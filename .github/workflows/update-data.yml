@@ -1,0 +1,38 @@
+# 毎日 日本時間 朝6時に最新データをチェックし、変更があれば
+# Pull Request（承認待ち）を作成してお知らせします。
+# → 通知が届いたら内容を確認し「Merge」を押した時だけサイトに反映されます。
+name: auto-update-check
+
+on:
+  schedule:
+    - cron: '0 21 * * *'   # UTC 21:00 = JST 6:00 毎日
+  workflow_dispatch:        # Actionsタブから手動実行も可能
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 最新データでビルド（差分サマリーも生成）
+        run: python3 build_data.py
+
+      - name: 変更があればPull Requestを作成（承認待ち）
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: auto-update          # 常に同じブランチを使い回す（PRが乱立しない）
+          add-paths: |
+            index.html
+            godata.json
+          title: "📢 データ更新があります：反映しますか？"
+          body-path: changes.md        # 変更内容の日本語サマリー
+          commit-message: "自動データ更新"
+          delete-branch: true          # Merge/Close後にブランチ自動削除
