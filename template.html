@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケモンGO 火力チェッカー｜自分のポケモンのDPSを計算・比較</title>
+<style>
+:root{
+  --bg:#f2f5fa; --card:#ffffff; --ink:#1b2330; --sub:#66738a; --line:#e3e9f2;
+  --accent:#2f66e0; --accent2:#0aa3a3; --gold:#b57f00; --goldbg:#fff7e0; --goldline:#f0c24b;
+  --shadow:#7a3cc4; --special:#c2410c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding:14px}
+.wrap{max-width:860px;margin:0 auto}
+header{margin:6px 0 16px}
+header h1{font-size:1.3rem;letter-spacing:.02em}
+header h1 span{color:var(--accent)}
+header p{font-size:.8rem;color:var(--sub);margin-top:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.step{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.step b{background:var(--accent);color:#fff;border-radius:8px;padding:2px 9px;font-size:.75rem;letter-spacing:.05em}
+.step h2{font-size:1rem}
+input[type=text],input[type=number],select{font:inherit;border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;background:#fbfcfe}
+input:focus,select:focus{outline:2px solid #bcd0f7;border-color:var(--accent)}
+.sugg{position:relative}
+.sugg-list{position:absolute;z-index:30;left:0;right:0;top:100%;background:#fff;border:1px solid var(--line);border-radius:10px;max-height:240px;overflow:auto;box-shadow:0 8px 24px rgba(20,40,90,.12);display:none}
+.sugg-list div{padding:8px 12px;cursor:pointer;font-size:.9rem;display:flex;justify-content:space-between;gap:8px}
+.sugg-list div:hover{background:#eef3fd}
+.sugg-list small{color:var(--sub)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:.72rem;color:#fff;border-radius:99px;padding:2px 10px;font-weight:600}
+.bossinfo{margin-top:10px;font-size:.85rem;color:var(--sub)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
+label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-weight:600}
+.toggle-row{display:flex;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap;font-size:.85rem}
+.toggle-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.lv-out{margin-top:10px;font-size:.9rem;background:#eef6ff;border:1px solid #cfe0f7;border-radius:9px;padding:8px 12px;display:none}
+.lv-out.err{background:#fdf0f0;border-color:#efc7c7;color:#a33}
+button.main{font:inherit;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 22px;cursor:pointer;margin-top:14px}
+button.main:disabled{background:#b9c6dd;cursor:not-allowed}
+button.main:hover:not(:disabled){background:#2452bd}
+.modes{display:flex;gap:6px;margin:2px 0 12px;flex-wrap:wrap}
+.modes button{font:inherit;font-size:.78rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 13px;cursor:pointer;color:var(--sub)}
+.modes button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.mine-sum{background:var(--goldbg);border:1px solid var(--goldline);border-radius:10px;padding:9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.mine-sum b{color:var(--gold)}
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line)}
+.rank-row.mine{background:var(--goldbg);border:1px solid var(--goldline);border-radius:10px;margin:3px 0}
+.rk{width:38px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
+.rank-row.mine .rk{color:var(--gold)}
+.rmain{flex:1;min-width:0}
+.rname{font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rname .tag-s{color:var(--shadow);font-weight:800}
+.rname small{color:var(--sub);font-weight:400;margin-left:6px;font-size:.72rem}
+.rmoves{font-size:.74rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rmoves .sp{color:var(--special)}
+.bar{height:5px;background:#edf1f7;border-radius:99px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:99px}
+.rank-row.mine .bar i{background:linear-gradient(90deg,#f0b429,#dd8a00)}
+.rdps{width:74px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
+.rdps small{display:block;font-weight:400;font-size:.62rem;color:var(--sub)}
+.avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),0 1px 3px rgba(20,40,90,.25)}
+.avatar svg{width:20px;height:20px;fill:#fff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.avatar.sm{width:26px;height:26px}
+.avatar.sm svg{width:14px;height:14px}
+.avatar.lg{width:52px;height:52px}
+.avatar.lg svg{width:28px;height:28px}
+.chip svg{width:12px;height:12px;fill:#fff;vertical-align:-1px;margin-right:3px}
+.wchip{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:700;color:#fff;border-radius:99px;padding:3px 10px;margin:2px 3px 2px 0}
+.wchip svg{width:12px;height:12px;fill:#fff}
+.wchip b{font-weight:800;opacity:.95}
+.bossline{display:flex;align-items:center;gap:12px;margin-top:12px}
+.bossname{font-weight:800;font-size:1.05rem}
+.mv-ic{width:11px;height:11px;vertical-align:-1px;margin-right:2px}
+.tag-s2{display:inline-block;background:var(--shadow);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
+.tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
+.sugg-list .srow{display:flex;align-items:center;gap:8px}
+.del{border:none;background:none;color:#c33;cursor:pointer;font-size:1rem;flex-shrink:0;padding:4px}
+.more{width:100%;margin-top:10px;font:inherit;font-size:.82rem;border:1px dashed var(--line);background:#fbfcfe;border-radius:10px;padding:9px;cursor:pointer;color:var(--sub)}
+.note{font-size:.72rem;color:var(--sub);margin-top:10px}
+.empty{color:var(--sub);font-size:.85rem;text-align:center;padding:18px 0}
+footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>ポケモンGO <span>火力チェッカー</span></h1>
+  <p>ボスを設定 → 火力ランキング自動生成。自分のポケモンはCP＋個体値で今の火力がわかる。特別技・レガシー技も全対応。</p>
+</header>
+
+<div class="card">
+  <div class="step"><b>STEP 1</b><h2>相手（レイドボス）を設定</h2></div>
+  <div class="sugg">
+    <input type="text" id="bossInput" placeholder="ボスのポケモン名で検索（例：メガミュウツーX）" autocomplete="off">
+    <div class="sugg-list" id="bossSugg"></div>
+  </div>
+  <div id="bossView"></div>
+</div>
+
+<div class="card">
+  <div class="step"><b>STEP 2</b><h2>自分のポケモンを追加（任意）</h2></div>
+  <div class="sugg">
+    <input type="text" id="myInput" placeholder="ポケモン名で検索（例：ネクロズマ）" autocomplete="off">
+    <div class="sugg-list" id="mySugg"></div>
+  </div>
+  <div id="myForm" style="display:none">
+    <div class="grid2" style="margin-top:12px">
+      <div><label class="f">通常技</label><select id="fastSel"></select></div>
+      <div><label class="f">ゲージ技</label><select id="chgSel"></select></div>
+    </div>
+    <div class="toggle-row">
+      <label><input type="radio" name="statmode" value="cp" checked> 今の状態（CP＋個体値）で計算</label>
+      <label><input type="radio" name="statmode" value="max"> フル強化想定（PL50・個体値15）</label>
+      <label><input type="checkbox" id="myShadow"> シャドウ（×1.2）</label>
+    </div>
+    <div class="grid3" id="cpArea" style="margin-top:8px">
+      <div><label class="f">CP</label><input type="number" id="myCP" min="10" placeholder="例: 2387"></div>
+      <div><label class="f">攻撃 個体値</label><input type="number" id="ivA" min="0" max="15" value="15"></div>
+      <div><label class="f">防御 個体値</label><input type="number" id="ivD" min="0" max="15" value="15"></div>
+      <div><label class="f">HP 個体値</label><input type="number" id="ivH" min="0" max="15" value="15"></div>
+    </div>
+    <div class="lv-out" id="lvOut"></div>
+    <button class="main" id="addBtn" disabled>ランキングに追加</button>
+  </div>
+  <p class="note">「(特)」は特別技・レガシー技（イベント限定やすごいわざマシンスペシャル等で習得）。習得済みならそのまま選択できます。</p>
+</div>
+
+<div class="card">
+  <div class="step"><b>RANK</b><h2>火力ランキング</h2></div>
+  <div class="modes">
+    <button data-m="0" class="on">通常のみ</button>
+    <button data-m="1">シャドウ込み</button>
+    <button data-m="2">メガ・シャドウ込み</button>
+  </div>
+  <div id="mineSummary"></div>
+  <div id="rankList"><div class="empty">ボスを設定するとランキングが表示されます</div></div>
+  <button class="more" id="moreBtn" style="display:none">さらに表示</button>
+  <p class="note">火力＝通常技100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差5%未満なら分割ありを優先）。データ出典：Game Master（PokeMiners）＋特別技補完（みんポケ・ポケらく・公式発表で照合済み）。</p>
+</div>
+
+<footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
+</div>
+
+<script>
+const D = __GODATA__;
+const TI = {}; D.types.forEach((t,i)=>TI[t]=i);
+const DEF_ENEMY = (100+15)*0.7903;
+const KEYS = Object.keys(D.pokemon);
+
+function eff(moveType, defTypes){ let m=1; for(const t of defTypes) m*=D.chart[moveType][TI[t]]; return m; }
+function stab(p, mv){ return p.ty.includes(mv.t) ? 1.2 : 1.0; }
+function dmg(p, mv, atkReal, bossTypes, shadow){
+  return Math.floor(0.5*(atkReal/DEF_ENEMY)*mv.p*stab(p,mv)*eff(mv.t,bossTypes)*(shadow?1.2:1)+1);
+}
+function comboDPS(p, m1, m2, atkReal, bossTypes, shadow){
+  if(!m1.e || m1.e<=0 || !m2.e) return null;
+  const d1=dmg(p,m1,atkReal,bossTypes,shadow), d2=dmg(p,m2,atkReal,bossTypes,shadow);
+  const n2=(m1.e*100)/Math.abs(m2.e);
+  const t=(m1.d*100)+(m2.d*n2);
+  if(t<=0) return null;
+  return {dps:(d1*100+d2*n2)/t, d1, d2};
+}
+function fastMoves(p){ return [...p.q.map(m=>({id:m,sp:false})), ...p.eq.map(m=>({id:m,sp:true}))].filter(x=>D.moves[x.id]); }
+function chgMoves(p){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>({id:m,sp:true}))].filter(x=>D.moves[x.id]); }
+
+// 全レベル(PL1〜51, 0.5刻み)の多数決で最適技構成を決定。
+// 各レベルで1位が「ゲージ分割なし(1ゲージ技)」の場合、分割あり(2/3ゲージ)の最高構成との
+// 火力差が5%未満なら分割ありをそのレベルの勝者とする。
+const LEVELS=[];
+for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) LEVELS.push(m); }
+function bestCombo(p, bossTypes, shadow){
+  const fs=fastMoves(p).filter(x=>D.moves[x.id].e>0);
+  const cs=chgMoves(p).filter(x=>D.moves[x.id].e<0);
+  if(!fs.length||!cs.length) return null;
+  // レベル非依存の係数を前計算: dmg = floor(coef*atk + 1)
+  const coef={};
+  for(const x of [...fs,...cs]){
+    const mv=D.moves[x.id];
+    coef[x.id]=0.5*mv.p*stab(p,mv)*eff(mv.t,bossTypes)*(shadow?1.2:1)/DEF_ENEMY;
+  }
+  const combos=[];
+  for(const f of fs){ const m1=D.moves[f.id];
+    for(const c of cs){ const m2=D.moves[c.id];
+      const n2=(m1.e*100)/Math.abs(m2.e);
+      const t=m1.d*100+m2.d*n2;
+      if(t>0) combos.push({f,c,n2,t,split:Math.abs(m2.e)<100});
+    }}
+  if(!combos.length) return null;
+  const tally=new Map();
+  for(const m of LEVELS){
+    const atk=(p.a+15)*m;
+    let best=null,bestSplit=null;
+    for(const cb of combos){
+      const d1=Math.floor(coef[cb.f.id]*atk+1), d2=Math.floor(coef[cb.c.id]*atk+1);
+      const v=(d1*100+d2*cb.n2)/cb.t;
+      if(!best||v>best.v) best={v,cb};
+      if(cb.split&&(!bestSplit||v>bestSplit.v)) bestSplit={v,cb};
+    }
+    let win=best;
+    if(!best.cb.split && bestSplit && (best.v-bestSplit.v)/best.v<0.05) win=bestSplit;
+    const key=win.cb.f.id+'|'+win.cb.c.id;
+    tally.set(key,(tally.get(key)||0)+1);
+  }
+  // 最多得票（同数はPL50火力が高い方）
+  const atk50=(p.a+15)*D.cpm['50'];
+  let winner=null;
+  for(const cb of combos){
+    const key=cb.f.id+'|'+cb.c.id, votes=tally.get(key)||0;
+    if(!votes) continue;
+    const d1=Math.floor(coef[cb.f.id]*atk50+1), d2=Math.floor(coef[cb.c.id]*atk50+1);
+    const dps=(d1*100+d2*cb.n2)/cb.t;
+    if(!winner||votes>winner.votes||(votes===winner.votes&&dps>winner.dps))
+      winner={votes,dps,f:cb.f,c:cb.c};
+  }
+  return winner;
+}
+function cpOf(p, iva, ivd, ivh, m){
+  return Math.max(10, Math.floor((p.a+iva)*Math.sqrt(p.df+ivd)*Math.sqrt(p.h+ivh)*m*m/10));
+}
+function levelFromCP(p, cp, iva, ivd, ivh){
+  const hits=[];
+  for(let l=1;l<=51;l+=0.5){
+    const m=D.cpm[String(l)]; if(!m) continue;
+    if(cpOf(p,iva,ivd,ivh,m)===cp) hits.push(l);
+  }
+  return hits;
+}
+
+// ---- state ----
+let boss=null, mode=0, showN=30;
+const mine=[];
+
+// ---- search suggest ----
+function attachSugg(inputEl, listEl, onPick, filterFn){
+  inputEl.addEventListener('input', ()=>{
+    const q=inputEl.value.trim();
+    if(!q){listEl.style.display='none';return;}
+    const res=KEYS.filter(k=>D.pokemon[k].n.includes(q) && (!filterFn||filterFn(k))).slice(0,12);
+    if(!res.length){listEl.style.display='none';return;}
+    listEl.innerHTML=res.map(k=>{
+      const p=D.pokemon[k];
+      return `<div data-k="${k}"><span class="srow">${avatarHtml(p,'sm')}${p.n}</span><small>${p.ty.map(t=>D.typeJa[t]).join('/')}｜攻${p.a}</small></div>`;
+    }).join('');
+    listEl.style.display='block';
+    listEl.querySelectorAll('div').forEach(el=>el.onclick=()=>{listEl.style.display='none';inputEl.value=D.pokemon[el.dataset.k].n;onPick(el.dataset.k);});
+  });
+  document.addEventListener('click',e=>{if(!listEl.contains(e.target)&&e.target!==inputEl)listEl.style.display='none';});
+}
+
+// ---- boss ----
+const typeColor={NORMAL:'#9aa0a6',FIGHTING:'#ce4265',FLYING:'#8fa8dd',POISON:'#a864c7',GROUND:'#d97845',ROCK:'#c7b78b',BUG:'#91c12f',GHOST:'#5269ac',STEEL:'#5a8ea1',FIRE:'#ff9c54',WATER:'#4d90d5',GRASS:'#63bb5b',ELECTRIC:'#f3d23b',PSYCHIC:'#f97176',ICE:'#74cec0',DRAGON:'#0a6dc4',DARK:'#5a5366',FAIRY:'#ec8fe6'};
+// オリジナルデザインのタイプアイコン（SVGパス・24x24）
+const TYPE_ICON={
+NORMAL:'<circle cx="12" cy="12" r="6"/>',
+FIRE:'<path d="M12 2C9.5 6.5 6 9 6 14a6 6 0 0012 0c0-2.8-1.2-4.6-2.6-6.6-.5 1.8-1.4 2.9-2.9 3.8.6-2.8.3-6-.5-9.2z"/>',
+WATER:'<path d="M12 2C8.5 7.5 6 10.8 6 14.2a6 6 0 0012 0C18 10.8 15.5 7.5 12 2z"/>',
+GRASS:'<path d="M20 4C10 4.5 5.5 9 5 15c-.2 2 .6 3.8 2 5 .3-5.6 3.6-10.3 9-12.8-4.4 3-7 7.4-7.3 12.6C16.5 20.5 20.8 14 20 4z"/>',
+ELECTRIC:'<path d="M13 2L5 13.5h4.5L8 22l8-11.5h-4.5L13 2z"/>',
+ICE:'<path d="M12 1.5l4.5 6-1.8 6.8L12 22.5l-2.7-8.2L7.5 7.5zM12 5l-2.6 3.4 1.5 5.4L12 18l1.1-4.2 1.5-5.4z" fill-rule="evenodd"/>',
+FIGHTING:'<path d="M12 2l1.8 4.6L18.5 4l-1.9 4.7L21 10.5l-4.4 1.8L18.5 17l-4.7-1.9L12 20l-1.8-4.9L5.5 17l1.9-4.7L3 10.5l4.4-1.8L5.5 4l4.7 2.6z"/>',
+POISON:'<circle cx="9" cy="9" r="4.5"/><circle cx="16.5" cy="12" r="3.2"/><circle cx="11" cy="17.5" r="2.6"/>',
+GROUND:'<path d="M2 19l6.5-9.5L12.5 15l3-4L22 19z"/>',
+FLYING:'<path d="M22 5C13.5 3 5.5 7.5 4 17.5c6.5 2 12.5-.5 14.5-6-4 2.4-7.3 2.6-9.6 1.6C15.5 12.4 19.5 9.8 22 5z"/>',
+PSYCHIC:'<path fill-rule="evenodd" d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 4.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7z"/>',
+BUG:'<ellipse cx="12" cy="14.5" rx="5" ry="6.5"/><circle cx="12" cy="5.5" r="3"/>',
+ROCK:'<path d="M7.5 3.5h9L21 11l-4.5 9.5h-9L3 11z"/>',
+GHOST:'<path d="M12 2.5a7 7 0 00-7 7V21l3-2.2 2 2.2 2-2.2 2 2.2 2-2.2 3 2.2V9.5a7 7 0 00-7-7z"/>',
+DRAGON:'<path fill-rule="evenodd" d="M12 1.5L21.5 12 12 22.5 2.5 12zM12 7l-3.8 5L12 17l3.8-5z"/>',
+DARK:'<path d="M20.5 13A8.5 8.5 0 1111 3.5 7 7 0 0020.5 13z"/>',
+STEEL:'<path fill-rule="evenodd" d="M12 1.5L21 7v10l-9 5.5L3 17V7zm0 6L7.5 10v4L12 16.5 16.5 14v-4z"/>',
+FAIRY:'<path d="M12 1.5c1.2 5.3 3.5 7.6 9 8.7-5.5 1.1-7.8 3.4-9 8.7-1.2-5.3-3.5-7.6-9-8.7 5.5-1.1 7.8-3.4 9-8.7z"/>'};
+function typeSvg(t){ return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${TYPE_ICON[t]||TYPE_ICON.NORMAL}</svg>`; }
+function avatarHtml(p, cls){
+  const c1=typeColor[p.ty[0]]||'#9aa0a6', c2=p.ty[1]?typeColor[p.ty[1]]:c1;
+  const bg = p.ty[1]?`linear-gradient(135deg,${c1} 50%,${c2} 50%)`:c1;
+  return `<span class="avatar ${cls||''}" style="background:${bg}">${typeSvg(p.ty[0])}</span>`;
+}
+function mvIcon(t){ return `<svg class="mv-ic" viewBox="0 0 24 24" style="fill:${typeColor[t]}">${TYPE_ICON[t]||''}</svg>`; }
+attachSugg(document.getElementById('bossInput'),document.getElementById('bossSugg'),k=>{
+  boss=k; renderBoss(); renderRank();
+});
+function renderBoss(){
+  const p=D.pokemon[boss];
+  const weak=D.types.filter(t=>eff(t,p.ty)>1.01)
+    .sort((a,b)=>eff(b,p.ty)-eff(a,p.ty))
+    .map(t=>`<span class="wchip" style="background:${typeColor[t]}">${typeSvg(t)}${D.typeJa[t]}<b>×${eff(t,p.ty).toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}</b></span>`);
+  document.getElementById('bossView').innerHTML=
+    `<div class="bossline">${avatarHtml(p,'lg')}
+       <div><div class="bossname">${p.n}</div>
+       <div class="chips">${p.ty.map(t=>`<span class="chip" style="background:${typeColor[t]}">${typeSvg(t)}${D.typeJa[t]}</span>`).join('')}</div></div></div>
+     <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>`;
+}
+
+// ---- my pokemon ----
+let myKey=null;
+attachSugg(document.getElementById('myInput'),document.getElementById('mySugg'),k=>{
+  myKey=k; buildMyForm();
+},k=>!D.pokemon[k].mega); // 自分側はメガ以外（メガはボス・ランキング側で対応）
+function buildMyForm(){
+  const p=D.pokemon[myKey];
+  const f=fastMoves(p), c=chgMoves(p);
+  document.getElementById('fastSel').innerHTML=f.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}｜${D.typeJa[D.moves[x.id].t]}</option>`).join('');
+  document.getElementById('chgSel').innerHTML=c.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}｜${D.typeJa[D.moves[x.id].t]}</option>`).join('');
+  document.getElementById('myForm').style.display='block';
+  document.getElementById('myShadow').disabled=!p.shadow;
+  if(!p.shadow) document.getElementById('myShadow').checked=false;
+  checkLevel();
+}
+function statMode(){ return document.querySelector('input[name=statmode]:checked').value; }
+function checkLevel(){
+  const out=document.getElementById('lvOut'), btn=document.getElementById('addBtn');
+  document.getElementById('cpArea').style.display = statMode()==='cp'?'grid':'none';
+  if(!myKey){btn.disabled=true;out.style.display='none';return;}
+  if(statMode()==='max'){out.style.display='none';btn.disabled=false;return;}
+  const p=D.pokemon[myKey];
+  const cp=parseInt(document.getElementById('myCP').value,10);
+  const iva=+document.getElementById('ivA').value, ivd=+document.getElementById('ivD').value, ivh=+document.getElementById('ivH').value;
+  if(!cp||[iva,ivd,ivh].some(v=>isNaN(v)||v<0||v>15)){out.style.display='none';btn.disabled=true;return;}
+  const hits=levelFromCP(p,cp,iva,ivd,ivh);
+  out.style.display='block';
+  if(hits.length){
+    out.className='lv-out';
+    out.textContent=`ポケモンレベル：PL ${hits[0]}${hits.length>1?`（他候補: ${hits.slice(1).join(', ')}）`:''}｜攻撃実数値 ${((p.a+iva)*D.cpm[String(hits[0])]).toFixed(1)}`;
+    out.dataset.lv=hits[0]; btn.disabled=false;
+  }else{
+    out.className='lv-out err';
+    out.textContent='このCPと個体値の組み合わせに一致するレベルが見つかりません。入力を確認してください。';
+    btn.disabled=true;
+  }
+}
+['myCP','ivA','ivD','ivH'].forEach(id=>document.getElementById(id).addEventListener('input',checkLevel));
+document.querySelectorAll('input[name=statmode]').forEach(r=>r.addEventListener('change',checkLevel));
+
+document.getElementById('addBtn').onclick=()=>{
+  const p=D.pokemon[myKey];
+  const isMax=statMode()==='max';
+  const lv=isMax?50:parseFloat(document.getElementById('lvOut').dataset.lv);
+  const iva=isMax?15:+document.getElementById('ivA').value;
+  mine.push({key:myKey,f:document.getElementById('fastSel').value,c:document.getElementById('chgSel').value,
+             lv,iva,isMax,shadow:document.getElementById('myShadow').checked});
+  renderRank();
+};
+
+// ---- ranking ----
+document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{
+  mode=+b.dataset.m; showN=30;
+  document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('on',x===b));
+  renderRank();
+});
+document.getElementById('moreBtn').onclick=()=>{showN+=50;renderRank();};
+
+function buildRanking(){
+  if(!boss) return [];
+  const bt=D.pokemon[boss].ty, rows=[];
+  for(const k of KEYS){
+    const p=D.pokemon[k];
+    if(p.mega && mode<2) continue;
+    const base=bestCombo(p,bt,false);
+    if(base) rows.push({k,p,shadow:false,...base});
+    if(p.shadow && mode>=1){
+      const s=bestCombo(p,bt,true);
+      if(s) rows.push({k,p,shadow:true,...s});
+    }
+  }
+  rows.sort((a,b)=>b.dps-a.dps);
+  return rows;
+}
+function mineRows(){
+  if(!boss) return [];
+  const bt=D.pokemon[boss].ty;
+  return mine.map((e,i)=>{
+    const p=D.pokemon[e.key];
+    const atk=(p.a+e.iva)*D.cpm[String(e.lv)];
+    const m1=D.moves[e.f], m2=D.moves[e.c];
+    const r=comboDPS(p,m1,m2,atk,bt,e.shadow);
+    return {i,e,p,dps:r?r.dps:0};
+  });
+}
+function moveLabel(p, id, sp){
+  const m=D.moves[id];
+  const isSp = sp!==undefined?sp:(p.eq.includes(id)||p.ec.includes(id));
+  const nm = mvIcon(m.t)+(isSp?`<span class="sp">${m.n}(特)</span>`:m.n);
+  return nm;
+}
+function badges(shadow, mega){
+  return (mega?'<span class="tag-m2">メガ</span>':'')+(shadow?'<span class="tag-s2">シャドウ</span>':'');
+}
+function renderRank(){
+  const listEl=document.getElementById('rankList'), sumEl=document.getElementById('mineSummary'), moreBtn=document.getElementById('moreBtn');
+  if(!boss){listEl.innerHTML='<div class="empty">ボスを設定するとランキングが表示されます</div>';sumEl.innerHTML='';moreBtn.style.display='none';return;}
+  const rows=buildRanking();
+  const top=rows.length?rows[0].dps:1;
+  const my=mineRows();
+  // 相当順位
+  sumEl.innerHTML=my.map(m=>{
+    const rank=rows.filter(r=>r.dps>m.dps).length+1;
+    return `<div class="mine-sum"><span>あなたの<b>${m.e.shadow?'S':''}${m.p.n}</b>（${m.e.isMax?'PL50・個体値15':'PL'+m.e.lv+'・攻個体'+m.e.iva}）</span><span>火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b>　<button class="del" data-i="${m.i}">✕</button></span></div>`;
+  }).join('');
+  // 一覧（自分のポケモンを該当位置に挿入）
+  const merged=[];
+  let mi=[...my].sort((a,b)=>b.dps-a.dps), pos=0;
+  rows.slice(0,showN).forEach((r,idx)=>{
+    while(pos<mi.length && mi[pos].dps>=r.dps){merged.push({mine:true,...mi[pos],rank:idx+1});pos++;}
+    merged.push({mine:false,...r,rank:idx+1});
+  });
+  while(pos<mi.length && showN>=rows.length){merged.push({mine:true,...mi[pos],rank:rows.filter(r=>r.dps>mi[pos].dps).length+1});pos++;}
+  listEl.innerHTML=merged.map(r=>{
+    if(r.mine){
+      return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div>${avatarHtml(r.p)}<div class="rmain">
+        <div class="rname">${badges(r.e.shadow,false)}${r.p.n}<small>${r.e.isMax?'PL50・個体値15':'PL'+r.e.lv+'・攻個体'+r.e.iva}（あなた）</small></div>
+        <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}</div>
+        <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
+        <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
+    }
+    return `<div class="rank-row"><div class="rk">${r.rank}</div>${avatarHtml(r.p)}<div class="rmain">
+      <div class="rname">${badges(r.shadow,r.p.mega)}${r.p.n}<small>PL50・個体値15</small></div>
+      <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}</div>
+      <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
+      <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
+  }).join('');
+  moreBtn.style.display=rows.length>showN?'block':'none';
+  sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
+}
+</script>
+</body>
+</html>
