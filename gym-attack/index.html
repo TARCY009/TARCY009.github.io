@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ジム挑戦オススメツール</title>
+<meta name="description" content="防衛ポケモンを指定すると、連戦効率(ゲージ分割)を考慮したジム攻撃おすすめランキングを表示します。">
+<style>
+:root{
+  --bg:#101418; --panel:#1a2129; --panel2:#212b36; --line:#2e3a47;
+  --text:#e8edf2; --sub:#93a3b3; --accent:#f5b942; --accent2:#4fc3f7;
+  --bar:#7ee081; --bar-off:#33404d; --warn:#ff7d6b;
+  --radius:12px;
+  font-size:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+header{padding:20px 0 4px}
+h1{font-size:1.35rem;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
+h1 .badge{font-size:.65rem;background:var(--accent);color:#1a1a1a;border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
+.lead{color:var(--sub);font-size:.85rem;margin-top:6px}
+/* 検索 */
+.searchbox{position:relative;margin-top:16px}
+.searchbox input{width:100%;padding:14px 16px;font-size:1.05rem;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--text);outline:none}
+.searchbox input:focus{border-color:var(--accent2)}
+.suggest{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);max-height:300px;overflow-y:auto;z-index:20;display:none}
+.suggest button{display:flex;width:100%;justify-content:space-between;align-items:center;padding:11px 14px;background:none;border:none;color:var(--text);font-size:.98rem;text-align:left;cursor:pointer;border-bottom:1px solid var(--line)}
+.suggest button:last-child{border-bottom:none}
+.suggest button:hover,.suggest button:focus{background:#2a3644}
+/* フィルタトグル */
+.filters{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.chipbtn{padding:8px 16px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s}
+.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1a1a1a;font-weight:700}
+#fShadow[aria-pressed="true"]{background:#8a63d2;border-color:#8a63d2;color:#fff}
+/* ランキングモード */
+.modes{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.modebtn{flex:1;padding:11px 8px;background:var(--panel);border:none;color:var(--sub);font-size:.9rem;cursor:pointer}
+.modebtn[aria-pressed="true"]{background:var(--accent2);color:#0d1620;font-weight:700}
+/* ポイントメーター */
+.meter{width:96px;height:6px;border-radius:3px;background:var(--bar-off);margin:4px 0 4px auto;overflow:hidden}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px}
+/* 防衛パネル */
+.defender{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:none}
+.defender .dname{font-size:1.15rem;font-weight:700}
+.defender .dmeta{color:var(--sub);font-size:.8rem;margin-top:4px}
+.typechips{display:inline-flex;gap:6px;margin-left:8px;vertical-align:middle}
+.tchip{font-size:.68rem;padding:2px 8px;border-radius:20px;color:#fff;font-weight:700}
+/* 設定 */
+details.settings{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-size:.85rem}
+.settings .body{padding:0 16px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.85rem}
+.settings label{color:var(--sub)}
+.settings input{width:100%;padding:6px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text)}
+/* ランキング */
+.ranklist{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center}
+.rank{font-size:1.05rem;font-weight:800;text-align:center;color:var(--sub)}
+.rank.r1{color:#ffd54f}.rank.r2{color:#cfd8dc}.rank.r3{color:#d7a97c}
+.pname{font-weight:700;font-size:1.0rem}
+.pname .shadow{color:#c39bff;font-size:.72rem;margin-left:6px;border:1px solid #6b4fa0;border-radius:6px;padding:1px 6px}
+.moves{margin-top:4px;font-size:.82rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.gauge{display:inline-flex;gap:2px;margin-left:4px;vertical-align:middle}
+.gauge i{width:10px;height:6px;border-radius:2px;background:var(--bar)}
+.gauge.g1 i{background:var(--warn)}
+.nums{text-align:right}
+.nums .score{font-size:1.1rem;font-weight:800;color:var(--accent)}
+.nums .dps{font-size:.72rem;color:var(--sub)}
+.nums .time{font-size:.72rem;color:var(--accent2)}
+.hitchip{font-size:.68rem;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.hit-resist{background:#1d4d33;color:#8be3a8}
+.hit-neutral{background:#3a4553;color:#b7c4d0}
+.hit-weak{background:#5a2620;color:#ffb0a3}
+/* 被弾内訳チップ(総合力モードのみ表示) */
+.hchip{display:inline-block;font-size:.66rem;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:5px;vertical-align:middle;letter-spacing:.02em}
+.hchip.hw{background:#54221d;color:#ff9d8f}
+.hchip.hn{background:#333d48;color:#aab8c5}
+.hchip.hr{background:#1c3a55;color:#8ec6f2}
+.note{margin-top:14px;color:var(--sub);font-size:.75rem}
+.loading{margin-top:24px;color:var(--sub);text-align:center}
+footer{margin-top:28px;color:#5c6b7a;font-size:.7rem;text-align:center}
+@media (max-width:480px){
+  .card{grid-template-columns:36px 1fr auto;padding:10px 10px}
+  .nums .score{font-size:1.0rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>ジム挑戦オススメツール <span class="badge">連戦効率型</span></h1>
+  <p class="lead">相手の防衛ポケモンを指定すると、ゲージ分割技を優遇した「連戦向き」の攻撃ランキングを表示します。攻撃側はPL50・個体値MAX想定。</p>
+</header>
+
+<div class="searchbox">
+  <input id="q" type="search" placeholder="防衛ポケモン名を入力(例: ハピナス)" autocomplete="off">
+  <div class="suggest" id="suggest"></div>
+</div>
+
+<div class="modes">
+  <button id="mPower" class="modebtn" type="button" aria-pressed="true">火力ランキング</button>
+  <button id="mTotal" class="modebtn" type="button" aria-pressed="false">総合力(耐久込み)</button>
+</div>
+
+<div class="filters">
+  <button id="fShadow" class="chipbtn" type="button" aria-pressed="false">シャドウ</button>
+  <button id="fMega" class="chipbtn" type="button" aria-pressed="false">メガ・ゲンシ</button>
+  <button id="fMulti" class="chipbtn" type="button" aria-pressed="false">複数技構成</button>
+</div>
+
+<div class="defender" id="defender"></div>
+
+<details class="settings">
+  <summary>詳細設定(ゲージ補正係数など)</summary>
+  <div class="body">
+    <div><label>1ゲージ技 補正</label><input id="c1" type="number" step="0.05" value="0.65"></div>
+    <div><label>2ゲージ技 補正</label><input id="c2" type="number" step="0.05" value="0.95"></div>
+    <div><label>3ゲージ技 補正</label><input id="c3" type="number" step="0.05" value="1.00"></div>
+    <div><label>耐性補正の強さ(指数)</label><input id="rex" type="number" step="0.05" value="0.25"></div>
+    <div><label>通常技の被弾比重</label><input id="wf" type="number" step="0.05" value="0.30" min="0" max="1"></div>
+    <div><label>防衛側PL</label><input id="dpl" type="number" step="10" value="40" min="40" max="50"></div>
+    <div><label>表示件数</label><input id="topn" type="number" step="10" value="30" min="10" max="100"></div>
+  </div>
+</details>
+
+<div class="loading" id="loading">データ読み込み中…</div>
+<div class="ranklist" id="ranklist"></div>
+<p class="note" id="note" style="display:none">
+  ポイントは1位を100とした相対値。火力ランキング = 対面DPS × ゲージ補正(1本ゲージ技は大幅減点)。総合力ランキングはこれに被弾耐性補正を加味し、名前横のチップに防衛側の技タイプ数の内訳(<span style="color:#ff9d8f">弱点</span>/<span style="color:#aab8c5">等倍</span>/<span style="color:#8ec6f2">耐性</span>)を表示。耐性補正の内部計算では通常技のタイプを低比重で扱います。デフォルトはメガ・シャドウ除外、各ポケモン最適技構成のみ表示。上のボタンで切替できます。
+</p>
+<footer>データ: PokeMiners Game Master / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
+</div>
+
+<script src="data/gym_data.js"></script>
+<script>
+const TYPE_COLORS=["#9aa0a6","#d3425f","#89aae3","#b567ce","#d97845","#c9b787","#92bc2c","#5f6dbc","#5695a3","#fb9b51","#4a90dd","#5fbd58","#f2d94e","#fa8581","#70ccbd","#0c69c8","#595761","#ee90e6"];
+const CFG={CPM50:0.84029999,CPM_TBL:{40:0.7903,50:0.84029999},IV:15,HP_MULT:2};
+let DATA=null, currentDefender=null;
+
+if(window.GYM_DATA){
+  DATA=window.GYM_DATA;
+  document.getElementById('loading').style.display='none';
+}else{
+  // フォールバック: サーバー経由(GitHub Pages等)ならfetchでも読める
+  fetch('data/gym_data.json').then(r=>r.json()).then(d=>{
+    DATA=d;
+    document.getElementById('loading').style.display='none';
+  }).catch(()=>{ document.getElementById('loading').textContent='データの読み込みに失敗しました。data/gym_data.js が index.html と同じ場所の data フォルダにあるか確認してください。'; });
+}
+
+const $q=document.getElementById('q'), $sg=document.getElementById('suggest');
+$q.addEventListener('input',()=>{
+  if(!DATA) return;
+  const v=$q.value.trim();
+  if(!v){$sg.style.display='none';return;}
+  const hits=DATA.pokemon.filter(p=>p.name.includes(v)).slice(0,12);
+  $sg.innerHTML='';
+  hits.forEach(p=>{
+    const b=document.createElement('button');
+    b.innerHTML=`<span>${p.name}</span><span class="typechips">${p.types.map(t=>`<span class="tchip" style="background:${TYPE_COLORS[t]}">${DATA.types_jp[t]}</span>`).join('')}</span>`;
+    b.onclick=()=>{selectDefender(p);};
+    $sg.appendChild(b);
+  });
+  $sg.style.display=hits.length?'block':'none';
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('.searchbox')) $sg.style.display='none'; });
+const FL={shadow:false,mega:false,multi:false};
+let MODE='power'; // 'power'=火力のみ / 'total'=耐久込み
+[['mPower','power'],['mTotal','total']].forEach(([id,mode])=>{
+  document.getElementById(id).addEventListener('click',()=>{
+    MODE=mode;
+    document.getElementById('mPower').setAttribute('aria-pressed',mode==='power');
+    document.getElementById('mTotal').setAttribute('aria-pressed',mode==='total');
+    if(currentDefender) render(currentDefender);
+  });
+});
+[['fShadow','shadow'],['fMega','mega'],['fMulti','multi']].forEach(([id,key])=>{
+  const b=document.getElementById(id);
+  b.addEventListener('click',()=>{
+    FL[key]=!FL[key];
+    b.setAttribute('aria-pressed',FL[key]?'true':'false');
+    if(currentDefender) render(currentDefender);
+  });
+});
+['c1','c2','c3','rex','wf','dpl','topn'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{ if(currentDefender) render(currentDefender); });
+});
+
+function eff(moveType, defTypes){
+  let m=1; for(const t of defTypes) m*=DATA.chart[moveType][t]; return m;
+}
+function stab(moveType, types){ return types.includes(moveType)?1.2:1.0; }
+function dmg(atkStat, defStat, power, s, e, shadow){
+  return Math.floor(0.5*(atkStat/defStat)*power*s*e*shadow)+1;
+}
+
+function selectDefender(p){
+  currentDefender=p; $q.value=p.name; $sg.style.display='none';
+  render(p);
+}
+
+function render(def){
+  const c=[+val('c1'),+val('c2'),+val('c3')];
+  const gauge={1:c[0],2:c[1],3:c[2]};
+  const rex=+val('rex'); const dpl=+val('dpl')||40; const topn=+val('topn')||30;
+  const wFast=Math.min(1,Math.max(0,+val('wf')||0.3));
+  const cpmD=CFG.CPM_TBL[dpl]||CFG.CPM_TBL[40];
+  const defStat=(def.def+CFG.IV)*cpmD;
+  const defHP=Math.floor((def.sta+CFG.IV)*cpmD)*CFG.HP_MULT;
+  // 防衛側の技タイプ(被弾評価用): スペシャル技=比重1.0 / 通常技のみのタイプ=比重wFast
+  const typeW={};
+  for(const m of def.fast){const mv=DATA.moves[m]; if(mv) typeW[mv.type]=Math.max(typeW[mv.type]||0,wFast);}
+  for(const m of def.charged){const mv=DATA.moves[m]; if(mv) typeW[mv.type]=1.0;}
+  const defTypeEntries=Object.keys(typeW).map(t=>({t:+t,w:typeW[t]}));
+  const chargedTypes=defTypeEntries.filter(e=>e.w===1).map(e=>DATA.types_jp[e.t]);
+  const fastOnlyTypes=defTypeEntries.filter(e=>e.w<1).map(e=>DATA.types_jp[e.t]);
+
+  document.getElementById('defender').style.display='block';
+  const hitLegend=(MODE==='total')?` / 弱点・等倍・耐性の数は防衛側の技タイプ数`:'';
+  document.getElementById('defender').innerHTML=
+    `<div class="dname">防衛: ${def.name}
+      <span class="typechips">${def.types.map(t=>`<span class="tchip" style="background:${TYPE_COLORS[t]}">${DATA.types_jp[t]}</span>`).join('')}</span></div>
+     <div class="dmeta">想定: PL${dpl}・個体値15 / ジム補正HP ${defHP}(2倍) / 反撃技タイプ: ${chargedTypes.join('・')||'-'}${fastOnlyTypes.length?` <span style="opacity:.7">(通常技のみ: ${fastOnlyTypes.join('・')})</span>`:''}${hitLegend}</div>`;
+
+  const rows=[];
+  for(const p of DATA.pokemon){
+    if(p.mega&&!FL.mega) continue;
+    const variants=(p.shadow&&FL.shadow)?[false,true]:[false];
+    for(const isShadow of variants){
+      const atkStat=(p.atk+CFG.IV)*CFG.CPM50;
+      const shadowMult=isShadow?1.2:1.0;
+      // 被弾耐性: 比重付き平均有効度(内部計算用) + 表示用の単純タイプ数
+      let inc=0, tw=0, hitW=0, hitN=0, hitR=0, cW=0, cN=0, cR=0;
+      for(const {t,w} of defTypeEntries){
+        const e=eff(t,p.types); inc+=e*w; tw+=w;
+        if(e>=1.6){hitW+=w;cW++;} else if(e<1){hitR+=w;cR++;} else {hitN+=w;cN++;}
+      }
+      const avgInc=tw?inc/tw:1;
+      const resist=Math.pow(1/avgInc,rex);
+      const local=[];
+      for(const f of p.fast){
+        const fm=DATA.moves[f]; if(!fm) continue;
+        for(const cmid of p.charged){
+          const cm=DATA.moves[cmid]; if(!cm||!cm.bars) continue;
+          const eF=eff(fm.type,def.types), eC=eff(cm.type,def.types);
+          const dF=dmg(atkStat,defStat,fm.power,stab(fm.type,p.types),eF,shadowMult);
+          const dC=dmg(atkStat,defStat,cm.power,stab(cm.type,p.types),eC,shadowMult);
+          const n2=(fm.energy*100)/Math.abs(cm.energy);
+          const total=dF*100+dC*n2;
+          const time=(fm.dur*100+cm.dur*n2)/1000;
+          const dps=total/time;
+          const sPower=dps*gauge[cm.bars];
+          const sTotal=sPower*resist;
+          const score=(MODE==='power')?sPower:sTotal;
+          if(!isFinite(score)||score<=0) continue; // わるあがき等の異常値を除外
+          local.push({p,isShadow,f,cmid,bars:cm.bars,dps,score,hitW,hitN,hitR,cW,cN,cR});
+        }
+      }
+      local.sort((a,b)=>b.score-a.score);
+      rows.push(...local.slice(0,FL.multi?3:1)); // デフォルトは最適技構成のみ、複数技ONで上位3構成
+    }
+  }
+  rows.sort((a,b)=>b.score-a.score);
+  const top=rows.slice(0,topn);
+  const base=top.length?top[0].score:1;
+  const ptLabel=(MODE==='power')?'火力ポイント':'総合力ポイント';
+  const list=document.getElementById('ranklist');
+  list.innerHTML='';
+  top.forEach((r,i)=>{
+    const fm=DATA.moves[r.f], cm=DATA.moves[r.cmid];
+    const pts=r.score/base*100;
+    let hitHtml='';
+    if(MODE==='total'){
+      const hitTitle=`防衛側の技タイプに対する内訳(参考: 比重換算 弱${r.hitW.toFixed(1)}・等${r.hitN.toFixed(1)}・耐${r.hitR.toFixed(1)})`;
+      hitHtml=`<span title="${hitTitle}">`
+        +(r.cW>0?`<span class="hchip hw">弱点${r.cW}</span>`:'')
+        +(r.cN>0?`<span class="hchip hn">等倍${r.cN}</span>`:'')
+        +(r.cR>0?`<span class="hchip hr">耐性${r.cR}</span>`:'')
+        +`</span>`;
+    }
+    const el=document.createElement('div'); el.className='card';
+    el.innerHTML=`
+      <div class="rank ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i+1}位</div>
+      <div>
+        <div class="pname">${r.p.name}${r.isShadow?'<span class="shadow">シャドウ</span>':''}${hitHtml}</div>
+        <div class="moves">
+          <span>${fm.jp}</span><span>/</span>
+          <span>${cm.jp}<span class="gauge ${r.bars===1?'g1':''}">${'<i></i>'.repeat(r.bars)}</span></span>
+        </div>
+      </div>
+      <div class="nums">
+        <div class="score">${pts.toFixed(1)}<span style="font-size:.65rem;color:var(--sub)"> ${ptLabel}</span></div>
+        <div class="meter"><i style="width:${Math.max(2,pts)}%"></i></div>
+        <div class="dps">DPS ${r.dps.toFixed(1)}</div>
+      </div>`;
+    list.appendChild(el);
+  });
+  document.getElementById('note').style.display='block';
+}
+function val(id){return document.getElementById(id).value;}
+</script>
+</body>
+</html>
