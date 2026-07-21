@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マックスバトル対策ツール(アタッカー)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<meta name="description" content="敵ボスを入力すると、ダイマックスフェイズの火力でおすすめアタッカーをランキング表示。キョダイマックス(威力450)とダイマックス(威力350)の差・タイプ相性・攻撃種族値を反映。PL50・攻撃個体値15・マックスわざLv3想定。">
+<style>
+:root{
+  --bg:#0b0912; --bg2:#131022;
+  --card:#171128; --card2:#1e1633; --line:#2d2347; --line2:#3d3060;
+  --text:#f3eefb; --sub:#9d92b8; --faint:#6f6590;
+  --dyna:#ff3d6e; --dyna2:#ff7a5c; --violet:#8b5cf6;
+  --dmax:#6fa0ff; --spec:#b76bff; --warn:#ffb35c;
+  --gold1:#ffd76a; --gold2:#e8a23d;
+  --radius:16px;
+  font-size:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(900px 480px at 50% -160px, rgba(255,61,110,.16), transparent 62%),
+    radial-gradient(700px 400px at 85% -120px, rgba(139,92,246,.12), transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+  line-height:1.55;padding-bottom:72px;
+}
+.num{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;letter-spacing:.02em}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+header{padding:26px 0 6px;text-align:left}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:var(--dyna);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,61,110,.55),transparent)}
+h1{font-size:1.45rem;font-weight:900;letter-spacing:.03em;margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;border-radius:999px;padding:3px 12px;font-weight:800;letter-spacing:.12em}
+.lead{color:var(--sub);font-size:.82rem;margin-top:8px;max-width:60ch}
+/* ボス入力 */
+.bosslabel{margin-top:20px;font-size:.72rem;color:var(--dyna);font-weight:800;letter-spacing:.22em;display:flex;align-items:center;gap:8px}
+.bosslabel::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dyna);box-shadow:0 0 10px var(--dyna)}
+.searchbox{position:relative;margin-top:8px}
+.searchbox input{width:100%;padding:15px 18px;font-size:1.05rem;background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line2);border-radius:var(--radius);color:var(--text);outline:none;transition:border-color .18s, box-shadow .18s}
+.searchbox input::placeholder{color:var(--faint)}
+.searchbox input:focus{border-color:var(--dyna);box-shadow:0 0 0 3px rgba(255,61,110,.18), 0 0 24px rgba(255,61,110,.12)}
+.sug{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--card2);border:1px solid var(--line2);border-radius:var(--radius);max-height:310px;overflow-y:auto;z-index:20;display:none;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.sug button{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;background:none;border:none;border-bottom:1px solid var(--line);color:var(--text);font-size:.95rem;cursor:pointer;text-align:left;font-family:inherit}
+.sug button:last-child{border-bottom:none}
+.sug button:hover,.sug button.sel{background:rgba(255,61,110,.10)}
+/* ボスカード */
+.bosscard{margin-top:14px;position:relative;border-radius:var(--radius);padding:16px 18px;display:none;background:linear-gradient(160deg,#221231,#170f26);overflow:hidden}
+.bosscard::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;background:linear-gradient(135deg,var(--dyna),rgba(139,92,246,.7));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.bosscard::after{content:"";position:absolute;right:-40px;top:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle, rgba(255,61,110,.28), transparent 70%);pointer-events:none}
+.bosscard .blabel{font-family:"Oswald",sans-serif;font-size:.62rem;letter-spacing:.3em;color:var(--dyna)}
+.bosscard .bname{font-weight:900;font-size:1.25rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.bosscard .weak{margin-top:10px;font-size:.76rem;color:var(--sub);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tchip{font-size:.66rem;padding:2px 9px;border-radius:999px;color:#fff;font-weight:700;white-space:nowrap;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25)}
+.tgroup{display:inline-flex;gap:4px;white-space:nowrap;flex-shrink:0}
+.badgetypes{display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex-shrink:0}
+.catline{margin-top:5px}
+.mult{font-size:.66rem;color:var(--sub)}
+/* フィルタ */
+.filters{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}
+.chipbtn{padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s;font-family:inherit}
+.chipbtn[aria-pressed="true"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512;font-weight:800}
+.myq{margin-top:10px}
+.myq input{width:100%;padding:12px 16px;font-size:.95rem;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);color:var(--text);outline:none;font-family:inherit;transition:border-color .18s, box-shadow .18s}
+.myq input::placeholder{color:var(--faint)}
+.myq input:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+/* ランキング */
+.list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.row{position:relative;background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;transition:transform .15s, border-color .15s}
+.row.hit{border-color:var(--violet)}
+.row.no1{background:linear-gradient(160deg,#2a142c,#1a0f24);border-color:transparent;box-shadow:0 0 28px rgba(255,61,110,.22)}
+.row.no1::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;background:linear-gradient(135deg,var(--gold1),var(--dyna),var(--violet));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.top{display:flex;align-items:center;gap:12px}
+.rank{min-width:56px;text-align:center;font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1rem;border-radius:10px;padding:6px 0;background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
+.rank.r1{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#3a2500;border-color:transparent;box-shadow:0 0 14px rgba(255,215,106,.35)}
+.rank.r10{background:linear-gradient(135deg,#dfe7ef,#aab8c6);color:#20303e;border-color:transparent}
+.rank.r100{background:linear-gradient(135deg,#d9a06b,#b06f3e);color:#2e1602;border-color:transparent}
+.namebox{flex:1;min-width:0}
+.pname{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cbadge{font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;letter-spacing:.04em}
+.cbadge.G{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;box-shadow:0 0 12px rgba(255,61,110,.35)}
+.cbadge.D{background:linear-gradient(135deg,#7fb0ff,#5f86e8);color:#0a1533}
+.cbadge.S{background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
+.moves{color:var(--sub);font-size:.78rem;margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.moves b{color:var(--text);font-weight:700}
+.legacy{font-size:.6rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 6px}
+.pts{text-align:right;min-width:88px}
+.pts b{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1.55rem;background:linear-gradient(180deg,#fff,#e9d9ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.row.no1 .pts b{background:linear-gradient(180deg,var(--gold1),#fff2c8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pts small{color:var(--faint);font-size:.64rem;display:block;letter-spacing:.14em}
+.meter{position:relative;display:block;height:8px;border-radius:99px;overflow:hidden;background:var(--bg2);margin-top:11px}
+.meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--dyna) 60%,var(--dyna2));box-shadow:0 0 10px rgba(255,61,110,.45);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.detail{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;color:var(--sub);font-size:.72rem}
+.detail b{color:var(--text);font-weight:700}
+.effchip{font-size:.64rem;border-radius:999px;padding:1px 8px;font-weight:800}
+.eff256{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;box-shadow:0 0 10px rgba(255,61,110,.4)}
+.eff16{background:var(--warn);color:#33210a}
+.eff1{background:var(--bg2);color:var(--sub);border:1px solid var(--line)}
+.efflow{background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
+.more{margin-top:16px;width:100%;padding:14px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.9rem;cursor:pointer;font-family:inherit;transition:all .15s}
+.more:hover{border-color:var(--dyna);color:var(--text)}
+.empty{margin-top:22px;color:var(--sub);text-align:center;font-size:.9rem}
+.placeholder{margin-top:30px;color:var(--sub);text-align:center;font-size:.9rem;line-height:2}
+footer{margin-top:32px;color:var(--faint);font-size:.7rem;line-height:1.8;border-top:1px solid var(--line);padding-top:16px}
+footer a{color:var(--spec)}
+:focus-visible{outline:2px solid var(--dyna);outline-offset:2px}
+@media (max-width:480px){
+  .rank{min-width:46px;font-size:.9rem}
+  .pts{min-width:72px}
+  .pts b{font-size:1.35rem}
+  h1{font-size:1.28rem}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Pok&eacute;mon GO Max Battle</div>
+  <h1>マックスバトル対策ツール <span class="badge">アタッカー</span></h1>
+  <p class="lead">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
+</header>
+
+<p class="bosslabel">敵ボスポケモン</p>
+<div class="searchbox">
+  <input id="bq" type="search" placeholder="ボスの名前を入力(例: リザードン)" autocomplete="off">
+  <div id="sug" class="sug"></div>
+</div>
+
+<div id="bosscard" class="bosscard">
+  <div class="blabel">TARGET BOSS</div>
+  <div class="bname" id="bname"></div>
+  <div class="weak" id="bweak"></div>
+</div>
+
+<div class="filters" id="filters" style="display:none">
+  <button id="fLegacy" class="chipbtn" aria-pressed="true">レガシー技を含める</button>
+</div>
+
+<div class="myq" id="myqwrap" style="display:none">
+  <input id="mq" type="search" placeholder="アタッカー名で検索(自分のポケモンの順位確認)" autocomplete="off">
+</div>
+
+<div id="list" class="list"></div>
+<button id="more" class="more" style="display:none">さらに表示</button>
+<p id="empty" class="empty" style="display:none">該当するポケモンがありません</p>
+<p id="placeholder" class="placeholder">上の入力欄からボスを選ぶとランキングが表示されます。</p>
+
+</div>
+
+<script src="data/max_data.js"></script>
+<script>
+(function(){
+  const D = MAX_DATA;
+  const TYPE_COLORS = {"ノーマル":"#9099a1","かくとう":"#ce4069","ひこう":"#8fa8dd","どく":"#ab6ac8","じめん":"#d97746","いわ":"#c7b78b","むし":"#90c12c","ゴースト":"#5269ac","はがね":"#5a8ea1","ほのお":"#ff9c54","みず":"#4d90d5","くさ":"#63bb5b","でんき":"#f3d23b","エスパー":"#f97176","こおり":"#74cec0","ドラゴン":"#0a6dc4","あく":"#5a5366","フェアリー":"#ec8fe6"};
+  const bq = document.getElementById('bq');
+  const sug = document.getElementById('sug');
+  const bosscard = document.getElementById('bosscard');
+  const bnameEl = document.getElementById('bname');
+  const bweakEl = document.getElementById('bweak');
+  const listEl = document.getElementById('list');
+  const moreBtn = document.getElementById('more');
+  const emptyEl = document.getElementById('empty');
+  const placeholderEl = document.getElementById('placeholder');
+  const filtersEl = document.getElementById('filters');
+  const fLegacy = document.getElementById('fLegacy');
+  const myqwrap = document.getElementById('myqwrap');
+  const mq = document.getElementById('mq');
+
+  let boss = null, includeLegacy = true, myQuery = '', shown = 30, ranked = [];
+
+  function chip(ti){
+    const jp = D.types_jp[ti];
+    return `<span class="tchip" style="background:${TYPE_COLORS[jp]}">${jp}</span>`;
+  }
+  function chips(tys){
+    return `<span class="tgroup">${tys.map(chip).join('')}</span>`;
+  }
+  function effVs(attType, defTypes){
+    let m = 1;
+    for(const dt of defTypes) m *= D.chart[attType][dt];
+    return m;
+  }
+  function effChip(m){
+    let cls = 'eff1', label = '等倍';
+    if(m >= 2.5){cls='eff256';label='二重弱点 ×2.56';}
+    else if(m >= 1.5){cls='eff16';label='弱点 ×1.6';}
+    else if(m < 0.99 && m > 0.5){cls='efflow';label='いまひとつ ×0.63';}
+    else if(m <= 0.5 && m > 0.3){cls='efflow';label='いまひとつ ×0.39';}
+    else if(m <= 0.3){cls='efflow';label='いまひとつ ×0.24';}
+    return `<span class="effchip ${cls}">${label}</span>`;
+  }
+
+  // ---------- ボス検索 ----------
+  const bosses = D.bosses;
+  function norm(s){
+    return (s||'').replace(/[ァ-ン]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase();
+  }
+  let selIdx = -1, sugItems = [];
+  function renderSug(){
+    const q = norm(bq.value.trim());
+    if(!q){sug.style.display='none';return;}
+    const hits = [];
+    for(const b of bosses){
+      if(norm(b.n).includes(q)) hits.push(b);
+      if(hits.length >= 12) break;
+    }
+    sugItems = hits; selIdx = -1;
+    if(!hits.length){sug.style.display='none';return;}
+    sug.innerHTML = hits.map((b,i) =>
+      `<button data-i="${i}">${b.n} ${chips(b.ty)}</button>`).join('');
+    sug.style.display = 'block';
+    sug.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => selectBoss(sugItems[+btn.dataset.i]));
+    });
+  }
+  bq.addEventListener('input', renderSug);
+  bq.addEventListener('keydown', e => {
+    if(sug.style.display !== 'block') return;
+    const btns = sug.querySelectorAll('button');
+    if(e.key === 'ArrowDown'){e.preventDefault(); selIdx = Math.min(selIdx+1, btns.length-1);}
+    else if(e.key === 'ArrowUp'){e.preventDefault(); selIdx = Math.max(selIdx-1, 0);}
+    else if(e.key === 'Enter'){e.preventDefault(); if(selIdx>=0) selectBoss(sugItems[selIdx]); else if(sugItems.length) selectBoss(sugItems[0]); return;}
+    else return;
+    btns.forEach((b,i)=>b.classList.toggle('sel', i===selIdx));
+  });
+  document.addEventListener('click', e => {
+    if(!sug.contains(e.target) && e.target !== bq) sug.style.display = 'none';
+  });
+
+  function selectBoss(b){
+    boss = b;
+    bq.value = b.n;
+    sug.style.display = 'none';
+    bnameEl.innerHTML = `${b.n} ${chips(b.ty)}`;
+    // 弱点表示
+    const weaks = [];
+    for(let t=0;t<18;t++){
+      const m = effVs(t, b.ty);
+      if(m >= 1.5) weaks.push({t, m});
+    }
+    weaks.sort((a,b)=>b.m-a.m);
+    bweakEl.innerHTML = '弱点: ' + (weaks.length
+      ? weaks.map(w => `${chip(w.t)}<span class="mult">×${w.m>=2.5?'2.56':'1.6'}</span>`).join(' ')
+      : 'なし');
+    bosscard.style.display = 'block';
+    filtersEl.style.display = 'flex';
+    myqwrap.style.display = 'block';
+    placeholderEl.style.display = 'none';
+    shown = 30;
+    compute();
+  }
+
+  // ---------- ランキング計算 ----------
+  function compute(){
+    if(!boss) return;
+    const atkMul = D.cpm50;
+    const rows = [];
+    for(const p of D.roster){
+      const power = D.power[p.cat];
+      const atkStat = (p.atk + 15) * atkMul;
+      let best = null;
+      if(p.cat === 'D'){
+        const cand = {};
+        for(const f of (p.fm||[])){
+          if(!includeLegacy && f.e) continue;
+          const stab = p.ty.includes(f.t) ? D.stab : 1;
+          const eff = effVs(f.t, boss.ty);
+          const dmg = power * atkStat * stab * eff;
+          if(!cand[f.t] || dmg > cand[f.t].dmg || (dmg === cand[f.t].dmg && !f.e && cand[f.t].fast.e)){
+            cand[f.t] = {dmg, t:f.t, stab, eff, fast:f};
+          }
+        }
+        for(const k in cand){ if(!best || cand[k].dmg > best.dmg || (cand[k].dmg === best.dmg && !cand[k].fast.e && best.fast.e)) best = cand[k]; }
+        if(!best) continue;
+        best.moveName = D.generic_max_jp[best.t];
+      }else{
+        const stab = p.ty.includes(p.ft) ? D.stab : 1;
+        const eff = effVs(p.ft, boss.ty);
+        best = {dmg: power * atkStat * stab * eff, t: p.ft, stab, eff, fast: null, moveName: p.gm};
+      }
+      rows.push({p, ...best});
+    }
+    rows.sort((a,b) => b.dmg - a.dmg);
+    const top = rows.length ? rows[0].dmg : 1;
+    ranked = rows.map((r,i) => ({...r, rank: i+1, pts: 100 * r.dmg / top}));
+    render();
+  }
+
+  function catBadge(cat){
+    if(cat === 'G') return '<span class="cbadge G">キョダイマックス</span>';
+    if(cat === 'D') return '<span class="cbadge D">ダイマックス</span>';
+    if(cat === 'S450') return '<span class="cbadge S">特別 450</span>';
+    return '<span class="cbadge S">特別 350</span>';
+  }
+
+  function render(){
+    const q = norm(myQuery.trim());
+    const view = q ? ranked.filter(r => norm(r.p.n).includes(q)) : ranked;
+    const slice = view.slice(0, shown);
+    listEl.innerHTML = slice.map(r => {
+      const rc = r.rank === 1 ? 'r1' : r.rank <= 10 ? 'r10' : r.rank <= 100 ? 'r100' : '';
+      const fastInfo = r.fast
+        ? `<span>元わざ: <b>${r.fast.jp}</b>${r.fast.e ? ' <span class="legacy">レガシー</span>' : ''}</span>`
+        : '';
+      return `<div class="row${q ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
+        <div class="top">
+          <div class="rank ${rc}">${r.rank}位</div>
+          <div class="namebox">
+            <div class="pname">${r.p.n} ${chips(r.p.ty)}</div>
+            <div class="catline">${catBadge(r.p.cat)}</div>
+            <div class="moves"><b>${r.moveName}</b> ${chip(r.t)} ${fastInfo}</div>
+          </div>
+          <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
+        </div>
+        <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
+        <div class="detail">
+          <span>攻撃種族値 <b>${r.p.atk}</b></span>
+          <span>タイプ一致 <b>${r.stab > 1 ? '○ ×1.2' : 'なし'}</b></span>
+          ${effChip(r.eff)}
+        </div>
+      </div>`;
+    }).join('');
+    emptyEl.style.display = slice.length ? 'none' : 'block';
+    moreBtn.style.display = view.length > shown ? 'block' : 'none';
+  }
+
+  fLegacy.addEventListener('click', () => {
+    includeLegacy = !includeLegacy;
+    fLegacy.setAttribute('aria-pressed', String(includeLegacy));
+    fLegacy.textContent = includeLegacy ? 'レガシー技を含める' : 'レガシー技を除外中';
+    compute();
+  });
+  mq.addEventListener('input', () => { myQuery = mq.value; shown = 30; render(); });
+  moreBtn.addEventListener('click', () => { shown += 30; render(); });
+})();
+</script>
+</body>
+</html>
