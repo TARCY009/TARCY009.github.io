@@ -6,49 +6,78 @@
 <title>ポケモンGO 火力チェッカー｜自分のポケモンのDPSを計算・比較</title>
 <style>
 :root{
-  --bg:#f2f5fa; --card:#ffffff; --ink:#1b2330; --sub:#66738a; --line:#e3e9f2;
-  --accent:#2f66e0; --accent2:#0aa3a3; --gold:#b57f00; --goldbg:#fff7e0; --goldline:#f0c24b;
-  --shadow:#7a3cc4; --special:#c2410c;
+  --ink:#20263a; --sub:#6a7391; --line:#dfe6f5; --card:#ffffff;
+  --accent:#3b6ef0; --accent2:#08b4c9; --violet:#8b5cf6;
+  --raid1:#ff5470; --raid2:#ff9750;
+  --gold:#b07a00; --goldbg:#fff6dd; --goldline:#f2c14e;
+  --shadow:#7a3cc4; --special:#d1490a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding:14px}
+body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;color:var(--ink);line-height:1.55;padding:14px;min-height:100vh;
+  background:
+    radial-gradient(900px 520px at -10% -10%, rgba(8,180,201,.20), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.18), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(255,151,80,.17), transparent 62%),
+    linear-gradient(165deg,#e9f1ff 0%,#efe9ff 48%,#fff0e4 100%);
+  background-attachment:fixed}
 .wrap{max-width:860px;margin:0 auto}
-header{margin:6px 0 16px}
-header h1{font-size:1.3rem;letter-spacing:.02em}
-header h1 span{color:var(--accent)}
-header p{font-size:.8rem;color:var(--sub);margin-top:2px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
-.step{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.step b{background:var(--accent);color:#fff;border-radius:8px;padding:2px 9px;font-size:.75rem;letter-spacing:.05em}
+header{margin:6px 0 18px}
+header h1{font-size:1.42rem;font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:.4em}
+header h1::before{content:'';width:1em;height:1em;border-radius:50%;flex-shrink:0;
+  background:
+    radial-gradient(circle at center,#fff 0 17%,#20263a 17% 30%,transparent 30%),
+    linear-gradient(180deg,#ff5470 0 44%,#20263a 44% 56%,#ffffff 56% 100%);
+  box-shadow:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55)}
+header h1 span{background:linear-gradient(92deg,var(--accent),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{font-size:.8rem;color:var(--sub);margin-top:3px}
+.card{position:relative;background:rgba(255,255,255,.92);border:1.5px solid var(--cardline,var(--line));border-radius:16px;padding:20px 16px 16px;margin-bottom:16px;overflow:hidden;
+  box-shadow:0 14px 30px -16px var(--cardglow,rgba(59,110,240,.35)), 0 1px 0 rgba(255,255,255,.8) inset}
+.card::before{content:'';position:absolute;left:0;top:0;right:0;height:4px;background:var(--cardbar,linear-gradient(90deg,var(--accent),var(--accent2)))}
+.c-boss{--cardline:#ffd6dc;--cardglow:rgba(255,84,112,.32);--cardbar:linear-gradient(90deg,#ff5470,#ff9750);--focusc:#ff5470;--focusring:rgba(255,84,112,.16)}
+.c-my  {--cardline:#c4e6ee;--cardglow:rgba(8,180,201,.30);--cardbar:linear-gradient(90deg,#08b4c9,#3b6ef0);--focusc:#08a6c9;--focusring:rgba(8,180,201,.16)}
+.c-rank{--cardline:#ddd4fb;--cardglow:rgba(139,92,246,.32);--cardbar:linear-gradient(90deg,#8b5cf6,#3b6ef0);--focusc:#8b5cf6;--focusring:rgba(139,92,246,.16)}
+.step{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.step b{background:var(--cardbar,var(--accent));color:#fff;border-radius:8px;padding:2px 10px;font-size:.75rem;letter-spacing:.06em;box-shadow:0 2px 6px -2px var(--cardglow,rgba(59,110,240,.5))}
 .step h2{font-size:1rem}
-input[type=text],input[type=number],select{font:inherit;border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;background:#fbfcfe}
-input:focus,select:focus{outline:2px solid #bcd0f7;border-color:var(--accent)}
+input[type=text],input[type=number],select{font:inherit;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;width:100%;background:#fbfcff;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));box-shadow:0 0 0 3px var(--focusring,rgba(59,110,240,.16))}
 .sugg{position:relative}
-.sugg-list{position:absolute;z-index:30;left:0;right:0;top:100%;background:#fff;border:1px solid var(--line);border-radius:10px;max-height:240px;overflow:auto;box-shadow:0 8px 24px rgba(20,40,90,.12);display:none}
+.sugg-list{position:absolute;z-index:30;left:0;right:0;top:100%;background:#fff;border:1.5px solid var(--cardline,var(--line));border-radius:12px;max-height:240px;overflow:auto;box-shadow:0 14px 32px rgba(30,40,90,.16);display:none}
 .sugg-list div{padding:8px 12px;cursor:pointer;font-size:.9rem;display:flex;justify-content:space-between;gap:8px}
-.sugg-list div:hover{background:#eef3fd}
+.sugg-list div:hover{background:linear-gradient(90deg,#eef3ff,#f6f1ff)}
 .sugg-list small{color:var(--sub)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{font-size:.72rem;color:#fff;border-radius:99px;padding:2px 10px;font-weight:600}
-.bossinfo{margin-top:10px;font-size:.85rem;color:var(--sub)}
+.chip{font-size:.72rem;color:#fff;border-radius:99px;padding:2px 10px;font-weight:600;box-shadow:0 2px 5px -2px rgba(30,40,90,.4)}
+.bossinfo{margin-top:12px;font-size:.85rem;color:var(--sub);font-weight:600}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
 label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-weight:600}
 .toggle-row{display:flex;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap;font-size:.85rem}
 .toggle-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
-.lv-out{margin-top:10px;font-size:.9rem;background:#eef6ff;border:1px solid #cfe0f7;border-radius:9px;padding:8px 12px;display:none}
-.lv-out.err{background:#fdf0f0;border-color:#efc7c7;color:#a33}
-button.main{font:inherit;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 22px;cursor:pointer;margin-top:14px}
-button.main:disabled{background:#b9c6dd;cursor:not-allowed}
-button.main:hover:not(:disabled){background:#2452bd}
+.toggle-row input{accent-color:var(--focusc,var(--accent))}
+.lv-out{margin-top:10px;font-size:.9rem;background:linear-gradient(90deg,#eaf5ff,#f1f7ff);border:1.5px solid #c9def7;border-radius:10px;padding:8px 12px;display:none}
+.lv-out.err{background:linear-gradient(90deg,#fdeff0,#fdf4f0);border-color:#efc2c7;color:#a33}
+button.main{font:inherit;font-weight:700;background:linear-gradient(92deg,var(--focusc,var(--accent)),var(--accent));color:#fff;border:none;border-radius:11px;padding:10px 24px;cursor:pointer;margin-top:14px;
+  box-shadow:0 8px 18px -8px var(--cardglow,rgba(59,110,240,.6));transition:transform .15s,box-shadow .15s,filter .15s}
+button.main:disabled{background:#b9c6dd;box-shadow:none;cursor:not-allowed}
+button.main:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 11px 22px -8px var(--cardglow,rgba(59,110,240,.7))}
+button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
 .modes{display:flex;gap:6px;margin:2px 0 12px;flex-wrap:wrap}
-.modes button{font:inherit;font-size:.78rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 13px;cursor:pointer;color:var(--sub)}
-.modes button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
-.mine-sum{background:var(--goldbg);border:1px solid var(--goldline);border-radius:10px;padding:9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.modes button{font:inherit;font-size:.78rem;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:5px 14px;cursor:pointer;color:var(--sub);transition:border-color .15s,color .15s}
+.modes button:hover{border-color:#c9c0f2;color:var(--ink)}
+.modes button.on{background:linear-gradient(92deg,var(--violet),var(--accent));border-color:transparent;color:#fff;font-weight:700;box-shadow:0 5px 12px -5px rgba(139,92,246,.55)}
+.mine-sum{background:linear-gradient(90deg,var(--goldbg),#fffcf1);border:1.5px solid var(--goldline);border-left:5px solid var(--goldline);border-radius:10px;padding:9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .mine-sum b{color:var(--gold)}
-.rank-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line)}
-.rank-row.mine{background:var(--goldbg);border:1px solid var(--goldline);border-radius:10px;margin:3px 0}
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid #eceffa}
+#rankList .rank-row:nth-child(-n+3):not(.mine){border-radius:12px;margin:3px 0}
+#rankList .rank-row:nth-child(1):not(.mine){background:linear-gradient(90deg,#fff6d8,#fffdf3);border:1.5px solid #f2c14e}
+#rankList .rank-row:nth-child(1):not(.mine) .rk{color:#b07a00}
+#rankList .rank-row:nth-child(2):not(.mine){background:linear-gradient(90deg,#eef2f9,#fafcff);border:1.5px solid #c6d2e6}
+#rankList .rank-row:nth-child(2):not(.mine) .rk{color:#64748f}
+#rankList .rank-row:nth-child(3):not(.mine){background:linear-gradient(90deg,#fdeede,#fffaf4)  ;border:1.5px solid #e0b088}
+#rankList .rank-row:nth-child(3):not(.mine) .rk{color:#a5652a}
+.rank-row.mine{background:linear-gradient(90deg,var(--goldbg),#fffcf1);border:1.5px solid var(--goldline);border-radius:12px;margin:3px 0}
 .rk{width:38px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
 .rank-row.mine .rk{color:var(--gold)}
 .rmain{flex:1;min-width:0}
@@ -57,19 +86,19 @@ button.main:hover:not(:disabled){background:#2452bd}
 .rname small{color:var(--sub);font-weight:400;margin-left:6px;font-size:.72rem}
 .rmoves{font-size:.74rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rmoves .sp{color:var(--special)}
-.bar{height:5px;background:#edf1f7;border-radius:99px;margin-top:4px;overflow:hidden}
-.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:99px}
-.rank-row.mine .bar i{background:linear-gradient(90deg,#f0b429,#dd8a00)}
+.bar{height:6px;background:#e8ecf8;border-radius:99px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent) 55%,var(--violet));border-radius:99px}
+.rank-row.mine .bar i,#rankList .rank-row:nth-child(1):not(.mine) .bar i{background:linear-gradient(90deg,#f0b429,#dd8a00)}
 .rdps{width:74px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
 .rdps small{display:block;font-weight:400;font-size:.62rem;color:var(--sub)}
-.avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),0 1px 3px rgba(20,40,90,.25)}
+.avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),0 2px 5px rgba(20,40,90,.28)}
 .avatar svg{width:20px;height:20px;fill:#fff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
 .avatar.sm{width:26px;height:26px}
 .avatar.sm svg{width:14px;height:14px}
 .avatar.lg{width:52px;height:52px}
 .avatar.lg svg{width:28px;height:28px}
 .chip svg{width:12px;height:12px;fill:#fff;vertical-align:-1px;margin-right:3px}
-.wchip{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:700;color:#fff;border-radius:99px;padding:3px 10px;margin:2px 3px 2px 0}
+.wchip{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:700;color:#fff;border-radius:99px;padding:3px 10px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(30,40,90,.45)}
 .wchip svg{width:12px;height:12px;fill:#fff}
 .wchip b{font-weight:800;opacity:.95}
 .bossline{display:flex;align-items:center;gap:12px;margin-top:12px}
@@ -79,10 +108,12 @@ button.main:hover:not(:disabled){background:#2452bd}
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .sugg-list .srow{display:flex;align-items:center;gap:8px}
 .del{border:none;background:none;color:#c33;cursor:pointer;font-size:1rem;flex-shrink:0;padding:4px}
-.more{width:100%;margin-top:10px;font:inherit;font-size:.82rem;border:1px dashed var(--line);background:#fbfcfe;border-radius:10px;padding:9px;cursor:pointer;color:var(--sub)}
+.more{width:100%;margin-top:10px;font:inherit;font-size:.82rem;border:1.5px dashed #cfc6f0;background:#fbfaff;border-radius:11px;padding:9px;cursor:pointer;color:var(--sub);transition:border-color .15s,background .15s}
+.more:hover{border-color:var(--violet);background:#f6f2ff;color:var(--ink)}
 .note{font-size:.72rem;color:var(--sub);margin-top:10px}
 .empty{color:var(--sub);font-size:.85rem;text-align:center;padding:18px 0}
 footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
 </style>
 </head>
 <body>
@@ -92,7 +123,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <p>ボスを設定 → 火力ランキング自動生成。自分のポケモンはCP＋個体値で今の火力がわかる。特別技・レガシー技も全対応。</p>
 </header>
 
-<div class="card">
+<div class="card c-boss">
   <div class="step"><b>STEP 1</b><h2>相手（レイドボス）を設定</h2></div>
   <div class="sugg">
     <input type="text" id="bossInput" placeholder="ボスのポケモン名で検索（例：メガミュウツーX）" autocomplete="off">
@@ -101,7 +132,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div id="bossView"></div>
 </div>
 
-<div class="card">
+<div class="card c-my">
   <div class="step"><b>STEP 2</b><h2>自分のポケモンを追加（任意）</h2></div>
   <div class="sugg">
     <input type="text" id="myInput" placeholder="ポケモン名で検索（例：ネクロズマ）" autocomplete="off">
@@ -129,7 +160,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <p class="note">「(特)」は特別技・レガシー技（イベント限定やすごいわざマシンスペシャル等で習得）。習得済みならそのまま選択できます。</p>
 </div>
 
-<div class="card">
+<div class="card c-rank">
   <div class="step"><b>RANK</b><h2>火力ランキング</h2></div>
   <div class="modes">
     <button data-m="0" class="on">通常のみ</button>
