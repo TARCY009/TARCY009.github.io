@@ -390,6 +390,7 @@ function buildRanking(){
   for(const k of KEYS){
     const p=D.pokemon[k];
     if(p.mega && mode<2) continue;
+    if(!p.mega && !p.fe) continue; // 進化前はランキングに表示しない(ボス選択・自分の登録では選択可)
     const base=bestCombo(p,bt,false);
     if(base) rows.push({k,p,shadow:false,...base});
     if(p.shadow && mode>=1){

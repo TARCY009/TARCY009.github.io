@@ -38,6 +38,38 @@ SUPP_EC = {  # ゲージ技の特別枠へ追加
 SUPP_EQ = {  # 通常技の特別枠へ追加
     'MEWTWO': ['COUNTER_FAST'],                       # カウンター(GOフェス2026)
 }
+# 2026-06シーズン「新たな歩み」の新規習得技(通常入手枠)。GM未反映のため手動補完。
+# 出典: https://pokemongo.com/ja/news/go-battle-league-forever-forward
+SUPP_C = {  # ゲージ技(通常枠)へ追加
+    'PIDGEOT':        ['TWISTER'],          # ピジョット: たつまき
+    'MANTINE':        ['TWISTER'],          # マンタイン: たつまき
+    'KECLEON':        ['THUNDER_PUNCH', 'DYNAMIC_PUNCH'],  # カクレオン: かみなりパンチ・ばくれつパンチ
+    'LOPUNNY':        ['THUNDER_PUNCH', 'SHADOW_BALL'],    # ミミロップ: かみなりパンチ・シャドーボール
+    'MELMETAL':       ['DYNAMIC_PUNCH'],    # メルメタル: ばくれつパンチ
+    'LEDIAN':         ['ACROBATICS'],       # レディアン: アクロバット
+    'SEISMITOAD':     ['ICY_WIND'],         # ガマゲロゲ: こごえるかぜ
+    'SLIGGOO':        ['BODY_SLAM'],        # ヌメイル: のしかかり
+    'STARMIE':        ['AQUA_JET'],         # スターミー: アクアジェット
+    'KABUTOPS':       ['AQUA_JET'],         # カブトプス: アクアジェット
+    'SWANNA':         ['AQUA_JET'],         # スワンナ: アクアジェット
+    'KINGDRA':        ['SURF'],             # キングドラ: なみのり
+    'XATU':           ['SHADOW_BALL'],      # ネイティオ: シャドーボール
+    'QWILFISH':       ['SHADOW_BALL'],      # ハリーセン: シャドーボール
+    'SYLVEON':        ['SHADOW_BALL'],      # ニンフィア: シャドーボール
+    'RHYPERIOR':      ['DRILL_RUN'],        # ドサイドン: ドリルライナー
+}
+SUPP_Q = {  # ノーマルアタック(通常枠)へ追加
+    'SLIGGOO':        ['DRAGON_BREATH_FAST'],  # ヌメイル: りゅうのいぶき
+    'AROMATISSE':     ['FAIRY_WIND_FAST'],     # フレフワン: ようせいのかぜ
+    'SYLVEON':        ['FAIRY_WIND_FAST'],     # ニンフィア: ようせいのかぜ
+    'CONKELDURR':     ['FORCE_PALM_FAST'],     # ローブシン: はっけい
+    'ZAPDOS_GALARIAN':['LOW_KICK_FAST'],       # サンダー(ガラル): けたぐり
+    'QUAQUAVAL':      ['LOW_KICK_FAST'],       # ウェーニバル: けたぐり
+    'LUMINEON':       ['GUST_FAST'],           # ネオラント: かぜおこし
+    'SWANNA':         ['GUST_FAST'],           # スワンナ: かぜおこし
+    'GIGALITH':       ['LOCK_ON_FAST'],        # ギガイアス: ロックオン
+    'LEDIAN':         ['ROLLOUT_FAST'],        # レディアン: ころがる
+}
 # 種族値・技構成がGame Master上で同一でも、独立エントリとして収録するフォルム
 # (フォルムチェンジ専用の特別技持ち等。統合dedupの対象外にする)
 FORCE_SPLIT = {'KELDEO_RESOLUTE'}
@@ -170,9 +202,11 @@ def main():
         if sig in groups and key not in FORCE_SPLIT: groups[sig]['dupes'].append(key); continue
         name, flag = display_name(pid, form)
         if flag=='RAW': print('警告: 未翻訳フォルム →', key, name, '(FORM_JA/OVERRIDEに追記してください)')
+        # 最終進化判定: evolutionBranchに通常進化が残っていれば進化前(メガ等の一時進化は無視)
+        fe = 0 if any('temporaryEvolution' not in b for b in (ps.get('evolutionBranch') or [])) else 1
         entry = {'n':name,'pid':pid,'a':st['baseAttack'],'df':st['baseDefense'],'h':st['baseStamina'],
                  'ty':[t.replace('POKEMON_TYPE_','') for t in [ps.get('type'),ps.get('type2')] if t],
-                 'q':q,'c':c,'eq':eq,'ec':ec,'dupes':[key],'tev':ps.get('tempEvoOverrides') or []}
+                 'q':q,'c':c,'eq':eq,'ec':ec,'dupes':[key],'tev':ps.get('tempEvoOverrides') or [],'fe':fe}
         if sig not in groups: groups[sig]=entry  # FORCE_SPLIT分は統合グループを乗っ取らない
         pokes[key]=entry; order.append(key)
 
@@ -198,7 +232,7 @@ def main():
     final = {}
     for k in order:
         p = pokes[k]
-        final[k] = {kk:p[kk] for kk in ['n','a','df','h','ty','q','c','eq','ec','shadow']}
+        final[k] = {kk:p[kk] for kk in ['n','a','df','h','ty','q','c','eq','ec','shadow','fe']}
         for ov in p['tev']:
             stt = ov.get('stats')
             if not stt: continue
@@ -209,7 +243,7 @@ def main():
             if mkey in final: continue
             final[mkey] = {'n':tag+p['n']+xy,'a':stt['baseAttack'],'df':stt['baseDefense'],'h':stt['baseStamina'],
                            'ty':[t.replace('POKEMON_TYPE_','') for t in [ov.get('typeOverride1'),ov.get('typeOverride2')] if t],
-                           'q':p['q'],'c':p['c'],'eq':p['eq'],'ec':p['ec'],'shadow':False,'mega':True}
+                           'q':p['q'],'c':p['c'],'eq':p['eq'],'ec':p['ec'],'shadow':False,'mega':True,'fe':1}
 
     # ===== 未実装ポケモンの除外（PvPokeのreleasedフラグで判定） =====
     # 照合できたうえで released=False のものだけ除外。照合不能は安全側で残す。
@@ -251,6 +285,18 @@ def main():
         if k in final:
             for m in ms:
                 if m not in final[k]['eq'] and m not in final[k]['q']: final[k]['eq'].append(m)
+    for k,ms in SUPP_C.items():
+        if k in final:
+            for m in ms:
+                if m not in final[k]['c'] and m not in final[k]['ec']: final[k]['c'].append(m)
+        else:
+            print('警告: SUPP_C 対象が見つかりません →', k)
+    for k,ms in SUPP_Q.items():
+        if k in final:
+            for m in ms:
+                if m not in final[k]['q'] and m not in final[k]['eq']: final[k]['q'].append(m)
+        else:
+            print('警告: SUPP_Q 対象が見つかりません →', k)
     for k,fix in FORM_MOVE_FIX.items():
         if k in final:
             for m in fix.get('remove', []):
