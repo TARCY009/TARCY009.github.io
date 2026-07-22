@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>マックスバトル対策ツール(アタッカー)</title>
+<title>マックスバトル対策ツール</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
-<meta name="description" content="敵ボスを入力すると、ダイマックスフェイズの火力でおすすめアタッカーをランキング表示。キョダイマックス(威力450)とダイマックス(威力350)の差・タイプ相性・攻撃種族値を反映。PL50・攻撃個体値15・マックスわざLv3想定。">
+<meta name="description" content="ボスポケモンを入力すると、おすすめのアタッカーとタンクをランキング表示。アタッカーはダイマックスフェイズ火力、タンクはボスの全スペシャルアタックへの耐久で評価。交代受けスペシャリスト検索にも対応。PL50・個体値15想定。">
 <style>
 :root{
   --bg:#0b0912; --bg2:#131022;
@@ -56,6 +56,9 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .bosscard .blabel{font-family:"Oswald",sans-serif;font-size:.62rem;letter-spacing:.3em;color:var(--dyna)}
 .bosscard .bname{font-weight:900;font-size:1.25rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
 .bosscard .weak{margin-top:10px;font-size:.76rem;color:var(--sub);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bosscard .bmoves{margin-top:10px;font-size:.76rem;color:var(--sub);display:flex;gap:6px;flex-wrap:wrap;align-items:center;position:relative;z-index:1}
+.bosscard .bmv{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--text);font-size:.74rem;font-weight:600}
+.bosscard .bmv .mvp{color:var(--faint);font-size:.66rem}
 .tchip{font-size:.66rem;padding:2px 9px;border-radius:999px;color:#fff;font-weight:700;white-space:nowrap;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25)}
 .tgroup{display:inline-flex;gap:4px;white-space:nowrap;flex-shrink:0}
 .badgetypes{display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex-shrink:0}
@@ -102,6 +105,20 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .eff16{background:var(--warn);color:#33210a}
 .eff1{background:var(--bg2);color:var(--sub);border:1px solid var(--line)}
 .efflow{background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
+
+.tabs{display:flex;gap:8px;margin-top:16px}
+.tab{flex:1;padding:12px;border-radius:var(--radius);border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s}
+.tab[aria-selected="true"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512;box-shadow:0 0 18px rgba(255,61,110,.28)}
+.tab.tank[aria-selected="true"]{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d;box-shadow:0 0 18px rgba(74,214,184,.28)}
+.swapmoves{display:none;flex-wrap:wrap;gap:8px;margin-top:12px}
+.swapmoves .mvbtn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--text);font-size:.82rem;cursor:pointer;font-family:inherit}
+.swapmoves .mvbtn[aria-pressed="true"]{border-color:#4ad6b8;background:rgba(74,214,184,.14);box-shadow:0 0 12px rgba(74,214,184,.2)}
+.swapmoves .mvp{color:var(--faint);font-size:.7rem}
+.halfchip{font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
+.nohalf{font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;border:1px solid var(--warn);color:var(--warn)}
+.wallb{font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
+.effres{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
+.effres2{background:#2b6b5c;color:#bff2e4;border:1px solid #4ad6b8}
 .more{margin-top:16px;width:100%;padding:14px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.9rem;cursor:pointer;font-family:inherit;transition:all .15s}
 .more:hover{border-color:var(--dyna);color:var(--text)}
 .empty{margin-top:22px;color:var(--sub);text-align:center;font-size:.9rem}
@@ -124,7 +141,7 @@ footer a{color:var(--spec)}
 <div class="wrap">
 <header>
   <div class="eyebrow">Pok&eacute;mon GO Max Battle</div>
-  <h1>マックスバトル対策ツール <span class="badge">アタッカー</span></h1>
+  <h1>マックスバトル対策ツール <span class="badge">アタッカー / タンク</span></h1>
   <p class="lead">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
 </header>
 
@@ -138,11 +155,20 @@ footer a{color:var(--spec)}
   <div class="blabel">TARGET BOSS</div>
   <div class="bname" id="bname"></div>
   <div class="weak" id="bweak"></div>
+  <div class="bmoves" id="bmoves"></div>
+</div>
+
+<div id="tabs" class="tabs">
+  <button id="tabAtk" class="tab" aria-selected="true">アタッカー</button>
+  <button id="tabTank" class="tab tank" aria-selected="false">タンク</button>
 </div>
 
 <div class="filters" id="filters" style="display:none">
   <button id="fLegacy" class="chipbtn" aria-pressed="true">レガシー技を含める</button>
+  <button id="fHalf" class="chipbtn" aria-pressed="true" style="display:none">0.5秒技持ちのみ</button>
+  <button id="fSwap" class="chipbtn" aria-pressed="false" style="display:none">交代受けモード</button>
 </div>
+<div id="swapMoves" class="swapmoves"></div>
 
 <div class="myq" id="myqwrap" style="display:none">
   <input id="mq" type="search" placeholder="アタッカー名で検索(自分のポケモンの順位確認)" autocomplete="off">
@@ -151,7 +177,7 @@ footer a{color:var(--spec)}
 <div id="list" class="list"></div>
 <button id="more" class="more" style="display:none">さらに表示</button>
 <p id="empty" class="empty" style="display:none">該当するポケモンがありません</p>
-<p id="placeholder" class="placeholder">上の入力欄からボスを選ぶとランキングが表示されます。</p>
+<p id="placeholder" class="placeholder">上の入力欄からボスを選ぶと、アタッカー/タンクのランキングが表示されます。</p>
 
 </div>
 
@@ -160,36 +186,30 @@ footer a{color:var(--spec)}
 (function(){
   const D = MAX_DATA;
   const TYPE_COLORS = {"ノーマル":"#9099a1","かくとう":"#ce4069","ひこう":"#8fa8dd","どく":"#ab6ac8","じめん":"#d97746","いわ":"#c7b78b","むし":"#90c12c","ゴースト":"#5269ac","はがね":"#5a8ea1","ほのお":"#ff9c54","みず":"#4d90d5","くさ":"#63bb5b","でんき":"#f3d23b","エスパー":"#f97176","こおり":"#74cec0","ドラゴン":"#0a6dc4","あく":"#5a5366","フェアリー":"#ec8fe6"};
-  const bq = document.getElementById('bq');
-  const sug = document.getElementById('sug');
-  const bosscard = document.getElementById('bosscard');
-  const bnameEl = document.getElementById('bname');
-  const bweakEl = document.getElementById('bweak');
-  const listEl = document.getElementById('list');
-  const moreBtn = document.getElementById('more');
-  const emptyEl = document.getElementById('empty');
-  const placeholderEl = document.getElementById('placeholder');
-  const filtersEl = document.getElementById('filters');
-  const fLegacy = document.getElementById('fLegacy');
-  const myqwrap = document.getElementById('myqwrap');
-  const mq = document.getElementById('mq');
+  const $ = id => document.getElementById(id);
+  const bq=$('bq'), sug=$('sug'), bosscard=$('bosscard'), bnameEl=$('bname'), bweakEl=$('bweak');
+  const listEl=$('list'), moreBtn=$('more'), emptyEl=$('empty'), placeholderEl=$('placeholder');
+  const filtersEl=$('filters'), fLegacy=$('fLegacy'), fHalf=$('fHalf'), fSwap=$('fSwap');
+  const tabsEl=$('tabs'), tabAtk=$('tabAtk'), tabTank=$('tabTank');
+  const swapMovesEl=$('swapMoves'), myqwrap=$('myqwrap'), mq=$('mq');
+  const cpm = D.cpm50;
 
-  let boss = null, includeLegacy = true, myQuery = '', shown = 30, ranked = [];
+  let boss=null, mode='atk', swapOn=false, halfOnly=true, includeLegacy=true;
+  let myQuery='', shown=30, ranked=[], swapSel=0;
 
+  // ---------- 共通ヘルパー ----------
   function chip(ti){
     const jp = D.types_jp[ti];
     return `<span class="tchip" style="background:${TYPE_COLORS[jp]}">${jp}</span>`;
   }
-  function chips(tys){
-    return `<span class="tgroup">${tys.map(chip).join('')}</span>`;
-  }
+  function chips(tys){ return `<span class="tgroup">${tys.map(chip).join('')}</span>`; }
   function effVs(attType, defTypes){
     let m = 1;
     for(const dt of defTypes) m *= D.chart[attType][dt];
     return m;
   }
-  function effChip(m){
-    let cls = 'eff1', label = '等倍';
+  function effChip(m){ // 攻撃側視点
+    let cls='eff1', label='等倍';
     if(m >= 2.5){cls='eff256';label='二重弱点 ×2.56';}
     else if(m >= 1.5){cls='eff16';label='弱点 ×1.6';}
     else if(m < 0.99 && m > 0.5){cls='efflow';label='いまひとつ ×0.63';}
@@ -197,12 +217,43 @@ footer a{color:var(--spec)}
     else if(m <= 0.3){cls='efflow';label='いまひとつ ×0.24';}
     return `<span class="effchip ${cls}">${label}</span>`;
   }
-
-  // ---------- ボス検索 ----------
-  const bosses = D.bosses;
+  function defChip(m){ // 防御側視点(被ダメ倍率)
+    if(m <= 0.3)  return '<span class="effchip effres">3重耐性 ×0.24</span>';
+    if(m <= 0.5)  return '<span class="effchip effres">2重耐性 ×0.39</span>';
+    if(m < 0.99)  return '<span class="effchip effres2">耐性 ×0.63</span>';
+    if(m >= 2.5)  return '<span class="effchip eff256">二重弱点 ×2.56</span>';
+    if(m >= 1.5)  return '<span class="effchip eff16">弱点 ×1.6</span>';
+    return '<span class="effchip eff1">等倍</span>';
+  }
   function norm(s){
     return (s||'').replace(/[ァ-ン]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase();
   }
+
+  // ---------- タンク用ロースター(種単位で重複統合) ----------
+  const tanks = [];
+  {
+    const seen = new Set();
+    for(const p of D.roster){
+      if(seen.has(p.n)) continue;
+      seen.add(p.n);
+      tanks.push(p);
+    }
+  }
+  function bulkOf(p){
+    // 耐久指数は種族値ベース: HP種族値 × 防御種族値 (例: ラティアス 190×246=46,740)
+    // ザマゼンタの開始時ウォールは実HP60相当のため、種族値換算(60÷PL50係数≒71.4)で上乗せ
+    const hp = p.st + (p.wall ? (D.wall_hp || 60) / cpm : 0);
+    return hp * p.df;
+  }
+  function halfMoveOf(p){
+    const cands = (p.fm || []).filter(f => f.q);
+    if(!cands.length) return null;
+    cands.sort((a,b) => (a.e||0) - (b.e||0)); // 通常入手技を優先表示
+    return cands[0];
+  }
+
+  // ---------- ボス検索 ----------
+  const bosses = D.bosses;
   let selIdx = -1, sugItems = [];
   function renderSug(){
     const q = norm(bq.value.trim());
@@ -240,7 +291,6 @@ footer a{color:var(--spec)}
     bq.value = b.n;
     sug.style.display = 'none';
     bnameEl.innerHTML = `${b.n} ${chips(b.ty)}`;
-    // 弱点表示
     const weaks = [];
     for(let t=0;t<18;t++){
       const m = effVs(t, b.ty);
@@ -250,50 +300,200 @@ footer a{color:var(--spec)}
     bweakEl.innerHTML = '弱点: ' + (weaks.length
       ? weaks.map(w => `${chip(w.t)}<span class="mult">×${w.m>=2.5?'2.56':'1.6'}</span>`).join(' ')
       : 'なし');
+    document.getElementById('bmoves').innerHTML = '使ってくる技: ' + (b.cm.length
+      ? b.cm.map(mi => {
+          const m = D.cmoves[mi];
+          return `<span class="bmv">${m.jp} ${chip(m.t)} <span class="mvp">威力${Math.round(m.p)}</span></span>`;
+        }).join(' ')
+      : 'データなし');
     bosscard.style.display = 'block';
     filtersEl.style.display = 'flex';
     myqwrap.style.display = 'block';
     placeholderEl.style.display = 'none';
     shown = 30;
+    swapSel = 0;
+    buildSwapChips();
+    syncControls();
     compute();
   }
 
-  // ---------- ランキング計算 ----------
+  // ---------- モード制御 ----------
+  function setMode(m){
+    mode = m;
+    tabAtk.setAttribute('aria-selected', String(m==='atk'));
+    tabTank.setAttribute('aria-selected', String(m==='tank'));
+    shown = 30;
+    syncControls();
+    compute();
+  }
+  function syncControls(){
+    fLegacy.style.display = (mode==='atk') ? '' : 'none';
+    fHalf.style.display   = (mode==='tank' && !swapOn) ? '' : 'none';
+    fSwap.style.display   = (mode==='tank') ? '' : 'none';
+    swapMovesEl.style.display = (mode==='tank' && swapOn) ? 'flex' : 'none';
+  }
+  tabAtk.addEventListener('click', () => setMode('atk'));
+  tabTank.addEventListener('click', () => setMode('tank'));
+
+  fLegacy.addEventListener('click', () => {
+    includeLegacy = !includeLegacy;
+    fLegacy.setAttribute('aria-pressed', String(includeLegacy));
+    fLegacy.textContent = includeLegacy ? 'レガシー技を含める' : 'レガシー技を除外中';
+    compute();
+  });
+  fHalf.addEventListener('click', () => {
+    halfOnly = !halfOnly;
+    fHalf.setAttribute('aria-pressed', String(halfOnly));
+    fHalf.textContent = halfOnly ? '0.5秒技持ちのみ' : '全ポケモン表示中';
+    shown = 30;
+    compute();
+  });
+  fSwap.addEventListener('click', () => {
+    swapOn = !swapOn;
+    fSwap.setAttribute('aria-pressed', String(swapOn));
+    shown = 30;
+    syncControls();
+    compute();
+  });
+
+  function buildSwapChips(){
+    if(!boss){ swapMovesEl.innerHTML=''; return; }
+    swapMovesEl.innerHTML = boss.cm.map((mi, i) => {
+      const m = D.cmoves[mi];
+      return `<button class="mvbtn" data-i="${i}" aria-pressed="${i===swapSel}">
+        ${m.jp} ${chip(m.t)} <span class="mvp">威力${Math.round(m.p)}</span>
+      </button>`;
+    }).join('');
+    swapMovesEl.querySelectorAll('.mvbtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        swapSel = +btn.dataset.i;
+        swapMovesEl.querySelectorAll('.mvbtn').forEach((b,i)=>b.setAttribute('aria-pressed', String(i===swapSel)));
+        shown = 30;
+        compute();
+      });
+    });
+  }
+
+  // ---------- 計算 ----------
   function compute(){
     if(!boss) return;
-    const atkMul = D.cpm50;
+    if(mode === 'atk') computeAtk();
+    else if(swapOn) computeSwap();
+    else computeTank();
+  }
+
+  function computeAtk(){
     const rows = [];
     for(const p of D.roster){
       const power = D.power[p.cat];
-      const atkStat = (p.atk + 15) * atkMul;
+      const atkStat = (p.atk + 15) * cpm;
       let best = null;
       if(p.cat === 'D'){
-        const cand = {};
-        for(const f of (p.fm||[])){
-          if(!includeLegacy && f.e) continue;
+        // ダイマックス勢: ノーマルアタックのタイプ=マックスわざのタイプになるため、
+        // ①ボスの弱点を突けるタイプの技が最優先 ②その中に0.5秒技があれば優先
+        // ③ノーマルアタック自体のタイプ補正込み与ダメ ④非レガシー の順で選出
+        // (マックスわざの威力は固定のため、わざ与ダメによる比較は行わない)
+        const pool = (p.fm||[]).filter(f => includeLegacy || !f.e);
+        if(!pool.length) continue;
+        const scored = pool.map(f => {
           const stab = p.ty.includes(f.t) ? D.stab : 1;
           const eff = effVs(f.t, boss.ty);
-          const dmg = power * atkStat * stab * eff;
-          if(!cand[f.t] || dmg > cand[f.t].dmg || (dmg === cand[f.t].dmg && !f.e && cand[f.t].fast.e)){
-            cand[f.t] = {dmg, t:f.t, stab, eff, fast:f};
-          }
-        }
-        for(const k in cand){ if(!best || cand[k].dmg > best.dmg || (cand[k].dmg === best.dmg && !cand[k].fast.e && best.fast.e)) best = cand[k]; }
-        if(!best) continue;
-        best.moveName = D.generic_max_jp[best.t];
+          return {f, stab, eff,
+                  dmg: power * atkStat * stab * eff,
+                  fdmg: (f.p||0) * stab * eff,
+                  weak: eff >= 1.5 ? 1 : 0,
+                  half: f.q ? 1 : 0};
+        });
+        scored.sort((a,b) => b.weak - a.weak || b.half - a.half ||
+                             b.fdmg - a.fdmg ||
+                             (a.f.e||0) - (b.f.e||0));
+        const s0 = scored[0];
+        best = {dmg: s0.dmg, t: s0.f.t, stab: s0.stab, eff: s0.eff,
+                fast: s0.f, moveName: D.generic_max_jp[s0.f.t]};
       }else{
+        // キョダイマックス・特別枠: マックスわざタイプ固定のため、
+        // ノーマルアタックは0.5秒技を必ず最優先。なければタイプ補正込みで
+        // 最もダメージが出る技(例: ムゲンダイナはボスに合わせてドラゴンテールorどくづき)
         const stab = p.ty.includes(p.ft) ? D.stab : 1;
         const eff = effVs(p.ft, boss.ty);
-        best = {dmg: power * atkStat * stab * eff, t: p.ft, stab, eff, fast: null, moveName: p.gm};
+        const pool = (p.fm||[]).map(f => {
+          const st = p.ty.includes(f.t) ? D.stab : 1;
+          return {f, fdmg: (f.p||0) * st * effVs(f.t, boss.ty), half: f.q ? 1 : 0};
+        });
+        pool.sort((a,b) => b.half - a.half || b.fdmg - a.fdmg || (a.f.e||0) - (b.f.e||0));
+        best = {dmg: power * atkStat * stab * eff, t: p.ft, stab, eff,
+                fast: null, moveName: p.gm,
+                rec: pool.length ? pool[0].f : null};
       }
       rows.push({p, ...best});
     }
     rows.sort((a,b) => b.dmg - a.dmg);
     const top = rows.length ? rows[0].dmg : 1;
     ranked = rows.map((r,i) => ({...r, rank: i+1, pts: 100 * r.dmg / top}));
-    render();
+    renderAtk();
   }
 
+  function bossMoves(){
+    return boss.cm.map(mi => D.cmoves[mi]);
+  }
+
+  function computeTank(){
+    const moves = bossMoves();
+    const rows = [];
+    for(const p of tanks){
+      const half = halfMoveOf(p);
+      if(halfOnly && !half) continue;
+      const bulk = bulkOf(p);
+      let num = 0, den = 0;
+      for(const m of moves){
+        const w = m.p * (boss.ty.includes(m.t) ? D.stab : 1); // 脅威度=威力×ボスのタイプ一致
+        const mult = effVs(m.t, p.ty);
+        num += w * (bulk / mult);
+        den += w;
+      }
+      const score = den ? num / den : bulk;
+      // 内訳: ボスの技1つ1つに対する相性(技の数ベースで集計)
+      let weak=0, weak2=0, eq=0, res=0, res2=0;
+      for(const m of moves){
+        const mu = effVs(m.t, p.ty);
+        if(mu >= 1.5){ weak++; if(mu >= 2.5) weak2++; }
+        else if(mu < 0.99){ res++; if(mu <= 0.5) res2++; }
+        else eq++;
+      }
+      rows.push({p, score, bulk, half, weak, weak2, eq, res, res2});
+    }
+    rows.sort((a,b) => b.score - a.score);
+    const top = rows.length ? rows[0].score : 1;
+    ranked = rows.map((r,i) => ({...r, rank: i+1, pts: 100 * r.score / top}));
+    renderTank();
+  }
+
+  function computeSwap(){
+    const mi = boss.cm[swapSel];
+    if(mi === undefined){ ranked = []; renderSwap(null); return; }
+    const m = D.cmoves[mi];
+    const rows = [];
+    for(const p of tanks){
+      const bulk = bulkOf(p);
+      const mult = effVs(m.t, p.ty);
+      rows.push({p, score: bulk / mult, bulk, mult, half: halfMoveOf(p)});
+    }
+    rows.sort((a,b) => b.score - a.score);
+    const top = rows.length ? rows[0].score : 1;
+    ranked = rows.map((r,i) => ({...r, rank: i+1, pts: 100 * r.score / top}));
+    renderSwap(m);
+  }
+
+  // ---------- 描画 ----------
+  function rankCls(r){ return r === 1 ? 'r1' : r <= 10 ? 'r10' : r <= 100 ? 'r100' : ''; }
+  function view(){
+    const q = norm(myQuery.trim());
+    return q ? ranked.filter(r => norm(r.p.n).includes(q)) : ranked;
+  }
+  function finishRender(v, slice){
+    emptyEl.style.display = slice.length ? 'none' : 'block';
+    moreBtn.style.display = v.length > shown ? 'block' : 'none';
+  }
   function catBadge(cat){
     if(cat === 'G') return '<span class="cbadge G">キョダイマックス</span>';
     if(cat === 'D') return '<span class="cbadge D">ダイマックス</span>';
@@ -301,18 +501,25 @@ footer a{color:var(--spec)}
     return '<span class="cbadge S">特別 350</span>';
   }
 
-  function render(){
+  function renderAtk(){
     const q = norm(myQuery.trim());
-    const view = q ? ranked.filter(r => norm(r.p.n).includes(q)) : ranked;
-    const slice = view.slice(0, shown);
+    const v = view(), slice = v.slice(0, shown);
     listEl.innerHTML = slice.map(r => {
-      const rc = r.rank === 1 ? 'r1' : r.rank <= 10 ? 'r10' : r.rank <= 100 ? 'r100' : '';
-      const fastInfo = r.fast
-        ? `<span>元わざ: <b>${r.fast.jp}</b>${r.fast.e ? ' <span class="legacy">レガシー</span>' : ''}</span>`
-        : '';
+      let fastInfo = '';
+      if(r.fast){ // ダイマックス勢: 選出したノーマルアタック(=マックスわざのタイプ)
+        const halfTag = r.fast.q
+          ? ' <span class="halfchip">0.5秒</span>'
+          : ' <span class="nohalf">0.5秒技なし</span>';
+        fastInfo = `<span>元わざ: <b>${r.fast.jp}</b>${r.fast.e ? ' <span class="legacy">レガシー</span>' : ''}${halfTag}</span>`;
+      }else if(r.rec){ // キョダイ・特別枠: 推奨ノーマルアタック(0.5秒技を最優先)
+        const halfTag = r.rec.q
+          ? ' <span class="halfchip">0.5秒</span>'
+          : ' <span class="nohalf">0.5秒技なし</span>';
+        fastInfo = `<span>ノーマルアタック: <b>${r.rec.jp}</b>${r.rec.e ? ' <span class="legacy">レガシー</span>' : ''}${halfTag}</span>`;
+      }
       return `<div class="row${q ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
         <div class="top">
-          <div class="rank ${rc}">${r.rank}位</div>
+          <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
           <div class="namebox">
             <div class="pname">${r.p.n} ${chips(r.p.ty)}</div>
             <div class="catline">${catBadge(r.p.cat)}</div>
@@ -328,17 +535,69 @@ footer a{color:var(--spec)}
         </div>
       </div>`;
     }).join('');
-    emptyEl.style.display = slice.length ? 'none' : 'block';
-    moreBtn.style.display = view.length > shown ? 'block' : 'none';
+    finishRender(v, slice);
   }
 
-  fLegacy.addEventListener('click', () => {
-    includeLegacy = !includeLegacy;
-    fLegacy.setAttribute('aria-pressed', String(includeLegacy));
-    fLegacy.textContent = includeLegacy ? 'レガシー技を含める' : 'レガシー技を除外中';
-    compute();
-  });
+  function renderTank(){
+    const q = norm(myQuery.trim());
+    const v = view(), slice = v.slice(0, shown);
+    listEl.innerHTML = slice.map(r => {
+      const halfChip = r.half
+        ? `<span class="halfchip">0.5秒技 ${r.half.jp}${r.half.e ? '(レガシー)' : ''}</span>`
+        : '<span class="nohalf">0.5秒技なし</span>';
+      const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
+      return `<div class="row${q ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
+        <div class="top">
+          <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
+          <div class="namebox">
+            <div class="pname">${r.p.n} ${chips(r.p.ty)}</div>
+            <div class="catline">${halfChip} ${wallChip}</div>
+          </div>
+          <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
+        </div>
+        <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
+        <div class="detail">
+          <span>耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
+          <span>ボスの技: <b>弱点${r.weak}${r.weak2 ? `(二重弱点${r.weak2})` : ''}・等倍${r.eq}・耐性${r.res}${r.res2 ? `(二重耐性${r.res2})` : ''}</b></span>
+        </div>
+      </div>`;
+    }).join('');
+    finishRender(v, slice);
+  }
+
+  function renderSwap(m){
+    const q = norm(myQuery.trim());
+    const v = view(), slice = v.slice(0, shown);
+    listEl.innerHTML = slice.map(r => {
+      const halfInfo = r.half
+        ? `<span>0.5秒技 <b>${r.half.jp}</b></span>`
+        : '<span>0.5秒技なし(交代受け専任)</span>';
+      const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
+      return `<div class="row${q ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
+        <div class="top">
+          <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
+          <div class="namebox">
+            <div class="pname">${r.p.n} ${chips(r.p.ty)}</div>
+            <div class="catline">${defChip(r.mult)} ${wallChip}</div>
+          </div>
+          <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
+        </div>
+        <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
+        <div class="detail">
+          <span>耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
+          ${halfInfo}
+        </div>
+      </div>`;
+    }).join('');
+    finishRender(v, slice);
+  }
+
   mq.addEventListener('input', () => { myQuery = mq.value; shown = 30; render(); });
+  function render(){
+    if(mode === 'atk') renderAtk();
+    else if(swapOn) renderSwap(D.cmoves[boss.cm[swapSel]]);
+    else renderTank();
+  }
   moreBtn.addEventListener('click', () => { shown += 30; render(); });
 })();
 </script>
