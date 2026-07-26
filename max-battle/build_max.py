@@ -122,6 +122,13 @@ SEASON_MOVE_FIX = {
     "ギガイアス":   {"q": ["LOCK_ON_FAST"]},
 }
 
+# 特別枠の専用SPアタック (Game Master実データ: type, power, durMs)
+SPECIAL_SP = {  # (key, 表示名, タイプ, 威力, 発動ms, 消費エネルギー) ※GM実データ
+    "ザシアン(けんのおう)":   [("BEHEMOTH_BLADE", "きょじゅうざん", "STEEL", 200.0, 3500, 100)],
+    "ザマゼンタ(たてのおう)": [("BEHEMOTH_BASH", "きょじゅうだん", "STEEL", 125.0, 1500, 50)],
+    "ムゲンダイナ":           [("DYNAMAX_CANNON", "ダイマックスほう", "DRAGON", 215.0, 1500, 100)],
+}
+
 # gym_data.json に未収録の種の日本語名フォールバック (dex -> 名前)
 NAME_FALLBACK = {
     834: "カジリガメ",
@@ -135,6 +142,33 @@ SPECIALS = {
     ("ZAMAZENTA","ZAMAZENTA_CROWNED_SHIELD"): {"power": 350, "cat": "S350"},
     ("ETERNATUS","ETERNATUS_NORMAL"):     {"power": 450, "cat": "S450"},
 }
+
+
+# PL41-51の整数レベルCPM (Game Master未収録の公式定数)
+CPM_41_51 = {
+    41: 0.79530001, 42: 0.80030001, 43: 0.80530001, 44: 0.81029999,
+    45: 0.81529999, 46: 0.82029999, 47: 0.82529999, 48: 0.83029999,
+    49: 0.83529999, 50: 0.84029999, 51: 0.84529999,
+}
+
+
+def build_cpms(gm):
+    """PL1〜51(0.5刻み)のCPM辞書。中間レベルはsqrt((a^2+b^2)/2)"""
+    import math
+    arr = None
+    for t in gm:
+        if t.get("templateId") == "PLAYER_LEVEL_SETTINGS":
+            arr = t["data"]["playerLevel"]["cpMultiplier"]
+            break
+    ints = {i + 1: arr[i] for i in range(len(arr))}  # 1..40
+    ints.update(CPM_41_51)
+    cpms = {}
+    for lv in range(1, 51):
+        cpms[str(lv)] = round(ints[lv], 8)
+        half = math.sqrt((ints[lv] ** 2 + ints[lv + 1] ** 2) / 2)
+        cpms[str(lv + 0.5)] = round(half, 8)
+    cpms["51"] = round(ints[51], 8)
+    return cpms
 
 
 def has_real_evolution(ps):
@@ -262,6 +296,19 @@ def main():
 
     unmatched, report = [], []
 
+    # ---- SPアタック辞書 (ボス技・SP判定共用) --------------------------------
+    cmove_keys, cmove_idx, cmove_extra = [], {}, {}
+    def cm_index(key):
+        if key not in cmove_idx:
+            cmove_idx[key] = len(cmove_keys)
+            cmove_keys.append(key)
+        return cmove_idx[key]
+    def cm_valid(key):
+        if key in cmove_extra:
+            return True
+        mj = gym["moves"].get(key)
+        return bool(mj) and not mj.get("fast") and mj.get("type") is not None and mj.get("power") is not None
+
     def settings_to_entry(tid, ps, cat, fixed=None, gname=None):
         dex = int(re.match(r"^V(\d{4})_", tid).group(1))
         types = [ps.get("type"), ps.get("type2")]
@@ -284,7 +331,7 @@ def main():
             if ty in T_IDX:
                 mj = gym["moves"].get(q, {})
                 f = {"jp": mj.get("jp", q), "t": T_IDX[ty], "e": 0,
-                     "p": mj.get("power", 0)}
+                     "p": mj.get("power", 0), "d": mj.get("dur") or 0, "en": mj.get("energy") or 0}
                 if mj.get("dur") == 500:
                     f["q"] = 1  # 0.5秒技
                 fasts.append(f)
@@ -293,7 +340,7 @@ def main():
             if ty in T_IDX:
                 mj = gym["moves"].get(q, {})
                 f = {"jp": mj.get("jp", q), "t": T_IDX[ty], "e": 1,
-                     "p": mj.get("power", 0)}
+                     "p": mj.get("power", 0), "d": mj.get("dur") or 0, "en": mj.get("energy") or 0}
                 if mj.get("dur") == 500:
                     f["q"] = 1
                 fasts.append(f)
@@ -305,14 +352,30 @@ def main():
                 mj = gym["moves"].get(mv)
                 if not mj:
                     continue
-                f = {"jp": mj["jp"], "t": mj["type"], "e": 0, "p": mj.get("power", 0)}
+                f = {"jp": mj["jp"], "t": mj["type"], "e": 0, "p": mj.get("power", 0), "d": mj.get("dur") or 0, "en": mj.get("energy") or 0}
                 if mj.get("dur") == 500:
                     f["q"] = 1
                 if (f["jp"], f["t"]) not in have:
                     fasts.append(f)
+        # SPアタック一覧(SP判定用): gym_data学習セット(新シーズン補完込み)を正、
+        # gym未収録種はGame Masterのスペシャルアタックで代替
+        if jp:
+            ckeys = list(jp.get("charged") or [])
+        else:
+            ckeys = [k for k in (ps.get("cinematicMoves") or []) +
+                     (ps.get("eliteCinematicMove") or []) if isinstance(k, str)]
+        elite_c = set(k for k in (ps.get("eliteCinematicMove") or []) if isinstance(k, str))
+        cm_ids, ce_ids = [], []
+        for k in ckeys:
+            if not cm_valid(k):
+                continue
+            mid = cm_index(k)
+            cm_ids.append(mid)
+            if k in elite_c:
+                ce_ids.append(mid)
         entry = {"n": name, "dex": dex, "ty": types_idx, "atk": atk,
                  "df": stats.get("baseDefense"), "st": stats.get("baseStamina"),
-                 "cat": cat}
+                 "cat": cat, "cm": cm_ids, "ce": ce_ids}
         # タンク評価用: ノーマルアタック一覧はカテゴリ問わず持たせる
         entry["fm"] = fasts
         if cat != "D":
@@ -430,6 +493,15 @@ def main():
         merged.append(e)
     entries = merged
 
+    # ---- 特別枠の専用SPアタックを登録・付与 ---------------------------------
+    for nm, moves_list in SPECIAL_SP.items():
+        for (key, jp_name, ty, pw, dur, en) in moves_list:
+            cmove_extra[key] = {"jp": jp_name, "t": T_IDX[ty], "p": pw, "d": dur, "en": en}
+            mid = cm_index(key)
+            for e in entries:
+                if e["n"] == nm and mid not in e.get("cm", []):
+                    e.setdefault("cm", []).append(mid)
+
     # ---- 表記オーバーライド -------------------------------------------------
     # ストリンダーはハイなすがた/ローなすがたで見た目のみ異なり性能は同一
     NAME_OVERRIDE = {"ストリンダー": "ストリンダー(ハイ&ロー)"}
@@ -441,30 +513,24 @@ def main():
     # ボス候補からコスチューム個体を除外
     # (コスチュームは括弧内が英数字表記。フォルム違いは日本語表記のため影響なし)
     costume_pat = re.compile(r"\([A-Za-z0-9 ._\-]+\)$")
-    boss_list = [p for p in gym["pokemon"] if not costume_pat.search(p["name"])]
+    # コスチューム個体と、メガシンカ・ゲンシカイキ(mega:Trueフラグ)はボス候補から除外
+    # ※名前の前方一致では メガニウム・メガヤンマ を誤除外するためフラグで判定
+    boss_list = [p for p in gym["pokemon"]
+                 if not costume_pat.search(p["name"]) and not p.get("mega")]
     # ボスの技: マックスバトルでは全スペシャルアタック(特別技・レガシー含む)を
     # 打ってくる可能性がある(ノーマルアタックは打ってこない)
-    cmove_keys, cmove_idx = [], {}
-    def cm_index(key):
-        if key not in cmove_idx:
-            cmove_idx[key] = len(cmove_keys)
-            cmove_keys.append(key)
-        return cmove_idx[key]
     boss_cm = {}
     for p in boss_list:
-        ids = []
-        for key in p.get("charged", []) or []:
-            mj = gym["moves"].get(key)
-            if not mj or mj.get("fast"):
-                continue
-            if mj.get("type") is None or mj.get("power") is None:
-                continue
-            ids.append(cm_index(key))
-        boss_cm[id(p)] = ids
+        boss_cm[id(p)] = [cm_index(k) for k in (p.get("charged") or []) if cm_valid(k)]
     cmoves_out = []
     for key in cmove_keys:
-        mj = gym["moves"][key]
-        cmoves_out.append({"jp": mj["jp"], "t": mj["type"], "p": mj["power"]})
+        if key in cmove_extra:
+            cmoves_out.append(cmove_extra[key])
+        else:
+            mj = gym["moves"][key]
+            cmoves_out.append({"jp": mj["jp"], "t": mj["type"], "p": mj["power"],
+                               "d": mj.get("dur") or 0,
+                               "en": abs(mj.get("energy") or 0)})
     for p in boss_list:
         if p["name"] == "ストリンダー":
             p["name"] = "ストリンダー(ハイ&ロー)"
@@ -473,12 +539,13 @@ def main():
         "types_jp": gym["types_jp"],
         "chart": gym["chart"],
         "cpm50": gym["cpm"]["50"],
+        "cpms": build_cpms(gm),
         "power": {"D": 350, "G": 450, "S350": 350, "S450": 450},
         "stab": 1.2,
         "generic_max_jp": {str(T_IDX[k]): v for k, v in GENERIC_MAX_JP.items()},
         "roster": entries,
         "bosses": [{"n": p["name"], "dex": p["dex"], "ty": p["types"],
-                    "cm": boss_cm[id(p)]}
+                    "df": p.get("def"), "cm": boss_cm[id(p)]}
                    for p in boss_list],
         "cmoves": cmoves_out,
         "wall_hp": 60,

@@ -62,13 +62,25 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .tchip{font-size:.66rem;padding:2px 9px;border-radius:999px;color:#fff;font-weight:700;white-space:nowrap;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25)}
 .tgroup{display:inline-flex;gap:4px;white-space:nowrap;flex-shrink:0}
 .badgetypes{display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex-shrink:0}
-.catline{margin-top:5px}
+.catline{margin-top:5px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .mult{font-size:.66rem;color:var(--sub)}
 /* フィルタ */
 .filters{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}
 .chipbtn{padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s;font-family:inherit}
+.chipbtn.spbtn[aria-pressed="true"]{background:linear-gradient(135deg,#f2c14e,#e8863d) !important;border-color:transparent !important;color:#33210a !important;font-weight:800;box-shadow:0 0 14px rgba(242,193,78,.3)}
 .chipbtn[aria-pressed="true"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512;font-weight:800}
-.myq{margin-top:10px}
+.myq{margin-top:10px;position:relative}
+.myq.hasresult{border:1px solid var(--violet);border-radius:var(--radius);padding:10px;background:rgba(139,92,246,.07)}
+.myiv{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.myiv label{display:inline-flex;align-items:center;gap:5px;color:var(--sub);font-size:.74rem;font-weight:600}
+.myiv input{width:64px;padding:7px 8px;background:var(--bg2);border:1px solid var(--line2);border-radius:9px;color:var(--text);font-size:.86rem;outline:none;text-align:center}
+.myiv #ivCP{width:84px}
+.myiv input:focus{border-color:var(--violet)}
+.ivinfo{font-size:.7rem;color:var(--sub);font-weight:700}
+.ivinfo.warn{color:var(--warn)}
+.pinlist{display:flex;flex-direction:column;gap:8px}
+.pinlist:not(:empty){margin-top:10px}
+.pinlabel{font-size:.7rem;color:var(--accent2);font-weight:800;letter-spacing:.12em}
 .myq input{width:100%;padding:12px 16px;font-size:.95rem;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);color:var(--text);outline:none;font-family:inherit;transition:border-color .18s, box-shadow .18s}
 .myq input::placeholder{color:var(--faint)}
 .myq input:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
@@ -78,14 +90,26 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .row.hit{border-color:var(--violet)}
 .row.no1{background:linear-gradient(160deg,#2a142c,#1a0f24);border-color:transparent;box-shadow:0 0 28px rgba(255,61,110,.22)}
 .row.no1::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;background:linear-gradient(135deg,var(--gold1),var(--dyna),var(--violet));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.top{display:flex;align-items:center;gap:12px}
+.prow{display:flex;align-items:center;gap:12px;margin-bottom:9px;padding-top:9px}
+.prow .pname{margin:0;flex:1;min-width:0}
+.nameplate{max-width:100%;position:relative}
+.cattag{position:absolute;top:-10px;left:12px;transform:skewX(-12deg);font-size:.58rem;font-weight:800;letter-spacing:.06em;padding:2px 10px;border-radius:5px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+.cattag.G{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512}
+.cattag.D{background:linear-gradient(135deg,#7fb0ff,#5f86e8);color:#0a1533}
+.cattag.S{background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
+.top{display:flex;align-items:flex-start;gap:12px}
 .rank{min-width:56px;text-align:center;font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1rem;border-radius:10px;padding:6px 0;background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
 .rank.r1{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#3a2500;border-color:transparent;box-shadow:0 0 14px rgba(255,215,106,.35)}
 .rank.r10{background:linear-gradient(135deg,#dfe7ef,#aab8c6);color:#20303e;border-color:transparent}
+.rank.allr{font-size:.72rem;letter-spacing:0}
 .rank.r100{background:linear-gradient(135deg,#d9a06b,#b06f3e);color:#2e1602;border-color:transparent}
 .namebox{flex:1;min-width:0}
-.pname{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.cbadge{font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;letter-spacing:.04em}
+.pname{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px}
+.nameplate{display:inline-block;padding:7px 13px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(255,61,110,.16) 65%,rgba(255,122,92,.12));border:1px solid rgba(255,255,255,.16);box-shadow:0 3px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10);line-height:1.35}
+.nameplate .nm{font-weight:900;font-size:1.31rem;letter-spacing:.02em;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.45);vertical-align:middle}
+.nameplate .tgroup{margin-left:8px;vertical-align:middle}
+.row.no1 .nameplate{background:linear-gradient(135deg,rgba(255,215,106,.30),rgba(255,61,110,.20));border-color:rgba(255,215,106,.45);box-shadow:0 3px 14px rgba(242,193,78,.25), inset 0 1px 0 rgba(255,255,255,.14)}
+.cbadge{white-space:nowrap;font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;letter-spacing:.04em}
 .cbadge.G{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;box-shadow:0 0 12px rgba(255,61,110,.35)}
 .cbadge.D{background:linear-gradient(135deg,#7fb0ff,#5f86e8);color:#0a1533}
 .cbadge.S{background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
@@ -110,13 +134,35 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .tab{flex:1;padding:12px;border-radius:var(--radius);border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s}
 .tab[aria-selected="true"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512;box-shadow:0 0 18px rgba(255,61,110,.28)}
 .tab.tank[aria-selected="true"]{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d;box-shadow:0 0 18px rgba(74,214,184,.28)}
+.sppanel{margin-top:12px;border:1px solid var(--line2);border-radius:var(--radius);padding:12px;background:var(--card)}
+.sprow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.sprow label{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:.8rem}
+.sprow input{width:110px;padding:8px 10px;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;color:var(--text);font-size:.9rem;outline:none}
+.sprow input:focus{border-color:#f2c14e}
+.spstatus{font-size:.7rem;color:var(--sub)}
+.spstatus.ok{color:#4ad6b8;font-weight:800}
+.tanknote{color:var(--faint);font-size:.7rem;line-height:1.6;margin:10px 2px 0}
+.spnote{color:var(--faint);font-size:.72rem;line-height:1.7;margin:0}
+.spnote + .spnote{margin-top:7px}
+.spnote b{color:#f2c14e}
+.spok{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
+.spng{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:var(--bg2);border:1px solid var(--line2);color:var(--faint)}
+.spv{margin-left:7px;font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:.72rem;padding:1px 8px;border-radius:999px;background:rgba(0,0,0,.26);letter-spacing:.02em}
+.spok .spv{color:#eafff8}
+.nohalf .spv{color:#33210a;background:rgba(255,255,255,.35)}
+.spmv{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-size:.74rem;padding:3px 10px;border-radius:999px;background:var(--bg2);border:1px solid var(--line2);color:var(--text)}
+.spmv.ok{border-color:#4ad6b8;background:rgba(74,214,184,.12)}
+.spmv .v{font-family:"Oswald",sans-serif;font-weight:600}
+.spmv.ok .v{color:#4ad6b8}
+.spmv:not(.ok) .v{color:var(--faint)}
 .swapmoves{display:none;flex-wrap:wrap;gap:8px;margin-top:12px}
 .swapmoves .mvbtn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--text);font-size:.82rem;cursor:pointer;font-family:inherit}
 .swapmoves .mvbtn[aria-pressed="true"]{border-color:#4ad6b8;background:rgba(74,214,184,.14);box-shadow:0 0 12px rgba(74,214,184,.2)}
 .swapmoves .mvp{color:var(--faint);font-size:.7rem}
-.halfchip{font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
-.nohalf{font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;border:1px solid var(--warn);color:var(--warn)}
-.wallb{font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
+.fastalt{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:700;background:var(--bg2);border:1px solid var(--line2);color:var(--sub)}
+.halfchip{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#cdeeff,#a9dcf6);color:#0c3346}
+.nohalf{white-space:nowrap;font-size:.7rem;border-radius:999px;padding:3px 12px;font-weight:800;background:var(--warn);color:#33210a;box-shadow:0 0 10px rgba(255,179,92,.35)}
+.wallb{white-space:nowrap;font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
 .effres{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
 .effres2{background:#2b6b5c;color:#bff2e4;border:1px solid #4ad6b8}
 .more{margin-top:16px;width:100%;padding:14px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.9rem;cursor:pointer;font-family:inherit;transition:all .15s}
@@ -145,6 +191,7 @@ footer a{color:var(--spec)}
   <p class="lead">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
 </header>
 
+
 <p class="bosslabel">敵ボスポケモン</p>
 <div class="searchbox">
   <input id="bq" type="search" placeholder="ボスの名前を入力(例: リザードン)" autocomplete="off">
@@ -164,14 +211,40 @@ footer a{color:var(--spec)}
 </div>
 
 <div class="filters" id="filters" style="display:none">
-  <button id="fLegacy" class="chipbtn" aria-pressed="true">レガシー技を含める</button>
+  <button id="fSp" class="chipbtn spbtn" aria-pressed="false">SP判定</button>
+  <button id="fLegacy" class="chipbtn" aria-pressed="true">レガシー・特別技を含める</button>
   <button id="fHalf" class="chipbtn" aria-pressed="true" style="display:none">0.5秒技持ちのみ</button>
   <button id="fSwap" class="chipbtn" aria-pressed="false" style="display:none">交代受けモード</button>
 </div>
+<p id="tankNote" class="tanknote" style="display:none">※耐久指数＝HP種族値×防御種族値（例: ラティアス 190×246=46,740）。自分のポケモンを入力した場合は、その個体のPL・個体値の実力に換算して表示します</p>
+
 <div id="swapMoves" class="swapmoves"></div>
 
+<div id="spPanel" class="sppanel" style="display:none">
+  <div class="sprow">
+    <button id="spStar5" class="chipbtn" aria-pressed="false">★5 (補正0.0025)</button>
+    <button id="spStar6" class="chipbtn" aria-pressed="true">★6・キョダイ (補正0.00033)</button>
+    <span id="spStatus" class="spstatus"></span>
+  </div>
+  <div class="sprow">
+    <label>ボスHP <input id="spHP" type="number" inputmode="numeric" placeholder="要入力"></label>
+    <label>防御CPM <input id="spDef" type="number" step="0.01" inputmode="decimal"></label>
+  </div>
+  <p class="spnote">ダイマックスフェイズへの移行はSPアタックの0.5秒あたりのチャージ量が<b>１％以上</b>ならSPを打つ方が早く、１％未満なら0.5秒技を連打する方が早い、という判定です。※未判明のボスは既定値で計算（判明したら反映させます）</p>
+  <p class="spnote">※2026年から星５・星６ボスのマックスメーターチャージ設定が調整されているため、それ以降の新登場＆再登場ポケモンの設定は不明です。SP判定のデフォルトは調整後に登場した初代御三家と同じ値に標準設定にしています</p>
+</div>
+
 <div class="myq" id="myqwrap" style="display:none">
-  <input id="mq" type="search" placeholder="アタッカー名で検索(自分のポケモンの順位確認)" autocomplete="off">
+  <input id="mq" type="search" placeholder="ポケモン名で検索（自分のポケモンの順位確認）" autocomplete="off">
+  <div id="mySug" class="sug"></div>
+  <div id="myiv" class="myiv" style="display:none">
+    <label>CP <input id="ivCP" type="number" inputmode="numeric" placeholder="実測CP"></label>
+    <label>攻撃 <input id="ivA" type="number" min="0" max="15" inputmode="numeric" placeholder="15"></label>
+    <label>防御 <input id="ivD" type="number" min="0" max="15" inputmode="numeric" placeholder="15"></label>
+    <label>HP <input id="ivS" type="number" min="0" max="15" inputmode="numeric" placeholder="15"></label>
+    <span id="ivInfo" class="ivinfo"></span>
+  </div>
+  <div id="pinlist" class="pinlist"></div>
 </div>
 
 <div id="list" class="list"></div>
@@ -182,6 +255,7 @@ footer a{color:var(--spec)}
 </div>
 
 <script src="data/max_data.js"></script>
+<script src="data/boss_params.js"></script>
 <script>
 (function(){
   const D = MAX_DATA;
@@ -191,11 +265,16 @@ footer a{color:var(--spec)}
   const listEl=$('list'), moreBtn=$('more'), emptyEl=$('empty'), placeholderEl=$('placeholder');
   const filtersEl=$('filters'), fLegacy=$('fLegacy'), fHalf=$('fHalf'), fSwap=$('fSwap');
   const tabsEl=$('tabs'), tabAtk=$('tabAtk'), tabTank=$('tabTank');
-  const swapMovesEl=$('swapMoves'), myqwrap=$('myqwrap'), mq=$('mq');
+  const swapMovesEl=$('swapMoves'), myqwrap=$('myqwrap'), mq=$('mq'), pinEl=$('pinlist');
+  const fSp=$('fSp'), spPanel=$('spPanel'), spStar5=$('spStar5'), spStar6=$('spStar6');
+  const myivBox=$('myiv'), ivCP=$('ivCP'), ivA=$('ivA'), ivD=$('ivD'), ivS=$('ivS'), ivInfo=$('ivInfo');
+  const spHP=$('spHP'), spDef=$('spDef'), spStatus=$('spStatus');
+  const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {defaults:{"5":{hp:null,defCpm:0.7},"6":{hp:60000,defCpm:0.85}}, coeff:{"5":0.0025,"6":0.00033}, bosses:{}};
   const cpm = D.cpm50;
 
   let boss=null, mode='atk', swapOn=false, halfOnly=true, includeLegacy=true;
-  let myQuery='', shown=30, ranked=[], swapSel=0;
+  let spStar=6, spOn=false;
+  let myQuery='', shown=30, ranked=[], rankedAll=[], swapSel=0;
 
   // ---------- 共通ヘルパー ----------
   function chip(ti){
@@ -245,10 +324,48 @@ footer a{color:var(--spec)}
     const hp = p.st + (p.wall ? (D.wall_hp || 60) / cpm : 0);
     return hp * p.df;
   }
+  // わざ1(ノーマルアタック)とわざ2(SP)のコンボDPS (火力ランキングと同方式)
+  function comboEffOf(p, f, m, atk, bossDef){
+    const n2 = (f.en * 100) / m.en;
+    const fstab = p.ty.includes(f.t) ? D.stab : 1;
+    const fd = Math.floor(0.5 * (f.p||0) * (atk / bossDef) * fstab * effVs(f.t, boss.ty)) + 1;
+    const stab = p.ty.includes(m.t) ? D.stab : 1;
+    const dmg = Math.floor(0.5 * m.p * (atk / bossDef) * stab * effVs(m.t, boss.ty)) + 1;
+    return (fd * 100 + dmg * n2) / ((f.d/1000) * 100 + (m.d/1000) * n2);
+  }
+  // ノーマルアタック選出スコア:
+  // SP打ってOKの技がある場合=そのSPとのわざ1わざ2トータルダメージ効率
+  // (エネルギー獲得量の差もここで反映。例: すなかけ7 > マッドショット6)
+  // SP封印の場合=タイプ補正込みの与ダメージ
+  function fastSelCtx(p){
+    const pr = spParams();
+    let bestSp = null;
+    if(pr && pr.denom){
+      const b = spBestOf(p, pr);
+      if(b && b.ok) bestSp = b;
+    }
+    return {pr, bestSp, atk: (p.atk + 15) * cpm};
+  }
+  function fastSelScore(p, f, sc){
+    if(sc.bestSp && sc.pr && (f.en||0) > 0 && (sc.bestSp.m.en||0) > 0){
+      return comboEffOf(p, f, sc.bestSp.m, sc.atk, sc.pr.bossDef);
+    }
+    return (f.p||0) * (p.ty.includes(f.t) ? D.stab : 1) * effVs(f.t, boss.ty);
+  }
   function halfMoveOf(p){
     const cands = (p.fm || []).filter(f => f.q);
     if(!cands.length) return null;
-    cands.sort((a,b) => (a.e||0) - (b.e||0)); // 通常入手技を優先表示
+    if(cands.length === 1) return cands[0];
+    const sc = fastSelCtx(p);
+    return cands.slice().sort((a,b) =>
+      fastSelScore(p, b, sc) - fastSelScore(p, a, sc) || (a.e||0) - (b.e||0))[0];
+  }
+  function bestFastOf(p){
+    // 0.5秒技を持たないポケモン向け: 早いわざ > タイプ補正込みで火力の高いわざ の優先度
+    const cands = (p.fm || []).slice();
+    if(!cands.length) return null;
+    const dmg = f => (f.p||0) * (p.ty.includes(f.t) ? D.stab : 1) * (boss ? effVs(f.t, boss.ty) : 1);
+    cands.sort((a,b) => (a.d||9999) - (b.d||9999) || dmg(b) - dmg(a) || (a.e||0) - (b.e||0));
     return cands[0];
   }
 
@@ -272,8 +389,26 @@ footer a{color:var(--spec)}
       btn.addEventListener('click', () => selectBoss(sugItems[+btn.dataset.i]));
     });
   }
-  bq.addEventListener('input', renderSug);
+  // ひらがなで入力・確定すると自動でカタカナに変換する
+  function toKata(str){
+    return (str||'').replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+  }
+  function bindKataInput(el, after){
+    let composing = false;
+    el.addEventListener('compositionstart', () => { composing = true; });
+    el.addEventListener('compositionend', () => {
+      composing = false;
+      el.value = toKata(el.value);
+      after();
+    });
+    el.addEventListener('input', () => {
+      if(!composing) el.value = toKata(el.value);
+      after();
+    });
+  }
+  bindKataInput(bq, renderSug);
   bq.addEventListener('keydown', e => {
+    if(e.isComposing) return; // 日本語変換中のEnterでは候補を確定しない
     if(sug.style.display !== 'block') return;
     const btns = sug.querySelectorAll('button');
     if(e.key === 'ArrowDown'){e.preventDefault(); selIdx = Math.min(selIdx+1, btns.length-1);}
@@ -313,6 +448,7 @@ footer a{color:var(--spec)}
     shown = 30;
     swapSel = 0;
     buildSwapChips();
+    applyBossParams();
     syncControls();
     compute();
   }
@@ -320,6 +456,8 @@ footer a{color:var(--spec)}
   // ---------- モード制御 ----------
   function setMode(m){
     mode = m;
+    spOn = false;
+    fSp.setAttribute('aria-pressed', 'false');
     tabAtk.setAttribute('aria-selected', String(m==='atk'));
     tabTank.setAttribute('aria-selected', String(m==='tank'));
     shown = 30;
@@ -327,18 +465,48 @@ footer a{color:var(--spec)}
     compute();
   }
   function syncControls(){
-    fLegacy.style.display = (mode==='atk') ? '' : 'none';
+    fSp.style.display = boss ? '' : 'none';
+    fLegacy.style.display = (mode==='atk' || spOn) ? '' : 'none';
     fHalf.style.display   = (mode==='tank' && !swapOn) ? '' : 'none';
     fSwap.style.display   = (mode==='tank') ? '' : 'none';
     swapMovesEl.style.display = (mode==='tank' && swapOn) ? 'flex' : 'none';
+    spPanel.style.display = (spOn && boss) ? '' : 'none';
+    document.getElementById('tankNote').style.display = (mode==='tank' && boss) ? '' : 'none';
   }
   tabAtk.addEventListener('click', () => setMode('atk'));
   tabTank.addEventListener('click', () => setMode('tank'));
+  fSp.addEventListener('click', () => {
+    spOn = !spOn;
+    fSp.setAttribute('aria-pressed', String(spOn));
+    shown = 30;
+    syncControls();
+    compute();
+  });
+
+  // ---------- SP判定: ボスパラメータ ----------
+  function applyBossParams(){
+    if(!boss) return;
+    const e = BP.bosses[boss.n];
+    if(e && e.star) spStar = e.star;
+    spStar5.setAttribute('aria-pressed', String(spStar===5));
+    spStar6.setAttribute('aria-pressed', String(spStar===6));
+    const d = BP.defaults[String(spStar)] || {};
+    const hp = (e && e.hp != null) ? e.hp : d.hp;
+    const dc = (e && e.defCpm != null) ? e.defCpm : d.defCpm;
+    spHP.value = hp != null ? hp : '';
+    spDef.value = dc != null ? dc : '';
+    spStatus.textContent = 'SP判定＝SPアタック発動の可否';
+    spStatus.className = 'spstatus ok';
+  }
+  spStar5.addEventListener('click', () => { spStar = 5; applyBossParams(); compute(); });
+  spStar6.addEventListener('click', () => { spStar = 6; applyBossParams(); compute(); });
+  spHP.addEventListener('input', () => compute());
+  spDef.addEventListener('input', () => compute());
 
   fLegacy.addEventListener('click', () => {
     includeLegacy = !includeLegacy;
     fLegacy.setAttribute('aria-pressed', String(includeLegacy));
-    fLegacy.textContent = includeLegacy ? 'レガシー技を含める' : 'レガシー技を除外中';
+    fLegacy.textContent = includeLegacy ? 'レガシー・特別技を含める' : 'レガシー・特別技を除外中';
     compute();
   });
   fHalf.addEventListener('click', () => {
@@ -395,17 +563,18 @@ footer a{color:var(--spec)}
         // (マックスわざの威力は固定のため、わざ与ダメによる比較は行わない)
         const pool = (p.fm||[]).filter(f => includeLegacy || !f.e);
         if(!pool.length) continue;
+        const sc = fastSelCtx(p);
         const scored = pool.map(f => {
           const stab = p.ty.includes(f.t) ? D.stab : 1;
           const eff = effVs(f.t, boss.ty);
           return {f, stab, eff,
                   dmg: power * atkStat * stab * eff,
-                  fdmg: (f.p||0) * stab * eff,
+                  sel: fastSelScore(p, f, sc),
                   weak: eff >= 1.5 ? 1 : 0,
                   half: f.q ? 1 : 0};
         });
         scored.sort((a,b) => b.weak - a.weak || b.half - a.half ||
-                             b.fdmg - a.fdmg ||
+                             b.sel - a.sel ||
                              (a.f.e||0) - (b.f.e||0));
         const s0 = scored[0];
         best = {dmg: s0.dmg, t: s0.f.t, stab: s0.stab, eff: s0.eff,
@@ -416,11 +585,11 @@ footer a{color:var(--spec)}
         // 最もダメージが出る技(例: ムゲンダイナはボスに合わせてドラゴンテールorどくづき)
         const stab = p.ty.includes(p.ft) ? D.stab : 1;
         const eff = effVs(p.ft, boss.ty);
+        const sc = fastSelCtx(p);
         const pool = (p.fm||[]).map(f => {
-          const st = p.ty.includes(f.t) ? D.stab : 1;
-          return {f, fdmg: (f.p||0) * st * effVs(f.t, boss.ty), half: f.q ? 1 : 0};
+          return {f, sel: fastSelScore(p, f, sc), half: f.q ? 1 : 0};
         });
-        pool.sort((a,b) => b.half - a.half || b.fdmg - a.fdmg || (a.f.e||0) - (b.f.e||0));
+        pool.sort((a,b) => b.half - a.half || b.sel - a.sel || (a.f.e||0) - (b.f.e||0));
         best = {dmg: power * atkStat * stab * eff, t: p.ft, stab, eff,
                 fast: null, moveName: p.gm,
                 rec: pool.length ? pool[0].f : null};
@@ -442,7 +611,6 @@ footer a{color:var(--spec)}
     const rows = [];
     for(const p of tanks){
       const half = halfMoveOf(p);
-      if(halfOnly && !half) continue;
       const bulk = bulkOf(p);
       let num = 0, den = 0;
       for(const m of moves){
@@ -460,11 +628,20 @@ footer a{color:var(--spec)}
         else if(mu < 0.99){ res++; if(mu <= 0.5) res2++; }
         else eq++;
       }
-      rows.push({p, score, bulk, half, weak, weak2, eq, res, res2});
+      rows.push({p, score, bulk, half, bf: half ? null : bestFastOf(p), weak, weak2, eq, res, res2});
     }
     rows.sort((a,b) => b.score - a.score);
-    const top = rows.length ? rows[0].score : 1;
-    ranked = rows.map((r,i) => ({...r, rank: i+1, pts: 100 * r.score / top}));
+    // 全ポケモン版(検索ピン留め用に常時保持)
+    const topAll = rows.length ? rows[0].score : 1;
+    rankedAll = rows.map((r,i) => ({...r, rank: i+1, pts: 100 * r.score / topAll}));
+    // 表示リストはフィルタ設定どおり
+    if(halfOnly){
+      const f = rows.filter(r => r.half);
+      const topF = f.length ? f[0].score : 1;
+      ranked = f.map((r,i) => ({...r, rank: i+1, pts: 100 * r.score / topF}));
+    }else{
+      ranked = rankedAll;
+    }
     renderTank();
   }
 
@@ -476,7 +653,8 @@ footer a{color:var(--spec)}
     for(const p of tanks){
       const bulk = bulkOf(p);
       const mult = effVs(m.t, p.ty);
-      rows.push({p, score: bulk / mult, bulk, mult, half: halfMoveOf(p)});
+      const hf = halfMoveOf(p);
+      rows.push({p, score: bulk / mult, bulk, mult, half: hf, bf: hf ? null : bestFastOf(p)});
     }
     rows.sort((a,b) => b.score - a.score);
     const top = rows.length ? rows[0].score : 1;
@@ -484,115 +662,348 @@ footer a{color:var(--spec)}
     renderSwap(m);
   }
 
-  // ---------- 描画 ----------
-  function rankCls(r){ return r === 1 ? 'r1' : r <= 10 ? 'r10' : r <= 100 ? 'r100' : ''; }
-  function view(){
-    const q = norm(myQuery.trim());
-    return q ? ranked.filter(r => norm(r.p.n).includes(q)) : ranked;
+  // ---------- 行内SP判定 (各ランキングのフレームに追加表示) ----------
+  function spParams(){
+    if(!boss) return null;
+    const hp = parseFloat(spHP.value);
+    const defCpm = parseFloat(spDef.value);
+    const e = BP.bosses[boss.n];
+    const coeff = (e && e.coeff) || (BP.coeff || {"5":0.00125,"6":0.00033})[String(spStar)];
+    if(!defCpm || !boss.df) return null;
+    return {bossDef: (boss.df + 15) * defCpm,
+            denom: (hp && coeff) ? hp * coeff : null};
   }
-  function finishRender(v, slice){
-    emptyEl.style.display = slice.length ? 'none' : 'block';
-    moreBtn.style.display = v.length > shown ? 'block' : 'none';
+  function spCtx(){
+    if(!spOn || !boss) return null;
+    const pr = spParams();
+    if(!pr || !pr.denom) return {invalid: true};
+    return pr;
   }
-  function catBadge(cat){
-    if(cat === 'G') return '<span class="cbadge G">キョダイマックス</span>';
-    if(cat === 'D') return '<span class="cbadge D">ダイマックス</span>';
-    if(cat === 'S450') return '<span class="cbadge S">特別 450</span>';
-    return '<span class="cbadge S">特別 350</span>';
+  function spBestOf(p, ctx, atkOverride){
+    if(!p.cm || !p.cm.length) return null;
+    const atk = atkOverride || (p.atk + 15) * cpm;
+    const elite = new Set(p.ce || []);
+    const cands = [];
+    for(const mi of p.cm){
+      if(!includeLegacy && elite.has(mi)) continue; // レガシー・特別技の切替を反映
+      const m = D.cmoves[mi];
+      const stab = p.ty.includes(m.t) ? D.stab : 1;
+      const eff = effVs(m.t, boss.ty);
+      const dmg = Math.floor(0.5 * m.p * (atk / ctx.bossDef) * stab * eff) + 1;
+      const charge = ctx.denom ? Math.max(1, dmg / ctx.denom) : 0; // 1%未満は1に補正(検証済み仕様)
+      const per = ctx.denom ? charge / ((m.d / 1000) * 2) : 0;
+      // ダメージ効率 = 火力ランキングツールと同方式の「わざ1&わざ2」コンボDPS
+      // (各SPに最適なノーマルアタックを組み合わせた時の効率)
+      let effv = null;
+      if((m.en||0) > 0){
+        for(const f of (p.fm||[])){
+          if(!(f.en > 0)) continue;
+          const n2 = (f.en * 100) / m.en;
+          const fstab = p.ty.includes(f.t) ? D.stab : 1;
+          const fd = Math.floor(0.5 * (f.p||0) * (atk / ctx.bossDef) * fstab * effVs(f.t, boss.ty)) + 1;
+          const v = (fd * 100 + dmg * n2) / ((f.d/1000) * 100 + (m.d/1000) * n2);
+          if(effv === null || v > effv) effv = v;
+        }
+      }
+      if(effv === null) effv = dmg / (m.d / 1000); // エネルギー情報なし時のみの代替値
+      cands.push({m, mi, dmg, charge, per, eff: effv,
+                  split: (m.en||0) > 0 && m.en < 100, ok: per >= 1});
+    }
+    if(!cands.length) return null;
+    let best;
+    if(ctx.denom){
+      const oks = cands.filter(c => c.ok);
+      if(oks.length){
+        // ①1%超え(打ってOK)であることが条件 → ②その中でわざ1&わざ2のダメージ効率が
+        // 最も高い技を選ぶ(1ゲージ技は分割あり最高値を5%以上上回る場合のみ採用)
+        oks.sort((a,b) => b.eff - a.eff || b.per - a.per);
+        best = oks[0];
+        if(!best.split){
+          const bs = oks.find(c => c.split);
+          if(bs && (best.eff - bs.eff) / best.eff < 0.05) best = bs;
+        }
+      }else{
+        best = cands.sort((a,b) => b.per - a.per)[0];
+      }
+    }else{
+      // 判定パラメータ未確定時(通常ランキングの最適SP表示): 効率+5%ルール
+      cands.sort((a,b) => b.eff - a.eff || ((b.split?1:0) - (a.split?1:0)));
+      best = cands[0];
+      if(!best.split){
+        const bs = cands.find(c => c.split);
+        if(bs && (best.eff - bs.eff) / best.eff < 0.05) best = bs;
+      }
+    }
+    return best;
+  }
+  function spLine(p, atkOverride){
+    const ctx = spCtx();
+    if(!ctx) return '';
+    if(ctx.invalid) return '<div class="catline"><span class="spng">SP判定: ボスHP・防御CPMを入力してください</span></div>';
+    const b = spBestOf(p, ctx, atkOverride);
+    if(!b) return '<div class="catline"><span class="spng">SP判定: 技データなし</span></div>';
+    const pct = `<b class="spv">${b.per.toFixed(2)}%</b>`;
+    const verdict = b.ok
+      ? `<span class="spok">SP打ってOK: ${b.m.jp}${pct}</span>`
+      : `<span class="nohalf">SP封印推奨(0.5秒技連打)${pct}</span>`;
+    return `<div class="catline">${verdict}</div>`;
   }
 
+  // ---------- 描画 ----------
+  function rankCls(r){ return r === 1 ? 'r1' : r <= 10 ? 'r10' : r <= 100 ? 'r100' : ''; }
+  function viewParts(){
+    // 検索中もランキングは残し、一致したポケモンを先頭にピン留め表示する。
+    // タンクの0.5秒フィルタで表示リストに居ない場合は「全体N位」としてピン留めする。
+    const q = mySel ? norm(mySel) : '';
+    if(!q) return {pin: [], rest: ranked, q};
+    let pin = ranked.filter(r => norm(r.p.n) === q);
+    if(!pin.length && mode === 'tank' && !swapOn && rankedAll.length){
+      pin = rankedAll.filter(r => norm(r.p.n) === q).map(r => ({...r, _all: 1}));
+    }
+    // ピン留めしても同じポケモンをランキングから消さない
+    // (理想個体PL50・個体値100%の強さをランキング側でいつでも確認できるようにするため)
+    return {pin, rest: ranked, q};
+  }
+  // ---------- 自分のポケモンのCP・個体値からの実力値計算 ----------
+  function cpOf(p, a, d, st, cm){
+    return Math.max(10, Math.floor((p.atk + a) * Math.sqrt(p.df + d) *
+                                   Math.sqrt(p.st + st) * cm * cm / 10));
+  }
+  function ownStats(p){
+    const cp = parseInt(ivCP.value, 10);
+    const a = parseInt(ivA.value, 10), d = parseInt(ivD.value, 10), st = parseInt(ivS.value, 10);
+    if(!(cp > 0)) return null;
+    if([a, d, st].some(v => !(v >= 0 && v <= 15))) return null;
+    // CPと一致するPLを探索(完全一致がなければ最も近いPL)
+    let bestL = null, bestDiff = Infinity;
+    for(const k in D.cpms){
+      const c = cpOf(p, a, d, st, D.cpms[k]);
+      const diff = Math.abs(c - cp);
+      if(diff < bestDiff){ bestDiff = diff; bestL = k; }
+    }
+    if(bestL === null) return null;
+    const cm = D.cpms[bestL];
+    return {
+      L: bestL, exact: bestDiff === 0, cp, cm,
+      atkR: (p.atk + a) * cm,                    // 攻撃実数値
+      eqSt: (p.st + st) * cm / cpm,              // PL50換算のHP種族値相当
+      eqDf: (p.df + d) * cm / cpm,               // PL50換算の防御種族値相当
+    };
+  }
+  function ownify(r){
+    if(!r || !r._pin) return r;
+    const os = ownStats(r.p);
+    if(!os) return r;
+    const list = r._all ? rankedAll : ranked;
+    if(!list.length) return r;
+    const o = {...r, _own: os};
+    if(mode === 'atk'){
+      const ratio = os.atkR / ((r.p.atk + 15) * cpm);
+      o.dmg = r.dmg * ratio;
+      o.pts = 100 * o.dmg / list[0].dmg;
+      o.rank = 1 + list.filter(x => x.dmg > o.dmg).length;
+    }else{
+      // 耐久指数は「PL50・個体値15で表の値と一致」する比率換算
+      // (実HP×実防御の、理想個体PL50比でスケール)
+      const ratio = (os.eqSt * os.eqDf) / ((r.p.st + 15) * (r.p.df + 15));
+      o.bulk = r.bulk * ratio;
+      o.score = r.score * ratio;
+      o.pts = 100 * o.score / list[0].score;
+      o.rank = 1 + list.filter(x => x.score > o.score).length;
+    }
+    return o;
+  }
+  function updateIvInfo(pin){
+    if(!pin.length){ myivBox.style.display = 'none'; return; }
+    myivBox.style.display = '';
+    const os = ownStats(pin[0].p);
+    if(os){
+      ivInfo.textContent = os.exact
+        ? `→ PL${os.L}として計算中`
+        : `⚠ CPと個体値が一致しません(最も近いPL${os.L}で計算)`;
+      ivInfo.className = os.exact ? 'ivinfo' : 'ivinfo warn';
+    }else{
+      ivInfo.textContent = (ivCP.value || ivA.value || ivD.value || ivS.value)
+        ? 'CPと個体値(0〜15)をすべて入力してください' : '';
+      ivInfo.className = 'ivinfo';
+    }
+  }
+  [ivCP, ivA, ivD, ivS].forEach(el => el.addEventListener('input', () => compute()));
+
+  function notFound(q){
+    return `<p class="empty">「${q}」に一致するポケモンは対象内にいません</p>`;
+  }
+  function paint(rowFn){
+    const {pin, rest, q} = viewParts();
+    updateIvInfo(pin);
+    const pinRows = pin.map(r => ownify({...r, _pin: 1}));
+    // 検索欄と同じ枠内に、自分のポケモンをセットで表示
+    pinEl.innerHTML = q
+      ? (pinRows.length
+          ? '<div class="pinlabel">あなたのポケモンの順位</div>' + pinRows.map(rowFn).join('')
+          : notFound(myQuery.trim()))
+      : '';
+    myqwrap.classList.toggle('hasresult', !!q);
+    const slice = rest.slice(0, shown);
+    listEl.innerHTML = slice.map(rowFn).join('');
+    emptyEl.style.display = (slice.length || pinRows.length) ? 'none' : 'block';
+    moreBtn.style.display = rest.length > shown ? 'block' : 'none';
+  }
+  function catTag(cat){
+    if(cat === 'G') return '<span class="cattag G">キョダイマックス</span>';
+    if(cat === 'D') return '<span class="cattag D">ダイマックス</span>';
+    return '<span class="cattag S">特別</span>';
+  }
+
+  function atkSpText(p, atkOverride){
+    const pr = spParams();
+    if(!pr) return '';
+    const b = spBestOf(p, pr, atkOverride);
+    if(!b) return '';
+    const elite = (p.ce||[]).includes(b.mi);
+    return `<span>SPアタック: <b>${b.m.jp}</b>${elite ? ' <span class="legacy">特別/レガシー</span>' : ''}</span>`;
+  }
   function renderAtk(){
-    const q = norm(myQuery.trim());
-    const v = view(), slice = v.slice(0, shown);
-    listEl.innerHTML = slice.map(r => {
+    paint(r => {
       let fastInfo = '';
       if(r.fast){ // ダイマックス勢: 選出したノーマルアタック(=マックスわざのタイプ)
         const halfTag = r.fast.q
           ? ' <span class="halfchip">0.5秒</span>'
           : ' <span class="nohalf">0.5秒技なし</span>';
-        fastInfo = `<span>元わざ: <b>${r.fast.jp}</b>${r.fast.e ? ' <span class="legacy">レガシー</span>' : ''}${halfTag}</span>`;
+        fastInfo = `<span>ノーマルアタック: <b>${r.fast.jp}</b>${r.fast.e ? ' <span class="legacy">特別/レガシー</span>' : ''}${halfTag}</span>`;
       }else if(r.rec){ // キョダイ・特別枠: 推奨ノーマルアタック(0.5秒技を最優先)
         const halfTag = r.rec.q
           ? ' <span class="halfchip">0.5秒</span>'
           : ' <span class="nohalf">0.5秒技なし</span>';
-        fastInfo = `<span>ノーマルアタック: <b>${r.rec.jp}</b>${r.rec.e ? ' <span class="legacy">レガシー</span>' : ''}${halfTag}</span>`;
+        fastInfo = `<span>ノーマルアタック: <b>${r.rec.jp}</b>${r.rec.e ? ' <span class="legacy">特別/レガシー</span>' : ''}${halfTag}</span>`;
       }
-      return `<div class="row${q ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
-        <div class="top">
+      return `<div class="row${r._pin ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
+        <div class="prow">
           <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
+          <div class="pname"><span class="nameplate">${catTag(r.p.cat)}<span class="nm">${r.p.n}</span>${chips(r.p.ty)}</span></div>
+        </div>
+        <div class="top">
           <div class="namebox">
-            <div class="pname">${r.p.n} ${chips(r.p.ty)}</div>
-            <div class="catline">${catBadge(r.p.cat)}</div>
             <div class="moves"><b>${r.moveName}</b> ${chip(r.t)} ${fastInfo}</div>
+            <div class="moves">${atkSpText(r.p, r._own && r._own.atkR)}</div>
+            ${spLine(r.p, r._own && r._own.atkR)}
           </div>
           <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
         </div>
         <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
         <div class="detail">
+          ${r._own ? `<span>あなたの個体 <b>PL${r._own.L}・CP${r._own.cp}${r._own.exact ? '' : '?'}</b></span>` : ''}
           <span>攻撃種族値 <b>${r.p.atk}</b></span>
           <span>タイプ一致 <b>${r.stab > 1 ? '○ ×1.2' : 'なし'}</b></span>
           ${effChip(r.eff)}
         </div>
       </div>`;
-    }).join('');
-    finishRender(v, slice);
+    });
   }
 
   function renderTank(){
-    const q = norm(myQuery.trim());
-    const v = view(), slice = v.slice(0, shown);
-    listEl.innerHTML = slice.map(r => {
+    paint(r => {
       const halfChip = r.half
-        ? `<span class="halfchip">0.5秒技 ${r.half.jp}${r.half.e ? '(レガシー)' : ''}</span>`
-        : '<span class="nohalf">0.5秒技なし</span>';
+        ? `<span class="halfchip">0.5秒技 ${r.half.jp}${r.half.e ? '(特別/レガシー)' : ''}</span>`
+        : `<span class="nohalf">0.5秒技なし</span>${r.bf ? ` <span class="fastalt">最速わざ ${r.bf.jp}(${(r.bf.d/1000).toFixed(1).replace(/\.0$/,'')}秒)</span>` : ''}`;
       const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
-      return `<div class="row${q ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
+      return `<div class="row${r._pin ? ' hit' : ''}${r.rank === 1 && !r._all ? ' no1' : ''}">
+        <div class="prow">
+          <div class="rank ${rankCls(r.rank)}${r._all ? ' allr' : ''}">${r._all ? '全体' : ''}${r.rank}位</div>
+          <div class="pname"><span class="nameplate"><span class="nm">${r.p.n}</span>${chips(r.p.ty)}</span></div>
+        </div>
         <div class="top">
-          <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
           <div class="namebox">
-            <div class="pname">${r.p.n} ${chips(r.p.ty)}</div>
             <div class="catline">${halfChip} ${wallChip}</div>
+            ${spLine(r.p, r._own && r._own.atkR)}
           </div>
           <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
         </div>
         <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
         <div class="detail">
+          ${r._own ? `<span>あなたの個体 <b>PL${r._own.L}・CP${r._own.cp}${r._own.exact ? '' : '?'}</b></span>` : ''}
           <span>耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
           <span>ボスの技: <b>弱点${r.weak}${r.weak2 ? `(二重弱点${r.weak2})` : ''}・等倍${r.eq}・耐性${r.res}${r.res2 ? `(二重耐性${r.res2})` : ''}</b></span>
         </div>
       </div>`;
-    }).join('');
-    finishRender(v, slice);
+    });
   }
 
   function renderSwap(m){
-    const q = norm(myQuery.trim());
-    const v = view(), slice = v.slice(0, shown);
-    listEl.innerHTML = slice.map(r => {
+    paint(r => {
       const halfInfo = r.half
         ? `<span>0.5秒技 <b>${r.half.jp}</b></span>`
-        : '<span>0.5秒技なし(交代受け専任)</span>';
+        : `<span>0.5秒技なし(交代受け専任)${r.bf ? ` / 最速わざ <b>${r.bf.jp}</b>` : ''}</span>`;
       const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
-      return `<div class="row${q ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
-        <div class="top">
+      return `<div class="row${r._pin ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
+        <div class="prow">
           <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
+          <div class="pname"><span class="nameplate"><span class="nm">${r.p.n}</span>${chips(r.p.ty)}</span></div>
+        </div>
+        <div class="top">
           <div class="namebox">
-            <div class="pname">${r.p.n} ${chips(r.p.ty)}</div>
             <div class="catline">${defChip(r.mult)} ${wallChip}</div>
+            ${spLine(r.p, r._own && r._own.atkR)}
           </div>
           <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
         </div>
         <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
         <div class="detail">
+          ${r._own ? `<span>あなたの個体 <b>PL${r._own.L}・CP${r._own.cp}${r._own.exact ? '' : '?'}</b></span>` : ''}
           <span>耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
           ${halfInfo}
         </div>
       </div>`;
-    }).join('');
-    finishRender(v, slice);
+    });
   }
 
-  mq.addEventListener('input', () => { myQuery = mq.value; shown = 30; render(); });
+  // 自分のポケモン検索: 2文字以上で候補を表示し、選んで確定する方式(他ツールと同じ)
+  const mySug = $('mySug');
+  let mySel = null, mySugItems = [], mySelIdx = -1;
+  function renderMySug(){
+    const q = norm(mq.value.trim());
+    if(mySel && mq.value !== mySel){ mySel = null; myQuery = ''; compute(); }
+    if(q.length < 2){ mySug.style.display = 'none'; return; }
+    const hits = [];
+    const seen = new Set();
+    for(const p of tanks){
+      if(!seen.has(p.n) && norm(p.n).includes(q)){ seen.add(p.n); hits.push(p); }
+      if(hits.length >= 12) break;
+    }
+    mySugItems = hits; mySelIdx = -1;
+    if(!hits.length){ mySug.style.display = 'none'; return; }
+    mySug.innerHTML = hits.map((p,i) =>
+      `<button data-i="${i}">${p.n} ${chips(p.ty)}</button>`).join('');
+    mySug.style.display = 'block';
+    mySug.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => selectMine(mySugItems[+btn.dataset.i]));
+    });
+  }
+  function selectMine(p){
+    mySel = p.n;
+    myQuery = p.n;
+    mq.value = p.n;
+    mySug.style.display = 'none';
+    // デフォルト入力: 最大CP(PL50・個体値15)と個体値15をあらかじめ入力しておく
+    ivA.value = 15; ivD.value = 15; ivS.value = 15;
+    ivCP.value = cpOf(p, 15, 15, 15, D.cpms['50']);
+    shown = 30;
+    compute();
+  }
+  bindKataInput(mq, renderMySug);
+  mq.addEventListener('keydown', e => {
+    if(e.isComposing) return;
+    if(mySug.style.display !== 'block') return;
+    const btns = mySug.querySelectorAll('button');
+    if(e.key === 'ArrowDown'){e.preventDefault(); mySelIdx = Math.min(mySelIdx+1, btns.length-1);}
+    else if(e.key === 'ArrowUp'){e.preventDefault(); mySelIdx = Math.max(mySelIdx-1, 0);}
+    else if(e.key === 'Enter'){e.preventDefault(); selectMine(mySugItems[mySelIdx < 0 ? 0 : mySelIdx]); return;}
+    else return;
+    btns.forEach((b,i) => b.classList.toggle('sel', i === mySelIdx));
+  });
+  document.addEventListener('click', e => {
+    if(!mySug.contains(e.target) && e.target !== mq) mySug.style.display = 'none';
+  });
   function render(){
     if(mode === 'atk') renderAtk();
     else if(swapOn) renderSwap(D.cmoves[boss.cm[swapSel]]);
