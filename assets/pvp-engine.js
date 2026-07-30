@@ -112,12 +112,16 @@
           }
         }
         s.cd = s.fast.tn;                       // 通常技を開始
+        s.startedNow = true;
       }
       // ターン経過 → 完了した通常技の発生
+      // 相手がゲージ技のターンに打ち始めた通常技は差し込み(前倒し)扱いなのでここでは進めない
       const row = { tn: turn, ev: [null, null] };
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
         if (charging[i]) continue;
+        if (charging[1 - i] && s.startedNow) { s.startedNow = false; continue; }
+        s.startedNow = false;
         s.cd--;
         if (s.cd === 0) {
           const dmg = fastDamage(i);
@@ -174,5 +178,53 @@
     };
   }
 
-  window.PvpEngine = { buildStats, damage, effectiveness, buffMult, simulate };
+  /* ---- 技のオート選択 ----
+     どのゲージ技を撃ち続けるかの組み合わせを総当たりでシミュレートし、
+     互いに最善手を取り合う組み合わせ(均衡)を返す。評価は与ダメ割合+残HP割合。 */
+  function battleScore(res, side) {
+    const own = res.final[side], opp = res.final[1 - side];
+    return 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
+  }
+
+  function chooseThrows(D, cfgL, cfgR, opt) {
+    const movesL = cfgL.charged || [], movesR = cfgR.charged || [];
+    if (movesL.length <= 1 && movesR.length <= 1)
+      return { left: movesL[0] || null, right: movesR[0] || null };
+    // 全組み合わせのスコア表を作る
+    const score = movesL.map(() => movesR.map(() => null));
+    for (let a = 0; a < movesL.length; a++)
+      for (let b = 0; b < movesR.length; b++) {
+        const res = simulate(D, { ...cfgL, throw: movesL[a], timing: 'optimal' },
+                                { ...cfgR, throw: movesR[b], timing: 'optimal' }, opt);
+        score[a][b] = [battleScore(res, 0), battleScore(res, 1)];
+      }
+    // 相互最善応答の反復(小さな表なので必ず短時間で安定するか循環する)
+    let a = 0, b = 0;
+    const seen = new Set();
+    for (let it = 0; it < 20; it++) {
+      const key = a + ',' + b;
+      if (seen.has(key)) break;   // 循環 → 現在の組で確定
+      seen.add(key);
+      let bestA = a;
+      for (let x = 0; x < movesL.length; x++) if (score[x][b][0] > score[bestA][b][0]) bestA = x;
+      let bestB = b;
+      for (let y = 0; y < movesR.length; y++) if (score[bestA][y][1] > score[bestA][bestB][1]) bestB = y;
+      if (bestA === a && bestB === b) break;
+      a = bestA; b = bestB;
+    }
+    return { left: movesL[a] || null, right: movesR[b] || null, score: score[a][b] };
+  }
+
+  /* オート選択つきシミュレート: throw未指定の側は総当たりで技を決めてから対戦 */
+  function simulateAuto(D, cfgL, cfgR, opt) {
+    const sel = chooseThrows(D, cfgL, cfgR, opt);
+    const L = { timing: 'optimal', ...cfgL }, R = { timing: 'optimal', ...cfgR };
+    if (!L.throw) L.throw = sel.left;
+    if (!R.throw) R.throw = sel.right;
+    const res = simulate(D, L, R, opt);
+    res.selected = { left: L.throw, right: R.throw };
+    return res;
+  }
+
+  window.PvpEngine = { buildStats, damage, effectiveness, buffMult, simulate, chooseThrows, simulateAuto };
 })();
