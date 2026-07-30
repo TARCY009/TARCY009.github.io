@@ -30,9 +30,10 @@ header h1::before{content:'';width:1em;height:1em;border-radius:50%;flex-shrink:
   box-shadow:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55)}
 header h1 span{background:linear-gradient(92deg,var(--accent),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
 header p{font-size:.8rem;color:var(--sub);margin-top:3px}
-.card{position:relative;background:rgba(255,255,255,.92);border:1.5px solid var(--cardline,var(--line));border-radius:16px;padding:20px 16px 16px;margin-bottom:16px;overflow:hidden;
+/* overflow:hiddenにすると検索候補リストがカード外に出られず隠れるため使わない */
+.card{position:relative;background:rgba(255,255,255,.92);border:1.5px solid var(--cardline,var(--line));border-radius:16px;padding:20px 16px 16px;margin-bottom:16px;
   box-shadow:0 14px 30px -16px var(--cardglow,rgba(59,110,240,.35)), 0 1px 0 rgba(255,255,255,.8) inset}
-.card::before{content:'';position:absolute;left:0;top:0;right:0;height:4px;background:var(--cardbar,linear-gradient(90deg,var(--accent),var(--accent2)))}
+.card::before{content:'';position:absolute;left:0;top:0;right:0;height:4px;border-radius:15px 15px 0 0;background:var(--cardbar,linear-gradient(90deg,var(--accent),var(--accent2)))}
 .c-boss{--cardline:#ffd6dc;--cardglow:rgba(255,84,112,.32);--cardbar:linear-gradient(90deg,#ff5470,#ff9750);--focusc:#ff5470;--focusring:rgba(255,84,112,.16)}
 .c-my  {--cardline:#c4e6ee;--cardglow:rgba(8,180,201,.30);--cardbar:linear-gradient(90deg,#08b4c9,#3b6ef0);--focusc:#08a6c9;--focusring:rgba(8,180,201,.16)}
 .c-rank{--cardline:#ddd4fb;--cardglow:rgba(139,92,246,.32);--cardbar:linear-gradient(90deg,#8b5cf6,#3b6ef0);--focusc:#8b5cf6;--focusring:rgba(139,92,246,.16)}
@@ -268,9 +269,21 @@ let boss=null, mode=0, showN=30;
 const mine=[];
 
 // ---- search suggest ----
+// ポケモン名はすべてカタカナなので、ひらがな入力はカタカナに読み替えて検索する
+const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
 function attachSugg(inputEl, listEl, onPick, filterFn){
-  inputEl.addEventListener('input', ()=>{
-    const q=inputEl.value.trim();
+  // IME変換の確定時に入力欄の値そのものをカタカナへ置き換える(変換中は触らない)
+  inputEl.addEventListener('compositionend', ()=>{
+    const v=toKata(inputEl.value);
+    if(v!==inputEl.value) inputEl.value=v;
+    inputEl.dispatchEvent(new Event('input'));
+  });
+  inputEl.addEventListener('input', e=>{
+    if(!e.isComposing){
+      const v=toKata(inputEl.value);
+      if(v!==inputEl.value) inputEl.value=v;
+    }
+    const q=toKata(inputEl.value.trim());
     if(!q){listEl.style.display='none';return;}
     const res=KEYS.filter(k=>D.pokemon[k].n.includes(q) && (!filterFn||filterFn(k))).slice(0,12);
     if(!res.length){listEl.style.display='none';return;}
