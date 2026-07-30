@@ -83,11 +83,21 @@
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
         if (s.cd !== 0) continue;               // 通常技の途中
-        const planIdx = s.plan.findIndex(p => p.on === turn);
-        if (planIdx >= 0) {
-          const mv = D.moves[s.plan[planIdx].move];
-          if (s.en >= mv.e) { charging[i] = mv; s.plan.splice(planIdx, 1); continue; }
-          s.plan.splice(planIdx, 1);            // エネルギー不足は見送り
+        if (s.cfg.timing === 'asap') {
+          // 最短: 撃てるゲージ技ができた瞬間に撃つ(複数撃てるなら消費が軽い技)
+          const avail = (s.cfg.charged || []).map(id => D.moves[id]).filter(m => s.en >= m.e);
+          if (avail.length) {
+            avail.sort((a, b) => a.e - b.e);
+            charging[i] = avail[0];
+            continue;
+          }
+        } else {
+          const planIdx = s.plan.findIndex(p => p.on === turn);
+          if (planIdx >= 0) {
+            const mv = D.moves[s.plan[planIdx].move];
+            s.plan.splice(planIdx, 1);          // エネルギー不足は見送り
+            if (s.en >= mv.e) { charging[i] = mv; continue; }
+          }
         }
         s.cd = s.fast.tn;                       // 通常技を開始
       }
@@ -127,6 +137,18 @@
         rows.push({ tn: '-', ev, state: sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })) });
         s.used[mv.n] = (s.used[mv.n] || 0) + 1;
         if (o.hp <= 0) break;
+        // 差し込み: 発動側の演出中に、相手の打ちかけ(未完了)の通常技が前倒しで完了する
+        // (このターンに自然完了する技は通常処理で発生済み。完了後、相手は次ターンに仕切り直し)
+        if (!charging[1 - i] && o.cd > 0) {
+          const dmg = fastDamage(1 - i);
+          s.hp -= dmg;
+          o.en = Math.min(100, o.en + o.fast.eg);
+          o.cd = 0;
+          const fev = [null, null];
+          fev[1 - i] = { move: o.fast.n, dmg, forwarded: true };
+          rows.push({ tn: '-', ev: fev, state: sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })) });
+          if (s.hp <= 0) break;
+        }
       }
       if (sides[0].hp <= 0 || sides[1].hp <= 0) break;
     }
