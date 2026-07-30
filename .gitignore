@@ -1,0 +1,6 @@
+# 作業引き継ぎメモ（ローカル専用・公開リポジトリには含めない）
+HANDOVER.md
+
+# build_data.py が生成する差分サマリー
+# GitHub Actions が自動PRの本文(body-path)に使う一時ファイルのためコミットしない
+changes.md

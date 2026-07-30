@@ -47,7 +47,9 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
 .sugg-list div:hover{background:linear-gradient(90deg,#eef3ff,#f6f1ff)}
 .sugg-list small{color:var(--sub)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{font-size:.72rem;color:#fff;border-radius:99px;padding:2px 10px;font-weight:600;box-shadow:0 2px 5px -2px rgba(30,40,90,.4)}
+.srow-meta{display:inline-flex;align-items:center;gap:5px}
+/* 明るいバッジが白系背景に溶けるため極薄の縁取りを追加(該当4タイプのみ) */
+.tbadge[title="でんき"],.tbadge[title="こおり"],.tbadge[title="いわ"],.tbadge[title="じめん"]{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .bossinfo{margin-top:12px;font-size:.85rem;color:var(--sub);font-weight:600}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -81,9 +83,16 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rk{width:38px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
 .rank-row.mine .rk{color:var(--gold)}
 .rmain{flex:1;min-width:0}
-.rname{font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 名前 → タイプアイコン → PL表記 の順。名前側のみ省略し、アイコンは常に表示 */
+.rname{display:flex;align-items:center;gap:5px;font-size:.88rem;font-weight:700;white-space:nowrap;min-width:0}
+.rname>*{flex-shrink:0}
+.rname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .rname .tag-s{color:var(--shadow);font-weight:800}
-.rname small{color:var(--sub);font-weight:400;margin-left:6px;font-size:.72rem}
+/* 幅が足りない時はPL表記から先に縮め、ポケモン名を優先的に残す */
+.rname small{flex:0 999 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--sub);font-weight:400;font-size:.72rem}
+/* 狭い幅では全行共通の「PL50・個体値15」を隠して名前とアイコンを優先
+   (自分のポケモン行は行ごとに異なるPL・個体値を持つため残す。共通値は下部の注記に記載) */
+@media (max-width:430px){.rank-row:not(.mine) .rname small{display:none}}
 .rmoves{font-size:.74rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rmoves .sp{color:var(--special)}
 .bar{height:6px;background:#e8ecf8;border-radius:99px;margin-top:4px;overflow:hidden}
@@ -91,19 +100,11 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rank-row.mine .bar i,#rankList .rank-row:nth-child(1):not(.mine) .bar i{background:linear-gradient(90deg,#f0b429,#dd8a00)}
 .rdps{width:74px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
 .rdps small{display:block;font-weight:400;font-size:.62rem;color:var(--sub)}
-.avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),0 2px 5px rgba(20,40,90,.28)}
-.avatar svg{width:20px;height:20px;fill:#fff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
-.avatar.sm{width:26px;height:26px}
-.avatar.sm svg{width:14px;height:14px}
-.avatar.lg{width:52px;height:52px}
-.avatar.lg svg{width:28px;height:28px}
-.chip svg{width:12px;height:12px;fill:#fff;vertical-align:-1px;margin-right:3px}
-.wchip{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:700;color:#fff;border-radius:99px;padding:3px 10px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(30,40,90,.45)}
-.wchip svg{width:12px;height:12px;fill:#fff}
-.wchip b{font-weight:800;opacity:.95}
+.wchip{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:var(--ink);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:99px;padding:2px 9px 2px 3px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(30,40,90,.28)}
+.wchip b{font-weight:800;color:var(--accent)}
 .bossline{display:flex;align-items:center;gap:12px;margin-top:12px}
 .bossname{font-weight:800;font-size:1.05rem}
-.mv-ic{width:11px;height:11px;vertical-align:-1px;margin-right:2px}
+.rmoves .tbadge{margin-right:3px}
 .tag-s2{display:inline-block;background:var(--shadow);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .sugg-list .srow{display:flex;align-items:center;gap:8px}
@@ -176,6 +177,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
 </div>
 
+<script src="/assets/type-icons.js"></script>
 <script>
 const D = __GODATA__;
 const TI = {}; D.types.forEach((t,i)=>TI[t]=i);
@@ -274,7 +276,7 @@ function attachSugg(inputEl, listEl, onPick, filterFn){
     if(!res.length){listEl.style.display='none';return;}
     listEl.innerHTML=res.map(k=>{
       const p=D.pokemon[k];
-      return `<div data-k="${k}"><span class="srow">${avatarHtml(p,'sm')}${p.n}</span><small>${p.ty.map(t=>D.typeJa[t]).join('/')}｜攻${p.a}</small></div>`;
+      return `<div data-k="${k}"><span class="srow">${p.n}</span><small class="srow-meta">${typeIcons(p,18)}攻${p.a}</small></div>`;
     }).join('');
     listEl.style.display='block';
     listEl.querySelectorAll('div').forEach(el=>el.onclick=()=>{listEl.style.display='none';inputEl.value=D.pokemon[el.dataset.k].n;onPick(el.dataset.k);});
@@ -283,34 +285,8 @@ function attachSugg(inputEl, listEl, onPick, filterFn){
 }
 
 // ---- boss ----
-const typeColor={NORMAL:'#9aa0a6',FIGHTING:'#ce4265',FLYING:'#8fa8dd',POISON:'#a864c7',GROUND:'#d97845',ROCK:'#c7b78b',BUG:'#91c12f',GHOST:'#5269ac',STEEL:'#5a8ea1',FIRE:'#ff9c54',WATER:'#4d90d5',GRASS:'#63bb5b',ELECTRIC:'#f3d23b',PSYCHIC:'#f97176',ICE:'#74cec0',DRAGON:'#0a6dc4',DARK:'#5a5366',FAIRY:'#ec8fe6'};
-// オリジナルデザインのタイプアイコン（SVGパス・24x24）
-const TYPE_ICON={
-NORMAL:'<circle cx="12" cy="12" r="6"/>',
-FIRE:'<path d="M12 2C9.5 6.5 6 9 6 14a6 6 0 0012 0c0-2.8-1.2-4.6-2.6-6.6-.5 1.8-1.4 2.9-2.9 3.8.6-2.8.3-6-.5-9.2z"/>',
-WATER:'<path d="M12 2C8.5 7.5 6 10.8 6 14.2a6 6 0 0012 0C18 10.8 15.5 7.5 12 2z"/>',
-GRASS:'<path d="M20 4C10 4.5 5.5 9 5 15c-.2 2 .6 3.8 2 5 .3-5.6 3.6-10.3 9-12.8-4.4 3-7 7.4-7.3 12.6C16.5 20.5 20.8 14 20 4z"/>',
-ELECTRIC:'<path d="M13 2L5 13.5h4.5L8 22l8-11.5h-4.5L13 2z"/>',
-ICE:'<path d="M12 1.5l4.5 6-1.8 6.8L12 22.5l-2.7-8.2L7.5 7.5zM12 5l-2.6 3.4 1.5 5.4L12 18l1.1-4.2 1.5-5.4z" fill-rule="evenodd"/>',
-FIGHTING:'<path d="M12 2l1.8 4.6L18.5 4l-1.9 4.7L21 10.5l-4.4 1.8L18.5 17l-4.7-1.9L12 20l-1.8-4.9L5.5 17l1.9-4.7L3 10.5l4.4-1.8L5.5 4l4.7 2.6z"/>',
-POISON:'<circle cx="9" cy="9" r="4.5"/><circle cx="16.5" cy="12" r="3.2"/><circle cx="11" cy="17.5" r="2.6"/>',
-GROUND:'<path d="M2 19l6.5-9.5L12.5 15l3-4L22 19z"/>',
-FLYING:'<path d="M22 5C13.5 3 5.5 7.5 4 17.5c6.5 2 12.5-.5 14.5-6-4 2.4-7.3 2.6-9.6 1.6C15.5 12.4 19.5 9.8 22 5z"/>',
-PSYCHIC:'<path fill-rule="evenodd" d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 4.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7z"/>',
-BUG:'<ellipse cx="12" cy="14.5" rx="5" ry="6.5"/><circle cx="12" cy="5.5" r="3"/>',
-ROCK:'<path d="M7.5 3.5h9L21 11l-4.5 9.5h-9L3 11z"/>',
-GHOST:'<path d="M12 2.5a7 7 0 00-7 7V21l3-2.2 2 2.2 2-2.2 2 2.2 2-2.2 3 2.2V9.5a7 7 0 00-7-7z"/>',
-DRAGON:'<path fill-rule="evenodd" d="M12 1.5L21.5 12 12 22.5 2.5 12zM12 7l-3.8 5L12 17l3.8-5z"/>',
-DARK:'<path d="M20.5 13A8.5 8.5 0 1111 3.5 7 7 0 0020.5 13z"/>',
-STEEL:'<path fill-rule="evenodd" d="M12 1.5L21 7v10l-9 5.5L3 17V7zm0 6L7.5 10v4L12 16.5 16.5 14v-4z"/>',
-FAIRY:'<path d="M12 1.5c1.2 5.3 3.5 7.6 9 8.7-5.5 1.1-7.8 3.4-9 8.7-1.2-5.3-3.5-7.6-9-8.7 5.5-1.1 7.8-3.4 9-8.7z"/>'};
-function typeSvg(t){ return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${TYPE_ICON[t]||TYPE_ICON.NORMAL}</svg>`; }
-function avatarHtml(p, cls){
-  const c1=typeColor[p.ty[0]]||'#9aa0a6', c2=p.ty[1]?typeColor[p.ty[1]]:c1;
-  const bg = p.ty[1]?`linear-gradient(135deg,${c1} 50%,${c2} 50%)`:c1;
-  return `<span class="avatar ${cls||''}" style="background:${bg}">${typeSvg(p.ty[0])}</span>`;
-}
-function mvIcon(t){ return `<svg class="mv-ic" viewBox="0 0 24 24" style="fill:${typeColor[t]}">${TYPE_ICON[t]||''}</svg>`; }
+// 複合タイプは分割カラー円ではなく typePairHTML でアイコン2個を横並び表示する
+function typeIcons(p, size){ return typePairHTML(p.ty.map(t=>D.typeJa[t]), size); }
 attachSugg(document.getElementById('bossInput'),document.getElementById('bossSugg'),k=>{
   boss=k; renderBoss(); renderRank();
 });
@@ -318,11 +294,11 @@ function renderBoss(){
   const p=D.pokemon[boss];
   const weak=D.types.filter(t=>eff(t,p.ty)>1.01)
     .sort((a,b)=>eff(b,p.ty)-eff(a,p.ty))
-    .map(t=>`<span class="wchip" style="background:${typeColor[t]}">${typeSvg(t)}${D.typeJa[t]}<b>×${eff(t,p.ty).toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}</b></span>`);
+    .map(t=>`<span class="wchip">${typeIconHTML(D.typeJa[t],18)}<b>×${eff(t,p.ty).toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}</b></span>`);
   document.getElementById('bossView').innerHTML=
-    `<div class="bossline">${avatarHtml(p,'lg')}
+    `<div class="bossline">
        <div><div class="bossname">${p.n}</div>
-       <div class="chips">${p.ty.map(t=>`<span class="chip" style="background:${typeColor[t]}">${typeSvg(t)}${D.typeJa[t]}</span>`).join('')}</div></div></div>
+       <div class="chips">${typeIcons(p,26)}</div></div></div>
      <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>`;
 }
 
@@ -415,7 +391,7 @@ function mineRows(){
 function moveLabel(p, id, sp){
   const m=D.moves[id];
   const isSp = sp!==undefined?sp:(p.eq.includes(id)||p.ec.includes(id));
-  const nm = mvIcon(m.t)+(isSp?`<span class="sp">${m.n}(特)</span>`:m.n);
+  const nm = typeIconHTML(D.typeJa[m.t],14)+(isSp?`<span class="sp">${m.n}(特)</span>`:m.n);
   return nm;
 }
 function badges(shadow, mega){
@@ -442,14 +418,14 @@ function renderRank(){
   while(pos<mi.length && showN>=rows.length){merged.push({mine:true,...mi[pos],rank:rows.filter(r=>r.dps>mi[pos].dps).length+1});pos++;}
   listEl.innerHTML=merged.map(r=>{
     if(r.mine){
-      return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div>${avatarHtml(r.p)}<div class="rmain">
-        <div class="rname">${badges(r.e.shadow,false)}${r.p.n}<small>${r.e.isMax?'PL50・個体値15':'PL'+r.e.lv+'・攻個体'+r.e.iva}（あなた）</small></div>
+      return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div><div class="rmain">
+        <div class="rname">${badges(r.e.shadow,false)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>${r.e.isMax?'PL50・個体値15':'PL'+r.e.lv+'・攻個体'+r.e.iva}（あなた）</small></div>
         <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}</div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
         <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
-    return `<div class="rank-row"><div class="rk">${r.rank}</div>${avatarHtml(r.p)}<div class="rmain">
-      <div class="rname">${badges(r.shadow,r.p.mega)}${r.p.n}<small>PL50・個体値15</small></div>
+    return `<div class="rank-row"><div class="rk">${r.rank}</div><div class="rmain">
+      <div class="rname">${badges(r.shadow,r.p.mega)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>PL50・個体値15</small></div>
       <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}</div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;

@@ -34,6 +34,9 @@ SUPP_EC = {  # ゲージ技の特別枠へ追加
     'ZAMAZENTA_CROWNED_SHIELD':['BEHEMOTH_BASH'],     # きょじゅうだん
     'KYUREM_BLACK':            ['FREEZE_SHOCK'],      # フリーズボルト
     'KYUREM_WHITE':            ['ICE_BURN'],          # コールドフレア
+    # オリジンフォルム専用の特別技。通常フォルムには追加しない（GM未反映）
+    'PALKIA_ORIGIN':           ['SPACIAL_REND'],      # あくうせつだん
+    'DIALGA_ORIGIN':           ['ROAR_OF_TIME'],      # ときのほうこう
 }
 SUPP_EQ = {  # 通常技の特別枠へ追加
     'MEWTWO': ['COUNTER_FAST'],                       # カウンター(GOフェス2026)

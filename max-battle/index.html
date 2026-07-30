@@ -59,7 +59,6 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .bosscard .bmoves{margin-top:10px;font-size:.76rem;color:var(--sub);display:flex;gap:6px;flex-wrap:wrap;align-items:center;position:relative;z-index:1}
 .bosscard .bmv{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--text);font-size:.74rem;font-weight:600}
 .bosscard .bmv .mvp{color:var(--faint);font-size:.66rem}
-.tchip{font-size:.66rem;padding:2px 9px;border-radius:999px;color:#fff;font-weight:700;white-space:nowrap;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25)}
 .tgroup{display:inline-flex;gap:4px;white-space:nowrap;flex-shrink:0}
 .badgetypes{display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex-shrink:0}
 .catline{margin-top:5px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -256,10 +255,10 @@ footer a{color:var(--spec)}
 
 <script src="data/max_data.js"></script>
 <script src="data/boss_params.js"></script>
+<script src="/assets/type-icons.js"></script>
 <script>
 (function(){
   const D = MAX_DATA;
-  const TYPE_COLORS = {"ノーマル":"#9099a1","かくとう":"#ce4069","ひこう":"#8fa8dd","どく":"#ab6ac8","じめん":"#d97746","いわ":"#c7b78b","むし":"#90c12c","ゴースト":"#5269ac","はがね":"#5a8ea1","ほのお":"#ff9c54","みず":"#4d90d5","くさ":"#63bb5b","でんき":"#f3d23b","エスパー":"#f97176","こおり":"#74cec0","ドラゴン":"#0a6dc4","あく":"#5a5366","フェアリー":"#ec8fe6"};
   const $ = id => document.getElementById(id);
   const bq=$('bq'), sug=$('sug'), bosscard=$('bosscard'), bnameEl=$('bname'), bweakEl=$('bweak');
   const listEl=$('list'), moreBtn=$('more'), emptyEl=$('empty'), placeholderEl=$('placeholder');
@@ -277,11 +276,12 @@ footer a{color:var(--spec)}
   let myQuery='', shown=30, ranked=[], rankedAll=[], swapSel=0;
 
   // ---------- 共通ヘルパー ----------
-  function chip(ti){
-    const jp = D.types_jp[ti];
-    return `<span class="tchip" style="background:${TYPE_COLORS[jp]}">${jp}</span>`;
+  // 単体のタイプアイコン。技名に付く場合は既定14px(技名テキストに合わせる)
+  function chip(ti, size){ return typeIconHTML(D.types_jp[ti], size || 14); }
+  // タイプアイコン2個組は .tgroup で分割不可を維持(既存ルール)
+  function chips(tys, size){
+    return `<span class="tgroup">${typePairHTML(tys.map(ti => D.types_jp[ti]), size || 18)}</span>`;
   }
-  function chips(tys){ return `<span class="tgroup">${tys.map(chip).join('')}</span>`; }
   function effVs(attType, defTypes){
     let m = 1;
     for(const dt of defTypes) m *= D.chart[attType][dt];
@@ -425,7 +425,7 @@ footer a{color:var(--spec)}
     boss = b;
     bq.value = b.n;
     sug.style.display = 'none';
-    bnameEl.innerHTML = `${b.n} ${chips(b.ty)}`;
+    bnameEl.innerHTML = `${b.n} ${chips(b.ty, 24)}`;
     const weaks = [];
     for(let t=0;t<18;t++){
       const m = effVs(t, b.ty);
@@ -433,7 +433,7 @@ footer a{color:var(--spec)}
     }
     weaks.sort((a,b)=>b.m-a.m);
     bweakEl.innerHTML = '弱点: ' + (weaks.length
-      ? weaks.map(w => `${chip(w.t)}<span class="mult">×${w.m>=2.5?'2.56':'1.6'}</span>`).join(' ')
+      ? weaks.map(w => `${chip(w.t, 18)}<span class="mult">×${w.m>=2.5?'2.56':'1.6'}</span>`).join(' ')
       : 'なし');
     document.getElementById('bmoves').innerHTML = '使ってくる技: ' + (b.cm.length
       ? b.cm.map(mi => {
@@ -880,7 +880,7 @@ footer a{color:var(--spec)}
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
         <div class="prow">
           <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
-          <div class="pname"><span class="nameplate">${catTag(r.p.cat)}<span class="nm">${r.p.n}</span>${chips(r.p.ty)}</span></div>
+          <div class="pname"><span class="nameplate">${catTag(r.p.cat)}<span class="nm">${r.p.n}</span>${chips(r.p.ty, 24)}</span></div>
         </div>
         <div class="top">
           <div class="namebox">
@@ -910,7 +910,7 @@ footer a{color:var(--spec)}
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank === 1 && !r._all ? ' no1' : ''}">
         <div class="prow">
           <div class="rank ${rankCls(r.rank)}${r._all ? ' allr' : ''}">${r._all ? '全体' : ''}${r.rank}位</div>
-          <div class="pname"><span class="nameplate"><span class="nm">${r.p.n}</span>${chips(r.p.ty)}</span></div>
+          <div class="pname"><span class="nameplate"><span class="nm">${r.p.n}</span>${chips(r.p.ty, 24)}</span></div>
         </div>
         <div class="top">
           <div class="namebox">
@@ -938,7 +938,7 @@ footer a{color:var(--spec)}
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank === 1 ? ' no1' : ''}">
         <div class="prow">
           <div class="rank ${rankCls(r.rank)}">${r.rank}位</div>
-          <div class="pname"><span class="nameplate"><span class="nm">${r.p.n}</span>${chips(r.p.ty)}</span></div>
+          <div class="pname"><span class="nameplate"><span class="nm">${r.p.n}</span>${chips(r.p.ty, 24)}</span></div>
         </div>
         <div class="top">
           <div class="namebox">

@@ -48,8 +48,9 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:#0d1a12;border-radius:
 .rank.r10{background:var(--silver);color:#232c34}
 .rank.r100{background:var(--bronze);color:#2e1c0d}
 .namebox{flex:1;min-width:0}
-.pname{font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tchip{font-size:.66rem;padding:2px 8px;border-radius:20px;color:#fff;font-weight:700}
+/* 名前 → タイプアイコン → 二重弱点 の順。アイコンは常に表示(縮まない) */
+.pname{font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pname .tpair{flex-shrink:0}
 .moves{color:var(--sub);font-size:.78rem;margin-top:2px}
 .pts{text-align:right;min-width:84px}
 .pts b{font-size:1.15rem}
@@ -108,10 +109,10 @@ footer a{color:var(--accent2)}
 </div>
 
 <script src="data/defense_data.js"></script>
+<script src="/assets/type-icons.js"></script>
 <script>
 (function(){
   const D = DEFENSE_DATA;
-  const TYPE_COLORS = {"ノーマル":"#9099a1","かくとう":"#ce4069","ひこう":"#8fa8dd","どく":"#ab6ac8","じめん":"#d97746","いわ":"#c7b78b","むし":"#90c12c","ゴースト":"#5269ac","はがね":"#5a8ea1","ほのお":"#ff9c54","みず":"#4d90d5","くさ":"#63bb5b","でんき":"#f3d23b","エスパー":"#f97176","こおり":"#74cec0","ドラゴン":"#0a6dc4","あく":"#5a5366","フェアリー":"#ec8fe6"};
   const listEl = document.getElementById('list');
   const moreBtn = document.getElementById('more');
   const emptyEl = document.getElementById('empty');
@@ -142,7 +143,7 @@ footer a{color:var(--accent2)}
       const rk = ranks[e.n];
       const row = document.createElement('div');
       row.className = 'row' + (query ? ' hit' : '');
-      const chips = e.t.map(t => `<span class="tchip" style="background:${TYPE_COLORS[D.types_jp[t]]||'#666'}">${D.types_jp[t]}</span>`).join('');
+      const chips = typePairHTML(e.t.map(t => D.types_jp[t]), 18);
       const tot = totalOf(e);
       const sum = e.pb + e.pt + e.py + (withInt ? e.pi : 0);
       const w = v => Math.max(0, v / sum * (tot / R.max) * 100).toFixed(1);

@@ -44,8 +44,8 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:#1a1a1a;border-radius:
 .defender{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:none}
 .defender .dname{font-size:1.15rem;font-weight:700}
 .defender .dmeta{color:var(--sub);font-size:.8rem;margin-top:4px}
-.typechips{display:inline-flex;gap:6px;margin-left:8px;vertical-align:middle}
-.tchip{font-size:.68rem;padding:2px 8px;border-radius:20px;color:#fff;font-weight:700}
+.defender .dname .tpair{margin-left:6px}
+.dmeta .tlist{display:inline-flex;gap:5px;vertical-align:middle}
 /* 設定 */
 details.settings{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
 details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-size:.85rem}
@@ -57,8 +57,12 @@ details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center}
 .rank{font-size:1.05rem;font-weight:800;text-align:center;color:var(--sub)}
 .rank.r1{color:#ffd54f}.rank.r2{color:#cfd8dc}.rank.r3{color:#d7a97c}
-.pname{font-weight:700;font-size:1.0rem}
-.pname .shadow{color:#c39bff;font-size:.72rem;margin-left:6px;border:1px solid #6b4fa0;border-radius:6px;padding:1px 6px}
+.pname{font-weight:700;font-size:1.0rem;display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;min-width:0}
+.pname .hits{display:inline-flex;flex-shrink:0;align-items:center}
+.pname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pname .tpair{flex-shrink:0}
+.pname .shadow{color:#c39bff;font-size:.72rem;border:1px solid #6b4fa0;border-radius:6px;padding:1px 6px;flex-shrink:0}
+.card>div{min-width:0}
 .moves{margin-top:4px;font-size:.82rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
 .gauge{display:inline-flex;gap:2px;margin-left:4px;vertical-align:middle}
 .gauge i{width:10px;height:6px;border-radius:2px;background:var(--bar)}
@@ -132,8 +136,8 @@ footer{margin-top:28px;color:#5c6b7a;font-size:.7rem;text-align:center}
 </div>
 
 <script src="data/gym_data.js"></script>
+<script src="/assets/type-icons.js"></script>
 <script>
-const TYPE_COLORS=["#9aa0a6","#d3425f","#89aae3","#b567ce","#d97845","#c9b787","#92bc2c","#5f6dbc","#5695a3","#fb9b51","#4a90dd","#5fbd58","#f2d94e","#fa8581","#70ccbd","#0c69c8","#595761","#ee90e6"];
 const CFG={CPM50:0.84029999,CPM_TBL:{40:0.7903,50:0.84029999},IV:15,HP_MULT:2};
 let DATA=null, currentDefender=null;
 
@@ -157,7 +161,7 @@ $q.addEventListener('input',()=>{
   $sg.innerHTML='';
   hits.forEach(p=>{
     const b=document.createElement('button');
-    b.innerHTML=`<span>${p.name}</span><span class="typechips">${p.types.map(t=>`<span class="tchip" style="background:${TYPE_COLORS[t]}">${DATA.types_jp[t]}</span>`).join('')}</span>`;
+    b.innerHTML=`<span>${p.name}</span>${typePairHTML(p.types.map(t=>DATA.types_jp[t]),18)}`;
     b.onclick=()=>{selectDefender(p);};
     $sg.appendChild(b);
   });
@@ -215,12 +219,15 @@ function render(def){
   const chargedTypes=defTypeEntries.filter(e=>e.w===1).map(e=>DATA.types_jp[e.t]);
   const fastOnlyTypes=defTypeEntries.filter(e=>e.w<1).map(e=>DATA.types_jp[e.t]);
 
+  // タイプアイコンの列挙表示(複合タイプの2個組と区別するため間隔を広めに)
+  const tlist=a=>a.length?`<span class="tlist">${a.map(t=>typeIconHTML(t,18)).join('')}</span>`:'';
+
   document.getElementById('defender').style.display='block';
   const hitLegend=(MODE==='total')?` / 弱点・等倍・耐性の数は防衛側の技タイプ数`:'';
   document.getElementById('defender').innerHTML=
     `<div class="dname">防衛: ${def.name}
-      <span class="typechips">${def.types.map(t=>`<span class="tchip" style="background:${TYPE_COLORS[t]}">${DATA.types_jp[t]}</span>`).join('')}</span></div>
-     <div class="dmeta">想定: PL${dpl}・個体値15 / ジム補正HP ${defHP}(2倍) / 反撃技タイプ: ${chargedTypes.join('・')||'-'}${fastOnlyTypes.length?` <span style="opacity:.7">(通常技のみ: ${fastOnlyTypes.join('・')})</span>`:''}${hitLegend}</div>`;
+      ${typePairHTML(def.types.map(t=>DATA.types_jp[t]),22)}</div>
+     <div class="dmeta">想定: PL${dpl}・個体値15 / ジム補正HP ${defHP}(2倍) / 反撃技タイプ: ${tlist(chargedTypes)||'-'}${fastOnlyTypes.length?` <span style="opacity:.7">(通常技のみ: ${tlist(fastOnlyTypes)})</span>`:''}${hitLegend}</div>`;
 
   const rows=[];
   for(const p of DATA.pokemon){
@@ -272,7 +279,7 @@ function render(def){
     let hitHtml='';
     if(MODE==='total'){
       const hitTitle=`防衛側の技タイプに対する内訳(参考: 比重換算 弱${r.hitW.toFixed(1)}・等${r.hitN.toFixed(1)}・耐${r.hitR.toFixed(1)})`;
-      hitHtml=`<span title="${hitTitle}">`
+      hitHtml=`<span class="hits" title="${hitTitle}">`
         +(r.cW>0?`<span class="hchip hw">弱点${r.cW}</span>`:'')
         +(r.cN>0?`<span class="hchip hn">等倍${r.cN}</span>`:'')
         +(r.cR>0?`<span class="hchip hr">耐性${r.cR}</span>`:'')
@@ -282,7 +289,7 @@ function render(def){
     el.innerHTML=`
       <div class="rank ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i+1}位</div>
       <div>
-        <div class="pname">${r.p.name}${r.isShadow?'<span class="shadow">シャドウ</span>':''}${hitHtml}</div>
+        <div class="pname"><span class="nm">${r.p.name}</span>${typePairHTML(r.p.types.map(t=>DATA.types_jp[t]),18)}${r.isShadow?'<span class="shadow">シャドウ</span>':''}${hitHtml}</div>
         <div class="moves">
           <span>${fm.jp}</span><span>/</span>
           <span>${cm.jp}<span class="gauge ${r.bars===1?'g1':''}">${'<i></i>'.repeat(r.bars)}</span></span>
