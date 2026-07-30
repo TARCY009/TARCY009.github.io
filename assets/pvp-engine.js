@@ -91,6 +91,18 @@
             charging[i] = avail[0];
             continue;
           }
+        } else if (s.cfg.timing === 'optimal') {
+          // 最適(CCT): 相手の通常技の最終ターンを狙って撃つ(差し込みで相手を得させない)。
+          // 倒しきれる場合はタイミングを待たず即撃ち。待つターンは通常技を開始する。
+          const o = sides[1 - i];
+          const mv = s.cfg.throw ? D.moves[s.cfg.throw]
+            : (s.cfg.charged || []).map(id => D.moves[id])
+                .sort((a, b) => damage(D, b, s, o) / b.e - damage(D, a, s, o) / a.e)[0];
+          if (mv && s.en >= mv.e) {
+            const dealt = o.shields > 0 ? 1 : damage(D, mv, s, o);
+            const oppFinal = o.cd === 1 || (o.cd === 0 && o.fast.tn === 1);
+            if (dealt >= o.hp || oppFinal) { charging[i] = mv; continue; }
+          }
         } else {
           const planIdx = s.plan.findIndex(p => p.on === turn);
           if (planIdx >= 0) {
