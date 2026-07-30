@@ -4,3 +4,6 @@ HANDOVER.md
 # build_data.py が生成する差分サマリー
 # GitHub Actions が自動PRの本文(body-path)に使う一時ファイルのためコミットしない
 changes.md
+
+# 対戦エンジン開発の答え合わせ資料(みんポケの出力を写した私的検証データのため公開しない)
+pvp-tests/
