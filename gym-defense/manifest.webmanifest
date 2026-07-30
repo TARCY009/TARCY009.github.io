@@ -1,0 +1,15 @@
+{
+  "name": "ジム防衛オススメツール",
+  "short_name": "ジム防衛",
+  "description": "攻撃側メタ分布を加重した総合ポイントで、ジム防衛におすすめのポケモンをランキング表示します。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101418",
+  "theme_color": "#6fcf8f",
+  "lang": "ja",
+  "icons": [
+    { "src": "/assets/icons/gym-defense/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/gym-defense/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

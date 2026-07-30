@@ -1,0 +1,15 @@
+{
+  "name": "ジム挑戦オススメツール",
+  "short_name": "ジム挑戦",
+  "description": "防衛ポケモンを指定すると、連戦効率を考慮したジム攻撃おすすめランキングを表示します。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101418",
+  "theme_color": "#f5b942",
+  "lang": "ja",
+  "icons": [
+    { "src": "/assets/icons/gym-attack/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/gym-attack/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

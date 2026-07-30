@@ -1,0 +1,15 @@
+{
+  "name": "マックスバトル対策ツール",
+  "short_name": "マックスバトル",
+  "description": "マックスバトルのボス対策ランキングを表示します。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0912",
+  "theme_color": "#ff3d6e",
+  "lang": "ja",
+  "icons": [
+    { "src": "/assets/icons/max-battle/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/max-battle/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

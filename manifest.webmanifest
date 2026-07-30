@@ -1,0 +1,15 @@
+{
+  "name": "ポケモンGO 火力チェッカー",
+  "short_name": "火力チェッカー",
+  "description": "ボスを設定すると火力ランキングを自動生成。自分のポケモンはCP＋個体値で今の火力がわかる。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f0f4fd",
+  "theme_color": "#ff5470",
+  "lang": "ja",
+  "icons": [
+    { "src": "/assets/icons/karyoku/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/karyoku/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
