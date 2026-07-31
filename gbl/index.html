@@ -86,9 +86,24 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .share button:hover{border-color:var(--gl)}
 .loading{margin-top:22px;color:var(--sub);text-align:center}
 footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
+/* 結論の要約 */
+.concl{font-size:.95rem;font-weight:700;margin-bottom:10px;line-height:1.5}
+.concl .w{color:var(--win)}
+.concl small{display:block;font-weight:400;color:var(--sub);font-size:.74rem;margin-top:2px}
+.selC2{opacity:.55}
+.tltbl tr.gap td{color:var(--sub);font-size:.7rem;padding:4px;border-bottom:1px dashed var(--line)}
+.tltbl td.ko{color:var(--lose);font-weight:700}
+.tlhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.tlhead h3{margin:0;font-size:.8rem;white-space:nowrap}
+.tlmode{display:flex;gap:4px;flex-shrink:0}
+.tlmode button{padding:4px 10px;font-size:.72rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;white-space:nowrap}
+.tltbl .mvname{white-space:nowrap}
+.tlmode button[aria-pressed="true"]{background:var(--gl);border-color:var(--gl);color:#06122b;font-weight:700}
 @media (max-width:430px){
   .duel{gap:6px}
   .side{padding:8px}
+  h1{font-size:1.08rem}
+  select{font-size:.76rem;padding:6px 4px}
 }
 </style>
 </head>
@@ -113,16 +128,17 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
       <div class="ivline"></div>
       <label class="f">通常技</label><select class="selFast"></select>
-      <label class="f">ゲージ技1 / ゲージ技2</label>
+      <label class="f">ゲージ技（この対面で使用）</label>
       <select class="selC1"></select>
-      <select class="selC2" style="margin-top:4px"></select>
+      <label class="f">ゲージ技2（予備・この対面では未使用）</label>
+      <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button>
       </div>
       <label class="f">ゲージ技タイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true">最適</button><button data-v="asap" aria-pressed="false">最短</button>
+        <button data-v="optimal" aria-pressed="true" title="相手の通常技の最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button>
       </div>
     </div>
   </div>
@@ -133,16 +149,17 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
       <div class="ivline"></div>
       <label class="f">通常技</label><select class="selFast"></select>
-      <label class="f">ゲージ技1 / ゲージ技2</label>
+      <label class="f">ゲージ技（この対面で使用）</label>
       <select class="selC1"></select>
-      <select class="selC2" style="margin-top:4px"></select>
+      <label class="f">ゲージ技2（予備・この対面では未使用）</label>
+      <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button>
       </div>
       <label class="f">ゲージ技タイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true">最適</button><button data-v="asap" aria-pressed="false">最短</button>
+        <button data-v="optimal" aria-pressed="true" title="相手の通常技の最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button>
       </div>
     </div>
   </div>
@@ -171,7 +188,9 @@ document.getElementById('loading').style.display = 'none';
 const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r && !D.pokemon[k].mega);
 const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 18);
-const mvIcon = (mid, size) => `<span class="mvname">${typeIconHTML(D.typeJa[D.moves[mid].t], size || 14)}${D.moves[mid].n}</span>`;
+const MOVE_TYPE = {};
+Object.values(D.moves).forEach(m => { MOVE_TYPE[m.n] = m.t; });
+const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOVE_TYPE[name]] || '', size || 13)}${name}</span>`;
 
 // ---- リーグ上限内の理想個体値(SCP最大)を求める ----
 const LEVELS = Object.keys(D.cpm).map(Number).filter(l => l <= 51).sort((a, b) => a - b);
@@ -360,8 +379,18 @@ function render(res, L, R) {
     return `<div class="fighter">
       <div class="top">${badge(i)}<span class="nm">${f.name}</span></div>
       <div class="hpbar"><i class="${pct <= 25 ? 'low' : ''}" style="width:${pct}%"></i></div>
-      <div class="subline">残りHP ${f.hp}/${f.hpMax}（${pct}%）・残りゲージ ${f.en}・シールド残${f.shields}</div>
+      <div class="subline">残りHP ${f.hp}/${f.hpMax}（${pct}%）</div>
+      <div class="subline">ゲージ${f.en}・シールド残${f.shields}</div>
     </div>`;
+  };
+  // 結論の要約文(専門値の前に、何が起きたかをひと言で)
+  const concl = () => {
+    if (res.winner === 'draw') return `<div class="concl">相打ちで引き分けでした。</div>`;
+    const w = res.final[res.winner], l = res.final[1 - res.winner];
+    const pct = Math.round(w.hp / w.hpMax * 100);
+    const secs = (res.turns / 2).toFixed(1);
+    return `<div class="concl"><span class="w">${w.name}の勝ち！</span> HPを${pct}%残して${l.name}を倒しきりました。
+      <small>対面時間 約${secs}秒（${res.turns}ターン）・両者とも理想個体値&自動最適の技構成</small></div>`;
   };
   // 技ごとの集計
   const mvRows = i => {
@@ -377,39 +406,74 @@ function render(res, L, R) {
       if (e.shielded) uses[e.move].sh++;
     });
     return Object.entries(uses).map(([n, u]) =>
-      `<tr><td>${n}</td><td class="num">威力${u.dmg}</td><td class="num">${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</td></tr>`).join('');
+      `<tr><td>${mvChip(n)}</td><td class="num">威力${u.dmg}</td><td class="num">${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</td></tr>`).join('');
   };
   rEl.innerHTML = `
+    ${concl()}
     <div class="vs">${fighter(0, L)}<div class="vsmark">VS</div>${fighter(1, R)}</div>
     <table class="mvtbl"><tr><td colspan="3" style="border-top:none;color:var(--sub);font-size:.68rem">${res.final[0].name}の技（実測値）</td></tr>${mvRows(0)}
     <tr><td colspan="3" style="color:var(--sub);font-size:.68rem">${res.final[1].name}の技（実測値）</td></tr>${mvRows(1)}</table>`;
-  // タイムライン
+  lastRes = res;
+  renderTimeline();
+  document.getElementById('share').style.display = 'flex';
+  history.replaceState(null, '', '?' + new URLSearchParams({
+    lg: cap, l: L.key, r: R.key, sl: L.shields, sr: R.shields, tl: L.timing, tr: R.timing
+  }).toString());
+}
+
+// ---- タイムライン(ダイジェスト/全ターン切替) ----
+let lastRes = null, tlMode = 'digest';
+function renderTimeline() {
+  const res = lastRes;
+  if (!res) return;
   const tl = document.getElementById('tl');
   tl.style.display = 'block';
-  const evTxt = (e, right) => {
+  const evTxt = e => {
     if (!e) return '';
-    let t = e.move;
+    let t = mvChip(e.move);
     if (e.shielded) t += ' <span class="shield">🛡防がれた</span>';
     else if (e.full) t += ` <b>-${e.dmg}</b>`;
     else t += ` -${e.dmg}`;
     if (e.buff && e.buff.target !== 'opponent') t += ' <span class="buffup">攻↑</span>';
     return t;
   };
-  tl.innerHTML = `<h3>タイムライン（0.5秒=1ターン）</h3>
+  const rowHtml = row => `<tr${row.tn === '-' ? ' class="charged"' : ''}>
+      <td class="ev">${evTxt(row.ev[0])}</td>
+      <td class="${row.state[0].hp === 0 ? 'ko' : ''}">${row.state[0].hp}</td><td>${row.state[0].en}</td>
+      <td class="tn">${row.tn}</td>
+      <td>${row.state[1].en}</td><td class="${row.state[1].hp === 0 ? 'ko' : ''}">${row.state[1].hp}</td>
+      <td class="ev r">${evTxt(row.ev[1])}</td>
+    </tr>`;
+  // ダイジェスト: ゲージ技・シールド・バフ・決着の行だけを残し、間は1行にたたむ
+  const isKey = (row, idx) => row.tn === '-' || idx === res.rows.length - 1 ||
+    (row.ev[0] && (row.ev[0].full || row.ev[0].buff)) || (row.ev[1] && (row.ev[1].full || row.ev[1].buff));
+  let body = '';
+  if (tlMode === 'digest') {
+    let hidden = [];
+    const flush = () => {
+      if (!hidden.length) return;
+      const a = hidden[0].tn, b = hidden[hidden.length - 1].tn;
+      body += `<tr class="gap"><td colspan="7">… 通常技の応酬 ${hidden.length}ターン（TN${a}${a === b ? '' : '〜' + b}）…</td></tr>`;
+      hidden = [];
+    };
+    res.rows.forEach((row, idx) => {
+      if (isKey(row, idx)) { flush(); body += rowHtml(row); }
+      else hidden.push(row);
+    });
+    flush();
+  } else {
+    body = res.rows.map(rowHtml).join('');
+  }
+  tl.innerHTML = `<div class="tlhead"><h3>タイムライン（0.5秒=1ターン）</h3>
+    <div class="tlmode">
+      <button aria-pressed="${tlMode === 'digest'}" data-m="digest">山場だけ</button>
+      <button aria-pressed="${tlMode === 'all'}" data-m="all">全ターン</button>
+    </div></div>
   <div style="overflow-x:auto"><table class="tltbl">
     <tr><th style="text-align:left">${res.final[0].name}</th><th>HP</th><th>EN</th><th>TN</th><th>EN</th><th>HP</th><th style="text-align:right">${res.final[1].name}</th></tr>
-    ${res.rows.map(row => `<tr${row.tn === '-' ? ' class="charged"' : ''}>
-      <td class="ev">${evTxt(row.ev[0])}</td>
-      <td>${row.state[0].hp}</td><td>${row.state[0].en}</td>
-      <td class="tn">${row.tn}</td>
-      <td>${row.state[1].en}</td><td>${row.state[1].hp}</td>
-      <td class="ev r">${evTxt(row.ev[1], true)}</td>
-    </tr>`).join('')}
+    ${body}
   </table></div>`;
-  document.getElementById('share').style.display = 'flex';
-  history.replaceState(null, '', '?' + new URLSearchParams({
-    lg: cap, l: L.key, r: R.key, sl: L.shields, sr: R.shields, tl: L.timing, tr: R.timing
-  }).toString());
+  tl.querySelectorAll('.tlmode button').forEach(b => b.onclick = () => { tlMode = b.dataset.m; renderTimeline(); });
 }
 
 document.getElementById('copyUrl').onclick = async () => {
