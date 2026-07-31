@@ -95,7 +95,13 @@
           // 最適(CCT): 相手の通常技の最終ターンを狙って撃つ(差し込みで相手を得させない)。
           // 倒しきれる場合はタイミングを待たず即撃ち。待つターンは通常技を開始する。
           const o = sides[1 - i];
-          const mv = s.cfg.throw ? D.moves[s.cfg.throw]
+          let mvId = null;
+          if (s.cfg.throwSeq) {   // 何発目にどのわざを打つかの指定(マニュアル)
+            const idx = s.thrown || 0;
+            mvId = idx < s.cfg.throwSeq.length ? s.cfg.throwSeq[idx] : s.cfg.throwRest;
+          }
+          const mv = mvId ? D.moves[mvId]
+            : s.cfg.throw ? D.moves[s.cfg.throw]
             : (s.cfg.charged || []).map(id => D.moves[id])
                 .sort((a, b) => damage(D, b, s, o) / b.e - damage(D, a, s, o) / a.e)[0];
           if (mv && s.en >= mv.e) {
@@ -144,12 +150,14 @@
         s.en -= mv.e;
         const full = damage(D, mv, s, o);
         // シールド判断: shieldPlan(相手のSP何発目で使うかの配列)があればそれに従う
+        // shieldRest=trueなら6発目以降はすべて使う
         o.spSeen = (o.spSeen || 0) + 1;
         const shielded = o.cfg.shieldPlan
-          ? (o.shields > 0 && o.cfg.shieldPlan.includes(o.spSeen))
+          ? (o.shields > 0 && (o.cfg.shieldPlan.includes(o.spSeen) || (o.cfg.shieldRest && o.spSeen > 5)))
           : o.shields > 0;
         const dealt = shielded ? 1 : full;
         if (shielded) o.shields--;
+        s.thrown = (s.thrown || 0) + 1;
         o.hp -= dealt;
         const buff = applyBuffs(mv, s, o, opt.rng);
         const ev = [null, null];

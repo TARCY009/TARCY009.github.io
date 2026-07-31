@@ -98,9 +98,24 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .tlmode{display:flex;gap:4px;flex-shrink:0}
 .tlmode button{padding:4px 10px;font-size:.72rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;white-space:nowrap}
 .tltbl .mvname{white-space:nowrap}
-.cust{margin-top:4px}
-.cust input{width:100%;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:.8rem;outline:none}
-.cust input:focus{border-color:var(--gl)}
+.popwin{margin-top:6px;border:1px solid var(--gl);border-radius:10px;padding:8px;background:var(--bg2)}
+.popttl{font-size:.7rem;color:var(--sub);font-weight:600;margin-bottom:6px}
+.slots{display:flex;flex-wrap:wrap;gap:4px}
+.slots button{flex:1 0 30%;padding:5px 2px;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;white-space:nowrap}
+.slots button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b;font-weight:700}
+.legend{font-size:.68rem;color:var(--sub);margin-bottom:6px;line-height:1.7}
+.sprow{display:flex;align-items:center;gap:6px;margin-top:4px}
+.sprow .lbl{font-size:.7rem;color:var(--sub);width:3.6em;flex-shrink:0}
+.sprow button{flex:1;padding:4px 2px;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sprow button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26;font-weight:700}
+/* 全ターン表示: わざ1発を所要ターン分の枠で表示 */
+.mvblock{border:2px solid #3b4a86;background:rgba(19,26,51,.5);font-size:.72rem;vertical-align:middle;padding:2px 4px}
+.mvblock.l{text-align:left}
+.mvblock.r{text-align:right}
+.mvblock.spblock{border-color:var(--ml);background:rgba(176,108,255,.14)}
+.mvblock.pendingblock{border-style:dashed;color:var(--sub)}
+.mvblock .shield{display:block;font-size:.68rem}
+.mvblock .mvname{white-space:normal}
 .evbox{display:inline-block;border:1px solid #35406e;border-radius:8px;padding:1px 6px;margin:1px 0;background:rgba(19,26,51,.7)}
 .tlmode button[aria-pressed="true"]{background:var(--gl);border-color:var(--gl);color:#06122b;font-weight:700}
 @media (max-width:430px){
@@ -118,7 +133,6 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 <div class="wrap">
 <header>
   <h1>GOバトルリーグ <b>対面シミュレーター</b></h1>
-  <p class="lead">ポケモンを2匹選ぶと、理想個体値・技構成を自動で最適化して1ターン単位で対面を再現します。</p>
 </header>
 
 <div class="leagues" id="leagues">
@@ -137,23 +151,26 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック（この対面で使用）</label>
       <select class="selC1"></select>
-      <label class="f">SPアタック2（予備・この対面では未使用）</label>
+      <label class="f">SPアタック2（追加する場合に選択）</label>
       <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <div class="cust custShield" style="display:none">
-        <label class="f">敵のSPアタック何発目で使う？</label>
-        <input class="inpShield" type="text" inputmode="numeric" placeholder="例: 1,3">
+      <div class="popwin custShield" style="display:none">
+        <div class="popttl">敵のSPアタック何発目でシールドを使う？</div>
+        <div class="slots shslots">
+          <button data-slot="1">1発目</button><button data-slot="2">2発目</button><button data-slot="3">3発目</button><button data-slot="4">4発目</button><button data-slot="5">5発目</button><button data-slot="6">6発目〜</button>
+        </div>
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <div class="cust custPlan" style="display:none">
-        <label class="f">SPアタックを打つターン</label>
-        <input class="inpPlan" type="text" inputmode="numeric" placeholder="例: 15,28,41">
+      <div class="popwin custPlan" style="display:none">
+        <div class="popttl">何発目にどっちのSPアタックを打つ？</div>
+        <div class="legend"></div>
+        <div class="sprows"></div>
       </div>
     </div>
   </div>
@@ -166,23 +183,26 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック（この対面で使用）</label>
       <select class="selC1"></select>
-      <label class="f">SPアタック2（予備・この対面では未使用）</label>
+      <label class="f">SPアタック2（追加する場合に選択）</label>
       <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <div class="cust custShield" style="display:none">
-        <label class="f">敵のSPアタック何発目で使う？</label>
-        <input class="inpShield" type="text" inputmode="numeric" placeholder="例: 1,3">
+      <div class="popwin custShield" style="display:none">
+        <div class="popttl">敵のSPアタック何発目でシールドを使う？</div>
+        <div class="slots shslots">
+          <button data-slot="1">1発目</button><button data-slot="2">2発目</button><button data-slot="3">3発目</button><button data-slot="4">4発目</button><button data-slot="5">5発目</button><button data-slot="6">6発目〜</button>
+        </div>
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <div class="cust custPlan" style="display:none">
-        <label class="f">SPアタックを打つターン</label>
-        <input class="inpPlan" type="text" inputmode="numeric" placeholder="例: 15,28,41">
+      <div class="popwin custPlan" style="display:none">
+        <div class="popttl">何発目にどっちのSPアタックを打つ？</div>
+        <div class="legend"></div>
+        <div class="sprows"></div>
       </div>
     </div>
   </div>
@@ -195,7 +215,6 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <button id="copyUrl">結果のURLをコピー</button>
 </div>
 
-<p class="note">個体値はリーグ上限内でステータス積(SCP)が最大になる理想個体(PL51まで・相棒ブースト込み)を自動採用。技構成は両者の全組み合わせを内部で対戦させ、互いに最善を取り合う構成を自動選択。ダメージ計算・ターン処理はみんポケのシミュレータと同一結果になることを実測ログで検証済み。</p>
 <div class="loading" id="loading">データ読み込み中…</div>
 <footer>データ: PokeMiners Game Master / PvPoke。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
 </div>
@@ -212,7 +231,11 @@ const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r && !D.pokemon[k].
 const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 18);
 const MOVE_TYPE = {};
-Object.values(D.moves).forEach(m => { MOVE_TYPE[m.n] = m.t; });
+const NAME_TYPES = {};
+Object.values(D.moves).forEach(m => {
+  MOVE_TYPE[m.n] = m.t;
+  (NAME_TYPES[m.n] = NAME_TYPES[m.n] || new Set()).add(m.t);
+});
 const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOVE_TYPE[name]] || '', size || 13)}${name}</span>`;
 
 // ---- リーグ上限内の理想個体値(SCP最大)を求める ----
@@ -292,10 +315,10 @@ function optimize(cfgL, cfgR) {
 
 // ---- 画面状態 ----
 let cap = 1500;
-const S = [
-  { key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null },
-  { key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null },
-];
+const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
+  shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
+  spSlots: ['1', '1', '1', '1', '1'], spRest: '1' });
+const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
 
 // ---- 検索候補 ----
@@ -339,8 +362,21 @@ sideEl.forEach((el, i) => {
     el.querySelector('.custPlan').style.display = S[i].timing === 'plan' ? 'block' : 'none';
     run();
   });
-  el.querySelector('.inpShield').onchange = run;
-  el.querySelector('.inpPlan').onchange = run;
+  // シールドの小窓(何発目で使うか)
+  const syncShieldSlots = () => {
+    el.querySelectorAll('.shslots button').forEach(b => {
+      const k = +b.dataset.slot;
+      b.setAttribute('aria-pressed', k === 6 ? !!S[i].shieldRest : !!S[i].shieldSlots[k - 1]);
+    });
+  };
+  syncShieldSlots();
+  el.querySelectorAll('.shslots button').forEach(b => b.onclick = () => {
+    const k = +b.dataset.slot;
+    if (k === 6) S[i].shieldRest = !S[i].shieldRest;
+    else S[i].shieldSlots[k - 1] = !S[i].shieldSlots[k - 1];
+    syncShieldSlots();
+    run();
+  });
   el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
   el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
   el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
@@ -378,11 +414,16 @@ function run() {
     if (S[i].c1) c.throw = S[i].c1;
     if (S[i].shieldMode === 'plan') {
       c.shields = 2;
-      c.shieldPlan = parseNums(sideEl[i].querySelector('.inpShield').value);
+      c.shieldPlan = S[i].shieldSlots.map((on, k) => on ? k + 1 : 0).filter(Boolean);
+      c.shieldRest = S[i].shieldRest;
     } else c.shields = S[i].shields;
     if (S[i].timing === 'plan') {
-      c.timing = undefined;
-      c.plan = parseNums(sideEl[i].querySelector('.inpPlan').value).map(t => ({ on: t, move: c.throw }));
+      // マニュアル: タイミングは「最適」で、何発目にどっちのわざを打つかを指定
+      c.timing = 'optimal';
+      const m1 = S[i].c1 || c.throw, m2 = S[i].c2 || m1;
+      const pick = v => v === '2' ? m2 : m1;
+      c.throwSeq = S[i].spSlots.map(pick);
+      c.throwRest = pick(S[i].spRest);
     } else c.timing = S[i].timing;
     return c;
   };
@@ -401,7 +442,12 @@ function fillMoves(i, cfg) {
   const st = PvpEngine.buildStats(D, cfg);
   el.querySelector('.ivline').textContent =
     `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
-  const opt = (m, sel) => `<option value="${m}"${m === sel ? ' selected' : ''}>${D.moves[m].n}（${D.typeJa[D.moves[m].t]}）</option>`;
+  // タイプは同名で複数タイプがあるわざ(ウェザーボール等)だけ表記する
+  const opt = (m, sel) => {
+    const mv = D.moves[m];
+    const suf = NAME_TYPES[mv.n].size > 1 ? `（${D.typeJa[mv.t]}）` : '';
+    return `<option value="${m}"${m === sel ? ' selected' : ''}>${mv.n}${suf}</option>`;
+  };
   // おぼえないわざも含めて選択可能にする(検証・お試し用)
   const byName = (a, b) => D.moves[a].n.localeCompare(D.moves[b].n, 'ja');
   const otherF = Object.keys(D.moves).filter(m => D.moves[m].eg && !fasts.includes(m)).sort(byName);
@@ -411,8 +457,36 @@ function fillMoves(i, cfg) {
     `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>`;
   el.querySelector('.selFast').innerHTML = grouped(fasts, otherF, cfg.fast);
   el.querySelector('.selC1').innerHTML = grouped(chargeds, otherC, cfg.throw);
-  const second = S[i].c2 || chargeds.find(m => m !== cfg.throw) || cfg.throw;
-  el.querySelector('.selC2').innerHTML = grouped(chargeds, otherC, second);
+  el.querySelector('.selC2').innerHTML =
+    `<option value=""${S[i].c2 ? '' : ' selected'}>なし</option>` + grouped(chargeds, otherC, S[i].c2);
+  // SPアタック2を選んだ時だけ「マニュアル」を出す(何発目にどっちを打つかを選べる)
+  const planBtn = el.querySelector('.timing button[data-v="plan"]');
+  planBtn.style.display = S[i].c2 ? '' : 'none';
+  if (!S[i].c2 && S[i].timing === 'plan') {
+    S[i].timing = 'optimal';
+    el.querySelectorAll('.timing button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'optimal'));
+    el.querySelector('.custPlan').style.display = 'none';
+  }
+  if (S[i].c2) buildSpWindow(i, S[i].c1 || cfg.throw, S[i].c2);
+}
+
+// 「何発目にどっちのSPアタックを打つか」の小窓
+function buildSpWindow(i, m1, m2) {
+  const el = sideEl[i];
+  el.querySelector('.legend').innerHTML =
+    `わざ1 = ${mvChip(D.moves[m1].n)}<br>わざ2 = ${mvChip(D.moves[m2].n)}`;
+  const labels = ['1発目', '2発目', '3発目', '4発目', '5発目', '6発目〜'];
+  el.querySelector('.sprows').innerHTML = labels.map((lbl, k) => {
+    const v = k < 5 ? S[i].spSlots[k] : S[i].spRest;
+    return `<div class="sprow"><span class="lbl">${lbl}</span>
+      <button data-k="${k}" data-v="1" aria-pressed="${v === '1'}">わざ1</button>
+      <button data-k="${k}" data-v="2" aria-pressed="${v === '2'}">わざ2</button></div>`;
+  }).join('');
+  el.querySelectorAll('.sprows button').forEach(b => b.onclick = () => {
+    const k = +b.dataset.k;
+    if (k < 5) S[i].spSlots[k] = b.dataset.v; else S[i].spRest = b.dataset.v;
+    run();
+  });
 }
 
 function render(res, L, R) {
@@ -512,7 +586,49 @@ function renderTimeline() {
     });
     flush();
   } else {
-    body = res.rows.map((row, idx) => rowHtml(row, res.rows[idx - 1])).join('');
+    // 全ターン: わざ1発を「所要ターン分の高さの枠」で表示(あわ=3ターンなら3行分の枠)
+    const n = res.rows.length;
+    const blocks = [[], []];
+    for (let i = 0; i < 2; i++) {
+      let start = 0;
+      res.rows.forEach((row, idx) => {
+        if (row.ev[i]) { blocks[i].push({ start, end: idx, ev: row.ev[i] }); start = idx + 1; }
+      });
+      if (start < n) blocks[i].push({ start, end: n - 1, ev: null });   // 打ちかけで終了した分
+    }
+    const shieldRows = [[], []];   // その側がシールドを使った行
+    res.rows.forEach((row, idx) => {
+      for (let i = 0; i < 2; i++) if (row.ev[i] && row.ev[i].shielded) shieldRows[1 - i].push(idx);
+    });
+    const blockTd = (i, idx) => {
+      const b = blocks[i].find(x => x.start === idx);
+      if (!b) return '';
+      let inner = '';
+      if (b.ev) {
+        inner = mvChip(b.ev.move);
+        if (b.ev.shielded) inner += ' -1';
+        else if (b.ev.full) inner += ` <b>-${b.ev.dmg}</b>`;
+        else inner += ` -${b.ev.dmg}`;
+        if (b.ev.buff && b.ev.buff.target !== 'opponent') inner += ' <span class="buffup">攻↑</span>';
+      } else inner = '…';
+      if (shieldRows[i].some(r => r >= b.start && r <= b.end)) inner += '<span class="shield">🛡シールド</span>';
+      const cls = 'mvblock ' + (i ? 'r' : 'l')
+        + (b.ev && b.ev.full !== undefined ? ' spblock' : '')
+        + (b.ev ? '' : ' pendingblock');
+      return `<td class="${cls}" rowspan="${b.end - b.start + 1}">${inner}</td>`;
+    };
+    body = res.rows.map((row, idx) => {
+      const prev = res.rows[idx - 1];
+      const num = (v, pv) => (prev && v === pv) ? '' : v;
+      const p = prev ? prev.state : null;
+      return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
+        ${blockTd(0, idx)}
+        <td class="${row.state[0].hp === 0 ? 'ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
+        <td class="tn">${row.tn}</td>
+        <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${row.state[1].hp === 0 ? 'ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
+        ${blockTd(1, idx)}
+      </tr>`;
+    }).join('');
   }
   tl.innerHTML = `<div class="tlhead"><h3>タイムライン（0.5秒=1ターン）</h3>
     <div class="tlmode">
