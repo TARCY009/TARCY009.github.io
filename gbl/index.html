@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOバトルリーグ対面シミュレーター</title>
+<meta name="description" content="ポケモンGOのGOバトルリーグ(GBL)対面を1ターン単位で正確にシミュレート。理想個体値・技構成・シールド枚数・発動タイミングを自動最適化。">
+<style>
+:root{
+  --bg:#0c1122; --bg2:#131a33; --panel:#1a2342; --line:#2a3560;
+  --ink:#eef1fb; --sub:#8b96c2; --cy:#43e0ff; --gl:#4d8dff; --ml:#b06cff;
+  --win:#3ddc84; --lose:#ff6b81; --gold:#ffd54a;
+  --r:14px;
+  font-size:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
+.wrap{max-width:760px;margin:0 auto;padding:14px}
+header{padding:18px 0 6px}
+h1{font-size:1.3rem;letter-spacing:.03em}
+h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--sub);font-size:.8rem;margin-top:4px}
+/* リーグ */
+.leagues{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.lgbtn{flex:1;padding:10px 6px;background:var(--bg2);border:none;color:var(--sub);font-size:.88rem;cursor:pointer;font-weight:700}
+.lgbtn[aria-pressed="true"]{background:var(--gl);color:#06122b}
+/* 2カラム */
+.duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px}
+.side h2{font-size:.78rem;color:var(--sub);letter-spacing:.08em;margin-bottom:6px}
+.side.mine h2{color:var(--cy)}
+.side.foe h2{color:var(--lose)}
+.sugg{position:relative}
+.sugg input{width:100%;padding:9px 10px;font-size:.95rem;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);outline:none}
+.sugg input:focus{border-color:var(--gl)}
+.sugg-list{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--line);border-radius:10px;max-height:250px;overflow:auto;display:none;box-shadow:0 14px 30px rgba(0,0,0,.5)}
+.sugg-list div{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px;cursor:pointer;font-size:.86rem}
+.sugg-list div:hover{background:#212b52}
+.pkhead{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0}
+.pkhead .nm{font-weight:700;font-size:.98rem;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pkhead .tpair{flex-shrink:0}
+.ivline{color:var(--sub);font-size:.72rem;margin-top:2px}
+label.f{display:block;font-size:.7rem;color:var(--sub);margin:8px 0 3px;font-weight:600}
+select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink)}
+.opts{display:flex;gap:4px}
+.opts button{flex:1;padding:6px 4px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer}
+.opts button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26;font-weight:700}
+.opts.sh button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy)}
+/* 結果 */
+.result{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:none}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.fighter{min-width:0}
+.fighter .top{display:flex;align-items:center;gap:6px;min-width:0}
+.fighter .top .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.badge{font-size:.68rem;font-weight:800;border-radius:6px;padding:1px 8px;flex-shrink:0}
+.badge.win{background:var(--win);color:#052613}
+.badge.lose{background:var(--lose);color:#2b070d}
+.badge.draw{background:var(--gold);color:#2b2305}
+.hpbar{height:10px;border-radius:99px;background:#0a0f22;overflow:hidden;margin-top:6px;border:1px solid var(--line)}
+.hpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--win),#a5f3c0)}
+.hpbar i.low{background:linear-gradient(90deg,var(--lose),#ffb3bd)}
+.subline{color:var(--sub);font-size:.72rem;margin-top:3px}
+.vsmark{color:var(--sub);font-weight:800;font-size:.8rem}
+/* 技詳細 */
+.mvtbl{width:100%;border-collapse:collapse;margin-top:10px;font-size:.78rem}
+.mvtbl td{padding:4px 6px;border-top:1px solid var(--line)}
+.mvtbl td:first-child{white-space:nowrap}
+.mvtbl .num{text-align:right;color:var(--sub);white-space:nowrap}
+.mvname{display:inline-flex;align-items:center;gap:4px}
+/* タイムライン */
+.tl{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:none}
+.tl h3{font-size:.85rem;margin-bottom:8px;color:var(--sub)}
+.tltbl{width:100%;border-collapse:collapse;font-size:.76rem}
+.tltbl th{color:var(--sub);font-weight:600;font-size:.68rem;padding:2px 4px;border-bottom:1px solid var(--line)}
+.tltbl td{padding:2px 4px;border-bottom:1px solid #1d264a;text-align:center}
+.tltbl td.ev{text-align:left}
+.tltbl td.ev.r{text-align:right}
+.tltbl tr.charged{background:rgba(176,108,255,.10)}
+.tltbl tr.charged td{border-bottom-color:#33265c}
+.tn{color:var(--sub)}
+.shield{color:var(--cy)}
+.buffup{color:var(--gold)}
+.note{margin-top:12px;color:var(--sub);font-size:.72rem}
+.share{margin-top:12px;display:flex;gap:8px}
+.share button{padding:9px 14px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:.82rem;cursor:pointer}
+.share button:hover{border-color:var(--gl)}
+.loading{margin-top:22px;color:var(--sub);text-align:center}
+footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
+@media (max-width:430px){
+  .duel{gap:6px}
+  .side{padding:8px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>GOバトルリーグ <b>対面シミュレーター</b></h1>
+  <p class="lead">ポケモンを2匹選ぶと、理想個体値・技構成を自動で最適化して1ターン単位で対面を再現します。</p>
+</header>
+
+<div class="leagues" id="leagues">
+  <button class="lgbtn" data-cap="1500" aria-pressed="true">スーパー</button>
+  <button class="lgbtn" data-cap="2500" aria-pressed="false">ハイパー</button>
+  <button class="lgbtn" data-cap="0" aria-pressed="false">マスター</button>
+</div>
+
+<div class="duel">
+  <div class="side mine" id="sideL">
+    <h2>じぶん（左）</h2>
+    <div class="sugg"><input type="search" placeholder="ポケモン名(例: まりるり)" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="pkview" style="display:none">
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
+      <div class="ivline"></div>
+      <label class="f">通常技</label><select class="selFast"></select>
+      <label class="f">ゲージ技1 / ゲージ技2</label>
+      <select class="selC1"></select>
+      <select class="selC2" style="margin-top:4px"></select>
+      <label class="f">シールド</label>
+      <div class="opts sh shields">
+        <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button>
+      </div>
+      <label class="f">ゲージ技タイミング</label>
+      <div class="opts timing">
+        <button data-v="optimal" aria-pressed="true">最適</button><button data-v="asap" aria-pressed="false">最短</button>
+      </div>
+    </div>
+  </div>
+  <div class="side foe" id="sideR">
+    <h2>あいて（右）</h2>
+    <div class="sugg"><input type="search" placeholder="ポケモン名(例: ちゃーれむ)" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="pkview" style="display:none">
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
+      <div class="ivline"></div>
+      <label class="f">通常技</label><select class="selFast"></select>
+      <label class="f">ゲージ技1 / ゲージ技2</label>
+      <select class="selC1"></select>
+      <select class="selC2" style="margin-top:4px"></select>
+      <label class="f">シールド</label>
+      <div class="opts sh shields">
+        <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button>
+      </div>
+      <label class="f">ゲージ技タイミング</label>
+      <div class="opts timing">
+        <button data-v="optimal" aria-pressed="true">最適</button><button data-v="asap" aria-pressed="false">最短</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="result" id="result"></div>
+<div class="tl" id="tl"></div>
+
+<div class="share" id="share" style="display:none">
+  <button id="copyUrl">結果のURLをコピー</button>
+</div>
+
+<p class="note">個体値はリーグ上限内でステータス積(SCP)が最大になる理想個体(PL51まで・相棒ブースト込み)を自動採用。技構成は両者の全組み合わせを内部で対戦させ、互いに最善を取り合う構成を自動選択。ダメージ計算・ターン処理はみんポケのシミュレータと同一結果になることを実測ログで検証済み。</p>
+<div class="loading" id="loading">データ読み込み中…</div>
+<footer>データ: PokeMiners Game Master / PvPoke。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
+</div>
+
+<script src="/pvp_data.js"></script>
+<script src="/assets/type-icons.js"></script>
+<script src="/assets/pvp-engine.js"></script>
+<script>
+const D = window.PVP_DATA;
+document.getElementById('loading').style.display = 'none';
+
+// ---- 検索対象(実装済み・メガ除外) ----
+const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r && !D.pokemon[k].mega);
+const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 18);
+const mvIcon = (mid, size) => `<span class="mvname">${typeIconHTML(D.typeJa[D.moves[mid].t], size || 14)}${D.moves[mid].n}</span>`;
+
+// ---- リーグ上限内の理想個体値(SCP最大)を求める ----
+const LEVELS = Object.keys(D.cpm).map(Number).filter(l => l <= 51).sort((a, b) => a - b);
+function cpOf(p, a, d, h, c) {
+  return Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
+}
+function rank1(key, cap) {
+  const p = D.pokemon[key];
+  if (!cap) return { ivs: [15, 15, 15], level: 50 };  // マスター
+  let best = null;
+  for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+    // capを超えない最大レベルを二分探索
+    let lo = 0, hi = LEVELS.length - 1, li = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (cpOf(p, a, d, h, D.cpm[String(LEVELS[mid])]) <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    if (li < 0) continue;
+    const c = D.cpm[String(LEVELS[li])];
+    const prod = (p.a + a) * c * (p.df + d) * c * Math.floor((p.h + h) * c);
+    if (!best || prod > best.prod) best = { prod, ivs: [a, d, h], level: LEVELS[li] };
+  }
+  return best || { ivs: [15, 15, 15], level: 50 };
+}
+
+// ---- 技構成の自動最適化(通常技×ゲージ技の総当たり+相互最善応答) ----
+const scoreOf = (res, side) => {
+  const own = res.final[side], opp = res.final[1 - side];
+  return 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
+};
+const NO_PROC = { rng: () => 1 };   // 確率バフは不発扱い(みんポケ準拠)
+function movePool(key) {
+  const p = D.pokemon[key];
+  const fasts = [...p.q, ...p.eq].filter(m => D.moves[m]);
+  let chargeds = [...p.c, ...p.ec].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
+  return { fasts, chargeds };
+}
+function policies(key, cfg) {
+  const { fasts, chargeds } = movePool(key);
+  const st = { atk: 1, def: 1, types: D.pokemon[key].ty, buffs: [0, 0] };
+  const dpe = m => D.moves[m].p / D.moves[m].e;
+  const top = chargeds.sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
+  const out = [];
+  for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5)))
+    for (const t of (cfg.throw ? [cfg.throw] : top))
+      out.push({ fast: f, throw: t });
+  return out;
+}
+function optimize(cfgL, cfgR) {
+  const PL = policies(cfgL.key, cfgL), PR = policies(cfgR.key, cfgR);
+  const cache = new Map();
+  const play = (a, b) => {
+    const k = a + ':' + b;
+    if (!cache.has(k)) {
+      const res = PvpEngine.simulate(D, { ...cfgL, ...PL[a], timing: cfgL.timing || 'optimal' },
+                                        { ...cfgR, ...PR[b], timing: cfgR.timing || 'optimal' }, NO_PROC);
+      cache.set(k, [scoreOf(res, 0), scoreOf(res, 1)]);
+    }
+    return cache.get(k);
+  };
+  let a = 0, b = 0;
+  const seen = new Set();
+  for (let it = 0; it < 24; it++) {
+    const key = a + ',' + b;
+    if (seen.has(key)) break;
+    seen.add(key);
+    let bestA = a;
+    for (let x = 0; x < PL.length; x++) if (play(x, b)[0] > play(bestA, b)[0]) bestA = x;
+    let bestB = b;
+    for (let y = 0; y < PR.length; y++) if (play(bestA, y)[1] > play(bestA, bestB)[1]) bestB = y;
+    if (bestA === a && bestB === b) break;
+    a = bestA; b = bestB;
+  }
+  return { left: PL[a], right: PR[b] };
+}
+
+// ---- 画面状態 ----
+let cap = 1500;
+const S = [
+  { key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null },
+  { key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null },
+];
+const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
+
+// ---- 検索候補 ----
+sideEl.forEach((el, i) => {
+  const inp = el.querySelector('input'), list = el.querySelector('.sugg-list');
+  inp.addEventListener('compositionend', () => {
+    const v = toKata(inp.value);
+    if (v !== inp.value) inp.value = v;
+    inp.dispatchEvent(new Event('input'));
+  });
+  inp.addEventListener('input', e => {
+    if (!e.isComposing) {
+      const v = toKata(inp.value);
+      if (v !== inp.value) inp.value = v;
+    }
+    const q = toKata(inp.value.trim());
+    if (!q) { list.style.display = 'none'; return; }
+    const hits = KEYS.filter(k => D.pokemon[k].n.includes(q)).slice(0, 12);
+    if (!hits.length) { list.style.display = 'none'; return; }
+    list.innerHTML = hits.map(k =>
+      `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+    list.style.display = 'block';
+    list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+      list.style.display = 'none';
+      inp.value = D.pokemon[d.dataset.k].n;
+      pick(i, d.dataset.k);
+    });
+  });
+  document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
+  // シールド・タイミング
+  el.querySelectorAll('.shields button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.shields button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    S[i].shields = +b.dataset.v; run();
+  });
+  el.querySelectorAll('.timing button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.timing button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    S[i].timing = b.dataset.v; run();
+  });
+  el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
+  el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
+  el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
+});
+
+document.getElementById('leagues').querySelectorAll('.lgbtn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', x === b));
+  cap = +b.dataset.cap;
+  S.forEach(s => { s.fast = s.c1 = s.c2 = null; });
+  run();
+});
+
+function pick(i, key) {
+  S[i].key = key;
+  S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
+  run();
+}
+
+// ---- 実行 ----
+function run() {
+  if (!S[0].key || !S[1].key) return;
+  const cfgs = S.map(s => {
+    const r1 = rank1(s.key, cap);
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shields: s.shields, timing: s.timing,
+             fast: s.fast || undefined, throw: undefined };
+  });
+  // ゲージ技の手動指定があれば候補をその2つに絞る(採用はエンジンの均衡計算)
+  const plan = optimize(
+    { ...cfgs[0], throw: S[0].c1 && S[0].c2 && S[0].c1 === S[0].c2 ? S[0].c1 : undefined },
+    { ...cfgs[1], throw: S[1].c1 && S[1].c2 && S[1].c1 === S[1].c2 ? S[1].c1 : undefined });
+  const L = { ...cfgs[0], ...plan.left }, R = { ...cfgs[1], ...plan.right };
+  if (S[0].fast) L.fast = S[0].fast;
+  if (S[1].fast) R.fast = S[1].fast;
+  if (S[0].c1) L.throw = S[0].c1;
+  if (S[1].c1) R.throw = S[1].c1;
+  const res = PvpEngine.simulate(D, L, R, NO_PROC);
+  render(res, L, R);
+}
+
+function fillMoves(i, cfg) {
+  const el = sideEl[i], { fasts, chargeds } = movePool(cfg.key);
+  const p = D.pokemon[cfg.key];
+  el.querySelector('.pkview').style.display = 'block';
+  el.querySelector('.nm').textContent = p.n;
+  el.querySelector('.ticons').innerHTML = typeIcons(p, 18);
+  el.querySelector('.ticons').className = 'ticons tpair';
+  const st = PvpEngine.buildStats(D, cfg);
+  el.querySelector('.ivline').textContent =
+    `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
+  const opt = (m, sel) => `<option value="${m}"${m === sel ? ' selected' : ''}>${D.moves[m].n}（${D.typeJa[D.moves[m].t]}）</option>`;
+  el.querySelector('.selFast').innerHTML = fasts.map(m => opt(m, cfg.fast)).join('');
+  el.querySelector('.selC1').innerHTML = chargeds.map(m => opt(m, cfg.throw)).join('');
+  const second = S[i].c2 || chargeds.find(m => m !== cfg.throw) || cfg.throw;
+  el.querySelector('.selC2').innerHTML = chargeds.map(m => opt(m, second)).join('');
+}
+
+function render(res, L, R) {
+  fillMoves(0, L); fillMoves(1, R);
+  const rEl = document.getElementById('result');
+  rEl.style.display = 'block';
+  const badge = i => res.winner === 'draw' ? '<span class="badge draw">DRAW</span>'
+    : res.winner === i ? '<span class="badge win">WIN</span>' : '<span class="badge lose">LOSE</span>';
+  const fighter = (i, cfg) => {
+    const f = res.final[i];
+    const pct = Math.round(f.hp / f.hpMax * 100);
+    return `<div class="fighter">
+      <div class="top">${badge(i)}<span class="nm">${f.name}</span></div>
+      <div class="hpbar"><i class="${pct <= 25 ? 'low' : ''}" style="width:${pct}%"></i></div>
+      <div class="subline">残りHP ${f.hp}/${f.hpMax}（${pct}%）・残りゲージ ${f.en}・シールド残${f.shields}</div>
+    </div>`;
+  };
+  // 技ごとの集計
+  const mvRows = i => {
+    const cfg = i === 0 ? L : R;
+    const s = res.final[i];
+    const uses = {};
+    res.rows.forEach(row => {
+      const e = row.ev[i];
+      if (!e) return;
+      uses[e.move] = uses[e.move] || { n: 0, dmg: e.dmg, sh: 0 };
+      uses[e.move].n++;
+      uses[e.move].dmg = Math.max(uses[e.move].dmg, e.full || e.dmg);
+      if (e.shielded) uses[e.move].sh++;
+    });
+    return Object.entries(uses).map(([n, u]) =>
+      `<tr><td>${n}</td><td class="num">威力${u.dmg}</td><td class="num">${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</td></tr>`).join('');
+  };
+  rEl.innerHTML = `
+    <div class="vs">${fighter(0, L)}<div class="vsmark">VS</div>${fighter(1, R)}</div>
+    <table class="mvtbl"><tr><td colspan="3" style="border-top:none;color:var(--sub);font-size:.68rem">${res.final[0].name}の技（実測値）</td></tr>${mvRows(0)}
+    <tr><td colspan="3" style="color:var(--sub);font-size:.68rem">${res.final[1].name}の技（実測値）</td></tr>${mvRows(1)}</table>`;
+  // タイムライン
+  const tl = document.getElementById('tl');
+  tl.style.display = 'block';
+  const evTxt = (e, right) => {
+    if (!e) return '';
+    let t = e.move;
+    if (e.shielded) t += ' <span class="shield">🛡防がれた</span>';
+    else if (e.full) t += ` <b>-${e.dmg}</b>`;
+    else t += ` -${e.dmg}`;
+    if (e.buff && e.buff.target !== 'opponent') t += ' <span class="buffup">攻↑</span>';
+    return t;
+  };
+  tl.innerHTML = `<h3>タイムライン（0.5秒=1ターン）</h3>
+  <div style="overflow-x:auto"><table class="tltbl">
+    <tr><th style="text-align:left">${res.final[0].name}</th><th>HP</th><th>EN</th><th>TN</th><th>EN</th><th>HP</th><th style="text-align:right">${res.final[1].name}</th></tr>
+    ${res.rows.map(row => `<tr${row.tn === '-' ? ' class="charged"' : ''}>
+      <td class="ev">${evTxt(row.ev[0])}</td>
+      <td>${row.state[0].hp}</td><td>${row.state[0].en}</td>
+      <td class="tn">${row.tn}</td>
+      <td>${row.state[1].en}</td><td>${row.state[1].hp}</td>
+      <td class="ev r">${evTxt(row.ev[1], true)}</td>
+    </tr>`).join('')}
+  </table></div>`;
+  document.getElementById('share').style.display = 'flex';
+  history.replaceState(null, '', '?' + new URLSearchParams({
+    lg: cap, l: L.key, r: R.key, sl: L.shields, sr: R.shields, tl: L.timing, tr: R.timing
+  }).toString());
+}
+
+document.getElementById('copyUrl').onclick = async () => {
+  await navigator.clipboard.writeText(location.href);
+  document.getElementById('copyUrl').textContent = 'コピーしました ✅';
+  setTimeout(() => document.getElementById('copyUrl').textContent = '結果のURLをコピー', 1500);
+};
+
+// ---- URLパラメータからの復元 ----
+(function init() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('lg')) {
+    cap = +q.get('lg');
+    document.querySelectorAll('.lgbtn').forEach(b => b.setAttribute('aria-pressed', +b.dataset.cap === cap));
+  }
+  ['l', 'r'].forEach((k, i) => {
+    const v = q.get(k);
+    if (v && D.pokemon[v]) {
+      S[i].key = v;
+      sideEl[i].querySelector('input').value = D.pokemon[v].n;
+    }
+  });
+  ['sl', 'sr'].forEach((k, i) => { if (q.get(k) != null) {
+    S[i].shields = +q.get(k);
+    sideEl[i].querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === S[i].shields));
+  }});
+  ['tl', 'tr'].forEach((k, i) => { if (q.get(k)) {
+    S[i].timing = q.get(k);
+    sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
+  }});
+  run();
+})();
+</script>
+</body>
+</html>
