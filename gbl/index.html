@@ -93,6 +93,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .selC2{opacity:.55}
 .tltbl tr.gap td{color:var(--sub);font-size:.7rem;padding:4px;border-bottom:1px dashed var(--line)}
 .tltbl td.ko{color:var(--lose);font-weight:700}
+.tltbl td.hpg{color:#4be08e;font-weight:700}
+.tltbl td.hpy{color:#ffd54a;font-weight:700}
+.tltbl td.hpr{color:#ff7b8e;font-weight:700}
 .tlhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
 .tlhead h3{margin:0;font-size:.8rem;white-space:nowrap}
 .tlmode{display:flex;gap:4px;flex-shrink:0}
@@ -269,9 +272,10 @@ const scoreOf = (res, side) => {
 };
 const NO_PROC = { rng: () => 1 };   // 確率バフは不発扱い(みんポケ準拠)
 function movePool(key) {
+  // 通常枠と特別枠の両方に載っているわざがあるため重複除去する
   const p = D.pokemon[key];
-  const fasts = [...p.q, ...p.eq].filter(m => D.moves[m]);
-  let chargeds = [...p.c, ...p.ec].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
+  const fasts = [...new Set([...p.q, ...p.eq])].filter(m => D.moves[m]);
+  const chargeds = [...new Set([...p.c, ...p.ec])].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
   return { fasts, chargeds };
 }
 function policies(key, cfg) {
@@ -449,9 +453,23 @@ function fillMoves(i, cfg) {
     return `<option value="${m}"${m === sel ? ' selected' : ''}>${mv.n}${suf}</option>`;
   };
   // おぼえないわざも含めて選択可能にする(検証・お試し用)
+  // 同名・同タイプの別ID(カメックス専用版など)とタイプ不定のめざめるパワーは除外
   const byName = (a, b) => D.moves[a].n.localeCompare(D.moves[b].n, 'ja');
-  const otherF = Object.keys(D.moves).filter(m => D.moves[m].eg && !fasts.includes(m)).sort(byName);
-  const otherC = Object.keys(D.moves).filter(m => D.moves[m].e && !chargeds.includes(m)).sort(byName);
+  const sig = m => D.moves[m].n + '|' + D.moves[m].t;
+  const others = (isFast, own) => {
+    const ownSig = new Set(own.map(sig)), seen = new Set();
+    return Object.keys(D.moves).filter(m => {
+      const mv = D.moves[m];
+      if (isFast ? !mv.eg : !mv.e) return false;
+      if (own.includes(m) || m === 'HIDDEN_POWER_NORMAL') return false;
+      const s = sig(m);
+      if (ownSig.has(s) || seen.has(s)) return false;
+      seen.add(s);
+      return true;
+    }).sort(byName);
+  };
+  const otherF = others(true, fasts);
+  const otherC = others(false, chargeds);
   const grouped = (own, others, sel) =>
     `<optgroup label="おぼえるわざ">${own.map(m => opt(m, sel)).join('')}</optgroup>` +
     `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>`;
@@ -540,6 +558,11 @@ function renderTimeline() {
   if (!res) return;
   const tl = document.getElementById('tl');
   tl.style.display = 'block';
+  // HPの残り割合で色分け: 緑(50%以上)・黄(20〜50%未満)・赤(20%未満)
+  const hpCls = (i, hp) => {
+    const pct = hp / res.final[i].hpMax;
+    return hp === 0 || pct < 0.2 ? 'hpr' : pct < 0.5 ? 'hpy' : 'hpg';
+  };
   // わざの発動は1発ずつ枠(フレーム)に入れて見分けやすくする
   const cellEv = (row, i) => {
     const e = row.ev[i], opp = row.ev[1 - i];
@@ -562,9 +585,9 @@ function renderTimeline() {
     const p = prev ? prev.state : null;
     return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
       <td class="ev">${cellEv(row, 0)}</td>
-      <td class="${row.state[0].hp === 0 ? 'ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
+      <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
       <td class="tn">${row.tn}</td>
-      <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${row.state[1].hp === 0 ? 'ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
+      <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${hpCls(1, row.state[1].hp)}${row.state[1].hp === 0 ? ' ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
       <td class="ev r">${cellEv(row, 1)}</td>
     </tr>`;
   };
@@ -623,9 +646,9 @@ function renderTimeline() {
       const p = prev ? prev.state : null;
       return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
         ${blockTd(0, idx)}
-        <td class="${row.state[0].hp === 0 ? 'ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
+        <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
         <td class="tn">${row.tn}</td>
-        <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${row.state[1].hp === 0 ? 'ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
+        <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${hpCls(1, row.state[1].hp)}${row.state[1].hp === 0 ? ' ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
         ${blockTd(1, idx)}
       </tr>`;
     }).join('');
