@@ -104,11 +104,11 @@
             if (dealt >= o.hp || oppFinal) { charging[i] = mv; continue; }
           }
         } else {
-          const planIdx = s.plan.findIndex(p => p.on === turn);
+          // 台本(plan): 指定ターン以降で最初に撃てるタイミングで発動する
+          const planIdx = s.plan.findIndex(p => p.on <= turn);
           if (planIdx >= 0) {
             const mv = D.moves[s.plan[planIdx].move];
-            s.plan.splice(planIdx, 1);          // エネルギー不足は見送り
-            if (s.en >= mv.e) { charging[i] = mv; continue; }
+            if (s.en >= mv.e) { s.plan.splice(planIdx, 1); charging[i] = mv; continue; }
           }
         }
         s.cd = s.fast.tn;                       // 通常技を開始
@@ -143,7 +143,11 @@
         if (s.hp <= 0) continue;                // 発動前に倒れた
         s.en -= mv.e;
         const full = damage(D, mv, s, o);
-        const shielded = o.shields > 0;
+        // シールド判断: shieldPlan(相手のSP何発目で使うかの配列)があればそれに従う
+        o.spSeen = (o.spSeen || 0) + 1;
+        const shielded = o.cfg.shieldPlan
+          ? (o.shields > 0 && o.cfg.shieldPlan.includes(o.spSeen))
+          : o.shields > 0;
         const dealt = shielded ? 1 : full;
         if (shielded) o.shields--;
         o.hp -= dealt;

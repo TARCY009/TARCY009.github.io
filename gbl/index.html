@@ -98,12 +98,19 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .tlmode{display:flex;gap:4px;flex-shrink:0}
 .tlmode button{padding:4px 10px;font-size:.72rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;white-space:nowrap}
 .tltbl .mvname{white-space:nowrap}
+.cust{margin-top:4px}
+.cust input{width:100%;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:.8rem;outline:none}
+.cust input:focus{border-color:var(--gl)}
+.evbox{display:inline-block;border:1px solid #35406e;border-radius:8px;padding:1px 6px;margin:1px 0;background:rgba(19,26,51,.7)}
 .tlmode button[aria-pressed="true"]{background:var(--gl);border-color:var(--gl);color:#06122b;font-weight:700}
 @media (max-width:430px){
   .duel{gap:6px}
   .side{padding:8px}
   h1{font-size:1.08rem}
   select{font-size:.76rem;padding:6px 4px}
+  .tltbl{font-size:.68rem}
+  .tltbl td{padding:2px}
+  .evbox{padding:1px 4px}
 }
 </style>
 </head>
@@ -127,18 +134,26 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <div class="pkview" style="display:none">
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
       <div class="ivline"></div>
-      <label class="f">通常技</label><select class="selFast"></select>
-      <label class="f">ゲージ技（この対面で使用）</label>
+      <label class="f">ノーマルアタック</label><select class="selFast"></select>
+      <label class="f">SPアタック（この対面で使用）</label>
       <select class="selC1"></select>
-      <label class="f">ゲージ技2（予備・この対面では未使用）</label>
+      <label class="f">SPアタック2（予備・この対面では未使用）</label>
       <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
-        <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button>
+        <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <label class="f">ゲージ技タイミング</label>
+      <div class="cust custShield" style="display:none">
+        <label class="f">敵のSPアタック何発目で使う？</label>
+        <input class="inpShield" type="text" inputmode="numeric" placeholder="例: 1,3">
+      </div>
+      <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true" title="相手の通常技の最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button>
+        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+      </div>
+      <div class="cust custPlan" style="display:none">
+        <label class="f">SPアタックを打つターン</label>
+        <input class="inpPlan" type="text" inputmode="numeric" placeholder="例: 15,28,41">
       </div>
     </div>
   </div>
@@ -148,18 +163,26 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <div class="pkview" style="display:none">
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
       <div class="ivline"></div>
-      <label class="f">通常技</label><select class="selFast"></select>
-      <label class="f">ゲージ技（この対面で使用）</label>
+      <label class="f">ノーマルアタック</label><select class="selFast"></select>
+      <label class="f">SPアタック（この対面で使用）</label>
       <select class="selC1"></select>
-      <label class="f">ゲージ技2（予備・この対面では未使用）</label>
+      <label class="f">SPアタック2（予備・この対面では未使用）</label>
       <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
-        <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button>
+        <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <label class="f">ゲージ技タイミング</label>
+      <div class="cust custShield" style="display:none">
+        <label class="f">敵のSPアタック何発目で使う？</label>
+        <input class="inpShield" type="text" inputmode="numeric" placeholder="例: 1,3">
+      </div>
+      <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true" title="相手の通常技の最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button>
+        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+      </div>
+      <div class="cust custPlan" style="display:none">
+        <label class="f">SPアタックを打つターン</label>
+        <input class="inpPlan" type="text" inputmode="numeric" placeholder="例: 15,28,41">
       </div>
     </div>
   </div>
@@ -302,15 +325,22 @@ sideEl.forEach((el, i) => {
     });
   });
   document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
-  // シールド・タイミング
+  // シールド・タイミング(ﾏﾆｭｱﾙ選択時は入力欄を表示)
   el.querySelectorAll('.shields button').forEach(b => b.onclick = () => {
     el.querySelectorAll('.shields button').forEach(x => x.setAttribute('aria-pressed', x === b));
-    S[i].shields = +b.dataset.v; run();
+    S[i].shieldMode = b.dataset.v === 'plan' ? 'plan' : null;
+    if (!S[i].shieldMode) S[i].shields = +b.dataset.v;
+    el.querySelector('.custShield').style.display = S[i].shieldMode ? 'block' : 'none';
+    run();
   });
   el.querySelectorAll('.timing button').forEach(b => b.onclick = () => {
     el.querySelectorAll('.timing button').forEach(x => x.setAttribute('aria-pressed', x === b));
-    S[i].timing = b.dataset.v; run();
+    S[i].timing = b.dataset.v;
+    el.querySelector('.custPlan').style.display = S[i].timing === 'plan' ? 'block' : 'none';
+    run();
   });
+  el.querySelector('.inpShield').onchange = run;
+  el.querySelector('.inpPlan').onchange = run;
   el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
   el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
   el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
@@ -330,22 +360,33 @@ function pick(i, key) {
 }
 
 // ---- 実行 ----
+const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
 function run() {
   if (!S[0].key || !S[1].key) return;
-  const cfgs = S.map(s => {
+  const base = S.map(s => {
     const r1 = rank1(s.key, cap);
-    return { key: s.key, ivs: r1.ivs, level: r1.level, shields: s.shields, timing: s.timing,
-             fast: s.fast || undefined, throw: undefined };
+    return { key: s.key, ivs: r1.ivs, level: r1.level };
   });
-  // ゲージ技の手動指定があれば候補をその2つに絞る(採用はエンジンの均衡計算)
-  const plan = optimize(
-    { ...cfgs[0], throw: S[0].c1 && S[0].c2 && S[0].c1 === S[0].c2 ? S[0].c1 : undefined },
-    { ...cfgs[1], throw: S[1].c1 && S[1].c2 && S[1].c1 === S[1].c2 ? S[1].c1 : undefined });
-  const L = { ...cfgs[0], ...plan.left }, R = { ...cfgs[1], ...plan.right };
-  if (S[0].fast) L.fast = S[0].fast;
-  if (S[1].fast) R.fast = S[1].fast;
-  if (S[0].c1) L.throw = S[0].c1;
-  if (S[1].c1) R.throw = S[1].c1;
+  // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
+  const optCfg = i => ({ ...base[i], shields: 2,
+    timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
+    fast: S[i].fast || undefined, throw: S[i].c1 || undefined });
+  const plan = optimize(optCfg(0), optCfg(1));
+  const fin = i => {
+    const c = { ...base[i], ...[plan.left, plan.right][i] };
+    if (S[i].fast) c.fast = S[i].fast;
+    if (S[i].c1) c.throw = S[i].c1;
+    if (S[i].shieldMode === 'plan') {
+      c.shields = 2;
+      c.shieldPlan = parseNums(sideEl[i].querySelector('.inpShield').value);
+    } else c.shields = S[i].shields;
+    if (S[i].timing === 'plan') {
+      c.timing = undefined;
+      c.plan = parseNums(sideEl[i].querySelector('.inpPlan').value).map(t => ({ on: t, move: c.throw }));
+    } else c.timing = S[i].timing;
+    return c;
+  };
+  const L = fin(0), R = fin(1);
   const res = PvpEngine.simulate(D, L, R, NO_PROC);
   render(res, L, R);
 }
@@ -361,10 +402,17 @@ function fillMoves(i, cfg) {
   el.querySelector('.ivline').textContent =
     `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
   const opt = (m, sel) => `<option value="${m}"${m === sel ? ' selected' : ''}>${D.moves[m].n}（${D.typeJa[D.moves[m].t]}）</option>`;
-  el.querySelector('.selFast').innerHTML = fasts.map(m => opt(m, cfg.fast)).join('');
-  el.querySelector('.selC1').innerHTML = chargeds.map(m => opt(m, cfg.throw)).join('');
+  // おぼえないわざも含めて選択可能にする(検証・お試し用)
+  const byName = (a, b) => D.moves[a].n.localeCompare(D.moves[b].n, 'ja');
+  const otherF = Object.keys(D.moves).filter(m => D.moves[m].eg && !fasts.includes(m)).sort(byName);
+  const otherC = Object.keys(D.moves).filter(m => D.moves[m].e && !chargeds.includes(m)).sort(byName);
+  const grouped = (own, others, sel) =>
+    `<optgroup label="おぼえるわざ">${own.map(m => opt(m, sel)).join('')}</optgroup>` +
+    `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>`;
+  el.querySelector('.selFast').innerHTML = grouped(fasts, otherF, cfg.fast);
+  el.querySelector('.selC1').innerHTML = grouped(chargeds, otherC, cfg.throw);
   const second = S[i].c2 || chargeds.find(m => m !== cfg.throw) || cfg.throw;
-  el.querySelector('.selC2').innerHTML = chargeds.map(m => opt(m, second)).join('');
+  el.querySelector('.selC2').innerHTML = grouped(chargeds, otherC, second);
 }
 
 function render(res, L, R) {
@@ -383,15 +431,6 @@ function render(res, L, R) {
       <div class="subline">ゲージ${f.en}・シールド残${f.shields}</div>
     </div>`;
   };
-  // 結論の要約文(専門値の前に、何が起きたかをひと言で)
-  const concl = () => {
-    if (res.winner === 'draw') return `<div class="concl">相打ちで引き分けでした。</div>`;
-    const w = res.final[res.winner], l = res.final[1 - res.winner];
-    const pct = Math.round(w.hp / w.hpMax * 100);
-    const secs = (res.turns / 2).toFixed(1);
-    return `<div class="concl"><span class="w">${w.name}の勝ち！</span> HPを${pct}%残して${l.name}を倒しきりました。
-      <small>対面時間 約${secs}秒（${res.turns}ターン）・両者とも理想個体値&自動最適の技構成</small></div>`;
-  };
   // 技ごとの集計
   const mvRows = i => {
     const cfg = i === 0 ? L : R;
@@ -409,7 +448,6 @@ function render(res, L, R) {
       `<tr><td>${mvChip(n)}</td><td class="num">威力${u.dmg}</td><td class="num">${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</td></tr>`).join('');
   };
   rEl.innerHTML = `
-    ${concl()}
     <div class="vs">${fighter(0, L)}<div class="vsmark">VS</div>${fighter(1, R)}</div>
     <table class="mvtbl"><tr><td colspan="3" style="border-top:none;color:var(--sub);font-size:.68rem">${res.final[0].name}の技（実測値）</td></tr>${mvRows(0)}
     <tr><td colspan="3" style="color:var(--sub);font-size:.68rem">${res.final[1].name}の技（実測値）</td></tr>${mvRows(1)}</table>`;
@@ -428,22 +466,34 @@ function renderTimeline() {
   if (!res) return;
   const tl = document.getElementById('tl');
   tl.style.display = 'block';
-  const evTxt = e => {
-    if (!e) return '';
-    let t = mvChip(e.move);
-    if (e.shielded) t += ' <span class="shield">🛡防がれた</span>';
-    else if (e.full) t += ` <b>-${e.dmg}</b>`;
-    else t += ` -${e.dmg}`;
-    if (e.buff && e.buff.target !== 'opponent') t += ' <span class="buffup">攻↑</span>';
-    return t;
+  // わざの発動は1発ずつ枠(フレーム)に入れて見分けやすくする
+  const cellEv = (row, i) => {
+    const e = row.ev[i], opp = row.ev[1 - i];
+    let h = '';
+    if (e) {
+      let t = mvChip(e.move);
+      if (e.shielded) t += ' -1';
+      else if (e.full) t += ` <b>-${e.dmg}</b>`;
+      else t += ` -${e.dmg}`;
+      if (e.buff && e.buff.target !== 'opponent') t += ' <span class="buffup">攻↑</span>';
+      h = `<span class="evbox">${t}</span>`;
+    }
+    // シールドは「使った側」に表示する
+    if (opp && opp.shielded) h += (h ? ' ' : '') + '<span class="evbox shield">🛡シールド</span>';
+    return h;
   };
-  const rowHtml = row => `<tr${row.tn === '-' ? ' class="charged"' : ''}>
-      <td class="ev">${evTxt(row.ev[0])}</td>
-      <td class="${row.state[0].hp === 0 ? 'ko' : ''}">${row.state[0].hp}</td><td>${row.state[0].en}</td>
+  const rowHtml = (row, prev) => {
+    // 全ターン表示では、前の行と同じ数字は省略して変化だけを見せる
+    const num = (v, pv) => (prev && v === pv) ? '' : v;
+    const p = prev ? prev.state : null;
+    return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
+      <td class="ev">${cellEv(row, 0)}</td>
+      <td class="${row.state[0].hp === 0 ? 'ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
       <td class="tn">${row.tn}</td>
-      <td>${row.state[1].en}</td><td class="${row.state[1].hp === 0 ? 'ko' : ''}">${row.state[1].hp}</td>
-      <td class="ev r">${evTxt(row.ev[1])}</td>
+      <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${row.state[1].hp === 0 ? 'ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
+      <td class="ev r">${cellEv(row, 1)}</td>
     </tr>`;
+  };
   // ダイジェスト: ゲージ技・シールド・バフ・決着の行だけを残し、間は1行にたたむ
   const isKey = (row, idx) => row.tn === '-' || idx === res.rows.length - 1 ||
     (row.ev[0] && (row.ev[0].full || row.ev[0].buff)) || (row.ev[1] && (row.ev[1].full || row.ev[1].buff));
@@ -453,7 +503,7 @@ function renderTimeline() {
     const flush = () => {
       if (!hidden.length) return;
       const a = hidden[0].tn, b = hidden[hidden.length - 1].tn;
-      body += `<tr class="gap"><td colspan="7">… 通常技の応酬 ${hidden.length}ターン（TN${a}${a === b ? '' : '〜' + b}）…</td></tr>`;
+      body += `<tr class="gap"><td colspan="7">… ノーマルアタックの応酬 ${hidden.length}ターン（TN${a}${a === b ? '' : '〜' + b}）…</td></tr>`;
       hidden = [];
     };
     res.rows.forEach((row, idx) => {
@@ -462,7 +512,7 @@ function renderTimeline() {
     });
     flush();
   } else {
-    body = res.rows.map(rowHtml).join('');
+    body = res.rows.map((row, idx) => rowHtml(row, res.rows[idx - 1])).join('');
   }
   tl.innerHTML = `<div class="tlhead"><h3>タイムライン（0.5秒=1ターン）</h3>
     <div class="tlmode">
