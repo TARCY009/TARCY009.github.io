@@ -52,7 +52,7 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .fighter{min-width:0}
 .fighter .top{display:flex;align-items:center;gap:6px;min-width:0}
 .fighter .top .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.badge{font-size:.68rem;font-weight:800;border-radius:6px;padding:1px 8px;flex-shrink:0}
+.badge{font-size:.85rem;font-weight:800;border-radius:7px;padding:2px 10px;flex-shrink:0}
 .badge.win{background:var(--win);color:#052613}
 .badge.lose{background:var(--lose);color:#2b070d}
 .badge.draw{background:var(--gold);color:#2b2305}
@@ -62,10 +62,12 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .subline{color:var(--sub);font-size:.72rem;margin-top:3px}
 .vsmark{color:var(--sub);font-weight:800;font-size:.8rem}
 /* 技詳細 */
-.mvtbl{width:100%;border-collapse:collapse;margin-top:10px;font-size:.78rem}
-.mvtbl td{padding:4px 6px;border-top:1px solid var(--line)}
-.mvtbl td:first-child{white-space:nowrap}
-.mvtbl .num{text-align:right;color:var(--sub);white-space:nowrap}
+.mvcols{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-top:10px;align-items:start}
+.mvside{min-width:0}
+.mvhead{color:var(--sub);font-size:.68rem;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.mvrow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:2px 6px;padding:5px 0;border-bottom:1px solid var(--line);font-size:.76rem;min-width:0}
+.mvrow .mvname{white-space:nowrap}
+.mvrow .num{color:var(--sub);white-space:nowrap;font-size:.72rem;margin-left:auto}
 .mvname{display:inline-flex;align-items:center;gap:4px}
 /* タイムライン */
 .tl{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:none}
@@ -541,12 +543,16 @@ function render(res, L, R) {
       if (e.shielded) uses[e.move].sh++;
     });
     return Object.entries(uses).map(([n, u]) =>
-      `<tr><td>${mvChip(n)}</td><td class="num">威力${u.dmg}</td><td class="num">${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</td></tr>`).join('');
+      `<div class="mvrow">${mvChip(n)}<span class="num">威力${u.dmg}・${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</span></div>`).join('');
   };
+  // 技一覧もHPバー等と同じ左右2列に揃える(中央のVSは列幅合わせ用の不可視スペーサー)
   rEl.innerHTML = `
     <div class="vs">${fighter(0, L)}<div class="vsmark">VS</div>${fighter(1, R)}</div>
-    <table class="mvtbl"><tr><td colspan="3" style="border-top:none;color:var(--sub);font-size:.68rem">${res.final[0].name}の技（実測値）</td></tr>${mvRows(0)}
-    <tr><td colspan="3" style="color:var(--sub);font-size:.68rem">${res.final[1].name}の技（実測値）</td></tr>${mvRows(1)}</table>`;
+    <div class="mvcols">
+      <div class="mvside"><div class="mvhead">${res.final[0].name}の技（実測値）</div>${mvRows(0)}</div>
+      <div class="vsmark" style="visibility:hidden">VS</div>
+      <div class="mvside"><div class="mvhead">${res.final[1].name}の技（実測値）</div>${mvRows(1)}</div>
+    </div>`;
   lastRes = res;
   renderTimeline();
   document.getElementById('share').style.display = 'flex';
