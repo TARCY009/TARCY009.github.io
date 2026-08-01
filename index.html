@@ -196,7 +196,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div id="mineSummary"></div>
   <div id="rankList"><div class="empty">ボスを設定するとランキングが表示されます</div></div>
   <button class="more" id="moreBtn" style="display:none">さらに表示</button>
-  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。データ出典：Game Master（PokeMiners）＋特別技補完（みんポケ・ポケらく・公式発表で照合済み）。</p>
+  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。データ出典：Game Master（PokeMiners）＋特別技補完（みんポケ・ポケらく・公式発表で照合済み）。</p>
 </div>
 
 <footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
@@ -478,7 +478,7 @@ function badges(shadow, mega){
   return (mega?'<span class="tag-m2">メガ</span>':'')+(shadow?'<span class="tag-s2">シャドウ</span>':'');
 }
 // スーパーメガレイドのシールド破壊おすすめメガ:
-// ①ボスの通常枠SPアタックをどれを受けても1発で倒れない(メガ=PL50個体値15、ボス=PL40想定)
+// ①ボスの通常枠SPアタック(シールド中の攻撃2倍補正込み)をどれを受けても1発で倒れない(メガ=PL50個体値15、ボス=PL40想定)
 // ②ゲージ2分割or3分割のSPアタックを持つ(シールド破壊が安定)
 // ③その中で対ボスDPSが高い順
 function shieldRows(){
@@ -496,7 +496,8 @@ function shieldRows(){
     for(const id of bp.c){
       const m=D.moves[id];
       if(!m||m.e>=0) continue;
-      const dmg=Math.floor(0.5*m.p*(bossAtk/def)*stab(bp,m)*eff(m.t,p.ty))+1;
+      // シールド展開中はボスの攻撃に2倍補正(2026-08実測: 実効約1.9〜2.2倍→2倍を採用)
+      const dmg=Math.floor(0.5*m.p*(bossAtk*2/def)*stab(bp,m)*eff(m.t,p.ty))+1;
       if(dmg>maxHit){maxHit=dmg;maxMove=m;}
     }
     if(!maxMove || maxHit>=hp) continue;   // 1発で倒れる可能性があるメガは除外
@@ -532,7 +533,7 @@ function renderShieldRank(){
     <div class="rank-row"><div class="rk">${idx+1}位</div><div class="rmain">
       <div class="rname">${badges(false,true)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}</div>
       <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</div>
-      <div class="rmoves">被弾最大${r.maxHit}/HP${r.hp} で1発耐え（${r.maxMove.n}）</div>
+      <div class="rmoves">被弾最大${r.maxHit}/HP${r.hp} で1発耐え（シールド中2倍補正込み・${r.maxMove.n}）</div>
       <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
