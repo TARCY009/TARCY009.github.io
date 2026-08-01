@@ -100,6 +100,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .tltbl td.hpg{color:#4be08e;font-weight:700}
 .tltbl td.hpy{color:#ffd54a;font-weight:700}
 .tltbl td.hpr{color:#ff7b8e;font-weight:700}
+.tltbl td.ensp{color:#f472b6;font-weight:700}
 .tlhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
 .tlhead h3{margin:0;font-size:.8rem;white-space:nowrap}
 .tlmode{display:flex;gap:4px;flex-shrink:0}
@@ -618,15 +619,17 @@ function renderTimeline() {
     if (opp && opp.shielded) h += (h ? ' ' : '') + '<span class="evbox shield">🛡シールド</span>';
     return h;
   };
+  // SPアタックを打った行のENはピンクで「ゲージを消費した」ことを示す
+  const enCls = (row, i) => (row.ev[i] && row.ev[i].full !== undefined) ? ' class="ensp"' : '';
   const rowHtml = (row, prev) => {
     // 全ターン表示では、前の行と同じ数字は省略して変化だけを見せる
     const num = (v, pv) => (prev && v === pv) ? '' : v;
     const p = prev ? prev.state : null;
     return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
       <td class="ev">${cellEv(row, 0)}</td>
-      <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
+      <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td${enCls(row, 0)}>${num(row.state[0].en, p && p[0].en)}</td>
       <td class="tn">${row.tn}</td>
-      <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${hpCls(1, row.state[1].hp)}${row.state[1].hp === 0 ? ' ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
+      <td${enCls(row, 1)}>${num(row.state[1].en, p && p[1].en)}</td><td class="${hpCls(1, row.state[1].hp)}${row.state[1].hp === 0 ? ' ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
       <td class="ev r">${cellEv(row, 1)}</td>
     </tr>`;
   };
@@ -687,9 +690,9 @@ function renderTimeline() {
       const p = prev ? prev.state : null;
       return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
         ${blockTd(0, idx)}
-        <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td>${num(row.state[0].en, p && p[0].en)}</td>
+        <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td${enCls(row, 0)}>${num(row.state[0].en, p && p[0].en)}</td>
         <td class="tn">${row.tn}</td>
-        <td>${num(row.state[1].en, p && p[1].en)}</td><td class="${hpCls(1, row.state[1].hp)}${row.state[1].hp === 0 ? ' ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
+        <td${enCls(row, 1)}>${num(row.state[1].en, p && p[1].en)}</td><td class="${hpCls(1, row.state[1].hp)}${row.state[1].hp === 0 ? ' ko' : ''}">${num(row.state[1].hp, p && p[1].hp)}</td>
         ${blockTd(1, idx)}
       </tr>`;
     }).join('');
