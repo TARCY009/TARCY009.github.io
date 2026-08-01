@@ -64,11 +64,14 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 /* 技詳細 */
 .savepk{margin-left:auto;flex-shrink:0;background:none;border:1px solid var(--line);border-radius:8px;color:var(--gold);font-size:.7rem;padding:3px 8px;cursor:pointer}
 .savepk:active{background:var(--bg2)}
-.mypk{display:none;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
-.mypkttl{color:var(--sub);font-size:.68rem;flex-shrink:0}
-.mypk .chip{background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:3px 9px;font-size:.74rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
-.mypk .chip i{font-style:normal;color:var(--sub);font-size:.64rem}
-.mypk .chip .del{color:var(--sub);font-weight:700;padding:0 2px}
+.mypkbar{margin-top:8px}
+.mypkbar .mypktab{color:var(--gold)}
+.mypkbar .mypktab[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305;font-weight:700}
+.mypkrow{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:.8rem;cursor:pointer}
+.mypkrow:last-child{border-bottom:none}
+.mypkrow i{font-style:normal;color:var(--sub);font-size:.68rem;margin-left:6px}
+.mypkrow .del{color:var(--sub);font-weight:700;padding:2px 8px;flex-shrink:0}
+.mypkempty{color:var(--sub);font-size:.72rem}
 .ivgrid{display:grid;grid-template-columns:1fr 1fr 1fr 1.4fr;gap:6px}
 .ivgrid label{color:var(--sub);font-size:.66rem;display:block}
 .ivgrid input{width:100%;margin-top:2px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:5px 3px;font-size:.85rem;outline:none;text-align:center}
@@ -185,9 +188,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="side mine" id="sideL">
     <h2>じぶん（左）</h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: まりるり)" autocomplete="off"><div class="sugg-list"></div></div>
-    <div class="mypk"></div>
+    <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
+    <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を端末に保存し、下の「マイポケ」から1タップで呼び出せます">★保存</button></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <label class="f">個体値・PL</label>
       <div class="opts ivmode">
@@ -232,9 +236,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="side foe" id="sideR">
     <h2>あいて（右）</h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: ちゃーれむ)" autocomplete="off"><div class="sugg-list"></div></div>
-    <div class="mypk"></div>
+    <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
+    <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を端末に保存し、下の「マイポケ」から1タップで呼び出せます">★保存</button></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <label class="f">個体値・PL</label>
       <div class="opts ivmode">
@@ -509,7 +514,7 @@ sideEl.forEach((el, i) => {
     else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, 51); inp.value = S[i].mLevel; }
     run();
   });
-  // ★保存: いまの構成(個体値・わざ込み)をマイポケへ。同じポケモンは上書き
+  // ★登録: いまの構成(個体値・わざ込み)を登録リストへ。同じポケモンは上書き
   el.querySelector('.savepk').onclick = () => {
     if (!S[i].key) return;
     const l = loadMyPk().filter(m => m.key !== S[i].key);
@@ -517,7 +522,15 @@ sideEl.forEach((el, i) => {
                 fast: S[i].fast, c1: S[i].c1, c2: S[i].c2 });
     saveMyPkList(l); renderMyPk();
     const b = el.querySelector('.savepk');
-    b.textContent = '★保存した！'; setTimeout(() => { b.textContent = '★保存'; }, 1200);
+    b.textContent = '★登録した！'; setTimeout(() => { b.textContent = '★登録'; }, 1200);
+  };
+  // ★登録リストのタブ: タップで一覧を開閉
+  el.querySelector('.mypktab').onclick = () => {
+    const box = el.querySelector('.mypklist');
+    const open = box.style.display === 'none';
+    if (open) renderMyPk();
+    box.style.display = open ? 'block' : 'none';
+    el.querySelector('.mypktab').setAttribute('aria-pressed', open);
   };
   el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
   el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
@@ -531,28 +544,32 @@ document.getElementById('leagues').querySelectorAll('.lgbtn').forEach(b => b.onc
   run();
 });
 
-// ---- マイポケ(端末内保存・両側の欄から呼び出せる) ----
+// ---- ★登録リスト(端末内保存・両側の欄から呼び出せる) ----
 const MYPK_KEY = 'gbl_mypoke';
 const loadMyPk = () => { try { return JSON.parse(localStorage.getItem(MYPK_KEY)) || []; } catch (e) { return []; } };
 const saveMyPkList = list => { try { localStorage.setItem(MYPK_KEY, JSON.stringify(list.slice(0, 30))); } catch (e) {} };
 function renderMyPk() {
   const list = loadMyPk();
   sideEl.forEach((el, i) => {
-    const box = el.querySelector('.mypk');
-    if (!list.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-    box.style.display = 'flex';
-    box.innerHTML = '<span class="mypkttl">マイポケ:</span>' + list.map((m, k) => {
+    const box = el.querySelector('.mypklist');
+    if (!list.length) {
+      box.innerHTML = '<div class="mypkempty">まだ登録がありません。ポケモンを選んで「★登録」を押すとここに追加されます</div>';
+      return;
+    }
+    box.innerHTML = list.map((m, k) => {
       const p = D.pokemon[m.key];
       if (!p) return '';
-      const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')}</i>` : '';
-      return `<span class="chip" data-k="${k}">${p.n}${iv}<b class="del" data-del="${k}">×</b></span>`;
+      const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
+      return `<div class="mypkrow" data-k="${k}"><span>${p.n}${iv}</span><b class="del" data-del="${k}">×</b></div>`;
     }).join('');
-    box.querySelectorAll('.chip').forEach(ch => ch.onclick = e => {
+    box.querySelectorAll('.mypkrow').forEach(row => row.onclick = e => {
       if (e.target.dataset.del !== undefined) {   // ×で削除
         const l = loadMyPk(); l.splice(+e.target.dataset.del, 1); saveMyPkList(l); renderMyPk();
         return;
       }
-      applyMyPk(i, loadMyPk()[+ch.dataset.k]);
+      applyMyPk(i, loadMyPk()[+row.dataset.k]);
+      box.style.display = 'none';   // 選んだら一覧を閉じる
+      el.querySelector('.mypktab').setAttribute('aria-pressed', 'false');
     });
   });
 }
