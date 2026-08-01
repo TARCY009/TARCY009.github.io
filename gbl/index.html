@@ -62,6 +62,38 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .subline{color:var(--sub);font-size:.72rem;margin-top:3px}
 .vsmark{color:var(--sub);font-weight:800;font-size:.8rem}
 /* 技詳細 */
+.savepk{margin-left:auto;flex-shrink:0;background:none;border:1px solid var(--line);border-radius:8px;color:var(--gold);font-size:.7rem;padding:3px 8px;cursor:pointer}
+.savepk:active{background:var(--bg2)}
+.mypk{display:none;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.mypkttl{color:var(--sub);font-size:.68rem;flex-shrink:0}
+.mypk .chip{background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:3px 9px;font-size:.74rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.mypk .chip i{font-style:normal;color:var(--sub);font-size:.64rem}
+.mypk .chip .del{color:var(--sub);font-weight:700;padding:0 2px}
+.ivgrid{display:grid;grid-template-columns:1fr 1fr 1fr 1.4fr;gap:6px}
+.ivgrid label{color:var(--sub);font-size:.66rem;display:block}
+.ivgrid input{width:100%;margin-top:2px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:5px 3px;font-size:.85rem;outline:none;text-align:center}
+.ivgrid input:focus{border-color:var(--gl)}
+.ivnote{margin-top:6px;font-size:.72rem;color:var(--sub)}
+.ivnote .over{color:#ff7b8e;font-weight:700}
+.bp{margin-top:10px}
+.bp summary{cursor:pointer;color:var(--sub);font-size:.74rem}
+.bpcols{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-top:6px;align-items:start}
+.bpside{min-width:0;font-size:.72rem;line-height:1.7}
+.bpside .mvname{white-space:nowrap}
+.bp .ok{color:var(--win);font-weight:700}
+.bp .ng{color:var(--sub)}
+.bpnote{color:var(--sub);font-size:.64rem;margin-top:4px}
+.shmtx{margin-top:12px}
+.shmtx table{border-collapse:separate;border-spacing:3px;width:100%;max-width:430px;margin:6px auto 0}
+.shmtx th{color:var(--sub);font-weight:600;font-size:.68rem;padding:2px}
+.shmtx th.corner{font-size:.62rem}
+.shmtx td{background:#0a0f22;border:1px solid var(--line);border-radius:8px;text-align:center;padding:5px 2px;cursor:pointer}
+.shmtx td b{font-size:.82rem}
+.shmtx td.w b{color:var(--win)}
+.shmtx td.l b{color:var(--lose)}
+.shmtx td.d b{color:var(--gold)}
+.shmtx td small{display:block;color:var(--sub);font-size:.62rem;margin-top:1px}
+.shmtx td.cur{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy)}
 .mvcols{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-top:10px;align-items:start}
 .mvside{min-width:0}
 .mvhead{color:var(--sub);font-size:.68rem;padding-bottom:4px;border-bottom:1px solid var(--line)}
@@ -153,9 +185,24 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="side mine" id="sideL">
     <h2>じぶん（左）</h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: まりるり)" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="mypk"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を端末に保存し、下の「マイポケ」から1タップで呼び出せます">★保存</button></div>
       <div class="ivline"></div>
+      <label class="f">個体値・PL</label>
+      <div class="opts ivmode">
+        <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
+      </div>
+      <div class="popwin custIv" style="display:none">
+        <div class="popttl">個体値(0〜15)とPL(1〜51)を入力</div>
+        <div class="ivgrid">
+          <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
+          <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
+          <label>HP<input type="number" class="ivH" min="0" max="15" inputmode="numeric"></label>
+          <label>PL<input type="number" class="ivL" min="1" max="51" step="0.5" inputmode="decimal"></label>
+        </div>
+        <div class="ivnote"></div>
+      </div>
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック（この対面で使用）</label>
       <select class="selC1"></select>
@@ -185,9 +232,24 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="side foe" id="sideR">
     <h2>あいて（右）</h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: ちゃーれむ)" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="mypk"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を端末に保存し、下の「マイポケ」から1タップで呼び出せます">★保存</button></div>
       <div class="ivline"></div>
+      <label class="f">個体値・PL</label>
+      <div class="opts ivmode">
+        <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
+      </div>
+      <div class="popwin custIv" style="display:none">
+        <div class="popttl">個体値(0〜15)とPL(1〜51)を入力</div>
+        <div class="ivgrid">
+          <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
+          <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
+          <label>HP<input type="number" class="ivH" min="0" max="15" inputmode="numeric"></label>
+          <label>PL<input type="number" class="ivL" min="1" max="51" step="0.5" inputmode="decimal"></label>
+        </div>
+        <div class="ivnote"></div>
+      </div>
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック（この対面で使用）</label>
       <select class="selC1"></select>
@@ -324,11 +386,47 @@ function optimize(cfgL, cfgR) {
   return { left: PL[a], right: PR[b] };
 }
 
+// ---- ブレークポイント検出(ノーマルアタックのダメージ境界) ----
+// 全個体値×リーグ上限内最大PLの実ステータス表(ポケモン×リーグごとに1回だけ計算)
+const ivTableCache = new Map();
+function ivTable(key, capV) {
+  const ck = key + ':' + capV;
+  if (!ivTableCache.has(ck)) {
+    const rows = [];
+    for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+      let lo = 0, hi = LEVELS.length - 1, li = -1;
+      while (lo <= hi) {   // CP上限内で最大のPLを二分探索
+        const mid = (lo + hi) >> 1;
+        const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LEVELS[mid] });
+        if (!capV || st.cp <= capV) { li = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      if (li < 0) continue;
+      const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LEVELS[li] });
+      rows.push({ ivs: [a, d, h], level: LEVELS[li], atk: st.atk, def: st.def, hp: st.hp, cp: st.cp });
+    }
+    ivTableCache.set(ck, rows);
+  }
+  return ivTableCache.get(ck);
+}
+// 必要な攻撃/防御実数値を満たす個体値・PLの例を探す(なければnull)
+// 条件を満たす中で「残りのステータス積」が最大の組み合わせを例として返す
+function findIvFor(key, need, capV) {
+  let best = null;
+  for (const r of ivTable(key, capV)) {
+    if (need.atk && r.atk < need.atk) continue;
+    if (need.def && r.def <= need.def) continue;
+    const score = need.atk ? r.def * r.hp : r.atk * r.hp;
+    if (!best || score > best.score) best = { ...r, score };
+  }
+  return best;
+}
+
 // ---- 画面状態 ----
 let cap = 1500;
 const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
-  spSlots: ['1', '1', '1', '1', '1'], spRest: '1' });
+  spSlots: ['1', '1', '1', '1', '1'], spRest: '1',
+  ivMode: 'auto', mIvs: null, mLevel: null });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
 
@@ -388,6 +486,39 @@ sideEl.forEach((el, i) => {
     syncShieldSlots();
     run();
   });
+  // 個体値: 理想(自動)/マニュアル切替。マニュアルを開いたら現在の理想値を初期値に入れる
+  const ivInputs = ['ivA', 'ivD', 'ivH', 'ivL'].map(c => el.querySelector('.' + c));
+  el.querySelectorAll('.ivmode button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    S[i].ivMode = b.dataset.v;
+    el.querySelector('.custIv').style.display = S[i].ivMode === 'manual' ? 'block' : 'none';
+    if (S[i].ivMode === 'manual' && S[i].key && !S[i].mIvs) {
+      const r1 = rank1(S[i].key, cap);
+      S[i].mIvs = r1.ivs.slice(); S[i].mLevel = r1.level;
+    }
+    if (S[i].mIvs) {
+      ivInputs[0].value = S[i].mIvs[0]; ivInputs[1].value = S[i].mIvs[1];
+      ivInputs[2].value = S[i].mIvs[2]; ivInputs[3].value = S[i].mLevel;
+    }
+    run();
+  });
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  ivInputs.forEach((inp, k) => inp.onchange = () => {
+    if (!S[i].mIvs) S[i].mIvs = [15, 15, 15];
+    if (k < 3) { S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), 0, 15); inp.value = S[i].mIvs[k]; }
+    else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, 51); inp.value = S[i].mLevel; }
+    run();
+  });
+  // ★保存: いまの構成(個体値・わざ込み)をマイポケへ。同じポケモンは上書き
+  el.querySelector('.savepk').onclick = () => {
+    if (!S[i].key) return;
+    const l = loadMyPk().filter(m => m.key !== S[i].key);
+    l.unshift({ key: S[i].key, ivMode: S[i].ivMode, mIvs: S[i].mIvs, mLevel: S[i].mLevel,
+                fast: S[i].fast, c1: S[i].c1, c2: S[i].c2 });
+    saveMyPkList(l); renderMyPk();
+    const b = el.querySelector('.savepk');
+    b.textContent = '★保存した！'; setTimeout(() => { b.textContent = '★保存'; }, 1200);
+  };
   el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
   el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
   el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
@@ -400,9 +531,53 @@ document.getElementById('leagues').querySelectorAll('.lgbtn').forEach(b => b.onc
   run();
 });
 
+// ---- マイポケ(端末内保存・両側の欄から呼び出せる) ----
+const MYPK_KEY = 'gbl_mypoke';
+const loadMyPk = () => { try { return JSON.parse(localStorage.getItem(MYPK_KEY)) || []; } catch (e) { return []; } };
+const saveMyPkList = list => { try { localStorage.setItem(MYPK_KEY, JSON.stringify(list.slice(0, 30))); } catch (e) {} };
+function renderMyPk() {
+  const list = loadMyPk();
+  sideEl.forEach((el, i) => {
+    const box = el.querySelector('.mypk');
+    if (!list.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    box.style.display = 'flex';
+    box.innerHTML = '<span class="mypkttl">マイポケ:</span>' + list.map((m, k) => {
+      const p = D.pokemon[m.key];
+      if (!p) return '';
+      const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')}</i>` : '';
+      return `<span class="chip" data-k="${k}">${p.n}${iv}<b class="del" data-del="${k}">×</b></span>`;
+    }).join('');
+    box.querySelectorAll('.chip').forEach(ch => ch.onclick = e => {
+      if (e.target.dataset.del !== undefined) {   // ×で削除
+        const l = loadMyPk(); l.splice(+e.target.dataset.del, 1); saveMyPkList(l); renderMyPk();
+        return;
+      }
+      applyMyPk(i, loadMyPk()[+ch.dataset.k]);
+    });
+  });
+}
+function applyMyPk(i, m) {
+  if (!m || !D.pokemon[m.key]) return;
+  S[i].key = m.key;
+  S[i].fast = m.fast || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
+  const el = sideEl[i];
+  el.querySelector('input').value = D.pokemon[m.key].n;
+  el.querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === S[i].ivMode));
+  el.querySelector('.custIv').style.display = S[i].ivMode === 'manual' ? 'block' : 'none';
+  if (S[i].mIvs) {
+    el.querySelector('.ivA').value = S[i].mIvs[0]; el.querySelector('.ivD').value = S[i].mIvs[1];
+    el.querySelector('.ivH').value = S[i].mIvs[2]; el.querySelector('.ivL').value = S[i].mLevel;
+  }
+  run();
+}
+
 function pick(i, key) {
   S[i].key = key;
   S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
+  S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;   // 個体値も理想に戻す
+  sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
+  sideEl[i].querySelector('.custIv').style.display = 'none';
   run();
 }
 
@@ -411,8 +586,17 @@ const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
 function run() {
   if (!S[0].key || !S[1].key) return;
   const base = S.map(s => {
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel };
     const r1 = rank1(s.key, cap);
     return { key: s.key, ivs: r1.ivs, level: r1.level };
+  });
+  // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
+  S.forEach((s, i) => {
+    const note = sideEl[i].querySelector('.ivnote');
+    if (s.ivMode === 'manual' && s.mIvs) {
+      const st = PvpEngine.buildStats(D, base[i]);
+      note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (cap && st.cp > cap ? ' <span class="over">⚠リーグ上限超え</span>' : '');
+    } else note.textContent = '';
   });
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
   const optCfg = i => ({ ...base[i], shields: 2,
@@ -440,7 +624,19 @@ function run() {
   };
   const L = fin(0), R = fin(1);
   const res = PvpEngine.simulate(D, L, R, NO_PROC);
-  render(res, L, R);
+  // シールド枚数別の勝敗(3×3): 技構成は同じままシールドだけ変えて総当たり
+  const noPlan = c => { const x = { ...c }; delete x.shieldPlan; delete x.shieldRest; return x; };
+  const matrix = [];
+  for (let a = 0; a <= 2; a++) {
+    const row = [];
+    for (let b = 0; b <= 2; b++) {
+      const r = PvpEngine.simulate(D, { ...noPlan(L), shields: a }, { ...noPlan(R), shields: b }, NO_PROC);
+      const w = r.winner;
+      row.push({ w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) });
+    }
+    matrix.push(row);
+  }
+  render(res, L, R, matrix);
 }
 
 function fillMoves(i, cfg) {
@@ -514,7 +710,7 @@ function buildSpWindow(i, m1, m2) {
   });
 }
 
-function render(res, L, R) {
+function render(res, L, R, matrix) {
   fillMoves(0, L); fillMoves(1, R);
   const rEl = document.getElementById('result');
   rEl.style.display = 'block';
@@ -546,24 +742,98 @@ function render(res, L, R) {
     return Object.entries(uses).map(([n, u]) =>
       `<div class="mvrow">${mvChip(n)}<span class="num">威力${u.dmg}・${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</span></div>`).join('');
   };
+  // シールド枚数別の勝敗3×3表(マスをタップでその設定に切替)
+  const curA = S[0].shieldMode ? -1 : S[0].shields, curB = S[1].shieldMode ? -1 : S[1].shields;
+  const mtxCell = (a, b) => {
+    const c = matrix[a][b];
+    const cls = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
+    const txt = c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け';
+    return `<td class="${cls}${a === curA && b === curB ? ' cur' : ''}" data-a="${a}" data-b="${b}">
+      <b>${txt}</b><small>${c.w === 'draw' ? '両者0' : '残HP' + c.pct + '%'}</small></td>`;
+  };
+  const mtxHtml = `<div class="shmtx">
+    <div class="mvhead">シールド枚数別の勝敗（マスをタップでその設定に切替。残HPは勝った側）</div>
+    <table>
+      <tr><th class="corner">自分＼相手</th><th>🛡0</th><th>🛡1</th><th>🛡2</th></tr>
+      ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${[0, 1, 2].map(b => mtxCell(a, b)).join('')}</tr>`).join('')}
+    </table></div>`;
   // 技一覧もHPバー等と同じ左右2列に揃える(中央のVSは列幅合わせ用の不可視スペーサー)
   rEl.innerHTML = `
     <div class="vs">${fighter(0, L)}<div class="vsmark">VS</div>${fighter(1, R)}</div>
+    ${mtxHtml}
     <div class="mvcols">
       <div class="mvside"><div class="mvhead">${res.final[0].name}の技（実測値）</div>${mvRows(0)}</div>
       <div class="vsmark" style="visibility:hidden">VS</div>
       <div class="mvside"><div class="mvhead">${res.final[1].name}の技（実測値）</div>${mvRows(1)}</div>
-    </div>`;
+    </div>
+    <details class="bp"><summary>ブレークポイント（あと少しでノーマルアタックのダメージが変わる境目）</summary>
+      <div class="bpbody"></div></details>`;
+  // ブレークポイント: 開いた時だけ計算する(個体値例の探索が少し重いため)
+  const bpBody = () => {
+    const cfgs = [L, R];
+    const fmt = v => (Math.round(v * 10) / 10).toFixed(1);
+    const side = i => {
+      const me = cfgs[i], op = cfgs[1 - i];
+      const stM = { ...PvpEngine.buildStats(D, me), buffs: [0, 0] };
+      const stO = { ...PvpEngine.buildStats(D, op), buffs: [0, 0] };
+      const mv = D.moves[me.fast], mvO = D.moves[op.fast];
+      // 与ダメ: 攻撃実数値がいくつあれば1上がるか
+      const effM = PvpEngine.effectiveness(D, mv.t, stO.types);
+      const stabM = stM.types.includes(mv.t) ? 1.2 : 1;
+      const K = 0.5 * mv.p * effM * stabM * 1.3 / stO.def;   // ダメ = floor(攻×K)+1
+      const cur = PvpEngine.damage(D, mv, stM, stO);
+      const atkReq = cur / K;
+      const exA = findIvFor(me.key, { atk: atkReq }, cap);
+      const give = `${mvChip(mv.n)} の与ダメ: 今<b>${cur}</b> → 攻撃実数値${fmt(atkReq)}以上(今${fmt(stM.atk)})で<b>${cur + 1}</b><br>` +
+        (exA ? `　<span class="ok">到達できる</span> 例: 個体値${exA.ivs.join('/')} PL${exA.level}（CP${exA.cp}）`
+             : `　<span class="ng">このリーグの個体値・PLでは届かない</span>`);
+      // 被ダメ: 防御実数値がいくつあれば1減るか
+      let take;
+      const curT = PvpEngine.damage(D, mvO, stO, stM);
+      if (curT <= 1) take = `${mvChip(mvO.n)} の被ダメ: 今<b>1</b>（最小値。これ以上減らない）`;
+      else {
+        const effO = PvpEngine.effectiveness(D, mvO.t, stM.types);
+        const stabO = stO.types.includes(mvO.t) ? 1.2 : 1;
+        const KO = 0.5 * mvO.p * effO * stabO * 1.3 * stO.atk;   // ダメ = floor(KO÷防)+1
+        const defReq = KO / (curT - 1);
+        const exD = findIvFor(me.key, { def: defReq }, cap);
+        take = `${mvChip(mvO.n)} の被ダメ: 今<b>${curT}</b> → 防御実数値${fmt(defReq)}超(今${fmt(stM.def)})で<b>${curT - 1}</b><br>` +
+          (exD ? `　<span class="ok">到達できる</span> 例: 個体値${exD.ivs.join('/')} PL${exD.level}（CP${exD.cp}）`
+               : `　<span class="ng">このリーグの個体値・PLでは届かない</span>`);
+      }
+      return `<div class="bpside"><div class="mvhead">${stM.name}</div>${give}<br>${take}</div>`;
+    };
+    return `<div class="bpcols">${side(0)}<div class="vsmark" style="visibility:hidden">VS</div>${side(1)}</div>
+      <div class="bpnote">※対戦開始時点（バフなし）・現在選択中のノーマルアタックで計算。個体値を「ﾏﾆｭｱﾙ」にすると自分の数値で試せます</div>`;
+  };
+  const bpEl = rEl.querySelector('.bp');
+  bpEl.addEventListener('toggle', () => {
+    bpOpen = bpEl.open;
+    if (bpEl.open && !bpEl.querySelector('.bpbody').innerHTML) bpEl.querySelector('.bpbody').innerHTML = bpBody();
+  });
+  if (bpOpen) bpEl.open = true;
+  // 3×3表のマスをタップ→両者のシールド枚数をその組み合わせに変更
+  rEl.querySelectorAll('.shmtx td[data-a]').forEach(td => td.onclick = () => {
+    [+td.dataset.a, +td.dataset.b].forEach((v, i) => {
+      S[i].shieldMode = null; S[i].shields = v;
+      sideEl[i].querySelectorAll('.shields button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.v === v));
+      sideEl[i].querySelector('.custShield').style.display = 'none';
+    });
+    run();
+  });
   lastRes = res;
   renderTimeline();
   document.getElementById('share').style.display = 'flex';
-  history.replaceState(null, '', '?' + new URLSearchParams({
-    lg: cap, l: L.key, r: R.key, sl: L.shields, sr: R.shields, tl: L.timing, tr: R.timing
-  }).toString());
+  const qp = { lg: cap, l: L.key, r: R.key, sl: L.shields, sr: R.shields, tl: L.timing, tr: R.timing };
+  // マニュアル個体値は「攻.防.HP.PL」形式でURLに含める
+  S.forEach((s, i) => {
+    if (s.ivMode === 'manual' && s.mIvs) qp[i ? 'ir' : 'il'] = s.mIvs.join('.') + '.' + s.mLevel;
+  });
+  history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
 }
 
 // ---- タイムライン(ダイジェスト/全ターン切替) ----
-let lastRes = null, tlMode = 'digest';
+let lastRes = null, tlMode = 'digest', bpOpen = false;
 function renderTimeline() {
   const res = lastRes;
   if (!res) return;
@@ -737,6 +1007,20 @@ document.getElementById('copyUrl').onclick = async () => {
     S[i].timing = q.get(k);
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
   }});
+  ['il', 'ir'].forEach((k, i) => {   // マニュアル個体値(攻.防.HP.PL)の復元
+    const v = q.get(k); if (!v) return;
+    const p = v.split('.').map(Number);
+    if (p.length < 4 || p.some(n => isNaN(n))) return;
+    S[i].ivMode = 'manual';
+    S[i].mIvs = [p[0], p[1], p[2]];
+    S[i].mLevel = p.length > 4 ? p[3] + p[4] / 10 : p[3];   // PL45.5は「45.5」の2要素に割れて届く
+    const el = sideEl[i];
+    el.querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'manual'));
+    el.querySelector('.custIv').style.display = 'block';
+    el.querySelector('.ivA').value = p[0]; el.querySelector('.ivD').value = p[1];
+    el.querySelector('.ivH').value = p[2]; el.querySelector('.ivL').value = S[i].mLevel;
+  });
+  renderMyPk();
   run();
 })();
 </script>
