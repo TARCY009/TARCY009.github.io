@@ -157,9 +157,20 @@ if(window.GYM_DATA){
 }
 
 const $q=document.getElementById('q'), $sg=document.getElementById('suggest');
-$q.addEventListener('input',()=>{
+// ひらがな入力はカタカナに読み替えて検索(確定時は入力欄の値もカタカナ化)
+const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+$q.addEventListener('compositionend',()=>{
+  const v=toKata($q.value);
+  if(v!==$q.value) $q.value=v;
+  $q.dispatchEvent(new Event('input'));
+});
+$q.addEventListener('input',e=>{
   if(!DATA) return;
-  const v=$q.value.trim();
+  if(!e.isComposing){
+    const v2=toKata($q.value);
+    if(v2!==$q.value) $q.value=v2;
+  }
+  const v=toKata($q.value.trim());
   if(!v){$sg.style.display='none';return;}
   const hits=DATA.pokemon.filter(p=>p.name.includes(v)).slice(0,12);
   $sg.innerHTML='';

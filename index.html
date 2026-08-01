@@ -70,6 +70,13 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
 label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-weight:600}
+.selrow{display:flex;align-items:center;gap:6px}
+.selrow select{flex:1;min-width:0}
+.seltype{flex-shrink:0;display:inline-flex}
+.cprow input{max-width:220px}
+.ivrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ivrow input{padding:8px 6px;text-align:center}
+.ivrow label.f{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .toggle-row{display:flex;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap;font-size:.85rem}
 .toggle-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .toggle-row input{accent-color:var(--focusc,var(--accent))}
@@ -156,19 +163,21 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   </div>
   <div id="myForm" style="display:none">
     <div class="grid2" style="margin-top:12px">
-      <div><label class="f">ノーマルアタック</label><select id="fastSel"></select></div>
-      <div><label class="f">SPアタック</label><select id="chgSel"></select></div>
+      <div><label class="f">ノーマルアタック</label><div class="selrow"><select id="fastSel"></select><span class="seltype" id="fastType"></span></div></div>
+      <div><label class="f">SPアタック</label><div class="selrow"><select id="chgSel"></select><span class="seltype" id="chgType"></span></div></div>
     </div>
     <div class="toggle-row">
       <label><input type="radio" name="statmode" value="cp" checked> 今の状態（CP＋個体値）で計算</label>
       <label><input type="radio" name="statmode" value="max"> フル強化想定（PL50・個体値15）</label>
       <label><input type="checkbox" id="myShadow"> シャドウ（×1.2）</label>
     </div>
-    <div class="grid3" id="cpArea" style="margin-top:8px">
-      <div><label class="f">CP</label><input type="number" id="myCP" min="10" placeholder="例: 2387"></div>
-      <div><label class="f">攻撃 個体値</label><input type="number" id="ivA" min="0" max="15" value="15"></div>
-      <div><label class="f">防御 個体値</label><input type="number" id="ivD" min="0" max="15" value="15"></div>
-      <div><label class="f">HP 個体値</label><input type="number" id="ivH" min="0" max="15" value="15"></div>
+    <div id="cpArea" style="margin-top:8px">
+      <div class="cprow"><label class="f">CP</label><input type="number" id="myCP" min="10" placeholder="例: 2387"></div>
+      <div class="ivrow">
+        <div><label class="f">攻撃 個体値</label><input type="number" id="ivA" min="0" max="15" value="15"></div>
+        <div><label class="f">防御 個体値</label><input type="number" id="ivD" min="0" max="15" value="15"></div>
+        <div><label class="f">HP 個体値</label><input type="number" id="ivH" min="0" max="15" value="15"></div>
+      </div>
     </div>
     <div class="lv-out" id="lvOut"></div>
     <button class="main" id="addBtn" disabled>ランキングに追加</button>
@@ -360,20 +369,37 @@ let myKey=null;
 attachSugg(document.getElementById('myInput'),document.getElementById('mySugg'),k=>{
   myKey=k; buildMyForm();
 },k=>!D.pokemon[k].mega); // 自分側はメガ以外（メガはボス・ランキング側で対応）
+function syncMoveTypeIcons(){
+  // 選択中のわざのタイプをセレクトのすぐ右にアイコン表示(option内はHTML不可のため)
+  const f=document.getElementById('fastSel').value, c=document.getElementById('chgSel').value;
+  document.getElementById('fastType').innerHTML=f?typeIconHTML(D.typeJa[D.moves[f].t],20):'';
+  document.getElementById('chgType').innerHTML=c?typeIconHTML(D.typeJa[D.moves[c].t],20):'';
+}
 function buildMyForm(){
   const p=D.pokemon[myKey];
   const f=fastMoves(p), c=chgMoves(p);
-  document.getElementById('fastSel').innerHTML=f.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}｜${D.typeJa[D.moves[x.id].t]}</option>`).join('');
-  document.getElementById('chgSel').innerHTML=c.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}｜${D.typeJa[D.moves[x.id].t]}</option>`).join('');
+  document.getElementById('fastSel').innerHTML=f.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}</option>`).join('');
+  document.getElementById('chgSel').innerHTML=c.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}</option>`).join('');
+  // ボス設定済みなら、そのボスに対する最適わざ構成を初期選択にする
+  if(boss){
+    const bc=bestCombo(p, D.pokemon[boss].ty, false);
+    if(bc){
+      document.getElementById('fastSel').value=bc.f.id;
+      document.getElementById('chgSel').value=bc.c.id;
+    }
+  }
+  syncMoveTypeIcons();
   document.getElementById('myForm').style.display='block';
   document.getElementById('myShadow').disabled=!p.shadow;
   if(!p.shadow) document.getElementById('myShadow').checked=false;
   checkLevel();
 }
+document.getElementById('fastSel').addEventListener('change',syncMoveTypeIcons);
+document.getElementById('chgSel').addEventListener('change',syncMoveTypeIcons);
 function statMode(){ return document.querySelector('input[name=statmode]:checked').value; }
 function checkLevel(){
   const out=document.getElementById('lvOut'), btn=document.getElementById('addBtn');
-  document.getElementById('cpArea').style.display = statMode()==='cp'?'grid':'none';
+  document.getElementById('cpArea').style.display = statMode()==='cp'?'block':'none';
   if(!myKey){btn.disabled=true;out.style.display='none';return;}
   if(statMode()==='max'){out.style.display='none';btn.disabled=false;return;}
   const p=D.pokemon[myKey];

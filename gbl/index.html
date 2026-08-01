@@ -80,6 +80,8 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .tn{color:var(--sub)}
 .shield{color:var(--cy)}
 .buffup{color:var(--gold)}
+.buffdown{color:#ff8f6b}
+.extra{color:var(--cy);font-weight:700}
 .note{margin-top:12px;color:var(--sub);font-size:.72rem}
 .share{margin-top:12px;display:flex;gap:8px}
 .share button{padding:9px 14px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:.82rem;cursor:pointer}
@@ -234,9 +236,11 @@ const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r && !D.pokemon[k].
 const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 18);
 const MOVE_TYPE = {};
+const MOVE_COST = {};
 const NAME_TYPES = {};
 Object.values(D.moves).forEach(m => {
   MOVE_TYPE[m.n] = m.t;
+  if (m.e) MOVE_COST[m.n] = m.e;
   (NAME_TYPES[m.n] = NAME_TYPES[m.n] || new Set()).add(m.t);
 });
 const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOVE_TYPE[name]] || '', size || 13)}${name}</span>`;
@@ -563,6 +567,34 @@ function renderTimeline() {
     const pct = hp / res.final[i].hpMax;
     return hp === 0 || pct < 0.2 ? 'hpr' : pct < 0.5 ? 'hpy' : 'hpg';
   };
+  // 能力変化はデータから向きを判定し、太い矢印(⬆⬇)で表示
+  const buffTxt = e => {
+    if (!e.buff) return '';
+    const dA = e.buff.to[0] - e.buff.from[0], dD = e.buff.to[1] - e.buff.from[1];
+    const pre = e.buff.target === 'opponent' ? '相手' : '';
+    let t = '';
+    if (dA) t += pre + '攻' + (dA > 0 ? '⬆' : '⬇');
+    if (dD) t += (t ? ' ' : '') + pre + '防' + (dD > 0 ? '⬆' : '⬇');
+    return t ? ` <span class="${dA + dD >= 0 ? 'buffup' : 'buffdown'}">${t}</span>` : '';
+  };
+  // CCT等でゲージが足りているのに余分に打ったノーマルアタックへ(+n)を付与
+  res.rows.forEach(row => { row._extra = [null, null]; });
+  for (let i = 0; i < 2; i++) {
+    let extra = 0;
+    for (let idx = 0; idx < res.rows.length; idx++) {
+      const e = res.rows[idx].ev[i];
+      if (!e) continue;
+      if (e.full !== undefined) { extra = 0; continue; }   // SPアタックでリセット
+      const prevEn = idx > 0 ? res.rows[idx - 1].state[i].en : 0;
+      let cost = null;
+      for (let j = idx + 1; j < res.rows.length; j++) {
+        const ev2 = res.rows[j].ev[i];
+        if (ev2 && ev2.full !== undefined) { cost = MOVE_COST[ev2.move] || null; break; }
+      }
+      if (cost != null && prevEn >= cost) { extra++; res.rows[idx]._extra[i] = '+' + extra; }
+      else extra = 0;
+    }
+  }
   // わざの発動は1発ずつ枠(フレーム)に入れて見分けやすくする
   const cellEv = (row, i) => {
     const e = row.ev[i], opp = row.ev[1 - i];
@@ -572,7 +604,8 @@ function renderTimeline() {
       if (e.shielded) t += ' -1';
       else if (e.full) t += ` <b>-${e.dmg}</b>`;
       else t += ` -${e.dmg}`;
-      if (e.buff && e.buff.target !== 'opponent') t += ' <span class="buffup">攻↑</span>';
+      if (row._extra && row._extra[i]) t += ` <span class="extra">(${row._extra[i]})</span>`;
+      t += buffTxt(e);
       h = `<span class="evbox">${t}</span>`;
     }
     // シールドは「使った側」に表示する
@@ -632,7 +665,9 @@ function renderTimeline() {
         if (b.ev.shielded) inner += ' -1';
         else if (b.ev.full) inner += ` <b>-${b.ev.dmg}</b>`;
         else inner += ` -${b.ev.dmg}`;
-        if (b.ev.buff && b.ev.buff.target !== 'opponent') inner += ' <span class="buffup">攻↑</span>';
+        const ex = res.rows[b.end]._extra && res.rows[b.end]._extra[i];
+        if (ex) inner += ` <span class="extra">(${ex})</span>`;
+        inner += buffTxt(b.ev);
       } else inner = '…';
       if (shieldRows[i].some(r => r >= b.start && r <= b.end)) inner += '<span class="shield">🛡シールド</span>';
       const cls = 'mvblock ' + (i ? 'r' : 'l')

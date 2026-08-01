@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PvP個体値チェッカー | ポケモンGO</title>
+<title>個体値チェッカー | ポケモンGO</title>
 <meta name="description" content="ポケモンGOの個体値を入力してスーパー・ハイパー・マスターリーグのPvP順位を即座に計算。GOバトルリーグ(GBL)対応、4096通り完全網羅。">
 <meta name="theme-color" content="#0c1122">
 <!-- OGP設定(公開URL設定済み) -->
-<meta property="og:title" content="PvP個体値チェッカー | ポケモンGO">
+<meta property="og:title" content="個体値チェッカー | ポケモンGO">
 <meta property="og:description" content="個体値を入力するだけで3リーグの順位を同時表示。アメXL数・攻撃優先順位にも対応。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tarcy009.github.io/iv-checker/">
 <meta property="og:image" content="https://tarcy009.github.io/iv-checker/ogp.png">
-<meta property="og:site_name" content="PvP個体値チェッカー">
+<meta property="og:site_name" content="個体値チェッカー">
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="icon" href="favicon.ico" sizes="32x32">
@@ -174,7 +174,7 @@ body.has-sticky{padding-top:52px}
 <div class="wrap">
 <header>
   <div class="eyebrow">GO BATTLE LEAGUE</div>
-  <h1>PvP個体値チェッカー<small>4096通り完全計算 — 順位・SCP・必要レベルを一発表示</small></h1>
+  <h1>個体値チェッカー<small>4096通り完全計算 — 順位・SCP・必要レベルを一発表示</small></h1>
 </header>
 
 <div class="card">
@@ -485,7 +485,16 @@ function descendants(p){
   }
   return out;
 }
-q.addEventListener('input',()=>{
+q.addEventListener('compositionend',()=>{ // 確定時は入力欄の値もカタカナ化
+  const v=kata(q.value);
+  if(v!==q.value) q.value=v;
+  q.dispatchEvent(new Event('input'));
+});
+q.addEventListener('input',e=>{
+  if(e && !e.isComposing){
+    const v0=kata(q.value);
+    if(v0!==q.value) q.value=v0;
+  }
   const v=kata(q.value.trim());
   if(!v){ sugg.style.display='none'; return; }
   const lower=v.toLowerCase();

@@ -190,7 +190,22 @@ footer a{color:var(--accent2)}
   }
   mBase.addEventListener('click', () => setMode(false));
   mInt.addEventListener('click', () => setMode(true));
-  q.addEventListener('input', () => { query = q.value.trim(); shown = query ? 9999 : PAGE; render(); });
+  // ひらがな入力はカタカナに読み替えて絞り込み(確定時は入力欄の値もカタカナ化)
+  const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+  q.addEventListener('compositionend', () => {
+    const v = toKata(q.value);
+    if (v !== q.value) q.value = v;
+    q.dispatchEvent(new Event('input'));
+  });
+  q.addEventListener('input', e => {
+    if (!e.isComposing) {
+      const v = toKata(q.value);
+      if (v !== q.value) q.value = v;
+    }
+    query = toKata(q.value.trim());
+    shown = query ? 9999 : PAGE;
+    render();
+  });
   fDw.addEventListener('click', () => {
     includeDw = !includeDw;
     fDw.setAttribute('aria-pressed', includeDw);
