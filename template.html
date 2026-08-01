@@ -125,7 +125,9 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .wchip{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:var(--ink);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:99px;padding:2px 9px 2px 3px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(30,40,90,.28)}
 .wchip b{font-weight:800;color:var(--accent)}
 .bossline{display:flex;align-items:center;gap:12px;margin-top:12px}
-.bossname{font-weight:800;font-size:1.05rem}
+.bossname{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.catchcp{font-size:.8rem;color:var(--sub);margin-top:4px}
+.catchcp b{color:var(--ink)}
 .rmoves .tbadge{margin-right:3px}
 .tag-s2{display:inline-block;background:var(--shadow);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
@@ -313,7 +315,7 @@ function attachSugg(inputEl, listEl, onPick, filterFn, rowFn){
     if(!res.length){listEl.style.display='none';return;}
     listEl.innerHTML=res.map(k=>{
       const p=D.pokemon[k];
-      const inner=rowFn?rowFn(p):`<span class="srow">${p.n}</span><small class="srow-meta">${typeIcons(p,18)}攻${p.a}</small>`;
+      const inner=rowFn?rowFn(p,k):`<span class="srow">${p.n}</span><small class="srow-meta">${typeIcons(p,18)}攻${p.a}</small>`;
       return `<div data-k="${k}">${inner}</div>`;
     }).join('');
     listEl.style.display='block';
@@ -328,10 +330,24 @@ function typeIcons(p, size){ return typePairHTML(p.ty.map(t=>D.typeJa[t]), size)
 // 耐久指数(防御種族値×HP種族値)が16000未満は極低耐久として注意表示
 const lowBulk=p=>(p.df*p.h<16000)?'<span class="lowbulk">⚠️極低耐久</span>':'';
 const cp100=(p,l)=>{const c=D.cpm[String(l)];return Math.max(10,Math.floor((p.a+15)*Math.sqrt(p.df+15)*Math.sqrt(p.h+15)*c*c/10));};
+// レイドボスの「捕獲時のすがた」: 合体後・王のフォルム・メガ/ゲンシは元のすがたで捕獲される
+function catchForm(k){
+  const m=k.match(/^(.*)_(MEGA(?:_[XY])?|PRIMAL)$/);
+  if(m && D.pokemon[m[1]]) return m[1];
+  const MAP={
+    'NECROZMA_DUSK_MANE':'NECROZMA','NECROZMA_DAWN_WINGS':'NECROZMA',
+    'KYUREM_BLACK':'KYUREM','KYUREM_WHITE':'KYUREM',
+    'ZACIAN_CROWNED_SWORD':'ZACIAN_HERO','ZAMAZENTA_CROWNED_SHIELD':'ZAMAZENTA_HERO',
+  };
+  return (MAP[k] && D.pokemon[MAP[k]]) ? MAP[k] : k;
+}
 attachSugg(document.getElementById('bossInput'),document.getElementById('bossSugg'),k=>{
   boss=k; renderBoss(); renderRank();
-},null,p=>`<span class="srow-wrap"><span class="srow-main"><span class="srow">${p.n}</span>${typeIcons(p,18)}</span>
-  <small class="srow-cp">捕獲100%CP <b>${cp100(p,20)}</b>（PL20）/ <b>${cp100(p,25)}</b>（PL25 天候ブースト）</small></span>`);
+},null,(p,k)=>{
+  const c=D.pokemon[catchForm(k)];
+  return `<span class="srow-wrap"><span class="srow-main"><span class="srow">${p.n}</span>${typeIcons(p,18)}</span>
+  <small class="srow-cp">捕獲100%CP <b>${cp100(c,20)}</b>（PL20）/ <b>${cp100(c,25)}</b>（PL25 天候ブースト）${c!==p?`・${c.n}で捕獲`:''}</small></span>`;
+});
 // レイドボスが実際に使うわざ一覧(特別わざ・レガシーわざは使用しないため通常枠のみ)
 function bossMovesHtml(p){
   const fmt=ids=>{
@@ -354,13 +370,14 @@ function bossMovesHtml(p){
 }
 function renderBoss(){
   const p=D.pokemon[boss];
+  const cf=D.pokemon[catchForm(boss)];
   const weak=D.types.filter(t=>eff(t,p.ty)>1.01)
     .sort((a,b)=>eff(b,p.ty)-eff(a,p.ty))
     .map(t=>`<span class="wchip">${typeIconHTML(D.typeJa[t],18)}<b>×${eff(t,p.ty).toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}</b></span>`);
   document.getElementById('bossView').innerHTML=
     `<div class="bossline">
-       <div><div class="bossname">${p.n}</div>
-       <div class="chips">${typeIcons(p,26)}</div></div></div>
+       <div><div class="bossname">${p.n}${typeIcons(p,24)}</div>
+       <div class="catchcp">捕獲100%CP <b>${cp100(cf,20)}</b>（PL20）/ <b>${cp100(cf,25)}</b>（PL25 天候ブースト）${cf!==p?`・<b>${cf.n}</b>のすがたで捕獲`:''}</div></div></div>
      <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>
      ${bossMovesHtml(p)}`;
 }
