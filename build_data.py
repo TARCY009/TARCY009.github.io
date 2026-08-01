@@ -312,6 +312,13 @@ def main():
         s = final[src]
         final[mkey] = {'n':nm,'a':a,'df':df,'h':h,'ty':ty,'q':s['q'],'c':s['c'],'eq':s['eq'],'ec':s['ec'],'shadow':False,'mega':True}
 
+    # タイプ不定の「めざめるパワー(ノーマル扱い)」は実在しないため全ポケモンから除外
+    REMOVE_MOVES = {'HIDDEN_POWER_FAST'}
+    for k in final:
+        for slot in ('q','c','eq','ec'):
+            final[k][slot] = [m for m in final[k][slot] if m not in REMOVE_MOVES]
+    for m in REMOVE_MOVES: moves.pop(m, None)
+
     cpm = {}
     for e in data:
         if e['templateId']=='PLAYER_LEVEL_SETTINGS':

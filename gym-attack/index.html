@@ -268,7 +268,13 @@ function render(def){
         }
       }
       local.sort((a,b)=>b.score-a.score);
-      rows.push(...local.slice(0,FL.multi?3:1)); // デフォルトは最適技構成のみ、複数技ONで上位3構成
+      // ドラゴン7%ルール: 1位が1ゲージ技なら、分割あり技との差が7%未満のとき分割ありを採用
+      let picks=local.slice(0,FL.multi?3:1); // デフォルトは最適技構成のみ、複数技ONで上位3構成
+      if(!FL.multi&&picks.length&&picks[0].bars===1){
+        const split=local.find(r=>r.bars>1);
+        if(split&&(picks[0].score-split.score)/picks[0].score<0.07) picks=[split];
+      }
+      rows.push(...picks);
     }
   }
   rows.sort((a,b)=>b.score-a.score);

@@ -15,7 +15,7 @@ from build_data import (SRC, fetch, TYPE_JA, REGION, FORM_JA, OVERRIDE,
 
 # PvPoke速度に含まれるが対戦ツールでは扱わない特殊ID
 SKIP_SPECIES_SUFFIX = ('_shadow',)          # シャドウは基本形にフラグで持つ
-SKIP_MOVES = {'STRUGGLE'}                   # わるあがき(自動発動のため技候補に出さない)
+SKIP_MOVES = {'STRUGGLE', 'HIDDEN_POWER_NORMAL'}   # わるあがき(自動発動) / タイプ不定めざパ(実在しない)
 
 # PvPoke固有ID・i18n未収録の技の日本語名(GM側と表記が違うものはID照合で解決するのでここは最小限)
 JP_MOVE_FIX_PVP = {
