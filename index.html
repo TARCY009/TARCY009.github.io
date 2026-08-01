@@ -53,6 +53,16 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
 .sugg-list small{color:var(--sub)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .srow-meta{display:inline-flex;align-items:center;gap:5px}
+.lowbulk{color:#c2410c;background:#fff1e6;border:1px solid #f5c6a0;border-radius:6px;font-size:.62rem;font-weight:700;padding:0 5px;flex-shrink:0}
+.srow-wrap{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.srow-main{display:flex;align-items:center;gap:6px}
+.srow-cp{color:var(--sub);font-size:.7rem}
+.bossmoves{margin-top:10px}
+.bossmoves summary{cursor:pointer;color:var(--sub);font-weight:600;font-size:.8rem}
+.bm-sec{margin-top:8px;font-size:.72rem;color:var(--sub);font-weight:700}
+.bm-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.bm{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px 8px;font-size:.8rem}
+.bm-note{display:block;margin-top:6px;color:var(--sub);font-size:.68rem}
 /* 明るいバッジが白系背景に溶けるため極薄の縁取りを追加(該当4タイプのみ) */
 .tbadge[title="でんき"],.tbadge[title="こおり"],.tbadge[title="いわ"],.tbadge[title="じめん"]{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .bossinfo{margin-top:12px;font-size:.85rem;color:var(--sub);font-weight:600}
@@ -275,7 +285,7 @@ const mine=[];
 // ---- search suggest ----
 // ポケモン名はすべてカタカナなので、ひらがな入力はカタカナに読み替えて検索する
 const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
-function attachSugg(inputEl, listEl, onPick, filterFn){
+function attachSugg(inputEl, listEl, onPick, filterFn, rowFn){
   // IME変換の確定時に入力欄の値そのものをカタカナへ置き換える(変換中は触らない)
   inputEl.addEventListener('compositionend', ()=>{
     const v=toKata(inputEl.value);
@@ -293,7 +303,8 @@ function attachSugg(inputEl, listEl, onPick, filterFn){
     if(!res.length){listEl.style.display='none';return;}
     listEl.innerHTML=res.map(k=>{
       const p=D.pokemon[k];
-      return `<div data-k="${k}"><span class="srow">${p.n}</span><small class="srow-meta">${typeIcons(p,18)}攻${p.a}</small></div>`;
+      const inner=rowFn?rowFn(p):`<span class="srow">${p.n}</span><small class="srow-meta">${typeIcons(p,18)}攻${p.a}</small>`;
+      return `<div data-k="${k}">${inner}</div>`;
     }).join('');
     listEl.style.display='block';
     listEl.querySelectorAll('div').forEach(el=>el.onclick=()=>{listEl.style.display='none';inputEl.value=D.pokemon[el.dataset.k].n;onPick(el.dataset.k);});
@@ -304,9 +315,33 @@ function attachSugg(inputEl, listEl, onPick, filterFn){
 // ---- boss ----
 // 複合タイプは分割カラー円ではなく typePairHTML でアイコン2個を横並び表示する
 function typeIcons(p, size){ return typePairHTML(p.ty.map(t=>D.typeJa[t]), size); }
+// 耐久指数(防御種族値×HP種族値)が16000未満は極低耐久として注意表示
+const lowBulk=p=>(p.df*p.h<16000)?'<span class="lowbulk">⚠️極低耐久</span>':'';
+const cp100=(p,l)=>{const c=D.cpm[String(l)];return Math.max(10,Math.floor((p.a+15)*Math.sqrt(p.df+15)*Math.sqrt(p.h+15)*c*c/10));};
 attachSugg(document.getElementById('bossInput'),document.getElementById('bossSugg'),k=>{
   boss=k; renderBoss(); renderRank();
-});
+},null,p=>`<span class="srow-wrap"><span class="srow-main"><span class="srow">${p.n}</span>${typeIcons(p,18)}</span>
+  <small class="srow-cp">捕獲100%CP <b>${cp100(p,20)}</b>（PL20）/ <b>${cp100(p,25)}</b>（PL25 天候ブースト）</small></span>`);
+// レイドボスが実際に使うわざ一覧(特別わざ・レガシーわざは使用しないため通常枠のみ)
+function bossMovesHtml(p){
+  const fmt=ids=>{
+    const out=[]; let hpDone=false;
+    for(const id of ids){
+      if(id.startsWith('HIDDEN_POWER_')){
+        if(!hpDone){out.push('<span class="bm">めざめるパワー（タイプはランダム）</span>');hpDone=true;}
+        continue;
+      }
+      const m=D.moves[id]; if(!m) continue;
+      out.push(`<span class="bm">${typeIconHTML(D.typeJa[m.t],14)}${m.n}</span>`);
+    }
+    return out.join('')||'<span class="bm">なし</span>';
+  };
+  return `<details class="bossmoves"><summary>ボスが使ってくるわざを見る</summary>
+    <div class="bm-sec">ノーマルアタック</div><div class="bm-list">${fmt(p.q)}</div>
+    <div class="bm-sec">SPアタック</div><div class="bm-list">${fmt(p.c)}</div>
+    <small class="bm-note">※特別わざ・レガシーわざはレイドボスは使ってこないため除外しています。</small>
+  </details>`;
+}
 function renderBoss(){
   const p=D.pokemon[boss];
   const weak=D.types.filter(t=>eff(t,p.ty)>1.01)
@@ -316,7 +351,8 @@ function renderBoss(){
     `<div class="bossline">
        <div><div class="bossname">${p.n}</div>
        <div class="chips">${typeIcons(p,26)}</div></div></div>
-     <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>`;
+     <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>
+     ${bossMovesHtml(p)}`;
 }
 
 // ---- my pokemon ----
@@ -436,13 +472,13 @@ function renderRank(){
   listEl.innerHTML=merged.map(r=>{
     if(r.mine){
       return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div><div class="rmain">
-        <div class="rname">${badges(r.e.shadow,false)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>${r.e.isMax?'PL50・個体値15':'PL'+r.e.lv+'・攻個体'+r.e.iva}（あなた）</small></div>
+        <div class="rname">${badges(r.e.shadow,false)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p)}<small>${r.e.isMax?'PL50・個体値15':'PL'+r.e.lv+'・攻個体'+r.e.iva}（あなた）</small></div>
         <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}</div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
         <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
     return `<div class="rank-row"><div class="rk">${r.rank}</div><div class="rmain">
-      <div class="rname">${badges(r.shadow,r.p.mega)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>PL50・個体値15</small></div>
+      <div class="rname">${badges(r.shadow,r.p.mega)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p)}<small>PL50・個体値15</small></div>
       <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}</div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
