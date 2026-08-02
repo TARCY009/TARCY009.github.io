@@ -219,7 +219,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">個体値(0〜15)を入力（PLはCP上限内の最適値に自動調整・手動変更も可）</div>
+        <div class="popttl">パターン別最適個体（タップで1位個体値を反映）</div>
+        <div class="slots ivpresets">
+          <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
+        </div>
+        <div class="popttl" style="margin-top:10px">個体値手動入力（PLはCP上限内の最適値に自動調整・手動変更も可）</div>
         <div class="ivgrid">
           <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
           <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
@@ -267,7 +271,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">個体値(0〜15)を入力（PLはCP上限内の最適値に自動調整・手動変更も可）</div>
+        <div class="popttl">パターン別最適個体（タップで1位個体値を反映）</div>
+        <div class="slots ivpresets">
+          <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
+        </div>
+        <div class="popttl" style="margin-top:10px">個体値手動入力（PLはCP上限内の最適値に自動調整・手動変更も可）</div>
         <div class="ivgrid">
           <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
           <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
@@ -344,11 +352,12 @@ const LEVELS = Object.keys(D.cpm).map(Number).filter(l => l <= 51).sort((a, b) =
 function cpOf(p, a, d, h, c) {
   return Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
 }
-function rank1(key, cap) {
+function rank1(key, cap, minIv) {
   const p = D.pokemon[key];
+  minIv = minIv || 0;   // 入手方法による個体値の下限(大親友交換5/シャドウレイド6/レイド系10)
   if (!cap) return { ivs: [15, 15, 15], level: 50 };  // マスター
   let best = null;
-  for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+  for (let a = minIv; a <= 15; a++) for (let d = minIv; d <= 15; d++) for (let h = minIv; h <= 15; h++) {
     // capを超えない最大レベルを二分探索
     let lo = 0, hi = LEVELS.length - 1, li = -1;
     while (lo <= hi) {
@@ -541,9 +550,20 @@ sideEl.forEach((el, i) => {
     }
     run();
   });
+  // パターン別最適個体: 入手方法の個体値下限つきランク1個体を入力欄へ反映
+  el.querySelectorAll('.ivpresets button').forEach(b => b.onclick = () => {
+    if (!S[i].key) return;
+    const r = rank1(S[i].key, cap, +b.dataset.f);
+    S[i].mIvs = r.ivs.slice(); S[i].mLevel = r.level;
+    ivInputs[0].value = r.ivs[0]; ivInputs[1].value = r.ivs[1];
+    ivInputs[2].value = r.ivs[2]; ivInputs[3].value = r.level;
+    el.querySelectorAll('.ivpresets button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    run();
+  });
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   ivInputs.forEach((inp, k) => inp.onchange = () => {
     if (!S[i].mIvs) S[i].mIvs = [15, 15, 15];
+    el.querySelectorAll('.ivpresets button').forEach(x => x.setAttribute('aria-pressed', false));   // 手入力したらパターン選択を解除
     if (k < 3) {
       S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), 0, 15); inp.value = S[i].mIvs[k];
       // 個体値に合わせてPLをCP上限内の最大(最適)レベルへ自動調整
