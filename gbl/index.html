@@ -219,7 +219,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">個体値(0〜15)とPL(1〜51)を入力</div>
+        <div class="popttl">個体値(0〜15)を入力（PLはCP上限内の最適値に自動調整・手動変更も可）</div>
         <div class="ivgrid">
           <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
           <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
@@ -267,7 +267,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">個体値(0〜15)とPL(1〜51)を入力</div>
+        <div class="popttl">個体値(0〜15)を入力（PLはCP上限内の最適値に自動調整・手動変更も可）</div>
         <div class="ivgrid">
           <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
           <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
@@ -437,6 +437,16 @@ function ivTable(key, capV) {
   }
   return ivTableCache.get(ck);
 }
+// 指定個体値でCP上限を超えない最大PLを返す
+function maxLevelFor(key, ivs, capV) {
+  let lo = 0, hi = LEVELS.length - 1, li = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const st = PvpEngine.buildStats(D, { key, ivs, level: LEVELS[mid] });
+    if (!capV || st.cp <= capV) { li = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  return LEVELS[li];
+}
 // 必要な攻撃/防御実数値を満たす個体値・PLの例を探す(なければnull)
 // 条件を満たす中で「残りのステータス積」が最大の組み合わせを例として返す
 function findIvFor(key, need, capV) {
@@ -534,8 +544,12 @@ sideEl.forEach((el, i) => {
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   ivInputs.forEach((inp, k) => inp.onchange = () => {
     if (!S[i].mIvs) S[i].mIvs = [15, 15, 15];
-    if (k < 3) { S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), 0, 15); inp.value = S[i].mIvs[k]; }
-    else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, 51); inp.value = S[i].mLevel; }
+    if (k < 3) {
+      S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), 0, 15); inp.value = S[i].mIvs[k];
+      // 個体値に合わせてPLをCP上限内の最大(最適)レベルへ自動調整
+      S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap);
+      ivInputs[3].value = S[i].mLevel;
+    } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, 51); inp.value = S[i].mLevel; }
     run();
   });
   // ★登録: いまの構成(個体値・わざ込み)を登録リストへ。同じポケモンは上書き
@@ -565,6 +579,13 @@ document.getElementById('leagues').querySelectorAll('.lgbtn').forEach(b => b.onc
   document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', x === b));
   cap = +b.dataset.cap;
   S.forEach(s => { s.fast = s.c1 = s.c2 = null; });
+  // マニュアル個体値のPLは新しいリーグの上限内最大へ自動調整
+  S.forEach((s, i) => {
+    if (s.ivMode === 'manual' && s.mIvs && s.key) {
+      s.mLevel = maxLevelFor(s.key, s.mIvs, cap);
+      sideEl[i].querySelector('.ivL').value = s.mLevel;
+    }
+  });
   run();
 });
 
