@@ -234,6 +234,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <div class="pkview" style="display:none">
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
+      <div class="smaxwrap" style="display:none">
+        <label class="f">スーパーマックスレベル（メガ専用・PL上限を拡張）</label>
+        <div class="opts smax">
+          <button data-lv="52" title="メガレベル最大でPL上限+2(52まで)">スーパーマックスLv</button><button data-lv="53" title="スーパーマックスLv+最高の相棒でPL上限53まで">＋最高の相棒</button>
+        </div>
+      </div>
       <label class="f">個体値・PL</label>
       <div class="opts ivmode">
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
@@ -286,6 +292,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <div class="pkview" style="display:none">
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
+      <div class="smaxwrap" style="display:none">
+        <label class="f">スーパーマックスレベル（メガ専用・PL上限を拡張）</label>
+        <div class="opts smax">
+          <button data-lv="52" title="メガレベル最大でPL上限+2(52まで)">スーパーマックスLv</button><button data-lv="53" title="スーパーマックスLv+最高の相棒でPL上限53まで">＋最高の相棒</button>
+        </div>
+      </div>
       <label class="f">個体値・PL</label>
       <div class="opts ivmode">
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
@@ -368,26 +380,31 @@ Object.values(D.moves).forEach(m => {
 const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOVE_TYPE[name]] || '', size || 13)}${name}</span>`;
 
 // ---- リーグ上限内の理想個体値(SCP最大)を求める ----
-const LEVELS = Object.keys(D.cpm).map(Number).filter(l => l <= 51).sort((a, b) => a - b);
+// 通常はPL51(相棒込み)まで。メガのスーパーマックスLvは52、+最高の相棒で53まで
+const LEVELS_ALL = Object.keys(D.cpm).map(Number).filter(l => l <= 53).sort((a, b) => a - b);
+const LEVELS = LEVELS_ALL.filter(l => l <= 51);
+const levelsUpTo = maxLv => (maxLv || 51) > 51 ? LEVELS_ALL.filter(l => l <= maxLv) : LEVELS;
+const isMega = key => !!key && (key.includes('_mega') || key.includes('_primal'));
 function cpOf(p, a, d, h, c) {
   return Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
 }
-function rank1(key, cap, minIv) {
+function rank1(key, cap, minIv, maxLv) {
   const p = D.pokemon[key];
   minIv = minIv || 0;   // 入手方法による個体値の下限(大親友交換5/シャドウレイド6/レイド系10)
-  if (!cap) return { ivs: [15, 15, 15], level: 50 };  // マスター
+  const LV = levelsUpTo(maxLv);
+  if (!cap) return { ivs: [15, 15, 15], level: (maxLv || 51) > 51 ? maxLv : 50 };  // マスター
   let best = null;
   for (let a = minIv; a <= 15; a++) for (let d = minIv; d <= 15; d++) for (let h = minIv; h <= 15; h++) {
     // capを超えない最大レベルを二分探索
-    let lo = 0, hi = LEVELS.length - 1, li = -1;
+    let lo = 0, hi = LV.length - 1, li = -1;
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
-      if (cpOf(p, a, d, h, D.cpm[String(LEVELS[mid])]) <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
+      if (cpOf(p, a, d, h, D.cpm[String(LV[mid])]) <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
     }
     if (li < 0) continue;
-    const c = D.cpm[String(LEVELS[li])];
+    const c = D.cpm[String(LV[li])];
     const prod = (p.a + a) * c * (p.df + d) * c * Math.floor((p.h + h) * c);
-    if (!best || prod > best.prod) best = { prod, ivs: [a, d, h], level: LEVELS[li] };
+    if (!best || prod > best.prod) best = { prod, ivs: [a, d, h], level: LV[li] };
   }
   return best || { ivs: [15, 15, 15], level: 50 };
 }
@@ -447,40 +464,42 @@ function optimize(cfgL, cfgR) {
 // ---- ブレークポイント検出(ノーマルアタックのダメージ境界) ----
 // 全個体値×リーグ上限内最大PLの実ステータス表(ポケモン×リーグごとに1回だけ計算)
 const ivTableCache = new Map();
-function ivTable(key, capV) {
-  const ck = key + ':' + capV;
+function ivTable(key, capV, maxLv) {
+  const ck = key + ':' + capV + ':' + (maxLv || 51);
   if (!ivTableCache.has(ck)) {
+    const LV = levelsUpTo(maxLv);
     const rows = [];
     for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
-      let lo = 0, hi = LEVELS.length - 1, li = -1;
+      let lo = 0, hi = LV.length - 1, li = -1;
       while (lo <= hi) {   // CP上限内で最大のPLを二分探索
         const mid = (lo + hi) >> 1;
-        const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LEVELS[mid] });
+        const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LV[mid] });
         if (!capV || st.cp <= capV) { li = mid; lo = mid + 1; } else hi = mid - 1;
       }
       if (li < 0) continue;
-      const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LEVELS[li] });
-      rows.push({ ivs: [a, d, h], level: LEVELS[li], atk: st.atk, def: st.def, hp: st.hp, cp: st.cp });
+      const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LV[li] });
+      rows.push({ ivs: [a, d, h], level: LV[li], atk: st.atk, def: st.def, hp: st.hp, cp: st.cp });
     }
     ivTableCache.set(ck, rows);
   }
   return ivTableCache.get(ck);
 }
 // 指定個体値でCP上限を超えない最大PLを返す
-function maxLevelFor(key, ivs, capV) {
-  let lo = 0, hi = LEVELS.length - 1, li = 0;
+function maxLevelFor(key, ivs, capV, maxLv) {
+  const LV = levelsUpTo(maxLv);
+  let lo = 0, hi = LV.length - 1, li = 0;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    const st = PvpEngine.buildStats(D, { key, ivs, level: LEVELS[mid] });
+    const st = PvpEngine.buildStats(D, { key, ivs, level: LV[mid] });
     if (!capV || st.cp <= capV) { li = mid; lo = mid + 1; } else hi = mid - 1;
   }
-  return LEVELS[li];
+  return LV[li];
 }
 // 必要な攻撃/防御実数値を満たす個体値・PLの例を探す(なければnull)
 // 条件を満たす中で「残りのステータス積」が最大の組み合わせを例として返す
-function findIvFor(key, need, capV) {
+function findIvFor(key, need, capV, maxLv) {
   let best = null;
-  for (const r of ivTable(key, capV)) {
+  for (const r of ivTable(key, capV, maxLv)) {
     if (need.atk && r.atk < need.atk) continue;
     if (need.def && r.def <= need.def) continue;
     const score = need.atk ? r.def * r.hp : r.atk * r.hp;
@@ -494,7 +513,7 @@ let cap = 1500;
 const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spSlots: ['1', '1', '1', '1', '1'], spRest: '1',
-  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false });
+  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51 });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
 
@@ -561,7 +580,7 @@ sideEl.forEach((el, i) => {
     S[i].ivMode = b.dataset.v;
     el.querySelector('.custIv').style.display = S[i].ivMode === 'manual' ? 'block' : 'none';
     if (S[i].ivMode === 'manual' && S[i].key && !S[i].mIvs) {
-      const r1 = rank1(S[i].key, cap);
+      const r1 = rank1(S[i].key, cap, 0, S[i].maxLv);
       S[i].mIvs = r1.ivs.slice(); S[i].mLevel = r1.level;
     }
     if (S[i].mIvs) {
@@ -573,7 +592,7 @@ sideEl.forEach((el, i) => {
   // パターン別最適個体: 入手方法の個体値下限つきランク1個体を入力欄へ反映
   el.querySelectorAll('.ivpresets button').forEach(b => b.onclick = () => {
     if (!S[i].key) return;
-    const r = rank1(S[i].key, cap, +b.dataset.f);
+    const r = rank1(S[i].key, cap, +b.dataset.f, S[i].maxLv);
     S[i].mIvs = r.ivs.slice(); S[i].mLevel = r.level;
     ivInputs[0].value = r.ivs[0]; ivInputs[1].value = r.ivs[1];
     ivInputs[2].value = r.ivs[2]; ivInputs[3].value = r.level;
@@ -587,9 +606,20 @@ sideEl.forEach((el, i) => {
     if (k < 3) {
       S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), 0, 15); inp.value = S[i].mIvs[k];
       // 個体値に合わせてPLをCP上限内の最大(最適)レベルへ自動調整
-      S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap);
+      S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap, S[i].maxLv);
       ivInputs[3].value = S[i].mLevel;
-    } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, 51); inp.value = S[i].mLevel; }
+    } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, S[i].maxLv); inp.value = S[i].mLevel; }
+    run();
+  });
+  // スーパーマックスレベル(メガ専用): PL上限を52/53へ拡張。同じタブ再タップで解除
+  el.querySelectorAll('.smax button').forEach(b => b.onclick = () => {
+    const lv = +b.dataset.lv;
+    S[i].maxLv = S[i].maxLv === lv ? 51 : lv;
+    syncSmax(i);
+    if (S[i].ivMode === 'manual' && S[i].mIvs) {   // マニュアルPLも新上限で自動調整
+      S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap, S[i].maxLv);
+      el.querySelector('.ivL').value = S[i].mLevel;
+    }
     run();
   });
   // シャドウタブ: この側にシャドウ補正(攻撃1.2倍・防御5/6)をかける
@@ -606,7 +636,7 @@ sideEl.forEach((el, i) => {
     if (!S[i].key) return;
     const l = loadMyPk().filter(m => m.key !== S[i].key);
     l.unshift({ key: S[i].key, ivMode: S[i].ivMode, mIvs: S[i].mIvs, mLevel: S[i].mLevel,
-                fast: S[i].fast, c1: S[i].c1, c2: S[i].c2, shadow: S[i].shadow });
+                fast: S[i].fast, c1: S[i].c1, c2: S[i].c2, shadow: S[i].shadow, maxLv: S[i].maxLv });
     saveMyPkList(l); renderMyPk();
     const b = el.querySelector('.savepk');
     b.textContent = '★登録した！'; setTimeout(() => { b.textContent = '★登録'; }, 1200);
@@ -629,7 +659,7 @@ function afterCapChange() {
   S.forEach(s => { s.fast = s.c1 = s.c2 = null; });
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs && s.key) {
-      s.mLevel = maxLevelFor(s.key, s.mIvs, cap);
+      s.mLevel = maxLevelFor(s.key, s.mIvs, cap, s.maxLv);
       sideEl[i].querySelector('.ivL').value = s.mLevel;
     }
   });
@@ -701,7 +731,7 @@ function runMulti() {
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
     ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow }
-    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow }))(rank1(S[0].key, cap));
+    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow }))(rank1(S[0].key, cap, 0, S[0].maxLv));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
   const myPols = policies(S[0].key, { fast: S[0].fast || undefined, throw: S[0].c1 || undefined });
   // 左パネルの表示(CP・個体値・PL・わざ)もこのリーグ/カップの内容に更新する
@@ -760,6 +790,7 @@ function runMulti() {
 // 環境一覧の行タップ→その相手を右側にセットして1対1シミュへ
 function applyMeta(m) {
   S[1].key = m.k; S[1].shadow = !!m.s;
+  S[1].maxLv = 51; syncSmax(1);
   sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', S[1].shadow);
   S[1].fast = m.f || null; S[1].c1 = m.c1 || null; S[1].c2 = null;
   S[1].ivMode = 'auto'; S[1].mIvs = null; S[1].mLevel = null;
@@ -807,6 +838,8 @@ function applyMyPk(i, m) {
   S[i].fast = m.fast || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
   S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
   S[i].shadow = !!m.shadow;
+  S[i].maxLv = m.maxLv || 51;
+  syncSmax(i);
   const el = sideEl[i];
   el.querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
   el.querySelector('input').value = (S[i].shadow ? 'シャドウ' : '') + D.pokemon[m.key].n;
@@ -819,11 +852,19 @@ function applyMyPk(i, m) {
   run();
 }
 
+// スーパーマックスレベルのタブ表示(メガのみ)と選択状態を同期
+function syncSmax(i) {
+  const el = sideEl[i];
+  el.querySelector('.smaxwrap').style.display = (S[i].key && isMega(S[i].key)) ? 'block' : 'none';
+  el.querySelectorAll('.smax button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.lv === S[i].maxLv));
+}
+
 function pick(i, key) {
   S[i].key = key;
   S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
   S[i].shadow = false;
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', false);
+  S[i].maxLv = 51; syncSmax(i);
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;   // 個体値も理想に戻す
   sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
   sideEl[i].querySelector('.custIv').style.display = 'none';
@@ -837,7 +878,7 @@ function run() {
   if (!S[0].key || !S[1].key) return;
   const base = S.map(s => {
     if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow };
-    const r1 = rank1(s.key, cap);
+    const r1 = rank1(s.key, cap, 0, s.maxLv);
     return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow };
   });
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
@@ -1042,7 +1083,7 @@ function render(res, L, R, matrix) {
       const K = 0.5 * mv.p * effM * stabM * 1.3 / stO.def;   // ダメ = floor(攻×K)+1
       const cur = PvpEngine.damage(D, mv, stM, stO);
       const atkReq = cur / K;
-      const exA = findIvFor(me.key, { atk: atkReq }, cap);
+      const exA = findIvFor(me.key, { atk: atkReq }, cap, S[i].maxLv);
       const give = `${mvChip(mv.n)} の与ダメ: 今<b>${cur}</b> → 攻撃実数値${fmt(atkReq)}以上(今${fmt(stM.atk)})で<b>${cur + 1}</b><br>` +
         (exA ? `　<span class="ok">到達できる</span> 例: 個体値${exA.ivs.join('/')} PL${exA.level}（CP${exA.cp}）`
              : `　<span class="ng">このリーグの個体値・PLでは届かない</span>`);
@@ -1055,7 +1096,7 @@ function render(res, L, R, matrix) {
         const stabO = stO.types.includes(mvO.t) ? 1.2 : 1;
         const KO = 0.5 * mvO.p * effO * stabO * 1.3 * stO.atk;   // ダメ = floor(KO÷防)+1
         const defReq = KO / (curT - 1);
-        const exD = findIvFor(me.key, { def: defReq }, cap);
+        const exD = findIvFor(me.key, { def: defReq }, cap, S[i].maxLv);
         take = `${mvChip(mvO.n)} の被ダメ: 今<b>${curT}</b> → 防御実数値${fmt(defReq)}超(今${fmt(stM.def)})で<b>${curT - 1}</b><br>` +
           (exD ? `　<span class="ok">到達できる</span> 例: 個体値${exD.ivs.join('/')} PL${exD.level}（CP${exD.cp}）`
                : `　<span class="ng">このリーグの個体値・PLでは届かない</span>`);
@@ -1099,6 +1140,7 @@ function updateUrl() {
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs) qp[i ? 'ir' : 'il'] = s.mIvs.join('.') + '.' + s.mLevel;
     if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
+    if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
   });
   if (cup) qp.cup = cup.slug;
   history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
@@ -1269,6 +1311,7 @@ document.getElementById('copyUrl').onclick = async () => {
     if (v && D.pokemon[v]) {
       S[i].key = v;
       sideEl[i].querySelector('input').value = D.pokemon[v].n;
+      syncSmax(i);   // メガならスーパーマックスタブを表示
     }
   });
   ['sl', 'sr'].forEach((k, i) => { if (q.get(k) != null) {
@@ -1286,6 +1329,10 @@ document.getElementById('copyUrl').onclick = async () => {
       sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', true);
       sideEl[i].querySelector('input').value = 'シャドウ' + D.pokemon[S[i].key].n;
     }
+  });
+  ['mll', 'mlr'].forEach((k, i) => {   // スーパーマックスレベルの復元
+    const v = +q.get(k);
+    if ((v === 52 || v === 53) && S[i].key) { S[i].maxLv = v; syncSmax(i); }
   });
   ['il', 'ir'].forEach((k, i) => {   // マニュアル個体値(攻.防.HP.PL)の復元
     const v = q.get(k); if (!v) return;
