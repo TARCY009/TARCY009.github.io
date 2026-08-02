@@ -26,8 +26,10 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .lgbtn[aria-pressed="true"]{background:var(--gl);color:#06122b}
 /* 2カラム */
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px}
-.side h2{font-size:.78rem;color:var(--sub);letter-spacing:.08em;margin-bottom:6px}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0}
+.side h2{font-size:.78rem;color:var(--sub);letter-spacing:.08em;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
+.shadowtab{padding:7px 14px;font-size:.82rem;font-weight:700;letter-spacing:0;background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--sub);cursor:pointer;flex-shrink:0}
+.shadowtab[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:#b06cff;color:#fff;box-shadow:0 0 10px rgba(176,108,255,.55)}
 .side.mine h2{color:var(--cy)}
 .side.foe h2{color:var(--lose)}
 .sugg{position:relative}
@@ -213,7 +215,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 <div class="duel">
   <div class="side mine" id="sideL">
-    <h2>じぶん（左）</h2>
+    <h2>じぶん（左）<button class="shadowtab" aria-pressed="false" title="シャドウ補正(攻撃1.2倍・防御5/6)をかけてシミュレート">シャドウ</button></h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: まりるり)" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
@@ -265,7 +267,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     </div>
   </div>
   <div class="side foe" id="sideR">
-    <h2>あいて（右）</h2>
+    <h2>あいて（右）<button class="shadowtab" aria-pressed="false" title="シャドウ補正(攻撃1.2倍・防御5/6)をかけてシミュレート">シャドウ</button></h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: ちゃーれむ)" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
@@ -578,12 +580,21 @@ sideEl.forEach((el, i) => {
     } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, 51); inp.value = S[i].mLevel; }
     run();
   });
+  // シャドウタブ: この側にシャドウ補正(攻撃1.2倍・防御5/6)をかける
+  el.querySelector('.shadowtab').onclick = () => {
+    S[i].shadow = !S[i].shadow;
+    el.querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
+    if (S[i].key) {
+      el.querySelector('input').value = (S[i].shadow ? 'シャドウ' : '') + D.pokemon[S[i].key].n;
+      run();
+    }
+  };
   // ★登録: いまの構成(個体値・わざ込み)を登録リストへ。同じポケモンは上書き
   el.querySelector('.savepk').onclick = () => {
     if (!S[i].key) return;
     const l = loadMyPk().filter(m => m.key !== S[i].key);
     l.unshift({ key: S[i].key, ivMode: S[i].ivMode, mIvs: S[i].mIvs, mLevel: S[i].mLevel,
-                fast: S[i].fast, c1: S[i].c1, c2: S[i].c2 });
+                fast: S[i].fast, c1: S[i].c1, c2: S[i].c2, shadow: S[i].shadow });
     saveMyPkList(l); renderMyPk();
     const b = el.querySelector('.savepk');
     b.textContent = '★登録した！'; setTimeout(() => { b.textContent = '★登録'; }, 1200);
@@ -699,6 +710,7 @@ function runMulti() {
 // 環境一覧の行タップ→その相手を右側にセットして1対1シミュへ
 function applyMeta(m) {
   S[1].key = m.k; S[1].shadow = !!m.s;
+  sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', S[1].shadow);
   S[1].fast = m.f || null; S[1].c1 = m.c1 || null; S[1].c2 = null;
   S[1].ivMode = 'auto'; S[1].mIvs = null; S[1].mLevel = null;
   sideEl[1].querySelector('input').value = m.n;
@@ -726,7 +738,7 @@ function renderMyPk() {
       const p = D.pokemon[m.key];
       if (!p) return '';
       const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
-      return `<div class="mypkrow" data-k="${k}"><span>${p.n}${iv}</span><b class="del" data-del="${k}">×</b></div>`;
+      return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? 'シャドウ' : ''}${p.n}${iv}</span><b class="del" data-del="${k}">×</b></div>`;
     }).join('');
     box.querySelectorAll('.mypkrow').forEach(row => row.onclick = e => {
       if (e.target.dataset.del !== undefined) {   // ×で削除
@@ -744,8 +756,10 @@ function applyMyPk(i, m) {
   S[i].key = m.key;
   S[i].fast = m.fast || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
   S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
+  S[i].shadow = !!m.shadow;
   const el = sideEl[i];
-  el.querySelector('input').value = D.pokemon[m.key].n;
+  el.querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
+  el.querySelector('input').value = (S[i].shadow ? 'シャドウ' : '') + D.pokemon[m.key].n;
   el.querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === S[i].ivMode));
   el.querySelector('.custIv').style.display = S[i].ivMode === 'manual' ? 'block' : 'none';
   if (S[i].mIvs) {
@@ -759,6 +773,7 @@ function pick(i, key) {
   S[i].key = key;
   S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
   S[i].shadow = false;
+  sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', false);
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;   // 個体値も理想に戻す
   sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
   sideEl[i].querySelector('.custIv').style.display = 'none';
@@ -1205,6 +1220,7 @@ document.getElementById('copyUrl').onclick = async () => {
   ['shl', 'shr'].forEach((k, i) => {   // シャドウ指定の復元
     if (q.get(k) && S[i].key) {
       S[i].shadow = true;
+      sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', true);
       sideEl[i].querySelector('input').value = 'シャドウ' + D.pokemon[S[i].key].n;
     }
   });
