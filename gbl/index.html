@@ -86,6 +86,22 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .bp .ok{color:var(--win);font-weight:700}
 .bp .ng{color:var(--sub)}
 .bpnote{color:var(--sub);font-size:.64rem;margin-top:4px}
+.modes{display:flex;gap:6px;margin-top:10px}
+.modes button{flex:1;padding:8px 4px;font-size:.85rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--sub);cursor:pointer;font-weight:700}
+.modes button[aria-pressed="true"]{background:var(--gl);border-color:var(--gl);color:#06122b}
+.multi{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.multi h3{font-size:.92rem}
+.mtnote{color:var(--sub);font-size:.7rem;margin-top:4px;line-height:1.6}
+.mttbl{width:100%;border-collapse:separate;border-spacing:0 4px;margin-top:8px;font-size:.78rem}
+.mttbl th{color:var(--sub);font-weight:600;font-size:.66rem;padding:2px}
+.mttbl td{padding:6px 4px;background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;cursor:pointer}
+.mttbl td.opname{text-align:left;border-left:1px solid var(--line);border-radius:8px 0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;width:42%}
+.mttbl td:last-child{border-right:1px solid var(--line);border-radius:0 8px 8px 0}
+.mttbl td.w{color:var(--win);font-weight:700}
+.mttbl td.l{color:var(--lose);font-weight:700}
+.mttbl td.d{color:var(--gold);font-weight:700}
+.mttbl td small{display:block;font-weight:400;color:var(--sub);font-size:.6rem}
+.mtprog{color:var(--sub);font-size:.74rem;margin-top:8px}
 .shmtx{margin-top:12px}
 .shmtx table{border-collapse:separate;border-spacing:3px;width:100%;max-width:430px;margin:6px auto 0}
 .shmtx th{color:var(--sub);font-weight:600;font-size:.68rem;padding:2px}
@@ -182,6 +198,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <button class="lgbtn" data-cap="1500" aria-pressed="true">スーパー</button>
   <button class="lgbtn" data-cap="2500" aria-pressed="false">ハイパー</button>
   <button class="lgbtn" data-cap="0" aria-pressed="false">マスター</button>
+</div>
+
+<div class="modes" id="modes">
+  <button data-m="duel" aria-pressed="true">1対1シミュ</button>
+  <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧（1対多）</button>
 </div>
 
 <div class="duel">
@@ -283,6 +304,8 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   </div>
 </div>
 
+<div class="multi" id="multi" style="display:none"></div>
+
 <div class="result" id="result"></div>
 <div class="tl" id="tl"></div>
 
@@ -295,6 +318,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 </div>
 
 <script src="/pvp_data.js"></script>
+<script src="/assets/meta_lists.js"></script>
 <script src="/assets/type-icons.js"></script>
 <script src="/assets/pvp-engine.js"></script>
 <script>
@@ -431,7 +455,7 @@ let cap = 1500;
 const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spSlots: ['1', '1', '1', '1', '1'], spRest: '1',
-  ivMode: 'auto', mIvs: null, mLevel: null });
+  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
 
@@ -544,6 +568,101 @@ document.getElementById('leagues').querySelectorAll('.lgbtn').forEach(b => b.onc
   run();
 });
 
+// ---- モード切替(1対1シミュ / 環境一覧) ----
+let mode = 'duel', multiToken = 0;
+function applyMode() {
+  sideEl[1].style.display = mode === 'duel' ? '' : 'none';
+  document.getElementById('multi').style.display = mode === 'multi' ? 'block' : 'none';
+  if (mode === 'multi') {
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('tl').style.display = 'none';
+    document.getElementById('share').style.display = 'none';
+  }
+}
+document.querySelectorAll('#modes button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  mode = b.dataset.m;
+  applyMode();
+  run();
+});
+
+// ---- 環境一覧(1対多): 自分1匹×環境上位50匹をシールド0-0/1-1/2-2で一括対戦 ----
+function runMulti() {
+  const box = document.getElementById('multi');
+  const list = (window.META_LISTS || {})[String(cap)] || [];
+  if (!S[0].key) {
+    box.innerHTML = '<div class="mtnote">左の「じぶん」のポケモンを選ぶと、環境上位' + (list.length || 50) + '匹との一括対戦がここに表示されます</div>';
+    return;
+  }
+  const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
+  const meBase = S[0].ivMode === 'manual' && S[0].mIvs
+    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow }
+    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow }))(rank1(S[0].key, cap));
+  const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
+  const myPols = policies(S[0].key, { fast: S[0].fast || undefined, throw: S[0].c1 || undefined });
+  const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
+  box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹</h3>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。行をタップすると1対1シミュで詳細を確認できます。相手は理想個体値・PvPoke推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
+    <table class="mttbl"><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
+    ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
+    </table><div class="mtprog">計算中… 0/${list.length}</div>`;
+  const rowsEl = [...box.querySelectorAll('tr[data-k]')];
+  rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
+  const prog = box.querySelector('.mtprog');
+  const wins = [0, 0, 0];
+  let idx = 0;
+  const step = () => {
+    if (token !== multiToken) return;
+    const t0 = performance.now();
+    while (idx < list.length && performance.now() - t0 < 40) {
+      const m = list[idx];
+      const r1 = rank1(m.k, cap);
+      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal',
+        fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
+      const cells = [0, 1, 2].map(sh => {
+        let best = null;
+        for (const pol of myPols) {   // 自分のわざはこの対面・このシールド数での最善を採用
+          const res = PvpEngine.simulate(D, { ...meBase, ...pol, timing: myTiming, shields: sh },
+                                            { ...opCfg, shields: sh }, NO_PROC);
+          const sc = scoreOf(res, 0);
+          if (!best || sc > best.sc) best = { sc, res };
+        }
+        const r = best.res, w = r.winner;
+        return { w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+      });
+      const tds = rowsEl[idx].querySelectorAll('td');
+      cells.forEach((c, j) => {
+        if (c.w === 0) wins[j]++;
+        tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
+        tds[j + 1].innerHTML = (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
+          `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
+      });
+      idx++;
+    }
+    if (idx < list.length) {
+      prog.textContent = `計算中… ${idx}/${list.length}`;
+      setTimeout(step, 0);
+    } else {
+      prog.textContent = `勝ち数: 🛡0-0で${wins[0]}勝 / 🛡1-1で${wins[1]}勝 / 🛡2-2で${wins[2]}勝（${list.length}匹中）`;
+    }
+  };
+  step();
+}
+
+// 環境一覧の行タップ→その相手を右側にセットして1対1シミュへ
+function applyMeta(m) {
+  S[1].key = m.k; S[1].shadow = !!m.s;
+  S[1].fast = m.f || null; S[1].c1 = m.c1 || null; S[1].c2 = null;
+  S[1].ivMode = 'auto'; S[1].mIvs = null; S[1].mLevel = null;
+  sideEl[1].querySelector('input').value = m.n;
+  sideEl[1].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
+  sideEl[1].querySelector('.custIv').style.display = 'none';
+  document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === 'duel'));
+  mode = 'duel'; applyMode();
+  run();
+  document.querySelector('.duel').scrollIntoView({ behavior: 'smooth' });
+}
+
 // ---- ★登録リスト(端末内保存・両側の欄から呼び出せる) ----
 const MYPK_KEY = 'gbl_mypoke';
 const loadMyPk = () => { try { return JSON.parse(localStorage.getItem(MYPK_KEY)) || []; } catch (e) { return []; } };
@@ -592,6 +711,7 @@ function applyMyPk(i, m) {
 function pick(i, key) {
   S[i].key = key;
   S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
+  S[i].shadow = false;
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;   // 個体値も理想に戻す
   sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
   sideEl[i].querySelector('.custIv').style.display = 'none';
@@ -601,11 +721,12 @@ function pick(i, key) {
 // ---- 実行 ----
 const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
 function run() {
+  if (mode === 'multi') { runMulti(); return; }
   if (!S[0].key || !S[1].key) return;
   const base = S.map(s => {
-    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel };
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow };
     const r1 = rank1(s.key, cap);
-    return { key: s.key, ivs: r1.ivs, level: r1.level };
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow };
   });
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
   S.forEach((s, i) => {
@@ -641,6 +762,8 @@ function run() {
   };
   const L = fin(0), R = fin(1);
   const res = PvpEngine.simulate(D, L, R, NO_PROC);
+  // シャドウ個体は結果・タイムラインの名前にも反映する
+  [L, R].forEach((c, i) => { if (c.shadow) res.final[i].name = 'シャドウ' + res.final[i].name; });
   // シールド枚数別の勝敗(3×3): 技構成は同じままシールドだけ変えて総当たり
   const noPlan = c => { const x = { ...c }; delete x.shieldPlan; delete x.shieldRest; return x; };
   const matrix = [];
@@ -660,7 +783,7 @@ function fillMoves(i, cfg) {
   const el = sideEl[i], { fasts, chargeds } = movePool(cfg.key);
   const p = D.pokemon[cfg.key];
   el.querySelector('.pkview').style.display = 'block';
-  el.querySelector('.nm').textContent = p.n;
+  el.querySelector('.nm').textContent = (cfg.shadow ? 'シャドウ' : '') + p.n;
   el.querySelector('.ticons').innerHTML = typeIcons(p, 18);
   el.querySelector('.ticons').className = 'ticons tpair';
   const st = PvpEngine.buildStats(D, cfg);
@@ -845,6 +968,7 @@ function render(res, L, R, matrix) {
   // マニュアル個体値は「攻.防.HP.PL」形式でURLに含める
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs) qp[i ? 'ir' : 'il'] = s.mIvs.join('.') + '.' + s.mLevel;
+    if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
   });
   history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
 }
@@ -1024,6 +1148,12 @@ document.getElementById('copyUrl').onclick = async () => {
     S[i].timing = q.get(k);
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
   }});
+  ['shl', 'shr'].forEach((k, i) => {   // シャドウ指定の復元
+    if (q.get(k) && S[i].key) {
+      S[i].shadow = true;
+      sideEl[i].querySelector('input').value = 'シャドウ' + D.pokemon[S[i].key].n;
+    }
+  });
   ['il', 'ir'].forEach((k, i) => {   // マニュアル個体値(攻.防.HP.PL)の復元
     const v = q.get(k); if (!v) return;
     const p = v.split('.').map(Number);
