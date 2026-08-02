@@ -24,6 +24,13 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .leagues{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .lgbtn{flex:1;padding:10px 6px;background:var(--bg2);border:none;color:var(--sub);font-size:.88rem;cursor:pointer;font-weight:700}
 .lgbtn[aria-pressed="true"]{background:var(--gl);color:#06122b}
+#cupTab[aria-pressed="true"]{background:var(--ml);color:#140a26}
+.cupwin{margin-top:8px}
+.cupslots button{flex:1 0 46%;font-size:.8rem;padding:9px 4px;font-weight:700}
+.cupslots button small{display:block;font-weight:400;font-size:.64rem;color:var(--sub);margin-top:2px}
+.cupslots button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
+.cupslots button[aria-pressed="true"] small{color:#140a26}
+@media (max-width:430px){.lgbtn{font-size:.76rem;padding:10px 2px}}
 /* 2カラム */
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0}
@@ -206,6 +213,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <button class="lgbtn" data-cap="1500" aria-pressed="true">スーパー</button>
   <button class="lgbtn" data-cap="2500" aria-pressed="false">ハイパー</button>
   <button class="lgbtn" data-cap="0" aria-pressed="false">マスター</button>
+  <button class="lgbtn" id="cupTab" aria-pressed="false" title="特殊レギュレーションの一覧を開く">特殊カップ</button>
+</div>
+<div class="popwin cupwin" id="cupwin" style="display:none">
+  <div class="popttl">特殊レギュレーションを選択（環境リストはそのカップの上位50匹に切替）</div>
+  <div class="slots cupslots" id="cupslots"></div>
 </div>
 
 <div class="modes" id="modes">
@@ -612,11 +624,9 @@ sideEl.forEach((el, i) => {
   el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
 });
 
-document.getElementById('leagues').querySelectorAll('.lgbtn').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', x === b));
-  cap = +b.dataset.cap;
+// リーグ/カップ切替の共通処理(わざ再選択とマニュアルPLの上限内再調整)
+function afterCapChange() {
   S.forEach(s => { s.fast = s.c1 = s.c2 = null; });
-  // マニュアル個体値のPLは新しいリーグの上限内最大へ自動調整
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs && s.key) {
       s.mLevel = maxLevelFor(s.key, s.mIvs, cap);
@@ -624,7 +634,43 @@ document.getElementById('leagues').querySelectorAll('.lgbtn').forEach(b => b.onc
     }
   });
   run();
+}
+document.getElementById('leagues').querySelectorAll('.lgbtn[data-cap]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', x === b));
+  cap = +b.dataset.cap;
+  // 特殊カップの選択は解除
+  cup = null;
+  cupTab.textContent = '特殊カップ';
+  cupwin.style.display = 'none';
+  afterCapChange();
 });
+
+// ---- 特殊カップ(タップで一覧を開き、選ぶとそのカップの上限・環境リストに切替) ----
+let cup = null;
+const cupTab = document.getElementById('cupTab');
+const cupwin = document.getElementById('cupwin');
+function renderCups() {
+  const box = document.getElementById('cupslots');
+  box.innerHTML = (window.CUP_LISTS || []).map(c =>
+    `<button data-slug="${c.slug}" aria-pressed="${!!(cup && cup.slug === c.slug)}">${c.label}<small>${c.cp === 10000 ? 'CP上限なし' : 'CP' + c.cp}</small></button>`).join('');
+  box.querySelectorAll('button').forEach(b => b.onclick = () => selectCup(b.dataset.slug));
+}
+function selectCup(slug) {
+  const c = (window.CUP_LISTS || []).find(x => x.slug === slug);
+  if (!c) return;
+  cup = c;
+  cap = c.cp === 10000 ? 0 : c.cp;
+  document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', false));
+  cupTab.setAttribute('aria-pressed', true);
+  cupTab.textContent = c.label;
+  cupwin.style.display = 'none';
+  afterCapChange();
+}
+cupTab.onclick = () => {
+  const open = cupwin.style.display === 'none';
+  renderCups();
+  cupwin.style.display = open ? 'block' : 'none';
+};
 
 // ---- モード切替(1対1シミュ / 環境一覧) ----
 let mode = 'duel', multiToken = 0;
@@ -647,7 +693,7 @@ document.querySelectorAll('#modes button').forEach(b => b.onclick = () => {
 // ---- 環境一覧(1対多): 自分1匹×環境上位50匹をシールド0-0/1-1/2-2で一括対戦 ----
 function runMulti() {
   const box = document.getElementById('multi');
-  const list = (window.META_LISTS || {})[String(cap)] || [];
+  const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
   if (!S[0].key) {
     box.innerHTML = '<div class="mtnote">左の「じぶん」のポケモンを選ぶと、環境上位' + (list.length || 50) + '匹との一括対戦がここに表示されます</div>';
     return;
@@ -658,14 +704,18 @@ function runMulti() {
     : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow }))(rank1(S[0].key, cap));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
   const myPols = policies(S[0].key, { fast: S[0].fast || undefined, throw: S[0].c1 || undefined });
+  // 左パネルの表示(CP・個体値・PL・わざ)もこのリーグ/カップの内容に更新する
+  const pool0 = movePool(S[0].key);
+  fillMoves(0, { ...meBase, fast: S[0].fast || pool0.fasts[0], throw: S[0].c1 || pool0.chargeds[0] });
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
-  box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹</h3>
+  box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
     <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。行をタップすると1対1シミュで詳細を確認できます。相手は理想個体値・PvPoke推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
     <table class="mttbl"><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
     </table><div class="mtprog">計算中… 0/${list.length}</div>`;
   const rowsEl = [...box.querySelectorAll('tr[data-k]')];
   rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
+  updateUrl();
   const prog = box.querySelector('.mtprog');
   const wins = [0, 0, 0];
   let idx = 0;
@@ -1033,12 +1083,24 @@ function render(res, L, R, matrix) {
   lastRes = res;
   renderTimeline();
   document.getElementById('share').style.display = 'flex';
-  const qp = { lg: cap, l: L.key, r: R.key, sl: L.shields, sr: R.shields, tl: L.timing, tr: R.timing };
+  updateUrl();
+}
+
+// 現在の設定を共有URLへ反映(1対1・環境一覧の両モードで使用)
+function updateUrl() {
+  const qp = { lg: cap };
+  if (S[0].key) qp.l = S[0].key;
+  if (S[1].key) qp.r = S[1].key;
+  qp.sl = S[0].shieldMode ? 2 : S[0].shields;
+  qp.sr = S[1].shieldMode ? 2 : S[1].shields;
+  qp.tl = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
+  qp.tr = S[1].timing === 'plan' ? 'optimal' : S[1].timing;
   // マニュアル個体値は「攻.防.HP.PL」形式でURLに含める
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs) qp[i ? 'ir' : 'il'] = s.mIvs.join('.') + '.' + s.mLevel;
     if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
   });
+  if (cup) qp.cup = cup.slug;
   history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
 }
 
@@ -1217,6 +1279,7 @@ document.getElementById('copyUrl').onclick = async () => {
     S[i].timing = q.get(k);
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
   }});
+  if (q.get('cup')) selectCup(q.get('cup'));   // 特殊カップの復元
   ['shl', 'shr'].forEach((k, i) => {   // シャドウ指定の復元
     if (q.get(k) && S[i].key) {
       S[i].shadow = true;

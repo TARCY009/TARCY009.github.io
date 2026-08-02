@@ -17,7 +17,18 @@ LEAGUES = {          # 出力キー: (PvPokeのCP, 表示名)
     "2500": (2500, "ハイパー"),
     "0":    (10000, "マスター"),
 }
+# 特殊カップ(スラッグ, CP上限, 日本語名)。PvPoke側にデータが無いものは自動でスキップされる
+CUPS = [
+    ("premier", 10000, "マスタープレミア"),
+    ("premier", 2500, "ハイパープレミア"),
+    ("classic", 10000, "マスタークラシック"),
+    ("remix", 1500, "スーパーリミックス"),
+    ("little", 500, "リトルカップ"),
+    ("summer", 1500, "サマーカップ"),
+    ("catch", 1500, "キャッチカップ"),
+]
 URL = "https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/rankings/all/overall/rankings-{cp}.json"
+URL_CUP = "https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/rankings/{cup}/overall/rankings-{cp}.json"
 
 with open("pvp_data.json", encoding="utf-8") as f:
     PVP = json.load(f)
@@ -69,7 +80,30 @@ for lg, (cp, label) in LEAGUES.items():
     meta[lg] = picked
     print(f"{label}(CP{cp}): {len(picked)}匹採用 / 変換不可 {len(skipped)}件 {skipped[:5]}")
 
+def fetch_cup(cup, cp):
+    with urllib.request.urlopen(URL_CUP.format(cup=cup, cp=cp), timeout=30) as r:
+        return json.load(r)
+
+
+cups_out = []
+for slug, cp, label in CUPS:
+    try:
+        rows = fetch_cup(slug, cp)
+    except Exception as e:
+        print(f"{label}: データなし→スキップ ({e})")
+        continue
+    picked = []
+    for e in rows:
+        if len(picked) >= TOP_N:
+            break
+        c = convert(e)
+        if c is not None:
+            picked.append(c)
+    cups_out.append({"slug": f"{slug}-{cp}", "label": label, "cp": cp, "list": picked})
+    print(f"{label}(CP{cp}): {len(picked)}匹採用")
+
 with open("assets/meta_lists.js", "w", encoding="utf-8") as f:
     f.write("// 環境上位リスト(PvPokeランキング由来)。build_meta.py で再生成する\n")
     f.write("window.META_LISTS = " + json.dumps(meta, ensure_ascii=False, separators=(",", ":")) + ";\n")
+    f.write("window.CUP_LISTS = " + json.dumps(cups_out, ensure_ascii=False, separators=(",", ":")) + ";\n")
 print("assets/meta_lists.js を出力した")
