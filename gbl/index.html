@@ -193,6 +193,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .mvblock.spblock{border-color:var(--ml);background:rgba(176,108,255,.14)}
 .mvblock.pendingblock{border-style:dashed;color:var(--sub)}
 .mvblock.vbottom{vertical-align:bottom;padding-bottom:5px}
+.mvblock.vtop{vertical-align:top;padding-top:5px}
 .mvblock .shield{display:block;font-size:.68rem}
 .mvblock .mvname{white-space:normal}
 .evbox{display:inline-block;border:1px solid #35406e;border-radius:8px;padding:1px 6px;margin:1px 0;background:rgba(19,26,51,.7)}
@@ -1252,13 +1253,15 @@ function renderTimeline() {
       res.rows.forEach((row, idx) => {
         if (row.tn !== '-') turnStart = idx;   // この行が属するターンの先頭行
         if (!row.ev[i]) return;
-        // SPアタックの枠は「発動したターンの先頭行」から。それより前の待ちは
-        // 行ごとの空セルにして罫線を通常どおり区切る
+        // SPアタックの枠は「発動したターンの先頭行〜そのターンの最終行(次の番号行の直前)」。
+        // それより前の待ちは行ごとの空セルにして罫線を通常どおり区切る
         const isSp = row.ev[i].full !== undefined;
         const s = isSp ? Math.max(start, turnStart) : start;
         for (let k = start; k < s; k++) blocks[i].push({ start: k, end: k, ev: null, idle: true });
-        blocks[i].push({ start: s, end: idx, ev: row.ev[i] });
-        start = idx + 1;
+        let e = idx;
+        if (isSp) while (e + 1 < n && res.rows[e + 1].tn === '-') e++;
+        blocks[i].push({ start: s, end: e, evRow: idx, ev: row.ev[i] });
+        start = e + 1;
       });
       if (start < n) blocks[i].push({ start, end: n - 1, ev: null });   // 打ちかけで終了した分
     }
@@ -1276,22 +1279,28 @@ function renderTimeline() {
         if (b.ev.shielded) moveHtml += ' -1';
         else if (b.ev.full) moveHtml += ` <b>-${b.ev.dmg}</b>`;
         else moveHtml += ` -${b.ev.dmg}`;
-        const ex = res.rows[b.end]._extra && res.rows[b.end]._extra[i];
+        const ex = res.rows[b.evRow]._extra && res.rows[b.evRow]._extra[i];
         if (ex) moveHtml += ` <span class="extra">(${ex})</span>`;
         moveHtml += buffTxt(b.ev);
       } else moveHtml = b.idle ? '' : '…';
       // 待ちの空セルは枠なし・通常の罫線で1行ずつ区切る(シールドは防いだSPと同じ段に出る)
       if (b.idle) return `<td class="ev ${i ? 'r' : 'l'}">${shs.length ? '<span class="shield">🛡シールド</span>' : ''}</td>`;
-      // 時系列順に上から並べる: シールドは防いだSPアタックの段、わざ名はダメージ発生の段(末尾行)
+      // 時系列順に上から並べる: シールドは防いだSPアタックの段、わざ名はダメージ発生の段
+      const er = b.evRow != null ? b.evRow : b.end;
       const items = shs.map(r => ({ row: r, h: '<span class="shield">🛡シールド</span>' }));
-      items.push({ row: b.end + 0.5, h: moveHtml });
+      items.push({ row: er + 0.5, h: moveHtml });
       items.sort((a, b2) => a.row - b2.row);
       const inner = items.map(x => x.h).join('');
+      // わざ名は発動行の位置(枠の上端/下端)へ寄せる(シールド併記時は行順の積み上げで表現)
+      let align = '';
+      if (!shs.length && b.end > b.start) {
+        if (er === b.start) align = ' vtop';
+        else if (er === b.end) align = ' vbottom';
+      }
       const cls = 'mvblock ' + (i ? 'r' : 'l')
         + (b.ev && b.ev.full !== undefined ? ' spblock' : '')
         + (b.ev ? '' : ' pendingblock')
-        // 差し込み(SPの後にダメージ発生)はわざ名を下の段に寄せる
-        + (b.ev && b.ev.forwarded && !shs.length ? ' vbottom' : '');
+        + align;
       return `<td class="${cls}" rowspan="${b.end - b.start + 1}">${inner}</td>`;
     };
     body = res.rows.map((row, idx) => {
