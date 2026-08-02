@@ -47,5 +47,6 @@
 ## 開発の基本
 - `assets/meta_lists.js`(GBL環境上位リスト)は毎週月曜朝9時(JST)にGitHub Actionsが自動更新して直接pushする(`.github/workflows/update-meta.yml`→`build_meta.py`)。手編集しない。**ローカルが遅れるため、push前に `git pull --rebase` すること**
 - ルートの `index.html` は生成物。必ず `template.html` を編集し、`godata.json` と合わせて再生成して両者を同期させる
-- `/gbl/` のエンジン(`assets/pvp-engine.js`)を変更したら `pvp-tests/engine-test.html` の全ケース緑を確認する(みんポケ一致保証)
+- `/gbl/` のエンジン(`assets/pvp-engine.js`)は**2026年6月刷新の新バトルシステム準拠**(ダメージはターン末解決・1ターン技同時はタイ・SPは次ターン開始・SP解決は演出中に完了するノーマルより先・同ターンにノーマルで倒されてもSPは解決)。ターン仕様を調べるときは必ず2026年6月以降の情報を使う(それ以前の解説は旧システム)
+- `/gbl/` のエンジンを変更したら `pvp-tests/engine-test.html` の全ケース緑を確認する(ローカル専用・最新シミュレータ挙動との一致保証)
 - `git push` とファイル削除は実行前に必ずユーザーへ確認する

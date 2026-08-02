@@ -138,7 +138,9 @@
       }
       row.state = sides.map(s => ({ hp: Math.max(0, s.hp), en: s.en }));
       rows.push(row);
-      if (sides[0].hp <= 0 || sides[1].hp <= 0) break;
+      // 2026年新システム: 同ターンにノーマルアタックで倒れてもそのターンのゲージ技は解決される
+      const koByFast = [sides[0].hp <= 0, sides[1].hp <= 0];
+      if ((sides[0].hp <= 0 || sides[1].hp <= 0) && !charging[0] && !charging[1]) break;
 
       // ゲージ技の発動(同時の場合は攻撃実数値が高い側が先=CMP)
       const order = sides[0].atk * buffMult(sides[0].buffs[0]) >= sides[1].atk * buffMult(sides[1].buffs[0]) ? [0, 1] : [1, 0];
@@ -146,7 +148,7 @@
         const mv = charging[i];
         if (!mv) continue;
         const s = sides[i], o = sides[1 - i];
-        if (s.hp <= 0) continue;                // 発動前に倒れた
+        if (s.hp <= 0 && !koByFast[i]) continue;   // 同ターンの相手ゲージ技で倒れた場合のみ不発
         s.en -= mv.e;
         const full = damage(D, mv, s, o);
         // シールド判断: shieldPlan(相手のSP何発目で使うかの配列)があればそれに従う
