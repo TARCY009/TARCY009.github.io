@@ -188,7 +188,6 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .mvblock.r{text-align:right}
 .mvblock.spblock{border-color:var(--ml);background:rgba(176,108,255,.14)}
 .mvblock.pendingblock{border-style:dashed;color:var(--sub)}
-.mvblock.idleblock{border-color:transparent;background:none}
 .mvblock .shield{display:block;font-size:.68rem}
 .mvblock .mvname{white-space:normal}
 .evbox{display:inline-block;border:1px solid #35406e;border-radius:8px;padding:1px 6px;margin:1px 0;background:rgba(19,26,51,.7)}
@@ -1244,13 +1243,16 @@ function renderTimeline() {
     const n = res.rows.length;
     const blocks = [[], []];
     for (let i = 0; i < 2; i++) {
-      let start = 0;
+      let start = 0, turnStart = 0;
       res.rows.forEach((row, idx) => {
+        if (row.tn !== '-') turnStart = idx;   // この行が属するターンの先頭行
         if (!row.ev[i]) return;
-        // SPアタックは1ターン=発動行だけを枠にし、それまでの待ちは空欄にする(みんポケ準拠)
+        // SPアタックの枠は「発動したターンの先頭行」から。それより前の待ちは
+        // 行ごとの空セルにして罫線を通常どおり区切る(みんポケ準拠)
         const isSp = row.ev[i].full !== undefined;
-        if (isSp && idx > start) blocks[i].push({ start, end: idx - 1, ev: null, idle: true });
-        blocks[i].push({ start: isSp ? idx : start, end: idx, ev: row.ev[i] });
+        const s = isSp ? Math.max(start, turnStart) : start;
+        for (let k = start; k < s; k++) blocks[i].push({ start: k, end: k, ev: null, idle: true });
+        blocks[i].push({ start: s, end: idx, ev: row.ev[i] });
         start = idx + 1;
       });
       if (start < n) blocks[i].push({ start, end: n - 1, ev: null });   // 打ちかけで終了した分
@@ -1273,9 +1275,11 @@ function renderTimeline() {
         inner += buffTxt(b.ev);
       } else inner = b.idle ? '' : '…';
       if (shieldRows[i].some(r => r >= b.start && r <= b.end)) inner += '<span class="shield">🛡シールド</span>';
+      // 待ちの空セルは枠なし・通常の罫線で1行ずつ区切る(みんポケの見た目)
+      if (b.idle) return `<td class="ev ${i ? 'r' : 'l'}">${inner}</td>`;
       const cls = 'mvblock ' + (i ? 'r' : 'l')
         + (b.ev && b.ev.full !== undefined ? ' spblock' : '')
-        + (b.idle ? ' idleblock' : b.ev ? '' : ' pendingblock');
+        + (b.ev ? '' : ' pendingblock');
       return `<td class="${cls}" rowspan="${b.end - b.start + 1}">${inner}</td>`;
     };
     body = res.rows.map((row, idx) => {
