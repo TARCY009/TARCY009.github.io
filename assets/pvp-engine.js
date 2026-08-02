@@ -162,7 +162,14 @@
         const buff = applyBuffs(mv, s, o, opt.rng);
         const ev = [null, null];
         ev[i] = { move: mv.n, dmg: dealt, full, shielded, buff };
-        rows.push({ tn: '-', ev, state: sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })) });
+        // みんポケ表示規則: 番号行が空(通常技の自然完了なし)ならゲージ技は番号行に入る
+        if (!row._merged && !row.ev[0] && !row.ev[1]) {
+          row._merged = true;
+          row.ev = ev;
+          row.state = sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en }));
+        } else {
+          rows.push({ tn: '-', ev, state: sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })) });
+        }
         s.used[mv.n] = (s.used[mv.n] || 0) + 1;
         if (o.hp <= 0) break;
         // 差し込み: 発動側の演出中に、相手の打ちかけ(未完了)の通常技が前倒しで完了する

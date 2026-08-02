@@ -188,6 +188,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .mvblock.r{text-align:right}
 .mvblock.spblock{border-color:var(--ml);background:rgba(176,108,255,.14)}
 .mvblock.pendingblock{border-style:dashed;color:var(--sub)}
+.mvblock.idleblock{border-color:transparent;background:none}
 .mvblock .shield{display:block;font-size:.68rem}
 .mvblock .mvname{white-space:normal}
 .evbox{display:inline-block;border:1px solid #35406e;border-radius:8px;padding:1px 6px;margin:1px 0;background:rgba(19,26,51,.7)}
@@ -1206,11 +1207,14 @@ function renderTimeline() {
   };
   // SPアタックを打った行のENはピンクで「ゲージを消費した」ことを示す
   const enCls = (row, i) => (row.ev[i] && row.ev[i].full !== undefined) ? ' class="ensp"' : '';
+  // SPアタックが番号行に入る場合(番号行が空くケース)もハイライトする
+  const spRow = row => row.tn === '-' ||
+    (row.ev[0] && row.ev[0].full !== undefined) || (row.ev[1] && row.ev[1].full !== undefined);
   const rowHtml = (row, prev) => {
     // 全ターン表示では、前の行と同じ数字は省略して変化だけを見せる
     const num = (v, pv) => (prev && v === pv) ? '' : v;
     const p = prev ? prev.state : null;
-    return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
+    return `<tr${spRow(row) ? ' class="charged"' : ''}>
       <td class="ev">${cellEv(row, 0)}</td>
       <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td${enCls(row, 0)}>${num(row.state[0].en, p && p[0].en)}</td>
       <td class="tn">${row.tn}</td>
@@ -1242,7 +1246,12 @@ function renderTimeline() {
     for (let i = 0; i < 2; i++) {
       let start = 0;
       res.rows.forEach((row, idx) => {
-        if (row.ev[i]) { blocks[i].push({ start, end: idx, ev: row.ev[i] }); start = idx + 1; }
+        if (!row.ev[i]) return;
+        // SPアタックは1ターン=発動行だけを枠にし、それまでの待ちは空欄にする(みんポケ準拠)
+        const isSp = row.ev[i].full !== undefined;
+        if (isSp && idx > start) blocks[i].push({ start, end: idx - 1, ev: null, idle: true });
+        blocks[i].push({ start: isSp ? idx : start, end: idx, ev: row.ev[i] });
+        start = idx + 1;
       });
       if (start < n) blocks[i].push({ start, end: n - 1, ev: null });   // 打ちかけで終了した分
     }
@@ -1262,18 +1271,18 @@ function renderTimeline() {
         const ex = res.rows[b.end]._extra && res.rows[b.end]._extra[i];
         if (ex) inner += ` <span class="extra">(${ex})</span>`;
         inner += buffTxt(b.ev);
-      } else inner = '…';
+      } else inner = b.idle ? '' : '…';
       if (shieldRows[i].some(r => r >= b.start && r <= b.end)) inner += '<span class="shield">🛡シールド</span>';
       const cls = 'mvblock ' + (i ? 'r' : 'l')
         + (b.ev && b.ev.full !== undefined ? ' spblock' : '')
-        + (b.ev ? '' : ' pendingblock');
+        + (b.idle ? ' idleblock' : b.ev ? '' : ' pendingblock');
       return `<td class="${cls}" rowspan="${b.end - b.start + 1}">${inner}</td>`;
     };
     body = res.rows.map((row, idx) => {
       const prev = res.rows[idx - 1];
       const num = (v, pv) => (prev && v === pv) ? '' : v;
       const p = prev ? prev.state : null;
-      return `<tr${row.tn === '-' ? ' class="charged"' : ''}>
+      return `<tr${spRow(row) ? ' class="charged"' : ''}>
         ${blockTd(0, idx)}
         <td class="${hpCls(0, row.state[0].hp)}${row.state[0].hp === 0 ? ' ko' : ''}">${num(row.state[0].hp, p && p[0].hp)}</td><td${enCls(row, 0)}>${num(row.state[0].en, p && p[0].en)}</td>
         <td class="tn">${row.tn}</td>
