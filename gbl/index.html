@@ -235,9 +235,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
-        <label class="f">スーパーマックスレベル（メガ専用・PL上限を拡張）</label>
+        <label class="f">メガLv4＝スーパーマックスレベル（PL上限を拡張）</label>
         <div class="opts smax">
-          <button data-lv="52" title="メガレベル最大でPL上限+2(52まで)">スーパーマックスLv</button><button data-lv="53" title="スーパーマックスLv+最高の相棒でPL上限53まで">＋最高の相棒</button>
+          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
         </div>
       </div>
       <label class="f">個体値・PL</label>
@@ -293,9 +293,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
-        <label class="f">スーパーマックスレベル（メガ専用・PL上限を拡張）</label>
+        <label class="f">メガLv4＝スーパーマックスレベル（PL上限を拡張）</label>
         <div class="opts smax">
-          <button data-lv="52" title="メガレベル最大でPL上限+2(52まで)">スーパーマックスLv</button><button data-lv="53" title="スーパーマックスLv+最高の相棒でPL上限53まで">＋最高の相棒</button>
+          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
         </div>
       </div>
       <label class="f">個体値・PL</label>
@@ -366,7 +366,8 @@ const D = window.PVP_DATA;
 document.getElementById('loading').style.display = 'none';
 
 // ---- 検索対象(実装済み・メガ除外) ----
-const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r && !D.pokemon[k].mega);
+// 実装済み(r)は全て検索可能にする。メガ・ゲンシもメガバージョン系カップ用に含める
+const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r);
 const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 18);
 const MOVE_TYPE = {};

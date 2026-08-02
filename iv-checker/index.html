@@ -220,8 +220,8 @@ body.has-sticky{padding-top:52px}
     <span>PL上限</span>
     <button class="cap act" data-cap="50">50</button>
     <button class="cap" data-cap="51">51 相棒</button>
-    <button class="cap smaxonly" data-cap="52" style="display:none" title="メガレベル「スーパーマックスレベル」でPL上限+2">52 スパマックス</button>
-    <button class="cap smaxonly" data-cap="53" style="display:none" title="スーパーマックスレベル+最高の相棒でPL上限53">53 スパマ相棒</button>
+    <button class="cap smaxonly" data-cap="52" style="display:none" title="メガLv4(スーパーマックスレベル)でPL上限+2">52 メガLv4</button>
+    <button class="cap smaxonly" data-cap="53" style="display:none" title="メガLv4+最高の相棒でPL上限53">53 メガLv4＋相棒</button>
     <div class="capgroup">
       <div class="capgroup-t">アメXLなしの最大強化</div>
       <div class="capgroup-b">
@@ -435,8 +435,8 @@ function render(){
   if(me.lv>50) notes.push('PL'+me.lv+'到達には「最高の相棒」ブーストが必要です。');
   else if(me.lv>40) notes.push('PL'+me.lv+'到達にはアメXLが必要です。');
   if(state.cap===41||state.cap===51) notes.push('アメXL数は相棒ブースト適用前提(実強化レベル=表示PL−1)で計算。');
-  if(state.cap===52) notes.push('アメXL数はスーパーマックスレベル(+2)適用前提(実強化レベル=表示PL−2)で計算。');
-  if(state.cap===53) notes.push('アメXL数はスーパーマックスレベル(+2)+最高の相棒(+1)適用前提(実強化レベル=表示PL−3)で計算。');
+  if(state.cap===52) notes.push('メガLv4の+2はメガシンカ中のブーストでアメ消費なし(アメXLは実強化レベル=表示PL−2分)。');
+  if(state.cap===53) notes.push('メガLv4(+2)+最高の相棒(+1)はブーストでアメ消費なし(アメXLは実強化レベル=表示PL−3分)。');
   notes.push('アメXLは通常個体の必要数。シャドウは1.2倍、ライトは0.9倍。');
   document.getElementById('lvnote').textContent=notes.join(' ');
 
