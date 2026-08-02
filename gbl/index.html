@@ -740,8 +740,8 @@ function runMulti() {
   }
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
-    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow }
-    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap }
+    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap }))(rank1(S[0].key, cap, 0, S[0].maxLv));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
   const myPols = policies(S[0].key, { fast: S[0].fast || undefined, throw: S[0].c1 || undefined });
   // 左パネルの表示(CP・個体値・PL・わざ)もこのリーグ/カップの内容に更新する
@@ -765,7 +765,7 @@ function runMulti() {
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
       const r1 = rank1(m.k, cap);
-      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal',
+      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
         fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       const cells = [0, 1, 2].map(sh => {
         let best = null;
@@ -887,9 +887,9 @@ function run() {
   if (mode === 'multi') { runMulti(); return; }
   if (!S[0].key || !S[1].key) return;
   const base = S.map(s => {
-    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow };
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap };
     const r1 = rank1(s.key, cap, 0, s.maxLv);
-    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow };
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap };
   });
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
   S.forEach((s, i) => {
@@ -1211,6 +1211,8 @@ function renderTimeline() {
     }
     // シールドは「使った側」に表示する
     if (opp && opp.shielded) h += (h ? ' ' : '') + '<span class="evbox shield">🛡シールド</span>';
+    // ミミッキュのばけのかわ発動も「防いだ側」に表示する
+    if (opp && opp.disguised) h += (h ? ' ' : '') + '<span class="evbox shield">👻ばけのかわ 防⬇</span>';
     return h;
   };
   // SPアタックを打った行のENはピンクで「ゲージを消費した」ことを示す
@@ -1269,13 +1271,18 @@ function renderTimeline() {
       if (start < n) blocks[i].push({ start, end: n - 1, ev: null });   // 打ちかけで終了した分
     }
     const shieldRows = [[], []];   // その側がシールドを使った行
+    const disguiseRows = [[], []];   // その側のばけのかわが発動した行
     res.rows.forEach((row, idx) => {
-      for (let i = 0; i < 2; i++) if (row.ev[i] && row.ev[i].shielded) shieldRows[1 - i].push(idx);
+      for (let i = 0; i < 2; i++) {
+        if (row.ev[i] && row.ev[i].shielded) shieldRows[1 - i].push(idx);
+        if (row.ev[i] && row.ev[i].disguised) disguiseRows[1 - i].push(idx);
+      }
     });
     const blockTd = (i, idx) => {
       const b = blocks[i].find(x => x.start === idx);
       if (!b) return '';
       const shs = shieldRows[i].filter(r => r >= b.start && r <= b.end);
+      const dgs = disguiseRows[i].filter(r => r >= b.start && r <= b.end);
       let moveHtml = '';
       if (b.ev) {
         moveHtml = mvChip(b.ev.move);
@@ -1286,17 +1293,18 @@ function renderTimeline() {
         if (ex) moveHtml += ` <span class="extra">(${ex})</span>`;
         moveHtml += buffTxt(b.ev);
       } else moveHtml = b.idle ? '' : '…';
-      // 待ちの空セルは枠なし・通常の罫線で1行ずつ区切る(シールドは防いだSPと同じ段に出る)
-      if (b.idle) return `<td class="ev ${i ? 'r' : 'l'}">${shs.length ? '<span class="shield">🛡シールド</span>' : ''}</td>`;
-      // 時系列順に上から並べる: シールドは防いだSPアタックの段、わざ名はダメージ発生の段
+      // 待ちの空セルは枠なし・通常の罫線で1行ずつ区切る(シールド類は防いだSPと同じ段に出る)
+      if (b.idle) return `<td class="ev ${i ? 'r' : 'l'}">${shs.length ? '<span class="shield">🛡シールド</span>' : ''}${dgs.length ? '<span class="shield">👻ばけのかわ 防⬇</span>' : ''}</td>`;
+      // 時系列順に上から並べる: シールド類は防いだSPアタックの段、わざ名はダメージ発生の段
       const er = b.evRow != null ? b.evRow : b.end;
       const items = shs.map(r => ({ row: r, h: '<span class="shield">🛡シールド</span>' }));
+      dgs.forEach(r => items.push({ row: r, h: '<span class="shield">👻ばけのかわ 防⬇</span>' }));
       items.push({ row: er + 0.5, h: moveHtml });
       items.sort((a, b2) => a.row - b2.row);
       const inner = items.map(x => x.h).join('');
       // わざ名は発動行の位置(枠の上端/下端)へ寄せる(シールド併記時は行順の積み上げで表現)
       let align = '';
-      if (!shs.length && b.end > b.start) {
+      if (!shs.length && !dgs.length && b.end > b.start) {
         if (er === b.start) align = ' vtop';
         else if (er === b.end) align = ' vbottom';
       }

@@ -55,12 +55,32 @@
     return { target: mv.bt || 'self', from: before, to: target.buffs.slice() };
   }
 
+  // ---- バトル中フォルムチェンジ持ち(ギルガルド/モルペコ/ミミッキュ)の特殊仕様 ----
+  const AEGIS_FAST_BLADE = { AEGISLASH_CHARGE_PSYCHO_CUT: 'PSYCHO_CUT', AEGISLASH_CHARGE_AIR_SLASH: 'AIR_SLASH' };
+  const AEGIS_FAST_SHIELD = { PSYCHO_CUT: 'AEGISLASH_CHARGE_PSYCHO_CUT', AIR_SLASH: 'AEGISLASH_CHARGE_AIR_SLASH' };
+
+  // ブレードフォルムの実ステータス: リーグ上限に収まるレベルへ換算して計算する(HPは変えない)
+  function bladeStats(D, cfg) {
+    const bl = D.pokemon['aegislash_blade'];
+    const cap = cfg.cap || 0;
+    let lvl = cfg.level;
+    if (cap === 1500) lvl = Math.ceil(cfg.level * 0.5) + 1;
+    else if (cap === 2500) lvl = Math.ceil(cfg.level * 0.75);
+    const cpAt = l => {
+      const c = D.cpm[String(l)];
+      return Math.max(10, Math.floor((bl.a + cfg.ivs[0]) * Math.sqrt(bl.df + cfg.ivs[1]) * Math.sqrt(bl.h + cfg.ivs[2]) * c * c / 10));
+    };
+    while (cap && lvl > 1 && cpAt(lvl) > cap) lvl -= 0.5;
+    const c = D.cpm[String(lvl)];
+    return { atk: (bl.a + cfg.ivs[0]) * c, def: (bl.df + cfg.ivs[1]) * c };
+  }
+
   function simulate(D, cfgL, cfgR, opt) {
     opt = opt || {};
     const maxTurn = opt.maxTurn || 480;
     const sides = [cfgL, cfgR].map(cfg => {
       const st = buildStats(D, cfg);
-      return {
+      const s = {
         cfg, ...st,
         hp: st.hp, en: 0, cd: 0, buffs: [0, 0],
         shields: cfg.shields != null ? cfg.shields : 2,
@@ -69,7 +89,23 @@
         plan: (cfg.plan || []).slice(),
         used: {},
       };
+      if (cfg.key === 'aegislash_shield') {        // 開始はシールドフォルム
+        s.form = 'shield';
+        s.shieldStats = { atk: st.atk, def: st.def };
+        s.bladeSt = bladeStats(D, cfg);
+      } else if (cfg.key === 'mimikyu') {          // ばけのかわ未使用
+        s.disguise = true;
+      } else if (cfg.key === 'morpeko_full_belly') {  // まんぷくで開始
+        s.mform = 'full';
+      }
+      return s;
     });
+    // モルペコのフォルムに応じてオーラぐるまのタイプを差し替える
+    const rmv = (s, id) => {
+      if (s.mform === 'hangry' && id === 'AURA_WHEEL_ELECTRIC') return 'AURA_WHEEL_DARK';
+      if (s.mform === 'full' && id === 'AURA_WHEEL_DARK') return 'AURA_WHEEL_ELECTRIC';
+      return id;
+    };
     const rows = [];   // タイムライン(数字ターン行と'-'行)
     let winner = null, turn = 0;
 
@@ -85,7 +121,7 @@
         if (s.cd !== 0) continue;               // 通常技の途中
         if (s.cfg.timing === 'asap') {
           // 最短: 撃てるゲージ技ができた瞬間に撃つ(複数撃てるなら消費が軽い技)
-          const avail = (s.cfg.charged || []).map(id => D.moves[id]).filter(m => s.en >= m.e);
+          const avail = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(m => s.en >= m.e);
           if (avail.length) {
             avail.sort((a, b) => a.e - b.e);
             charging[i] = avail[0];
@@ -100,12 +136,14 @@
             const idx = s.thrown || 0;
             mvId = idx < s.cfg.throwSeq.length ? s.cfg.throwSeq[idx] : s.cfg.throwRest;
           }
-          const mv = mvId ? D.moves[mvId]
-            : s.cfg.throw ? D.moves[s.cfg.throw]
-            : (s.cfg.charged || []).map(id => D.moves[id])
+          const mv = mvId ? D.moves[rmv(s, mvId)]
+            : s.cfg.throw ? D.moves[rmv(s, s.cfg.throw)]
+            : (s.cfg.charged || []).map(id => D.moves[rmv(s, id)])
                 .sort((a, b) => damage(D, b, s, o) / b.e - damage(D, a, s, o) / a.e)[0];
           if (mv && s.en >= mv.e) {
-            const dealt = o.shields > 0 ? 1 : damage(D, mv, s, o);
+            // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
+            const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
+            const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
             const oppFinal = o.cd === 1 || (o.cd === 0 && o.fast.tn === 1);
             if (dealt >= o.hp || oppFinal) { charging[i] = mv; continue; }
           }
@@ -113,7 +151,7 @@
           // 台本(plan): 指定ターン以降で最初に撃てるタイミングで発動する
           const planIdx = s.plan.findIndex(p => p.on <= turn);
           if (planIdx >= 0) {
-            const mv = D.moves[s.plan[planIdx].move];
+            const mv = D.moves[rmv(s, s.plan[planIdx].move)];
             if (s.en >= mv.e) { s.plan.splice(planIdx, 1); charging[i] = mv; continue; }
           }
         }
@@ -150,6 +188,13 @@
         const s = sides[i], o = sides[1 - i];
         if (s.hp <= 0 && !koByFast[i]) continue;   // 同ターンの相手ゲージ技で倒れた場合のみ不発
         s.en -= mv.e;
+        // ギルガルド: SPアタック使用の直前にブレードフォルム化(このSPからブレードの攻撃で計算)
+        if (s.form === 'shield') {
+          s.form = 'blade';
+          s.atk = s.bladeSt.atk; s.def = s.bladeSt.def;
+          const bid = AEGIS_FAST_BLADE[s.fastId];
+          if (bid) { s.fastId = bid; s.fast = D.moves[bid]; }
+        }
         const full = damage(D, mv, s, o);
         // シールド判断: shieldPlan(相手のSP何発目で使うかの配列)があればそれに従う
         // shieldRest=trueなら6発目以降はすべて使う
@@ -157,13 +202,32 @@
         const shielded = o.cfg.shieldPlan
           ? (o.shields > 0 && (o.cfg.shieldPlan.includes(o.spSeen) || (o.cfg.shieldRest && o.spSeen > 5)))
           : o.shields > 0;
-        const dealt = shielded ? 1 : full;
-        if (shielded) o.shields--;
+        let dealt = shielded ? 1 : full;
+        let disguised = false;
+        if (shielded) {
+          o.shields--;
+          // ギルガルド: シールドを使うとシールドフォルムに戻る
+          if (o.form === 'blade') {
+            o.form = 'shield';
+            o.atk = o.shieldStats.atk; o.def = o.shieldStats.def;
+            const sid = AEGIS_FAST_SHIELD[o.fastId];
+            if (sid) { o.fastId = sid; o.fast = D.moves[sid]; }
+          }
+        } else if (o.disguise) {
+          // ミミッキュ: シールドを使わずに受けた最初の敵SPをばけのかわで無効化(ダメージ1)。
+          // 以後は「ばれた」姿になり防御-1段階がバトル中ずっと適用される
+          o.disguise = false;
+          dealt = 1;
+          disguised = true;
+          o.buffs[1] = Math.max(-4, o.buffs[1] - 1);
+        }
         s.thrown = (s.thrown || 0) + 1;
         o.hp -= dealt;
         const buff = applyBuffs(mv, s, o, opt.rng);
         const ev = [null, null];
-        ev[i] = { move: mv.n, dmg: dealt, full, shielded, buff };
+        ev[i] = { move: mv.n, dmg: dealt, full, shielded, disguised, buff };
+        // モルペコ: SPアタックを打つたびに まんぷく⇄はらぺこ が切り替わる(オーラぐるまのタイプが変化)
+        if (s.mform) s.mform = s.mform === 'full' ? 'hangry' : 'full';
         // 表示規則: 番号行が空(通常技の自然完了なし)ならゲージ技は番号行に入る
         if (!row._merged && !row.ev[0] && !row.ev[1]) {
           row._merged = true;
