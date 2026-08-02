@@ -60,6 +60,12 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .hpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--win),#a5f3c0)}
 .hpbar i.low{background:linear-gradient(90deg,var(--lose),#ffb3bd)}
 .subline{color:var(--sub);font-size:.72rem;margin-top:3px}
+.enbar{height:8px;border-radius:99px;background:#0a0f22;overflow:hidden;margin-top:8px;border:1px solid var(--line)}
+.enbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ml),#d8b4fe)}
+.subline b{color:var(--ink)}
+.shline .sh{font-size:.92rem;margin-right:1px}
+.shline .usedsh{filter:grayscale(1);opacity:.3}
+.shline .shnone{opacity:.7}
 .vsmark{color:var(--sub);font-weight:800;font-size:.8rem}
 /* 技詳細 */
 .savepk{margin-left:auto;flex-shrink:0;background:none;border:1px solid var(--line);border-radius:8px;color:var(--gold);font-size:.7rem;padding:3px 8px;cursor:pointer}
@@ -900,11 +906,18 @@ function render(res, L, R, matrix) {
   const fighter = (i, cfg) => {
     const f = res.final[i];
     const pct = Math.round(f.hp / f.hpMax * 100);
+    // ゲージ(0〜100)はメーターで、シールドは🛡️で残数を見せる(使った分は薄く表示)
+    const enPct = Math.min(100, f.en);
+    const shInit = cfg.shieldPlan ? 2 : cfg.shields;
+    const shHtml = shInit === 0 ? '<span class="shnone">なし（設定0枚）</span>'
+      : Array.from({ length: shInit }, (_, k) => `<span class="sh${k < f.shields ? '' : ' usedsh'}">🛡️</span>`).join('');
     return `<div class="fighter">
       <div class="top">${badge(i)}<span class="nm">${f.name}</span></div>
       <div class="hpbar"><i class="${pct <= 25 ? 'low' : ''}" style="width:${pct}%"></i></div>
       <div class="subline">残りHP ${f.hp}/${f.hpMax}（${pct}%）</div>
-      <div class="subline">ゲージ${f.en}・シールド残${f.shields}</div>
+      <div class="enbar"><i style="width:${enPct}%"></i></div>
+      <div class="subline">ゲージ残：<b>${f.en}</b></div>
+      <div class="subline shline">シールド残：${shHtml}</div>
     </div>`;
   };
   // 技ごとの集計
