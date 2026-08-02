@@ -358,7 +358,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 </div>
 
 <div class="loading" id="loading">データ読み込み中…</div>
-<footer>データ: PokeMiners Game Master / PvPoke。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
+<footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
 </div>
 
 <script src="/pvp_data.js"></script>
@@ -419,7 +419,7 @@ const scoreOf = (res, side) => {
   const own = res.final[side], opp = res.final[1 - side];
   return 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
 };
-const NO_PROC = { rng: () => 1 };   // 確率バフは不発扱い(みんポケ準拠)
+const NO_PROC = { rng: () => 1 };   // 確率バフは不発扱い
 function movePool(key) {
   // 通常枠と特別枠の両方に載っているわざがあるため重複除去する
   const p = D.pokemon[key];
@@ -744,7 +744,7 @@ function runMulti() {
   fillMoves(0, { ...meBase, fast: S[0].fast || pool0.fasts[0], throw: S[0].c1 || pool0.chargeds[0] });
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。行をタップすると1対1シミュで詳細を確認できます。相手は理想個体値・PvPoke推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。行をタップすると1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
     <table class="mttbl"><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
     </table><div class="mtprog">計算中… 0/${list.length}</div>`;
@@ -1252,7 +1252,7 @@ function renderTimeline() {
         if (row.tn !== '-') turnStart = idx;   // この行が属するターンの先頭行
         if (!row.ev[i]) return;
         // SPアタックの枠は「発動したターンの先頭行」から。それより前の待ちは
-        // 行ごとの空セルにして罫線を通常どおり区切る(みんポケ準拠)
+        // 行ごとの空セルにして罫線を通常どおり区切る
         const isSp = row.ev[i].full !== undefined;
         const s = isSp ? Math.max(start, turnStart) : start;
         for (let k = start; k < s; k++) blocks[i].push({ start: k, end: k, ev: null, idle: true });
@@ -1279,7 +1279,7 @@ function renderTimeline() {
         inner += buffTxt(b.ev);
       } else inner = b.idle ? '' : '…';
       if (shieldRows[i].some(r => r >= b.start && r <= b.end)) inner += '<span class="shield">🛡シールド</span>';
-      // 待ちの空セルは枠なし・通常の罫線で1行ずつ区切る(みんポケの見た目)
+      // 待ちの空セルは枠なし・通常の罫線で1行ずつ区切る
       if (b.idle) return `<td class="ev ${i ? 'r' : 'l'}">${inner}</td>`;
       const cls = 'mvblock ' + (i ? 'r' : 'l')
         + (b.ev && b.ev.full !== undefined ? ' spblock' : '')

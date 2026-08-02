@@ -106,7 +106,7 @@ for slug, cp, label in CUPS:
     print(f"{label}(CP{cp}): {len(picked)}匹採用")
 
 with open("assets/meta_lists.js", "w", encoding="utf-8") as f:
-    f.write("// 環境上位リスト(PvPokeランキング由来)。build_meta.py で再生成する\n")
+    f.write("// 環境上位リスト。build_meta.py で再生成する\n")
     f.write("window.META_LISTS = " + json.dumps(meta, ensure_ascii=False, separators=(",", ":")) + ";\n")
     f.write("window.CUP_LISTS = " + json.dumps(cups_out, ensure_ascii=False, separators=(",", ":")) + ";\n")
 print("assets/meta_lists.js を出力した")

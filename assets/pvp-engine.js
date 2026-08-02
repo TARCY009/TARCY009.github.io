@@ -1,7 +1,7 @@
 /* ================================================================
    GOバトルリーグ 対面シミュレート エンジン (フェーズ2)
    - 1ターン(0.5秒)刻みで通常技・ゲージ技・シールド・能力変化を再現
-   - ゲージ技はターン計数を消費しない「ポーズ」として扱う(みんポケ表示と同モデル)
+   - ゲージ技はターン計数を消費しない「ポーズ」として扱う
    - 使い方: PvpEngine.simulate(PVP_DATA, cfgL, cfgR)
      cfg = { key, ivs:[a,d,h], level, shadow, fast, charged:[id...],
              shields, plan:[{after:ターン数, move:id}] }
@@ -70,7 +70,7 @@
         used: {},
       };
     });
-    const rows = [];   // タイムライン(みんポケ互換: 数字ターン行と'-'行)
+    const rows = [];   // タイムライン(数字ターン行と'-'行)
     let winner = null, turn = 0;
 
     const fastDamage = s => damage(D, sides[s].fast, sides[s], sides[1 - s]);
@@ -162,7 +162,7 @@
         const buff = applyBuffs(mv, s, o, opt.rng);
         const ev = [null, null];
         ev[i] = { move: mv.n, dmg: dealt, full, shielded, buff };
-        // みんポケ表示規則: 番号行が空(通常技の自然完了なし)ならゲージ技は番号行に入る
+        // 表示規則: 番号行が空(通常技の自然完了なし)ならゲージ技は番号行に入る
         if (!row._merged && !row.ev[0] && !row.ev[1]) {
           row._merged = true;
           row.ev = ev;
