@@ -52,6 +52,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .pkhead{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0}
 .pkhead .nm{font-weight:700;font-size:.98rem;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pkhead .tpair{flex-shrink:0}
+.pkhead .scp{font-weight:800;font-size:.9rem;color:var(--gold);flex-shrink:0;white-space:nowrap}
 .ivline{color:var(--sub);font-size:.72rem;margin-top:2px}
 label.f{display:block;font-size:.7rem;color:var(--sub);margin:8px 0 3px;font-weight:600}
 select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink)}
@@ -120,7 +121,10 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .mttbl td.l{color:var(--lose);font-weight:700}
 .mttbl td.d{color:var(--gold);font-weight:700}
 .mttbl td small{display:block;font-weight:400;color:var(--sub);font-size:.6rem}
-.mtprog{color:var(--sub);font-size:.74rem;margin-top:8px}
+.mtprog{color:var(--sub);font-size:.74rem;margin-top:8px;line-height:1.9}
+.mtscore{font-size:1.05rem;font-weight:800;color:var(--gold)}
+.mtscore small{font-size:.7rem;font-weight:600}
+.mtscorenote{font-size:.66rem;margin-left:4px}
 .shmtx{margin-top:12px}
 .shmtx table{border-collapse:separate;border-spacing:3px;width:100%;max-width:430px;margin:6px auto 0}
 .shmtx th{color:var(--sub);font-weight:600;font-size:.68rem;padding:2px}
@@ -245,7 +249,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <label class="f">メガLv4＝スーパーマックスレベル（PL上限を拡張）</label>
@@ -303,7 +307,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <label class="f">メガLv4＝スーパーマックスレベル（PL上限を拡張）</label>
@@ -768,7 +772,10 @@ function runMulti() {
   rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
   updateUrl();
   const prog = box.querySelector('.mtprog');
-  const wins = [0, 0, 0];
+  const wins = [0, 0, 0], losses = [0, 0, 0], draws = [0, 0, 0];
+  // 採用率加重: 環境1位の相手ほど重み大(1位=N点〜最下位=1点)
+  const wScore = [0, 0, 0];
+  let wSum = 0;
   let idx = 0;
   const step = () => {
     if (token !== multiToken) return;
@@ -790,8 +797,12 @@ function runMulti() {
         return { w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
       });
       const tds = rowsEl[idx].querySelectorAll('td');
+      const wgt = list.length - idx;   // 採用率順の重み
+      wSum += wgt;
       cells.forEach((c, j) => {
-        if (c.w === 0) wins[j]++;
+        if (c.w === 0) { wins[j]++; wScore[j] += wgt; }
+        else if (c.w === 'draw') { draws[j]++; wScore[j] += wgt * 0.5; }
+        else losses[j]++;
         tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
         tds[j + 1].innerHTML = (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
           `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
@@ -802,7 +813,11 @@ function runMulti() {
       prog.textContent = `計算中… ${idx}/${list.length}`;
       setTimeout(step, 0);
     } else {
-      prog.textContent = `勝ち数: 🛡0-0で${wins[0]}勝 / 🛡1-1で${wins[1]}勝 / 🛡2-2で${wins[2]}勝（${list.length}匹中）`;
+      const wl = j => `${wins[j]}勝${losses[j]}敗${draws[j] ? draws[j] + '分' : ''}`;
+      const score = ((wScore[0] + wScore[1] + wScore[2]) / (wSum * 3) * 100);
+      prog.innerHTML = `勝敗: 🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
+        `<span class="mtscore">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
+        `<span class="mtscorenote">（採用率で加重: 環境上位の相手に勝つほど高得点）</span>`;
     }
   };
   step();
@@ -962,6 +977,8 @@ function fillMoves(i, cfg) {
   el.querySelector('.ticons').innerHTML = typeIcons(p, 18);
   el.querySelector('.ticons').className = 'ticons tpair';
   const st = PvpEngine.buildStats(D, cfg);
+  // SCP: 攻撃×防御×耐久を総合したPvP向け評価値
+  el.querySelector('.scp').textContent = 'SCP ' + Math.floor(Math.pow(st.atk * st.def * st.hp, 2 / 3) / 10);
   el.querySelector('.ivline').textContent =
     `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
   // タイプは同名で複数タイプがあるわざ(ウェザーボール等)だけ表記する
