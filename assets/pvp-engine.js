@@ -144,8 +144,14 @@
             // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
             const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
             const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
-            const oppFinal = o.cd === 1 || (o.cd === 0 && o.fast.tn === 1);
-            if (dealt >= o.hp || oppFinal) { charging[i] = mv; continue; }
+            // 相手の最終ターン(cd===1)か1ターン技の開始が最適。技周期が同じ対面(ミラー等)は
+            // 最終ターンが永遠に来ないため、同時開始(cd===0)のタイミングで発動する(最新シミュレータ実測準拠)
+            const sameTn = s.fast.tn === o.fast.tn;
+            const oppFinal = o.cd === 1 || (o.cd === 0 && (o.fast.tn === 1 || sameTn));
+            // 保険: 撃てるのに最適タイミングが来ないまま待ち続けたら発動する(周期のズレ等での硬直防止)
+            const stuck = (s.waitCnt || 0) >= 3;
+            if (dealt >= o.hp || oppFinal || stuck) { s.waitCnt = 0; charging[i] = mv; continue; }
+            s.waitCnt = (s.waitCnt || 0) + 1;
           }
         } else {
           // 台本(plan): 指定ターン以降で最初に撃てるタイミングで発動する
