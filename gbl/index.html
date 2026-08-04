@@ -186,6 +186,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sprow .lbl{font-size:.7rem;color:var(--sub);width:3.6em;flex-shrink:0}
 .sprow button{flex:1;padding:4px 2px;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sprow button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26;font-weight:700}
+.sprow input.tin{width:4.8em;flex-shrink:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:4px 3px;font-size:.74rem;text-align:center;outline:none}
+.sprow input.tin:focus{border-color:var(--gl)}
+/* ターン指定窓は幅が足りない時にわざ1/わざ2ボタンを2行目へ折り返す */
+.turnrows .sprow{flex-wrap:wrap;row-gap:4px}
+.turnrows .sprow button{flex:1 0 34%;min-width:3.4em}
 /* 全ターン表示: わざ1発を所要ターン分の枠で表示 */
 .mvblock{border:2px solid #3b4a86;background:rgba(19,26,51,.5);font-size:.72rem;vertical-align:middle;padding:2px 4px}
 /* 行結合セルは下線が描かれないことがあるため内側シャドウで四辺を確実に描く */
@@ -272,6 +277,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <select class="selC1"></select>
       <label class="f">SPアタック2（マニュアル用）</label>
       <select class="selC2"></select>
+      <div class="popwin custSeq" style="display:none">
+        <div class="popttl">何発目にどっちのSPアタックを打つ？</div>
+        <div class="legend"></div>
+        <div class="sprows"></div>
+      </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
@@ -287,9 +297,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custPlan" style="display:none">
-        <div class="popttl">何発目にどっちのSPアタックを打つ？</div>
-        <div class="legend"></div>
-        <div class="sprows"></div>
+        <div class="popttl">何ターン目にSPアタックを発動する？（そのターン以降ゲージが貯まり次第発動・未入力の発は撃たない）</div>
+        <div class="legend planlegend"></div>
+        <div class="turnrows"></div>
       </div>
     </div>
   </div>
@@ -330,6 +340,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <select class="selC1"></select>
       <label class="f">SPアタック2（マニュアル用）</label>
       <select class="selC2"></select>
+      <div class="popwin custSeq" style="display:none">
+        <div class="popttl">何発目にどっちのSPアタックを打つ？</div>
+        <div class="legend"></div>
+        <div class="sprows"></div>
+      </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
@@ -345,9 +360,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custPlan" style="display:none">
-        <div class="popttl">何発目にどっちのSPアタックを打つ？</div>
-        <div class="legend"></div>
-        <div class="sprows"></div>
+        <div class="popttl">何ターン目にSPアタックを発動する？（そのターン以降ゲージが貯まり次第発動・未入力の発は撃たない）</div>
+        <div class="legend planlegend"></div>
+        <div class="turnrows"></div>
       </div>
     </div>
   </div>
@@ -523,6 +538,7 @@ let cap = 1500;
 const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spSlots: ['1', '1', '1', '1', '1'], spRest: '1',
+  spTurns: [null, null, null, null, null], spTurnMv: ['1', '1', '1', '1', '1'],
   ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51 });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
@@ -566,6 +582,7 @@ sideEl.forEach((el, i) => {
     el.querySelectorAll('.timing button').forEach(x => x.setAttribute('aria-pressed', x === b));
     S[i].timing = b.dataset.v;
     el.querySelector('.custPlan').style.display = S[i].timing === 'plan' ? 'block' : 'none';
+    el.querySelector('.custSeq').style.display = (S[i].c2 && S[i].timing !== 'plan') ? 'block' : 'none';
     run();
   });
   // シールドの小窓(何発目で使うか)
@@ -913,14 +930,24 @@ function run() {
       c.shieldPlan = S[i].shieldSlots.map((on, k) => on ? k + 1 : 0).filter(Boolean);
       c.shieldRest = S[i].shieldRest;
     } else c.shields = S[i].shields;
+    const m1 = S[i].c1 || c.throw, m2 = S[i].c2 || m1;
+    c.charged = [m1, S[i].c2].filter(Boolean);
     if (S[i].timing === 'plan') {
-      // マニュアル: タイミングは「最適」で、何発目にどっちのわざを打つかを指定
-      c.timing = 'optimal';
-      const m1 = S[i].c1 || c.throw, m2 = S[i].c2 || m1;
-      const pick = v => v === '2' ? m2 : m1;
-      c.throwSeq = S[i].spSlots.map(pick);
-      c.throwRest = pick(S[i].spRest);
-    } else c.timing = S[i].timing;
+      // ﾏﾆｭｱﾙ: 指定ターン以降にゲージが貯まり次第SPを発動(わざ1/わざ2も指定可)
+      c.timing = 'plan';
+      c.plan = S[i].spTurns
+        .map((t, k) => t ? { on: t, move: S[i].spTurnMv[k] === '2' ? m2 : m1 } : null)
+        .filter(Boolean)
+        .sort((a, b) => a.on - b.on);
+    } else {
+      c.timing = S[i].timing;
+      // SPアタック2選択時: 何発目にどっちを打つかの指定を最適タイミングに適用
+      if (S[i].c2 && S[i].timing === 'optimal') {
+        const pick = v => v === '2' ? m2 : m1;
+        c.throwSeq = S[i].spSlots.map(pick);
+        c.throwRest = pick(S[i].spRest);
+      }
+    }
     return c;
   };
   const L = fin(0), R = fin(1);
@@ -983,21 +1010,17 @@ function fillMoves(i, cfg) {
   el.querySelector('.selC1').innerHTML = grouped(chargeds, otherC, cfg.throw);
   el.querySelector('.selC2').innerHTML =
     `<option value=""${S[i].c2 ? '' : ' selected'}>なし</option>` + grouped(chargeds, otherC, S[i].c2);
-  // SPアタック2を選んだ時だけ「マニュアル」を出す(何発目にどっちを打つかを選べる)
-  const planBtn = el.querySelector('.timing button[data-v="plan"]');
-  planBtn.style.display = S[i].c2 ? '' : 'none';
-  if (!S[i].c2 && S[i].timing === 'plan') {
-    S[i].timing = 'optimal';
-    el.querySelectorAll('.timing button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'optimal'));
-    el.querySelector('.custPlan').style.display = 'none';
-  }
-  if (S[i].c2) buildSpWindow(i, S[i].c1 || cfg.throw, S[i].c2);
+  // 「何発目にどっちのSP」小窓はSPアタック2選択時に表示(ﾏﾆｭｱﾙ時はターン指定窓が担当)
+  el.querySelector('.custSeq').style.display = (S[i].c2 && S[i].timing !== 'plan') ? 'block' : 'none';
+  el.querySelector('.custPlan').style.display = S[i].timing === 'plan' ? 'block' : 'none';
+  if (S[i].c2 && S[i].timing !== 'plan') buildSpWindow(i, S[i].c1 || cfg.throw, S[i].c2);
+  if (S[i].timing === 'plan') buildTurnWindow(i, S[i].c1 || cfg.throw, S[i].c2);
 }
 
-// 「何発目にどっちのSPアタックを打つか」の小窓
+// 「何発目にどっちのSPアタックを打つか」の小窓(SPアタック2選択時)
 function buildSpWindow(i, m1, m2) {
   const el = sideEl[i];
-  el.querySelector('.legend').innerHTML =
+  el.querySelector('.custSeq .legend').innerHTML =
     `わざ1 = ${mvChip(D.moves[m1].n)}<br>わざ2 = ${mvChip(D.moves[m2].n)}`;
   const labels = ['1発目', '2発目', '3発目', '4発目', '5発目', '6発目〜'];
   el.querySelector('.sprows').innerHTML = labels.map((lbl, k) => {
@@ -1009,6 +1032,34 @@ function buildSpWindow(i, m1, m2) {
   el.querySelectorAll('.sprows button').forEach(b => b.onclick = () => {
     const k = +b.dataset.k;
     if (k < 5) S[i].spSlots[k] = b.dataset.v; else S[i].spRest = b.dataset.v;
+    run();
+  });
+}
+
+// 「何ターン目にSPアタックを発動するか」の小窓(ﾏﾆｭｱﾙタイミング)
+function buildTurnWindow(i, m1, m2) {
+  const el = sideEl[i];
+  el.querySelector('.planlegend').innerHTML = m2
+    ? `わざ1 = ${mvChip(D.moves[m1].n)}<br>わざ2 = ${mvChip(D.moves[m2].n)}`
+    : `発動するSP: ${mvChip(D.moves[m1].n)}`;
+  const rows = el.querySelector('.turnrows');
+  rows.innerHTML = [0, 1, 2, 3, 4].map(k => {
+    const t = S[i].spTurns[k], mv = S[i].spTurnMv[k];
+    return `<div class="sprow"><span class="lbl">${k + 1}発目</span>
+      <input type="number" class="tin" data-k="${k}" min="1" max="480" inputmode="numeric" placeholder="ターン" value="${t || ''}">
+      ${m2 ? `<button data-k="${k}" data-v="1" aria-pressed="${mv === '1'}">わざ1</button>
+      <button data-k="${k}" data-v="2" aria-pressed="${mv === '2'}">わざ2</button>` : ''}
+    </div>`;
+  }).join('');
+  rows.querySelectorAll('input.tin').forEach(inp => inp.onchange = () => {
+    const k = +inp.dataset.k;
+    const v = Math.round(+inp.value);
+    S[i].spTurns[k] = v >= 1 ? Math.min(480, v) : null;
+    inp.value = S[i].spTurns[k] || '';
+    run();
+  });
+  rows.querySelectorAll('button').forEach(b => b.onclick = () => {
+    S[i].spTurnMv[+b.dataset.k] = b.dataset.v;
     run();
   });
 }
