@@ -153,6 +153,33 @@
             if (dealt >= o.hp || oppFinal || stuck) { s.waitCnt = 0; charging[i] = mv; continue; }
             s.waitCnt = (s.waitCnt || 0) + 1;
           }
+        } else if (s.cfg.timing === 'shots') {
+          // 発ごとの設定: n発目のSPをどのタイミング(最適/最短/+N発)でどのわざで打つか
+          const idx = s.thrown || 0;
+          const sh = idx < (s.cfg.shotPlan || []).length ? s.cfg.shotPlan[idx] : s.cfg.shotRest;
+          if (sh && sh.move) {
+            const mv = D.moves[rmv(s, sh.move)];
+            if (mv && s.en >= mv.e) {
+              const o = sides[1 - i];
+              let fire = false;
+              if (sh.mode === 'min') fire = true;   // 最短: 撃てた瞬間
+              else if (typeof sh.mode === 'number') {
+                // +N発: ゲージが貯まってから通常技を余分にN発打ってから発動
+                if ((s.shotWait || 0) >= sh.mode) fire = true;
+                else s.shotWait = (s.shotWait || 0) + 1;
+              } else {
+                // 最適: 通常タイミングAIと同じ判断
+                const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
+                const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
+                const sameTn = s.fast.tn === o.fast.tn;
+                const oppFinal = o.cd === 1 || (o.cd === 0 && (o.fast.tn === 1 || sameTn));
+                const stuck = (s.waitCnt || 0) >= 3;
+                if (dealt >= o.hp || oppFinal || stuck) fire = true;
+                else s.waitCnt = (s.waitCnt || 0) + 1;
+              }
+              if (fire) { s.waitCnt = 0; s.shotWait = 0; charging[i] = mv; continue; }
+            }
+          }
         } else {
           // 台本(plan): 指定ターン以降で最初に撃てるタイミングで発動する
           const planIdx = s.plan.findIndex(p => p.on <= turn);
