@@ -109,6 +109,8 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .modes{display:flex;gap:6px;margin-top:10px}
 .modes button{flex:1;padding:8px 4px;font-size:.85rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--sub);cursor:pointer;font-weight:700}
 .modes button[aria-pressed="true"]{background:var(--gl);border-color:var(--gl);color:#06122b}
+@media (max-width:430px){.modes{gap:4px}.modes button{font-size:.74rem;padding:8px 2px}}
+.cnsub{display:block;font-size:.68rem;font-weight:400;color:var(--sub);margin-top:2px}
 .multi{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px}
 .multi h3{font-size:.92rem}
 .mtnote{color:var(--sub);font-size:.7rem;margin-top:4px;line-height:1.6}
@@ -195,6 +197,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .slots button{flex:1 0 30%;padding:5px 2px;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;white-space:nowrap}
 .slots button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b;font-weight:700}
 .legend{font-size:.68rem;color:var(--sub);margin-bottom:6px;line-height:1.7}
+.legend .autonote{font-size:.64rem;opacity:.85}
 .sprow{display:flex;align-items:center;gap:6px;margin-top:4px}
 .sprow .lbl{font-size:.7rem;color:var(--sub);width:3.6em;flex-shrink:0}
 .sprow button{flex:1;padding:4px 2px;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -248,7 +251,8 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 <div class="modes" id="modes">
   <button data-m="duel" aria-pressed="true">1対1シミュ</button>
-  <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧（1対多）</button>
+  <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧</button>
+  <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモンを環境上位から総当たりで探す">カウンター検索</button>
 </div>
 
 <div class="duel">
@@ -371,6 +375,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 </div>
 
 <div class="multi" id="multi" style="display:none"></div>
+<div class="multi" id="counter" style="display:none"></div>
 
 <div class="result" id="result"></div>
 <div class="tl" id="tl"></div>
@@ -455,9 +460,12 @@ function policies(key, cfg) {
   const dpe = m => D.moves[m].p / D.moves[m].e;
   const top = chargeds.sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
   const out = [];
-  for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5)))
+  for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5))) {
+    // SPを2本指定しているときは撃つわざを固定せず、エンジンの使い分けに任せて評価する
+    if (cfg.charged) { out.push({ fast: f }); continue; }
     for (const t of (cfg.throw ? [cfg.throw] : top))
       out.push({ fast: f, throw: t });
+  }
   return out;
 }
 function optimize(cfgL, cfgR) {
@@ -540,7 +548,7 @@ let cap = 1500;
 const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
-  spMv: ['1', '1', '1', '1', '1'], spMvRest: '1',
+  spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
   ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51 });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
@@ -739,9 +747,12 @@ cupTab.onclick = () => {
 // ---- モード切替(1対1シミュ / 環境一覧) ----
 let mode = 'duel', multiToken = 0;
 function applyMode() {
-  sideEl[1].style.display = mode === 'duel' ? '' : 'none';
+  // 環境一覧は「じぶん」だけ、カウンター検索は「あいて」だけを使う
+  sideEl[0].style.display = mode === 'counter' ? 'none' : '';
+  sideEl[1].style.display = mode === 'duel' || mode === 'counter' ? '' : 'none';
   document.getElementById('multi').style.display = mode === 'multi' ? 'block' : 'none';
-  if (mode === 'multi') {
+  document.getElementById('counter').style.display = mode === 'counter' ? 'block' : 'none';
+  if (mode !== 'duel') {
     document.getElementById('result').style.display = 'none';
     document.getElementById('tl').style.display = 'none';
     document.getElementById('share').style.display = 'none';
@@ -763,7 +774,9 @@ function runMulti() {
     return;
   }
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
-  mtResults = [];
+  const MV = VIEWS.multi;
+  MV.results = [];
+  MV.pick = k => applyMeta(list[k]);
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
     ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap }
     : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap }))(rank1(S[0].key, cap, 0, S[0].maxLv));
@@ -775,7 +788,7 @@ function runMulti() {
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
     <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。行をタップすると1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
-    ${mtCtlHtml()}
+    ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
     </tbody></table><div class="mtprog">計算中… 0/${list.length}</div>`;
@@ -815,10 +828,10 @@ function runMulti() {
         else if (c.w === 'draw') { draws[j]++; wScore[j] += wgt * 0.5; }
         else losses[j]++;
         tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
-        tds[j + 1].innerHTML = mtCellHtml(c);
+        tds[j + 1].innerHTML = cellHtml(c);
       });
       // 絞り込み・並び替え用に対面の結果を保存(scは0〜1000の対面スコア=与ダメ+残HP)
-      mtResults.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
+      MV.results.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
         sc: (cells[0].sc + cells[1].sc + cells[2].sc) / 3,
         nWin: cells.filter(c => c.w === 0).length,
         nLose: cells.filter(c => c.w === 1).length });
@@ -833,87 +846,190 @@ function runMulti() {
       prog.innerHTML = `勝敗: 🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
         `<span class="mtscore">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
         `<span class="mtscorenote">（採用率で加重: 環境上位の相手に勝つほど高得点）</span>`;
-      bindMtCtl(box);   // 計算が終わったら絞り込み・並び替えを有効化
-      applyMtView(box);
+      bindCtl(box, 'multi');   // 計算が終わったら絞り込み・並び替えを有効化
+      applyView(box, 'multi');
     }
   };
   step();
 }
 
-// ---- 環境一覧の絞り込み・並び替え ----
-let mtResults = [], mtFilter = 'all', mtSort = 'meta';
-const MT_FILTERS = [
-  { v: 'all',  t: 'すべて',   d: '全ての相手を表示' },
-  { v: 'lose', t: '負けあり', d: 'シールド3通りのうち1つでも負け・引き分けがある相手だけ表示' },
-  { v: 'bad',  t: '全敗',     d: '3通りとも負けた相手だけ表示（パーティの穴になりやすい相手）' },
-];
-const MT_SORTS = [
-  { v: 'meta',  t: '環境順',   d: '環境での使用率が高い順（初期表示）' },
-  { v: 'bad',   t: '苦手順',   d: '不利な対面が上。大差で負けた相手から並ぶ' },
-  { v: 'close', t: '惜しい順', d: 'あと少しで勝てた負け対面が上。個体値やわざの見直しで逆転できる可能性がある相手' },
-];
-function mtCtlHtml() {
+// ---- 一括対戦の表: 絞り込み・並び替え(環境一覧とカウンター検索で共用) ----
+const VIEWS = {
+  multi: {
+    results: [], filter: 'all', sort: 'meta', head: '相手',
+    filters: [
+      { v: 'all',  t: 'すべて',   d: '全ての相手を表示' },
+      { v: 'lose', t: '負けあり', d: 'シールド3通りのうち1つでも負け・引き分けがある相手だけ表示' },
+      { v: 'bad',  t: '全敗',     d: '3通りとも負けた相手だけ表示（パーティの穴になりやすい相手）' },
+    ],
+    sorts: [
+      { v: 'meta',  t: '環境順',   d: '環境での使用率が高い順（初期表示）' },
+      { v: 'bad',   t: '苦手順',   d: '不利な対面が上。大差で負けた相手から並ぶ' },
+      { v: 'close', t: '惜しい順', d: 'あと少しで勝てた負け対面が上。個体値やわざの見直しで逆転できる可能性がある相手' },
+    ],
+  },
+  counter: {
+    results: [], filter: 'all', sort: 'good', head: '勝てる候補',
+    filters: [
+      { v: 'all',  t: 'すべて', d: '環境上位の全候補を表示' },
+      { v: 'win',  t: '勝ちあり', d: 'シールド3通りのうち1つでも勝てる候補だけ表示' },
+      { v: 'best', t: '全勝',   d: '3通りとも勝てる候補だけ表示（安定して有利）' },
+    ],
+    sorts: [
+      { v: 'good', t: '強い順', d: '相手を圧倒できる候補が上（初期表示）' },
+      { v: 'meta', t: '環境順', d: '環境での使用率が高い順' },
+      { v: 'close', t: '惜しい順', d: 'あと少しで勝てる候補が上。個体値やわざを詰めれば届く可能性がある' },
+    ],
+  },
+};
+const cellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
+  `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
+function ctlHtml(vn) {
+  const V = VIEWS[vn];
   const grp = (cls, items, cur) => `<div class="opts ${cls}">` + items.map(o =>
     `<button data-v="${o.v}" aria-pressed="${o.v === cur}" title="${o.d}" disabled>${o.t}</button>`).join('') + '</div>';
-  return `<div class="mtctl">
-    <div class="mtctlrow"><span class="lbl">表示</span>${grp('mtfilter', MT_FILTERS, mtFilter)}</div>
-    <div class="mtctlrow"><span class="lbl">並び</span>${grp('mtsort', MT_SORTS, mtSort)}</div>
+  return `<div class="mtctl" data-v="${vn}">
+    <div class="mtctlrow"><span class="lbl">表示</span>${grp('mtfilter', V.filters, V.filter)}</div>
+    <div class="mtctlrow"><span class="lbl">並び</span>${grp('mtsort', V.sorts, V.sort)}</div>
   </div>`;
 }
-const mtCellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
-  `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
-function bindMtCtl(box) {
+function bindCtl(box, vn) {
+  const V = VIEWS[vn];
   box.querySelectorAll('.mtctl button').forEach(b => { b.disabled = false; });
-  const bind = (cls, set) => box.querySelectorAll('.' + cls + ' button').forEach(b => b.onclick = () => {
+  const bind = (cls, key) => box.querySelectorAll('.' + cls + ' button').forEach(b => b.onclick = () => {
     box.querySelectorAll('.' + cls + ' button').forEach(x => x.setAttribute('aria-pressed', x === b));
-    set(b.dataset.v);
-    applyMtView(box);
+    V[key] = b.dataset.v;
+    applyView(box, vn);
   });
-  bind('mtfilter', v => mtFilter = v);
-  bind('mtsort', v => mtSort = v);
+  bind('mtfilter', 'filter');
+  bind('mtsort', 'sort');
 }
 // 保存済みの結果から、いまの絞り込み・並び替えで表を作り直す
-function applyMtView(box) {
+function applyView(box, vn) {
+  const V = VIEWS[vn];
   const tb = box.querySelector('.mttbl tbody');
-  if (!tb || !mtResults.length) return;
-  let rows = mtResults.slice();
-  if (mtFilter === 'lose') rows = rows.filter(r => r.nWin < 3);
-  else if (mtFilter === 'bad') rows = rows.filter(r => r.nLose === 3);
-  if (mtSort === 'bad') rows.sort((a, b) => a.sc - b.sc);
-  else if (mtSort === 'close') {
-    // 惜しい順: 負けを含む対面をスコアの高い順(勝ちに近い順)に並べ、全勝の相手は最後
+  if (!tb || !V.results.length) return;
+  let rows = V.results.slice();
+  if (V.filter === 'lose') rows = rows.filter(r => r.nWin < 3);
+  else if (V.filter === 'bad') rows = rows.filter(r => r.nLose === 3);
+  else if (V.filter === 'win') rows = rows.filter(r => r.nWin > 0);
+  else if (V.filter === 'best') rows = rows.filter(r => r.nWin === 3);
+  if (V.sort === 'bad') rows.sort((a, b) => a.sc - b.sc);
+  else if (V.sort === 'good') rows.sort((a, b) => b.sc - a.sc);
+  else if (V.sort === 'close') {
+    // 惜しい順: 負けを含む対面をスコアの高い順(勝ちに近い順)に並べ、全勝は最後
     const lost = rows.filter(r => r.nWin < 3).sort((a, b) => b.sc - a.sc);
     rows = lost.concat(rows.filter(r => r.nWin === 3).sort((a, b) => b.sc - a.sc));
   }
-  const head = `<tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>`;
+  const head = `<tr><th style="text-align:left">${V.head}</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>`;
   tb.innerHTML = head + (rows.length ? rows.map(r =>
     `<tr data-k="${r.idx}"><td class="opname">${r.name}</td>` +
-    r.cells.map(c => `<td class="${c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l'}">${mtCellHtml(c)}</td>`).join('') +
+    r.cells.map(c => `<td class="${c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l'}">${cellHtml(c)}</td>`).join('') +
     '</tr>').join('')
-    : `<tr><td class="mtempty" colspan="4">該当する相手はいません（この絞り込みでは0件）</td></tr>`);
-  const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
-  tb.querySelectorAll('tr[data-k]').forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
+    : `<tr><td class="mtempty" colspan="4">該当するポケモンはいません（この絞り込みでは0件）</td></tr>`);
+  tb.querySelectorAll('tr[data-k]').forEach(tr => tr.onclick = () => V.pick(+tr.dataset.k));
   const cnt = box.querySelector('.mtcnt');
   if (cnt) cnt.remove();
-  if (mtFilter !== 'all')
+  if (V.filter !== 'all')
     box.querySelector('.mtctl').insertAdjacentHTML('beforeend',
-      `<div class="mtcnt">${rows.length}件を表示中（全${mtResults.length}匹中）</div>`);
+      `<div class="mtcnt">${rows.length}件を表示中（全${V.results.length}匹中）</div>`);
 }
 
-// 環境一覧の行タップ→その相手を右側にセットして1対1シミュへ
-function applyMeta(m) {
-  S[1].key = m.k; S[1].shadow = !!m.s;
-  S[1].maxLv = 51; syncSmax(1);
-  sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', S[1].shadow);
-  S[1].fast = m.f || null; S[1].c1 = m.c1 || null; S[1].c2 = null;
-  S[1].ivMode = 'auto'; S[1].mIvs = null; S[1].mLevel = null;
-  sideEl[1].querySelector('input').value = m.n;
-  sideEl[1].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
-  sideEl[1].querySelector('.custIv').style.display = 'none';
+// 一覧の行タップ→そのポケモンを指定した側にセットして1対1シミュへ(i=0:じぶん / 1:あいて)
+function applyMeta(m, i) {
+  i = i === 0 ? 0 : 1;   // 省略時は「あいて」側
+  S[i].key = m.k; S[i].shadow = !!m.s;
+  S[i].maxLv = 51; syncSmax(i);
+  sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
+  // 環境リストのわざ構成(SP2本)をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する
+  S[i].fast = m.f || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  resetSpPlan(i);
+  S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;
+  sideEl[i].querySelector('input').value = m.n;
+  sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
+  sideEl[i].querySelector('.custIv').style.display = 'none';
   document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === 'duel'));
   mode = 'duel'; applyMode();
   run();
   document.querySelector('.duel').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ---- カウンター検索(逆引き): 選んだ「あいて」に勝てるポケモンを環境上位から探す ----
+function runCounter() {
+  const box = document.getElementById('counter');
+  const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
+  if (!S[1].key) {
+    box.innerHTML = '<div class="mtnote">右の「あいて」に倒したいポケモンを選ぶと、環境上位' + (list.length || 50) +
+      '匹の中から勝てる候補をここに一覧表示します</div>';
+    return;
+  }
+  const token = ++multiToken;
+  const CV = VIEWS.counter;
+  CV.results = [];
+  CV.pick = k => applyMeta(list[k], 0);
+  // 倒したい相手(あいて)の設定。わざは対面ごとに相手側が最善を選ぶ前提で評価する
+  const foeBase = S[1].ivMode === 'manual' && S[1].mIvs
+    ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap }
+    : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap }))(rank1(S[1].key, cap, 0, S[1].maxLv));
+  const foeTiming = S[1].timing === 'plan' ? 'optimal' : S[1].timing;
+  const foePols = policies(S[1].key, { fast: S[1].fast || undefined, throw: S[1].c1 || undefined });
+  const pool1 = movePool(S[1].key);
+  fillMoves(1, { ...foeBase, fast: S[1].fast || pool1.fasts[0], throw: S[1].c1 || pool1.chargeds[0] });
+  const foeName = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
+  box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">環境上位${list.length}匹から検索${cup ? `（${cup.label}）` : ''}</small></h3>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。行をタップすると、その候補を「じぶん」にセットして1対1シミュで詳細を確認できます。候補は理想個体値・標準的な推奨わざ構成、あいてのわざは対面ごとに相手が最善を選ぶ前提</div>
+    ${ctlHtml('counter')}
+    <table class="mttbl"><tbody><tr><th style="text-align:left">勝てる候補</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
+    ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
+    </tbody></table><div class="mtprog">計算中… 0/${list.length}</div>`;
+  const rowsEl = [...box.querySelectorAll('tr[data-k]')];
+  rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k], 0));
+  updateUrl();
+  const prog = box.querySelector('.mtprog');
+  const beats = [0, 0, 0];
+  let idx = 0;
+  const step = () => {
+    if (token !== multiToken) return;
+    const t0 = performance.now();
+    while (idx < list.length && performance.now() - t0 < 40) {
+      const m = list[idx];
+      const r1 = rank1(m.k, cap);
+      const cdCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
+        fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
+      const cells = [0, 1, 2].map(sh => {
+        let worst = null;   // あいてが最も得をするわざ構成を選ぶ＝候補にとって最も厳しい結果
+        for (const pol of foePols) {
+          const res = PvpEngine.simulate(D, { ...cdCfg, shields: sh },
+                                            { ...foeBase, ...pol, timing: foeTiming, shields: sh }, NO_PROC);
+          const sc = scoreOf(res, 1);
+          if (!worst || sc > worst.sc) worst = { sc, res };
+        }
+        const r = worst.res, w = r.winner;
+        return { w, sc: scoreOf(r, 0), pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+      });
+      const tds = rowsEl[idx].querySelectorAll('td');
+      cells.forEach((c, j) => {
+        if (c.w === 0) beats[j]++;
+        tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
+        tds[j + 1].innerHTML = cellHtml(c);
+      });
+      CV.results.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
+        sc: (cells[0].sc + cells[1].sc + cells[2].sc) / 3,
+        nWin: cells.filter(c => c.w === 0).length,
+        nLose: cells.filter(c => c.w === 1).length });
+      idx++;
+    }
+    if (idx < list.length) {
+      prog.textContent = `計算中… ${idx}/${list.length}`;
+      setTimeout(step, 0);
+    } else {
+      prog.innerHTML = `${foeName}に勝てる候補: 🛡0-0 <b>${beats[0]}匹</b> / 🛡1-1 <b>${beats[1]}匹</b> / 🛡2-2 <b>${beats[2]}匹</b>` +
+        `<span class="mtscorenote">（環境上位${list.length}匹中）</span>`;
+      bindCtl(box, 'counter');
+      applyView(box, 'counter');
+    }
+  };
+  step();
 }
 
 // ---- ★登録リスト(端末内保存・両側の欄から呼び出せる) ----
@@ -972,9 +1088,17 @@ function syncSmax(i) {
   el.querySelectorAll('.smax button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.lv === S[i].maxLv));
 }
 
+// 発ごとのSP設定を初期状態(全部おまかせ)へ戻す。ポケモンを切り替えたときに古い指定を残さない
+function resetSpPlan(i) {
+  const m = S[i].timing === 'asap' ? 'min' : 'opt';
+  S[i].spMode = [m, m, m, m, m]; S[i].spModeRest = m;
+  S[i].spMv = ['auto', 'auto', 'auto', 'auto', 'auto']; S[i].spMvRest = 'auto';
+}
+
 function pick(i, key) {
   S[i].key = key;
   S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
+  resetSpPlan(i);
   S[i].shadow = false;
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', false);
   S[i].maxLv = 51; syncSmax(i);
@@ -988,6 +1112,7 @@ function pick(i, key) {
 const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
 function run() {
   if (mode === 'multi') { runMulti(); return; }
+  if (mode === 'counter') { runCounter(); return; }
   if (!S[0].key || !S[1].key) return;
   const base = S.map(s => {
     if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap };
@@ -1003,9 +1128,14 @@ function run() {
     } else note.textContent = '';
   });
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
-  const optCfg = i => ({ ...base[i], shields: 2,
-    timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
-    fast: S[i].fast || undefined, throw: S[i].c1 || undefined });
+  const optCfg = i => {
+    const c = { ...base[i], shields: 2,
+      timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
+      fast: S[i].fast || undefined, throw: S[i].c1 || undefined };
+    // SP1・SP2の両方を指定済みなら、最適化中も2本を使い分ける前提で評価する(一覧の結果と一致させる)
+    if (S[i].c1 && S[i].c2) { c.charged = [S[i].c1, S[i].c2]; delete c.throw; }
+    return c;
+  };
   const plan = optimize(optCfg(0), optCfg(1));
   const fin = i => {
     const c = { ...base[i], ...[plan.left, plan.right][i] };
@@ -1019,9 +1149,9 @@ function run() {
     const m1 = S[i].c1 || c.throw, m2 = S[i].c2 || m1;
     c.charged = [m1, S[i].c2].filter(Boolean);
     if (S[i].timing === 'plan' || S[i].c2) {
-      // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(1/2)を指定
+      // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(自動/1/2)を指定
       c.timing = 'shots';
-      const pick = v => v === '2' ? m2 : m1;
+      const pick = v => v === '2' ? m2 : v === '1' ? m1 : null;   // null=自動(威力効率で選ぶ)
       c.shotPlan = S[i].spMode.map((mode, k) => ({ mode, move: pick(S[i].spMv[k]) }));
       c.shotRest = { mode: S[i].spModeRest, move: pick(S[i].spMvRest) };
     } else c.timing = S[i].timing;
@@ -1099,7 +1229,7 @@ function fillMoves(i, cfg) {
 function buildSpConfig(i, m1, m2) {
   const el = sideEl[i];
   el.querySelector('.custSp .legend').innerHTML = m2
-    ? `1 = ${mvChip(D.moves[m1].n)}　2 = ${mvChip(D.moves[m2].n)}`
+    ? `1 = ${mvChip(D.moves[m1].n)}　2 = ${mvChip(D.moves[m2].n)}<br><span class="autonote">自 = 自動（その時点で威力効率が高いほうを撃つ）</span>`
     : `SP: ${mvChip(D.moves[m1].n)}`;
   const optHtml = sel =>
     `<option value="opt"${sel === 'opt' ? ' selected' : ''}>最適</option>` +
@@ -1112,7 +1242,8 @@ function buildSpConfig(i, m1, m2) {
     const mv = k < 5 ? S[i].spMv[k] : S[i].spMvRest;
     return `<div class="sprow"><span class="lbl">${lbl}</span>
       <select class="tsel" data-k="${k}">${optHtml(mode)}</select>
-      ${m2 ? `<button data-k="${k}" data-v="1" aria-pressed="${mv === '1'}">1</button>
+      ${m2 ? `<button data-k="${k}" data-v="auto" aria-pressed="${mv === 'auto'}" title="威力効率が高いほうを自動で選ぶ">自</button>
+      <button data-k="${k}" data-v="1" aria-pressed="${mv === '1'}">1</button>
       <button data-k="${k}" data-v="2" aria-pressed="${mv === '2'}">2</button>` : ''}
     </div>`;
   }).join('');
@@ -1274,6 +1405,7 @@ function updateUrl() {
     if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
   });
   if (cup) qp.cup = cup.slug;
+  if (mode !== 'duel') qp.md = mode;
   history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
 }
 
@@ -1514,6 +1646,11 @@ document.getElementById('copyUrl').onclick = async () => {
     el.querySelector('.ivA').value = p[0]; el.querySelector('.ivD').value = p[1];
     el.querySelector('.ivH').value = p[2]; el.querySelector('.ivL').value = S[i].mLevel;
   });
+  if (q.get('md') === 'multi' || q.get('md') === 'counter') {   // モードの復元
+    mode = q.get('md');
+    document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
+    applyMode();
+  }
   renderMyPk();
   run();
 })();

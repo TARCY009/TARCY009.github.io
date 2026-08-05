@@ -157,10 +157,13 @@
           // 発ごとの設定: n発目のSPをどのタイミング(最適/最短/+N発)でどのわざで打つか
           const idx = s.thrown || 0;
           const sh = idx < (s.cfg.shotPlan || []).length ? s.cfg.shotPlan[idx] : s.cfg.shotRest;
-          if (sh && sh.move) {
-            const mv = D.moves[rmv(s, sh.move)];
+          if (sh) {
+            const o = sides[1 - i];
+            // わざ指定なし(自動)のときは、この相手に対して威力効率(ダメージ÷消費ゲージ)が最も高いわざを選ぶ
+            const mv = sh.move ? D.moves[rmv(s, sh.move)]
+              : (s.cfg.charged || []).map(id => D.moves[rmv(s, id)])
+                  .sort((a, b) => damage(D, b, s, o) / b.e - damage(D, a, s, o) / a.e)[0];
             if (mv && s.en >= mv.e) {
-              const o = sides[1 - i];
               let fire = false;
               if (sh.mode === 'min') fire = true;   // 最短: 撃てた瞬間
               else if (typeof sh.mode === 'number') {
