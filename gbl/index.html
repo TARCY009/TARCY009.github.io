@@ -112,6 +112,15 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .multi{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px}
 .multi h3{font-size:.92rem}
 .mtnote{color:var(--sub);font-size:.7rem;margin-top:4px;line-height:1.6}
+.mtctl{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px 10px}
+.mtctlrow{display:flex;align-items:center;gap:6px;flex:1 1 220px;min-width:0}
+.mtctlrow .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
+.mtctl .opts{flex:1;min-width:0}
+.mtctl .opts button{padding:5px 2px;font-size:.72rem}
+.mtctl .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
+.mtctl .opts button:disabled{opacity:.45;cursor:default}
+.mtcnt{flex:1 1 100%;font-size:.66rem;color:var(--sub)}
+.mtempty{color:var(--sub);font-size:.72rem;text-align:center!important;cursor:default!important}
 .mttbl{width:100%;border-collapse:separate;border-spacing:0 4px;margin-top:8px;font-size:.78rem}
 .mttbl th{color:var(--sub);font-weight:600;font-size:.66rem;padding:2px}
 .mttbl td{padding:6px 4px;background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;cursor:pointer}
@@ -754,6 +763,7 @@ function runMulti() {
     return;
   }
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
+  mtResults = [];
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
     ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap }
     : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap }))(rank1(S[0].key, cap, 0, S[0].maxLv));
@@ -765,9 +775,10 @@ function runMulti() {
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
     <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。行をタップすると1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
-    <table class="mttbl"><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
+    ${mtCtlHtml()}
+    <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
-    </table><div class="mtprog">計算中… 0/${list.length}</div>`;
+    </tbody></table><div class="mtprog">計算中… 0/${list.length}</div>`;
   const rowsEl = [...box.querySelectorAll('tr[data-k]')];
   rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
   updateUrl();
@@ -794,7 +805,7 @@ function runMulti() {
           if (!best || sc > best.sc) best = { sc, res };
         }
         const r = best.res, w = r.winner;
-        return { w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+        return { w, sc: best.sc, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
       });
       const tds = rowsEl[idx].querySelectorAll('td');
       const wgt = list.length - idx;   // 採用率順の重み
@@ -804,9 +815,13 @@ function runMulti() {
         else if (c.w === 'draw') { draws[j]++; wScore[j] += wgt * 0.5; }
         else losses[j]++;
         tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
-        tds[j + 1].innerHTML = (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
-          `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
+        tds[j + 1].innerHTML = mtCellHtml(c);
       });
+      // 絞り込み・並び替え用に対面の結果を保存(scは0〜1000の対面スコア=与ダメ+残HP)
+      mtResults.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
+        sc: (cells[0].sc + cells[1].sc + cells[2].sc) / 3,
+        nWin: cells.filter(c => c.w === 0).length,
+        nLose: cells.filter(c => c.w === 1).length });
       idx++;
     }
     if (idx < list.length) {
@@ -818,9 +833,71 @@ function runMulti() {
       prog.innerHTML = `勝敗: 🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
         `<span class="mtscore">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
         `<span class="mtscorenote">（採用率で加重: 環境上位の相手に勝つほど高得点）</span>`;
+      bindMtCtl(box);   // 計算が終わったら絞り込み・並び替えを有効化
+      applyMtView(box);
     }
   };
   step();
+}
+
+// ---- 環境一覧の絞り込み・並び替え ----
+let mtResults = [], mtFilter = 'all', mtSort = 'meta';
+const MT_FILTERS = [
+  { v: 'all',  t: 'すべて',   d: '全ての相手を表示' },
+  { v: 'lose', t: '負けあり', d: 'シールド3通りのうち1つでも負け・引き分けがある相手だけ表示' },
+  { v: 'bad',  t: '全敗',     d: '3通りとも負けた相手だけ表示（パーティの穴になりやすい相手）' },
+];
+const MT_SORTS = [
+  { v: 'meta',  t: '環境順',   d: '環境での使用率が高い順（初期表示）' },
+  { v: 'bad',   t: '苦手順',   d: '不利な対面が上。大差で負けた相手から並ぶ' },
+  { v: 'close', t: '惜しい順', d: 'あと少しで勝てた負け対面が上。個体値やわざの見直しで逆転できる可能性がある相手' },
+];
+function mtCtlHtml() {
+  const grp = (cls, items, cur) => `<div class="opts ${cls}">` + items.map(o =>
+    `<button data-v="${o.v}" aria-pressed="${o.v === cur}" title="${o.d}" disabled>${o.t}</button>`).join('') + '</div>';
+  return `<div class="mtctl">
+    <div class="mtctlrow"><span class="lbl">表示</span>${grp('mtfilter', MT_FILTERS, mtFilter)}</div>
+    <div class="mtctlrow"><span class="lbl">並び</span>${grp('mtsort', MT_SORTS, mtSort)}</div>
+  </div>`;
+}
+const mtCellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
+  `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
+function bindMtCtl(box) {
+  box.querySelectorAll('.mtctl button').forEach(b => { b.disabled = false; });
+  const bind = (cls, set) => box.querySelectorAll('.' + cls + ' button').forEach(b => b.onclick = () => {
+    box.querySelectorAll('.' + cls + ' button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    set(b.dataset.v);
+    applyMtView(box);
+  });
+  bind('mtfilter', v => mtFilter = v);
+  bind('mtsort', v => mtSort = v);
+}
+// 保存済みの結果から、いまの絞り込み・並び替えで表を作り直す
+function applyMtView(box) {
+  const tb = box.querySelector('.mttbl tbody');
+  if (!tb || !mtResults.length) return;
+  let rows = mtResults.slice();
+  if (mtFilter === 'lose') rows = rows.filter(r => r.nWin < 3);
+  else if (mtFilter === 'bad') rows = rows.filter(r => r.nLose === 3);
+  if (mtSort === 'bad') rows.sort((a, b) => a.sc - b.sc);
+  else if (mtSort === 'close') {
+    // 惜しい順: 負けを含む対面をスコアの高い順(勝ちに近い順)に並べ、全勝の相手は最後
+    const lost = rows.filter(r => r.nWin < 3).sort((a, b) => b.sc - a.sc);
+    rows = lost.concat(rows.filter(r => r.nWin === 3).sort((a, b) => b.sc - a.sc));
+  }
+  const head = `<tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>`;
+  tb.innerHTML = head + (rows.length ? rows.map(r =>
+    `<tr data-k="${r.idx}"><td class="opname">${r.name}</td>` +
+    r.cells.map(c => `<td class="${c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l'}">${mtCellHtml(c)}</td>`).join('') +
+    '</tr>').join('')
+    : `<tr><td class="mtempty" colspan="4">該当する相手はいません（この絞り込みでは0件）</td></tr>`);
+  const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
+  tb.querySelectorAll('tr[data-k]').forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
+  const cnt = box.querySelector('.mtcnt');
+  if (cnt) cnt.remove();
+  if (mtFilter !== 'all')
+    box.querySelector('.mtctl').insertAdjacentHTML('beforeend',
+      `<div class="mtcnt">${rows.length}件を表示中（全${mtResults.length}匹中）</div>`);
 }
 
 // 環境一覧の行タップ→その相手を右側にセットして1対1シミュへ
