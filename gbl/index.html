@@ -1925,6 +1925,11 @@ function renderTimeline() {
   tl.querySelectorAll('.tlmode button').forEach(b => b.onclick = () => { tlMode = b.dataset.m; renderTimeline(); });
 }
 
+// オフラインでも起動できるようにService Workerを登録する
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+
 document.getElementById('copyUrl').onclick = async () => {
   await navigator.clipboard.writeText(location.href);
   document.getElementById('copyUrl').textContent = 'コピーしました ✅';
