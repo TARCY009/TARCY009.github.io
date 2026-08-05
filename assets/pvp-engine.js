@@ -115,6 +115,25 @@
 
     const fastDamage = s => damage(D, sides[s].fast, sides[s], sides[1 - s]);
 
+    // SPアタックを2本持っているときの「自動」選択(実戦の考え方に合わせる)
+    //  1. シールドが無い相手を倒しきれるわざがあればそれを撃つ(消費が軽いほうを優先)
+    //  2. 相手にシールド(またはばけのかわ)が残っているなら、消費が軽いほうで剥がしにいく＝釣り
+    //  3. シールドが無いなら、ダメージ効率(ダメージ÷消費ゲージ)が高いほうを撃つ
+    const autoMove = (s, o) => {
+      const list = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(Boolean);
+      if (list.length <= 1) return list[0];
+      const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
+      const dmg = m => damage(D, m, att, o);
+      const blocked = o.shields > 0 || o.disguise;
+      if (!blocked) {
+        const lethal = list.filter(m => s.en >= m.e && dmg(m) >= o.hp).sort((a, b) => a.e - b.e)[0];
+        if (lethal) return lethal;
+      }
+      return list.slice().sort(blocked
+        ? (a, b) => a.e - b.e || dmg(b) - dmg(a)                 // 釣り: 消費が軽い順
+        : (a, b) => dmg(b) / b.e - dmg(a) / a.e)[0];             // 効率が高い順
+    };
+
     while (turn < maxTurn && winner === null) {
       turn++;
       // 行動決定: 待機中の側は「ゲージ技を使う」か「通常技を開始」
@@ -142,8 +161,7 @@
           }
           const mv = mvId ? D.moves[rmv(s, mvId)]
             : s.cfg.throw ? D.moves[rmv(s, s.cfg.throw)]
-            : (s.cfg.charged || []).map(id => D.moves[rmv(s, id)])
-                .sort((a, b) => damage(D, b, s, o) / b.e - damage(D, a, s, o) / a.e)[0];
+            : autoMove(s, o);
           if (mv && s.en >= mv.e) {
             // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
             const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
@@ -163,10 +181,8 @@
           const sh = idx < (s.cfg.shotPlan || []).length ? s.cfg.shotPlan[idx] : s.cfg.shotRest;
           if (sh) {
             const o = sides[1 - i];
-            // わざ指定なし(自動)のときは、この相手に対して威力効率(ダメージ÷消費ゲージ)が最も高いわざを選ぶ
-            const mv = sh.move ? D.moves[rmv(s, sh.move)]
-              : (s.cfg.charged || []).map(id => D.moves[rmv(s, id)])
-                  .sort((a, b) => damage(D, b, s, o) / b.e - damage(D, a, s, o) / a.e)[0];
+            // わざ指定なし(自動)のときは相手の状況に合わせて選ぶ(釣り→効率)
+            const mv = sh.move ? D.moves[rmv(s, sh.move)] : autoMove(s, o);
             if (mv && s.en >= mv.e) {
               let fire = false;
               if (sh.mode === 'min') fire = true;   // 最短: 撃てた瞬間
