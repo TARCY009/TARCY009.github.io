@@ -97,6 +97,14 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .ivgrid label{color:var(--sub);font-size:.66rem;display:block}
 .ivgrid input{width:100%;margin-top:2px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:5px 3px;font-size:.85rem;outline:none;text-align:center}
 .ivgrid input:focus{border-color:var(--gl)}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cgrid label{color:var(--sub);font-size:.66rem;display:block}
+.cgrid input{width:100%;margin-top:2px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:5px 3px;font-size:.85rem;outline:none;text-align:center}
+.cgrid input:focus{border-color:var(--gl)}
+.cpre{margin-top:6px}
+.cpre button{flex:1 0 22%;font-size:.66rem}
+.cnote{margin-top:6px;font-size:.64rem;color:var(--sub)}
+.carrytag{font-size:.66rem;color:var(--gold);margin-top:2px}
 .ivnote{margin-top:6px;font-size:.72rem;color:var(--sub)}
 .ivnote .over{color:#ff7b8e;font-weight:700}
 .bp{margin-top:10px}
@@ -345,6 +353,21 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <div class="opts timing">
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
+      <label class="f">連戦（2体目以降の引き継ぎ）</label>
+      <div class="opts carry">
+        <button data-v="off" aria-pressed="true" title="満タン・ゲージ0の状態から開始する">なし</button><button data-v="on" aria-pressed="false" title="前の対面から引き継いだHP・ゲージで開始する">設定する</button>
+      </div>
+      <div class="popwin custCarry" style="display:none">
+        <div class="popttl">交代した直後の状態を再現（HPの残り％と、たまっているゲージ）</div>
+        <div class="cgrid">
+          <label>開始HP（％）<input type="number" class="cHp" min="1" max="100" inputmode="numeric"></label>
+          <label>開始ゲージ<input type="number" class="cEn" min="0" max="100" inputmode="numeric"></label>
+        </div>
+        <div class="slots cpre">
+          <button data-hp="100">HP満タン</button><button data-hp="75">HP75%</button><button data-hp="50">HP50%</button><button data-hp="25">HP25%</button>
+        </div>
+        <div class="cnote">シールドの残り枚数は上の「シールド」で設定してください</div>
+      </div>
       <div class="popwin custSp" style="display:none">
         <div class="popttl">発ごとのSP設定（＋N発＝ゲージが貯まってから通常技を余分にN発打って発動）</div>
         <div class="legend"></div>
@@ -402,6 +425,21 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+      </div>
+      <label class="f">連戦（2体目以降の引き継ぎ）</label>
+      <div class="opts carry">
+        <button data-v="off" aria-pressed="true" title="満タン・ゲージ0の状態から開始する">なし</button><button data-v="on" aria-pressed="false" title="前の対面から引き継いだHP・ゲージで開始する">設定する</button>
+      </div>
+      <div class="popwin custCarry" style="display:none">
+        <div class="popttl">交代した直後の状態を再現（HPの残り％と、たまっているゲージ）</div>
+        <div class="cgrid">
+          <label>開始HP（％）<input type="number" class="cHp" min="1" max="100" inputmode="numeric"></label>
+          <label>開始ゲージ<input type="number" class="cEn" min="0" max="100" inputmode="numeric"></label>
+        </div>
+        <div class="slots cpre">
+          <button data-hp="100">HP満タン</button><button data-hp="75">HP75%</button><button data-hp="50">HP50%</button><button data-hp="25">HP25%</button>
+        </div>
+        <div class="cnote">シールドの残り枚数は上の「シールド」で設定してください</div>
       </div>
       <div class="popwin custSp" style="display:none">
         <div class="popttl">発ごとのSP設定（＋N発＝ゲージが貯まってから通常技を余分にN発打って発動）</div>
@@ -599,7 +637,8 @@ const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
   spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
-  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51 });
+  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51,
+  carry: false, cHp: 100, cEn: 0 });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
 
@@ -741,6 +780,32 @@ sideEl.forEach((el, i) => {
     box.style.display = open ? 'block' : 'none';
     el.querySelector('.mypktab').setAttribute('aria-pressed', open);
   };
+  // 連戦(引き継ぎ): 開始HP%と開始ゲージ
+  el.querySelectorAll('.carry button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.carry button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    S[i].carry = b.dataset.v === 'on';
+    el.querySelector('.custCarry').style.display = S[i].carry ? 'block' : 'none';
+    el.querySelector('.cHp').value = S[i].cHp;
+    el.querySelector('.cEn').value = S[i].cEn;
+    run();
+  });
+  el.querySelector('.cHp').onchange = e => {
+    S[i].cHp = Math.min(100, Math.max(1, Math.round(+e.target.value || 100)));
+    e.target.value = S[i].cHp;
+    el.querySelectorAll('.cpre button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.hp === S[i].cHp));
+    run();
+  };
+  el.querySelector('.cEn').onchange = e => {
+    S[i].cEn = Math.min(100, Math.max(0, Math.round(+e.target.value || 0)));
+    e.target.value = S[i].cEn;
+    run();
+  };
+  el.querySelectorAll('.cpre button').forEach(b => b.onclick = () => {
+    S[i].cHp = +b.dataset.hp;
+    el.querySelector('.cHp').value = S[i].cHp;
+    el.querySelectorAll('.cpre button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    run();
+  });
   el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
   el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
   el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
@@ -832,8 +897,8 @@ function runMulti() {
   MV.results = [];
   MV.pick = (k, j) => { if (j != null) setBothShields(j); applyMeta(list[k]); };
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
-    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap }
-    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, ...carryOf(0) }
+    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
   const myPols = policies(S[0].key, { fast: S[0].fast || undefined, throw: S[0].c1 || undefined });
   // 左パネルの表示(CP・個体値・PL・わざ)もこのリーグ/カップの内容に更新する
@@ -1053,8 +1118,8 @@ function runCounter() {
   CV.pick = (k, j) => { if (j != null) setBothShields(j); applyMeta(list[k], 0); };
   // 倒したい相手(あいて)の設定。わざは対面ごとに相手側が最善を選ぶ前提で評価する
   const foeBase = S[1].ivMode === 'manual' && S[1].mIvs
-    ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap }
-    : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap }))(rank1(S[1].key, cap, 0, S[1].maxLv));
+    ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap, ...carryOf(1) }
+    : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv));
   const foeTiming = S[1].timing === 'plan' ? 'optimal' : S[1].timing;
   const foePols = policies(S[1].key, { fast: S[1].fast || undefined, throw: S[1].c1 || undefined });
   const pool1 = movePool(S[1].key);
@@ -1366,15 +1431,18 @@ function pick(i, key) {
 
 // ---- 実行 ----
 const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
+// 連戦の引き継ぎ設定(開始HP%・開始ゲージ)を計算用の設定に足す
+const carryOf = i => S[i].carry ? { startHpPct: S[i].cHp, startEn: S[i].cEn } : {};
 function run() {
   if (mode === 'multi') { runMulti(); return; }
   if (mode === 'counter') { runCounter(); return; }
   if (mode === 'party') { runParty(); return; }
   if (!S[0].key || !S[1].key) return;
-  const base = S.map(s => {
-    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap };
+  const base = S.map((s, i) => {
+    const c = carryOf(i);
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap, ...c };
     const r1 = rank1(s.key, cap, 0, s.maxLv);
-    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap };
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap, ...c };
   });
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
   S.forEach((s, i) => {
@@ -1539,8 +1607,12 @@ function render(res, L, R, matrix) {
     const shInit = cfg.shieldPlan ? 2 : cfg.shields;
     const shHtml = shInit === 0 ? '<span class="shnone">なし（設定0枚）</span>'
       : Array.from({ length: shInit }, (_, k) => `<span class="sh${k < f.shields ? '' : ' usedsh'}">🛡️</span>`).join('');
+    // 連戦設定を使っているときは開始状態を明示する
+    const carryTxt = cfg.startHpPct != null || cfg.startEn
+      ? `<div class="carrytag">連戦: HP${cfg.startHpPct != null ? cfg.startHpPct : 100}%・ゲージ${cfg.startEn || 0}から開始</div>` : '';
     return `<div class="fighter">
       <div class="top">${badge(i)}<span class="nm">${f.name}</span></div>
+      ${carryTxt}
       <div class="hpbar"><i class="${pct <= 25 ? 'low' : ''}" style="width:${pct}%"></i></div>
       <div class="subline">残りHP ${f.hp}/${f.hpMax}（${pct}%）</div>
       <div class="enbar"><i style="width:${enPct}%"></i></div>
@@ -1663,6 +1735,7 @@ function updateUrl() {
     if (s.ivMode === 'manual' && s.mIvs) qp[i ? 'ir' : 'il'] = s.mIvs.join('.') + '.' + s.mLevel;
     if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
     if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
+    if (s.carry) qp[i ? 'cyr' : 'cyl'] = s.cHp + '.' + s.cEn;   // 連戦(開始HP%.開始ゲージ)
   });
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel') qp.md = mode;
@@ -1905,6 +1978,20 @@ document.getElementById('copyUrl').onclick = async () => {
     el.querySelector('.custIv').style.display = 'block';
     el.querySelector('.ivA').value = p[0]; el.querySelector('.ivD').value = p[1];
     el.querySelector('.ivH').value = p[2]; el.querySelector('.ivL').value = S[i].mLevel;
+  });
+  ['cyl', 'cyr'].forEach((k, i) => {   // 連戦(開始HP%.開始ゲージ)の復元
+    const v = q.get(k); if (!v) return;
+    const p = v.split('.').map(Number);
+    if (p.some(n => isNaN(n))) return;
+    S[i].carry = true;
+    S[i].cHp = Math.min(100, Math.max(1, p[0] || 100));
+    S[i].cEn = Math.min(100, Math.max(0, p[1] || 0));
+    const el = sideEl[i];
+    el.querySelectorAll('.carry button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'on'));
+    el.querySelector('.custCarry').style.display = 'block';
+    el.querySelector('.cHp').value = S[i].cHp;
+    el.querySelector('.cEn').value = S[i].cEn;
+    el.querySelectorAll('.cpre button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.hp === S[i].cHp));
   });
   if (['multi', 'counter', 'party'].includes(q.get('md'))) {   // モードの復元
     mode = q.get('md');

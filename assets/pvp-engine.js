@@ -89,6 +89,10 @@
         plan: (cfg.plan || []).slice(),
         used: {},
       };
+      // 連戦(2体目以降)の引き継ぎ: 開始HP割合と開始ゲージを指定できる
+      if (cfg.startHpPct != null && cfg.startHpPct < 100)
+        s.hp = Math.max(1, Math.round(st.hp * cfg.startHpPct / 100));
+      if (cfg.startEn) s.en = Math.max(0, Math.min(100, cfg.startEn));
       if (cfg.key === 'aegislash_shield') {        // 開始はシールドフォルム
         s.form = 'shield';
         s.shieldStats = { atk: st.atk, def: st.def };
