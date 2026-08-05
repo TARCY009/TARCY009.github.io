@@ -37,6 +37,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 @media (max-width:430px){.lgbtn{font-size:.76rem;padding:10px 2px}}
 /* 2カラム */
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.duel.solo{grid-template-columns:1fr}
 .side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0}
 .side h2{font-size:.78rem;color:var(--sub);letter-spacing:.08em;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
 .shadowtab{padding:7px 14px;font-size:.82rem;font-weight:700;letter-spacing:0;background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--sub);cursor:pointer;flex-shrink:0}
@@ -109,7 +110,43 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .modes{display:flex;gap:6px;margin-top:10px}
 .modes button{flex:1;padding:8px 4px;font-size:.85rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--sub);cursor:pointer;font-weight:700}
 .modes button[aria-pressed="true"]{background:var(--gl);border-color:var(--gl);color:#06122b}
-@media (max-width:430px){.modes{gap:4px}.modes button{font-size:.74rem;padding:8px 2px}}
+.modes{flex-wrap:wrap}
+.modes button{flex:1 1 auto}
+@media (max-width:520px){.modes{gap:4px}.modes button{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
+/* パーティ診断 */
+.pslots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.pslot{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px;min-width:0}
+.phd{display:flex;align-items:center;gap:3px;margin-bottom:5px}
+.phd .pnum{font-size:.68rem;color:var(--cy);font-weight:700;margin-right:auto}
+.phd button{background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--sub);font-size:.6rem;padding:2px 5px;cursor:pointer}
+.phd .pshadow[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:#b06cff;color:#fff}
+.phd .pstar{color:var(--gold)}
+.pslot input{width:100%;padding:6px 7px;font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
+.pslot input:focus{border-color:var(--gl)}
+.pmeta{margin-top:5px;display:flex;flex-wrap:wrap;align-items:center;gap:3px}
+.pmeta .pt2{font-size:.62rem;color:var(--sub);flex:1 0 100%;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pmeta .pempty{font-size:.66rem;color:var(--sub);opacity:.7}
+.pstarwin .mypkrow{cursor:pointer}
+.pctl{display:flex;align-items:center;gap:8px;margin-top:10px}
+.pctl .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
+.pctl .opts{flex:1}
+.pctl .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
+.pteam{font-size:.74rem;color:var(--ink);margin-top:10px}
+.pteam b{color:var(--cy)}
+.ptbl td.opname{width:34%}
+.ptbl th{font-size:.6rem;line-height:1.3}
+.pcolnum{display:inline-block;background:var(--line);border-radius:5px;padding:0 4px;margin-right:3px;color:var(--ink)}
+.mttbl td.pcnt{font-weight:800;font-size:.9rem}
+.mttbl td.pcnt small{display:inline;font-size:.6rem;color:var(--sub);font-weight:600}
+.mttbl td.pcnt.c0{color:var(--lose);background:rgba(255,107,129,.14)}
+.mttbl td.pcnt.c1{color:var(--gold)}
+.mttbl td.pcnt.c2,.mttbl td.pcnt.c3{color:var(--win)}
+.holehead{color:var(--lose);font-weight:700;font-size:.82rem}
+.holeok{color:var(--win);font-weight:700;font-size:.82rem}
+.holelist{color:var(--ink);font-size:.74rem;line-height:1.6;margin-top:2px}
+.holesub{font-size:.7rem;margin-top:4px}
+.holeword{color:var(--lose)}
+@media (max-width:520px){.pslots{grid-template-columns:1fr;gap:5px}.pslot{padding:6px}.pmeta .pt2{flex:0 1 auto}}
 .cnsub{display:block;font-size:.68rem;font-weight:400;color:var(--sub);margin-top:2px}
 .multi{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px}
 .multi h3{font-size:.92rem}
@@ -253,6 +290,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <button data-m="duel" aria-pressed="true">1対1シミュ</button>
   <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧</button>
   <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモンを環境上位から総当たりで探す">カウンター検索</button>
+  <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
 </div>
 
 <div class="duel">
@@ -376,6 +414,18 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 <div class="multi" id="multi" style="display:none"></div>
 <div class="multi" id="counter" style="display:none"></div>
+<div class="multi" id="party" style="display:none">
+  <h3>パーティ3匹の穴チェック</h3>
+  <div class="mtnote">3匹を選ぶと、環境上位の相手それぞれに「3匹のうち何匹が勝てるか」を出します。<b class="holeword">0匹＝パーティの穴</b>（そのポケモンを出されると全員が負ける相手）です。個体値は理想値、わざは対面ごとに最適化します（★登録リストから選ぶと自分の個体値・わざで診断できます）。マスをタップすると、その1対1の詳細を確認できます。</div>
+  <div class="pslots"></div>
+  <div class="pctl">
+    <span class="lbl">シールド</span>
+    <div class="opts ptsh">
+      <button data-v="0" aria-pressed="false">🛡0-0</button><button data-v="1" aria-pressed="true">🛡1-1</button><button data-v="2" aria-pressed="false">🛡2-2</button>
+    </div>
+  </div>
+  <div class="pbody"></div>
+</div>
 
 <div class="result" id="result"></div>
 <div class="tl" id="tl"></div>
@@ -747,11 +797,15 @@ cupTab.onclick = () => {
 // ---- モード切替(1対1シミュ / 環境一覧) ----
 let mode = 'duel', multiToken = 0;
 function applyMode() {
-  // 環境一覧は「じぶん」だけ、カウンター検索は「あいて」だけを使う
+  // 環境一覧は「じぶん」だけ、カウンター検索は「あいて」だけ、パーティ診断は専用の3枠を使う
+  const duelBox = document.querySelector('.duel');
+  duelBox.style.display = mode === 'party' ? 'none' : '';
+  duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter');   // 片側だけのときは1列で広く使う
   sideEl[0].style.display = mode === 'counter' ? 'none' : '';
   sideEl[1].style.display = mode === 'duel' || mode === 'counter' ? '' : 'none';
   document.getElementById('multi').style.display = mode === 'multi' ? 'block' : 'none';
   document.getElementById('counter').style.display = mode === 'counter' ? 'block' : 'none';
+  document.getElementById('party').style.display = mode === 'party' ? 'block' : 'none';
   if (mode !== 'duel') {
     document.getElementById('result').style.display = 'none';
     document.getElementById('tl').style.display = 'none';
@@ -776,7 +830,7 @@ function runMulti() {
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
   const MV = VIEWS.multi;
   MV.results = [];
-  MV.pick = k => applyMeta(list[k]);
+  MV.pick = (k, j) => { if (j != null) setBothShields(j); applyMeta(list[k]); };
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
     ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap }
     : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap }))(rank1(S[0].key, cap, 0, S[0].maxLv));
@@ -787,7 +841,7 @@ function runMulti() {
   fillMoves(0, { ...meBase, fast: S[0].fast || pool0.fasts[0], throw: S[0].c1 || pool0.chargeds[0] });
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。行をタップすると1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。マスをタップすると、そのシールド枚数のまま1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
     ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
@@ -881,6 +935,20 @@ const VIEWS = {
       { v: 'close', t: '惜しい順', d: 'あと少しで勝てる候補が上。個体値やわざを詰めれば届く可能性がある' },
     ],
   },
+  party: {
+    results: [], filter: 'all', sort: 'risk', head: '相手', tail: '勝てる数',
+    filters: [
+      { v: 'all',  t: 'すべて', d: '環境上位の全ての相手を表示' },
+      { v: 'hole', t: '穴のみ', d: '3匹とも勝てない相手だけ表示（パーティの穴）' },
+      { v: 'thin', t: '1匹以下', d: '勝てるのが1匹だけ、または0匹の相手を表示（薄い対面）' },
+    ],
+    sorts: [
+      { v: 'risk',  t: '危険順', d: '勝てる数が少ない相手が上（初期表示）' },
+      { v: 'meta',  t: '環境順', d: '環境での使用率が高い順' },
+      { v: 'close', t: '惜しい順', d: 'あと少しで勝てた対面が上' },
+    ],
+    tailHtml: r => `<td class="pcnt c${r.nWin}">${r.nWin}<small>/${r.cells.length}</small></td>`,
+  },
 };
 const cellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
   `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
@@ -914,25 +982,41 @@ function applyView(box, vn) {
   else if (V.filter === 'bad') rows = rows.filter(r => r.nLose === 3);
   else if (V.filter === 'win') rows = rows.filter(r => r.nWin > 0);
   else if (V.filter === 'best') rows = rows.filter(r => r.nWin === 3);
+  else if (V.filter === 'hole') rows = rows.filter(r => r.nWin === 0);
+  else if (V.filter === 'thin') rows = rows.filter(r => r.nWin <= 1);
   if (V.sort === 'bad') rows.sort((a, b) => a.sc - b.sc);
   else if (V.sort === 'good') rows.sort((a, b) => b.sc - a.sc);
+  else if (V.sort === 'risk') rows.sort((a, b) => a.nWin - b.nWin || a.sc - b.sc);   // 勝てる数が少ない順
   else if (V.sort === 'close') {
     // 惜しい順: 負けを含む対面をスコアの高い順(勝ちに近い順)に並べ、全勝は最後
     const lost = rows.filter(r => r.nWin < 3).sort((a, b) => b.sc - a.sc);
     rows = lost.concat(rows.filter(r => r.nWin === 3).sort((a, b) => b.sc - a.sc));
   }
-  const head = `<tr><th style="text-align:left">${V.head}</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>`;
+  const cols = V.cols || ['🛡0-0', '🛡1-1', '🛡2-2'];
+  const head = `<tr><th style="text-align:left">${V.head}</th>` + cols.map(c => `<th>${c}</th>`).join('') +
+    (V.tail ? `<th>${V.tail}</th>` : '') + '</tr>';
   tb.innerHTML = head + (rows.length ? rows.map(r =>
     `<tr data-k="${r.idx}"><td class="opname">${r.name}</td>` +
-    r.cells.map(c => `<td class="${c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l'}">${cellHtml(c)}</td>`).join('') +
-    '</tr>').join('')
-    : `<tr><td class="mtempty" colspan="4">該当するポケモンはいません（この絞り込みでは0件）</td></tr>`);
-  tb.querySelectorAll('tr[data-k]').forEach(tr => tr.onclick = () => V.pick(+tr.dataset.k));
+    r.cells.map((c, j) => `<td data-j="${j}" class="${c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l'}">${cellHtml(c)}</td>`).join('') +
+    (V.tailHtml ? V.tailHtml(r) : '') + '</tr>').join('')
+    : `<tr><td class="mtempty" colspan="${cols.length + 1}">該当するポケモンはいません（この絞り込みでは0件）</td></tr>`);
+  // セルをタップしたときは、その列(シールド枚数/パーティのメンバー)も一緒に渡す
+  tb.querySelectorAll('tr[data-k] td').forEach(td => td.onclick = () =>
+    V.pick(+td.parentNode.dataset.k, td.dataset.j === undefined ? null : +td.dataset.j));
   const cnt = box.querySelector('.mtcnt');
   if (cnt) cnt.remove();
   if (V.filter !== 'all')
     box.querySelector('.mtctl').insertAdjacentHTML('beforeend',
       `<div class="mtcnt">${rows.length}件を表示中（全${V.results.length}匹中）</div>`);
+}
+
+// 両者のシールド枚数をまとめて変更(一覧のマスをタップしたときに同じ条件へ揃える)
+function setBothShields(v) {
+  [0, 1].forEach(i => {
+    S[i].shieldMode = null; S[i].shields = v;
+    sideEl[i].querySelectorAll('.shields button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.v === v));
+    sideEl[i].querySelector('.custShield').style.display = 'none';
+  });
 }
 
 // 一覧の行タップ→そのポケモンを指定した側にセットして1対1シミュへ(i=0:じぶん / 1:あいて)
@@ -966,7 +1050,7 @@ function runCounter() {
   const token = ++multiToken;
   const CV = VIEWS.counter;
   CV.results = [];
-  CV.pick = k => applyMeta(list[k], 0);
+  CV.pick = (k, j) => { if (j != null) setBothShields(j); applyMeta(list[k], 0); };
   // 倒したい相手(あいて)の設定。わざは対面ごとに相手側が最善を選ぶ前提で評価する
   const foeBase = S[1].ivMode === 'manual' && S[1].mIvs
     ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap }
@@ -977,7 +1061,7 @@ function runCounter() {
   fillMoves(1, { ...foeBase, fast: S[1].fast || pool1.fasts[0], throw: S[1].c1 || pool1.chargeds[0] });
   const foeName = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
   box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">環境上位${list.length}匹から検索${cup ? `（${cup.label}）` : ''}</small></h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。行をタップすると、その候補を「じぶん」にセットして1対1シミュで詳細を確認できます。候補は理想個体値・標準的な推奨わざ構成、あいてのわざは対面ごとに相手が最善を選ぶ前提</div>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。マスをタップすると、その候補を「じぶん」にセットし同じシールド枚数で1対1シミュを開きます。候補は理想個体値・標準的な推奨わざ構成、あいてのわざは対面ごとに相手が最善を選ぶ前提</div>
     ${ctlHtml('counter')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">勝てる候補</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
@@ -1032,6 +1116,178 @@ function runCounter() {
   step();
 }
 
+// ---- パーティ3匹の穴チェック ----
+// PT[i] = ★登録リストと同じ形({key, ivMode, mIvs, mLevel, fast, c1, c2, shadow, maxLv})
+const PT = [null, null, null];
+let ptShield = 1;
+const PT_KEY = 'gbl_party';
+try { const v = JSON.parse(localStorage.getItem(PT_KEY)); if (Array.isArray(v)) v.forEach((m, i) => { if (i < 3) PT[i] = m; }); } catch (e) {}
+const savePt = () => { try { localStorage.setItem(PT_KEY, JSON.stringify(PT)); } catch (e) {} };
+const ptName = m => m ? (m.shadow ? 'シャドウ' : '') + D.pokemon[m.key].n : '';
+
+// 3枠の入力欄を作る(検索・★登録リストからの呼び出し・シャドウ切替・クリア)
+function buildPartySlots() {
+  const box = document.querySelector('#party .pslots');
+  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot" data-i="${i}">
+    <div class="phd"><span class="pnum">${i + 1}匹目</span>
+      <button class="pshadow" title="シャドウ補正(攻撃1.2倍・防御5/6)をかける">シャドウ</button>
+      <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
+      <button class="pclr" title="この枠を空にする">×</button></div>
+    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="popwin pstarwin" style="display:none"></div>
+    <div class="pmeta"></div>
+  </div>`).join('');
+  box.querySelectorAll('.pslot').forEach(el => {
+    const i = +el.dataset.i;
+    const inp = el.querySelector('input'), list = el.querySelector('.sugg-list');
+    inp.addEventListener('compositionend', () => {
+      const v = toKata(inp.value);
+      if (v !== inp.value) inp.value = v;
+      inp.dispatchEvent(new Event('input'));
+    });
+    inp.addEventListener('input', e => {
+      if (!e.isComposing) {
+        const v = toKata(inp.value);
+        if (v !== inp.value) inp.value = v;
+      }
+      const q = toKata(inp.value.trim());
+      if (!q) { list.style.display = 'none'; return; }
+      const hits = KEYS.filter(k => D.pokemon[k].n.includes(q)).slice(0, 10);
+      if (!hits.length) { list.style.display = 'none'; return; }
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.style.display = 'block';
+      list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+        list.style.display = 'none';
+        PT[i] = { key: d.dataset.k, ivMode: 'auto', shadow: false, maxLv: 51 };
+        savePt(); syncPartySlot(i); run();
+      });
+    });
+    document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
+    el.querySelector('.pshadow').onclick = () => {
+      if (!PT[i]) return;
+      PT[i].shadow = !PT[i].shadow;
+      savePt(); syncPartySlot(i); run();
+    };
+    el.querySelector('.pclr').onclick = () => { PT[i] = null; savePt(); syncPartySlot(i); run(); };
+    el.querySelector('.pstar').onclick = () => {
+      const win = el.querySelector('.pstarwin');
+      const open = win.style.display === 'none';
+      const saved = loadMyPk();
+      win.innerHTML = saved.length
+        ? '<div class="popttl">★登録リストから選ぶ</div>' + saved.map((m, k) => {
+            const p = D.pokemon[m.key];
+            if (!p) return '';
+            const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
+            return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? 'シャドウ' : ''}${p.n}${iv}</span></div>`;
+          }).join('')
+        : '<div class="mypkempty">まだ登録がありません。1対1シミュでポケモンを選び「★登録」を押すとここに追加されます</div>';
+      win.querySelectorAll('.mypkrow').forEach(row => row.onclick = () => {
+        PT[i] = { ...loadMyPk()[+row.dataset.k] };
+        win.style.display = 'none';
+        savePt(); syncPartySlot(i); run();
+      });
+      win.style.display = open ? 'block' : 'none';
+      el.querySelector('.pstar').setAttribute('aria-pressed', open);
+    };
+    syncPartySlot(i);
+  });
+}
+// 枠の表示(名前・タイプ・個体値・わざ)を現在の設定に合わせる
+function syncPartySlot(i) {
+  const el = document.querySelector(`#party .pslot[data-i="${i}"]`);
+  if (!el) return;
+  const m = PT[i];
+  el.querySelector('.pshadow').setAttribute('aria-pressed', !!(m && m.shadow));
+  el.querySelector('input').value = m ? ptName(m) : '';
+  const meta = el.querySelector('.pmeta');
+  if (!m) { meta.innerHTML = '<span class="pempty">未選択</span>'; return; }
+  const p = D.pokemon[m.key];
+  const iv = m.ivMode === 'manual' && m.mIvs ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
+  const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
+  meta.innerHTML = `${typeIcons(p, 15)}<span class="pt2">${iv}</span><span class="pt2">${mv}</span>`;
+}
+// パーティのメンバー1匹分の計算用設定(理想個体値/登録した個体値)
+function ptBase(m) {
+  if (m.ivMode === 'manual' && m.mIvs)
+    return { key: m.key, ivs: m.mIvs.slice(), level: m.mLevel, shadow: !!m.shadow, cap };
+  const r = rank1(m.key, cap, 0, m.maxLv || 51);
+  return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap };
+}
+function runParty() {
+  const box = document.getElementById('party');
+  const body = box.querySelector('.pbody');
+  const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
+  const idxs = [0, 1, 2].filter(i => PT[i]);
+  if (!idxs.length) {
+    body.innerHTML = '<div class="mtnote">上の枠にポケモンを入れると診断を始めます（1匹だけ・2匹でも診断できます）</div>';
+    return;
+  }
+  const token = ++multiToken;
+  const PV = VIEWS.party;
+  PV.results = [];
+  PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${ptName(PT[i])}`);
+  PV.pick = (k, j) => {   // セルをタップ→そのメンバーと相手を同じシールド枚数で1対1シミュへ
+    if (j != null && PT[idxs[j]]) { applyMyPk(0, PT[idxs[j]], true); setBothShields(ptShield); }
+    applyMeta(list[k], 1);
+  };
+  const bases = idxs.map(i => ptBase(PT[i]));
+  const pols = idxs.map(i => policies(PT[i].key,
+    (PT[i].c1 && PT[i].c2) ? { fast: PT[i].fast || undefined, charged: [PT[i].c1, PT[i].c2] }
+                           : { fast: PT[i].fast || undefined, throw: PT[i].c1 || undefined }));
+  const names = idxs.map(i => ptName(PT[i]));
+  body.innerHTML = `<div class="mtnote pteam">診断中のパーティ: ${names.map((n, j) => `<b>${j + 1}. ${n}</b>`).join(' ／ ')}（シールド🛡${ptShield}-${ptShield}）</div>
+    ${ctlHtml('party')}
+    <table class="mttbl ptbl"><tbody></tbody></table>
+    <div class="mtprog">計算中… 0/${list.length}</div>`;
+  const prog = body.querySelector('.mtprog');
+  updateUrl();
+  let idx = 0;
+  const step = () => {
+    if (token !== multiToken) return;
+    const t0 = performance.now();
+    while (idx < list.length && performance.now() - t0 < 40) {
+      const m = list[idx];
+      const r1 = rank1(m.k, cap);
+      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
+        shields: ptShield, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
+      const cells = idxs.map((pi, j) => {
+        const p = PT[pi];
+        let best = null;
+        for (const pol of pols[j]) {
+          const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield };
+          if (p.c1 && p.c2) me.charged = [p.c1, p.c2];
+          const res = PvpEngine.simulate(D, me, opCfg, NO_PROC);
+          const sc = scoreOf(res, 0);
+          if (!best || sc > best.sc) best = { sc, res };
+        }
+        const r = best.res, w = r.winner;
+        return { w, sc: best.sc, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+      });
+      PV.results.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
+        sc: cells.reduce((a, c) => a + c.sc, 0) / cells.length,
+        nWin: cells.filter(c => c.w === 0).length,
+        nLose: cells.filter(c => c.w === 1).length });
+      idx++;
+    }
+    if (idx < list.length) {
+      prog.textContent = `計算中… ${idx}/${list.length}`;
+      setTimeout(step, 0);
+    } else {
+      const holes = PV.results.filter(r => r.nWin === 0);
+      const thin = PV.results.filter(r => r.nWin === 1);
+      const avg = (PV.results.reduce((a, r) => a + r.nWin, 0) / PV.results.length).toFixed(2);
+      prog.innerHTML = (holes.length
+          ? `<span class="holehead">⚠ パーティの穴（${idxs.length}匹とも勝てない相手）: <b>${holes.length}匹</b></span>` +
+            `<div class="holelist">${holes.map(r => r.m.n).join('、')}</div>`
+          : `<span class="holeok">✅ ${idxs.length}匹とも勝てない相手はいません（穴なし）</span>`) +
+        `<div class="holesub">勝てるのが1匹だけの相手: ${thin.length}匹 ／ 平均で1相手あたり ${avg}匹が勝てます（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
+      bindCtl(body, 'party');
+      applyView(body, 'party');
+    }
+  };
+  step();
+}
+
 // ---- ★登録リスト(端末内保存・両側の欄から呼び出せる) ----
 const MYPK_KEY = 'gbl_mypoke';
 const loadMyPk = () => { try { return JSON.parse(localStorage.getItem(MYPK_KEY)) || []; } catch (e) { return []; } };
@@ -1061,7 +1317,7 @@ function renderMyPk() {
     });
   });
 }
-function applyMyPk(i, m) {
+function applyMyPk(i, m, skipRun) {
   if (!m || !D.pokemon[m.key]) return;
   S[i].key = m.key;
   S[i].fast = m.fast || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
@@ -1078,7 +1334,7 @@ function applyMyPk(i, m) {
     el.querySelector('.ivA').value = S[i].mIvs[0]; el.querySelector('.ivD').value = S[i].mIvs[1];
     el.querySelector('.ivH').value = S[i].mIvs[2]; el.querySelector('.ivL').value = S[i].mLevel;
   }
-  run();
+  if (!skipRun) run();   // 続けて別の設定も変える場合は呼び出し側でまとめて実行する
 }
 
 // スーパーマックスレベルのタブ表示(メガのみ)と選択状態を同期
@@ -1113,6 +1369,7 @@ const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
 function run() {
   if (mode === 'multi') { runMulti(); return; }
   if (mode === 'counter') { runCounter(); return; }
+  if (mode === 'party') { runParty(); return; }
   if (!S[0].key || !S[1].key) return;
   const base = S.map(s => {
     if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap };
@@ -1128,24 +1385,27 @@ function run() {
     } else note.textContent = '';
   });
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
-  const optCfg = i => {
-    const c = { ...base[i], shields: 2,
+  // わざの最適化も実際のシールド枚数で行う(一覧のマスをタップしたときに結果が一致する)
+  const curSh = i => S[i].shieldMode === 'plan' ? 2 : S[i].shields;
+  const optCfg = (i, sh) => {
+    const c = { ...base[i], shields: sh,
       timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
       fast: S[i].fast || undefined, throw: S[i].c1 || undefined };
     // SP1・SP2の両方を指定済みなら、最適化中も2本を使い分ける前提で評価する(一覧の結果と一致させる)
     if (S[i].c1 && S[i].c2) { c.charged = [S[i].c1, S[i].c2]; delete c.throw; }
     return c;
   };
-  const plan = optimize(optCfg(0), optCfg(1));
-  const fin = i => {
-    const c = { ...base[i], ...[plan.left, plan.right][i] };
+  const plan = optimize(optCfg(0, curSh(0)), optCfg(1, curSh(1)));
+  // pol=採用するわざ構成 / sh=シールド枚数 / usePlan=マニュアル指定(何発目で使うか)を反映するか
+  const fin = (i, pol, sh, usePlan) => {
+    const c = { ...base[i], ...pol };
     if (S[i].fast) c.fast = S[i].fast;
     if (S[i].c1) c.throw = S[i].c1;
-    if (S[i].shieldMode === 'plan') {
+    if (usePlan && S[i].shieldMode === 'plan') {
       c.shields = 2;
       c.shieldPlan = S[i].shieldSlots.map((on, k) => on ? k + 1 : 0).filter(Boolean);
       c.shieldRest = S[i].shieldRest;
-    } else c.shields = S[i].shields;
+    } else c.shields = sh;
     const m1 = S[i].c1 || c.throw, m2 = S[i].c2 || m1;
     c.charged = [m1, S[i].c2].filter(Boolean);
     if (S[i].timing === 'plan' || S[i].c2) {
@@ -1157,17 +1417,17 @@ function run() {
     } else c.timing = S[i].timing;
     return c;
   };
-  const L = fin(0), R = fin(1);
+  const L = fin(0, plan.left, curSh(0), true), R = fin(1, plan.right, curSh(1), true);
   const res = PvpEngine.simulate(D, L, R, NO_PROC);
   // シャドウ個体は結果・タイムラインの名前にも反映する
   [L, R].forEach((c, i) => { if (c.shadow) res.final[i].name = 'シャドウ' + res.final[i].name; });
-  // シールド枚数別の勝敗(3×3): 技構成は同じままシールドだけ変えて総当たり
-  const noPlan = c => { const x = { ...c }; delete x.shieldPlan; delete x.shieldRest; return x; };
+  // シールド枚数別の勝敗(3×3): 各マスでわざ構成も選び直す(マスをタップした結果と一致させるため)
   const matrix = [];
   for (let a = 0; a <= 2; a++) {
     const row = [];
     for (let b = 0; b <= 2; b++) {
-      const r = PvpEngine.simulate(D, { ...noPlan(L), shields: a }, { ...noPlan(R), shields: b }, NO_PROC);
+      const p = a === curSh(0) && b === curSh(1) ? plan : optimize(optCfg(0, a), optCfg(1, b));
+      const r = PvpEngine.simulate(D, fin(0, p.left, a, false), fin(1, p.right, b, false), NO_PROC);
       const w = r.winner;
       row.push({ w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) });
     }
@@ -1646,11 +1906,17 @@ document.getElementById('copyUrl').onclick = async () => {
     el.querySelector('.ivA').value = p[0]; el.querySelector('.ivD').value = p[1];
     el.querySelector('.ivH').value = p[2]; el.querySelector('.ivL').value = S[i].mLevel;
   });
-  if (q.get('md') === 'multi' || q.get('md') === 'counter') {   // モードの復元
+  if (['multi', 'counter', 'party'].includes(q.get('md'))) {   // モードの復元
     mode = q.get('md');
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
     applyMode();
   }
+  buildPartySlots();
+  document.querySelectorAll('#party .ptsh button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#party .ptsh button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    ptShield = +b.dataset.v;
+    run();
+  });
   renderMyPk();
   run();
 })();
