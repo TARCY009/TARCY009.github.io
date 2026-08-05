@@ -117,7 +117,8 @@
 
     // SPアタックを2本持っているときの「自動」選択(実戦の考え方に合わせる)
     //  1. シールドが無い相手を倒しきれるわざがあればそれを撃つ(消費が軽いほうを優先)
-    //  2. 相手にシールド(またはばけのかわ)が残っているなら、消費が軽いほうで剥がしにいく＝釣り
+    //  2. 相手にシールド(またはばけのかわ)が残っているなら、消費が軽いほうを撃つ＝ブラフ
+    //     (cfg.bluff === false ならブラフをせず、常に効率が高いほうを撃つ)
     //  3. シールドが無いなら、ダメージ効率(ダメージ÷消費ゲージ)が高いほうを撃つ
     const autoMove = (s, o) => {
       const list = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(Boolean);
@@ -129,8 +130,9 @@
         const lethal = list.filter(m => s.en >= m.e && dmg(m) >= o.hp).sort((a, b) => a.e - b.e)[0];
         if (lethal) return lethal;
       }
-      return list.slice().sort(blocked
-        ? (a, b) => a.e - b.e || dmg(b) - dmg(a)                 // 釣り: 消費が軽い順
+      const bluff = blocked && s.cfg.bluff !== false;
+      return list.slice().sort(bluff
+        ? (a, b) => a.e - b.e || dmg(b) - dmg(a)                 // ブラフ: 消費が軽い順
         : (a, b) => dmg(b) / b.e - dmg(a) / a.e)[0];             // 効率が高い順
     };
 
@@ -181,7 +183,7 @@
           const sh = idx < (s.cfg.shotPlan || []).length ? s.cfg.shotPlan[idx] : s.cfg.shotRest;
           if (sh) {
             const o = sides[1 - i];
-            // わざ指定なし(自動)のときは相手の状況に合わせて選ぶ(釣り→効率)
+            // わざ指定なし(自動)のときは相手の状況に合わせて選ぶ(ブラフ→効率)
             const mv = sh.move ? D.moves[rmv(s, sh.move)] : autoMove(s, o);
             if (mv && s.en >= mv.e) {
               let fire = false;

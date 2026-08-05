@@ -104,6 +104,9 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .cpre{margin-top:6px}
 .cpre button{flex:1 0 22%;font-size:.66rem}
 .cnote{margin-top:6px;font-size:.64rem;color:var(--sub)}
+.bluffnote{margin-top:4px;font-size:.62rem;color:var(--sub);line-height:1.5}
+.bluffnote b{color:var(--ink)}
+.opts.bluff button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305}
 .carrytag{font-size:.66rem;color:var(--gold);margin-top:2px}
 .ivnote{margin-top:6px;font-size:.72rem;color:var(--sub)}
 .ivnote .over{color:#ff7b8e;font-weight:700}
@@ -338,6 +341,13 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <select class="selC1"></select>
       <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2（わざ開放）</label>
       <select class="selC2"></select>
+      <div class="bluffwrap" style="display:none">
+        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ（軽いSPでシールドを使わせる）</label>
+        <div class="opts bluff">
+          <button data-v="1" aria-pressed="true" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button><button data-v="0" aria-pressed="false" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button>
+        </div>
+        <div class="bluffnote">相手がブラフに引っ掛かるかは「シールド」を<b>ﾏﾆｭｱﾙ</b>にして、何発目で使うかを決めると再現できます</div>
+      </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
@@ -411,6 +421,13 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <select class="selC1"></select>
       <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2（わざ開放）</label>
       <select class="selC2"></select>
+      <div class="bluffwrap" style="display:none">
+        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ（軽いSPでシールドを使わせる）</label>
+        <div class="opts bluff">
+          <button data-v="1" aria-pressed="true" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button><button data-v="0" aria-pressed="false" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button>
+        </div>
+        <div class="bluffnote">相手がブラフに引っ掛かるかは「シールド」を<b>ﾏﾆｭｱﾙ</b>にして、何発目で使うかを決めると再現できます</div>
+      </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
@@ -642,7 +659,7 @@ const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
   spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
   ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51,
-  carry: false, cHp: 100, cEn: 0 });
+  carry: false, cHp: 100, cEn: 0, bluff: true });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
 
@@ -784,6 +801,12 @@ sideEl.forEach((el, i) => {
     box.style.display = open ? 'block' : 'none';
     el.querySelector('.mypktab').setAttribute('aria-pressed', open);
   };
+  // ブラフ: 相手のシールドが残っている間、消費の軽いSPを撃ってシールドを使わせにいくか
+  el.querySelectorAll('.bluff button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.bluff button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    S[i].bluff = b.dataset.v === '1';
+    run();
+  });
   // 連戦(引き継ぎ): 開始HP%と開始ゲージ
   el.querySelectorAll('.carry button').forEach(b => b.onclick = () => {
     el.querySelectorAll('.carry button').forEach(x => x.setAttribute('aria-pressed', x === b));
@@ -1447,7 +1470,7 @@ function shotsCfg(i, m1, m2) {
 }
 // 一覧系で使う「自分側の1構成」を作る(SP2指定・発ごとの設定を1対1シミュと同じ扱いにする)
 function listSideCfg(i, base, pol, sh, timing) {
-  const c = { ...base, ...pol, timing, shields: sh };
+  const c = { ...base, ...pol, timing, shields: sh, bluff: S[i].bluff };
   if (S[i].timing === 'plan' || S[i].c2) {
     const m1 = S[i].c1 || (pol.charged ? pol.charged[0] : pol.throw), m2 = S[i].c2 || m1;
     c.charged = [m1, S[i].c2].filter(Boolean);
@@ -1479,13 +1502,13 @@ function run() {
   // わざの最適化も実際のシールド枚数で行う(一覧のマスをタップしたときに結果が一致する)
   const curSh = i => S[i].shieldMode === 'plan' ? 2 : S[i].shields;
   // わざの候補(policies)側でSP1/SP2の組を決めるので、ここではポケモン・シールド・タイミングだけ渡す
-  const optCfg = (i, sh) => ({ ...base[i], shields: sh,
+  const optCfg = (i, sh) => ({ ...base[i], shields: sh, bluff: S[i].bluff,
     timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
     ...polOpts(i) });
   const plan = optimize(optCfg(0, curSh(0)), optCfg(1, curSh(1)));
   // pol=採用するわざ構成 / sh=シールド枚数 / usePlan=マニュアル指定(何発目で使うか)を反映するか
   const fin = (i, pol, sh, usePlan) => {
-    const c = { ...base[i], ...pol };
+    const c = { ...base[i], ...pol, bluff: S[i].bluff };
     if (S[i].fast) c.fast = S[i].fast;
     if (S[i].c1) c.throw = S[i].c1;
     if (usePlan && S[i].shieldMode === 'plan') {
@@ -1564,6 +1587,9 @@ function fillMoves(i, cfg) {
   el.querySelector('.selC1').innerHTML = grouped(chargeds, otherC, cfg.throw);
   el.querySelector('.selC2').innerHTML =
     `<option value=""${S[i].c2 ? '' : ' selected'}>なし</option>` + grouped(chargeds, otherC, S[i].c2);
+  // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す
+  el.querySelector('.bluffwrap').style.display = S[i].c2 ? 'block' : 'none';
+  el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));
   // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示
   const showSp = S[i].timing === 'plan' || !!S[i].c2;
   el.querySelector('.custSp').style.display = showSp ? 'block' : 'none';
@@ -1753,6 +1779,7 @@ function updateUrl() {
     if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
     if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
     if (s.carry) qp[i ? 'cyr' : 'cyl'] = s.cHp + '.' + s.cEn;   // 連戦(開始HP%.開始ゲージ)
+    if (!s.bluff) qp[i ? 'bfr' : 'bfl'] = 0;   // ブラフしない設定
   });
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel') qp.md = mode;
@@ -2000,6 +2027,12 @@ document.getElementById('copyUrl').onclick = async () => {
     el.querySelector('.custIv').style.display = 'block';
     el.querySelector('.ivA').value = p[0]; el.querySelector('.ivD').value = p[1];
     el.querySelector('.ivH').value = p[2]; el.querySelector('.ivL').value = S[i].mLevel;
+  });
+  ['bfl', 'bfr'].forEach((k, i) => {   // ブラフ設定の復元
+    if (q.get(k) === '0') {
+      S[i].bluff = false;
+      sideEl[i].querySelectorAll('.bluff button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === '0'));
+    }
   });
   ['cyl', 'cyr'].forEach((k, i) => {   // 連戦(開始HP%.開始ゲージ)の復元
     const v = q.get(k); if (!v) return;
