@@ -224,7 +224,6 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .concl{font-size:.95rem;font-weight:700;margin-bottom:10px;line-height:1.5}
 .concl .w{color:var(--win)}
 .concl small{display:block;font-weight:400;color:var(--sub);font-size:.74rem;margin-top:2px}
-.selC2{opacity:.55}
 .tltbl tr.gap td{color:var(--sub);font-size:.7rem;padding:4px;border-bottom:1px dashed var(--line)}
 .tltbl td.ko{color:var(--lose);font-weight:700}
 .tltbl td.hpg{color:#4be08e;font-weight:700}
@@ -337,7 +336,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック</label>
       <select class="selC1"></select>
-      <label class="f">SPアタック2（マニュアル用）</label>
+      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2（わざ開放）</label>
       <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
@@ -410,7 +409,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック</label>
       <select class="selC1"></select>
-      <label class="f">SPアタック2（マニュアル用）</label>
+      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2（わざ開放）</label>
       <select class="selC2"></select>
       <label class="f">シールド</label>
       <div class="opts sh shields">
@@ -542,6 +541,8 @@ function movePool(key) {
   const chargeds = [...new Set([...p.c, ...p.ec])].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
   return { fasts, chargeds };
 }
+// わざ構成の候補を作る。cfg = { fast:固定するノーマル, c1:固定するSP1, c2:指定されたSP2 }
+// c2があるときは「SP1候補+SP2」の2本セットを返し、どちらを撃つかはエンジンが相手に合わせて選ぶ
 function policies(key, cfg) {
   const { fasts, chargeds } = movePool(key);
   const st = { atk: 1, def: 1, types: D.pokemon[key].ty, buffs: [0, 0] };
@@ -549,13 +550,16 @@ function policies(key, cfg) {
   const top = chargeds.sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
   const out = [];
   for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5))) {
-    // SPを2本指定しているときは撃つわざを固定せず、エンジンの使い分けに任せて評価する
-    if (cfg.charged) { out.push({ fast: f }); continue; }
-    for (const t of (cfg.throw ? [cfg.throw] : top))
-      out.push({ fast: f, throw: t });
+    for (const t of (cfg.c1 ? [cfg.c1] : top)) {
+      if (cfg.c2) out.push({ fast: f, charged: t === cfg.c2 ? [t] : [t, cfg.c2] });
+      else out.push({ fast: f, throw: t });
+    }
   }
   return out;
 }
+// 画面で選んでいるわざ(ノーマル/SP1/SP2)を policies 用の指定に変換する
+const polOpts = i => ({ fast: S[i].fast || undefined, c1: S[i].c1 || undefined, c2: S[i].c2 || undefined });
+
 function optimize(cfgL, cfgR) {
   const PL = policies(cfgL.key, cfgL), PR = policies(cfgR.key, cfgR);
   const cache = new Map();
@@ -900,13 +904,15 @@ function runMulti() {
     ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, ...carryOf(0) }
     : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
-  const myPols = policies(S[0].key, { fast: S[0].fast || undefined, throw: S[0].c1 || undefined });
+  // SPアタック2を選んでいれば、2本を相手に合わせて使い分ける前提で計算する(わざ開放した実戦に合わせる)
+  const myPols = policies(S[0].key, polOpts(0));
+  const myCfg = (pol, sh) => listSideCfg(0, meBase, pol, sh, myTiming);
   // 左パネルの表示(CP・個体値・PL・わざ)もこのリーグ/カップの内容に更新する
   const pool0 = movePool(S[0].key);
   fillMoves(0, { ...meBase, fast: S[0].fast || pool0.fasts[0], throw: S[0].c1 || pool0.chargeds[0] });
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。マスをタップすると、そのシールド枚数のまま1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成、自分のわざは対面ごとに最適化（わざを選んでいる場合はそれを使用）</div>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。マスをタップすると、そのシールド枚数のまま1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成で、SPアタック2本を相手に合わせて使い分けます。自分のわざは対面ごとに自動で最適化（選んだわざがあればそれを使用）。<b>SPアタック2を選ぶと自分も2本を使い分けて</b>計算するので、わざ開放した実戦に近い結果になります</div>
     ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
@@ -931,8 +937,7 @@ function runMulti() {
       const cells = [0, 1, 2].map(sh => {
         let best = null;
         for (const pol of myPols) {   // 自分のわざはこの対面・このシールド数での最善を採用
-          const res = PvpEngine.simulate(D, { ...meBase, ...pol, timing: myTiming, shields: sh },
-                                            { ...opCfg, shields: sh }, NO_PROC);
+          const res = PvpEngine.simulate(D, myCfg(pol, sh), { ...opCfg, shields: sh }, NO_PROC);
           const sc = scoreOf(res, 0);
           if (!best || sc > best.sc) best = { sc, res };
         }
@@ -1121,12 +1126,14 @@ function runCounter() {
     ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap, ...carryOf(1) }
     : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv));
   const foeTiming = S[1].timing === 'plan' ? 'optimal' : S[1].timing;
-  const foePols = policies(S[1].key, { fast: S[1].fast || undefined, throw: S[1].c1 || undefined });
+  // SPアタック2を選んでいれば、あいても2本を使い分ける前提で評価する
+  const foePols = policies(S[1].key, polOpts(1));
+  const foeCfg = (pol, sh) => listSideCfg(1, foeBase, pol, sh, foeTiming);
   const pool1 = movePool(S[1].key);
   fillMoves(1, { ...foeBase, fast: S[1].fast || pool1.fasts[0], throw: S[1].c1 || pool1.chargeds[0] });
   const foeName = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
   box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">環境上位${list.length}匹から検索${cup ? `（${cup.label}）` : ''}</small></h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。マスをタップすると、その候補を「じぶん」にセットし同じシールド枚数で1対1シミュを開きます。候補は理想個体値・標準的な推奨わざ構成、あいてのわざは対面ごとに相手が最善を選ぶ前提</div>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。マスをタップすると、その候補を「じぶん」にセットし同じシールド枚数で1対1シミュを開きます。候補は理想個体値・標準的な推奨わざ構成（SPアタック2本を使い分け）、あいてのわざは対面ごとに相手が最善を選ぶ前提。あいてに<b>SPアタック2を選ぶと、あいても2本を使い分けて</b>計算します</div>
     ${ctlHtml('counter')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">勝てる候補</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
@@ -1148,8 +1155,7 @@ function runCounter() {
       const cells = [0, 1, 2].map(sh => {
         let worst = null;   // あいてが最も得をするわざ構成を選ぶ＝候補にとって最も厳しい結果
         for (const pol of foePols) {
-          const res = PvpEngine.simulate(D, { ...cdCfg, shields: sh },
-                                            { ...foeBase, ...pol, timing: foeTiming, shields: sh }, NO_PROC);
+          const res = PvpEngine.simulate(D, { ...cdCfg, shields: sh }, foeCfg(pol, sh), NO_PROC);
           const sc = scoreOf(res, 1);
           if (!worst || sc > worst.sc) worst = { sc, res };
         }
@@ -1297,8 +1303,7 @@ function runParty() {
   };
   const bases = idxs.map(i => ptBase(PT[i]));
   const pols = idxs.map(i => policies(PT[i].key,
-    (PT[i].c1 && PT[i].c2) ? { fast: PT[i].fast || undefined, charged: [PT[i].c1, PT[i].c2] }
-                           : { fast: PT[i].fast || undefined, throw: PT[i].c1 || undefined }));
+    { fast: PT[i].fast || undefined, c1: PT[i].c1 || undefined, c2: PT[i].c2 || undefined }));
   const names = idxs.map(i => ptName(PT[i]));
   body.innerHTML = `<div class="mtnote pteam">診断中のパーティ: ${names.map((n, j) => `<b>${j + 1}. ${n}</b>`).join(' ／ ')}（シールド🛡${ptShield}-${ptShield}）</div>
     ${ctlHtml('party')}
@@ -1316,11 +1321,9 @@ function runParty() {
       const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
         shields: ptShield, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       const cells = idxs.map((pi, j) => {
-        const p = PT[pi];
         let best = null;
         for (const pol of pols[j]) {
           const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield };
-          if (p.c1 && p.c2) me.charged = [p.c1, p.c2];
           const res = PvpEngine.simulate(D, me, opCfg, NO_PROC);
           const sc = scoreOf(res, 0);
           if (!best || sc > best.sc) best = { sc, res };
@@ -1386,6 +1389,7 @@ function applyMyPk(i, m, skipRun) {
   if (!m || !D.pokemon[m.key]) return;
   S[i].key = m.key;
   S[i].fast = m.fast || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  resetSpPlan(i);   // 発ごとのSP設定は「おまかせ」に戻す(前のポケモンの指定を残さない)
   S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
   S[i].shadow = !!m.shadow;
   S[i].maxLv = m.maxLv || 51;
@@ -1433,6 +1437,25 @@ function pick(i, key) {
 const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
 // 連戦の引き継ぎ設定(開始HP%・開始ゲージ)を計算用の設定に足す
 const carryOf = i => S[i].carry ? { startHpPct: S[i].cHp, startEn: S[i].cEn } : {};
+// 発ごとのSP設定(何発目をどのタイミング・どのわざで撃つか)を計算用の設定に変換する
+// move=null は「自動」＝その時点で威力効率が高いほうをエンジンが選ぶ
+function shotsCfg(i, m1, m2) {
+  const pick = v => v === '2' ? m2 : v === '1' ? m1 : null;
+  return { timing: 'shots',
+    shotPlan: S[i].spMode.map((mode, k) => ({ mode, move: pick(S[i].spMv[k]) })),
+    shotRest: { mode: S[i].spModeRest, move: pick(S[i].spMvRest) } };
+}
+// 一覧系で使う「自分側の1構成」を作る(SP2指定・発ごとの設定を1対1シミュと同じ扱いにする)
+function listSideCfg(i, base, pol, sh, timing) {
+  const c = { ...base, ...pol, timing, shields: sh };
+  if (S[i].timing === 'plan' || S[i].c2) {
+    const m1 = S[i].c1 || (pol.charged ? pol.charged[0] : pol.throw), m2 = S[i].c2 || m1;
+    c.charged = [m1, S[i].c2].filter(Boolean);
+    delete c.throw;
+    Object.assign(c, shotsCfg(i, m1, m2));
+  }
+  return c;
+}
 function run() {
   if (mode === 'multi') { runMulti(); return; }
   if (mode === 'counter') { runCounter(); return; }
@@ -1455,14 +1478,10 @@ function run() {
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
   // わざの最適化も実際のシールド枚数で行う(一覧のマスをタップしたときに結果が一致する)
   const curSh = i => S[i].shieldMode === 'plan' ? 2 : S[i].shields;
-  const optCfg = (i, sh) => {
-    const c = { ...base[i], shields: sh,
-      timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
-      fast: S[i].fast || undefined, throw: S[i].c1 || undefined };
-    // SP1・SP2の両方を指定済みなら、最適化中も2本を使い分ける前提で評価する(一覧の結果と一致させる)
-    if (S[i].c1 && S[i].c2) { c.charged = [S[i].c1, S[i].c2]; delete c.throw; }
-    return c;
-  };
+  // わざの候補(policies)側でSP1/SP2の組を決めるので、ここではポケモン・シールド・タイミングだけ渡す
+  const optCfg = (i, sh) => ({ ...base[i], shields: sh,
+    timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
+    ...polOpts(i) });
   const plan = optimize(optCfg(0, curSh(0)), optCfg(1, curSh(1)));
   // pol=採用するわざ構成 / sh=シールド枚数 / usePlan=マニュアル指定(何発目で使うか)を反映するか
   const fin = (i, pol, sh, usePlan) => {
@@ -1474,15 +1493,13 @@ function run() {
       c.shieldPlan = S[i].shieldSlots.map((on, k) => on ? k + 1 : 0).filter(Boolean);
       c.shieldRest = S[i].shieldRest;
     } else c.shields = sh;
-    const m1 = S[i].c1 || c.throw, m2 = S[i].c2 || m1;
+    // SP1は「選んだわざ > 候補として選ばれたわざ」の順で決まる(SP2指定時はpol.chargedの1本目が候補)
+    const m1 = S[i].c1 || (pol.charged ? pol.charged[0] : c.throw), m2 = S[i].c2 || m1;
     c.charged = [m1, S[i].c2].filter(Boolean);
-    if (S[i].timing === 'plan' || S[i].c2) {
-      // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(自動/1/2)を指定
-      c.timing = 'shots';
-      const pick = v => v === '2' ? m2 : v === '1' ? m1 : null;   // null=自動(威力効率で選ぶ)
-      c.shotPlan = S[i].spMode.map((mode, k) => ({ mode, move: pick(S[i].spMv[k]) }));
-      c.shotRest = { mode: S[i].spModeRest, move: pick(S[i].spMvRest) };
-    } else c.timing = S[i].timing;
+    c.throw = m1;   // 画面のSPアタック欄にも実際に使うわざを表示する
+    // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(自動/1/2)を指定
+    if (S[i].timing === 'plan' || S[i].c2) Object.assign(c, shotsCfg(i, m1, m2));
+    else c.timing = S[i].timing;
     return c;
   };
   const L = fin(0, plan.left, curSh(0), true), R = fin(1, plan.right, curSh(1), true);
