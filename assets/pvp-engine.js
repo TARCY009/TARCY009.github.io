@@ -138,6 +138,23 @@
       } else if (cfg.key === 'morpeko_full_belly') {  // まんぷくで開始
         s.mform = 'full';
       }
+      // 3匹の連戦: 前の対面を生き延びた側は、その続きの状態(HP・ゲージ・能力変化・硬直・
+      // ばけのかわ/フォルム)から始める。cfg.resume には前の対面の res.final[].resume を渡す
+      const rs = cfg.resume;
+      if (rs) {
+        if (rs.hp != null) s.hp = Math.max(1, Math.min(st.hp, rs.hp));
+        if (rs.en != null) s.en = Math.max(0, Math.min(100, rs.en));
+        if (rs.buffs) s.buffs = rs.buffs.slice();
+        if (rs.stall != null) s.stall = Math.max(s.stall, rs.stall);
+        if (rs.disguise === false) s.disguise = false;
+        if (rs.mform) s.mform = rs.mform;
+        if (rs.form === 'blade' && s.bladeSt) {   // ギルガルド: ブレードのまま次の相手を迎える
+          s.form = 'blade';
+          s.atk = s.bladeSt.atk; s.def = s.bladeSt.def;
+          const bid = AEGIS_FAST_BLADE[s.fastId];
+          if (bid) { s.fastId = bid; s.fast = D.moves[bid]; }
+        }
+      }
       return s;
     });
     // モルペコのフォルムに応じてオーラぐるまのタイプを差し替える
@@ -379,7 +396,13 @@
 
     return {
       winner, turns: turn, rows,
-      final: sides.map(s => ({ name: s.name, cp: s.cp, hp: Math.max(0, s.hp), hpMax: buildStats(D, s.cfg).hp, en: s.en, shields: s.shields, buffs: s.buffs })),
+      final: sides.map(s => ({
+        name: s.name, cp: s.cp, hp: Math.max(0, s.hp), hpMax: buildStats(D, s.cfg).hp,
+        en: s.en, shields: s.shields, buffs: s.buffs,
+        // 3匹の連戦で次の対面へ引き継ぐ状態(生き残った側だけ使う)
+        resume: { hp: Math.max(0, s.hp), en: s.en, buffs: s.buffs.slice(), stall: s.stall,
+                  disguise: !!s.disguise, form: s.form, mform: s.mform },
+      })),
     };
   }
 
