@@ -104,6 +104,10 @@
         fastId: cfg.fast,
         plan: (cfg.plan || []).slice(),
         used: {},
+        // ロケット団戦: NPC側は、どちらかがSPアタックを撃つたびに stallSp ターンのあいだ動けない
+        npc: !!cfg.npc,
+        stallSp: cfg.stallSp || 0,
+        stall: cfg.stallStart || 0,
       };
       // 連戦(2体目以降)の引き継ぎ: 開始HP割合と開始ゲージを指定できる
       if (cfg.startHpPct != null && cfg.startHpPct < 100)
@@ -170,8 +174,10 @@
       // ゲージ技は1ターンを消費して発動し、その間も相手の通常技は進行する
       const charging = [null, null];
       const sync = [null, null];   // 「同時」待ち: 相手が撃つかどうかを見てから決める(下の2周目)
+      const stalled = [false, false];   // ロケット団戦の硬直(このターンは何もしない)
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
+        if (s.stall > 0) { s.stall--; stalled[i] = true; continue; }   // 硬直中
         if (s.cd !== 0) continue;               // 通常技の途中
         if (s.cfg.timing === 'sync') {
           // 同時: 相手がSPアタックを撃つターンに合わせて撃つ(先後は攻撃実数値=CMPで決まる)
@@ -255,10 +261,10 @@
       }
       // ターン経過 → 完了した通常技の発生
       // 相手がゲージ技のターンに打ち始めた通常技は差し込み(前倒し)扱いなのでここでは進めない
-      const row = { tn: turn, ev: [null, null] };
+      const row = { tn: turn, ev: [null, null], stalled };
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
-        if (charging[i]) continue;
+        if (charging[i] || stalled[i]) continue;
         if (charging[1 - i] && s.startedNow) { s.startedNow = false; continue; }
         s.startedNow = false;
         s.cd--;
@@ -318,6 +324,8 @@
         }
         s.thrown = (s.thrown || 0) + 1;
         o.hp -= dealt;
+        // ロケット団戦: どちらがSPアタックを撃っても、相手(NPC)は一定ターン動けなくなる(硬直)
+        for (const x of sides) if (x.npc && x.stallSp) { x.stall = x.stallSp; x.cd = 0; }
         const buff = applyBuffs(mv, s, o, opt);
         const ev = [null, null];
         ev[i] = { move: mv.n, dmg: dealt, full, shielded, disguised, buff };

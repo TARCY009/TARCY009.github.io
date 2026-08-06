@@ -148,6 +148,17 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .gopt .opts button{padding:5px 2px;font-size:.72rem}
 .gopt .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
 .goptnote{font-size:.64rem;color:var(--sub);line-height:1.5;margin-top:4px}
+/* ロケット団戦の設定 */
+.rocket{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
+.rkrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rkrow+.rkrow{margin-top:6px}
+.rocket .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
+.rocket .opts{flex:1;min-width:160px}
+.rocket .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305}
+.rocket input{width:64px;padding:5px 6px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
+.rocket input:focus{border-color:var(--gl)}
+.rknote{font-size:.64rem;color:var(--sub);line-height:1.5;margin-top:6px}
+.stallbox{opacity:.85;font-size:.66rem;color:var(--gold)}
 .cmpnote{margin-top:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;font-size:.72rem;color:var(--sub);line-height:1.5}
 .cmpnote b{color:var(--cy)}
 @media (max-width:520px){.gopt{gap:6px}.gopt .lbl{font-size:.62rem;max-width:38%;line-height:1.3}}
@@ -314,6 +325,23 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧</button>
   <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモンを環境上位から総当たりで探す">カウンター検索</button>
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
+  <button data-m="rocket" aria-pressed="false" title="GOロケット団(したっぱ/リーダー/サカキ)との戦いを再現する。相手はSPアタックのあと動けなくなる(硬直)">ロケット団戦</button>
+</div>
+
+<div class="rocket" id="rocket" style="display:none">
+  <div class="rkrow">
+    <span class="lbl">あいて</span>
+    <div class="opts rkkind" id="rkkind">
+      <button data-v="grunt" aria-pressed="true" title="したっぱ・ムサシ・コジロウ。シールドを使いません">したっぱ</button><button data-v="leader" aria-pressed="false" title="シエラ・クリフ・アルロ。こちらの最初の2発のSPアタックを必ずシールドで防ぎます">リーダー</button><button data-v="boss" aria-pressed="false" title="サカキ。こちらの最初の2発のSPアタックを必ずシールドで防ぎます">サカキ</button>
+    </div>
+  </div>
+  <div class="rkrow">
+    <label class="lbl" for="rkstall" title="どちらかがSPアタックを撃つと、相手はこのターン数だけ動けなくなります(0.5秒=1ターン)">硬直（ターン）</label>
+    <input type="number" id="rkstall" min="0" max="16" inputmode="numeric">
+    <label class="lbl" for="rklv" title="ロケット団のポケモンのPL。下の「この設定のCP」がゲーム内の表示CPに合うように調整してください">あいてのPL</label>
+    <input type="number" id="rklv" min="1" max="50" step="0.5" inputmode="decimal">
+  </div>
+  <div class="rknote"></div>
 </div>
 
 <div class="gopt" id="gopt">
@@ -911,24 +939,72 @@ cupTab.onclick = () => {
   cupwin.style.display = open ? 'block' : 'none';
 };
 
+// ---- ロケット団戦の設定 ----
+// 硬直: どちらかがSPアタックを撃つと相手(NPC)が動けなくなるターン数。
+// 外部の攻略情報では「SPアタック後は7ターン」「交代時は4.5秒(9ターン)」等と幅があるため、既定7で変更できるようにする
+const RK = { kind: 'grunt', stall: 7, lv: 20 };
+const rkShields = () => RK.kind === 'grunt' ? 0 : 2;   // したっぱはシールドを使わない
+const RK_NOTE = {
+  grunt: 'したっぱ（ムサシ・コジロウを含む）は<b>シールドを使いません</b>。',
+  leader: 'リーダー（シエラ・クリフ・アルロ）は<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。',
+  boss: 'サカキは<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。',
+};
+
 // ---- モード切替(1対1シミュ / 環境一覧) ----
 let mode = 'duel', multiToken = 0;
 function applyMode() {
   // 環境一覧は「じぶん」だけ、カウンター検索は「あいて」だけ、パーティ診断は専用の3枠を使う
+  const rk = mode === 'rocket';
   const duelBox = document.querySelector('.duel');
   duelBox.style.display = mode === 'party' ? 'none' : '';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter');   // 片側だけのときは1列で広く使う
+  // ロケット団戦はCP制限が無いのでリーグは選ばせない。相手の設定は専用パネルにまとめる
+  document.getElementById('leagues').style.display = rk ? 'none' : '';
+  document.getElementById('cupwin').style.display = 'none';
+  document.getElementById('rocket').style.display = rk ? 'block' : 'none';
+  if (rk) syncRocket();
   sideEl[0].style.display = mode === 'counter' ? 'none' : '';
-  sideEl[1].style.display = mode === 'duel' || mode === 'counter' ? '' : 'none';
+  sideEl[1].style.display = mode === 'duel' || mode === 'counter' || rk ? '' : 'none';
   document.getElementById('multi').style.display = mode === 'multi' ? 'block' : 'none';
   document.getElementById('counter').style.display = mode === 'counter' ? 'block' : 'none';
   document.getElementById('party').style.display = mode === 'party' ? 'block' : 'none';
-  if (mode !== 'duel') {
+  if (mode !== 'duel' && !rk) {
     document.getElementById('result').style.display = 'none';
     document.getElementById('tl').style.display = 'none';
     document.getElementById('share').style.display = 'none';
   }
 }
+
+// ロケット団戦パネルの表示を状態に合わせる(相手のシールド・PLも反映する)
+function syncRocket() {
+  document.querySelectorAll('#rkkind button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.kind));
+  document.getElementById('rkstall').value = RK.stall;
+  document.getElementById('rklv').value = RK.lv;
+  document.querySelector('.rknote').innerHTML = RK_NOTE[RK.kind] +
+    `どちらかがSPアタックを撃つと、あいては<b>${RK.stall}ターン（${(RK.stall / 2).toFixed(1)}秒）</b>動けなくなります（この間はこちらだけ攻撃できます）。` +
+    'あいてのポケモンはシャドウ（攻撃1.2倍・防御5/6）として計算します。PLは「この設定のCP」がゲーム内の表示CPに合うように調整してください。';
+  // ロケット団のポケモンはすべてシャドウ・個体値は最大として扱い、PLだけ指定する
+  S[1].shadow = true;
+  sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', true);
+  S[1].ivMode = 'manual'; S[1].mIvs = [15, 15, 15]; S[1].mLevel = RK.lv;
+  sideEl[1].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'manual'));
+}
+document.querySelectorAll('#rkkind button').forEach(b => b.onclick = () => {
+  RK.kind = b.dataset.v;
+  syncRocket();
+  run();
+});
+document.getElementById('rkstall').onchange = e => {
+  RK.stall = Math.max(0, Math.min(16, +e.target.value || 0));
+  syncRocket();
+  run();
+};
+document.getElementById('rklv').onchange = e => {
+  const v = Math.round((+e.target.value || 20) * 2) / 2;   // PLは0.5刻み
+  RK.lv = Math.max(1, Math.min(50, v));
+  syncRocket();
+  run();
+};
 document.querySelectorAll('#modes button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x === b));
   mode = b.dataset.m;
@@ -1526,27 +1602,42 @@ function run() {
   if (mode === 'counter') { runCounter(); return; }
   if (mode === 'party') { runParty(); return; }
   if (!S[0].key || !S[1].key) return;
+  const rk = mode === 'rocket';       // ロケット団戦: 相手はNPC、CP制限なし
+  const capX = rk ? 0 : cap;
   const base = S.map((s, i) => {
     const c = carryOf(i);
-    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap, ...c };
-    const r1 = rank1(s.key, cap, 0, s.maxLv);
-    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap, ...c };
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, ...c };
+    const r1 = rank1(s.key, capX, 0, s.maxLv);
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, ...c };
   });
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
   S.forEach((s, i) => {
     const note = sideEl[i].querySelector('.ivnote');
     if (s.ivMode === 'manual' && s.mIvs) {
       const st = PvpEngine.buildStats(D, base[i]);
-      note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (cap && st.cp > cap ? ' <span class="over">⚠リーグ上限超え</span>' : '');
+      note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (capX && st.cp > capX ? ' <span class="over">⚠リーグ上限超え</span>' : '');
     } else note.textContent = '';
   });
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
   // わざの最適化も実際のシールド枚数で行う(一覧のマスをタップしたときに結果が一致する)
-  const curSh = i => S[i].shieldMode === 'plan' ? 2 : S[i].shields;
+  // ロケット団戦では相手のシールドは種別で決まる(したっぱ0枚・リーダー/サカキ2枚)
+  const curSh = i => rk && i === 1 ? rkShields() : (S[i].shieldMode === 'plan' ? 2 : S[i].shields);
+  // ロケット団戦の相手(NPC)の共通設定: SPアタックは撃てしだい、硬直あり、
+  // リーダー・サカキはこちらの最初の2発を必ずシールドで防ぐ
+  const rkCfg = c => {
+    c.npc = true; c.stallSp = RK.stall; c.timing = 'asap';
+    delete c.shotPlan; delete c.shotRest;
+    if (rkShields()) { c.shields = 2; c.shieldPlan = [1, 2]; c.shieldRest = false; }
+    else { c.shields = 0; delete c.shieldPlan; delete c.shieldRest; }
+    return c;
+  };
   // わざの候補(policies)側でSP1/SP2の組を決めるので、ここではポケモン・シールド・タイミングだけ渡す
-  const optCfg = (i, sh) => ({ ...base[i], shields: sh, bluff: S[i].bluff,
-    timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
-    ...polOpts(i) });
+  const optCfg = (i, sh) => {
+    const c = { ...base[i], shields: sh, bluff: S[i].bluff,
+      timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
+      ...polOpts(i) };
+    return rk && i === 1 ? rkCfg(c) : c;
+  };
   const plan = optimize(optCfg(0, curSh(0)), optCfg(1, curSh(1)));
   // pol=採用するわざ構成 / sh=シールド枚数 / usePlan=マニュアル指定(何発目で使うか)を反映するか
   const fin = (i, pol, sh, usePlan) => {
@@ -1565,17 +1656,19 @@ function run() {
     // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(自動/1/2)を指定
     if (S[i].timing === 'plan' || S[i].c2) Object.assign(c, shotsCfg(i, m1, m2));
     else c.timing = S[i].timing;
-    return c;
+    return rk && i === 1 ? rkCfg(c) : c;
   };
   const L = fin(0, plan.left, curSh(0), true), R = fin(1, plan.right, curSh(1), true);
   const res = PvpEngine.simulate(D, L, R, SIMOPT);
   // シャドウ個体は結果・タイムラインの名前にも反映する
   [L, R].forEach((c, i) => { if (c.shadow) res.final[i].name = 'シャドウ' + res.final[i].name; });
   // シールド枚数別の勝敗(3×3): 各マスでわざ構成も選び直す(マスをタップした結果と一致させるため)
+  // ロケット団戦は相手のシールドが固定なので、自分のシールド枚数(0/1/2)だけを並べる
+  const bList = rk ? [curSh(1)] : [0, 1, 2];
   const matrix = [];
   for (let a = 0; a <= 2; a++) {
     const row = [];
-    for (let b = 0; b <= 2; b++) {
+    for (const b of bList) {
       const p = a === curSh(0) && b === curSh(1) ? plan : optimize(optCfg(0, a), optCfg(1, b));
       const r = PvpEngine.simulate(D, fin(0, p.left, a, false), fin(1, p.right, b, false), SIMOPT);
       const w = r.winner;
@@ -1722,8 +1815,10 @@ function render(res, L, R, matrix) {
     return Object.entries(uses).map(([n, u]) =>
       `<div class="mvrow">${mvChip(n)}<span class="num">威力${u.dmg}・${u.n}回${u.sh ? `（<span class="shield">🛡×${u.sh}</span>）` : ''}</span></div>`).join('');
   };
-  // シールド枚数別の勝敗3×3表(マスをタップでその設定に切替)
-  const curA = S[0].shieldMode ? -1 : S[0].shields, curB = S[1].shieldMode ? -1 : S[1].shields;
+  // シールド枚数別の勝敗表(マスをタップでその設定に切替)。
+  // ロケット団戦は相手のシールドが種別で決まっているので、自分の枚数だけの1列にする
+  const rkMode = mode === 'rocket';
+  const curA = S[0].shieldMode ? -1 : S[0].shields, curB = rkMode ? 0 : (S[1].shieldMode ? -1 : S[1].shields);
   const mtxCell = (a, b) => {
     const c = matrix[a][b];
     const cls = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
@@ -1731,7 +1826,12 @@ function render(res, L, R, matrix) {
     return `<td class="${cls}${a === curA && b === curB ? ' cur' : ''}" data-a="${a}" data-b="${b}">
       <b>${txt}</b><small>${c.w === 'draw' ? '両者0' : '残HP' + c.pct + '%'}</small></td>`;
   };
-  const mtxHtml = `<div class="shmtx">
+  const mtxHtml = rkMode ? `<div class="shmtx">
+    <div class="mvhead">自分のシールド枚数別の勝敗（マスをタップでその枚数に切替。残HPは勝った側）</div>
+    <table>
+      <tr><th class="corner">自分のシールド</th><th>勝敗</th></tr>
+      ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${mtxCell(a, 0)}</tr>`).join('')}
+    </table></div>` : `<div class="shmtx">
     <div class="mvhead">シールド枚数別の勝敗（マスをタップでその設定に切替。残HPは勝った側）</div>
     <table>
       <tr><th class="corner">自分＼相手</th><th>🛡0</th><th>🛡1</th><th>🛡2</th></tr>
@@ -1806,6 +1906,7 @@ function render(res, L, R, matrix) {
   // 3×3表のマスをタップ→両者のシールド枚数をその組み合わせに変更
   rEl.querySelectorAll('.shmtx td[data-a]').forEach(td => td.onclick = () => {
     [+td.dataset.a, +td.dataset.b].forEach((v, i) => {
+      if (rkMode && i === 1) return;   // ロケット団戦は相手のシールドが種別で決まっている
       S[i].shieldMode = null; S[i].shields = v;
       sideEl[i].querySelectorAll('.shields button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.v === v));
       sideEl[i].querySelector('.custShield').style.display = 'none';
@@ -1838,6 +1939,7 @@ function updateUrl() {
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel') qp.md = mode;
   if (SIMOPT.buffMode !== 'none') qp.pb = SIMOPT.buffMode;   // 確率わざの扱い
+  if (mode === 'rocket') { qp.rk = RK.kind; qp.rs = RK.stall; qp.rl = RK.lv; }   // ロケット団戦の設定
   history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
 }
 
@@ -1890,6 +1992,8 @@ function renderTimeline() {
   const cellEv = (row, i) => {
     const e = row.ev[i], opp = row.ev[1 - i];
     let h = '';
+    // ロケット団戦の硬直(この側は動けないターン)
+    if (!e && row.stalled && row.stalled[i]) h = '<span class="evbox stallbox">硬直</span>';
     if (e) {
       let t = mvChip(e.move);
       if (e.shielded) t += ' -1';
@@ -1931,7 +2035,10 @@ function renderTimeline() {
     const flush = () => {
       if (!hidden.length) return;
       const a = hidden[0].tn, b = hidden[hidden.length - 1].tn;
-      body += `<tr class="gap"><td colspan="7">… ノーマルアタックの応酬 ${hidden.length}ターン（TN${a}${a === b ? '' : '〜' + b}）…</td></tr>`;
+      // ロケット団戦: たたんだ中に相手の硬直が含まれていたらターン数を添える
+      const st = hidden.filter(r => r.stalled && r.stalled[1]).length;
+      body += `<tr class="gap"><td colspan="7">… ノーマルアタックの応酬 ${hidden.length}ターン（TN${a}${a === b ? '' : '〜' + b}）` +
+        `${st ? `<span class="stallbox">うち あいての硬直 ${st}ターン</span>` : ''}…</td></tr>`;
       hidden = [];
     };
     res.rows.forEach((row, idx) => {
@@ -1982,9 +2089,15 @@ function renderTimeline() {
         const ex = res.rows[b.evRow]._extra && res.rows[b.evRow]._extra[i];
         if (ex) moveHtml += ` <span class="extra">(${ex})</span>`;
         moveHtml += buffTxt(b.ev);
-      } else moveHtml = b.idle ? '' : '…';
+      }
+      // ロケット団戦の硬直(この側が動けないターン)は、わざの入っていない枠に「硬直」と出す
+      let stn = 0;
+      for (let k = b.start; k <= b.end; k++) if (res.rows[k].stalled && res.rows[k].stalled[i]) stn++;
+      const stallHtml = stn ? `<span class="stallbox">硬直${stn === b.end - b.start + 1 ? '' : stn}</span>` : '';
+      if (!b.ev) moveHtml = stn === b.end - b.start + 1 ? stallHtml : (b.idle ? stallHtml : '…' + stallHtml);
+      else if (stn) moveHtml = stallHtml + '<br>' + moveHtml;   // 硬直が明けてから出したわざ
       // 待ちの空セルは枠なし・通常の罫線で1行ずつ区切る(シールド類は防いだSPと同じ段に出る)
-      if (b.idle) return `<td class="ev ${i ? 'r' : 'l'}">${shs.length ? '<span class="shield">🛡シールド</span>' : ''}${dgs.length ? '<span class="shield">👻ばけのかわ 防⬇</span>' : ''}</td>`;
+      if (b.idle) return `<td class="ev ${i ? 'r' : 'l'}">${shs.length ? '<span class="shield">🛡シールド</span>' : ''}${dgs.length ? '<span class="shield">👻ばけのかわ 防⬇</span>' : ''}${moveHtml}</td>`;
       // 時系列順に上から並べる: シールド類は防いだSPアタックの段、わざ名はダメージ発生の段
       const er = b.evRow != null ? b.evRow : b.end;
       const items = shs.map(r => ({ row: r, h: '<span class="shield">🛡シールド</span>' }));
@@ -2114,7 +2227,10 @@ document.getElementById('copyUrl').onclick = async () => {
     document.querySelectorAll('#prob button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === SIMOPT.buffMode));
     syncProbNote();
   }
-  if (['multi', 'counter', 'party'].includes(q.get('md'))) {   // モードの復元
+  if (['grunt', 'leader', 'boss'].includes(q.get('rk'))) RK.kind = q.get('rk');   // ロケット団戦の設定の復元
+  if (q.get('rs') != null && !isNaN(+q.get('rs'))) RK.stall = Math.max(0, Math.min(16, +q.get('rs')));
+  if (q.get('rl') != null && !isNaN(+q.get('rl'))) RK.lv = Math.max(1, Math.min(50, +q.get('rl')));
+  if (['multi', 'counter', 'party', 'rocket'].includes(q.get('md'))) {   // モードの復元
     mode = q.get('md');
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
     applyMode();
