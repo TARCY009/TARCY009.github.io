@@ -1,6 +1,6 @@
 // GBL対面シミュレーター用のService Worker
 // 目的: 電波の悪い場所でも起動できるようにする(PWAインストール要件も満たす)
-const CACHE = 'gbl-v2';
+const CACHE = 'gbl-v3';
 // 起動に必要な一式。データ本体(pvp_data.js)と共有モジュールはページ外のパスだが、
 // このSWが管理するページからの読み込みは全てfetchイベントを通るのでキャッシュできる
 const ASSETS = [
@@ -18,14 +18,21 @@ self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));
   self.clients.claim();
 });
-// ネットワーク優先(環境リストの更新をすぐ反映)、オフライン時のみキャッシュを使う
+// ネットワーク優先(更新をすぐ反映)、オフライン時のみキャッシュを使う。
+// 公開先(GitHub Pages)はHTML等を10分間ブラウザにキャッシュさせる設定のため、
+// 同一サイトのファイルは cache:'reload' でブラウザのキャッシュを使わずに取りに行く(更新が即座に届く)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    fetch(e.request).then(r => {
-      const cp = r.clone();
+  const url = new URL(e.request.url);
+  const sameSite = url.origin === self.location.origin;
+  e.respondWith((async () => {
+    try {
+      const res = sameSite ? await fetch(url.href, { cache: 'reload' }) : await fetch(e.request);
+      const cp = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, cp)).catch(() => {});
-      return r;
-    }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
-  );
+      return res;
+    } catch (err) {
+      return (await caches.match(e.request)) || (await caches.match('./index.html'));
+    }
+  })());
 });
