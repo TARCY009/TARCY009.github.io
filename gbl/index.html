@@ -141,6 +141,14 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .pmeta .pt2{font-size:.62rem;color:var(--sub);flex:1 0 100%;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pmeta .pempty{font-size:.66rem;color:var(--sub);opacity:.7}
 .pstarwin .mypkrow{cursor:pointer}
+/* 全モード共通の計算設定 */
+.gopt{display:flex;align-items:center;gap:8px;margin-top:8px}
+.gopt .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
+.gopt .opts{flex:1;min-width:0}
+.gopt .opts button{padding:5px 2px;font-size:.72rem}
+.gopt .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
+.goptnote{font-size:.64rem;color:var(--sub);line-height:1.5;margin-top:4px}
+@media (max-width:520px){.gopt{gap:6px}.gopt .lbl{font-size:.62rem;max-width:38%;line-height:1.3}}
 .pctl{display:flex;align-items:center;gap:8px;margin-top:10px}
 .pctl .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
 .pctl .opts{flex:1}
@@ -305,6 +313,14 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモンを環境上位から総当たりで探す">カウンター検索</button>
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
 </div>
+
+<div class="gopt" id="gopt">
+  <span class="lbl" title="「ねっとう」「かみくだく」など、決まった確率で能力が上下するわざの計算方法。全モード共通で使われます">確率で能力が上下するわざ</span>
+  <div class="opts prob" id="prob">
+    <button data-v="none" aria-pressed="true" title="効果は起きない前提で計算する（運に頼らない結果・既定）">不発</button><button data-v="avg" aria-pressed="false" title="確率のぶんを平均して反映する（例: 30%で攻⬇なら0.3段階ぶん下がる）">期待値</button><button data-v="always" aria-pressed="false" title="毎回必ず発動する前提で計算する（いちばん効果が出た場合）">必ず発動</button>
+  </div>
+</div>
+<div class="goptnote" id="goptnote"></div>
 
 <div class="duel">
   <div class="side mine" id="sideL">
@@ -553,7 +569,9 @@ const scoreOf = (res, side) => {
   const own = res.final[side], opp = res.final[1 - side];
   return 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
 };
-const NO_PROC = { rng: () => 1 };   // 確率バフは不発扱い
+// 全モード共通の計算設定。確率で能力が上下するわざの扱い(不発/期待値/必ず発動)
+// ここを1つの設定にまとめて、一覧系と1対1シミュの結果が食い違わないようにする
+const SIMOPT = { buffMode: 'none' };
 function movePool(key) {
   // 通常枠と特別枠の両方に載っているわざがあるため重複除去する
   const p = D.pokemon[key];
@@ -587,7 +605,7 @@ function optimize(cfgL, cfgR) {
     const k = a + ':' + b;
     if (!cache.has(k)) {
       const res = PvpEngine.simulate(D, { ...cfgL, ...PL[a], timing: cfgL.timing || 'optimal' },
-                                        { ...cfgR, ...PR[b], timing: cfgR.timing || 'optimal' }, NO_PROC);
+                                        { ...cfgR, ...PR[b], timing: cfgR.timing || 'optimal' }, SIMOPT);
       cache.set(k, [scoreOf(res, 0), scoreOf(res, 1)]);
     }
     return cache.get(k);
@@ -914,6 +932,23 @@ document.querySelectorAll('#modes button').forEach(b => b.onclick = () => {
   run();
 });
 
+// ---- 確率で能力が上下するわざの扱い(全モード共通・切り替えたら計算し直す) ----
+const PROB_NOTE = {
+  none: '「ねっとう(30%で相手の攻撃⬇)」のような運まかせの効果は<b>起きない前提</b>で計算します（運に頼らない見方・既定）',
+  avg:  '確率のぶんを<b>平均</b>して反映します（30%で攻⬇なら0.3段階ぶん）。長い目で見た平均的な強さの目安',
+  always: '運まかせの効果が<b>毎回発動する前提</b>で計算します（いちばんうまくいった場合の上ぶれ）',
+};
+function syncProbNote() {
+  document.getElementById('goptnote').innerHTML = PROB_NOTE[SIMOPT.buffMode];
+}
+syncProbNote();
+document.querySelectorAll('#prob button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#prob button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  SIMOPT.buffMode = b.dataset.v;
+  syncProbNote();
+  run();
+});
+
 // ---- 環境一覧(1対多): 自分1匹×環境上位50匹をシールド0-0/1-1/2-2で一括対戦 ----
 function runMulti() {
   const box = document.getElementById('multi');
@@ -963,7 +998,7 @@ function runMulti() {
       const cells = [0, 1, 2].map(sh => {
         let best = null;
         for (const pol of myPols) {   // 自分のわざはこの対面・このシールド数での最善を採用
-          const res = PvpEngine.simulate(D, myCfg(pol, sh), { ...opCfg, shields: sh }, NO_PROC);
+          const res = PvpEngine.simulate(D, myCfg(pol, sh), { ...opCfg, shields: sh }, SIMOPT);
           const sc = scoreOf(res, 0);
           if (!best || sc > best.sc) best = { sc, res };
         }
@@ -1181,7 +1216,7 @@ function runCounter() {
       const cells = [0, 1, 2].map(sh => {
         let worst = null;   // あいてが最も得をするわざ構成を選ぶ＝候補にとって最も厳しい結果
         for (const pol of foePols) {
-          const res = PvpEngine.simulate(D, { ...cdCfg, shields: sh }, foeCfg(pol, sh), NO_PROC);
+          const res = PvpEngine.simulate(D, { ...cdCfg, shields: sh }, foeCfg(pol, sh), SIMOPT);
           const sc = scoreOf(res, 1);
           if (!worst || sc > worst.sc) worst = { sc, res };
         }
@@ -1350,7 +1385,7 @@ function runParty() {
         let best = null;
         for (const pol of pols[j]) {
           const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield };
-          const res = PvpEngine.simulate(D, me, opCfg, NO_PROC);
+          const res = PvpEngine.simulate(D, me, opCfg, SIMOPT);
           const sc = scoreOf(res, 0);
           if (!best || sc > best.sc) best = { sc, res };
         }
@@ -1529,7 +1564,7 @@ function run() {
     return c;
   };
   const L = fin(0, plan.left, curSh(0), true), R = fin(1, plan.right, curSh(1), true);
-  const res = PvpEngine.simulate(D, L, R, NO_PROC);
+  const res = PvpEngine.simulate(D, L, R, SIMOPT);
   // シャドウ個体は結果・タイムラインの名前にも反映する
   [L, R].forEach((c, i) => { if (c.shadow) res.final[i].name = 'シャドウ' + res.final[i].name; });
   // シールド枚数別の勝敗(3×3): 各マスでわざ構成も選び直す(マスをタップした結果と一致させるため)
@@ -1538,7 +1573,7 @@ function run() {
     const row = [];
     for (let b = 0; b <= 2; b++) {
       const p = a === curSh(0) && b === curSh(1) ? plan : optimize(optCfg(0, a), optCfg(1, b));
-      const r = PvpEngine.simulate(D, fin(0, p.left, a, false), fin(1, p.right, b, false), NO_PROC);
+      const r = PvpEngine.simulate(D, fin(0, p.left, a, false), fin(1, p.right, b, false), SIMOPT);
       const w = r.winner;
       row.push({ w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) });
     }
@@ -1599,7 +1634,7 @@ function fillMoves(i, cfg) {
   if (showSp) buildSpConfig(i, S[i].c1 || cfg.throw, S[i].c2);
 }
 
-// 「発ごとのSP設定」小窓(タイミングとわざを1行で選ぶ・みんポケの2窓を合体)
+// 「発ごとのSP設定」小窓(タイミングとわざを1行で選ぶ)
 function buildSpConfig(i, m1, m2) {
   const el = sideEl[i];
   el.querySelector('.custSp .legend').innerHTML = m2
@@ -1786,6 +1821,7 @@ function updateUrl() {
   });
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel') qp.md = mode;
+  if (SIMOPT.buffMode !== 'none') qp.pb = SIMOPT.buffMode;   // 確率わざの扱い
   history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
 }
 
@@ -1802,13 +1838,18 @@ function renderTimeline() {
     return hp === 0 || pct < 0.2 ? 'hpr' : pct < 0.5 ? 'hpy' : 'hpg';
   };
   // 能力変化はデータから向きを判定し、太い矢印(⬆⬇)で表示
+  // 1段階ちょうど以外(2段階や「期待値」設定の端数)は矢印のうしろに段階数を添える
+  const stg = d => {
+    const a = Math.abs(d);
+    return a === 1 ? '' : String(Math.round(a * 100) / 100);
+  };
   const buffTxt = e => {
     if (!e.buff) return '';
     const dA = e.buff.to[0] - e.buff.from[0], dD = e.buff.to[1] - e.buff.from[1];
     const pre = e.buff.target === 'opponent' ? '相手' : '';
     let t = '';
-    if (dA) t += pre + '攻' + (dA > 0 ? '⬆' : '⬇');
-    if (dD) t += (t ? ' ' : '') + pre + '防' + (dD > 0 ? '⬆' : '⬇');
+    if (dA) t += pre + '攻' + (dA > 0 ? '⬆' : '⬇') + stg(dA);
+    if (dD) t += (t ? ' ' : '') + pre + '防' + (dD > 0 ? '⬆' : '⬇') + stg(dD);
     return t ? ` <span class="${dA + dD >= 0 ? 'buffup' : 'buffdown'}">${t}</span>` : '';
   };
   // CCT等でゲージが足りているのに余分に打ったノーマルアタックへ(+n)を付与
@@ -2051,6 +2092,11 @@ document.getElementById('copyUrl').onclick = async () => {
     el.querySelector('.cEn').value = S[i].cEn;
     el.querySelectorAll('.cpre button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.hp === S[i].cHp));
   });
+  if (['avg', 'always'].includes(q.get('pb'))) {   // 確率で能力が上下するわざの扱いの復元
+    SIMOPT.buffMode = q.get('pb');
+    document.querySelectorAll('#prob button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === SIMOPT.buffMode));
+    syncProbNote();
+  }
   if (['multi', 'counter', 'party'].includes(q.get('md'))) {   // モードの復元
     mode = q.get('md');
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));

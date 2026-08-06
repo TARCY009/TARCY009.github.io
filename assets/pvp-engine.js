@@ -45,13 +45,29 @@
     return Math.floor(0.5 * mv.p * (a / d) * eff * stab * BONUS) + 1;
   }
 
-  function applyBuffs(mv, self, opp, rng) {
+  /* 確率で能力が上下するわざ(ねっとう30%など)の扱い。opt.buffMode で切り替える
+       'none'   … 不発として扱う(最低保証・安全側)
+       'avg'    … 確率のぶんを平均で反映(30%で攻-1なら-0.3段階)
+       'always' … 毎回必ず発動する前提(最大値・危険側)
+       'rng'    … 乱数で判定(既定・opt.rng があればそれを使う) */
+  function applyBuffs(mv, self, opp, opt) {
     if (!mv.bf) return null;
-    if (mv.bc < 1 && (rng ? rng() : Math.random()) >= mv.bc) return null;
+    let scale = 1;
+    if (mv.bc < 1) {
+      const mode = (opt && opt.buffMode) || 'rng';
+      if (mode === 'none') return null;
+      else if (mode === 'avg') scale = mv.bc;
+      else if (mode !== 'always') {
+        const rng = opt && opt.rng;
+        if ((rng ? rng() : Math.random()) >= mv.bc) return null;
+      }
+    }
     const target = mv.bt === 'opponent' ? opp : self;
     const before = target.buffs.slice();
-    target.buffs[0] = Math.max(-4, Math.min(4, target.buffs[0] + mv.bf[0]));
-    target.buffs[1] = Math.max(-4, Math.min(4, target.buffs[1] + mv.bf[1]));
+    const clamp = v => Math.max(-4, Math.min(4, Math.round(v * 1000) / 1000));
+    target.buffs[0] = clamp(target.buffs[0] + mv.bf[0] * scale);
+    target.buffs[1] = clamp(target.buffs[1] + mv.bf[1] * scale);
+    if (target.buffs[0] === before[0] && target.buffs[1] === before[1]) return null;
     return { target: mv.bt || 'self', from: before, to: target.buffs.slice() };
   }
 
@@ -281,7 +297,7 @@
         }
         s.thrown = (s.thrown || 0) + 1;
         o.hp -= dealt;
-        const buff = applyBuffs(mv, s, o, opt.rng);
+        const buff = applyBuffs(mv, s, o, opt);
         const ev = [null, null];
         ev[i] = { move: mv.n, dmg: dealt, full, shielded, disguised, buff };
         // モルペコ: SPアタックを打つたびに まんぷく⇄はらぺこ が切り替わる(オーラぐるまのタイプが変化)
