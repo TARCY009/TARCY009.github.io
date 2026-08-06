@@ -148,6 +148,8 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .gopt .opts button{padding:5px 2px;font-size:.72rem}
 .gopt .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
 .goptnote{font-size:.64rem;color:var(--sub);line-height:1.5;margin-top:4px}
+.cmpnote{margin-top:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;font-size:.72rem;color:var(--sub);line-height:1.5}
+.cmpnote b{color:var(--cy)}
 @media (max-width:520px){.gopt{gap:6px}.gopt .lbl{font-size:.62rem;max-width:38%;line-height:1.3}}
 .pctl{display:flex;align-items:center;gap:8px;margin-top:10px}
 .pctl .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
@@ -379,7 +381,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <label class="f">連戦（2体目以降の引き継ぎ）</label>
       <div class="opts carry">
@@ -459,7 +461,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <label class="f">連戦（2体目以降の引き継ぎ）</label>
       <div class="opts carry">
@@ -683,6 +685,8 @@ const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1
   carry: false, cHp: 100, cEn: 0, bluff: true });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
+// 側のタイミング設定 → 発ごとのSP設定で使う記号(最短=min / 同時=sync / それ以外=最適)
+const spModeOf = i => S[i].timing === 'asap' ? 'min' : S[i].timing === 'sync' ? 'sync' : 'opt';
 
 // ---- 検索候補 ----
 sideEl.forEach((el, i) => {
@@ -722,9 +726,9 @@ sideEl.forEach((el, i) => {
   el.querySelectorAll('.timing button').forEach(b => b.onclick = () => {
     el.querySelectorAll('.timing button').forEach(x => x.setAttribute('aria-pressed', x === b));
     S[i].timing = b.dataset.v;
-    // 最適/最短を押したら発ごとの設定も一括でそのタイミングに揃える
+    // 最適/最短/同時を押したら発ごとの設定も一括でそのタイミングに揃える
     if (S[i].timing !== 'plan') {
-      const m = S[i].timing === 'asap' ? 'min' : 'opt';
+      const m = spModeOf(i);
       S[i].spMode = [m, m, m, m, m];
       S[i].spModeRest = m;
     }
@@ -1476,7 +1480,7 @@ function syncSmax(i) {
 
 // 発ごとのSP設定を初期状態(全部おまかせ)へ戻す。ポケモンを切り替えたときに古い指定を残さない
 function resetSpPlan(i) {
-  const m = S[i].timing === 'asap' ? 'min' : 'opt';
+  const m = spModeOf(i);
   S[i].spMode = [m, m, m, m, m]; S[i].spModeRest = m;
   S[i].spMv = ['auto', 'auto', 'auto', 'auto', 'auto']; S[i].spMvRest = 'auto';
 }
@@ -1643,6 +1647,7 @@ function buildSpConfig(i, m1, m2) {
   const optHtml = sel =>
     `<option value="opt"${sel === 'opt' ? ' selected' : ''}>最適</option>` +
     `<option value="min"${sel === 'min' ? ' selected' : ''}>最短</option>` +
+    `<option value="sync"${sel === 'sync' ? ' selected' : ''}>同時</option>` +
     [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n =>
       `<option value="${n}"${sel === n ? ' selected' : ''}>＋${n}発</option>`).join('');
   const labels = ['1発目', '2発目', '3発目', '4発目', '5発目', '6発目〜'];
@@ -1658,7 +1663,7 @@ function buildSpConfig(i, m1, m2) {
   }).join('');
   el.querySelectorAll('.custSp .tsel').forEach(sel => sel.onchange = () => {
     const k = +sel.dataset.k;
-    const v = sel.value === 'opt' || sel.value === 'min' ? sel.value : +sel.value;
+    const v = ['opt', 'min', 'sync'].includes(sel.value) ? sel.value : +sel.value;
     if (k < 5) S[i].spMode[k] = v; else S[i].spModeRest = v;
     // 発ごとに触ったらタイミングは「ﾏﾆｭｱﾙ」表示にする
     if (S[i].timing !== 'plan') {
@@ -1732,9 +1737,20 @@ function render(res, L, R, matrix) {
       <tr><th class="corner">自分＼相手</th><th>🛡0</th><th>🛡1</th><th>🛡2</th></tr>
       ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${[0, 1, 2].map(b => mtxCell(a, b)).join('')}</tr>`).join('')}
     </table></div>`;
+  // 「同時」を使っているときは、撃ち合いになったらどちらが先に当たるか(CMP)を出す
+  let cmpHtml = '';
+  if (S[0].timing === 'sync' || S[1].timing === 'sync') {
+    const at = [PvpEngine.buildStats(D, L).atk, PvpEngine.buildStats(D, R).atk];
+    const fst = at[0] >= at[1] ? 0 : 1;   // 攻撃の実数値が高いほうが先に当たる
+    const fmt1 = v => (Math.round(v * 10) / 10).toFixed(1);
+    cmpHtml = `<div class="cmpnote">同じターンに撃ち合ったときは <b>${res.final[fst].name}</b> のSPアタックが先に当たります
+      （能力変化がない状態の攻撃実数値 ${fmt1(at[fst])} ${at[0] === at[1] ? '＝' : '＞'} ${fmt1(at[1 - fst])}。
+      戦闘中に攻撃が上下すると入れ替わることがあります）</div>`;
+  }
   // 技一覧もHPバー等と同じ左右2列に揃える(中央のVSは列幅合わせ用の不可視スペーサー)
   rEl.innerHTML = `
     <div class="vs">${fighter(0, L)}<div class="vsmark">VS</div>${fighter(1, R)}</div>
+    ${cmpHtml}
     ${mtxHtml}
     <div class="mvcols">
       <div class="mvside"><div class="mvhead">${res.final[0].name}の技（実測値）</div>${mvRows(0)}</div>
@@ -2046,6 +2062,7 @@ document.getElementById('copyUrl').onclick = async () => {
   ['tl', 'tr'].forEach((k, i) => { if (q.get(k)) {
     S[i].timing = q.get(k);
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
+    resetSpPlan(i);   // 発ごとのSP設定も復元したタイミングに揃える(SPアタック2を選んだときの表示用)
   }});
   if (q.get('cup')) selectCup(q.get('cup'));   // 特殊カップの復元
   ['shl', 'shr'].forEach((k, i) => {   // シャドウ指定の復元

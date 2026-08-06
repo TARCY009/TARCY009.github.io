@@ -152,15 +152,32 @@
         : (a, b) => dmg(b) / b.e - dmg(a) / a.e)[0];             // 効率が高い順
     };
 
+    // 何発目にどのわざを撃つ予定かを決める(マニュアル指定 > 固定指定 > 自動選択)
+    const plannedMove = (s, o) => {
+      let mvId = null;
+      if (s.cfg.throwSeq) {   // 何発目にどのわざを打つかの指定(マニュアル)
+        const idx = s.thrown || 0;
+        mvId = idx < s.cfg.throwSeq.length ? s.cfg.throwSeq[idx] : s.cfg.throwRest;
+      }
+      return mvId ? D.moves[rmv(s, mvId)]
+        : s.cfg.throw ? D.moves[rmv(s, s.cfg.throw)]
+        : autoMove(s, o);
+    };
+
     while (turn < maxTurn && winner === null) {
       turn++;
       // 行動決定: 待機中の側は「ゲージ技を使う」か「通常技を開始」
       // ゲージ技は1ターンを消費して発動し、その間も相手の通常技は進行する
       const charging = [null, null];
+      const sync = [null, null];   // 「同時」待ち: 相手が撃つかどうかを見てから決める(下の2周目)
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
         if (s.cd !== 0) continue;               // 通常技の途中
-        if (s.cfg.timing === 'asap') {
+        if (s.cfg.timing === 'sync') {
+          // 同時: 相手がSPアタックを撃つターンに合わせて撃つ(先後は攻撃実数値=CMPで決まる)
+          const mv = plannedMove(s, sides[1 - i]);
+          if (mv && s.en >= mv.e) { sync[i] = mv; continue; }
+        } else if (s.cfg.timing === 'asap') {
           // 最短: 撃てるゲージ技ができた瞬間に撃つ(複数撃てるなら消費が軽い技)
           const avail = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(m => s.en >= m.e);
           if (avail.length) {
@@ -172,14 +189,7 @@
           // 最適(CCT): 相手の通常技の最終ターンを狙って撃つ(差し込みで相手を得させない)。
           // 倒しきれる場合はタイミングを待たず即撃ち。待つターンは通常技を開始する。
           const o = sides[1 - i];
-          let mvId = null;
-          if (s.cfg.throwSeq) {   // 何発目にどのわざを打つかの指定(マニュアル)
-            const idx = s.thrown || 0;
-            mvId = idx < s.cfg.throwSeq.length ? s.cfg.throwSeq[idx] : s.cfg.throwRest;
-          }
-          const mv = mvId ? D.moves[rmv(s, mvId)]
-            : s.cfg.throw ? D.moves[rmv(s, s.cfg.throw)]
-            : autoMove(s, o);
+          const mv = plannedMove(s, o);
           if (mv && s.en >= mv.e) {
             // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
             const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
@@ -203,6 +213,7 @@
             const mv = sh.move ? D.moves[rmv(s, sh.move)] : autoMove(s, o);
             if (mv && s.en >= mv.e) {
               let fire = false;
+              if (sh.mode === 'sync') { sync[i] = mv; continue; }   // 同時: 2周目で相手に合わせる
               if (sh.mode === 'min') fire = true;   // 最短: 撃てた瞬間
               else if (typeof sh.mode === 'number') {
                 // +N発: ゲージが貯まってから通常技を余分にN発打ってから発動
@@ -231,6 +242,16 @@
         }
         s.cd = s.fast.tn;                       // 通常技を開始
         s.startedNow = true;
+      }
+      // 「同時」の判定(2周目): 相手がこのターンにSPアタックを撃つなら合わせて撃つ。
+      // 両者とも「同時」なら、二人とも撃てるようになったターンに撃ち合う。
+      // 相手が撃たないままゲージが満タン(これ以上ためられない)になったら合わせるのをあきらめて撃つ
+      for (let i = 0; i < 2; i++) {
+        if (!sync[i]) continue;
+        const s = sides[i];
+        const together = sync[1 - i] ? true : !!charging[1 - i];
+        if (together || s.en >= 100) { s.waitCnt = 0; s.shotWait = 0; charging[i] = sync[i]; }
+        else { s.cd = s.fast.tn; s.startedNow = true; }
       }
       // ターン経過 → 完了した通常技の発生
       // 相手がゲージ技のターンに打ち始めた通常技は差し込み(前倒し)扱いなのでここでは進めない
