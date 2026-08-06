@@ -188,6 +188,7 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rkcolttl{font-size:.72rem;font-weight:700;color:var(--cy)}
 .rkcolttl.foe{color:var(--gold)}
 .rkcolttl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:1px}
+.fslot .fshadow{display:inline-flex;align-items:center;justify-content:center;width:26px;height:21px;border-radius:99px;background:linear-gradient(135deg,#7c3aed,#b06cff);color:#fff;font-size:.72rem;flex-shrink:0}
 .fslot select{width:100%;margin-top:4px;padding:5px 6px;font-size:.72rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
 .fstat{font-size:.62rem;color:var(--sub);margin-top:4px;line-height:1.4}
 .rkstallcfg{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding:7px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
@@ -911,6 +912,8 @@ sideEl.forEach((el, i) => {
   });
   // シャドウタブ: この側にシャドウ補正(攻撃1.2倍・防御5/6)をかける
   el.querySelector('.shadowtab').onclick = () => {
+    // ロケット団戦のあいてはシャドウ固定(押しても切り替えない)
+    if (el.querySelector('.shadowtab').getAttribute('aria-disabled') === 'true') return;
     S[i].shadow = !S[i].shadow;
     el.querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
     if (S[i].key) {
@@ -1123,13 +1126,19 @@ function syncRocket() {
     (RK.team ? `「あいての登場」は<b>1回目の対面</b>の始まり方です（2匹目以降の硬直は下の連戦パネルで設定します）。` : '') +
     (RK.enter === 'ko' ? `倒されて次を出した直後なので、登場時にも<b>8ターン（4秒）</b>の硬直があります。` : '') +
     (RK.enter === 'swap' ? `自分から交代した直後なので、登場時にも<b>9ターン（4.5秒）</b>の硬直があります（交代の分、自分も1ターン動けないので実質8ターンぶんの得）。` : '') +
-    `<br>あいてのステータスは<b>PL40・個体値100%と比べて 攻撃${m[0]}倍・防御${m[1]}倍・HP${m[2]}倍</b>として計算します` +
+    `<br>あいてのポケモンは<b>必ずシャドウ</b>です（切り替えできません）。ステータスは<b>PL40・個体値100%と比べて 攻撃${m[0]}倍・防御${m[1]}倍・HP${m[2]}倍</b>として計算します` +
     '（ここに<b>シャドウ補正（攻×1.2・防÷1.2）</b>が別途かかります。トレーナーレベル40以上が前提）。';
-  // ロケット団のポケモンはステータスの決まり方が違うので、個体値・PL・シャドウの欄は使わない
-  S[1].shadow = false;   // 画面のシャドウタブは使わない(計算側では常にシャドウとして扱う)
+  // ロケット団のポケモンはステータスの決まり方が違うので、個体値・PLの欄は使わない
   S[1].c2 = null;   // 同じ個体が2種類のSPアタックを使い分けることはない
   const el = sideEl[1];
-  el.querySelector('.shadowtab').setAttribute('aria-pressed', false);
+  // ロケット団はシャドウしか使ってこないので、シャドウは常にON(押しても切り替わらない)
+  if (RK.prevShadow == null) RK.prevShadow = S[1].shadow;   // 他モードへ戻したときのために覚えておく
+  S[1].shadow = true;
+  const tab = el.querySelector('.shadowtab');
+  tab.setAttribute('aria-pressed', true);
+  tab.setAttribute('aria-disabled', true);
+  tab.title = 'ロケット団のポケモンは必ずシャドウです（切り替えできません）';
+  if (S[1].key) el.querySelector('input').value = 'シャドウ' + D.pokemon[S[1].key].n;
   // シールド(種別で決まる)・タイミング(常に撃てしだい)・連戦(登場の設定で扱う)は選ばせない
   ['.ivmode', '.custIv', '.smaxwrap', '.selC2', '.bluffwrap', '.shields', '.custShield',
    '.timing', '.custSp', '.carry', '.custCarry'].forEach(sel => {
@@ -1155,6 +1164,13 @@ function restoreFoeInputs() {
   el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
   el.querySelector('.bluffwrap').style.display = S[1].c2 ? 'block' : 'none';
   hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
+  // シャドウ固定を解除し、ロケット団戦に入る前の状態へ戻す
+  const tab = el.querySelector('.shadowtab');
+  if (RK.prevShadow != null) { S[1].shadow = RK.prevShadow; RK.prevShadow = null; }
+  tab.setAttribute('aria-pressed', !!S[1].shadow);
+  tab.removeAttribute('aria-disabled');
+  tab.title = 'シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする';
+  if (S[1].key) el.querySelector('input').value = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
 }
 document.querySelectorAll('#rkkind button').forEach(b => b.onclick = () => {
   RK.kind = b.dataset.v;
@@ -1709,7 +1725,9 @@ function buildFoeSlots() {
   const box = document.querySelector('#rkteam .foeslots');
   if (!box) return;
   box.innerHTML = [0, 1, 2].map(i => `<div class="pslot fslot" data-i="${i}">
-    <div class="phd"><span class="pnum">${i + 1}匹目</span><button class="pclr" title="この枠を空にする">×</button></div>
+    <div class="phd"><span class="pnum">${i + 1}匹目</span>
+      <span class="fshadow" title="ロケット団のポケモンは必ずシャドウです"><i class="shadowmark"></i></span>
+      <button class="pclr" title="この枠を空にする">×</button></div>
     <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="fbody" style="display:none">
       <select class="selFast" title="あいてのノーマルアタック"></select>
@@ -1757,7 +1775,7 @@ function syncFoeSlots() {
   document.querySelectorAll('#rkteam .fslot').forEach(el => {
     const m = RKT[+el.dataset.i];
     const fb = el.querySelector('.fbody');
-    el.querySelector('input').value = m ? D.pokemon[m.key].n : '';
+    el.querySelector('input').value = m ? rktName(m) : '';   // 必ずシャドウなので名前もそう出す
     if (!m) { fb.style.display = 'none'; return; }
     fb.style.display = 'block';
     const cfg = rktCfg(m);
@@ -1958,6 +1976,7 @@ function applyMyPk(i, m, skipRun) {
     el.querySelector('.ivA').value = S[i].mIvs[0]; el.querySelector('.ivD').value = S[i].mIvs[1];
     el.querySelector('.ivH').value = S[i].mIvs[2]; el.querySelector('.ivL').value = S[i].mLevel;
   }
+  if (mode === 'rocket' && i === 1) syncRocket();   // あいて側はシャドウ固定などの表示に戻す
   if (!skipRun) run();   // 続けて別の設定も変える場合は呼び出し側でまとめて実行する
 }
 
@@ -1985,6 +2004,7 @@ function pick(i, key) {
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;   // 個体値も理想に戻す
   sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
   sideEl[i].querySelector('.custIv').style.display = 'none';
+  if (mode === 'rocket' && i === 1) syncRocket();   // ロケット団のポケモンはシャドウ固定
   run();
 }
 
