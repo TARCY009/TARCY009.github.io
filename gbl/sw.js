@@ -15,7 +15,9 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+  // 自分の古いキャッシュ(gbl-)だけ消す。他ツールのキャッシュは消さない
+  e.waitUntil(caches.keys().then(ks =>
+    Promise.all(ks.filter(k => k.startsWith('gbl-') && k !== CACHE).map(k => caches.delete(k)))));
   self.clients.claim();
 });
 // ネットワーク優先(更新をすぐ反映)、オフライン時のみキャッシュを使う。

@@ -597,6 +597,10 @@ function renderRank(){
   moreBtn.style.display=rows.length>showN?'block':'none';
   sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
 }
+// オフライン対応＆更新の即時反映(サイト共通のService Worker)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
+}
 </script>
 </body>
 </html>

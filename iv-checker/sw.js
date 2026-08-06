@@ -1,22 +1,35 @@
-// 最小構成のService Worker: PWAインストール要件+基本キャッシュ
-const CACHE='ivc-v1';
+// 個体値チェッカー用のService Worker
+//  - 更新をすぐ届ける: 公開先はHTML等を10分間ブラウザにキャッシュさせるため、
+//    同一サイトのファイルは cache:'reload' でブラウザのキャッシュを使わずに取りに行く
+//  - オフラインでも開ける: 通信できないときだけ保存済みを使う
+const CACHE='ivc-v2';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{}));
   self.skipWaiting();
 });
 self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  // 自分の古いキャッシュ(ivc-)だけ消す。他ツールのキャッシュは消さない
+  e.waitUntil(caches.keys().then(ks=>Promise.all(
+    ks.filter(k=>k.startsWith('ivc-')&&k!==CACHE).map(k=>caches.delete(k)))));
   self.clients.claim();
 });
-// ネットワーク優先(更新反映を優先)、オフライン時のみキャッシュ
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET') return;
-  e.respondWith(
-    fetch(e.request).then(r=>{
-      const cp=r.clone();
-      caches.open(CACHE).then(c=>c.put(e.request,cp)).catch(()=>{});
-      return r;
-    }).catch(()=>caches.match(e.request))
-  );
+  const url=new URL(e.request.url);
+  const sameSite=url.origin===self.location.origin;
+  e.respondWith((async()=>{
+    try{
+      const res=sameSite?await fetch(url.href,{cache:'reload'}):await fetch(e.request);
+      if(sameSite&&res.ok){
+        const cp=res.clone();
+        caches.open(CACHE).then(c=>c.put(e.request,cp)).catch(()=>{});
+      }
+      return res;
+    }catch(err){
+      return (await caches.match(e.request)) ||
+             (await caches.match(e.request,{ignoreSearch:true})) ||
+             (await caches.match('./index.html'));
+    }
+  })());
 });

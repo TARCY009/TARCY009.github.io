@@ -1015,6 +1015,10 @@ footer a{color:var(--spec)}
   }
   moreBtn.addEventListener('click', () => { shown += 30; render(); });
 })();
+// オフライン対応＆更新の即時反映(サイト共通のService Worker)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
+}
 </script>
 </body>
 </html>
