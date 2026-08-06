@@ -338,7 +338,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="rkrow">
     <span class="lbl">あいての登場</span>
     <div class="opts rkenter" id="rkenter">
-      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">先頭（開幕）</button><button data-v="later" aria-pressed="false" title="交代や倒されたあとに出てくる2匹目以降。登場直後に硬直があります">2体目以降</button>
+      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">先頭（開幕）</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次を出した直後。あいては4秒(8ターン)動けません">倒されて交代</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">手動で交代</button>
     </div>
     <label class="lbl" for="rkstall" title="どちらかがSPアタックを撃つと、あいてはこのターン数だけ動けなくなります(0.5秒=1ターン)">SP後の硬直</label>
     <input type="number" id="rkstall" min="0" max="16" inputmode="numeric">
@@ -951,8 +951,15 @@ cupTab.onclick = () => {
 // 表示実数値(シャドウフシギソウ: 攻362.95 防207.77 HP134 / CP6059)から逆算した。
 // シャドウ補正(攻×1.2・防÷1.2)はこの倍率には含まれず、通常のポケモンと同じく戦闘計算でかかる
 // (この扱いで「シャドウミュウツーPL40攻13のねんりきで4発(3.8発)」という実測と一致する)
-const RK = { kind: 'grunt', stall: 4, enter: 'first' };
-const RK_ENTER_STALL = 6;
+// 硬直(2026年3月時点の確定情報。0.5秒=1ターン):
+//   SPアタック発動直後 3.5秒=7ターン / 瀕死による交代直後 4秒=8ターン / 手動交代直後 4.5秒=9ターン
+//   手動交代のときは自分も0.5秒(1ターン)動けないので、実質は8ターン分の得になる
+const RK = { kind: 'grunt', stall: 7, enter: 'first' };
+const RK_ENTER = {
+  first: { foe: 0, me: 0, label: '先頭（開幕）' },
+  ko:    { foe: 8, me: 0, label: '倒されて交代' },
+  swap:  { foe: 9, me: 1, label: '手動で交代' },
+};
 const RK_BASE = [2.7666, 1.6640, 1.0];   // したっぱ: 攻・防・HPの倍率
 const rkMult = r => RK_BASE.map(v => v * r);
 const RK_SPEC = {
@@ -1002,7 +1009,8 @@ function syncRocket() {
   const m = sp.mult.map(v => Math.round(v * 100) / 100);
   document.querySelector('.rknote').innerHTML = RK_NOTE[RK.kind] +
     `どちらかがSPアタックを撃つと、あいては<b>${RK.stall}ターン（${(RK.stall / 2).toFixed(1)}秒）</b>動けません（この間はこちらだけ攻撃できます）。` +
-    (RK.enter === 'later' ? `2体目以降として出てくるので、登場直後にも<b>${RK_ENTER_STALL}ターン（3秒）</b>の硬直があります。` : '') +
+    (RK.enter === 'ko' ? `倒されて次を出した直後なので、登場時にも<b>8ターン（4秒）</b>の硬直があります。` : '') +
+    (RK.enter === 'swap' ? `自分から交代した直後なので、登場時にも<b>9ターン（4.5秒）</b>の硬直があります（交代の分、自分も1ターン動けないので実質8ターンぶんの得）。` : '') +
     `<br>あいてのステータスは<b>PL40・個体値100%と比べて 攻撃${m[0]}倍・防御${m[1]}倍・HP${m[2]}倍</b>として計算します` +
     '（ここに<b>シャドウ補正（攻×1.2・防÷1.2）</b>が別途かかります。トレーナーレベル40以上が前提）。';
   // ロケット団のポケモンはステータスの決まり方が違うので、個体値・PL・シャドウの欄は使わない
@@ -1010,12 +1018,13 @@ function syncRocket() {
   S[1].c2 = null;   // 同じ個体が2種類のSPアタックを使い分けることはない
   const el = sideEl[1];
   el.querySelector('.shadowtab').setAttribute('aria-pressed', false);
-  // シールドも種別で決まる(したっぱ0枚・リーダー/サカキは最初の2発を防ぐ)ので選ばせない
-  ['.ivmode', '.custIv', '.smaxwrap', '.selC2', '.bluffwrap', '.shields', '.custShield'].forEach(sel => {
+  // シールド(種別で決まる)・タイミング(常に撃てしだい)・連戦(登場の設定で扱う)は選ばせない
+  ['.ivmode', '.custIv', '.smaxwrap', '.selC2', '.bluffwrap', '.shields', '.custShield',
+   '.timing', '.custSp', '.carry', '.custCarry'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n) n.style.display = 'none';
   });
-  hideLabelFor(el, '.ivmode'); hideLabelFor(el, '.selC2'); hideLabelFor(el, '.shields');
+  ['.ivmode', '.selC2', '.shields', '.timing', '.carry'].forEach(sel => hideLabelFor(el, sel));
 }
 // 入力欄のすぐ上の見出し(ラベル)も一緒に隠す/戻す
 function hideLabelFor(el, sel, show) {
@@ -1026,8 +1035,11 @@ function hideLabelFor(el, sel, show) {
 // ロケット団戦から他のモードへ戻したときに、隠した欄を元に戻す
 function restoreFoeInputs() {
   const el = sideEl[1];
-  ['.ivmode', '.selC2', '.shields'].forEach(sel => { const n = el.querySelector(sel); if (n) n.style.display = ''; });
-  hideLabelFor(el, '.shields', true);
+  ['.ivmode', '.selC2', '.shields', '.timing', '.carry'].forEach(sel => {
+    const n = el.querySelector(sel);
+    if (n) n.style.display = '';
+    hideLabelFor(el, sel, true);
+  });
   el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
   el.querySelector('.bluffwrap').style.display = S[1].c2 ? 'block' : 'none';
   hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
@@ -1646,12 +1658,15 @@ function run() {
   if (!S[0].key || !S[1].key) return;
   const rk = mode === 'rocket';       // ロケット団戦: 相手はNPC、CP制限なし
   const capX = rk ? 0 : cap;
+  // 手動交代の直後は自分も1ターン(0.5秒)動けない
+  const myStall = rk ? RK_ENTER[RK.enter].me : 0;
   const base = S.map((s, i) => {
     const c = carryOf(i);
     if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, ...c };
     const r1 = rank1(s.key, capX, 0, s.maxLv);
     return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, ...c };
   });
+  if (myStall) base[0].stallStart = myStall;
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
   S.forEach((s, i) => {
     const note = sideEl[i].querySelector('.ivnote');
@@ -1669,7 +1684,7 @@ function run() {
   const rkCfg = c => {
     const sp = rkSpec();
     c.npc = true; c.stallSp = RK.stall; c.timing = 'asap';
-    c.stallStart = RK.enter === 'later' ? RK_ENTER_STALL : 0;   // 2体目以降は登場直後も硬直
+    c.stallStart = RK_ENTER[RK.enter].foe;   // 交代・倒されたあとの登場は硬直つき
     c.statMult = sp.mult;   // ステータスはPL40・個体値100%基準の倍率で決まる
     c.spMult = sp.sp;       // したっぱのSPアタックは威力0.6倍
     c.shadow = true;        // ロケット団のポケモンはシャドウ(補正は倍率とは別にかかる)
@@ -2280,7 +2295,7 @@ document.getElementById('copyUrl').onclick = async () => {
   }
   if (['grunt', 'leader', 'boss'].includes(q.get('rk'))) RK.kind = q.get('rk');   // ロケット団戦の設定の復元
   if (q.get('rs') != null && !isNaN(+q.get('rs'))) RK.stall = Math.max(0, Math.min(16, +q.get('rs')));
-  if (['first', 'later'].includes(q.get('re'))) RK.enter = q.get('re');
+  if (RK_ENTER[q.get('re')]) RK.enter = q.get('re');
   if (['multi', 'counter', 'party', 'rocket'].includes(q.get('md'))) {   // モードの復元
     mode = q.get('md');
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
