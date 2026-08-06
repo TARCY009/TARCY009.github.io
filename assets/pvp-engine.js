@@ -24,8 +24,21 @@
   }
 
   // 実ステータス(種族値+個体値, レベル補正, シャドウ補正)
+  // ロケット団(NPC)のポケモンだけは決まり方が違うので cfg.statMult=[攻,防,HP] で倍率を渡す。
+  // 基準は「PL40・個体値100%」。表示上のCP・実数値はこの倍率までで、
+  // シャドウ補正(攻×1.2・防÷1.2)は通常のポケモンと同じく戦闘計算で別途かかる
   function buildStats(D, cfg) {
     const p = D.pokemon[cfg.key];
+    if (cfg.statMult) {
+      const c40 = D.cpm['40'];
+      const bA = (p.a + 15) * c40 * cfg.statMult[0];
+      const bD = (p.df + 15) * c40 * cfg.statMult[1];
+      const hp = Math.floor((p.h + 15) * c40 * cfg.statMult[2]);
+      const cp = Math.max(10, Math.floor(bA * Math.sqrt(bD) * Math.sqrt(hp) / 10));
+      const sA = cfg.shadow ? D.settings.shadowAtkMult : 1;
+      const sD = cfg.shadow ? D.settings.shadowDefMult : 1;
+      return { atk: bA * sA, def: bD * sD, hp, cp, baseAtk: bA, baseDef: bD, types: p.ty, name: p.n };
+    }
     const c = D.cpm[String(cfg.level)];
     const sA = cfg.shadow ? D.settings.shadowAtkMult : 1;
     const sD = cfg.shadow ? D.settings.shadowDefMult : 1;
@@ -104,10 +117,13 @@
         fastId: cfg.fast,
         plan: (cfg.plan || []).slice(),
         used: {},
-        // ロケット団戦: NPC側は、どちらかがSPアタックを撃つたびに stallSp ターンのあいだ動けない
+        // ロケット団戦: NPC側は、どちらかがSPアタックを撃つたびに stallSp ターンのあいだ動けない。
+        // stallStart は「2体目以降として出てきたとき」の登場直後の硬直。
+        // spMult はSPアタックのダメージ倍率(したっぱは手加減して撃つため1倍未満)
         npc: !!cfg.npc,
         stallSp: cfg.stallSp || 0,
         stall: cfg.stallStart || 0,
+        spMult: cfg.spMult || 1,
       };
       // 連戦(2体目以降)の引き継ぎ: 開始HP割合と開始ゲージを指定できる
       if (cfg.startHpPct != null && cfg.startHpPct < 100)
@@ -296,7 +312,8 @@
           const bid = AEGIS_FAST_BLADE[s.fastId];
           if (bid) { s.fastId = bid; s.fast = D.moves[bid]; }
         }
-        const full = damage(D, mv, s, o);
+        // ロケット団のしたっぱはSPアタックを弱い威力で撃ってくる(spMult)
+        const full = s.spMult === 1 ? damage(D, mv, s, o) : Math.max(1, Math.floor(damage(D, mv, s, o) * s.spMult));
         // シールド判断: shieldPlan(相手のSP何発目で使うかの配列)があればそれに従う
         // shieldRest=trueなら6発目以降はすべて使う
         o.spSeen = (o.spSeen || 0) + 1;

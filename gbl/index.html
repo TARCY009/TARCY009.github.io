@@ -336,10 +336,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     </div>
   </div>
   <div class="rkrow">
-    <label class="lbl" for="rkstall" title="どちらかがSPアタックを撃つと、相手はこのターン数だけ動けなくなります(0.5秒=1ターン)">硬直（ターン）</label>
+    <span class="lbl">あいての登場</span>
+    <div class="opts rkenter" id="rkenter">
+      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">先頭（開幕）</button><button data-v="later" aria-pressed="false" title="交代や倒されたあとに出てくる2匹目以降。登場直後に硬直があります">2体目以降</button>
+    </div>
+    <label class="lbl" for="rkstall" title="どちらかがSPアタックを撃つと、あいてはこのターン数だけ動けなくなります(0.5秒=1ターン)">SP後の硬直</label>
     <input type="number" id="rkstall" min="0" max="16" inputmode="numeric">
-    <label class="lbl" for="rklv" title="ロケット団のポケモンのPL。下の「この設定のCP」がゲーム内の表示CPに合うように調整してください">あいてのPL</label>
-    <input type="number" id="rklv" min="1" max="50" step="0.5" inputmode="decimal">
   </div>
   <div class="rknote"></div>
 </div>
@@ -940,14 +942,30 @@ cupTab.onclick = () => {
 };
 
 // ---- ロケット団戦の設定 ----
-// 硬直: どちらかがSPアタックを撃つと相手(NPC)が動けなくなるターン数。
-// 外部の攻略情報では「SPアタック後は7ターン」「交代時は4.5秒(9ターン)」等と幅があるため、既定7で変更できるようにする
-const RK = { kind: 'grunt', stall: 7, lv: 20 };
-const rkShields = () => RK.kind === 'grunt' ? 0 : 2;   // したっぱはシールドを使わない
+// 外部の対面シミュレータに書かれている動き:
+//  ・どちらかがSPアタックを撃つと、あいては4ターン(2秒)硬直する
+//  ・交代や新しいポケモンが出たとき、あいては6ターン(3秒)硬直する
+//  ・したっぱはSPアタックの威力が0.5〜0.7倍(最短で撃つ場合0.6倍として計算)、幹部は1倍
+//  ・同じ個体が2種類のSPアタックを使い分けることはない
+// ステータスは「PL40・個体値100%」を基準にした倍率。したっぱの倍率は外部シミュレータの
+// 表示実数値(シャドウフシギソウ: 攻362.95 防207.77 HP134 / CP6059)から逆算した。
+// シャドウ補正(攻×1.2・防÷1.2)はこの倍率には含まれず、通常のポケモンと同じく戦闘計算でかかる
+// (この扱いで「シャドウミュウツーPL40攻13のねんりきで4発(3.8発)」という実測と一致する)
+const RK = { kind: 'grunt', stall: 4, enter: 'first' };
+const RK_ENTER_STALL = 6;
+const RK_BASE = [2.7666, 1.6640, 1.0];   // したっぱ: 攻・防・HPの倍率
+const rkMult = r => RK_BASE.map(v => v * r);
+const RK_SPEC = {
+  grunt:  { name: 'したっぱ', mult: rkMult(1), sp: 0.6, shields: 0 },
+  leader: { name: 'リーダー', mult: rkMult(1.15), sp: 1, shields: 2 },
+  boss:   { name: 'サカキ',   mult: rkMult(1.25), sp: 1, shields: 2 },
+};
+const rkSpec = () => RK_SPEC[RK.kind];
+const rkShields = () => rkSpec().shields;   // したっぱはシールドを使わない
 const RK_NOTE = {
-  grunt: 'したっぱ（ムサシ・コジロウを含む）は<b>シールドを使いません</b>。',
-  leader: 'リーダー（シエラ・クリフ・アルロ）は<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。',
-  boss: 'サカキは<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。',
+  grunt: 'したっぱ（ムサシ・コジロウを含む）は<b>シールドを使いません</b>。SPアタックは手加減してくる（威力<b>0.6倍</b>）ものとして計算します。',
+  leader: 'リーダー（シエラ・クリフ・アルロ）は<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。SPアタックの威力は等倍です。',
+  boss: 'サカキは<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。SPアタックの威力は等倍です。',
 };
 
 // ---- モード切替(1対1シミュ / 環境一覧) ----
@@ -962,7 +980,7 @@ function applyMode() {
   document.getElementById('leagues').style.display = rk ? 'none' : '';
   document.getElementById('cupwin').style.display = 'none';
   document.getElementById('rocket').style.display = rk ? 'block' : 'none';
-  if (rk) syncRocket();
+  if (rk) syncRocket(); else restoreFoeInputs();
   sideEl[0].style.display = mode === 'counter' ? 'none' : '';
   sideEl[1].style.display = mode === 'duel' || mode === 'counter' || rk ? '' : 'none';
   document.getElementById('multi').style.display = mode === 'multi' ? 'block' : 'none';
@@ -975,33 +993,57 @@ function applyMode() {
   }
 }
 
-// ロケット団戦パネルの表示を状態に合わせる(相手のシールド・PLも反映する)
+// ロケット団戦パネルの表示を状態に合わせる(あいて側の入力欄も整理する)
 function syncRocket() {
+  const sp = rkSpec();
   document.querySelectorAll('#rkkind button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.kind));
+  document.querySelectorAll('#rkenter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.enter));
   document.getElementById('rkstall').value = RK.stall;
-  document.getElementById('rklv').value = RK.lv;
+  const m = sp.mult.map(v => Math.round(v * 100) / 100);
   document.querySelector('.rknote').innerHTML = RK_NOTE[RK.kind] +
-    `どちらかがSPアタックを撃つと、あいては<b>${RK.stall}ターン（${(RK.stall / 2).toFixed(1)}秒）</b>動けなくなります（この間はこちらだけ攻撃できます）。` +
-    'あいてのポケモンはシャドウ（攻撃1.2倍・防御5/6）として計算します。PLは「この設定のCP」がゲーム内の表示CPに合うように調整してください。';
-  // ロケット団のポケモンはすべてシャドウ・個体値は最大として扱い、PLだけ指定する
-  S[1].shadow = true;
-  sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', true);
-  S[1].ivMode = 'manual'; S[1].mIvs = [15, 15, 15]; S[1].mLevel = RK.lv;
-  sideEl[1].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'manual'));
+    `どちらかがSPアタックを撃つと、あいては<b>${RK.stall}ターン（${(RK.stall / 2).toFixed(1)}秒）</b>動けません（この間はこちらだけ攻撃できます）。` +
+    (RK.enter === 'later' ? `2体目以降として出てくるので、登場直後にも<b>${RK_ENTER_STALL}ターン（3秒）</b>の硬直があります。` : '') +
+    `<br>あいてのステータスは<b>PL40・個体値100%と比べて 攻撃${m[0]}倍・防御${m[1]}倍・HP${m[2]}倍</b>として計算します` +
+    '（ここに<b>シャドウ補正（攻×1.2・防÷1.2）</b>が別途かかります。トレーナーレベル40以上が前提）。';
+  // ロケット団のポケモンはステータスの決まり方が違うので、個体値・PL・シャドウの欄は使わない
+  S[1].shadow = false;   // 画面のシャドウタブは使わない(計算側では常にシャドウとして扱う)
+  S[1].c2 = null;   // 同じ個体が2種類のSPアタックを使い分けることはない
+  const el = sideEl[1];
+  el.querySelector('.shadowtab').setAttribute('aria-pressed', false);
+  // シールドも種別で決まる(したっぱ0枚・リーダー/サカキは最初の2発を防ぐ)ので選ばせない
+  ['.ivmode', '.custIv', '.smaxwrap', '.selC2', '.bluffwrap', '.shields', '.custShield'].forEach(sel => {
+    const n = el.querySelector(sel);
+    if (n) n.style.display = 'none';
+  });
+  hideLabelFor(el, '.ivmode'); hideLabelFor(el, '.selC2'); hideLabelFor(el, '.shields');
+}
+// 入力欄のすぐ上の見出し(ラベル)も一緒に隠す/戻す
+function hideLabelFor(el, sel, show) {
+  const n = el.querySelector(sel);
+  const lb = n && n.previousElementSibling;
+  if (lb && lb.classList.contains('f')) lb.style.display = show ? '' : 'none';
+}
+// ロケット団戦から他のモードへ戻したときに、隠した欄を元に戻す
+function restoreFoeInputs() {
+  const el = sideEl[1];
+  ['.ivmode', '.selC2', '.shields'].forEach(sel => { const n = el.querySelector(sel); if (n) n.style.display = ''; });
+  hideLabelFor(el, '.shields', true);
+  el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
+  el.querySelector('.bluffwrap').style.display = S[1].c2 ? 'block' : 'none';
+  hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
 }
 document.querySelectorAll('#rkkind button').forEach(b => b.onclick = () => {
   RK.kind = b.dataset.v;
   syncRocket();
   run();
 });
-document.getElementById('rkstall').onchange = e => {
-  RK.stall = Math.max(0, Math.min(16, +e.target.value || 0));
+document.querySelectorAll('#rkenter button').forEach(b => b.onclick = () => {
+  RK.enter = b.dataset.v;
   syncRocket();
   run();
-};
-document.getElementById('rklv').onchange = e => {
-  const v = Math.round((+e.target.value || 20) * 2) / 2;   // PLは0.5刻み
-  RK.lv = Math.max(1, Math.min(50, v));
+});
+document.getElementById('rkstall').onchange = e => {
+  RK.stall = Math.max(0, Math.min(16, +e.target.value || 0));
   syncRocket();
   run();
 };
@@ -1625,9 +1667,14 @@ function run() {
   // ロケット団戦の相手(NPC)の共通設定: SPアタックは撃てしだい、硬直あり、
   // リーダー・サカキはこちらの最初の2発を必ずシールドで防ぐ
   const rkCfg = c => {
+    const sp = rkSpec();
     c.npc = true; c.stallSp = RK.stall; c.timing = 'asap';
+    c.stallStart = RK.enter === 'later' ? RK_ENTER_STALL : 0;   // 2体目以降は登場直後も硬直
+    c.statMult = sp.mult;   // ステータスはPL40・個体値100%基準の倍率で決まる
+    c.spMult = sp.sp;       // したっぱのSPアタックは威力0.6倍
+    c.shadow = true;        // ロケット団のポケモンはシャドウ(補正は倍率とは別にかかる)
     delete c.shotPlan; delete c.shotRest;
-    if (rkShields()) { c.shields = 2; c.shieldPlan = [1, 2]; c.shieldRest = false; }
+    if (sp.shields) { c.shields = 2; c.shieldPlan = [1, 2]; c.shieldRest = false; }
     else { c.shields = 0; delete c.shieldPlan; delete c.shieldRest; }
     return c;
   };
@@ -1661,7 +1708,8 @@ function run() {
   const L = fin(0, plan.left, curSh(0), true), R = fin(1, plan.right, curSh(1), true);
   const res = PvpEngine.simulate(D, L, R, SIMOPT);
   // シャドウ個体は結果・タイムラインの名前にも反映する
-  [L, R].forEach((c, i) => { if (c.shadow) res.final[i].name = 'シャドウ' + res.final[i].name; });
+  // シャドウ個体は結果・タイムラインの名前にも反映する(ロケット団のポケモンは常にシャドウ)
+  [L, R].forEach((c, i) => { if (c.shadow || c.statMult) res.final[i].name = 'シャドウ' + res.final[i].name; });
   // シールド枚数別の勝敗(3×3): 各マスでわざ構成も選び直す(マスをタップした結果と一致させるため)
   // ロケット団戦は相手のシールドが固定なので、自分のシールド枚数(0/1/2)だけを並べる
   const bList = rk ? [curSh(1)] : [0, 1, 2];
@@ -1687,10 +1735,13 @@ function fillMoves(i, cfg) {
   el.querySelector('.ticons').innerHTML = typeIcons(p, 18);
   el.querySelector('.ticons').className = 'ticons tpair';
   const st = PvpEngine.buildStats(D, cfg);
-  // SCP: 攻撃×防御×耐久を総合したPvP向け評価値
-  el.querySelector('.scp').textContent = 'SCP ' + Math.floor(Math.pow(st.atk * st.def * st.hp, 2 / 3) / 10);
-  el.querySelector('.ivline').textContent =
-    `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
+  // SCP: 攻撃×防御×耐久を総合したPvP向け評価値(ロケット団のポケモンは基準が違うので出さない)
+  el.querySelector('.scp').textContent = cfg.statMult ? '' : 'SCP ' + Math.floor(Math.pow(st.atk * st.def * st.hp, 2 / 3) / 10);
+  // ロケット団のポケモンは個体値・PLでなく倍率でステータスが決まるので、実数値をそのまま出す
+  // (シャドウ補正をかける前の値＝ゲームやシミュレータの表示に合わせる)
+  el.querySelector('.ivline').textContent = cfg.statMult
+    ? `CP${st.cp} / 攻撃${st.baseAtk.toFixed(2)} / 防御${st.baseDef.toFixed(2)} / HP${st.hp}`
+    : `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
   // タイプは同名で複数タイプがあるわざ(ウェザーボール等)だけ表記する
   const opt = (m, sel) => {
     const mv = D.moves[m];
@@ -1939,7 +1990,7 @@ function updateUrl() {
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel') qp.md = mode;
   if (SIMOPT.buffMode !== 'none') qp.pb = SIMOPT.buffMode;   // 確率わざの扱い
-  if (mode === 'rocket') { qp.rk = RK.kind; qp.rs = RK.stall; qp.rl = RK.lv; }   // ロケット団戦の設定
+  if (mode === 'rocket') { qp.rk = RK.kind; qp.rs = RK.stall; qp.re = RK.enter; }   // ロケット団戦の設定
   history.replaceState(null, '', '?' + new URLSearchParams(qp).toString());
 }
 
@@ -2229,7 +2280,7 @@ document.getElementById('copyUrl').onclick = async () => {
   }
   if (['grunt', 'leader', 'boss'].includes(q.get('rk'))) RK.kind = q.get('rk');   // ロケット団戦の設定の復元
   if (q.get('rs') != null && !isNaN(+q.get('rs'))) RK.stall = Math.max(0, Math.min(16, +q.get('rs')));
-  if (q.get('rl') != null && !isNaN(+q.get('rl'))) RK.lv = Math.max(1, Math.min(50, +q.get('rl')));
+  if (['first', 'later'].includes(q.get('re'))) RK.enter = q.get('re');
   if (['multi', 'counter', 'party', 'rocket'].includes(q.get('md'))) {   // モードの復元
     mode = q.get('md');
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
