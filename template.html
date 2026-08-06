@@ -91,7 +91,10 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .modes{display:flex;gap:6px;margin:2px 0 12px;flex-wrap:wrap}
 .modes button{font:inherit;font-size:.78rem;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:5px 14px;cursor:pointer;color:var(--sub);transition:border-color .15s,color .15s}
 .modes button:hover{border-color:#c9c0f2;color:var(--ink)}
-.modes button.on{background:linear-gradient(92deg,var(--violet),var(--accent));border-color:transparent;color:#fff;font-weight:700;box-shadow:0 5px 12px -5px rgba(139,92,246,.55)}
+.modes button[aria-pressed="true"]{background:linear-gradient(92deg,var(--violet),var(--accent));border-color:transparent;color:#fff;font-weight:700;box-shadow:0 5px 12px -5px rgba(139,92,246,.55)}
+.modes button:disabled{opacity:.4;cursor:default}
+.modes button:disabled:hover{border-color:var(--line);color:var(--sub)}
+#fShadow{display:inline-flex;align-items:center;justify-content:center;font-size:1rem;padding:5px 18px}
 .mine-sum{background:linear-gradient(90deg,var(--goldbg),#fffcf1);border:1.5px solid var(--goldline);border-left:5px solid var(--goldline);border-radius:10px;padding:9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .mine-sum b{color:var(--gold)}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid #eceffa}
@@ -131,7 +134,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .catchcp b{color:var(--ink)}
 .rmoves .tbadge{margin-right:3px}
 .modes button .shadowmark,.toggle-row .shadowmark{color:var(--shadow)}
-.modes button.on .shadowmark{color:#fff}
+.modes button[aria-pressed="true"] .shadowmark{color:#fff}
 .tag-s2{display:inline-flex;align-items:center;background:var(--shadow);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .sugg-list .srow{display:flex;align-items:center;gap:8px}
@@ -193,10 +196,9 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="card c-rank">
   <div class="step"><b>RANK</b><h2>火力ランキング</h2></div>
   <div class="modes">
-    <button data-m="0" class="on">通常のみ</button>
-    <button data-m="1" title="シャドウを含めたランキング"><i class="shadowmark"></i>込み</button>
-    <button data-m="2" title="メガ・ゲンシとシャドウを含めたランキング">メガ・<i class="shadowmark"></i>込み</button>
-    <button data-m="3">シールド破壊(メガ)</button>
+    <button id="fShadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
+    <button id="fMega" type="button" aria-pressed="false" title="メガ・ゲンシを含める">メガ・ゲンシ</button>
+    <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドのシールド破壊向き（メガのみ）">シールド破壊(メガ)</button>
   </div>
   <div id="mineSummary"></div>
   <div id="rankList"><div class="empty">ボスを設定するとランキングが表示されます</div></div>
@@ -294,7 +296,10 @@ function levelFromCP(p, cp, iva, ivd, ivh){
 }
 
 // ---- state ----
-let boss=null, mode=0, showN=30;
+let boss=null, showN=30;
+// ジム挑戦ツールと同じ形式: シャドウ・メガはそれぞれ独立して「含める/含めない」を切り替える。
+// シールド破壊(メガ)だけは別のランキングなので、押している間はその一覧に切り替わる。
+let fShadow=false, fMega=false, shieldMode=false;
 const mine=[];
 
 // ---- search suggest ----
@@ -454,11 +459,18 @@ document.getElementById('addBtn').onclick=()=>{
 };
 
 // ---- ranking ----
-document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{
-  mode=+b.dataset.m; showN=30;
-  document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('on',x===b));
-  renderRank();
-});
+const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield');
+function syncModes(){
+  shadowBtn.setAttribute('aria-pressed',fShadow);
+  megaBtn.setAttribute('aria-pressed',fMega);
+  shieldBtn.setAttribute('aria-pressed',shieldMode);
+  // シールド破壊はメガ専用の一覧なので、その間は他の絞り込みを使わない
+  shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode;
+}
+shadowBtn.onclick=()=>{fShadow=!fShadow;showN=30;syncModes();renderRank();};
+megaBtn.onclick=()=>{fMega=!fMega;showN=30;syncModes();renderRank();};
+shieldBtn.onclick=()=>{shieldMode=!shieldMode;showN=30;syncModes();renderRank();};
+syncModes();
 document.getElementById('moreBtn').onclick=()=>{showN+=50;renderRank();};
 
 function buildRanking(){
@@ -466,11 +478,11 @@ function buildRanking(){
   const bt=D.pokemon[boss].ty, rows=[];
   for(const k of KEYS){
     const p=D.pokemon[k];
-    if(p.mega && mode<2) continue;
+    if(p.mega && !fMega) continue;
     if(!p.mega && !p.fe) continue; // 進化前はランキングに表示しない(ボス選択・自分の登録では選択可)
     const base=bestCombo(p,bt,false);
     if(base) rows.push({k,p,shadow:false,...base});
-    if(p.shadow && mode>=1){
+    if(p.shadow && fShadow){
       const s=bestCombo(p,bt,true);
       if(s) rows.push({k,p,shadow:true,...s});
     }
@@ -562,7 +574,7 @@ function renderShieldRank(){
 }
 function renderRank(){
   const listEl=document.getElementById('rankList'), sumEl=document.getElementById('mineSummary'), moreBtn=document.getElementById('moreBtn');
-  if(mode===3){renderShieldRank();return;}   // シールド破壊(メガ)
+  if(shieldMode){renderShieldRank();return;}   // シールド破壊(メガ)
   if(!boss){listEl.innerHTML='<div class="empty">ボスを設定するとランキングが表示されます</div>';sumEl.innerHTML='';moreBtn.style.display='none';return;}
   const rows=buildRanking();
   const top=rows.length?rows[0].dps:1;
