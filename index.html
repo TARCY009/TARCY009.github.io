@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/karyoku/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/karyoku/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
 <meta name="theme-color" content="#ff5470">
 <style>
 :root{
@@ -129,7 +130,9 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .catchcp{font-size:.8rem;color:var(--sub);margin-top:4px}
 .catchcp b{color:var(--ink)}
 .rmoves .tbadge{margin-right:3px}
-.tag-s2{display:inline-block;background:var(--shadow);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
+.modes button .shadowmark,.toggle-row .shadowmark{color:var(--shadow)}
+.modes button.on .shadowmark{color:#fff}
+.tag-s2{display:inline-flex;align-items:center;background:var(--shadow);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .sugg-list .srow{display:flex;align-items:center;gap:8px}
 .del{border:none;background:none;color:#c33;cursor:pointer;font-size:1rem;flex-shrink:0;padding:4px}
@@ -171,7 +174,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <div class="toggle-row">
       <label><input type="radio" name="statmode" value="cp" checked> 今の状態（CP＋個体値）で計算</label>
       <label><input type="radio" name="statmode" value="max"> フル強化想定（PL50・個体値15）</label>
-      <label><input type="checkbox" id="myShadow"> シャドウ（×1.2）</label>
+      <label title="シャドウ（攻撃1.2倍・防御5/6）として計算"><input type="checkbox" id="myShadow"> <i class="shadowmark"></i>×1.2</label>
     </div>
     <div id="cpArea" style="margin-top:8px">
       <div class="cprow"><label class="f">CP</label><input type="number" id="myCP" min="10" placeholder="例: 2387"></div>
@@ -191,8 +194,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div class="step"><b>RANK</b><h2>火力ランキング</h2></div>
   <div class="modes">
     <button data-m="0" class="on">通常のみ</button>
-    <button data-m="1">シャドウ込み</button>
-    <button data-m="2">メガ・シャドウ込み</button>
+    <button data-m="1" title="シャドウを含めたランキング"><i class="shadowmark"></i>込み</button>
+    <button data-m="2" title="メガ・ゲンシとシャドウを含めたランキング">メガ・<i class="shadowmark"></i>込み</button>
     <button data-m="3">シールド破壊(メガ)</button>
   </div>
   <div id="mineSummary"></div>
@@ -493,7 +496,7 @@ function moveLabel(p, id, sp){
   return nm;
 }
 function badges(shadow, mega){
-  return (mega?'<span class="tag-m2">メガ</span>':'')+(shadow?'<span class="tag-s2">シャドウ</span>':'');
+  return (mega?'<span class="tag-m2">メガ</span>':'')+(shadow?'<span class="tag-s2" title="シャドウ"><i class="shadowmark"></i></span>':'');
 }
 // スーパーメガレイドのシールド破壊おすすめメガ:
 // ①ボスの通常枠SPアタック(シールド中の攻撃2倍補正込み)をどれを受けても1発で倒れない(メガ=PL50個体値15、ボス=PL40想定)

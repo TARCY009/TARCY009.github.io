@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/gbl/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/gbl/apple-touch-icon.png">
 <link rel="manifest" href="/gbl/manifest.webmanifest">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
 <meta name="theme-color" content="#0c1122">
 <style>
 :root{
@@ -40,7 +41,8 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .duel.solo{grid-template-columns:1fr}
 .side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0}
 .side h2{font-size:.78rem;color:var(--sub);letter-spacing:.08em;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
-.shadowtab{padding:7px 14px;font-size:.82rem;font-weight:700;letter-spacing:0;background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--sub);cursor:pointer;flex-shrink:0}
+/* シャドウマークのタブ(文字なし・押すとシャドウ補正ON) */
+.shadowtab{display:inline-flex;align-items:center;justify-content:center;width:38px;height:30px;padding:0;font-size:1rem;background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:#7d5ca8;cursor:pointer;flex-shrink:0}
 .shadowtab[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:#b06cff;color:#fff;box-shadow:0 0 10px rgba(176,108,255,.55)}
 .side.mine h2{color:var(--cy)}
 .side.foe h2{color:var(--lose)}
@@ -130,6 +132,7 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .phd{display:flex;align-items:center;gap:3px;margin-bottom:5px}
 .phd .pnum{font-size:.68rem;color:var(--cy);font-weight:700;margin-right:auto}
 .phd button{background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--sub);font-size:.6rem;padding:2px 5px;cursor:pointer}
+.phd .pshadow{display:inline-flex;align-items:center;justify-content:center;color:#7d5ca8;font-size:.8rem;padding:2px 6px}
 .phd .pshadow[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:#b06cff;color:#fff}
 .phd .pstar{color:var(--gold)}
 .pslot input{width:100%;padding:6px 7px;font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
@@ -305,7 +308,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 <div class="duel">
   <div class="side mine" id="sideL">
-    <h2>じぶん（左）<button class="shadowtab" aria-pressed="false" title="シャドウ補正(攻撃1.2倍・防御5/6)をかけてシミュレート">シャドウ</button></h2>
+    <h2>じぶん（左）<button class="shadowtab" aria-pressed="false" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button></h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: まりるり)" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
@@ -385,7 +388,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     </div>
   </div>
   <div class="side foe" id="sideR">
-    <h2>あいて（右）<button class="shadowtab" aria-pressed="false" title="シャドウ補正(攻撃1.2倍・防御5/6)をかけてシミュレート">シャドウ</button></h2>
+    <h2>あいて（右）<button class="shadowtab" aria-pressed="false" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button></h2>
     <div class="sugg"><input type="search" placeholder="ポケモン名(例: ちゃーれむ)" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
@@ -1224,7 +1227,7 @@ function buildPartySlots() {
   const box = document.querySelector('#party .pslots');
   box.innerHTML = [0, 1, 2].map(i => `<div class="pslot" data-i="${i}">
     <div class="phd"><span class="pnum">${i + 1}匹目</span>
-      <button class="pshadow" title="シャドウ補正(攻撃1.2倍・防御5/6)をかける">シャドウ</button>
+      <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
       <button class="pclr" title="この枠を空にする">×</button></div>
     <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>

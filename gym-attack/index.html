@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/gym-attack/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/gym-attack/apple-touch-icon.png">
 <link rel="manifest" href="/gym-attack/manifest.webmanifest">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
 <meta name="theme-color" content="#f5b942">
 <style>
 :root{
@@ -65,7 +66,8 @@ details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-
 .pname .hits{display:inline-flex;flex-shrink:0;align-items:center}
 .pname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pname .tpair{flex-shrink:0}
-.pname .shadow{color:#c39bff;font-size:.72rem;border:1px solid #6b4fa0;border-radius:6px;padding:1px 6px;flex-shrink:0}
+.pname .shadow{display:inline-flex;align-items:center;color:#c39bff;font-size:.85rem;border:1px solid #6b4fa0;border-radius:6px;padding:1px 5px;flex-shrink:0}
+#fShadow{display:inline-flex;align-items:center;justify-content:center;color:#c39bff;font-size:1.05rem;padding:6px 18px}
 .card>div{min-width:0}
 .moves{margin-top:4px;font-size:.82rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
 .gauge{display:inline-flex;gap:2px;margin-left:4px;vertical-align:middle}
@@ -111,7 +113,7 @@ footer{margin-top:28px;color:#5c6b7a;font-size:.7rem;text-align:center}
 </div>
 
 <div class="filters">
-  <button id="fShadow" class="chipbtn" type="button" aria-pressed="false">シャドウ</button>
+  <button id="fShadow" class="chipbtn" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
   <button id="fMega" class="chipbtn" type="button" aria-pressed="false">メガ・ゲンシ</button>
   <button id="fMulti" class="chipbtn" type="button" aria-pressed="false">複数技構成</button>
 </div>
@@ -310,7 +312,7 @@ function render(def){
     el.innerHTML=`
       <div class="rank ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i+1}位</div>
       <div>
-        <div class="pname"><span class="nm">${r.p.name}</span>${typePairHTML(r.p.types.map(t=>DATA.types_jp[t]),18)}${r.isShadow?'<span class="shadow">シャドウ</span>':''}${hitHtml}</div>
+        <div class="pname"><span class="nm">${r.p.name}</span>${typePairHTML(r.p.types.map(t=>DATA.types_jp[t]),18)}${r.isShadow?'<span class="shadow" title="シャドウ"><i class="shadowmark"></i></span>':''}${hitHtml}</div>
         <div class="moves">
           <span>${fm.jp}</span><span>/</span>
           <span>${cm.jp}<span class="gauge ${r.bars===1?'g1':''}">${'<i></i>'.repeat(r.bars)}</span></span>
