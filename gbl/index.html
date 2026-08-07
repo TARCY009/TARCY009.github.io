@@ -246,6 +246,14 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rbrow1 .opts{flex:0 1 200px}
 .rbrow1 .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
 .rbclear{padding:5px 9px;font-size:.68rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer}
+.rbfind{margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+.rbgo{padding:5px 11px;font-size:.72rem;font-weight:700;background:var(--panel);border:1px solid var(--cy);
+  border-radius:8px;color:var(--cy);cursor:pointer}
+.rbfindnote{flex:1 0 100%;font-size:.6rem;color:var(--sub);line-height:1.5}
+.rbfound{margin-top:7px;padding:6px 9px;background:rgba(122,162,255,.1);border:1px solid var(--gl);
+  border-radius:8px;font-size:.68rem;color:var(--ink);line-height:1.6}
+.rbfound .ok{color:var(--win)}
+.rbfound .ng{color:var(--lose)}
 .rbacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
 .rbchip{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;font-size:.68rem;font-weight:700;
   background:var(--gold);border:1px solid var(--gold);border-radius:99px;color:#2b2305;cursor:pointer}
@@ -710,7 +718,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <input type="number" id="rkkof" min="0" max="16" inputmode="numeric">
     <label class="lbl" for="rkkom" title="自分のポケモンが倒れて次を出したとき、あいてが動けないターン数（0.5秒=1ターン）">自分が倒れて次を出した</label>
     <input type="number" id="rkkom" min="0" max="16" inputmode="numeric">
-    <span class="rkstallnote">どちらも既定は<b>8ターン（4秒）</b>＝「瀕死による交代」の硬直。実戦と違ったらここで変えられます</span>
+    <label class="lbl" for="rkswcd" title="自分から交代したあと、次の交代ができるようになるまでの秒数">交代のクールタイム（秒）</label>
+    <input type="number" id="rkswcd" min="0" max="120" step="5" inputmode="numeric">
+    <span class="rkstallnote">硬直はどちらも既定<b>8ターン（4秒）</b>＝「瀕死による交代」の値。交代のクールタイムは既定<b>60秒</b>（自分から交代したあと、次に交代できるまで）。実戦と違ったらここで変えられます</span>
   </div>
   <div class="rkbody"></div>
 </div>
@@ -1158,7 +1168,9 @@ cupTab.onclick = () => {
 // who=だれと戦うか(シエラ/クリフ/アルロ/サカキ) / sel=その人の何匹目に誰を選んでいるか(候補の番号)
 // play=たたかい方('1v1'=1対1 / 'team'=3匹の連戦(自動) / 'build'=組み立て(自分で手を置く))
 // team は「じぶん・あいての3枠を使う画面か」を表す(連戦と組み立ての両方でtrue)
-const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, who: null, sel: {} };
+// swapCd=交代のクールタイム(ターン)。一度交代したら、この時間が過ぎるまで次の交代ができない。
+// これが無いと「交代を連打してあいてを硬直させ続ける」抜け道が成立してしまう(既定60秒=120ターン)
+const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 120, who: null, sel: {} };
 const RK_PLAY = { 0: '1v1', 1: 'team', 2: 'build' };
 function setPlay(v) { RK.play = v; RK.team = v !== '1v1'; }
 const RK_ENTER = {
@@ -1304,6 +1316,7 @@ function syncRocket() {
   document.getElementById('rkstall').value = RK.stall;
   document.getElementById('rkkof').value = RK.koFoe;
   document.getElementById('rkkom').value = RK.koMe;
+  document.getElementById('rkswcd').value = RK.swapCd / 2;   // 画面は秒、内部はターン
   syncFoeSlots();
   renderRoster();   // リーダー・サカキの手持ち(したっぱのときは隠れる)
   // 3枠を使う画面(連戦・組み立て)の見出しと説明はたたかい方で切り替える
@@ -1403,6 +1416,10 @@ document.querySelectorAll('#rkteam .rksh button').forEach(b => b.onclick = () =>
 // 交代のときの硬直(実戦と違ったら変えられるように数値で持つ)
 document.getElementById('rkkof').onchange = e => {
   RK.koFoe = Math.max(0, Math.min(16, +e.target.value || 0));
+  syncRocket(); run();
+};
+document.getElementById('rkswcd').onchange = e => {
+  RK.swapCd = Math.max(0, Math.min(240, Math.round((+e.target.value || 0) * 2)));
   syncRocket(); run();
 };
 document.getElementById('rkkom').onchange = e => {
@@ -2098,7 +2115,8 @@ function runRocketTeam() {
 //   {t, k:'switch', to:枠番号} … そのターンで交代する(あいてはNPCなので登場の硬直がつく)
 // auto=true のあいだはSPをAI(最適タイミング)が撃つ。手を置くと手動に切り替わり、
 // 「置いたターンだけ撃つ」＝置かなければ温存、になる
-const RB = { acts: [], auto: true, open: {}, menu: null };
+// entry = 何番目の対面からどの枠を出すか(倒されて次を出すとき・開幕に選べる)
+const RB = { acts: [], auto: true, open: {}, menu: null, entry: {}, found: null };
 const rbSort = () => RB.acts.sort((a, b) => a.t - b.t || (a.k === 'sp' ? -1 : 1));
 const rbActAt = t => RB.acts.filter(a => a.t === t);
 
@@ -2129,7 +2147,20 @@ function rbPicks(mine, foes, myShields) {
 }
 // 置いた手のとおりにバトルを最後まで回す。対面(leg)ごとに区切って返す
 // 交代のあるターンで打ち切り(stopAt)、次の対面を「続きの状態」から始める
-function rbBattle(picks, foes, myShields) {
+// SPアタックの「作戦」メニュー。手順の自動探索(rbSearch)はこの中から対面ごとに選ぶ
+// shotRest を付けない = そのあとは撃たない(＝温存)。エンジンの timing:'shots' の性質を使う
+const RB_POLICY = {
+  hold:  { label: '撃たない（温存）', cfg: { timing: 'shots', shotPlan: [], shotRest: null } },
+  one:   { label: '1発だけ（最適）',  cfg: { timing: 'shots', shotPlan: [{ mode: 'opt' }], shotRest: null } },
+  oneMin:{ label: '1発だけ（即撃ち）', cfg: { timing: 'shots', shotPlan: [{ mode: 'min' }], shotRest: null } },
+  two:   { label: '2発だけ（最適）',  cfg: { timing: 'shots', shotPlan: [{ mode: 'opt' }, { mode: 'opt' }], shotRest: null } },
+  all:   { label: '撃てるだけ（最適）', cfg: { timing: 'optimal' } },
+  allMin:{ label: '撃てるだけ（即撃ち）', cfg: { timing: 'asap' } },
+};
+// plan = { acts:置いた手, auto:SPをAIにまかせるか, legPolicy:対面ごとの作戦, entry:対面ごとに出す枠 }
+function rbBattle(picks, foes, myShields, plan) {
+  plan = plan || RB;
+  const acts = plan.acts || [];
   const legs = [];
   // じぶんの枠ごとの状態(生きているか・引っ込めたときの続き)。交代で行ったり来たりする
   const st = picks.map(() => ({ alive: true, resume: null }));
@@ -2137,17 +2168,25 @@ function rbBattle(picks, foes, myShields) {
     for (let i = 0; i < st.length; i++) if (st[(from + i) % st.length].alive) return (from + i) % st.length;
     return -1;
   };
-  let mi = 0, fi = 0, base = 0;                       // base=この対面が始まる通しターン
+  const entryOf = k => {   // その対面から出す枠の指定(あれば)。生きている枠だけ有効
+    const v = plan.entry && plan.entry[k];
+    return v != null && st[v] && st[v].alive ? v : null;
+  };
+  let mi = entryOf(0) != null ? entryOf(0) : 0, fi = 0, base = 0;   // base=この対面が始まる通しターン
   let myShLeft = myShields, foeShLeft = rkShields();
   let foeResume = null;
   let myEntry = RK_ENTER[RK.enter].me, foeEntry = RK_ENTER[RK.enter].foe;
+  let swOkAt = 0;   // 交代のクールタイム: このターン以降でないと次の交代ができない
   while (fi < foes.length && mi >= 0 && legs.length < 12) {
-    const spActs = RB.acts.filter(a => a.k === 'sp' && a.t > base).sort((a, b) => a.t - b.t);
-    const sw = RB.acts.filter(a => a.k === 'switch' && a.t > base && st[a.to] && st[a.to].alive && a.to !== mi)
+    const spActs = acts.filter(a => a.k === 'sp' && a.t > base).sort((a, b) => a.t - b.t);
+    const sw = acts.filter(a => a.k === 'switch' && a.t > base && a.t >= swOkAt &&
+        st[a.to] && st[a.to].alive && a.to !== mi)
       .sort((a, b) => a.t - b.t)[0];
     const L = { ...picks[mi].base, ...picks[mi].pol, shields: myShLeft, bluff: true };
-    if (RB.auto) L.timing = 'optimal';
-    else L.plan = spActs.map(a => ({ on: a.t - base, move: a.mv }));   // 台本: 置いた手だけ撃つ
+    const lp = plan.legPolicy && plan.legPolicy[legs.length];
+    if (plan.auto) L.timing = 'optimal';
+    else if (lp && RB_POLICY[lp]) Object.assign(L, RB_POLICY[lp].cfg);   // 探索がえらんだ作戦
+    else L.plan = spActs.map(a => ({ on: a.t - base, move: a.mv }));     // 台本: 置いた手だけ撃つ
     if (st[mi].resume) L.resume = { ...st[mi].resume, stall: Math.max(st[mi].resume.stall || 0, myEntry) };
     else if (myEntry) L.stallStart = myEntry;
     const R = rktCfg(foes[fi], { shields: foeShLeft, stallStart: foeEntry });
@@ -2170,11 +2209,13 @@ function rbBattle(picks, foes, myShields) {
     if (foeDown) fi++;
     if (swapped) {
       mi = sw.to;
+      swOkAt = base + RK.swapCd;   // 次に交代できるようになるまで待つ
       // 手動交代の直後: あいては9ターン(4.5秒)動けず、交代した自分も1ターン動けない
       foeEntry = Math.max(RK_ENTER.swap.foe, foeDown ? RK.koFoe : 0);
       myEntry = RK_ENTER.swap.me;
     } else {
-      if (meDown) mi = nextAlive(mi);
+      // 倒されたら次を出す。どれを出すかは指定があればそれ、無ければ上から順
+      if (meDown) { const e = entryOf(legs.length); mi = e != null ? e : nextAlive(mi); }
       foeEntry = Math.max(meDown ? RK.koMe : 0, foeDown ? RK.koFoe : 0);
       myEntry = 0;
     }
@@ -2182,8 +2223,135 @@ function rbBattle(picks, foes, myShields) {
   const meLeft = st.filter(s => s.alive).length;
   const foeLeft = foes.length - fi;
   const outcome = foeLeft === 0 ? (meLeft > 0 ? 'win' : 'draw') : (meLeft === 0 ? 'lose' : 'timeout');
-  return { legs, picks, st, outcome, meLeft, foeLeft, turns: base, myShLeft, foeShLeft,
+  // 生き残っているぶんの残HP(割合の合計)。手順のよしあしを比べるのに使う
+  const hpLeft = st.reduce((sum, s, i) => {
+    if (!s.alive) return sum;
+    const max = PvpEngine.buildStats(D, picks[i].base).hp;
+    return sum + (s.resume ? Math.max(0, s.resume.hp) / max : 1);
+  }, 0);
+  return { legs, picks, st, outcome, meLeft, foeLeft, hpLeft, turns: base, myShLeft, foeShLeft,
     nMe: picks.length, nFoe: foes.length };
+}
+
+// ---- 手順の自動探索 ----
+// 対面ごとに「どのポケモンを出すか」「SPをどう撃つか（作戦）」「すぐ交代するか」を
+// 総当たりし、ビームサーチ(見込みのある手順だけ残して次の対面へ)で通しの手順を組み立てる。
+// goal='fast' … 早く倒しきる手順 ／ goal='safe' … 手持ちを多く残して確実に勝つ手順
+const RB_GOAL = {
+  fast: { label: '最速', tip: '倒しきるまでの時間がいちばん短い手順をさがします（ロケット団戦はここがいちばん大事）' },
+  safe: { label: '安定', tip: '手持ちとHPをできるだけ多く残して勝つ手順をさがします（負けにくさ重視）' },
+};
+function rbScore(bt, goal) {
+  const win = bt.outcome === 'win' ? 1 : 0;
+  const killed = bt.nFoe - bt.foeLeft;
+  // まず「倒した数」、次に目的に応じて 速さ / 残り、の順で比べる
+  const core = win * 1e7 + killed * 1e5;
+  return goal === 'fast'
+    ? core - bt.turns * 10 + bt.hpLeft * 20 + bt.meLeft * 30
+    : core + bt.meLeft * 2000 + bt.hpLeft * 800 - bt.turns;
+}
+// ビームサーチのあとの仕上げ。交代のターンは1ターン違うだけで結果が変わるので、
+// 各対面の全ターンについて「ここで交代したら?」「この交代をやめたら?」を試して良くなるほうへ寄せる
+function rbRefine(picks, foes, myShields, plan, goal) {
+  const ev = p => { const bt = rbBattle(picks, foes, myShields, { ...p, auto: false }); return { plan: p, bt, sc: rbScore(bt, goal) }; };
+  let cur = ev(plan);
+  for (let round = 0; round < 3; round++) {
+    let improved = false;
+    const legs = cur.bt.legs.slice();
+    for (const leg of legs) {
+      for (let tn = 1; tn <= leg.res.turns; tn++) {
+        const t = leg.base + tn;
+        const others = cur.plan.acts.filter(a => !(a.k === 'switch' && a.t === t));
+        for (let j = 0; j < picks.length; j++) {
+          if (j === leg.myIdx) continue;
+          const c = ev({ ...cur.plan, acts: [...others, { t, k: 'switch', to: j }] });
+          if (c.sc > cur.sc) { cur = c; improved = true; }
+        }
+        if (others.length !== cur.plan.acts.length) {   // その交代をやめてみる
+          const c = ev({ ...cur.plan, acts: others });
+          if (c.sc > cur.sc) { cur = c; improved = true; }
+        }
+      }
+    }
+    if (!improved) break;
+  }
+  return cur;
+}
+function rbSearch(picks, foes, myShields, goal) {
+  const POL = Object.keys(RB_POLICY);
+  let beam = [{ legPolicy: [], entry: {}, acts: [] }];
+  let best = null;
+  for (let depth = 0; depth < 10; depth++) {
+    const cand = [];
+    for (const plan of beam) {
+      const cur = rbBattle(picks, foes, myShields, { ...plan, auto: false });
+      if (cur.legs.length <= depth) {            // これ以上ぶつかり合いが無い＝完成した手順
+        const sc = rbScore(cur, goal);
+        if (!best || sc > best.sc) best = { sc, plan, bt: cur };
+        continue;
+      }
+      const leg = cur.legs[depth];
+      // この対面から出す枠の候補(倒されて出すとき・開幕だけ選べる)
+      const fresh = depth === 0 || (cur.legs[depth - 1] && cur.legs[depth - 1].meDown);
+      const entries = fresh
+        ? picks.map((p, k) => k).filter(k => k === leg.myIdx || (cur.legs.every(l => l.myIdx !== k) && k !== leg.myIdx))
+        : [leg.myIdx];
+      for (const e of entries) {
+        const ent = e === leg.myIdx ? plan.entry : { ...plan.entry, [depth]: e };
+        // 作戦それぞれを試す
+        for (const p of POL) cand.push({ ...plan, entry: ent, legPolicy: [...plan.legPolicy.slice(0, depth), p] });
+        // 交代する手も候補に入れる。①すぐ交代(あいての硬直をかせぐ) ②途中で引く ③苦しくなったら引く
+        const len = leg.res.turns;
+        const swTurns = [...new Set([1, Math.ceil(len / 3), Math.ceil(len * 2 / 3)]
+          .filter(x => x >= 1 && x < len).map(x => leg.base + x))];
+        const hurt = leg.res.rows.find(r => r.tn !== '-' && r.state[0].hp > 0 &&
+          r.state[0].hp < leg.res.final[0].hpMax * 0.4);
+        if (hurt && !swTurns.includes(leg.base + hurt.tn)) swTurns.push(leg.base + hurt.tn);
+        swTurns.forEach(t => {
+          // すぐ交代する場合はその対面が1ターンで終わるので作戦は関係ない。
+          // 途中まで戦ってから引く場合は、それまでのSPの撃ち方も一緒に試す
+          const pols = t === leg.base + 1 ? ['hold'] : ['hold', 'one', 'two', 'all'];
+          for (const p of pols) for (let j = 0; j < picks.length; j++) {
+            if (j === e) continue;
+            cand.push({ ...plan, entry: ent, legPolicy: [...plan.legPolicy.slice(0, depth), p],
+              acts: [...plan.acts, { t, k: 'switch', to: j }] });
+          }
+        });
+      }
+    }
+    if (!cand.length) break;
+    // 見込みのある手順だけ残す(同じ結果になるものは1つにまとめる)
+    const seen = new Set();
+    beam = cand.map(plan => ({ plan, bt: rbBattle(picks, foes, myShields, { ...plan, auto: false }) }))
+      .sort((a, b) => rbScore(b.bt, goal) - rbScore(a.bt, goal))
+      .filter(x => {
+        const k = `${x.bt.legs.length}:${x.bt.turns}:${x.bt.meLeft}:${x.bt.foeLeft}:${Math.round(x.bt.hpLeft * 100)}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      })
+      .slice(0, 8)
+      .map(x => x.plan);
+  }
+  if (!best) return null;
+  best = rbRefine(picks, foes, myShields, best.plan, goal);   // 交代のタイミングを1ターンずつ詰める
+  // 見つかった手順を「置いた手」に変換する(タイムラインで見て、そのまま手直しできるように)
+  const acts = best.plan.acts.slice();
+  best.bt.legs.forEach(leg => {
+    const ids = rbSpList(leg.pol);
+    leg.res.rows.forEach((row, idx) => {
+      const e = row.ev[0];
+      if (!e || e.full === undefined) return;
+      // タイムラインはわざ名しか持たないので、そのポケモンのSPからIDを引き当てる
+      const id = ids.find(x => D.moves[x].n === e.move);
+      if (!id) return;
+      // その発動が何ターン目だったか(番号行をさかのぼって数える)
+      let tn = null;
+      for (let j = idx; j >= 0; j--) if (leg.res.rows[j].tn !== '-') { tn = leg.res.rows[j].tn; break; }
+      if (tn != null) acts.push({ t: leg.base + tn, k: 'sp', mv: id });
+    });
+  });
+  return { acts, entry: best.plan.entry, bt: best.bt };
 }
 
 // 1ターン=0.5秒。通しターンから経過秒を出す
@@ -2243,6 +2411,11 @@ function rbRender(body, bt, picks) {
         </div>
         <button class="rbclear" title="置いた手をすべて消します">手をすべて消す</button>
       </div>
+      <div class="rbrow1 rbfind"><span class="lbl">手順をさがす</span>
+        ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" title="${RB_GOAL[g].tip}">${RB_GOAL[g].label}の手順</button>`).join('')}
+        <span class="rbfindnote">出てきた手順はそのまま下のタイムラインに入るので、続けて手直しできます</span>
+      </div>
+      ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
       <div class="rbacts">${actChips}</div>
       <div class="rbhint">${RB.auto
         ? '<b>自動</b>: SPアタックはAIが最適なタイミングで撃ちます。<b>交代</b>だけ自分で置けます。<br>ゲージを<b>あえて温存</b>したいときは「手動」にしてください。'
@@ -2254,7 +2427,24 @@ function rbRender(body, bt, picks) {
     <div class="rblegs">${legHtml}</div>`;
   // ---- 操作の配線 ----
   body.querySelectorAll('.rbauto button').forEach(b => b.onclick = () => { RB.auto = b.dataset.v === '1'; run(); });
-  body.querySelector('.rbclear').onclick = () => { RB.acts = []; RB.menu = null; run(); };
+  body.querySelector('.rbclear').onclick = () => { RB.acts = []; RB.entry = {}; RB.menu = null; RB.found = null; run(); };
+  // 手順の自動探索: 見つかった手順をそのまま「置いた手」に入れて、下のタイムラインへ反映する
+  body.querySelectorAll('.rbgo').forEach(b => b.onclick = () => {
+    const g = b.dataset.g;
+    b.textContent = 'さがしています…';
+    setTimeout(() => {
+      const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
+      const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
+      const r = rbSearch(rbPicks(mine, foes, RK.sh), foes, RK.sh, g);
+      if (!r) { RB.found = '手順が見つかりませんでした。'; run(); return; }
+      RB.acts = r.acts; RB.entry = r.entry; RB.auto = false; RB.menu = null;
+      const o = RK_OUTCOME[r.bt.outcome];
+      RB.found = `<b>${RB_GOAL[g].label}の手順</b>が見つかりました → <b class="${o.cls === 'win' ? 'ok' : 'ng'}">${o.txt}</b>` +
+        `（かかった時間 <b>${rbSec(r.bt.turns)}秒</b>・じぶん ${r.bt.meLeft}/${r.bt.nMe}匹 残り）。` +
+        `下のタイムラインに入れました。ターンの行をタップすれば、ここから自分で手直しできます。`;
+      run();
+    }, 30);
+  });
   body.querySelectorAll('.rbchip[data-del]').forEach(b => b.onclick = () => {
     RB.acts.splice(+b.dataset.del, 1); RB.menu = null; run();
   });
@@ -3005,7 +3195,7 @@ function updateUrl() {
     const w = rkWho();   // リーダー・サカキの手持ち(だれと・何匹目に誰を選んでいるか)
     if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
     if (RK.team) {   // 3匹の連戦(自分のパーティは端末内に保存しているのでURLには入れない)
-      qp.rt = RK.play === 'build' ? 2 : 1; qp.rsh = RK.sh; qp.rkf = RK.koFoe; qp.rkm = RK.koMe;
+      qp.rt = RK.play === 'build' ? 2 : 1; qp.rsh = RK.sh; qp.rkf = RK.koFoe; qp.rkm = RK.koMe; qp.rsw = RK.swapCd;
       if (RK.play === 'build') {   // 組み立て: 置いた手(ターン~種類~中身)とSPの自動/手動
         if (!RB.auto) qp.rba = 0;
         if (RB.acts.length) qp.rb = RB.acts.map(a => `${a.t}~${a.k === 'sp' ? 'sp~' + a.mv : 'sw~' + a.to}`).join(',');
@@ -3325,6 +3515,7 @@ document.getElementById('copyUrl').onclick = async () => {
   RK.sh = rkNum('rsh', 0, 2, RK.sh);
   RK.koFoe = rkNum('rkf', 0, 16, RK.koFoe);
   RK.koMe = rkNum('rkm', 0, 16, RK.koMe);
+  RK.swapCd = rkNum('rsw', 0, 240, RK.swapCd);
   if (q.get('rp')) q.get('rp').split(',').slice(0, 3).forEach((s, i) => {
     const [key, fast, c1] = s.split('~');
     if (D.pokemon[key]) RKT[i] = { key, fast: fast || null, c1: c1 || null };
