@@ -311,6 +311,34 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
 .rkfilt button .shadowmark{margin-right:3px}
 #rkrank{padding:10px 12px}
+/* 自分のポケモンを追加(CP＋個体値) */
+.rkmy{margin-bottom:8px}
+.rkmytab{width:100%;padding:7px;font-size:.72rem;font-weight:700;background:var(--bg2);
+  border:1px solid var(--line);border-radius:10px;color:var(--gold);cursor:pointer}
+.rkmytab[aria-expanded="true"]{border-color:var(--gold)}
+.rkmybody{margin-top:7px;padding:9px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
+.rkmysugg{position:relative}
+.rkmysel{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.82rem;color:var(--ink)}
+.rkmyshadow{padding:2px 8px;background:var(--panel);border:1px solid var(--line);border-radius:99px;
+  color:var(--sub);cursor:pointer}
+.rkmyshadow[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:#b06cff;color:#fff}
+.rkmyrow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:8px}
+.rkmyrow label{font-size:.68rem;color:var(--sub);font-weight:600}
+.rkmyrow input{width:70px;padding:5px 6px;font-size:.78rem;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
+.rkmyrow input:focus{border-color:var(--gl)}
+.rkmyrow input[type="number"]:not(#rkmCP){width:52px}
+.rkmylv{margin-top:6px;font-size:.72rem;color:var(--sub)}
+.rkmylv b{color:var(--cy);font-size:.88rem}
+.rkmylv .ng{color:var(--lose)}
+.rkmyadd{margin-top:8px;padding:7px 14px;font-size:.74rem;font-weight:700;background:var(--gold);
+  border:1px solid var(--gold);border-radius:8px;color:#2b2305;cursor:pointer}
+.rkmyadd:disabled{background:var(--panel);border-color:var(--line);color:var(--sub);cursor:default}
+.rkmylist{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line)}
+.rkmyrowsaved{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:3px 0;font-size:.74rem;color:var(--ink)}
+.rkmyrowsaved i{font-style:normal;font-size:.62rem;color:var(--sub);margin-left:6px}
+.rkmydel{color:var(--lose);cursor:pointer;padding:0 6px}
 .rkrcard{display:flex;align-items:center;gap:9px;padding:7px 9px;margin-top:5px;cursor:pointer;
   background:var(--bg2);border:1px solid var(--line);border-radius:10px}
 .rkrcard:hover{border-color:var(--gl)}
@@ -780,6 +808,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 <!-- ロケット団戦 1対1: おすすめランキング(あいてを決めると出る) -->
 <div class="multi" id="rkrank" style="display:none">
+  <div class="rkmy" id="rkmy">
+    <button class="rkmytab" id="rkmytab" aria-expanded="false" title="CPと個体値を入れると、自分の個体の実力でランキングに並びます">＋ 自分のポケモン</button>
+    <div class="rkmybody" id="rkmybody" style="display:none"></div>
+  </div>
   <div class="rkrbody"></div>
 </div>
 
@@ -1417,8 +1449,10 @@ function renderRoster() {
     if (!p) return `<button class="rkchip" disabled>${key}</button>`;
     // 1対1は「いまあいてに入っている1匹」、連戦は「その枠に選んだ1匹」を光らせる
     const on = RK.team ? j === sel[s] : key === S[1].key;
+    // ロケット団のあいては全部シャドウなので、チップにはマークを付けない
+    // (タイプアイコンと名前のあいだに入って読みにくくなる。あいての入力欄のマークで足りる)
     return `<button class="rkchip${on ? ' on' : ''}" data-s="${s}" data-j="${j}"
-      title="${p.n}を${RK.team ? `${s + 1}匹目に入れる` : 'あいてにする'}"><i class="shadowmark"></i>${p.n}${typeIcons(p, 14)}</button>`;
+      title="シャドウ${p.n}を${RK.team ? `${s + 1}匹目に入れる` : 'あいてにする'}">${p.n}${typeIcons(p, 14)}</button>`;
   };
   // 「固定/ランダム」は文字でなく📌🎲で示す(説明は最下部の「使い方」へ)
   document.getElementById('rklineup').innerHTML = w.slots.map((cands, s) =>
@@ -1521,8 +1555,9 @@ function syncRocket() {
   tab.title = 'ロケット団のポケモンは必ずシャドウです（切り替えできません）';
   if (S[1].key) el.querySelector('input').value = 'シャドウ' + D.pokemon[S[1].key].n;
   // シールド(種別で決まる)・タイミング(常に撃てしだい)・連戦(登場の設定で扱う)は選ばせない
+  // ★登録リストは「自分の個体値で計算する」ための機能。あいてはNPCで倍率が決まっているので出さない
   ['.ivmode', '.custIv', '.smaxwrap', '.selC2', '.bluffwrap', '.shields', '.custShield',
-   '.timing', '.custSp', '.carry', '.custCarry'].forEach(sel => {
+   '.timing', '.custSp', '.carry', '.custCarry', '.mypkbar', '.mypklist'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n) n.style.display = 'none';
   });
@@ -1542,6 +1577,7 @@ function restoreFoeInputs() {
     if (n) n.style.display = '';
     hideLabelFor(el, sel, true);
   });
+  el.querySelector('.mypkbar').style.display = '';   // ★登録リストのタブを戻す
   el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
   el.querySelector('.bluffwrap').style.display = S[1].c2 ? 'block' : 'none';
   hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
@@ -2301,6 +2337,98 @@ function runRocketTeam() {
 // あいてのわざはランダムなので、倒され判定(⚠)は「いちばんキツいわざで来た場合」で見る。
 const RKR = { view: 'power', shadow: true, mega: false, top: 30, cache: null };
 
+// ---- 「自分のポケモン」の追加(CPと個体値からPLを逆算して★登録リストに入れる) ----
+// 保存先は★登録リストと同じ(gbl_mypoke)なので、追加したものは左右パネルからも呼び出せる
+const RKM = { key: null, shadow: false };
+// そのCPになりうるPLを探す(個体値が決まればふつう1つに定まる)
+function levelsFromCP(key, cp, ivs) {
+  const p = D.pokemon[key], hits = [];
+  for (let l = 1; l <= 51; l += 0.5) {
+    const m = D.cpm[String(l)];
+    if (m && cpOf(p, ivs[0], ivs[1], ivs[2], m) === cp) hits.push(l);
+  }
+  return hits;
+}
+const rkmIvs = () => [0, 1, 2].map(k => {
+  const v = +document.getElementById(['rkmA', 'rkmD', 'rkmH'][k]).value;
+  return isNaN(v) ? 15 : Math.max(0, Math.min(15, v));
+});
+function renderRkMy() {
+  const box = document.getElementById('rkmybody');
+  const saved = loadMyPk();
+  const p = RKM.key && D.pokemon[RKM.key];
+  box.innerHTML = `
+    <div class="sugg rkmysugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    ${p ? `<div class="rkmysel">
+      <button class="rkmyshadow" aria-pressed="${RKM.shadow}" title="シャドウとして計算する"><i class="shadowmark"></i></button>
+      <b>${RKM.shadow ? 'シャドウ' : ''}${p.n}</b>${typeIcons(p, 15)}</div>
+    <div class="rkmyrow">
+      <label for="rkmCP">CP</label><input type="number" id="rkmCP" min="10" inputmode="numeric" placeholder="例 2387">
+      <label for="rkmA">攻</label><input type="number" id="rkmA" min="0" max="15" value="15" inputmode="numeric">
+      <label for="rkmD">防</label><input type="number" id="rkmD" min="0" max="15" value="15" inputmode="numeric">
+      <label for="rkmH">HP</label><input type="number" id="rkmH" min="0" max="15" value="15" inputmode="numeric">
+    </div>
+    <div class="rkmylv" id="rkmlv"></div>
+    <button class="rkmyadd" id="rkmadd" disabled>ランキングに追加</button>` : ''}
+    ${saved.length ? `<div class="rkmylist">${saved.map((m, k) => {
+      const q = D.pokemon[m.key];
+      if (!q) return '';
+      const iv = m.ivMode === 'manual' && m.mIvs ? `${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
+      return `<div class="rkmyrowsaved"><span>★${m.shadow ? 'シャドウ' : ''}${q.n}<i>${iv}</i></span>
+        <b class="rkmydel" data-del="${k}" title="消す">×</b></div>`;
+    }).join('')}</div>` : ''}`;
+  // ポケモンの検索
+  const inp = box.querySelector('.rkmysugg input'), list = box.querySelector('.rkmysugg .sugg-list');
+  inp.addEventListener('compositionend', () => { inp.value = toKata(inp.value); inp.dispatchEvent(new Event('input')); });
+  inp.addEventListener('input', e => {
+    if (!e.isComposing) inp.value = toKata(inp.value);
+    const q = toKata(inp.value.trim());
+    if (!q) { list.style.display = 'none'; return; }
+    const hits = KEYS.filter(k => D.pokemon[k].n.includes(q)).slice(0, 10);
+    if (!hits.length) { list.style.display = 'none'; return; }
+    list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+    list.style.display = 'block';
+    list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+      RKM.key = d.dataset.k; RKM.shadow = false; renderRkMy();
+    });
+  });
+  if (!p) return;
+  box.querySelector('.rkmyshadow').onclick = () => { RKM.shadow = !RKM.shadow; renderRkMy(); };
+  // CP・個体値を入れるたびにPLを逆算して出す(合わなければ追加させない)
+  const lv = box.querySelector('#rkmlv'), add = box.querySelector('#rkmadd');
+  const recalc = () => {
+    const cp = +document.getElementById('rkmCP').value;
+    if (!cp) { lv.textContent = ''; add.disabled = true; return; }
+    const hits = levelsFromCP(RKM.key, cp, rkmIvs());
+    if (!hits.length) {
+      lv.innerHTML = '<span class="ng">CPと個体値の組み合わせが合いません</span>';
+      add.disabled = true; return;
+    }
+    lv.innerHTML = `PL <b>${hits[hits.length - 1]}</b>` +
+      (hits.length > 1 ? `<span class="rkrdim">（候補 ${hits.join(' / ')}・いちばん高いPLで計算します）</span>` : '');
+    add.disabled = false;
+  };
+  ['rkmCP', 'rkmA', 'rkmD', 'rkmH'].forEach(id => document.getElementById(id).oninput = recalc);
+  add.onclick = () => {
+    const cp = +document.getElementById('rkmCP').value;
+    const ivs = rkmIvs(), hits = levelsFromCP(RKM.key, cp, ivs);
+    if (!hits.length) return;
+    saveMyPkList([...loadMyPk(), { key: RKM.key, shadow: RKM.shadow, ivMode: 'manual', mIvs: ivs, mLevel: hits[hits.length - 1] }]);
+    RKM.key = null; RKM.shadow = false;
+    renderRkMy(); renderMyPk(); run();
+  };
+  box.querySelectorAll('.rkmydel').forEach(b => b.onclick = () => {
+    const l = loadMyPk(); l.splice(+b.dataset.del, 1); saveMyPkList(l);
+    renderRkMy(); renderMyPk(); run();
+  });
+}
+document.getElementById('rkmytab').onclick = () => {
+  const body = document.getElementById('rkmybody'), open = body.style.display === 'none';
+  if (open) renderRkMy();
+  body.style.display = open ? 'block' : 'none';
+  document.getElementById('rkmytab').setAttribute('aria-expanded', open);
+};
+
 // ランキングの候補を作る。全ポケモン(理想個体値・PL上限)＋★登録リスト(自分の個体)
 function rkCandidates() {
   const out = [];
@@ -2341,9 +2469,10 @@ function rkRanking() {
     rows.push({ ...c, me, st, fast: best.id, dmg: best.dmg, dps: best.dps });
   }
   rows.sort((a, b) => b.dps - a.dps || a.key.localeCompare(b.key));
-  // 上位だけ実際にシミュレートして「先に倒されないか」を見る(全部やると重いので絞る)
+  // 上位だけ実際にシミュレートして「先に倒されないか」を見る(全部やると重いので絞る)。
+  // ただし★登録リストの自分の個体は、順位が下でも必ず調べる(必ず一覧に出すため)
   const CHECK = 160;
-  rows.slice(0, CHECK).forEach(r => {
+  rows.filter((r, i) => i < CHECK || r.mine).forEach(r => {
     // SPアタックは撃たない(ノーマルアタックだけで殴る前提)。
     // こちらがSPを撃たないぶん、シールド2枚はまるごとあいてのSPを防ぐのに使える
     const L = { ...r.me, fast: r.fast, charged: [], shields: 2, timing: 'shots', shotPlan: [], shotRest: null };
@@ -2380,7 +2509,11 @@ function runRkRank() {
   body.innerHTML = '<div class="mtprog">計算中…</div>';
   setTimeout(() => {
     const all = RKR.cache = rkRanking();
-    const list = (RKR.view === 'safe' ? all.filter(r => r.checked && r.win) : all).slice(0, RKR.top);
+    // 全体での順位を持たせてから絞る(自分の個体が圏外でも、本当の順位のまま出せるように)
+    const ranked = (RKR.view === 'safe' ? all.filter(r => r.checked && r.win) : all)
+      .map((r, i) => ({ ...r, rank: i + 1 }));
+    const list = ranked.slice(0, RKR.top)
+      .concat(ranked.slice(RKR.top).filter(r => r.mine));   // ★自分の個体は圏外でも必ず出す
     if (!list.length) {
       body.innerHTML = '<div class="mtnote">' + (RKR.view === 'safe'
         ? 'ノーマルアタックだけで<b>先に倒されずに勝てる</b>ポケモンが見つかりませんでした。SPアタックを使う前提で「シミュレート」や「模擬戦」を見てください。'
@@ -2397,6 +2530,7 @@ function runRkRank() {
   }, 20);
 }
 function rkRankCard(r, i) {
+  const n = r.rank || i + 1;   // 全体での順位(圏外の自分の個体もこの順位で出す)
   const p = D.pokemon[r.key];
   const mv = D.moves[r.fast];
   const nm = (r.shadow ? 'シャドウ' : '') + p.n;
@@ -2411,7 +2545,7 @@ function rkRankCard(r, i) {
     : r.anyWin ? `<span class="ng">${r.loseTo.join('・')}だと負け</span>`
     : `<span class="ng">どのわざでも負け</span>`;
   return `<div class="rkrcard${warn ? ' warn' : ''}" data-i="${i}">
-    <div class="rkrank ${i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : ''}">${i + 1}</div>
+    <div class="rkrank ${n === 1 ? 'r1' : n === 2 ? 'r2' : n === 3 ? 'r3' : ''}">${n}</div>
     <div class="rkrmain">
       <div class="rkrname">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
         ${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}${typeIcons(p, 15)}</div>
