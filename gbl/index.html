@@ -235,7 +235,7 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .holesub{font-size:.7rem;margin-top:4px}
 .holeword{color:var(--lose)}
 @media (max-width:520px){.pslots{grid-template-columns:1fr;gap:5px}.pslot{padding:6px}.pmeta .pt2{flex:0 1 auto}}
-/* ロケット団戦: 3匹の連戦 */
+/* ロケット団戦: 3匹連戦 */
 .rkteams{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .rkteams .pslots{grid-template-columns:1fr;margin-top:6px}
 .rkcolttl{font-size:.72rem;font-weight:700;color:var(--cy)}
@@ -249,7 +249,7 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rkstallcfg input{width:56px;padding:4px 6px;font-size:.76rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
 .rkstallcfg input:focus{border-color:var(--gl)}
 .rkstallnote{flex:1 0 100%;font-size:.62rem;color:var(--sub);line-height:1.5}
-/* ロケット団戦: バトルを組み立てる(分岐タイムライン) */
+/* ロケット団戦: 模擬戦(分岐タイムライン) */
 .rbctl{margin-top:10px;padding:8px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
 .rbrow1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .rbrow1 .lbl{font-size:.68rem;color:var(--sub);font-weight:600}
@@ -505,7 +505,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="rkrow">
     <span class="lbl">たたかい方</span>
     <div class="opts rkmode" id="rkmode">
-      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1</button><button data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで計算します">3匹の連戦</button><button data-v="2" aria-pressed="false" title="タイムラインのターンをタップして、SPアタックを撃つ・温存する・交代するを自分で決めながら組み立てます">組み立て</button>
+      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1</button><button data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで計算します">3匹連戦</button><button data-v="2" aria-pressed="false" title="本番の前に、タイムラインのターンをタップしてSPアタックを撃つ・温存する・交代するを自分で試せます">模擬戦</button>
     </div>
   </div>
   <div class="rkrow">
@@ -719,7 +719,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 </div>
 
 <div class="multi" id="rkteam" style="display:none">
-  <h3 id="rkteamttl">3匹の連戦</h3>
+  <h3 id="rkteamttl">3匹連戦</h3>
   <div class="mtnote" id="rkteamnote"></div>
   <div class="rkteams">
     <div class="rkteamcol">
@@ -1228,11 +1228,11 @@ const HELP_HTML = `
   <h4>たたかい方の3つ</h4>
   <ul>
     <li><b>1対1</b>… 1匹どうしの対面だけを計算します</li>
-    <li><b>3匹の連戦</b>… 上から順に出し、倒れたら次。シールドはバトル全体で共有し、生き残りはHP・ゲージ・能力変化を引き継ぎます。自分から交代する動きは入っていません</li>
-    <li><b>組み立て</b>… タイムラインの<b>ターンの行をタップ</b>して、SPアタックを撃つ・交代するを自分で置きます。置くとそこから先が計算し直されます</li>
+    <li><b>3匹連戦</b>… 上から順に出し、倒れたら次。シールドはバトル全体で共有し、生き残りはHP・ゲージ・能力変化を引き継ぎます。自分から交代する動きは入っていません</li>
+    <li><b>模擬戦</b>… 本番の前に一度やってみる画面。タイムラインの<b>ターンの行をタップ</b>して、SPアタックを撃つ・交代するを自分で置きます。置くとそこから先が計算し直されます</li>
   </ul>
 
-  <h4>組み立ての使い方</h4>
+  <h4>模擬戦の使い方</h4>
   <ul>
     <li><b>自動</b>＝SPアタックはAIが最適なタイミングで撃ちます（交代だけ自分で置けます）</li>
     <li><b>手動</b>＝<b>置いたターンだけ</b>撃ちます。置かなければ撃たないので、<b>ゲージを次の相手に持ち越せます</b></li>
@@ -1271,11 +1271,11 @@ const HELP_HTML = `
 // 硬直(2026年3月時点の確定情報。0.5秒=1ターン):
 //   SPアタック発動直後 3.5秒=7ターン / 瀕死による交代直後 4秒=8ターン / 手動交代直後 4.5秒=9ターン
 //   手動交代のときは自分も0.5秒(1ターン)動けないので、実質は8ターン分の得になる
-// team=3匹の連戦モード / sh=自分のシールド(バトル全体で共有)
+// team=3匹連戦モード / sh=自分のシールド(バトル全体で共有)
 // koFoe=あいてが倒れて次が出た直後の硬直 / koMe=自分が倒れて次を出した直後の硬直(どちらも既定8ターン=4秒)
 // who=だれと戦うか(シエラ/クリフ/アルロ/サカキ) / sel=その人の何匹目に誰を選んでいるか(候補の番号)
-// play=たたかい方('1v1'=1対1 / 'team'=3匹の連戦(自動) / 'build'=組み立て(自分で手を置く))
-// team は「じぶん・あいての3枠を使う画面か」を表す(連戦と組み立ての両方でtrue)
+// play=たたかい方('1v1'=1対1 / 'team'=3匹連戦(自動) / 'build'=模擬戦(自分で手を置く))
+// team は「じぶん・あいての3枠を使う画面か」を表す(連戦と模擬戦の両方でtrue)
 // swapCd=交代のクールタイム(ターン)。一度自分から交代したら、この時間が過ぎるまで次の交代ができない。
 // 「あいてが固まる硬直(4.5秒)」とは別物で、こちら側の制約。45秒=90ターン(ユーザー確定)。
 // これが無いと「交代を連打してあいてを硬直させ続ける」抜け道が成立してしまう
@@ -1300,7 +1300,7 @@ const RK_SPEC = {
 const rkSpec = () => RK_SPEC[RK.kind];
 const rkShields = () => rkSpec().shields;   // したっぱはシールドを使わない
 // ロケット団の相手(NPC)の共通設定。SPアタックは撃てしだい・硬直あり・ステータスは倍率で決まる。
-// opt.stallStart=登場したときの硬直ターン / opt.shields=残りシールド枚数(3匹の連戦の途中から使う)
+// opt.stallStart=登場したときの硬直ターン / opt.shields=残りシールド枚数(3匹連戦の途中から使う)
 function rkCfg(c, opt) {
   opt = opt || {};
   const sp = rkSpec();
@@ -1333,7 +1333,7 @@ const rkWho = () => rkWhoList().find(w => w.id === RK.who) || null;
 const rkSel = w => (RK.sel[w.id] = (RK.sel[w.id] || w.slots.map(() => 0)));
 const rkLineup = w => w.slots.map((cands, s) => cands[rkSel(w)[s]] || cands[0]).filter(k => D.pokemon[k]);
 
-// 手持ちの1匹を「あいて」として使う。1対1は右パネル、3匹の連戦は指定の枠に入れる
+// 手持ちの1匹を「あいて」として使う。1対1は右パネル、3匹連戦は指定の枠に入れる
 // (どちらも表示の作り直しと再計算までここで済ませる)
 function rkPutOne(slot, key) {
   if (!D.pokemon[key]) return;
@@ -1391,7 +1391,7 @@ let mode = 'duel', multiToken = 0;
 function applyMode() {
   // 環境一覧は「じぶん」だけ、カウンター検索は「あいて」だけ、パーティ診断は専用の3枠を使う
   const rk = mode === 'rocket';
-  const rkTeam = rk && RK.team;   // 3匹の連戦は専用の3枠を使う(1対1の左右パネルは隠す)
+  const rkTeam = rk && RK.team;   // 3匹連戦は専用の3枠を使う(1対1の左右パネルは隠す)
   const duelBox = document.querySelector('.duel');
   duelBox.style.display = mode === 'party' || rkTeam ? 'none' : '';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter');   // 片側だけのときは1列で広く使う
@@ -1409,7 +1409,7 @@ function applyMode() {
   if ((mode !== 'duel' && !rk) || rkTeam) {
     document.getElementById('result').style.display = 'none';
     document.getElementById('tl').style.display = 'none';
-    // 組み立ては「置いた手」ごとURLで共有できるので、コピーボタンは出したままにする
+    // 模擬戦は「置いた手」ごとURLで共有できるので、コピーボタンは出したままにする
     document.getElementById('share').style.display = RK.play === 'build' ? 'flex' : 'none';
   }
 }
@@ -1427,11 +1427,11 @@ function syncRocket() {
   document.getElementById('rkswcd').value = RK.swapCd / 2;   // 画面は秒、内部はターン
   syncFoeSlots();
   renderRoster();   // リーダー・サカキの手持ち(したっぱのときは隠れる)
-  // 3枠を使う画面(連戦・組み立て)の見出しと説明はたたかい方で切り替える
+  // 3枠を使う画面(連戦・模擬戦)の見出しと説明はたたかい方で切り替える
   const bld = RK.play === 'build';
   const ttl = document.getElementById('rkteamttl');
   if (ttl) {
-    ttl.textContent = bld ? 'バトルを組み立てる' : '3匹の連戦';
+    ttl.textContent = bld ? '模擬戦' : '3匹連戦';
     // 説明は最下部の「使い方」に集約。ここには一言だけ置く
     document.getElementById('rkteamnote').innerHTML = bld
       ? 'ターンの行をタップして手を置くと、そこから先が変わります'
@@ -1509,10 +1509,10 @@ document.getElementById('rkstall').onchange = e => {
   syncRocket();
   run();
 };
-// 1対1 ⇄ 3匹の連戦
+// 1対1 ⇄ 3匹連戦
 document.querySelectorAll('#rkmode button').forEach(b => b.onclick = () => {
   setPlay(RK_PLAY[b.dataset.v]);
-  RB.acts = [];   // たたかい方を変えたら組み立ての手はいったん消す
+  RB.acts = [];   // たたかい方を変えたら模擬戦の手はいったん消す
   applyMode();
   run();
 });
@@ -2031,7 +2031,7 @@ function runParty() {
   step();
 }
 
-// ---- ロケット団戦: 3匹の連戦 ----
+// ---- ロケット団戦: 3匹連戦 ----
 // RKT[i] = あいての手持ち1匹({key, fast, c1})。ステータスは種別の倍率で決まるので個体値は持たない
 const RKT = [null, null, null];
 const RKT_KEY = 'gbl_rocket_team';
@@ -2119,7 +2119,7 @@ function syncFoeSlots() {
   });
 }
 
-// 3匹の連戦を1通り(自分のシールド枚数を決め打ち)で最後まで計算する
+// 3匹連戦を1通り(自分のシールド枚数を決め打ち)で最後まで計算する
 // opt.worst=あいてのわざを対面ごとに「こちらがいちばんキツいもの」にする(わざ運の最悪ケース)
 // opt.picks=自分のわざ構成を使い回す(バトル前に決めるものなので、あいてのわざ運では変えない)
 function rkChain(mine, foes, myShields, opt) {
@@ -2219,7 +2219,7 @@ function runRocketTeam() {
   step();
 }
 
-// ---- ロケット団戦: バトルを組み立てる(手を置くと、そこから先が計算し直される) ----
+// ---- ロケット団戦: 模擬戦(手を置くと、そこから先が計算し直される) ----
 // acts = 置いた手。t は「バトル全体の通しターン」なので、対面をまたいでもズレない
 //   {t, k:'sp', mv:わざID}     … そのターンにSPアタックを撃つ(ゲージが足りなければ貯まり次第)
 //   {t, k:'switch', to:枠番号} … そのターンで交代する(あいてはNPCなので登場の硬直がつく)
@@ -2230,7 +2230,7 @@ const RB = { acts: [], auto: true, open: {}, menu: null, entry: {}, found: null 
 const rbSort = () => RB.acts.sort((a, b) => a.t - b.t || (a.k === 'sp' ? -1 : 1));
 const rbActAt = t => RB.acts.filter(a => a.t === t);
 
-// じぶんの各枠のわざ構成を決める(3匹の連戦と同じ最悪ケース基準)。バトル中は変えられない
+// じぶんの各枠のわざ構成を決める(3匹連戦と同じ最悪ケース基準)。バトル中は変えられない
 function rbPicks(mine, foes, myShields) {
   return mine.map(m => {
     const base = ptBase(m, 0);
@@ -2497,7 +2497,7 @@ function runRkBuild() {
   updateUrl();
   if (!mine.length || !foes.length) {
     body.innerHTML = `<div class="mtnote">${!mine.length ? '左の枠に<b>じぶんのポケモン</b>を入れてください。' : ''}` +
-      `${!foes.length ? '右の枠に<b>あいてのポケモン</b>を入れてください。' : ''}（1匹ずつでも組み立てられます）</div>`;
+      `${!foes.length ? '右の枠に<b>あいてのポケモン</b>を入れてください。' : ''}（1匹ずつでも試せます）</div>`;
     return;
   }
   const picks = rbPicks(mine, foes, RK.sh);
@@ -3288,9 +3288,9 @@ function updateUrl() {
     qp.rk = RK.kind; qp.rs = RK.stall; qp.re = RK.enter;
     const w = rkWho();   // リーダー・サカキの手持ち(だれと・何匹目に誰を選んでいるか)
     if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
-    if (RK.team) {   // 3匹の連戦(自分のパーティは端末内に保存しているのでURLには入れない)
+    if (RK.team) {   // 3匹連戦(自分のパーティは端末内に保存しているのでURLには入れない)
       qp.rt = RK.play === 'build' ? 2 : 1; qp.rsh = RK.sh; qp.rkf = RK.koFoe; qp.rkm = RK.koMe; qp.rsw = RK.swapCd;
-      if (RK.play === 'build') {   // 組み立て: 置いた手(ターン~種類~中身)とSPの自動/手動
+      if (RK.play === 'build') {   // 模擬戦: 置いた手(ターン~種類~中身)とSPの自動/手動
         if (!RB.auto) qp.rba = 0;
         if (RB.acts.length) qp.rb = RB.acts.map(a => `${a.t}~${a.k === 'sp' ? 'sp~' + a.mv : 'sw~' + a.to}`).join(',');
       }
@@ -3303,7 +3303,7 @@ function updateUrl() {
 
 // ---- タイムライン(ダイジェスト/全ターン切替) ----
 let lastRes = null, tlMode = 'digest', bpOpen = false;
-// タイムラインの表を作る(1対1シミュと、3匹の連戦の対面ごとの詳細で共用)
+// タイムラインの表を作る(1対1シミュと、3匹連戦の対面ごとの詳細で共用)
 function timelineTable(res, tlMode) {
   // HPの残り割合で色分け: 緑(50%以上)・黄(20〜50%未満)・赤(20%未満)
   const hpCls = (i, hp) => {
@@ -3591,8 +3591,8 @@ document.getElementById('copyUrl').onclick = async () => {
   if (['grunt', 'leader', 'boss'].includes(q.get('rk'))) RK.kind = q.get('rk');   // ロケット団戦の設定の復元
   if (q.get('rs') != null && !isNaN(+q.get('rs'))) RK.stall = Math.max(0, Math.min(16, +q.get('rs')));
   if (RK_ENTER[q.get('re')]) RK.enter = q.get('re');
-  if (q.get('rt') === '1') setPlay('team');        // 3匹の連戦の復元
-  if (q.get('rt') === '2') setPlay('build');       // 組み立ての復元
+  if (q.get('rt') === '1') setPlay('team');        // 3匹連戦の復元
+  if (q.get('rt') === '2') setPlay('build');       // 模擬戦の復元
   if (q.get('rba') === '0') RB.auto = false;
   if (q.get('rb')) q.get('rb').split(',').forEach(s => {   // 置いた手の復元
     const [t, k, v] = s.split('~');
