@@ -166,7 +166,6 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rkslot+.rkslot{margin-top:5px}
 .rkslbl{font-size:.66rem;color:var(--sub);font-weight:600;flex-shrink:0;width:58px;padding-top:6px;line-height:1.3}
 .rkslbl i{font-style:normal;font-size:.72rem}
-.rkrostnote{text-align:right}
 .rkcands{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0}
 .rkchip{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;font-size:.72rem;font-weight:600;
   background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--ink);cursor:pointer}
@@ -174,7 +173,6 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rkchip.on{background:var(--gold);border-color:var(--gold);color:#2b2305}
 .rkchip.on .shadowmark{color:#5b21b6}
 .rkchip:disabled{opacity:.4;cursor:default}
-.rkrostnote{font-size:.62rem;color:var(--sub);line-height:1.5;margin-top:6px}
 /* ロケット団戦: 決着までの時間と「あいてのわざ全通り」 */
 .rktime{margin-top:10px;padding:6px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
   font-size:.78rem;color:var(--ink);text-align:center}
@@ -1426,8 +1424,8 @@ function renderRoster() {
   document.getElementById('rklineup').innerHTML = w.slots.map((cands, s) =>
     `<div class="rkslot"><span class="rkslbl">${s + 1}匹目
       <i title="${cands.length < 2 ? '必ずこれが出てきます' : 'この中からランダムで出てきます'}">${cands.length < 2 ? '📌' : '🎲'}</i></span>
-      <div class="rkcands">${cands.map((k, j) => chip(k, s, j)).join('')}</div></div>`).join('') +
-    `<div class="rkrostnote" title="手持ちはイベントで入れ替わります。違っていたら、あいての欄から直接えらべます">${RR.updated}時点</div>`;
+      <div class="rkcands">${cands.map((k, j) => chip(k, s, j)).join('')}</div></div>`).join('');
+  // 「◯◯時点」の日付は出さない(常に最新に保つ前提。データ側の updated は更新時の目印として残す)
   document.querySelectorAll('#rkwho button').forEach(b => b.onclick = () => {
     RK.who = b.dataset.w;
     rkPutAll();
