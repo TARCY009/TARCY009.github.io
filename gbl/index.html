@@ -158,6 +158,49 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rocket input{width:64px;padding:5px 6px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
 .rocket input:focus{border-color:var(--gl)}
 .rknote{font-size:.64rem;color:var(--sub);line-height:1.5;margin-top:6px}
+/* ロケット団戦: リーダー・サカキの手持ち */
+.rkroster{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.rklineup{margin-top:6px}
+.rkslot{display:flex;align-items:flex-start;gap:8px}
+.rkslot+.rkslot{margin-top:5px}
+.rkslbl{font-size:.66rem;color:var(--sub);font-weight:600;flex-shrink:0;width:58px;padding-top:6px;line-height:1.3}
+.rkslbl i{display:block;font-style:normal;font-size:.56rem;color:var(--gold)}
+.rkcands{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.rkchip{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;font-size:.72rem;font-weight:600;
+  background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--ink);cursor:pointer}
+.rkchip .shadowmark{color:#b06cff}
+.rkchip.on{background:var(--gold);border-color:var(--gold);color:#2b2305}
+.rkchip.on .shadowmark{color:#5b21b6}
+.rkchip:disabled{opacity:.4;cursor:default}
+.rkrostnote{font-size:.62rem;color:var(--sub);line-height:1.5;margin-top:6px}
+/* ロケット団戦: 決着までの時間と「あいてのわざ全通り」 */
+.rktime{margin-top:10px;padding:6px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+  font-size:.78rem;color:var(--ink);text-align:center}
+.rktime b{color:var(--cy);font-size:.94rem}
+.rktime small{display:block;font-size:.62rem;color:var(--sub);margin-top:1px}
+.rkmoves{margin-top:12px}
+.rkmvsum{font-size:.74rem;color:var(--ink);line-height:1.6;margin-bottom:6px}
+.rkmvsum .ok{color:var(--win)}
+.rkmvsum .ng{color:var(--lose)}
+.rkmoves table{width:100%;border-collapse:separate;border-spacing:3px}
+.rkmoves th{font-size:.62rem;color:var(--sub);font-weight:600;text-align:center}
+.rkmoves td{background:#0a0f22;border:1px solid var(--line);border-radius:8px;padding:5px 6px;
+  font-size:.7rem;color:var(--sub);text-align:center;cursor:pointer}
+.rkmoves td:first-child{text-align:left;color:var(--ink)}
+.rkmoves td.w b{color:var(--win)}
+.rkmoves td.l b{color:var(--lose)}
+.rkmoves tr.cur td{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy)}
+.rkmvnote .curmk,.shmtx .curmk{color:var(--cy)}
+.shmtx .mvhead small{display:block;font-size:.6rem;font-weight:400;color:var(--sub);line-height:1.5;margin-top:2px}
+.rkmvsp{margin-left:4px}
+.rkmvnote{font-size:.62rem;color:var(--sub);line-height:1.5;margin-top:4px}
+.rkworst{margin-top:6px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg2);font-size:.78rem;font-weight:700;text-align:center}
+.rkworst.ok{color:var(--win);border-color:rgba(74,222,128,.4)}
+.rkworst.ng{color:var(--lose);border-color:rgba(255,107,129,.4)}
+.rkworst small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);line-height:1.5;margin-top:3px}
+@media (max-width:520px){.rkmoves td{padding:4px;font-size:.66rem}.rkmvsp{display:block;margin-left:0}}
+@media (max-width:520px){.rkslbl{width:46px;font-size:.6rem}.rkchip{padding:4px 6px;font-size:.68rem}}
 .stallbox{opacity:.85;font-size:.66rem;color:var(--gold)}
 .cmpnote{margin-top:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;font-size:.72rem;color:var(--sub);line-height:1.5}
 .cmpnote b{color:var(--cy)}
@@ -385,6 +428,13 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <button data-v="grunt" aria-pressed="true" title="したっぱ・ムサシ・コジロウ。シールドを使いません">したっぱ</button><button data-v="leader" aria-pressed="false" title="シエラ・クリフ・アルロ。こちらの最初の2発のSPアタックを必ずシールドで防ぎます">リーダー</button><button data-v="boss" aria-pressed="false" title="サカキ。こちらの最初の2発のSPアタックを必ずシールドで防ぎます">サカキ</button>
     </div>
   </div>
+  <div class="rkroster" id="rkroster" style="display:none">
+    <div class="rkrow">
+      <span class="lbl">だれと</span>
+      <div class="opts rkwho" id="rkwho"></div>
+    </div>
+    <div class="rklineup" id="rklineup"></div>
+  </div>
   <div class="rkrow">
     <span class="lbl">あいての登場</span>
     <div class="opts rkenter" id="rkenter">
@@ -591,7 +641,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <div class="pslots myslots"></div>
     </div>
     <div class="rkteamcol">
-      <div class="rkcolttl foe">あいての手持ち（出てくる順）<small>ロケット団のポケモンとわざを選ぶ</small></div>
+      <div class="rkcolttl foe">あいての手持ち（出てくる順）<small>リーダー・サカキは上の「だれと」からタップで入ります</small></div>
       <div class="pslots foeslots"></div>
     </div>
   </div>
@@ -626,6 +676,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 <script src="/assets/meta_lists.js"></script>
 <script src="/assets/type-icons.js"></script>
 <script src="/assets/pvp-engine.js"></script>
+<script src="/assets/rocket_roster.js"></script>
 <script>
 const D = window.PVP_DATA;
 document.getElementById('loading').style.display = 'none';
@@ -690,10 +741,21 @@ function movePool(key) {
   const chargeds = [...new Set([...p.c, ...p.ec])].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
   return { fasts, chargeds };
 }
+// ロケット団のあいてが使ってくるわざ。おぼえるわざの中からランダムに打ってくるが、
+// 特別なわざ(レガシー技)は打ってこないので、通常枠(q/c)だけに絞る
+function rkPool(key) {
+  const p = D.pokemon[key];
+  return {
+    fasts: [...new Set(p.q)].filter(m => D.moves[m]),
+    chargeds: [...new Set(p.c)].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION'),
+  };
+}
+// ロケット団のあいてかどうかは statMult(倍率でステータスが決まる)の有無で見分ける
+const poolOf = cfg => (cfg && cfg.statMult ? rkPool(cfg.key) : movePool(cfg.key));
 // わざ構成の候補を作る。cfg = { fast:固定するノーマル, c1:固定するSP1, c2:指定されたSP2 }
 // c2があるときは「SP1候補+SP2」の2本セットを返し、どちらを撃つかはエンジンが相手に合わせて選ぶ
 function policies(key, cfg) {
-  const { fasts, chargeds } = movePool(key);
+  const { fasts, chargeds } = cfg && cfg.statMult ? rkPool(key) : movePool(key);
   const st = { atk: 1, def: 1, types: D.pokemon[key].ty, buffs: [0, 0] };
   const dpe = m => D.moves[m].p / D.moves[m].e;
   const top = chargeds.sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
@@ -1039,7 +1101,8 @@ cupTab.onclick = () => {
 //   手動交代のときは自分も0.5秒(1ターン)動けないので、実質は8ターン分の得になる
 // team=3匹の連戦モード / sh=自分のシールド(バトル全体で共有)
 // koFoe=あいてが倒れて次が出た直後の硬直 / koMe=自分が倒れて次を出した直後の硬直(どちらも既定8ターン=4秒)
-const RK = { kind: 'grunt', stall: 7, enter: 'first', team: false, sh: 2, koFoe: 8, koMe: 8 };
+// who=だれと戦うか(シエラ/クリフ/アルロ/サカキ) / sel=その人の何匹目に誰を選んでいるか(候補の番号)
+const RK = { kind: 'grunt', stall: 7, enter: 'first', team: false, sh: 2, koFoe: 8, koMe: 8, who: null, sel: {} };
 const RK_ENTER = {
   first: { foe: 0, me: 0, label: '先頭（開幕）' },
   ko:    { foe: 8, me: 0, label: '倒されて交代' },
@@ -1082,6 +1145,69 @@ const RK_NOTE = {
   boss: 'サカキは<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。SPアタックの威力は等倍です。',
 };
 
+// ---- リーダー・サカキの手持ち(内蔵データ) ----
+// データは assets/rocket_roster.js。したっぱは相手が多すぎるので内蔵しない(自分で選ぶ)
+const RR = window.ROCKET_ROSTER || { updated: '', list: {} };
+const rkWhoList = () => (RR.list && RR.list[RK.kind]) || [];
+const rkWho = () => rkWhoList().find(w => w.id === RK.who) || null;
+// 選んでいる並び(各枠の候補番号)。未選択の枠は先頭の候補にする
+const rkSel = w => (RK.sel[w.id] = (RK.sel[w.id] || w.slots.map(() => 0)));
+const rkLineup = w => w.slots.map((cands, s) => cands[rkSel(w)[s]] || cands[0]).filter(k => D.pokemon[k]);
+
+// 手持ちの1匹を「あいて」として使う。1対1は右パネル、3匹の連戦は指定の枠に入れる
+// (どちらも表示の作り直しと再計算までここで済ませる)
+function rkPutOne(slot, key) {
+  if (!D.pokemon[key]) return;
+  if (!RK.team) { pick(1, key); return; }   // 1対1: pickがシャドウ固定の表示と再計算までやる
+  RKT[slot] = { key, fast: null, c1: null };
+  saveRkt(); syncRocket(); run();
+}
+// その人の手持ちをまるごと呼び出す(連戦なら3枠、1対1なら1匹目)
+function rkPutAll() {
+  const w = rkWho();
+  if (!w) return;
+  const line = rkLineup(w);
+  if (!RK.team) { if (line[0]) pick(1, line[0]); else { syncRocket(); run(); } return; }
+  [0, 1, 2].forEach(i => { RKT[i] = line[i] ? { key: line[i], fast: null, c1: null } : null; });
+  saveRkt(); syncRocket(); run();
+}
+// 手持ちパネルの描画(したっぱのときは丸ごと隠す)
+function renderRoster() {
+  const box = document.getElementById('rkroster');
+  const list = rkWhoList();
+  if (!list.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  if (!rkWho()) RK.who = list[0].id;   // 既定はリストの先頭(呼び出しはタップしたときだけ)
+  const w = rkWho(), sel = rkSel(w);
+  document.getElementById('rkwho').innerHTML = list.map(x =>
+    `<button data-w="${x.id}" aria-pressed="${x.id === RK.who}" title="${x.name}の手持ちを${RK.team ? 'あいての3枠' : 'あいての欄'}に呼び出す">${x.name}</button>`).join('');
+  const chip = (key, s, j) => {
+    const p = D.pokemon[key];
+    if (!p) return `<button class="rkchip" disabled>${key}</button>`;
+    // 1対1は「いまあいてに入っている1匹」、連戦は「その枠に選んだ1匹」を光らせる
+    const on = RK.team ? j === sel[s] : key === S[1].key;
+    return `<button class="rkchip${on ? ' on' : ''}" data-s="${s}" data-j="${j}"
+      title="${p.n}を${RK.team ? `${s + 1}匹目に入れる` : 'あいてにする'}"><i class="shadowmark"></i>${p.n}${typeIcons(p, 14)}</button>`;
+  };
+  document.getElementById('rklineup').innerHTML = w.slots.map((cands, s) =>
+    `<div class="rkslot"><span class="rkslbl">${s + 1}匹目${cands.length < 2 ? '<i>固定</i>' : ''}</span>
+      <div class="rkcands">${cands.map((k, j) => chip(k, s, j)).join('')}</div></div>`).join('') +
+    `<div class="rkrostnote">1匹目は固定、<b>2匹目・3匹目はランダム</b>で出てきます（タップで${RK.team ? 'その枠に入ります' : 'あいての欄に入ります'}）。` +
+    `手持ちのデータは<b>${RR.updated}時点</b>のもので、イベントで入れ替わることがあります。` +
+    `違っていたら${RK.team ? 'あいての枠' : 'あいての名前欄'}から直接えらべます。` +
+    `<br>あいてのわざは<b>おぼえるわざの中からランダム</b>なので決め打ちできません。${RK.team ? 'あいての枠の中のわざ欄' : 'あいてのわざ欄'}を切り替えて、キツいわざでも勝てるかを確かめてください。</div>`;
+  document.querySelectorAll('#rkwho button').forEach(b => b.onclick = () => {
+    RK.who = b.dataset.w;
+    rkPutAll();
+  });
+  document.querySelectorAll('#rklineup .rkchip').forEach(b => b.onclick = () => {
+    if (b.disabled) return;
+    const s = +b.dataset.s, j = +b.dataset.j;
+    rkSel(w)[s] = j;
+    rkPutOne(s, w.slots[s][j]);
+  });
+}
+
 // ---- モード切替(1対1シミュ / 環境一覧) ----
 let mode = 'duel', multiToken = 0;
 function applyMode() {
@@ -1120,6 +1246,7 @@ function syncRocket() {
   document.getElementById('rkkof').value = RK.koFoe;
   document.getElementById('rkkom').value = RK.koMe;
   syncFoeSlots();
+  renderRoster();   // リーダー・サカキの手持ち(したっぱのときは隠れる)
   const m = sp.mult.map(v => Math.round(v * 100) / 100);
   document.querySelector('.rknote').innerHTML = RK_NOTE[RK.kind] +
     `どちらかがSPアタックを撃つと、あいては<b>${RK.stall}ターン（${(RK.stall / 2).toFixed(1)}秒）</b>動けません（この間はこちらだけ攻撃できます）。` +
@@ -1130,6 +1257,11 @@ function syncRocket() {
     '（ここに<b>シャドウ補正（攻×1.2・防÷1.2）</b>が別途かかります。トレーナーレベル40以上が前提）。';
   // ロケット団のポケモンはステータスの決まり方が違うので、個体値・PLの欄は使わない
   S[1].c2 = null;   // 同じ個体が2種類のSPアタックを使い分けることはない
+  if (S[1].key) {   // 特別なわざ(レガシー技)は打ってこないので、選ばれていたら自動選択に戻す
+    const pool = rkPool(S[1].key);
+    if (S[1].fast && !pool.fasts.includes(S[1].fast)) S[1].fast = null;
+    if (S[1].c1 && !pool.chargeds.includes(S[1].c1)) S[1].c1 = null;
+  }
   const el = sideEl[1];
   // ロケット団はシャドウしか使ってこないので、シャドウは常にON(押しても切り替わらない)
   if (RK.prevShadow == null) RK.prevShadow = S[1].shadow;   // 他モードへ戻したときのために覚えておく
@@ -1711,10 +1843,11 @@ try { const v = JSON.parse(localStorage.getItem(RKT_KEY)); if (Array.isArray(v))
 const saveRkt = () => { try { localStorage.setItem(RKT_KEY, JSON.stringify(RKT)); } catch (e) {} };
 const rktName = m => m ? 'シャドウ' + D.pokemon[m.key].n : '';
 // あいて1匹分の計算用設定(わざが未選択なら、おぼえるわざの先頭を使う)
+// 特別なわざ(レガシー技)は打ってこないので候補から外す
 function rktCfg(m, opt) {
-  const { fasts, chargeds } = movePool(m.key);
-  const fast = m.fast && D.moves[m.fast] ? m.fast : fasts[0];
-  const sp = m.c1 && D.moves[m.c1] ? m.c1 : chargeds[0];
+  const { fasts, chargeds } = rkPool(m.key);
+  const fast = m.fast && fasts.includes(m.fast) ? m.fast : fasts[0];
+  const sp = m.c1 && chargeds.includes(m.c1) ? m.c1 : chargeds[0];
   // SPアタックを覚えないポケモン(進化前など)はノーマルアタックだけで戦う
   return rkCfg({ key: m.key, ivs: [15, 15, 15], level: 40, cap: 0, fast,
     charged: sp ? [sp] : [], throw: sp }, opt);
@@ -1779,7 +1912,7 @@ function syncFoeSlots() {
     if (!m) { fb.style.display = 'none'; return; }
     fb.style.display = 'block';
     const cfg = rktCfg(m);
-    const { fasts, chargeds } = movePool(m.key);
+    const { fasts, chargeds } = rkPool(m.key);   // 特別なわざ(レガシー技)は打ってこない
     const opts = (list, sel) => list.map(x => `<option value="${x}"${x === sel ? ' selected' : ''}>${D.moves[x].n}</option>`).join('');
     el.querySelector('.selFast').innerHTML = opts(fasts, cfg.fast);
     el.querySelector('.selC1').innerHTML = opts(chargeds, cfg.throw);
@@ -1791,18 +1924,32 @@ function syncFoeSlots() {
 }
 
 // 3匹の連戦を1通り(自分のシールド枚数を決め打ち)で最後まで計算する
-function rkChain(mine, foes, myShields) {
+// opt.worst=あいてのわざを対面ごとに「こちらがいちばんキツいもの」にする(わざ運の最悪ケース)
+// opt.picks=自分のわざ構成を使い回す(バトル前に決めるものなので、あいてのわざ運では変えない)
+function rkChain(mine, foes, myShields, opt) {
+  opt = opt || {};
   // わざはバトル中に変わらないので、相手全体に対していちばん良い組み合わせをポケモンごとに1つ選ぶ
-  const picks = mine.map(m => {
+  const picks = opt.picks || mine.map(m => {
     const base = ptBase(m, 0);   // ロケット団戦はCP制限なし
     const pols = policies(m.key, { fast: m.fast || undefined, c1: m.c1 || undefined, c2: m.c2 || undefined });
     let best = null;
     for (const pol of pols) {
+      const L = { ...base, ...pol, timing: 'optimal', shields: myShields, bluff: true };
       let sc = 0;
-      for (const f of foes)
-        sc += scoreOf(PvpEngine.simulate(D,
-          { ...base, ...pol, timing: 'optimal', shields: myShields, bluff: true },
-          rktCfg(f, { stallStart: 0, shields: rkShields() }), SIMOPT), 0);
+      for (const f of foes) {
+        // あいてのわざはランダムなので、そのポケモンがいちばんキツいわざを持っていた場合で評価する
+        // (1対1シミュの rkOptimize と同じ「最悪ケース基準」にそろえる)
+        const R = rktCfg(f, { stallStart: 0, shields: rkShields() });
+        const { fasts, chargeds } = rkPool(f.key);
+        const spList = chargeds.length ? chargeds : [null];
+        let worst = null;
+        for (const fm of fasts) for (const sp of spList) {
+          const s = scoreOf(PvpEngine.simulate(D, L,
+            { ...R, fast: fm, charged: sp ? [sp] : [], throw: sp }, SIMOPT), 0);
+          if (worst === null || s < worst) worst = s;
+        }
+        sc += worst;
+      }
       if (!best || sc > best.sc) best = { sc, pol };
     }
     return { m, base, pol: best.pol, name: ptName(m) };
@@ -1817,7 +1964,16 @@ function rkChain(mine, foes, myShields) {
     else if (myEntry) L.stallStart = myEntry;           // 手動交代の直後は自分も1ターン動けない
     const R = rktCfg(foes[fi], { shields: foeShLeft, stallStart: foeEntry });
     if (foeResume) R.resume = { ...foeResume, stall: Math.max(foeResume.stall || 0, foeEntry) };
-    const res = PvpEngine.simulate(D, L, R, SIMOPT);
+    let res;
+    if (opt.worst) {
+      // あいてが打ってくるわざはランダムなので、全通りのうち一番キツいもので通す
+      const { fasts, chargeds } = rkPool(foes[fi].key);
+      const spList = chargeds.length ? chargeds : [null];
+      for (const f of fasts) for (const sp of spList) {
+        const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, SIMOPT);
+        if (!res || scoreOf(r, 0) < scoreOf(res, 0)) res = r;
+      }
+    } else res = PvpEngine.simulate(D, L, R, SIMOPT);
     res.final[0].name = picks[mi].name;                 // 表示名(シャドウ表記込み)に差し替える
     res.final[1].name = rktName(foes[fi]);
     turns += res.turns;
@@ -1857,7 +2013,10 @@ function runRocketTeam() {
   const runs = [];
   const step = () => {
     if (token !== multiToken) return;
-    runs.push(rkChain(mine, foes, runs.length));
+    const r = rkChain(mine, foes, runs.length);
+    // あいてのわざはランダムなので、いちばんキツい引きだった場合も一緒に出す
+    r.worst = rkChain(mine, foes, runs.length, { worst: true, picks: r.picks });
+    runs.push(r);
     if (runs.length < 3) { prog.textContent = `計算中… ${runs.length}/3`; setTimeout(step, 0); }
     else renderRkTeam(body, runs);
   };
@@ -1899,9 +2058,17 @@ function renderRkTeam(body, runs) {
     </tr>
     <tr class="tlrow" data-k="${k}" style="display:none"><td colspan="3"></td></tr>`;
   }).join('');
+  // あいてのわざはランダムなので、いちばんキツい引きだった場合の結果も添える
+  const wo = cur.worst && RK_OUTCOME[cur.worst.outcome];
+  const worstHtml = !wo ? '' : `<div class="rkworst ${wo.cls === 'win' ? 'ok' : 'ng'}">
+    あいてのわざ運がいちばん悪いと <b>${wo.txt}</b>
+    <small>あいてが対面ごとに<b>こちらにいちばんキツいわざ</b>を打ってきた場合：
+    じぶん ${cur.worst.meLeft}/${cur.worst.nMe}匹 ／ あいて ${cur.worst.foeLeft}/${cur.worst.nFoe}匹 が残り、${sec(cur.worst.turns)}秒かかります。
+    ${cur.worst.outcome === 'win' ? 'あいてのわざがどう来ても勝てるので、安心して挑めます。' : 'あいてのわざの引き次第で落とすことがあるので、編成を見直すと確実です。'}</small></div>`;
   body.innerHTML = `<div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
       <small>じぶん ${cur.meLeft}/${cur.nMe}匹 ／ あいて ${cur.foeLeft}/${cur.nFoe}匹 が残りました
       （戦った時間の目安 ${sec(cur.turns)}秒・残りシールド じぶん${cur.myShLeft}枚／あいて${cur.foeShLeft}枚）</small></div>
+    ${worstHtml}
     <div class="mtnote">えらばれたわざ: ${cur.picks.map((p, j) => `<b>${j + 1}. ${p.name}</b> = ${mvNames(p.pol)}`).join(' ／ ')}</div>
     <table class="rkchain">
       <tr><th style="text-align:left">対面</th><th>結果</th><th style="text-align:right">決着したときの残り</th></tr>
@@ -2067,7 +2234,9 @@ function run() {
       ...polOpts(i) };
     return rk && i === 1 ? rkCfg(c) : c;
   };
-  const plan = optimize(optCfg(0, curSh(0)), optCfg(1, curSh(1)));
+  // ロケット団戦はあいてのわざがランダムなので「最悪ケース基準」で選ぶ(rkOptimize)
+  const opt2 = (a, b) => rk ? rkOptimize(optCfg(0, a), optCfg(1, b)) : optimize(optCfg(0, a), optCfg(1, b));
+  const plan = opt2(curSh(0), curSh(1));
   // pol=採用するわざ構成 / sh=シールド枚数 / usePlan=マニュアル指定(何発目で使うか)を反映するか
   const fin = (i, pol, sh, usePlan) => {
     const c = { ...base[i], ...pol, bluff: S[i].bluff };
@@ -2099,7 +2268,7 @@ function run() {
   for (let a = 0; a <= 2; a++) {
     const row = [];
     for (const b of bList) {
-      const p = a === curSh(0) && b === curSh(1) ? plan : optimize(optCfg(0, a), optCfg(1, b));
+      const p = a === curSh(0) && b === curSh(1) ? plan : opt2(a, b);
       const r = PvpEngine.simulate(D, fin(0, p.left, a, false), fin(1, p.right, b, false), SIMOPT);
       const w = r.winner;
       row.push({ w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) });
@@ -2109,8 +2278,99 @@ function run() {
   render(res, L, R, matrix);
 }
 
+// あいてが打ってくるわざの全通り。picked=true なら画面で指定されたわざだけに絞る
+function rkFoeCombos(cfgR, picked) {
+  let { fasts, chargeds } = rkPool(cfgR.key);
+  if (picked && S[1].fast && fasts.includes(S[1].fast)) fasts = [S[1].fast];
+  if (picked && S[1].c1 && chargeds.includes(S[1].c1)) chargeds = [S[1].c1];
+  const spList = chargeds.length ? chargeds : [null];
+  const out = [];
+  for (const f of fasts) for (const sp of spList) out.push({ fast: f, throw: sp });
+  return out;
+}
+// ロケット団戦のわざ最適化(最悪ケース基準)
+// あいてのわざはランダムなので「お互いが最善を尽くす」前提は合わない。
+// 自分のわざはバトル中に変えられないので、あいての全通りに対して
+//   ①勝てる通りが多い ②その中で最悪ケースがマシ
+// の順でいちばん強い構成を選び、表示は「その構成にとっていちばんキツいわざ」で出す。
+// こうすると主結果・シールド枚数別の勝敗・わざ全通り表の数字が食い違わない。
+function rkOptimize(cfgL, cfgR) {
+  const PL = policies(cfgL.key, cfgL);
+  const all = rkFoeCombos(cfgR, false);      // 自分のわざ選びは常に全通りで評価する
+  const shown = rkFoeCombos(cfgR, true);     // 画面でわざを指定していれば、表示はその中の最悪ケース
+  const foeCfg = c => ({ ...cfgR, fast: c.fast, charged: c.throw ? [c.throw] : [], throw: c.throw });
+  let best = null;
+  for (const pol of PL) {
+    const L = { ...cfgL, ...pol, timing: cfgL.timing || 'optimal' };
+    let wins = 0, worst = null;
+    for (const c of all) {
+      const r = PvpEngine.simulate(D, L, foeCfg(c), SIMOPT);
+      if (r.winner === 0) wins++;
+      const sc = scoreOf(r, 0);
+      if (worst === null || sc < worst) worst = sc;
+    }
+    if (!best || wins > best.wins || (wins === best.wins && worst > best.worst)) best = { wins, worst, pol, L };
+  }
+  // 選んだ構成にとって、いちばんキツいわざを主結果として出す(最悪ケース基準)
+  let show = shown[0], showSc = null;
+  for (const c of shown) {
+    const sc = scoreOf(PvpEngine.simulate(D, best.L, foeCfg(c), SIMOPT), 0);
+    if (showSc === null || sc < showSc) { showSc = sc; show = c; }
+  }
+  return { left: best.pol, right: show, wins: best.wins, n: all.length };
+}
+
+// ---- あいてのわざ全通り(ロケット団戦) ----
+// ロケット団のあいては、おぼえるわざの中からランダムに打ってくるので決め打ちできない。
+// そこで全通り試して「どのわざで来ても勝てるか」を出す。
+// 自分のわざはバトル中に変えられないので L は固定したまま、あいてのわざだけ差し替える。
+function rkAllMoves(L, R) {
+  const { fasts, chargeds } = rkPool(R.key);
+  const spList = chargeds.length ? chargeds : [null];   // SPを覚えないポケモンはノーマルだけ
+  const rows = [];
+  for (const f of fasts) for (const sp of spList) {
+    const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, SIMOPT);
+    const me = r.final[0], foe = r.final[1];
+    rows.push({ fast: f, sp, win: r.winner === 0, draw: r.winner === 'draw', turns: r.turns,
+      pct: Math.round(me.hp / me.hpMax * 100), foePct: Math.round(foe.hp / foe.hpMax * 100),
+      score: scoreOf(r, 0),   // 自分から見た良さ(相手を削った分＋自分の残りHP)。低いほどキツい
+      cur: f === R.fast && sp === (R.throw || null) });
+  }
+  // キツい順に並べる。先頭がいちばん危ないわざ
+  // (勝つ場合は自分の残りが少ないほど、負ける場合は相手を削れていないほどキツい)
+  rows.sort((a, b) => a.score - b.score);
+  return { rows, wins: rows.filter(r => r.win).length };
+}
+// あいてのわざ全通りの表(タップでそのわざに切り替えてタイムラインを確認できる)
+function rkMovesHtml(all) {
+  const sec = t => (t / 2).toFixed(1);
+  const n = all.rows.length, w = all.wins;
+  const worst = all.rows[0];
+  const head = w === n ? `<b class="ok">どのわざで来ても勝てます</b>（${n}通りすべて勝ち）`
+    : w === 0 ? `<b class="ng">どのわざで来ても勝てません</b>（${n}通りすべて負け）`
+    : `<b class="ng">わざ次第で負けます</b>（${n}通り中<b>${w}通り</b>で勝ち）。いちばん危ないのは ${mvChip(D.moves[worst.fast].n)}${worst.sp ? ' ＋ ' + mvChip(D.moves[worst.sp].n) : ''}`;
+  const rowHtml = r => `<tr class="${r.cur ? 'cur' : ''}" data-f="${r.fast}" data-c="${r.sp || ''}">
+    <td>${mvChip(D.moves[r.fast].n)}${r.sp ? '<span class="rkmvsp">' + mvChip(D.moves[r.sp].n) + '</span>' : ''}</td>
+    <td class="${r.win ? 'w' : 'l'}"><b>${r.draw ? '相打ち' : r.win ? '勝ち' : '負け'}</b></td>
+    <td>${sec(r.turns)}秒</td>
+    <td>${r.win ? `自分 残HP${r.pct}%` : `相手に残HP${r.foePct}%`}</td></tr>`;
+  return `<div class="rkmoves">
+    <div class="mvhead">あいてのわざ全通り（ロケット団は<b>おぼえるわざからランダム</b>に使ってきます。特別なわざは使いません）</div>
+    <div class="rkmvsum">${head}</div>
+    <table><tr><th style="text-align:left">あいてのわざ</th><th>結果</th><th>決着</th><th>決着時の残り</th></tr>
+      ${all.rows.map(rowHtml).join('')}</table>
+    <div class="rkmvnote">キツい順（上ほど危ない）に並べています。自分のわざはバトル中に変えられないので、
+      <b>この表の全通りに対していちばん強い構成</b>を自動で選び、そのまま相手のわざだけを差し替えて計算しています。
+      上の結果は<b class="curmk">水色枠の行</b>＝<b>いちばんキツいわざで来た場合</b>です（安全側の見方）。
+      行をタップすると、そのわざで来た場合の詳細（タイムライン）に切り替わります。
+      <b>決着が速いほど良い</b>（ロケット団戦は早く倒すほど有利）。</div>
+  </div>`;
+}
+
 function fillMoves(i, cfg) {
-  const el = sideEl[i], { fasts, chargeds } = movePool(cfg.key);
+  // ロケット団のあいては、おぼえるわざ(特別なわざを除く)しか打ってこないので候補を絞る
+  const rkFoe = !!cfg.statMult;
+  const el = sideEl[i], { fasts, chargeds } = poolOf(cfg);
   const p = D.pokemon[cfg.key];
   el.querySelector('.pkview').style.display = 'block';
   el.querySelector('.nm').textContent = (cfg.shadow ? 'シャドウ' : '') + p.n;
@@ -2148,9 +2408,11 @@ function fillMoves(i, cfg) {
   };
   const otherF = others(true, fasts);
   const otherC = others(false, chargeds);
-  const grouped = (own, others, sel) =>
-    `<optgroup label="おぼえるわざ">${own.map(m => opt(m, sel)).join('')}</optgroup>` +
-    `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>`;
+  // ロケット団のあいては打ってこないわざを選べても意味がないので「その他のわざ」を出さない
+  const grouped = (own, others, sel) => rkFoe
+    ? own.map(m => opt(m, sel)).join('')
+    : `<optgroup label="おぼえるわざ">${own.map(m => opt(m, sel)).join('')}</optgroup>` +
+      `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>`;
   el.querySelector('.selFast').innerHTML = grouped(fasts, otherF, cfg.fast);
   el.querySelector('.selC1').innerHTML = grouped(chargeds, otherC, cfg.throw);
   el.querySelector('.selC2').innerHTML =
@@ -2260,7 +2522,8 @@ function render(res, L, R, matrix) {
       <b>${txt}</b><small>${c.w === 'draw' ? '両者0' : '残HP' + c.pct + '%'}</small></td>`;
   };
   const mtxHtml = rkMode ? `<div class="shmtx">
-    <div class="mvhead">自分のシールド枚数別の勝敗（マスをタップでその枚数に切替。残HPは勝った側）</div>
+    <div class="mvhead">自分のシールド枚数別の勝敗（マスをタップでその枚数に切替。残HPは勝った側）
+      <small>※あいてのわざは<b class="curmk">こちらにいちばんキツいもの</b>（上の表の水色枠）で計算しています</small></div>
     <table>
       <tr><th class="corner">自分のシールド</th><th>勝敗</th></tr>
       ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${mtxCell(a, 0)}</tr>`).join('')}
@@ -2280,10 +2543,18 @@ function render(res, L, R, matrix) {
       （能力変化がない状態の攻撃実数値 ${fmt1(at[fst])} ${at[0] === at[1] ? '＝' : '＞'} ${fmt1(at[1 - fst])}。
       戦闘中に攻撃が上下すると入れ替わることがあります）</div>`;
   }
+  // ロケット団戦は「いかに早く倒せるか」が大事なので、決着までの時間を必ず出す。
+  // あいてのわざはランダムなので、全通り試した結果も添える
+  let rkHtml = '';
+  if (rkMode) {
+    rkHtml = `<div class="rktime">この対面の決着まで <b>${(res.turns / 2).toFixed(1)}秒</b>
+      （${res.turns}ターン）<small>ロケット団戦は早く倒すほど有利です</small></div>` + rkMovesHtml(rkAllMoves(L, R));
+  }
   // 技一覧もHPバー等と同じ左右2列に揃える(中央のVSは列幅合わせ用の不可視スペーサー)
   rEl.innerHTML = `
     <div class="vs">${fighter(0, L)}<div class="vsmark">VS</div>${fighter(1, R)}</div>
     ${cmpHtml}
+    ${rkHtml}
     ${mtxHtml}
     <div class="mvcols">
       <div class="mvside"><div class="mvhead">${res.final[0].name}の技（実測値）</div>${mvRows(0)}</div>
@@ -2346,6 +2617,12 @@ function render(res, L, R, matrix) {
     });
     run();
   });
+  // わざ全通りの行をタップ→あいてのわざをそれに切り替える(タイムラインでどう負けるか確認できる)
+  rEl.querySelectorAll('.rkmoves tr[data-f]').forEach(tr => tr.onclick = () => {
+    S[1].fast = tr.dataset.f;
+    S[1].c1 = tr.dataset.c || null;
+    run();
+  });
   lastRes = res;
   renderTimeline();
   document.getElementById('share').style.display = 'flex';
@@ -2374,6 +2651,8 @@ function updateUrl() {
   if (SIMOPT.buffMode !== 'none') qp.pb = SIMOPT.buffMode;   // 確率わざの扱い
   if (mode === 'rocket') {   // ロケット団戦の設定
     qp.rk = RK.kind; qp.rs = RK.stall; qp.re = RK.enter;
+    const w = rkWho();   // リーダー・サカキの手持ち(だれと・何匹目に誰を選んでいるか)
+    if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
     if (RK.team) {   // 3匹の連戦(自分のパーティは端末内に保存しているのでURLには入れない)
       qp.rt = 1; qp.rsh = RK.sh; qp.rkf = RK.koFoe; qp.rkm = RK.koMe;
       const t = [0, 1, 2].filter(i => RKT[i]).map(i => [RKT[i].key, RKT[i].fast || '', RKT[i].c1 || ''].join('~'));
@@ -2674,6 +2953,11 @@ document.getElementById('copyUrl').onclick = async () => {
   if (q.get('rs') != null && !isNaN(+q.get('rs'))) RK.stall = Math.max(0, Math.min(16, +q.get('rs')));
   if (RK_ENTER[q.get('re')]) RK.enter = q.get('re');
   if (q.get('rt') === '1') RK.team = true;   // 3匹の連戦の復元
+  if (q.get('rw') && rkWhoList().some(w => w.id === q.get('rw'))) {   // 手持ち(だれと・選んだ並び)の復元
+    RK.who = q.get('rw');
+    const w = rkWho(), sel = (q.get('rl') || '').split('').map(Number);
+    if (w) RK.sel[w.id] = w.slots.map((c, s) => (sel[s] >= 0 && sel[s] < c.length ? sel[s] : 0));
+  }
   const rkNum = (k, lo, hi, def) => { const v = +q.get(k); return q.get(k) != null && !isNaN(v) ? Math.max(lo, Math.min(hi, v)) : def; };
   RK.sh = rkNum('rsh', 0, 2, RK.sh);
   RK.koFoe = rkNum('rkf', 0, 16, RK.koFoe);

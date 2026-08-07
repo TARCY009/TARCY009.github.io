@@ -107,6 +107,12 @@
   function simulate(D, cfgL, cfgR, opt) {
     opt = opt || {};
     const maxTurn = opt.maxTurn || 480;
+    // opt.stopAt: このターンを終えたところで打ち切る。交代(場が仕切り直しになる場面)に使う。
+    // 打ち切った場合は winner=null・stopped=true で返り、final[].resume から続きを始められる。
+    // 注意: resume はHP・ゲージ・能力変化・硬直までで、打ちかけの通常技(cd)やタイミングAIの
+    // 内部カウンタは引き継がない。したがって「同じ対面の途中から続ける」用途には使えない
+    // (その場合は決定を書き換えて1ターン目から回し直すこと。1回のシミュは0.02ms未満と軽い)
+    const stopAt = opt.stopAt || 0;
     const sides = [cfgL, cfgR].map(cfg => {
       const st = buildStats(D, cfg);
       const s = {
@@ -389,6 +395,7 @@
         }
       }
       if (sides[0].hp <= 0 || sides[1].hp <= 0) break;
+      if (stopAt && turn >= stopAt) break;   // 途中で打ち切る(交代・分岐のため)
     }
     if (sides[0].hp <= 0 && sides[1].hp <= 0) winner = 'draw';
     else if (sides[1].hp <= 0) winner = 0;
@@ -396,6 +403,8 @@
 
     return {
       winner, turns: turn, rows,
+      // 決着ではなく opt.stopAt で打ち切った場合は true(続きは final[].resume から始められる)
+      stopped: !!(stopAt && winner === null && turn >= stopAt),
       final: sides.map(s => ({
         name: s.name, cp: s.cp, hp: Math.max(0, s.hp), hpMax: buildStats(D, s.cfg).hp,
         en: s.en, shields: s.shields, buffs: s.buffs,
