@@ -157,14 +157,18 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rocket .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305}
 .rocket input{width:64px;padding:5px 6px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
 .rocket input:focus{border-color:var(--gl)}
-.rknote{font-size:.64rem;color:var(--sub);line-height:1.5;margin-top:6px}
+.rknote{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.rkfact{display:inline-flex;align-items:center;padding:2px 8px;font-size:.66rem;font-weight:600;
+  background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--sub)}
+.rkfact .shadowmark{color:#b06cff}
 /* ロケット団戦: リーダー・サカキの手持ち */
 .rkroster{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
 .rklineup{margin-top:6px}
 .rkslot{display:flex;align-items:flex-start;gap:8px}
 .rkslot+.rkslot{margin-top:5px}
 .rkslbl{font-size:.66rem;color:var(--sub);font-weight:600;flex-shrink:0;width:58px;padding-top:6px;line-height:1.3}
-.rkslbl i{display:block;font-style:normal;font-size:.56rem;color:var(--gold)}
+.rkslbl i{font-style:normal;font-size:.72rem}
+.rkrostnote{text-align:right}
 .rkcands{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0}
 .rkchip{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;font-size:.72rem;font-weight:600;
   background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--ink);cursor:pointer}
@@ -190,8 +194,14 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rkmoves td.w b{color:var(--win)}
 .rkmoves td.l b{color:var(--lose)}
 .rkmoves tr.cur td{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy)}
-.rkmvnote .curmk,.shmtx .curmk{color:var(--cy)}
-.shmtx .mvhead small{display:block;font-size:.6rem;font-weight:400;color:var(--sub);line-height:1.5;margin-top:2px}
+.mvhead small{font-size:.6rem;font-weight:400;color:var(--sub);margin-left:6px}
+.rkdanger{display:inline-block;margin-left:6px;font-size:.66rem;font-weight:600;color:var(--lose)}
+.rkmvsum small{font-size:.66rem;font-weight:400;color:var(--sub)}
+.foepct{color:var(--gold)}
+.rktime{font-size:.9rem}
+.rktime b{font-size:1.15rem}
+.rbmttl span{margin-left:8px;font-weight:400;color:var(--sub)}
+.rkchain td small{display:block;font-size:.58rem;color:var(--sub);font-weight:400}
 .rkmvsp{margin-left:4px}
 .rkmvnote{font-size:.62rem;color:var(--sub);line-height:1.5;margin-top:4px}
 .rkworst{margin-top:6px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);
@@ -301,6 +311,20 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rbmbtns button.close{border-color:var(--line);color:var(--sub)}
 .rbmnote{font-size:.6rem;color:var(--sub);line-height:1.5;margin-top:5px}
 @media (max-width:520px){.rbev{width:30%;font-size:.62rem}.rbrow td{padding:3px}.rbmbtns button{font-size:.66rem;padding:5px 7px}}
+/* ページ最下部の「使い方」タブ。説明の文章はすべてここに集める */
+.helpwrap{margin-top:18px}
+#helptab{width:100%;padding:10px;font-size:.8rem;font-weight:700;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--r);color:var(--sub);cursor:pointer}
+#helptab[aria-expanded="true"]{color:var(--ink);border-color:var(--gl)}
+#helpbody{margin-top:8px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+#helpbody h4{margin:14px 0 5px;font-size:.76rem;color:var(--cy)}
+#helpbody h4:first-child{margin-top:0}
+#helpbody p,#helpbody li{font-size:.7rem;color:var(--sub);line-height:1.7;margin:0}
+#helpbody ul{margin:0;padding-left:1.1em}
+#helpbody b{color:var(--ink)}
+.hlegend{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;margin:2px 0}
+.hlegend div{font-size:.7rem;color:var(--sub);line-height:1.7}
+.hlegend i{font-style:normal;display:inline-block;min-width:2.2em;color:var(--ink);font-weight:700}
 .rkverdict{margin-top:12px;padding:8px 10px;border-radius:10px;font-size:.86rem;font-weight:700;text-align:center;border:1px solid var(--line)}
 .rkverdict.win{color:var(--win);background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.4)}
 .rkverdict.lose{color:var(--lose);background:rgba(255,107,129,.12);border-color:rgba(255,107,129,.4)}
@@ -498,11 +522,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <div class="rklineup" id="rklineup"></div>
   </div>
   <div class="rkrow">
-    <span class="lbl">あいての登場</span>
+    <span class="lbl" title="あいてのポケモンがどう出てきた場面か">登場</span>
     <div class="opts rkenter" id="rkenter">
-      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">先頭（開幕）</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次を出した直後。あいては4秒(8ターン)動けません">倒されて交代</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">手動で交代</button>
+      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">開幕</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次を出した直後。あいては4秒(8ターン)動けません">💀後</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">⇄後</button>
     </div>
-    <label class="lbl" for="rkstall" title="どちらかがSPアタックを撃つと、あいてはこのターン数だけ動けなくなります(0.5秒=1ターン)">SP後の硬直</label>
+    <label class="lbl" for="rkstall" title="SPアタックのあと、あいてが動けないターン数（0.5秒=1ターン）">⏸️</label>
     <input type="number" id="rkstall" min="0" max="16" inputmode="numeric">
   </div>
   <div class="rknote"></div>
@@ -699,11 +723,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="mtnote" id="rkteamnote"></div>
   <div class="rkteams">
     <div class="rkteamcol">
-      <div class="rkcolttl">じぶん（出す順）<small>パーティ診断と共通の3枠</small></div>
+      <div class="rkcolttl" title="パーティ診断と共通の3枠です">じぶん<small>出す順</small></div>
       <div class="pslots myslots"></div>
     </div>
     <div class="rkteamcol">
-      <div class="rkcolttl foe">あいての手持ち（出てくる順）<small>リーダー・サカキは上の「だれと」からタップで入ります</small></div>
+      <div class="rkcolttl foe" title="リーダー・サカキは上の「だれと」からタップで入ります">あいて<small>出てくる順</small></div>
       <div class="pslots foeslots"></div>
     </div>
   </div>
@@ -714,13 +738,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     </div>
   </div>
   <div class="rkstallcfg">
-    <label class="lbl" for="rkkof" title="あいてのポケモンが倒れて次が出てきたとき、あいてが動けないターン数（0.5秒=1ターン）">あいてが倒れて次が出た</label>
+    <label class="lbl" for="rkkof" title="あいてのポケモンが倒れて次が出てきたとき、あいてが動けないターン数（0.5秒=1ターン）">⏸️ あいて💀</label>
     <input type="number" id="rkkof" min="0" max="16" inputmode="numeric">
-    <label class="lbl" for="rkkom" title="自分のポケモンが倒れて次を出したとき、あいてが動けないターン数（0.5秒=1ターン）">自分が倒れて次を出した</label>
+    <label class="lbl" for="rkkom" title="自分のポケモンが倒れて次を出したとき、あいてが動けないターン数（0.5秒=1ターン）">⏸️ じぶん💀</label>
     <input type="number" id="rkkom" min="0" max="16" inputmode="numeric">
-    <label class="lbl" for="rkswcd" title="自分から交代したあと、次の交代ができるようになるまでの秒数（あいてが固まる硬直とは別のもの）">交代のクールタイム（秒）</label>
+    <label class="lbl" for="rkswcd" title="自分から交代したあと、次の交代ができるようになるまでの秒数（あいてが固まる硬直とは別のもの）">⇄ 秒</label>
     <input type="number" id="rkswcd" min="0" max="120" step="5" inputmode="numeric">
-    <span class="rkstallnote">硬直はどちらも既定<b>8ターン（4秒）</b>＝「瀕死による交代」の値。交代のクールタイムは<b>45秒</b>＝自分から交代したあと、<b>次に交代できるようになるまで</b>の時間（あいてが固まる硬直とは別のものです）。実戦と違ったらここで変えられます</span>
   </div>
   <div class="rkbody"></div>
 </div>
@@ -733,6 +756,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 </div>
 
 <div class="loading" id="loading">データ読み込み中…</div>
+<!-- 使い方・見かたの説明。画面の中には結論だけを置き、説明はすべてここにまとめる -->
+<div class="helpwrap">
+  <button id="helptab" aria-expanded="false">？ 使い方・マークの見かた</button>
+  <div id="helpbody" style="display:none"></div>
+</div>
+
 <footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
 </div>
 
@@ -1150,6 +1179,85 @@ cupTab.onclick = () => {
   cupwin.style.display = open ? 'block' : 'none';
 };
 
+// ---- 使い方・マークの見かた(ページ最下部) ----
+// 画面の中には結論だけを置き、説明の文章はすべてここに集める。
+// のちに「説明ありモード」を作るときは、ここの文章を画面内へ戻す形にする。
+const HELP_HTML = `
+  <h4>マークの見かた</h4>
+  <div class="hlegend">
+    <div><i>🛡</i>シールド（残り枚数・使った回数）</div>
+    <div><i>⏱</i>かかった時間（秒）</div>
+    <div><i>⇄</i>交代する／した</div>
+    <div><i>▶</i>SPアタックを撃つ指示</div>
+    <div><i>🎲</i>ランダムで決まる</div>
+    <div><i>📌</i>固定（必ずこれが出る）</div>
+    <div><i>⏸️</i>硬直（あいてが動けない）</div>
+    <div><i><i class="shadowmark"></i></i>シャドウ</div>
+  </div>
+
+  <p style="margin-top:8px">※ 以下は<b>ロケット団戦</b>の説明です（他のモードの説明も順次ここへまとめます）</p>
+
+  <h4>ロケット団戦の勝ち方</h4>
+  <p>大事なのは<b>いかに早く倒せるか</b>です。SPアタックは発動に時間がかかるので、
+  ノーマルアタックだけで押し切れるならそのほうが速く終わります。
+  ただしリーダー戦は撃たないと苦しい場面が多く、サカキ戦は最後の伝説が強いのでほぼ必ず撃つことになります。</p>
+
+  <h4>あいての条件</h4>
+  <ul>
+    <li>あいては<b>必ずシャドウ</b>です（切り替えできません）</li>
+    <li>ステータスは「PL40・個体値100%」と比べた<b>倍率</b>で決まります（画面上部に表示。シャドウ補正は別途かかります）</li>
+    <li>わざは<b>おぼえるわざからランダム</b>。特別なわざ（レガシー技）は使いません</li>
+    <li>したっぱはシールドを使わず、SPアタックの威力は0.6倍。リーダーとサカキは<b>こちらの最初の2発を必ずシールドで防ぎ</b>、威力は等倍です</li>
+    <li>あいては同じ個体で2種類のSPアタックを使い分けません</li>
+  </ul>
+
+  <h4>硬直（⏸️）と交代のクールタイム</h4>
+  <ul>
+    <li><b>硬直</b>＝<b>あいてが動けない</b>時間。SPアタックのあと3.5秒、瀕死で交代した直後4秒、手動で交代した直後4.5秒</li>
+    <li><b>交代のクールタイム</b>＝<b>自分が次の交代を出せない</b>時間で<b>45秒</b>。硬直とは別のものです</li>
+    <li>手動で交代すると自分も0.5秒動けませんが、あいてが4.5秒止まるぶん得になります</li>
+  </ul>
+
+  <h4>あいてのわざ全通り</h4>
+  <p>あいてのわざはランダムなので決め打ちできません。そこで<b>全通りを試して</b>、どのわざで来ても勝てるかを出しています。
+  並び順は<b>キツい順</b>（上ほど危ない）。自分のわざはバトル中に変えられないので、
+  <b>全通りに対していちばん強い構成</b>を自動で選び、そのまま相手のわざだけを差し替えています。
+  画面の主結果と勝敗表は、<b>いちばんキツいわざで来た場合</b>＝安全側で出しています（水色枠の行）。
+  行をタップすると、そのわざで来たときの詳細に切り替わります。</p>
+
+  <h4>たたかい方の3つ</h4>
+  <ul>
+    <li><b>1対1</b>… 1匹どうしの対面だけを計算します</li>
+    <li><b>3匹の連戦</b>… 上から順に出し、倒れたら次。シールドはバトル全体で共有し、生き残りはHP・ゲージ・能力変化を引き継ぎます。自分から交代する動きは入っていません</li>
+    <li><b>組み立て</b>… タイムラインの<b>ターンの行をタップ</b>して、SPアタックを撃つ・交代するを自分で置きます。置くとそこから先が計算し直されます</li>
+  </ul>
+
+  <h4>組み立ての使い方</h4>
+  <ul>
+    <li><b>自動</b>＝SPアタックはAIが最適なタイミングで撃ちます（交代だけ自分で置けます）</li>
+    <li><b>手動</b>＝<b>置いたターンだけ</b>撃ちます。置かなければ撃たないので、<b>ゲージを次の相手に持ち越せます</b></li>
+    <li>ゲージが足りないターンに置いた場合は、貯まりしだい撃ちます。行には実際に撃ったターンを添えます</li>
+    <li><b>最速／安定</b>のボタンで手順を自動でさがせます。見つかった手順はそのままタイムラインに入るので、続けて手直しできます</li>
+    <li>引っ込めたポケモンはHP・ゲージを保ったまま控えに戻り、出し直すと続きから戦います</li>
+  </ul>
+
+  <h4>計算の前提</h4>
+  <ul>
+    <li>ロケット団戦は<b>CP制限なし</b>。じぶんは個体値を理想値・PLを上限まで上げた前提で計算します（★登録リストから呼び出せば自分の個体値・わざで計算します）</li>
+    <li>「ねっとう(30%で相手の攻撃⬇)」のような運まかせの効果の扱いは、画面上部で切り替えられます（既定は<b>不発</b>＝運に頼らない見方）</li>
+    <li>1ターン＝0.5秒です</li>
+  </ul>`;
+(() => {
+  const tab = document.getElementById('helptab'), body = document.getElementById('helpbody');
+  tab.onclick = () => {
+    const open = body.style.display === 'none';
+    if (open && !body.innerHTML) body.innerHTML = HELP_HTML;
+    body.style.display = open ? 'block' : 'none';
+    tab.setAttribute('aria-expanded', open);
+    tab.textContent = open ? '？ 使い方・マークの見かた（閉じる）' : '？ 使い方・マークの見かた';
+  };
+})();
+
 // ---- ロケット団戦の設定 ----
 // 外部の対面シミュレータに書かれている動き:
 //  ・どちらかがSPアタックを撃つと、あいては4ターン(2秒)硬直する
@@ -1260,13 +1368,12 @@ function renderRoster() {
     return `<button class="rkchip${on ? ' on' : ''}" data-s="${s}" data-j="${j}"
       title="${p.n}を${RK.team ? `${s + 1}匹目に入れる` : 'あいてにする'}"><i class="shadowmark"></i>${p.n}${typeIcons(p, 14)}</button>`;
   };
+  // 「固定/ランダム」は文字でなく📌🎲で示す(説明は最下部の「使い方」へ)
   document.getElementById('rklineup').innerHTML = w.slots.map((cands, s) =>
-    `<div class="rkslot"><span class="rkslbl">${s + 1}匹目${cands.length < 2 ? '<i>固定</i>' : ''}</span>
+    `<div class="rkslot"><span class="rkslbl">${s + 1}匹目
+      <i title="${cands.length < 2 ? '必ずこれが出てきます' : 'この中からランダムで出てきます'}">${cands.length < 2 ? '📌' : '🎲'}</i></span>
       <div class="rkcands">${cands.map((k, j) => chip(k, s, j)).join('')}</div></div>`).join('') +
-    `<div class="rkrostnote">1匹目は固定、<b>2匹目・3匹目はランダム</b>で出てきます（タップで${RK.team ? 'その枠に入ります' : 'あいての欄に入ります'}）。` +
-    `手持ちのデータは<b>${RR.updated}時点</b>のもので、イベントで入れ替わることがあります。` +
-    `違っていたら${RK.team ? 'あいての枠' : 'あいての名前欄'}から直接えらべます。` +
-    `<br>あいてのわざは<b>おぼえるわざの中からランダム</b>なので決め打ちできません。${RK.team ? 'あいての枠の中のわざ欄' : 'あいてのわざ欄'}を切り替えて、キツいわざでも勝てるかを確かめてください。</div>`;
+    `<div class="rkrostnote" title="手持ちはイベントで入れ替わります。違っていたら、あいての欄から直接えらべます">${RR.updated}時点</div>`;
   document.querySelectorAll('#rkwho button').forEach(b => b.onclick = () => {
     RK.who = b.dataset.w;
     rkPutAll();
@@ -1325,18 +1432,19 @@ function syncRocket() {
   const ttl = document.getElementById('rkteamttl');
   if (ttl) {
     ttl.textContent = bld ? 'バトルを組み立てる' : '3匹の連戦';
+    // 説明は最下部の「使い方」に集約。ここには一言だけ置く
     document.getElementById('rkteamnote').innerHTML = bld
-      ? 'じぶんの3匹とあいての手持ちを入れると、1匹目の対面から順にタイムラインが出ます。<b>ターンの行をタップ</b>すると、そこで<b>SPアタックを撃つ・交代する</b>を選べて、<b>そこから先が計算し直されます</b>。「手動」にすると<b>置いたターンだけSPを撃つ</b>ので、<b>あえてゲージを温存</b>して次の相手にぶつける動きも組めます。'
-      : 'じぶんのポケモンを<b>上から順に</b>出し、<b>倒れたら次</b>を出して最後まで戦います（自分から交代する動きは入れていません。交代を試したいときは「組み立て」へ）。シールドは<b>バトル全体で共有</b>、HP・ゲージ・能力変化は生き残ったポケモンがそのまま引き継ぎます。わざは相手3匹の全体に対していちばん良い組み合わせを1匹につき1つ選びます（★登録リストから呼び出せば自分のわざ・個体値で計算します）。CP制限が無いので個体値は理想値・PLは上限まで上げた前提です。';
+      ? 'ターンの行をタップして手を置くと、そこから先が変わります'
+      : '上から順に出し、倒れたら次。シールドは3匹で共有';
   }
+  // あいての条件は文章でなくマーク付きのチップで出す(説明は最下部の「使い方」へ)
   const m = sp.mult.map(v => Math.round(v * 100) / 100);
-  document.querySelector('.rknote').innerHTML = RK_NOTE[RK.kind] +
-    `どちらかがSPアタックを撃つと、あいては<b>${RK.stall}ターン（${(RK.stall / 2).toFixed(1)}秒）</b>動けません（この間はこちらだけ攻撃できます）。` +
-    (RK.team ? `「あいての登場」は<b>1回目の対面</b>の始まり方です（2匹目以降の硬直は下の連戦パネルで設定します）。` : '') +
-    (RK.enter === 'ko' ? `倒されて次を出した直後なので、登場時にも<b>8ターン（4秒）</b>の硬直があります。` : '') +
-    (RK.enter === 'swap' ? `自分から交代した直後なので、登場時にも<b>9ターン（4.5秒）</b>の硬直があります（交代の分、自分も1ターン動けないので実質8ターンぶんの得）。` : '') +
-    `<br>あいてのポケモンは<b>必ずシャドウ</b>です（切り替えできません）。ステータスは<b>PL40・個体値100%と比べて 攻撃${m[0]}倍・防御${m[1]}倍・HP${m[2]}倍</b>として計算します` +
-    '（ここに<b>シャドウ補正（攻×1.2・防÷1.2）</b>が別途かかります。トレーナーレベル40以上が前提）。';
+  document.querySelector('.rknote').innerHTML =
+    `<span class="rkfact" title="ロケット団のポケモンは必ずシャドウです"><i class="shadowmark"></i></span>` +
+    `<span class="rkfact" title="PL40・個体値100%と比べたステータスの倍率（シャドウ補正は別途）">攻×${m[0]}　防×${m[1]}　HP×${m[2]}</span>` +
+    `<span class="rkfact" title="${sp.shields ? 'こちらの最初の2発のSPアタックを必ずシールドで防ぎます' : 'シールドを使いません'}">🛡${sp.shields}</span>` +
+    (sp.sp !== 1 ? `<span class="rkfact" title="SPアタックを手加減して撃ってきます">SP×${sp.sp}</span>` : '') +
+    `<span class="rkfact" title="どちらかがSPアタックを撃つと、あいてがこの時間動けません（硬直）">⏸️${(RK.stall / 2).toFixed(1)}秒</span>`;
   // ロケット団のポケモンはステータスの決まり方が違うので、個体値・PLの欄は使わない
   S[1].c2 = null;   // 同じ個体が2種類のSPアタックを使い分けることはない
   if (S[1].key) {   // 特別なわざ(レガシー技)は打ってこないので、選ばれていたら自動選択に戻す
@@ -1435,10 +1543,11 @@ document.querySelectorAll('#modes button').forEach(b => b.onclick = () => {
 });
 
 // ---- 確率で能力が上下するわざの扱い(全モード共通・切り替えたら計算し直す) ----
+// 説明は最下部の「使い方」へ。ここは選んでいる状態が一言でわかるだけにする
 const PROB_NOTE = {
-  none: '「ねっとう(30%で相手の攻撃⬇)」のような運まかせの効果は<b>起きない前提</b>で計算します（運に頼らない見方・既定）',
-  avg:  '確率のぶんを<b>平均</b>して反映します（30%で攻⬇なら0.3段階ぶん）。長い目で見た平均的な強さの目安',
-  always: '運まかせの効果が<b>毎回発動する前提</b>で計算します（いちばんうまくいった場合の上ぶれ）',
+  none: '運まかせの効果は<b>起きない前提</b>',
+  avg:  '確率のぶんを<b>平均</b>して反映',
+  always: '運まかせの効果が<b>毎回発動する前提</b>',
 };
 function syncProbNote() {
   document.getElementById('goptnote').innerHTML = PROB_NOTE[SIMOPT.buffMode];
@@ -2402,8 +2511,8 @@ function rbRender(body, bt, picks) {
   rbSort();
   const actChips = RB.acts.length
     ? RB.acts.map((a, k) => `<button class="rbchip" data-del="${k}" title="タップでこの手を消す">${a.t}T
-        <span>${a.k === 'sp' ? mvName(a.mv) : (picks[a.to] ? picks[a.to].name + 'に交代' : '交代')}</span>×</button>`).join('')
-    : '<span class="rbnoact">まだ手を置いていません。下のタイムラインの<b>ターンの行をタップ</b>すると置けます</span>';
+        <span>${a.k === 'sp' ? '▶' + mvName(a.mv) : '⇄' + (picks[a.to] ? picks[a.to].name : '')}</span>×</button>`).join('')
+    : '<span class="rbnoact">ターンの行をタップして手を置きます</span>';
   const legHtml = bt.legs.map((leg, li) => rbLegHtml(leg, li, picks)).join('');
   body.innerHTML = `<div class="rbctl">
       <div class="rbrow1"><span class="lbl">SPアタック</span>
@@ -2412,19 +2521,14 @@ function rbRender(body, bt, picks) {
         </div>
         <button class="rbclear" title="置いた手をすべて消します">手をすべて消す</button>
       </div>
-      <div class="rbrow1 rbfind"><span class="lbl">手順をさがす</span>
-        ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" title="${RB_GOAL[g].tip}">${RB_GOAL[g].label}の手順</button>`).join('')}
-        <span class="rbfindnote">出てきた手順はそのまま下のタイムラインに入るので、続けて手直しできます</span>
+      <div class="rbrow1 rbfind"><span class="lbl">🔎 手順</span>
+        ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" title="${RB_GOAL[g].tip}">${RB_GOAL[g].label}</button>`).join('')}
       </div>
       ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
       <div class="rbacts">${actChips}</div>
-      <div class="rbhint">${RB.auto
-        ? '<b>自動</b>: SPアタックはAIが最適なタイミングで撃ちます。<b>交代</b>だけ自分で置けます。<br>ゲージを<b>あえて温存</b>したいときは「手動」にしてください。'
-        : '<b>手動</b>: <b>置いたターンだけ</b>SPアタックを撃ちます（置かなければ撃たないので、<b>ゲージを次の相手に持ち越せます</b>）。ゲージが足りないターンに置いた場合は、貯まりしだい撃ちます。'}</div>
     </div>
     <div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
-      <small>じぶん ${bt.meLeft}/${bt.nMe}匹 ／ あいて ${bt.foeLeft}/${bt.nFoe}匹 が残りました
-      （かかった時間 <b>${rbSec(bt.turns)}秒</b>・残りシールド じぶん${bt.myShLeft}枚／あいて${bt.foeShLeft}枚）</small></div>
+      <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
     <div class="rblegs">${legHtml}</div>`;
   // ---- 操作の配線 ----
   body.querySelectorAll('.rbauto button').forEach(b => b.onclick = () => { RB.auto = b.dataset.v === '1'; run(); });
@@ -2440,9 +2544,8 @@ function rbRender(body, bt, picks) {
       if (!r) { RB.found = '手順が見つかりませんでした。'; run(); return; }
       RB.acts = r.acts; RB.entry = r.entry; RB.auto = false; RB.menu = null;
       const o = RK_OUTCOME[r.bt.outcome];
-      RB.found = `<b>${RB_GOAL[g].label}の手順</b>が見つかりました → <b class="${o.cls === 'win' ? 'ok' : 'ng'}">${o.txt}</b>` +
-        `（かかった時間 <b>${rbSec(r.bt.turns)}秒</b>・じぶん ${r.bt.meLeft}/${r.bt.nMe}匹 残り）。` +
-        `下のタイムラインに入れました。ターンの行をタップすれば、ここから自分で手直しできます。`;
+      RB.found = `🔎 ${RB_GOAL[g].label} → <b class="${o.cls === 'win' ? 'ok' : 'ng'}">${o.txt}</b>` +
+        `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
       run();
     }, 30);
   });
@@ -2534,16 +2637,14 @@ function rbLegHtml(leg, li, picks) {
     </tr>`;
     if (RB.menu === gt) {
       const spBtns = spList.map(id =>
-        `<button data-act="sp" data-t="${gt}" data-mv="${id}">▶ ${D.moves[id].n} を撃つ</button>`).join('');
+        `<button data-act="sp" data-t="${gt}" data-mv="${id}" title="このターンにSPアタックを撃つ（ゲージが足りなければ貯まりしだい）">▶ ${D.moves[id].n}</button>`).join('');
       const swBtns = swTo.map(k =>
-        `<button data-act="switch" data-t="${gt}" data-to="${k}">⇄ ${picks[k].name} に交代</button>`).join('');
+        `<button data-act="switch" data-t="${gt}" data-to="${k}" title="このターンで交代する（あいては4.5秒動けません／自分も0.5秒動けません）">⇄ ${picks[k].name}</button>`).join('');
       body += `<tr class="rbmenu"><td colspan="5">
-        <div class="rbmttl">${gt}ターン目（${rbSec(gt)}秒）でどうする？</div>
+        <div class="rbmttl">${gt}T<span>⏱${rbSec(gt)}</span></div>
         <div class="rbmbtns">${spBtns}${swBtns}
-          ${acts.length ? `<button data-act="del" data-t="${gt}" class="del">この手を消す</button>` : ''}
-          <button data-act="close" data-t="${gt}" class="close">閉じる</button></div>
-        <div class="rbmnote">SPアタックはゲージが足りていれば<b>このターンに</b>、足りなければ<b>貯まりしだい</b>撃ちます。
-          交代すると<b>あいては${RK_ENTER.swap.foe}ターン（${rbSec(RK_ENTER.swap.foe)}秒）動けません</b>（自分も1ターン動けません）。</div>
+          ${acts.length ? `<button data-act="del" data-t="${gt}" class="del" title="このターンに置いた手を消す">✕</button>` : ''}
+          <button data-act="close" data-t="${gt}" class="close" title="閉じる">閉じる</button></div>
       </td></tr>`;
     }
   });
@@ -2579,45 +2680,43 @@ function renderRkTeam(body, runs) {
   // 自分のシールド枚数別の結果(タップで切替)
   const sumRows = [0, 1, 2].map(sh => {
     const r = runs[sh], ro = RK_OUTCOME[r.outcome];
-    return `<tr><th>🛡${sh}</th><td class="${ro.cls === 'win' ? 'w' : 'l'}${sh === RK.sh ? ' cur' : ''}" data-sh="${sh}">
-      <b>${ro.txt}</b><small>残り じぶん${r.meLeft}匹 ／ あいて${r.foeLeft}匹</small></td></tr>`;
+    return `<tr><th>${sh}</th><td class="${ro.cls === 'win' ? 'w' : 'l'}${sh === RK.sh ? ' cur' : ''}" data-sh="${sh}">
+      <b>${ro.txt}</b><small>じぶん${r.meLeft} ／ あいて${r.foeLeft}</small></td></tr>`;
   }).join('');
   const legHtml = cur.legs.map((leg, k) => {
     const f0 = leg.res.final[0], f1 = leg.res.final[1];
     const pct = f => Math.round(f.hp / f.hpMax * 100);
     const cls = leg.meDown && leg.foeDown ? 'd' : leg.foeDown ? 'w' : leg.meDown ? 'l' : 'd';
     const txt = leg.meDown && leg.foeDown ? '相打ち' : leg.foeDown ? '倒した' : leg.meDown ? '倒された' : '決着つかず';
-    const surv = leg.meDown && leg.foeDown ? '両者ひんし'
-      : leg.foeDown ? `${leg.meName} 残りHP ${f0.hp}/${f0.hpMax}（${pct(f0)}%）・ゲージ${f0.en}`
-      : leg.meDown ? `${leg.foeName} 残りHP ${f1.hp}/${f1.hpMax}（${pct(f1)}%）・ゲージ${f1.en}`
-      : '上限ターンまで決着せず';
+    const surv = leg.meDown && leg.foeDown ? '両者💀'
+      : leg.foeDown ? `${pct(f0)}%<small>ゲージ${f0.en}</small>`
+      : leg.meDown ? `<span class="foepct">${pct(f1)}%</span><small>ゲージ${f1.en}</small>`
+      : '—';
     return `<tr class="legrow" data-k="${k}">
       <td><span class="legme">${leg.myIdx + 1}. ${leg.meName}</span><div class="legvs">vs</div>
         <span class="legfoe">${leg.foeIdx + 1}. ${leg.foeName}</span></td>
-      <td class="${cls}"><b>${txt}</b><small>${sec(leg.res.turns)}秒</small></td>
-      <td>${surv}<div class="rkopen">タップでタイムライン ▾</div></td>
+      <td class="${cls}"><b>${txt}</b><small>⏱${sec(leg.res.turns)}</small></td>
+      <td>${surv}<div class="rkopen">▾</div></td>
     </tr>
     <tr class="tlrow" data-k="${k}" style="display:none"><td colspan="3"></td></tr>`;
   }).join('');
   // あいてのわざはランダムなので、いちばんキツい引きだった場合の結果も添える
   const wo = cur.worst && RK_OUTCOME[cur.worst.outcome];
-  const worstHtml = !wo ? '' : `<div class="rkworst ${wo.cls === 'win' ? 'ok' : 'ng'}">
-    あいてのわざ運がいちばん悪いと <b>${wo.txt}</b>
-    <small>あいてが対面ごとに<b>こちらにいちばんキツいわざ</b>を打ってきた場合：
-    じぶん ${cur.worst.meLeft}/${cur.worst.nMe}匹 ／ あいて ${cur.worst.foeLeft}/${cur.worst.nFoe}匹 が残り、${sec(cur.worst.turns)}秒かかります。
-    ${cur.worst.outcome === 'win' ? 'あいてのわざがどう来ても勝てるので、安心して挑めます。' : 'あいてのわざの引き次第で落とすことがあるので、編成を見直すと確実です。'}</small></div>`;
+  const worstHtml = !wo ? '' : `<div class="rkworst ${wo.cls === 'win' ? 'ok' : 'ng'}"
+    title="あいてが対面ごとに、こちらにいちばんキツいわざを打ってきた場合">
+    🎲 わざ運が最悪でも <b>${wo.txt}</b>
+    <small>じぶん${cur.worst.meLeft}/${cur.worst.nMe} ／ あいて${cur.worst.foeLeft}/${cur.worst.nFoe} ・ ⏱${sec(cur.worst.turns)}秒</small></div>`;
   body.innerHTML = `<div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
-      <small>じぶん ${cur.meLeft}/${cur.nMe}匹 ／ あいて ${cur.foeLeft}/${cur.nFoe}匹 が残りました
-      （戦った時間の目安 ${sec(cur.turns)}秒・残りシールド じぶん${cur.myShLeft}枚／あいて${cur.foeShLeft}枚）</small></div>
+      <small>じぶん ${cur.meLeft}/${cur.nMe} ／ あいて ${cur.foeLeft}/${cur.nFoe} ・ ⏱<b>${sec(cur.turns)}</b>秒 ・ 🛡${cur.myShLeft}／${cur.foeShLeft}</small></div>
     ${worstHtml}
-    <div class="mtnote">えらばれたわざ: ${cur.picks.map((p, j) => `<b>${j + 1}. ${p.name}</b> = ${mvNames(p.pol)}`).join(' ／ ')}</div>
+    <div class="mtnote">${cur.picks.map((p, j) => `<b>${j + 1}. ${p.name}</b> ${mvNames(p.pol)}`).join('　／　')}</div>
     <table class="rkchain">
-      <tr><th style="text-align:left">対面</th><th>結果</th><th style="text-align:right">決着したときの残り</th></tr>
+      <tr><th style="text-align:left">対面</th><th>結果</th><th style="text-align:right">残り</th></tr>
       ${legHtml}
     </table>
     <div class="rksum">
-      <div class="mvhead">自分のシールド枚数別の結果（タップでその枚数に切替）</div>
-      <table><tr><th class="corner">自分のシールド</th><th>結果</th></tr>${sumRows}</table>
+      <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
+      <table><tr><th class="corner">🛡</th><th>結果</th></tr>${sumRows}</table>
     </div>`;
   // 対面の行をタップ→その対面のタイムラインを開く(1対1シミュと同じ表示)
   body.querySelectorAll('tr.legrow').forEach(tr => tr.onclick = () => {
@@ -2627,7 +2726,7 @@ function renderRkTeam(body, runs) {
     const td = row.firstElementChild;
     if (open && !td.innerHTML) td.innerHTML = timelineTable(cur.legs[k].res, 'digest');
     row.style.display = open ? '' : 'none';
-    tr.querySelector('.rkopen').textContent = open ? 'タイムラインを閉じる ▴' : 'タップでタイムライン ▾';
+    tr.querySelector('.rkopen').textContent = open ? '▴' : '▾';
   });
   body.querySelectorAll('.rksum td[data-sh]').forEach(td => td.onclick = () => {
     RK.sh = +td.dataset.sh;
@@ -2888,24 +2987,20 @@ function rkMovesHtml(all) {
   const sec = t => (t / 2).toFixed(1);
   const n = all.rows.length, w = all.wins;
   const worst = all.rows[0];
-  const head = w === n ? `<b class="ok">どのわざで来ても勝てます</b>（${n}通りすべて勝ち）`
-    : w === 0 ? `<b class="ng">どのわざで来ても勝てません</b>（${n}通りすべて負け）`
-    : `<b class="ng">わざ次第で負けます</b>（${n}通り中<b>${w}通り</b>で勝ち）。いちばん危ないのは ${mvChip(D.moves[worst.fast].n)}${worst.sp ? ' ＋ ' + mvChip(D.moves[worst.sp].n) : ''}`;
+  const head = w === n ? `<b class="ok">◯ どのわざでも勝ち</b>　<small>${n}通り</small>`
+    : w === 0 ? `<b class="ng">✕ どのわざでも負け</b>　<small>${n}通り</small>`
+    : `<b class="ng">△ わざ次第</b>　<small>${n}通り中 ${w}通りで勝ち</small>
+       <span class="rkdanger">危険: ${mvChip(D.moves[worst.fast].n)}${worst.sp ? mvChip(D.moves[worst.sp].n) : ''}</span>`;
   const rowHtml = r => `<tr class="${r.cur ? 'cur' : ''}" data-f="${r.fast}" data-c="${r.sp || ''}">
     <td>${mvChip(D.moves[r.fast].n)}${r.sp ? '<span class="rkmvsp">' + mvChip(D.moves[r.sp].n) + '</span>' : ''}</td>
-    <td class="${r.win ? 'w' : 'l'}"><b>${r.draw ? '相打ち' : r.win ? '勝ち' : '負け'}</b></td>
-    <td>${sec(r.turns)}秒</td>
-    <td>${r.win ? `自分 残HP${r.pct}%` : `相手に残HP${r.foePct}%`}</td></tr>`;
+    <td class="${r.win ? 'w' : 'l'}"><b>${r.draw ? '△' : r.win ? '◯' : '✕'}</b></td>
+    <td>${sec(r.turns)}</td>
+    <td>${r.win ? `${r.pct}%` : `<span class="foepct">${r.foePct}%</span>`}</td></tr>`;
   return `<div class="rkmoves">
-    <div class="mvhead">あいてのわざ全通り（ロケット団は<b>おぼえるわざからランダム</b>に使ってきます。特別なわざは使いません）</div>
+    <div class="mvhead">🎲 あいてのわざ全通り<small>キツい順</small></div>
     <div class="rkmvsum">${head}</div>
-    <table><tr><th style="text-align:left">あいてのわざ</th><th>結果</th><th>決着</th><th>決着時の残り</th></tr>
+    <table><tr><th style="text-align:left">わざ</th><th>勝敗</th><th>⏱</th><th>残り</th></tr>
       ${all.rows.map(rowHtml).join('')}</table>
-    <div class="rkmvnote">キツい順（上ほど危ない）に並べています。自分のわざはバトル中に変えられないので、
-      <b>この表の全通りに対していちばん強い構成</b>を自動で選び、そのまま相手のわざだけを差し替えて計算しています。
-      上の結果は<b class="curmk">水色枠の行</b>＝<b>いちばんキツいわざで来た場合</b>です（安全側の見方）。
-      行をタップすると、そのわざで来た場合の詳細（タイムライン）に切り替わります。
-      <b>決着が速いほど良い</b>（ロケット団戦は早く倒すほど有利）。</div>
   </div>`;
 }
 
@@ -3064,8 +3159,7 @@ function render(res, L, R, matrix) {
       <b>${txt}</b><small>${c.w === 'draw' ? '両者0' : '残HP' + c.pct + '%'}</small></td>`;
   };
   const mtxHtml = rkMode ? `<div class="shmtx">
-    <div class="mvhead">自分のシールド枚数別の勝敗（マスをタップでその枚数に切替。残HPは勝った側）
-      <small>※あいてのわざは<b class="curmk">こちらにいちばんキツいもの</b>（上の表の水色枠）で計算しています</small></div>
+    <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
     <table>
       <tr><th class="corner">自分のシールド</th><th>勝敗</th></tr>
       ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${mtxCell(a, 0)}</tr>`).join('')}
@@ -3089,8 +3183,7 @@ function render(res, L, R, matrix) {
   // あいてのわざはランダムなので、全通り試した結果も添える
   let rkHtml = '';
   if (rkMode) {
-    rkHtml = `<div class="rktime">この対面の決着まで <b>${(res.turns / 2).toFixed(1)}秒</b>
-      （${res.turns}ターン）<small>ロケット団戦は早く倒すほど有利です</small></div>` + rkMovesHtml(rkAllMoves(L, R));
+    rkHtml = `<div class="rktime">⏱ <b>${(res.turns / 2).toFixed(1)}</b>秒</div>` + rkMovesHtml(rkAllMoves(L, R));
   }
   // 技一覧もHPバー等と同じ左右2列に揃える(中央のVSは列幅合わせ用の不可視スペーサー)
   rEl.innerHTML = `
