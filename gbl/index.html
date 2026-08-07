@@ -311,6 +311,8 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
 .rkfilt button .shadowmark{margin-right:3px}
 #rkrank{padding:10px 12px}
+#rkranktitle{text-align:center}
+#rkranktitle small{font-size:.62rem;font-weight:400;color:var(--sub);margin-left:7px}
 /* 自分のポケモンを追加(CP＋個体値) */
 .rkmy{margin-bottom:8px}
 .rkmytab{width:100%;padding:7px;font-size:.72rem;font-weight:700;background:var(--bg2);
@@ -808,6 +810,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 <!-- ロケット団戦 1対1: おすすめランキング(あいてを決めると出る) -->
 <div class="multi" id="rkrank" style="display:none">
+  <h3 id="rkranktitle">ノーマルアタック火力ランキング</h3>
   <div class="rkmy" id="rkmy">
     <button class="rkmytab" id="rkmytab" aria-expanded="false" title="CPと個体値を入れると、自分の個体の実力でランキングに並びます">＋ 自分のポケモン</button>
     <div class="rkmybody" id="rkmybody" style="display:none"></div>
@@ -2504,6 +2507,9 @@ function rkRanking() {
 function runRkRank() {
   const box = document.getElementById('rkrank');
   const body = box.querySelector('.rkrbody');
+  // 何のランキングかが一目で分かるように見出しを出す
+  document.getElementById('rkranktitle').innerHTML = 'ノーマルアタック火力ランキング' +
+    (RKR.view === 'safe' ? '<small>先に倒されないものだけ</small>' : '');
   updateUrl();
   if (!S[1].key) { body.innerHTML = '<div class="mtnote">あいてのポケモンを選ぶとランキングが出ます</div>'; return; }
   body.innerHTML = '<div class="mtprog">計算中…</div>';
@@ -2534,22 +2540,22 @@ function rkRankCard(r, i) {
   const p = D.pokemon[r.key];
   const mv = D.moves[r.fast];
   const nm = (r.shadow ? 'シャドウ' : '') + p.n;
-  // 先に倒されるものは、わざ名の前に⚠を付けて注意をうながす
   const warn = r.checked && !r.win;
-  // 秒数は勝てる場合だけ意味があるので、全部負けるときは⚠だけにする
+  // ⚠は「あいてのどのわざで負けるか」の左に付ける。
+  // わざ名の前に付けると、こちらのわざが悪いように読めてしまう(ローブシンのはっけい等)
   const num = !r.checked ? '<span class="rkrdim">—</span>'
     : r.anyWin ? `<b${warn ? ' class="warn"' : ''}>${(r.turns / 2).toFixed(1)}</b>秒`
-    : '<b class="ng">⚠️</b>';
+    : '<span class="rkrdim">—</span>';   // 全部負けるなら秒数に意味がない
   const sub = !r.checked ? ''
     : r.win ? `残HP${r.myPct}%`
-    : r.anyWin ? `<span class="ng">${r.loseTo.join('・')}だと負け</span>`
-    : `<span class="ng">どのわざでも負け</span>`;
+    : r.anyWin ? `<span class="ng">⚠️${r.loseTo.join('・')}だと負け</span>`
+    : `<span class="ng">⚠️どのわざでも負け</span>`;
   return `<div class="rkrcard${warn ? ' warn' : ''}" data-i="${i}">
     <div class="rkrank ${n === 1 ? 'r1' : n === 2 ? 'r2' : n === 3 ? 'r3' : ''}">${n}</div>
     <div class="rkrmain">
       <div class="rkrname">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
         ${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}${typeIcons(p, 15)}</div>
-      <div class="rkrmv">${warn ? '⚠️' : ''}${mvChip(mv.n)}
+      <div class="rkrmv">${mvChip(mv.n)}
         <span class="rkrdim">${r.mine ? `個体値${r.ivs.join('/')} PL${r.level}` : ''}</span></div>
     </div>
     <div class="rkrnum">${num}<small>${sub}</small><i class="rkrdps">${r.dps.toFixed(1)}/秒</i></div>
