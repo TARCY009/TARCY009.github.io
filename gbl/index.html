@@ -718,9 +718,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <input type="number" id="rkkof" min="0" max="16" inputmode="numeric">
     <label class="lbl" for="rkkom" title="自分のポケモンが倒れて次を出したとき、あいてが動けないターン数（0.5秒=1ターン）">自分が倒れて次を出した</label>
     <input type="number" id="rkkom" min="0" max="16" inputmode="numeric">
-    <label class="lbl" for="rkswcd" title="自分から交代したあと、次の交代ができるようになるまでの秒数">交代のクールタイム（秒）</label>
+    <label class="lbl" for="rkswcd" title="自分から交代したあと、次の交代ができるようになるまでの秒数（あいてが固まる硬直とは別のもの）">交代のクールタイム（秒）</label>
     <input type="number" id="rkswcd" min="0" max="120" step="5" inputmode="numeric">
-    <span class="rkstallnote">硬直はどちらも既定<b>8ターン（4秒）</b>＝「瀕死による交代」の値。交代のクールタイムは既定<b>60秒</b>（自分から交代したあと、次に交代できるまで）。実戦と違ったらここで変えられます</span>
+    <span class="rkstallnote">硬直はどちらも既定<b>8ターン（4秒）</b>＝「瀕死による交代」の値。交代のクールタイムは<b>45秒</b>＝自分から交代したあと、<b>次に交代できるようになるまで</b>の時間（あいてが固まる硬直とは別のものです）。実戦と違ったらここで変えられます</span>
   </div>
   <div class="rkbody"></div>
 </div>
@@ -1168,9 +1168,10 @@ cupTab.onclick = () => {
 // who=だれと戦うか(シエラ/クリフ/アルロ/サカキ) / sel=その人の何匹目に誰を選んでいるか(候補の番号)
 // play=たたかい方('1v1'=1対1 / 'team'=3匹の連戦(自動) / 'build'=組み立て(自分で手を置く))
 // team は「じぶん・あいての3枠を使う画面か」を表す(連戦と組み立ての両方でtrue)
-// swapCd=交代のクールタイム(ターン)。一度交代したら、この時間が過ぎるまで次の交代ができない。
-// これが無いと「交代を連打してあいてを硬直させ続ける」抜け道が成立してしまう(既定60秒=120ターン)
-const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 120, who: null, sel: {} };
+// swapCd=交代のクールタイム(ターン)。一度自分から交代したら、この時間が過ぎるまで次の交代ができない。
+// 「あいてが固まる硬直(4.5秒)」とは別物で、こちら側の制約。45秒=90ターン(ユーザー確定)。
+// これが無いと「交代を連打してあいてを硬直させ続ける」抜け道が成立してしまう
+const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 90, who: null, sel: {} };
 const RK_PLAY = { 0: '1v1', 1: 'team', 2: 'build' };
 function setPlay(v) { RK.play = v; RK.team = v !== '1v1'; }
 const RK_ENTER = {
