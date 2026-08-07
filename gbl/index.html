@@ -311,6 +311,30 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rbmbtns button.close{border-color:var(--line);color:var(--sub)}
 .rbmnote{font-size:.6rem;color:var(--sub);line-height:1.5;margin-top:5px}
 @media (max-width:520px){.rbev{width:30%;font-size:.62rem}.rbrow td{padding:3px}.rbmbtns button{font-size:.66rem;padding:5px 7px}}
+/* ロケット団戦 1対1: おすすめランキング */
+.rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
+.rkfilt button .shadowmark{margin-right:3px}
+#rkrank{padding:10px 12px}
+.rkrcard{display:flex;align-items:center;gap:9px;padding:7px 9px;margin-top:5px;cursor:pointer;
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px}
+.rkrcard:hover{border-color:var(--gl)}
+.rkrcard.warn{border-color:rgba(255,107,129,.45)}
+.rkrank{flex:0 0 26px;text-align:center;font-size:.8rem;font-weight:800;color:var(--sub)}
+.rkrank.r1{color:#ffd76a}.rkrank.r2{color:#d6dee8}.rkrank.r3{color:#e0a06a}
+.rkrmain{flex:1;min-width:0}
+.rkrname{display:flex;align-items:center;gap:4px;font-size:.82rem;font-weight:700;color:var(--ink);flex-wrap:wrap}
+.rkrname .shadowmark{color:#b06cff}
+.rkrmine{color:var(--gold)}
+.rkrmv{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:.7rem;flex-wrap:wrap}
+.rkrdim{font-size:.62rem;color:var(--sub);font-weight:400}
+.rkrnum{flex:0 0 auto;text-align:right}
+.rkrnum b{font-size:1rem;color:var(--cy)}
+.rkrnum b.ng{color:var(--lose)}
+.rkrnum b.warn{color:var(--gold)}
+.rkrnum small{display:block;font-size:.6rem;color:var(--sub);white-space:nowrap}
+.rkrnum small .ng{color:var(--lose)}
+.rkrnum .rkrdps{display:block;font-style:normal;font-size:.6rem;color:var(--sub);opacity:.8}
+@media (max-width:520px){.rkrcard{gap:6px;padding:6px}.rkrname{font-size:.76rem}}
 /* ページ最下部の「使い方」タブ。説明の文章はすべてここに集める */
 .helpwrap{margin-top:18px}
 #helptab{width:100%;padding:10px;font-size:.8rem;font-weight:700;background:var(--panel);
@@ -530,6 +554,19 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <input type="number" id="rkstall" min="0" max="16" inputmode="numeric">
   </div>
   <div class="rknote"></div>
+  <!-- 1対1のときだけ: 見かた(おすすめランキング / シミュレート)と絞り込み -->
+  <div class="rkrow rkviewrow" id="rkviewrow" style="display:none">
+    <span class="lbl">見かた</span>
+    <div class="opts" id="rkviewbtns">
+      <button data-v="power" aria-pressed="true" title="ノーマルアタックだけで殴ったとき、火力が高い順に並べます">火力</button><button data-v="safe" aria-pressed="false" title="あいてのノーマルアタックで先に倒されない中から、火力が高い順に並べます">高火力＋安定</button><button data-v="sim" aria-pressed="false" title="1匹どうしの対面を1ターンずつ詳しく計算します">シミュレート</button>
+    </div>
+  </div>
+  <div class="rkrow rkfiltrow" id="rkfiltrow" style="display:none">
+    <span class="lbl">ランキングに含める</span>
+    <div class="opts rkfilt" id="rkfilt">
+      <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガ・ゲンシを含める">メガ・ゲンシ</button>
+    </div>
+  </div>
 </div>
 
 <div class="gopt" id="gopt">
@@ -746,6 +783,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     <input type="number" id="rkswcd" min="0" max="120" step="5" inputmode="numeric">
   </div>
   <div class="rkbody"></div>
+</div>
+
+<!-- ロケット団戦 1対1: おすすめランキング(あいてを決めると出る) -->
+<div class="multi" id="rkrank" style="display:none">
+  <div class="rkrbody"></div>
 </div>
 
 <div class="result" id="result"></div>
@@ -1225,9 +1267,21 @@ const HELP_HTML = `
   画面の主結果と勝敗表は、<b>いちばんキツいわざで来た場合</b>＝安全側で出しています（水色枠の行）。
   行をタップすると、そのわざで来たときの詳細に切り替わります。</p>
 
+  <h4>おすすめランキング（1対1）</h4>
+  <p>あいてを決めると、<b>ノーマルアタックだけで殴ったときに火力が出る順</b>に並べます。
+  ロケット団戦は早く倒すほど有利なので、SPアタックを撃たずに押し切れる相手を先に見つけるのが近道です。</p>
+  <ul>
+    <li>大きい数字は<b>倒しきるまでの秒数</b>、右下の小さい数字は<b>1秒あたりのダメージ</b>です</li>
+    <li><b>⚠️</b>が付いたものは、<b>あいてのノーマルアタック次第で先に倒されます</b>。どのわざで負けるかを右に書いています</li>
+    <li><b>高火力＋安定</b>に切り替えると、<b>あいてのわざがどれでも先に倒されない</b>ものだけになります</li>
+    <li>シールドは<b>2枚とも残っている前提</b>です（SPアタックを撃たないので、まるごとあいてのSPを防ぐのに使えます）</li>
+    <li>候補は<b>全ポケモン（理想個体値・PL50）</b>と、<b>★登録リストに入れた自分の個体</b>（★印・自分の個体値とPLで計算）です</li>
+    <li>行をタップすると、そのポケモンで<b>シミュレート</b>に切り替わります。シミュレートは<b>SPアタックも使う前提</b>で計算するので、ランキングの秒数とは少し変わります</li>
+  </ul>
+
   <h4>たたかい方の3つ</h4>
   <ul>
-    <li><b>1対1</b>… 1匹どうしの対面だけを計算します</li>
+    <li><b>1対1</b>… おすすめランキングと、1匹どうしの詳しいシミュレートを切り替えられます</li>
     <li><b>3匹連戦</b>… 上から順に出し、倒れたら次。シールドはバトル全体で共有し、生き残りはHP・ゲージ・能力変化を引き継ぎます。自分から交代する動きは入っていません</li>
     <li><b>模擬戦</b>… 本番の前に一度やってみる画面。タイムラインの<b>ターンの行をタップ</b>して、SPアタックを撃つ・交代するを自分で置きます。置くとそこから先が計算し直されます</li>
   </ul>
@@ -1392,6 +1446,8 @@ function applyMode() {
   // 環境一覧は「じぶん」だけ、カウンター検索は「あいて」だけ、パーティ診断は専用の3枠を使う
   const rk = mode === 'rocket';
   const rkTeam = rk && RK.team;   // 3匹連戦は専用の3枠を使う(1対1の左右パネルは隠す)
+  // 1対1のランキング表示のときは「じぶん」を選ぶ必要がない(あいてだけ決めればよい)
+  const rkRankView = rk && RK.play === '1v1' && RKR.view !== 'sim';
   const duelBox = document.querySelector('.duel');
   duelBox.style.display = mode === 'party' || rkTeam ? 'none' : '';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter');   // 片側だけのときは1列で広く使う
@@ -1400,13 +1456,15 @@ function applyMode() {
   document.getElementById('cupwin').style.display = 'none';
   document.getElementById('rocket').style.display = rk ? 'block' : 'none';
   if (rk) syncRocket(); else restoreFoeInputs();
-  sideEl[0].style.display = mode === 'counter' ? 'none' : '';
+  sideEl[0].style.display = mode === 'counter' || rkRankView ? 'none' : '';
   sideEl[1].style.display = mode === 'duel' || mode === 'counter' || rk ? '' : 'none';
+  duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter' || rkRankView);
   document.getElementById('multi').style.display = mode === 'multi' ? 'block' : 'none';
   document.getElementById('counter').style.display = mode === 'counter' ? 'block' : 'none';
   document.getElementById('party').style.display = mode === 'party' ? 'block' : 'none';
   document.getElementById('rkteam').style.display = rkTeam ? 'block' : 'none';
-  if ((mode !== 'duel' && !rk) || rkTeam) {
+  document.getElementById('rkrank').style.display = rkRankView ? 'block' : 'none';
+  if ((mode !== 'duel' && !rk) || rkTeam || rkRankView) {
     document.getElementById('result').style.display = 'none';
     document.getElementById('tl').style.display = 'none';
     // 模擬戦は「置いた手」ごとURLで共有できるので、コピーボタンは出したままにする
@@ -1427,6 +1485,12 @@ function syncRocket() {
   document.getElementById('rkswcd').value = RK.swapCd / 2;   // 画面は秒、内部はターン
   syncFoeSlots();
   renderRoster();   // リーダー・サカキの手持ち(したっぱのときは隠れる)
+  // 1対1のときだけ「見かた」の切り替えを出す
+  const vr = document.getElementById('rkviewrow');
+  vr.style.display = RK.play === '1v1' ? '' : 'none';
+  vr.querySelectorAll('#rkviewbtns button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RKR.view));
+  document.getElementById('rkfiltrow').style.display = (RK.play === '1v1' && RKR.view !== 'sim') ? '' : 'none';
+  document.querySelectorAll('#rkfilt button').forEach(b => b.setAttribute('aria-pressed', !!RKR[b.dataset.f]));
   // 3枠を使う画面(連戦・模擬戦)の見出しと説明はたたかい方で切り替える
   const bld = RK.play === 'build';
   const ttl = document.getElementById('rkteamttl');
@@ -1509,6 +1573,16 @@ document.getElementById('rkstall').onchange = e => {
   syncRocket();
   run();
 };
+// 1対1の見かた(火力ランキング / 高火力＋安定 / シミュレート)
+document.querySelectorAll('#rkviewbtns button').forEach(b => b.onclick = () => {
+  RKR.view = b.dataset.v;
+  syncRocket(); applyMode(); run();
+});
+// ランキングの絞り込み(シャドウ・メガはそれぞれ独立ON/OFF)
+document.querySelectorAll('#rkfilt button').forEach(b => b.onclick = () => {
+  RKR[b.dataset.f] = !RKR[b.dataset.f];
+  syncRocket(); run();
+});
 // 1対1 ⇄ 3匹連戦
 document.querySelectorAll('#rkmode button').forEach(b => b.onclick = () => {
   setPlay(RK_PLAY[b.dataset.v]);
@@ -2219,6 +2293,134 @@ function runRocketTeam() {
   step();
 }
 
+// ---- ロケット団戦 1対1: おすすめランキング ----
+// ロケット団戦の目的は「いかに早く倒すか」なので、あいてを決めたらまず
+// 「ノーマルアタックだけで殴ったときにいちばん火力が出るポケモンとわざ」を並べる。
+// 火力＝そのあいてに対するノーマルアタックのDPS(ダメージ÷秒)。
+// あいてのわざはランダムなので、倒され判定(⚠)は「いちばんキツいわざで来た場合」で見る。
+const RKR = { view: 'power', shadow: true, mega: false, top: 30, cache: null };
+
+// ランキングの候補を作る。全ポケモン(理想個体値・PL上限)＋★登録リスト(自分の個体)
+function rkCandidates() {
+  const out = [];
+  for (const key of KEYS) {
+    const mega = isMega(key);
+    if (mega && !RKR.mega) continue;
+    out.push({ key, shadow: false, ivs: [15, 15, 15], level: 50 });
+    // シャドウは攻撃1.2倍で火力が出るぶん、ロケット団戦の主力になりやすい
+    if (RKR.shadow && D.pokemon[key].shadow && !mega) out.push({ key, shadow: true, ivs: [15, 15, 15], level: 50 });
+  }
+  // ★登録リスト(自分の強化段階・個体値)も混ぜる。行には★を付けて見分けられるようにする
+  loadMyPk().forEach(m => {
+    if (!D.pokemon[m.key]) return;
+    const b = ptBase(m, 0);
+    out.push({ key: m.key, shadow: !!m.shadow, ivs: b.ivs, level: b.level, mine: true, fixFast: m.fast || null });
+  });
+  return out;
+}
+// あいて1匹に対するランキングを作る
+function rkRanking() {
+  const foeBase = rkCfg({ key: S[1].key, ivs: [15, 15, 15], level: 40, cap: 0,
+    fast: S[1].fast || rkPool(S[1].key).fasts[0], charged: [], throw: null });
+  const foeSt = PvpEngine.buildStats(D, foeBase);
+  const combos = rkFoeCombos(foeBase, false);   // あいてのわざ全通り(最悪ケースを見るため)
+  const rows = [];
+  for (const c of rkCandidates()) {
+    const me = { key: c.key, ivs: c.ivs, level: c.level, shadow: c.shadow, cap: 0 };
+    const st = PvpEngine.buildStats(D, me);
+    const fasts = c.fixFast && D.moves[c.fixFast] ? [c.fixFast] : movePool(c.key).fasts;
+    let best = null;
+    for (const id of fasts) {
+      const mv = D.moves[id];
+      const dmg = PvpEngine.damage(D, mv, { ...st, buffs: [0, 0] }, { ...foeSt, buffs: [0, 0] });
+      const dps = dmg / (mv.tn * 0.5);
+      if (!best || dps > best.dps) best = { id, mv, dmg, dps };
+    }
+    if (!best) continue;
+    rows.push({ ...c, me, st, fast: best.id, dmg: best.dmg, dps: best.dps });
+  }
+  rows.sort((a, b) => b.dps - a.dps || a.key.localeCompare(b.key));
+  // 上位だけ実際にシミュレートして「先に倒されないか」を見る(全部やると重いので絞る)
+  const CHECK = 160;
+  rows.slice(0, CHECK).forEach(r => {
+    // SPアタックは撃たない(ノーマルアタックだけで殴る前提)。
+    // こちらがSPを撃たないぶん、シールド2枚はまるごとあいてのSPを防ぐのに使える
+    const L = { ...r.me, fast: r.fast, charged: [], shields: 2, timing: 'shots', shotPlan: [], shotRest: null };
+    // 勝ち負けを分けるのは主に「あいてのノーマルアタックがどれか」なので、そこでまとめる
+    const byFast = new Map();
+    for (const c of combos) {
+      const res = PvpEngine.simulate(D, L,
+        { ...foeBase, fast: c.fast, charged: c.throw ? [c.throw] : [], throw: c.throw }, SIMOPT);
+      const cur = byFast.get(c.fast);
+      if (!cur || scoreOf(res, 0) < scoreOf(cur, 0)) byFast.set(c.fast, res);
+    }
+    const list = [...byFast.entries()].map(([f, res]) => ({ f, res, win: res.winner === 0 }));
+    r.nFast = list.length;
+    r.nWin = list.filter(x => x.win).length;
+    r.win = r.nWin === list.length;
+    r.loseTo = list.filter(x => !x.win).map(x => D.moves[x.f].n);
+    // 秒数は「勝てる中でいちばん遅いケース」＝安全側で出す
+    const wins = list.filter(x => x.win);
+    const show = (wins.length ? wins : list).reduce((a, b) => scoreOf(a.res, 0) < scoreOf(b.res, 0) ? a : b);
+    r.turns = show.res.turns;
+    r.myPct = Math.round(show.res.final[0].hp / show.res.final[0].hpMax * 100);
+    r.foePct = Math.round(show.res.final[1].hp / show.res.final[1].hpMax * 100);
+    r.anyWin = wins.length > 0;
+    r.checked = true;
+  });
+  return rows;
+}
+
+function runRkRank() {
+  const box = document.getElementById('rkrank');
+  const body = box.querySelector('.rkrbody');
+  updateUrl();
+  if (!S[1].key) { body.innerHTML = '<div class="mtnote">あいてのポケモンを選ぶとランキングが出ます</div>'; return; }
+  body.innerHTML = '<div class="mtprog">計算中…</div>';
+  setTimeout(() => {
+    const all = RKR.cache = rkRanking();
+    const list = (RKR.view === 'safe' ? all.filter(r => r.checked && r.win) : all).slice(0, RKR.top);
+    if (!list.length) {
+      body.innerHTML = '<div class="mtnote">' + (RKR.view === 'safe'
+        ? 'ノーマルアタックだけで<b>先に倒されずに勝てる</b>ポケモンが見つかりませんでした。SPアタックを使う前提で「シミュレート」や「模擬戦」を見てください。'
+        : '候補がありません') + '</div>';
+      return;
+    }
+    body.innerHTML = list.map((r, i) => rkRankCard(r, i)).join('');
+    body.querySelectorAll('.rkrcard').forEach(el => el.onclick = () => {
+      const r = list[+el.dataset.i];
+      applyMyPk(0, { key: r.key, fast: r.fast, shadow: r.shadow,
+        ivMode: r.mine ? 'manual' : 'auto', mIvs: r.mine ? r.ivs : null, mLevel: r.mine ? r.level : null }, true);
+      RKR.view = 'sim'; syncRocket(); applyMode(); run();
+    });
+  }, 20);
+}
+function rkRankCard(r, i) {
+  const p = D.pokemon[r.key];
+  const mv = D.moves[r.fast];
+  const nm = (r.shadow ? 'シャドウ' : '') + p.n;
+  // 先に倒されるものは、わざ名の前に⚠を付けて注意をうながす
+  const warn = r.checked && !r.win;
+  // 秒数は勝てる場合だけ意味があるので、全部負けるときは⚠だけにする
+  const num = !r.checked ? '<span class="rkrdim">—</span>'
+    : r.anyWin ? `<b${warn ? ' class="warn"' : ''}>${(r.turns / 2).toFixed(1)}</b>秒`
+    : '<b class="ng">⚠️</b>';
+  const sub = !r.checked ? ''
+    : r.win ? `残HP${r.myPct}%`
+    : r.anyWin ? `<span class="ng">${r.loseTo.join('・')}だと負け</span>`
+    : `<span class="ng">どのわざでも負け</span>`;
+  return `<div class="rkrcard${warn ? ' warn' : ''}" data-i="${i}">
+    <div class="rkrank ${i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : ''}">${i + 1}</div>
+    <div class="rkrmain">
+      <div class="rkrname">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
+        ${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}${typeIcons(p, 15)}</div>
+      <div class="rkrmv">${warn ? '⚠️' : ''}${mvChip(mv.n)}
+        <span class="rkrdim">${r.mine ? `個体値${r.ivs.join('/')} PL${r.level}` : ''}</span></div>
+    </div>
+    <div class="rkrnum">${num}<small>${sub}</small><i class="rkrdps">${r.dps.toFixed(1)}/秒</i></div>
+  </div>`;
+}
+
 // ---- ロケット団戦: 模擬戦(手を置くと、そこから先が計算し直される) ----
 // acts = 置いた手。t は「バトル全体の通しターン」なので、対面をまたいでもズレない
 //   {t, k:'sp', mv:わざID}     … そのターンにSPアタックを撃つ(ゲージが足りなければ貯まり次第)
@@ -2842,6 +3044,8 @@ function run() {
   if (mode === 'multi') { runMulti(); return; }
   if (mode === 'counter') { runCounter(); return; }
   if (mode === 'party') { runParty(); return; }
+  // ロケット団戦の1対1は、まず「誰で殴ればいいか」のランキングを出す
+  if (mode === 'rocket' && RK.play === '1v1' && RKR.view !== 'sim') { runRkRank(); return; }
   if (mode === 'rocket' && RK.play === 'build') { runRkBuild(); return; }
   if (mode === 'rocket' && RK.team) { runRocketTeam(); return; }
   if (!S[0].key || !S[1].key) return;
