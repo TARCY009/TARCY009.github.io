@@ -3032,9 +3032,13 @@ function rbRender(body, bt, picks, foes, extra) {
       b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
-    const stopTn = leg.pending && leg.pending.kind !== 'next' ? leg.pending.tn : Infinity;
+    // 決断待ちの場面から先は「まだ起きていない」ので描かない。
+    // シールド(sh)とSP(sp)の質問は「そのターンの出来事が決まる前」に聞くものなので、
+    // 質問のターン自体も隠す(仮の結果=被弾やKOを先に見せない)。交代(swap)はそのターンまで殴ってから聞く
+    const pend = leg.pending && leg.pending.kind !== 'next' ? leg.pending : null;
+    const hideFrom = !pend ? Infinity : (pend.kind === 'swap' ? pend.tn + 1 : pend.tn);
     rbTurns(res).forEach(t => {
-      if (t.tn > stopTn) return;   // 決断待ちのターンから先は「まだ起きていない」
+      if (t.tn >= hideFrom) return;
       const gt = base + t.tn;
       for (let i = 0; i < 2; i++) for (const e of t.ev[i]) {
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
@@ -3051,13 +3055,16 @@ function rbRender(body, bt, picks, foes, extra) {
       (ptAt[t.tn] || []).forEach(p => items.push(chipItem(p, gt)));
     });
     const endGt = base + res.turns;
-    if (leg.foeDown) { alive1--; items.push({ gt: endGt,
-      html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(endGt)}</i></div>` }); }
-    if (leg.meDown) { alive0--; items.push({ gt: endGt,
-      html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
-    if (leg.meDown || leg.foeDown) {
-      const f = frames[endGt] || frames[endGt - 1];
-      if (f) frames[endGt] = { ...f, alive0, alive1 };
+    // 決断待ちのあいだは倒れたかどうかもまだ決まっていない(仮の結果)ので出さない
+    if (!pend) {
+      if (leg.foeDown) { alive1--; items.push({ gt: endGt,
+        html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(endGt)}</i></div>` }); }
+      if (leg.meDown) { alive0--; items.push({ gt: endGt,
+        html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
+      if (leg.meDown || leg.foeDown) {
+        const f = frames[endGt] || frames[endGt - 1];
+        if (f) frames[endGt] = { ...f, alive0, alive1 };
+      }
     }
     if (leg.nextPoint) items.push(chipItem(leg.nextPoint, endGt));
   });
