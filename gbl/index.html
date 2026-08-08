@@ -3035,23 +3035,38 @@ function rbRender(body, bt, picks, foes, extra) {
       b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
-    // 決断待ちの場面から先は「まだ起きていない」ので描かない。
-    // シールド(sh)とSP(sp)の質問は「そのターンの出来事が決まる前」に聞くものなので、
-    // 質問のターン自体も隠す(仮の結果=被弾やKOを先に見せない)。交代(swap)はそのターンまで殴ってから聞く
+    // 決断待ちより先は「まだ起きていない」ので描かない。ただし同じターンの中でも
+    // 「もう決まった出来事」(答えたシールドの結果など)は見せる＝出来事の単位で隠す。
+    //   sp待ち: 自分の行動はこれから選ぶので自分側だけ隠す(あいて側は決まっている)
+    //   sh待ち: 質問対象のあいてのSPから先を隠す(それより前のノーマルの応酬は決まっている)
+    //   swap待ち: そのターンまで殴ってから聞く仕様なので、ターンはすべて見せる
     const pend = leg.pending && leg.pending.kind !== 'next' ? leg.pending : null;
-    const hideFrom = !pend ? Infinity : (pend.kind === 'swap' ? pend.tn + 1 : pend.tn);
     rbTurns(res).forEach(t => {
-      if (t.tn >= hideFrom) return;
+      if (pend && t.tn > pend.tn) return;
       const gt = base + t.tn;
-      for (let i = 0; i < 2; i++) for (const e of t.ev[i]) {
+      const partial = pend && pend.kind !== 'swap' && t.tn === pend.tn;
+      let ev0 = t.ev[0], ev1 = t.ev[1];
+      if (partial) {
+        if (pend.kind === 'sp') ev0 = [];
+        else { const k = ev1.findIndex(e => e.full !== undefined); if (k >= 0) ev1 = ev1.slice(0, k); }
+      }
+      // シールド・能力変化の追跡は「見せる出来事」だけに対して行う(仮の結果を混ぜない)
+      for (let i = 0; i < 2; i++) for (const e of (i ? ev1 : ev0)) {
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
       }
-      frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
-        b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
-      const e0 = evCell(t.ev[0]);
-      const e1 = evCell(t.ev[1]) + (t.stalled && !t.ev[1].length ? '<i class="stall">⏸</i>' : '');
+      if (!partial) {
+        frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
+          b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+      } else {
+        // 決断待ちのターンのHUDは、前のターンのHP・ゲージのまま(結果はまだ決まっていない)
+        const pf = frames[gt - 1] || frames[base];
+        frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
+          b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+      }
+      const e0 = evCell(ev0);
+      const e1 = evCell(ev1) + (t.stalled && !ev1.length ? '<i class="stall">⏸</i>' : '');
       items.push(!e0 && !e1
         ? { gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` }
         : { gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${gt}</i><div class="c foe">${e1}</div></div>` });
@@ -3214,6 +3229,8 @@ function rbRender(body, bt, picks, foes, extra) {
     });
     const wx = winbox.querySelector('.wx');
     if (wx) wx.onclick = () => { RBUI.open = null; RBV.playing = true; run(); };
+    // ウィンドウが出たぶん画面下が高くなるので、最新のターンが隠れないように追従する
+    autoScroll();
   }
   function atStop() {
     stopTimer();
