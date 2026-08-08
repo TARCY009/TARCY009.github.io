@@ -264,54 +264,108 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
   border-radius:8px;font-size:.68rem;color:var(--ink);line-height:1.6}
 .rbfound .ok{color:var(--win)}
 .rbfound .ng{color:var(--lose)}
-.rbhint{font-size:.62rem;color:var(--sub);line-height:1.6;margin-top:6px}
-.rbleg{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:8px}
-.rbleghd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.76rem;font-weight:700}
-.rbleghd .legme{color:var(--cy)}
-.rbleghd .legfoe{color:var(--gold)}
-.rbleghd .legvs{color:var(--sub);font-size:.66rem;font-weight:400}
-.rbres{margin-left:auto;padding:1px 8px;border-radius:99px;font-size:.7rem;border:1px solid var(--line)}
-.rbres.w{color:var(--win);border-color:rgba(74,222,128,.5)}
-.rbres.l{color:var(--lose);border-color:rgba(255,107,129,.5)}
-.rbres.d{color:var(--gold);border-color:rgba(240,200,80,.5)}
-.rbsec{font-size:.68rem;color:var(--sub);font-weight:600}
-.rbmv{font-size:.64rem;color:var(--sub);margin-top:3px}
-.rbtl{width:100%;border-collapse:separate;border-spacing:0 2px;margin-top:6px}
-.rbtl th{font-size:.58rem;color:var(--sub);font-weight:600;padding-bottom:2px}
-.rbtl th small{display:block;font-size:.52rem;font-weight:400}
-.rbrow{cursor:pointer}
-.rbrow td{background:#0a0f22;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px 5px;font-size:.68rem}
-.rbrow td:first-child{border-left:1px solid var(--line);border-radius:8px 0 0 8px}
-.rbrow td:last-child{border-right:1px solid var(--line);border-radius:0 8px 8px 0}
-.rbrow:hover td{border-color:var(--gl)}
-.rbev{width:34%;color:var(--ink)}
-.rbev.r{text-align:right}
-.rbst{width:12%;text-align:center;color:var(--ink);font-weight:700}
-.rbst small{display:block;font-size:.56rem;color:var(--sub);font-weight:400}
-.rbtn{width:16%;text-align:center;color:var(--sub);font-size:.62rem}
-.rbtn small{display:block;font-size:.54rem}
-.rbgap{cursor:pointer}
-.rbgap td{padding:3px 6px;font-size:.6rem;color:var(--sub);text-align:center}
-.rbgap:hover td{color:var(--ink)}
-/* 決断の場面: まだ決めていないもの(選択肢を出す)と、決め終わったもの(1行) */
-.rbask td{background:rgba(240,200,80,.1);border:1px solid var(--gold);border-radius:10px;padding:8px}
-.rbasktl{display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:700;color:var(--gold);margin-bottom:6px}
-.rbasktl span{margin-left:auto;font-size:.62rem;font-weight:400;color:var(--sub)}
-.rbaskbtns{display:flex;flex-wrap:wrap;gap:5px}
-.rbaskbtns button{padding:6px 10px;font-size:.72rem;font-weight:700;background:var(--panel);
-  border:1px solid var(--gl);border-radius:8px;color:var(--ink);cursor:pointer}
-.rbaskbtns button.wait{border-color:var(--line);color:var(--sub);font-weight:600}
-.rbaskbtns button.hold{border-color:var(--line);color:var(--sub);font-weight:600}
-.rbaskbtns button.on{background:var(--cy);border-color:var(--cy);color:#06202b}
-.rbdone td{padding:2px 0;background:transparent;border:0}
-.rbdonebtn{display:flex;align-items:center;gap:7px;width:100%;padding:4px 9px;font-size:.68rem;
-  background:var(--bg2);border:1px dashed var(--line);border-radius:8px;color:var(--sub);cursor:pointer;text-align:left}
-.rbdonebtn b{color:var(--ink);font-size:.72rem}
-.rbdonebtn i{margin-left:auto;font-style:normal;font-size:.58rem;color:var(--gold);font-weight:700}
-.rbdone.open .rbdonebtn{border-style:solid;border-color:var(--cy)}
-.rbdone .rbaskbtns{margin:5px 0 3px}
-.rkverdict.play{color:var(--gold);background:rgba(240,200,80,.1);border-color:rgba(240,200,80,.4)}
-@media (max-width:520px){.rbev{width:30%;font-size:.62rem}.rbrow td{padding:3px}.rbaskbtns button{font-size:.68rem;padding:5px 8px}}
+/* ---- 模擬戦: 流れるタイムライン ---- */
+.rbfeed{margin-top:12px;min-height:100px}
+.fi.future{display:none}
+.fi.in>*{animation:fdup .28s ease-out}
+@keyframes fdup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.flg{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 8px;padding:9px 12px;
+  background:linear-gradient(90deg,rgba(67,224,255,.13),transparent 35%,transparent 65%,rgba(255,213,74,.13));
+  border:1px solid var(--line);border-radius:12px;font-weight:800;font-size:.85rem}
+.flg .me{color:var(--cy)}
+.flg .foe{color:var(--gold)}
+.flg em{font-style:normal;font-size:.6rem;color:var(--sub);letter-spacing:.12em}
+.ft{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:4px;padding:2px 0;min-height:25px}
+.ft.q{min-height:12px;padding:0}
+.ft .tn{grid-column:2;text-align:center;font-size:.55rem;color:#3d4a78;font-variant-numeric:tabular-nums}
+.ft .c{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+.ft .c.me{grid-column:1}
+.ft .c.foe{grid-column:3;justify-content:flex-end}
+.ev{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:9px;font-size:.67rem;white-space:nowrap}
+.ev .dmg{font-weight:800;font-size:.72rem}
+.c.me .ev .dmg{color:var(--gold)}
+.c.foe .ev .dmg{color:var(--lose)}
+.ev.sp{border-color:var(--gold);background:rgba(255,213,74,.1);font-weight:700}
+.fi.in .dmg{animation:dpop .4s}
+@keyframes dpop{0%{transform:scale(.5)}55%{transform:scale(1.3)}100%{transform:scale(1)}}
+.blk{font-style:normal;font-size:.64rem;color:var(--cy);font-weight:800}
+.stall{font-style:normal;font-size:.62rem;color:var(--sub);opacity:.7}
+.bf{font-style:normal;font-size:.56rem;font-weight:800;padding:1px 4px;border-radius:6px}
+.bf.up{color:var(--win);background:rgba(61,220,132,.13)}
+.bf.dn{color:var(--lose);background:rgba(255,107,129,.13)}
+.fko{margin:8px auto;text-align:center;font-weight:800;font-size:.82rem;padding:7px;border-radius:10px;max-width:340px}
+.fko.win{color:var(--win);background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.35)}
+.fko.lose{color:var(--lose);background:rgba(255,107,129,.07);border:1px solid rgba(255,107,129,.35)}
+.fko i{font-style:normal;font-size:.66rem;color:var(--sub);margin-left:6px}
+.fc{text-align:center;margin:3px 0}
+.fchip{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;font-size:.68rem;color:var(--sub);
+  background:var(--bg2);border:1px solid rgba(255,213,74,.55);border-radius:99px;cursor:pointer}
+.fchip b{color:var(--ink);font-size:.7rem}
+.fchip.auto{border-color:var(--line);border-style:dashed}
+.fchip:hover{border-color:var(--cy)}
+.rbfin{margin-top:12px}
+/* ---- 下部の常駐フレーム(HUD)と選択ウィンドウ ---- */
+.rbdock{position:sticky;bottom:6px;z-index:6;margin-top:10px}
+.rbwinbox:empty{display:none}
+.rbwin{margin:0 auto 8px;max-width:520px;background:rgba(19,26,51,.97);border:1px solid var(--gold);
+  border-radius:14px;padding:10px 12px;box-shadow:0 6px 30px rgba(0,0,0,.55),0 0 0 1px rgba(255,213,74,.15);
+  animation:winup .22s ease-out}
+@keyframes winup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rwt{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.84rem;color:var(--gold);margin-bottom:8px}
+.rwt span{margin-left:auto;font-size:.62rem;font-weight:600;color:var(--sub)}
+.rwt .wx{background:none;border:0;color:var(--sub);font-size:.8rem;cursor:pointer;padding:0 2px}
+.rwb{display:flex;flex-wrap:wrap;gap:6px}
+.rwb button{min-height:38px;padding:6px 13px;font-size:.78rem;font-weight:800;background:var(--panel);
+  border:1px solid var(--gl);border-radius:11px;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.rwb button.fire{border-color:var(--cy);box-shadow:inset 0 0 12px rgba(67,224,255,.08)}
+.rwb button.wait,.rwb button.hold{border-color:var(--line);color:var(--sub);font-weight:700}
+.rwb button.on{background:var(--cy);border-color:var(--cy);color:#06202b}
+.rwb .cost{font-style:normal;font-size:.58rem;font-weight:800;color:#06202b;background:var(--gold);border-radius:99px;padding:1px 6px}
+.rwb .dmg{color:var(--lose)}
+.rbhud{display:grid;grid-template-columns:1fr 74px 1fr;gap:8px;align-items:start;
+  background:rgba(12,17,34,.96);backdrop-filter:blur(8px);border:1px solid var(--gl);
+  border-radius:14px;padding:9px 10px 8px;box-shadow:0 -6px 28px rgba(0,0,0,.45),0 0 0 1px rgba(77,141,255,.12)}
+.hs{min-width:0}
+.hs .hn{display:flex;align-items:baseline;gap:6px;min-width:0}
+.hs .nm{font-size:.72rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hs.me .nm{color:var(--cy)}
+.hs.foe .nm{color:var(--gold)}
+.hs .cp{font-size:.56rem;color:var(--sub);font-weight:700;flex:0 0 auto}
+.hs.foe .hn{justify-content:flex-end}
+.hb{height:7px;background:#0a0f22;border:1px solid var(--line);border-radius:99px;margin:4px 0 5px;overflow:hidden}
+.hb i{display:block;height:100%;width:100%;border-radius:99px;transition:width .35s ease}
+.hb i.g{background:linear-gradient(90deg,#2bd97c,#7ef0af)}
+.hb i.y{background:linear-gradient(90deg,#e8a93d,#ffd54a)}
+.hb i.r{background:linear-gradient(90deg,#ff6b81,#ff9d9d)}
+.hx{display:flex;align-items:center;gap:6px;min-height:24px;flex-wrap:wrap}
+.hs.foe .hx{justify-content:flex-end}
+.balls{display:inline-flex;gap:3px}
+.pb{width:12px;height:12px;border-radius:50%;position:relative;display:inline-block;
+  background:linear-gradient(#ff5d5d 0 43%,#0c1122 43% 57%,#eef1fb 57% 100%);box-shadow:0 1px 2px rgba(0,0,0,.6)}
+.pb::after{content:'';position:absolute;left:50%;top:50%;width:4px;height:4px;transform:translate(-50%,-50%);
+  border-radius:50%;background:#eef1fb;box-shadow:0 0 0 1px #0c1122}
+.pb.off{filter:grayscale(1) brightness(.4)}
+.shd{font-style:normal;font-size:.64rem}
+.shd.off{filter:grayscale(1) brightness(.4)}
+.gqs{display:inline-flex;gap:4px}
+.gq{position:relative;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  background:conic-gradient(var(--gqc) var(--p,0%),rgba(255,255,255,.09) 0)}
+.gq i{width:18px;height:18px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-style:normal}
+.hs.me .gq{--gqc:var(--cy)}
+.hs.foe .gq{--gqc:var(--gold)}
+.gq.on{animation:gqp 1.1s infinite;box-shadow:0 0 8px var(--gqc)}
+@keyframes gqp{50%{transform:scale(1.12)}}
+.hm{text-align:center}
+.hm .clk{display:block;font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.hm .trn{display:block;font-style:normal;font-size:.55rem;color:var(--sub);font-variant-numeric:tabular-nums}
+.hctl{display:flex;justify-content:center;gap:4px;margin-top:4px}
+.hctl button{width:26px;height:22px;font-size:.6rem;background:var(--bg2);border:1px solid var(--line);
+  border-radius:7px;color:var(--ink);cursor:pointer;padding:0}
+.hctl .hspd{width:30px}
+@media (max-width:520px){.rbhud{grid-template-columns:1fr 60px 1fr;padding:7px 7px 6px}.hs .nm{font-size:.63rem}
+  .gq{width:21px;height:21px}.gq i{width:16px;height:16px}.ft{grid-template-columns:1fr 30px 1fr}
+  .ev{font-size:.6rem;padding:2px 5px}.rwb button{font-size:.72rem;padding:6px 10px}}
 /* ロケット団戦 1対1: おすすめランキング */
 .rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
 .rkfilt button .shadowmark{margin-right:3px}
@@ -1309,12 +1363,14 @@ const HELP_HTML = `
   </ul>
 
   <h4>模擬戦の使い方</h4>
-  <p>ノーマルアタックの応酬はまとめて進み、<b>決断が要る場面だけ止まって選択肢が出ます</b>。選ぶと、そこから先が計算し直されて<b>下に伸びていきます</b>。実際のバトルと同じ感覚で立ち回りを試せます。</p>
+  <p>バトルは<b>実際と同じ速さ（1ターン=0.5秒）</b>で上から流れ、<b>決断の場面で止まって選択肢が出ます</b>。選ぶとまた流れ出します。画面のいちばん下には、いまの<b>HP・SPゲージ・シールド・能力変化・残り手持ち</b>がつねに見えています。</p>
   <ul>
-    <li><b>⚡ ゲージが溜まった</b>… SPアタックを<b>撃つ（どちらを撃つかも選ぶ）</b>／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）</li>
-    <li><b>🛡 あいてのSPアタックが来る</b>… シールドを<b>使う</b>／<b>受ける</b></li>
-    <li><b>⏸ あいてが交代してきた</b>… あいてが硬直しているあいだ殴ったあと、<b>交代する</b>／<b>このまま</b>続ける</li>
-    <li><b>💀 倒された</b>… 次にどのポケモンを出すか</li>
+    <li><b>⚡ SPアタック</b>… 撃つわざをタップ／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）／<b>おまかせ</b>（AIの判断で進める）</li>
+    <li><b>🛡 〜が来る！</b>… シールドで<b>使う</b>か、<b>受ける</b>か（受けた場合のダメージつき）</li>
+    <li><b>⇄ 交代する？</b>… あいての交代直後（硬直中に殴ったあと）に聞かれます</li>
+    <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
+    <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
+    <li>下のフレームの <b>⏸／×1／⏩</b> で一時停止・倍速（×1×2×4）・次の決断まで飛ばす、ができます。決着後は <b>↻</b> でもう一度最初から再生できます</li>
   </ul>
   <h4>わざの決め方</h4>
   <ul>
@@ -1325,9 +1381,9 @@ const HELP_HTML = `
   </ul>
 
   <ul>
-    <li><b>おまかせ</b>… 決めていない場面はAIが判断して、<b>最後まで一気に結果を出します</b>。並んだ決断はタップすれば選び直せます（そこから先は自動でやり直しになります）</li>
-    <li><b>1手ずつ</b>… 決断のたびに止まります。1つ選ぶごとに先へ進みます</li>
-    <li><b>最速／安定</b>のボタンで、決断の組み合わせを自動でさがせます。見つかった手順はそのまま画面に入るので、続けて手直しできます</li>
+    <li><b>▶ バトル</b>… 上記の流れる表示。ゲームと同じ感覚で立ち回りを試せます</li>
+    <li><b>結果だけ</b>… 全部おまかせで戦った結果を<b>一気に</b>出します。並んだチップをタップすれば選び直せます</li>
+    <li><b>最速／安定</b>のボタンで、決断の組み合わせを自動でさがせます。見つかった手順はそのままバトルで再生されるので、続けて手直しできます</li>
     <li>引っ込めたポケモンはHP・ゲージを保ったまま控えに戻り、出し直すと続きから戦います</li>
     <li><b>🎲 わざ運が最悪でも</b>… あいてのわざはランダムなので、対面ごとに<b>こちらがいちばんキツいわざ</b>を引いた場合の結果も出しています</li>
     <li><b>🛡 自分のシールド別</b>… 同じ手順のまま、使えるシールドの枚数だけ変えた結果です。タップで切り替わります</li>
@@ -1624,7 +1680,7 @@ document.querySelectorAll('#rkfilt button').forEach(b => b.onclick = () => {
 // 1対1 ⇄ 模擬戦
 document.querySelectorAll('#rkmode button').forEach(b => b.onclick = () => {
   setPlay(RK_PLAY[b.dataset.v]);
-  RB.ans = {}; RBUI.open = null;   // たたかい方を変えたら模擬戦の選択はいったん消す
+  RB.ans = {}; RBUI.open = null; RBV.cur = 0; RBV.playing = true;   // たたかい方を変えたら模擬戦は最初から
   applyMode();
   run();
 });
@@ -2508,9 +2564,8 @@ function rkRankCard(r, i) {
 
 // ---- ロケット団戦: 模擬戦 ----
 // ans  = 決断への答え（キーは rbKey。決めていない場面は「おまかせ」でAIが判断する）
-// step = 見かた。false=おまかせ（最後まで一気に出す）／true=1手ずつ（決断のたびに止まる）
-// open = たたんだノーマルアタックの応酬を開いた場所
-const RB = { ans: {}, step: false, open: {}, found: null };
+// step = 見かた。true=バトル（1ターン=0.5秒で再生し、決断で止まる）／false=結果だけ（一気に出す）
+const RB = { ans: {}, step: true, found: null };
 const rbAnsCount = () => Object.keys(RB.ans).length;
 // 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
 const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', auto: 'a' };
@@ -2627,7 +2682,8 @@ function rbPoints(turns, ctx, dec) {
     // あいてのSPアタックが飛んできた(1ターンに複数入ることは無いが念のため配列で見る)
     for (const e of t.ev[1]) {
       if (e.full === undefined) continue;
-      if (ctx.myShLeft - shUsed > 0) pts.push({ kind: 'sh', seq: shSeq, tn: t.tn, spSeen: shSeq + 1 });
+      // mv/dmg は選択ウィンドウの表示用(何が来て、受けたら何ダメージか)
+      if (ctx.myShLeft - shUsed > 0) pts.push({ kind: 'sh', seq: shSeq, tn: t.tn, spSeen: shSeq + 1, mv: e.move, dmg: e.full });
       if (dec.shieldAt.includes(shSeq + 1)) shUsed++;
       shSeq++;
     }
@@ -2655,7 +2711,8 @@ function rbPoints(turns, ctx, dec) {
 // 決断ひとつぶんの選択肢(画面に出すボタン)を作る
 function rbChoices(p, ctx) {
   if (p.kind === 'sp') {
-    const list = ctx.spList.map(id => ({ a: 'fire', mv: id, label: `▶ ${D.moves[id].n}`, cls: 'fire',
+    const list = ctx.spList.map(id => ({ a: 'fire', mv: id, cls: 'fire',
+      label: `${mvChip(D.moves[id].n, 14)}<i class="cost">${D.moves[id].e}</i>`,
       tip: `ゲージ${D.moves[id].e} のSPアタックをここで撃ちます` }));
     return list.concat([
       { a: 'wait', n: 1, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
@@ -2666,12 +2723,12 @@ function rbChoices(p, ctx) {
   }
   if (p.kind === 'sh') return [
     { a: 'use', label: '🛡 使う', cls: 'fire', tip: 'シールドで防ぎます(ダメージ1)' },
-    { a: 'no', label: '受ける', cls: 'hold', tip: 'シールドを使わずにダメージを受けます' },
+    { a: 'no', label: `受ける${p.dmg ? `<b class="dmg">-${p.dmg}</b>` : ''}`, cls: 'hold', tip: 'シールドを使わずにダメージを受けます' },
   ];
   if (p.kind === 'swap') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `⇄ ${ctx.picks[k].name}`, cls: 'fire',
     tip: 'ここで交代します(あいては4.5秒動けません／自分も0.5秒動けません)' }))
     .concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
-  return ctx.swTo.map(k => ({ a: 'to', to: k, label: `${ctx.picks[k].name}を出す`, cls: 'fire',
+  return ctx.swTo.map(k => ({ a: 'to', to: k, label: ctx.picks[k].name, cls: 'fire',
     tip: '次にこのポケモンを出します' }));
 }
 
@@ -2765,6 +2822,13 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     const points = log.map(p => ({ ...p, gt: base + p.tn, ctx, opts: rbChoices(p, ctx) }));
     legs.push({ res, base, myIdx: mi, foeIdx: fi, meName: picks[mi].name, foeName: rktName(foes[fi]),
       meDown, foeDown, swapped, swapTo: swapped ? dec.swapTo : null, pol, li, points,
+      // hud = この対面が始まった時点の両者の状態(下の常駐フレームの表示に使う)
+      hud: { hp0: st[mi].resume ? Math.max(0, st[mi].resume.hp) : res.final[0].hpMax,
+             en0: st[mi].resume ? st[mi].resume.en : 0,
+             b0: ((st[mi].resume && st[mi].resume.buffs) || [0, 0]).slice(),
+             hp1: foeResume ? Math.max(0, foeResume.hp) : res.final[1].hpMax,
+             en1: foeResume ? foeResume.en : 0,
+             b1: ((foeResume && foeResume.buffs) || [0, 0]).slice() },
       pending: pending && pending.key.slice(0, pending.key.indexOf(':')) === String(li) ? pending : null });
     if (pending) break;
     base += res.turns;
@@ -2880,241 +2944,361 @@ function rbTurns(res) {
 // じぶんが撃てるSPアタックの一覧(1本でも2本でも同じ形にする)
 const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.throw ? [pol.throw] : []));
 
-function runRkBuild() {
-  const body = document.querySelector('#rkteam .rkbody');
-  const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
-  const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
-  updateUrl();
-  if (!mine.length || !foes.length) {
-    body.innerHTML = `<div class="mtnote">${!mine.length ? '左の枠に<b>じぶんのポケモン</b>を入れてください。' : ''}` +
-      `${!foes.length ? '右の枠に<b>あいてのポケモン</b>を入れてください。' : ''}（1匹ずつでも試せます）</div>`;
-    return;
-  }
-  // わざの選び直し(3通り)が入る初回だけ少し待つので、先に「計算中」を出して画面を固まらせない
-  const token = ++multiToken;
-  const go = () => {
-    if (token !== multiToken) return;
-    const picks = rbPicksCached(mine, foes, RK.sh);
-    const bt = rbPlay(picks, foes, RK.sh, RB.ans, RB.step);
-    // 決着まで出ているときだけ、まとめの2つを添える(途中では意味がないので出さない)
-    const extra = bt.pending ? {} : {
-      // あいてのわざはランダムなので、いちばんキツい引きだった場合も添える
-      worst: rbPlay(picks, foes, RK.sh, RB.ans, false, true),
-      // 自分のシールド0/1/2の3通り(同じ選択のまま枚数だけ変えて比べる)
-      shRuns: [0, 1, 2].map(sh => sh === RK.sh ? bt
-        : rbPlay(rbPicksCached(mine, foes, sh), foes, sh, RB.ans, false)),
-    };
-    rbRender(body, bt, picks, extra);
-  };
-  // 3通り必要なのは「おまかせ」でシールド別を出すときだけ。1手ずつは今の枚数だけあればよい
-  const ready = RB.step ? rbPicksHas(mine, foes, RK.sh) : [0, 1, 2].every(sh => rbPicksHas(mine, foes, sh));
-  if (ready) go();
-  else { body.innerHTML = '<div class="mtprog">計算中…</div>'; setTimeout(go, 0); }
-}
-
-// 画面に出している決断の一覧(タップしたときに中身を引くために持っておく)
+// ==== 模擬戦の画面: ゲームと同じ流れで「観て・選ぶ」 ====
+// タイムラインは実際のバトルと同じ 1ターン=0.5秒 で上から下へ流れ、
+// 決断の場面に来ると止まって、下の常駐フレーム(HUD)の上に選択ウィンドウが出る。
+// HUD = 両者の HP・ゲージ・シールド・能力変化・残り手持ち(モンスターボール)を常に表示
+const RBV = { cur: 0, playing: true, speed: 1, timer: null };
 const RBUI = { pts: {}, order: [], open: null };
+const RB_ICON = { sp: '⚡', sh: '🛡', swap: '⇄', next: '💀' };
 // 選び直したら、その決断より後ろの答えは消す(前提が変わるので、そこから先はおまかせに戻る)
 function rbTrim(key) {
   const i = RBUI.order.indexOf(key);
   if (i < 0) return;
   RBUI.order.slice(i + 1).forEach(k => delete RB.ans[k]);
 }
-// 決断の見出し(何を聞かれているか)
 function rbAskTitle(p) {
-  if (p.kind === 'sp') return `⚡ ゲージが溜まった`;
-  if (p.kind === 'sh') return `🛡 ${p.foeMv || 'あいてのSPアタック'}が来る`;
-  if (p.kind === 'swap') return `⏸ あいてが交代してきた`;
-  return `💀 倒された`;
+  if (p.kind === 'sp') return '⚡ SPアタック';
+  if (p.kind === 'sh') return `🛡 ${p.mv || 'SPアタック'}が来る！`;
+  if (p.kind === 'swap') return '⇄ 交代する？';
+  return '💀 次に出すのは？';
 }
-// 決めた内容を短く表す
 function rbAnsLabel(p, a) {
   if (!a) return '？';
   if (p.kind === 'sp') {
-    if (a.a === 'auto') return '▶ おまかせ';
+    if (a.a === 'auto') return 'おまかせ';
     if (a.a === 'fire') return `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'wait') return `＋${a.n}`;
-    if (a.a === 'to') return `⇄ ${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}`;
     return '撃たない';
   }
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '🛡 使う';
   if (p.kind === 'swap') return a.a === 'stay' ? 'このまま' : `⇄ ${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}`;
-  return a.a === 'order' ? '順番どおり' : `${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}を出す`;
-}
-// 決断ひとつぶんの行(未決定なら選択肢、決定済みならタップで開ける1行)
-function rbPointHtml(p, opened) {
-  const btns = p.opts.map((o, i) =>
-    `<button data-key="${p.key}" data-i="${i}" title="${o.tip || ''}"
-      class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}">${o.label}</button>`).join('');
-  if (!p.ans) return `<tr class="rbask"><td colspan="5">
-    <div class="rbasktl">${rbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.gt)}</span></div>
-    <div class="rbaskbtns">${btns}</div></td></tr>`;
-  return `<tr class="rbdone${opened ? ' open' : ''}"><td colspan="5">
-    <button class="rbdonebtn" data-open="${p.key}" title="タップして選び直す">
-      ${rbAskTitle(p)}<b>${rbAnsLabel(p, p.ans)}</b>${p.auto ? '' : '<i>指定</i>'}</button>
-    ${opened ? `<div class="rbaskbtns">${btns}
-      ${p.auto ? '' : `<button data-key="${p.key}" data-i="-1" class="hold">おまかせに戻す</button>`}</div>` : ''}
-  </td></tr>`;
+  return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
+// 能力変化のタグ(⬆⬇)。1段階ちょうど以外は段階数を添える
+function buffTag(bf) {
+  let out = '';
+  for (let k = 0; k < 2; k++) {
+    const d = Math.round((bf.to[k] - bf.from[k]) * 10) / 10;
+    if (!d) continue;
+    out += `<i class="bf ${d > 0 ? 'up' : 'dn'}">${bf.target === 'opponent' ? '相手' : ''}${'攻防'[k]}${d > 0 ? '⬆' : '⬇'}${Math.abs(d) === 1 ? '' : Math.abs(d)}</i>`;
+  }
+  return out;
+}
 
-function rbRender(body, bt, picks, extra) {
-  setProbTab(anyProbMove(picks.map(p => p.pol).concat(
-    [0, 1, 2].filter(i => RKT[i]).map(i => rktCfg(RKT[i])))));
+function runRkBuild() {
+  const body = document.querySelector('#rkteam .rkbody');
+  const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
+  const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
+  updateUrl();
+  clearInterval(RBV.timer); RBV.timer = null;
+  if (!mine.length || !foes.length) {
+    body.innerHTML = `<div class="mtnote">${!mine.length ? '左の枠に<b>じぶんのポケモン</b>を入れてください。' : ''}` +
+      `${!foes.length ? '右の枠に<b>あいてのポケモン</b>を入れてください。' : ''}（1匹ずつでも試せます）</div>`;
+    return;
+  }
+  const token = ++multiToken;
+  const go = () => {
+    if (token !== multiToken) return;
+    const picks = rbPicksCached(mine, foes, RK.sh);
+    const bt = rbPlay(picks, foes, RK.sh, RB.ans, RB.step);
+    // 決着まで出ているときだけ、まとめ(わざ運の最悪・シールド別)を添える
+    const extra = bt.pending ? {} : {
+      worst: rbPlay(picks, foes, RK.sh, RB.ans, false, true),
+      shRuns: [0, 1, 2].map(sh => sh === RK.sh ? bt : rbPlay(rbPicksCached(mine, foes, sh), foes, sh, RB.ans, false)),
+    };
+    rbRender(body, bt, picks, foes, extra);
+  };
+  const ready = RB.step ? rbPicksHas(mine, foes, RK.sh) : [0, 1, 2].every(sh => rbPicksHas(mine, foes, sh));
+  if (ready) go();
+  else { body.innerHTML = '<div class="mtprog">計算中…</div>'; setTimeout(go, 0); }
+}
+
+function rbRender(body, bt, picks, foes, extra) {
+  setProbTab(anyProbMove(picks.map(p => p.pol).concat(foes.map(f => rktCfg(f)))));
   extra = extra || {};
   RBUI.pts = {}; RBUI.order = [];
+  const regPt = p => { if (p) { RBUI.pts[p.key] = p; RBUI.order.push(p.key); } };
+  bt.legs.forEach(leg => { (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.pending); });
+
+  // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
+  // items は時系列どおりに積む(gt=通しターン。表示はそこまで「再生」が進んだら出す)
+  const items = [], frames = [];
+  let alive0 = picks.length, alive1 = foes.length;
+  let sh0 = RK.sh, sh1 = rkShields();
+  const shMax0 = RK.sh, shMax1 = rkShields();
+  const evCell = list => list.map(e => {
+    const b = e.buff ? buffTag(e.buff) : '';
+    if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
+      e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>`;
+    return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
+  }).join('');
+  const chipItem = (p, gt) => ({ gt, html: `<div class="fc"><button class="fchip${p.auto ? ' auto' : ''}"
+    data-k="${p.key}" title="タップすると、この場面からやり直せます">${RB_ICON[p.kind]}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
-    (leg.points || []).forEach(p => { RBUI.pts[p.key] = p; RBUI.order.push(p.key); });
-    if (leg.nextPoint) { RBUI.pts[leg.nextPoint.key] = leg.nextPoint; RBUI.order.push(leg.nextPoint.key); }
-    if (leg.pending) { RBUI.pts[leg.pending.key] = leg.pending; RBUI.order.push(leg.pending.key); }
+    const res = leg.res, base = leg.base;
+    const fcfg = rktCfg(foes[leg.foeIdx]);
+    const meta = {
+      name0: leg.meName, name1: leg.foeName,
+      cp0: res.final[0].cp, cp1: res.final[1].cp,
+      max0: res.final[0].hpMax, max1: res.final[1].hpMax,
+      sp0: rbSpList(leg.pol).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
+      sp1: fcfg.throw ? [{ n: D.moves[fcfg.throw].n, e: D.moves[fcfg.throw].e }] : [],
+    };
+    let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
+    items.push({ gt: base, html: `<div class="flg"><span class="me">${leg.meName}</span><em>VS</em><span class="foe">${leg.foeName}</span></div>` });
+    frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
+      b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+    const ptAt = {};
+    (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
+    const stopTn = leg.pending && leg.pending.kind !== 'next' ? leg.pending.tn : Infinity;
+    rbTurns(res).forEach(t => {
+      if (t.tn > stopTn) return;   // 決断待ちのターンから先は「まだ起きていない」
+      const gt = base + t.tn;
+      for (let i = 0; i < 2; i++) for (const e of t.ev[i]) {
+        if (e.shielded) { if (i === 0) sh1--; else sh0--; }
+        if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
+          if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
+      }
+      frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
+        b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+      const e0 = evCell(t.ev[0]);
+      const e1 = evCell(t.ev[1]) + (t.stalled && !t.ev[1].length ? '<i class="stall">⏸</i>' : '');
+      items.push(!e0 && !e1
+        ? { gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` }
+        : { gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${gt}</i><div class="c foe">${e1}</div></div>` });
+      (ptAt[t.tn] || []).forEach(p => items.push(chipItem(p, gt)));
+    });
+    const endGt = base + res.turns;
+    if (leg.foeDown) { alive1--; items.push({ gt: endGt,
+      html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(endGt)}</i></div>` }); }
+    if (leg.meDown) { alive0--; items.push({ gt: endGt,
+      html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
+    if (leg.meDown || leg.foeDown) {
+      const f = frames[endGt] || frames[endGt - 1];
+      if (f) frames[endGt] = { ...f, alive0, alive1 };
+    }
+    if (leg.nextPoint) items.push(chipItem(leg.nextPoint, endGt));
   });
-  const o = RK_OUTCOME[bt.outcome];
-  // 決着まで出ているときだけ、勝敗とまとめを出す
-  const verdict = bt.pending
-    ? `<div class="rkverdict play">▶ 進行中<small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱${rbSec(bt.turns)}秒</small></div>`
-    : `<div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
-      <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>`;
-  const wo = extra.worst && !extra.worst.pending && RK_OUTCOME[extra.worst.outcome];
-  const worstHtml = !wo ? '' : `<div class="rkworst ${wo.cls === 'win' ? 'ok' : 'ng'}"
-    title="あいてが対面ごとに、こちらにいちばんキツいわざを打ってきた場合">
-    🎲 わざ運が最悪でも <b>${wo.txt}</b>
-    <small>じぶん${extra.worst.meLeft}/${extra.worst.nMe} ／ あいて${extra.worst.foeLeft}/${extra.worst.nFoe} ・ ⏱${rbSec(extra.worst.turns)}秒</small></div>`;
-  const sumHtml = !extra.shRuns ? '' : `<div class="rksum">
-      <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
-      <table><tr><th class="corner">🛡</th><th>結果</th></tr>${extra.shRuns.map((r, sh) => {
-        const ro = RK_OUTCOME[r.outcome] || RK_OUTCOME.timeout;
-        return `<tr><th>${sh}</th><td class="${ro.cls === 'win' ? 'w' : 'l'}${sh === RK.sh ? ' cur' : ''}" data-sh="${sh}">
-          <b>${ro.txt}</b><small>じぶん${r.meLeft} ／ あいて${r.foeLeft} ・ ⏱${rbSec(r.turns)}</small></td></tr>`;
-      }).join('')}</table>
-    </div>`;
-  const legHtml = bt.legs.map(leg => rbLegHtml(leg, picks)).join('');
+  const stop = bt.pending ? bt.pending.gt : bt.turns;
+  for (let g = 1; g <= stop; g++) if (!frames[g]) frames[g] = frames[g - 1];
+  // 決着のまとめ(再生が最後まで来たら出る)
+  if (!bt.pending) {
+    const o = RK_OUTCOME[bt.outcome];
+    const wo = extra.worst && RK_OUTCOME[extra.worst.outcome];
+    items.push({ gt: stop, html: `<div class="rbfin">
+      <div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
+        <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
+      ${!wo ? '' : `<div class="rkworst ${wo.cls === 'win' ? 'ok' : 'ng'}"
+        title="あいてが対面ごとに、こちらにいちばんキツいわざを打ってきた場合">
+        🎲 わざ運が最悪でも <b>${wo.txt}</b>
+        <small>じぶん${extra.worst.meLeft}/${extra.worst.nMe} ／ あいて${extra.worst.foeLeft}/${extra.worst.nFoe} ・ ⏱${rbSec(extra.worst.turns)}秒</small></div>`}
+      ${!extra.shRuns ? '' : `<div class="rksum">
+        <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
+        <table><tr><th class="corner">🛡</th><th>結果</th></tr>${extra.shRuns.map((r, sh) => {
+          const ro = RK_OUTCOME[r.outcome] || RK_OUTCOME.timeout;
+          return `<tr><th>${sh}</th><td class="${ro.cls === 'win' ? 'w' : 'l'}${sh === RK.sh ? ' cur' : ''}" data-sh="${sh}">
+            <b>${ro.txt}</b><small>じぶん${r.meLeft} ／ あいて${r.foeLeft} ・ ⏱${rbSec(r.turns)}</small></td></tr>`;
+        }).join('')}</table></div>`}
+    </div>` });
+  }
+
+  // ---- 画面を組む ----
   body.innerHTML = `<div class="rbctl">
       <div class="rbrow1"><span class="lbl">見かた</span>
         <div class="opts rbstep">
-          <button data-v="0" aria-pressed="${!RB.step}" title="最後まで一気に計算して出します。決断の場面はタップで選び直せます">おまかせ</button><button data-v="1" aria-pressed="${RB.step}" title="実際のバトルと同じように、決断の場面ごとに止まって選びます">1手ずつ</button>
+          <button data-v="1" aria-pressed="${RB.step}" title="実際と同じ速さでバトルが流れ、決断の場面で止まって選べます">▶ バトル</button><button data-v="0" aria-pressed="${!RB.step}" title="全部おまかせで戦った結果を一気に出します。決断はタップで選び直せます">結果だけ</button>
         </div>
-        ${rbAnsCount() ? `<button class="rbclear" title="選んだ手をすべて消して、はじめからおまかせに戻します">選び直す</button>` : ''}
+        ${rbAnsCount() ? '<button class="rbclear" title="選んだ手をすべて消して、はじめからおまかせに戻します">選び直す</button>' : ''}
       </div>
       <div class="rbrow1 rbfind"><span class="lbl">🔎 手順</span>
         ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" title="${RB_GOAL[g].tip}">${RB_GOAL[g].label}</button>`).join('')}
       </div>
       ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
     </div>
-    ${verdict}
-    ${worstHtml}
-    ${sumHtml}
-    <div class="rblegs">${legHtml}</div>`;
+    <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}">${x.html}</div>`).join('')}</div>
+    <div class="rbdock">
+      <div class="rbwinbox"></div>
+      <div class="rbhud">
+        <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b></div>
+          <div class="hb"><i></i></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqs"></span><span class="bfs"></span></div>
+        </div>
+        <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
+          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button>` : ''}</div>
+        </div>
+        <div class="hs foe"><div class="hn"><b class="cp"></b><span class="nm"></span></div>
+          <div class="hb"><i></i></div>
+          <div class="hx"><span class="bfs"></span><span class="gqs"></span><span class="shds"></span><span class="balls"></span></div>
+        </div>
+      </div>
+    </div>`;
+
+  // ---- 再生(1ターン=0.5秒で流す)と HUD の更新 ----
+  const feedEl = body.querySelector('.rbfeed');
+  const els = [...feedEl.children];
+  const dock = body.querySelector('.rbdock');
+  const winbox = dock.querySelector('.rbwinbox');
+  const hud = dock.querySelector('.rbhud');
+  const sideRefs = side => {
+    const el = hud.querySelector('.hs.' + side);
+    return { nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
+      balls: el.querySelector('.balls'), shds: el.querySelector('.shds'),
+      gqs: el.querySelector('.gqs'), bfs: el.querySelector('.bfs') };
+  };
+  const R0 = sideRefs('me'), R1 = sideRefs('foe');
+  const clk = hud.querySelector('.clk'), trn = hud.querySelector('.trn');
+  let ptr = 0, lastEl = null, curLegKey = '';
+  function updateHud(gt) {
+    const f = frames[Math.max(0, Math.min(gt, stop))];
+    if (!f) return;
+    const legKey = f.meta.name0 + '|' + f.meta.name1;
+    if (legKey !== curLegKey) {   // 対面が変わったときだけ名前・CP・ゲージの器を作り直す
+      curLegKey = legKey;
+      [[R0, f.meta.name0, f.meta.cp0, f.meta.sp0], [R1, f.meta.name1, f.meta.cp1, f.meta.sp1]].forEach(([Rf, nm, cp, sps]) => {
+        Rf.nm.textContent = nm; Rf.cp.textContent = 'CP' + cp;
+        Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i></span>`).join('');
+      });
+    }
+    const set = (Rf, hp, max, en, sh, shMax, alive, total, b) => {
+      const pct = Math.max(0, Math.min(100, hp / max * 100));
+      Rf.bar.style.width = pct + '%';
+      Rf.bar.className = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
+      Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
+      Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
+      Rf.bfs.innerHTML = [0, 1].map(k => !b[k] ? '' :
+        `<i class="bf ${b[k] > 0 ? 'up' : 'dn'}">${'攻防'[k]}${b[k] > 0 ? '⬆' : '⬇'}${Math.abs(b[k]) === 1 ? '' : Math.abs(b[k])}</i>`).join('');
+      Rf.gqs.querySelectorAll('.gq').forEach(g => {
+        const e = +g.dataset.e;
+        g.style.setProperty('--p', Math.min(100, en / e * 100) + '%');
+        g.classList.toggle('on', en >= e);
+      });
+    };
+    set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0);
+    set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1);
+    clk.textContent = rbSec(gt);
+    trn.textContent = gt + 'T';
+  }
+  const revealTo = g => {
+    while (ptr < els.length && +els[ptr].dataset.gt <= g) {
+      els[ptr].classList.remove('future'); els[ptr].classList.add('in');
+      lastEl = els[ptr]; ptr++;
+    }
+  };
+  const autoScroll = () => {
+    if (!lastEl) return;
+    const target = lastEl.getBoundingClientRect().bottom + scrollY - (innerHeight - dock.offsetHeight - 10);
+    // 手で上へスクロールして読み返しているときは連れ戻さない
+    if (target > scrollY && target - scrollY < innerHeight * 1.5)
+      scrollTo({ top: target, behavior: RBV.speed === 1 ? 'smooth' : 'auto' });
+  };
+  const stopTimer = () => { clearInterval(RBV.timer); RBV.timer = null; };
+  const ended = () => RBV.cur >= stop && !bt.pending;
+  const setPlayBtn = () => {
+    const b = hud.querySelector('.hplay');
+    if (b) b.textContent = ended() ? '↻' : RBV.timer ? '⏸' : '▶';
+  };
+  function showWin(p, editing) {
+    RBV.playing = !editing && RBV.playing;
+    stopTimer(); setPlayBtn();
+    const btns = p.opts.map((o, i) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
+        data-k="${p.key}" data-i="${i}" title="${o.tip || ''}">${o.label}</button>`).join('')
+      + (p.kind === 'sp' ? `<button class="hold" data-k="${p.key}" data-i="auto" title="AIの判断にまかせます">おまかせ</button>` : '')
+      + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
+    winbox.innerHTML = `<div class="rbwin">
+      <div class="rwt">${rbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.gt)}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
+      <div class="rwb">${btns}</div></div>`;
+    winbox.querySelectorAll('.rwb button').forEach(b => b.onclick = () => {
+      rbTrim(p.key);
+      if (b.dataset.i === 'reset') delete RB.ans[p.key];
+      else if (b.dataset.i === 'auto') RB.ans[p.key] = { ...RB_AUTO[p.kind] };
+      else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
+      RBUI.open = null; RBV.playing = true;
+      run();
+    });
+    const wx = winbox.querySelector('.wx');
+    if (wx) wx.onclick = () => { RBUI.open = null; RBV.playing = true; run(); };
+  }
+  function atStop() {
+    stopTimer();
+    if (bt.pending) showWin(bt.pending, false);
+    else RBV.playing = false;
+    setPlayBtn();
+  }
+  function tick() {
+    if (!document.body.contains(feedEl)) { stopTimer(); return; }
+    RBV.cur++;
+    revealTo(RBV.cur);
+    updateHud(RBV.cur);
+    autoScroll();
+    if (RBV.cur >= stop) atStop();
+  }
+  const startTimer = () => { stopTimer(); RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+
   // ---- 操作の配線 ----
-  body.querySelectorAll('.rbstep button').forEach(b => b.onclick = () => { RB.step = b.dataset.v === '1'; run(); });
+  body.querySelectorAll('.rbstep button').forEach(b => b.onclick = () => {
+    RB.step = b.dataset.v === '1';
+    RBV.cur = RB.step ? 0 : 1e9; RBV.playing = true; RBUI.open = null;
+    run();
+  });
   const clr = body.querySelector('.rbclear');
-  if (clr) clr.onclick = () => { RB.ans = {}; RBUI.open = null; RB.found = null; run(); };
+  if (clr) clr.onclick = () => { RB.ans = {}; RBUI.open = null; RB.found = null; RBV.cur = 0; RBV.playing = true; run(); };
   body.querySelectorAll('.rksum td[data-sh]').forEach(td => td.onclick = () => {
     RK.sh = +td.dataset.sh; syncRocket(); run();
   });
-  // 決断の選択肢をタップ
-  body.querySelectorAll('.rbaskbtns button').forEach(b => b.onclick = () => {
-    const p = RBUI.pts[b.dataset.key];
-    if (!p) return;
-    const i = +b.dataset.i;
-    rbTrim(p.key);
-    if (i < 0) delete RB.ans[p.key];        // おまかせに戻す
-    else RB.ans[p.key] = { ...p.opts[i] };
-    RBUI.open = null;
-    run();
-  });
-  // 決めた内容をタップ → 選び直す
-  body.querySelectorAll('.rbdonebtn').forEach(b => b.onclick = () => {
-    RBUI.open = RBUI.open === b.dataset.open ? null : b.dataset.open;
-    run();
-  });
-  // たたんだ区間をタップ→そのあいだのターンも表示する
-  body.querySelectorAll('.rbgap').forEach(tr => tr.onclick = () => {
-    const [li, a, b] = tr.dataset.g.split('-').map(Number);
-    for (let x = a; x <= b; x++) RB.open[`${li}-${x}`] = true;
-    run();
-  });
-  // 手順の自動探索: 見つかった手順をそのまま決断の答えに入れて、下のタイムラインへ反映する
+  // 手順の自動探索: 見つかった手順をそのまま決断の答えに入れて、バトルで再生する
   body.querySelectorAll('.rbgo').forEach(b => b.onclick = () => {
     const g = b.dataset.g;
     b.textContent = 'さがしています…';
     setTimeout(() => {
-      const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
-      const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
-      const r = rbFind(rbPicksCached(mine, foes, RK.sh), foes, RK.sh, g);
+      const r = rbFind(rbPicksCached(mine2(), foes, RK.sh), foes, RK.sh, g);
       if (!r) { RB.found = '手順が見つかりませんでした。'; run(); return; }
       RB.ans = r.ans; RBUI.open = null;
       const o2 = RK_OUTCOME[r.bt.outcome];
       RB.found = `🔎 ${RB_GOAL[g].label} → <b class="${o2.cls === 'win' ? 'ok' : 'ng'}">${o2.txt}</b>` +
         `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
+      RBV.cur = 0; RBV.playing = true;
       run();
     }, 30);
   });
+  const mine2 = () => [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
+  // 決めた場面のチップ → その場面からやり直す
+  feedEl.querySelectorAll('.fchip').forEach(b => b.onclick = () => {
+    const p = RBUI.pts[b.dataset.k];
+    if (!p) return;
+    RBUI.open = p.key; RBV.cur = p.gt;
+    run();
+  });
+  // HUDの再生コントロール
+  const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
+  if (hplay) hplay.onclick = () => {
+    if (ended()) { RBV.cur = 0; RBV.playing = true; run(); return; }   // ↻ 最初から再生
+    if (RBV.cur >= stop) return;   // 決断待ちのあいだは選択がすべて
+    if (RBV.timer) { RBV.playing = false; stopTimer(); } else { RBV.playing = true; startTimer(); }
+    setPlayBtn();
+  };
+  if (hspd) hspd.onclick = () => {
+    RBV.speed = RBV.speed === 1 ? 2 : RBV.speed === 2 ? 4 : 1;
+    hspd.textContent = '×' + RBV.speed;
+    if (RBV.timer) startTimer();
+  };
+  if (hskip) hskip.onclick = () => {
+    RBV.cur = stop; revealTo(stop); updateHud(stop); autoScroll();
+    if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
+  };
+
+  // ---- 初期表示(再生の途中状態を引き継ぐ) ----
+  RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
+  if (!RB.step) RBV.cur = stop;   // 結果だけ: 最後まで一気に出す
+  revealTo(RBV.cur);
+  updateHud(RBV.cur);
+  if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
+  else if (RBV.cur >= stop) atStop();
+  else if (RB.step && RBV.playing) startTimer();
+  setPlayBtn();
 }
 
-// 1対面ぶんの見出し＋タイムライン(決断の場面をあいだに挟む)
-function rbLegHtml(leg, picks) {
-  const res = leg.res, base = leg.base, li = leg.li;
-  const turns = rbTurns(res);
-  const evTxt = list => list.map(e => {
-    let t = mvChip(e.move);
-    if (e.shielded) t += ' <span class="shield">🛡-1</span>';
-    else if (e.full !== undefined) t += ` <b>-${e.dmg}</b>`;
-    else t += ` -${e.dmg}`;
-    return `<span class="evbox">${t}</span>`;
-  }).join(' ');
-  const spList = rbSpList(leg.pol);
-  // 決断の場面をターンごとに引けるようにする
-  const ptAt = {};
-  (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
-  if (leg.pending && leg.pending.kind !== 'next') (ptAt[leg.pending.tn] = ptAt[leg.pending.tn] || []).push(leg.pending);
-  // まだ決めていない場面があるときは、そこから先はまだ起きていないので出さない
-  const stopTn = leg.pending && leg.pending.kind !== 'next' ? leg.pending.tn : Infinity;
-  let body = '', gap = [];
-  const flushGap = () => {
-    if (!gap.length) return;
-    const a = base + gap[0].tn, b = base + gap[gap.length - 1].tn;
-    const gk = `${li}-${gap[0].tn}-${gap[gap.length - 1].tn}`;
-    const st = gap.filter(x => x.stalled).length;
-    body += `<tr class="rbgap" data-g="${gk}"><td colspan="5">… ノーマルアタックの応酬 ${gap.length}ターン（${a}〜${b}T）` +
-      `${st ? `<span class="stallbox">うち あいての硬直 ${st}ターン</span>` : ''} ・<b>タップで開く</b> …</td></tr>`;
-    gap = [];
-  };
-  turns.forEach(t => {
-    if (t.tn > stopTn) return;
-    const gt = base + t.tn;
-    const pts = ptAt[t.tn] || [];
-    const show = t.key || pts.length || RB.open[`${li}-${t.tn}`];
-    if (!show) { gap.push(t); return; }
-    flushGap();
-    body += `<tr class="rbrow" data-t="${gt}">
-      <td class="rbev">${evTxt(t.ev[0])}</td>
-      <td class="rbst">${t.state[0].hp}<small>${t.state[0].en}</small></td>
-      <td class="rbtn">${gt}T<small>${rbSec(gt)}秒</small></td>
-      <td class="rbst">${t.state[1].hp}<small>${t.state[1].en}</small></td>
-      <td class="rbev r">${evTxt(t.ev[1])}${t.stalled && !t.ev[1].length ? '<span class="evbox stallbox">硬直</span>' : ''}</td>
-    </tr>`;
-    pts.forEach(p => { body += rbPointHtml(p, RBUI.open === p.key); });
-  });
-  flushGap();
-  // 倒されて次を出す場面は、その対面の最後に置く
-  if (leg.nextPoint) body += rbPointHtml(leg.nextPoint, RBUI.open === leg.nextPoint.key);
-  if (leg.pending && leg.pending.kind === 'next') body += rbPointHtml(leg.pending, true);
-  const rescls = leg.pending ? 'd' : leg.swapped ? 'd' : leg.meDown && leg.foeDown ? 'd' : leg.foeDown ? 'w' : leg.meDown ? 'l' : 'd';
-  const restxt = leg.pending ? '▶ 進行中'
-    : leg.swapped ? `${picks[leg.swapTo] ? picks[leg.swapTo].name : ''}に交代`
-    : leg.meDown && leg.foeDown ? '相打ち' : leg.foeDown ? '倒した' : leg.meDown ? '倒された' : '決着つかず';
-  const sec = leg.pending && leg.pending.tn ? leg.pending.tn : res.turns;
-  return `<div class="rbleg">
-    <div class="rbleghd"><span class="legme">${leg.myIdx + 1}. ${leg.meName}</span>
-      <span class="legvs">vs</span><span class="legfoe">${leg.foeIdx + 1}. ${leg.foeName}</span>
-      <span class="rbres ${rescls}">${restxt}</span>
-      <span class="rbsec">${rbSec(sec)}秒</span></div>
-    <div class="rbmv">わざ: ${mvChip(D.moves[leg.pol.fast].n)} / ${spList.map(id => mvChip(D.moves[id].n)).join(' ')}</div>
-    <table class="rbtl">
-      <tr><th>じぶん</th><th>HP<small>ゲージ</small></th><th>ターン</th><th>HP<small>ゲージ</small></th><th>あいて</th></tr>
-      ${body}
-    </table></div>`;
-}
 const mvName2 = id => D.moves[id] ? D.moves[id].n : id;
 
 const RK_OUTCOME = {
@@ -3683,7 +3867,7 @@ function updateUrl() {
     if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
     if (RK.team) {   // 模擬戦(自分のパーティは端末内に保存しているのでURLには入れない)
       qp.rt = 1; qp.rsh = RK.sh; qp.rkf = RK.koFoe; qp.rkm = RK.koMe; qp.rsw = RK.swapCd;
-      if (RB.step) qp.rbs = 1;   // 見かた(1手ずつ)と、決断で選んだ内容
+      if (!RB.step) qp.rbs = 0;   // 見かた(結果だけ)と、決断で選んだ内容
       const ansStr = rbAnsToStr();
       if (ansStr) qp.rb = ansStr;
       const t = [0, 1, 2].filter(i => RKT[i]).map(i => [RKT[i].key, RKT[i].fast || '', RKT[i].c1 || ''].join('~'));
@@ -3985,7 +4169,7 @@ document.getElementById('copyUrl').onclick = async () => {
   if (RK_ENTER[q.get('re')]) RK.enter = q.get('re');
   // 模擬戦の復元(rt=2 は「3匹連戦」と別画面だったころの古いリンク。同じ画面に読み替える)
   if (q.get('rt') === '1' || q.get('rt') === '2') setPlay('build');
-  if (q.get('rbs') === '1') RB.step = true;   // 見かた(1手ずつ)の復元
+  if (q.get('rbs') === '0') RB.step = false;   // 見かた(結果だけ)の復元(rbs=1は旧リンク・既定と同じ)
   if (q.get('rb')) rbAnsFromStr(q.get('rb'));   // 決断で選んだ内容の復元
   if (q.get('rw') && rkWhoList().some(w => w.id === q.get('rw'))) {   // 手持ち(だれと・選んだ並び)の復元
     RK.who = q.get('rw');
