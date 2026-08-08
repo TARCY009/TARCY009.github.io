@@ -617,7 +617,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
     </div>
     <div class="rklineup" id="rklineup"></div>
   </div>
-  <div class="rkrow rksep">
+  <div class="rkrow rksep" id="rkenterrow">
     <span class="lbl" title="この対面が始まった時点で、あいてが動けない状態かどうか">敵硬直</span>
     <div class="opts rkenter" id="rkenter">
       <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">開幕（硬直なし）</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次が出てきた直後。あいては4秒(8ターン)動けません">撃破後</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">交代後</button>
@@ -1565,6 +1565,9 @@ function applyMode() {
 function syncRocket() {
   const sp = rkSpec();
   document.querySelectorAll('#rkkind button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.kind));
+  // 敵硬直は「途中の対面を切り出す」1対1専用の設定。模擬戦は開幕からの通しなので隠す
+  if (RK.team) RK.enter = 'first';
+  document.getElementById('rkenterrow').style.display = RK.team ? 'none' : '';
   document.querySelectorAll('#rkenter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.enter));
   document.querySelectorAll('#rkmode button').forEach(b => b.setAttribute('aria-pressed', RK_PLAY[b.dataset.v] === RK.play));
   syncFoeSlots();
