@@ -196,7 +196,6 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .foepct{color:var(--gold)}
 .rktime{font-size:.9rem}
 .rktime b{font-size:1.15rem}
-.rbmttl span{margin-left:8px;font-weight:400;color:var(--sub)}
 .rkmvsp{margin-left:4px}
 .rkmvnote{font-size:.62rem;color:var(--sub);line-height:1.5;margin-top:4px}
 .rkworst{margin-top:6px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);
@@ -259,11 +258,6 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
   border-radius:8px;font-size:.68rem;color:var(--ink);line-height:1.6}
 .rbfound .ok{color:var(--win)}
 .rbfound .ng{color:var(--lose)}
-.rbacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
-.rbchip{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;font-size:.68rem;font-weight:700;
-  background:var(--gold);border:1px solid var(--gold);border-radius:99px;color:#2b2305;cursor:pointer}
-.rbchip span{font-weight:600}
-.rbnoact{font-size:.64rem;color:var(--sub);line-height:1.5}
 .rbhint{font-size:.62rem;color:var(--sub);line-height:1.6;margin-top:6px}
 .rbleg{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:8px}
 .rbleghd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.76rem;font-weight:700}
@@ -284,28 +278,34 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rbrow td:first-child{border-left:1px solid var(--line);border-radius:8px 0 0 8px}
 .rbrow td:last-child{border-right:1px solid var(--line);border-radius:0 8px 8px 0}
 .rbrow:hover td{border-color:var(--gl)}
-.rbrow.hasact td{border-color:var(--gold)}
-.rbrow.menuon td{border-color:var(--cy)}
 .rbev{width:34%;color:var(--ink)}
 .rbev.r{text-align:right}
 .rbst{width:12%;text-align:center;color:var(--ink);font-weight:700}
 .rbst small{display:block;font-size:.56rem;color:var(--sub);font-weight:400}
 .rbtn{width:16%;text-align:center;color:var(--sub);font-size:.62rem}
 .rbtn small{display:block;font-size:.54rem}
-.rbmark{display:inline-block;margin-left:4px;padding:0 5px;border-radius:99px;background:var(--gold);color:#2b2305;font-size:.6rem;font-weight:700}
-.rbmark i{font-style:normal;font-weight:600;opacity:.75;margin-left:3px}
 .rbgap{cursor:pointer}
 .rbgap td{padding:3px 6px;font-size:.6rem;color:var(--sub);text-align:center}
 .rbgap:hover td{color:var(--ink)}
-.rbmenu td{background:rgba(122,162,255,.08);border:1px solid var(--gl);border-radius:10px;padding:7px 8px}
-.rbmttl{font-size:.7rem;font-weight:700;color:var(--ink);margin-bottom:5px}
-.rbmbtns{display:flex;flex-wrap:wrap;gap:5px}
-.rbmbtns button{padding:5px 9px;font-size:.7rem;font-weight:600;background:var(--panel);border:1px solid var(--gl);
-  border-radius:8px;color:var(--ink);cursor:pointer}
-.rbmbtns button.del{border-color:rgba(255,107,129,.5);color:var(--lose)}
-.rbmbtns button.close{border-color:var(--line);color:var(--sub)}
-.rbmnote{font-size:.6rem;color:var(--sub);line-height:1.5;margin-top:5px}
-@media (max-width:520px){.rbev{width:30%;font-size:.62rem}.rbrow td{padding:3px}.rbmbtns button{font-size:.66rem;padding:5px 7px}}
+/* 決断の場面: まだ決めていないもの(選択肢を出す)と、決め終わったもの(1行) */
+.rbask td{background:rgba(240,200,80,.1);border:1px solid var(--gold);border-radius:10px;padding:8px}
+.rbasktl{display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:700;color:var(--gold);margin-bottom:6px}
+.rbasktl span{margin-left:auto;font-size:.62rem;font-weight:400;color:var(--sub)}
+.rbaskbtns{display:flex;flex-wrap:wrap;gap:5px}
+.rbaskbtns button{padding:6px 10px;font-size:.72rem;font-weight:700;background:var(--panel);
+  border:1px solid var(--gl);border-radius:8px;color:var(--ink);cursor:pointer}
+.rbaskbtns button.wait{border-color:var(--line);color:var(--sub);font-weight:600}
+.rbaskbtns button.hold{border-color:var(--line);color:var(--sub);font-weight:600}
+.rbaskbtns button.on{background:var(--cy);border-color:var(--cy);color:#06202b}
+.rbdone td{padding:2px 0;background:transparent;border:0}
+.rbdonebtn{display:flex;align-items:center;gap:7px;width:100%;padding:4px 9px;font-size:.68rem;
+  background:var(--bg2);border:1px dashed var(--line);border-radius:8px;color:var(--sub);cursor:pointer;text-align:left}
+.rbdonebtn b{color:var(--ink);font-size:.72rem}
+.rbdonebtn i{margin-left:auto;font-style:normal;font-size:.58rem;color:var(--gold);font-weight:700}
+.rbdone.open .rbdonebtn{border-style:solid;border-color:var(--cy)}
+.rbdone .rbaskbtns{margin:5px 0 3px}
+.rkverdict.play{color:var(--gold);background:rgba(240,200,80,.1);border-color:rgba(240,200,80,.4)}
+@media (max-width:520px){.rbev{width:30%;font-size:.62rem}.rbrow td{padding:3px}.rbaskbtns button{font-size:.68rem;padding:5px 8px}}
 /* ロケット団戦 1対1: おすすめランキング */
 .rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
 .rkfilt button .shadowmark{margin-right:3px}
@@ -539,7 +539,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   <div class="rkrow">
     <span class="lbl">たたかい方</span>
     <div class="opts rkmode" id="rkmode">
-      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1</button><button data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで計算します。タイムラインのターンをタップすると、SPアタックを撃つ・温存する・交代するを自分で試せます">模擬戦</button>
+      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1</button><button data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで戦います。SPアタックを撃つ・温存する・シールドを使う・交代するを、決断の場面ごとに自分で選べます">模擬戦</button>
     </div>
   </div>
   <div class="rkrow">
@@ -764,7 +764,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 <div class="multi" id="rkteam" style="display:none">
   <h3>模擬戦</h3>
-  <div class="mtnote">上から順に出し、倒れたら次。シールドは3匹で共有します。<b>ターンの行をタップ</b>すると、そこから先を自分で組めます</div>
+  <div class="mtnote">上から順に出し、倒れたら次。シールドは3匹で共有します。<b>決断の場面で止まって選ぶ</b>と、そこから先が計算し直されます</div>
   <div class="rkteams">
     <div class="rkteamcol">
       <div class="rkcolttl" title="パーティ診断と共通の3枠です">じぶん<small>出す順</small></div>
@@ -1303,12 +1303,17 @@ const HELP_HTML = `
   </ul>
 
   <h4>模擬戦の使い方</h4>
+  <p>ノーマルアタックの応酬はまとめて進み、<b>決断が要る場面だけ止まって選択肢が出ます</b>。選ぶと、そこから先が計算し直されて<b>下に伸びていきます</b>。実際のバトルと同じ感覚で立ち回りを試せます。</p>
   <ul>
-    <li>そのまま開くと<b>自動で戦った結果</b>が出ます。本番の前に一度やってみたいときは、タイムラインの<b>ターンの行をタップ</b>して、SPアタックを撃つ・交代するを自分で置きます。置くとそこから先が計算し直されます</li>
-    <li><b>自動</b>＝SPアタックはAIが最適なタイミングで撃ちます（交代だけ自分で置けます）</li>
-    <li><b>手動</b>＝<b>置いたターンだけ</b>撃ちます。置かなければ撃たないので、<b>ゲージを次の相手に持ち越せます</b></li>
-    <li>ゲージが足りないターンに置いた場合は、貯まりしだい撃ちます。行には実際に撃ったターンを添えます</li>
-    <li><b>最速／安定</b>のボタンで手順を自動でさがせます。見つかった手順はそのままタイムラインに入るので、続けて手直しできます</li>
+    <li><b>⚡ ゲージが溜まった</b>… SPアタックを<b>撃つ（どちらを撃つかも選ぶ）</b>／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）</li>
+    <li><b>🛡 あいてのSPアタックが来る</b>… シールドを<b>使う</b>／<b>受ける</b></li>
+    <li><b>⏸ あいてが交代してきた</b>… あいてが硬直しているあいだ殴ったあと、<b>交代する</b>／<b>このまま</b>続ける</li>
+    <li><b>💀 倒された</b>… 次にどのポケモンを出すか</li>
+  </ul>
+  <ul>
+    <li><b>おまかせ</b>… 決めていない場面はAIが判断して、<b>最後まで一気に結果を出します</b>。並んだ決断はタップすれば選び直せます（そこから先は自動でやり直しになります）</li>
+    <li><b>1手ずつ</b>… 決断のたびに止まります。1つ選ぶごとに先へ進みます</li>
+    <li><b>最速／安定</b>のボタンで、決断の組み合わせを自動でさがせます。見つかった手順はそのまま画面に入るので、続けて手直しできます</li>
     <li>引っ込めたポケモンはHP・ゲージを保ったまま控えに戻り、出し直すと続きから戦います</li>
     <li><b>🎲 わざ運が最悪でも</b>… あいてのわざはランダムなので、対面ごとに<b>こちらがいちばんキツいわざ</b>を引いた場合の結果も出しています</li>
     <li><b>🛡 自分のシールド別</b>… 同じ手順のまま、使えるシールドの枚数だけ変えた結果です。タップで切り替わります</li>
@@ -1591,7 +1596,7 @@ document.querySelectorAll('#rkfilt button').forEach(b => b.onclick = () => {
 // 1対1 ⇄ 模擬戦
 document.querySelectorAll('#rkmode button').forEach(b => b.onclick = () => {
   setPlay(RK_PLAY[b.dataset.v]);
-  RB.acts = [];   // たたかい方を変えたら模擬戦の手はいったん消す
+  RB.ans = {}; RBUI.open = null;   // たたかい方を変えたら模擬戦の選択はいったん消す
   applyMode();
   run();
 });
@@ -2438,16 +2443,31 @@ function rkRankCard(r, i) {
   </div>`;
 }
 
-// ---- ロケット団戦: 模擬戦(手を置くと、そこから先が計算し直される) ----
-// acts = 置いた手。t は「バトル全体の通しターン」なので、対面をまたいでもズレない
-//   {t, k:'sp', mv:わざID}     … そのターンにSPアタックを撃つ(ゲージが足りなければ貯まり次第)
-//   {t, k:'switch', to:枠番号} … そのターンで交代する(あいてはNPCなので登場の硬直がつく)
-// auto=true のあいだはSPをAI(最適タイミング)が撃つ。手を置くと手動に切り替わり、
-// 「置いたターンだけ撃つ」＝置かなければ温存、になる
-// entry = 何番目の対面からどの枠を出すか(倒されて次を出すとき・開幕に選べる)
-const RB = { acts: [], auto: true, open: {}, menu: null, entry: {}, found: null };
-const rbSort = () => RB.acts.sort((a, b) => a.t - b.t || (a.k === 'sp' ? -1 : 1));
-const rbActAt = t => RB.acts.filter(a => a.t === t);
+// ---- ロケット団戦: 模擬戦 ----
+// ans  = 決断への答え（キーは rbKey。決めていない場面は「おまかせ」でAIが判断する）
+// step = 見かた。false=おまかせ（最後まで一気に出す）／true=1手ずつ（決断のたびに止まる）
+// open = たたんだノーマルアタックの応酬を開いた場所
+const RB = { ans: {}, step: false, open: {}, found: null };
+const rbAnsCount = () => Object.keys(RB.ans).length;
+// 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
+const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', auto: 'a' };
+const rbAnsToStr = () => Object.keys(RB.ans).map(k => {
+  const a = RB.ans[k], c = RB_CODE[a.a] || 'a';
+  const v = a.a === 'fire' ? a.mv : a.a === 'wait' ? a.n : a.a === 'to' ? a.to : null;
+  return `${k.replace(/:/g, '.')}~${c}${v != null ? '~' + v : ''}`;
+}).join(',');
+function rbAnsFromStr(str) {
+  str.split(',').forEach(s => {
+    const [k, c, v] = s.split('~');
+    if (!k || !c) return;
+    const a = c === 'f' ? (D.moves[v] ? { a: 'fire', mv: v } : null)
+      : c === 'w' ? { a: 'wait', n: Math.max(1, Math.min(9, +v || 1)) }
+      : c === 'h' ? { a: 'hold' } : c === 'u' ? { a: 'use' } : c === 'n' ? { a: 'no' }
+      : c === 'y' ? { a: 'stay' } : c === 'o' ? { a: 'order' }
+      : c === 't' ? (isNaN(+v) ? null : { a: 'to', to: +v }) : null;
+    if (a) RB.ans[k.replace(/\./g, ':')] = a;
+  });
+}
 
 // じぶんの各枠のわざ構成を決める(1対1の rkOptimize と同じ最悪ケース基準)。バトル中は変えられない
 // 置いた手には左右されない(バトル前に決めるもの)ので、同じ条件なら計算し直さずに使い回す。
@@ -2488,103 +2508,217 @@ function rbPicks(mine, foes, myShields) {
     return { m, base, pol: best.pol, name: ptName(m) };
   });
 }
-// 置いた手のとおりにバトルを最後まで回す。対面(leg)ごとに区切って返す
-// 交代のあるターンで打ち切り(stopAt)、次の対面を「続きの状態」から始める
-// SPアタックの「作戦」メニュー。手順の自動探索(rbSearch)はこの中から対面ごとに選ぶ
-// shotRest を付けない = そのあとは撃たない(＝温存)。エンジンの timing:'shots' の性質を使う
-const RB_POLICY = {
-  hold:  { label: '撃たない（温存）', cfg: { timing: 'shots', shotPlan: [], shotRest: null } },
-  one:   { label: '1発だけ（最適）',  cfg: { timing: 'shots', shotPlan: [{ mode: 'opt' }], shotRest: null } },
-  oneMin:{ label: '1発だけ（即撃ち）', cfg: { timing: 'shots', shotPlan: [{ mode: 'min' }], shotRest: null } },
-  two:   { label: '2発だけ（最適）',  cfg: { timing: 'shots', shotPlan: [{ mode: 'opt' }, { mode: 'opt' }], shotRest: null } },
-  all:   { label: '撃てるだけ（最適）', cfg: { timing: 'optimal' } },
-  allMin:{ label: '撃てるだけ（即撃ち）', cfg: { timing: 'asap' } },
-};
-// plan = { acts:置いた手, auto:SPをAIにまかせるか, legPolicy:対面ごとの作戦, entry:対面ごとに出す枠,
-//          worst:あいてのわざを対面ごとに「こちらがいちばんキツいもの」にする(わざ運の最悪ケース) }
-function rbBattle(picks, foes, myShields, plan) {
-  plan = plan || RB;
-  const acts = plan.acts || [];
+// ---- 模擬戦「1手ずつ」: 決断が要る場面だけ止まって選ぶ ----
+// 実際のバトルと同じ流れを再現する。ノーマルアタックの応酬はまとめて進み、
+// 次の4つのどれかに来たら止まって選択肢を出す(選ぶたびに先へ伸びていく):
+//   sp   … 自分のSPアタックが撃てるようになった → 撃つ(どちらを) / 撃たない / あとN発殴ってから
+//   sh   … あいてのSPアタックが飛んできた → シールドを使う / 使わない
+//   swap … あいてが交代してきて硬直している → 殴ったあと、交代する / このまま続ける
+//   next … 自分が倒された → 次にどれを出すか
+// 答えは RB.ans[キー] に持つ。キーは「対面の番号:種別:連番:待った発数」なので、
+// 前の決断を変えなければ後ろの決断のキーも変わらない(選び直しに強い)。
+// 決めていない場面は「おまかせ」(AIの判断)で進む。これは従来の自動と完全に同じ動きになる
+// ＝ 一気に結果を出してから、気になる場面だけタップして選び直せる。
+const rbKey = (li, kind, seq, w) => `${li}:${kind}:${seq}:${w || 0}`;
+const RB_AUTO = { sp: { a: 'auto' }, sh: { a: 'use' }, swap: { a: 'stay' }, next: { a: 'order' } };
+
+// 1対面ぶんのシミュ結果から、決断が要る場面を時系列に並べる。
+// dec はいまの対面で決まっている内容(撃つと決めた発・使うと決めたシールド)。
+function rbPoints(turns, ctx, dec) {
+  const pts = [];
+  // --- あいてのSPアタック(シールドを使うかどうか) ---
+  let shSeq = 0, shUsed = 0;
+  // --- 自分のSPアタック(撃つかどうか) ---
+  // asked = その発についてもう聞いた（撃つ or 撃たないが決まるまで、毎ターン聞き直さない）
+  let spIdx = 0, armed = false, normals = 0, asked = false;
+  const cost = ctx.cost;
+  for (const t of turns) {
+    // あいてのSPアタックが飛んできた(1ターンに複数入ることは無いが念のため配列で見る)
+    for (const e of t.ev[1]) {
+      if (e.full === undefined) continue;
+      if (ctx.myShLeft - shUsed > 0) pts.push({ kind: 'sh', seq: shSeq, tn: t.tn, spSeen: shSeq + 1 });
+      if (dec.shieldAt.includes(shSeq + 1)) shUsed++;
+      shSeq++;
+    }
+    // 自分がSPアタックを撃った → 次の発の判断へ
+    if (t.ev[0].some(e => e.full !== undefined)) { spIdx++; armed = false; asked = false; normals = 0; continue; }
+    if (armed && t.ev[0].some(e => e.full === undefined)) normals++;   // 待っているあいだのノーマル
+    if (!armed && !asked && !dec.hold && cost && t.state[0].en >= cost) { armed = true; normals = 0; }
+    if (armed) {
+      // 「あとN発殴ってから」を選んでいれば、そのぶん後ろにずれたところが判断の場面
+      // (撃つと決めた発は、そのとき決めた待ち発数の位置に判断の場面が残る＝キーが変わらない)
+      const dw = spIdx < dec.shots.length ? dec.shots[spIdx].wait : dec.wait;
+      const w = typeof dw === 'number' ? dw : 0;
+      if (normals >= w) { pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn }); armed = false; asked = true; }
+    }
+  }
+  pts.sort((a, b) => a.tn - b.tn);
+  // --- あいてが交代してきた(硬直のあいだ殴ってから、交代するか) ---
+  // 硬直が明けるターンが判断の場面。交代のクールタイム中と、出せる控えが無いときは出さない
+  if (ctx.foeEntry > 0 && ctx.base + ctx.foeEntry >= ctx.swOkAt && ctx.swTo.length) {
+    pts.unshift({ kind: 'swap', seq: 0, tn: Math.min(ctx.foeEntry, turns.length) });
+  }
+  return pts;
+}
+
+// 決断ひとつぶんの選択肢(画面に出すボタン)を作る
+function rbChoices(p, ctx) {
+  if (p.kind === 'sp') {
+    const list = ctx.spList.map(id => ({ a: 'fire', mv: id, label: `▶ ${D.moves[id].n}`, cls: 'fire',
+      tip: `ゲージ${D.moves[id].e} のSPアタックをここで撃ちます` }));
+    return list.concat([
+      { a: 'wait', n: 1, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
+      { a: 'wait', n: 2, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
+      { a: 'wait', n: 3, label: '＋3', cls: 'wait', tip: 'ノーマルアタックをあと3発打ってから、もう一度ここで選びます' },
+      { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この相手には撃たず、ゲージを次の相手に持ち越します' },
+    ]);
+  }
+  if (p.kind === 'sh') return [
+    { a: 'use', label: '🛡 使う', cls: 'fire', tip: 'シールドで防ぎます(ダメージ1)' },
+    { a: 'no', label: '受ける', cls: 'hold', tip: 'シールドを使わずにダメージを受けます' },
+  ];
+  if (p.kind === 'swap') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `⇄ ${ctx.picks[k].name}`, cls: 'fire',
+    tip: 'ここで交代します(あいては4.5秒動けません／自分も0.5秒動けません)' }))
+    .concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
+  return ctx.swTo.map(k => ({ a: 'to', to: k, label: `${ctx.picks[k].name}を出す`, cls: 'fire',
+    tip: '次にこのポケモンを出します' }));
+}
+
+// 決めた答えを、その対面の決定(dec)に反映する
+function rbApply(dec, p, ans) {
+  if (p.kind === 'sp') {
+    // おまかせ＝エンジンの最適タイミング判断にゆだねる(従来の自動とまったく同じ動き)
+    if (ans.a === 'auto') { dec.shots[p.seq] = { wait: 'opt', mv: null }; dec.wait = 0; }
+    else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait, mv: ans.mv }; dec.wait = 0; }
+    else if (ans.a === 'wait') dec.wait += ans.n;
+    else dec.hold = true;
+  } else if (p.kind === 'sh') {
+    if (ans.a !== 'no') dec.shieldAt.push(p.spSeen);   // おまかせは「残っていれば使う」
+  }
+  // swap / next は対面をまたぐので、呼び出し側(rbPlay)で使う
+}
+
+// 決断リスト(ans)のとおりにバトルを進める。まだ決めていない場面に来たら
+// そこで止めて pending に入れて返す(画面はそこまでを出して選択肢を見せる)。
+// stepwise=true なら「1手ずつ」＝決めていない場面に来たら止まる。
+// false（おまかせ）なら決めていない場面はAIの判断で進み、最後まで結果を出す。
+// worst=true はあいてのわざを対面ごとに「こちらがいちばんキツいもの」にする(わざ運の最悪ケース)
+function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
+  ans = ans || {};
   const legs = [];
-  // じぶんの枠ごとの状態(生きているか・引っ込めたときの続き)。交代で行ったり来たりする
   const st = picks.map(() => ({ alive: true, resume: null }));
   const nextAlive = from => {
     for (let i = 0; i < st.length; i++) if (st[(from + i) % st.length].alive) return (from + i) % st.length;
     return -1;
   };
-  const entryOf = k => {   // その対面から出す枠の指定(あれば)。生きている枠だけ有効
-    const v = plan.entry && plan.entry[k];
-    return v != null && st[v] && st[v].alive ? v : null;
-  };
-  let mi = entryOf(0) != null ? entryOf(0) : 0, fi = 0, base = 0;   // base=この対面が始まる通しターン
+  let mi = 0, fi = 0, base = 0, pending = null;
   let myShLeft = myShields, foeShLeft = rkShields();
   let foeResume = null;
   let myEntry = RK_ENTER[RK.enter].me, foeEntry = RK_ENTER[RK.enter].foe;
-  let swOkAt = 0;   // 交代のクールタイム: このターン以降でないと次の交代ができない
-  while (fi < foes.length && mi >= 0 && legs.length < 12) {
-    const spActs = acts.filter(a => a.k === 'sp' && a.t > base).sort((a, b) => a.t - b.t);
-    const sw = acts.filter(a => a.k === 'switch' && a.t > base && a.t >= swOkAt &&
-        st[a.to] && st[a.to].alive && a.to !== mi)
-      .sort((a, b) => a.t - b.t)[0];
-    const L = { ...picks[mi].base, ...picks[mi].pol, shields: myShLeft, bluff: true };
-    const lp = plan.legPolicy && plan.legPolicy[legs.length];
-    if (plan.auto) L.timing = 'optimal';
-    else if (lp && RB_POLICY[lp]) Object.assign(L, RB_POLICY[lp].cfg);   // 探索がえらんだ作戦
-    else L.plan = spActs.map(a => ({ on: a.t - base, move: a.mv }));     // 台本: 置いた手だけ撃つ
-    if (st[mi].resume) L.resume = { ...st[mi].resume, stall: Math.max(st[mi].resume.stall || 0, myEntry) };
-    else if (myEntry) L.stallStart = myEntry;
-    const R = rktCfg(foes[fi], { shields: foeShLeft, stallStart: foeEntry });
-    if (foeResume) R.resume = { ...foeResume, stall: Math.max(foeResume.stall || 0, foeEntry) };
-    const stopAt = sw ? Math.max(1, sw.t - base) : 0;
-    let res;
-    if (plan.worst) {
-      // あいてが打ってくるわざはランダムなので、全通りのうちこちらがいちばんキツいもので通す
-      const { fasts, chargeds } = rkPool(foes[fi].key);
-      const spList = chargeds.length ? chargeds : [null];
-      for (const f of fasts) for (const sp of spList) {
-        const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp },
-          { ...SIMOPT, stopAt });
-        if (!res || scoreOf(r, 0) < scoreOf(res, 0)) res = r;
+  let swOkAt = 0;
+  while (fi < foes.length && mi >= 0 && legs.length < 12 && !pending) {
+    const li = legs.length;
+    const pol = picks[mi].pol;
+    const spList = rbSpList(pol);
+    const cost = spList.length ? Math.min(...spList.map(id => D.moves[id].e)) : 0;
+    const swTo = picks.map((p, k) => k).filter(k => k !== mi && st[k].alive);
+    const ctx = { li, base, cost, spList, picks, myShLeft, foeEntry, swOkAt, swTo };
+    const dec = { shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 };
+    // 決めた場面はキーで覚える(「撃たない」を選ぶとその場面自体が消えるなど、
+    // 決めるたびに場面の並びが変わるので、番号ではなくキーで対応づける)
+    const handled = new Set(), log = [];   // log = 決めた場面の履歴(画面に出して選び直せるようにする)
+    let res = null;
+    // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す)
+    for (let guard = 0; guard < 60; guard++) {
+      // charged は必ず入れる(SPが1本の構成だと、わざ未指定のときエンジンが選べないため)
+      const L = { ...picks[mi].base, ...pol, charged: spList.slice(), shields: myShLeft, bluff: true,
+        timing: 'shots', shotPlan: dec.shots.map(s => ({ mode: s.wait, move: s.mv })), shotRest: null,
+        shieldPlan: dec.shieldAt.slice(), shieldRest: false };
+      if (st[mi].resume) L.resume = { ...st[mi].resume, stall: Math.max(st[mi].resume.stall || 0, myEntry) };
+      else if (myEntry) L.stallStart = myEntry;
+      const R = rktCfg(foes[fi], { shields: foeShLeft, stallStart: foeEntry });
+      if (foeResume) R.resume = { ...foeResume, stall: Math.max(foeResume.stall || 0, foeEntry) };
+      const sopt = { ...SIMOPT, stopAt: dec.swapAt };
+      if (!worst) res = PvpEngine.simulate(D, L, R, sopt);
+      else {
+        // あいてが打ってくるわざはランダムなので、全通りのうちこちらがいちばんキツいもので通す
+        const { fasts, chargeds } = rkPool(foes[fi].key);
+        const spL = chargeds.length ? chargeds : [null];
+        res = null;
+        for (const f of fasts) for (const sp of spL) {
+          const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, sopt);
+          if (!res || scoreOf(r, 0) < scoreOf(res, 0)) res = r;
+        }
       }
-    } else res = PvpEngine.simulate(D, L, R, { ...SIMOPT, stopAt });
+      const pts = rbPoints(rbTurns(res), ctx, dec);
+      const p = pts.find(x => !handled.has(rbKey(li, x.kind, x.seq, x.w)));
+      if (!p) break;                              // この対面で決めることはもう無い
+      p.key = rbKey(li, p.kind, p.seq, p.w);
+      p.gt = base + p.tn;
+      const a = ans[p.key] || (stepwise ? null : RB_AUTO[p.kind]);
+      if (!a) { pending = { ...p, ctx, opts: rbChoices(p, ctx) }; break; }
+      handled.add(p.key);
+      log.push({ ...p, ans: a, auto: !ans[p.key] });
+      if (p.kind === 'swap') {
+        if (a.a === 'stay') continue;             // 交代しないなら、そのまま先へ
+        dec.swapTo = a.to; dec.swapAt = Math.max(1, p.tn);
+        continue;
+      }
+      rbApply(dec, p, a);
+    }
     res.final[0].name = picks[mi].name;
     res.final[1].name = rktName(foes[fi]);
     const meDown = res.final[0].hp <= 0, foeDown = res.final[1].hp <= 0;
-    const swapped = !!(res.stopped && sw && !meDown && !foeDown);
+    const swapped = !!(res.stopped && dec.swapTo != null && !meDown && !foeDown);
+    // この対面の「決断の場面」を最終状態で作り直す(画面に出してタップで選び直せるようにする)
+    const points = log.map(p => ({ ...p, gt: base + p.tn, ctx, opts: rbChoices(p, ctx) }));
     legs.push({ res, base, myIdx: mi, foeIdx: fi, meName: picks[mi].name, foeName: rktName(foes[fi]),
-      meDown, foeDown, swapped, swapTo: swapped ? sw.to : null, pol: picks[mi].pol });
+      meDown, foeDown, swapped, swapTo: swapped ? dec.swapTo : null, pol, li, points,
+      pending: pending && pending.key.slice(0, pending.key.indexOf(':')) === String(li) ? pending : null });
+    if (pending) break;
     base += res.turns;
     myShLeft = res.final[0].shields;
     foeShLeft = res.final[1].shields;
     st[mi].alive = !meDown;
     st[mi].resume = meDown ? null : res.final[0].resume;
     foeResume = foeDown ? null : res.final[1].resume;
-    if (!meDown && !foeDown && !swapped) break;        // 上限ターンまで決着せず
+    if (!meDown && !foeDown && !swapped) break;   // 上限ターンまで決着せず
     if (foeDown) fi++;
     if (swapped) {
-      mi = sw.to;
-      swOkAt = base + RK.swapCd;   // 次に交代できるようになるまで待つ
-      // 手動交代の直後: あいては9ターン(4.5秒)動けず、交代した自分も1ターン動けない
+      mi = dec.swapTo;
+      swOkAt = base + RK.swapCd;
       foeEntry = Math.max(RK_ENTER.swap.foe, foeDown ? RK.koFoe : 0);
       myEntry = RK_ENTER.swap.me;
     } else {
-      // 倒されたら次を出す。どれを出すかは指定があればそれ、無ければ上から順
-      if (meDown) { const e = entryOf(legs.length); mi = e != null ? e : nextAlive(mi); }
+      if (meDown) {
+        // 倒された → 次に出すポケモンを選ぶ(残り1匹なら選ぶまでもない)
+        const rest = picks.map((p, k) => k).filter(k => st[k].alive);
+        if (rest.length > 1) {
+          const key = rbKey(li, 'next', 0, 0), nctx = { ...ctx, swTo: rest };
+          const a = ans[key] || (stepwise ? null : RB_AUTO.next);
+          const pt = { kind: 'next', seq: 0, w: 0, key, tn: res.turns, gt: base, ctx: nctx,
+            opts: rbChoices({ kind: 'next' }, nctx), ans: a, auto: !ans[key] };
+          if (!a) { pending = pt; legs[legs.length - 1].pending = pt; break; }
+          legs[legs.length - 1].nextPoint = pt;
+          mi = a.a === 'to' ? a.to : nextAlive(mi);
+        } else mi = rest.length ? rest[0] : -1;
+      }
       foeEntry = Math.max(meDown ? RK.koMe : 0, foeDown ? RK.koFoe : 0);
       myEntry = 0;
     }
   }
   const meLeft = st.filter(s => s.alive).length;
   const foeLeft = foes.length - fi;
-  const outcome = foeLeft === 0 ? (meLeft > 0 ? 'win' : 'draw') : (meLeft === 0 ? 'lose' : 'timeout');
+  const outcome = pending ? 'playing'
+    : foeLeft === 0 ? (meLeft > 0 ? 'win' : 'draw') : (meLeft === 0 ? 'lose' : 'timeout');
   // 生き残っているぶんの残HP(割合の合計)。手順のよしあしを比べるのに使う
   const hpLeft = st.reduce((sum, s, i) => {
     if (!s.alive) return sum;
     const max = PvpEngine.buildStats(D, picks[i].base).hp;
     return sum + (s.resume ? Math.max(0, s.resume.hp) / max : 1);
   }, 0);
-  return { legs, picks, st, outcome, meLeft, foeLeft, hpLeft, turns: base, myShLeft, foeShLeft,
-    nMe: picks.length, nFoe: foes.length };
+  return { legs, picks, st, outcome, meLeft, foeLeft, pending, turns: base, hpLeft,
+    myShLeft, foeShLeft, nMe: picks.length, nFoe: foes.length };
 }
 
 // ---- 手順の自動探索 ----
@@ -2604,108 +2738,29 @@ function rbScore(bt, goal) {
     ? core - bt.turns * 10 + bt.hpLeft * 20 + bt.meLeft * 30
     : core + bt.meLeft * 2000 + bt.hpLeft * 800 - bt.turns;
 }
-// ビームサーチのあとの仕上げ。交代のターンは1ターン違うだけで結果が変わるので、
-// 各対面の全ターンについて「ここで交代したら?」「この交代をやめたら?」を試して良くなるほうへ寄せる
-function rbRefine(picks, foes, myShields, plan, goal) {
-  const ev = p => { const bt = rbBattle(picks, foes, myShields, { ...p, auto: false }); return { plan: p, bt, sc: rbScore(bt, goal) }; };
-  let cur = ev(plan);
-  for (let round = 0; round < 3; round++) {
-    let improved = false;
-    const legs = cur.bt.legs.slice();
-    for (const leg of legs) {
-      for (let tn = 1; tn <= leg.res.turns; tn++) {
-        const t = leg.base + tn;
-        const others = cur.plan.acts.filter(a => !(a.k === 'switch' && a.t === t));
-        for (let j = 0; j < picks.length; j++) {
-          if (j === leg.myIdx) continue;
-          const c = ev({ ...cur.plan, acts: [...others, { t, k: 'switch', to: j }] });
-          if (c.sc > cur.sc) { cur = c; improved = true; }
-        }
-        if (others.length !== cur.plan.acts.length) {   // その交代をやめてみる
-          const c = ev({ ...cur.plan, acts: others });
-          if (c.sc > cur.sc) { cur = c; improved = true; }
-        }
-      }
-    }
-    if (!improved) break;
-  }
-  return cur;
-}
-function rbSearch(picks, foes, myShields, goal) {
-  const POL = Object.keys(RB_POLICY);
-  let beam = [{ legPolicy: [], entry: {}, acts: [] }];
-  let best = null;
-  for (let depth = 0; depth < 10; depth++) {
+// 「最速 / 安定」の手順をさがす。決断そのものを組み合わせて探すので、
+// 見つかった手順は**そのまま画面の選択(ans)になる**＝探索の結果と表示が食い違わない。
+// 各段で「まだ決めていない最初の場面」を選択肢ぶんだけ枝分かれさせ、見込みのある手だけ残す
+function rbFind(picks, foes, myShields, goal) {
+  const evalAns = ans => {
+    const bt = rbPlay(picks, foes, myShields, ans, false);   // 残りはおまかせで最後まで通す
+    return { ans, bt, sc: rbScore(bt, goal) };
+  };
+  let best = evalAns({});          // 何も決めない(全部おまかせ)を出発点にする
+  let beam = [best];
+  for (let depth = 0; depth < 24; depth++) {
     const cand = [];
-    for (const plan of beam) {
-      const cur = rbBattle(picks, foes, myShields, { ...plan, auto: false });
-      if (cur.legs.length <= depth) {            // これ以上ぶつかり合いが無い＝完成した手順
-        const sc = rbScore(cur, goal);
-        if (!best || sc > best.sc) best = { sc, plan, bt: cur };
-        continue;
-      }
-      const leg = cur.legs[depth];
-      // この対面から出す枠の候補(倒されて出すとき・開幕だけ選べる)
-      const fresh = depth === 0 || (cur.legs[depth - 1] && cur.legs[depth - 1].meDown);
-      const entries = fresh
-        ? picks.map((p, k) => k).filter(k => k === leg.myIdx || (cur.legs.every(l => l.myIdx !== k) && k !== leg.myIdx))
-        : [leg.myIdx];
-      for (const e of entries) {
-        const ent = e === leg.myIdx ? plan.entry : { ...plan.entry, [depth]: e };
-        // 作戦それぞれを試す
-        for (const p of POL) cand.push({ ...plan, entry: ent, legPolicy: [...plan.legPolicy.slice(0, depth), p] });
-        // 交代する手も候補に入れる。①すぐ交代(あいての硬直をかせぐ) ②途中で引く ③苦しくなったら引く
-        const len = leg.res.turns;
-        const swTurns = [...new Set([1, Math.ceil(len / 3), Math.ceil(len * 2 / 3)]
-          .filter(x => x >= 1 && x < len).map(x => leg.base + x))];
-        const hurt = leg.res.rows.find(r => r.tn !== '-' && r.state[0].hp > 0 &&
-          r.state[0].hp < leg.res.final[0].hpMax * 0.4);
-        if (hurt && !swTurns.includes(leg.base + hurt.tn)) swTurns.push(leg.base + hurt.tn);
-        swTurns.forEach(t => {
-          // すぐ交代する場合はその対面が1ターンで終わるので作戦は関係ない。
-          // 途中まで戦ってから引く場合は、それまでのSPの撃ち方も一緒に試す
-          const pols = t === leg.base + 1 ? ['hold'] : ['hold', 'one', 'two', 'all'];
-          for (const p of pols) for (let j = 0; j < picks.length; j++) {
-            if (j === e) continue;
-            cand.push({ ...plan, entry: ent, legPolicy: [...plan.legPolicy.slice(0, depth), p],
-              acts: [...plan.acts, { t, k: 'switch', to: j }] });
-          }
-        });
-      }
+    for (const b of beam) {
+      const step = rbPlay(picks, foes, myShields, b.ans, true);
+      if (!step.pending) continue;   // この手順はもう決めることが無い
+      for (const o of step.pending.opts) cand.push(evalAns({ ...b.ans, [step.pending.key]: { ...o } }));
     }
     if (!cand.length) break;
-    // 見込みのある手順だけ残す(同じ結果になるものは1つにまとめる)
-    const seen = new Set();
-    beam = cand.map(plan => ({ plan, bt: rbBattle(picks, foes, myShields, { ...plan, auto: false }) }))
-      .sort((a, b) => rbScore(b.bt, goal) - rbScore(a.bt, goal))
-      .filter(x => {
-        const k = `${x.bt.legs.length}:${x.bt.turns}:${x.bt.meLeft}:${x.bt.foeLeft}:${Math.round(x.bt.hpLeft * 100)}`;
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      })
-      .slice(0, 8)
-      .map(x => x.plan);
+    cand.sort((x, y) => y.sc - x.sc);
+    beam = cand.slice(0, 5);
+    if (beam[0].sc > best.sc) best = beam[0];
   }
-  if (!best) return null;
-  best = rbRefine(picks, foes, myShields, best.plan, goal);   // 交代のタイミングを1ターンずつ詰める
-  // 見つかった手順を「置いた手」に変換する(タイムラインで見て、そのまま手直しできるように)
-  const acts = best.plan.acts.slice();
-  best.bt.legs.forEach(leg => {
-    const ids = rbSpList(leg.pol);
-    leg.res.rows.forEach((row, idx) => {
-      const e = row.ev[0];
-      if (!e || e.full === undefined) return;
-      // タイムラインはわざ名しか持たないので、そのポケモンのSPからIDを引き当てる
-      const id = ids.find(x => D.moves[x].n === e.move);
-      if (!id) return;
-      // その発動が何ターン目だったか(番号行をさかのぼって数える)
-      let tn = null;
-      for (let j = idx; j >= 0; j--) if (leg.res.rows[j].tn !== '-') { tn = leg.res.rows[j].tn; break; }
-      if (tn != null) acts.push({ t: leg.base + tn, k: 'sp', mv: id });
-    });
-  });
-  return { acts, entry: best.plan.entry, bt: best.bt };
+  return best;
 }
 
 // 1ターン=0.5秒。通しターンから経過秒を出す
@@ -2749,88 +2804,137 @@ function runRkBuild() {
   const go = () => {
     if (token !== multiToken) return;
     const picks = rbPicksCached(mine, foes, RK.sh);
-    const bt = rbBattle(picks, foes, RK.sh);
-    rbRender(body, bt, picks, {
+    const bt = rbPlay(picks, foes, RK.sh, RB.ans, RB.step);
+    // 決着まで出ているときだけ、まとめの2つを添える(途中では意味がないので出さない)
+    const extra = bt.pending ? {} : {
       // あいてのわざはランダムなので、いちばんキツい引きだった場合も添える
-      worst: rbBattle(picks, foes, RK.sh, { ...RB, worst: true }),
-      // 自分のシールド0/1/2の3通り(同じ手順のまま枚数だけ変えて比べる)
-      shRuns: [0, 1, 2].map(sh => sh === RK.sh ? bt : rbBattle(rbPicksCached(mine, foes, sh), foes, sh)),
-    });
+      worst: rbPlay(picks, foes, RK.sh, RB.ans, false, true),
+      // 自分のシールド0/1/2の3通り(同じ選択のまま枚数だけ変えて比べる)
+      shRuns: [0, 1, 2].map(sh => sh === RK.sh ? bt
+        : rbPlay(rbPicksCached(mine, foes, sh), foes, sh, RB.ans, false)),
+    };
+    rbRender(body, bt, picks, extra);
   };
-  if ([0, 1, 2].every(sh => rbPicksHas(mine, foes, sh))) go();
+  // 3通り必要なのは「おまかせ」でシールド別を出すときだけ。1手ずつは今の枚数だけあればよい
+  const ready = RB.step ? rbPicksHas(mine, foes, RK.sh) : [0, 1, 2].every(sh => rbPicksHas(mine, foes, sh));
+  if (ready) go();
   else { body.innerHTML = '<div class="mtprog">計算中…</div>'; setTimeout(go, 0); }
 }
+
+// 画面に出している決断の一覧(タップしたときに中身を引くために持っておく)
+const RBUI = { pts: {}, order: [], open: null };
+// 選び直したら、その決断より後ろの答えは消す(前提が変わるので、そこから先はおまかせに戻る)
+function rbTrim(key) {
+  const i = RBUI.order.indexOf(key);
+  if (i < 0) return;
+  RBUI.order.slice(i + 1).forEach(k => delete RB.ans[k]);
+}
+// 決断の見出し(何を聞かれているか)
+function rbAskTitle(p) {
+  if (p.kind === 'sp') return `⚡ ゲージが溜まった`;
+  if (p.kind === 'sh') return `🛡 ${p.foeMv || 'あいてのSPアタック'}が来る`;
+  if (p.kind === 'swap') return `⏸ あいてが交代してきた`;
+  return `💀 倒された`;
+}
+// 決めた内容を短く表す
+function rbAnsLabel(p, a) {
+  if (!a) return '？';
+  if (p.kind === 'sp') {
+    if (a.a === 'auto') return '▶ おまかせ';
+    if (a.a === 'fire') return `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'wait') return `＋${a.n}`;
+    if (a.a === 'to') return `⇄ ${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}`;
+    return '撃たない';
+  }
+  if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '🛡 使う';
+  if (p.kind === 'swap') return a.a === 'stay' ? 'このまま' : `⇄ ${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}`;
+  return a.a === 'order' ? '順番どおり' : `${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}を出す`;
+}
+// 決断ひとつぶんの行(未決定なら選択肢、決定済みならタップで開ける1行)
+function rbPointHtml(p, opened) {
+  const btns = p.opts.map((o, i) =>
+    `<button data-key="${p.key}" data-i="${i}" title="${o.tip || ''}"
+      class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}">${o.label}</button>`).join('');
+  if (!p.ans) return `<tr class="rbask"><td colspan="5">
+    <div class="rbasktl">${rbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.gt)}</span></div>
+    <div class="rbaskbtns">${btns}</div></td></tr>`;
+  return `<tr class="rbdone${opened ? ' open' : ''}"><td colspan="5">
+    <button class="rbdonebtn" data-open="${p.key}" title="タップして選び直す">
+      ${rbAskTitle(p)}<b>${rbAnsLabel(p, p.ans)}</b>${p.auto ? '' : '<i>指定</i>'}</button>
+    ${opened ? `<div class="rbaskbtns">${btns}
+      ${p.auto ? '' : `<button data-key="${p.key}" data-i="-1" class="hold">おまかせに戻す</button>`}</div>` : ''}
+  </td></tr>`;
+}
+const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
 
 function rbRender(body, bt, picks, extra) {
   setProbTab(anyProbMove(picks.map(p => p.pol).concat(
     [0, 1, 2].filter(i => RKT[i]).map(i => rktCfg(RKT[i])))));
-  const o = RK_OUTCOME[bt.outcome];
   extra = extra || {};
-  // あいてのわざはランダムなので、いちばんキツい引きだった場合の結果も添える
-  const wo = extra.worst && RK_OUTCOME[extra.worst.outcome];
+  RBUI.pts = {}; RBUI.order = [];
+  bt.legs.forEach(leg => {
+    (leg.points || []).forEach(p => { RBUI.pts[p.key] = p; RBUI.order.push(p.key); });
+    if (leg.nextPoint) { RBUI.pts[leg.nextPoint.key] = leg.nextPoint; RBUI.order.push(leg.nextPoint.key); }
+    if (leg.pending) { RBUI.pts[leg.pending.key] = leg.pending; RBUI.order.push(leg.pending.key); }
+  });
+  const o = RK_OUTCOME[bt.outcome];
+  // 決着まで出ているときだけ、勝敗とまとめを出す
+  const verdict = bt.pending
+    ? `<div class="rkverdict play">▶ 進行中<small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱${rbSec(bt.turns)}秒</small></div>`
+    : `<div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
+      <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>`;
+  const wo = extra.worst && !extra.worst.pending && RK_OUTCOME[extra.worst.outcome];
   const worstHtml = !wo ? '' : `<div class="rkworst ${wo.cls === 'win' ? 'ok' : 'ng'}"
     title="あいてが対面ごとに、こちらにいちばんキツいわざを打ってきた場合">
     🎲 わざ運が最悪でも <b>${wo.txt}</b>
     <small>じぶん${extra.worst.meLeft}/${extra.worst.nMe} ／ あいて${extra.worst.foeLeft}/${extra.worst.nFoe} ・ ⏱${rbSec(extra.worst.turns)}秒</small></div>`;
-  // 自分のシールド枚数別の結果(タップで切替)。手を置いていれば同じ手順のまま枚数だけ変えて比べる
   const sumHtml = !extra.shRuns ? '' : `<div class="rksum">
       <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
       <table><tr><th class="corner">🛡</th><th>結果</th></tr>${extra.shRuns.map((r, sh) => {
-        const ro = RK_OUTCOME[r.outcome];
+        const ro = RK_OUTCOME[r.outcome] || RK_OUTCOME.timeout;
         return `<tr><th>${sh}</th><td class="${ro.cls === 'win' ? 'w' : 'l'}${sh === RK.sh ? ' cur' : ''}" data-sh="${sh}">
           <b>${ro.txt}</b><small>じぶん${r.meLeft} ／ あいて${r.foeLeft} ・ ⏱${rbSec(r.turns)}</small></td></tr>`;
       }).join('')}</table>
     </div>`;
-  const mvName = id => D.moves[id] ? D.moves[id].n : id;
-  // 置いた手の一覧(タップで消せる)
-  rbSort();
-  const actChips = RB.acts.length
-    ? RB.acts.map((a, k) => `<button class="rbchip" data-del="${k}" title="タップでこの手を消す">${a.t}T
-        <span>${a.k === 'sp' ? '▶' + mvName(a.mv) : '⇄' + (picks[a.to] ? picks[a.to].name : '')}</span>×</button>`).join('')
-    : '<span class="rbnoact">ターンの行をタップして手を置きます</span>';
-  const legHtml = bt.legs.map((leg, li) => rbLegHtml(leg, li, picks)).join('');
+  const legHtml = bt.legs.map(leg => rbLegHtml(leg, picks)).join('');
   body.innerHTML = `<div class="rbctl">
-      <div class="rbrow1"><span class="lbl">SPアタック</span>
-        <div class="opts rbauto">
-          <button data-v="1" aria-pressed="${RB.auto}" title="撃つタイミングをAIにまかせます（最適タイミング）">自動</button><button data-v="0" aria-pressed="${!RB.auto}" title="置いたターンだけ撃ちます。置かなければ撃たない＝ゲージを温存できます">手動</button>
+      <div class="rbrow1"><span class="lbl">見かた</span>
+        <div class="opts rbstep">
+          <button data-v="0" aria-pressed="${!RB.step}" title="最後まで一気に計算して出します。決断の場面はタップで選び直せます">おまかせ</button><button data-v="1" aria-pressed="${RB.step}" title="実際のバトルと同じように、決断の場面ごとに止まって選びます">1手ずつ</button>
         </div>
-        <button class="rbclear" title="置いた手をすべて消します">手をすべて消す</button>
+        ${rbAnsCount() ? `<button class="rbclear" title="選んだ手をすべて消して、はじめからおまかせに戻します">選び直す</button>` : ''}
       </div>
       <div class="rbrow1 rbfind"><span class="lbl">🔎 手順</span>
         ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" title="${RB_GOAL[g].tip}">${RB_GOAL[g].label}</button>`).join('')}
       </div>
       ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
-      <div class="rbacts">${actChips}</div>
     </div>
-    <div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
-      <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
+    ${verdict}
     ${worstHtml}
     ${sumHtml}
     <div class="rblegs">${legHtml}</div>`;
   // ---- 操作の配線 ----
-  body.querySelectorAll('.rbauto button').forEach(b => b.onclick = () => { RB.auto = b.dataset.v === '1'; run(); });
+  body.querySelectorAll('.rbstep button').forEach(b => b.onclick = () => { RB.step = b.dataset.v === '1'; run(); });
+  const clr = body.querySelector('.rbclear');
+  if (clr) clr.onclick = () => { RB.ans = {}; RBUI.open = null; RB.found = null; run(); };
   body.querySelectorAll('.rksum td[data-sh]').forEach(td => td.onclick = () => {
     RK.sh = +td.dataset.sh; syncRocket(); run();
   });
-  body.querySelector('.rbclear').onclick = () => { RB.acts = []; RB.entry = {}; RB.menu = null; RB.found = null; run(); };
-  // 手順の自動探索: 見つかった手順をそのまま「置いた手」に入れて、下のタイムラインへ反映する
-  body.querySelectorAll('.rbgo').forEach(b => b.onclick = () => {
-    const g = b.dataset.g;
-    b.textContent = 'さがしています…';
-    setTimeout(() => {
-      const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
-      const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
-      const r = rbSearch(rbPicks(mine, foes, RK.sh), foes, RK.sh, g);
-      if (!r) { RB.found = '手順が見つかりませんでした。'; run(); return; }
-      RB.acts = r.acts; RB.entry = r.entry; RB.auto = false; RB.menu = null;
-      const o = RK_OUTCOME[r.bt.outcome];
-      RB.found = `🔎 ${RB_GOAL[g].label} → <b class="${o.cls === 'win' ? 'ok' : 'ng'}">${o.txt}</b>` +
-        `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
-      run();
-    }, 30);
+  // 決断の選択肢をタップ
+  body.querySelectorAll('.rbaskbtns button').forEach(b => b.onclick = () => {
+    const p = RBUI.pts[b.dataset.key];
+    if (!p) return;
+    const i = +b.dataset.i;
+    rbTrim(p.key);
+    if (i < 0) delete RB.ans[p.key];        // おまかせに戻す
+    else RB.ans[p.key] = { ...p.opts[i] };
+    RBUI.open = null;
+    run();
   });
-  body.querySelectorAll('.rbchip[data-del]').forEach(b => b.onclick = () => {
-    RB.acts.splice(+b.dataset.del, 1); RB.menu = null; run();
+  // 決めた内容をタップ → 選び直す
+  body.querySelectorAll('.rbdonebtn').forEach(b => b.onclick = () => {
+    RBUI.open = RBUI.open === b.dataset.open ? null : b.dataset.open;
+    run();
   });
   // たたんだ区間をタップ→そのあいだのターンも表示する
   body.querySelectorAll('.rbgap').forEach(tr => tr.onclick = () => {
@@ -2838,105 +2942,82 @@ function rbRender(body, bt, picks, extra) {
     for (let x = a; x <= b; x++) RB.open[`${li}-${x}`] = true;
     run();
   });
-  // ターンの行をタップ→そのターンで何をするかを選ぶ
-  body.querySelectorAll('tr.rbrow').forEach(tr => tr.onclick = e => {
-    if (e.target.closest('.rbmenu')) return;
-    const t = +tr.dataset.t;
-    RB.menu = RB.menu === t ? null : t;
-    run();
-  });
-  body.querySelectorAll('.rbmenu button[data-act]').forEach(b => b.onclick = () => {
-    const t = +b.dataset.t;
-    if (b.dataset.act === 'close') RB.menu = null;
-    else if (b.dataset.act === 'del') { RB.acts = RB.acts.filter(a => a.t !== t); RB.menu = null; }
-    else if (b.dataset.act === 'sp') {
-      RB.acts = RB.acts.filter(a => !(a.t === t && a.k === 'sp'));
-      RB.acts.push({ t, k: 'sp', mv: b.dataset.mv });
-      RB.auto = false;   // 手を置いたら手動に切り替える(置いたターンだけ撃つ)
-      RB.menu = null;
-    } else if (b.dataset.act === 'switch') {
-      RB.acts = RB.acts.filter(a => !(a.t === t && a.k === 'switch'));
-      RB.acts.push({ t, k: 'switch', to: +b.dataset.to });
-      RB.menu = null;
-    }
-    run();
+  // 手順の自動探索: 見つかった手順をそのまま決断の答えに入れて、下のタイムラインへ反映する
+  body.querySelectorAll('.rbgo').forEach(b => b.onclick = () => {
+    const g = b.dataset.g;
+    b.textContent = 'さがしています…';
+    setTimeout(() => {
+      const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
+      const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
+      const r = rbFind(rbPicksCached(mine, foes, RK.sh), foes, RK.sh, g);
+      if (!r) { RB.found = '手順が見つかりませんでした。'; run(); return; }
+      RB.ans = r.ans; RBUI.open = null;
+      const o2 = RK_OUTCOME[r.bt.outcome];
+      RB.found = `🔎 ${RB_GOAL[g].label} → <b class="${o2.cls === 'win' ? 'ok' : 'ng'}">${o2.txt}</b>` +
+        `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
+      run();
+    }, 30);
   });
 }
 
-// 1対面ぶんの見出し＋タイムライン
-function rbLegHtml(leg, li, picks) {
-  const res = leg.res, base = leg.base;
+// 1対面ぶんの見出し＋タイムライン(決断の場面をあいだに挟む)
+function rbLegHtml(leg, picks) {
+  const res = leg.res, base = leg.base, li = leg.li;
   const turns = rbTurns(res);
-  const evTxt = (list, side) => list.map(e => {
+  const evTxt = list => list.map(e => {
     let t = mvChip(e.move);
     if (e.shielded) t += ' <span class="shield">🛡-1</span>';
     else if (e.full !== undefined) t += ` <b>-${e.dmg}</b>`;
     else t += ` -${e.dmg}`;
     return `<span class="evbox">${t}</span>`;
-  }).join(' ') || (side === 1 && list.length === 0 ? '' : '');
+  }).join(' ');
   const spList = rbSpList(leg.pol);
-  // その対面で交代できる相手(自分の他の枠)
-  const swTo = picks.map((p, k) => k).filter(k => k !== leg.myIdx);
-  // 置いたターンにゲージが足りないと、実際の発動は後ろにずれる。ずれた分を行に添えて分かるようにする
-  // (置いた順に発動するので、n番目の指示＝n番目の発動として対応づける)
-  const fires = turns.filter(t => t.ev[0].some(e => e.full !== undefined)).map(t => base + t.tn);
-  const legActs = RB.acts.filter(a => a.k === 'sp' && a.t > base).sort((a, b) => a.t - b.t);
-  const firedAt = {};
-  legActs.forEach((a, k) => { if (fires[k] != null) firedAt[a.t] = fires[k]; });
+  // 決断の場面をターンごとに引けるようにする
+  const ptAt = {};
+  (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
+  if (leg.pending && leg.pending.kind !== 'next') (ptAt[leg.pending.tn] = ptAt[leg.pending.tn] || []).push(leg.pending);
+  // まだ決めていない場面があるときは、そこから先はまだ起きていないので出さない
+  const stopTn = leg.pending && leg.pending.kind !== 'next' ? leg.pending.tn : Infinity;
   let body = '', gap = [];
   const flushGap = () => {
     if (!gap.length) return;
-    // ターン番号はバトル全体の通しで出す(たたんだ行も同じ数え方にそろえる)
     const a = base + gap[0].tn, b = base + gap[gap.length - 1].tn;
-    const gk = `${li}-${gap[0].tn}-${gap[gap.length - 1].tn}`;   // 開いたときはこの範囲のターンを出す
+    const gk = `${li}-${gap[0].tn}-${gap[gap.length - 1].tn}`;
     const st = gap.filter(x => x.stalled).length;
     body += `<tr class="rbgap" data-g="${gk}"><td colspan="5">… ノーマルアタックの応酬 ${gap.length}ターン（${a}〜${b}T）` +
       `${st ? `<span class="stallbox">うち あいての硬直 ${st}ターン</span>` : ''} ・<b>タップで開く</b> …</td></tr>`;
     gap = [];
   };
   turns.forEach(t => {
-    const gt = base + t.tn;                       // 通しターン
-    const acts = rbActAt(gt);
-    const show = t.key || acts.length || RB.menu === gt || RB.open[`${li}-${t.tn}`] ||
-      (RB.open[`${li}-open`]);
+    if (t.tn > stopTn) return;
+    const gt = base + t.tn;
+    const pts = ptAt[t.tn] || [];
+    const show = t.key || pts.length || RB.open[`${li}-${t.tn}`];
     if (!show) { gap.push(t); return; }
     flushGap();
-    const mark = acts.map(a => {
-      if (a.k !== 'sp') return '<span class="rbmark">⇄交代</span>';
-      const f = firedAt[a.t];
-      // ゲージ待ちで後ろにずれたときは、実際に撃ったターンを添える
-      const late = f != null && f !== gt ? `<i>${f}Tに発動</i>` : f == null ? '<i>撃てず</i>' : '';
-      return `<span class="rbmark">▶${mvName2(a.mv)}${late}</span>`;
-    }).join('');
-    body += `<tr class="rbrow${acts.length ? ' hasact' : ''}${RB.menu === gt ? ' menuon' : ''}" data-t="${gt}">
-      <td class="rbev">${evTxt(t.ev[0], 0)}${mark}</td>
+    body += `<tr class="rbrow" data-t="${gt}">
+      <td class="rbev">${evTxt(t.ev[0])}</td>
       <td class="rbst">${t.state[0].hp}<small>${t.state[0].en}</small></td>
       <td class="rbtn">${gt}T<small>${rbSec(gt)}秒</small></td>
       <td class="rbst">${t.state[1].hp}<small>${t.state[1].en}</small></td>
-      <td class="rbev r">${evTxt(t.ev[1], 1)}${t.stalled && !t.ev[1].length ? '<span class="evbox stallbox">硬直</span>' : ''}</td>
+      <td class="rbev r">${evTxt(t.ev[1])}${t.stalled && !t.ev[1].length ? '<span class="evbox stallbox">硬直</span>' : ''}</td>
     </tr>`;
-    if (RB.menu === gt) {
-      const spBtns = spList.map(id =>
-        `<button data-act="sp" data-t="${gt}" data-mv="${id}" title="このターンにSPアタックを撃つ（ゲージが足りなければ貯まりしだい）">▶ ${D.moves[id].n}</button>`).join('');
-      const swBtns = swTo.map(k =>
-        `<button data-act="switch" data-t="${gt}" data-to="${k}" title="このターンで交代する（あいては4.5秒動けません／自分も0.5秒動けません）">⇄ ${picks[k].name}</button>`).join('');
-      body += `<tr class="rbmenu"><td colspan="5">
-        <div class="rbmttl">${gt}T<span>⏱${rbSec(gt)}</span></div>
-        <div class="rbmbtns">${spBtns}${swBtns}
-          ${acts.length ? `<button data-act="del" data-t="${gt}" class="del" title="このターンに置いた手を消す">✕</button>` : ''}
-          <button data-act="close" data-t="${gt}" class="close" title="閉じる">閉じる</button></div>
-      </td></tr>`;
-    }
+    pts.forEach(p => { body += rbPointHtml(p, RBUI.open === p.key); });
   });
   flushGap();
-  const rescls = leg.swapped ? 'd' : leg.meDown && leg.foeDown ? 'd' : leg.foeDown ? 'w' : leg.meDown ? 'l' : 'd';
-  const restxt = leg.swapped ? `${picks[leg.swapTo] ? picks[leg.swapTo].name : ''}に交代`
+  // 倒されて次を出す場面は、その対面の最後に置く
+  if (leg.nextPoint) body += rbPointHtml(leg.nextPoint, RBUI.open === leg.nextPoint.key);
+  if (leg.pending && leg.pending.kind === 'next') body += rbPointHtml(leg.pending, true);
+  const rescls = leg.pending ? 'd' : leg.swapped ? 'd' : leg.meDown && leg.foeDown ? 'd' : leg.foeDown ? 'w' : leg.meDown ? 'l' : 'd';
+  const restxt = leg.pending ? '▶ 進行中'
+    : leg.swapped ? `${picks[leg.swapTo] ? picks[leg.swapTo].name : ''}に交代`
     : leg.meDown && leg.foeDown ? '相打ち' : leg.foeDown ? '倒した' : leg.meDown ? '倒された' : '決着つかず';
+  const sec = leg.pending && leg.pending.tn ? leg.pending.tn : res.turns;
   return `<div class="rbleg">
     <div class="rbleghd"><span class="legme">${leg.myIdx + 1}. ${leg.meName}</span>
       <span class="legvs">vs</span><span class="legfoe">${leg.foeIdx + 1}. ${leg.foeName}</span>
       <span class="rbres ${rescls}">${restxt}</span>
-      <span class="rbsec">${rbSec(res.turns)}秒</span></div>
+      <span class="rbsec">${rbSec(sec)}秒</span></div>
     <div class="rbmv">わざ: ${mvChip(D.moves[leg.pol.fast].n)} / ${spList.map(id => mvChip(D.moves[id].n)).join(' ')}</div>
     <table class="rbtl">
       <tr><th>じぶん</th><th>HP<small>ゲージ</small></th><th>ターン</th><th>HP<small>ゲージ</small></th><th>あいて</th></tr>
@@ -3511,8 +3592,9 @@ function updateUrl() {
     if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
     if (RK.team) {   // 模擬戦(自分のパーティは端末内に保存しているのでURLには入れない)
       qp.rt = 1; qp.rsh = RK.sh; qp.rkf = RK.koFoe; qp.rkm = RK.koMe; qp.rsw = RK.swapCd;
-      if (!RB.auto) qp.rba = 0;   // 置いた手(ターン~種類~中身)とSPの自動/手動
-      if (RB.acts.length) qp.rb = RB.acts.map(a => `${a.t}~${a.k === 'sp' ? 'sp~' + a.mv : 'sw~' + a.to}`).join(',');
+      if (RB.step) qp.rbs = 1;   // 見かた(1手ずつ)と、決断で選んだ内容
+      const ansStr = rbAnsToStr();
+      if (ansStr) qp.rb = ansStr;
       const t = [0, 1, 2].filter(i => RKT[i]).map(i => [RKT[i].key, RKT[i].fast || '', RKT[i].c1 || ''].join('~'));
       if (t.length) qp.rp = t.join(',');
     }
@@ -3812,13 +3894,8 @@ document.getElementById('copyUrl').onclick = async () => {
   if (RK_ENTER[q.get('re')]) RK.enter = q.get('re');
   // 模擬戦の復元(rt=2 は「3匹連戦」と別画面だったころの古いリンク。同じ画面に読み替える)
   if (q.get('rt') === '1' || q.get('rt') === '2') setPlay('build');
-  if (q.get('rba') === '0') RB.auto = false;
-  if (q.get('rb')) q.get('rb').split(',').forEach(s => {   // 置いた手の復元
-    const [t, k, v] = s.split('~');
-    if (isNaN(+t)) return;
-    if (k === 'sp' && D.moves[v]) RB.acts.push({ t: +t, k: 'sp', mv: v });
-    else if (k === 'sw' && !isNaN(+v)) RB.acts.push({ t: +t, k: 'switch', to: +v });
-  });
+  if (q.get('rbs') === '1') RB.step = true;   // 見かた(1手ずつ)の復元
+  if (q.get('rb')) rbAnsFromStr(q.get('rb'));   // 決断で選んだ内容の復元
   if (q.get('rw') && rkWhoList().some(w => w.id === q.get('rw'))) {   // 手持ち(だれと・選んだ並び)の復元
     RK.who = q.get('rw');
     const w = rkWho(), sel = (q.get('rl') || '').split('').map(Number);
