@@ -2675,12 +2675,14 @@ function rbPoints(turns, ctx, dec) {
       if (normals >= w) { pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn }); armed = false; asked = true; }
     }
   }
-  pts.sort((a, b) => a.tn - b.tn);
   // --- あいてが交代してきた(硬直のあいだ殴ってから、交代するか) ---
   // 硬直が明けるターンが判断の場面。交代のクールタイム中と、出せる控えが無いときは出さない
   if (ctx.foeEntry > 0 && ctx.base + ctx.foeEntry >= ctx.swOkAt && ctx.swTo.length) {
-    pts.unshift({ kind: 'swap', seq: 0, tn: Math.min(ctx.foeEntry, turns.length) });
+    pts.push({ kind: 'swap', seq: 0, tn: Math.min(ctx.foeEntry, turns.length) });
   }
+  // 質問は必ず時系列の順に出す(同じターンならSP・シールド→交代の順)。
+  // 交代を先に聞いてしまうと、そのあと時間が巻き戻ってSPの質問が出る逆順が起きる(実装時に踏んだ)
+  pts.sort((a, b) => a.tn - b.tn);
   return pts;
 }
 
@@ -2949,8 +2951,9 @@ function rbAnsLabel(p, a) {
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
   }
-  if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '🛡 使う';
-  if (p.kind === 'swap') return a.a === 'stay' ? 'このまま' : `⇄ ${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}`;
+  // チップは種別アイコン(RB_ICON)と並べて出すので、ここでは🛡や⇄を重ねない
+  if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
+  if (p.kind === 'swap') return a.a === 'stay' ? 'このまま' : `${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}に交代`;
   return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
