@@ -230,6 +230,12 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .holeword{color:var(--lose)}
 @media (max-width:520px){.pslots{grid-template-columns:1fr;gap:5px}.pslot{padding:6px}.pmeta .pt2{flex:0 1 auto}}
 /* ロケット団戦: 模擬戦(3匹の通し) */
+.pmv{display:flex;flex-direction:column;gap:4px;margin-top:5px}
+.pmv select{font-size:.72rem;padding:4px 6px}
+.pmv .pt2{font-size:.64rem;color:var(--sub)}
+.frand{margin-top:4px;padding:4px 8px;font-size:.68rem;font-weight:700;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:pointer}
+.frand:hover{border-color:var(--gold)}
 .rkteams{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .rkteams .pslots{grid-template-columns:1fr;margin-top:6px}
 .rkcolttl{font-size:.72rem;font-weight:700;color:var(--cy)}
@@ -1310,6 +1316,14 @@ const HELP_HTML = `
     <li><b>⏸ あいてが交代してきた</b>… あいてが硬直しているあいだ殴ったあと、<b>交代する</b>／<b>このまま</b>続ける</li>
     <li><b>💀 倒された</b>… 次にどのポケモンを出すか</li>
   </ul>
+  <h4>わざの決め方</h4>
+  <ul>
+    <li><b>じぶん</b>… 枠ごとに<b>ノーマルアタック／SPアタック1／SPアタック2</b>を選びます。わざはバトル中に変えられないので、ここで決めたわざで最後まで戦います</li>
+    <li>ノーマルアタックだけ<b>おまかせ</b>を選べます（効率のよい構成を自動で選びます）。<b>SPアタックは必ず自分で選びます</b>（既定は<b>ダメージ効率がいちばん高いわざ</b>）。2本目を開放していないなら「なし」にしてください</li>
+    <li><b>あいて</b>… ロケット団は<b>おぼえるわざの中からランダムに</b>打ってきます。自分で選ぶか、<b>🎲 ランダム</b>を押すとその引きを再現できます（押すたびに変わります）</li>
+    <li>あいてのわざ運がどう転んでも大丈夫かは、結果の<b>🎲 わざ運が最悪でも</b>で確かめられます</li>
+  </ul>
+
   <ul>
     <li><b>おまかせ</b>… 決めていない場面はAIが判断して、<b>最後まで一気に結果を出します</b>。並んだ決断はタップすれば選び直せます（そこから先は自動でやり直しになります）</li>
     <li><b>1手ずつ</b>… 決断のたびに止まります。1つ選ぶごとに先へ進みます</li>
@@ -1357,7 +1371,8 @@ const HELP_HTML = `
 // swapCd=交代のクールタイム(ターン)。一度自分から交代したら、この時間が過ぎるまで次の交代ができない。
 // 「あいてが固まる硬直(4.5秒)」とは別物で、こちら側の制約。45秒=90ターン(ユーザー確定)。
 // これが無いと「交代を連打してあいてを硬直させ続ける」抜け道が成立してしまう
-const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 90, who: null, sel: {} };
+// whoBy = 種別ごとに最後に選んだ人(リーダーでアルロ→サカキ→リーダー と戻ってもアルロのまま)
+const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 90, who: null, whoBy: {}, sel: {} };
 const RK_PLAY = { 0: '1v1', 1: 'build' };
 function setPlay(v) { RK.play = v; RK.team = v !== '1v1'; }
 const RK_ENTER = {
@@ -1455,7 +1470,7 @@ function renderRoster() {
       <div class="rkcands">${cands.map((k, j) => chip(k, s, j)).join('')}</div></div>`).join('');
   // 「◯◯時点」の日付は出さない(常に最新に保つ前提。データ側の updated は更新時の目印として残す)
   document.querySelectorAll('#rkwho button').forEach(b => b.onclick = () => {
-    RK.who = b.dataset.w;
+    RK.who = RK.whoBy[RK.kind] = b.dataset.w;
     rkPutAll();
   });
   document.querySelectorAll('#rklineup .rkchip').forEach(b => b.onclick = () => {
@@ -1581,7 +1596,9 @@ const saveRkGrunt = () => { try { localStorage.setItem(RKG_KEY, JSON.stringify(R
 document.querySelectorAll('#rkkind button').forEach(b => b.onclick = () => {
   const v = b.dataset.v;
   if (RK.kind === 'grunt' && v !== 'grunt') saveRkGrunt();   // したっぱの枠を控えておく
+  if (RK.who) RK.whoBy[RK.kind] = RK.who;   // 種別ごとに「最後に選んだ人」を覚えておく
   RK.kind = v;
+  RK.who = RK.whoBy[v] || null;
   syncRocket();   // ここで renderRoster が走り、だれと戦うかが未選択なら先頭の人になる
   // リーダー・サカキは手持ちが分かっているので、選んだ時点であいての枠に入れる
   if (v !== 'grunt') { if (rkWhoList().length) rkPutAll(); else run(); return; }
@@ -1975,9 +1992,10 @@ const ptName = m => m ? (m.shadow ? 'シャドウ' : '') + D.pokemon[m.key].n : 
 
 // 3枠の入力欄を作る(検索・★登録リストからの呼び出し・シャドウ切替・クリア)
 // パーティ診断とロケット団戦の連戦で同じ3枠(PT)を共有するので、置き場所(box)を受け取る
-function buildPartySlots(box) {
+// withMoves=true の枠(模擬戦)にだけ、じぶんのわざを選ぶ欄を出す
+function buildPartySlots(box, withMoves) {
   if (!box) return;
-  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine" data-i="${i}">
+  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}">
     <div class="phd"><span class="pnum">${i + 1}匹目</span>
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
@@ -1985,6 +2003,7 @@ function buildPartySlots(box) {
     <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="popwin pstarwin" style="display:none"></div>
     <div class="pmeta"></div>
+    ${withMoves ? '<div class="pmv"></div>' : ''}
   </div>`).join('');
   box.querySelectorAll('.pslot').forEach(el => {
     const i = +el.dataset.i;
@@ -2048,11 +2067,34 @@ function syncPartySlot(i) {
     el.querySelector('.pshadow').setAttribute('aria-pressed', !!(m && m.shadow));
     el.querySelector('input').value = m ? ptName(m) : '';
     const meta = el.querySelector('.pmeta');
+    const mvbox = el.querySelector('.pmv');
+    if (mvbox) mvbox.innerHTML = '';
     if (!m) { meta.innerHTML = '<span class="pempty">未選択</span>'; return; }
     const p = D.pokemon[m.key];
     const iv = m.ivMode === 'manual' && m.mIvs ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
-    meta.innerHTML = `${typeIcons(p, 15)}<span class="pt2">${iv}</span><span class="pt2">${mv}</span>`;
+    // わざを自分で選べる枠(模擬戦)では、下のわざ欄に出るので文字では書かない
+    meta.innerHTML = `${typeIcons(p, 15)}<span class="pt2">${iv}</span>${mvbox ? '' : `<span class="pt2">${mv}</span>`}`;
+    if (!mvbox) return;
+    const cur = rbmOf(i);
+    const { fasts, chargeds } = movePool(m.key);
+    const opts = (list, sel) => list.map(id =>
+      `<option value="${id}"${id === sel ? ' selected' : ''}>${D.moves[id].n}</option>`).join('');
+    mvbox.innerHTML = `
+      <select class="mvF" title="ノーマルアタック（おまかせにすると効率のよい構成を自動で選びます）">
+        <option value="auto"${cur.fast === 'auto' ? ' selected' : ''}>おまかせ</option>${opts(fasts, cur.fast)}</select>
+      ${chargeds.length ? `<select class="mvC1" title="SPアタック1">${opts(chargeds, cur.c1)}</select>
+      <select class="mvC2" title="SPアタック2（2本目を開放していないなら「なし」）">
+        <option value=""${!cur.c2 ? ' selected' : ''}>なし</option>${opts(chargeds, cur.c2)}</select>`
+        : '<span class="pt2">SPアタックなし</span>'}`;
+    mvbox.querySelectorAll('select').forEach(sel => sel.onchange = () => {
+      const c = rbmOf(i);
+      if (sel.classList.contains('mvF')) c.fast = sel.value;
+      else if (sel.classList.contains('mvC1')) c.c1 = sel.value;
+      else c.c2 = sel.value;
+      if (c.c2 && c.c2 === c.c1) c.c2 = '';   // 同じわざを2本持っても意味がない
+      saveRbm(); syncPartySlot(i); run();
+    });
   });
 }
 // パーティのメンバー1匹分の計算用設定(理想個体値/登録した個体値)
@@ -2166,6 +2208,7 @@ function buildFoeSlots() {
     <div class="fbody" style="display:none">
       <select class="selFast" title="あいてのノーマルアタック"></select>
       <select class="selC1" title="あいてのSPアタック"></select>
+      <button class="frand" title="おぼえるわざからランダムに選びます（ロケット団はランダムに打ってきます）">🎲 ランダム</button>
       <div class="fstat"></div>
     </div>
   </div>`).join('');
@@ -2197,6 +2240,15 @@ function buildFoeSlots() {
     });
     document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
     el.querySelector('.pclr').onclick = () => { RKT[i] = null; saveRkt(); syncFoeSlots(); run(); };
+    // あいてはおぼえるわざの中からランダムに打ってくるので、その引きを再現するボタン
+    el.querySelector('.frand').onclick = () => {
+      if (!RKT[i]) return;
+      const { fasts, chargeds } = rkPool(RKT[i].key);
+      const pickRnd = list => list.length ? list[Math.floor(Math.random() * list.length)] : null;
+      RKT[i].fast = pickRnd(fasts);
+      RKT[i].c1 = pickRnd(chargeds);
+      saveRkt(); syncFoeSlots(); run();
+    };
     el.querySelectorAll('select').forEach(sel => sel.onchange = () => {
       if (!RKT[i]) return;
       RKT[i][sel.classList.contains('selFast') ? 'fast' : 'c1'] = sel.value;
@@ -2480,25 +2532,53 @@ function rbAnsFromStr(str) {
   });
 }
 
+// ---- 模擬戦: じぶんが使うわざ(枠ごとに自分で選ぶ) ----
+// パーティ診断は「わざを対面ごとに最適化」する仕様なので、PT には書かず別に持つ。
+// SPアタックは必ず具体的なわざを指定する（おまかせにしない＝画面に出ているわざで必ず戦う）。
+// ノーマルアタックだけ「おまかせ」を選べる（policies が効率のよい構成を選ぶ）
+const RBM = [null, null, null];
+const RBM_KEY = 'gbl_rocket_mymoves';
+try { const v = JSON.parse(localStorage.getItem(RBM_KEY)); if (Array.isArray(v)) v.forEach((m, i) => { if (i < 3) RBM[i] = m; }); } catch (e) {}
+const saveRbm = () => { try { localStorage.setItem(RBM_KEY, JSON.stringify(RBM)); } catch (e) {} };
+// 既定のSPアタックは「ダメージ効率(威力÷ゲージ)がいちばん高いわざ」
+function rbmDefault(key) {
+  const { chargeds } = movePool(key);
+  const dpe = m => D.moves[m].p / D.moves[m].e;
+  return { key, fast: 'auto', c1: chargeds.slice().sort((a, b) => dpe(b) - dpe(a))[0] || '', c2: '' };
+}
+// その枠のわざ指定(ポケモンを入れ替えたら作り直す)
+function rbmOf(i) {
+  if (!PT[i]) return null;
+  if (!RBM[i] || RBM[i].key !== PT[i].key) { RBM[i] = rbmDefault(PT[i].key); saveRbm(); }
+  return RBM[i];
+}
+const rbMyMoves = () => [0, 1, 2].filter(i => PT[i]).map(i => rbmOf(i));
+
 // じぶんの各枠のわざ構成を決める(1対1の rkOptimize と同じ最悪ケース基準)。バトル中は変えられない
 // 置いた手には左右されない(バトル前に決めるもの)ので、同じ条件なら計算し直さずに使い回す。
 // これが無いと、ターンをタップするたびに45ms×3通りの選び直しが走って画面が重くなる
 // (シールド枚数ごとに選び直すので、0/1/2の3通りを覚えておけるようにMapで持つ)
 const RBP = new Map();
-const rbPkKey = (mine, foes, sh) => JSON.stringify([mine, foes, sh, RK.kind, RK.stall, SIMOPT.buffMode]);
+const rbPkKey = (mine, foes, sh) => JSON.stringify([mine, foes, sh, RK.kind, RK.stall, SIMOPT.buffMode, rbMyMoves()]);
 const rbPicksHas = (mine, foes, sh) => RBP.has(rbPkKey(mine, foes, sh));
 function rbPicksCached(mine, foes, myShields) {
   const key = rbPkKey(mine, foes, myShields);
   if (!RBP.has(key)) {
     if (RBP.size > 6) RBP.clear();   // 設定を変えながら使うと溜まるので、たまに捨てる
-    RBP.set(key, rbPicks(mine, foes, myShields));
+    RBP.set(key, rbPicks(mine, foes, myShields, rbMyMoves()));
   }
   return RBP.get(key);
 }
-function rbPicks(mine, foes, myShields) {
-  return mine.map(m => {
+// moves = 画面で選んだわざ(mine と同じ並び)。ノーマルが 'auto' のときだけ構成を選ばせる
+function rbPicks(mine, foes, myShields, moves) {
+  moves = moves || [];
+  return mine.map((m, k) => {
     const base = ptBase(m, 0);
-    const pols = policies(m.key, { fast: m.fast || undefined, c1: m.c1 || undefined, c2: m.c2 || undefined });
+    const mv = moves[k] || {};
+    const pols = policies(m.key, {
+      fast: (mv.fast && mv.fast !== 'auto') ? mv.fast : (m.fast || undefined),
+      c1: mv.c1 || m.c1 || undefined,
+      c2: mv.c2 || m.c2 || undefined });
     let best = null;
     for (const pol of pols) {
       const L = { ...base, ...pol, timing: 'optimal', shields: myShields, bluff: true };
@@ -3927,7 +4007,7 @@ document.getElementById('copyUrl').onclick = async () => {
     applyMode();
   }
   buildPartySlots(document.querySelector('#party .pslots'));
-  buildPartySlots(document.querySelector('#rkteam .myslots'));   // 連戦でも同じ3枠(PT)を使う
+  buildPartySlots(document.querySelector('#rkteam .myslots'), true);   // 模擬戦でも同じ3枠(PT)を使う
   buildFoeSlots();
   document.querySelectorAll('#party .ptsh button').forEach(b => b.onclick = () => {
     document.querySelectorAll('#party .ptsh button').forEach(x => x.setAttribute('aria-pressed', x === b));
