@@ -244,10 +244,6 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .fslot .fshadow{display:inline-flex;align-items:center;justify-content:center;width:26px;height:21px;border-radius:99px;background:linear-gradient(135deg,#7c3aed,#b06cff);color:#fff;font-size:.72rem;flex-shrink:0}
 .fslot select{width:100%;margin-top:4px;padding:5px 6px;font-size:.72rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
 .fstat{font-size:.62rem;color:var(--sub);margin-top:4px;line-height:1.4}
-.rkstallcfg{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding:7px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
-.rkstallcfg .lbl{font-size:.66rem;color:var(--sub);font-weight:600}
-.rkstallcfg input{width:56px;padding:4px 6px;font-size:.76rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
-.rkstallcfg input:focus{border-color:var(--gl)}
 .rkstallnote{flex:1 0 100%;font-size:.62rem;color:var(--sub);line-height:1.5}
 /* ロケット団戦: 模擬戦(分岐タイムライン) */
 .rbctl{margin-top:10px;padding:8px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
@@ -352,10 +348,16 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .gq{position:relative;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   background:conic-gradient(var(--gqc) var(--p,0%),rgba(255,255,255,.09) 0)}
 .gq i{width:18px;height:18px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-style:normal}
-.hs.me .gq{--gqc:var(--cy)}
-.hs.foe .gq{--gqc:var(--gold)}
-.gq.on{animation:gqp 1.1s infinite;box-shadow:0 0 8px var(--gqc)}
+.gq b{position:absolute;right:-4px;bottom:-4px;min-width:13px;height:13px;border-radius:99px;background:var(--gold);
+  color:#06202b;font-size:.55rem;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 2px;
+  box-shadow:0 1px 3px rgba(0,0,0,.6)}
+.gq b:empty{display:none}
+.gq.on{animation:gqp 1.1s infinite;box-shadow:0 0 8px var(--gqc,var(--gold))}
 @keyframes gqp{50%{transform:scale(1.12)}}
+.rbstart{display:block;margin:0 auto 8px;padding:13px 34px;font-size:1rem;font-weight:800;letter-spacing:.04em;
+  color:#2b2305;background:linear-gradient(180deg,#ffe27a,#ffc93a);border:1px solid #ffd54a;border-radius:99px;
+  cursor:pointer;box-shadow:0 4px 20px rgba(255,213,74,.35),0 0 0 1px rgba(255,213,74,.2);animation:stpl 1.6s infinite}
+@keyframes stpl{50%{transform:scale(1.04);box-shadow:0 4px 26px rgba(255,213,74,.55),0 0 0 1px rgba(255,213,74,.3)}}
 .hm{text-align:center}
 .hm .clk{display:block;font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .hm .trn{display:block;font-style:normal;font-size:.55rem;color:var(--sub);font-variant-numeric:tabular-nums}
@@ -834,20 +836,6 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
       <div class="rkcolttl foe" title="リーダー・サカキは上の「だれと」からタップで入ります">あいて<small>出てくる順</small></div>
       <div class="pslots foeslots"></div>
     </div>
-  </div>
-  <div class="pctl">
-    <span class="lbl" title="バトル全体で使えるシールドの枚数。3匹で共有します">自分のシールド</span>
-    <div class="opts rksh">
-      <button data-v="0" aria-pressed="false">🛡0</button><button data-v="1" aria-pressed="false">🛡1</button><button data-v="2" aria-pressed="true">🛡2</button>
-    </div>
-  </div>
-  <div class="rkstallcfg">
-    <label class="lbl" for="rkkof" title="あいてのポケモンが倒れて次が出てきたとき、あいてが動けないターン数（0.5秒=1ターン）">⏸️ あいて💀</label>
-    <input type="number" id="rkkof" min="0" max="16" inputmode="numeric">
-    <label class="lbl" for="rkkom" title="自分のポケモンが倒れて次を出したとき、あいてが動けないターン数（0.5秒=1ターン）">⏸️ じぶん💀</label>
-    <input type="number" id="rkkom" min="0" max="16" inputmode="numeric">
-    <label class="lbl" for="rkswcd" title="自分から交代したあと、次の交代ができるようになるまでの秒数（あいてが固まる硬直とは別のもの）">⇄ 秒</label>
-    <input type="number" id="rkswcd" min="0" max="120" step="5" inputmode="numeric">
   </div>
   <div class="rkbody"></div>
 </div>
@@ -1363,7 +1351,11 @@ const HELP_HTML = `
   </ul>
 
   <h4>模擬戦の使い方</h4>
-  <p>バトルは<b>実際と同じ速さ（1ターン=0.5秒）</b>で上から流れ、<b>決断の場面で止まって選択肢が出ます</b>。選ぶとまた流れ出します。画面のいちばん下には、いまの<b>HP・SPゲージ・シールド・能力変化・残り手持ち</b>がつねに見えています。</p>
+  <p>ポケモンとわざをそろえて<b>▶ バトルスタート！</b>を押すと、バトルが<b>実際と同じ速さ（1ターン=0.5秒）</b>で上から流れ、<b>決断の場面で止まって選択肢が出ます</b>。選ぶとまた流れ出します。画面のいちばん下には、いまの<b>HP・SPゲージ・シールド・能力変化・残り手持ち</b>がつねに見えています。</p>
+  <ul>
+    <li><b>SPゲージの円</b>は<b>1周=1発ぶん</b>。2周目・3周目は色が変わって重なり、<b>数字はいま撃てる発数</b>です（例: グロウパンチ35なら最大2発＋86%）</li>
+    <li>シールドは<b>2枚を全部使う前提</b>です（ロケット団戦では出し惜しみする意味がほぼ無いため、枚数の選択はありません）</li>
+  </ul>
   <ul>
     <li><b>⚡ SPアタック</b>… 撃つわざをタップ／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）／<b>おまかせ</b>（AIの判断で進める）</li>
     <li><b>🛡 〜が来る！</b>… シールドで<b>使う</b>か、<b>受ける</b>か（受けた場合のダメージつき）</li>
@@ -1375,7 +1367,7 @@ const HELP_HTML = `
   <h4>わざの決め方</h4>
   <ul>
     <li><b>じぶん</b>… 枠ごとに<b>ノーマルアタック／SPアタック1／SPアタック2</b>を選びます。わざはバトル中に変えられないので、ここで決めたわざで最後まで戦います</li>
-    <li>ノーマルアタックだけ<b>おまかせ</b>を選べます（効率のよい構成を自動で選びます）。<b>SPアタックは必ず自分で選びます</b>（既定は<b>ダメージ効率がいちばん高いわざ</b>）。2本目を開放していないなら「なし」にしてください</li>
+    <li>既定では<b>ノーマルアタック・SPアタックともダメージ効率がいちばん高いわざ</b>が選ばれています。ノーマルアタックだけ<b>おまかせ</b>（相手に合わせて自動）も選べます。SP2本目を開放していないなら「なし」にしてください</li>
     <li><b>あいて</b>… ロケット団は<b>おぼえるわざの中からランダムに</b>打ってきます。自分で選ぶか、<b>🎲 ランダム</b>を押すとその引きを再現できます（押すたびに変わります）</li>
     <li>あいてのわざ運がどう転んでも大丈夫かは、結果の<b>🎲 わざ運が最悪でも</b>で確かめられます</li>
   </ul>
@@ -1386,7 +1378,6 @@ const HELP_HTML = `
     <li><b>最速／安定</b>のボタンで、決断の組み合わせを自動でさがせます。見つかった手順はそのままバトルで再生されるので、続けて手直しできます</li>
     <li>引っ込めたポケモンはHP・ゲージを保ったまま控えに戻り、出し直すと続きから戦います</li>
     <li><b>🎲 わざ運が最悪でも</b>… あいてのわざはランダムなので、対面ごとに<b>こちらがいちばんキツいわざ</b>を引いた場合の結果も出しています</li>
-    <li><b>🛡 自分のシールド別</b>… 同じ手順のまま、使えるシールドの枚数だけ変えた結果です。タップで切り替わります</li>
   </ul>
 
   <h4>計算の前提</h4>
@@ -1576,10 +1567,6 @@ function syncRocket() {
   document.querySelectorAll('#rkkind button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.kind));
   document.querySelectorAll('#rkenter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.enter));
   document.querySelectorAll('#rkmode button').forEach(b => b.setAttribute('aria-pressed', RK_PLAY[b.dataset.v] === RK.play));
-  document.querySelectorAll('#rkteam .rksh button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === RK.sh));
-  document.getElementById('rkkof').value = RK.koFoe;
-  document.getElementById('rkkom').value = RK.koMe;
-  document.getElementById('rkswcd').value = RK.swapCd / 2;   // 画面は秒、内部はターン
   syncFoeSlots();
   renderRoster();   // リーダー・サカキの手持ち(したっぱのときは隠れる)
   // 1対1のときだけ「見かた」の切り替えを出す
@@ -1680,29 +1667,10 @@ document.querySelectorAll('#rkfilt button').forEach(b => b.onclick = () => {
 // 1対1 ⇄ 模擬戦
 document.querySelectorAll('#rkmode button').forEach(b => b.onclick = () => {
   setPlay(RK_PLAY[b.dataset.v]);
-  RB.ans = {}; RBUI.open = null; RBV.cur = 0; RBV.playing = true;   // たたかい方を変えたら模擬戦は最初から
+  RB.ans = {}; RBUI.open = null; RBV.cur = 0; RBV.playing = true; RBV.started = false;   // たたかい方を変えたら模擬戦は最初から
   applyMode();
   run();
 });
-// 連戦で自分が使えるシールド(バトル全体で共有)
-document.querySelectorAll('#rkteam .rksh button').forEach(b => b.onclick = () => {
-  RK.sh = +b.dataset.v;
-  syncRocket();
-  run();
-});
-// 交代のときの硬直(実戦と違ったら変えられるように数値で持つ)
-document.getElementById('rkkof').onchange = e => {
-  RK.koFoe = Math.max(0, Math.min(16, +e.target.value || 0));
-  syncRocket(); run();
-};
-document.getElementById('rkswcd').onchange = e => {
-  RK.swapCd = Math.max(0, Math.min(240, Math.round((+e.target.value || 0) * 2)));
-  syncRocket(); run();
-};
-document.getElementById('rkkom').onchange = e => {
-  RK.koMe = Math.max(0, Math.min(16, +e.target.value || 0));
-  syncRocket(); run();
-};
 document.querySelectorAll('#modes button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x === b));
   mode = b.dataset.m;
@@ -2595,16 +2563,21 @@ const RBM = [null, null, null];
 const RBM_KEY = 'gbl_rocket_mymoves';
 try { const v = JSON.parse(localStorage.getItem(RBM_KEY)); if (Array.isArray(v)) v.forEach((m, i) => { if (i < 3) RBM[i] = m; }); } catch (e) {}
 const saveRbm = () => { try { localStorage.setItem(RBM_KEY, JSON.stringify(RBM)); } catch (e) {} };
-// 既定のSPアタックは「ダメージ効率(威力÷ゲージ)がいちばん高いわざ」
+// 既定のわざ: ノーマルは「1ターンあたりのダメージ(タイプ一致1.2倍込み)が最高のわざ」、
+// SPは「ダメージ効率(威力÷ゲージ)がいちばん高いわざ」
 function rbmDefault(key) {
-  const { chargeds } = movePool(key);
+  const { fasts, chargeds } = movePool(key);
+  const ty = D.pokemon[key].ty;
+  const dpt = m => D.moves[m].p * (ty.includes(D.moves[m].t) ? 1.2 : 1) / (D.moves[m].tn || 1);
   const dpe = m => D.moves[m].p / D.moves[m].e;
-  return { key, fast: 'auto', c1: chargeds.slice().sort((a, b) => dpe(b) - dpe(a))[0] || '', c2: '' };
+  return { v: 2, key,
+    fast: fasts.slice().sort((a, b) => dpt(b) - dpt(a))[0] || 'auto',
+    c1: chargeds.slice().sort((a, b) => dpe(b) - dpe(a))[0] || '', c2: '' };
 }
-// その枠のわざ指定(ポケモンを入れ替えたら作り直す)
+// その枠のわざ指定(ポケモンを入れ替えたら作り直す。v無しは旧形式なので既定を選び直す)
 function rbmOf(i) {
   if (!PT[i]) return null;
-  if (!RBM[i] || RBM[i].key !== PT[i].key) { RBM[i] = rbmDefault(PT[i].key); saveRbm(); }
+  if (!RBM[i] || RBM[i].key !== PT[i].key || !RBM[i].v) { RBM[i] = rbmDefault(PT[i].key); saveRbm(); }
   return RBM[i];
 }
 const rbMyMoves = () => [0, 1, 2].filter(i => PT[i]).map(i => rbmOf(i));
@@ -2948,7 +2921,9 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 // タイムラインは実際のバトルと同じ 1ターン=0.5秒 で上から下へ流れ、
 // 決断の場面に来ると止まって、下の常駐フレーム(HUD)の上に選択ウィンドウが出る。
 // HUD = 両者の HP・ゲージ・シールド・能力変化・残り手持ち(モンスターボール)を常に表示
-const RBV = { cur: 0, playing: true, speed: 1, timer: null };
+// started=false のあいだは再生せず「バトルスタート！」ボタンを出す
+// (ポケモンやわざの入力中に勝手にシミュが動き始めないように)
+const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined };
 const RBUI = { pts: {}, order: [], open: null };
 const RB_ICON = { sp: '⚡', sh: '🛡', swap: '⇄', next: '💀' };
 // 選び直したら、その決断より後ろの答えは消す(前提が変わるので、そこから先はおまかせに戻る)
@@ -2998,20 +2973,22 @@ function runRkBuild() {
       `${!foes.length ? '右の枠に<b>あいてのポケモン</b>を入れてください。' : ''}（1匹ずつでも試せます）</div>`;
     return;
   }
+  // 入力(ポケモン・わざ・あいて等)が変わったら、前のバトルの選択と再生位置は仕切り直す
+  const sig = JSON.stringify([mine, foes, rbMyMoves(), RK.kind, RK.enter, RK.stall, SIMOPT.buffMode]);
+  if (RBV.sig !== sig) {
+    if (RBV.sig !== undefined) { RB.ans = {}; RBUI.open = null; RB.found = null; }
+    RBV.sig = sig; RBV.started = false; RBV.cur = 0; RBV.playing = true;
+  }
   const token = ++multiToken;
   const go = () => {
     if (token !== multiToken) return;
     const picks = rbPicksCached(mine, foes, RK.sh);
     const bt = rbPlay(picks, foes, RK.sh, RB.ans, RB.step);
-    // 決着まで出ているときだけ、まとめ(わざ運の最悪・シールド別)を添える
-    const extra = bt.pending ? {} : {
-      worst: rbPlay(picks, foes, RK.sh, RB.ans, false, true),
-      shRuns: [0, 1, 2].map(sh => sh === RK.sh ? bt : rbPlay(rbPicksCached(mine, foes, sh), foes, sh, RB.ans, false)),
-    };
+    // 決着まで出ているときだけ、まとめ(わざ運の最悪)を添える
+    const extra = bt.pending ? {} : { worst: rbPlay(picks, foes, RK.sh, RB.ans, false, true) };
     rbRender(body, bt, picks, foes, extra);
   };
-  const ready = RB.step ? rbPicksHas(mine, foes, RK.sh) : [0, 1, 2].every(sh => rbPicksHas(mine, foes, sh));
-  if (ready) go();
+  if (rbPicksHas(mine, foes, RK.sh)) go();
   else { body.innerHTML = '<div class="mtprog">計算中…</div>'; setTimeout(go, 0); }
 }
 
@@ -3094,13 +3071,6 @@ function rbRender(body, bt, picks, foes, extra) {
         title="あいてが対面ごとに、こちらにいちばんキツいわざを打ってきた場合">
         🎲 わざ運が最悪でも <b>${wo.txt}</b>
         <small>じぶん${extra.worst.meLeft}/${extra.worst.nMe} ／ あいて${extra.worst.foeLeft}/${extra.worst.nFoe} ・ ⏱${rbSec(extra.worst.turns)}秒</small></div>`}
-      ${!extra.shRuns ? '' : `<div class="rksum">
-        <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
-        <table><tr><th class="corner">🛡</th><th>結果</th></tr>${extra.shRuns.map((r, sh) => {
-          const ro = RK_OUTCOME[r.outcome] || RK_OUTCOME.timeout;
-          return `<tr><th>${sh}</th><td class="${ro.cls === 'win' ? 'w' : 'l'}${sh === RK.sh ? ' cur' : ''}" data-sh="${sh}">
-            <b>${ro.txt}</b><small>じぶん${r.meLeft} ／ あいて${r.foeLeft} ・ ⏱${rbSec(r.turns)}</small></td></tr>`;
-        }).join('')}</table></div>`}
     </div>` });
   }
 
@@ -3158,7 +3128,7 @@ function rbRender(body, bt, picks, foes, extra) {
       curLegKey = legKey;
       [[R0, f.meta.name0, f.meta.cp0, f.meta.sp0], [R1, f.meta.name1, f.meta.cp1, f.meta.sp1]].forEach(([Rf, nm, cp, sps]) => {
         Rf.nm.textContent = nm; Rf.cp.textContent = 'CP' + cp;
-        Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i></span>`).join('');
+        Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b) => {
@@ -3169,13 +3139,24 @@ function rbRender(body, bt, picks, foes, extra) {
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
       Rf.bfs.innerHTML = [0, 1].map(k => !b[k] ? '' :
         `<i class="bf ${b[k] > 0 ? 'up' : 'dn'}">${'攻防'[k]}${b[k] > 0 ? '⬆' : '⬇'}${Math.abs(b[k]) === 1 ? '' : Math.abs(b[k])}</i>`).join('');
+      // SPゲージ: 1周=1発ぶん。2周目・3周目は色を変えて重ね、数字は「いま撃てる発数」
+      // (グロウパンチ35なら最大2.86周。何発ぶん溜まっているかが一目で分かるように)
       Rf.gqs.querySelectorAll('.gq').forEach(g => {
         const e = +g.dataset.e;
-        g.style.setProperty('--p', Math.min(100, en / e * 100) + '%');
-        g.classList.toggle('on', en >= e);
+        const laps = Math.floor(en / e);                       // 撃てる発数
+        const prog = (en - laps * e) / e * 100;                // いまの周の溜まり具合
+        const cur = cols[Math.min(laps, cols.length - 1)];
+        const below = laps > 0 ? cols[Math.min(laps - 1, cols.length - 1)] : 'rgba(255,255,255,.09)';
+        g.style.background = `conic-gradient(${cur} ${prog}%, ${below} 0)`;
+        g.style.setProperty('--gqc', laps > 0 ? below : cur);
+        g.classList.toggle('on', laps >= 1);
+        g.querySelector('b').textContent = laps >= 1 ? laps : '';
       });
     };
+    const GQC_ME = ['#43e0ff', '#ffd54a', '#ff6b81'], GQC_FOE = ['#ffd54a', '#ff6b81', '#b06cff'];
+    let cols = GQC_ME;
     set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0);
+    cols = GQC_FOE;
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1);
     clk.textContent = rbSec(gt);
     trn.textContent = gt + 'T';
@@ -3244,9 +3225,6 @@ function rbRender(body, bt, picks, foes, extra) {
   });
   const clr = body.querySelector('.rbclear');
   if (clr) clr.onclick = () => { RB.ans = {}; RBUI.open = null; RB.found = null; RBV.cur = 0; RBV.playing = true; run(); };
-  body.querySelectorAll('.rksum td[data-sh]').forEach(td => td.onclick = () => {
-    RK.sh = +td.dataset.sh; syncRocket(); run();
-  });
   // 手順の自動探索: 見つかった手順をそのまま決断の答えに入れて、バトルで再生する
   body.querySelectorAll('.rbgo').forEach(b => b.onclick = () => {
     const g = b.dataset.g;
@@ -3258,7 +3236,7 @@ function rbRender(body, bt, picks, foes, extra) {
       const o2 = RK_OUTCOME[r.bt.outcome];
       RB.found = `🔎 ${RB_GOAL[g].label} → <b class="${o2.cls === 'win' ? 'ok' : 'ng'}">${o2.txt}</b>` +
         `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
-      RBV.cur = 0; RBV.playing = true;
+      RBV.cur = 0; RBV.playing = true; RBV.started = true;   // 見つけた手順はそのまま再生する
       run();
     }, 30);
   });
@@ -3272,7 +3250,9 @@ function rbRender(body, bt, picks, foes, extra) {
   });
   // HUDの再生コントロール
   const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
+  const startBattle = () => { RBV.started = true; RBV.playing = true; winbox.innerHTML = ''; startTimer(); };
   if (hplay) hplay.onclick = () => {
+    if (!RBV.started) { startBattle(); return; }
     if (ended()) { RBV.cur = 0; RBV.playing = true; run(); return; }   // ↻ 最初から再生
     if (RBV.cur >= stop) return;   // 決断待ちのあいだは選択がすべて
     if (RBV.timer) { RBV.playing = false; stopTimer(); } else { RBV.playing = true; startTimer(); }
@@ -3284,6 +3264,7 @@ function rbRender(body, bt, picks, foes, extra) {
     if (RBV.timer) startTimer();
   };
   if (hskip) hskip.onclick = () => {
+    RBV.started = true;
     RBV.cur = stop; revealTo(stop); updateHud(stop); autoScroll();
     if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
   };
@@ -3291,6 +3272,16 @@ function rbRender(body, bt, picks, foes, extra) {
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
   if (!RB.step) RBV.cur = stop;   // 結果だけ: 最後まで一気に出す
+  if (RB.step && !RBV.started) {
+    // まだスタートしていない: VSカードと両者の状態だけ見せて、スタートボタンを待つ
+    RBV.cur = 0;
+    revealTo(0);
+    updateHud(0);
+    winbox.innerHTML = '<button class="rbstart">▶ バトルスタート！</button>';
+    winbox.querySelector('.rbstart').onclick = startBattle;
+    setPlayBtn();
+    return;
+  }
   revealTo(RBV.cur);
   updateHud(RBV.cur);
   if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
@@ -3866,7 +3857,7 @@ function updateUrl() {
     const w = rkWho();   // リーダー・サカキの手持ち(だれと・何匹目に誰を選んでいるか)
     if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
     if (RK.team) {   // 模擬戦(自分のパーティは端末内に保存しているのでURLには入れない)
-      qp.rt = 1; qp.rsh = RK.sh; qp.rkf = RK.koFoe; qp.rkm = RK.koMe; qp.rsw = RK.swapCd;
+      qp.rt = 1;
       if (!RB.step) qp.rbs = 0;   // 見かた(結果だけ)と、決断で選んだ内容
       const ansStr = rbAnsToStr();
       if (ansStr) qp.rb = ansStr;
@@ -4176,11 +4167,6 @@ document.getElementById('copyUrl').onclick = async () => {
     const w = rkWho(), sel = (q.get('rl') || '').split('').map(Number);
     if (w) RK.sel[w.id] = w.slots.map((c, s) => (sel[s] >= 0 && sel[s] < c.length ? sel[s] : 0));
   }
-  const rkNum = (k, lo, hi, def) => { const v = +q.get(k); return q.get(k) != null && !isNaN(v) ? Math.max(lo, Math.min(hi, v)) : def; };
-  RK.sh = rkNum('rsh', 0, 2, RK.sh);
-  RK.koFoe = rkNum('rkf', 0, 16, RK.koFoe);
-  RK.koMe = rkNum('rkm', 0, 16, RK.koMe);
-  RK.swapCd = rkNum('rsw', 0, 240, RK.swapCd);
   if (q.get('rp')) q.get('rp').split(',').slice(0, 3).forEach((s, i) => {
     const [key, fast, c1] = s.split('~');
     if (D.pokemon[key]) RKT[i] = { key, fast: fast || null, c1: c1 || null };
