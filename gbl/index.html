@@ -1573,9 +1573,20 @@ function restoreFoeInputs() {
   tab.title = 'シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする';
   if (S[1].key) el.querySelector('input').value = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
 }
+// したっぱのあいては内蔵データが無く自分で選ぶので、リーダー・サカキの手持ちで
+// 上書きされて消えないように別に覚えておき、したっぱへ戻したときに復元する
+const RKG_KEY = 'gbl_rocket_grunt';
+const loadRkGrunt = () => { try { const v = JSON.parse(localStorage.getItem(RKG_KEY)); return Array.isArray(v) ? v : null; } catch (e) { return null; } };
+const saveRkGrunt = () => { try { localStorage.setItem(RKG_KEY, JSON.stringify(RKT)); } catch (e) {} };
 document.querySelectorAll('#rkkind button').forEach(b => b.onclick = () => {
-  RK.kind = b.dataset.v;
-  syncRocket();
+  const v = b.dataset.v;
+  if (RK.kind === 'grunt' && v !== 'grunt') saveRkGrunt();   // したっぱの枠を控えておく
+  RK.kind = v;
+  syncRocket();   // ここで renderRoster が走り、だれと戦うかが未選択なら先頭の人になる
+  // リーダー・サカキは手持ちが分かっているので、選んだ時点であいての枠に入れる
+  if (v !== 'grunt') { if (rkWhoList().length) rkPutAll(); else run(); return; }
+  const g = loadRkGrunt();   // したっぱに戻す: 前に自分で選んでいた枠に戻す
+  if (g) { [0, 1, 2].forEach(i => RKT[i] = g[i] || null); saveRkt(); syncRocket(); }
   run();
 });
 document.querySelectorAll('#rkenter button').forEach(b => b.onclick = () => {
