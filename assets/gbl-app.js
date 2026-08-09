@@ -261,7 +261,8 @@ document.getElementById('app').innerHTML = `
   <div class="mtnote">上から順に出し、倒れたら次。シールドは3匹で共有します。<b>決断の場面で止まって選ぶ</b>と、そこから先が計算し直されます</div>
   <div class="rkteams">
     <div class="rkteamcol">
-      <div class="rkcolttl" title="パーティ診断と共通の3枠です">じぶん<small>出す順</small></div>
+      <div class="rkcolttl" title="パーティ診断と共通の3枠です">じぶん<small>出す順</small>
+        <button class="rksuggtab" id="rksuggtab" aria-expanded="false" title="あいての手持ち全体に対して火力が高いポケモンを提案します">🏆 おすすめ</button></div>
       <div class="pslots myslots"></div>
     </div>
     <div class="rkteamcol">
@@ -269,6 +270,7 @@ document.getElementById('app').innerHTML = `
       <div class="pslots foeslots"></div>
     </div>
   </div>
+  <div class="rksugg" id="rksugg" style="display:none"></div>
   <div class="rkbody"></div>
 </div>
 
@@ -809,6 +811,7 @@ const HELP_HTML = `
   <ul>
     <li><b>1対1</b>… おすすめランキングと、1匹どうしの詳しいシミュレートを切り替えられます</li>
     <li><b>模擬戦</b>… じぶんの3匹とあいての手持ちを通しで戦います。上から順に出し、倒れたら次。シールドはバトル全体で共有し、生き残りはHP・ゲージ・能力変化を引き継ぎます</li>
+    <li><b>🏆 おすすめ</b>（じぶんの枠の上）… あいての手持ち<b>全体</b>に対する火力ランキングです。わざはバトル中に変えられないので、ノーマルアタックは<b>3匹合計の火力がいちばん高くなる1本</b>で評価します。①②③はあいての順で、対面ごとの秒間ダメージと ⚠（あいてのわざ次第で先に倒される）を出します。<b>1・2・3</b>を押すとそのポケモンがじぶんの枠に入り、評価に使ったノーマルアタックがわざ欄にセットされます（並び替えの基準は1対1のランキングと同じ・シールド2枚でSPを防ぐ前提）</li>
   </ul>
 
   <h4>模擬戦の使い方</h4>
@@ -1950,6 +1953,113 @@ function rkRanking() {
   return rows;
 }
 
+// ---- 模擬戦: おすすめポケモン(あいての手持ち全体に対する火力ランキング) ----
+// 1対1の「誰で殴ればいい？」をあいて3匹へ広げたもの。わざはバトル中に変えられないので、
+// ノーマルアタックは「3匹合計の火力がいちばん高くなる1本」を選んで評価する
+const RKS = { open: false, sig: null, cache: null };
+// あいての枠のわざ指定を尊重した全通り(未指定=自動はおぼえるわざ全部)
+function rkSuggCombos(f) {
+  const pool = rkPool(f.key);
+  const fl = f.fast && pool.fasts.includes(f.fast) ? [f.fast] : pool.fasts;
+  const sl = f.c1 && pool.chargeds.includes(f.c1) ? [f.c1]
+    : (pool.chargeds.length ? pool.chargeds : [null]);
+  const out = [];
+  for (const fa of fl) for (const sp of sl) out.push({ fast: fa, sp });
+  return out;
+}
+function rkTeamRanking(foes) {
+  const bases = foes.map(f => rktCfg(f, { shields: rkShields(), stallStart: 0 }));
+  const sts = bases.map(b => PvpEngine.buildStats(D, b));
+  const rows = [];
+  for (const c of rkCandidates()) {
+    const me = { key: c.key, ivs: c.ivs, level: c.level, shadow: c.shadow, cap: 0 };
+    const st = PvpEngine.buildStats(D, me);
+    const fasts = c.fixFast && D.moves[c.fixFast] ? [c.fixFast] : movePool(c.key).fasts;
+    let best = null;
+    for (const id of fasts) {
+      const mv = D.moves[id];
+      const per = sts.map(fs =>
+        PvpEngine.damage(D, mv, { ...st, buffs: [0, 0] }, { ...fs, buffs: [0, 0] }) / (mv.tn * 0.5));
+      const sum = per.reduce((a, b) => a + b, 0);
+      if (!best || sum > best.sum) best = { id, per, sum };
+    }
+    if (!best) continue;
+    rows.push({ ...c, me, fast: best.id, per: best.per, dps: best.sum / foes.length });
+  }
+  rows.sort((a, b) => b.dps - a.dps || a.key.localeCompare(b.key));
+  // 上位＋★の個体だけ、対面ごとに「先に倒されないか」をシミュレートで確認する
+  // (1対1ランキングと同じ前提: SPは撃たず、シールド2枚はあいてのSPを防ぐのに使う)
+  const CHECK = 60;
+  rows.filter((r, i) => i < CHECK || r.mine).forEach(r => {
+    const L = { ...r.me, fast: r.fast, charged: [], shields: 2, timing: 'shots', shotPlan: [], shotRest: null };
+    r.danger = foes.map((f, fi) => {
+      for (const c of rkSuggCombos(f)) {
+        const res = PvpEngine.simulate(D, L,
+          { ...bases[fi], fast: c.fast, charged: c.sp ? [c.sp] : [], throw: c.sp }, SIMOPT);
+        if (res.winner !== 0) return true;   // このあいてのわざ次第で先に倒される
+      }
+      return false;
+    });
+    r.checked = true;
+  });
+  return rows;
+}
+function renderRkSuggList(box, rows, foes) {
+  const ranked = rows.map((r, i) => ({ ...r, rank: i + 1 }));
+  const list = ranked.slice(0, RKR.top).concat(ranked.slice(RKR.top).filter(r => r.mine));
+  const foeIcon = ['①', '②', '③'];
+  box.innerHTML = `<div class="rkshead">火力順（ノーマルアタックだけで殴ったときの平均DPS）。${foeIcon.slice(0, foes.length).join('')}=あいての順・⚠=そのあいてに先に倒されうる。<b>1・2・3を押すと じぶんの枠に入ります</b></div>` +
+    list.map((r, i) => {
+      const p = D.pokemon[r.key];
+      const per = r.per.map((v, k) =>
+        `<span class="rksfoe${r.checked && r.danger[k] ? ' ng' : ''}" title="${rktName(foes[k])}${r.checked && r.danger[k] ? '（わざ次第で先に倒されます）' : ''}">${foeIcon[k]}${r.checked && r.danger[k] ? '⚠' : ''}${v.toFixed(1)}</span>`).join('');
+      return `<div class="rksrow" data-i="${i}">
+        <div class="rkrank ${r.rank === 1 ? 'r1' : r.rank === 2 ? 'r2' : r.rank === 3 ? 'r3' : ''}">${r.rank}</div>
+        <div class="rksmain">
+          <div class="rkrname">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
+            ${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}${typeIcons(p, 15)}</div>
+          <div class="rksmv">${mvChip(D.moves[r.fast].n)}<span class="rksper">${per}</span></div>
+        </div>
+        <div class="rkrnum"><i class="rkrdps">${r.dps.toFixed(1)}/秒</i></div>
+        <div class="rksadd">${[0, 1, 2].map(s =>
+          `<button data-s="${s}" title="${s + 1}匹目の枠に入れる">${s + 1}</button>`).join('')}</div>
+      </div>`;
+    }).join('');
+  box.querySelectorAll('.rksrow .rksadd button').forEach(b => b.onclick = () => {
+    const r = list[+b.closest('.rksrow').dataset.i];
+    const s = +b.dataset.s;
+    // ★の個体は登録リストの内容(個体値・PL)ごと、それ以外は理想個体値で枠に入れる
+    const saved = r.mine ? loadMyPk().find(m => m.key === r.key && !!m.shadow === r.shadow) : null;
+    PT[s] = saved ? { ...saved } : { key: r.key, ivMode: 'auto', shadow: r.shadow, maxLv: 51 };
+    // 評価に使ったノーマルアタックをそのまま模擬戦のわざにする(表示と結果を食い違わせない)
+    RBM[s] = { ...rbmDefault(r.key), fast: r.fast };
+    saveRbm(); savePt(); syncPartySlot(s); run();
+  });
+}
+function renderRkSugg() {
+  const box = document.getElementById('rksugg');
+  const tab = document.getElementById('rksuggtab');
+  if (!box || !tab) return;
+  tab.setAttribute('aria-expanded', RKS.open);
+  box.style.display = RKS.open ? 'block' : 'none';
+  if (!RKS.open) return;
+  const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
+  if (!foes.length) {
+    box.innerHTML = '<div class="mtnote">右の枠にあいてのポケモンを入れると、おすすめが出ます</div>';
+    RKS.sig = null;
+    return;
+  }
+  const sig = JSON.stringify([foes, RK.kind, RKR.shadow, RKR.mega, loadMyPk()]);
+  if (RKS.sig === sig && RKS.cache) { renderRkSuggList(box, RKS.cache, foes); return; }
+  RKS.sig = sig;
+  box.innerHTML = '<div class="mtprog">計算中…</div>';
+  setTimeout(() => {
+    if (RKS.sig !== sig || !RKS.open) return;
+    RKS.cache = rkTeamRanking(foes);
+    renderRkSuggList(box, RKS.cache, foes);
+  }, 10);
+}
+
 function runRkRank() {
   const box = document.getElementById('rkrank');
   const body = box.querySelector('.rkrbody');
@@ -2544,6 +2654,7 @@ function runRkBuild() {
   const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
   const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
   updateUrl();
+  renderRkSugg();   // おすすめパネル(開いていれば、あいての変化に追従して作り直す)
   clearInterval(RBV.timer); RBV.timer = null;
   if (!mine.length || !foes.length) {
     body.innerHTML = `<div class="mtnote">${!mine.length ? '左の枠に<b>じぶんのポケモン</b>を入れてください。' : ''}` +
@@ -3865,6 +3976,8 @@ document.getElementById('copyUrl').onclick = async () => {
   buildPartySlots(document.querySelector('#party .pslots'));
   buildPartySlots(document.querySelector('#rkteam .myslots'), true);   // 模擬戦でも同じ3枠(PT)を使う
   buildFoeSlots();
+  const sgTab = document.getElementById('rksuggtab');
+  if (sgTab) sgTab.onclick = () => { RKS.open = !RKS.open; renderRkSugg(); };
   document.querySelectorAll('#party .ptsh button').forEach(b => b.onclick = () => {
     document.querySelectorAll('#party .ptsh button').forEach(x => x.setAttribute('aria-pressed', x === b));
     ptShield = +b.dataset.v;

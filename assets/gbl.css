@@ -425,6 +425,24 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkrnum small .ng{color:var(--lose)}
 .rkrnum .rkrdps{display:block;font-style:normal;font-size:.6rem;color:var(--sub);opacity:.8}
 @media (max-width:520px){.rkrcard{gap:6px;padding:6px}.rkrname{font-size:.87rem}}
+/* 模擬戦のおすすめポケモン(あいての手持ち全体への火力ランキング) */
+.rksuggtab{margin-left:8px;padding:2px 9px;font-size:.68rem;font-weight:700;color:var(--ink);
+  background:var(--bg2);border:1px solid var(--line);border-radius:999px;cursor:pointer;vertical-align:1px}
+.rksuggtab[aria-expanded="true"]{border-color:var(--gold);color:var(--gold)}
+.rksugg{margin-top:8px}
+.rkshead{font-size:.68rem;color:var(--sub);line-height:1.6;margin-bottom:2px}
+.rksrow{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-top:5px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px}
+.rksmain{flex:1;min-width:0}
+.rksmv{display:flex;align-items:center;gap:7px;margin-top:2px;font-size:.8rem;flex-wrap:wrap}
+.rksper{display:flex;gap:7px;flex-wrap:wrap}
+.rksfoe{font-size:.7rem;color:var(--sub);white-space:nowrap}
+.rksfoe.ng{color:var(--lose)}
+.rksadd{display:flex;gap:4px}
+.rksadd button{width:26px;height:26px;padding:0;font-size:.74rem;font-weight:800;color:var(--cy);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.rksadd button:hover{border-color:var(--cy)}
+@media (max-width:520px){.rksrow{gap:5px;padding:5px 6px}.rksadd button{width:23px;height:23px}}
 /* ページ最下部の「使い方」タブ。説明の文章はすべてここに集める */
 .helpwrap{margin-top:18px}
 #helptab{width:100%;padding:10px;font-size:.8rem;font-weight:700;background:var(--panel);
