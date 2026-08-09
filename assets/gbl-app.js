@@ -1586,8 +1586,11 @@ function syncPartySlot(i) {
     const p = D.pokemon[m.key];
     const iv = m.ivMode === 'manual' && m.mIvs ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
-    // わざを自分で選べる枠(模擬戦)では、下のわざ欄に出るので文字では書かない
-    meta.innerHTML = `${typeIcons(p, 15)}<span class="pt2">${iv}</span>${mvbox ? '' : `<span class="pt2">${mv}</span>`}`;
+    // わざを自分で選べる枠(模擬戦)では、わざは下の欄に出るので文字では書かない。
+    // 個体値・PLの文字も出さない(⚙詳細にある。ﾏﾆｭｱﾙ入力中だけ小さく出して分かるようにする)
+    meta.innerHTML = mvbox
+      ? `${typeIcons(p, 15)}${m.ivMode === 'manual' && m.mIvs ? `<span class="pt2">${iv}</span>` : ''}`
+      : `${typeIcons(p, 15)}<span class="pt2">${iv}</span><span class="pt2">${mv}</span>`;
     if (!mvbox) return;
     const cur = rbmOf(i);
     const { fasts, chargeds } = movePool(m.key);
@@ -1597,8 +1600,8 @@ function syncPartySlot(i) {
       <select class="mvF" title="ノーマルアタック（おまかせにすると効率のよい構成を自動で選びます）">
         <option value="auto"${cur.fast === 'auto' ? ' selected' : ''}>おまかせ</option>${opts(fasts, cur.fast)}</select>
       ${chargeds.length ? `<select class="mvC1" title="SPアタック1">${opts(chargeds, cur.c1)}</select>
-      <select class="mvC2" title="SPアタック2（2本目を開放していないなら「なし」）">
-        <option value=""${!cur.c2 ? ' selected' : ''}>なし</option>${opts(chargeds, cur.c2)}</select>`
+      <select class="mvC2" title="SPアタック2（2本目を開放していないなら「ー」）">
+        <option value=""${!cur.c2 ? ' selected' : ''}>ー</option>${opts(chargeds, cur.c2)}</select>`
         : '<span class="pt2">SPアタックなし</span>'}`;
     mvbox.querySelectorAll('select').forEach(sel => sel.onchange = () => {
       const c = rbmOf(i);
@@ -3413,7 +3416,7 @@ function fillMoves(i, cfg) {
   el.querySelector('.selFast').innerHTML = grouped(fasts, otherF, cfg.fast);
   el.querySelector('.selC1').innerHTML = grouped(chargeds, otherC, cfg.throw);
   el.querySelector('.selC2').innerHTML =
-    `<option value=""${S[i].c2 ? '' : ' selected'}>なし</option>` + grouped(chargeds, otherC, S[i].c2);
+    `<option value=""${S[i].c2 ? '' : ' selected'}>ー</option>` + grouped(chargeds, otherC, S[i].c2);
   // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す
   el.querySelector('.bluffwrap').style.display = S[i].c2 ? 'block' : 'none';
   el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));

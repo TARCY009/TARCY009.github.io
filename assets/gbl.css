@@ -228,8 +228,17 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .frand{margin-top:4px;padding:4px 8px;font-size:.68rem;font-weight:700;background:var(--panel);
   border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:pointer}
 .frand:hover{border-color:var(--gold)}
-.rkteams{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.rkteams .pslots{grid-template-columns:1fr;margin-top:6px}
+/* じぶん・あいての枠は「同じ順番どうしが同じ行」のグリッドに置き、行の高さ=左右の高いほうに揃える
+   (display:contents で列の入れ物を透過させ、data-i で行を明示する) */
+.rkteams{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:10px}
+.rkteams .rkteamcol,.rkteams .pslots{display:contents}
+.rkteams .rkcolttl{grid-row:1;grid-column:1;align-self:end}
+.rkteams .rkcolttl.foe{grid-column:2}
+.rkteams .myslots .pslot{grid-column:1}
+.rkteams .foeslots .pslot{grid-column:2}
+.rkteams .pslot[data-i="0"]{grid-row:2}
+.rkteams .pslot[data-i="1"]{grid-row:3}
+.rkteams .pslot[data-i="2"]{grid-row:4}
 .rkcolttl{font-size:.72rem;font-weight:700;color:var(--cy)}
 .rkcolttl.foe{color:var(--gold)}
 .rkcolttl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:1px}
@@ -492,7 +501,11 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rksum td.d b{color:var(--gold)}
 .rksum td small{display:block;color:var(--sub);font-size:.62rem;margin-top:1px}
 .rksum td.cur{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy)}
-@media (max-width:520px){.rkteams{grid-template-columns:1fr}}
+@media (max-width:520px){
+  .rkteams{display:block}
+  .rkteams .rkteamcol{display:block;margin-top:8px}
+  .rkteams .pslots{display:grid;grid-template-columns:1fr;gap:5px;margin-top:6px}
+}
 .cnsub{display:block;font-size:.68rem;font-weight:400;color:var(--sub);margin-top:2px}
 .multi{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px}
 .multi h3{font-size:.92rem}
