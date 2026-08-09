@@ -426,7 +426,30 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkrnum .rkrdps{display:block;font-style:normal;font-size:.6rem;color:var(--sub);opacity:.8}
 @media (max-width:520px){.rkrcard{gap:6px;padding:6px}.rkrname{font-size:.87rem}}
 /* 模擬戦のおすすめ提案(タブを押してから枠の入力欄をタップすると対策トップ5が出る) */
-.rksuggbar{display:flex;align-items:center;gap:5px;margin:6px 0 2px}
+.rksuggbar{display:flex;align-items:center;gap:5px;margin:6px 0 2px;flex-wrap:wrap}
+/* ⚙詳細: 使う頻度の低い設定をまとめて隠すタブ(右端・少し大きめ) */
+.rkdetailtab{margin-left:auto;padding:5px 14px;font-size:.78rem;font-weight:800;color:var(--ink);
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.rkdetailtab[aria-expanded="true"]{color:var(--cy);border-color:var(--cy)}
+.rkdetail{margin:6px 0 8px;padding:9px 11px;background:var(--bg2);border:1px solid var(--line);border-radius:12px}
+.rkdttl{font-size:.68rem;font-weight:700;color:var(--sub);margin:8px 0 4px}
+.rkdttl:first-child{margin-top:0}
+.rkdrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px}
+.rkdrow .lbl{font-size:.72rem;font-weight:700;color:var(--ink);min-width:44px}
+.rkdiv label{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;color:var(--sub)}
+.rkdiv input{width:44px;padding:4px 5px;font-size:.78rem;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:8px;text-align:center}
+.rkdideal{padding:4px 9px;font-size:.68rem;font-weight:700;color:var(--sub);
+  background:var(--bg);border:1px solid var(--line);border-radius:999px;cursor:pointer}
+.rkdideal[aria-pressed="true"]{color:var(--cy);border-color:var(--cy)}
+.rkdrand{padding:5px 11px;font-size:.72rem;font-weight:700;color:var(--gold);
+  background:var(--bg);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.rkdrand:disabled{opacity:.35;cursor:default}
+.rkdprob .gopt{margin-top:8px}
+/* 「結果だけ見る」(オートバトル行の右端) */
+.rbonly{margin-left:auto;padding:5px 11px;font-size:.72rem;font-weight:700;color:var(--sub);
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.rbonly[aria-pressed="true"]{color:var(--gold);border-color:var(--gold)}
 .rksuggbar .lbl{font-size:.66rem;color:var(--sub)}
 .rksuggbar button{padding:3px 9px;font-size:.68rem;font-weight:700;color:var(--sub);
   background:var(--bg2);border:1px solid var(--line);border-radius:999px;cursor:pointer}

@@ -252,7 +252,12 @@ document.getElementById('app').innerHTML = `
 
 <div class="multi" id="rkteam" style="display:none">
   <div class="rksuggbar" id="rksuggbar"><span class="lbl">おすすめ</span>
-    <button data-m="power" aria-pressed="false" title="じぶんの枠の入力欄をタップすると、同じ順番のあいてをいちばん速く倒せるポケモン トップ5を出します">高火力</button><button data-m="safe" aria-pressed="false" title="あいてのどのわざでも先に倒されないポケモンだけに絞って、火力トップ5を出します">高火力＋安定</button></div>
+    <button data-m="power" aria-pressed="false" title="じぶんの枠の入力欄をタップすると、同じ順番のあいてをいちばん速く倒せるポケモン トップ5を出します">高火力</button><button data-m="safe" aria-pressed="false" title="あいてのどのわざでも先に倒されないポケモンだけに絞って、火力トップ5を出します">高火力＋安定</button>
+    <button class="rkdetailtab" id="rkdetailtab" aria-expanded="false" title="こまかい設定（確率で上下するわざ・じぶんの個体値とPL・あいてのわざランダム）を開きます">⚙ 詳細</button></div>
+  <div class="rkdetail" id="rkdetail" style="display:none">
+    <div class="rkdbody"></div>
+    <div class="rkdprob"></div>
+  </div>
   <div class="rkteams">
     <div class="rkteamcol">
       <div class="rkcolttl" title="上から順に出します。パーティ診断と共通の3枠です">じぶん</div>
@@ -825,13 +830,13 @@ const HELP_HTML = `
   <ul>
     <li><b>じぶん</b>… 枠ごとに<b>ノーマルアタック／SPアタック1／SPアタック2</b>を選びます。わざはバトル中に変えられないので、ここで決めたわざで最後まで戦います</li>
     <li>既定では<b>ノーマルアタック・SPアタックともダメージ効率がいちばん高いわざ</b>が選ばれています。ノーマルアタックだけ<b>おまかせ</b>（相手に合わせて自動）も選べます。SP2本目を開放していないなら「なし」にしてください</li>
-    <li><b>あいて</b>… ロケット団は<b>おぼえるわざの中からランダムに</b>打ってきます。既定の<b>自動（いちばんキツい）</b>は、全通りのうち<b>こちらにいちばんキツいわざ</b>を引いた前提で計算します（1対1と同じ基準）。わざを決め打ちしたいときは選ぶか、<b>🎲 ランダム</b>でその引きを再現できます（押すたびに変わります）</li>
+    <li><b>あいて</b>… ロケット団は<b>おぼえるわざの中からランダムに</b>打ってきます。既定の<b>自動（いちばんキツい）</b>は、全通りのうち<b>こちらにいちばんキツいわざ</b>を引いた前提で計算します（1対1と同じ基準）。わざを決め打ちしたいときは選ぶか、<b>⚙ 詳細</b>の<b>🎲</b>でランダムな引きを再現できます（押すたびに変わります）</li>
+    <li><b>⚙ 詳細</b>（おすすめの右）… 使う頻度の低い設定置き場です。<b>確率で能力が上下するわざ</b>の扱い、<b>じぶんの個体値・PL</b>（既定はPL50・個体値100%。「理想個体値」で戻せます）、<b>あいてのわざの🎲ランダム</b>がここにあります</li>
     <li>わざを決め打ちしたときは、結果に<b>🎲 わざ運が最悪でも</b>が添えられ、わざ運がどう転んでも大丈夫かを確かめられます</li>
   </ul>
 
   <ul>
-    <li><b>▶ バトル</b>… 上記の流れる表示。ゲームと同じ感覚で立ち回りを試せます</li>
-    <li><b>結果だけ</b>… 全部おまかせで戦った結果を<b>一気に</b>出します。並んだチップをタップすれば選び直せます</li>
+    <li><b>結果だけ見る</b>（オートバトル行の右）… バトルを流さず、全部おまかせで戦った結果を<b>一気に</b>出します。並んだチップをタップすれば選び直せます。もう一度押すと流れるバトル表示に戻ります</li>
     <li><b>🔎 オートバトル（最速／安定）</b>… 決断の組み合わせをAIが自動でさがします。<b>最速</b>=勝てる中で決着がいちばん早い手順、<b>安定</b>=勝てる中で手持ちとHPがいちばん残る手順（どちらも「勝てること→倒した数」が最優先）。見つかった手順はそのままバトルで再生されるので、続けて手直しできます</li>
     <li>引っ込めたポケモンはHP・ゲージを保ったまま控えに戻り、出し直すと続きから戦います</li>
     <li><b>🎲 わざ運が最悪でも</b>… あいてのわざを決め打ちしたときだけ出ます。対面ごとに<b>こちらがいちばんキツいわざ</b>を引いた場合の結果です（わざ欄が全部「自動」なら主結果がそのまま最悪ケースです）</li>
@@ -1011,6 +1016,16 @@ function applyMode() {
   document.getElementById('party').style.display = mode === 'party' ? 'block' : 'none';
   document.getElementById('rkteam').style.display = rkTeam ? 'block' : 'none';
   document.getElementById('rkrank').style.display = rkRankView ? 'block' : 'none';
+  // 確率わざの設定は、模擬戦のあいだ「⚙ 詳細」パネルの中へ移す(トップをすっきりさせる)
+  const goptEl = document.getElementById('gopt'), gnoteEl = document.getElementById('goptnote');
+  if (rkTeam) {
+    const pr = document.querySelector('#rkdetail .rkdprob');
+    if (pr && goptEl.parentElement !== pr) { pr.appendChild(goptEl); pr.appendChild(gnoteEl); }
+  } else if (goptEl.parentElement !== duelBox.parentElement) {
+    duelBox.parentElement.insertBefore(goptEl, duelBox);
+    duelBox.parentElement.insertBefore(gnoteEl, duelBox);
+  }
+  renderRkDetail();
   renderMyPk();   // ★登録リストの中身はモードで変わる(ロケット団戦のあいてはメガ・ゲンシ不可)
   if ((mode !== 'duel' && !rk) || rkTeam || rkRankView) {
     document.getElementById('result').style.display = 'none';
@@ -1706,7 +1721,6 @@ function buildFoeSlots() {
     <div class="fbody" style="display:none">
       <select class="selFast" title="あいてのノーマルアタック"></select>
       <select class="selC1" title="あいてのSPアタック"></select>
-      <button class="frand" title="おぼえるわざからランダムに選びます（ロケット団はランダムに打ってきます）">🎲 ランダム</button>
       <div class="fstat"></div>
     </div>
   </div>`).join('');
@@ -1738,15 +1752,6 @@ function buildFoeSlots() {
     });
     document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
     el.querySelector('.pclr').onclick = () => { RKT[i] = null; saveRkt(); syncFoeSlots(); run(); };
-    // あいてはおぼえるわざの中からランダムに打ってくるので、その引きを再現するボタン
-    el.querySelector('.frand').onclick = () => {
-      if (!RKT[i]) return;
-      const { fasts, chargeds } = rkPool(RKT[i].key);
-      const pickRnd = list => list.length ? list[Math.floor(Math.random() * list.length)] : null;
-      RKT[i].fast = pickRnd(fasts);
-      RKT[i].c1 = pickRnd(chargeds);
-      saveRkt(); syncFoeSlots(); run();
-    };
     el.querySelectorAll('select').forEach(sel => sel.onchange = () => {
       if (!RKT[i]) return;
       // 空値=「自動(いちばんキツい)」。全通り試していちばんキツいわざで計算する
@@ -2016,6 +2021,74 @@ function rkShowSugg(i, el) {
     saveRbm(); savePt(); syncPartySlot(i); run();
   });
   return true;
+}
+
+// ---- 模擬戦: 「⚙ 詳細」パネル ----
+// 使う頻度の低い設定(確率わざ・じぶんの個体値とPL・あいてのわざランダム)をここへ集めて、
+// トップの画面をすっきりさせる。確率わざの設定(#gopt)は模擬戦のあいだこのパネルへ移動する
+const RKD = { open: false };
+function renderRkDetail() {
+  const box = document.getElementById('rkdetail');
+  const tab = document.getElementById('rkdetailtab');
+  if (!box || !tab) return;
+  tab.setAttribute('aria-expanded', RKD.open);
+  box.style.display = RKD.open ? 'block' : 'none';
+  if (!RKD.open) return;
+  const body = box.querySelector('.rkdbody');
+  // じぶんの個体値・PL(既定は理想個体値=PL50・100%。枠にポケモンが居るときだけ出す)
+  const ivRow = i => {
+    const m = PT[i];
+    const man = m.ivMode === 'manual' && m.mIvs;
+    const iv = man ? m.mIvs : [15, 15, 15];
+    const lv = man ? m.mLevel : 50;
+    return `<div class="rkdrow rkdiv" data-i="${i}"><span class="lbl">${i + 1}匹目</span>
+      <button class="rkdideal" aria-pressed="${!man}" title="PL50・個体値100%に戻す">理想個体値</button>
+      <label>攻<input type="number" class="dA" min="0" max="15" value="${iv[0]}" inputmode="numeric"></label>
+      <label>防<input type="number" class="dD" min="0" max="15" value="${iv[1]}" inputmode="numeric"></label>
+      <label>HP<input type="number" class="dH" min="0" max="15" value="${iv[2]}" inputmode="numeric"></label>
+      <label>PL<input type="number" class="dL" min="1" max="51" step="0.5" value="${lv}" inputmode="decimal"></label>
+    </div>`;
+  };
+  const myRows = [0, 1, 2].filter(i => PT[i]).map(ivRow).join('');
+  const anyFoe = [0, 1, 2].some(i => RKT[i]);
+  body.innerHTML =
+    (myRows ? `<div class="rkdttl">じぶんの個体値・PL</div>${myRows}` : '') +
+    (anyFoe ? `<div class="rkdttl">あいてのわざを🎲でランダムに引き直す</div>
+      <div class="rkdrow">${[0, 1, 2].map(i =>
+        `<button class="rkdrand" data-i="${i}" ${RKT[i] ? '' : 'disabled'}>🎲 ${i + 1}匹目</button>`).join('')}</div>` : '');
+  // 個体値・PLの入力: 変えたらﾏﾆｭｱﾙ扱い。「理想個体値」で既定に戻す
+  body.querySelectorAll('.rkdiv').forEach(row => {
+    const i = +row.dataset.i;
+    const commit = () => {
+      const n = (sel, lo, hi, st) => {
+        const el2 = row.querySelector(sel);
+        let v = +el2.value || 0;
+        if (st) v = Math.round(v * 2) / 2; else v = Math.round(v);
+        v = Math.min(hi, Math.max(lo, v));
+        el2.value = v;
+        return v;
+      };
+      PT[i].ivMode = 'manual';
+      PT[i].mIvs = [n('.dA', 0, 15), n('.dD', 0, 15), n('.dH', 0, 15)];
+      PT[i].mLevel = n('.dL', 1, 51, true);
+      savePt(); syncPartySlot(i); renderRkDetail(); run();
+    };
+    row.querySelectorAll('input').forEach(inp => inp.onchange = commit);
+    row.querySelector('.rkdideal').onclick = () => {
+      PT[i].ivMode = 'auto'; PT[i].mIvs = null; PT[i].mLevel = null;
+      savePt(); syncPartySlot(i); renderRkDetail(); run();
+    };
+  });
+  // あいてのわざランダム(おぼえるわざから引き直す。ロケット団はランダムに打ってくる)
+  body.querySelectorAll('.rkdrand').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (!RKT[i]) return;
+    const { fasts, chargeds } = rkPool(RKT[i].key);
+    const pickRnd = list => list.length ? list[Math.floor(Math.random() * list.length)] : null;
+    RKT[i].fast = pickRnd(fasts);
+    RKT[i].c1 = pickRnd(chargeds);
+    saveRkt(); syncFoeSlots(); run();
+  });
 }
 
 function runRkRank() {
@@ -2612,6 +2685,7 @@ function runRkBuild() {
   const mine = [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
   const foes = [0, 1, 2].filter(i => RKT[i]).map(i => RKT[i]);
   updateUrl();
+  renderRkDetail();   // 詳細パネル(開いていれば、枠の増減に追従する)
   clearInterval(RBV.timer); RBV.timer = null;
   if (!mine.length || !foes.length) {
     body.innerHTML = `<div class="mtnote">${!mine.length ? '<b>じぶん</b>' : ''}${!mine.length && !foes.length ? 'と' : ''}` +
@@ -2766,15 +2840,11 @@ function rbRender(body, bt, picks, foes, extra) {
 
   // ---- 画面を組む ----
   body.innerHTML = `<div class="rbctl">
-      <div class="rbrow1"><span class="lbl">見かた</span>
-        <div class="opts rbstep">
-          <button data-v="1" aria-pressed="${RB.step}" title="実際と同じ速さでバトルが流れ、決断の場面で止まって選べます">▶ バトル</button><button data-v="0" aria-pressed="${!RB.step}" title="全部おまかせで戦った結果を一気に出します。決断はタップで選び直せます">結果だけ</button>
-        </div>
-        ${RB.step ? `<button class="rbclear" style="display:${RBV.started || rbAnsCount() ? '' : 'none'}" title="選んだ手を消して、もう一度はじめからバトルします">▶ バトルスタート！</button>`
-          : (rbAnsCount() ? '<button class="rbclear" title="選んだ手をすべて消して、全部おまかせに戻します">選び直す</button>' : '')}
-      </div>
       <div class="rbrow1 rbfind"><span class="lbl">🔎 オートバトル</span>
         ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" title="${RB_GOAL[g].tip}">${RB_GOAL[g].label}</button>`).join('')}
+        ${RB.step ? `<button class="rbclear" style="display:${RBV.started || rbAnsCount() ? '' : 'none'}" title="選んだ手を消して、もう一度はじめからバトルします">▶ バトルスタート！</button>`
+          : (rbAnsCount() ? '<button class="rbclear" title="選んだ手をすべて消して、全部おまかせに戻します">選び直す</button>' : '')}
+        <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
       </div>
       ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
     </div>
@@ -2916,11 +2986,13 @@ function rbRender(body, bt, picks, foes, extra) {
   const startTimer = () => { stopTimer(); RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
 
   // ---- 操作の配線 ----
-  body.querySelectorAll('.rbstep button').forEach(b => b.onclick = () => {
-    RB.step = b.dataset.v === '1';
+  // 「結果だけ見る」: バトルを流さず一気に表示。もう一度押すとバトル表示へ戻る
+  const only = body.querySelector('.rbonly');
+  if (only) only.onclick = () => {
+    RB.step = !RB.step;
     RBV.cur = RB.step ? 0 : 1e9; RBV.playing = true; RBUI.open = null;
     run();
-  });
+  };
   const restart = () => {
     RB.ans = {}; RBUI.open = null; RB.found = null;
     RBV.cur = 0; RBV.playing = true;
@@ -3934,11 +4006,14 @@ document.getElementById('copyUrl').onclick = async () => {
   buildPartySlots(document.querySelector('#rkteam .myslots'), true);   // 模擬戦でも同じ3枠(PT)を使う
   buildFoeSlots();
   // 模擬戦のおすすめタブ(高火力/高火力＋安定)。同じタブをもう一度押すとオフ
-  document.querySelectorAll('#rksuggbar button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#rksuggbar button[data-m]').forEach(b => b.onclick = () => {
     RKS.mode = RKS.mode === b.dataset.m ? null : b.dataset.m;
-    document.querySelectorAll('#rksuggbar button').forEach(x =>
+    document.querySelectorAll('#rksuggbar button[data-m]').forEach(x =>
       x.setAttribute('aria-pressed', x.dataset.m === RKS.mode));
   });
+  // 模擬戦の「⚙ 詳細」パネルの開閉
+  const dTab = document.getElementById('rkdetailtab');
+  if (dTab) dTab.onclick = () => { RKD.open = !RKD.open; renderRkDetail(); };
   document.querySelectorAll('#party .ptsh button').forEach(b => b.onclick = () => {
     document.querySelectorAll('#party .ptsh button').forEach(x => x.setAttribute('aria-pressed', x === b));
     ptShield = +b.dataset.v;
