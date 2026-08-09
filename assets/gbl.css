@@ -335,8 +335,13 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .pb::after{content:'';position:absolute;left:50%;top:50%;width:4px;height:4px;transform:translate(-50%,-50%);
   border-radius:50%;background:#eef1fb;box-shadow:0 0 0 1px #0c1122}
 .pb.off{filter:grayscale(1) brightness(.4)}
-.shd{font-style:normal;font-size:.64rem}
+.shd{font-style:normal;font-size:.95rem;line-height:1}
 .shd.off{filter:grayscale(1) brightness(.4)}
+/* 交代のクールタイム表示(じぶん側・ボールの下)。見落とさないよう大きめに出す */
+.hswap{display:flex;align-items:center;gap:3px;margin-top:3px;color:var(--gold);font-weight:900;font-size:.95rem;line-height:1}
+.hswap b{font-size:1.25rem;line-height:1}
+.hswap small{font-size:.62rem;color:var(--sub);font-weight:700}
+.hswap:empty{display:none}
 .gqs{display:inline-flex;gap:4px}
 .gq{position:relative;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   background:conic-gradient(var(--gqc) var(--p,0%),rgba(255,255,255,.09) 0)}

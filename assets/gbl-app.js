@@ -2340,6 +2340,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     // この対面の「決断の場面」を最終状態で作り直す(画面に出してタップで選び直せるようにする)
     const points = log.map(p => ({ ...p, gt: base + p.tn, ctx, opts: rbChoices(p, ctx) }));
     legs.push({ res, base, myIdx: mi, foeIdx: fi, meName: picks[mi].name, foeName: rktName(foes[fi]),
+      swOk: swOkAt,   // この対面中に交代が解禁される通しターン(HUDの交代タイマー用)
       meDown, foeDown, swapped, swapTo: swapped ? dec.swapTo : null, pol, li, points, foeMv,
       leadHit: li === 0 && lead ? lead.hit : null, leadPt: li === 0 && lead ? lead.pt : null,
       // hud = この対面が始まった時点の両者の状態(下の常駐フレームの表示に使う)
@@ -2586,6 +2587,7 @@ function rbRender(body, bt, picks, foes, extra) {
       max0: res.final[0].hpMax, max1: res.final[1].hpMax,
       sp0: rbSpList(leg.pol).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: fsp ? [{ n: D.moves[fsp].n, e: D.moves[fsp].e }] : [],
+      swOk: leg.swOk || 0,   // 交代が解禁される通しターン(残り秒は表示時に gt から計算)
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
@@ -2696,6 +2698,7 @@ function rbRender(body, bt, picks, foes, extra) {
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b></div>
           <div class="hb"><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqs"></span><span class="bfs"></span></div>
+          <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
           <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button>` : ''}</div>
@@ -2721,6 +2724,7 @@ function rbRender(body, bt, picks, foes, extra) {
   };
   const R0 = sideRefs('me'), R1 = sideRefs('foe');
   const clk = hud.querySelector('.clk'), trn = hud.querySelector('.trn');
+  const swapEl = hud.querySelector('.hs.me .hswap');   // 交代タイマー(じぶん側だけ)
   let ptr = 0, lastEl = null, curLegKey = '';
   function updateHud(gt) {
     const f = frames[Math.max(0, Math.min(gt, stop))];
@@ -2762,6 +2766,9 @@ function rbRender(body, bt, picks, foes, extra) {
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1);
     clk.textContent = rbSec(gt);
     trn.textContent = gt + 'T';
+    // 交代のクールタイム(45秒)の残り。0になったら消える＝出ていなければいつでも交代できる
+    const swLeft = Math.max(0, (f.meta.swOk || 0) - gt);
+    swapEl.innerHTML = swLeft > 0 ? `⇄<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
   }
   const revealTo = g => {
     while (ptr < els.length && +els[ptr].dataset.gt <= g) {
