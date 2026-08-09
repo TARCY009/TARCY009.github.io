@@ -837,7 +837,7 @@ const HELP_HTML = `
 
   <ul>
     <li><b>結果だけ見る</b>（オートバトル行の右）… バトルを流さず、全部おまかせで戦った結果を<b>一気に</b>出します。並んだチップをタップすれば選び直せます。もう一度押すと流れるバトル表示に戻ります</li>
-    <li><b>🔎 オートバトル（最速／安定）</b>… 決断の組み合わせをAIが自動でさがします。<b>最速</b>=勝てる中で決着がいちばん早い手順、<b>安定</b>=勝てる中で手持ちとHPがいちばん残る手順（どちらも「勝てること→倒した数」が最優先）。見つかった手順はそのままバトルで再生されるので、続けて手直しできます</li>
+    <li><b>🔎 オートバトル（最速／安定）</b>… <b>押して選んでおき、▶ バトルスタート！で開始</b>すると、決断の組み合わせをAIが自動でさがして再生します（もう一度押すと解除）。<b>最速</b>=勝てる中で決着がいちばん早い手順、<b>安定</b>=勝てる中で手持ちとHPがいちばん残る手順（どちらも「勝てること→倒した数」が最優先）。再生後も続けて手直しできます</li>
     <li>引っ込めたポケモンはHP・ゲージを保ったまま控えに戻り、出し直すと続きから戦います</li>
     <li><b>🎲 わざ運が最悪でも</b>… あいてのわざを決め打ちしたときだけ出ます。対面ごとに<b>こちらがいちばんキツいわざ</b>を引いた場合の結果です（わざ欄が全部「自動」なら主結果がそのまま最悪ケースです）</li>
   </ul>
@@ -2155,7 +2155,7 @@ function rkRankCard(r, i) {
 // ---- ロケット団戦: 模擬戦 ----
 // ans  = 決断への答え（キーは rbKey。決めていない場面は「おまかせ」でAIが判断する）
 // step = 見かた。true=バトル（1ターン=0.5秒で再生し、決断で止まる）／false=結果だけ（一気に出す）
-const RB = { ans: {}, step: true, found: null };
+const RB = { ans: {}, step: true, found: null, goal: null };
 const rbAnsCount = () => Object.keys(RB.ans).length;
 // 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
 const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a' };
@@ -2842,14 +2842,16 @@ function rbRender(body, bt, picks, foes, extra) {
   }
 
   // ---- 画面を組む ----
-  body.innerHTML = `<div class="rbctl">
-      <div class="rbrow1 rbfind"><span class="lbl">🔎 オートバトル</span>
-        ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" title="${RB_GOAL[g].tip}">${RB_GOAL[g].label}</button>`).join('')}
-        ${RB.step ? `<button class="rbclear" style="display:${RBV.started || rbAnsCount() ? '' : 'none'}" title="選んだ手を消して、もう一度はじめからバトルします">▶ バトルスタート！</button>`
-          : (rbAnsCount() ? '<button class="rbclear" title="選んだ手をすべて消して、全部おまかせに戻します">選び直す</button>' : '')}
-        <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
+  body.innerHTML = `<div class="rbctlbar">
+      <div class="rbctl">
+        <div class="rbrow1 rbfind"><span class="lbl">🔎 オートバトル</span>
+          ${Object.keys(RB_GOAL).map(g => `<button class="rbgo" data-g="${g}" aria-pressed="${RB.goal === g}" title="${RB_GOAL[g].tip}（押して選んでから ▶ バトルスタート！で開始）">${RB_GOAL[g].label}</button>`).join('')}
+          ${RB.step ? `<button class="rbclear" style="display:${RBV.started || rbAnsCount() ? '' : 'none'}" title="選んだ手を消して、もう一度はじめからバトルします">▶ バトルスタート！</button>`
+            : (rbAnsCount() ? '<button class="rbclear" title="選んだ手をすべて消して、全部おまかせに戻します">選び直す</button>' : '')}
+        </div>
+        ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
       </div>
-      ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
+      <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
     <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}">${x.html}</div>`).join('')}</div>
     <div class="rbdock">
@@ -3000,26 +3002,30 @@ function rbRender(body, bt, picks, foes, extra) {
     RB.ans = {}; RBUI.open = null; RB.found = null;
     RBV.cur = 0; RBV.playing = true;
     if (RB.step) RBV.started = true;   // そのまま新しいバトルが最初から始まる
+    if (RB.step && RB.goal) { applyGoal(); return; }   // オートバトルを選んでいれば探索してから再生
     run();
   };
   const clr = body.querySelector('.rbclear');
   if (clr) clr.onclick = restart;
   // 手順の自動探索: 見つかった手順をそのまま決断の答えに入れて、バトルで再生する
+  // 最速/安定は「押して選んでおく」だけ。▶ バトルスタート！を押したときに探索して再生する
   body.querySelectorAll('.rbgo').forEach(b => b.onclick = () => {
     const g = b.dataset.g;
-    b.textContent = 'さがしています…';
-    setTimeout(() => {
-      const r = rbFind(rbPicksCached(mine2(), foes, RK.sh), foes, RK.sh, g);
-      if (!r) { RB.found = '手順が見つかりませんでした。'; run(); return; }
-      RB.ans = r.ans; RBUI.open = null;
-      const o2 = RK_OUTCOME[r.bt.outcome];
-      RB.found = `🔎 ${RB_GOAL[g].label} → <b class="${o2.cls === 'win' ? 'ok' : 'ng'}">${o2.txt}</b>` +
-        `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
-      RBV.cur = 0; RBV.playing = true; RBV.started = true;   // 見つけた手順はそのまま再生する
-      run();
-    }, 30);
+    RB.goal = RB.goal === g ? null : g;
+    body.querySelectorAll('.rbgo').forEach(x => x.setAttribute('aria-pressed', x.dataset.g === RB.goal));
   });
   const mine2 = () => [0, 1, 2].filter(i => PT[i]).map(i => PT[i]);
+  // 選んでおいたオートバトル(最速/安定)の手順をさがして、そのまま再生する
+  const applyGoal = () => {
+    const r = rbFind(rbPicksCached(mine2(), foes, RK.sh), foes, RK.sh, RB.goal);
+    if (!r) { RB.found = '手順が見つかりませんでした。'; run(); return; }
+    RB.ans = r.ans; RBUI.open = null;
+    const o2 = RK_OUTCOME[r.bt.outcome];
+    RB.found = `🔎 ${RB_GOAL[RB.goal].label} → <b class="${o2.cls === 'win' ? 'ok' : 'ng'}">${o2.txt}</b>` +
+      `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
+    RBV.cur = 0; RBV.playing = true; RBV.started = true;
+    run();
+  };
   // 決めた場面のチップ → その場面からやり直す
   feedEl.querySelectorAll('.fchip').forEach(b => b.onclick = () => {
     const p = RBUI.pts[b.dataset.k];
@@ -3030,7 +3036,9 @@ function rbRender(body, bt, picks, foes, extra) {
   // HUDの再生コントロール
   const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
   const startBattle = () => {
-    RBV.started = true; RBV.playing = true; winbox.innerHTML = '';
+    RBV.started = true; RBV.playing = true;
+    if (RB.goal) { applyGoal(); return; }   // オートバトルを選んでいれば探索してから再生
+    winbox.innerHTML = '';
     if (clr) clr.style.display = '';   // 走り出したら上にも「▶ バトルスタート！」(やり直し)を出す
     if (RBV.cur >= stop) atStop();     // 開幕交代など、最初の決断が0ターン目ならすぐ聞く
     else startTimer();

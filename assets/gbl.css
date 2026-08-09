@@ -247,15 +247,17 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .fstat{font-size:.62rem;color:var(--sub);margin-top:4px;line-height:1.4}
 .rkstallnote{flex:1 0 100%;font-size:.62rem;color:var(--sub);line-height:1.5}
 /* ロケット団戦: 模擬戦(分岐タイムライン) */
-.rbctl{margin-top:10px;padding:8px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
+.rbctlbar{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.rbctl{width:fit-content;max-width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
 .rbrow1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .rbrow1 .lbl{font-size:.68rem;color:var(--sub);font-weight:600}
 .rbrow1 .opts{flex:0 1 200px}
 .rbrow1 .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
 .rbclear{padding:5px 9px;font-size:.68rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer}
-.rbfind{margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+.rbfind{margin-top:0;padding-top:0;border-top:none}
 .rbgo{padding:5px 11px;font-size:.72rem;font-weight:700;background:var(--panel);border:1px solid var(--cy);
   border-radius:8px;color:var(--cy);cursor:pointer}
+.rbgo[aria-pressed="true"]{background:var(--cy);color:#06202b}
 .rbfindnote{flex:1 0 100%;font-size:.6rem;color:var(--sub);line-height:1.5}
 .rbfound{margin-top:7px;padding:6px 9px;background:rgba(122,162,255,.1);border:1px solid var(--gl);
   border-radius:8px;font-size:.68rem;color:var(--ink);line-height:1.6}
@@ -455,10 +457,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:var(--bg);border:1px solid var(--line);border-radius:10px;cursor:pointer}
 .rkdrand:disabled{opacity:.35;cursor:default}
 .rkdprob .gopt{margin-top:8px}
-/* 「結果だけ見る」(オートバトル行の右端) */
-.rbonly{margin-left:auto;padding:5px 11px;font-size:.72rem;font-weight:700;color:var(--sub);
-  background:var(--bg2);border:1px solid var(--line);border-radius:10px;cursor:pointer}
-.rbonly[aria-pressed="true"]{color:var(--gold);border-color:var(--gold)}
+/* 「結果だけ見る」: オートバトルのフレームの外に置く独立ボタン(丸い金色で雰囲気を変える) */
+.rbonly{margin-left:auto;padding:9px 18px;font-size:.74rem;font-weight:800;letter-spacing:.02em;
+  color:var(--gold);background:transparent;border:1.5px solid var(--gold);border-radius:999px;cursor:pointer}
+.rbonly[aria-pressed="true"]{background:var(--gold);color:#241a00}
 .rksuggbar .lbl{font-size:.66rem;color:var(--sub)}
 .rksuggbar button{padding:3px 9px;font-size:.68rem;font-weight:700;color:var(--sub);
   background:var(--bg2);border:1px solid var(--line);border-radius:999px;cursor:pointer}
