@@ -2001,10 +2001,10 @@ function rkRankCard(r, i) {
 const RB = { ans: {}, step: true, found: null };
 const rbAnsCount = () => Object.keys(RB.ans).length;
 // 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
-const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', auto: 'a' };
+const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a' };
 const rbAnsToStr = () => Object.keys(RB.ans).map(k => {
   const a = RB.ans[k], c = RB_CODE[a.a] || 'a';
-  const v = a.a === 'fire' ? a.mv : a.a === 'wait' ? a.n : a.a === 'to' ? a.to : null;
+  const v = a.a === 'fire' ? a.mv : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
   return `${k.replace(/:/g, '.')}~${c}${v != null ? '~' + v : ''}`;
 }).join(',');
 function rbAnsFromStr(str) {
@@ -2015,7 +2015,8 @@ function rbAnsFromStr(str) {
       : c === 'w' ? { a: 'wait', n: Math.max(1, Math.min(9, +v || 1)) }
       : c === 'h' ? { a: 'hold' } : c === 'u' ? { a: 'use' } : c === 'n' ? { a: 'no' }
       : c === 'y' ? { a: 'stay' } : c === 'o' ? { a: 'order' }
-      : c === 't' ? (isNaN(+v) ? null : { a: 'to', to: +v }) : null;
+      : c === 't' ? (isNaN(+v) ? null : { a: 'to', to: +v })
+      : c === 'q' ? (isNaN(+v) ? null : { a: 'toq', to: +v }) : null;
     if (a) RB.ans[k.replace(/\./g, ':')] = a;
   });
 }
@@ -2097,7 +2098,7 @@ function rbPicks(mine, foes, myShields, moves) {
 // 次の4つのどれかに来たら止まって選択肢を出す(選ぶたびに先へ伸びていく):
 //   sp   … 自分のSPアタックが撃てるようになった → 撃つ(どちらを) / 撃たない / あとN発殴ってから
 //   sh   … あいてのSPアタックが飛んできた → シールドを使う / 使わない
-//   swap … あいてが交代してきて硬直している → 殴ったあと、交代する / このまま続ける
+//   swap … あいての次のポケモンが出てきた(倒した直後など) → すぐ交代 / 硬直ぶん殴ってから交代 / このまま
 //   next … 自分が倒された → 次にどれを出すか
 // 答えは RB.ans[キー] に持つ。キーは「対面の番号:種別:連番:待った発数」なので、
 // 前の決断を変えなければ後ろの決断のキーも変わらない(選び直しに強い)。
@@ -2128,7 +2129,8 @@ function rbPoints(turns, ctx, dec) {
     // 自分がSPアタックを撃った → 次の発の判断へ
     if (t.ev[0].some(e => e.full !== undefined)) { spIdx++; armed = false; asked = false; normals = 0; continue; }
     if (armed && t.ev[0].some(e => e.full === undefined)) normals++;   // 待っているあいだのノーマル
-    if (!armed && !asked && !dec.hold && cost && t.state[0].en >= cost) { armed = true; normals = 0; }
+    // 交代すると決めたあとはSPの質問を出さない(殴って下がる途中に撃つ判断は混乱のもと)
+    if (!armed && !asked && !dec.hold && dec.swapTo == null && cost && t.state[0].en >= cost) { armed = true; normals = 0; }
     if (armed) {
       // 「あとN発殴ってから」を選んでいれば、そのぶん後ろにずれたところが判断の場面
       // (撃つと決めた発は、そのとき決めた待ち発数の位置に判断の場面が残る＝キーが変わらない)
@@ -2138,14 +2140,17 @@ function rbPoints(turns, ctx, dec) {
       if (normals >= w) { pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn, en: t.state[0].en }); armed = false; asked = true; }
     }
   }
-  // --- あいてが交代してきた(硬直のあいだ殴ってから、交代するか) ---
-  // 硬直が明けるターンが判断の場面。交代のクールタイム中と、出せる控えが無いときは出さない
+  // --- あいての次のポケモンが出てきた(倒した直後など・硬直中): こちらも交代するか ---
+  // 質問は「次のあいてが出てきたターン」に出す。すぐ交代するか、硬直のあいだ
+  // ノーマルアタックを打ちきってから交代するか(rbChoices)を選べる。
+  // クールタイムが明けない・出せる控えが無いときは出さない
   if (ctx.foeEntry > 0 && ctx.base + ctx.foeEntry >= ctx.swOkAt && ctx.swTo.length) {
-    pts.push({ kind: 'swap', seq: 0, tn: Math.min(ctx.foeEntry, turns.length) });
+    pts.push({ kind: 'swap', seq: 0, tn: 1 });
   }
-  // 質問は必ず時系列の順に出す(同じターンならSP・シールド→交代の順)。
-  // 交代を先に聞いてしまうと、そのあと時間が巻き戻ってSPの質問が出る逆順が起きる(実装時に踏んだ)
-  pts.sort((a, b) => a.tn - b.tn);
+  // 質問は必ず時系列の順に出す(同じターンに並んだら交代→SP・シールドの順。
+  // 「交代する？」が最初の判断で、残る場合にだけSPを撃つかが意味を持つため)。
+  // 時系列を崩して交代を先頭に出すと、答えたあとに時間が巻き戻る逆順が起きる(実装時に踏んだ)
+  pts.sort((a, b) => a.tn - b.tn || (a.kind === 'swap' ? -1 : b.kind === 'swap' ? 1 : 0));
   return pts;
 }
 
@@ -2178,9 +2183,22 @@ function rbChoices(p, ctx) {
     { a: 'use', label: '🛡 使う', cls: 'fire', tip: 'シールドで防ぎます(ダメージ1)' },
     { a: 'no', label: `受ける${p.dmg ? `<b class="dmg">-${p.dmg}</b>` : ''}`, cls: 'hold', tip: 'シールドを使わずにダメージを受けます' },
   ];
-  if (p.kind === 'swap') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `⇄ ${ctx.picks[k].name}`, cls: 'fire',
-    tip: 'ここで交代します(あいては4.5秒動けません／自分も0.5秒動けません)' }))
-    .concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
+  if (p.kind === 'swap') {
+    // すぐ交代するか、あいての硬直のあいだノーマルアタックを打ちきってから交代するか。
+    // ＋N = 硬直(foeEntryターン)のあいだに打ちきれる発数
+    const fm = ctx.fast && D.moves[ctx.fast];
+    const n = fm ? Math.floor(ctx.foeEntry / (fm.tn || 1)) : 0;
+    const opts = [];
+    for (const k of ctx.swTo) {
+      opts.push({ a: 'toq', to: k, cls: 'fire',
+        label: `⇄ ${ctx.picks[k].name} <i class="need">すぐ</i>`,
+        tip: 'いますぐ交代します(あいてはここから4.5秒動けません／自分も0.5秒動けません)' });
+      if (n > 0) opts.push({ a: 'to', to: k, cls: 'fire',
+        label: `⇄ ${ctx.picks[k].name} <i class="need">${fm.n}＋${n}</i>`,
+        tip: `あいてが動けないあいだに${fm.n}をあと${n}発打ってから交代します(硬直ぶんを殴ってから下がる)` });
+    }
+    return opts.concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
+  }
   return ctx.swTo.map(k => ({ a: 'to', to: k, label: ctx.picks[k].name, cls: 'fire',
     tip: '次にこのポケモンを出します' }));
 }
@@ -2308,7 +2326,9 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       log.push({ ...p, ans: a, auto: !ans[p.key] });
       if (p.kind === 'swap') {
         if (a.a === 'stay') continue;             // 交代しないなら、そのまま先へ
-        dec.swapTo = a.to; dec.swapAt = Math.max(1, p.tn);
+        dec.swapTo = a.to;
+        // すぐ交代=そのターンのうちに ／ それ以外=硬直のあいだ殴りきってから(旧共有リンクの t~ も同じ)
+        dec.swapAt = a.a === 'toq' ? 1 : Math.max(1, ctx.foeEntry);
         continue;
       }
       rbApply(dec, p, a);
@@ -2476,7 +2496,15 @@ function rbAnsLabel(p, a) {
   }
   // チップは種別アイコン(RB_ICON)と並べて出すので、ここでは🛡や⇄を重ねない
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
-  if (p.kind === 'swap' || p.kind === 'lead') return a.a === 'stay' ? 'このまま' : `${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}に交代`;
+  if (p.kind === 'swap' || p.kind === 'lead') {
+    if (a.a === 'stay') return 'このまま';
+    const nm = p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : '';
+    if (p.kind === 'lead') return `${nm}に交代`;
+    if (a.a === 'toq') return `${nm}にすぐ交代`;
+    const fm = p.ctx.fast && D.moves[p.ctx.fast];
+    const n = fm ? Math.floor((p.ctx.foeEntry || 0) / (fm.tn || 1)) : 0;
+    return `${fm && n ? `${fm.n}＋${n}のあと` : ''}${nm}に交代`;
+  }
   return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
