@@ -951,6 +951,15 @@ function rkPool(key) {
     chargeds: [...new Set(p.c)].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION'),
   };
 }
+// ロケット団戦で「こちらにいちばんキツいわざ」を選ぶための評価。低いほどキツい。
+// 勝ち負けがまず最優先。勝つ場合は、ロケット団戦でいちばん大事な「早さ」を先に見る
+// (決着が遅いほどキツい)＝最悪ケースの秒数が主結果より短く見える逆転を防ぐ。
+// 同じ速さなら残りHPが少ないほどキツい。負け(と決着せず)は従来どおり scoreOf で比べる。
+// scoreOf は最大1000なので、勝ちはどれも2000以上になり負けと混ざらない
+const rkWorstScore = res => {
+  if (res.winner !== 0) return scoreOf(res, 0);
+  return 2000 + (1000 - res.turns) * 10 + res.final[0].hp / res.final[0].hpMax;
+};
 // ロケット団のあいてかどうかは statMult(倍率でステータスが決まる)の有無で見分ける
 const poolOf = cfg => (cfg && cfg.statMult ? rkPool(cfg.key) : movePool(cfg.key));
 // わざ構成の候補を作る。cfg = { fast:固定するノーマル, c1:固定するSP1, c2:指定されたSP2 }
@@ -1372,8 +1381,8 @@ const HELP_HTML = `
   <ul>
     <li><b>じぶん</b>… 枠ごとに<b>ノーマルアタック／SPアタック1／SPアタック2</b>を選びます。わざはバトル中に変えられないので、ここで決めたわざで最後まで戦います</li>
     <li>既定では<b>ノーマルアタック・SPアタックともダメージ効率がいちばん高いわざ</b>が選ばれています。ノーマルアタックだけ<b>おまかせ</b>（相手に合わせて自動）も選べます。SP2本目を開放していないなら「なし」にしてください</li>
-    <li><b>あいて</b>… ロケット団は<b>おぼえるわざの中からランダムに</b>打ってきます。自分で選ぶか、<b>🎲 ランダム</b>を押すとその引きを再現できます（押すたびに変わります）</li>
-    <li>あいてのわざ運がどう転んでも大丈夫かは、結果の<b>🎲 わざ運が最悪でも</b>で確かめられます</li>
+    <li><b>あいて</b>… ロケット団は<b>おぼえるわざの中からランダムに</b>打ってきます。既定の<b>自動（いちばんキツい）</b>は、全通りのうち<b>こちらにいちばんキツいわざ</b>を引いた前提で計算します（1対1と同じ基準）。わざを決め打ちしたいときは選ぶか、<b>🎲 ランダム</b>でその引きを再現できます（押すたびに変わります）</li>
+    <li>わざを決め打ちしたときは、結果に<b>🎲 わざ運が最悪でも</b>が添えられ、わざ運がどう転んでも大丈夫かを確かめられます</li>
   </ul>
 
   <ul>
@@ -1381,7 +1390,7 @@ const HELP_HTML = `
     <li><b>結果だけ</b>… 全部おまかせで戦った結果を<b>一気に</b>出します。並んだチップをタップすれば選び直せます</li>
     <li><b>🔎 オートバトル（最速／安定）</b>… 決断の組み合わせをAIが自動でさがします。<b>最速</b>=勝てる中で決着がいちばん早い手順、<b>安定</b>=勝てる中で手持ちとHPがいちばん残る手順（どちらも「勝てること→倒した数」が最優先）。見つかった手順はそのままバトルで再生されるので、続けて手直しできます</li>
     <li>引っ込めたポケモンはHP・ゲージを保ったまま控えに戻り、出し直すと続きから戦います</li>
-    <li><b>🎲 わざ運が最悪でも</b>… あいてのわざはランダムなので、対面ごとに<b>こちらがいちばんキツいわざ</b>を引いた場合の結果も出しています</li>
+    <li><b>🎲 わざ運が最悪でも</b>… あいてのわざを決め打ちしたときだけ出ます。対面ごとに<b>こちらがいちばんキツいわざ</b>を引いた場合の結果です（わざ欄が全部「自動」なら主結果がそのまま最悪ケースです）</li>
   </ul>
 
   <h4>計算の前提</h4>
@@ -2290,7 +2299,8 @@ function buildFoeSlots() {
     };
     el.querySelectorAll('select').forEach(sel => sel.onchange = () => {
       if (!RKT[i]) return;
-      RKT[i][sel.classList.contains('selFast') ? 'fast' : 'c1'] = sel.value;
+      // 空値=「自動(いちばんキツい)」。全通り試していちばんキツいわざで計算する
+      RKT[i][sel.classList.contains('selFast') ? 'fast' : 'c1'] = sel.value || null;
       saveRkt(); syncFoeSlots(); run();
     });
   });
@@ -2306,9 +2316,12 @@ function syncFoeSlots() {
     fb.style.display = 'block';
     const cfg = rktCfg(m);
     const { fasts, chargeds } = rkPool(m.key);   // 特別なわざ(レガシー技)は打ってこない
+    // 既定は「自動(いちばんキツい)」＝全通りのうちこちらにいちばんキツいわざで計算する。
+    // 1対1(最悪ケース基準)と結果の基準がそろい、わざを決め打ちしたいときだけ選べばよい
+    const auto = '<option value="">自動（いちばんキツい）</option>';
     const opts = (list, sel) => list.map(x => `<option value="${x}"${x === sel ? ' selected' : ''}>${D.moves[x].n}</option>`).join('');
-    el.querySelector('.selFast').innerHTML = opts(fasts, cfg.fast);
-    el.querySelector('.selC1').innerHTML = opts(chargeds, cfg.throw);
+    el.querySelector('.selFast').innerHTML = auto + opts(fasts, m.fast);
+    el.querySelector('.selC1').innerHTML = chargeds.length ? auto + opts(chargeds, m.c1) : '';
     const st = PvpEngine.buildStats(D, cfg);
     // 実数値はシャドウ補正をかける前の値(ゲームの表示に合わせる)
     el.querySelector('.fstat').innerHTML =
@@ -2468,7 +2481,7 @@ function rkRanking() {
       const res = PvpEngine.simulate(D, L,
         { ...foeBase, fast: c.fast, charged: c.throw ? [c.throw] : [], throw: c.throw }, SIMOPT);
       const cur = byFast.get(c.fast);
-      if (!cur || scoreOf(res, 0) < scoreOf(cur, 0)) byFast.set(c.fast, res);
+      if (!cur || rkWorstScore(res) < rkWorstScore(cur)) byFast.set(c.fast, res);
     }
     const list = [...byFast.entries()].map(([f, res]) => ({ f, res, win: res.winner === 0 }));
     r.nFast = list.length;
@@ -2477,7 +2490,7 @@ function rkRanking() {
     r.loseTo = list.filter(x => !x.win).map(x => D.moves[x.f].n);
     // 秒数は「勝てる中でいちばん遅いケース」＝安全側で出す
     const wins = list.filter(x => x.win);
-    const show = (wins.length ? wins : list).reduce((a, b) => scoreOf(a.res, 0) < scoreOf(b.res, 0) ? a : b);
+    const show = (wins.length ? wins : list).reduce((a, b) => rkWorstScore(a.res) < rkWorstScore(b.res) ? a : b);
     r.turns = show.res.turns;
     r.myPct = Math.round(show.res.final[0].hp / show.res.final[0].hpMax * 100);
     r.foePct = Math.round(show.res.final[1].hp / show.res.final[1].hpMax * 100);
@@ -2632,7 +2645,7 @@ function rbPicks(mine, foes, myShields, moves) {
         const spList = chargeds.length ? chargeds : [null];
         let worst = null;
         for (const fm of fasts) for (const sp of spList) {
-          const s = scoreOf(PvpEngine.simulate(D, L, { ...R, fast: fm, charged: sp ? [sp] : [], throw: sp }, SIMOPT), 0);
+          const s = rkWorstScore(PvpEngine.simulate(D, L, { ...R, fast: fm, charged: sp ? [sp] : [], throw: sp }, SIMOPT));
           if (worst === null || s < worst) worst = s;
         }
         sc += worst;
@@ -2769,27 +2782,35 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       pending = { kind: 'lead', seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts };
     } else {
       const to = picks[a.to] ? a.to : 1;
-      // 飛んでくる1発のダメージは、交代先 vs あいて で1度だけ小さくシミュして読み取る
-      // (タイプ相性・シャドウ・倍率込みの正確な値になる)
+      // 飛んでくる1発のダメージは、交代先 vs あいて で小さくシミュして読み取る
+      // (タイプ相性・シャドウ・倍率込みの正確な値になる)。
+      // わざ欄が「自動(いちばんキツい)」なら、いちばん痛いノーマルアタックが来るとして読む
       const R0 = rktCfg(foes[0], { shields: foeShLeft, stallStart: 0 });
-      const probe = PvpEngine.simulate(D, { ...picks[to].base, ...picks[to].pol,
-        charged: [], timing: 'shots', shotPlan: [], shotRest: null, shields: myShields }, R0,
-        { ...SIMOPT, stopAt: 8 });
-      let dmg = 1, mvName = D.moves[R0.fast] ? D.moves[R0.fast].n : '';
-      for (const row of probe.rows) {
-        const e = row.ev && row.ev[1];
-        if (e && e.full === undefined && e.dmg != null) { dmg = e.dmg; mvName = e.move; break; }
+      const lfList = foes[0].fast ? [R0.fast] : rkPool(foes[0].key).fasts;
+      let hit = null;
+      for (const f of lfList) {
+        const probe = PvpEngine.simulate(D, { ...picks[to].base, ...picks[to].pol,
+          charged: [], timing: 'shots', shotPlan: [], shotRest: null, shields: myShields },
+          { ...R0, fast: f }, { ...SIMOPT, stopAt: 8 });
+        for (const row of probe.rows) {
+          const e = row.ev && row.ev[1];
+          if (e && e.full === undefined && e.dmg != null) {
+            if (!hit || e.dmg > hit.dmg) hit = { dmg: e.dmg, mv: e.move, eg: D.moves[f] ? D.moves[f].eg : 0 };
+            break;
+          }
+        }
       }
+      if (!hit) hit = { dmg: 1, mv: D.moves[R0.fast] ? D.moves[R0.fast].n : '',
+        eg: D.moves[R0.fast] ? D.moves[R0.fast].eg : 0 };
       const maxB = PvpEngine.buildStats(D, picks[to].base).hp;
       const maxF = PvpEngine.buildStats(D, R0).hp;
-      const eg = D.moves[R0.fast] ? D.moves[R0.fast].eg : 0;
       mi = to;
-      st[to].resume = { hp: Math.max(0, maxB - dmg), en: 0, buffs: [0, 0], stall: 0 };
-      foeResume = { hp: maxF, en: Math.min(100, eg), buffs: [0, 0], stall: 0 };
+      st[to].resume = { hp: Math.max(0, maxB - hit.dmg), en: 0, buffs: [0, 0], stall: 0 };
+      foeResume = { hp: maxF, en: Math.min(100, hit.eg), buffs: [0, 0], stall: 0 };
       myEntry = RK_ENTER.swap.me;
       foeEntry = RK_ENTER.swap.foe;
       swOkAt = RK.swapCd;
-      lead = { hit: { mv: mvName, dmg },
+      lead = { hit: { mv: hit.mv, dmg: hit.dmg },
         pt: { kind: 'lead', seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts, ans: a, auto: !ans[key] } };
     }
   }
@@ -2804,7 +2825,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     // 決めた場面はキーで覚える(「撃たない」を選ぶとその場面自体が消えるなど、
     // 決めるたびに場面の並びが変わるので、番号ではなくキーで対応づける)
     const handled = new Set(), log = [];   // log = 決めた場面の履歴(画面に出して選び直せるようにする)
-    let res = null;
+    let res = null, foeMv = null;   // foeMv = 採用したあいてのわざ(自動のときHUDの表示に使う)
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す)
     for (let guard = 0; guard < 60; guard++) {
       // charged は必ず入れる(SPが1本の構成だと、わざ未指定のときエンジンが選べないため)
@@ -2816,16 +2837,17 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       const R = rktCfg(foes[fi], { shields: foeShLeft, stallStart: foeEntry });
       if (foeResume) R.resume = { ...foeResume, stall: Math.max(foeResume.stall || 0, foeEntry) };
       const sopt = { ...SIMOPT, stopAt: dec.swapAt };
-      if (!worst) res = PvpEngine.simulate(D, L, R, sopt);
-      else {
-        // あいてが打ってくるわざはランダムなので、全通りのうちこちらがいちばんキツいもので通す
-        const { fasts, chargeds } = rkPool(foes[fi].key);
-        const spL = chargeds.length ? chargeds : [null];
-        res = null;
-        for (const f of fasts) for (const sp of spL) {
-          const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, sopt);
-          if (!res || scoreOf(r, 0) < scoreOf(res, 0)) res = r;
-        }
+      // あいてのわざ欄が「自動(いちばんキツい)」の項目は全通り試して、こちらに
+      // いちばんキツいものを採用する(1対1の最悪ケース基準と結果がそろう)。
+      // worst=true(わざ運の最悪) は、わざを指定していても全通りにする
+      const pool = rkPool(foes[fi].key);
+      const fList = (worst || !foes[fi].fast) ? pool.fasts : [R.fast];
+      const spL = (worst || !foes[fi].c1) ? (pool.chargeds.length ? pool.chargeds : [null]) : [R.throw || null];
+      res = null; let sc = null;
+      for (const f of fList) for (const sp of spL) {
+        const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, sopt);
+        const s = rkWorstScore(r);
+        if (!res || s < sc) { res = r; sc = s; foeMv = { fast: f, sp: sp || null }; }
       }
       const pts = rbPoints(rbTurns(res), ctx, dec);
       const p = pts.find(x => !handled.has(rbKey(li, x.kind, x.seq, x.w)));
@@ -2850,7 +2872,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     // この対面の「決断の場面」を最終状態で作り直す(画面に出してタップで選び直せるようにする)
     const points = log.map(p => ({ ...p, gt: base + p.tn, ctx, opts: rbChoices(p, ctx) }));
     legs.push({ res, base, myIdx: mi, foeIdx: fi, meName: picks[mi].name, foeName: rktName(foes[fi]),
-      meDown, foeDown, swapped, swapTo: swapped ? dec.swapTo : null, pol, li, points,
+      meDown, foeDown, swapped, swapTo: swapped ? dec.swapTo : null, pol, li, points, foeMv,
       leadHit: li === 0 && lead ? lead.hit : null, leadPt: li === 0 && lead ? lead.pt : null,
       // hud = この対面が始まった時点の両者の状態(下の常駐フレームの表示に使う)
       hud: { hp0: st[mi].resume ? Math.max(0, st[mi].resume.hp) : res.final[0].hpMax,
@@ -3043,8 +3065,10 @@ function runRkBuild() {
     if (token !== multiToken) return;
     const picks = rbPicksCached(mine, foes, RK.sh);
     const bt = rbPlay(picks, foes, RK.sh, RB.ans, RB.step);
-    // 決着まで出ているときだけ、まとめ(わざ運の最悪)を添える
-    const extra = bt.pending ? {} : { worst: rbPlay(picks, foes, RK.sh, RB.ans, false, true) };
+    // 決着まで出ているときだけ、まとめ(わざ運の最悪)を添える。
+    // あいてのわざが全部「自動(いちばんキツい)」なら主結果がそのまま最悪ケースなので出さない
+    const anyFixed = foes.some(f => f.fast || f.c1);
+    const extra = bt.pending || !anyFixed ? {} : { worst: rbPlay(picks, foes, RK.sh, RB.ans, false, true) };
     rbRender(body, bt, picks, foes, extra);
   };
   if (rbPicksHas(mine, foes, RK.sh)) go();
@@ -3052,7 +3076,11 @@ function runRkBuild() {
 }
 
 function rbRender(body, bt, picks, foes, extra) {
-  setProbTab(anyProbMove(picks.map(p => p.pol).concat(foes.map(f => rktCfg(f)))));
+  // わざ欄が「自動(いちばんキツい)」のあいては、候補の全わざを確率わざの判定に含める
+  setProbTab(anyProbMove(picks.map(p => p.pol).concat(foes.map(f => {
+    const pool = rkPool(f.key);
+    return { charged: (f.fast ? [f.fast] : pool.fasts).concat(f.c1 ? [f.c1] : pool.chargeds) };
+  }))));
   extra = extra || {};
   RBUI.pts = {}; RBUI.order = [];
   const regPt = p => { if (p) { RBUI.pts[p.key] = p; RBUI.order.push(p.key); } };
@@ -3074,13 +3102,14 @@ function rbRender(body, bt, picks, foes, extra) {
     data-k="${p.key}" title="タップすると、この場面からやり直せます">${RB_ICON[p.kind]}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
     const res = leg.res, base = leg.base;
-    const fcfg = rktCfg(foes[leg.foeIdx]);
+    // あいてのSPは実際に採用されたわざ(自動なら「いちばんキツい」と選ばれたもの)で出す
+    const fsp = leg.foeMv ? leg.foeMv.sp : rktCfg(foes[leg.foeIdx]).throw;
     const meta = {
       name0: leg.meName, name1: leg.foeName,
       cp0: res.final[0].cp, cp1: res.final[1].cp,
       max0: res.final[0].hpMax, max1: res.final[1].hpMax,
       sp0: rbSpList(leg.pol).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
-      sp1: fcfg.throw ? [{ n: D.moves[fcfg.throw].n, e: D.moves[fcfg.throw].e }] : [],
+      sp1: fsp ? [{ n: D.moves[fsp].n, e: D.moves[fsp].e }] : [],
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
@@ -3625,7 +3654,7 @@ function rkOptimize(cfgL, cfgR) {
     for (const c of all) {
       const r = PvpEngine.simulate(D, L, foeCfg(c), SIMOPT);
       if (r.winner === 0) wins++;
-      const sc = scoreOf(r, 0);
+      const sc = rkWorstScore(r);   // 勝つ場合は「遅いほどキツい」も込みで最悪を見る
       if (worst === null || sc < worst) worst = sc;
     }
     if (!best || wins > best.wins || (wins === best.wins && worst > best.worst)) best = { wins, worst, pol, L };
@@ -3633,7 +3662,7 @@ function rkOptimize(cfgL, cfgR) {
   // 選んだ構成にとって、いちばんキツいわざを主結果として出す(最悪ケース基準)
   let show = shown[0], showSc = null;
   for (const c of shown) {
-    const sc = scoreOf(PvpEngine.simulate(D, best.L, foeCfg(c), SIMOPT), 0);
+    const sc = rkWorstScore(PvpEngine.simulate(D, best.L, foeCfg(c), SIMOPT));
     if (showSc === null || sc < showSc) { showSc = sc; show = c; }
   }
   return { left: best.pol, right: show, wins: best.wins, n: all.length };
@@ -3652,11 +3681,11 @@ function rkAllMoves(L, R) {
     const me = r.final[0], foe = r.final[1];
     rows.push({ fast: f, sp, win: r.winner === 0, draw: r.winner === 'draw', turns: r.turns,
       pct: Math.round(me.hp / me.hpMax * 100), foePct: Math.round(foe.hp / foe.hpMax * 100),
-      score: scoreOf(r, 0),   // 自分から見た良さ(相手を削った分＋自分の残りHP)。低いほどキツい
+      score: rkWorstScore(r),   // 自分から見た良さ。低いほどキツい
       cur: f === R.fast && sp === (R.throw || null) });
   }
   // キツい順に並べる。先頭がいちばん危ないわざ
-  // (勝つ場合は自分の残りが少ないほど、負ける場合は相手を削れていないほどキツい)
+  // (勝つ場合は決着が遅いほど・残りが少ないほど、負ける場合は相手を削れていないほどキツい)
   rows.sort((a, b) => a.score - b.score);
   return { rows, wins: rows.filter(r => r.win).length };
 }
