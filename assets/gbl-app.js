@@ -137,7 +137,7 @@ document.getElementById('app').innerHTML = `
       <div class="opts timing">
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <label class="f">連戦（2体目以降の引き継ぎ）</label>
+      <label class="f">連戦</label>
       <div class="opts carry">
         <button data-v="off" aria-pressed="true" title="満タン・ゲージ0の状態から開始する">なし</button><button data-v="on" aria-pressed="false" title="前の対面から引き継いだHP・ゲージで開始する">設定する</button>
       </div>
@@ -217,7 +217,7 @@ document.getElementById('app').innerHTML = `
       <div class="opts timing">
         <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
-      <label class="f">連戦（2体目以降の引き継ぎ）</label>
+      <label class="f">連戦</label>
       <div class="opts carry">
         <button data-v="off" aria-pressed="true" title="満タン・ゲージ0の状態から開始する">なし</button><button data-v="on" aria-pressed="false" title="前の対面から引き継いだHP・ゲージで開始する">設定する</button>
       </div>
@@ -332,7 +332,9 @@ Object.values(D.moves).forEach(m => {
   if (m.e) MOVE_COST[m.n] = m.e;
   (NAME_TYPES[m.n] = NAME_TYPES[m.n] || new Set()).add(m.t);
 });
-const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOVE_TYPE[name]] || '', size || 13)}${name}</span>`;
+// チップ表示ではギルガルド専用わざの「（独自性能）」を「（独自）」に縮める(タイムライン等の省スペース用。
+// タイプアイコンの参照はフルネームで行うので縮めるのは表示文字だけ)
+const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOVE_TYPE[name]] || '', size || 13)}${name.replace('（独自性能）', '（独自）')}</span>`;
 
 // ---- リーグ上限内の理想個体値(SCP最大)を求める ----
 // 通常はPL51(相棒込み)まで。メガのスーパーマックスLvは52、+最高の相棒で53まで
@@ -420,8 +422,13 @@ function policies(key, cfg) {
   if (!out.length) for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5))) out.push({ fast: f });
   return out;
 }
-// 画面で選んでいるわざ(ノーマル/SP1/SP2)を policies 用の指定に変換する
-const polOpts = i => ({ fast: S[i].fast || undefined, c1: S[i].c1 || undefined, c2: S[i].c2 || undefined });
+// 画面で選んでいるわざ(ノーマル/SP1/SP2)を policies 用の指定に変換する。
+// 手動で選んだわざが最優先、なければ以前の自動選出で決まったわざ(pin)を使い続ける
+// (設定をいじるたびに構成が勝手に変わらないようにする。どちらも無いときだけ自動最適化)
+const polOpts = i => ({ fast: S[i].fast || S[i].pin.fast || undefined,
+  c1: S[i].c1 || S[i].pin.c1 || undefined, c2: S[i].c2 || undefined });
+// 自動選出のわざを未確定に戻す(ポケモンを替えた・リーグを替えたときに呼ぶ)
+const resetPin = i => { S[i].pin = { fast: null, c1: null }; };
 
 function optimize(cfgL, cfgR) {
   const PL = policies(cfgL.key, cfgL), PR = policies(cfgR.key, cfgR);
@@ -501,6 +508,7 @@ function findIvFor(key, need, capV, maxLv) {
 // ---- 画面状態 ----
 let cap = 1500;
 const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
+  pin: { fast: null, c1: null },   // 自動選出で決まったわざの控え(一度決まったら固定するため)
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
   spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
@@ -689,8 +697,9 @@ sideEl.forEach((el, i) => {
 });
 
 // リーグ/カップ切替の共通処理(わざ再選択とマニュアルPLの上限内再調整)
+// 自動選出で確定したわざ(pin)だけ新リーグで選び直す。手動で選んだわざは変えない
 function afterCapChange() {
-  S.forEach(s => { s.fast = s.c1 = s.c2 = null; });
+  S.forEach((s, i) => resetPin(i));
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs && s.key) {
       s.mLevel = maxLevelFor(s.key, s.mIvs, cap, s.maxLv);
@@ -1038,7 +1047,7 @@ function syncRocket() {
   // ロケット団のポケモンはステータスの決まり方が違うので、個体値・PLの欄は使わない
   S[1].c2 = null;   // 同じ個体が2種類のSPアタックを使い分けることはない
   // ロケット団はメガ・ゲンシを使ってこない。他モードから持ち越していたら外す
-  if (isMega(S[1].key)) { S[1].key = null; S[1].fast = S[1].c1 = null; sideEl[1].querySelector('input').value = ''; }
+  if (isMega(S[1].key)) { S[1].key = null; S[1].fast = S[1].c1 = null; resetPin(1); sideEl[1].querySelector('input').value = ''; }
   if (S[1].key) {   // 特別なわざ(レガシー技)は打ってこないので、選ばれていたら自動選択に戻す
     const pool = rkPool(S[1].key);
     if (S[1].fast && !pool.fasts.includes(S[1].fast)) S[1].fast = null;
@@ -1184,10 +1193,10 @@ function runMulti() {
   const myCfg = (pol, sh) => listSideCfg(0, meBase, pol, sh, myTiming);
   // 左パネルの表示(CP・個体値・PL・わざ)もこのリーグ/カップの内容に更新する
   const pool0 = movePool(S[0].key);
-  fillMoves(0, { ...meBase, fast: S[0].fast || pool0.fasts[0], throw: S[0].c1 || pool0.chargeds[0] });
+  fillMoves(0, { ...meBase, fast: S[0].fast || S[0].pin.fast || pool0.fasts[0], throw: S[0].c1 || S[0].pin.c1 || pool0.chargeds[0] });
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。マスをタップすると、そのシールド枚数のまま1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成で、SPアタック2本を相手に合わせて使い分けます。自分のわざは対面ごとに自動で最適化（選んだわざがあればそれを使用）。<b>SPアタック2を選ぶと自分も2本を使い分けて</b>計算するので、わざ開放した実戦に近い結果になります</div>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。マスをタップすると、そのシールド枚数のまま1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成で、SPアタック2本を相手に合わせて使い分けます。自分のわざは対面ごとに自動で最適化（わざ欄で選択・確定済みの構成があればそれで固定）。<b>SPアタック2を選ぶと自分も2本を使い分けて</b>計算するので、わざ開放した実戦に近い結果になります</div>
     ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
@@ -1372,6 +1381,7 @@ function applyMeta(m, i) {
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
   // 環境リストのわざ構成(SP2本)をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する
   S[i].fast = m.f || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;
   sideEl[i].querySelector('input').value = m.n;
@@ -1405,10 +1415,10 @@ function runCounter() {
   const foePols = policies(S[1].key, polOpts(1));
   const foeCfg = (pol, sh) => listSideCfg(1, foeBase, pol, sh, foeTiming);
   const pool1 = movePool(S[1].key);
-  fillMoves(1, { ...foeBase, fast: S[1].fast || pool1.fasts[0], throw: S[1].c1 || pool1.chargeds[0] });
+  fillMoves(1, { ...foeBase, fast: S[1].fast || S[1].pin.fast || pool1.fasts[0], throw: S[1].c1 || S[1].pin.c1 || pool1.chargeds[0] });
   const foeName = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
   box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">環境上位${list.length}匹から検索${cup ? `（${cup.label}）` : ''}</small></h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。マスをタップすると、その候補を「じぶん」にセットし同じシールド枚数で1対1シミュを開きます。候補は理想個体値・標準的な推奨わざ構成（SPアタック2本を使い分け）、あいてのわざは対面ごとに相手が最善を選ぶ前提。あいてに<b>SPアタック2を選ぶと、あいても2本を使い分けて</b>計算します</div>
+    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。マスをタップすると、その候補を「じぶん」にセットし同じシールド枚数で1対1シミュを開きます。候補は理想個体値・標準的な推奨わざ構成（SPアタック2本を使い分け）、あいてのわざは対面ごとに相手が最善を選ぶ前提（わざ欄で選択・確定済みの構成があればそれで固定）。あいてに<b>SPアタック2を選ぶと、あいても2本を使い分けて</b>計算します</div>
     ${ctlHtml('counter')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">勝てる候補</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
@@ -2958,6 +2968,7 @@ function applyMyPk(i, m, skipRun) {
   if (!m || !D.pokemon[m.key]) return;
   S[i].key = m.key;
   S[i].fast = m.fast || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);   // 発ごとのSP設定は「おまかせ」に戻す(前のポケモンの指定を残さない)
   S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
   S[i].shadow = !!m.shadow;
@@ -2993,6 +3004,7 @@ function resetSpPlan(i) {
 function pick(i, key) {
   S[i].key = key;
   S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
+  resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);
   S[i].shadow = false;
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', false);
@@ -3071,6 +3083,15 @@ function run() {
   // ロケット団戦はあいてのわざがランダムなので「最悪ケース基準」で選ぶ(rkOptimize)
   const opt2 = (a, b) => rk ? rkOptimize(optCfg(0, a), optCfg(1, b)) : optimize(optCfg(0, a), optCfg(1, b));
   const plan = opt2(curSh(0), curSh(1));
+  // 自動選出のわざはここで確定して控える(pin)。以後は手動で変えるか、
+  // ポケモン・リーグを替えるまで同じ構成を使い続ける(設定をいじるたびに勝手に変わらないように)。
+  // ロケット団のあいては「わざ全通りの最悪ケース」を見る仕様なので固定しない
+  const pinMoves = (i, pol) => {
+    if (!S[i].fast && pol.fast) S[i].pin.fast = pol.fast;
+    if (!S[i].c1) S[i].pin.c1 = pol.throw || (pol.charged && pol.charged[0]) || null;
+  };
+  pinMoves(0, plan.left);
+  if (!rk) pinMoves(1, plan.right);
   // pol=採用するわざ構成 / sh=シールド枚数 / usePlan=マニュアル指定(何発目で使うか)を反映するか
   const fin = (i, pol, sh, usePlan) => {
     const c = { ...base[i], ...pol, bluff: S[i].bluff };
@@ -3476,6 +3497,14 @@ function updateUrl() {
     if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
     if (s.carry) qp[i ? 'cyr' : 'cyl'] = s.cHp + '.' + s.cEn;   // 連戦(開始HP%.開始ゲージ)
     if (!s.bluff) qp[i ? 'bfr' : 'bfl'] = 0;   // ブラフしない設定
+    // わざ構成(ノーマル~SP1~SP2)。手動選択は「!」付き、自動選出の確定値はそのまま書く。
+    // これが無いと、共有リンクを開いた人の側で自動選出をやり直すことになり、
+    // 送り主が確定させた構成と食い違うことがある
+    if (s.key) {
+      const f = s.fast ? '!' + s.fast : (s.pin.fast || '');
+      const c = s.c1 ? '!' + s.c1 : (s.pin.c1 || '');
+      if (f || c || s.c2) qp[i ? 'mvr' : 'mvl'] = [f, c, s.c2 || ''].join('~');
+    }
   });
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel' && !PAGE_ROCKET) qp.md = mode;
@@ -3498,7 +3527,7 @@ function updateUrl() {
 }
 
 // ---- タイムライン(ダイジェスト/全ターン切替) ----
-let lastRes = null, tlMode = 'digest', bpOpen = false;
+let lastRes = null, tlMode = 'all', bpOpen = false;
 // タイムラインの表を作る(1対1シミュで使う)
 function timelineTable(res, tlMode) {
   // HPの残り割合で色分け: 緑(50%以上)・黄(20〜50%未満)・赤(20%未満)
@@ -3693,8 +3722,8 @@ function renderTimeline() {
   tl.style.display = 'block';
   tl.innerHTML = `<div class="tlhead"><h3>タイムライン（0.5秒=1ターン）</h3>
     <div class="tlmode">
-      <button aria-pressed="${tlMode === 'digest'}" data-m="digest">山場だけ</button>
       <button aria-pressed="${tlMode === 'all'}" data-m="all">全ターン</button>
+      <button aria-pressed="${tlMode === 'digest'}" data-m="digest">山場のみ</button>
     </div></div>` + timelineTable(res, tlMode);
   tl.querySelectorAll('.tlmode button').forEach(b => b.onclick = () => { tlMode = b.dataset.m; renderTimeline(); });
 }
@@ -3764,6 +3793,19 @@ document.getElementById('copyUrl').onclick = async () => {
     el.querySelector('.custIv').style.display = 'block';
     el.querySelector('.ivA').value = p[0]; el.querySelector('.ivD').value = p[1];
     el.querySelector('.ivH').value = p[2]; el.querySelector('.ivL').value = S[i].mLevel;
+  });
+  ['mvl', 'mvr'].forEach((k, i) => {   // わざ構成の復元(「!」付き=手動選択 / なし=自動選出の確定値)
+    const v = q.get(k); if (!v || !S[i].key) return;
+    const [f, c, c2] = v.split('~');
+    const put = (val, fld) => {
+      if (!val) return;
+      const man = val[0] === '!';
+      const id = man ? val.slice(1) : val;
+      if (!D.moves[id]) return;
+      if (man) S[i][fld] = id; else S[i].pin[fld] = id;
+    };
+    put(f, 'fast'); put(c, 'c1');
+    if (c2 && D.moves[c2]) S[i].c2 = c2;
   });
   ['bfl', 'bfr'].forEach((k, i) => {   // ブラフ設定の復元
     if (q.get(k) === '0') {

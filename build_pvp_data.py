@@ -23,8 +23,8 @@ JP_MOVE_FIX_PVP = {
     'SNIPE_SHOT': 'ねらいうち', 'SPRINGTIDE_STORM': 'はるのあらし',
     'TECHNO_BLAST_DOUSE': 'テクノバスター（アクア）',
     # ギルガルド(シールドフォルム)専用のチャージ仕様技
-    'AEGISLASH_CHARGE_AIR_SLASH': 'エアスラッシュ（チャージ）',
-    'AEGISLASH_CHARGE_PSYCHO_CUT': 'サイコカッター（チャージ）',
+    'AEGISLASH_CHARGE_AIR_SLASH': 'エアスラッシュ（独自性能）',
+    'AEGISLASH_CHARGE_PSYCHO_CUT': 'サイコカッター（独自性能）',
 }
 # PvPoke固有IDでGMフォルムキーに機械照合できないポケモンの日本語名
 SPECIES_JA_FIX = {
