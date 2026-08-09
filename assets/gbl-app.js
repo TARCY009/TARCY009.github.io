@@ -2008,7 +2008,7 @@ function rkShowSugg(i, el) {
       <b class="rksgno">${k + 1}</b>
       <span class="rksgnm">${r.mine ? '<span class="rkrmine">★</span>' : ''}${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}</span>${typeIcons(p, 15)}
       <span class="rksgmv">${mvChip(D.moves[r.fast].n, 12)}</span>
-      <span class="rksgdps">${warn ? '⚠' : ''}${r.dps.toFixed(1)}/秒</span>
+      <span class="rksgdps">${warn ? '⚠' : ''}<small>DPS</small>${r.dps.toFixed(1)}</span>
     </div>`;
   }).join('');
   list.style.display = 'block';

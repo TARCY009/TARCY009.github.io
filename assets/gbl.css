@@ -440,6 +440,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rksgnm .shadowmark{color:#b06cff}
 .rksgmv{font-size:.74rem}
 .rksgdps{margin-left:auto;font-size:.72rem;color:var(--cy);white-space:nowrap}
+.rksgdps small{font-size:.58rem;color:var(--sub);margin-right:2px}
 /* ページ最下部の「使い方」タブ。説明の文章はすべてここに集める */
 .helpwrap{margin-top:18px}
 #helptab{width:100%;padding:10px;font-size:.8rem;font-weight:700;background:var(--panel);
