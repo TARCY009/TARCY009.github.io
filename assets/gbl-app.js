@@ -2246,6 +2246,9 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
   let mi = 0, fi = 0, base = 0, pending = null;
   let myShLeft = myShields, foeShLeft = rkShields();
   let foeResume = null;
+  // あいてのわざはバトル中に変わらない。「自動(いちばんキツい)」も最初の対面で採用したわざに
+  // 固定し、こちらの交代・被弾後の出し直しで同じあいてと再戦しても選び直さない
+  const foeMvLock = {};
   let myEntry = RK_ENTER[RK.enter].me, foeEntry = RK_ENTER[RK.enter].foe;
   let swOkAt = 0;
   // ---- 開幕交代(1匹目を出してすぐ交代し、あいての硬直4.5秒を序盤に稼ぐ) ----
@@ -2320,8 +2323,10 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       // いちばんキツいものを採用する(1対1の最悪ケース基準と結果がそろう)。
       // worst=true(わざ運の最悪) は、わざを指定していても全通りにする
       const pool = rkPool(foes[fi].key);
-      const fList = (worst || !foes[fi].fast) ? pool.fasts : [R.fast];
-      const spL = (worst || !foes[fi].c1) ? (pool.chargeds.length ? pool.chargeds : [null]) : [R.throw || null];
+      const lock = foeMvLock[fi];   // 2対面目以降は最初に採用したわざで固定(途中で変わらない)
+      const fList = lock ? [lock.fast] : (worst || !foes[fi].fast) ? pool.fasts : [R.fast];
+      const spL = lock ? [lock.sp]
+        : (worst || !foes[fi].c1) ? (pool.chargeds.length ? pool.chargeds : [null]) : [R.throw || null];
       res = null; let sc = null;
       for (const f of fList) for (const sp of spL) {
         const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, sopt);
@@ -2346,6 +2351,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       }
       rbApply(dec, p, a);
     }
+    if (!foeMvLock[fi] && foeMv) foeMvLock[fi] = foeMv;   // この対面で採用したわざをバトル中固定に
     res.final[0].name = picks[mi].name;
     res.final[1].name = rktName(foes[fi]);
     const meDown = res.final[0].hp <= 0, foeDown = res.final[1].hp <= 0;
