@@ -318,6 +318,7 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .rwb button.wait,.rwb button.hold{border-color:var(--line);color:var(--sub);font-weight:700}
 .rwb button.on{background:var(--cy);border-color:var(--cy);color:#06202b}
 .rwb .cost{font-style:normal;font-size:.58rem;font-weight:800;color:#06202b;background:var(--gold);border-radius:99px;padding:1px 6px}
+.rwb .need{font-style:normal;font-size:.6rem;font-weight:700;color:var(--sub)}
 .rwb .dmg{color:var(--lose)}
 .rbhud{display:grid;grid-template-columns:1fr 74px 1fr;gap:8px;align-items:start;
   background:rgba(12,17,34,.96);backdrop-filter:blur(8px);border:1px solid var(--gl);
@@ -2697,7 +2698,8 @@ function rbPoints(turns, ctx, dec) {
       // (撃つと決めた発は、そのとき決めた待ち発数の位置に判断の場面が残る＝キーが変わらない)
       const dw = spIdx < dec.shots.length ? dec.shots[spIdx].wait : dec.wait;
       const w = typeof dw === 'number' ? dw : 0;
-      if (normals >= w) { pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn }); armed = false; asked = true; }
+      // en = この時点のゲージ。選択ウィンドウで「ゲージが足りないわざはあと何発で発動か」を出すのに使う
+      if (normals >= w) { pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn, en: t.state[0].en }); armed = false; asked = true; }
     }
   }
   // --- あいてが交代してきた(硬直のあいだ殴ってから、交代するか) ---
@@ -2716,9 +2718,19 @@ function rbChoices(p, ctx) {
   if (p.kind === 'lead') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `⇄ ${ctx.picks[k].name}`, cls: 'fire',
     tip: '開幕にこのポケモンへ交代します(あいての打ちかけの1発は交代先に入ります)' }));
   if (p.kind === 'sp') {
-    const list = ctx.spList.map(id => ({ a: 'fire', mv: id, cls: 'fire',
-      label: `${mvChip(D.moves[id].n, 14)}<i class="cost">${D.moves[id].e}</i>`,
-      tip: `ゲージ${D.moves[id].e} のSPアタックをここで撃ちます` }));
+    // 質問は「いちばん軽いSPが撃てるようになったターン」に出るので、重いほうのわざは
+    // ゲージが足りず、ノーマルを追加で打ってからの発動になる。それをボタンに出さないと
+    // 「選んだらすぐ撃てる」と錯覚しやすい(例: グロウパンチ35で質問→はっけい＋1でコメットパンチ)
+    const fm = ctx.fast && D.moves[ctx.fast];
+    const list = ctx.spList.map(id => {
+      const need = fm && fm.eg > 0 && p.en != null
+        ? Math.max(0, Math.ceil((D.moves[id].e - p.en) / fm.eg)) : 0;
+      return { a: 'fire', mv: id, cls: 'fire',
+        label: `${mvChip(D.moves[id].n, 14)}<i class="cost">${D.moves[id].e}</i>${
+          need ? `<i class="need">${fm.n}＋${need}</i>` : ''}`,
+        tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打ってから発動します`
+                  : `ゲージ${D.moves[id].e} のSPアタックをここで撃ちます` };
+    });
     return list.concat([
       { a: 'wait', n: 1, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
       { a: 'wait', n: 2, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
@@ -2820,7 +2832,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     const spList = rbSpList(pol);
     const cost = spList.length ? Math.min(...spList.map(id => D.moves[id].e)) : 0;
     const swTo = picks.map((p, k) => k).filter(k => k !== mi && st[k].alive);
-    const ctx = { li, base, cost, spList, picks, myShLeft, foeEntry, swOkAt, swTo };
+    const ctx = { li, base, cost, spList, picks, myShLeft, foeEntry, swOkAt, swTo, fast: pol.fast };
     const dec = { shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 };
     // 決めた場面はキーで覚える(「撃たない」を選ぶとその場面自体が消えるなど、
     // 決めるたびに場面の並びが変わるので、番号ではなくキーで対応づける)
