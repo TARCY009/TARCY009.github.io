@@ -3900,9 +3900,9 @@ function updateUrl() {
     if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
     if (RK.team) {   // 模擬戦(自分のパーティは端末内に保存しているのでURLには入れない)
       qp.rt = 1;
-      if (!RB.step) qp.rbs = 0;   // 見かた(結果だけ)と、決断で選んだ内容
-      const ansStr = rbAnsToStr();
-      if (ansStr) qp.rb = ansStr;
+      if (!RB.step) qp.rbs = 0;   // 見かた(結果だけ)
+      // 決断で選んだ内容(rb=)は普段のURLには書かない。書くとリロードで復元されて
+      // 「答えた場面が聞かれずに素通りする」ため。共有はコピーボタンを押した時だけ付ける
       const t = [0, 1, 2].filter(i => RKT[i]).map(i => [RKT[i].key, RKT[i].fast || '', RKT[i].c1 || ''].join('~'));
       if (t.length) qp.rp = t.join(',');
     }
@@ -4118,7 +4118,13 @@ if ('serviceWorker' in navigator) {
 }
 
 document.getElementById('copyUrl').onclick = async () => {
-  await navigator.clipboard.writeText(location.href);
+  // 模擬戦は「選んだ手」も含めて共有する。リンクを開いた人にはその手順が再現される
+  let url = location.href;
+  if (mode === 'rocket' && RK.team) {
+    const ansStr = rbAnsToStr();
+    if (ansStr) { const u = new URL(location.href); u.searchParams.set('rb', ansStr); url = u.toString(); }
+  }
+  await navigator.clipboard.writeText(url);
   document.getElementById('copyUrl').textContent = 'コピーしました ✅';
   setTimeout(() => document.getElementById('copyUrl').textContent = '結果のURLをコピー', 1500);
 };
