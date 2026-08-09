@@ -1,0 +1,15 @@
+{
+  "name": "GOロケット団対策シミュレーター",
+  "short_name": "ロケット団対策",
+  "description": "ポケモンGOのGOロケット団戦(したっぱ/リーダー/サカキ)をシミュレート。おすすめランキングと模擬戦つき。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1122",
+  "theme_color": "#0c1122",
+  "lang": "ja",
+  "icons": [
+    { "src": "/assets/icons/rocket/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/rocket/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
