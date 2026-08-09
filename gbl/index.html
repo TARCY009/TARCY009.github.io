@@ -354,6 +354,9 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .gq b:empty{display:none}
 .gq.on{animation:gqp 1.1s infinite;box-shadow:0 0 8px var(--gqc,var(--gold))}
 @keyframes gqp{50%{transform:scale(1.12)}}
+.plead{margin-left:2px;padding:2px 8px;font-size:.6rem;font-weight:700;background:var(--bg2);
+  border:1px solid var(--line);border-radius:99px;color:var(--sub);cursor:pointer}
+.plead[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305}
 .rbstart{display:block;margin:0 auto 8px;padding:13px 34px;font-size:1rem;font-weight:800;letter-spacing:.04em;
   color:#2b2305;background:linear-gradient(180deg,#ffe27a,#ffc93a);border:1px solid #ffd54a;border-radius:99px;
   cursor:pointer;box-shadow:0 4px 20px rgba(255,213,74,.35),0 0 0 1px rgba(255,213,74,.2);animation:stpl 1.6s infinite}
@@ -1360,6 +1363,7 @@ const HELP_HTML = `
     <li><b>⚡ SPアタック</b>… 撃つわざをタップ／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）／<b>おまかせ</b>（AIの判断で進める）</li>
     <li><b>🛡 〜が来る！</b>… シールドで<b>使う</b>か、<b>受ける</b>か（受けた場合のダメージつき）</li>
     <li><b>⇄ 交代する？</b>… あいての交代直後（硬直中に殴ったあと）に聞かれます</li>
+    <li><b>⇄ 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
     <li>下のフレームの <b>⏸／×1／⏩</b> で一時停止・倍速（×1×2×4）・次の決断まで飛ばす、ができます。<b>⏹</b>（または上の<b>▶ バトルスタート！</b>）で選んだ手を消して、もう一度はじめからバトルできます。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
@@ -1419,7 +1423,8 @@ const HELP_HTML = `
 // 「あいてが固まる硬直(4.5秒)」とは別物で、こちら側の制約。45秒=90ターン(ユーザー確定)。
 // これが無いと「交代を連打してあいてを硬直させ続ける」抜け道が成立してしまう
 // whoBy = 種別ごとに最後に選んだ人(リーダーでアルロ→サカキ→リーダー と戻ってもアルロのまま)
-const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 90, who: null, whoBy: {}, sel: {} };
+// leadSwap=開幕交代(1匹目を出してすぐ交代し、あいての硬直4.5秒を序盤に稼ぐテク)
+const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 90, who: null, whoBy: {}, sel: {}, leadSwap: false };
 const RK_PLAY = { 0: '1v1', 1: 'build' };
 function setPlay(v) { RK.play = v; RK.team = v !== '1v1'; }
 const RK_ENTER = {
@@ -2023,7 +2028,8 @@ const ptName = m => m ? (m.shadow ? 'シャドウ' : '') + D.pokemon[m.key].n : 
 function buildPartySlots(box, withMoves) {
   if (!box) return;
   box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}">
-    <div class="phd"><span class="pnum">${i + 1}匹目</span>
+    <div class="phd"><span class="pnum">${i + 1}匹目</span>${withMoves && i === 0
+      ? `<button class="plead" aria-pressed="${RK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいては4.5秒硬直・打ちかけの1発は交代先に入ります)">⇄開幕交代</button>` : ''}
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
       <button class="pclr" title="この枠を空にする">×</button></div>
@@ -2064,6 +2070,12 @@ function buildPartySlots(box, withMoves) {
       savePt(); syncPartySlot(i); run();
     };
     el.querySelector('.pclr').onclick = () => { PT[i] = null; savePt(); syncPartySlot(i); run(); };
+    const pl = el.querySelector('.plead');
+    if (pl) pl.onclick = () => {
+      RK.leadSwap = !RK.leadSwap;
+      pl.setAttribute('aria-pressed', RK.leadSwap);
+      run();   // バトルの署名が変わるので、スタート待ちから仕切り直しになる
+    };
     el.querySelector('.pstar').onclick = () => {
       const win = el.querySelector('.pstarwin');
       const open = win.style.display === 'none';
@@ -2642,7 +2654,7 @@ function rbPicks(mine, foes, myShields, moves) {
 // 決めていない場面は「おまかせ」(AIの判断)で進む。これは従来の自動と完全に同じ動きになる
 // ＝ 一気に結果を出してから、気になる場面だけタップして選び直せる。
 const rbKey = (li, kind, seq, w) => `${li}:${kind}:${seq}:${w || 0}`;
-const RB_AUTO = { sp: { a: 'auto' }, sh: { a: 'use' }, swap: { a: 'stay' }, next: { a: 'order' } };
+const RB_AUTO = { sp: { a: 'auto' }, sh: { a: 'use' }, swap: { a: 'stay' }, next: { a: 'order' }, lead: { a: 'to', to: 1 } };
 
 // 1対面ぶんのシミュ結果から、決断が要る場面を時系列に並べる。
 // dec はいまの対面で決まっている内容(撃つと決めた発・使うと決めたシールド)。
@@ -2688,6 +2700,8 @@ function rbPoints(turns, ctx, dec) {
 
 // 決断ひとつぶんの選択肢(画面に出すボタン)を作る
 function rbChoices(p, ctx) {
+  if (p.kind === 'lead') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `⇄ ${ctx.picks[k].name}`, cls: 'fire',
+    tip: '開幕にこのポケモンへ交代します(あいての打ちかけの1発は交代先に入ります)' }));
   if (p.kind === 'sp') {
     const list = ctx.spList.map(id => ({ a: 'fire', mv: id, cls: 'fire',
       label: `${mvChip(D.moves[id].n, 14)}<i class="cost">${D.moves[id].e}</i>`,
@@ -2742,6 +2756,43 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
   let foeResume = null;
   let myEntry = RK_ENTER[RK.enter].me, foeEntry = RK_ENTER[RK.enter].foe;
   let swOkAt = 0;
+  // ---- 開幕交代(1匹目を出してすぐ交代し、あいての硬直4.5秒を序盤に稼ぐ) ----
+  // あいての打ちかけのノーマルアタック1発は交代先に入り、あいてはそのぶんのゲージを得る。
+  // そのあと あいて9ターン硬直・自分1ターン硬直・交代クールタイム開始(通常の手動交代と同じ)
+  let lead = null;
+  if (RK.leadSwap && picks.length > 1 && foes.length) {
+    const key = rbKey(0, 'lead', 0, 0);
+    const lctx = { li: 0, base: 0, picks, swTo: picks.map((p, k) => k).filter(k => k > 0) };
+    const opts = rbChoices({ kind: 'lead' }, lctx);
+    const a = ans[key] || (stepwise ? null : RB_AUTO.lead);
+    if (!a) {
+      pending = { kind: 'lead', seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts };
+    } else {
+      const to = picks[a.to] ? a.to : 1;
+      // 飛んでくる1発のダメージは、交代先 vs あいて で1度だけ小さくシミュして読み取る
+      // (タイプ相性・シャドウ・倍率込みの正確な値になる)
+      const R0 = rktCfg(foes[0], { shields: foeShLeft, stallStart: 0 });
+      const probe = PvpEngine.simulate(D, { ...picks[to].base, ...picks[to].pol,
+        charged: [], timing: 'shots', shotPlan: [], shotRest: null, shields: myShields }, R0,
+        { ...SIMOPT, stopAt: 8 });
+      let dmg = 1, mvName = D.moves[R0.fast] ? D.moves[R0.fast].n : '';
+      for (const row of probe.rows) {
+        const e = row.ev && row.ev[1];
+        if (e && e.full === undefined && e.dmg != null) { dmg = e.dmg; mvName = e.move; break; }
+      }
+      const maxB = PvpEngine.buildStats(D, picks[to].base).hp;
+      const maxF = PvpEngine.buildStats(D, R0).hp;
+      const eg = D.moves[R0.fast] ? D.moves[R0.fast].eg : 0;
+      mi = to;
+      st[to].resume = { hp: Math.max(0, maxB - dmg), en: 0, buffs: [0, 0], stall: 0 };
+      foeResume = { hp: maxF, en: Math.min(100, eg), buffs: [0, 0], stall: 0 };
+      myEntry = RK_ENTER.swap.me;
+      foeEntry = RK_ENTER.swap.foe;
+      swOkAt = RK.swapCd;
+      lead = { hit: { mv: mvName, dmg },
+        pt: { kind: 'lead', seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts, ans: a, auto: !ans[key] } };
+    }
+  }
   while (fi < foes.length && mi >= 0 && legs.length < 12 && !pending) {
     const li = legs.length;
     const pol = picks[mi].pol;
@@ -2800,6 +2851,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     const points = log.map(p => ({ ...p, gt: base + p.tn, ctx, opts: rbChoices(p, ctx) }));
     legs.push({ res, base, myIdx: mi, foeIdx: fi, meName: picks[mi].name, foeName: rktName(foes[fi]),
       meDown, foeDown, swapped, swapTo: swapped ? dec.swapTo : null, pol, li, points,
+      leadHit: li === 0 && lead ? lead.hit : null, leadPt: li === 0 && lead ? lead.pt : null,
       // hud = この対面が始まった時点の両者の状態(下の常駐フレームの表示に使う)
       hud: { hp0: st[mi].resume ? Math.max(0, st[mi].resume.hp) : res.final[0].hpMax,
              en0: st[mi].resume ? st[mi].resume.en : 0,
@@ -2930,7 +2982,7 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 // (ポケモンやわざの入力中に勝手にシミュが動き始めないように)
 const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined };
 const RBUI = { pts: {}, order: [], open: null };
-const RB_ICON = { sp: '⚡', sh: '🛡', swap: '⇄', next: '💀' };
+const RB_ICON = { sp: '⚡', sh: '🛡', swap: '⇄', next: '💀', lead: '⇄' };
 // 選び直したら、その決断より後ろの答えは消す(前提が変わるので、そこから先はおまかせに戻る)
 function rbTrim(key) {
   const i = RBUI.order.indexOf(key);
@@ -2938,6 +2990,7 @@ function rbTrim(key) {
   RBUI.order.slice(i + 1).forEach(k => delete RB.ans[k]);
 }
 function rbAskTitle(p) {
+  if (p.kind === 'lead') return '⇄ 開幕交代';
   if (p.kind === 'sp') return '⚡ SPアタック';
   if (p.kind === 'sh') return `🛡 ${p.mv || 'SPアタック'}が来る！`;
   if (p.kind === 'swap') return '⇄ 交代する？';
@@ -2953,7 +3006,7 @@ function rbAnsLabel(p, a) {
   }
   // チップは種別アイコン(RB_ICON)と並べて出すので、ここでは🛡や⇄を重ねない
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
-  if (p.kind === 'swap') return a.a === 'stay' ? 'このまま' : `${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}に交代`;
+  if (p.kind === 'swap' || p.kind === 'lead') return a.a === 'stay' ? 'このまま' : `${p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : ''}に交代`;
   return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
@@ -2980,7 +3033,7 @@ function runRkBuild() {
     return;
   }
   // 入力(ポケモン・わざ・あいて等)が変わったら、前のバトルの選択と再生位置は仕切り直す
-  const sig = JSON.stringify([mine, foes, rbMyMoves(), RK.kind, RK.enter, RK.stall, SIMOPT.buffMode]);
+  const sig = JSON.stringify([mine, foes, rbMyMoves(), RK.kind, RK.enter, RK.stall, SIMOPT.buffMode, RK.leadSwap]);
   if (RBV.sig !== sig) {
     if (RBV.sig !== undefined) { RB.ans = {}; RBUI.open = null; RB.found = null; }
     RBV.sig = sig; RBV.started = false; RBV.cur = 0; RBV.playing = true;
@@ -3003,7 +3056,7 @@ function rbRender(body, bt, picks, foes, extra) {
   extra = extra || {};
   RBUI.pts = {}; RBUI.order = [];
   const regPt = p => { if (p) { RBUI.pts[p.key] = p; RBUI.order.push(p.key); } };
-  bt.legs.forEach(leg => { (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.pending); });
+  bt.legs.forEach(leg => { regPt(leg.leadPt); (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.pending); });
 
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
   // items は時系列どおりに積む(gt=通しターン。表示はそこまで「再生」が進んだら出す)
@@ -3030,7 +3083,10 @@ function rbRender(body, bt, picks, foes, extra) {
       sp1: fcfg.throw ? [{ n: D.moves[fcfg.throw].n, e: D.moves[fcfg.throw].e }] : [],
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
+    if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
     items.push({ gt: base, html: `<div class="flg"><span class="me">${leg.meName}</span><em>VS</em><span class="foe">${leg.foeName}</span></div>` });
+    if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
+      <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
     const ptAt = {};
@@ -3086,6 +3142,16 @@ function rbRender(body, bt, picks, foes, extra) {
     }
     if (leg.nextPoint) items.push(chipItem(leg.nextPoint, endGt));
   });
+  // 開幕交代の質問中はまだ対面が無いので、1匹目とあいて1匹目の初期状態を出しておく
+  if (!bt.legs.length && bt.pending && foes.length) {
+    const F = rktCfg(foes[0]);
+    const sA = PvpEngine.buildStats(D, picks[0].base), sF = PvpEngine.buildStats(D, F);
+    items.push({ gt: 0, html: `<div class="flg"><span class="me">${picks[0].name}</span><em>VS</em><span class="foe">${rktName(foes[0])}</span></div>` });
+    frames[0] = { meta: { name0: picks[0].name, name1: rktName(foes[0]), cp0: sA.cp, cp1: sF.cp, max0: sA.hp, max1: sF.hp,
+      sp0: rbSpList(picks[0].pol).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
+      sp1: F.throw ? [{ n: D.moves[F.throw].n, e: D.moves[F.throw].e }] : [] },
+      hp0: sA.hp, en0: 0, hp1: sF.hp, en1: 0, b0: [0, 0], b1: [0, 0], sh0, sh1, alive0, alive1 };
+  }
   const stop = bt.pending ? bt.pending.gt : bt.turns;
   for (let g = 1; g <= stop; g++) if (!frames[g]) frames[g] = frames[g - 1];
   // 決着のまとめ(再生が最後まで来たら出る)
@@ -3288,8 +3354,10 @@ function rbRender(body, bt, picks, foes, extra) {
   // HUDの再生コントロール
   const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
   const startBattle = () => {
-    RBV.started = true; RBV.playing = true; winbox.innerHTML = ''; startTimer();
+    RBV.started = true; RBV.playing = true; winbox.innerHTML = '';
     if (clr) clr.style.display = '';   // 走り出したら上にも「▶ バトルスタート！」(やり直し)を出す
+    if (RBV.cur >= stop) atStop();     // 開幕交代など、最初の決断が0ターン目ならすぐ聞く
+    else startTimer();
   };
   if (hplay) hplay.onclick = () => {
     if (!RBV.started) { startBattle(); return; }
@@ -3900,6 +3968,7 @@ function updateUrl() {
     if (w) { qp.rw = w.id; qp.rl = rkSel(w).join(''); }
     if (RK.team) {   // 模擬戦(自分のパーティは端末内に保存しているのでURLには入れない)
       qp.rt = 1;
+      if (RK.leadSwap) qp.rls = 1;   // 開幕交代
       if (!RB.step) qp.rbs = 0;   // 見かた(結果だけ)
       // 決断で選んだ内容(rb=)は普段のURLには書かない。書くとリロードで復元されて
       // 「答えた場面が聞かれずに素通りする」ため。共有はコピーボタンを押した時だけ付ける
@@ -4209,6 +4278,7 @@ document.getElementById('copyUrl').onclick = async () => {
   // 模擬戦の復元(rt=2 は「3匹連戦」と別画面だったころの古いリンク。同じ画面に読み替える)
   if (q.get('rt') === '1' || q.get('rt') === '2') setPlay('build');
   if (q.get('rbs') === '0') RB.step = false;   // 見かた(結果だけ)の復元(rbs=1は旧リンク・既定と同じ)
+  if (q.get('rls') === '1') RK.leadSwap = true;   // 開幕交代の復元
   if (q.get('rb')) rbAnsFromStr(q.get('rb'));   // 決断で選んだ内容の復元
   if (q.get('rw') && rkWhoList().some(w => w.id === q.get('rw'))) {   // 手持ち(だれと・選んだ並び)の復元
     RK.who = q.get('rw');
