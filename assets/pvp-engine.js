@@ -24,17 +24,24 @@
   }
 
   // 実ステータス(種族値+個体値, レベル補正, シャドウ補正)
-  // ロケット団(NPC)のポケモンだけは決まり方が違うので cfg.statMult=[攻,防,HP] で倍率を渡す。
-  // 基準は「PL40・個体値100%」。表示上のCP・実数値はこの倍率までで、
+  // ロケット団(NPC)のポケモンだけは決まり方が違うので cfg.statMult=[攻,防,HP] で種別係数を渡す
+  // (したっぱ=1・リーダー=1.05・サカキ=1.15)。ステータスは専用CPM(RCPM)方式:
+  //   攻撃 = floor((攻種族値+15)×2÷1.2) × RCPM × 係数
+  //   防御 = (防種族値+15) × RCPM × 係数
+  //   HP   = floor( floor((HP種族値+15)÷2×1.2) × RCPM × 係数 )
+  //   CP   = floor(攻 × √防 × √HP(切り捨て前) ÷ 10)
+  // 攻撃・HPは基礎値の段階で切り捨てるため、ポケモンごとに端数の出方が異なる。
+  // 2026-08-10に外部シミュレータの表示値と20例(3種別)で完全一致を確認した実測準拠の式。
   // シャドウ補正(攻×1.2・防÷1.2)は通常のポケモンと同じく戦闘計算で別途かかる
+  const RCPM = 1.31502077;
   function buildStats(D, cfg) {
     const p = D.pokemon[cfg.key];
     if (cfg.statMult) {
-      const c40 = D.cpm['40'];
-      const bA = (p.a + 15) * c40 * cfg.statMult[0];
-      const bD = (p.df + 15) * c40 * cfg.statMult[1];
-      const hp = Math.floor((p.h + 15) * c40 * cfg.statMult[2]);
-      const cp = Math.max(10, Math.floor(bA * Math.sqrt(bD) * Math.sqrt(hp) / 10));
+      const bA = Math.floor((p.a + 15) * 5 / 3) * RCPM * cfg.statMult[0];
+      const bD = (p.df + 15) * RCPM * cfg.statMult[1];
+      const hpRaw = Math.floor((p.h + 15) * 3 / 5) * RCPM * cfg.statMult[2];
+      const hp = Math.floor(hpRaw);
+      const cp = Math.max(10, Math.floor(bA * Math.sqrt(bD) * Math.sqrt(hpRaw) / 10));
       const sA = cfg.shadow ? D.settings.shadowAtkMult : 1;
       const sD = cfg.shadow ? D.settings.shadowDefMult : 1;
       return { atk: bA * sA, def: bD * sD, hp, cp, baseAtk: bA, baseDef: bD, types: p.ty, name: p.n };

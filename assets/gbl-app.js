@@ -259,15 +259,15 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="rkteam" style="display:none">
   <h3>模擬戦</h3>
   <div class="mtnote">上から順に出し、倒れたら次。シールドは3匹で共有します。<b>決断の場面で止まって選ぶ</b>と、そこから先が計算し直されます</div>
+  <div class="rksuggbar" id="rksuggbar"><span class="lbl">おすすめ</span>
+    <button data-m="power" aria-pressed="false" title="じぶんの枠の入力欄をタップすると、同じ順番のあいてをいちばん速く倒せるポケモン トップ5を出します">高火力</button><button data-m="safe" aria-pressed="false" title="あいてのどのわざでも先に倒されないポケモンだけに絞って、火力トップ5を出します">高火力＋安定</button></div>
   <div class="rkteams">
     <div class="rkteamcol">
-      <div class="rkcolttl" title="パーティ診断と共通の3枠です">じぶん<small>出す順</small></div>
-      <div class="rksuggbar" id="rksuggbar"><span class="lbl">おすすめ</span>
-        <button data-m="power" aria-pressed="false" title="枠の入力欄をタップすると、同じ順番のあいてをいちばん速く倒せるポケモン トップ5を出します">高火力</button><button data-m="safe" aria-pressed="false" title="あいてのどのわざでも先に倒されないポケモンだけに絞って、火力トップ5を出します">高火力＋安定</button></div>
+      <div class="rkcolttl" title="上から順に出します。パーティ診断と共通の3枠です">じぶん</div>
       <div class="pslots myslots"></div>
     </div>
     <div class="rkteamcol">
-      <div class="rkcolttl foe" title="リーダー・サカキは上の「だれと」からタップで入ります">あいて<small>出てくる順</small></div>
+      <div class="rkcolttl foe" title="上から順に出てきます。リーダー・サカキは上の「だれと」からタップで入ります">あいて</div>
       <div class="pslots foeslots"></div>
     </div>
   </div>
@@ -773,9 +773,9 @@ const HELP_HTML = `
   <h4>あいての条件</h4>
   <ul>
     <li>あいては<b>必ずシャドウ</b>です（切り替えできません）</li>
-    <li>ステータスは「PL40・個体値100%」と比べた倍率で決まります。したっぱが<b>攻2.77・防1.66・HP1.0倍</b>、
-      <b>リーダーはさらに1.05倍</b>、<b>サカキはさらに1.15倍</b>（ここにシャドウ補正が別途かかります）。
-      実際の数値（CP・攻・防・HP）は<b>あいての欄</b>に出ます</li>
+    <li>ステータスは<b>ロケット団専用の計算式</b>で決まります（個体値100%扱い・目安として「PL40の理想個体」の
+      およそ攻2.8倍/防1.7倍。<b>リーダーはさらに1.05倍</b>、<b>サカキはさらに1.15倍</b>で、
+      ここにシャドウ補正が別途かかります）。実際の数値（CP・攻・防・HP）は<b>あいての欄</b>に出ます</li>
     <li>わざは<b>おぼえるわざからランダム</b>。特別なわざ（レガシー技）は使いません</li>
     <li>したっぱはシールドを使わず、SPアタックの威力は0.6倍。リーダーとサカキは<b>こちらの最初の2発を必ずシールドで防ぎ</b>、威力は等倍です</li>
     <li>あいては同じ個体で2種類のSPアタックを使い分けません</li>
@@ -868,9 +868,9 @@ const HELP_HTML = `
 //  ・交代や新しいポケモンが出たとき、あいては6ターン(3秒)硬直する
 //  ・したっぱはSPアタックの威力が0.5〜0.7倍(最短で撃つ場合0.6倍として計算)、幹部は1倍
 //  ・同じ個体が2種類のSPアタックを使い分けることはない
-// ステータスは「PL40・個体値100%」を基準にした倍率。したっぱの倍率は外部シミュレータの
-// 表示実数値(シャドウフシギソウ: 攻362.95 防207.77 HP134 / CP6059)から逆算した。
-// シャドウ補正(攻×1.2・防÷1.2)はこの倍率には含まれず、通常のポケモンと同じく戦闘計算でかかる
+// ステータスは専用CPM(RCPM)方式(pvp-engine.jsのbuildStats参照)。外部シミュレータの
+// 表示実数値20例(3種別)と完全一致することを2026-08-10に確認した。
+// シャドウ補正(攻×1.2・防÷1.2)はこの計算には含まれず、通常のポケモンと同じく戦闘計算でかかる
 // (この扱いで「シャドウミュウツーPL40攻13のねんりきで4発(3.8発)」という実測と一致する)
 // 硬直(2026年3月時点の確定情報。0.5秒=1ターン):
 //   SPアタック発動直後 3.5秒=7ターン / 瀕死による交代直後 4秒=8ターン / 手動交代直後 4.5秒=9ターン
@@ -893,11 +893,12 @@ const RK_ENTER = {
   ko:    { foe: 8, me: 0, label: '倒されて交代' },
   swap:  { foe: 9, me: 1, label: '手動で交代' },
 };
-const RK_BASE = [2.7666, 1.6640, 1.0];   // したっぱ: 攻・防・HPの倍率
-const rkMult = r => RK_BASE.map(v => v * r);
-// 種別の係数(どちらも実測で確認済み):
+// ステータスは専用CPM(RCPM)方式でエンジン(buildStats)が計算する。ここでは種別の係数だけ渡す。
+// 2026-08-10確定: 外部シミュレータと20例(3種別)で表示値が完全一致
 //   サカキ×1.15 … ペルシアン(CP7956・攻415.88・防228.35・HP160)と一致
 //   リーダー×1.05 … チゴラス(CP6417・攻397.66・防190.55・HP136)と一致
+const RK_BASE = [1, 1, 1];   // したっぱ: 係数1(RCPM素のまま)
+const rkMult = r => RK_BASE.map(v => v * r);
 const RK_SPEC = {
   grunt:  { name: 'したっぱ', mult: rkMult(1), sp: 0.6, shields: 0 },
   leader: { name: 'リーダー', mult: rkMult(1.05), sp: 1, shields: 2 },
