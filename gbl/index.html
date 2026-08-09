@@ -3092,19 +3092,21 @@ function rbRender(body, bt, picks, foes, extra) {
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
     // 決断待ちより先は「まだ起きていない」ので描かない。ただし同じターンの中でも
-    // 「もう決まった出来事」(答えたシールドの結果など)は見せる＝出来事の単位で隠す。
-    //   sp待ち: 自分の行動はこれから選ぶので自分側だけ隠す(あいて側は決まっている)
+    // 「もう決まった出来事」は見せる＝出来事の単位で隠す。
+    //   sp待ち: 質問はゲージが条件を満たした(=ノーマルが当たった)ターンに出るが、
+    //           撃つ場合も発動は次の行動ターン。質問ターンの出来事はすべて確定なので全部見せる
+    //           (隠すと「＋2で待った2発目」が見えず、打ったかどうか確認できない。実装時に踏んだ)
     //   sh待ち: 質問対象のあいてのSPから先を隠す(それより前のノーマルの応酬は決まっている)
     //   swap待ち: そのターンまで殴ってから聞く仕様なので、ターンはすべて見せる
     const pend = leg.pending && leg.pending.kind !== 'next' ? leg.pending : null;
     rbTurns(res).forEach(t => {
       if (pend && t.tn > pend.tn) return;
       const gt = base + t.tn;
-      const partial = pend && pend.kind !== 'swap' && t.tn === pend.tn;
+      const partial = pend && pend.kind === 'sh' && t.tn === pend.tn;
       let ev0 = t.ev[0], ev1 = t.ev[1];
       if (partial) {
-        if (pend.kind === 'sp') ev0 = [];
-        else { const k = ev1.findIndex(e => e.full !== undefined); if (k >= 0) ev1 = ev1.slice(0, k); }
+        const k = ev1.findIndex(e => e.full !== undefined);
+        if (k >= 0) ev1 = ev1.slice(0, k);
       }
       // シールド・能力変化の追跡は「見せる出来事」だけに対して行う(仮の結果を混ぜない)
       for (let i = 0; i < 2; i++) for (const e of (i ? ev1 : ev0)) {
