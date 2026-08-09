@@ -52,7 +52,7 @@ document.getElementById('app').innerHTML = `
   <div class="rkrow rksep" id="rkenterrow">
     <span class="lbl" title="この対面が始まった時点で、あいてが動けない状態かどうか">敵硬直</span>
     <div class="opts rkenter" id="rkenter">
-      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">開幕（硬直なし）</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次が出てきた直後。あいては4秒(8ターン)動けません">撃破後</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">交代後</button>
+      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">開幕</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次が出てきた直後。あいては4秒(8ターン)動けません">撃破後</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">交代後</button>
     </div>
   </div>
   <!-- 1対1のときだけ: 見かた(おすすめランキング / シミュレート)と絞り込み -->
@@ -63,7 +63,7 @@ document.getElementById('app').innerHTML = `
     </div>
   </div>
   <div class="rkrow rkfiltrow" id="rkfiltrow" style="display:none">
-    <span class="lbl">ランキングに含める</span>
+    <span class="lbl">含める</span>
     <div class="opts rkfilt" id="rkfilt">
       <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガ・ゲンシを含める">メガ・ゲンシ</button>
     </div>
@@ -81,14 +81,13 @@ document.getElementById('app').innerHTML = `
 <div class="duel">
   <div class="side mine" id="sideL">
     <h2>じぶん<button class="shadowtab" aria-pressed="false" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button></h2>
-    <div class="sugg"><input type="search" placeholder="ポケモン名(例: まりるり)" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
-        <label class="f">メガLv4＝スーパーマックスレベル（PL上限を拡張）</label>
         <div class="opts smax">
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
         </div>
@@ -98,11 +97,11 @@ document.getElementById('app').innerHTML = `
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">パターン別最適個体（タップで1位個体値を反映）</div>
+        <div class="popttl">入手別の1位個体（タップで反映）</div>
         <div class="slots ivpresets">
           <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
         </div>
-        <div class="popttl" style="margin-top:10px">個体値手動入力（PLは自動調整・手動も可）</div>
+        <div class="popttl" style="margin-top:10px">手動入力（PLは自動調整）</div>
         <div class="ivgrid">
           <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
           <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
@@ -114,21 +113,20 @@ document.getElementById('app').innerHTML = `
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック</label>
       <select class="selC1"></select>
-      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2（わざ開放）</label>
+      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2</label>
       <select class="selC2"></select>
       <div class="bluffwrap" style="display:none">
-        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ（軽いSPでシールドを使わせる）</label>
+        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
           <button data-v="1" aria-pressed="true" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button><button data-v="0" aria-pressed="false" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button>
         </div>
-        <div class="bluffnote">相手がブラフに引っ掛かるかは「シールド」を<b>ﾏﾆｭｱﾙ</b>にして、何発目で使うかを決めると再現できます</div>
       </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custShield" style="display:none">
-        <div class="popttl">敵のSPアタック何発目でシールドを使う？</div>
+        <div class="popttl">SPアタック何発目で使う？</div>
         <div class="slots shslots">
           <button data-slot="1">1発目</button><button data-slot="2">2発目</button><button data-slot="3">3発目</button><button data-slot="4">4発目</button><button data-slot="5">5発目</button><button data-slot="6">6発目〜</button>
         </div>
@@ -142,7 +140,7 @@ document.getElementById('app').innerHTML = `
         <button data-v="off" aria-pressed="true" title="満タン・ゲージ0の状態から開始する">なし</button><button data-v="on" aria-pressed="false" title="前の対面から引き継いだHP・ゲージで開始する">設定する</button>
       </div>
       <div class="popwin custCarry" style="display:none">
-        <div class="popttl">交代した直後の状態を再現（HPの残り％と、たまっているゲージ）</div>
+        <div class="popttl">開始HP％とゲージを指定</div>
         <div class="cgrid">
           <label>開始HP（％）<input type="number" class="cHp" min="1" max="100" inputmode="numeric"></label>
           <label>開始ゲージ<input type="number" class="cEn" min="0" max="100" inputmode="numeric"></label>
@@ -150,10 +148,9 @@ document.getElementById('app').innerHTML = `
         <div class="slots cpre">
           <button data-hp="100">HP満タン</button><button data-hp="75">HP75%</button><button data-hp="50">HP50%</button><button data-hp="25">HP25%</button>
         </div>
-        <div class="cnote">シールドの残り枚数は上の「シールド」で設定してください</div>
       </div>
       <div class="popwin custSp" style="display:none">
-        <div class="popttl">発ごとのSP設定（＋N発＝ゲージが貯まってから通常技を余分にN発打って発動）</div>
+        <div class="popttl">発ごとのSP設定</div>
         <div class="legend"></div>
         <div class="sprows"></div>
       </div>
@@ -161,14 +158,13 @@ document.getElementById('app').innerHTML = `
   </div>
   <div class="side foe" id="sideR">
     <h2>あいて<button class="shadowtab" aria-pressed="false" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button></h2>
-    <div class="sugg"><input type="search" placeholder="ポケモン名(例: ちゃーれむ)" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
       <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
-        <label class="f">メガLv4＝スーパーマックスレベル（PL上限を拡張）</label>
         <div class="opts smax">
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
         </div>
@@ -178,11 +174,11 @@ document.getElementById('app').innerHTML = `
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">パターン別最適個体（タップで1位個体値を反映）</div>
+        <div class="popttl">入手別の1位個体（タップで反映）</div>
         <div class="slots ivpresets">
           <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
         </div>
-        <div class="popttl" style="margin-top:10px">個体値手動入力（PLは自動調整・手動も可）</div>
+        <div class="popttl" style="margin-top:10px">手動入力（PLは自動調整）</div>
         <div class="ivgrid">
           <label>攻撃<input type="number" class="ivA" min="0" max="15" inputmode="numeric"></label>
           <label>防御<input type="number" class="ivD" min="0" max="15" inputmode="numeric"></label>
@@ -194,21 +190,20 @@ document.getElementById('app').innerHTML = `
       <label class="f">ノーマルアタック</label><select class="selFast"></select>
       <label class="f">SPアタック</label>
       <select class="selC1"></select>
-      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2（わざ開放）</label>
+      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2</label>
       <select class="selC2"></select>
       <div class="bluffwrap" style="display:none">
-        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ（軽いSPでシールドを使わせる）</label>
+        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
           <button data-v="1" aria-pressed="true" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button><button data-v="0" aria-pressed="false" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button>
         </div>
-        <div class="bluffnote">相手がブラフに引っ掛かるかは「シールド」を<b>ﾏﾆｭｱﾙ</b>にして、何発目で使うかを決めると再現できます</div>
       </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
         <button data-v="2" aria-pressed="true">2枚</button><button data-v="1" aria-pressed="false">1枚</button><button data-v="0" aria-pressed="false">0枚</button><button data-v="plan" aria-pressed="false" title="敵のSPアタック何発目で使うかを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custShield" style="display:none">
-        <div class="popttl">敵のSPアタック何発目でシールドを使う？</div>
+        <div class="popttl">SPアタック何発目で使う？</div>
         <div class="slots shslots">
           <button data-slot="1">1発目</button><button data-slot="2">2発目</button><button data-slot="3">3発目</button><button data-slot="4">4発目</button><button data-slot="5">5発目</button><button data-slot="6">6発目〜</button>
         </div>
@@ -222,7 +217,7 @@ document.getElementById('app').innerHTML = `
         <button data-v="off" aria-pressed="true" title="満タン・ゲージ0の状態から開始する">なし</button><button data-v="on" aria-pressed="false" title="前の対面から引き継いだHP・ゲージで開始する">設定する</button>
       </div>
       <div class="popwin custCarry" style="display:none">
-        <div class="popttl">交代した直後の状態を再現（HPの残り％と、たまっているゲージ）</div>
+        <div class="popttl">開始HP％とゲージを指定</div>
         <div class="cgrid">
           <label>開始HP（％）<input type="number" class="cHp" min="1" max="100" inputmode="numeric"></label>
           <label>開始ゲージ<input type="number" class="cEn" min="0" max="100" inputmode="numeric"></label>
@@ -230,10 +225,9 @@ document.getElementById('app').innerHTML = `
         <div class="slots cpre">
           <button data-hp="100">HP満タン</button><button data-hp="75">HP75%</button><button data-hp="50">HP50%</button><button data-hp="25">HP25%</button>
         </div>
-        <div class="cnote">シールドの残り枚数は上の「シールド」で設定してください</div>
       </div>
       <div class="popwin custSp" style="display:none">
-        <div class="popttl">発ごとのSP設定（＋N発＝ゲージが貯まってから通常技を余分にN発打って発動）</div>
+        <div class="popttl">発ごとのSP設定</div>
         <div class="legend"></div>
         <div class="sprows"></div>
       </div>
@@ -257,8 +251,6 @@ document.getElementById('app').innerHTML = `
 </div>
 
 <div class="multi" id="rkteam" style="display:none">
-  <h3>模擬戦</h3>
-  <div class="mtnote">上から順に出し、倒れたら次。シールドは3匹で共有します。<b>決断の場面で止まって選ぶ</b>と、そこから先が計算し直されます</div>
   <div class="rksuggbar" id="rksuggbar"><span class="lbl">おすすめ</span>
     <button data-m="power" aria-pressed="false" title="じぶんの枠の入力欄をタップすると、同じ順番のあいてをいちばん速く倒せるポケモン トップ5を出します">高火力</button><button data-m="safe" aria-pressed="false" title="あいてのどのわざでも先に倒されないポケモンだけに絞って、火力トップ5を出します">高火力＋安定</button></div>
   <div class="rkteams">
@@ -288,7 +280,7 @@ document.getElementById('app').innerHTML = `
 <div class="tl" id="tl"></div>
 
 <div class="share" id="share" style="display:none">
-  <button id="copyUrl">結果のURLをコピー</button>
+  <button id="copyUrl">🔗 URLをコピー</button>
 </div>
 
 <div class="loading" id="loading">データ読み込み中…</div>
@@ -2044,7 +2036,7 @@ function runRkRank() {
       .concat(ranked.slice(RKR.top).filter(r => r.mine));   // ★自分の個体は圏外でも必ず出す
     if (!list.length) {
       body.innerHTML = '<div class="mtnote">' + (RKR.view === 'safe'
-        ? 'ノーマルアタックだけで<b>先に倒されずに勝てる</b>ポケモンが見つかりませんでした。SPアタックを使う前提で「シミュレート」や「模擬戦」を見てください。'
+        ? '<b>先に倒されずに勝てる</b>候補がありません（SPアタックを使うなら「シミュレート」か模擬戦へ）'
         : '候補がありません') + '</div>';
       return;
     }
@@ -2622,8 +2614,8 @@ function runRkBuild() {
   updateUrl();
   clearInterval(RBV.timer); RBV.timer = null;
   if (!mine.length || !foes.length) {
-    body.innerHTML = `<div class="mtnote">${!mine.length ? '左の枠に<b>じぶんのポケモン</b>を入れてください。' : ''}` +
-      `${!foes.length ? '右の枠に<b>あいてのポケモン</b>を入れてください。' : ''}（1匹ずつでも試せます）</div>`;
+    body.innerHTML = `<div class="mtnote">${!mine.length ? '<b>じぶん</b>' : ''}${!mine.length && !foes.length ? 'と' : ''}` +
+      `${!foes.length ? '<b>あいて</b>' : ''}のポケモンを枠に入れてください（1匹ずつでもOK）</div>`;
     return;
   }
   // 入力(ポケモン・わざ・あいて等)が変わったら、前のバトルの選択と再生位置は仕切り直す
@@ -3315,7 +3307,7 @@ function fillMoves(i, cfg) {
   // ロケット団のポケモンは個体値・PLでなく倍率でステータスが決まるので、実数値をそのまま出す
   // (シャドウ補正をかける前の値＝ゲームやシミュレータの表示に合わせる)
   el.querySelector('.ivline').textContent = cfg.statMult
-    ? `CP${st.cp} / 攻撃${st.baseAtk.toFixed(2)} / 防御${st.baseDef.toFixed(2)} / HP${st.hp}`
+    ? `CP${st.cp}／攻${st.baseAtk.toFixed(2)}・防${st.baseDef.toFixed(2)}・HP${st.hp}`
     : `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
   // タイプは同名で複数タイプがあるわざ(ウェザーボール等)だけ表記する
   const opt = (m, sel) => {
@@ -3414,7 +3406,7 @@ function render(res, L, R, matrix) {
     // ゲージ(0〜100)はメーターで、シールドは🛡️で残数を見せる(使った分は薄く表示)
     const enPct = Math.min(100, f.en);
     const shInit = cfg.shieldPlan ? 2 : cfg.shields;
-    const shHtml = shInit === 0 ? '<span class="shnone">なし（設定0枚）</span>'
+    const shHtml = shInit === 0 ? '<span class="shnone">🛡0</span>'
       : Array.from({ length: shInit }, (_, k) => `<span class="sh${k < f.shields ? '' : ' usedsh'}">🛡️</span>`).join('');
     // 連戦設定を使っているときは開始状態を明示する
     const carryTxt = cfg.startHpPct != null || cfg.startEn
@@ -3423,10 +3415,10 @@ function render(res, L, R, matrix) {
       <div class="top">${badge(i)}<span class="nm">${f.name}</span></div>
       ${carryTxt}
       <div class="hpbar"><i class="${pct <= 25 ? 'low' : ''}" style="width:${pct}%"></i></div>
-      <div class="subline">残りHP ${f.hp}/${f.hpMax}（${pct}%）</div>
+      <div class="subline">HP ${f.hp}/${f.hpMax}（${pct}%）</div>
       <div class="enbar"><i style="width:${enPct}%"></i></div>
-      <div class="subline">ゲージ残：<b>${f.en}</b></div>
-      <div class="subline shline">シールド残：${shHtml}</div>
+      <div class="subline">ゲージ <b>${f.en}</b></div>
+      <div class="subline shline">${shHtml}</div>
     </div>`;
   };
   // 技ごとの集計
