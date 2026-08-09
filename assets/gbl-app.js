@@ -313,6 +313,9 @@ if (PAGE_ROCKET) {
   if (rb) rb.outerHTML = '<a class="modelink" href="/rocket/" title="GOロケット団(したっぱ/リーダー/サカキ)対策の専用ページへ">ロケット団戦 ↗</a>';
 }
 
+// 交代マーク(黄色い循環矢印の画像・assets/gbl.css の .swapmark)。「⇄」の文字の代わりに全箇所で使う
+const SWAPMK = '<i class="swapmark"></i>';
+
 const D = window.PVP_DATA;
 document.getElementById('loading').style.display = 'none';
 
@@ -741,7 +744,7 @@ const HELP_HTML = `
   <div class="hlegend">
     <div><i>🛡</i>シールド（残り枚数・使った回数）</div>
     <div><i>⏱</i>かかった時間（秒）</div>
-    <div><i>⇄</i>交代する／した</div>
+    <div><i>${SWAPMK}</i>交代する／した</div>
     <div><i>▶</i>SPアタックを撃つ指示</div>
     <div><i>🎲</i>ランダムで決まる</div>
     <div><i>📌</i>固定（必ずこれが出る）</div>
@@ -808,8 +811,8 @@ const HELP_HTML = `
   <ul>
     <li><b>⚡ SPアタック</b>… 撃つわざをタップ／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）／<b>おまかせ</b>（AIの判断で進める）</li>
     <li><b>🛡 〜が来る！</b>… シールドで<b>使う</b>か、<b>受ける</b>か（受けた場合のダメージつき）</li>
-    <li><b>⇄ 交代する？</b>… あいての交代直後（硬直中に殴ったあと）に聞かれます</li>
-    <li><b>⇄ 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
+    <li><b>${SWAPMK} 交代する？</b>… あいての交代直後（硬直中に殴ったあと）に聞かれます</li>
+    <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
     <li>下のフレームの <b>⏸／×1／⏩</b> で一時停止・倍速（×1×2×4）・次の決断まで飛ばす、ができます。<b>⏹</b>（または上の<b>▶ バトルスタート！</b>）で選んだ手を消して、もう一度はじめからバトルできます。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
@@ -1475,7 +1478,7 @@ function buildPartySlots(box, withMoves) {
   if (!box) return;
   box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}">
     <div class="phd"><span class="pnum">${i + 1}匹目</span>${withMoves && i === 0
-      ? `<button class="plead" aria-pressed="${RK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいては4.5秒硬直・打ちかけの1発は交代先に入ります)">⇄開幕交代</button>` : ''}
+      ? `<button class="plead" aria-pressed="${RK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいては4.5秒硬直・打ちかけの1発は交代先に入ります)">${SWAPMK}開幕交代</button>` : ''}
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
       <button class="pclr" title="この枠を空にする">×</button></div>
@@ -2156,7 +2159,7 @@ function rbPoints(turns, ctx, dec) {
 
 // 決断ひとつぶんの選択肢(画面に出すボタン)を作る
 function rbChoices(p, ctx) {
-  if (p.kind === 'lead') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `⇄ ${ctx.picks[k].name}`, cls: 'fire',
+  if (p.kind === 'lead') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `${SWAPMK} ${ctx.picks[k].name}`, cls: 'fire',
     tip: '開幕にこのポケモンへ交代します(あいての打ちかけの1発は交代先に入ります)' }));
   if (p.kind === 'sp') {
     // 質問は「いちばん軽いSPが撃てるようになったターン」に出るので、重いほうのわざは
@@ -2191,10 +2194,10 @@ function rbChoices(p, ctx) {
     const opts = [];
     for (const k of ctx.swTo) {
       opts.push({ a: 'toq', to: k, cls: 'fire',
-        label: `⇄ ${ctx.picks[k].name} <i class="need">すぐ</i>`,
+        label: `${SWAPMK} ${ctx.picks[k].name} <i class="need">すぐ</i>`,
         tip: 'いますぐ交代します(あいてはここから4.5秒動けません／自分も0.5秒動けません)' });
       if (n > 0) opts.push({ a: 'to', to: k, cls: 'fire',
-        label: `⇄ ${ctx.picks[k].name} <i class="need">${fm.n}＋${n}</i>`,
+        label: `${SWAPMK} ${ctx.picks[k].name} <i class="need">${fm.n}＋${n}</i>`,
         tip: `あいてが動けないあいだに${fm.n}をあと${n}発打ってから交代します(硬直ぶんを殴ってから下がる)` });
     }
     return opts.concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
@@ -2473,7 +2476,7 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 // (ポケモンやわざの入力中に勝手にシミュが動き始めないように)
 const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined };
 const RBUI = { pts: {}, order: [], open: null };
-const RB_ICON = { sp: '⚡', sh: '🛡', swap: '⇄', next: '💀', lead: '⇄' };
+const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, next: '💀', lead: SWAPMK };
 // 選び直したら、その決断より後ろの答えは消す(前提が変わるので、そこから先はおまかせに戻る)
 function rbTrim(key) {
   const i = RBUI.order.indexOf(key);
@@ -2481,10 +2484,10 @@ function rbTrim(key) {
   RBUI.order.slice(i + 1).forEach(k => delete RB.ans[k]);
 }
 function rbAskTitle(p) {
-  if (p.kind === 'lead') return '⇄ 開幕交代';
+  if (p.kind === 'lead') return SWAPMK + ' 開幕交代';
   if (p.kind === 'sp') return '⚡ SPアタック';
   if (p.kind === 'sh') return `🛡 ${p.mv || 'SPアタック'}が来る！`;
-  if (p.kind === 'swap') return '⇄ 交代する？';
+  if (p.kind === 'swap') return SWAPMK + ' 交代する？';
   return '💀 次に出すのは？';
 }
 function rbAnsLabel(p, a) {
@@ -2768,7 +2771,7 @@ function rbRender(body, bt, picks, foes, extra) {
     trn.textContent = gt + 'T';
     // 交代のクールタイム(45秒)の残り。0になったら消える＝出ていなければいつでも交代できる
     const swLeft = Math.max(0, (f.meta.swOk || 0) - gt);
-    swapEl.innerHTML = swLeft > 0 ? `⇄<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
+    swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
   }
   const revealTo = g => {
     while (ptr < els.length && +els[ptr].dataset.gt <= g) {
