@@ -112,7 +112,9 @@ def main():
         if nm is None and mid.startswith('HIDDEN_POWER_'):
             nm = 'めざめるパワー（' + TYPE_JA.get(mid.replace('HIDDEN_POWER_', ''), '?') + '）'
         if nm is None:
-            warn_mv.append(mid); nm = mv['name']
+            # 日本語名が無い技はゲーム未実装の作業用データ(「◯◯+」等)なので収録しない
+            # (収録すると /gbl/ の「その他のわざ」欄に英語名のまま並んでしまう)
+            warn_mv.append(mid); continue
         entry = {'n': nm, 't': mv['type'].upper(), 'p': mv['power']}
         if mv.get('energyGain'):                 # 通常技: ゲージ増加とターン数
             entry['eg'] = mv['energyGain']

@@ -1,6 +1,13 @@
 # 毎日 日本時間 朝6時に最新データをチェックし、変更があれば
 # Pull Request（承認待ち）を作成してお知らせします。
 # → 通知が届いたら内容を確認し「Merge」を押した時だけサイトに反映されます。
+#
+# 2026-08-09拡張: 火力チェッカーだけでなく全ツールのデータを一括更新する。
+#   build_data.py            → index.html / godata.json（火力チェッカー）
+#   gym-attack/build_gym.py  → gym_data.json/js（ジム挑戦。godata.jsonから同期）
+#   gym-defense/build_defense.py → defense_data.js/json（ジム防衛）
+#   max-battle/build_max.py  → max_data.js（マックスバトル）
+#   build_pvp_data.py        → pvp_data.js/json（GBL対面シミュ・ロケット団対策）
 name: auto-update-check
 
 on:
@@ -22,8 +29,20 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: 最新データでビルド（差分サマリーも生成）
+      - name: 火力チェッカーをビルド（差分サマリーも生成）
         run: python3 build_data.py
+
+      - name: ジム挑戦データを同期
+        run: python3 gym-attack/build_gym.py
+
+      - name: ジム防衛データを再計算
+        run: python3 gym-defense/build_defense.py
+
+      - name: マックスバトルデータを再生成
+        run: python3 max-battle/build_max.py
+
+      - name: GBL・ロケット団対策データを再生成
+        run: python3 build_pvp_data.py
 
       - name: 変更があればPull Requestを作成（承認待ち）
         uses: peter-evans/create-pull-request@v6
@@ -32,6 +51,13 @@ jobs:
           add-paths: |
             index.html
             godata.json
+            gym-attack/data/gym_data.json
+            gym-attack/data/gym_data.js
+            gym-defense/data/defense_data.js
+            gym-defense/data/defense_data.json
+            max-battle/data/max_data.js
+            pvp_data.js
+            pvp_data.json
           title: "📢 データ更新があります：反映しますか？"
           body-path: changes.md        # 変更内容の日本語サマリー
           commit-message: "自動データ更新"

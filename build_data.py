@@ -312,6 +312,31 @@ def main():
         s = final[src]
         final[mkey] = {'n':nm,'a':a,'df':df,'h':h,'ty':ty,'q':s['q'],'c':s['c'],'eq':s['eq'],'ec':s['ec'],'shadow':False,'mega':True}
 
+    # ===== 新メガ・ゲンシの取りこぼし防止（PvPokeフォールバック） =====
+    # Game Masterの tempEvoOverrides に未収録の新メガ（メガエアームド・メガライチュウX/Y等）が
+    # PvPoke側に先に載ることがあるため、実装済み(released)のものを自動補完する。
+    # GMに正式収録されたら自動取得値を優先（キーが既にあればスキップ）。
+    for sp in pvp:
+        sid = sp.get('speciesId','')
+        mm = re.match(r'^(.*?)_(mega(?:_[xy])?|primal)$', sid)
+        if not mm or not sp.get('released'): continue
+        key = sid.upper()
+        if key in final: continue
+        base_key = mm.group(1).upper().replace('_ALOLAN','_ALOLA')
+        src = final.get(base_key)
+        if not src:
+            print('警告: 新メガの元ポケモンが見つかりません →', sid); continue
+        bs = sp.get('baseStats') or {}
+        if not all(bs.get(x) for x in ('atk','def','hp')): continue
+        kind = mm.group(2)
+        xy = 'X' if kind.endswith('_x') else ('Y' if kind.endswith('_y') else '')
+        tag = 'ゲンシ' if kind == 'primal' else 'メガ'
+        ty = [t.upper() for t in (sp.get('types') or []) if t and t != 'none']
+        final[key] = {'n':tag+src['n']+xy,'a':bs['atk'],'df':bs['def'],'h':bs['hp'],
+                      'ty':ty or src['ty'],'q':src['q'],'c':src['c'],'eq':src['eq'],'ec':src['ec'],
+                      'shadow':False,'mega':True,'fe':1}
+        print('PvPokeから新メガ・ゲンシを補完 →', final[key]['n'])
+
     # めざめるパワーはタイプ別16種(ノーマル/フェアリーは実在しない)に展開し、
     # ボスごとに最適なタイプで火力評価できるようにする
     HP16 = ['FIGHTING','FLYING','POISON','GROUND','ROCK','BUG','GHOST','STEEL',

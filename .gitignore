@@ -8,5 +8,8 @@ HANDOVER.md
 # GitHub Actions が自動PRの本文(body-path)に使う一時ファイルのためコミットしない
 changes.md
 
+# build_max.py がダウンロードする Game Master のキャッシュ(18MB超・コミットしない)
+max-battle/latest.json
+
 # 対戦エンジン開発の答え合わせ資料(外部シミュレータの出力を写した私的検証データのため公開しない)
 pvp-tests/

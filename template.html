@@ -282,6 +282,12 @@ function bestCombo(p, bossTypes, shadow){
     if(!winner||votes>winner.votes||(votes===winner.votes&&dps>winner.dps))
       winner={votes,dps,f:cb.f,c:cb.c};
   }
+  // めざめるパワーが最適の場合、同じ相性倍率(=同DPS)のタイプを全部集める(表示で複数アイコンにする)
+  if(winner&&winner.f.id.startsWith('HIDDEN_POWER_')){
+    const e0=eff(D.moves[winner.f.id].t,bossTypes);
+    winner.hpTypes=fs.filter(x=>x.id.startsWith('HIDDEN_POWER_')&&eff(D.moves[x.id].t,bossTypes)===e0)
+                    .map(x=>D.moves[x.id].t);
+  }
   return winner;
 }
 function cpOf(p, iva, ivd, ivh, m){
@@ -502,9 +508,16 @@ function mineRows(){
     return {i,e,p,dps:r?r.dps:0};
   });
 }
-function moveLabel(p, id, sp){
+function moveLabel(p, id, sp, hpTypes){
   const m=D.moves[id];
   const isSp = sp!==undefined?sp:(p.eq.includes(id)||p.ec.includes(id));
+  // めざめるパワーは「（むし）」等のタイプ名テキストを出さず、
+  // 最適タイプ(同DPSで複数あれば全部)のアイコンだけで示す
+  if(id.startsWith('HIDDEN_POWER_')){
+    const ts=(hpTypes&&hpTypes.length?hpTypes:[m.t]);
+    const icons=ts.map(t=>typeIconHTML(D.typeJa[t],14)).join('');
+    return icons+(isSp?`<span class="sp">めざめるパワー(特)</span>`:'めざめるパワー');
+  }
   const nm = typeIconHTML(D.typeJa[m.t],14)+(isSp?`<span class="sp">${m.n}(特)</span>`:m.n);
   return nm;
 }
@@ -606,7 +619,7 @@ function renderRank(){
     }
     return `<div class="rank-row"><div class="rk">${r.rank}</div><div class="rmain">
       <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small>PL50・個体値15</small></div>
-      <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}</div>
+      <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}</div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
