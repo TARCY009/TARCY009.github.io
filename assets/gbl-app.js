@@ -739,6 +739,13 @@ cupTab.onclick = () => {
   const open = cupwin.style.display === 'none';
   renderCups();
   cupwin.style.display = open ? 'block' : 'none';
+  // 一覧を開いているあいだは「特殊カップ」を選択中として光らせる(前のリーグが選ばれたままだと紛らわしい)。
+  // 何も選ばずに閉じたら、いま実際に使っているリーグの表示へ戻す
+  if (open) {
+    document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', x === cupTab));
+  } else if (!cup) {
+    document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', +x.dataset.cap === cap));
+  }
 };
 
 // ---- 使い方・マークの見かた(ページ最下部) ----
