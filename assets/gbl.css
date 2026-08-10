@@ -14,9 +14,17 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .lead{color:var(--sub);font-size:.8rem;margin-top:4px}
 /* リーグ */
 .leagues{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.lgbtn{flex:1;padding:10px 6px;background:var(--bg2);border:none;color:var(--sub);font-size:.88rem;cursor:pointer;font-weight:700}
-.lgbtn[aria-pressed="true"]{background:var(--gl);color:#06122b}
-#cupTab[aria-pressed="true"]{background:var(--ml);color:#140a26}
+/* リーグごとに色を持たせる(スーパー=青 / ハイパー=黄 / マスター=紫 / 特殊カップ=白っぽいグレー)。
+   選んでいないときは色を控えめに、押すとその色で塗って はっきり分かるようにする */
+.lgbtn{flex:1;padding:10px 6px;background:var(--bg2);border:none;font-size:.88rem;cursor:pointer;font-weight:700;
+  color:var(--lc);opacity:.62;transition:opacity .15s ease,background .15s ease}
+.lgbtn + .lgbtn{border-left:1px solid var(--line)}
+.lgbtn:hover{opacity:.85}
+.lgbtn[data-cap="1500"]{--lc:#4d8dff;--lt:#06122b}
+.lgbtn[data-cap="2500"]{--lc:#ffd54a;--lt:#2b2305}
+.lgbtn[data-cap="0"]{--lc:#b06cff;--lt:#140a26}
+#cupTab{--lc:#e6ebfa;--lt:#141b33}
+.lgbtn[aria-pressed="true"]{background:var(--lc);color:var(--lt);opacity:1}
 .cupwin{margin-top:8px}
 .cupslots button{flex:1 0 46%;font-size:.8rem;padding:9px 4px;font-weight:700}
 .cupslots button small{display:block;font-weight:400;font-size:.64rem;color:var(--sub);margin-top:2px}
