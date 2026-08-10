@@ -92,6 +92,15 @@ document.getElementById('app').innerHTML = `
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
         </div>
       </div>
+      <select class="selFast" title="ノーマルアタック"></select>
+      <select class="selC1" title="SPアタック"></select>
+      <select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select>
+      <div class="bluffwrap" style="display:none">
+        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
+        <div class="opts bluff">
+          <button data-v="0" aria-pressed="true" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button><button data-v="1" aria-pressed="false" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button>
+        </div>
+      </div>
       <label class="f">個体値・PL</label>
       <div class="opts ivmode">
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
@@ -109,17 +118,6 @@ document.getElementById('app').innerHTML = `
           <label>PL<input type="number" class="ivL" min="1" max="51" step="0.5" inputmode="decimal"></label>
         </div>
         <div class="ivnote"></div>
-      </div>
-      <label class="f">ノーマルアタック</label><select class="selFast"></select>
-      <label class="f">SPアタック</label>
-      <select class="selC1"></select>
-      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2</label>
-      <select class="selC2"></select>
-      <div class="bluffwrap" style="display:none">
-        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
-        <div class="opts bluff">
-          <button data-v="0" aria-pressed="true" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button><button data-v="1" aria-pressed="false" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button>
-        </div>
       </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
@@ -169,6 +167,15 @@ document.getElementById('app').innerHTML = `
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
         </div>
       </div>
+      <select class="selFast" title="ノーマルアタック"></select>
+      <select class="selC1" title="SPアタック"></select>
+      <select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select>
+      <div class="bluffwrap" style="display:none">
+        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
+        <div class="opts bluff">
+          <button data-v="0" aria-pressed="true" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button><button data-v="1" aria-pressed="false" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button>
+        </div>
+      </div>
       <label class="f">個体値・PL</label>
       <div class="opts ivmode">
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
@@ -186,17 +193,6 @@ document.getElementById('app').innerHTML = `
           <label>PL<input type="number" class="ivL" min="1" max="51" step="0.5" inputmode="decimal"></label>
         </div>
         <div class="ivnote"></div>
-      </div>
-      <label class="f">ノーマルアタック</label><select class="selFast"></select>
-      <label class="f">SPアタック</label>
-      <select class="selC1"></select>
-      <label class="f" title="わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けて計算します">SPアタック2</label>
-      <select class="selC2"></select>
-      <div class="bluffwrap" style="display:none">
-        <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
-        <div class="opts bluff">
-          <button data-v="0" aria-pressed="true" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button><button data-v="1" aria-pressed="false" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button>
-        </div>
       </div>
       <label class="f">シールド</label>
       <div class="opts sh shields">
@@ -3455,10 +3451,16 @@ function fillMoves(i, cfg) {
     ? own.map(m => opt(m, sel)).join('')
     : `<optgroup label="おぼえるわざ">${own.map(m => opt(m, sel)).join('')}</optgroup>` +
       `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>`;
-  el.querySelector('.selFast').innerHTML = grouped(fasts, otherF, cfg.fast);
-  el.querySelector('.selC1').innerHTML = grouped(chargeds, otherC, cfg.throw);
-  el.querySelector('.selC2').innerHTML =
-    `<option value=""${S[i].c2 ? '' : ' selected'}>ー</option>` + grouped(chargeds, otherC, S[i].c2);
+  // わざ欄は「選ぶ前は欄の中に薄くわざの種類を出し、選んだらわざ名に変わる」方式。
+  // 自分で選んでいないあいだ(＝自動でいちばん良い構成を使う)は見出しを兼ねたプレースホルダーにする
+  const ph = (sel, key, label, own, others, cur) => {
+    const un = !S[i][key];   // 未選択＝自動。どのわざにも selected を付けず、見出しを選んだ状態にする
+    sel.innerHTML = `<option value=""${un ? ' selected' : ''}>${label}</option>` + grouped(own, others, un ? null : cur);
+    sel.classList.toggle('ph', un);
+  };
+  ph(el.querySelector('.selFast'), 'fast', 'ノーマルアタック', fasts, otherF, cfg.fast);
+  ph(el.querySelector('.selC1'), 'c1', 'SPアタック', chargeds, otherC, cfg.throw);
+  ph(el.querySelector('.selC2'), 'c2', 'SPアタック2', chargeds, otherC, S[i].c2);
   // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す
   el.querySelector('.bluffwrap').style.display = S[i].c2 ? 'block' : 'none';
   el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));
