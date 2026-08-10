@@ -71,12 +71,14 @@ document.getElementById('app').innerHTML = `
 </div>
 
 <div class="gopt" id="gopt">
-  <span class="lbl" title="「ねっとう」「かみくだく」など、決まった確率で能力が上下するわざの計算方法。全モード共通で使われます">確率で能力が上下するわざ</span>
-  <div class="opts prob" id="prob">
-    <button data-v="none" aria-pressed="true" title="効果は起きない前提で計算する（運に頼らない結果・既定）">不発</button><button data-v="avg" aria-pressed="false" title="確率のぶんを平均して反映する（例: 30%で攻⬇なら0.3段階ぶん下がる）">期待値</button><button data-v="always" aria-pressed="false" title="毎回必ず発動する前提で計算する（いちばん効果が出た場合）">必ず発動</button>
+  <span class="lbl" title="「ねっとう」「かみくだく」など、決まった確率で能力が上下するわざの計算方法。全モード共通で使われます">能力変化わざ</span>
+  <div class="goptmain">
+    <div class="opts prob" id="prob">
+      <button data-v="none" aria-pressed="true" title="効果は起きない前提で計算する（運に頼らない結果・既定）">不発</button><button data-v="avg" aria-pressed="false" title="確率のぶんを平均して反映する（例: 30%で攻⬇なら0.3段階ぶん下がる）">期待値</button><button data-v="always" aria-pressed="false" title="毎回必ず発動する前提で計算する（いちばん効果が出た場合）">必ず発動</button>
+    </div>
+    <div class="goptnote" id="goptnote"></div>
   </div>
 </div>
-<div class="goptnote" id="goptnote"></div>
 
 <div class="duel">
   <div class="side mine" id="sideL">
@@ -1014,13 +1016,12 @@ function applyMode() {
   document.getElementById('rkteam').style.display = rkTeam ? 'block' : 'none';
   document.getElementById('rkrank').style.display = rkRankView ? 'block' : 'none';
   // 確率わざの設定は、模擬戦のあいだ「⚙ 詳細」パネルの中へ移す(トップをすっきりさせる)
-  const goptEl = document.getElementById('gopt'), gnoteEl = document.getElementById('goptnote');
+  const goptEl = document.getElementById('gopt');
   if (rkTeam) {
     const pr = document.querySelector('#rkdetail .rkdprob');
-    if (pr && goptEl.parentElement !== pr) { pr.appendChild(goptEl); pr.appendChild(gnoteEl); }
+    if (pr && goptEl.parentElement !== pr) pr.appendChild(goptEl);
   } else if (goptEl.parentElement !== duelBox.parentElement) {
     duelBox.parentElement.insertBefore(goptEl, duelBox);
-    duelBox.parentElement.insertBefore(gnoteEl, duelBox);
   }
   renderRkDetail();
   renderMyPk();   // ★登録リストの中身はモードで変わる(ロケット団戦のあいてはメガ・ゲンシ不可)
@@ -1194,7 +1195,6 @@ const isProbMove = id => { const m = D.moves[id]; return !!(m && m.bf && m.bc < 
 // この切り替えは、そういうわざが実際に使われているときだけ出す(使っていないと選ぶ意味がない)
 function setProbTab(on) {
   document.getElementById('gopt').style.display = on ? '' : 'none';
-  document.getElementById('goptnote').style.display = on ? '' : 'none';
 }
 // 計算に使う設定から、確率わざが混じっているかを見る
 const cfgProbMoves = c => [c.fast, c.throw, ...(c.charged || [])].filter(Boolean);
