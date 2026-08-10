@@ -528,7 +528,7 @@ sideEl.forEach((el, i) => {
     }
     const q = toKata(inp.value.trim());
     if (!q) { list.style.display = 'none'; return; }
-    const hits = KEYS.filter(k => D.pokemon[k].n.includes(q) && rkFoeOk(i, k)).slice(0, 12);
+    const hits = searchPk(q, k => rkFoeOk(i, k));
     if (!hits.length) { list.style.display = 'none'; return; }
     list.innerHTML = hits.map(k =>
       `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
@@ -1521,6 +1521,20 @@ const ptName = m => m ? (m.shadow ? 'シャドウ' : '') + D.pokemon[m.key].n : 
 // 3枠の入力欄を作る(検索・★登録リストからの呼び出し・シャドウ切替・クリア)
 // パーティ診断とロケット団戦の連戦で同じ3枠(PT)を共有するので、置き場所(box)を受け取る
 // withMoves=true の枠(模擬戦)にだけ、じぶんのわざを選ぶ欄を出す
+// ポケモン名の検索候補。「メガ」のように該当が多い語でも埋もれないよう、
+// 前方一致(名前の先頭が一致)を先に並べ、件数の上限も広めに取る(一覧はスクロールできる)
+function searchPk(q, ok) {
+  const hit = [], sub = [];
+  for (const k of KEYS) {
+    if (ok && !ok(k)) continue;
+    const n = D.pokemon[k].n;
+    const i = n.indexOf(q);
+    if (i === 0) hit.push(k);
+    else if (i > 0) sub.push(k);
+    if (hit.length + sub.length >= 60) break;
+  }
+  return hit.concat(sub).slice(0, 60);
+}
 function buildPartySlots(box, withMoves) {
   if (!box) return;
   box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}">
@@ -1549,7 +1563,7 @@ function buildPartySlots(box, withMoves) {
       }
       const q = toKata(inp.value.trim());
       if (!q) { list.style.display = 'none'; return; }
-      const hits = KEYS.filter(k => D.pokemon[k].n.includes(q)).slice(0, 10);
+      const hits = searchPk(q);
       if (!hits.length) { list.style.display = 'none'; return; }
       list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
       list.style.display = 'block';
@@ -1768,7 +1782,7 @@ function buildFoeSlots() {
       const q = toKata(inp.value.trim());
       if (!q) { list.style.display = 'none'; return; }
       // ロケット団はメガ・ゲンシを使ってこないので、あいての候補には出さない
-      const hits = KEYS.filter(k => D.pokemon[k].n.includes(q) && !isMega(k)).slice(0, 10);
+      const hits = searchPk(q, k => !isMega(k));
       if (!hits.length) { list.style.display = 'none'; return; }
       list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
       list.style.display = 'block';
@@ -1866,7 +1880,7 @@ function renderRkMy() {
     if (!e.isComposing) inp.value = toKata(inp.value);
     const q = toKata(inp.value.trim());
     if (!q) { list.style.display = 'none'; return; }
-    const hits = KEYS.filter(k => D.pokemon[k].n.includes(q)).slice(0, 10);
+    const hits = searchPk(q);
     if (!hits.length) { list.style.display = 'none'; return; }
     list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
     list.style.display = 'block';
