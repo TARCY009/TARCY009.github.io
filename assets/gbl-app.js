@@ -118,7 +118,7 @@ document.getElementById('app').innerHTML = `
       <div class="bluffwrap" style="display:none">
         <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
-          <button data-v="1" aria-pressed="true" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button><button data-v="0" aria-pressed="false" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button>
+          <button data-v="0" aria-pressed="true" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button><button data-v="1" aria-pressed="false" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button>
         </div>
       </div>
       <label class="f">シールド</label>
@@ -195,7 +195,7 @@ document.getElementById('app').innerHTML = `
       <div class="bluffwrap" style="display:none">
         <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
-          <button data-v="1" aria-pressed="true" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button><button data-v="0" aria-pressed="false" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button>
+          <button data-v="0" aria-pressed="true" title="ブラフはせず、常にダメージ効率が高いSPを撃つ">しない</button><button data-v="1" aria-pressed="false" title="相手にシールドが残っている間は、消費の軽いSPを撃ってシールドを使わせにいく">する</button>
         </div>
       </div>
       <label class="f">シールド</label>
@@ -511,7 +511,7 @@ const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
   spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
   ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51,
-  carry: false, cHp: 100, cEn: 0, bluff: true });
+  carry: false, cHp: 100, cEn: 0, bluff: false });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
 // 側のタイミング設定 → 発ごとのSP設定で使う記号(最短=min / 同時=sync / それ以外=最適)
@@ -3681,7 +3681,7 @@ function updateUrl() {
     if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
     if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
     if (s.carry) qp[i ? 'cyr' : 'cyl'] = s.cHp + '.' + s.cEn;   // 連戦(開始HP%.開始ゲージ)
-    if (!s.bluff) qp[i ? 'bfr' : 'bfl'] = 0;   // ブラフしない設定
+    if (s.bluff) qp[i ? 'bfr' : 'bfl'] = 1;   // ブラフする設定(既定はしない)
     // わざ構成(ノーマル~SP1~SP2)。手動選択は「!」付き、自動選出の確定値はそのまま書く。
     // これが無いと、共有リンクを開いた人の側で自動選出をやり直すことになり、
     // 送り主が確定させた構成と食い違うことがある
@@ -3992,10 +3992,10 @@ document.getElementById('copyUrl').onclick = async () => {
     put(f, 'fast'); put(c, 'c1');
     if (c2 && D.moves[c2]) S[i].c2 = c2;
   });
-  ['bfl', 'bfr'].forEach((k, i) => {   // ブラフ設定の復元
-    if (q.get(k) === '0') {
-      S[i].bluff = false;
-      sideEl[i].querySelectorAll('.bluff button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === '0'));
+  ['bfl', 'bfr'].forEach((k, i) => {   // ブラフ設定の復元(既定は「しない」。旧リンクの bfl=0 は既定と同じ)
+    if (q.get(k) === '1') {
+      S[i].bluff = true;
+      sideEl[i].querySelectorAll('.bluff button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === '1'));
     }
   });
   ['cyl', 'cyr'].forEach((k, i) => {   // 連戦(開始HP%.開始ゲージ)の復元
