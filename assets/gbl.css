@@ -226,13 +226,31 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkslot+.rkslot{margin-top:5px}
 .rkslbl{font-size:.66rem;color:var(--sub);font-weight:600;flex-shrink:0;width:58px;padding-top:6px;line-height:1.3}
 .rkslbl i{font-style:normal;font-size:.72rem}
-.rkcands{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0}
-.rkchip{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;font-size:.72rem;font-weight:600;
-  background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:var(--ink);cursor:pointer}
+.rkcands{flex:1;display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+/* 「だれと」(シエラ/クリフ/アルロ/サカキ)は、種別の赤と区別できるよう金系の立体ボタンに */
+.rkwho{gap:6px}
+.rkwho button{flex:1;padding:9px 6px;font-size:.86rem;font-weight:800;color:#e8c56a;
+  background:linear-gradient(180deg,#2a2440,#1c1830);border:1px solid rgba(255,213,74,.32);border-radius:11px;
+  box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.rkwho button:hover{transform:translateY(-1px);border-color:#ffd54a}
+.rocket .rkwho button[aria-pressed="true"]{color:#33260a;border-color:#ffe89a;
+  background:linear-gradient(160deg,#fff0b8 0%,#ffd54a 45%,#e0a020 100%);
+  box-shadow:0 5px 16px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(-1px)}
+/* 手持ちのポケモンチップ。選ぶと金色に光り、押した感じが出るようにする */
+.rkchip{display:inline-flex;align-items:center;gap:3px;padding:5px 10px;font-size:.72rem;font-weight:700;
+  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:99px;
+  color:var(--ink);cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.35);
+  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.rkchip:hover{transform:translateY(-1px);border-color:rgba(255,213,74,.6)}
 .rkchip .shadowmark{color:#b06cff}
-.rkchip.on{background:var(--gold);border-color:var(--gold);color:#2b2305}
+.rkchip.on{color:#33260a;border-color:#ffe89a;
+  background:linear-gradient(160deg,#fff0b8 0%,#ffd54a 45%,#e8b32c 100%);
+  box-shadow:0 4px 12px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(-1px)}
 .rkchip.on .shadowmark{color:#5b21b6}
-.rkchip:disabled{opacity:.4;cursor:default}
+.rkchip:disabled{opacity:.4;cursor:default;box-shadow:none;transform:none}
+/* 何匹目かのラベル(📌固定 / 🎲ランダム)を少し読みやすく */
+.rkslbl{color:var(--sub)}
+.rkslbl i{opacity:.9}
 /* ロケット団戦: 決着までの時間と「あいてのわざ全通り」 */
 .rktime{margin-top:10px;padding:6px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
   font-size:.78rem;color:var(--ink);text-align:center}
