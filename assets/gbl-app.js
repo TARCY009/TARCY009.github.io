@@ -1259,9 +1259,9 @@ function runMulti() {
       setTimeout(step, 0);
     } else {
       const wl = j => `${wins[j]}勝${losses[j]}敗${draws[j] ? draws[j] + '分' : ''}`;
-      const score = ((wScore[0] + wScore[1] + wScore[2]) / (wSum * 3) * 100);
+      const score = envScore((wScore[0] + wScore[1] + wScore[2]) / (wSum * 3));
       prog.innerHTML = `🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
-        `<span class="mtscore">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
+        `<span class="mtscore" title="環境上位${list.length}匹×シールド0/1/2の勝敗を採用率で加重した点数。勝てない相手が減るほど加速的に上がります（全部に勝っても100にはなりません）">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
         '';
       bindCtl(box, 'multi');   // 計算が終わったら絞り込み・並び替えを有効化
       applyView(box, 'multi');
@@ -1313,6 +1313,11 @@ const VIEWS = {
     tailHtml: r => `<td class="pcnt c${r.nWin}">${r.nWin}<small>/${r.cells.length}</small></td>`,
   },
 };
+// 環境スコア: 採用率で加重した勝率 p(0〜1) を 0〜99.9 の点数に直す。
+// 「環境からランダムに2回対面したとき、少なくとも1回は勝てる確率」＝ 1-(1-p)^2 の形。
+// 勝てない相手が減るほど加速的に伸びるので、上位の実力差が点数に出やすい。
+// 99.9倍で頭打ちにしてあるので、全対面に勝っても100点にはならない。
+const envScore = p => 99.9 * (1 - Math.pow(1 - Math.max(0, Math.min(1, p)), 2));
 const cellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
   `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
 function ctlHtml(vn) {
