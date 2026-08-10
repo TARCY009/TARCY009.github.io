@@ -125,6 +125,7 @@ select option[value=""]{color:var(--sub)}
 .bpdmg small{font-size:.62rem;margin-left:5px}
 .bpreq{font-size:.66rem;color:var(--sub);white-space:nowrap}
 .bpreq b{color:var(--ink);font-weight:700}
+.bpreq b.need{color:var(--gold)}
 .bpreq i{font-style:normal;margin:0 2px;opacity:.6}
 .bpst{font-size:.64rem;text-align:right;white-space:nowrap;font-weight:700}
 .bpst small{display:block;font-size:.58rem;font-weight:400;color:var(--sub)}

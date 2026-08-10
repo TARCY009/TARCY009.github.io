@@ -3693,8 +3693,8 @@ function render(res, L, R, matrix) {
         <div class="bpttl"><i class="bpk">${mark}</i>${mvChip(mvName, 13)}</div>
         <div class="bpdmg">${note ? `<b>${from}</b><small>${note}</small>`
           : `<b>${from}</b><i>→</i><b class="${ex ? 'hit' : 'same'}">${ex ? to : from}</b>`}</div>
-        ${note ? '' : `<div class="bpreq">${statLbl} <b>${fmt(now)}</b><i>→</i><b>${fmt(need)}</b></div>
-        <div class="bpst ${ex ? 'ok' : 'ng'}">${ex ? `届く<small>${ex.ivs.join('/')} PL${ex.level}</small>`
+        ${note ? '' : `<div class="bpreq">${statLbl} <i>いま</i><b>${fmt(now)}</b><i>→ 必要</i><b class="need">${fmt(need)}</b></div>
+        <div class="bpst ${ex ? 'ok' : 'ng'}">${ex ? `変化あり<small>${ex.ivs.join('/')} PL${ex.level}</small>`
           : `変化なし<small>最大まで上げても届かない</small>`}</div>`}
       </div>`;
       const give = item('💥', mv.n, cur, cur + 1, '攻撃', stM.atk, atkReq, exA);
