@@ -13,18 +13,23 @@ h1{font-size:1.3rem;letter-spacing:.03em}
 h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{color:var(--sub);font-size:.8rem;margin-top:4px}
 /* リーグ */
-.leagues{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 /* リーグごとに色を持たせる(スーパー=青 / ハイパー=黄 / マスター=紫 / 特殊カップ=白っぽいグレー)。
-   選んでいないときは色を控えめに、押すとその色で塗って はっきり分かるようにする */
-.lgbtn{flex:1;padding:10px 6px;background:var(--bg2);border:none;font-size:.88rem;cursor:pointer;font-weight:700;
-  color:var(--lc);opacity:.62;transition:opacity .15s ease,background .15s ease}
-.lgbtn + .lgbtn{border-left:1px solid var(--line)}
-.lgbtn:hover{opacity:.85}
-.lgbtn[data-cap="1500"]{--lc:#4d8dff;--lt:#06122b}
-.lgbtn[data-cap="2500"]{--lc:#ffd54a;--lt:#2b2305}
-.lgbtn[data-cap="0"]{--lc:#b06cff;--lt:#140a26}
-#cupTab{--lc:#e6ebfa;--lt:#141b33}
-.lgbtn[aria-pressed="true"]{background:var(--lc);color:var(--lt);opacity:1}
+   選んでいないときは色を控えめに、押すとその色のグラデーションで点灯して立体的に浮き上がる */
+.leagues{display:flex;gap:6px;margin-top:12px}
+.lgbtn{flex:1;padding:11px 6px;font-size:.9rem;font-weight:800;letter-spacing:.02em;cursor:pointer;
+  color:var(--lc);opacity:.72;background:linear-gradient(180deg,#1e2850,#151d38);
+  border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
+.lgbtn:hover{opacity:1;transform:translateY(-1px);
+  box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1)}
+.lgbtn[data-cap="1500"]{--lc:#4d8dff;--l1:#a9c8ff;--l2:#1f5fd0;--lt:#04173a;--lg:rgba(77,141,255,.42)}
+.lgbtn[data-cap="2500"]{--lc:#ffd54a;--l1:#fff0b8;--l2:#e0a020;--lt:#33260a;--lg:rgba(255,213,74,.38)}
+.lgbtn[data-cap="0"]{--lc:#b06cff;--l1:#e3b6ff;--l2:#7d3fd6;--lt:#1c0a33;--lg:rgba(176,108,255,.42)}
+#cupTab{--lc:#e6ebfa;--l1:#ffffff;--l2:#b9c3de;--lt:#141b33;--lg:rgba(220,230,255,.35)}
+.lgbtn[aria-pressed="true"]{opacity:1;color:var(--lt);border-color:var(--l1);transform:translateY(-1px);
+  background:linear-gradient(160deg,var(--l1) 0%,var(--lc) 45%,var(--l2) 100%);
+  box-shadow:0 6px 18px var(--lg),inset 0 1px 0 rgba(255,255,255,.6)}
 .cupwin{margin-top:8px}
 .cupslots button{flex:1 0 46%;font-size:.8rem;padding:9px 4px;font-weight:700}
 .cupslots button small{display:block;font-weight:400;font-size:.64rem;color:var(--sub);margin-top:2px}
@@ -143,13 +148,22 @@ select option[value=""]{color:var(--sub)}
 .bpnote{color:var(--sub);font-size:.64rem;margin-top:8px;line-height:1.6}
 @media (max-width:520px){.bpcols{grid-template-columns:1fr}}
 .modes{display:flex;gap:6px;margin-top:10px}
-.modes button{flex:1;padding:8px 4px;font-size:.85rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--sub);cursor:pointer;font-weight:700}
-.modes button[aria-pressed="true"]{background:var(--gl);border-color:var(--gl);color:#06122b}
+.modes button{flex:1;padding:9px 4px;font-size:.85rem;font-weight:800;color:var(--sub);cursor:pointer;
+  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:11px;
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+.modes button:hover{color:var(--ink);transform:translateY(-1px)}
+.modes button[aria-pressed="true"]{color:#04173a;border-color:#a9c8ff;transform:translateY(-1px);
+  background:linear-gradient(160deg,#a9c8ff 0%,#4d8dff 45%,#2f6ae0 100%);
+  box-shadow:0 5px 16px rgba(77,141,255,.4),inset 0 1px 0 rgba(255,255,255,.6)}
 .modes{flex-wrap:wrap}
 .modes button{flex:1 1 auto}
 @media (max-width:520px){.modes{gap:4px}.modes button{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
 /* 別ページへのリンク(GBL⇄ロケット団対策)。タブと同じ見た目で置く */
-.modes a.modelink{flex:1 1 auto;padding:8px 4px;font-size:.85rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--sub);font-weight:700;text-align:center;text-decoration:none}
+.modes a.modelink{flex:1 1 auto;padding:9px 4px;font-size:.85rem;font-weight:800;text-align:center;text-decoration:none;
+  color:#ff8f8f;background:linear-gradient(180deg,#2a1c2e,#1d1526);border:1px solid rgba(255,107,129,.3);border-radius:11px;
+  box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .12s ease,border-color .12s ease}
+.modes a.modelink:hover{transform:translateY(-1px);border-color:#ff6b6b}
 @media (max-width:520px){.modes a.modelink{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
 header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
 header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
