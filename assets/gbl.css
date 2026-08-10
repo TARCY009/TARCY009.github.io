@@ -39,7 +39,8 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .sugg-list{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--line);border-radius:10px;max-height:250px;overflow:auto;display:none;box-shadow:0 14px 30px rgba(0,0,0,.5)}
 .sugg-list div{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px;cursor:pointer;font-size:.86rem}
 .sugg-list div:hover{background:#212b52}
-.pkhead{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0}
+/* 名前・タイプ・SCP・★登録が1行に収まらない狭い画面では折り返す(はみ出し防止) */
+.pkhead{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0;flex-wrap:wrap}
 .pkhead .nm{font-weight:700;font-size:.98rem;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pkhead .tpair{flex-shrink:0}
 .pkhead .scp{font-weight:800;font-size:.9rem;color:var(--gold);flex-shrink:0;white-space:nowrap}
@@ -106,16 +107,16 @@ select option[value=""]{color:var(--sub)}
 .bp{margin-top:10px}
 .bp summary{cursor:pointer;color:var(--sub);font-size:.74rem}
 .bp summary small{font-size:.62rem;margin-left:6px;opacity:.8}
-.bpcols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:start}
+.bpcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px;align-items:start}
 .bpside{min-width:0;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .bphd{font-size:.74rem;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 1行=「わざ／ダメージの変化／必要な実数値／届くか」の2段グリッド */
-.bpitem{display:grid;grid-template-columns:1fr auto;gap:1px 8px;align-items:baseline;
+.bpitem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 8px;align-items:baseline;
   margin-top:7px;padding-top:7px;border-top:1px solid var(--line)}
 .bpttl{display:flex;align-items:center;gap:4px;min-width:0;font-size:.74rem}
 .bpttl .mvname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bpk{font-style:normal;font-size:.78rem;opacity:.85;flex-shrink:0}
-.bpdmg{white-space:nowrap;text-align:right;font-size:.78rem;color:var(--sub)}
+.bpdmg{white-space:nowrap;text-align:right;font-size:.78rem;color:var(--sub);min-width:0}
 .bpdmg b{font-size:.95rem;color:var(--ink)}
 .bpdmg b.hit{color:var(--win)}
 .bpdmg b.same{color:var(--sub)}
@@ -123,11 +124,11 @@ select option[value=""]{color:var(--sub)}
 .ivstats b{color:var(--ink);font-weight:700}
 .bpdmg i{font-style:normal;margin:0 3px;opacity:.6}
 .bpdmg small{font-size:.62rem;margin-left:5px}
-.bpreq{font-size:.66rem;color:var(--sub);white-space:nowrap}
+.bpreq{font-size:.66rem;color:var(--sub);line-height:1.6;min-width:0}
 .bpreq b{color:var(--ink);font-weight:700}
 .bpreq b.need{color:var(--gold)}
 .bpreq i{font-style:normal;margin:0 2px;opacity:.6}
-.bpst{font-size:.64rem;text-align:right;white-space:nowrap;font-weight:700}
+.bpst{font-size:.64rem;text-align:right;font-weight:700;min-width:0}
 .bpst small{display:block;font-size:.58rem;font-weight:400;color:var(--sub)}
 .bp .ok{color:var(--win)}
 .bp .ng{color:var(--sub);font-weight:400}
