@@ -118,6 +118,9 @@ select option[value=""]{color:var(--sub)}
 .bpdmg{white-space:nowrap;text-align:right;font-size:.78rem;color:var(--sub)}
 .bpdmg b{font-size:.95rem;color:var(--ink)}
 .bpdmg b.hit{color:var(--win)}
+.bpdmg b.same{color:var(--sub)}
+.ivstats{margin-top:3px;font-size:.7rem;color:var(--sub)}
+.ivstats b{color:var(--ink);font-weight:700}
 .bpdmg i{font-style:normal;margin:0 3px;opacity:.6}
 .bpdmg small{font-size:.62rem;margin-left:5px}
 .bpreq{font-size:.66rem;color:var(--sub);white-space:nowrap}

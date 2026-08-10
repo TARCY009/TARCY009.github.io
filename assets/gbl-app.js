@@ -106,7 +106,7 @@ document.getElementById('app').innerHTML = `
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">入手別の1位個体（タップで反映）</div>
+        <div class="popttl ivpresetttl">入手別の1位個体（タップで反映）</div>
         <div class="slots ivpresets">
           <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
         </div>
@@ -181,7 +181,7 @@ document.getElementById('app').innerHTML = `
         <button data-v="auto" aria-pressed="true" title="リーグ上限内でSCPが最大になる理想個体値を自動計算">理想(自動)</button><button data-v="manual" aria-pressed="false" title="手持ちポケモンの個体値とPLを入力">ﾏﾆｭｱﾙ</button>
       </div>
       <div class="popwin custIv" style="display:none">
-        <div class="popttl">入手別の1位個体（タップで反映）</div>
+        <div class="popttl ivpresetttl">入手別の1位個体（タップで反映）</div>
         <div class="slots ivpresets">
           <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
         </div>
@@ -3286,6 +3286,23 @@ function run() {
     return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, ...c };
   });
   if (myStall) base[0].stallStart = myStall;
+  // マニュアル個体値のCPと実数値を表示し、リーグ上限超えは警告する(計算は続行)。
+  // 実数値はブレイクポイントの数字と同じ基準(シャドウ補正込み)なので、設定の調整に使える
+  S.forEach((s, i) => {
+    const note = sideEl[i].querySelector('.ivnote');
+    if (s.ivMode === 'manual' && s.mIvs) {
+      const st = PvpEngine.buildStats(D, base[i]);
+      const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+      note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (capX && st.cp > capX ? ' <span class="over">⚠リーグ上限超え</span>' : '') +
+        `<div class="ivstats">攻 <b>${f1(st.atk)}</b>・防 <b>${f1(st.def)}</b>・HP <b>${st.hp}</b></div>`;
+    } else note.textContent = '';
+    // CP上限のないリーグ(マスター・ロケット団戦)では入手別の1位個体は意味がないので隠す
+    const noCap = !capX;
+    const el2 = sideEl[i];
+    [el2.querySelector('.ivpresetttl'), el2.querySelector('.ivpresets')].forEach(n => {
+      if (n) n.style.display = noCap ? 'none' : '';
+    });
+  });
   // 1対1シミュは「自分で選んだ構成の結果を見る」画面なので、
   // わざを選ぶまでは結果を出さない(わざ欄だけ先に用意して選べるようにする)
   fillMoves(0, { ...base[0], fast: S[0].fast, throw: S[0].c1 });
@@ -3297,14 +3314,6 @@ function run() {
   const needMv = i => !S[i].fast ||
     (S[i].timing !== 'never' && !S[i].c1 && movePool(S[i].key).chargeds.length);
   if (needMv(0) || (!rk && needMv(1))) { hideDuelResult(true); return; }
-  // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
-  S.forEach((s, i) => {
-    const note = sideEl[i].querySelector('.ivnote');
-    if (s.ivMode === 'manual' && s.mIvs) {
-      const st = PvpEngine.buildStats(D, base[i]);
-      note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (capX && st.cp > capX ? ' <span class="over">⚠リーグ上限超え</span>' : '');
-    } else note.textContent = '';
-  });
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
   // わざの最適化も実際のシールド枚数で行う(一覧のマスをタップしたときに結果が一致する)
   // ロケット団戦では相手のシールドは種別で決まる(したっぱ0枚・リーダー/サカキ2枚)
@@ -3678,14 +3687,17 @@ function render(res, L, R, matrix) {
       const atkReq = cur / K;
       const exA = findIvFor(me.key, { atk: atkReq }, cap, S[i].maxLv);
       // 1行ぶんの表示: わざ・ダメージの変化・必要な実数値・届くかどうか
+      // 1行の作り: わざ ／ ダメージの変化 ／ 必要な実数値(いまの値→必要な値) ／ 届くか。
+      // このリーグの個体値・PLでは届かないときは「5→5 変化なし」と出す(ユーザー指示)
       const item = (mark, mvName, from, to, statLbl, now, need, ex, note) => `<div class="bpitem">
         <div class="bpttl"><i class="bpk">${mark}</i>${mvChip(mvName, 13)}</div>
         <div class="bpdmg">${note ? `<b>${from}</b><small>${note}</small>`
-          : `<b>${from}</b><i>→</i><b class="hit">${to}</b>`}</div>
+          : `<b>${from}</b><i>→</i><b class="${ex ? 'hit' : 'same'}">${ex ? to : from}</b>`}</div>
         ${note ? '' : `<div class="bpreq">${statLbl} <b>${fmt(now)}</b><i>→</i><b>${fmt(need)}</b></div>
-        <div class="bpst ${ex ? 'ok' : 'ng'}">${ex ? `届く<small>${ex.ivs.join('/')} PL${ex.level}</small>` : '届かない'}</div>`}
+        <div class="bpst ${ex ? 'ok' : 'ng'}">${ex ? `届く<small>${ex.ivs.join('/')} PL${ex.level}</small>`
+          : `変化なし<small>最大まで上げても届かない</small>`}</div>`}
       </div>`;
-      const give = item('⚔', mv.n, cur, cur + 1, '攻撃', stM.atk, atkReq, exA);
+      const give = item('💥', mv.n, cur, cur + 1, '攻撃', stM.atk, atkReq, exA);
       // 被ダメ: 防御実数値がいくつあれば1減るか
       let take;
       const curT = PvpEngine.damage(D, mvO, stO, stM);
@@ -3701,7 +3713,7 @@ function render(res, L, R, matrix) {
       return `<div class="bpside"><div class="bphd">${stM.name}</div>${give}${take}</div>`;
     };
     return `<div class="bpcols">${side(0)}${side(1)}</div>
-      <div class="bpnote">※開始時点（バフなし）・いま選んでいるノーマルアタックで計算。<i class="bpk">⚔</i>与ダメ ／ <i class="bpk">🛡</i>被ダメ</div>`;
+      <div class="bpnote">※開始時点（バフなし）・いま選んでいるノーマルアタックで計算。<i class="bpk">💥</i>与ダメ ／ <i class="bpk">🛡</i>被ダメ</div>`;
   };
   const bpEl = rEl.querySelector('.bp');
   bpEl.addEventListener('toggle', () => {
