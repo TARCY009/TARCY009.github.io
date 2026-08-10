@@ -1022,19 +1022,18 @@ function applyMode() {
   document.getElementById('party').style.display = mode === 'party' ? 'block' : 'none';
   document.getElementById('rkteam').style.display = rkTeam ? 'block' : 'none';
   document.getElementById('rkrank').style.display = rkRankView ? 'block' : 'none';
-  // 能力変化わざの設定の置き場所:
-  //   1対1(GBL・ロケット団) … じぶん/あいての設定と結果のあいだ(いじった結果がすぐ下に見える)
-  //   一覧系               … 表が長いので従来どおり上のまま
-  //   模擬戦               … 「⚙ 詳細」パネルの中
+  // 能力変化わざの設定は、どの画面でも「ポケモンの設定の下・結果の上」に置く。
+  // 模擬戦だけは「⚙ 詳細」パネルの中にしまう
   const goptEl = document.getElementById('gopt');
-  const resEl = document.getElementById('result');
+  const anchor = mode === 'multi' ? document.getElementById('multi')
+    : mode === 'counter' ? document.getElementById('counter')
+    : mode === 'party' ? document.getElementById('party')
+    : document.getElementById('result');
   if (rkTeam) {
     const pr = document.querySelector('#rkdetail .rkdprob');
     if (pr && goptEl.parentElement !== pr) pr.appendChild(goptEl);
-  } else if (mode === 'duel' || rk) {
-    if (goptEl.nextElementSibling !== resEl) resEl.parentElement.insertBefore(goptEl, resEl);
-  } else if (goptEl.nextElementSibling !== duelBox) {
-    duelBox.parentElement.insertBefore(goptEl, duelBox);
+  } else if (goptEl.nextElementSibling !== anchor) {
+    anchor.parentElement.insertBefore(goptEl, anchor);
   }
   renderRkDetail();
   renderMyPk();   // ★登録リストの中身はモードで変わる(ロケット団戦のあいてはメガ・ゲンシ不可)
