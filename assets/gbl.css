@@ -101,6 +101,7 @@ select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(-
 .ivnote .over{color:#ff7b8e;font-weight:700}
 .bp{margin-top:10px}
 .bp summary{cursor:pointer;color:var(--sub);font-size:.74rem}
+.bp summary small{font-size:.62rem;margin-left:6px;opacity:.8}
 .bpcols{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-top:6px;align-items:start}
 .bpside{min-width:0;font-size:.72rem;line-height:1.7}
 .bpside .mvname{white-space:nowrap}
@@ -216,6 +217,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .mttbl td.pcnt.c1{color:var(--gold)}
 .mttbl td.pcnt.c2,.mttbl td.pcnt.c3{color:var(--win)}
 .holehead{color:var(--lose);font-weight:700;font-size:.82rem}
+.holehead small{font-size:.62rem;font-weight:400;color:var(--sub);margin-left:4px}
 .holeok{color:var(--win);font-weight:700;font-size:.82rem}
 .holelist{color:var(--ink);font-size:.74rem;line-height:1.6;margin-top:2px}
 .holesub{font-size:.7rem;margin-top:4px}
@@ -592,6 +594,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .tltbl td.ensp{color:#f472b6;font-weight:700}
 .tlhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
 .tlhead h3{margin:0;font-size:.8rem;white-space:nowrap}
+.tlhead h3 small{font-size:.62rem;font-weight:400;color:var(--sub);margin-left:6px}
 .tlmode{display:flex;gap:4px;flex-shrink:0}
 .tlmode button{padding:4px 10px;font-size:.72rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;white-space:nowrap}
 .tltbl .mvname{white-space:nowrap}

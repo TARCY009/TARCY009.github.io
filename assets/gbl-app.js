@@ -17,7 +17,7 @@ document.getElementById('app').innerHTML = `
   <button class="lgbtn" id="cupTab" aria-pressed="false" title="特殊レギュレーションの一覧を開く">特殊カップ</button>
 </div>
 <div class="popwin cupwin" id="cupwin" style="display:none">
-  <div class="popttl">特殊レギュレーションを選択（環境リストはそのカップの上位50匹に切替）</div>
+  <div class="popttl">特殊カップを選ぶ</div>
   <div class="slots cupslots" id="cupslots"></div>
 </div>
 
@@ -238,8 +238,7 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="multi" style="display:none"></div>
 <div class="multi" id="counter" style="display:none"></div>
 <div class="multi" id="party" style="display:none">
-  <h3>パーティ3匹の穴チェック</h3>
-  <div class="mtnote">3匹を選ぶと、環境上位の相手それぞれに「3匹のうち何匹が勝てるか」を出します。<b class="holeword">0匹＝パーティの穴</b>（そのポケモンを出されると全員が負ける相手）です。個体値は理想値、わざは対面ごとに最適化します（★登録リストから選ぶと自分の個体値・わざで診断できます）。マスをタップすると、その1対1の詳細を確認できます。</div>
+  <h3>パーティ3匹の穴チェック<small class="cnsub"><b class="holeword">0匹＝穴</b>・マスをタップ→1対1シミュ</small></h3>
   <div class="pslots"></div>
   <div class="pctl">
     <span class="lbl">シールド</span>
@@ -1188,7 +1187,7 @@ function runMulti() {
   const box = document.getElementById('multi');
   const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
   if (!S[0].key) {
-    box.innerHTML = '<div class="mtnote">左の「じぶん」のポケモンを選ぶと、環境上位' + (list.length || 50) + '匹との一括対戦がここに表示されます</div>';
+    box.innerHTML = '<div class="mtnote">左の<b>じぶん</b>を選ぶと、環境上位' + (list.length || 50) + '匹と一括対戦します</div>';
     return;
   }
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
@@ -1206,12 +1205,11 @@ function runMulti() {
   const pool0 = movePool(S[0].key);
   fillMoves(0, { ...meBase, fast: S[0].fast || S[0].pin.fast || pool0.fasts[0], throw: S[0].c1 || S[0].pin.c1 || pool0.chargeds[0] });
   const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
-  box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}</h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで一括対戦。%は勝った側の残りHP。マスをタップすると、そのシールド枚数のまま1対1シミュで詳細を確認できます。相手は理想個体値・標準的な推奨わざ構成で、SPアタック2本を相手に合わせて使い分けます。自分のわざは対面ごとに自動で最適化（わざ欄で選択・確定済みの構成があればそれで固定）。<b>SPアタック2を選ぶと自分も2本を使い分けて</b>計算するので、わざ開放した実戦に近い結果になります</div>
+  box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}<small class="cnsub">マスをタップ→1対1シミュ</small></h3>
     ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
-    </tbody></table><div class="mtprog">計算中… 0/${list.length}</div>`;
+    </tbody></table><div class="mtprog">計算中 0/${list.length}</div>`;
   const rowsEl = [...box.querySelectorAll('tr[data-k]')];
   rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
   updateUrl();
@@ -1257,14 +1255,14 @@ function runMulti() {
       idx++;
     }
     if (idx < list.length) {
-      prog.textContent = `計算中… ${idx}/${list.length}`;
+      prog.textContent = `計算中 ${idx}/${list.length}`;
       setTimeout(step, 0);
     } else {
       const wl = j => `${wins[j]}勝${losses[j]}敗${draws[j] ? draws[j] + '分' : ''}`;
       const score = ((wScore[0] + wScore[1] + wScore[2]) / (wSum * 3) * 100);
-      prog.innerHTML = `勝敗: 🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
+      prog.innerHTML = `🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
         `<span class="mtscore">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
-        `<span class="mtscorenote">（採用率で加重: 環境上位の相手に勝つほど高得点）</span>`;
+        '';
       bindCtl(box, 'multi');   // 計算が終わったら絞り込み・並び替えを有効化
       applyView(box, 'multi');
     }
@@ -1409,8 +1407,7 @@ function runCounter() {
   const box = document.getElementById('counter');
   const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
   if (!S[1].key) {
-    box.innerHTML = '<div class="mtnote">右の「あいて」に倒したいポケモンを選ぶと、環境上位' + (list.length || 50) +
-      '匹の中から勝てる候補をここに一覧表示します</div>';
+    box.innerHTML = '<div class="mtnote">右の<b>あいて</b>を選ぶと、環境上位' + (list.length || 50) + '匹から勝てる候補を探します</div>';
     return;
   }
   const token = ++multiToken;
@@ -1428,12 +1425,11 @@ function runCounter() {
   const pool1 = movePool(S[1].key);
   fillMoves(1, { ...foeBase, fast: S[1].fast || S[1].pin.fast || pool1.fasts[0], throw: S[1].c1 || S[1].pin.c1 || pool1.chargeds[0] });
   const foeName = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
-  box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">環境上位${list.length}匹から検索${cup ? `（${cup.label}）` : ''}</small></h3>
-    <div class="mtnote">シールド0-0 / 1-1 / 2-2の3通りで総当たり。「勝ち」は候補側の勝利で、%は勝った側の残りHP。マスをタップすると、その候補を「じぶん」にセットし同じシールド枚数で1対1シミュを開きます。候補は理想個体値・標準的な推奨わざ構成（SPアタック2本を使い分け）、あいてのわざは対面ごとに相手が最善を選ぶ前提（わざ欄で選択・確定済みの構成があればそれで固定）。あいてに<b>SPアタック2を選ぶと、あいても2本を使い分けて</b>計算します</div>
+  box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}・マスをタップ→1対1シミュ</small></h3>
     ${ctlHtml('counter')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">勝てる候補</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
-    </tbody></table><div class="mtprog">計算中… 0/${list.length}</div>`;
+    </tbody></table><div class="mtprog">計算中 0/${list.length}</div>`;
   const rowsEl = [...box.querySelectorAll('tr[data-k]')];
   rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k], 0));
   updateUrl();
@@ -1471,11 +1467,10 @@ function runCounter() {
       idx++;
     }
     if (idx < list.length) {
-      prog.textContent = `計算中… ${idx}/${list.length}`;
+      prog.textContent = `計算中 ${idx}/${list.length}`;
       setTimeout(step, 0);
     } else {
-      prog.innerHTML = `${foeName}に勝てる候補: 🛡0-0 <b>${beats[0]}匹</b> / 🛡1-1 <b>${beats[1]}匹</b> / 🛡2-2 <b>${beats[2]}匹</b>` +
-        `<span class="mtscorenote">（環境上位${list.length}匹中）</span>`;
+      prog.innerHTML = `勝てる候補 🛡0-0 <b>${beats[0]}匹</b> / 🛡1-1 <b>${beats[1]}匹</b> / 🛡2-2 <b>${beats[2]}匹</b>`;
       bindCtl(box, 'counter');
       applyView(box, 'counter');
     }
@@ -1628,7 +1623,7 @@ function runParty() {
   const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
   const idxs = [0, 1, 2].filter(i => PT[i]);
   if (!idxs.length) {
-    body.innerHTML = '<div class="mtnote">上の枠にポケモンを入れると診断を始めます（1匹だけ・2匹でも診断できます）</div>';
+    body.innerHTML = '<div class="mtnote">上の枠にポケモンを入れると診断します（1〜3匹）</div>';
     return;
   }
   const token = ++multiToken;
@@ -1643,10 +1638,9 @@ function runParty() {
   const pols = idxs.map(i => policies(PT[i].key,
     { fast: PT[i].fast || undefined, c1: PT[i].c1 || undefined, c2: PT[i].c2 || undefined }));
   const names = idxs.map(i => ptName(PT[i]));
-  body.innerHTML = `<div class="mtnote pteam">診断中のパーティ: ${names.map((n, j) => `<b>${j + 1}. ${n}</b>`).join(' ／ ')}（シールド🛡${ptShield}-${ptShield}）</div>
-    ${ctlHtml('party')}
+  body.innerHTML = `${ctlHtml('party')}
     <table class="mttbl ptbl"><tbody></tbody></table>
-    <div class="mtprog">計算中… 0/${list.length}</div>`;
+    <div class="mtprog">計算中 0/${list.length}</div>`;
   const prog = body.querySelector('.mtprog');
   updateUrl();
   let idx = 0;
@@ -1676,17 +1670,17 @@ function runParty() {
       idx++;
     }
     if (idx < list.length) {
-      prog.textContent = `計算中… ${idx}/${list.length}`;
+      prog.textContent = `計算中 ${idx}/${list.length}`;
       setTimeout(step, 0);
     } else {
       const holes = PV.results.filter(r => r.nWin === 0);
       const thin = PV.results.filter(r => r.nWin === 1);
       const avg = (PV.results.reduce((a, r) => a + r.nWin, 0) / PV.results.length).toFixed(2);
       prog.innerHTML = (holes.length
-          ? `<span class="holehead">⚠ パーティの穴（${idxs.length}匹とも勝てない相手）: <b>${holes.length}匹</b></span>` +
+          ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>` +
             `<div class="holelist">${holes.map(r => r.m.n).join('、')}</div>`
-          : `<span class="holeok">✅ ${idxs.length}匹とも勝てない相手はいません（穴なし）</span>`) +
-        `<div class="holesub">勝てるのが1匹だけの相手: ${thin.length}匹 ／ 平均で1相手あたり ${avg}匹が勝てます（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
+          : `<span class="holeok">✅ 穴なし</span>`) +
+        `<div class="holesub">1匹だけ勝てる相手 ${thin.length}匹 ／ 平均 ${avg}匹（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
       bindCtl(body, 'party');
       applyView(body, 'party');
     }
@@ -3527,7 +3521,7 @@ function render(res, L, R, matrix) {
       : Array.from({ length: shInit }, (_, k) => `<span class="sh${k < f.shields ? '' : ' usedsh'}">🛡️</span>`).join('');
     // 連戦設定を使っているときは開始状態を明示する
     const carryTxt = cfg.startHpPct != null || cfg.startEn
-      ? `<div class="carrytag">連戦: HP${cfg.startHpPct != null ? cfg.startHpPct : 100}%・ゲージ${cfg.startEn || 0}から開始</div>` : '';
+      ? `<div class="carrytag">連戦 HP${cfg.startHpPct != null ? cfg.startHpPct : 100}%・ゲージ${cfg.startEn || 0}</div>` : '';
     return `<div class="fighter">
       <div class="top">${badge(i)}<span class="nm">${f.name}</span></div>
       ${carryTxt}
@@ -3571,7 +3565,7 @@ function render(res, L, R, matrix) {
       <tr><th class="corner">自分のシールド</th><th>勝敗</th></tr>
       ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${mtxCell(a, 0)}</tr>`).join('')}
     </table></div>` : `<div class="shmtx">
-    <div class="mvhead">シールド枚数別の勝敗（マスをタップでその設定に切替。残HPは勝った側）</div>
+    <div class="mvhead">🛡 シールド枚数別<small>タップで切替・残HPは勝った側</small></div>
     <table>
       <tr><th class="corner">自分＼相手</th><th>🛡0</th><th>🛡1</th><th>🛡2</th></tr>
       ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${[0, 1, 2].map(b => mtxCell(a, b)).join('')}</tr>`).join('')}
@@ -3599,11 +3593,11 @@ function render(res, L, R, matrix) {
     ${rkHtml}
     ${mtxHtml}
     <div class="mvcols">
-      <div class="mvside"><div class="mvhead">${res.final[0].name}の技（実測値）</div>${mvRows(0)}</div>
+      <div class="mvside"><div class="mvhead">${res.final[0].name}の技</div>${mvRows(0)}</div>
       <div class="vsmark" style="visibility:hidden">VS</div>
-      <div class="mvside"><div class="mvhead">${res.final[1].name}の技（実測値）</div>${mvRows(1)}</div>
+      <div class="mvside"><div class="mvhead">${res.final[1].name}の技</div>${mvRows(1)}</div>
     </div>
-    <details class="bp"><summary>ブレークポイント（あと少しでノーマルアタックのダメージが変わる境目）</summary>
+    <details class="bp"><summary>ブレークポイント<small>ダメージが変わる境目</small></summary>
       <div class="bpbody"></div></details>`;
   // ブレークポイント: 開いた時だけ計算する(個体値例の探索が少し重いため)
   const bpBody = () => {
@@ -3641,7 +3635,7 @@ function render(res, L, R, matrix) {
       return `<div class="bpside"><div class="mvhead">${stM.name}</div>${give}<br>${take}</div>`;
     };
     return `<div class="bpcols">${side(0)}<div class="vsmark" style="visibility:hidden">VS</div>${side(1)}</div>
-      <div class="bpnote">※対戦開始時点（バフなし）・現在選択中のノーマルアタックで計算。個体値を「ﾏﾆｭｱﾙ」にすると自分の数値で試せます</div>`;
+      <div class="bpnote">※開始時点（バフなし）・いま選んでいるノーマルアタックで計算</div>`;
   };
   const bpEl = rEl.querySelector('.bp');
   bpEl.addEventListener('toggle', () => {
@@ -3911,7 +3905,7 @@ function renderTimeline() {
   if (!res) return;
   const tl = document.getElementById('tl');
   tl.style.display = 'block';
-  tl.innerHTML = `<div class="tlhead"><h3>タイムライン（0.5秒=1ターン）</h3>
+  tl.innerHTML = `<div class="tlhead"><h3>タイムライン<small>0.5秒=1ターン</small></h3>
     <div class="tlmode">
       <button aria-pressed="${tlMode === 'all'}" data-m="all">全ターン</button>
       <button aria-pressed="${tlMode === 'digest'}" data-m="digest">山場のみ</button>
