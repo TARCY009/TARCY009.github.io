@@ -452,7 +452,7 @@ function optimize(cfgL, cfgR) {
   return { left: PL[a], right: PR[b] };
 }
 
-// ---- ブレークポイント検出(ノーマルアタックのダメージ境界) ----
+// ---- ブレイクポイント検出(ノーマルアタックのダメージ境界) ----
 // 全個体値×リーグ上限内最大PLの実ステータス表(ポケモン×リーグごとに1回だけ計算)
 const ivTableCache = new Map();
 function ivTable(key, capV, maxLv) {
@@ -3659,9 +3659,9 @@ function render(res, L, R, matrix) {
       <div class="vsmark" style="visibility:hidden">VS</div>
       <div class="mvside"><div class="mvhead">${res.final[1].name}の技</div>${mvRows(1)}</div>
     </div>
-    <details class="bp"><summary>ブレークポイント<small>ダメージが変わる境目</small></summary>
+    <details class="bp"><summary>ブレイクポイント<small>ダメージが変わる境目</small></summary>
       <div class="bpbody"></div></details>`;
-  // ブレークポイント: 開いた時だけ計算する(個体値例の探索が少し重いため)
+  // ブレイクポイント: 開いた時だけ計算する(個体値例の探索が少し重いため)
   const bpBody = () => {
     const cfgs = [L, R];
     const fmt = v => (Math.round(v * 10) / 10).toFixed(1);
@@ -3677,27 +3677,31 @@ function render(res, L, R, matrix) {
       const cur = PvpEngine.damage(D, mv, stM, stO);
       const atkReq = cur / K;
       const exA = findIvFor(me.key, { atk: atkReq }, cap, S[i].maxLv);
-      const give = `${mvChip(mv.n)} の与ダメ: 今<b>${cur}</b> → 攻撃実数値${fmt(atkReq)}以上(今${fmt(stM.atk)})で<b>${cur + 1}</b><br>` +
-        (exA ? `　<span class="ok">到達できる</span> 例: 個体値${exA.ivs.join('/')} PL${exA.level}（CP${exA.cp}）`
-             : `　<span class="ng">このリーグの個体値・PLでは届かない</span>`);
+      // 1行ぶんの表示: わざ・ダメージの変化・必要な実数値・届くかどうか
+      const item = (mark, mvName, from, to, statLbl, now, need, ex, note) => `<div class="bpitem">
+        <div class="bpttl"><i class="bpk">${mark}</i>${mvChip(mvName, 13)}</div>
+        <div class="bpdmg">${note ? `<b>${from}</b><small>${note}</small>`
+          : `<b>${from}</b><i>→</i><b class="hit">${to}</b>`}</div>
+        ${note ? '' : `<div class="bpreq">${statLbl} <b>${fmt(now)}</b><i>→</i><b>${fmt(need)}</b></div>
+        <div class="bpst ${ex ? 'ok' : 'ng'}">${ex ? `届く<small>${ex.ivs.join('/')} PL${ex.level}</small>` : '届かない'}</div>`}
+      </div>`;
+      const give = item('⚔', mv.n, cur, cur + 1, '攻撃', stM.atk, atkReq, exA);
       // 被ダメ: 防御実数値がいくつあれば1減るか
       let take;
       const curT = PvpEngine.damage(D, mvO, stO, stM);
-      if (curT <= 1) take = `${mvChip(mvO.n)} の被ダメ: 今<b>1</b>（最小値。これ以上減らない）`;
+      if (curT <= 1) take = item('🛡', mvO.n, 1, 1, '防御', 0, 0, null, 'これ以上減らない');
       else {
         const effO = PvpEngine.effectiveness(D, mvO.t, stM.types);
         const stabO = stO.types.includes(mvO.t) ? 1.2 : 1;
         const KO = 0.5 * mvO.p * effO * stabO * 1.3 * stO.atk;   // ダメ = floor(KO÷防)+1
         const defReq = KO / (curT - 1);
         const exD = findIvFor(me.key, { def: defReq }, cap, S[i].maxLv);
-        take = `${mvChip(mvO.n)} の被ダメ: 今<b>${curT}</b> → 防御実数値${fmt(defReq)}超(今${fmt(stM.def)})で<b>${curT - 1}</b><br>` +
-          (exD ? `　<span class="ok">到達できる</span> 例: 個体値${exD.ivs.join('/')} PL${exD.level}（CP${exD.cp}）`
-               : `　<span class="ng">このリーグの個体値・PLでは届かない</span>`);
+        take = item('🛡', mvO.n, curT, curT - 1, '防御', stM.def, defReq, exD);
       }
-      return `<div class="bpside"><div class="mvhead">${stM.name}</div>${give}<br>${take}</div>`;
+      return `<div class="bpside"><div class="bphd">${stM.name}</div>${give}${take}</div>`;
     };
-    return `<div class="bpcols">${side(0)}<div class="vsmark" style="visibility:hidden">VS</div>${side(1)}</div>
-      <div class="bpnote">※開始時点（バフなし）・いま選んでいるノーマルアタックで計算</div>`;
+    return `<div class="bpcols">${side(0)}${side(1)}</div>
+      <div class="bpnote">※開始時点（バフなし）・いま選んでいるノーマルアタックで計算。<i class="bpk">⚔</i>与ダメ ／ <i class="bpk">🛡</i>被ダメ</div>`;
   };
   const bpEl = rEl.querySelector('.bp');
   bpEl.addEventListener('toggle', () => {
