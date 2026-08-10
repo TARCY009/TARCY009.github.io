@@ -333,6 +333,13 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hs.foe .nm{color:var(--gold)}
 .hs .cp{font-size:.56rem;color:var(--sub);font-weight:700;flex:0 0 auto}
 .hs.foe .hn{justify-content:flex-end}
+/* 残りHPの実数値(バーだけでは残りわずかが読み取れないため。色はバーと同じ基準) */
+.hs .hpn{font-size:.62rem;font-weight:800;flex:0 0 auto;white-space:nowrap;letter-spacing:.02em}
+.hs.me .hpn{margin-left:auto}
+.hs.foe .hpn{margin-right:auto}
+.hs .hpn.g{color:#7ef0af}
+.hs .hpn.y{color:#ffd54a}
+.hs .hpn.r{color:#ff9d9d}
 .hb{height:7px;background:#0a0f22;border:1px solid var(--line);border-radius:99px;margin:4px 0 5px;overflow:hidden}
 .hb i{display:block;height:100%;width:100%;border-radius:99px;transition:width .35s ease}
 .hb i.g{background:linear-gradient(90deg,#2bd97c,#7ef0af)}

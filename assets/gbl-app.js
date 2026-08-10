@@ -2286,9 +2286,13 @@ function rbPoints(turns, ctx, dec) {
     // 自分がSPアタックを撃った → 次の発の判断へ
     if (t.ev[0].some(e => e.full !== undefined)) { spIdx++; armed = false; asked = false; normals = 0; continue; }
     if (armed && t.ev[0].some(e => e.full === undefined)) normals++;   // 待っているあいだのノーマル
+    // 決着したターンではSPの質問を出さない(2026-08-10バグ修正)。
+    // SPアタックは次の行動ターンに発動するので、すでに倒しきった(倒された)ターンで
+    // 「撃つ?」と聞いても撃ちようがない。あいてのHPが0なのにSPを聞かれて見えていた原因
+    const over = t.state[0].hp <= 0 || t.state[1].hp <= 0;
     // 交代すると決めたあとはSPの質問を出さない(殴って下がる途中に撃つ判断は混乱のもと)
-    if (!armed && !asked && !dec.hold && dec.swapTo == null && cost && t.state[0].en >= cost) { armed = true; normals = 0; }
-    if (armed) {
+    if (!armed && !asked && !over && !dec.hold && dec.swapTo == null && cost && t.state[0].en >= cost) { armed = true; normals = 0; }
+    if (armed && !over) {
       // 「あとN発殴ってから」を選んでいれば、そのぶん後ろにずれたところが判断の場面
       // (撃つと決めた発は、そのとき決めた待ち発数の位置に判断の場面が残る＝キーが変わらない)
       const dw = spIdx < dec.shots.length ? dec.shots[spIdx].wait : dec.wait;
@@ -2878,7 +2882,7 @@ function rbRender(body, bt, picks, foes, extra) {
     <div class="rbdock">
       <div class="rbwinbox"></div>
       <div class="rbhud">
-        <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b></div>
+        <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqs"></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
@@ -2886,7 +2890,7 @@ function rbRender(body, bt, picks, foes, extra) {
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
           <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button>` : ''}</div>
         </div>
-        <div class="hs foe"><div class="hn"><b class="cp"></b><span class="nm"></span></div>
+        <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
           <div class="hx"><span class="bfs"></span><span class="gqs"></span><span class="shds"></span><span class="balls"></span></div>
         </div>
@@ -2902,6 +2906,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const sideRefs = side => {
     const el = hud.querySelector('.hs.' + side);
     return { nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
+      hpn: el.querySelector('.hpn'),
       balls: el.querySelector('.balls'), shds: el.querySelector('.shds'),
       gqs: el.querySelector('.gqs'), bfs: el.querySelector('.bfs') };
   };
@@ -2922,8 +2927,13 @@ function rbRender(body, bt, picks, foes, extra) {
     }
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
-      Rf.bar.style.width = pct + '%';
-      Rf.bar.className = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
+      // HPが1でも残っているうちはバーを空に見せない(残りわずかでも「まだ倒せていない」と分かるように)
+      Rf.bar.style.width = (hp > 0 ? Math.max(pct, 4) : 0) + '%';
+      const cls = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
+      Rf.bar.className = cls;
+      // バーだけでは残りわずかが読み取れないので、実数値も出す(色はバーと同じ基準)
+      Rf.hpn.textContent = hp + '/' + max;
+      Rf.hpn.className = 'hpn ' + cls;
       Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
       Rf.bfs.innerHTML = [0, 1].map(k => !b[k] ? '' :
