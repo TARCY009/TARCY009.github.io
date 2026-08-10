@@ -131,7 +131,7 @@ document.getElementById('app').innerHTML = `
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+        <button data-v="never" aria-pressed="false" style="display:none" title="SPアタックを撃たずにノーマルアタックだけで戦う">撃たない</button><button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <label class="f">連戦</label>
       <div class="opts carry">
@@ -206,7 +206,7 @@ document.getElementById('app').innerHTML = `
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+        <button data-v="never" aria-pressed="false" style="display:none" title="SPアタックを撃たずにノーマルアタックだけで戦う">撃たない</button><button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <label class="f">連戦</label>
       <div class="opts carry">
@@ -1076,6 +1076,24 @@ function syncRocket() {
     if (n) n.style.display = 'none';
   });
   ['.ivmode', '.selC2', '.shields', '.timing', '.carry'].forEach(sel => hideLabelFor(el, sel));
+  syncTimingTabs(true);
+}
+// SPアタックタイミングのタブは画面で出し分ける(2026-08-10ユーザー指示):
+//   ロケット団戦 … 「同時」を出さない（硬直があって相手に合わせるのが現実的でない）代わりに「撃たない」
+//   GBL         … 従来どおり「同時」まで。「撃たない」は出さない
+function syncTimingTabs(rk) {
+  sideEl.forEach((el, i) => {
+    el.querySelectorAll('.timing button').forEach(b => {
+      const hide = rk ? b.dataset.v === 'sync' : b.dataset.v === 'never';
+      b.style.display = hide ? 'none' : '';
+    });
+    // 隠したタブが選ばれたままにならないよう「最適」へ戻す
+    if ((rk && S[i].timing === 'sync') || (!rk && S[i].timing === 'never')) {
+      S[i].timing = 'optimal';
+      resetSpPlan(i);
+    }
+    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
+  });
 }
 // 入力欄のすぐ上の見出し(ラベル)も一緒に隠す/戻す
 function hideLabelFor(el, sel, show) {
@@ -1092,6 +1110,7 @@ function restoreFoeInputs() {
     hideLabelFor(el, sel, true);
   });
   el.querySelector('.mypkbar').style.display = '';   // ★登録リストのタブを戻す
+  syncTimingTabs(false);
   el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
   el.querySelector('.bluffwrap').style.display = S[1].c2 ? 'block' : 'none';
   hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
@@ -3281,7 +3300,7 @@ function run() {
   // わざの候補(policies)側でSP1/SP2の組を決めるので、ここではポケモン・シールド・タイミングだけ渡す
   const optCfg = (i, sh) => {
     const c = { ...base[i], shields: sh, bluff: S[i].bluff,
-      timing: S[i].timing === 'plan' ? 'optimal' : S[i].timing,
+      timing: ['plan', 'never'].includes(S[i].timing) ? 'optimal' : S[i].timing,
       ...polOpts(i) };
     return rk && i === 1 ? rkCfg(c) : c;
   };
@@ -3312,7 +3331,8 @@ function run() {
     c.charged = [m1, S[i].c2].filter(Boolean);
     c.throw = m1;   // 画面のSPアタック欄にも実際に使うわざを表示する
     // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(自動/1/2)を指定
-    if (S[i].timing === 'plan' || S[i].c2) Object.assign(c, shotsCfg(i, m1, m2));
+    if (S[i].timing === 'never') { c.timing = 'shots'; c.shotPlan = []; c.shotRest = null; }
+    else if (S[i].timing === 'plan' || S[i].c2) Object.assign(c, shotsCfg(i, m1, m2));
     else c.timing = S[i].timing;
     return rk && i === 1 ? rkCfg(c) : c;
   };
@@ -3483,7 +3503,7 @@ function fillMoves(i, cfg) {
   el.querySelector('.bluffwrap').style.display = S[i].c2 ? 'block' : 'none';
   el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));
   // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示
-  const showSp = S[i].timing === 'plan' || !!S[i].c2;
+  const showSp = S[i].timing !== 'never' && (S[i].timing === 'plan' || !!S[i].c2);
   el.querySelector('.custSp').style.display = showSp ? 'block' : 'none';
   if (showSp) buildSpConfig(i, S[i].c1 || cfg.throw, S[i].c2);
 }
@@ -3975,7 +3995,7 @@ document.getElementById('copyUrl').onclick = async () => {
     S[i].shields = +q.get(k);
     sideEl[i].querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === S[i].shields));
   }});
-  ['tl', 'tr'].forEach((k, i) => { if (q.get(k)) {
+  ['tl', 'tr'].forEach((k, i) => { if (['optimal', 'asap', 'sync', 'plan', 'never'].includes(q.get(k))) {
     S[i].timing = q.get(k);
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
     resetSpPlan(i);   // 発ごとのSP設定も復元したタイミングに揃える(SPアタック2を選んだときの表示用)
