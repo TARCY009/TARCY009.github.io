@@ -2921,7 +2921,10 @@ function rbRender(body, bt, picks, foes, extra) {
     if (legKey !== curLegKey) {   // 対面が変わったときだけ名前・CP・ゲージの器を作り直す
       curLegKey = legKey;
       [[R0, f.meta.name0, f.meta.cp0, f.meta.sp0], [R1, f.meta.name1, f.meta.cp1, f.meta.sp1]].forEach(([Rf, nm, cp, sps]) => {
-        Rf.nm.textContent = nm; Rf.cp.textContent = 'CP' + cp;
+        // 下のフレームは幅が狭いので「シャドウ○○」は「S○○」に縮める(ロケット団はほぼ全部シャドウ)
+        Rf.nm.textContent = nm.replace(/^シャドウ/, 'S');
+        Rf.nm.title = nm;
+        Rf.cp.textContent = 'CP' + cp;
         Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
