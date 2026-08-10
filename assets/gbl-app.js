@@ -3226,6 +3226,15 @@ function listSideCfg(i, base, pol, sh, timing) {
   }
   return c;
 }
+// 1対1シミュの結果・タイムライン・共有ボタンを引っ込める。
+// hint=true のときは「わざを選ぶと結果が出る」ことだけ短く伝える
+function hideDuelResult(hint) {
+  const rEl = document.getElementById('result');
+  rEl.innerHTML = hint ? '<div class="mtnote">わざを選ぶと結果が出ます</div>' : '';
+  rEl.style.display = hint ? 'block' : 'none';
+  document.getElementById('tl').style.display = 'none';
+  document.getElementById('share').style.display = 'none';
+}
 function run() {
   // 一覧系は多数のポケモンを回すので、確率わざの切り替えは常に出す。
   // 対面を1つに決めて計算する画面だけ、そのわざを使っているときに絞る(下で上書きする)
@@ -3236,8 +3245,8 @@ function run() {
   // ロケット団戦の1対1は、まず「誰で殴ればいいか」のランキングを出す
   if (mode === 'rocket' && RK.play === '1v1' && RKR.view !== 'sim') { setProbTab(false); runRkRank(); return; }
   if (mode === 'rocket' && RK.team) { runRkBuild(); return; }   // 模擬戦(3匹の通し)
-  if (!S[0].key || !S[1].key) return;
   const rk = mode === 'rocket';       // ロケット団戦: 相手はNPC、CP制限なし
+  if (!S[0].key || !S[1].key) { hideDuelResult(); return; }
   const capX = rk ? 0 : cap;
   // 手動交代の直後は自分も1ターン(0.5秒)動けない
   const myStall = rk ? RK_ENTER[RK.enter].me : 0;
@@ -3248,6 +3257,15 @@ function run() {
     return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, ...c };
   });
   if (myStall) base[0].stallStart = myStall;
+  // 1対1シミュは「自分で選んだ構成の結果を見る」画面なので、
+  // わざを選ぶまでは結果を出さない(わざ欄だけ先に用意して選べるようにする)。
+  // ロケット団戦はあいてが「わざ全通りの最悪ケース」仕様なので対象外
+  if (!rk) {
+    fillMoves(0, { ...base[0], fast: S[0].fast, throw: S[0].c1 });
+    fillMoves(1, { ...base[1], fast: S[1].fast, throw: S[1].c1 });
+    const needMv = i => !S[i].fast || (!S[i].c1 && movePool(S[i].key).chargeds.length);
+    if (needMv(0) || needMv(1)) { hideDuelResult(true); return; }
+  }
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
   S.forEach((s, i) => {
     const note = sideEl[i].querySelector('.ivnote');
