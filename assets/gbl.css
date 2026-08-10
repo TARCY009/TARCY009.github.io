@@ -74,7 +74,6 @@ select option[value=""]{color:var(--sub)}
 .subline b{color:var(--ink)}
 .shline .sh{font-size:1.1rem;margin-right:2px}
 .shline .usedsh{filter:grayscale(1);opacity:.3}
-.shline .shnone{opacity:.7}
 .vsmark{color:var(--sub);font-weight:800;font-size:.8rem}
 /* 技詳細 */
 .savepk{margin-left:auto;flex-shrink:0;background:none;border:1px solid var(--line);border-radius:8px;color:var(--gold);font-size:.7rem;padding:3px 8px;cursor:pointer}

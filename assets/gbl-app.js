@@ -3577,8 +3577,10 @@ function render(res, L, R, matrix) {
     // ゲージ(0〜100)はメーターで、シールドは🛡️で残数を見せる(使った分は薄く表示)
     const enPct = Math.min(100, f.en);
     const shInit = cfg.shieldPlan ? 2 : cfg.shields;
-    const shHtml = shInit === 0 ? '<span class="shnone">🛡0</span>'
-      : Array.from({ length: shInit }, (_, k) => `<span class="sh${k < f.shields ? '' : ' usedsh'}">🛡️</span>`).join('');
+    // シールドを持たない側(したっぱなど0枚設定)は、シールドの行そのものを出さない
+    const shHtml = shInit === 0 ? ''
+      : `<div class="subline shline">${Array.from({ length: shInit },
+          (_, k) => `<span class="sh${k < f.shields ? '' : ' usedsh'}">🛡️</span>`).join('')}</div>`;
     // 連戦設定を使っているときは開始状態を明示する
     const carryTxt = cfg.startHpPct != null || cfg.startEn
       ? `<div class="carrytag">連戦 HP${cfg.startHpPct != null ? cfg.startHpPct : 100}%・ゲージ${cfg.startEn || 0}</div>` : '';
@@ -3589,7 +3591,7 @@ function render(res, L, R, matrix) {
       <div class="subline">HP ${f.hp}/${f.hpMax}（${pct}%）</div>
       <div class="enbar"><i style="width:${enPct}%"></i></div>
       <div class="subline">ゲージ <b>${f.en}</b></div>
-      <div class="subline shline">${shHtml}</div>
+      ${shHtml}
     </div>`;
   };
   // 技ごとの集計
