@@ -2452,6 +2452,28 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     // 決めるたびに場面の並びが変わるので、番号ではなくキーで対応づける)
     const handled = new Set(), log = [];   // log = 決めた場面の履歴(画面に出して選び直せるようにする)
     let res = null, foeMv = null;   // foeMv = 採用したあいてのわざ(自動のときHUDの表示に使う)
+    // あいての採用わざ(自動=いちばんキツい)は、この対面をはじめて迎えた時点で
+    // 「全部おまかせ」基準(1対1と同じエンジンの自動プレイ)の全通り評価で決めて、バトル中固定する。
+    // 決断を反映した再計算で選び直すと、SP・シールド・交代に答えるたびに
+    // あいてのわざが変わって見えてしまう(2026-08-10バグ修正)
+    if (!foeMvLock[fi]) {
+      const pool0 = rkPool(foes[fi].key);
+      const Rb = rktCfg(foes[fi], { shields: foeShLeft, stallStart: foeEntry });
+      if (foeResume) Rb.resume = { ...foeResume, stall: Math.max(foeResume.stall || 0, foeEntry) };
+      const Lb = { ...picks[mi].base, ...pol, charged: spList.slice(), shields: myShLeft,
+        bluff: true, timing: 'optimal' };
+      if (st[mi].resume) Lb.resume = { ...st[mi].resume, stall: Math.max(st[mi].resume.stall || 0, myEntry) };
+      else if (myEntry) Lb.stallStart = myEntry;
+      const fl = (worst || !foes[fi].fast) ? pool0.fasts : [Rb.fast];
+      const sl = (worst || !foes[fi].c1) ? (pool0.chargeds.length ? pool0.chargeds : [null]) : [Rb.throw || null];
+      let bs = null, bmv = null;
+      for (const f of fl) for (const sp of sl) {
+        const r = PvpEngine.simulate(D, Lb, { ...Rb, fast: f, charged: sp ? [sp] : [], throw: sp }, SIMOPT);
+        const s = rkWorstScore(r);
+        if (bmv === null || s < bs) { bs = s; bmv = { fast: f, sp: sp || null }; }
+      }
+      if (bmv) foeMvLock[fi] = bmv;
+    }
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す)
     for (let guard = 0; guard < 60; guard++) {
       // charged は必ず入れる(SPが1本の構成だと、わざ未指定のときエンジンが選べないため)
@@ -2495,7 +2517,6 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       }
       rbApply(dec, p, a);
     }
-    if (!foeMvLock[fi] && foeMv) foeMvLock[fi] = foeMv;   // この対面で採用したわざをバトル中固定に
     res.final[0].name = picks[mi].name;
     res.final[1].name = rktName(foes[fi]);
     const meDown = res.final[0].hp <= 0, foeDown = res.final[1].hp <= 0;
