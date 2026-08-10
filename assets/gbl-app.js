@@ -70,15 +70,6 @@ document.getElementById('app').innerHTML = `
   </div>
 </div>
 
-<div class="gopt" id="gopt">
-  <span class="lbl" title="「ねっとう」「かみくだく」など、決まった確率で能力が上下するわざの計算方法。全モード共通で使われます">能力変化わざ</span>
-  <div class="goptmain">
-    <div class="opts prob" id="prob">
-      <button data-v="none" aria-pressed="true" title="効果は起きない前提で計算する（運に頼らない結果・既定）">不発</button><button data-v="avg" aria-pressed="false" title="確率のぶんを平均して反映する（例: 30%で攻⬇なら0.3段階ぶん下がる）">期待値</button><button data-v="always" aria-pressed="false" title="毎回必ず発動する前提で計算する（いちばん効果が出た場合）">必ず発動</button>
-    </div>
-    <div class="goptnote" id="goptnote"></div>
-  </div>
-</div>
 
 <div class="duel">
   <div class="side mine" id="sideL">
@@ -278,6 +269,15 @@ document.getElementById('app').innerHTML = `
   <div class="rkrbody"></div>
 </div>
 
+<div class="gopt" id="gopt">
+  <span class="lbl" title="「ねっとう」「かみくだく」など、決まった確率で能力が上下するわざの計算方法。全モード共通で使われます">能力変化わざ</span>
+  <div class="goptmain">
+    <div class="opts prob" id="prob">
+      <button data-v="none" aria-pressed="true" title="効果は起きない前提で計算する（運に頼らない結果・既定）">不発</button><button data-v="avg" aria-pressed="false" title="確率のぶんを平均して反映する（例: 30%で攻⬇なら0.3段階ぶん下がる）">期待値</button><button data-v="always" aria-pressed="false" title="毎回必ず発動する前提で計算する（いちばん効果が出た場合）">必ず発動</button>
+    </div>
+    <div class="goptnote" id="goptnote"></div>
+  </div>
+</div>
 <div class="result" id="result"></div>
 <div class="tl" id="tl"></div>
 
@@ -1022,12 +1022,18 @@ function applyMode() {
   document.getElementById('party').style.display = mode === 'party' ? 'block' : 'none';
   document.getElementById('rkteam').style.display = rkTeam ? 'block' : 'none';
   document.getElementById('rkrank').style.display = rkRankView ? 'block' : 'none';
-  // 確率わざの設定は、模擬戦のあいだ「⚙ 詳細」パネルの中へ移す(トップをすっきりさせる)
+  // 能力変化わざの設定の置き場所:
+  //   1対1(GBL・ロケット団) … じぶん/あいての設定と結果のあいだ(いじった結果がすぐ下に見える)
+  //   一覧系               … 表が長いので従来どおり上のまま
+  //   模擬戦               … 「⚙ 詳細」パネルの中
   const goptEl = document.getElementById('gopt');
+  const resEl = document.getElementById('result');
   if (rkTeam) {
     const pr = document.querySelector('#rkdetail .rkdprob');
     if (pr && goptEl.parentElement !== pr) pr.appendChild(goptEl);
-  } else if (goptEl.parentElement !== duelBox.parentElement) {
+  } else if (mode === 'duel' || rk) {
+    if (goptEl.nextElementSibling !== resEl) resEl.parentElement.insertBefore(goptEl, resEl);
+  } else if (goptEl.nextElementSibling !== duelBox) {
     duelBox.parentElement.insertBefore(goptEl, duelBox);
   }
   renderRkDetail();
@@ -3336,6 +3342,9 @@ function run() {
   // ロケット団戦のあいては「わざ全通りの最悪ケース」仕様なので選ばせない(じぶんだけ見る)
   const needMv = i => !S[i].fast ||
     (S[i].timing !== 'never' && !S[i].c1 && movePool(S[i].key).chargeds.length);
+  // 能力変化わざの設定は、そういうわざを実際に選んでいるときだけ出す
+  const selCfg = i => ({ fast: S[i].fast, throw: S[i].c1, charged: [S[i].c1, S[i].c2].filter(Boolean) });
+  setProbTab(anyProbMove([selCfg(0), selCfg(1)]));
   if (needMv(0) || (!rk && needMv(1))) { hideDuelResult(true); return; }
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
   // わざの最適化も実際のシールド枚数で行う(一覧のマスをタップしたときに結果が一致する)
