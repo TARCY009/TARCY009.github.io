@@ -17,13 +17,13 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
    選んでいないときは色を控えめに、押すとその色のグラデーションで点灯して立体的に浮き上がる */
 .leagues{display:flex;gap:6px;margin-top:12px}
 .lgbtn{flex:1;padding:11px 6px;font-size:.9rem;font-weight:800;letter-spacing:.02em;cursor:pointer;
-  color:var(--lc);opacity:.72;background:linear-gradient(180deg,#1e2850,#151d38);
+  color:var(--lu,var(--lc));opacity:.72;background:linear-gradient(180deg,#1e2850,#151d38);
   border:1px solid var(--line);border-radius:12px;
   box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
   transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
 .lgbtn:hover{opacity:1;transform:translateY(-1px);
   box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1)}
-.lgbtn[data-cap="1500"]{--lc:#4d8dff;--l1:#a9c8ff;--l2:#1f5fd0;--lt:#04173a;--lg:rgba(77,141,255,.42)}
+.lgbtn[data-cap="1500"]{--lu:#7aa8ff;--lc:#2f6fe0;--l1:#6fa3ff;--l2:#12409e;--lt:#ffffff;--lg:rgba(47,111,224,.48)}
 .lgbtn[data-cap="2500"]{--lc:#ffd54a;--l1:#fff0b8;--l2:#e0a020;--lt:#33260a;--lg:rgba(255,213,74,.38)}
 .lgbtn[data-cap="0"]{--lc:#b06cff;--l1:#e3b6ff;--l2:#7d3fd6;--lt:#1c0a33;--lg:rgba(176,108,255,.42)}
 #cupTab{--lc:#e6ebfa;--l1:#ffffff;--l2:#b9c3de;--lt:#141b33;--lg:rgba(220,230,255,.35)}
@@ -153,9 +153,9 @@ select option[value=""]{color:var(--sub)}
   box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05);
   transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
 .modes button:hover{color:var(--ink);transform:translateY(-1px)}
-.modes button[aria-pressed="true"]{color:#04173a;border-color:#a9c8ff;transform:translateY(-1px);
-  background:linear-gradient(160deg,#a9c8ff 0%,#4d8dff 45%,#2f6ae0 100%);
-  box-shadow:0 5px 16px rgba(77,141,255,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.modes button[aria-pressed="true"]{color:#042330;border-color:#d5f2ff;transform:translateY(-1px);
+  background:linear-gradient(160deg,#d5f2ff 0%,#8bd8f5 45%,#4fb0dd 100%);
+  box-shadow:0 5px 16px rgba(110,205,240,.38),inset 0 1px 0 rgba(255,255,255,.7)}
 .modes{flex-wrap:wrap}
 .modes button{flex:1 1 auto}
 @media (max-width:520px){.modes{gap:4px}.modes button{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
