@@ -1262,6 +1262,7 @@ function runMulti() {
       const score = envScore((wScore[0] + wScore[1] + wScore[2]) / (wSum * 3));
       prog.innerHTML = `🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
         `<span class="mtscore" title="環境上位${list.length}匹×シールド0/1/2の勝敗を採用率で加重した点数。勝てない相手が減るほど加速的に上がります（全部に勝っても100にはなりません）">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
+        `<span class="mtscorenote">※スコアはあくまで参考程度に</span>` +
         '';
       bindCtl(box, 'multi');   // 計算が終わったら絞り込み・並び替えを有効化
       applyView(box, 'multi');

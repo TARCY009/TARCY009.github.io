@@ -542,7 +542,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .mtprog{color:var(--sub);font-size:.74rem;margin-top:8px;line-height:1.9}
 .mtscore{font-size:1.05rem;font-weight:800;color:var(--gold)}
 .mtscore small{font-size:.7rem;font-weight:600}
-.mtscorenote{font-size:.66rem;margin-left:4px}
+.mtscorenote{font-size:.66rem;margin-left:6px;color:var(--sub)}
 .shmtx{margin-top:12px}
 .shmtx table{border-collapse:separate;border-spacing:3px;width:100%;max-width:430px;margin:6px auto 0}
 .shmtx th{color:var(--sub);font-weight:600;font-size:.68rem;padding:2px}
