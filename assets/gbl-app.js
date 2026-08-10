@@ -878,6 +878,8 @@ const HELP_HTML = `
 // whoBy = 種別ごとに最後に選んだ人(リーダーでアルロ→サカキ→リーダー と戻ってもアルロのまま)
 // leadSwap=開幕交代(1匹目を出してすぐ交代し、あいての硬直4.5秒を序盤に稼ぐテク)
 const RK = { kind: 'grunt', stall: 7, enter: 'first', play: '1v1', team: false, sh: 2, koFoe: 8, koMe: 8, swapCd: 90, who: null, whoBy: {}, sel: {}, leadSwap: false };
+// 共有リンクでSPアタックタイミングが指定されていたか(指定があればロケット団戦の既定「撃たない」で上書きしない)
+let timingFromUrl = false;
 const RK_PLAY = { 0: '1v1', 1: 'build' };
 function setPlay(v) { RK.play = v; RK.team = v !== '1v1'; }
 const RK_ENTER = {
@@ -1061,6 +1063,13 @@ function syncRocket() {
   }
   const el = sideEl[1];
   // ロケット団はシャドウしか使ってこないので、シャドウは常にON(押しても切り替わらない)
+  // ロケット団戦は「SPを撃たずに速く倒す」のが基本なので、タイミングの既定は「撃たない」。
+  // 共有リンクでタイミングが指定されているときは尊重する
+  if (RK.prevTiming == null && !timingFromUrl) {
+    RK.prevTiming = S[0].timing;
+    S[0].timing = 'never';
+    resetSpPlan(0);
+  }
   if (RK.prevShadow == null) RK.prevShadow = S[1].shadow;   // 他モードへ戻したときのために覚えておく
   S[1].shadow = true;
   const tab = el.querySelector('.shadowtab');
@@ -1116,6 +1125,7 @@ function restoreFoeInputs() {
   hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
   // シャドウ固定を解除し、ロケット団戦に入る前の状態へ戻す
   const tab = el.querySelector('.shadowtab');
+  if (RK.prevTiming != null) { S[0].timing = RK.prevTiming; RK.prevTiming = null; resetSpPlan(0); }
   if (RK.prevShadow != null) { S[1].shadow = RK.prevShadow; RK.prevShadow = null; }
   tab.setAttribute('aria-pressed', !!S[1].shadow);
   tab.removeAttribute('aria-disabled');
@@ -3277,14 +3287,16 @@ function run() {
   });
   if (myStall) base[0].stallStart = myStall;
   // 1対1シミュは「自分で選んだ構成の結果を見る」画面なので、
-  // わざを選ぶまでは結果を出さない(わざ欄だけ先に用意して選べるようにする)。
-  // ロケット団戦はあいてが「わざ全通りの最悪ケース」仕様なので対象外
-  if (!rk) {
-    fillMoves(0, { ...base[0], fast: S[0].fast, throw: S[0].c1 });
-    fillMoves(1, { ...base[1], fast: S[1].fast, throw: S[1].c1 });
-    const needMv = i => !S[i].fast || (!S[i].c1 && movePool(S[i].key).chargeds.length);
-    if (needMv(0) || needMv(1)) { hideDuelResult(true); return; }
-  }
+  // わざを選ぶまでは結果を出さない(わざ欄だけ先に用意して選べるようにする)
+  fillMoves(0, { ...base[0], fast: S[0].fast, throw: S[0].c1 });
+  fillMoves(1, rk
+    ? rkCfg({ ...base[1], fast: S[1].fast || rkPool(S[1].key).fasts[0], charged: [], throw: S[1].c1 })
+    : { ...base[1], fast: S[1].fast, throw: S[1].c1 });
+  // SPアタックは「撃たない」ときは選ばなくても結果を出せる。
+  // ロケット団戦のあいては「わざ全通りの最悪ケース」仕様なので選ばせない(じぶんだけ見る)
+  const needMv = i => !S[i].fast ||
+    (S[i].timing !== 'never' && !S[i].c1 && movePool(S[i].key).chargeds.length);
+  if (needMv(0) || (!rk && needMv(1))) { hideDuelResult(true); return; }
   // マニュアル個体値のCPを表示し、リーグ上限超えは警告する(計算は続行)
   S.forEach((s, i) => {
     const note = sideEl[i].querySelector('.ivnote');
@@ -3302,6 +3314,8 @@ function run() {
     const c = { ...base[i], shields: sh, bluff: S[i].bluff,
       timing: ['plan', 'never'].includes(S[i].timing) ? 'optimal' : S[i].timing,
       ...polOpts(i) };
+    // 「撃たない」ときは、わざの選び方もSPを撃たない前提にそろえる(表示と結果を食い違わせない)
+    if (S[i].timing === 'never') { c.timing = 'shots'; c.shotPlan = []; c.shotRest = null; }
     return rk && i === 1 ? rkCfg(c) : c;
   };
   // ロケット団戦はあいてのわざがランダムなので「最悪ケース基準」で選ぶ(rkOptimize)
@@ -3996,6 +4010,7 @@ document.getElementById('copyUrl').onclick = async () => {
     sideEl[i].querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === S[i].shields));
   }});
   ['tl', 'tr'].forEach((k, i) => { if (['optimal', 'asap', 'sync', 'plan', 'never'].includes(q.get(k))) {
+    timingFromUrl = true;
     S[i].timing = q.get(k);
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
     resetSpPlan(i);   // 発ごとのSP設定も復元したタイミングに揃える(SPアタック2を選んだときの表示用)
