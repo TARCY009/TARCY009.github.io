@@ -1522,7 +1522,9 @@ const ptName = m => m ? (m.shadow ? 'シャドウ' : '') + D.pokemon[m.key].n : 
 // パーティ診断とロケット団戦の連戦で同じ3枠(PT)を共有するので、置き場所(box)を受け取る
 // withMoves=true の枠(模擬戦)にだけ、じぶんのわざを選ぶ欄を出す
 // ポケモン名の検索候補。「メガ」のように該当が多い語でも埋もれないよう、
-// 前方一致(名前の先頭が一致)を先に並べ、件数の上限も広めに取る(一覧はスクロールできる)
+// 前方一致(名前の先頭が一致)を先に並べ、件数の上限も広めに取る(一覧はスクロールできる)。
+// 上限100は「メガ」の該当数(2026-08時点で56)が今後増えても当分あふれない余裕を見た値
+const SEARCH_MAX = 100;
 function searchPk(q, ok) {
   const hit = [], sub = [];
   for (const k of KEYS) {
@@ -1531,9 +1533,9 @@ function searchPk(q, ok) {
     const i = n.indexOf(q);
     if (i === 0) hit.push(k);
     else if (i > 0) sub.push(k);
-    if (hit.length + sub.length >= 60) break;
+    if (hit.length + sub.length >= SEARCH_MAX) break;
   }
-  return hit.concat(sub).slice(0, 60);
+  return hit.concat(sub).slice(0, SEARCH_MAX);
 }
 function buildPartySlots(box, withMoves) {
   if (!box) return;
