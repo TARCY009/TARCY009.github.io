@@ -30,10 +30,9 @@ document.getElementById('app').innerHTML = `
 </div>
 
 <div class="rocket" id="rocket" style="display:none">
-  <div class="rkrow">
-    <span class="lbl">たたかい方</span>
+  <div class="rkrow rkmoderow">
     <div class="opts rkmode" id="rkmode">
-      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1</button><button data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで戦います。SPアタックを撃つ・温存する・シールドを使う・交代するを、決断の場面ごとに自分で選べます">模擬戦</button>
+      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1モード</button><button data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで戦います。SPアタックを撃つ・温存する・シールドを使う・交代するを、決断の場面ごとに自分で選べます">模擬戦モード</button>
     </div>
   </div>
   <div class="rkrow">

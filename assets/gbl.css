@@ -189,6 +189,34 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rocket .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
 .rocket .opts{flex:1;min-width:160px}
 .rocket .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305}
+/* いちばん上のモード切替(1対1 / 模擬戦)はこのツールの主役なので、大きく立体的に見せる */
+.rkmoderow{margin-bottom:2px}
+.rkmode{gap:8px}
+.rkmode button{flex:1;padding:12px 6px;font-size:.95rem;font-weight:800;letter-spacing:.03em;
+  color:var(--sub);background:linear-gradient(180deg,#1e2850,#151d38);
+  border:1px solid var(--line);border-radius:12px;cursor:pointer;
+  box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+.rkmode button:hover{color:var(--ink);transform:translateY(-1px);
+  box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1)}
+.rocket .rkmode button[data-v="0"][aria-pressed="true"]{
+  color:#03212c;background:linear-gradient(160deg,#8df3ff 0%,#43e0ff 45%,#1b9fd0 100%);border-color:#9df5ff;
+  box-shadow:0 6px 18px rgba(67,224,255,.4),inset 0 1px 0 rgba(255,255,255,.65);transform:translateY(-1px)}
+.rocket .rkmode button[data-v="1"][aria-pressed="true"]{
+  color:#1c0a33;background:linear-gradient(160deg,#e3b6ff 0%,#b06cff 45%,#7d3fd6 100%);border-color:#e3b6ff;
+  box-shadow:0 6px 18px rgba(176,108,255,.4),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px)}
+/* あいての種別はロケット団らしく赤系。したっぱ→サカキで赤が濃くなる */
+.rkkind{gap:6px}
+.rkkind button{flex:1;padding:9px 4px;font-size:.86rem;font-weight:800;color:var(--rc);
+  background:linear-gradient(180deg,#241c33,#191428);border:1px solid rgba(255,107,129,.3);border-radius:11px;
+  box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .12s ease,box-shadow .12s ease}
+.rkkind button:hover{transform:translateY(-1px);border-color:var(--rc)}
+.rkkind button[data-v="grunt"]{--rc:#ffa8a8;--rd:#e05a5a}
+.rkkind button[data-v="leader"]{--rc:#ff7676;--rd:#c62828}
+.rkkind button[data-v="boss"]{--rc:#ff4d4d;--rd:#8e0000}
+.rocket .rkkind button[aria-pressed="true"]{color:#2c0406;border-color:var(--rc);
+  background:linear-gradient(160deg,#ffd0d0 0%,var(--rc) 45%,var(--rd) 100%);
+  box-shadow:0 5px 16px rgba(255,77,77,.38),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px)}
 .rocket input{width:64px;padding:5px 6px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
 .rocket input:focus{border-color:var(--gl)}
 /* ロケット団戦: リーダー・サカキの手持ち */
