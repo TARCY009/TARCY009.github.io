@@ -321,6 +321,22 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .holelist{color:var(--ink);font-size:.74rem;line-height:1.6;margin-top:2px}
 .holesub{font-size:.7rem;margin-top:4px}
 .holenote{font-size:.68rem;color:var(--sub);line-height:1.5;margin-bottom:5px}
+/* パーティ診断の見出し行(右上に「わざ｜オート」を置く) */
+.phead{display:flex;align-items:flex-start;gap:8px}
+.phead h3{flex:1;min-width:0}
+/* 「わざ｜オート」ボタン。左=見出し(濃紺)・右=いまの状態(淡い水色)の2色ピル */
+.ptauto{flex-shrink:0;display:inline-flex;align-items:stretch;padding:0;border:2px solid #131c63;border-radius:999px;
+  overflow:hidden;cursor:pointer;background:#0f1856;font-weight:800;letter-spacing:.03em;
+  box-shadow:0 3px 0 rgba(0,0,0,.45),0 4px 12px rgba(19,28,99,.35);transition:transform .08s,box-shadow .08s}
+.ptauto:hover{transform:translateY(-1px);box-shadow:0 4px 0 rgba(0,0,0,.45),0 7px 16px rgba(19,28,99,.45)}
+.ptauto:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.45)}
+.ptauto .k{padding:5px 10px;font-size:.72rem;color:#dbe9ff;
+  background:linear-gradient(180deg,#233098,#101a5e);box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.ptauto .v{padding:5px 12px;font-size:.72rem;color:#2b3a8f;
+  background:linear-gradient(180deg,#f2f8ff,#cfe2fa);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+/* 手動のときは右側を消灯させて、いまオートでないことを色で示す */
+.ptauto[aria-pressed="false"] .v{color:#8f9ec2;background:linear-gradient(180deg,#2a3566,#1b2450);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
 .holeword{color:var(--lose)}
 @media (max-width:520px){.pslots{grid-template-columns:1fr;gap:5px}.pslot{padding:6px}.pmeta .pt2{flex:0 1 auto}}
 /* ロケット団戦: 模擬戦(3匹の通し) */

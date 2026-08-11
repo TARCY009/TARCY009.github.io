@@ -226,7 +226,10 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="multi" style="display:none"></div>
 <div class="multi" id="counter" style="display:none"></div>
 <div class="multi" id="party" style="display:none">
-  <h3>パーティ3匹の穴チェック<small class="cnsub"><b class="holeword">0匹＝穴</b>・マスをタップ→1対1シミュ</small></h3>
+  <div class="phead">
+    <h3>パーティ3匹の穴チェック<small class="cnsub"><b class="holeword">0匹＝穴</b>・マスをタップ→1対1シミュ</small></h3>
+    <button class="ptauto" aria-pressed="true" title="オート＝環境上位にいちばん多く勝てるわざ構成を自動で選びます。押すと手動になり、下の欄で選んだわざで計算します"><span class="k">わざ</span><span class="v">オート</span></button>
+  </div>
   <div class="pslots"></div>
   <div class="pctl">
     <span class="lbl">シールド</span>
@@ -764,6 +767,11 @@ const HELP_HTML = `
   </div>
 
 ${PAGE_ROCKET ? '' : `
+  <h4>パーティ診断の「わざ｜オート」</h4>
+  <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
+  （対面ごとに選び直しません）。押して<b>手動</b>にすると、枠のわざ欄を自分で選べます。
+  どちらも<b>画面に出ているわざでそのまま計算</b>するので、マスをタップして開く1対1シミュと結果が食い違いません。</p>
+
   <h4>カウンター検索の「範囲」</h4>
   <p>既定は<b>上位50</b>。<b>上位100</b>に広げると51〜100位まで総当たりします。
   使用率は低いものの特定の相手に刺さるポケモン（伝説など）を拾いたいときに使ってください。
@@ -1572,10 +1580,12 @@ function searchPk(q, ok) {
   }
   return hit.concat(sub).slice(0, SEARCH_MAX);
 }
-function buildPartySlots(box, withMoves) {
+// mvStore = わざ欄の置き場所。'rbm'=ロケット団の模擬戦(RBM) / 'pt'=パーティ診断(PTに直接持つ) / 無し=わざ欄なし
+function buildPartySlots(box, mvStore) {
   if (!box) return;
-  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}">
-    <div class="phd"><span class="pnum">${i + 1}匹目</span>${withMoves && i === 0
+  const withMoves = !!mvStore, isRk = mvStore === 'rbm';
+  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}" data-mv="${mvStore || ''}">
+    <div class="phd"><span class="pnum">${i + 1}匹目</span>${isRk && i === 0
       ? `<button class="plead" aria-pressed="${RK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいては4.5秒硬直・打ちかけの1発は交代先に入ります)">${SWAPMK}開幕交代</button>` : ''}
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
@@ -1612,7 +1622,7 @@ function buildPartySlots(box, withMoves) {
     });
     document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
     // 模擬戦: おすすめタブ(高火力/高火力＋安定)が押されていたら、入力欄タップで対策トップ5を出す
-    if (withMoves) ['focus', 'click'].forEach(ev => inp.addEventListener(ev, () => {
+    if (isRk) ['focus', 'click'].forEach(ev => inp.addEventListener(ev, () => {
       if (list.style.display !== 'block') rkShowSugg(i, el);
     }));
     el.querySelector('.pshadow').onclick = () => {
@@ -1661,6 +1671,7 @@ function syncPartySlot(i) {
     if (mvbox) mvbox.innerHTML = '';
     if (!m) { meta.innerHTML = '<span class="pempty">未選択</span>'; return; }
     const p = D.pokemon[m.key];
+    const isPt = el.dataset.mv === 'pt';
     const iv = m.ivMode === 'manual' && m.mIvs ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
     // わざを自分で選べる枠(模擬戦)では、わざは下の欄に出るので文字では書かない。
@@ -1669,26 +1680,70 @@ function syncPartySlot(i) {
       ? `${typeIcons(p, 15)}${m.ivMode === 'manual' && m.mIvs ? `<span class="pt2">${iv}</span>` : ''}`
       : `${typeIcons(p, 15)}<span class="pt2">${iv}</span><span class="pt2">${mv}</span>`;
     if (!mvbox) return;
-    const cur = rbmOf(i);
+    const cur = isPt ? ptMvOf(i) : rbmOf(i);
+    const auto = isPt && ptAuto;   // パーティ診断のオート中はこちらで選ぶので触らせない
     const { fasts, chargeds } = movePool(m.key);
     const opts = (list, sel) => list.map(id =>
       `<option value="${id}"${id === sel ? ' selected' : ''}>${D.moves[id].n}</option>`).join('');
     mvbox.innerHTML = `
-      <select class="mvF" title="ノーマルアタック（おまかせにすると効率のよい構成を自動で選びます）">
-        <option value="auto"${cur.fast === 'auto' ? ' selected' : ''}>おまかせ</option>${opts(fasts, cur.fast)}</select>
-      ${chargeds.length ? `<select class="mvC1" title="SPアタック1">${opts(chargeds, cur.c1)}</select>
-      <select class="mvC2" title="SPアタック2（2本目を開放していないなら「ー」）">
+      <select class="mvF"${auto ? ' disabled' : ''} title="ノーマルアタック${isPt ? '' : '（おまかせにすると効率のよい構成を自動で選びます）'}">
+        ${isPt ? '' : `<option value="auto"${cur.fast === 'auto' ? ' selected' : ''}>おまかせ</option>`}${opts(fasts, cur.fast)}</select>
+      ${chargeds.length ? `<select class="mvC1"${auto ? ' disabled' : ''} title="SPアタック1">${opts(chargeds, cur.c1)}</select>
+      <select class="mvC2"${auto ? ' disabled' : ''} title="SPアタック2（2本目を開放していないなら「ー」）">
         <option value=""${!cur.c2 ? ' selected' : ''}>ー</option>${opts(chargeds, cur.c2)}</select>`
         : '<span class="pt2">SPアタックなし</span>'}`;
     mvbox.querySelectorAll('select').forEach(sel => sel.onchange = () => {
-      const c = rbmOf(i);
+      const c = isPt ? { fast: PT[i].fast, c1: PT[i].c1, c2: PT[i].c2 } : rbmOf(i);
       if (sel.classList.contains('mvF')) c.fast = sel.value;
       else if (sel.classList.contains('mvC1')) c.c1 = sel.value;
       else c.c2 = sel.value;
       if (c.c2 && c.c2 === c.c1) c.c2 = '';   // 同じわざを2本持っても意味がない
-      saveRbm(); syncPartySlot(i); run();
+      if (isPt) {
+        // 選び直したぶんだけ差し替え、空いている欄は今表示している構成で埋める(全部そろって初めて計算できる)
+        const now = ptMvOf(i);
+        PT[i].fast = c.fast || now.fast; PT[i].c1 = c.c1 || now.c1; PT[i].c2 = c.c2 || '';
+        savePt();
+      } else saveRbm();
+      syncPartySlot(i); run();
     });
   });
+}
+// ---- パーティ診断のわざ ----
+// オート = 環境上位にいちばん多く勝てる構成を1つ選んで固定する（対面ごとに選び直さない）。
+// 手動 = 枠のわざ欄で選んだ構成でそのまま計算する。どちらも「画面に出ているわざで戦う」ので結果と食い違わない
+let ptAuto = true;
+try { ptAuto = localStorage.getItem('gbl_party_auto') !== '0'; } catch (e) {}
+const savePtAuto = () => { try { localStorage.setItem('gbl_party_auto', ptAuto ? '1' : '0'); } catch (e) {} };
+const PTA = [null, null, null];   // オートで選ばれた構成(計算のたびに更新して枠にも出す)
+// その枠でいま使うわざ(オート中はオートの選出、手動なら選んだわざ。未指定は効率のよい既定で埋める)
+function ptMvOf(i) {
+  const m = PT[i];
+  if (!m) return null;
+  if (ptAuto && PTA[i] && PTA[i].key === m.key) return PTA[i];
+  const d = rbmDefault(m.key);
+  return { key: m.key, fast: m.fast || d.fast, c1: m.c1 || d.c1, c2: m.c2 || '' };
+}
+// policies() の1構成 → 画面のわざ欄の形に直す
+const polToMv = (key, pol) => ({ key, fast: pol.fast,
+  c1: pol.throw || (pol.charged && pol.charged[0]) || '', c2: (pol.charged && pol.charged[1]) || '' });
+// オートで試すわざ構成。SP1本の全通り(policies)に加えて、
+// わざ開放でSP2本にした構成も候補に入れる(効率のよいSP上位3本の組み合わせだけ。全部やると重い)
+function ptAutoPols(key) {
+  const out = policies(key, {});
+  const { fasts, chargeds } = movePool(key);
+  const dpe = m => D.moves[m].p / D.moves[m].e;
+  const top = chargeds.slice().sort((a, b) => dpe(b) - dpe(a)).slice(0, 3);
+  for (const f of fasts.slice(0, 5))
+    for (let a = 0; a < top.length; a++)
+      for (let b = a + 1; b < top.length; b++) out.push({ fast: f, charged: [top[a], top[b]] });
+  return out;
+}
+// 「わざ｜オート／手動」ボタンの見た目を状態に合わせる
+function syncPtAuto() {
+  const b = document.querySelector('#party .ptauto');
+  if (!b) return;
+  b.setAttribute('aria-pressed', ptAuto);
+  b.querySelector('.v').textContent = ptAuto ? 'オート' : '手動';
 }
 // パーティのメンバー1匹分の計算用設定(理想個体値/登録した個体値)
 // capX=CP上限(ロケット団戦は制限が無いので0を渡す)
@@ -1713,12 +1768,19 @@ function runParty() {
   PV.results = [];
   PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${ptName(PT[i])}`);
   PV.pick = (k, j) => {   // セルをタップ→そのメンバーと相手を同じシールド枚数で1対1シミュへ
-    if (j != null && PT[idxs[j]]) { applyMyPk(0, PT[idxs[j]], true); setBothShields(ptShield); }
+    // 表で使ったわざ(オートの選出 or 手動で選んだわざ)をそのまま渡す＝一覧と1対1の結果が食い違わない
+    if (j != null && PT[idxs[j]]) { applyMyPk(0, { ...PT[idxs[j]], ...ptMvOf(idxs[j]) }, true); setBothShields(ptShield); }
     applyMeta(list[k], 1);
   };
   const bases = idxs.map(i => ptBase(PT[i]));
-  const pols = idxs.map(i => policies(PT[i].key,
-    { fast: PT[i].fast || undefined, c1: PT[i].c1 || undefined, c2: PT[i].c2 || undefined }));
+  // オート: 全構成を試して「環境にいちばん多く勝てる1構成」をあとで選ぶ / 手動: 選んだ構成だけ
+  const pols = idxs.map(i => {
+    if (!ptAuto) { const v = ptMvOf(i); return policies(PT[i].key, { fast: v.fast, c1: v.c1 || undefined, c2: v.c2 || undefined }); }
+    return ptAutoPols(PT[i].key);
+  });
+  const win = pols.map(ps => ps.map(() => 0));    // 構成ごとの勝った数
+  const tot = pols.map(ps => ps.map(() => 0));    // 構成ごとの合計スコア(同数のときの決め手)
+  const grid = [];                                 // grid[相手][メンバー][構成] = マスの中身
   const names = idxs.map(i => ptName(PT[i]));
   body.innerHTML = `${ctlHtml('party')}
     <table class="mttbl ptbl"><tbody></tbody></table>
@@ -1732,33 +1794,48 @@ function runParty() {
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
       const r1 = rank1(m.k, cap);
-      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
+      // bluff:false は1対1シミュの既定と同じ(エンジンは未指定だとブラフする)。
+      // ここを揃えないと、マスの勝敗とタップして開く1対1の結果が食い違う
+      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap, bluff: false,
         shields: ptShield, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
-      const cells = idxs.map((pi, j) => {
-        let best = null;
-        for (const pol of pols[j]) {
-          const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield };
-          const res = PvpEngine.simulate(D, me, opCfg, SIMOPT);
-          const sc = scoreOf(res, 0);
-          if (!best || sc > best.sc) best = { sc, res };
-        }
-        const r = best.res, w = r.winner;
-        return { w, sc: best.sc, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
-      });
-      PV.results.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
-        sc: cells.reduce((a, c) => a + c.sc, 0) / cells.length,
-        nWin: cells.filter(c => c.w === 0).length,
-        nLose: cells.filter(c => c.w === 1).length });
+      // 構成ごとの結果をすべて控える。どの構成を使うかは全員ぶん出そろってから決める
+      grid[idx] = idxs.map((pi, j) => pols[j].map((pol, pk) => {
+        const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield, bluff: false };
+        const r = PvpEngine.simulate(D, me, opCfg, SIMOPT);
+        const sc = scoreOf(r, 0), w = r.winner;
+        if (w === 0) win[j][pk]++;
+        tot[j][pk] += sc;
+        return { w, sc, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+      }));
       idx++;
     }
     if (idx < list.length) {
       prog.textContent = `計算中 ${idx}/${list.length}`;
       setTimeout(step, 0);
     } else {
+      // 各メンバーの構成を1つに決める(勝った数が最多→同数なら合計スコアが上)。手動なら候補は1つだけ
+      const use = idxs.map((pi, j) => {
+        let bk = 0;
+        pols[j].forEach((pol, pk) => {
+          if (win[j][pk] > win[j][bk] || (win[j][pk] === win[j][bk] && tot[j][pk] > tot[j][bk])) bk = pk;
+        });
+        PTA[pi] = polToMv(PT[pi].key, pols[j][bk]);   // 枠のわざ欄にも同じ構成を出す
+        return bk;
+      });
+      idxs.forEach(pi => syncPartySlot(pi));
+      PV.results = grid.map((row, k) => {
+        const cells = row.map((byPol, j) => byPol[use[j]]);
+        return { idx: k, m: list[k], name: `${k + 1}. ${list[k].n}`, cells,
+          sc: cells.reduce((a, c) => a + c.sc, 0) / cells.length,
+          nWin: cells.filter(c => c.w === 0).length,
+          nLose: cells.filter(c => c.w === 1).length };
+      });
       const holes = PV.results.filter(r => r.nWin === 0);
       const avg = (PV.results.reduce((a, r) => a + r.nWin, 0) / PV.results.length).toFixed(2);
       // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
-      prog.innerHTML = `<div class="holenote">※じぶんのわざは相手ごとに最適な構成を自動で選んでいます（あいては環境の標準構成）</div>` +
+      prog.innerHTML = `<div class="holenote">${ptAuto
+          ? '※わざは<b>環境にいちばん多く勝てる構成</b>をオートで選び、枠に表示しています（あいては環境の標準構成）'
+          : '※わざは枠で<b>指定した構成</b>で計算しています（あいては環境の標準構成）'}</div>` +
         (holes.length
           ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>` +
             `<div class="holelist">${holes.map(r => r.m.n).join('、')}</div>`
@@ -4177,8 +4254,23 @@ document.getElementById('copyUrl').onclick = async () => {
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
     applyMode();
   }
-  buildPartySlots(document.querySelector('#party .pslots'));
-  buildPartySlots(document.querySelector('#rkteam .myslots'), true);   // 模擬戦でも同じ3枠(PT)を使う
+  buildPartySlots(document.querySelector('#party .pslots'), 'pt');
+  buildPartySlots(document.querySelector('#rkteam .myslots'), 'rbm');   // 模擬戦でも同じ3枠(PT)を使う
+  // パーティ診断の「わざ｜オート」。手動へ切り替えるときは、いま出ている構成を枠に書き込んでから編集させる
+  const paBtn = document.querySelector('#party .ptauto');
+  if (paBtn) paBtn.onclick = () => {
+    // 空いている欄だけオートの選出で埋める(★登録リストの個体や、前に自分で選んだわざは上書きしない)
+    if (ptAuto) [0, 1, 2].forEach(i => {
+      if (!PT[i]) return;
+      const v = ptMvOf(i);
+      PT[i].fast = PT[i].fast || v.fast; PT[i].c1 = PT[i].c1 || v.c1; PT[i].c2 = PT[i].c2 || v.c2 || '';
+    });
+    ptAuto = !ptAuto;
+    savePt(); savePtAuto(); syncPtAuto();
+    [0, 1, 2].forEach(i => syncPartySlot(i));
+    run();
+  };
+  syncPtAuto();
   buildFoeSlots();
   // 模擬戦のおすすめタブ(高火力/高火力＋安定)。同じタブをもう一度押すとオフ
   document.querySelectorAll('#rksuggbar button[data-m]').forEach(b => b.onclick = () => {
