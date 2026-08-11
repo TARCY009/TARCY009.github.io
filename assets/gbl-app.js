@@ -1756,13 +1756,14 @@ function runParty() {
       setTimeout(step, 0);
     } else {
       const holes = PV.results.filter(r => r.nWin === 0);
-      const thin = PV.results.filter(r => r.nWin === 1);
       const avg = (PV.results.reduce((a, r) => a + r.nWin, 0) / PV.results.length).toFixed(2);
-      prog.innerHTML = (holes.length
+      // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
+      prog.innerHTML = `<div class="holenote">※じぶんのわざは相手ごとに最適な構成を自動で選んでいます（あいては環境の標準構成）</div>` +
+        (holes.length
           ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>` +
             `<div class="holelist">${holes.map(r => r.m.n).join('、')}</div>`
           : `<span class="holeok">✅ 穴なし</span>`) +
-        `<div class="holesub">1匹だけ勝てる相手 ${thin.length}匹 ／ 平均 ${avg}匹（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
+        `<div class="holesub">平均 ${avg}匹（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
       bindCtl(body, 'party');
       applyView(body, 'party');
     }

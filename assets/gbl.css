@@ -320,6 +320,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .holeok{color:var(--win);font-weight:700;font-size:.82rem}
 .holelist{color:var(--ink);font-size:.74rem;line-height:1.6;margin-top:2px}
 .holesub{font-size:.7rem;margin-top:4px}
+.holenote{font-size:.68rem;color:var(--sub);line-height:1.5;margin-bottom:5px}
 .holeword{color:var(--lose)}
 @media (max-width:520px){.pslots{grid-template-columns:1fr;gap:5px}.pslot{padding:6px}.pmeta .pt2{flex:0 1 auto}}
 /* ロケット団戦: 模擬戦(3匹の通し) */
