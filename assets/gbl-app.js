@@ -24,7 +24,7 @@ document.getElementById('app').innerHTML = `
 <div class="modes" id="modes">
   <button data-m="duel" aria-pressed="true">1対1シミュ</button>
   <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧</button>
-  <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモンを環境上位から総当たりで探す">カウンター検索</button>
+  <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモン（対策）を環境上位から総当たりで探す">対策さがし</button>
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
   <button data-m="rocket" aria-pressed="false" title="GOロケット団(したっぱ/リーダー/サカキ)との戦いを再現する。相手はSPアタックのあと動けなくなる(硬直)">ロケット団戦</button>
 </div>
@@ -778,7 +778,7 @@ const HELP_HTML = `
 ${PAGE_ROCKET ? '' : `
   <h4>「ブラフ」の設定</h4>
   <p>ブラフ＝<b>軽いSPアタックをわざと撃ってシールドを使わせる駆け引き</b>。
-  環境一覧・カウンター検索・パーティ診断では、<b>じぶんとあいての両方に同じ前提</b>を使います。
+  環境一覧・対策さがし・パーティ診断では、<b>じぶんとあいての両方に同じ前提</b>を使います。
   既定は<b>しない</b>（運に頼らない見方）。<b>する</b>にするとお互いが駆け引きしてくる見方になります。
   マスターリーグのようにSPを2本持つポケモンが多いほど差が出ます。
   1対1シミュでは、左右のパネルで別々に指定できます。</p>
@@ -793,7 +793,7 @@ ${PAGE_ROCKET ? '' : `
   （対面ごとに選び直しません）。押して<b>マニュアル</b>にすると、枠のわざ欄を自分で選べます。
   どちらも<b>画面に出ているわざでそのまま計算</b>するので、マスをタップして開く1対1シミュと結果が食い違いません。</p>
 
-  <h4>カウンター検索の「範囲」</h4>
+  <h4>対策さがしの「範囲」</h4>
   <p>既定は<b>上位50</b>。<b>上位100</b>に広げると51〜100位まで総当たりします。
   使用率は低いものの特定の相手に刺さるポケモン（伝説など）を拾いたいときに使ってください。
   <b>環境一覧・パーティ診断・環境スコアは上位50のまま</b>なので、点数の基準は変わりません。</p>`}
@@ -1048,6 +1048,7 @@ function applyMode() {
   document.getElementById('cupwin').style.display = 'none';
   document.getElementById('rocket').style.display = rk ? 'block' : 'none';
   if (rk) syncRocket(); else restoreFoeInputs();
+  syncCounterPanel(mode === 'counter');
   sideEl[0].style.display = mode === 'counter' || rkRankView ? 'none' : '';
   sideEl[1].style.display = mode === 'duel' || mode === 'counter' || rk ? '' : 'none';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter' || rkRankView);
@@ -1162,6 +1163,40 @@ function hideLabelFor(el, sel, show) {
   const lb = n && n.previousElementSibling;
   if (lb && lb.classList.contains('f')) lb.style.display = show ? '' : 'none';
 }
+// カウンター検索は「このポケモンがざっくり何に弱いか」を見る画面なので、
+// 細かい手順の指定(シールドのﾏﾆｭｱﾙ・SPアタックタイミング・連戦)は出さない(2026-08-11ユーザー指示)。
+// 表示を消すだけだと前の設定が裏で効いて結果がズレるので、値も既定へ寄せる(抜けるときに元へ戻す)
+const CN = { prev: null };
+function syncCounterPanel(on) {
+  const el = sideEl[1];
+  if (!el) return;
+  const planBtn = el.querySelector('.shields button[data-v="plan"]');
+  ['.timing', '.carry'].forEach(sel => {
+    const n = el.querySelector(sel);
+    if (n) n.style.display = on ? 'none' : '';
+    hideLabelFor(el, sel, !on);
+  });
+  ['.custShield', '.custCarry', '.custSp'].forEach(sel => {
+    const n = el.querySelector(sel);
+    if (n && on) n.style.display = 'none';
+  });
+  if (planBtn) planBtn.style.display = on ? 'none' : '';
+  if (on) {
+    if (!CN.prev) CN.prev = { timing: S[1].timing, carry: S[1].carry, shieldMode: S[1].shieldMode };
+    S[1].timing = 'optimal'; S[1].carry = false;
+    if (S[1].shieldMode === 'plan') { S[1].shieldMode = null; S[1].shields = 2; }
+    resetSpPlan(1);
+    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'optimal'));
+    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'off'));
+    el.querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === String(S[1].shields)));
+  } else if (CN.prev) {
+    S[1].timing = CN.prev.timing; S[1].carry = CN.prev.carry; S[1].shieldMode = CN.prev.shieldMode;
+    CN.prev = null;
+    resetSpPlan(1);
+    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[1].timing));
+    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === (S[1].carry ? 'on' : 'off')));
+  }
+}
 // ロケット団戦から他のモードへ戻したときに、隠した欄を元に戻す
 function restoreFoeInputs() {
   const el = sideEl[1];
@@ -1173,7 +1208,8 @@ function restoreFoeInputs() {
   el.querySelector('.mypkbar').style.display = '';   // ★登録リストのタブを戻す
   syncTimingTabs(false);
   el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
-  el.querySelector('.bluffwrap').style.display = S[1].c2 ? 'block' : 'none';
+  el.querySelector('.bluffwrap').style.display =
+    S[1].c2 && !['multi', 'counter', 'party'].includes(mode) ? 'block' : 'none';
   hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
   // シャドウ固定を解除し、ロケット団戦に入る前の状態へ戻す
   const tab = el.querySelector('.shadowtab');
@@ -1391,15 +1427,15 @@ const VIEWS = {
     ],
   },
   party: {
-    results: [], filter: 'all', sort: 'risk', head: '相手', tail: '勝てる数',
+    results: [], filter: 'all', sort: 'meta', head: '相手', tail: '勝てる数',
     filters: [
       { v: 'all',  t: 'すべて', d: '環境上位の全ての相手を表示' },
       { v: 'hole', t: '穴のみ', d: '3匹とも勝てない相手だけ表示（パーティの穴）' },
       { v: 'thin', t: '1匹以下', d: '勝てるのが1匹だけ、または0匹の相手を表示（薄い対面）' },
     ],
     sorts: [
-      { v: 'risk',  t: '危険順', d: '勝てる数が少ない相手が上（初期表示）' },
-      { v: 'meta',  t: '環境順', d: '環境での使用率が高い順' },
+      { v: 'meta',  t: '環境順', d: '環境での使用率が高い順（初期表示）' },
+      { v: 'risk',  t: '危険順', d: '勝てる数が少ない相手が上' },
       { v: 'close', t: '惜しい順', d: 'あと少しで勝てた対面が上' },
     ],
     tailHtml: r => `<td class="pcnt c${r.nWin}">${r.nWin}<small>/${r.cells.length}</small></td>`,
@@ -3711,8 +3747,8 @@ function fillMoves(i, cfg) {
   el.querySelector('.bluffwrap').style.display =
     S[i].c2 && !['multi', 'counter', 'party'].includes(mode) ? 'block' : 'none';
   el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));
-  // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示
-  const showSp = S[i].timing !== 'never' && (S[i].timing === 'plan' || !!S[i].c2);
+  // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示(カウンター検索は手順を指定しないので出さない)
+  const showSp = S[i].timing !== 'never' && (S[i].timing === 'plan' || !!S[i].c2) && mode !== 'counter';
   el.querySelector('.custSp').style.display = showSp ? 'block' : 'none';
   if (showSp) buildSpConfig(i, S[i].c1 || cfg.throw, S[i].c2);
 }
