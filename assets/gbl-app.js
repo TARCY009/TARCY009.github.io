@@ -783,7 +783,7 @@ ${PAGE_ROCKET ? '' : `
   マスターリーグのようにSPを2本持つポケモンが多いほど差が出ます。
   1対1シミュでは、左右のパネルで別々に指定できます。</p>
 
-  <h4>パーティ診断の「平均勝ち数」</h4>
+  <h4>パーティ診断の「平均勝率」</h4>
   <p>環境上位の相手<b>1匹あたり</b>、パーティの何匹が勝てるかを割合で出したものです。
   3匹編成で<b>50％</b>なら「どの相手にも平均1.5匹が勝てる」という意味になります。
   数字が大きいほど、どの相手にも選べる手が多いパーティです（勝てるのが0匹の相手が<b>穴</b>）。</p>
@@ -1879,7 +1879,7 @@ function runParty() {
           nLose: cells.filter(c => c.w === 1).length };
       });
       const holes = PV.results.filter(r => r.nWin === 0);
-      // 平均勝ち数は「相手1匹に何匹が勝てるか」を割合にして出す(1.50/3匹 = 50％)
+      // 平均勝率は「相手1匹に何匹が勝てるか」を割合にして出す(1.50/3匹 = 50％)
       const avg = Math.round(PV.results.reduce((a, r) => a + r.nWin, 0)
         / (PV.results.length * idxs.length) * 100);
       // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
@@ -1890,7 +1890,7 @@ function runParty() {
         (holes.length
           ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>`
           : `<span class="holeok">✅ 穴なし</span>`) +
-        `<div class="holesub">平均勝ち数：<b>${avg}％</b>` +
+        `<div class="holesub">平均勝率：<b>${avg}％</b>` +
         `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
       bindCtl(body, 'party');
       applyView(body, 'party');
