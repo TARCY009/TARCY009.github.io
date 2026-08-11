@@ -332,6 +332,34 @@ const SWAPMK = '<i class="swapmark"></i>';
 const D = window.PVP_DATA;
 document.getElementById('loading').style.display = 'none';
 
+// ---- 環境リストのわざ構成を、人が確認した確定値(assets/meta_moves.js)で上書きする ----
+// 情報元の推奨構成は約7割しか実戦の定番と一致しないため、上位100匹はタダシさんが確認した
+// 構成を使う(pvp-tests/answer-key.html で作る)。載っていないポケモンは従来どおり情報元の推奨。
+// 読み込んだ直後に一度だけ書き換えるので、環境一覧・パーティ診断・対策さがし・カップの
+// すべてが同じ構成を見る＝画面ごとに結果が食い違わない
+(function applyMetaMoves() {
+  const MM = window.META_MOVES;
+  if (!MM) return;
+  const put = (list, tbl) => (list || []).forEach(m => {
+    const mv = tbl[m.k + (m.s ? '|s' : '')];
+    if (!mv) return;
+    m.f = mv[0] || m.f;
+    m.c1 = mv[1] || m.c1;
+    if (mv[2]) m.c2 = mv[2]; else delete m.c2;
+  });
+  Object.keys(MM).forEach(lg => {
+    put((window.META_LISTS || {})[lg], MM[lg]);
+    put((window.META_EXT || {})[lg], MM[lg]);
+  });
+  // カップはCP上限が同じリーグの確定値を使う(マスター相当のカップは "0")
+  (window.CUP_LISTS || []).forEach(c => {
+    const tbl = MM[c.cp >= 10000 ? '0' : String(c.cp)];
+    if (!tbl) return;
+    put(c.list, tbl);
+    put(c.ext, tbl);
+  });
+})();
+
 // ---- 検索対象(実装済み・メガ除外) ----
 // 実装済み(r)は全て検索可能にする。メガ・ゲンシもメガバージョン系カップ用に含める
 const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r);

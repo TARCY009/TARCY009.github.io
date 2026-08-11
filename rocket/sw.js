@@ -1,12 +1,13 @@
 // ロケット団対策シミュレーター用のService Worker
 // 目的: 電波の悪い場所でも起動できるようにする(PWAインストール要件も満たす)
-const CACHE = 'rkt-v1';
+const CACHE = 'rkt-v2';
 // 起動に必要な一式。データ本体(pvp_data.js)と共有モジュールはページ外のパスだが、
 // このSWが管理するページからの読み込みは全てfetchイベントを通るのでキャッシュできる
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   '/pvp_data.js',
-  '/assets/pvp-engine.js', '/assets/meta_lists.js', '/assets/type-icons.js', '/assets/shadow-icon.css',
+  '/assets/pvp-engine.js', '/assets/meta_lists.js', '/assets/meta_moves.js',
+'/assets/type-icons.js', '/assets/shadow-icon.css',
   '/assets/rocket_roster.js', '/assets/gbl.css', '/assets/gbl-app.js',
   '/assets/icons/rocket/icon-192.png', '/assets/icons/rocket/icon-512.png',
   '/assets/icons/rocket/favicon-32.png', '/assets/icons/rocket/apple-touch-icon.png',
