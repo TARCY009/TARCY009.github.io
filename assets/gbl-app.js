@@ -783,10 +783,10 @@ ${PAGE_ROCKET ? '' : `
   マスターリーグのようにSPを2本持つポケモンが多いほど差が出ます。
   1対1シミュでは、左右のパネルで別々に指定できます。</p>
 
-  <h4>パーティ診断の「相手1匹に勝てるのは平均◯匹」</h4>
-  <p>環境上位の相手<b>1匹あたり</b>、パーティの何匹が勝てるかの平均です。
-  3匹なら<b>1.5</b>で「だいたい半分の相手に1〜2匹しか勝てない」という意味になります。
-  数字が大きいほど、どの相手にも複数の選択肢があるパーティです（0匹の相手が<b>穴</b>）。</p>
+  <h4>パーティ診断の「平均勝ち数」</h4>
+  <p>環境上位の相手<b>1匹あたり</b>、パーティの何匹が勝てるかを割合で出したものです。
+  3匹編成で<b>50％</b>なら「どの相手にも平均1.5匹が勝てる」という意味になります。
+  数字が大きいほど、どの相手にも選べる手が多いパーティです（勝てるのが0匹の相手が<b>穴</b>）。</p>
 
   <h4>パーティ診断の「わざ｜オート」</h4>
   <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
@@ -1879,7 +1879,9 @@ function runParty() {
           nLose: cells.filter(c => c.w === 1).length };
       });
       const holes = PV.results.filter(r => r.nWin === 0);
-      const avg = (PV.results.reduce((a, r) => a + r.nWin, 0) / PV.results.length).toFixed(2);
+      // 平均勝ち数は「相手1匹に何匹が勝てるか」を割合にして出す(1.50/3匹 = 50％)
+      const avg = Math.round(PV.results.reduce((a, r) => a + r.nWin, 0)
+        / (PV.results.length * idxs.length) * 100);
       // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
       prog.innerHTML = `<div class="holenote">${ptAuto
           ? '※わざは<b>環境にいちばん多く勝てる構成</b>をオートで選び、枠に表示しています（あいては環境の標準構成）'
@@ -1888,7 +1890,7 @@ function runParty() {
         (holes.length
           ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>`
           : `<span class="holeok">✅ 穴なし</span>`) +
-        `<div class="holesub">相手1匹に勝てるのは平均 <b>${avg}</b>/${idxs.length}匹` +
+        `<div class="holesub">平均勝ち数：<b>${avg}％</b>` +
         `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
       bindCtl(body, 'party');
       applyView(body, 'party');
