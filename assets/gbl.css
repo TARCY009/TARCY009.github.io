@@ -645,6 +645,8 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .mtctl .opts button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
 .mtctl .opts button:disabled{opacity:.45;cursor:default}
 .mtcnt{flex:1 1 100%;font-size:.66rem;color:var(--sub)}
+/* 全ポケモンから探すときは、その相手に合わせて選んだわざを名前の下に小さく出す */
+.opname .cnmv{display:block;font-size:.62rem;color:var(--sub);font-weight:400;margin-top:1px}
 .mtempty{color:var(--sub);font-size:.72rem;text-align:center!important;cursor:default!important}
 .mttbl{width:100%;border-collapse:separate;border-spacing:0 4px;margin-top:8px;font-size:.78rem}
 .mttbl th{color:var(--sub);font-weight:600;font-size:.66rem;padding:2px}

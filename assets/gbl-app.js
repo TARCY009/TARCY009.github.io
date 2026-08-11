@@ -355,7 +355,17 @@ const rkFoeOk = (i, key) => !(mode === 'rocket' && i === 1 && isMega(key));
 function cpOf(p, a, d, h, c) {
   return Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
 }
+// 同じ条件なら答えは変わらないので覚えておく(全ポケモンを回す「対策さがし(全ポケモン)」で
+// 1匹あたり4096通りの計算を毎回やり直すと1秒以上かかるため)
+const R1C = new Map();
 function rank1(key, cap, minIv, maxLv) {
+  const ck = key + '|' + cap + '|' + (minIv || 0) + '|' + (maxLv || '');
+  if (R1C.has(ck)) return R1C.get(ck);
+  const v = rank1Calc(key, cap, minIv, maxLv);
+  R1C.set(ck, v);
+  return v;
+}
+function rank1Calc(key, cap, minIv, maxLv) {
   const p = D.pokemon[key];
   minIv = minIv || 0;   // 入手方法による個体値の下限(大親友交換5/シャドウレイド6/レイド系10)
   const LV = levelsUpTo(maxLv);
@@ -794,9 +804,13 @@ ${PAGE_ROCKET ? '' : `
   どちらも<b>画面に出ているわざでそのまま計算</b>するので、マスをタップして開く1対1シミュと結果が食い違いません。</p>
 
   <h4>対策さがしの「範囲」</h4>
-  <p>既定は<b>上位50</b>。<b>上位100</b>に広げると51〜100位まで総当たりします。
-  使用率は低いものの特定の相手に刺さるポケモン（伝説など）を拾いたいときに使ってください。
-  <b>環境一覧・パーティ診断・環境スコアは上位50のまま</b>なので、点数の基準は変わりません。</p>`}
+  <p>既定は<b>上位50</b>。<b>上位100</b>で51〜100位まで、<b>全ポケモン</b>で順位に関係なく全部（シャドウ込み・約1500匹）から探します。
+  あまり使われていないポケモンで刺しにいきたいときは全ポケモンをどうぞ。
+  <b>環境一覧・パーティ診断・環境スコアは上位50のまま</b>なので、点数の基準は変わりません。</p>
+  <p>全ポケモンのときは、わざを総当たりすると重すぎるので
+  <b>そのあいてにいちばん効くノーマル／SPを1本ずつ</b>計算式で選び、名前の下に出しています。
+  もっと詰めたいときは行をタップして1対1シミュでわざを変えてみてください。
+  表は<b>並び順の上位300件</b>まで出します（全部の件数は表の上に出ます）。</p>`}
 
   <p style="margin-top:8px">※ 以下は<b>ロケット団戦</b>の説明です（他のモードの説明も順次ここへまとめます）</p>
 
@@ -1454,6 +1468,7 @@ let cnTop = 50;
 const CN_RANGES = [
   { v: '50',  t: '上位50',  d: '環境上位50匹から探す（初期表示）' },
   { v: '100', t: '上位100', d: '51〜100位まで広げて探す。使用率は低いが刺さるポケモン（伝説など）を拾える' },
+  { v: 'all', t: '全ポケモン', d: '環境の順位に関係なく全ポケモン（シャドウ込み）から探す。わざはそのあいてにいちばん効く組み合わせを自動で選びます' },
 ];
 function ctlHtml(vn) {
   const V = VIEWS[vn];
@@ -1477,8 +1492,8 @@ function bindCtl(box, vn) {
   bind('mtsort', 'sort');
   // 範囲を変えると候補そのものが変わるので、表を作り直すのではなく計算からやり直す
   if (vn === 'counter') box.querySelectorAll('.mtrange button').forEach(b => b.onclick = () => {
-    if (+b.dataset.v === cnTop) return;
-    cnTop = +b.dataset.v;
+    if (b.dataset.v === String(cnTop)) return;
+    cnTop = b.dataset.v === 'all' ? 'all' : +b.dataset.v;
     runCounter();
   });
 }
@@ -1502,6 +1517,11 @@ function applyView(box, vn) {
     const lost = rows.filter(r => r.nWin < 3).sort((a, b) => b.sc - a.sc);
     rows = lost.concat(rows.filter(r => r.nWin === 3).sort((a, b) => b.sc - a.sc));
   }
+  // 「全ポケモン」は1500匹を超えるので、並び順の上位だけ描く(全部DOMに置くと重い)。
+  // 何件を出していて全部で何件あるかは下の件数表示に必ず出す
+  const MAXROW = 300;
+  const total = rows.length, cut = total > MAXROW;
+  if (cut) rows = rows.slice(0, MAXROW);
   const cols = V.cols || ['🛡0-0', '🛡1-1', '🛡2-2'];
   const head = `<tr><th style="text-align:left">${V.head}</th>` + cols.map(c => `<th>${c}</th>`).join('') +
     (V.tail ? `<th>${V.tail}</th>` : '') + '</tr>';
@@ -1515,9 +1535,10 @@ function applyView(box, vn) {
     V.pick(+td.parentNode.dataset.k, td.dataset.j === undefined ? null : +td.dataset.j));
   const cnt = box.querySelector('.mtcnt');
   if (cnt) cnt.remove();
-  if (V.filter !== 'all')
-    box.querySelector('.mtctl').insertAdjacentHTML('beforeend',
-      `<div class="mtcnt">${rows.length}件を表示中（全${V.results.length}匹中）</div>`);
+  if (V.filter !== 'all' || cut)
+    box.querySelector('.mtctl').insertAdjacentHTML('beforeend', '<div class="mtcnt">' +
+      (cut ? `${total}件のうち<b>上位${MAXROW}件</b>を表示中（全${V.results.length}匹中）。絞り込みや並びで見たいところを出してください`
+           : `${rows.length}件を表示中（全${V.results.length}匹中）`) + '</div>');
 }
 
 // 両者のシールド枚数をまとめて変更(一覧のマスをタップしたときに同じ条件へ揃える)
@@ -1555,26 +1576,71 @@ function applyMeta(m, i) {
   document.querySelector('.duel').scrollIntoView({ behavior: 'smooth' });
 }
 
-// ---- カウンター検索(逆引き): 選んだ「あいて」に勝てるポケモンを環境上位から探す ----
+// 「全ポケモン」の候補を、環境リストと同じ形({k,n,s,f,c1})で作る。
+// わざは総当たりすると重すぎる(1500匹×構成40通り)ので、
+// そのあいてに対する実ダメージから「1ターンあたりが最大のノーマル」「ゲージ効率が最大のSP」を計算式で選ぶ。
+// 選んだわざはそのまま行に持たせるので、マスをタップして開く1対1シミュとも食い違わない
+function cnAllList(foeBase) {
+  const foeSt = { ...PvpEngine.buildStats(D, foeBase), buffs: [0, 0] };
+  const megaOk = !!(cup && cup.slug.startsWith('mega'));   // メガはメガカップ以外では使えない
+  const out = [];
+  for (const key of KEYS) {
+    if (isMega(key) && !megaOk) continue;
+    const p = D.pokemon[key];
+    const r = rank1(key, cap);
+    const { fasts, chargeds } = movePool(key);
+    if (!fasts.length) continue;
+    for (const sh of (p.shadow ? [false, true] : [false])) {
+      const me = { ...PvpEngine.buildStats(D, { key, ivs: r.ivs, level: r.level, shadow: sh, cap }), buffs: [0, 0] };
+      let f = null, fv = -1, c = null, cv = -1;
+      for (const id of fasts) {
+        const mv = D.moves[id], v = PvpEngine.damage(D, mv, me, foeSt) / (mv.tn || 1);
+        if (v > fv) { fv = v; f = id; }
+      }
+      for (const id of chargeds) {
+        const mv = D.moves[id], v = PvpEngine.damage(D, mv, me, foeSt) / mv.e;
+        if (v > cv) { cv = v; c = id; }
+      }
+      out.push({ k: key, n: (sh ? 'シャドウ' : '') + p.n, s: sh ? 1 : 0, f, c1: c || undefined });
+    }
+  }
+  return out;
+}
+
+// ---- 対策さがし(逆引き): 選んだ「あいて」に勝てるポケモンを探す ----
 function runCounter() {
   const box = document.getElementById('counter');
   // 基準の上位50に、「上位100」を選んでいるときだけ51〜100位(META_EXT / cup.ext)を足す。
   // 環境一覧・パーティ診断・環境スコアは上位50のままなので、そちらの数値は影響を受けない
   const cnBase = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
   const cnExt = cup ? (cup.ext || []) : ((window.META_EXT || {})[String(cap)] || []);
-  const list = cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
   if (!S[1].key) {
-    box.innerHTML = '<div class="mtnote">右の<b>あいて</b>を選ぶと、環境上位' + (list.length || 50) + '匹から勝てる候補を探します</div>';
+    box.innerHTML = '<div class="mtnote">右の<b>あいて</b>を選ぶと、勝てる候補を探します</div>';
     return;
   }
   const token = ++multiToken;
   const CV = VIEWS.counter;
   CV.results = [];
-  CV.pick = (k, j) => { if (j != null) setBothShields(j); applyMeta(list[k], 0); };
   // 倒したい相手(あいて)の設定。わざは対面ごとに相手側が最善を選ぶ前提で評価する
   const foeBase = S[1].ivMode === 'manual' && S[1].mIvs
     ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap, ...carryOf(1) }
     : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv));
+  // 「全ポケモン」は環境リストの代わりに、全ポケモン(シャドウ込み)から同じ形の候補を作る
+  const list = cnTop === 'all' ? cnAllList(foeBase) : cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
+  CV.pick = (k, j) => {
+    // マスをタップしたら、そのマスで使った「あいてのいちばんキツいわざ」も引き継ぐ。
+    // これが無いと1対1は「わざを選ぶと結果が出ます」で止まり、表の勝敗を確かめられない
+    if (j != null) {
+      setBothShields(j);
+      const row = CV.results.find(r => r.idx === k);
+      const mv = row && row.cells[j] && row.cells[j].mv;
+      if (mv) {
+        S[1].fast = mv.fast || null; S[1].c1 = mv.c1 || null; S[1].c2 = mv.c2 || null;
+        resetPin(1); resetSpPlan(1);
+      }
+    }
+    applyMeta(list[k], 0);
+  };
   const foeTiming = S[1].timing === 'plan' ? 'optimal' : S[1].timing;
   // SPアタック2を選んでいれば、あいても2本を使い分ける前提で評価する
   const foePols = policies(S[1].key, polOpts(1));
@@ -1582,10 +1648,13 @@ function runCounter() {
   const pool1 = movePool(S[1].key);
   fillMoves(1, { ...foeBase, fast: S[1].fast || S[1].pin.fast || pool1.fasts[0], throw: S[1].c1 || S[1].pin.c1 || pool1.chargeds[0] });
   const foeName = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
-  box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}・マスをタップ→1対1シミュ</small></h3>
+  // 候補が多い「全ポケモン」では、計算しながら1行ずつ描くと重いので表は最後にまとめて作る
+  const all = cnTop === 'all';
+  const sub = all ? `全ポケモン${list.length}匹（シャドウ込み）` : `環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}`;
+  box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">${sub}・マスをタップ→1対1シミュ</small></h3>
     ${ctlHtml('counter')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">勝てる候補</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
-    ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
+    ${all ? '' : list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
     </tbody></table><div class="mtprog">計算中 0/${list.length}</div>`;
   const rowsEl = [...box.querySelectorAll('tr[data-k]')];
   rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k], 0));
@@ -1606,18 +1675,25 @@ function runCounter() {
         for (const pol of foePols) {
           const res = PvpEngine.simulate(D, { ...cdCfg, shields: sh }, foeCfg(pol, sh), SIMOPT);
           const sc = scoreOf(res, 1);
-          if (!worst || sc > worst.sc) worst = { sc, res };
+          if (!worst || sc > worst.sc) worst = { sc, res, pol };
         }
-        const r = worst.res, w = r.winner;
-        return { w, sc: scoreOf(r, 0), pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+        const r = worst.res, w = r.winner, p = worst.pol;
+        return { w, sc: scoreOf(r, 0), pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100),
+          // タップしたときに1対1へ渡す「あいての構成」
+          mv: { fast: p.fast, c1: p.throw || (p.charged && p.charged[0]), c2: (p.charged && p.charged[1]) || null } };
       });
-      const tds = rowsEl[idx].querySelectorAll('td');
+      const tds = rowsEl[idx] ? rowsEl[idx].querySelectorAll('td') : null;
       cells.forEach((c, j) => {
         if (c.w === 0) beats[j]++;
+        if (!tds) return;
         tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
         tds[j + 1].innerHTML = cellHtml(c);
       });
-      CV.results.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
+      // 全ポケモンのときは並び順の番号に意味が無いので付けず、代わりに使ったわざを添える
+      CV.results.push({ idx, m, cells,
+        name: all
+          ? `${m.n}<small class="cnmv">${D.moves[m.f] ? D.moves[m.f].n : ''}${m.c1 && D.moves[m.c1] ? ' / ' + D.moves[m.c1].n : ''}</small>`
+          : `${idx + 1}. ${m.n}`,
         sc: (cells[0].sc + cells[1].sc + cells[2].sc) / 3,
         nWin: cells.filter(c => c.w === 0).length,
         nLose: cells.filter(c => c.w === 1).length });
@@ -3993,7 +4069,7 @@ function updateUrl() {
   });
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel' && !PAGE_ROCKET) qp.md = mode;
-  if (mode === 'counter' && cnTop !== 50) qp.cn = cnTop;   // カウンター検索で探す範囲(既定50)
+  if (mode === 'counter' && cnTop !== 50) qp.cn = cnTop;   // 対策さがしで探す範囲(既定50・100/all)
   if (metaBluff && ['multi', 'counter', 'party'].includes(mode)) qp.bf = 1;   // 環境リスト側のブラフ(既定はしない)
   if (SIMOPT.buffMode !== 'none') qp.pb = SIMOPT.buffMode;   // 確率わざの扱い
   if (mode === 'rocket') {   // ロケット団戦の設定
@@ -4257,7 +4333,8 @@ document.getElementById('copyUrl').onclick = async () => {
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
     resetSpPlan(i);   // 発ごとのSP設定も復元したタイミングに揃える(SPアタック2を選んだときの表示用)
   }});
-  if (q.get('cn') === '100') cnTop = 100;   // カウンター検索で探す範囲
+  if (q.get('cn') === '100') cnTop = 100;   // 対策さがしで探す範囲
+  else if (q.get('cn') === 'all') cnTop = 'all';
   if (q.get('bf') === '1') { metaBluff = true; syncBluffNote(); }   // 環境リスト側のブラフ
   if (q.get('cup')) selectCup(q.get('cup'));   // 特殊カップの復元
   ['shl', 'shr'].forEach((k, i) => {   // シャドウ指定の復元
