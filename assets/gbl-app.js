@@ -281,7 +281,7 @@ document.getElementById('app').innerHTML = `
   </div>
 </div>
 <div class="gopt" id="gbluff" style="display:none">
-  <span class="lbl" title="安いSPアタックをわざと撃ってシールドを使わせる駆け引き。ここでの設定は「環境リストから作るポケモン」（環境一覧のあいて・カウンター検索の候補・パーティ診断のあいて）に使います。じぶん・あいてのパネルで選べる側は、そちらのボタンが優先です">ブラフ</span>
+  <span class="lbl" title="安いSPアタックをわざと撃ってシールドを使わせる駆け引き。この画面では、じぶんとあいての両方に同じ前提を使います（1対1シミュでは左右のパネルで別々に指定できます）">ブラフ</span>
   <div class="goptmain">
     <div class="opts bluffmeta" id="bluffmeta">
       <button data-v="0" aria-pressed="true" title="ブラフをせず、いつも効率のよいSPアタックを撃つ前提（運に頼らない結果・既定）">しない</button><button data-v="1" aria-pressed="false" title="シールドが残っているあいだは軽いSPアタックを撃ってくる前提（引っ掛かると不利になる厳しめの見方）">する</button>
@@ -778,10 +778,15 @@ const HELP_HTML = `
 ${PAGE_ROCKET ? '' : `
   <h4>「ブラフ」の設定</h4>
   <p>ブラフ＝<b>軽いSPアタックをわざと撃ってシールドを使わせる駆け引き</b>。
-  この枠の設定は<b>環境リストから作るポケモン</b>（環境一覧のあいて・カウンター検索の候補・パーティ診断のあいて）に使います。
-  既定は<b>しない</b>（運に頼らない見方）。<b>する</b>にすると相手が駆け引きしてくる厳しめの見方になります。
+  環境一覧・カウンター検索・パーティ診断では、<b>じぶんとあいての両方に同じ前提</b>を使います。
+  既定は<b>しない</b>（運に頼らない見方）。<b>する</b>にするとお互いが駆け引きしてくる見方になります。
   マスターリーグのようにSPを2本持つポケモンが多いほど差が出ます。
-  じぶん・あいてのパネルがある側は、そのパネルのブラフのボタンが優先です。</p>
+  1対1シミュでは、左右のパネルで別々に指定できます。</p>
+
+  <h4>パーティ診断の「相手1匹に勝てるのは平均◯匹」</h4>
+  <p>環境上位の相手<b>1匹あたり</b>、パーティの何匹が勝てるかの平均です。
+  3匹なら<b>1.5</b>で「だいたい半分の相手に1〜2匹しか勝てない」という意味になります。
+  数字が大きいほど、どの相手にも複数の選択肢があるパーティです（0匹の相手が<b>穴</b>）。</p>
 
   <h4>パーティ診断の「わざ｜オート」</h4>
   <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
@@ -1250,8 +1255,8 @@ const anyProbMove = cfgs => cfgs.filter(Boolean).some(c => cfgProbMoves(c).some(
 let metaBluff = false;
 function syncBluffNote() {
   document.getElementById('gbluffnote').innerHTML = metaBluff
-    ? '環境の相手は<b>軽いSPで駆け引きしてくる前提</b>'
-    : '環境の相手は<b>ブラフしない前提</b>';
+    ? '<b>お互いに</b>軽いSPで<b>駆け引きする前提</b>'
+    : '<b>お互いにブラフしない前提</b>';
   document.querySelectorAll('#bluffmeta button').forEach(x =>
     x.setAttribute('aria-pressed', (x.dataset.v === '1') === metaBluff));
 }
@@ -1494,11 +1499,14 @@ function applyMeta(m, i) {
   S[i].key = m.k; S[i].shadow = !!m.s;
   S[i].maxLv = 51; syncSmax(i);
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
-  // 環境リストのわざ構成(SP2本)とブラフの前提をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する
+  // 環境リストのわざ構成(SP2本)とブラフの前提をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する。
+  // ブラフは一覧では両者に同じ前提を使っているので、左右そろえて渡す
   S[i].fast = m.f || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
-  S[i].bluff = metaBluff;
-  sideEl[i].querySelectorAll('.bluff button').forEach(x =>
-    x.setAttribute('aria-pressed', (x.dataset.v === '1') === metaBluff));
+  [0, 1].forEach(k => {
+    S[k].bluff = metaBluff;
+    sideEl[k].querySelectorAll('.bluff button').forEach(x =>
+      x.setAttribute('aria-pressed', (x.dataset.v === '1') === metaBluff));
+  });
   resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;
@@ -1839,8 +1847,8 @@ function runParty() {
         shields: ptShield, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       // 構成ごとの結果をすべて控える。どの構成を使うかは全員ぶん出そろってから決める
       grid[idx] = idxs.map((pi, j) => pols[j].map((pol, pk) => {
-        // じぶん側は1対1シミュと同じ設定(マスをタップするとこの構成がそのまま S[0] になる)
-        const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield, bluff: S[0].bluff };
+        // じぶん側もあいてと同じブラフの前提で計算する(マスをタップした1対1にも同じ値を渡す)
+        const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield, bluff: metaBluff };
         const r = PvpEngine.simulate(D, me, opCfg, SIMOPT);
         const sc = scoreOf(r, 0), w = r.winner;
         if (w === 0) win[j][pk]++;
@@ -1876,11 +1884,12 @@ function runParty() {
       prog.innerHTML = `<div class="holenote">${ptAuto
           ? '※わざは<b>環境にいちばん多く勝てる構成</b>をオートで選び、枠に表示しています（あいては環境の標準構成）'
           : '※わざは枠で<b>指定した構成</b>で計算しています（あいては環境の標準構成）'}</div>` +
+        // 穴のポケモン名は表(絞り込み「穴のみ」)で見られるので、ここでは数だけにする
         (holes.length
-          ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>` +
-            `<div class="holelist">${holes.map(r => r.m.n).join('、')}</div>`
+          ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>`
           : `<span class="holeok">✅ 穴なし</span>`) +
-        `<div class="holesub">平均 ${avg}匹（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
+        `<div class="holesub">相手1匹に勝てるのは平均 <b>${avg}</b>/${idxs.length}匹` +
+        `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
       bindCtl(body, 'party');
       applyView(body, 'party');
     }
@@ -3415,7 +3424,8 @@ function shotsCfg(i, m1, m2) {
 }
 // 一覧系で使う「自分側の1構成」を作る(SP2指定・発ごとの設定を1対1シミュと同じ扱いにする)
 function listSideCfg(i, base, pol, sh, timing) {
-  const c = { ...base, ...pol, timing, shields: sh, bluff: S[i].bluff };
+  // 一覧系のブラフは共通の「ブラフ」枠で両者まとめて決める(片側だけ違うと見かたが分かりにくい)
+  const c = { ...base, ...pol, timing, shields: sh, bluff: metaBluff };
   if (S[i].timing === 'plan' || S[i].c2) {
     const m1 = S[i].c1 || (pol.charged ? pol.charged[0] : pol.throw), m2 = S[i].c2 || m1;
     c.charged = [m1, S[i].c2].filter(Boolean);
@@ -3694,8 +3704,10 @@ function fillMoves(i, cfg) {
   ph(el.querySelector('.selFast'), 'fast', 'ノーマルアタック', fasts, otherF, cfg.fast);
   ph(el.querySelector('.selC1'), 'c1', 'SPアタック', chargeds, otherC, cfg.throw);
   ph(el.querySelector('.selC2'), 'c2', 'SPアタック2', chargeds, otherC, S[i].c2);
-  // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す
-  el.querySelector('.bluffwrap').style.display = S[i].c2 ? 'block' : 'none';
+  // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す。
+  // 一覧系(環境一覧・カウンター検索・パーティ診断)は共通の「ブラフ」枠で両者まとめて決めるので出さない
+  el.querySelector('.bluffwrap').style.display =
+    S[i].c2 && !['multi', 'counter', 'party'].includes(mode) ? 'block' : 'none';
   el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));
   // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示
   const showSp = S[i].timing !== 'never' && (S[i].timing === 'plan' || !!S[i].c2);
