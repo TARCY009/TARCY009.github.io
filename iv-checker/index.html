@@ -274,7 +274,7 @@ body.has-sticky{padding-top:52px}
 
 <footer>
   種族値・CPMデータ: ゲーム内公開データ準拠<br>
-  順位: 総合=ステータス積(SCP)基準、攻撃優先=攻撃個体値降順→SCP順。同値はCP降順。<br>最低個体値: 野生0 / 交換1・2・3・5(フレンドレベル) / シャドウレイド6 / レイド・ふか・リワード10<br>アメXL: PL40からの累計必要数(40〜42:各10 / 42〜44:各12 / 44〜46:各15 / 46〜48:各17 / 48〜50:各20、PL50まで合計296)
+  順位: 総合=ステータス積(SCP)基準、攻撃優先=攻撃個体値降順→SCP順。<b>同じSCPは同順位(タイ)</b>で、重なったぶんだけ次の順位を飛ばします(1位が2通りなら次は3位)。並び順は同順位内でCP降順。<br>最低個体値: 野生0 / 交換1・2・3・5(フレンドレベル) / シャドウレイド6 / レイド・ふか・リワード10<br>アメXL: PL40からの累計必要数(40〜42:各10 / 42〜44:各12 / 44〜46:各15 / 46〜48:各17 / 48〜50:各20、PL50まで合計296)
 </footer>
 </div>
 
@@ -315,7 +315,7 @@ function rankAll(p,capCP,maxLv,fl){
   return rows;
 }
 
-function scp(sp){ return Math.round(Math.pow(sp,2/3)/10); }
+function scp(sp){ return Math.floor(Math.pow(sp,2/3)/10); }  // 端数は切り捨て(他ツール・外部の表示と統一)
 
 // アメXL: 半レベル毎の必要数(40→42:10, 42→44:12, 44→46:15, 46→48:17, 48→50:20 / 合計296)
 function xlStep(lv){ // lvはこの強化で到達するレベル(40.5〜50)
@@ -348,6 +348,18 @@ function sortRows(rows){
   return rows;
 }
 
+// 同じSCP(攻撃優先なら同じ攻撃個体値かつ同じSCP)は同順位=タイにして、
+// 重なったぶんだけ次の順位を飛ばす(1位が2つなら次は3位)
+function assignRanks(rows){
+  let prevKey=null, prevRank=0;
+  rows.forEach((r,i)=>{
+    const key=(state.sort==='atk'? r.ia+':' : '')+scp(r.sp);
+    if(key===prevKey){ r.rank=prevRank; }
+    else { r.rank=i+1; prevKey=key; prevRank=r.rank; }
+  });
+  return rows;
+}
+
 function findRank(rows,iv){
   return rows.findIndex(r=>r.ia===iv[0]&&r.id===iv[1]&&r.ih===iv[2]);
 }
@@ -372,12 +384,12 @@ function render(){
   const leagues=['gl','ul','ml'];
   const detail={};
   leagues.forEach(lg=>{
-    const rows=sortRows(rankAll(state.p, CAPS[lg], state.cap, state.floor));
+    const rows=assignRanks(sortRows(rankAll(state.p, CAPS[lg], state.cap, state.floor)));
     const idx=belowFloor? -1 : findRank(rows, state.iv);
     detail[lg]={rows, idx};
     const el=document.getElementById('lgr-'+lg);
     if(idx>=0){
-      const r=idx+1;
+      const r=rows[idx].rank;
       el.textContent=r+'位';
       el.className='lgc-r '+medalCls(r);
     } else {
@@ -407,7 +419,7 @@ function render(){
     return;
   }
 
-  const me=rows[idx], rank=idx+1;
+  const me=rows[idx], rank=me.rank;
   const mcls=medalCls(rank);
   rkEl.textContent=rank;
   rkEl.parentElement.className='rank-num '+mcls;
@@ -422,7 +434,7 @@ function render(){
   rows.slice(0,10).forEach((r,i)=>{
     const cls=(i===idx)?' class="me"':'';
     const xl=xlFor(r.lv);
-    html+='<tr'+cls+'><td>'+(i+1)+'位</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td><td>'+(xl>0?xl:'—')+'</td></tr>';
+    html+='<tr'+cls+'><td>'+r.rank+'位</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td><td>'+(xl>0?xl:'—')+'</td></tr>';
   });
   if(idx>=10){
     html+='<tr><td colspan="6" style="text-align:center;color:var(--sub)">⋮</td></tr>';
