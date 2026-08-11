@@ -763,6 +763,12 @@ const HELP_HTML = `
     <div><i><i class="shadowmark"></i></i>シャドウ</div>
   </div>
 
+${PAGE_ROCKET ? '' : `
+  <h4>カウンター検索の「範囲」</h4>
+  <p>既定は<b>上位50</b>。<b>上位100</b>に広げると51〜100位まで総当たりします。
+  使用率は低いものの特定の相手に刺さるポケモン（伝説など）を拾いたいときに使ってください。
+  <b>環境一覧・パーティ診断・環境スコアは上位50のまま</b>なので、点数の基準は変わりません。</p>`}
+
   <p style="margin-top:8px">※ 以下は<b>ロケット団戦</b>の説明です（他のモードの説明も順次ここへまとめます）</p>
 
   <h4>ロケット団戦の勝ち方</h4>
@@ -1357,6 +1363,13 @@ const VIEWS = {
 const envScore = p => 99.9 * (1 - Math.pow(1 - Math.max(0, Math.min(1, p)), 2));
 const cellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
   `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
+// カウンター検索だけの「探す範囲」。環境スコアの基準を動かさないよう、
+// 環境一覧・パーティ診断は上位50固定のままにして、逆引きで候補を広げたいときだけ100位まで見る
+let cnTop = 50;
+const CN_RANGES = [
+  { v: '50',  t: '上位50',  d: '環境上位50匹から探す（初期表示）' },
+  { v: '100', t: '上位100', d: '51〜100位まで広げて探す。使用率は低いが刺さるポケモン（伝説など）を拾える' },
+];
 function ctlHtml(vn) {
   const V = VIEWS[vn];
   const grp = (cls, items, cur) => `<div class="opts ${cls}">` + items.map(o =>
@@ -1364,6 +1377,7 @@ function ctlHtml(vn) {
   return `<div class="mtctl" data-v="${vn}">
     <div class="mtctlrow"><span class="lbl">表示</span>${grp('mtfilter', V.filters, V.filter)}</div>
     <div class="mtctlrow"><span class="lbl">並び</span>${grp('mtsort', V.sorts, V.sort)}</div>
+    ${vn === 'counter' ? `<div class="mtctlrow"><span class="lbl">範囲</span>${grp('mtrange', CN_RANGES, String(cnTop))}</div>` : ''}
   </div>`;
 }
 function bindCtl(box, vn) {
@@ -1376,6 +1390,12 @@ function bindCtl(box, vn) {
   });
   bind('mtfilter', 'filter');
   bind('mtsort', 'sort');
+  // 範囲を変えると候補そのものが変わるので、表を作り直すのではなく計算からやり直す
+  if (vn === 'counter') box.querySelectorAll('.mtrange button').forEach(b => b.onclick = () => {
+    if (+b.dataset.v === cnTop) return;
+    cnTop = +b.dataset.v;
+    runCounter();
+  });
 }
 // 保存済みの結果から、いまの絞り込み・並び替えで表を作り直す
 function applyView(box, vn) {
@@ -1447,7 +1467,11 @@ function applyMeta(m, i) {
 // ---- カウンター検索(逆引き): 選んだ「あいて」に勝てるポケモンを環境上位から探す ----
 function runCounter() {
   const box = document.getElementById('counter');
-  const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
+  // 基準の上位50に、「上位100」を選んでいるときだけ51〜100位(META_EXT / cup.ext)を足す。
+  // 環境一覧・パーティ診断・環境スコアは上位50のままなので、そちらの数値は影響を受けない
+  const cnBase = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
+  const cnExt = cup ? (cup.ext || []) : ((window.META_EXT || {})[String(cap)] || []);
+  const list = cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
   if (!S[1].key) {
     box.innerHTML = '<div class="mtnote">右の<b>あいて</b>を選ぶと、環境上位' + (list.length || 50) + '匹から勝てる候補を探します</div>';
     return;
@@ -3801,6 +3825,7 @@ function updateUrl() {
   });
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel' && !PAGE_ROCKET) qp.md = mode;
+  if (mode === 'counter' && cnTop !== 50) qp.cn = cnTop;   // カウンター検索で探す範囲(既定50)
   if (SIMOPT.buffMode !== 'none') qp.pb = SIMOPT.buffMode;   // 確率わざの扱い
   if (mode === 'rocket') {   // ロケット団戦の設定
     qp.rk = RK.kind; qp.rs = RK.stall; qp.re = RK.enter;
@@ -4063,6 +4088,7 @@ document.getElementById('copyUrl').onclick = async () => {
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
     resetSpPlan(i);   // 発ごとのSP設定も復元したタイミングに揃える(SPアタック2を選んだときの表示用)
   }});
+  if (q.get('cn') === '100') cnTop = 100;   // カウンター検索で探す範囲
   if (q.get('cup')) selectCup(q.get('cup'));   // 特殊カップの復元
   ['shl', 'shr'].forEach((k, i) => {   // シャドウ指定の復元
     if (q.get(k) && S[i].key) {

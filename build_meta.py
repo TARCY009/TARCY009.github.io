@@ -11,7 +11,8 @@ PvPokeのランキング(オープンソース・シーズンごとに更新)か
 import json
 import urllib.request
 
-TOP_N = 50
+TOP_N = 50    # 環境一覧・パーティ診断・環境スコアが使う基準の件数(変えると環境スコアの基準が動くので固定)
+EXT_N = 100   # カウンター検索の「上位100」用。51〜100位は別枠(META_EXT / cup.ext)に出す
 LEAGUES = {          # 出力キー: (PvPokeのCP, 表示名)
     "1500": (1500, "スーパー"),
     "2500": (2500, "ハイパー"),
@@ -69,19 +70,21 @@ def convert(entry):
 
 
 meta = {}
+meta_ext = {}
 for lg, (cp, label) in LEAGUES.items():
     rows = fetch(cp)
     picked, skipped = [], []
     for e in rows:
-        if len(picked) >= TOP_N:
+        if len(picked) >= EXT_N:
             break
         c = convert(e)
         if c is None:
             skipped.append(e["speciesId"])
             continue
         picked.append(c)
-    meta[lg] = picked
-    print(f"{label}(CP{cp}): {len(picked)}匹採用 / 変換不可 {len(skipped)}件 {skipped[:5]}")
+    meta[lg] = picked[:TOP_N]
+    meta_ext[lg] = picked[TOP_N:]
+    print(f"{label}(CP{cp}): {len(meta[lg])}匹採用(+拡張{len(meta_ext[lg])}匹) / 変換不可 {len(skipped)}件 {skipped[:5]}")
 
 def fetch_cup(cup, cp):
     with urllib.request.urlopen(URL_CUP.format(cup=cup, cp=cp), timeout=30) as r:
@@ -97,16 +100,19 @@ for slug, cp, label in CUPS:
         continue
     picked = []
     for e in rows:
-        if len(picked) >= TOP_N:
+        if len(picked) >= EXT_N:
             break
         c = convert(e)
         if c is not None:
             picked.append(c)
-    cups_out.append({"slug": f"{slug}-{cp}", "label": label, "cp": cp, "list": picked})
-    print(f"{label}(CP{cp}): {len(picked)}匹採用")
+    cups_out.append({"slug": f"{slug}-{cp}", "label": label, "cp": cp,
+                     "list": picked[:TOP_N], "ext": picked[TOP_N:]})
+    print(f"{label}(CP{cp}): {len(picked[:TOP_N])}匹採用(+拡張{len(picked[TOP_N:])}匹)")
 
 with open("assets/meta_lists.js", "w", encoding="utf-8") as f:
     f.write("// 環境上位リスト。build_meta.py で再生成する\n")
+    f.write("// META_LISTS=上位50(環境一覧・パーティ診断・環境スコアの基準) / META_EXT=51〜100位(カウンター検索の「上位100」専用)\n")
     f.write("window.META_LISTS = " + json.dumps(meta, ensure_ascii=False, separators=(",", ":")) + ";\n")
+    f.write("window.META_EXT = " + json.dumps(meta_ext, ensure_ascii=False, separators=(",", ":")) + ";\n")
     f.write("window.CUP_LISTS = " + json.dumps(cups_out, ensure_ascii=False, separators=(",", ":")) + ";\n")
 print("assets/meta_lists.js を出力した")
