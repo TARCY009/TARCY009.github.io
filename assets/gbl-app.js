@@ -280,6 +280,15 @@ document.getElementById('app').innerHTML = `
     <div class="goptnote" id="goptnote"></div>
   </div>
 </div>
+<div class="gopt" id="gbluff" style="display:none">
+  <span class="lbl" title="安いSPアタックをわざと撃ってシールドを使わせる駆け引き。ここでの設定は「環境リストから作るポケモン」（環境一覧のあいて・カウンター検索の候補・パーティ診断のあいて）に使います。じぶん・あいてのパネルで選べる側は、そちらのボタンが優先です">ブラフ</span>
+  <div class="goptmain">
+    <div class="opts bluffmeta" id="bluffmeta">
+      <button data-v="0" aria-pressed="true" title="ブラフをせず、いつも効率のよいSPアタックを撃つ前提（運に頼らない結果・既定）">しない</button><button data-v="1" aria-pressed="false" title="シールドが残っているあいだは軽いSPアタックを撃ってくる前提（引っ掛かると不利になる厳しめの見方）">する</button>
+    </div>
+    <div class="goptnote" id="gbluffnote"></div>
+  </div>
+</div>
 <div class="result" id="result"></div>
 <div class="tl" id="tl"></div>
 
@@ -767,6 +776,13 @@ const HELP_HTML = `
   </div>
 
 ${PAGE_ROCKET ? '' : `
+  <h4>「ブラフ」の設定</h4>
+  <p>ブラフ＝<b>軽いSPアタックをわざと撃ってシールドを使わせる駆け引き</b>。
+  この枠の設定は<b>環境リストから作るポケモン</b>（環境一覧のあいて・カウンター検索の候補・パーティ診断のあいて）に使います。
+  既定は<b>しない</b>（運に頼らない見方）。<b>する</b>にすると相手が駆け引きしてくる厳しめの見方になります。
+  マスターリーグのようにSPを2本持つポケモンが多いほど差が出ます。
+  じぶん・あいてのパネルがある側は、そのパネルのブラフのボタンが優先です。</p>
+
   <h4>パーティ診断の「わざ｜オート」</h4>
   <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
   （対面ごとに選び直しません）。押して<b>手動</b>にすると、枠のわざ欄を自分で選べます。
@@ -1048,6 +1064,11 @@ function applyMode() {
   } else if (goptEl.nextElementSibling !== anchor) {
     anchor.parentElement.insertBefore(goptEl, anchor);
   }
+  // ブラフの設定は環境リストを使う3モードだけ。置き場所は能力変化わざと同じ(結果・表の直前)
+  const bfEl = document.getElementById('gbluff');
+  const bfOn = ['multi', 'counter', 'party'].includes(mode);
+  bfEl.style.display = bfOn ? '' : 'none';
+  if (bfOn && bfEl.nextElementSibling !== goptEl) goptEl.parentElement.insertBefore(bfEl, goptEl);
   renderRkDetail();
   renderMyPk();   // ★登録リストの中身はモードで変わる(ロケット団戦のあいてはメガ・ゲンシ不可)
   if ((mode !== 'duel' && !rk) || rkTeam || rkRankView) {
@@ -1224,6 +1245,21 @@ function setProbTab(on) {
 // 計算に使う設定から、確率わざが混じっているかを見る
 const cfgProbMoves = c => [c.fast, c.throw, ...(c.charged || [])].filter(Boolean);
 const anyProbMove = cfgs => cfgs.filter(Boolean).some(c => cfgProbMoves(c).some(isProbMove));
+// ---- 環境リストから作るポケモンのブラフ(環境一覧のあいて・カウンター検索の候補・パーティ診断のあいて) ----
+// エンジンは cfg.bluff 未指定だとブラフするので、必ずこの値を渡すこと(渡し忘れると1対1と食い違う)
+let metaBluff = false;
+function syncBluffNote() {
+  document.getElementById('gbluffnote').innerHTML = metaBluff
+    ? '環境の相手は<b>軽いSPで駆け引きしてくる前提</b>'
+    : '環境の相手は<b>ブラフしない前提</b>';
+  document.querySelectorAll('#bluffmeta button').forEach(x =>
+    x.setAttribute('aria-pressed', (x.dataset.v === '1') === metaBluff));
+}
+syncBluffNote();
+document.querySelectorAll('#bluffmeta button').forEach(b => b.onclick = () => {
+  metaBluff = b.dataset.v === '1';
+  syncBluffNote(); updateUrl(); run();
+});
 syncProbNote();
 document.querySelectorAll('#prob button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#prob button').forEach(x => x.setAttribute('aria-pressed', x === b));
@@ -1276,7 +1312,7 @@ function runMulti() {
       const m = list[idx];
       const r1 = rank1(m.k, cap);
       const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
-        fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
+        bluff: metaBluff, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       const cells = [0, 1, 2].map(sh => {
         let best = null;
         for (const pol of myPols) {   // 自分のわざはこの対面・このシールド数での最善を採用
@@ -1458,8 +1494,11 @@ function applyMeta(m, i) {
   S[i].key = m.k; S[i].shadow = !!m.s;
   S[i].maxLv = 51; syncSmax(i);
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
-  // 環境リストのわざ構成(SP2本)をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する
+  // 環境リストのわざ構成(SP2本)とブラフの前提をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する
   S[i].fast = m.f || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  S[i].bluff = metaBluff;
+  sideEl[i].querySelectorAll('.bluff button').forEach(x =>
+    x.setAttribute('aria-pressed', (x.dataset.v === '1') === metaBluff));
   resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;
@@ -1517,7 +1556,7 @@ function runCounter() {
       const m = list[idx];
       const r1 = rank1(m.k, cap);
       const cdCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
-        fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
+        bluff: metaBluff, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       const cells = [0, 1, 2].map(sh => {
         let worst = null;   // あいてが最も得をするわざ構成を選ぶ＝候補にとって最も厳しい結果
         for (const pol of foePols) {
@@ -1794,13 +1833,14 @@ function runParty() {
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
       const r1 = rank1(m.k, cap);
-      // bluff:false は1対1シミュの既定と同じ(エンジンは未指定だとブラフする)。
-      // ここを揃えないと、マスの勝敗とタップして開く1対1の結果が食い違う
-      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap, bluff: false,
+      // bluff は必ず渡す(エンジンは未指定だとブラフする)。ここを揃えないと、
+      // マスの勝敗とタップして開く1対1シミュの結果が食い違う
+      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap, bluff: metaBluff,
         shields: ptShield, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       // 構成ごとの結果をすべて控える。どの構成を使うかは全員ぶん出そろってから決める
       grid[idx] = idxs.map((pi, j) => pols[j].map((pol, pk) => {
-        const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield, bluff: false };
+        // じぶん側は1対1シミュと同じ設定(マスをタップするとこの構成がそのまま S[0] になる)
+        const me = { ...bases[j], ...pol, timing: 'optimal', shields: ptShield, bluff: S[0].bluff };
         const r = PvpEngine.simulate(D, me, opCfg, SIMOPT);
         const sc = scoreOf(r, 0), w = r.winner;
         if (w === 0) win[j][pk]++;
@@ -3904,6 +3944,7 @@ function updateUrl() {
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel' && !PAGE_ROCKET) qp.md = mode;
   if (mode === 'counter' && cnTop !== 50) qp.cn = cnTop;   // カウンター検索で探す範囲(既定50)
+  if (metaBluff && ['multi', 'counter', 'party'].includes(mode)) qp.bf = 1;   // 環境リスト側のブラフ(既定はしない)
   if (SIMOPT.buffMode !== 'none') qp.pb = SIMOPT.buffMode;   // 確率わざの扱い
   if (mode === 'rocket') {   // ロケット団戦の設定
     qp.rk = RK.kind; qp.rs = RK.stall; qp.re = RK.enter;
@@ -4167,6 +4208,7 @@ document.getElementById('copyUrl').onclick = async () => {
     resetSpPlan(i);   // 発ごとのSP設定も復元したタイミングに揃える(SPアタック2を選んだときの表示用)
   }});
   if (q.get('cn') === '100') cnTop = 100;   // カウンター検索で探す範囲
+  if (q.get('bf') === '1') { metaBluff = true; syncBluffNote(); }   // 環境リスト側のブラフ
   if (q.get('cup')) selectCup(q.get('cup'));   // 特殊カップの復元
   ['shl', 'shr'].forEach((k, i) => {   // シャドウ指定の復元
     if (q.get(k) && S[i].key) {
