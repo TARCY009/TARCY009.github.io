@@ -321,6 +321,34 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .holelist{color:var(--ink);font-size:.74rem;line-height:1.6;margin-top:2px}
 .holesub{font-size:.7rem;margin-top:4px}
 .holenote{font-size:.68rem;color:var(--sub);line-height:1.5;margin-bottom:5px}
+/* パーティ診断のまとめの図: 穴の内訳ドーナツ + 苦手タイプのバー(どちらもタップで表を絞り込む) */
+.ptchart{display:flex;align-items:center;gap:14px;margin:2px 0 8px}
+.ptdwrap{position:relative;width:104px;height:104px;flex-shrink:0}
+.ptdonut{width:100%;height:100%;background:var(--g);border-radius:50%;
+  -webkit-mask:radial-gradient(farthest-side,#0000 58%,#000 60%);mask:radial-gradient(farthest-side,#0000 58%,#000 60%)}
+.ptdmid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  line-height:1.1;pointer-events:none}
+.ptdmid b{font-size:1.55rem;font-weight:800}
+.ptdmid b.bad{color:var(--lose)}
+.ptdmid b.ok{color:var(--win);font-size:1.2rem}
+.ptdmid small{font-size:.6rem;color:var(--sub);font-weight:700;margin-top:1px}
+.ptlegend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;flex:1;min-width:0;max-width:300px}
+.ptlegend button{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:.72rem;color:var(--ink);
+  background:var(--bg2);border:1px solid var(--line);border-radius:8px;cursor:pointer;text-align:left}
+.ptlegend button i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.ptlegend button b{margin-left:auto;font-weight:800}
+.ptlegend button[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
+.pttypes{margin:0 0 7px;max-width:420px}
+.ptttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:3px}
+.pttrow{display:flex;align-items:center;gap:7px;width:100%;padding:2px 6px;margin-bottom:2px;
+  background:none;border:1px solid transparent;border-radius:8px;cursor:pointer}
+.pttrow[aria-pressed="true"]{border-color:var(--cy);background:var(--bg2)}
+.pttnm{display:flex;align-items:center;gap:3px;flex-shrink:0;width:108px;font-size:.72rem;color:var(--ink)}
+.pttnm small{font-size:.6rem;color:var(--sub);margin-left:auto}
+.pttbar{flex:1;min-width:0;height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.pttbar i{display:block;height:100%;border-radius:99px}
+.pttrow b{font-size:.72rem;font-weight:800;width:34px;text-align:right}
+@media (max-width:420px){.ptdwrap{width:88px;height:88px}.ptchart{gap:10px}.pttnm{width:96px}}
 /* パーティ診断の見出し行(右上に「わざ｜オート」を置く) */
 .phead{display:flex;align-items:flex-start;gap:8px}
 .phead h3{flex:1;min-width:0}

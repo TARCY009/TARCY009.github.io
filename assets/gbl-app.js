@@ -1545,6 +1545,9 @@ function applyView(box, vn) {
   else if (V.filter === 'best') rows = rows.filter(r => r.nWin === 3);
   else if (V.filter === 'hole') rows = rows.filter(r => r.nWin === 0);
   else if (V.filter === 'thin') rows = rows.filter(r => r.nWin <= 1);
+  // 図から選んだ絞り込み(nX=勝てる数がちょうどX / ty:○○=そのタイプの相手)
+  else if (/^n\d$/.test(V.filter)) rows = rows.filter(r => r.nWin === +V.filter.slice(1));
+  else if (V.filter.startsWith('ty:')) rows = rows.filter(r => (r.ty || []).includes(V.filter.slice(3)));
   if (V.sort === 'bad') rows.sort((a, b) => a.sc - b.sc);
   else if (V.sort === 'good') rows.sort((a, b) => b.sc - a.sc);
   else if (V.sort === 'risk') rows.sort((a, b) => a.nWin - b.nWin || a.sc - b.sc);   // 勝てる数が少ない順
@@ -1569,6 +1572,9 @@ function applyView(box, vn) {
   // セルをタップしたときは、その列(シールド枚数/パーティのメンバー)も一緒に渡す
   tb.querySelectorAll('tr[data-k] td').forEach(td => td.onclick = () =>
     V.pick(+td.parentNode.dataset.k, td.dataset.j === undefined ? null : +td.dataset.j));
+  // いまの絞り込みを、表示タブと図(ドーナツ・苦手タイプ)の両方に反映する
+  box.querySelectorAll('.mtfilter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === V.filter));
+  box.querySelectorAll('[data-flt]').forEach(el => el.setAttribute('aria-pressed', el.dataset.flt === V.filter));
   const cnt = box.querySelector('.mtcnt');
   if (cnt) cnt.remove();
   if (V.filter !== 'all' || cut)
@@ -1745,6 +1751,56 @@ function runCounter() {
     }
   };
   step();
+}
+
+// ---- パーティ診断の図(穴の内訳ドーナツ・苦手タイプのバー) ----
+// 勝てる数の色は表の「勝てる数」列と同じ基準にそろえる(全員勝ち=緑 / 0匹=赤)
+const ptSegColor = (k, n) => k === 0 ? 'var(--lose)' : k === n ? 'var(--win)' : k === 1 ? 'var(--gold)' : '#8ce6b0';
+const ptWinColor = p => p >= 0.5 ? 'var(--win)' : p >= 0.25 ? 'var(--gold)' : 'var(--lose)';
+// 相手50匹を「勝てる数」で分けた円グラフ。0匹＝穴を中央に大きく出す
+function ptDonutHtml(res, n) {
+  const cnt = Array.from({ length: n + 1 }, (_, k) => res.filter(r => r.nWin === k).length);
+  let acc = 0;
+  const segs = [];
+  for (let k = n; k >= 0; k--) {   // 全員勝ちから時計回りに並べる(良い→悪い)
+    if (!cnt[k]) continue;
+    const from = acc / res.length * 100;
+    acc += cnt[k];
+    segs.push(`${ptSegColor(k, n)} ${from.toFixed(2)}% ${(acc / res.length * 100).toFixed(2)}%`);
+  }
+  const holes = cnt[0];
+  const legend = [];
+  for (let k = n; k >= 0; k--) {
+    if (!cnt[k]) continue;
+    const lbl = k === 0 ? '穴' : `${k}匹`;
+    legend.push(`<button data-flt="${k === 0 ? 'hole' : 'n' + k}" aria-pressed="false"` +
+      ` title="${k === 0 ? '全員が負ける相手' : `${k}匹が勝てる相手`} ${cnt[k]}匹（タップで表を絞り込み）">` +
+      `<i style="background:${ptSegColor(k, n)}"></i>${lbl}<b>${cnt[k]}</b></button>`);
+  }
+  // 中央の文字はドーナツの穴あけ(mask)に巻き込まれないよう、別の要素で重ねる
+  return `<div class="ptdwrap">
+      <div class="ptdonut" style="--g:conic-gradient(${segs.join(',')})"></div>
+      <span class="ptdmid">${holes ? `<b class="bad">${holes}</b><small>穴</small>` : '<b class="ok">✅</b><small>穴なし</small>'}</span>
+    </div><div class="ptlegend">${legend.join('')}</div>`;
+}
+// 相手のタイプごとの勝率。苦手な順に最大5つ出す(何を入れ替えるかの手がかり)
+function ptTypeHtml(res, n) {
+  const agg = {};
+  res.forEach(r => r.ty.forEach(t => {
+    const a = agg[t] = agg[t] || { w: 0, tot: 0, cnt: 0 };
+    a.w += r.nWin; a.tot += n; a.cnt++;
+  }));
+  // 1匹しかいないタイプは偶然に左右されるので出さない
+  const rows = Object.entries(agg).filter(([, a]) => a.cnt >= 2)
+    .map(([t, a]) => ({ t, p: a.w / a.tot, cnt: a.cnt }))
+    .sort((a, b) => a.p - b.p).slice(0, 5);
+  if (rows.length < 3) return '';
+  return `<div class="pttypes"><div class="ptttl">苦手なタイプ</div>` + rows.map(r =>
+    `<button class="pttrow" data-flt="ty:${r.t}" aria-pressed="false"` +
+    ` title="${r.t}タイプの相手${r.cnt}匹への勝率（タップで表を絞り込み）">` +
+    `<span class="pttnm">${typeIconHTML(r.t, 16)}${r.t}<small>${r.cnt}匹</small></span>` +
+    `<span class="pttbar"><i style="width:${Math.max(2, Math.round(r.p * 100))}%;background:${ptWinColor(r.p)}"></i></span>` +
+    `<b style="color:${ptWinColor(r.p)}">${Math.round(r.p * 100)}%</b></button>`).join('') + '</div>';
 }
 
 // ---- パーティ3匹の穴チェック ----
@@ -1960,6 +2016,8 @@ function runParty() {
   }
   const token = ++multiToken;
   const PV = VIEWS.party;
+  // 図から選んだ絞り込みは、パーティが変わると意味が変わるので持ち越さない
+  if (PV.filter.startsWith('ty:') || (/^n\d$/.test(PV.filter) && +PV.filter.slice(1) > idxs.length)) PV.filter = 'all';
   PV.results = [];
   PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${ptName(PT[i])}`);
   PV.pick = (k, j) => {   // セルをタップ→そのメンバーと相手を同じシールド枚数で1対1シミュへ
@@ -1977,9 +2035,10 @@ function runParty() {
   const tot = pols.map(ps => ps.map(() => 0));    // 構成ごとの合計スコア(同数のときの決め手)
   const grid = [];                                 // grid[相手][メンバー][構成] = マスの中身
   const names = idxs.map(i => ptName(PT[i]));
-  body.innerHTML = `${ctlHtml('party')}
-    <table class="mttbl ptbl"><tbody></tbody></table>
-    <div class="mtprog">計算中 0/${list.length}</div>`;
+  // 診断のまとめ(図)は表の上に置く。計算中は進み具合をここに出す
+  body.innerHTML = `<div class="mtprog">計算中 0/${list.length}</div>
+    ${ctlHtml('party')}
+    <table class="mttbl ptbl"><tbody></tbody></table>`;
   const prog = body.querySelector('.mtprog');
   updateUrl();
   let idx = 0;
@@ -2022,24 +2081,29 @@ function runParty() {
       PV.results = grid.map((row, k) => {
         const cells = row.map((byPol, j) => byPol[use[j]]);
         return { idx: k, m: list[k], name: `${k + 1}. ${list[k].n}`, cells,
+          // 苦手タイプの集計・絞り込みに使う(相手のタイプ名)
+          ty: (D.pokemon[list[k].k].ty || []).map(t => D.typeJa[t]),
           sc: cells.reduce((a, c) => a + c.sc, 0) / cells.length,
           nWin: cells.filter(c => c.w === 0).length,
           nLose: cells.filter(c => c.w === 1).length };
       });
-      const holes = PV.results.filter(r => r.nWin === 0);
       // 平均勝率は「相手1匹に何匹が勝てるか」を割合にして出す(1.50/3匹 = 50％)
       const avg = Math.round(PV.results.reduce((a, r) => a + r.nWin, 0)
         / (PV.results.length * idxs.length) * 100);
-      // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
-      prog.innerHTML = `<div class="holenote">${ptAuto
-          ? '※わざは<b>環境にいちばん多く勝てる構成</b>をオートで選び、枠に表示しています（あいては環境の標準構成）'
-          : '※わざは枠で<b>指定した構成</b>で計算しています（あいては環境の標準構成）'}</div>` +
-        // 穴のポケモン名は表(絞り込み「穴のみ」)で見られるので、ここでは数だけにする
-        (holes.length
-          ? `<span class="holehead">⚠ 穴 <b>${holes.length}匹</b><small>（全員負け）</small></span>`
-          : `<span class="holeok">✅ 穴なし</span>`) +
+      // 穴の数は円グラフの中央に出すので、文字では繰り返さない(平均勝率と前提だけ添える)
+      prog.innerHTML = `<div class="ptchart">${ptDonutHtml(PV.results, idxs.length)}</div>` +
+        ptTypeHtml(PV.results, idxs.length) +
         `<div class="holesub">平均勝率：<b>${avg}％</b>` +
-        `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>`;
+        `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>` +
+        // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
+        `<div class="holenote">${ptAuto
+          ? '※わざは<b>環境にいちばん多く勝てる構成</b>をオートで選び、枠に表示しています（あいては環境の標準構成）'
+          : '※わざは枠で<b>指定した構成</b>で計算しています（あいては環境の標準構成）'}</div>`;
+      // 図をタップしたら表を絞り込む(同じところをもう一度押すと解除)
+      prog.querySelectorAll('[data-flt]').forEach(el => el.onclick = () => {
+        PV.filter = PV.filter === el.dataset.flt ? 'all' : el.dataset.flt;
+        applyView(body, 'party');
+      });
       bindCtl(body, 'party');
       applyView(body, 'party');
     }
