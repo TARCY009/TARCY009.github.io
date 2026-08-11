@@ -228,7 +228,7 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="party" style="display:none">
   <div class="phead">
     <h3>パーティ3匹の穴チェック<small class="cnsub"><b class="holeword">0匹＝穴</b>・マスをタップ→1対1シミュ</small></h3>
-    <button class="ptauto" aria-pressed="true" title="オート＝環境上位にいちばん多く勝てるわざ構成を自動で選びます。押すと手動になり、下の欄で選んだわざで計算します"><span class="k">わざ</span><span class="v">オート</span></button>
+    <button class="ptauto" aria-pressed="true" title="オート＝環境上位にいちばん多く勝てるわざ構成を自動で選びます。押すとマニュアルになり、下の欄で選んだわざで計算します"><span class="k">わざ</span><span class="v">オート</span></button>
   </div>
   <div class="pslots"></div>
   <div class="pctl">
@@ -785,7 +785,7 @@ ${PAGE_ROCKET ? '' : `
 
   <h4>パーティ診断の「わざ｜オート」</h4>
   <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
-  （対面ごとに選び直しません）。押して<b>手動</b>にすると、枠のわざ欄を自分で選べます。
+  （対面ごとに選び直しません）。押して<b>マニュアル</b>にすると、枠のわざ欄を自分で選べます。
   どちらも<b>画面に出ているわざでそのまま計算</b>するので、マスをタップして開く1対1シミュと結果が食い違いません。</p>
 
   <h4>カウンター検索の「範囲」</h4>
@@ -1782,7 +1782,7 @@ function syncPtAuto() {
   const b = document.querySelector('#party .ptauto');
   if (!b) return;
   b.setAttribute('aria-pressed', ptAuto);
-  b.querySelector('.v').textContent = ptAuto ? 'オート' : '手動';
+  b.querySelector('.v').textContent = ptAuto ? 'オート' : 'マニュアル';
 }
 // パーティのメンバー1匹分の計算用設定(理想個体値/登録した個体値)
 // capX=CP上限(ロケット団戦は制限が無いので0を渡す)
