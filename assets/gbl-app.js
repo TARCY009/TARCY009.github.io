@@ -234,7 +234,7 @@ document.getElementById('app').innerHTML = `
   <div class="pctl">
     <span class="lbl">シールド</span>
     <div class="opts ptsh">
-      <button data-v="2" aria-pressed="false">🛡2-2</button><button data-v="1" aria-pressed="true">🛡1-1</button><button data-v="0" aria-pressed="false">🛡0-0</button>
+      <button data-v="2" aria-pressed="true">🛡2-2</button><button data-v="1" aria-pressed="false">🛡1-1</button><button data-v="0" aria-pressed="false">🛡0-0</button>
     </div>
   </div>
   <div class="pbody"></div>
@@ -1750,7 +1750,7 @@ function runCounter() {
 // ---- パーティ3匹の穴チェック ----
 // PT[i] = ★登録リストと同じ形({key, ivMode, mIvs, mLevel, fast, c1, c2, shadow, maxLv})
 const PT = [null, null, null];
-let ptShield = 1;
+let ptShield = 2;   // 既定は2枚(実戦で最も多い前提)
 const PT_KEY = 'gbl_party';
 try { const v = JSON.parse(localStorage.getItem(PT_KEY)); if (Array.isArray(v)) v.forEach((m, i) => { if (i < 3) PT[i] = m; }); } catch (e) {}
 const savePt = () => { try { localStorage.setItem(PT_KEY, JSON.stringify(PT)); } catch (e) {} };
