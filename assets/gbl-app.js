@@ -234,7 +234,7 @@ document.getElementById('app').innerHTML = `
   <div class="pctl">
     <span class="lbl">シールド</span>
     <div class="opts ptsh">
-      <button data-v="0" aria-pressed="false">🛡0-0</button><button data-v="1" aria-pressed="true">🛡1-1</button><button data-v="2" aria-pressed="false">🛡2-2</button>
+      <button data-v="2" aria-pressed="false">🛡2-2</button><button data-v="1" aria-pressed="true">🛡1-1</button><button data-v="0" aria-pressed="false">🛡0-0</button>
     </div>
   </div>
   <div class="pbody"></div>
@@ -269,6 +269,12 @@ document.getElementById('app').innerHTML = `
     <div class="rkmybody" id="rkmybody" style="display:none"></div>
   </div>
   <div class="rkrbody"></div>
+</div>
+
+<!-- 一覧系3モードの「⚙ 詳細」。ブラフ・能力変化わざはここへ畳んで、画面の幅と文字を減らす -->
+<div class="mdet" id="mdet" style="display:none">
+  <button class="mdettab" id="mdettab" aria-expanded="false" title="こまかい設定（ブラフ・能力変化わざ）を開きます">⚙ 詳細</button>
+  <div class="mdetbody" id="mdetbody" style="display:none"></div>
 </div>
 
 <div class="gopt" id="gopt">
@@ -1048,6 +1054,13 @@ function renderRoster() {
 
 // ---- モード切替(1対1シミュ / 環境一覧) ----
 let mode = PAGE_ROCKET ? 'rocket' : 'duel', multiToken = 0;   // ロケット団対策ページはモード固定
+// 一覧系3モードの「⚙ 詳細」(ブラフ・能力変化わざ)の開閉
+const MDET = { open: false };
+function syncMdet() {
+  const tab = document.getElementById('mdettab'), body = document.getElementById('mdetbody');
+  tab.setAttribute('aria-expanded', MDET.open);
+  body.style.display = MDET.open ? '' : 'none';
+}
 function applyMode() {
   // 環境一覧は「じぶん」だけ、カウンター検索は「あいて」だけ、パーティ診断は専用の3枠を使う
   const rk = mode === 'rocket';
@@ -1072,23 +1085,46 @@ function applyMode() {
   document.getElementById('rkteam').style.display = rkTeam ? 'block' : 'none';
   document.getElementById('rkrank').style.display = rkRankView ? 'block' : 'none';
   // 能力変化わざの設定は、どの画面でも「ポケモンの設定の下・結果の上」に置く。
-  // 模擬戦だけは「⚙ 詳細」パネルの中にしまう
+  // 模擬戦と一覧系3モードは「⚙ 詳細」パネルの中にしまう(常時出すと幅と文字を取りすぎる)
   const goptEl = document.getElementById('gopt');
-  const anchor = mode === 'multi' ? document.getElementById('multi')
-    : mode === 'counter' ? document.getElementById('counter')
-    : mode === 'party' ? document.getElementById('party')
-    : document.getElementById('result');
-  if (rkTeam) {
-    const pr = document.querySelector('#rkdetail .rkdprob');
-    if (pr && goptEl.parentElement !== pr) pr.appendChild(goptEl);
-  } else if (goptEl.nextElementSibling !== anchor) {
-    anchor.parentElement.insertBefore(goptEl, anchor);
-  }
-  // ブラフの設定は環境リストを使う3モードだけ。置き場所は能力変化わざと同じ(結果・表の直前)
   const bfEl = document.getElementById('gbluff');
-  const bfOn = ['multi', 'counter', 'party'].includes(mode);
-  bfEl.style.display = bfOn ? '' : 'none';
-  if (bfOn && bfEl.nextElementSibling !== goptEl) goptEl.parentElement.insertBefore(bfEl, goptEl);
+  const detTab = document.getElementById('mdettab');
+  const detBody = document.getElementById('mdetbody');
+  const detWrap = document.getElementById('mdet');
+  const listMode = ['multi', 'counter', 'party'].includes(mode);
+  // ブラフの設定は環境リストを使う3モードだけ
+  bfEl.style.display = listMode ? '' : 'none';
+  const detHome = () => {   // 使わないときはタブも中身も入れ物へ戻しておく
+    if (detTab.parentElement !== detWrap) detWrap.insertBefore(detTab, detWrap.firstChild);
+    if (detBody.parentElement !== detWrap) detWrap.appendChild(detBody);
+  };
+  if (listMode) {
+    if (bfEl.parentElement !== detBody) detBody.appendChild(bfEl);   // ブラフ→能力変化わざの順
+    if (goptEl.previousElementSibling !== bfEl) detBody.appendChild(goptEl);
+    if (mode === 'party') {
+      // パーティ診断はタブを「わざ｜オート」の右へ、中身は見出しのすぐ下(3枠の上)へ置く
+      const ph = document.querySelector('#party .phead'), ps = document.querySelector('#party .pslots');
+      if (detTab.parentElement !== ph) ph.appendChild(detTab);
+      if (detBody.nextElementSibling !== ps) ps.parentElement.insertBefore(detBody, ps);
+      detWrap.style.display = 'none';
+    } else {
+      const anchor = document.getElementById(mode);
+      detHome();
+      detWrap.style.display = '';
+      if (detWrap.nextElementSibling !== anchor) anchor.parentElement.insertBefore(detWrap, anchor);
+    }
+  } else {
+    detHome();
+    detWrap.style.display = 'none';
+    if (rkTeam) {
+      const pr = document.querySelector('#rkdetail .rkdprob');
+      if (pr && goptEl.parentElement !== pr) pr.appendChild(goptEl);
+    } else {
+      const anchor = document.getElementById('result');
+      if (goptEl.nextElementSibling !== anchor) anchor.parentElement.insertBefore(goptEl, anchor);
+    }
+  }
+  syncMdet();
   renderRkDetail();
   renderMyPk();   // ★登録リストの中身はモードで変わる(ロケット団戦のあいてはメガ・ゲンシ不可)
   if ((mode !== 'duel' && !rk) || rkTeam || rkRankView) {
@@ -4450,6 +4486,9 @@ document.getElementById('copyUrl').onclick = async () => {
   // 模擬戦の「⚙ 詳細」パネルの開閉
   const dTab = document.getElementById('rkdetailtab');
   if (dTab) dTab.onclick = () => { RKD.open = !RKD.open; renderRkDetail(); };
+  // 一覧系3モードの「⚙ 詳細」パネルの開閉
+  const mTab = document.getElementById('mdettab');
+  if (mTab) mTab.onclick = () => { MDET.open = !MDET.open; syncMdet(); };
   document.querySelectorAll('#party .ptsh button').forEach(b => b.onclick = () => {
     document.querySelectorAll('#party .ptsh button').forEach(x => x.setAttribute('aria-pressed', x === b));
     ptShield = +b.dataset.v;
