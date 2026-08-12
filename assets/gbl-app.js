@@ -859,6 +859,9 @@ ${PAGE_ROCKET ? '' : `
   提案の数字はそのわざ構成での結果なので、オートのままだと構成を選び直して数字が変わってしまいます。
   そのため<b>わざはマニュアルに切り替わり</b>、残る2匹も<b>いま出ている構成のまま固定</b>されます
   （＝入れ替えた結果が提案どおりの数字になります）。<b>↩ 元に戻す</b>で1つ前に戻せます。</p>
+  <p>入れ替えると<b>続けて次の候補を出します</b>。提案が出なくなるまで繰り返せば、そのリーグでの仕上がりです
+  （<b>✅</b>が出ます）。何匹替えて穴と勝率がどう変わったかは<b>入れ替えの記録</b>に残ります
+  （リーグやカップを変えると消えます）。</p>
 
   <h4>パーティ診断の「わざ｜オート」</h4>
   <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
@@ -2239,10 +2242,15 @@ function runParty() {
       // 入れ替え候補は、いまの診断結果を土台にして探す(パーティや条件が変わったら作り直す)
       PTS.base = { list, idxs, bases, results: PV.results,
         usedPols: idxs.map((pi, j) => pols[j][use[j]]) };
+      // リーグやカップが変わったら、入れ替えの記録は別の話になるので消す
+      const psig = `${cap}|${cup ? cup.slug : ''}`;
+      if (PTS.sig !== psig) { PTS.sig = psig; PTS.log = []; PTS.start = null; PTS.undo = null; }
       PTS.rows = null; PTS.busy = false;
       renderPtSwap();
       bindCtl(body, 'party');
       applyView(body, 'party');
+      // 入れ替えた直後は、続けて次の候補を出す(提案が出なくなるまで繰り返すのが実用の使い方)
+      if (PTS.chain) { PTS.chain = false; runPtSwap(); }
     }
   };
   step();
@@ -2254,11 +2262,23 @@ function runParty() {
 // ③絞った候補を環境の全員と戦わせて、入れ替えたあとの穴の数と勝率を出す
 // 提案は「そこに出ているわざ構成で戦ったら」の数字なので、入れ替えるときはその構成ごと枠に入れる
 // (オートのままだと構成を選び直して数字が変わるため、わざはマニュアルへ切り替える)
-const PTS = { range: 100, rows: null, base: null, busy: false, undo: null, msg: '', scan: null };
+// log/start = 入れ替えの記録（はじめの状態からどう良くなったか）。chain = 入れ替えた直後に続けて次の候補を出す
+const PTS = { range: 100, rows: null, base: null, busy: false, undo: null, msg: '', scan: null,
+  log: [], start: null, chain: false, sig: '' };
+// いまのパーティの穴の数と平均勝率(診断結果から数えるだけ。候補を計算していなくても出せる)
+function ptNowStat() {
+  const B = PTS.base, n = B.idxs.length;
+  return { holes: B.results.filter(r => r.nWin === 0).length,
+    avg: B.results.reduce((a, r) => a + r.nWin, 0) / (B.results.length * n) };
+}
 const PTS_RANGES = [
   { v: '100', t: '環境上位', d: '環境上位100匹から探す（初期表示）。人が確認した実戦の定番構成で計算します' },
   { v: 'all', t: '全ポケモン', d: '環境の順位に関係なく全ポケモン（シャドウ込み・約1600匹）から探す。環境上位は必ず候補に入れたうえで、残りは穴に強そうな順に絞ってくらべます' },
 ];
+// 1回に進める時間。画面に出ているあいだは40msずつ区切って操作をふさがないようにするが、
+// 他のタブを見ているあいだはブラウザがタイマーを1分に1回まで絞るので、区切りを大きくして進める
+// (見えていないので固まっても困らない。これが無いと裏に回した瞬間に計算がほぼ止まる)
+const ptSwapSlice = () => (document.hidden ? 1500 : 40);
 // シミュにかける候補の数。環境上位(約100匹)は全部くらべる。
 // 全ポケモン(約1600匹)は全部やると数十秒かかるので、計算式で見込みのある順に絞る
 const ptRoughN = () => (PTS.range === 'all' ? 120 : 999);
@@ -2431,8 +2451,7 @@ function runPtSwap() {
   });
   // rest[相手][メンバー] = そのメンバーを抜いた残りが勝てる数(いまの診断結果から作る)
   const rest = B.results.map(r => r.cells.map((c, j) => r.nWin - (c.w === 0 ? 1 : 0)));
-  const now = { holes: B.results.filter(r => r.nWin === 0).length,
-    avg: B.results.reduce((a, r) => a + r.nWin, 0) / (B.results.length * n) };
+  const now = ptNowStat();
   const pool = ptSwapPool();
   const token = ++multiToken;
   const found = [];
@@ -2453,7 +2472,7 @@ function runPtSwap() {
   const step1 = () => {
     if (token !== multiToken) { PTS.busy = false; return; }
     const t0 = performance.now();
-    while (idx < short.length && performance.now() - t0 < 40) {
+    while (idx < short.length && performance.now() - t0 < ptSwapSlice()) {
       const { c } = short[idx++];
       // 本計算はここから。個体値は正規の rank1(CP上限内でいちばん強い個体)で計算し直す
       const cb = ptBase({ key: c.k, ivMode: 'auto', shadow: !!c.s, maxLv: 51 });
@@ -2481,7 +2500,7 @@ function runPtSwap() {
         .map(r => ({ key: r.c.k, name: r.c.n, shadow: !!r.c.s, j: r.j, holes: r.holes, avg: r.avg,
           mv: polToMv(r.c.k, r.pol) }));
       PTS.now = now;
-      PTS.busy = false; PTS.msg = PTS.rows.length ? '' : 'いまより良くなる入れ替えは見つかりませんでした';
+      PTS.busy = false; PTS.msg = '';
       renderPtSwap();
     }
   };
@@ -2493,6 +2512,20 @@ function ptSwapProg(msg) {
   PTS.msg = msg;
   const e = document.querySelector('#ptswap .ptswmsg');
   if (e) e.textContent = msg; else renderPtSwap();
+}
+// 入れ替えの記録。はじめの状態から何匹替えて、穴と勝率がどう変わったかをまとめて出す
+// (提案が出なくなるまで繰り返す使い方をするので、どこから来たのかが見えるようにする)
+function ptSwapLogHtml() {
+  if (!PTS.log.length || !PTS.start) return '';
+  const s = ptNowStat();
+  const arrow = (a, b, less) => `<b>${a}</b><em>→</em>` +
+    `<b class="${(less ? b < a : b > a) ? 'good' : ''}">${b}</b>`;
+  return `<div class="ptswlog"><div class="ptttl">入れ替えの記録<small>／${PTS.log.length}匹</small></div>` +
+    PTS.log.map(l => `<div class="ptswlogrow"><span class="pcolnum">${l.i + 1}</span>` +
+      `<s>${l.from}</s><i class="swapmark"></i><b>${l.to}</b></div>`).join('') +
+    `<div class="ptswlogsum"><small>穴</small>${arrow(PTS.start.holes, s.holes, true)}` +
+    `<span class="sep">／</span><small>勝率</small>` +
+    `${arrow(Math.round(PTS.start.avg * 100), Math.round(s.avg * 100), false)}<small>％</small></div></div>`;
 }
 // 入れ替え候補の表示(ボタン→計算中→結果)。パーティが変わるたびに作り直す
 function renderPtSwap() {
@@ -2511,7 +2544,13 @@ function renderPtSwap() {
     (canUndo ? `<button class="ptswundo" title="入れ替える前のポケモンに戻します">↩ 元に戻す</button>` : '') + '</div>';
   let body = '';
   if (PTS.busy) body = `<div class="ptswmsg">${PTS.msg || '計算中…'}</div>`;
-  else if (PTS.msg) body = `<div class="ptswmsg">${PTS.msg}</div>`;
+  else if (PTS.rows && !PTS.rows.length) {
+    // 探したけれど、いまより良くなる入れ替えが無かった＝ここが仕上がり
+    const s = ptNowStat();
+    body = `<div class="ptswdone"><b>${s.holes ? '✅ これ以上よくなる入れ替えはありません' : '✅ 穴なしで仕上がりました'}</b>` +
+      `<small>いま 穴${s.holes}・勝率${Math.round(s.avg * 100)}％` +
+      `（${PTS.range === 'all' ? '全ポケモン' : '環境上位'}から探した結果）</small></div>`;
+  }
   else if (PTS.rows && PTS.rows.length) {
     const now = PTS.now;
     body = '<div class="ptswlist">' + PTS.rows.map((r, i) => {
@@ -2532,7 +2571,7 @@ function renderPtSwap() {
         : `${PTS.scan.pool}匹から、環境上位＋穴に強そうな<b>${PTS.scan.short}匹</b>をくらべました`)
         : '') + '</div></div>';
   }
-  box.innerHTML = head + body;
+  box.innerHTML = head + body + ptSwapLogHtml();
   const btn = box.querySelector('.ptswbtn');
   if (btn) btn.onclick = () => runPtSwap();
   box.querySelectorAll('.ptswrange button').forEach(b => b.onclick = () => {
@@ -2545,6 +2584,8 @@ function renderPtSwap() {
     const u = PTS.undo;
     PTS.undo = null;
     PT[u.i] = u.was;
+    PTS.log.pop();                               // 記録も1つ戻す
+    if (!PTS.log.length) PTS.start = null;
     if (u.auto && !ptAuto) { ptAuto = true; savePtAuto(); syncPtAuto(); }
     savePt();
     [0, 1, 2].forEach(i => syncPartySlot(i));
@@ -2553,14 +2594,21 @@ function renderPtSwap() {
   box.querySelectorAll('.ptswrow').forEach(el => el.onclick = () => {
     const r = PTS.rows[+el.dataset.i], pi = B.idxs[r.j];
     PTS.undo = { i: pi, was: PT[pi] ? { ...PT[pi] } : null, auto: ptAuto, key: r.key, shadow: r.shadow };
+    // はじめの状態を控えて、入れ替えを記録に積む。続けて次の候補も出す
+    if (!PTS.log.length) PTS.start = ptNowStat();
+    PTS.log.push({ i: pi, from: names[r.j], to: r.name });
+    PTS.chain = true;
     // 提案は「このわざ構成で戦ったら」の数字なので、オートのままだと構成を選び直して数字が変わる。
     // 残る2匹はいま出ている構成をそのまま欄に書き込んでからマニュアルへ切り替える
     // (こうすると、入れ替えた結果が提案どおりの数字になる＝表示と計算が食い違わない)
     if (ptAuto) {
-      [0, 1, 2].forEach(i => {
-        if (!PT[i]) return;
-        const v = ptMvOf(i);
-        PT[i].fast = PT[i].fast || v.fast; PT[i].c1 = PT[i].c1 || v.c1; PT[i].c2 = PT[i].c2 || v.c2 || '';
+      // 書き込むのは「診断で実際に使った構成」(usedPols)。ここで ptMvOf を通すと、
+      // 前に手で選んで PT に残っていたわざのほうが優先され、オートで出ていた構成とすり替わる
+      // (実際にチャーレムがサイコカッター型→カウンター型に変わり、提案の数字と食い違った)
+      B.idxs.forEach((slot, j) => {
+        if (!PT[slot] || !B.usedPols[j]) return;
+        const mv = polToMv(PT[slot].key, B.usedPols[j]);
+        PT[slot].fast = mv.fast; PT[slot].c1 = mv.c1; PT[slot].c2 = mv.c2 || '';
       });
       ptAuto = false; savePtAuto(); syncPtAuto();
     }

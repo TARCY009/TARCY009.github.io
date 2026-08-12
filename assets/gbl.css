@@ -395,6 +395,24 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptswd b{font-weight:800;color:var(--ink)}
 .ptswd b.good{color:var(--win)}
 .ptswnote{font-size:.64rem;color:var(--sub);line-height:1.5}
+/* もう入れ替えなくてよい状態 */
+.ptswdone{margin-top:6px;padding:8px 12px;max-width:520px;border-radius:10px;
+  background:linear-gradient(160deg,rgba(63,214,128,.16),rgba(63,214,128,.06));
+  border:1px solid rgba(63,214,128,.45)}
+.ptswdone b{display:block;font-size:.82rem;color:var(--win)}
+.ptswdone small{display:block;margin-top:2px;font-size:.66rem;color:var(--sub)}
+/* 入れ替えの記録(はじめの状態からどう良くなったか) */
+.ptswlog{margin-top:8px;padding:7px 10px;max-width:520px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:10px}
+.ptswlogrow{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--ink);margin-bottom:2px}
+.ptswlogrow s{color:var(--sub);text-decoration-color:var(--lose)}
+.ptswlogrow b{font-weight:800}
+.ptswlogsum{margin-top:4px;padding-top:4px;border-top:1px solid var(--line);font-size:.76rem;color:var(--sub)}
+.ptswlogsum small{font-size:.62rem;margin-right:3px}
+.ptswlogsum b{font-weight:800;color:var(--ink)}
+.ptswlogsum b.good{color:var(--win)}
+.ptswlogsum em{font-style:normal;margin:0 2px}
+.ptswlogsum .sep{margin:0 7px;opacity:.5}
 @media (max-width:420px){.ptdwrap{width:88px;height:88px}.ptchart{gap:10px}.pttnm{width:96px}
   .ptrnm{width:88px}.ptronly{width:66px}
   .ptswrow{gap:6px}.ptswnm{font-size:.72rem}.ptswd{font-size:.7rem}}
