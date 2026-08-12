@@ -23,9 +23,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -50,7 +50,7 @@ jobs:
         run: python3 pvp-tests/build_meta_moves.py --no-report
 
       - name: 変更があればPull Requestを作成（承認待ち）
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: auto-update          # 常に同じブランチを使い回す（PRが乱立しない）
           add-paths: |
