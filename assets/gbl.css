@@ -321,38 +321,39 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .holelist{color:var(--ink);font-size:.74rem;line-height:1.6;margin-top:2px}
 .holesub{font-size:.7rem;margin-top:4px}
 .holenote{font-size:.68rem;color:var(--sub);line-height:1.5;margin-bottom:5px}
-/* パーティ診断のまとめの図: 穴の内訳ドーナツ + 苦手タイプのバー(どちらもタップで表を絞り込む) */
-.ptchart{display:flex;align-items:center;gap:14px;margin:2px 0 8px}
-.ptdwrap{position:relative;width:104px;height:104px;flex-shrink:0}
-.ptdonut{width:100%;height:100%;background:var(--g);border-radius:50%;
-  -webkit-mask:radial-gradient(farthest-side,#0000 58%,#000 60%);mask:radial-gradient(farthest-side,#0000 58%,#000 60%)}
-.ptdmid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  line-height:1.1;pointer-events:none}
-.ptdmid b{font-size:1.55rem;font-weight:800}
-.ptdmid b.bad{color:var(--lose)}
-.ptdmid b.ok{color:var(--win);font-size:1.2rem}
-.ptdmid small{font-size:.6rem;color:var(--sub);font-weight:700;margin-top:1px}
-.ptlegend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;flex:1;min-width:0;max-width:300px}
-.ptlegend button{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:.72rem;color:var(--ink);
+/* パーティ診断のまとめ: 環境を1匹1マスで並べた図 + 診断文(どちらもタップで表を絞り込む) */
+.ptchart{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:2px 0 9px}
+.ptgwrap{flex-shrink:0}
+.ptgttl{font-size:.7rem;color:var(--sub);margin-bottom:5px}
+.ptgttl b{color:var(--ink);font-weight:800}
+.ptgttl small{display:block;font-size:.58rem;color:var(--sub);margin-top:1px}
+.ptgrid{display:grid;grid-template-columns:repeat(10,16px);gap:3px}
+.ptgc{display:block;width:16px;height:16px;border-radius:3px}
+.ptglegend{display:flex;flex-direction:column;gap:3px;min-width:190px}
+.ptglegend button{display:flex;align-items:center;gap:7px;padding:3px 9px;font-size:.72rem;color:var(--ink);
   background:var(--bg2);border:1px solid var(--line);border-radius:8px;cursor:pointer;text-align:left}
-.ptlegend button i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
-.ptlegend button b{margin-left:auto;font-weight:800}
-.ptlegend button[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
-.ptlegwrap{flex:1;min-width:0;max-width:340px}
-.ptlegwrap .ptttl{margin-bottom:4px}
-.ptlegwrap .ptttl b{color:var(--ink);font-weight:800}
-/* 弱点を具体的なポケモン名で出す（タイプだけでは次の手が決まらないため） */
-.ptweak{margin:0 0 8px;max-width:520px}
-.ptwhead{display:block;width:100%;text-align:left;padding:4px 9px;font-size:.76rem;color:var(--ink);
+.ptglegend button i{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ptglegend button .ptglbl{font-weight:700;width:44px;flex-shrink:0}
+.ptglegend button b{font-weight:800;width:24px;text-align:right}
+.ptglegend button small{font-size:.6rem;color:var(--sub)}
+.ptglegend button[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
+/* 診断文: 数字を並べるより、状況と次の一手を言い切るほうが頭に入る */
+.ptdiag{margin:0 0 9px;padding:8px 11px;max-width:520px;border-radius:10px;
+  background:rgba(63,214,128,.07);border:1px solid rgba(63,214,128,.35)}
+.ptdiag.bad{background:rgba(255,107,129,.07);border-color:rgba(255,107,129,.35)}
+.ptdttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:3px}
+.ptdtext{font-size:.78rem;line-height:1.65;color:var(--ink);margin:0}
+.ptdtext b{font-weight:800}
+.ptdnext{font-size:.74rem;line-height:1.6;color:var(--cy);margin:6px 0 0}
+.ptdnext b{font-weight:800}
+.ptwhead{display:block;width:100%;margin-top:7px;text-align:left;padding:4px 9px;font-size:.74rem;color:var(--ink);
   background:var(--bg2);border:1px solid var(--line);border-radius:8px;cursor:pointer}
 .ptwhead[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
-.ptwhead b{font-weight:800;color:var(--lose)}
-.ptwhead small{float:right;font-size:.6rem;color:var(--sub);font-weight:400;padding-top:2px}
-.ptweak.thin .ptwhead b{color:var(--gold)}
+.ptwhead b{font-weight:800}
+.ptwhead small{float:right;font-size:.58rem;color:var(--sub);font-weight:400;padding-top:2px}
 .ptwchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .ptwchip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:.7rem;color:var(--ink);
-  background:rgba(255,107,129,.13);border:1px solid rgba(255,107,129,.32);border-radius:99px}
-.ptweak.thin .ptwchip{background:rgba(245,195,60,.13);border-color:rgba(245,195,60,.32)}
+  background:var(--bg2);border:1px solid var(--line);border-radius:99px}
 .ptwchip em{font-style:normal;font-size:.58rem;color:var(--sub)}
 .ptwmore{align-self:center;font-size:.66rem;color:var(--sub)}
 .pttypes{margin:0 0 7px;max-width:420px}
@@ -434,7 +435,9 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptswlogsum b.good{color:var(--win)}
 .ptswlogsum em{font-style:normal;margin:0 2px}
 .ptswlogsum .sep{margin:0 7px;opacity:.5}
-@media (max-width:420px){.ptdwrap{width:88px;height:88px}.ptchart{gap:10px}.pttnm{width:96px}
+@media (max-width:420px){.ptchart{gap:10px}.pttnm{width:96px}
+  .ptgrid{grid-template-columns:repeat(10,14px);gap:2px}.ptgc{width:14px;height:14px}
+  .ptglegend{min-width:100%}
   .ptrnm{width:88px}.ptronly{width:66px}
   .ptswrow{gap:6px}.ptswnm{font-size:.72rem}.ptswd{font-size:.7rem}}
 /* パーティ診断の見出し行(右上に「わざ｜オート」を置く) */

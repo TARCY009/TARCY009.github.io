@@ -837,14 +837,16 @@ ${PAGE_ROCKET ? '' : `
   そこで順位の重みを掛けたものが<b>実戦想定</b>です（環境スコアと同じ重みの付け方）。
   よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
 
-  <h4>パーティ診断の円グラフ</h4>
-  <p>環境上位の相手を「<b>パーティの何匹が勝てるか</b>」で分けたものです。
-  <b>3匹 8</b>なら「3匹とも勝てる相手が8匹」。<b>0匹＝穴</b>で、中央にその数が出ます。
-  タップするとその相手だけに表を絞り込めます。</p>
+  <h4>パーティ診断のマスの図</h4>
+  <p><b>1マス＝環境の1匹</b>で、色はその相手に<b>パーティの何匹が勝てるか</b>を表します。
+  <b>楽勝</b>＝3匹とも勝てる／<b>有利</b>＝2匹／<b>綱渡り</b>＝1匹しか勝てない／<b>穴</b>＝3匹とも勝てない。
+  マスは<b>環境順（左上が1位）</b>なので、<b>上のほうに赤があるほど深刻</b>です。
+  凡例をタップするとその相手だけに表を絞り込めます。</p>
 
-  <h4>パーティ診断の「特に弱い相手」</h4>
-  <p>穴になっている相手を<b>名前と環境順位</b>で並べます（穴が無いときは、勝てるのが1匹だけの相手）。
-  タイプだけ分かっても次の手は決まらないので、<b>そのまま下の入れ替え候補につながる</b>ように名前まで出しています。</p>
+  <h4>パーティ診断の「📋 診断」</h4>
+  <p>いまの並びが<b>どれだけ弱いか・誰に弱いか・次に何をすればいいか</b>を文でまとめます。
+  苦手な相手は<b>名前と環境順位</b>で出します（タイプだけ分かっても次の手は決まらないため）。
+  深刻度は<b>環境上位10位に何匹いるか</b>で見ています（使用率の低い相手ばかりなら、急いで埋める必要はありません）。</p>
 
   <h4>パーティ診断の「3匹の働き」</h4>
   <p>横棒はその子が勝てる相手の数。右の<b>この子だけ◯</b>は、
@@ -1830,34 +1832,29 @@ function runCounter() {
 // 勝てる数の色は表の「勝てる数」列と同じ基準にそろえる(全員勝ち=緑 / 0匹=赤)
 const ptSegColor = (k, n) => k === 0 ? 'var(--lose)' : k === n ? 'var(--win)' : k === 1 ? 'var(--gold)' : '#8ce6b0';
 const ptWinColor = p => p >= 0.5 ? 'var(--win)' : p >= 0.25 ? 'var(--gold)' : 'var(--lose)';
-// 相手50匹を「勝てる数」で分けた円グラフ。0匹＝穴を中央に大きく出す
-function ptDonutHtml(res, n) {
-  const cnt = Array.from({ length: n + 1 }, (_, k) => res.filter(r => r.nWin === k).length);
-  let acc = 0;
-  const segs = [];
-  for (let k = n; k >= 0; k--) {   // 全員勝ちから時計回りに並べる(良い→悪い)
-    if (!cnt[k]) continue;
-    const from = acc / res.length * 100;
-    acc += cnt[k];
-    segs.push(`${ptSegColor(k, n)} ${from.toFixed(2)}% ${(acc / res.length * 100).toFixed(2)}%`);
-  }
-  const holes = cnt[0];
+// 「3匹 10 / 1匹 19」のように匹数がふたつ並ぶと、どちらが何の数か読み取れない。
+// そこで状況を表す言葉を先に出す(楽勝/有利/綱渡り/穴)
+const ptRankLabel = (k, n) => k === 0 ? '穴' : k === n ? (n > 1 ? '楽勝' : '勝てる') : k === 1 ? '綱渡り' : '有利';
+const ptRankDesc = (k, n) => k === 0 ? (n > 1 ? `${n}匹とも勝てない` : '勝てない')
+  : k === n ? (n > 1 ? `${n}匹とも勝てる` : '勝てる') : k === 1 ? '1匹しか勝てない' : `${k}匹が勝てる`;
+// 環境の1匹を1マスで表す。数を読まなくても、黄(綱渡り)や赤(穴)の多さで並びの状態がつかめる
+function ptGridHtml(res, n) {
+  const cells = res.map(r =>
+    `<i class="ptgc" style="background:${ptSegColor(r.nWin, n)}"` +
+    ` title="${r.idx + 1}位 ${r.m.n}／${ptRankLabel(r.nWin, n)}（${ptRankDesc(r.nWin, n)}）"></i>`).join('');
   const legend = [];
   for (let k = n; k >= 0; k--) {
-    if (!cnt[k]) continue;
-    const lbl = k === 0 ? '穴' : `${k}匹`;
+    const cnt = res.filter(r => r.nWin === k).length;
+    if (!cnt && k !== 0) continue;   // 穴の行は0でも出す(「穴なし」が分かるように)
     legend.push(`<button data-flt="${k === 0 ? 'hole' : 'n' + k}" aria-pressed="false"` +
-      ` title="${k === 0 ? '全員が負ける相手' : `${k}匹が勝てる相手`} ${cnt[k]}匹（タップで表を絞り込み）">` +
-      `<i style="background:${ptSegColor(k, n)}"></i>${lbl}<b>${cnt[k]}</b></button>`);
+      ` title="${ptRankDesc(k, n)}相手が${cnt}匹（タップで表を絞り込み）">` +
+      `<i style="background:${ptSegColor(k, n)}"></i><span class="ptglbl">${ptRankLabel(k, n)}</span>` +
+      `<b>${cnt}</b><small>${ptRankDesc(k, n)}</small></button>`);
   }
-  // 中央の文字はドーナツの穴あけ(mask)に巻き込まれないよう、別の要素で重ねる
-  // 見出しが無いと「3匹 8」が何の数字か伝わらないので、必ず添える
-  return `<div class="ptdwrap">
-      <div class="ptdonut" style="--g:conic-gradient(${segs.join(',')})"></div>
-      <span class="ptdmid">${holes ? `<b class="bad">${holes}</b><small>穴</small>` : '<b class="ok">✅</b><small>穴なし</small>'}</span>
-    </div><div class="ptlegwrap">
-      <div class="ptttl">環境${res.length}匹のうち、パーティの<b>何匹が勝てるか</b></div>
-      <div class="ptlegend">${legend.join('')}</div></div>`;
+  // マスは環境順(左上が1位)。上のほうに赤があるほど「よく当たる相手に負ける」＝深刻と読める
+  return `<div class="ptgwrap"><div class="ptgttl">環境<b>${res.length}匹</b>に、パーティ<b>${n}匹</b>で挑むと` +
+    `<small>1マス＝環境の1匹（左上ほどよく当たる）</small></div><div class="ptgrid">${cells}</div></div>` +
+    `<div class="ptglegend">${legend.join('')}</div>`;
 }
 // 相手のタイプごとの勝率。苦手な順に最大5つ出す(何を入れ替えるかの手がかり)
 function ptTypeHtml(res, n) {
@@ -1881,23 +1878,51 @@ function ptTypeHtml(res, n) {
 // 環境のどのポケモンに苦しんでいるかを、タイプではなく名前で出す。
 // 「じめんが苦手」と分かっても次の手は決まらないが、「この4匹に勝てない」なら
 // そのまま入れ替え候補につながる（穴が無いときは、勝てるのが1匹だけの薄い対面を出す）
-function ptWeakHtml(res) {
+function ptDiagHtml(res, names, n) {
+  const N = res.length;
   const holes = res.filter(r => r.nWin === 0);
   const thin = res.filter(r => r.nWin === 1);
-  const list = holes.length ? holes : thin;
-  if (!list.length) return '';
+  const pct = v => Math.round(v / N * 100);
+  let lead = '', detail = '', next = '', flt = '', list = [], ttl = '';
+  if (holes.length) {
+    list = holes; flt = 'hole'; ttl = '勝てない相手';
+    const top = holes.slice(0, 3).map(r => `${r.m.n}(${r.idx + 1}位)`).join('・');
+    // よく当たる相手かどうかで優先度が変わる。平均順位で見ると
+    // 「1位に勝てないのに下位が多いから軽い」と逆の判定になるので、上位10位に何匹いるかで見る
+    const topHoles = holes.filter(r => r.idx < 10).length;
+    lead = `環境の<b>${holes.length}匹</b>（${pct(holes.length)}%）には、<b>${n}匹とも勝てません</b>。`;
+    detail = `とくに <b>${top}</b>${holes.length > 3 ? ' など' : ''}。` +
+      (topHoles ? `よく当たる<b>上位10位に${topHoles}匹</b>いるので、優先して埋めたいところです。`
+                : '上位の常連は避けられているので、深刻度は高くありません。');
+  } else if (thin.length) {
+    list = thin; flt = 'n1'; ttl = '綱渡りの相手';
+    // その綱渡りをだれが支えているか＝失うと崩れる1匹
+    const rely = names.map((nm, j) => ({ nm, cnt: thin.filter(r => r.cells[j].w === 0).length }))
+      .sort((a, b) => b.cnt - a.cnt)[0];
+    lead = `<b>穴はありません</b>。ただし環境の<b>${thin.length}匹</b>（${pct(thin.length)}%）は` +
+      `「勝てるのが1匹だけ」の<b>綱渡り</b>です。`;
+    detail = rely && rely.cnt ? `そのうち<b>${rely.cnt}匹</b>は <b>${rely.nm}</b> に頼りきりなので、` +
+      `この子を先に失うと苦しくなります。` : '';
+  } else {
+    lead = `どの相手にも<b>2匹以上</b>が勝てます。かなり安定した並びです。`;
+  }
+  // 次の一手。抜いても穴が増えない子(＝他の子で代われる)があれば、そこが替え時
+  const dup = names.map((nm, j) => ({ nm,
+    only: res.filter(r => r.nWin === 1 && r.cells[j].w === 0).length })).filter(d => !d.only);
+  if (n > 1 && dup.length) next = `→ <b>${dup[0].nm}</b> は他の${n - 1}匹で代われます。` +
+    `下の<b>入れ替え候補</b>で、ここを替えると幅が広がりそうです。`;
+  else if (holes.length) next = `→ 下の<b>入れ替え候補</b>で、この穴を埋められるポケモンを探せます。`;
+  else next = `→ 下の<b>入れ替え候補</b>で、どの枠を替えるといちばん良くなるか比べられます。`;
   const MAX = 10;
-  const chips = list.slice(0, MAX).map(r =>
-    `<span class="ptwchip"><em>${r.idx + 1}</em>${r.m.n}</span>`).join('');
-  return `<div class="ptweak${holes.length ? '' : ' thin'}">` +
-    `<button class="ptwhead" data-flt="${holes.length ? 'hole' : 'n1'}"` +
-    ` aria-pressed="false" title="タップで表をこの相手だけに絞り込みます">` +
-    (holes.length
-      ? `⚠ この<b>${holes.length}匹</b>には、3匹とも勝てません`
-      : `この<b>${thin.length}匹</b>には、1匹しか勝てません`) +
-    `<small>環境での順位つき</small></button>` +
-    `<div class="ptwchips">${chips}` +
-    (list.length > MAX ? `<span class="ptwmore">ほか${list.length - MAX}匹</span>` : '') + '</div></div>';
+  return `<div class="ptdiag${holes.length ? ' bad' : ''}"><div class="ptdttl">📋 診断</div>` +
+    `<p class="ptdtext">${lead}${detail}</p>` +
+    (list.length ? `<button class="ptwhead" data-flt="${flt}" aria-pressed="false"` +
+      ` title="タップで表をこの相手だけに絞り込みます">⚠ ${ttl} <b>${list.length}匹</b>` +
+      `<small>環境での順位つき・タップで絞り込み</small></button>` +
+      `<div class="ptwchips">` +
+      list.slice(0, MAX).map(r => `<span class="ptwchip"><em>${r.idx + 1}</em>${r.m.n}</span>`).join('') +
+      (list.length > MAX ? `<span class="ptwmore">ほか${list.length - MAX}匹</span>` : '') + '</div>' : '') +
+    `<p class="ptdnext">${next}</p></div>`;
 }
 // 3匹それぞれの働き。「この子だけが勝てる相手」が0匹なら、抜いても穴が増えない＝役割が被っている
 // (勝ち数が多くても役割が被っていることはあるので、入れ替えを考えるときの手がかりになる)
@@ -2258,8 +2283,8 @@ function runParty() {
       syncPtShieldBadges(ptShieldHoles(list, bases, idxs.map((pi, j) => pols[j][use[j]]),
         PV.results.filter(r => r.nWin === 0).length));
       // 穴の数は円グラフの中央に出すので、文字では繰り返さない(平均勝率と前提だけ添える)
-      prog.innerHTML = `<div class="ptchart">${ptDonutHtml(PV.results, idxs.length)}</div>` +
-        ptWeakHtml(PV.results) +
+      prog.innerHTML = `<div class="ptchart">${ptGridHtml(PV.results, idxs.length)}</div>` +
+        ptDiagHtml(PV.results, names, idxs.length) +
         ptTypeHtml(PV.results, idxs.length) +
         ptRoleHtml(PV.results, names) +
         `<div class="holesub">平均勝率：<b>${avg}％</b>` +
