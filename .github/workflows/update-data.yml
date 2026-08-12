@@ -1,6 +1,7 @@
 # 毎日 日本時間 朝6時に最新データをチェックし、変更があれば
-# Pull Request（承認待ち）を作成してお知らせします。
-# → 通知が届いたら内容を確認し「Merge」を押した時だけサイトに反映されます。
+# そのままサイトに反映します（2026-08-12にタダシさんの指示で、承認待ちPRから完全自動へ変更）。
+# → 反映した内容は「お知らせ」を立てて知らせるので、GitHubからメールが届きます。
+#   タダシさん側の操作は不要。読むだけ。
 #
 # 2026-08-09拡張: 火力チェッカーだけでなく全ツールのデータを一括更新する。
 #   build_data.py            → index.html / godata.json（火力チェッカー）
@@ -17,7 +18,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  issues: write     # 更新内容の「お知らせ」を立てる（GitHubがそれをメールで送ってくれる）
 
 jobs:
   build:
@@ -30,7 +31,10 @@ jobs:
           python-version: '3.12'
 
       - name: 火力チェッカーをビルド（差分サマリーも生成）
-        run: python3 build_data.py
+        id: build
+        run: |
+          python3 build_data.py | tee /tmp/build.txt
+          echo "headline=$(grep '^HEADLINE: ' /tmp/build.txt | sed 's/^HEADLINE: //')" >> "$GITHUB_OUTPUT"
 
       - name: ジム挑戦データを同期
         run: python3 gym-attack/build_gym.py
@@ -49,22 +53,48 @@ jobs:
       - name: 環境上位のわざ構成を作り直す
         run: python3 pvp-tests/build_meta_moves.py --no-report
 
-      - name: 変更があればPull Requestを作成（承認待ち）
-        uses: peter-evans/create-pull-request@v8
-        with:
-          branch: auto-update          # 常に同じブランチを使い回す（PRが乱立しない）
-          add-paths: |
-            index.html
-            godata.json
-            gym-attack/data/gym_data.json
-            gym-attack/data/gym_data.js
-            gym-defense/data/defense_data.js
-            gym-defense/data/defense_data.json
-            max-battle/data/max_data.js
-            pvp_data.js
-            pvp_data.json
-            assets/meta_moves.js
-          title: "📢 データ更新があります：反映しますか？"
-          body-path: changes.md        # 変更内容の日本語サマリー
-          commit-message: "自動データ更新"
-          delete-branch: true          # Merge/Close後にブランチ自動削除
+      - name: 更新内容を実行結果ページに表示
+        run: cat changes.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 変更があればそのまま公開
+        id: commit
+        env:
+          HEADLINE: ${{ steps.build.outputs.headline }}
+        run: |
+          FILES="index.html godata.json
+                 gym-attack/data/gym_data.json gym-attack/data/gym_data.js
+                 gym-defense/data/defense_data.js gym-defense/data/defense_data.json
+                 max-battle/data/max_data.js
+                 pvp_data.js pvp_data.json assets/meta_moves.js"
+          if git diff --quiet -- $FILES; then
+            echo "データに変化なし。今回は更新しない"
+            echo "changed=0" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add $FILES
+            git commit -m "chore: ゲームデータを自動更新（${HEADLINE:-内部データの調整のみ}）" \
+                       -m "変更の内訳はお知らせ（Issue）を見てください。"
+            git push
+            echo "changed=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 更新があった日だけ「お知らせ」を立てる。GitHubがこれをメールで送ってくれる。
+      # 前回のお知らせは自動で閉じて受信箱をためない。
+      - name: 更新内容をお知らせする
+        if: steps.commit.outputs.changed == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEADLINE: ${{ steps.build.outputs.headline }}
+        run: |
+          gh issue list --state open --limit 50 --json number,title \
+            | jq -r '.[] | select(.title | startswith("📢 ゲームデータの更新内容")) | .number' \
+            | xargs -r -I{} gh issue close {} --comment "新しいお知らせが届いたので閉じます。"
+          {
+            cat changes.md
+            echo ""
+            echo "@${{ github.repository_owner }}"
+          } > /tmp/issue_body.md
+          gh issue create \
+            --title "📢 ゲームデータの更新内容（$(TZ=Asia/Tokyo date '+%-m/%-d')）${HEADLINE:-内部データの調整のみ}" \
+            --body-file /tmp/issue_body.md

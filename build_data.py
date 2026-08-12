@@ -395,23 +395,28 @@ def main():
         om, nm_ = old.get('moves',{}), moves
         newmoves = [nm_[m]['n'] for m in nm_ if m not in om]
         adjmoves = [f"{nm_[m]['n']}（威力{om[m]['p']}→{nm_[m]['p']}）" for m in nm_ if m in om and nm_[m]['p']!=om[m]['p']]
-        def sec(title, items, cap=30):
+        head = []   # お知らせの件名に出す要約
+        def sec(title, items, cap=30, short=None):
             if items:
                 lines.append(f"### {title}（{len(items)}件）")
                 lines.extend(f"- {x}" for x in items[:cap])
                 if len(items)>cap: lines.append(f"- …他{len(items)-cap}件")
                 lines.append("")
-        sec("🆕 新ポケモン・新実装", added)
-        sec("🟣 新シャドウ実装", newshadow)
-        sec("📊 種族値変更", statchg)
-        sec("⚔️ 覚える技の追加", movechg)
-        sec("✨ 新しい技", newmoves)
-        sec("🔧 技の威力調整", adjmoves)
-        sec("🗑️ 削除", removed)
+                if short: head.append(f"{short}{len(items)}件")
+        sec("🆕 新ポケモン・新実装", added, short="新ポケモン")
+        sec("🟣 新シャドウ実装", newshadow, short="新シャドウ")
+        sec("📊 種族値変更", statchg, short="種族値変更")
+        sec("⚔️ 覚える技の追加", movechg, short="技の追加")
+        sec("✨ 新しい技", newmoves, short="新しい技")
+        sec("🔧 技の威力調整", adjmoves, short="威力調整")
+        sec("🗑️ 削除", removed, short="削除")
+        print("HEADLINE: " + ("・".join(head) if head else "内部データの調整のみ"))
     if not lines:
         lines = ["データに実質的な変更はありません（CPM表・相性表など内部値のみの差分の可能性）。"]
     open('changes.md','w',encoding='utf-8').write(
-        "## データ更新の内容\n\nこの内容で問題なければ **Merge pull request** を押すとサイトに反映されます。反映しない場合はこのPRを **Close** してください。\n\n" + "\n".join(lines))
+        "## データ更新の内容\n\n"
+        "この内容はすでにサイトへ反映済みです。読み終わったらこのお知らせを閉じてください。\n"
+        "（次の更新のときに自動で閉じるので、そのままでも大丈夫です）\n\n" + "\n".join(lines))
 
     open('godata.json','w',encoding='utf-8').write(god)
     tpl = open('template.html', encoding='utf-8').read()
