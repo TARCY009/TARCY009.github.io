@@ -348,7 +348,56 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .pttbar{flex:1;min-width:0;height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
 .pttbar i{display:block;height:100%;border-radius:99px}
 .pttrow b{font-size:.72rem;font-weight:800;width:34px;text-align:right}
-@media (max-width:420px){.ptdwrap{width:88px;height:88px}.ptchart{gap:10px}.pttnm{width:96px}}
+/* 3匹の働き(勝ち数のバー＋この子だけが勝てる相手の数)。苦手タイプのバーと見た目をそろえる */
+.ptroles{margin:0 0 7px;max-width:420px}
+.ptttl small{font-weight:400;margin-left:2px}
+.ptrrow{display:flex;align-items:center;gap:7px;width:100%;padding:2px 6px;margin-bottom:2px;
+  background:none;border:1px solid transparent;border-radius:8px;cursor:pointer}
+.ptrrow[aria-pressed="true"]{border-color:var(--cy);background:var(--bg2)}
+.ptrnm{display:flex;align-items:center;gap:4px;flex-shrink:0;width:108px;font-size:.72rem;color:var(--ink);
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ptrbar{flex:1;min-width:0;height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.ptrbar i{display:block;height:100%;border-radius:99px}
+.ptrrow>b{font-size:.72rem;font-weight:800;text-align:right}
+.ptrrow>small{font-size:.6rem;color:var(--sub);margin-left:-4px}
+.ptronly{flex-shrink:0;width:74px;text-align:right;font-style:normal;font-size:.64rem;color:var(--sub)}
+.ptronly b{font-size:.76rem;font-weight:800;color:var(--cy);margin-left:2px}
+.ptronly.dup{color:var(--gold)}
+/* シールドのボタンに出す、その枚数での穴の数 */
+.ptsh button .shhole{margin-left:5px;padding:0 5px;border-radius:99px;font-size:.62rem;font-weight:800;
+  color:#fff;background:var(--lose)}
+.ptsh button .shhole.zero{background:var(--win);color:#08210f}
+.holesub .wavg{margin-left:8px;padding:1px 7px;border-radius:99px;background:var(--bg2);border:1px solid var(--line)}
+/* 入れ替え候補: 穴を埋められるポケモンの提案(タップで枠に入る) */
+.ptswap{margin:0 0 8px}
+.ptswbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ptswbtn{padding:6px 14px;font-size:.74rem;font-weight:800;color:#3a2a00;border:none;border-radius:999px;cursor:pointer;
+  background:linear-gradient(160deg,#ffe9a8 0%,#f5c33c 45%,#c98f10 100%);
+  box-shadow:0 3px 0 rgba(0,0,0,.4),0 5px 16px rgba(245,195,60,.32),inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .08s,box-shadow .08s}
+.ptswbtn:hover{transform:translateY(-1px)}
+.ptswbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.ptswbtn:disabled{opacity:.5;cursor:default;transform:none}
+.ptswundo{margin-left:auto;padding:5px 11px;font-size:.7rem;color:var(--ink);background:var(--bg2);
+  border:1px solid var(--line);border-radius:999px;cursor:pointer}
+.ptswmsg{font-size:.72rem;color:var(--sub);margin-top:6px}
+.ptswlist{margin-top:6px;display:flex;flex-direction:column;gap:4px;max-width:520px}
+.ptswrow{display:flex;align-items:center;gap:10px;width:100%;padding:5px 8px;cursor:pointer;
+  background:var(--bg2);border:1px solid var(--line);border-radius:9px;text-align:left}
+.ptswrow:hover{border-color:var(--gold)}
+.ptswnm{flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:.76rem;color:var(--ink)}
+.ptswnm s{color:var(--sub);text-decoration-color:var(--lose)}
+.ptswnm b{font-weight:800}
+.ptswnm small{width:100%;font-size:.62rem;color:var(--sub)}
+.ptswd{flex-shrink:0;font-size:.76rem;color:var(--sub);white-space:nowrap}
+.ptswd small{font-size:.6rem;margin-right:3px}
+.ptswd em{font-style:normal;margin:0 2px;color:var(--sub)}
+.ptswd b{font-weight:800;color:var(--ink)}
+.ptswd b.good{color:var(--win)}
+.ptswnote{font-size:.64rem;color:var(--sub);line-height:1.5}
+@media (max-width:420px){.ptdwrap{width:88px;height:88px}.ptchart{gap:10px}.pttnm{width:96px}
+  .ptrnm{width:88px}.ptronly{width:66px}
+  .ptswrow{gap:6px}.ptswnm{font-size:.72rem}.ptswd{font-size:.7rem}}
 /* パーティ診断の見出し行(右上に「わざ｜オート」を置く) */
 .phead{display:flex;align-items:flex-start;gap:8px}
 .phead h3{flex:1;min-width:0}

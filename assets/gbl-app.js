@@ -832,6 +832,34 @@ ${PAGE_ROCKET ? '' : `
   3匹編成で<b>50％</b>なら「どの相手にも平均1.5匹が勝てる」という意味になります。
   数字が大きいほど、どの相手にも選べる手が多いパーティです（勝てるのが0匹の相手が<b>穴</b>）。</p>
 
+  <h4>パーティ診断の「実戦想定」</h4>
+  <p>平均勝率は環境上位50匹を<b>同じ重さ</b>で数えたものですが、実際は<b>上位の相手ほどよく当たります</b>。
+  そこで順位の重みを掛けたものが<b>実戦想定</b>です（環境スコアと同じ重みの付け方）。
+  よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
+
+  <h4>パーティ診断の「3匹の働き」</h4>
+  <p>横棒はその子が勝てる相手の数。右の<b>この子だけ◯</b>は、
+  <b>その相手に勝てるのがその子しかいない</b>数です（＝抜くとそこが穴になる）。
+  <b>代役あり</b>と出たら、他の2匹で代われるので入れ替えても穴は増えません。
+  タップすると、その子だけが勝てる相手に表を絞り込みます。</p>
+
+  <h4>パーティ診断のシールドの数字</h4>
+  <p>🛡のボタンに付く数字は、<b>その枚数で戦ったときの穴の数</b>です。
+  わざ構成はいま選んでいる枚数で決めたものを使い回すので、
+  「同じ3匹のまま、シールドの枚数だけ変えたらどうなるか」が見られます。</p>
+
+  <h4>パーティ診断の「🔧 入れ替え候補」</h4>
+  <p>いまの<b>穴</b>（穴が無ければ勝てるのが1匹以下の薄い対面）を埋められるポケモンを探し、
+  <b>どの子と入れ替えると穴が何匹減り、勝率がどう変わるか</b>を出します。
+  並びは「穴の減り」と「勝率の上がり」の合計順です（穴1匹 ≒ 勝率3ポイントとして扱います）。</p>
+  <p>範囲は<b>環境上位</b>（100匹・実戦の定番のわざ構成で計算）と
+  <b>全ポケモン</b>（シャドウ込み・約1600匹。わざはダメージ効率で選んだノーマル1本＋SP2本）。
+  全ポケモンは数が多いので、<b>穴に強そうな順に絞ってから</b>くらべます（何匹くらべたかは下に出ます）。</p>
+  <p>行をタップすると、<b>そこに出ているわざのまま</b>枠に入ります。
+  提案の数字はそのわざ構成での結果なので、オートのままだと構成を選び直して数字が変わってしまいます。
+  そのため<b>わざはマニュアルに切り替わり</b>、残る2匹も<b>いま出ている構成のまま固定</b>されます
+  （＝入れ替えた結果が提案どおりの数字になります）。<b>↩ 元に戻す</b>で1つ前に戻せます。</p>
+
   <h4>パーティ診断の「わざ｜オート」</h4>
   <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
   （対面ごとに選び直しません）。押して<b>マニュアル</b>にすると、枠のわざ欄を自分で選べます。
@@ -1573,8 +1601,12 @@ function applyView(box, vn) {
   else if (V.filter === 'best') rows = rows.filter(r => r.nWin === 3);
   else if (V.filter === 'hole') rows = rows.filter(r => r.nWin === 0);
   else if (V.filter === 'thin') rows = rows.filter(r => r.nWin <= 1);
-  // 図から選んだ絞り込み(nX=勝てる数がちょうどX / ty:○○=そのタイプの相手)
+  // 図から選んだ絞り込み(nX=勝てる数がちょうどX / ty:○○=そのタイプの相手 / onlyX=X番目の子だけが勝てる相手)
   else if (/^n\d$/.test(V.filter)) rows = rows.filter(r => r.nWin === +V.filter.slice(1));
+  else if (/^only\d$/.test(V.filter)) {
+    const j = +V.filter.slice(4);
+    rows = rows.filter(r => r.nWin === 1 && r.cells[j] && r.cells[j].w === 0);
+  }
   else if (V.filter.startsWith('ty:')) rows = rows.filter(r => (r.ty || []).includes(V.filter.slice(3)));
   if (V.sort === 'bad') rows.sort((a, b) => a.sc - b.sc);
   else if (V.sort === 'good') rows.sort((a, b) => b.sc - a.sc);
@@ -1830,6 +1862,28 @@ function ptTypeHtml(res, n) {
     `<span class="pttbar"><i style="width:${Math.max(2, Math.round(r.p * 100))}%;background:${ptWinColor(r.p)}"></i></span>` +
     `<b style="color:${ptWinColor(r.p)}">${Math.round(r.p * 100)}%</b></button>`).join('') + '</div>';
 }
+// 3匹それぞれの働き。「この子だけが勝てる相手」が0匹なら、抜いても穴が増えない＝役割が被っている
+// (勝ち数が多くても役割が被っていることはあるので、入れ替えを考えるときの手がかりになる)
+function ptRoleHtml(res, names) {
+  if (names.length < 2) return '';
+  const rows = names.map((nm, j) => ({
+    j, nm,
+    win: res.filter(r => r.cells[j].w === 0).length,
+    // その相手に勝てるのがこの子だけ = この子を抜くとそこが穴になる
+    only: res.filter(r => r.nWin === 1 && r.cells[j].w === 0).length,
+  }));
+  const mx = Math.max(1, ...rows.map(r => r.win));
+  return `<div class="ptroles"><div class="ptttl">3匹の働き<small>／この子だけが勝てる相手</small></div>` +
+    rows.map(r => `<button class="ptrrow" data-flt="only${r.j}" aria-pressed="false"` +
+      ` title="${r.nm}だけが勝てる相手 ${r.only}匹（タップで表を絞り込み）。0匹なら他の2匹で代われるので、入れ替えても穴は増えません">` +
+      `<span class="ptrnm"><span class="pcolnum">${r.j + 1}</span>${r.nm}</span>` +
+      `<span class="ptrbar"><i style="width:${Math.max(2, Math.round(r.win / mx * 100))}%;` +
+      `background:${ptWinColor(r.win / res.length)}"></i></span>` +
+      `<b>${r.win}</b><small>/${res.length}</small>` +
+      (r.only ? `<em class="ptronly">この子だけ<b>${r.only}</b></em>`
+              : `<em class="ptronly dup">代役あり</em>`) +
+      `</button>`).join('') + '</div>';
+}
 
 // ---- パーティ3匹の穴チェック ----
 // PT[i] = ★登録リストと同じ形({key, ivMode, mIvs, mLevel, fast, c1, c2, shadow, maxLv})
@@ -2033,6 +2087,38 @@ function ptBase(m, capX) {
   const r = rank1(m.key, cp, 0, m.maxLv || 51);
   return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap: cp };
 }
+// シールドの枚数ごとの「穴」(3匹とも勝てない相手)の数。
+// わざの構成は選択中の枚数で決まったもの(usedPols)を使い回す＝いま表に出ている3匹の話のまま、
+// 枚数だけ変えたらどうなるかを見る。選択中の枚数は表と食い違わないよう PV.results から数える
+function ptShieldHoles(list, bases, usedPols, curHoles) {
+  const out = { [ptShield]: curHoles };
+  [0, 1, 2].filter(sh => sh !== ptShield).forEach(sh => {
+    let holes = 0;
+    list.forEach(m => {
+      const r1 = rank1(m.k, cap);
+      const op = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
+        bluff: metaBluff, shields: sh, fast: m.f || movePool(m.k).fasts[0],
+        charged: [m.c1, m.c2].filter(Boolean) };
+      const win = bases.some((b, j) => PvpEngine.simulate(D,
+        { ...b, ...usedPols[j], timing: 'optimal', shields: sh, bluff: metaBluff }, op, SIMOPT).winner === 0);
+      if (!win) holes++;
+    });
+    out[sh] = holes;
+  });
+  return out;
+}
+// シールドのボタンに、その枚数での穴の数をバッジで出す(nullで消す)
+function syncPtShieldBadges(h) {
+  document.querySelectorAll('#party .ptsh button').forEach(b => {
+    const v = +b.dataset.v, n = h ? h[v] : null;
+    let e = b.querySelector('.shhole');
+    if (n == null) { if (e) e.remove(); b.removeAttribute('title'); return; }
+    if (!e) { e = document.createElement('b'); b.appendChild(e); }
+    e.className = 'shhole' + (n ? '' : ' zero');
+    e.textContent = n ? '穴' + n : '穴なし';
+    b.title = `おたがい${v}枚のとき、3匹とも勝てない相手が${n}匹`;
+  });
+}
 function runParty() {
   const box = document.getElementById('party');
   const body = box.querySelector('.pbody');
@@ -2045,7 +2131,8 @@ function runParty() {
   const token = ++multiToken;
   const PV = VIEWS.party;
   // 図から選んだ絞り込みは、パーティが変わると意味が変わるので持ち越さない
-  if (PV.filter.startsWith('ty:') || (/^n\d$/.test(PV.filter) && +PV.filter.slice(1) > idxs.length)) PV.filter = 'all';
+  if (PV.filter.startsWith('ty:') || (/^n\d$/.test(PV.filter) && +PV.filter.slice(1) > idxs.length)
+    || (/^only\d$/.test(PV.filter) && +PV.filter.slice(4) >= idxs.length)) PV.filter = 'all';
   PV.results = [];
   PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${ptName(PT[i])}`);
   PV.pick = (k, j) => {   // セルをタップ→そのメンバーと相手を同じシールド枚数で1対1シミュへ
@@ -2065,9 +2152,11 @@ function runParty() {
   const names = idxs.map(i => ptName(PT[i]));
   // 診断のまとめ(図)は表の上に置く。計算中は進み具合をここに出す
   body.innerHTML = `<div class="mtprog">計算中 0/${list.length}</div>
+    <div class="ptswap" id="ptswap"></div>
     ${ctlHtml('party')}
     <table class="mttbl ptbl"><tbody></tbody></table>`;
   const prog = body.querySelector('.mtprog');
+  syncPtShieldBadges(null);   // 計算し直すあいだ、前回のバッジは消しておく
   updateUrl();
   let idx = 0;
   const step = () => {
@@ -2118,10 +2207,25 @@ function runParty() {
       // 平均勝率は「相手1匹に何匹が勝てるか」を割合にして出す(1.50/3匹 = 50％)
       const avg = Math.round(PV.results.reduce((a, r) => a + r.nWin, 0)
         / (PV.results.length * idxs.length) * 100);
+      // 実戦想定の勝率: 上位の相手ほど当たりやすいので、環境スコアと同じ採用率の重み(順位の逆順)を掛ける。
+      // 引き分けを0.5とするのも環境一覧と同じ扱い
+      let wSum = 0, wWin = 0;
+      PV.results.forEach((r, k) => {
+        const wgt = PV.results.length - k;
+        wSum += wgt;
+        wWin += wgt * (r.nWin + r.cells.filter(c => c.w === 'draw').length * 0.5);
+      });
+      const wavg = Math.round(wWin / (wSum * idxs.length) * 100);
+      // シールドの枚数ごとの穴の数。わざの構成は選択中の枚数で決めたものを使い回す
+      // (枚数ごとに構成を選び直すと、いま表に出ている構成の話ではなくなるため)
+      syncPtShieldBadges(ptShieldHoles(list, bases, idxs.map((pi, j) => pols[j][use[j]]),
+        PV.results.filter(r => r.nWin === 0).length));
       // 穴の数は円グラフの中央に出すので、文字では繰り返さない(平均勝率と前提だけ添える)
       prog.innerHTML = `<div class="ptchart">${ptDonutHtml(PV.results, idxs.length)}</div>` +
         ptTypeHtml(PV.results, idxs.length) +
+        ptRoleHtml(PV.results, names) +
         `<div class="holesub">平均勝率：<b>${avg}％</b>` +
+        `<span class="wavg" title="上位の相手ほど当たりやすいので、順位の重みを掛けた勝率です。よく当たる相手に強いパーティほど高くなります（環境スコアと同じ重みの付け方）">実戦想定 <b>${wavg}％</b></span>` +
         `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>` +
         // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
         `<div class="holenote">${ptAuto
@@ -2132,11 +2236,340 @@ function runParty() {
         PV.filter = PV.filter === el.dataset.flt ? 'all' : el.dataset.flt;
         applyView(body, 'party');
       });
+      // 入れ替え候補は、いまの診断結果を土台にして探す(パーティや条件が変わったら作り直す)
+      PTS.base = { list, idxs, bases, results: PV.results,
+        usedPols: idxs.map((pi, j) => pols[j][use[j]]) };
+      PTS.rows = null; PTS.busy = false;
+      renderPtSwap();
       bindCtl(body, 'party');
       applyView(body, 'party');
     }
   };
   step();
+}
+
+// ---- 入れ替え候補: 穴を埋められるポケモンを探して「①を△△に替えると穴が8→1」を出す ----
+// 手順は3つ。①埋めたい相手(穴。無ければ薄い対面)を決める
+// ②計算式で見込みのある候補まで絞る(環境上位なら全部・全ポケモンは約1600匹あるので絞る)
+// ③絞った候補を環境の全員と戦わせて、入れ替えたあとの穴の数と勝率を出す
+// 提案は「そこに出ているわざ構成で戦ったら」の数字なので、入れ替えるときはその構成ごと枠に入れる
+// (オートのままだと構成を選び直して数字が変わるため、わざはマニュアルへ切り替える)
+const PTS = { range: 100, rows: null, base: null, busy: false, undo: null, msg: '', scan: null };
+const PTS_RANGES = [
+  { v: '100', t: '環境上位', d: '環境上位100匹から探す（初期表示）。人が確認した実戦の定番構成で計算します' },
+  { v: 'all', t: '全ポケモン', d: '環境の順位に関係なく全ポケモン（シャドウ込み・約1600匹）から探す。環境上位は必ず候補に入れたうえで、残りは穴に強そうな順に絞ってくらべます' },
+];
+// シミュにかける候補の数。環境上位(約100匹)は全部くらべる。
+// 全ポケモン(約1600匹)は全部やると数十秒かかるので、計算式で見込みのある順に絞る
+const ptRoughN = () => (PTS.range === 'all' ? 120 : 999);
+
+// 候補の一覧。すでにパーティにいるポケモンは除く
+function ptSwapPool() {
+  const used = new Set(PTS.base.idxs.map(i => PT[i].key + (PT[i].shadow ? '|s' : '')));
+  if (PTS.range !== 'all') {
+    const src = cup ? (cup.list || []).concat(cup.ext || [])
+      : ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || []);
+    return src.filter(m => !used.has(m.k + (m.s ? '|s' : '')));
+  }
+  // 全ポケモンは構成の総当たりが重すぎるので、わざはダメージ効率で選ぶ
+  // (ノーマルは1ターンあたり・SPは効率のよい2本。実戦のわざ開放に合わせてSPは2本持たせる)
+  // ただし環境上位に載っているポケモンは、人が確認した確定値の構成をそのまま使う
+  const meta = new Map();
+  (cup ? (cup.list || []).concat(cup.ext || [])
+    : ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || []))
+    .forEach(m => meta.set(m.k + (m.s ? '|s' : ''), m));
+  const megaOk = !!(cup && cup.slug.startsWith('mega'));
+  const out = [];
+  for (const key of KEYS) {
+    if (isMega(key) && !megaOk) continue;
+    const p = D.pokemon[key];
+    const { fasts, chargeds } = movePool(key);
+    if (!fasts.length) continue;
+    const dpt = m => D.moves[m].p * (p.ty.includes(D.moves[m].t) ? 1.2 : 1) / (D.moves[m].tn || 1);
+    const dpe = m => D.moves[m].p / D.moves[m].e;
+    const f = fasts.slice().sort((a, b) => dpt(b) - dpt(a))[0];
+    const cs = chargeds.slice().sort((a, b) => dpe(b) - dpe(a)).slice(0, 2);
+    for (const sh of (p.shadow ? [false, true] : [false])) {
+      const mk = key + (sh ? '|s' : '');
+      if (used.has(mk)) continue;
+      // meta=1 の印を付けた候補は、計算式の絞り込みに関係なく必ずくらべる
+      // (「全ポケモン」の提案が「環境上位」より悪くなるのはおかしいため)
+      const mm = meta.get(mk);
+      out.push(mm ? { ...mm, meta: 1 }
+        : { k: key, n: (sh ? 'シャドウ' : '') + p.n, s: sh ? 1 : 0, f,
+            c1: cs[0] || undefined, c2: cs[1] || undefined });
+    }
+  }
+  return out;
+}
+// 1ターンあたりの総ダメージ(ノーマルを打ちながらSPをためて撃つ想定)。
+// シミュを回さずに強さを見積もるための式で、候補を絞る前段にだけ使う
+function ptCycleDpt(fastId, chargedId, me, foe) {
+  const mf = D.moves[fastId];
+  if (!mf) return 0;
+  const df = PvpEngine.damage(D, mf, me, foe);
+  const mc = chargedId ? D.moves[chargedId] : null;
+  const add = mc && mc.e ? PvpEngine.damage(D, mc, me, foe) * ((mf.e || 0) / mc.e) : 0;
+  return (df + add) / (mf.tn || 1);
+}
+const ptBestDpt = (fasts, chargeds, me, foe) => {
+  let v = 0;
+  for (const f of fasts) {
+    if (!chargeds.length) { v = Math.max(v, ptCycleDpt(f, null, me, foe)); continue; }
+    for (const c of chargeds) v = Math.max(v, ptCycleDpt(f, c, me, foe));
+  }
+  return v;
+};
+// いちばん痛いSPアタックのダメージ。シールドで防げるぶんを耐久に足すのに使う
+const ptBestSp = (chargeds, me, foe) => {
+  let v = 0;
+  for (const c of chargeds) v = Math.max(v, PvpEngine.damage(D, D.moves[c], me, foe));
+  return v;
+};
+// 粗選別用のざっくりした個体(理想個体値で、CP上限に収まる最大レベル)。
+// 正規の rank1 は1匹あたり4096通りを調べるので、全ポケモン(約1600匹)に掛けると数秒かかる。
+// 候補を並べるだけならこの近似で足りる(本計算に回す数十匹は正規の rank1 で計算し直す)
+const PTRB = new Map();
+function ptRoughBase(key, shadow) {
+  const ck = key + '|' + cap;
+  let v = PTRB.get(ck);
+  if (!v) {
+    const p = D.pokemon[key];
+    if (!cap) v = { ivs: [15, 15, 15], level: 50 };
+    else {
+      const LV = levelsUpTo(51);
+      let lo = 0, hi = LV.length - 1, li = 0;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (cpOf(p, 15, 15, 15, D.cpm[String(LV[mid])]) <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      v = { ivs: [15, 15, 15], level: LV[li] };
+    }
+    PTRB.set(ck, v);
+  }
+  return { key, ivs: v.ivs, level: v.level, shadow, cap };
+}
+// 見込みのある候補を計算式で選ぶ。全候補をシミュすると1匹あたり50戦で重すぎるため、
+// ここで数十匹まで絞ってから本計算に回す。
+// 見るのは「埋めたい相手(穴)への強さ」だけではなく「環境全体への強さ」も。
+// 穴だけで選ぶと、そこにしか刺さらない尖ったポケモンばかりが上がってきてパーティが弱くなる
+function ptSwapRough(pool, targets, wide, keep) {
+  const mk = list => list.map(m => {
+    const r1 = rank1(m.k, cap);
+    const st = { ...PvpEngine.buildStats(D, { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, cap }),
+      buffs: [0, 0] };
+    const mp = movePool(m.k);
+    const cs = [m.c1, m.c2].filter(Boolean);
+    return { st, fasts: m.f ? [m.f] : mp.fasts, chargeds: cs.length ? cs : mp.chargeds };
+  });
+  const tg = mk(targets), wd = mk(wide);
+  const scored = pool.map(c => {
+    const me = { ...PvpEngine.buildStats(D, ptRoughBase(c.k, !!c.s)), buffs: [0, 0] };
+    const mp = movePool(c.k);
+    const cs = [c.c1, c.c2].filter(Boolean);
+    const fasts = c.f ? [c.f] : mp.fasts, chargeds = cs.length ? cs : mp.chargeds;
+    const sum = (arr, w) => {
+      let s = 0;
+      for (const t of arr) {
+        const mine = ptBestDpt(fasts, chargeds, me, t.st);
+        const theirs = ptBestDpt(t.fasts, t.chargeds, t.st, me);
+        if (!mine || !theirs) continue;
+        // シールドで防げるぶんを耐久に足す。ここを見ないと、
+        // 防御が低いかわりに火力で押す強豪(シールドがあれば十分戦える)を落としてしまう
+        const myHp = me.hp + ptShield * ptBestSp(t.chargeds, t.st, me);
+        const foeHp = t.st.hp + ptShield * ptBestSp(chargeds, me, t.st);
+        const myTtk = foeHp / mine;   // 相手を倒すまでのターン数
+        // 制限時間(480ターン)内に倒しきれない相手は勝ちようがない。
+        // こういう候補はシミュも最後まで回って重いので、ここで落としておく
+        if (myTtk > 400) { s -= w; continue; }
+        // 倒すまでのターン数と、自分が倒されるまでのターン数の比(1匹に偏らないよう上限を付ける)
+        s += w * Math.min(2.5, (myHp / theirs) / myTtk);
+      }
+      return s;
+    };
+    // 穴を埋められるかを重く見つつ、環境全体への強さも見る(1匹あたりの平均でそろえる)
+    const sc = (tg.length ? sum(tg, 2) / tg.length : 0) + (wd.length ? sum(wd, 1) / wd.length : 0);
+    return { c, sc };
+  });
+  // 環境上位(meta=1)は必ず残し、残りは見込みのある順に keep 匹だけ足す
+  const must = scored.filter(x => x.c.meta);
+  return must.concat(scored.filter(x => !x.c.meta).sort((a, b) => b.sc - a.sc).slice(0, keep));
+}
+// 候補1匹を環境の全員と戦わせて、勝てたかどうかの配列を返す。
+// 埋めたい相手(hot)を先に戦って、1匹も勝てなければ残りは省く(穴を埋められない候補に50戦かけない)
+function ptSwapWins(cb, pol, foes, hot) {
+  const me = { ...cb, ...pol, timing: 'optimal', shields: ptShield, bluff: metaBluff };
+  const sim = k => PvpEngine.simulate(D, me, foes[k], SIMOPT).winner === 0;
+  const wins = new Array(foes.length);
+  let any = false;
+  for (const k of hot) { wins[k] = sim(k); if (wins[k]) any = true; }
+  if (!any) return null;
+  for (let k = 0; k < foes.length; k++) if (wins[k] === undefined) wins[k] = sim(k);
+  return wins;
+}
+// 候補を j 番目のメンバーと入れ替えたときの穴の数・勝ち数の合計
+function ptSwapScore(wins, rest, j, n) {
+  let holes = 0, tot = 0;
+  for (let k = 0; k < wins.length; k++) {
+    const nw = rest[k][j] + (wins[k] ? 1 : 0);
+    tot += nw;
+    if (!nw) holes++;
+  }
+  return { holes, avg: tot / (wins.length * n) };
+}
+function runPtSwap() {
+  const B = PTS.base;
+  if (!B || PTS.busy) return;
+  PTS.busy = true; PTS.rows = null; PTS.msg = ''; PTS.scan = null;
+  renderPtSwap();
+  const n = B.idxs.length;
+  const foes = B.list.map(m => {
+    const r1 = rank1(m.k, cap);
+    return { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
+      bluff: metaBluff, shields: ptShield, fast: m.f || movePool(m.k).fasts[0],
+      charged: [m.c1, m.c2].filter(Boolean) };
+  });
+  // rest[相手][メンバー] = そのメンバーを抜いた残りが勝てる数(いまの診断結果から作る)
+  const rest = B.results.map(r => r.cells.map((c, j) => r.nWin - (c.w === 0 ? 1 : 0)));
+  const now = { holes: B.results.filter(r => r.nWin === 0).length,
+    avg: B.results.reduce((a, r) => a + r.nWin, 0) / (B.results.length * n) };
+  const pool = ptSwapPool();
+  const token = ++multiToken;
+  const found = [];
+  let short = [], hot = [], idx = 0;
+  // ①埋めたい相手(穴。無ければ薄い対面)を決めて、そこに強い候補だけを計算式で選ぶ
+  const step0 = () => {
+    if (token !== multiToken) { PTS.busy = false; return; }
+    let tg = B.results.filter(r => r.nWin === 0);
+    if (!tg.length) tg = B.results.filter(r => r.nWin <= 1);
+    if (!tg.length) tg = B.results.slice(0, 10);
+    hot = tg.map(r => r.idx);
+    // 環境全体への強さは、採用率の高い上位20匹で見る(全員だと計算式でも重い)
+    short = ptSwapRough(pool, tg.map(r => r.m), B.list.slice(0, 20), ptRoughN());
+    PTS.scan = { pool: pool.length, short: short.length, target: tg.length };
+    setTimeout(step1, 0);
+  };
+  // ②絞った候補を環境の全員と戦わせて、入れ替えたときの穴の数と勝率を出す
+  const step1 = () => {
+    if (token !== multiToken) { PTS.busy = false; return; }
+    const t0 = performance.now();
+    while (idx < short.length && performance.now() - t0 < 40) {
+      const { c } = short[idx++];
+      // 本計算はここから。個体値は正規の rank1(CP上限内でいちばん強い個体)で計算し直す
+      const cb = ptBase({ key: c.k, ivMode: 'auto', shadow: !!c.s, maxLv: 51 });
+      const pol = { fast: c.f || movePool(c.k).fasts[0], charged: [c.c1, c.c2].filter(Boolean) };
+      const wins = ptSwapWins(cb, pol, foes, hot);
+      if (!wins) continue;   // 埋めたい相手に1匹も勝てない＝入れ替える意味がない
+      let best = null;
+      for (let j = 0; j < n; j++) {
+        const s = ptSwapScore(wins, rest, j, n);
+        if (!best || s.holes < best.holes || (s.holes === best.holes && s.avg > best.avg)) best = { ...s, j };
+      }
+      // いまより悪くなる候補は出さない(穴が増える・勝率が下がる)
+      if (best.holes < now.holes || (best.holes === now.holes && best.avg > now.avg))
+        found.push({ c, cb, pol, ...best });
+    }
+    if (idx < short.length) {
+      ptSwapProg(`くらべています ${idx}/${short.length}`);
+      setTimeout(step1, 0);
+    } else {
+      // 並びは「穴がどれだけ減るか」と「勝率がどれだけ上がるか」の合計。
+      // 穴だけで並べると、穴を1匹減らすかわりに勝率を大きく落とす候補が上に来てしまう
+      // (穴1匹 ≒ 勝率3ポイントとして扱う)
+      const gain = r => (now.holes - r.holes) * 3 + (r.avg - now.avg) * 100;
+      PTS.rows = found.sort((a, b) => gain(b) - gain(a)).slice(0, 5)
+        .map(r => ({ key: r.c.k, name: r.c.n, shadow: !!r.c.s, j: r.j, holes: r.holes, avg: r.avg,
+          mv: polToMv(r.c.k, r.pol) }));
+      PTS.now = now;
+      PTS.busy = false; PTS.msg = PTS.rows.length ? '' : 'いまより良くなる入れ替えは見つかりませんでした';
+      renderPtSwap();
+    }
+  };
+  ptSwapProg('候補を絞っています…');
+  setTimeout(step0, 0);
+}
+// 計算中の進み具合。枠ごと描き直すと下の表まで並べ直しになって重いので、文字だけ差し替える
+function ptSwapProg(msg) {
+  PTS.msg = msg;
+  const e = document.querySelector('#ptswap .ptswmsg');
+  if (e) e.textContent = msg; else renderPtSwap();
+}
+// 入れ替え候補の表示(ボタン→計算中→結果)。パーティが変わるたびに作り直す
+function renderPtSwap() {
+  const box = document.getElementById('ptswap');
+  if (!box || !PTS.base) return;
+  const B = PTS.base;
+  const names = B.idxs.map(i => ptName(PT[i]));
+  const range = `<div class="opts ptswrange">` + PTS_RANGES.map(o =>
+    `<button data-v="${o.v}" aria-pressed="${o.v === String(PTS.range)}" title="${o.d}">${o.t}</button>`).join('') + '</div>';
+  // 「元に戻す」は、入れ替えたポケモンがまだ枠にいるときだけ出す
+  // (そのあと自分で枠を変えたなら、戻す先はもう意味がない)
+  const u = PTS.undo;
+  const canUndo = u && PT[u.i] && PT[u.i].key === u.key && !!PT[u.i].shadow === !!u.shadow;
+  const head = `<div class="ptswbar"><button class="ptswbtn" ${PTS.busy ? 'disabled' : ''}` +
+    ` title="いまの穴を埋められるポケモンを探して、どのメンバーと入れ替えると何匹減るかを出します">🔧 入れ替え候補</button>${range}` +
+    (canUndo ? `<button class="ptswundo" title="入れ替える前のポケモンに戻します">↩ 元に戻す</button>` : '') + '</div>';
+  let body = '';
+  if (PTS.busy) body = `<div class="ptswmsg">${PTS.msg || '計算中…'}</div>`;
+  else if (PTS.msg) body = `<div class="ptswmsg">${PTS.msg}</div>`;
+  else if (PTS.rows && PTS.rows.length) {
+    const now = PTS.now;
+    body = '<div class="ptswlist">' + PTS.rows.map((r, i) => {
+      const mv = [r.mv.fast, r.mv.c1, r.mv.c2].filter(Boolean)
+        .map(m => D.moves[m] ? D.moves[m].n : '').filter(Boolean).join(' / ');
+      return `<button class="ptswrow" data-i="${i}" title="${names[r.j]}を${r.name}に替えたときの診断結果です（タップで枠に入れます）">` +
+        `<span class="ptswnm"><span class="pcolnum">${B.idxs[r.j] + 1}</span>` +
+        `<s>${names[r.j]}</s><i class="swapmark"></i><b>${r.name}</b><small>${mv}</small></span>` +
+        `<span class="ptswd"><small>穴</small>${now.holes}<em>→</em>` +
+        `<b class="${r.holes < now.holes ? 'good' : ''}">${r.holes}</b></span>` +
+        `<span class="ptswd"><small>勝率</small>${Math.round(now.avg * 100)}<em>→</em>` +
+        `<b class="${r.avg > now.avg ? 'good' : ''}">${Math.round(r.avg * 100)}</b><small>％</small></span>` +
+        `</button>`;
+    }).join('') +
+      `<div class="ptswnote">タップすると、下に出ているわざのまま枠に入ります（わざは<b>マニュアル</b>に切り替わります）` +
+      (PTS.scan ? '<br>' + (PTS.scan.short >= PTS.scan.pool
+        ? `${PTS.scan.pool}匹すべてとくらべました`
+        : `${PTS.scan.pool}匹から、環境上位＋穴に強そうな<b>${PTS.scan.short}匹</b>をくらべました`)
+        : '') + '</div></div>';
+  }
+  box.innerHTML = head + body;
+  const btn = box.querySelector('.ptswbtn');
+  if (btn) btn.onclick = () => runPtSwap();
+  box.querySelectorAll('.ptswrange button').forEach(b => b.onclick = () => {
+    if (b.dataset.v === String(PTS.range) || PTS.busy) return;
+    PTS.range = b.dataset.v === 'all' ? 'all' : +b.dataset.v;
+    runPtSwap();
+  });
+  const un = box.querySelector('.ptswundo');
+  if (un) un.onclick = () => {
+    const u = PTS.undo;
+    PTS.undo = null;
+    PT[u.i] = u.was;
+    if (u.auto && !ptAuto) { ptAuto = true; savePtAuto(); syncPtAuto(); }
+    savePt();
+    [0, 1, 2].forEach(i => syncPartySlot(i));
+    run();
+  };
+  box.querySelectorAll('.ptswrow').forEach(el => el.onclick = () => {
+    const r = PTS.rows[+el.dataset.i], pi = B.idxs[r.j];
+    PTS.undo = { i: pi, was: PT[pi] ? { ...PT[pi] } : null, auto: ptAuto, key: r.key, shadow: r.shadow };
+    // 提案は「このわざ構成で戦ったら」の数字なので、オートのままだと構成を選び直して数字が変わる。
+    // 残る2匹はいま出ている構成をそのまま欄に書き込んでからマニュアルへ切り替える
+    // (こうすると、入れ替えた結果が提案どおりの数字になる＝表示と計算が食い違わない)
+    if (ptAuto) {
+      [0, 1, 2].forEach(i => {
+        if (!PT[i]) return;
+        const v = ptMvOf(i);
+        PT[i].fast = PT[i].fast || v.fast; PT[i].c1 = PT[i].c1 || v.c1; PT[i].c2 = PT[i].c2 || v.c2 || '';
+      });
+      ptAuto = false; savePtAuto(); syncPtAuto();
+    }
+    PT[pi] = { key: r.key, ivMode: 'auto', shadow: r.shadow, maxLv: 51,
+      fast: r.mv.fast, c1: r.mv.c1, c2: r.mv.c2 || '' };
+    savePt();
+    [0, 1, 2].forEach(i => syncPartySlot(i));
+    run();
+  });
 }
 
 // ---- ロケット団戦: あいての3枠(模擬戦で使う) ----
