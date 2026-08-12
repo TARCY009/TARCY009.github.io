@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  issues: write     # 更新結果の「お知らせ」を立てる（GitHubがそれをメールで送ってくれる）
 
 jobs:
   update-meta:
@@ -38,11 +39,13 @@ jobs:
         run: cat pvp-tests/meta_changes.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: 変化があればコミットして公開
+        id: commit
         env:
           HEADLINE: ${{ steps.moves.outputs.headline }}
         run: |
           if git diff --quiet assets/meta_lists.js assets/meta_moves.js; then
             echo "環境に変化なし。今回は更新しない"
+            echo "changed=0" >> "$GITHUB_OUTPUT"
           else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -50,4 +53,30 @@ jobs:
             git commit -m "chore: GBL環境上位リストとわざ構成を自動更新（${HEADLINE}）" \
                        -m "変更の内訳は pvp-tests/meta_changes.md を見てください。"
             git push
+            echo "changed=1" >> "$GITHUB_OUTPUT"
           fi
+
+      # 更新があった週だけ「お知らせ」を立てる。GitHubがこれをメールで送ってくれるので
+      # タダシさん側の設定は不要。先週までのお知らせは自動で閉じて受信箱をためない。
+      - name: 更新結果をお知らせする
+        if: steps.commit.outputs.changed == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEADLINE: ${{ steps.moves.outputs.headline }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          gh issue list --state open --limit 50 --json number,title \
+            | jq -r '.[] | select(.title | startswith("📢 環境リストの更新結果")) | .number' \
+            | xargs -r -I{} gh issue close {} --comment "新しいお知らせが届いたので閉じます。"
+          {
+            cat pvp-tests/meta_changes.md
+            echo
+            echo "---"
+            echo "この内容はすでにサイトへ反映済みです。読み終わったらこのお知らせを閉じてください。"
+            echo "（次の更新のときに自動で閉じるので、そのままでも大丈夫です）"
+            echo ""
+            echo "@${OWNER}"
+          } > /tmp/issue_body.md
+          gh issue create \
+            --title "📢 環境リストの更新結果（$(TZ=Asia/Tokyo date '+%-m/%-d')）${HEADLINE}" \
+            --body-file /tmp/issue_body.md

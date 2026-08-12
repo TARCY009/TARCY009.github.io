@@ -190,6 +190,9 @@ def sec(title, items):
     rep.append('')
 
 
+swapped = [0]   # 入れ替わり（入った＋抜けた）の合計。件名の要約に使う
+
+
 def churn(label, old_top, old_ext, new_top, new_ext):
     """入れ替わりを1グループぶん調べる。戻り値は新顔の行"""
     if old_top is None:
@@ -204,6 +207,7 @@ def churn(label, old_top, old_ext, new_top, new_ext):
     down = [m for k, m in nn.items() if k in on and k not in ntop and k in otop]
     if not (added or gone or up or down):
         return []
+    swapped[0] += len(added) + len(gone)
     rep.append(f'## {label}')
     rep.append('')
     sec('🆕 新しく入った', [f'{m["n"]}（{order[idm(m)]}位）' for m in added])
@@ -304,4 +308,6 @@ if not NO_REPORT:
     print('pvp-tests/meta_changes.md に更新結果を書き出しました')
 if todo_new:
     headline.insert(0, f'新顔{len(todo_new)}匹')
-print('HEADLINE: ' + ('・'.join(headline) if headline else '入れ替わりなし'))
+if swapped[0]:
+    headline.append(f'入れ替わり{swapped[0]}件')
+print('HEADLINE: ' + ('・'.join(headline) if headline else '順位の入れ替わりのみ'))
