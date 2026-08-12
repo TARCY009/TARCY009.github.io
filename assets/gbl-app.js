@@ -837,6 +837,15 @@ ${PAGE_ROCKET ? '' : `
   そこで順位の重みを掛けたものが<b>実戦想定</b>です（環境スコアと同じ重みの付け方）。
   よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
 
+  <h4>パーティ診断の円グラフ</h4>
+  <p>環境上位の相手を「<b>パーティの何匹が勝てるか</b>」で分けたものです。
+  <b>3匹 8</b>なら「3匹とも勝てる相手が8匹」。<b>0匹＝穴</b>で、中央にその数が出ます。
+  タップするとその相手だけに表を絞り込めます。</p>
+
+  <h4>パーティ診断の「特に弱い相手」</h4>
+  <p>穴になっている相手を<b>名前と環境順位</b>で並べます（穴が無いときは、勝てるのが1匹だけの相手）。
+  タイプだけ分かっても次の手は決まらないので、<b>そのまま下の入れ替え候補につながる</b>ように名前まで出しています。</p>
+
   <h4>パーティ診断の「3匹の働き」</h4>
   <p>横棒はその子が勝てる相手の数。右の<b>この子だけ◯</b>は、
   <b>その相手に勝てるのがその子しかいない</b>数です（＝抜くとそこが穴になる）。
@@ -851,6 +860,7 @@ ${PAGE_ROCKET ? '' : `
   <h4>パーティ診断の「🔧 入れ替え候補」</h4>
   <p>いまの<b>穴</b>（穴が無ければ勝てるのが1匹以下の薄い対面）を埋められるポケモンを探し、
   <b>どの子と入れ替えると穴が何匹減り、勝率がどう変わるか</b>を出します。
+  <b>枠ごとに「①マリルリを替えるなら…」とまとめて、それぞれ3つまで</b>候補を並べます。
   並びは「穴の減り」と「勝率の上がり」の合計順です（穴1匹 ≒ 勝率3ポイントとして扱います）。</p>
   <p>範囲は<b>環境上位</b>（100匹・実戦の定番のわざ構成で計算）と
   <b>全ポケモン</b>（シャドウ込み・約1600匹。わざはダメージ効率で選んだノーマル1本＋SP2本）。
@@ -1841,10 +1851,13 @@ function ptDonutHtml(res, n) {
       `<i style="background:${ptSegColor(k, n)}"></i>${lbl}<b>${cnt[k]}</b></button>`);
   }
   // 中央の文字はドーナツの穴あけ(mask)に巻き込まれないよう、別の要素で重ねる
+  // 見出しが無いと「3匹 8」が何の数字か伝わらないので、必ず添える
   return `<div class="ptdwrap">
       <div class="ptdonut" style="--g:conic-gradient(${segs.join(',')})"></div>
       <span class="ptdmid">${holes ? `<b class="bad">${holes}</b><small>穴</small>` : '<b class="ok">✅</b><small>穴なし</small>'}</span>
-    </div><div class="ptlegend">${legend.join('')}</div>`;
+    </div><div class="ptlegwrap">
+      <div class="ptttl">環境${res.length}匹のうち、パーティの<b>何匹が勝てるか</b></div>
+      <div class="ptlegend">${legend.join('')}</div></div>`;
 }
 // 相手のタイプごとの勝率。苦手な順に最大5つ出す(何を入れ替えるかの手がかり)
 function ptTypeHtml(res, n) {
@@ -1864,6 +1877,27 @@ function ptTypeHtml(res, n) {
     `<span class="pttnm">${typeIconHTML(r.t, 16)}${r.t}<small>${r.cnt}匹</small></span>` +
     `<span class="pttbar"><i style="width:${Math.max(2, Math.round(r.p * 100))}%;background:${ptWinColor(r.p)}"></i></span>` +
     `<b style="color:${ptWinColor(r.p)}">${Math.round(r.p * 100)}%</b></button>`).join('') + '</div>';
+}
+// 環境のどのポケモンに苦しんでいるかを、タイプではなく名前で出す。
+// 「じめんが苦手」と分かっても次の手は決まらないが、「この4匹に勝てない」なら
+// そのまま入れ替え候補につながる（穴が無いときは、勝てるのが1匹だけの薄い対面を出す）
+function ptWeakHtml(res) {
+  const holes = res.filter(r => r.nWin === 0);
+  const thin = res.filter(r => r.nWin === 1);
+  const list = holes.length ? holes : thin;
+  if (!list.length) return '';
+  const MAX = 10;
+  const chips = list.slice(0, MAX).map(r =>
+    `<span class="ptwchip"><em>${r.idx + 1}</em>${r.m.n}</span>`).join('');
+  return `<div class="ptweak${holes.length ? '' : ' thin'}">` +
+    `<button class="ptwhead" data-flt="${holes.length ? 'hole' : 'n1'}"` +
+    ` aria-pressed="false" title="タップで表をこの相手だけに絞り込みます">` +
+    (holes.length
+      ? `⚠ この<b>${holes.length}匹</b>には、3匹とも勝てません`
+      : `この<b>${thin.length}匹</b>には、1匹しか勝てません`) +
+    `<small>環境での順位つき</small></button>` +
+    `<div class="ptwchips">${chips}` +
+    (list.length > MAX ? `<span class="ptwmore">ほか${list.length - MAX}匹</span>` : '') + '</div></div>';
 }
 // 3匹それぞれの働き。「この子だけが勝てる相手」が0匹なら、抜いても穴が増えない＝役割が被っている
 // (勝ち数が多くても役割が被っていることはあるので、入れ替えを考えるときの手がかりになる)
@@ -2225,6 +2259,7 @@ function runParty() {
         PV.results.filter(r => r.nWin === 0).length));
       // 穴の数は円グラフの中央に出すので、文字では繰り返さない(平均勝率と前提だけ添える)
       prog.innerHTML = `<div class="ptchart">${ptDonutHtml(PV.results, idxs.length)}</div>` +
+        ptWeakHtml(PV.results) +
         ptTypeHtml(PV.results, idxs.length) +
         ptRoleHtml(PV.results, names) +
         `<div class="holesub">平均勝率：<b>${avg}％</b>` +
@@ -2479,14 +2514,14 @@ function runPtSwap() {
       const pol = { fast: c.f || movePool(c.k).fasts[0], charged: [c.c1, c.c2].filter(Boolean) };
       const wins = ptSwapWins(cb, pol, foes, hot);
       if (!wins) continue;   // 埋めたい相手に1匹も勝てない＝入れ替える意味がない
-      let best = null;
+      // 枠ごとに「その子と入れ替えたらどうなるか」を全部控える(あとで枠ごとにまとめて出す)
+      const gains = [];
       for (let j = 0; j < n; j++) {
         const s = ptSwapScore(wins, rest, j, n);
-        if (!best || s.holes < best.holes || (s.holes === best.holes && s.avg > best.avg)) best = { ...s, j };
+        // いまより悪くなる入れ替えは出さない(穴が増える・勝率が下がる)
+        if (s.holes < now.holes || (s.holes === now.holes && s.avg > now.avg)) gains.push({ ...s, j });
       }
-      // いまより悪くなる候補は出さない(穴が増える・勝率が下がる)
-      if (best.holes < now.holes || (best.holes === now.holes && best.avg > now.avg))
-        found.push({ c, cb, pol, ...best });
+      if (gains.length) found.push({ c, pol, gains });
     }
     if (idx < short.length) {
       ptSwapProg(`くらべています ${idx}/${short.length}`);
@@ -2496,9 +2531,18 @@ function runPtSwap() {
       // 穴だけで並べると、穴を1匹減らすかわりに勝率を大きく落とす候補が上に来てしまう
       // (穴1匹 ≒ 勝率3ポイントとして扱う)
       const gain = r => (now.holes - r.holes) * 3 + (r.avg - now.avg) * 100;
-      PTS.rows = found.sort((a, b) => gain(b) - gain(a)).slice(0, 5)
-        .map(r => ({ key: r.c.k, name: r.c.n, shadow: !!r.c.s, j: r.j, holes: r.holes, avg: r.avg,
-          mv: polToMv(r.c.k, r.pol) }));
+      // 「①マリルリを替えるなら A / B / C」と枠ごとにまとめる。
+      // 総合順に混ぜて並べると、どの子を替える話なのか読み取りづらい
+      const bySlot = new Map();
+      found.forEach(r => r.gains.forEach(g => {
+        const a = bySlot.get(g.j) || [];
+        a.push({ key: r.c.k, name: r.c.n, shadow: !!r.c.s, holes: g.holes, avg: g.avg,
+          mv: polToMv(r.c.k, r.pol) });
+        bySlot.set(g.j, a);
+      }));
+      PTS.rows = [...bySlot.entries()]
+        .map(([j, arr]) => ({ j: +j, cands: arr.sort((a, b) => gain(b) - gain(a)).slice(0, 3) }))
+        .sort((a, b) => gain(b.cands[0]) - gain(a.cands[0]));
       PTS.now = now;
       PTS.busy = false; PTS.msg = '';
       renderPtSwap();
@@ -2553,17 +2597,21 @@ function renderPtSwap() {
   }
   else if (PTS.rows && PTS.rows.length) {
     const now = PTS.now;
-    body = '<div class="ptswlist">' + PTS.rows.map((r, i) => {
-      const mv = [r.mv.fast, r.mv.c1, r.mv.c2].filter(Boolean)
-        .map(m => D.moves[m] ? D.moves[m].n : '').filter(Boolean).join(' / ');
-      return `<button class="ptswrow" data-i="${i}" title="${names[r.j]}を${r.name}に替えたときの診断結果です（タップで枠に入れます）">` +
-        `<span class="ptswnm"><span class="pcolnum">${B.idxs[r.j] + 1}</span>` +
-        `<s>${names[r.j]}</s><i class="swapmark"></i><b>${r.name}</b><small>${mv}</small></span>` +
-        `<span class="ptswd"><small>穴</small>${now.holes}<em>→</em>` +
-        `<b class="${r.holes < now.holes ? 'good' : ''}">${r.holes}</b></span>` +
-        `<span class="ptswd"><small>勝率</small>${Math.round(now.avg * 100)}<em>→</em>` +
-        `<b class="${r.avg > now.avg ? 'good' : ''}">${Math.round(r.avg * 100)}</b><small>％</small></span>` +
-        `</button>`;
+    body = '<div class="ptswlist">' + PTS.rows.map((g, gi) => {
+      const rows = g.cands.map((r, i) => {
+        const mv = [r.mv.fast, r.mv.c1, r.mv.c2].filter(Boolean)
+          .map(m => D.moves[m] ? D.moves[m].n : '').filter(Boolean).join(' / ');
+        return `<button class="ptswrow" data-g="${gi}" data-i="${i}"` +
+          ` title="${names[g.j]}を${r.name}に替えたときの診断結果です（タップで枠に入れます）">` +
+          `<span class="ptswnm"><b>${r.name}</b><small>${mv}</small></span>` +
+          `<span class="ptswd"><small>穴</small>${now.holes}<em>→</em>` +
+          `<b class="${r.holes < now.holes ? 'good' : ''}">${r.holes}</b></span>` +
+          `<span class="ptswd"><small>勝率</small>${Math.round(now.avg * 100)}<em>→</em>` +
+          `<b class="${r.avg > now.avg ? 'good' : ''}">${Math.round(r.avg * 100)}</b><small>％</small></span>` +
+          `</button>`;
+      }).join('');
+      return `<div class="ptswgrp"><div class="ptswgh"><span class="pcolnum">${B.idxs[g.j] + 1}</span>` +
+        `<b>${names[g.j]}</b>を替えるなら</div>${rows}</div>`;
     }).join('') +
       `<div class="ptswnote">タップすると、下に出ているわざのまま枠に入ります（わざは<b>マニュアル</b>に切り替わります）` +
       (PTS.scan ? '<br>' + (PTS.scan.short >= PTS.scan.pool
@@ -2592,11 +2640,11 @@ function renderPtSwap() {
     run();
   };
   box.querySelectorAll('.ptswrow').forEach(el => el.onclick = () => {
-    const r = PTS.rows[+el.dataset.i], pi = B.idxs[r.j];
+    const g = PTS.rows[+el.dataset.g], r = g.cands[+el.dataset.i], pi = B.idxs[g.j];
     PTS.undo = { i: pi, was: PT[pi] ? { ...PT[pi] } : null, auto: ptAuto, key: r.key, shadow: r.shadow };
     // はじめの状態を控えて、入れ替えを記録に積む。続けて次の候補も出す
     if (!PTS.log.length) PTS.start = ptNowStat();
-    PTS.log.push({ i: pi, from: names[r.j], to: r.name });
+    PTS.log.push({ i: pi, from: names[g.j], to: r.name });
     PTS.chain = true;
     // 提案は「このわざ構成で戦ったら」の数字なので、オートのままだと構成を選び直して数字が変わる。
     // 残る2匹はいま出ている構成をそのまま欄に書き込んでからマニュアルへ切り替える

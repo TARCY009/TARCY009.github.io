@@ -338,6 +338,23 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptlegend button i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 .ptlegend button b{margin-left:auto;font-weight:800}
 .ptlegend button[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
+.ptlegwrap{flex:1;min-width:0;max-width:340px}
+.ptlegwrap .ptttl{margin-bottom:4px}
+.ptlegwrap .ptttl b{color:var(--ink);font-weight:800}
+/* 弱点を具体的なポケモン名で出す（タイプだけでは次の手が決まらないため） */
+.ptweak{margin:0 0 8px;max-width:520px}
+.ptwhead{display:block;width:100%;text-align:left;padding:4px 9px;font-size:.76rem;color:var(--ink);
+  background:var(--bg2);border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.ptwhead[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
+.ptwhead b{font-weight:800;color:var(--lose)}
+.ptwhead small{float:right;font-size:.6rem;color:var(--sub);font-weight:400;padding-top:2px}
+.ptweak.thin .ptwhead b{color:var(--gold)}
+.ptwchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.ptwchip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:.7rem;color:var(--ink);
+  background:rgba(255,107,129,.13);border:1px solid rgba(255,107,129,.32);border-radius:99px}
+.ptweak.thin .ptwchip{background:rgba(245,195,60,.13);border-color:rgba(245,195,60,.32)}
+.ptwchip em{font-style:normal;font-size:.58rem;color:var(--sub)}
+.ptwmore{align-self:center;font-size:.66rem;color:var(--sub)}
 .pttypes{margin:0 0 7px;max-width:420px}
 .ptttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:3px}
 .pttrow{display:flex;align-items:center;gap:7px;width:100%;padding:2px 6px;margin-bottom:2px;
@@ -381,7 +398,11 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptswundo{margin-left:auto;padding:5px 11px;font-size:.7rem;color:var(--ink);background:var(--bg2);
   border:1px solid var(--line);border-radius:999px;cursor:pointer}
 .ptswmsg{font-size:.72rem;color:var(--sub);margin-top:6px}
-.ptswlist{margin-top:6px;display:flex;flex-direction:column;gap:4px;max-width:520px}
+.ptswlist{margin-top:6px;max-width:520px}
+/* 「①マリルリを替えるなら A / B / C」と枠ごとにまとめる */
+.ptswgrp{margin-bottom:9px;display:flex;flex-direction:column;gap:4px}
+.ptswgh{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--sub)}
+.ptswgh b{font-weight:800;color:var(--ink)}
 .ptswrow{display:flex;align-items:center;gap:10px;width:100%;padding:5px 8px;cursor:pointer;
   background:var(--bg2);border:1px solid var(--line);border-radius:9px;text-align:left}
 .ptswrow:hover{border-color:var(--gold)}
