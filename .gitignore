@@ -12,4 +12,9 @@ changes.md
 max-battle/latest.json
 
 # 対戦エンジン開発の答え合わせ資料(外部シミュレータの出力を写した私的検証データのため公開しない)
-pvp-tests/
+pvp-tests/*
+# ただし環境上位のわざ構成を自動更新するのに要る3つだけは対象にする
+# (GitHub Actionsが毎週これを実行するので、リポジトリに入っていないと動かない)
+!pvp-tests/build_meta_moves.py
+!pvp-tests/answer_key.js
+!pvp-tests/meta_changes.md

@@ -44,6 +44,11 @@ jobs:
       - name: GBL・ロケット団対策データを再生成
         run: python3 build_pvp_data.py
 
+      # わざの追加や削除で確定値がずれることがあるので、環境上位のわざ構成も作り直す
+      # （報告は changes.md にまとまるので、ここでは meta_changes.md を書き換えない）
+      - name: 環境上位のわざ構成を作り直す
+        run: python3 pvp-tests/build_meta_moves.py --no-report
+
       - name: 変更があればPull Requestを作成（承認待ち）
         uses: peter-evans/create-pull-request@v6
         with:
@@ -58,6 +63,7 @@ jobs:
             max-battle/data/max_data.js
             pvp_data.js
             pvp_data.json
+            assets/meta_moves.js
           title: "📢 データ更新があります：反映しますか？"
           body-path: changes.md        # 変更内容の日本語サマリー
           commit-message: "自動データ更新"

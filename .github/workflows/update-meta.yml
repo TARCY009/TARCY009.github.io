@@ -1,6 +1,10 @@
-# GBL環境上位リスト(assets/meta_lists.js)の自動更新
-# 毎週月曜 日本時間 朝9時にPvPokeのランキングを取得し、
-# 変化があればそのままサイトに反映する（承認不要の完全自動）。
+# GBL環境上位リスト(assets/meta_lists.js)と、そのわざ構成(assets/meta_moves.js)の自動更新
+# 毎週月曜 日本時間 朝9時にランキングを取得し、変化があればそのままサイトに反映する（承認不要の完全自動）。
+#
+# 入れ替わりで入ってきた新顔のわざ構成も自動で決まる（build_meta_moves.py が
+# 「人の確定値 → 同リーグの通常⇄シャドウの引き継ぎ → 情報元の推奨」の順に埋める）ので、
+# 手作業は不要。どれがどう変わったかは pvp-tests/meta_changes.md と
+# コミットメッセージ・Actionsの実行結果ページに出る。
 name: auto-update-meta
 
 on:
@@ -24,14 +28,26 @@ jobs:
       - name: 環境上位リストを再生成
         run: python3 build_meta.py
 
-      - name: 変化があればコミットして公開
+      - name: わざ構成の確定値を再生成し、更新結果をまとめる
+        id: moves
         run: |
-          if git diff --quiet assets/meta_lists.js; then
+          python3 pvp-tests/build_meta_moves.py | tee /tmp/out.txt
+          echo "headline=$(grep '^HEADLINE: ' /tmp/out.txt | sed 's/^HEADLINE: //')" >> "$GITHUB_OUTPUT"
+
+      - name: 更新結果を実行結果ページに表示
+        run: cat pvp-tests/meta_changes.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 変化があればコミットして公開
+        env:
+          HEADLINE: ${{ steps.moves.outputs.headline }}
+        run: |
+          if git diff --quiet assets/meta_lists.js assets/meta_moves.js; then
             echo "環境に変化なし。今回は更新しない"
           else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add assets/meta_lists.js
-            git commit -m "chore: GBL環境上位リストを自動更新 (PvPoke)"
+            git add assets/meta_lists.js assets/meta_moves.js pvp-tests/meta_changes.md
+            git commit -m "chore: GBL環境上位リストとわざ構成を自動更新（${HEADLINE}）" \
+                       -m "変更の内訳は pvp-tests/meta_changes.md を見てください。"
             git push
           fi
