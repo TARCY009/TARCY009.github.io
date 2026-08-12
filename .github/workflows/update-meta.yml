@@ -11,6 +11,11 @@ on:
   schedule:
     - cron: '0 0 * * 1'   # UTC 0:00 月曜 = JST 9:00 月曜
   workflow_dispatch:        # Actionsタブから手動実行も可能
+    inputs:
+      test:
+        description: 'お知らせが届くかテストする（環境に変化が無くてもお知らせを立てる）'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -59,12 +64,16 @@ jobs:
       # 更新があった週だけ「お知らせ」を立てる。GitHubがこれをメールで送ってくれるので
       # タダシさん側の設定は不要。先週までのお知らせは自動で閉じて受信箱をためない。
       - name: 更新結果をお知らせする
-        if: steps.commit.outputs.changed == '1'
+        if: steps.commit.outputs.changed == '1' || github.event.inputs.test == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEADLINE: ${{ steps.moves.outputs.headline }}
           OWNER: ${{ github.repository_owner }}
+          IS_TEST: ${{ github.event.inputs.test }}
         run: |
+          if [ "$IS_TEST" = "true" ] && [ "${{ steps.commit.outputs.changed }}" != "1" ]; then
+            HEADLINE="テスト送信（環境に変化はありません）"
+          fi
           gh issue list --state open --limit 50 --json number,title \
             | jq -r '.[] | select(.title | startswith("📢 環境リストの更新結果")) | .number' \
             | xargs -r -I{} gh issue close {} --comment "新しいお知らせが届いたので閉じます。"

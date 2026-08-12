@@ -120,7 +120,8 @@ def pick(m, a):
         mv = ok(a[mid])
         if mv:
             return mv, 'ans'
-        warns.append(f'{m["n"]}（{mid}）: 確定値 {mvtext(a[mid])} をおぼえないので情報元の推奨に戻しました')
+        warns.append(f'{m["n"]}: 確定値の {mvtext(a[mid])} をおぼえなくなったので、'
+                     f'情報元の推奨に戻しました（answer_key.js の "{mid}" の行）')
     tw = twin_of(mid)
     if tw in a:
         mv = ok(a[tw])
