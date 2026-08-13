@@ -503,11 +503,15 @@ const autoFasts = fasts => {
   if (!real.length) return fasts;
   return real.slice(0, 5).concat(fasts.filter(m => HP_MOVE.test(D.moves[m].n)));
 };
-// SPアタックの良さ。**タイプ一致(1.2倍)を込みで**ダメージ÷消費ゲージを見る。
-// これが無いと、タイプ一致でない大技(ホウオウのソーラービーム)が上位に残って実戦とズレる
+// SPアタックの良さ。**タイプ一致(1.2倍)込みのダメージ÷消費ゲージ**に、
+// **能力変化ぶんの価値**(PvpEngine.buffAdj)を掛ける。
+// タイプ一致を見ないと、一致していない大技(ホウオウのソーラービーム)が上位に残る。
+// 能力変化を見ないと、**威力の数字に出ない良いわざが候補から落ちる**
+// (シャドウフォレトスの「がんせきふうじ」＝相手の攻撃を下げるわざ・2026-08-13タダシさん指摘)
 const dpeOf = (key, m) => {
   const mv = D.moves[m];
-  return mv.p * ((D.pokemon[key].ty || []).includes(mv.t) ? 1.2 : 1) / mv.e;
+  const stab = (D.pokemon[key].ty || []).includes(mv.t) ? 1.2 : 1;
+  return mv.p * stab * PvpEngine.buffAdj(mv) / mv.e;
 };
 function policies(key, cfg) {
   const pool = cfg && cfg.statMult ? rkPool(key) : movePool(key);

@@ -65,6 +65,22 @@
     return Math.floor(0.5 * mv.p * (a / d) * eff * stab * BONUS) + 1;
   }
 
+  /* わざの「能力変化ぶんの価値」。ダメージ効率に掛けて使う(1.0で影響なし)。
+     ・相手の能力を下げる / 自分の能力を上げる → 以後ずっと有利なので割り増す
+     ・自分の能力が下がる → 以後ずっと不利を背負うので割り引く
+     1段階につき BUFF_RATE、発動確率(bc)のぶんだけ効かせる。
+     わざの候補を絞るとき(gbl-app.js の dpeOf)にも同じものを使う */
+  const BUFF_RATE = 0.10;
+  function buffAdj(mv) {
+    if (!mv || !mv.bf) return 1;
+    const p = mv.bc == null ? 1 : mv.bc;
+    const sum = (mv.bf[0] + mv.bf[1]) * p;
+    // 相手が対象なら、下がるぶんがこちらの得(上げるわざは存在しない)
+    if (mv.bt === 'opponent') return 1 + Math.max(0, -sum) * BUFF_RATE;
+    // 自分が対象: 上がるなら割り増し、下がるなら割り引き
+    return (1 + Math.max(0, sum) * BUFF_RATE) / (1 + Math.max(0, -sum) * BUFF_RATE);
+  }
+
   /* 確率で能力が上下するわざ(ねっとう30%など)の扱い。opt.buffMode で切り替える
        'none'   … 不発として扱う(最低保証・安全側)
        'avg'    … 確率のぶんを平均で反映(30%で攻-1なら-0.3段階)
@@ -186,16 +202,15 @@
     //  2. 相手にシールド(またはばけのかわ)が残っているなら、消費が軽いほうを撃つ＝ブラフ
     //     (cfg.bluff === false ならブラフをせず、常に効率が高いほうを撃つ)
     //  3. シールドが無いなら、ダメージ効率(ダメージ÷消費ゲージ)が高いほうを撃つ。
-    //     ただし**自分の能力が下がるわざは効率を割り引く**(2026-08-13追加)。
-    //     ブレイブバード(自分の防御-3)のような技は、撃つと以後ずっと不利を背負うので、
-    //     実戦では「倒しきれるとき(ルール1)や交代の直前」に使う。割引が無いと
-    //     効率の数字だけで序盤から連打してしまい、実戦と選び方がズレる
-    //     (1段階につき25%割り引く。-3なら 1/(1+0.75)=0.57倍)
-    const selfPenalty = m => {
-      if (m.bt !== 'self' || !m.bf) return 1;
-      const drop = -(Math.min(0, m.bf[0]) + Math.min(0, m.bf[1])) * (m.bc == null ? 1 : m.bc);
-      return drop > 0 ? 1 / (1 + drop * 0.25) : 1;
-    };
+    //     ただし**能力変化のぶんを効率に足し引きする**(2026-08-13追加)。
+    //     ダメージの数字だけで選ぶと、以後の有利不利がまったく効かない:
+    //      - 自分の能力が下がるわざ(ブレイブバードの防御-3)は、撃つと以後ずっと不利を背負う。
+    //        実戦では「倒しきれるとき(ルール1)や交代の直前」に使うので、割り引く
+    //      - 相手の能力を下げる/自分の能力を上げるわざ(がんせきふうじ・グロウパンチ)は
+    //        以後ずっと有利になるので、割り増す
+    //     **1段階につき10%**(2026-08-13タダシさん指示で25%→10%。戦術によっては
+    //     割り引かなくてよい場面もあるため控えめにする)。
+    //     **発動確率のぶんだけ効かせる**(ねっとう30%なら0.3段階ぶん)
     const autoMove = (s, o) => {
       const list = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(Boolean);
       if (list.length <= 1) return list[0];
@@ -207,7 +222,7 @@
         if (lethal) return lethal;
       }
       const bluff = blocked && s.cfg.bluff !== false;
-      const eff = m => dmg(m) * selfPenalty(m) / m.e;
+      const eff = m => dmg(m) * buffAdj(m) / m.e;
       return list.slice().sort(bluff
         ? (a, b) => a.e - b.e || dmg(b) - dmg(a)                 // ブラフ: 消費が軽い順
         : (a, b) => eff(b) - eff(a))[0];                         // 効率が高い順(自分デバフは割引)
@@ -481,5 +496,5 @@
     return res;
   }
 
-  window.PvpEngine = { buildStats, damage, effectiveness, buffMult, simulate, chooseThrows, simulateAuto };
+  window.PvpEngine = { buildStats, damage, effectiveness, buffMult, buffAdj, simulate, chooseThrows, simulateAuto };
 })();
