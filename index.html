@@ -102,12 +102,17 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .bignum{font-size:1.15rem;font-weight:800;letter-spacing:.02em}
 .rmoves .bignum{font-size:.95rem}
 /* 強化ボタン: ゲーム内ではPLが見えないので、1タップ=1回の強化(+0.5)で数えられるようにする */
-.plctl{display:flex;align-items:center;gap:6px}
+.plctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* 狭い画面ではボタンが縦書きに潰れるので、行を分けて文字は折り返さない */
+@media (max-width:560px){.plctl{flex-basis:100%}}
 .plnow{font-size:1.15rem;font-weight:800;color:var(--gold);min-width:76px;text-align:center;letter-spacing:.02em}
-.plbtn{border:1px solid var(--goldline);background:#fff;color:#8a6100;border-radius:9px;padding:4px 10px;font-size:.8rem;font-weight:800;cursor:pointer;line-height:1.5}
+.plbtn{border:1px solid var(--goldline);background:#fff;color:#8a6100;border-radius:9px;padding:4px 10px;font-size:.8rem;font-weight:800;cursor:pointer;line-height:1.5;white-space:nowrap}
 .plbtn.up{background:linear-gradient(180deg,#ffd873,#f0a827);border-color:#d99a1c;color:#4a3200;box-shadow:0 2px 0 rgba(0,0,0,.2)}
 .plbtn.up:hover:not(:disabled){transform:translateY(-1px)}
 .plbtn:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
+/* メガLv4(スーパーマックスレベル): 名前も挙動も /gbl/・/iv-checker/ と共通。役割の色はメガの紫 */
+.plbtn.smax{border-color:#c4b0ea;color:#6d3fc4;font-size:.74rem;padding:4px 8px}
+.plbtn.smax[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);border-color:#6d28d9;color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(-1px)}
 .plneed{flex-basis:100%;font-size:.78rem;color:#8a6100;font-weight:700}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid #eceffa}
 #rankList .rank-row:nth-child(-n+3):not(.mine){border-radius:12px;margin:3px 0}
@@ -220,7 +225,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div id="mineSummary"></div>
   <div id="rankList"><div class="empty">ボスを設定するとランキングが表示されます</div></div>
   <button class="more" id="moreBtn" style="display:none">さらに表示</button>
-  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。登録した自分のポケモンは「強化 +0.5」ボタンで1回の強化ぶんずつPLを上げられます（ゲーム内ではPLが表示されないため、強化の回数で数えられるようにしています。「−」で1回戻す、「↩」で入力したPLに戻る。PL50超は最高の相棒でのみ到達）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。登録した自分のメガもこの一覧に入り、1発耐えられない場合は「何PLまで上げれば耐えるか」とそのときの火力を出します（登録したわざ・個体値で計算）。特別技はゲーム内データを公式発表と照合して補完済み。</p>
+  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。登録した自分のポケモンは「強化 +0.5」ボタンで1回の強化ぶんずつPLを上げられます（ゲーム内ではPLが表示されないため、強化の回数で数えられるようにしています。「−」で1回戻す、「↩」で入力したPLに戻る。PL50超は最高の相棒でのみ到達）。メガ・ゲンシは「メガLv4」「メガLv4＋相棒」でPL上限が52・53に広がります（アメを使わないブーストなので1タップでそのPLになります。もう一度押すと解除）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。登録した自分のメガもこの一覧に入り、1発耐えられない場合は「何PLまで上げれば耐えるか」とそのときの火力を出します（登録したわざ・個体値で計算）。特別技はゲーム内データを公式発表と照合して補完済み。</p>
 </div>
 
 <footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
@@ -497,14 +502,22 @@ document.getElementById('addBtn').onclick=()=>{
 // ゲーム内ではPLが表示されないため、「あと何回強化すれば届くか」をタップで数えられるようにする。
 // 強化で上げられるのはPL50まで(最高の相棒でPL51)。
 const PL_MAX=51, PL_NORM=50;   // PL50超(50.5・51)は最高の相棒でしか届かない
+// メガLv4(スーパーマックスレベル)はPL上限+2、最高の相棒と合わせて53まで。
+// ボタン名と挙動(再タップで解除)は /gbl/・/iv-checker/ と同じにそろえる
+const plMaxOf=e=>e.maxLv||PL_MAX;
 const ivTxt=e=>`個体値${(e.iva===e.ivd&&e.ivd===e.ivh)?e.iva:`${e.iva}/${e.ivd}/${e.ivh}`}`;
 const mineLabel=e=>`PL${e.lv}・${ivTxt(e)}`;
 function plCtlHtml(e,i){
+  const mx=plMaxOf(e);
+  // メガ・ゲンシだけスーパーマックスレベルのタブを出す
+  const smax=D.pokemon[e.key].mega?`
+    <button class="plbtn smax" data-i="${i}" data-max="52" aria-pressed="${mx===52}" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button>
+    <button class="plbtn smax" data-i="${i}" data-max="53" aria-pressed="${mx===53}" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>`:'';
   return `<span class="plctl">
     <button class="plbtn" data-i="${i}" data-d="-0.5" ${e.lv>1?'':'disabled'} title="1回ぶん戻す">−</button>
     <b class="plnow">PL ${e.lv}</b>
-    <button class="plbtn up" data-i="${i}" data-d="0.5" ${e.lv<PL_MAX?'':'disabled'} title="1回強化する（+0.5）">強化 +0.5</button>
-    ${e.lv!==e.lv0?`<button class="plbtn" data-i="${i}" data-rst="1" title="入力したPL${e.lv0}に戻す">↩</button>`:''}
+    <button class="plbtn up" data-i="${i}" data-d="0.5" ${e.lv<mx?'':'disabled'} title="1回強化する（+0.5）">強化 +0.5</button>
+    ${e.lv!==e.lv0?`<button class="plbtn" data-i="${i}" data-rst="1" title="入力したPL${e.lv0}に戻す">↩</button>`:''}${smax}
   </span>`;
 }
 // 「あと◯回」= 目標PLまでの強化の回数(1回=0.5)
@@ -513,9 +526,15 @@ function bindMineCtl(sumEl){
   sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
   sumEl.querySelectorAll('.plbtn').forEach(b=>b.onclick=()=>{
     const e=mine[+b.dataset.i];
-    if(b.dataset.rst) e.lv=e.lv0;
-    else{
-      const nx=Math.min(PL_MAX,Math.max(1,e.lv+parseFloat(b.dataset.d)));
+    if(b.dataset.rst){ e.lv=e.lv0; }
+    else if(b.dataset.max){
+      // メガLv4はアメを使わないブーストなので、タップしたらその上限までPLを引き上げる
+      // (他ツールと同じ「上限52/53で評価」の状態になる)。再タップで解除し、元のPLへ戻す
+      const v=+b.dataset.max;
+      if(e.maxLv===v){ e.maxLv=PL_MAX; e.lv=Math.min(e.lvPre??e.lv,PL_MAX); e.lvPre=null; }
+      else{ if(!e.maxLv) e.lvPre=e.lv; e.maxLv=v; e.lv=v; }
+    }else{
+      const nx=Math.min(plMaxOf(e),Math.max(1,e.lv+parseFloat(b.dataset.d)));
       if(!D.cpm[String(nx)]) return;
       e.lv=nx;
     }
@@ -651,8 +670,8 @@ function shieldMine(){
     const now=at(e.lv);
     let need=null;
     if(!now.hold){
-      // HPは上がり被ダメは下がるので、耐えられる最小のPLを下から探す
-      for(let l=1;l<=51;l+=0.5){
+      // HPは上がり被ダメは下がるので、耐えられる最小のPLを下から探す(メガLv4なら52・53まで)
+      for(let l=1;l<=plMaxOf(e);l+=0.5){
         if(l<=e.lv||!D.cpm[String(l)]) continue;
         const s=at(l); if(s.hold){need=s;break;}
       }
@@ -675,11 +694,14 @@ function renderShieldRank(){
       ? `🛡1発耐え　火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rankOf(m.dps)}位相当</b>`
       : (m.need
         ? `<span class="ng">🛡1発アウト</span>　<b class="bignum">PL${m.need.lv}</b>以上で耐える（火力 <b>${m.need.dps.toFixed(2)}</b> ＝ <b>${rankOf(m.need.dps)}位相当</b>）`
-        : `<span class="ng">🛡1発アウト</span>　PL51まで上げても耐えられません`);
-    // ゲーム内ではPLが見えないので、必要なぶんを「強化◯回」で示す
+        : `<span class="ng">🛡1発アウト</span>　PL${plMaxOf(m.e)}まで上げても耐えられません`);
+    // ゲーム内ではPLが見えないので、必要なぶんを「強化◯回」で示す。
+    // PL50超・51超はアメでは届かない(最高の相棒／メガLv4のブースト)ので必ず断っておく
+    const way=m.need&&m.need.lv>PL_MAX?'・PL51超はメガLv4のぶん（アメ消費なし）'
+      :(m.need&&m.need.lv>PL_NORM?'・PL50超は最高の相棒でのみ到達':'');
     const need=m.hold?'':(m.need
-      ? `<span class="plneed">🛡1発耐えまで あと <b class="bignum">${plTimes(m.e.lv,m.need.lv)}回</b> の強化（PL${m.e.lv}→${m.need.lv}${m.need.lv>PL_NORM?'・PL50超は最高の相棒でのみ到達）':'）'}</span>`
-      : `<span class="plneed">強化しきっても（PL51）このボスのSPアタックは耐えられません</span>`);
+      ? `<span class="plneed">🛡1発耐えまで あと <b class="bignum">${plTimes(m.e.lv,m.need.lv)}回</b> の強化（PL${m.e.lv}→${m.need.lv}${way}）</span>`
+      : `<span class="plneed">PL${plMaxOf(m.e)}まで上げてもこのボスのSPアタックは耐えられません${plMaxOf(m.e)<53&&D.pokemon[m.e.key].mega?'（メガLv4を入れるとさらに上げられます）':''}</span>`);
     return `<div class="mine-sum"><span>あなたの<b>${m.p.n}</b>（${ivTxt(m.e)}）</span>${plCtlHtml(m.e,m.i)}<span>${right}</span>${need}<button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
   }).join('')
     +(skipped?`<p class="note">シールド破壊の対象はメガシンカだけなので、登録した${skipped}匹は出していません。</p>`:'')
