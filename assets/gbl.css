@@ -395,21 +395,24 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   padding:3px 12px;font-size:.68rem;font-weight:800;color:#3a2a00;border:none;border-radius:999px;
   cursor:pointer;background:linear-gradient(160deg,#ffe9a8 0%,#f5c33c 45%,#c98f10 100%);
   box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
-.ptwk{display:grid;grid-template-columns:112px 54px 1fr 48px 76px;align-items:center;gap:9px;
+.ptwk{display:grid;grid-template-columns:118px 56px 1fr 62px;align-items:center;gap:9px;
   width:100%;padding:5px 9px;margin-bottom:4px;border-radius:9px;cursor:pointer;text-align:left;
   background:linear-gradient(160deg,rgba(60,78,140,.28),rgba(14,20,46,.4));
   border:1px solid var(--line);border-left:3px solid rgba(var(--rc,139,150,194),.85)}
 .ptwk[aria-pressed="true"]{border-color:var(--cy);border-left-color:var(--cy);
   box-shadow:0 0 0 1px var(--cy) inset}
-/* 列の見出し。ここに「シールドあり/なし」を出すことで、軸の意味がバーの真上で分かる */
-/* 行と同じ枠線ぶんの余白を透明で入れて、列の位置をぴったり合わせる */
-.ptwk.head{margin-bottom:3px;padding:0 9px 2px;background:none;cursor:default;
+/* 列の見出し。ここに「序盤🛡⭕ / 終盤🛡❌」を出すことで、軸の意味が横棒の真上で分かる。
+   行と同じ枠線ぶんの余白を透明で入れて、列の位置をぴったり合わせる */
+.ptwk.head,.ptwk.cap{margin-bottom:2px;padding:0 9px;background:none;cursor:default;
   border:1px solid transparent;border-left:3px solid transparent;
-  font-size:.6rem;color:var(--sub);font-weight:700}
-.ptwk.head .ptwnm,.ptwk.head .ptwrole,.ptwk.head .ptwwin,.ptwk.head .ptwsub{
-  font-size:.6rem;color:var(--sub);font-weight:700;background:none;border:none;padding:0}
-.ptwk.head .ptwb em{display:flex;align-items:baseline;gap:4px;flex:1;min-width:0}
-.ptwk.head .ptwb em b{font-size:.62rem;font-weight:800}
+  font-size:.62rem;color:var(--sub);font-weight:700}
+.ptwk.cap{margin-bottom:1px}
+.ptwk.head{padding-bottom:2px}
+.ptwcap{text-align:center;font-size:.62rem;font-weight:800;color:var(--ink);
+  padding:2px 0;border-radius:6px;background:rgba(120,150,255,.12)}
+.ptwcap small{font-weight:400;color:var(--sub);margin-left:5px}
+.ptwk.head .ptwb em{display:flex;align-items:baseline;justify-content:center;gap:3px;flex:1;min-width:0}
+.ptwk.head .ptwb em b{font-size:.72rem;font-weight:800}
 .ptwk.head .ptwb.e em{color:var(--cy)}
 .ptwk.head .ptwb.l em{color:var(--ml)}
 .ptwnm{display:flex;align-items:center;gap:4px;min-width:0;font-size:.75rem;font-weight:700;color:var(--ink);
@@ -423,32 +426,33 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:linear-gradient(120deg,rgba(67,224,255,.24),rgba(176,108,255,.24))}
 .ptwrole.wait{color:var(--sub);background:none;border-color:var(--line)}
 .ptwbars{display:flex;align-items:center;gap:10px;min-width:0}
-.ptwb{display:flex;align-items:center;gap:4px;flex:1;min-width:0}
-.ptwb>em{font-style:normal;font-size:.56rem;color:var(--sub);flex-shrink:0}
-/* 真ん中の線＝環境の平均。役割は「平均より上か」で決まるので、この基準が見えないと読めない */
-.ptwb i{position:relative;flex:1;min-width:0;height:8px;border-radius:99px;overflow:hidden;
+.ptwb{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
+.ptwb>em{font-style:normal;font-size:.58rem;flex-shrink:0}
+.ptwb.e>em{color:var(--cy)}
+.ptwb.l>em{color:var(--ml)}
+/* 真ん中の線＝半分(50匹なら25勝)。役割はここを超えたかで決まるので、基準がそのまま図に出る */
+.ptwb i{position:relative;flex:1;min-width:0;height:9px;border-radius:99px;overflow:hidden;
   background:rgba(255,255,255,.07);box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
 .ptwb i::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;
-  background:rgba(255,255,255,.3)}
+  background:rgba(255,255,255,.45)}
 .ptwb i b{display:block;height:100%;border-radius:99px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
 .ptwb.e i b{background:linear-gradient(90deg,rgba(67,224,255,.65),var(--cy))}
 .ptwb.l i b{background:linear-gradient(90deg,rgba(176,108,255,.65),var(--ml))}
-.ptwwin{text-align:right;font-size:.72rem;color:var(--ink)}
-.ptwwin b{font-size:.86rem;font-weight:800}
-.ptwwin small{font-size:.58rem;color:var(--sub);margin-left:1px}
+.ptwb>u{flex-shrink:0;width:22px;text-align:right;text-decoration:none;
+  font-size:.78rem;font-weight:800;color:var(--ink)}
 .ptwsub{text-align:right;font-size:.64rem;color:var(--sub)}
-.ptwsub b{font-size:.78rem;font-weight:800;color:var(--cy);margin-left:2px}
+.ptwsub b{font-size:.82rem;font-weight:800;color:var(--lose);margin-left:2px}
 .ptwsub.dup{color:var(--gold)}
-/* 狭い画面は、2本のバーだけ次の行へ送る(名前と数字の列は崩さない)。
+/* 狭い画面は2行組み。1行目に 名前・役割・抜くと、2行目に 2本の横棒を置く。
    列見出しは並びが合わなくなるので隠し、代わりに行ごとの小さなラベルを出す */
-/* 狭い画面は2行組み。1行目に 名前・役割・勝ち、2行目に 2本のバーと代役を置く。
-   代役を1行目に残すと名前の列が83pxまで潰れて、6文字の名前が切れてしまう */
 @media (max-width:540px){
-  .ptwk{grid-template-columns:1fr 52px 62px;gap:6px}
-  .ptwnm{grid-area:1/1}.ptwrole{grid-area:1/2}.ptwwin{grid-area:1/3}
-  .ptwbars{grid-area:2/1/3/3;margin-top:4px}
-  .ptwsub{grid-area:2/3;margin-top:4px}
+  .ptwk{grid-template-columns:1fr 56px 62px;gap:6px}
+  .ptwnm{grid-area:1/1}.ptwrole{grid-area:1/2}.ptwsub{grid-area:1/3}
+  .ptwbars{grid-area:2/1/3/4;margin-top:4px}
   .ptwk.head{display:none}
+  /* 列見出しが出せないぶん、「勝ち数の内訳」は全幅のラベルとして残す */
+  .ptwk.cap{display:block;padding:0;border:none;margin-bottom:4px}
+  .ptwcap{display:block}
 }
 @media (min-width:541px){.ptwk:not(.head) .ptwb>em{display:none}}
 /* シールドのボタンに出す、その枚数での穴の数 */
