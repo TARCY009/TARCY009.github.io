@@ -349,11 +349,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:rgba(var(--dc),.07);border:1px solid rgba(var(--dc),.35)}
 .ptdiag.warn{--dc:255,213,74}
 .ptdiag.bad{--dc:255,107,129}
-/* 見出しは「ここが結論」と分かるように、色つきのバッジで大きく出す */
-.ptdttl{display:inline-flex;align-items:center;gap:5px;margin-bottom:7px;padding:3px 13px;
-  font-size:.84rem;font-weight:800;letter-spacing:.04em;color:#10162e;border-radius:99px;
-  background:linear-gradient(160deg,rgba(var(--dc),1),rgba(var(--dc),.72));
-  box-shadow:0 3px 10px rgba(var(--dc),.4),inset 0 1px 0 rgba(255,255,255,.55)}
+/* 見出しは「ここが結論」と分かるように、バッジで大きく出す。
+   色は状態の3色（--dc）とは別の水色にする。同じ色にすると外枠や「勝てない相手」の赤と
+   かぶって、どれが状態を表す色なのか分からなくなるため（2026-08-13タダシさん指摘） */
+.ptdttl{display:inline-flex;align-items:center;gap:6px;margin-bottom:7px;padding:3px 14px 3px 11px;
+  font-size:.84rem;font-weight:800;letter-spacing:.04em;color:#06243a;border-radius:99px;
+  background:linear-gradient(160deg,#9ef2ff,var(--cy));
+  box-shadow:0 3px 10px rgba(67,224,255,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+.ptdic{font-size:1.2rem;line-height:1}
 .ptdtext{font-size:.78rem;line-height:1.65;color:var(--ink);margin:0}
 .ptdtext b{font-weight:800}
 .ptdnext{font-size:.74rem;line-height:1.6;color:var(--cy);margin:7px 0 0}

@@ -2019,7 +2019,7 @@ function ptDiagHtml(res, names, n) {
   // 枠・見出し・弱点のフレームの色は、相性の図と同じ3色に連動させる
   // (穴あり=赤 / 穴は無いが1匹頼みあり=黄 / どちらも無い=緑)。下の要素は --dc を受け継ぐ
   return `<div class="ptdiag${holes.length ? ' bad' : thin.length ? ' warn' : ''}">` +
-    `<div class="ptdttl">📋 診断</div>` +
+    `<div class="ptdttl"><span class="ptdic">📋</span>診断</div>` +
     `<p class="ptdtext">${lead}${detail}</p>` +
     (list.length ? `<button class="ptwhead" data-flt="${flt}" aria-pressed="false"` +
       ` title="タップで表をこの相手だけに絞り込みます">⚠ ${ttl} <b>${list.length}匹</b>` +
