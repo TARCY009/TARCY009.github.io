@@ -490,14 +490,18 @@ const rkWorstScore = res => {
 const poolOf = cfg => (cfg && cfg.statMult ? rkPool(cfg.key) : movePool(cfg.key));
 // わざ構成の候補を作る。cfg = { fast:固定するノーマル, c1:固定するSP1, c2:指定されたSP2 }
 // c2があるときは「SP1候補+SP2」の2本セットを返し、どちらを撃つかはエンジンが相手に合わせて選ぶ
-// めざめるパワーは16タイプに展開されるので、候補の先頭を埋め尽くして
+// めざめるパワーは16タイプに展開されるので、素直に並べると候補の先頭を埋め尽くし、
 // **実戦の定番わざを押し出してしまう**(ホウオウは19個中17個がめざパで、やきつくすが候補外だった)。
-// タイプ厳選が難しく実戦でもまず使われないので、**自動選出の候補からは外す**(手動では選べるまま)。
-// 全部めざパになるポケモンはいないが、念のため空になったら元のまま使う
+// かといって全部外すと、**でんきカップのレントラーのめざめるパワー(じめん)**のように
+// 限られた場面で本命になるものまで消える(2026-08-13タダシさん指摘)。
+// そこで **実戦のわざを先に並べてから、めざめるパワーを後ろに全部足す**。
+// 先頭5本の枠は実戦のわざが取り、めざパは追加の候補として残るので、
+// 刺さる場面ならシミュが選ぶ
 const HP_MOVE = /^めざめるパワー/;
 const autoFasts = fasts => {
-  const f = fasts.filter(m => !HP_MOVE.test(D.moves[m].n));
-  return f.length ? f : fasts;
+  const real = fasts.filter(m => !HP_MOVE.test(D.moves[m].n));
+  if (!real.length) return fasts;
+  return real.slice(0, 5).concat(fasts.filter(m => HP_MOVE.test(D.moves[m].n)));
 };
 // SPアタックの良さ。**タイプ一致(1.2倍)を込みで**ダメージ÷消費ゲージを見る。
 // これが無いと、タイプ一致でない大技(ホウオウのソーラービーム)が上位に残って実戦とズレる
@@ -513,14 +517,14 @@ function policies(key, cfg) {
   const dpe = m => dpeOf(key, m);
   const top = chargeds.sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
   const out = [];
-  for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5))) {
+  for (const f of (cfg.fast ? [cfg.fast] : fasts)) {
     for (const t of (cfg.c1 ? [cfg.c1] : top)) {
       if (cfg.c2) out.push({ fast: f, charged: t === cfg.c2 ? [t] : [t, cfg.c2] });
       else out.push({ fast: f, throw: t });
     }
   }
   // SPアタックを覚えないポケモン(進化前など)はノーマルアタックだけの構成にする
-  if (!out.length) for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5))) out.push({ fast: f });
+  if (!out.length) for (const f of (cfg.fast ? [cfg.fast] : fasts)) out.push({ fast: f });
   return out;
 }
 // 画面で選んでいるわざ(ノーマル/SP1/SP2)を policies 用の指定に変換する。
@@ -2306,11 +2310,18 @@ const polToMv = (key, pol) => ({ key, fast: pol.fast,
 // わざ開放でSP2本にした構成も候補に入れる(効率のよいSP上位3本の組み合わせだけ。全部やると重い)
 function ptAutoPols(key) {
   const out = policies(key, {});
-  const { chargeds } = movePool(key);
-  const fasts = autoFasts(movePool(key).fasts);
+  const pool = movePool(key);
+  const fasts = autoFasts(pool.fasts);
   const dpe = m => dpeOf(key, m);
-  const top = chargeds.slice().sort((a, b) => dpe(b) - dpe(a)).slice(0, 3);
-  for (const f of fasts.slice(0, 5))
+  // SP2本の組み合わせは**上位8本の全ペア**から作る(2026-08-13にタダシさん指摘で3本→8本へ)。
+  // 効率上位3本だけだと、**効率の数字に出ない良いわざが組み合わせに入らない**。
+  // 実例: シャドウフォレトスの「がんせきふうじ」(相手の攻撃を下げる)が候補外で、
+  // SP2本の構成が1本の構成に7勝も負けていた
+  const top = pool.chargeds.slice().sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
+  // めざめるパワーは16タイプぶんあるので、組み合わせまで作ると候補が数百通りになる。
+  // タイプで刺さるかどうかの話なので、SP1本の構成(policies)だけで十分
+  const real = fasts.filter(m => !HP_MOVE.test(D.moves[m].n));
+  for (const f of real)
     for (let a = 0; a < top.length; a++)
       for (let b = a + 1; b < top.length; b++) out.push({ fast: f, charged: [top[a], top[b]] });
   return out;
