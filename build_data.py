@@ -73,6 +73,32 @@ SUPP_Q = {  # ノーマルアタック(通常枠)へ追加
     'GIGALITH':       ['LOCK_ON_FAST'],        # ギガイアス: ロックオン
     'LEDIAN':         ['ROLLOUT_FAST'],        # レディアン: ころがる
 }
+# Game Masterにわざ定義(moveSettings)自体が無い技の手動補完。
+# データ提供元の更新が止まっている間のつなぎで、GM側に正式収録されたら自動取得値を優先(既にあれば注入しない)。
+# 値は外部攻略情報の複数サイト突き合わせで確定(表示値はタイプ一致1.2倍込みのことがあるので素の値に戻すこと)
+SUPP_MOVES = {
+    'PLASMA_FISTS': {   # プラズマフィスト(ゼラオラ専用・GOフェス2026実装)
+        'move': {'movementId': 'PLASMA_FISTS', 'pokemonType': 'POKEMON_TYPE_ELECTRIC',
+                 'power': 135.0, 'durationMs': 3500, 'energyDelta': -50},   # 威力135・3.5秒・2ゲージ
+        'learn': {'ZERAORA': 'cinematicMoves'},   # ゼラオラのゲージ技(通常枠)
+    },
+}
+
+def apply_gm_supp(data):
+    """SUPP_MOVES を Game Master のデータへ注入する(build_max.py からも使う)"""
+    have = {e['data']['moveSettings'].get('movementId') for e in data
+            if 'moveSettings' in e.get('data', {})}
+    for mid, sup in SUPP_MOVES.items():
+        if mid not in have:
+            data.append({'templateId': f'SUPP_MOVE_{mid}', 'data': {'moveSettings': dict(sup['move'])}})
+            print('GM未収録のわざを手動補完 →', mid)
+        for pid, slot in sup['learn'].items():
+            for e in data:
+                ps = e.get('data', {}).get('pokemonSettings')
+                if ps and ps.get('pokemonId') == pid and mid not in (ps.get(slot) or []):
+                    ps.setdefault(slot, []).append(mid)
+    return data
+
 # 種族値・技構成がGame Master上で同一でも、独立エントリとして収録するフォルム
 # (フォルムチェンジ専用の特別技持ち等。統合dedupの対象外にする)
 FORCE_SPLIT = {'KELDEO_RESOLUTE'}
@@ -88,7 +114,8 @@ MANUAL_MEGA = {
 # i18nに未収録の技・ポケモンの日本語名
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
  'MIND_BLOWN':'ビックリヘッド','DRUM_BEATING':'ドラムアタック','PYROBALL':'かえんボール','GIGATON_HAMMER':'デカハンマー',
- 'AURA_WHEEL_ELECTRIC':'オーラぐるま（でんき）','AURA_WHEEL_DARK':'オーラぐるま（あく）','DYNAMAX_CANNON':'ダイマックスほう'}
+ 'AURA_WHEEL_ELECTRIC':'オーラぐるま（でんき）','AURA_WHEEL_DARK':'オーラぐるま（あく）','DYNAMAX_CANNON':'ダイマックスほう',
+ 'PLASMA_FISTS':'プラズマフィスト'}
 GEN9_JA = {'WALKINGWAKE':'ウネルミナモ','IRONLEAVES':'テツノイサハ','DIPPLIN':'カミッチュ','POLTCHAGEIST':'チャデス',
  'SINISTCHA':'ヤバソチャ','OKIDOGI':'イイネイヌ','MUNKIDORI':'マシマシラ','FEZANDIPITI':'キチキギス','OGERPON':'オーガポン',
  'ARCHALUDON':'ブリジュラス','HYDRAPPLE':'カミツオロチ','GOUGINGFIRE':'ウガツホムラ','RAGINGBOLT':'タケルライコ',
@@ -136,7 +163,7 @@ DEFAULT_FORM = {'LANDORUS':'ランドロス（けしん）','TORNADUS':'トル�
  'KELDEO':'ケルディオ（いつも）'}
 
 def main():
-    data = fetch(SRC['gm'])
+    data = apply_gm_supp(fetch(SRC['gm']))
     ja = fetch(SRC['ja'])['data']
     ja_map = {ja[i]: ja[i+1] for i in range(0, len(ja)-1, 2)}
     pvp = fetch(SRC['pvp'])['pokemon']
