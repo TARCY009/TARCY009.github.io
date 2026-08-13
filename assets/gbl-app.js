@@ -86,7 +86,7 @@ document.getElementById('app').innerHTML = `
       </div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
-      <select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select>
+      <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
       <div class="bluffwrap" style="display:none">
         <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
@@ -161,7 +161,7 @@ document.getElementById('app').innerHTML = `
       </div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
-      <select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select>
+      <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
       <div class="bluffwrap" style="display:none">
         <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
@@ -803,6 +803,9 @@ sideEl.forEach((el, i) => {
   el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
   el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
   el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
+  // SPアタック2の「×」= 2本目を外して1本に戻す(2026-08-13タダシさん指示)。
+  // プレースホルダーを選び直しても外せるが気づきにくく、発ごとのSP設定が出っぱなしになる
+  el.querySelector('.c2clear').onclick = () => { S[i].c2 = null; resetSpPlan(i); run(); };
 });
 
 // リーグ/カップ切替の共通処理(わざ再選択とマニュアルPLの上限内再調整)
@@ -1223,6 +1226,7 @@ function applyMode() {
   document.getElementById('rocket').style.display = rk ? 'block' : 'none';
   if (rk) syncRocket(); else restoreFoeInputs();
   syncCounterPanel(mode === 'counter');
+  syncMultiPanel(mode === 'multi');
   sideEl[0].style.display = mode === 'counter' || rkRankView ? 'none' : '';
   sideEl[1].style.display = mode === 'duel' || mode === 'counter' || rk ? '' : 'none';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter' || rkRankView);
@@ -1329,12 +1333,12 @@ function syncRocket() {
   if (S[1].key) el.querySelector('input').value = 'シャドウ' + D.pokemon[S[1].key].n;
   // シールド(種別で決まる)・タイミング(常に撃てしだい)・連戦(登場の設定で扱う)は選ばせない
   // ★登録リストは「自分の個体値で計算する」ための機能。あいてはNPCで倍率が決まっているので出さない
-  ['.ivmode', '.custIv', '.smaxwrap', '.selC2', '.bluffwrap', '.shields', '.custShield',
+  ['.ivmode', '.custIv', '.smaxwrap', '.c2row', '.bluffwrap', '.shields', '.custShield',
    '.timing', '.custSp', '.carry', '.custCarry', '.mypkbar', '.mypklist'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n) n.style.display = 'none';
   });
-  ['.ivmode', '.selC2', '.shields', '.timing', '.carry'].forEach(sel => hideLabelFor(el, sel));
+  ['.ivmode', '.c2row', '.shields', '.timing', '.carry'].forEach(sel => hideLabelFor(el, sel));
   syncTimingTabs(true);
 }
 // SPアタックタイミングのタブは画面で出し分ける(2026-08-10ユーザー指示):
@@ -1364,11 +1368,49 @@ function hideLabelFor(el, sel, show) {
 // 細かい手順の指定(シールドのﾏﾆｭｱﾙ・SPアタックタイミング・連戦)は出さない(2026-08-11ユーザー指示)。
 // 表示を消すだけだと前の設定が裏で効いて結果がズレるので、値も既定へ寄せる(抜けるときに元へ戻す)
 const CN = { prev: null };
+// 環境一覧のじぶんパネルから、結果の読み方を混乱させる設定を隠す(2026-08-13タダシさん指示)。
+// 理屈は対策さがし(下のsyncCounterPanel)と同じ:
+//  - シールド: 表が🛡0-0/1-1/2-2の3列を常に全部見せているので、パネルの枚数設定は結果に効かない。
+//    見えているのに設定が残っていると「効くのでは」と迷わせる
+//  - SPアタックタイミング・発ごとのSP設定・連戦: こちらは**裏で結果に効いてしまう**
+//    (S[0].timing と carryOf(0) が50匹ぶんの計算に渡る)。隠すだけでなく値も既定へ寄せ、
+//    1対1で入れた設定が見えない前提として働かないようにする。抜けるときは元へ戻す
+const MVP = { prev: null };
+function syncMultiPanel(on) {
+  const el = sideEl[0];
+  if (!el) return;
+  ['.timing', '.carry', '.shields'].forEach(sel => {
+    const n = el.querySelector(sel);
+    if (n) n.style.display = on ? 'none' : '';
+    hideLabelFor(el, sel, !on);
+  });
+  ['.custShield', '.custCarry', '.custSp'].forEach(sel => {
+    const n = el.querySelector(sel);
+    if (n && on) n.style.display = 'none';
+  });
+  if (on) {
+    if (!MVP.prev) MVP.prev = { timing: S[0].timing, carry: S[0].carry, shieldMode: S[0].shieldMode };
+    S[0].timing = 'optimal'; S[0].carry = false;
+    if (S[0].shieldMode === 'plan') { S[0].shieldMode = null; S[0].shields = 2; }
+    resetSpPlan(0);
+    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'optimal'));
+    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'off'));
+    el.querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === String(S[0].shields)));
+  } else if (MVP.prev) {
+    S[0].timing = MVP.prev.timing; S[0].carry = MVP.prev.carry; S[0].shieldMode = MVP.prev.shieldMode;
+    MVP.prev = null;
+    resetSpPlan(0);
+    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[0].timing));
+    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === (S[0].carry ? 'on' : 'off')));
+  }
+}
 function syncCounterPanel(on) {
   const el = sideEl[1];
   if (!el) return;
   const planBtn = el.querySelector('.shields button[data-v="plan"]');
-  ['.timing', '.carry'].forEach(sel => {
+  // シールドは行ごと隠す(2026-08-13タダシさん指示)。表が🛡0-0/1-1/2-2の3列を
+  // 常に全部見せているので、パネルの枚数設定は結果に効かず、残すと迷わせるだけ
+  ['.timing', '.carry', '.shields'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n) n.style.display = on ? 'none' : '';
     hideLabelFor(el, sel, !on);
@@ -1397,7 +1439,7 @@ function syncCounterPanel(on) {
 // ロケット団戦から他のモードへ戻したときに、隠した欄を元に戻す
 function restoreFoeInputs() {
   const el = sideEl[1];
-  ['.ivmode', '.selC2', '.shields', '.timing', '.carry'].forEach(sel => {
+  ['.ivmode', '.c2row', '.shields', '.timing', '.carry'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n) n.style.display = '';
     hideLabelFor(el, sel, true);
@@ -1407,7 +1449,7 @@ function restoreFoeInputs() {
   el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
   el.querySelector('.bluffwrap').style.display =
     S[1].c2 && !['multi', 'counter', 'party'].includes(mode) ? 'block' : 'none';
-  hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.selC2', true);
+  hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.c2row', true);
   // シャドウ固定を解除し、ロケット団戦に入る前の状態へ戻す
   const tab = el.querySelector('.shadowtab');
   if (RK.prevTiming != null) { S[0].timing = RK.prevTiming; RK.prevTiming = null; resetSpPlan(0); }
@@ -1517,7 +1559,14 @@ function runMulti() {
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
   const MV = VIEWS.multi;
   MV.results = [];
-  MV.pick = (k, j) => { if (j != null) setBothShields(j); applyMeta(list[k]); };
+  MV.pick = (k, j) => {
+    // マスをタップして開く1対1は、一覧と同じ前提(最適・連戦なし)のまま渡す。
+    // ここで退避した設定を復元すると「最短・連戦あり」が蘇って、マスの勝敗と食い違う
+    // (食い違い禁止ルールが優先。モードタブで抜けたときだけ復元する)
+    MVP.prev = null;
+    if (j != null) setBothShields(j);
+    applyMeta(list[k]);
+  };
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
     ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, ...carryOf(0) }
     : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
@@ -1822,6 +1871,8 @@ function runCounter() {
   // 「全ポケモン」は環境リストの代わりに、全ポケモン(シャドウ込み)から同じ形の候補を作る
   const list = cnTop === 'all' ? cnAllList(foeBase) : cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
   CV.pick = (k, j) => {
+    // マスをタップして開く1対1は、一覧と同じ前提(最適・連戦なし)のまま渡す(環境一覧と同じ理由)
+    CN.prev = null;
     // マスをタップしたら、そのマスで使った「あいてのいちばんキツいわざ」も引き継ぐ。
     // これが無いと1対1は「わざを選ぶと結果が出ます」で止まり、表の勝敗を確かめられない
     if (j != null) {
@@ -2271,9 +2322,17 @@ function syncPartySlot(i) {
       <select class="mvF"${auto ? ' disabled' : ''} title="ノーマルアタック${isPt ? '' : '（おまかせにすると効率のよい構成を自動で選びます）'}">
         ${isPt ? '' : `<option value="auto"${cur.fast === 'auto' ? ' selected' : ''}>おまかせ</option>`}${opts(fasts, cur.fast)}</select>
       ${chargeds.length ? `<select class="mvC1"${auto ? ' disabled' : ''} title="SPアタック1">${opts(chargeds, cur.c1)}</select>
-      <select class="mvC2"${auto ? ' disabled' : ''} title="SPアタック2（2本目を開放していないなら「ー」）">
-        <option value=""${!cur.c2 ? ' selected' : ''}>ー</option>${opts(chargeds, cur.c2)}</select>`
+      <div class="c2row"><select class="mvC2"${auto ? ' disabled' : ''} title="SPアタック2（2本目を開放していないなら「ー」）">
+        <option value=""${!cur.c2 ? ' selected' : ''}>ー</option>${opts(chargeds, cur.c2)}</select>${
+        cur.c2 && !auto ? '<button class="c2clear" title="SPアタック2を外す（1本に戻す）">×</button>' : ''}</div>`
         : '<span class="pt2">SPアタックなし</span>'}`;
+    // ×でSPアタック2を外す(1対1シミュと同じ操作を全画面にそろえる・2026-08-13タダシさん指示)
+    const c2x = mvbox.querySelector('.c2clear');
+    if (c2x) c2x.onclick = () => {
+      if (isPt) { PT[i].c2 = ''; savePt(); }
+      else { rbmOf(i).c2 = ''; saveRbm(); }
+      syncPartySlot(i); run();
+    };
     mvbox.querySelectorAll('select').forEach(sel => sel.onchange = () => {
       const c = isPt ? { fast: PT[i].fast, c1: PT[i].c1, c2: PT[i].c2 } : rbmOf(i);
       if (sel.classList.contains('mvF')) c.fast = sel.value;
@@ -4767,6 +4826,7 @@ function fillMoves(i, cfg) {
   ph(el.querySelector('.selFast'), 'fast', 'ノーマルアタック', fasts, otherF, cfg.fast);
   ph(el.querySelector('.selC1'), 'c1', 'SPアタック', chargeds, otherC, cfg.throw);
   ph(el.querySelector('.selC2'), 'c2', 'SPアタック2', chargeds, otherC, S[i].c2);
+  el.querySelector('.c2clear').style.display = S[i].c2 ? '' : 'none';
   // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す。
   // 一覧系(環境一覧・カウンター検索・パーティ診断)は共通の「ブラフ」枠で両者まとめて決めるので出さない
   el.querySelector('.bluffwrap').style.display =

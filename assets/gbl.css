@@ -62,6 +62,15 @@ label.f{display:block;font-size:.7rem;color:var(--sub);margin:8px 0 3px;font-wei
 select{width:100%;font:inherit;font-size:.84rem;padding:6px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink)}
 /* わざ欄: 見出しラベルを置かず、選ぶ前は欄の中に薄くわざの種類を出す(選ぶとわざ名に変わる) */
 .pkview > select{margin-top:6px}
+/* SPアタック2の行: 選んでいるときだけ右に「×」(2本目を外して1本に戻す) */
+.c2row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.c2row select{flex:1;min-width:0;margin-top:0}
+.c2clear{flex-shrink:0;width:30px;height:30px;font-size:.9rem;color:var(--sub);cursor:pointer;
+  background:var(--bg2);border:1px solid var(--line);border-radius:8px}
+.c2clear:hover{color:var(--lose);border-color:var(--lose)}
+/* パーティ枠・模擬戦のわざ欄は小さめなので、×もそれに合わせる */
+.pmv .c2row{margin-top:4px;gap:4px}
+.pmv .c2clear{width:24px;height:24px;font-size:.78rem;border-radius:6px}
 select.ph{color:var(--sub)}
 select.ph option{color:var(--ink)}
 select option[value=""]{color:var(--sub)}
