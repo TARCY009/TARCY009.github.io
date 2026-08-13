@@ -2330,6 +2330,20 @@ function ptAutoPols(key) {
       for (let b = a + 1; b < top.length; b++) out.push({ fast: f, charged: [top[a], top[b]] });
   return out;
 }
+// 環境リスト(人が確認した実戦の定番構成)に載っているポケモンなら、その構成を返す。
+// **オートはまずこれを使う**(2026-08-13タダシさん指摘で追加)。
+// シミュの勝ち数だけで選ぶと、確定値とちがう構成が出てしまう
+// (実例: ディアルガ(オリジン)が「ときのほうこう」を外す・キュレム(ホワイト)が
+//  「コールドフレア」ではなく「げんしのちから」を選ぶ)。
+// **人の選択は式で再現できない**(CLAUDE.mdの確定仕様)ので、確定値がある限りそれに従う。
+// シャドウ違いしか無いときはその構成を借りる(通常⇄シャドウのコピーは39/39一致の実績)
+function ptMetaMoves(key, shadow) {
+  const src = cup ? (cup.list || []).concat(cup.ext || [])
+    : ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || []);
+  const m = src.find(x => x.k === key && !!x.s === !!shadow) || src.find(x => x.k === key);
+  if (!m || !m.f || !m.c1) return null;
+  return { fast: m.f, c1: m.c1, c2: m.c2 || undefined };
+}
 // 「わざ｜マニュアル／オート」ボタン。両方を出して、オンの側だけ白く点灯させる
 // (片方しか出さないと、いまどちらなのか・押すとどうなるのかが読み取れないため)
 function syncPtAuto() {
@@ -2403,6 +2417,9 @@ function runParty() {
   // オート: 全構成を試して「環境にいちばん多く勝てる1構成」をあとで選ぶ / 手動: 選んだ構成だけ
   const pols = idxs.map(i => {
     if (!ptAuto) { const v = ptMvOf(i); return policies(PT[i].key, { fast: v.fast, c1: v.c1 || undefined, c2: v.c2 || undefined }); }
+    // オートは環境の確定値(人が確認した定番構成)を最優先。載っていないポケモンだけシミュで選ぶ
+    const mm = ptMetaMoves(PT[i].key, PT[i].shadow);
+    if (mm) return policies(PT[i].key, mm);
     return ptAutoPols(PT[i].key);
   });
   const win = pols.map(ps => ps.map(() => 0));    // 構成ごとの勝った数
