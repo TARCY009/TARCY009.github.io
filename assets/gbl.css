@@ -339,7 +339,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptgsub b{color:var(--ink);font-weight:800}
 .ptgsub b.e{color:var(--cy)}
 .ptgsub b.l{color:var(--ml)}
-.ptgsub small{display:block;font-size:.62rem;color:var(--sub);opacity:.85;margin-top:2px}
+.ptgsub small{display:block;font-size:.62rem;color:var(--sub);opacity:.85;margin-top:3px;line-height:1.9}
+.ptgsub small b{color:var(--ink);font-weight:800}
+/* 役割の基準を書く行に、表の行と同じバッジをそのまま並べる(色で対応が取れる) */
+.ptgsub .ptwrole{display:inline-block;padding:1px 8px;margin:0 2px;vertical-align:middle;font-size:.6rem}
 .ptchart{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
 /* 順位のグループごとに1本の帯。左から右へ読むだけなので折り返しの説明が要らない。
    帯の長さはそろえ、1匹あたりの大きさで重みを示す(よく当たるグループほどマスが大きい) */

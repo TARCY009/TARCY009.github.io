@@ -857,12 +857,13 @@ ${PAGE_ROCKET ? '' : `
 
   <h4>パーティ診断の「3匹の働き」</h4>
   <p><b>横棒は勝ち数そのもの</b>です。環境上位50匹と戦って、
-  <b>序盤🛡⭕（おたがい🛡2枚）で何勝／終盤🛡❌（おたがい🛡0枚）で何勝</b>かを並べています。
+  <b>🛡2-2（シールドが残っている序盤）で何勝／🛡0-0（切れた終盤）で何勝</b>かを並べています。
+  どちらも<b>おたがい同じ枚数</b>です。
   <b>真ん中の線が半分（25匹）</b>なので、<b>線より右なら半分以上に勝てる</b>と読んでください。
   序盤と終盤は<b>同じ50匹と別々に戦った結果</b>なので、2本を足しても50にはなりません。</p>
   <p><b>役割</b>は、その線をどちら側で越えているかで決まります。
-  <b>万能</b>＝どちらも半分以上／<b>序盤型</b>＝シールドがあるときだけ／<b>終盤型</b>＝切れてからだけ／
-  <b>苦戦</b>＝どちらも半分未満。シールドは<b>SPアタックしか防げない</b>ので、
+  <b>万能</b>＝どちらも25勝以上／<b>序盤型</b>＝🛡2-2だけ／<b>終盤型</b>＝🛡0-0だけ／
+  <b>苦戦</b>＝どちらも25勝未満。シールドは<b>SPアタックしか防げない</b>ので、
   実測では<b>高威力のSPを持つほど終盤型</b>、<b>安いSPを撃てる・ノーマルアタックが強いほど序盤型</b>になります。
   <b>3匹が同じ側に寄っていたら、逆の場面を任せられるポケモンがいない</b>ということなので、
   <b>🔧◯◯型を探す</b>を押すと、その型を優先した入れ替え候補が出ます。</p>
@@ -2041,6 +2042,8 @@ function ptWorkHtml(res, names, pos) {
     // 2本の合計は50にならない。数字だけだと「内訳なのに50を超える?」と誤読される(タダシさん指摘・2026-08-13)
     const bar = (lbl, w, cls) => `<span class="ptwb ${cls}"><em>${lbl}</em>` +
       `<i><b style="width:${Math.max(3, Math.round(w / N * 100))}%"></b></i><u>${w}<small>/${N}</small></u></span>`;
+    // 行のラベルは「🛡2-2」「🛡0-0」だけにする(2026-08-13タダシさん指示)。
+    // 序盤/終盤との対応は、下の役割の基準（🛡2-2だけ＝序盤型…）が示すので重ねて書かない
     return `<button class="ptwk${p ? ' r-' + p.r : ''}" data-flt="only${j}" aria-pressed="false"` +
       (p ? ` style="--rc:${PT_ROLES[p.r].c}"` : '') +
       ` title="${nm}` +
@@ -2048,7 +2051,7 @@ function ptWorkHtml(res, names, pos) {
       `。抜くと穴が${only}匹ふえます（この${only}匹に勝てるのはこのポケモンだけ）。タップで表を絞り込み">` +
       `<span class="ptwnm"><span class="pcolnum">${j + 1}</span>${nm}</span>` +
       (p ? ptRoleChip(p.r) : `<span class="ptwrole wait">…</span>`) +
-      `<span class="ptwbars">${p ? bar('序盤🛡⭕', p.w2, 'e') + bar('終盤🛡❌', p.w0, 'l') : ''}</span>` +
+      `<span class="ptwbars">${p ? bar('🛡2-2', p.w2, 'e') + bar('🛡0-0', p.w0, 'l') : ''}</span>` +
       // 「代役なし6」は何の数か分からなかった(タダシさん指摘・2026-08-13)ので、
       // **抜いたらどうなるか**をそのまま書く。0匹なら入れ替えても穴は増えない
       (only ? `<span class="ptwsub">穴<b>+${only}</b></span>`
@@ -2071,15 +2074,16 @@ function ptWorkHtml(res, names, pos) {
   const head = `<div class="ptwk cap"><span></span><span></span>` +
     `<span class="ptwcap">場面ごとの勝ち数<small>それぞれ環境${N}匹と対戦</small></span><span></span></div>` +
     `<div class="ptwk head"><span class="ptwnm">ポケモン</span><span class="ptwrole hd">役割</span>` +
-    `<span class="ptwbars"><span class="ptwb e"><em>序盤<b>🛡⭕</b></em></span>` +
-    `<span class="ptwb l"><em>終盤<b>🛡❌</b></em></span></span>` +
+    `<span class="ptwbars"><span class="ptwb e"><em><b>🛡2-2</b></em></span>` +
+    `<span class="ptwb l"><em><b>🛡0-0</b></em></span></span>` +
     `<span class="ptwsub">抜くと</span></div>`;
   return `<div class="ptcard"><div class="ptsec"><span class="ptdic">⚔️</span>3匹の働き</div>` +
     `<div class="ptgsub"><b class="e">シールドが残っている序盤</b>と<b class="l">切れた終盤</b>で` +
-    // どちらもおたがい同じ枚数で戦わせている。この枚数を書いておかないと
-    // 「🛡⭕は2-2? 1-1?」が分からない(タダシさん質問・2026-08-13)
-    `得意なポケモンが分かれます<small>序盤＝おたがい🛡2枚／終盤＝おたがい🛡0枚` +
-    `・真ん中の線＝半分（${N / 2}匹）</small></div>` +
+    // 枚数は列見出しの「🛡2-2 / 🛡0-0」が示すので、ここには**役割の基準**を書く
+    // (2026-08-13タダシさん指示。何勝以上でどの型になるかが分かれば、あとは表を読むだけで済む)
+    `得意なポケモンが分かれます<small><b>${N / 2}勝以上</b>（真ん中の線）で得意：` +
+    `両方${ptRoleChip('all')}／<b class="e">🛡2-2</b>だけ${ptRoleChip('early')}／` +
+    `<b class="l">🛡0-0</b>だけ${ptRoleChip('late')}／どちらも未満${ptRoleChip('weak')}</small></div>` +
     (pos && names.length > 1 ? `<p class="ptwnote">${ptRoleNote(pos, names, N)}${find}</p>` : '') +
     (pos ? head : '') + rows + '</div>';
 }
