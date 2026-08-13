@@ -342,9 +342,11 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptsec[aria-expanded="true"] .ptsecarw{transform:rotate(180deg)}
 /* 閉じているときは枠を消してバッジだけにする。3枚を同じ入れ物に入れてあるので、
    閉じたタブは横に並び、開いたものだけ全幅になる(タブが1行に収まってスッキリする) */
-.ptcards{display:flex;flex-wrap:wrap;align-items:flex-start;gap:7px;margin-bottom:9px}
-.ptcards>[data-sec]{flex:0 0 auto;margin:0}
-.ptcards>[data-sec][aria-expanded="true"]{flex:1 1 100%}
+/* タブは縦に並べる(2026-08-13タダシさん指示)。横並びだと3枚が1行に詰まって窮屈だった */
+.ptcards{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:9px}
+.ptcards>[data-sec]{margin:0;align-self:stretch}
+/* 閉じているカードはバッジぶんの幅だけにする(縦に並んだタブに見える) */
+.ptcards>[data-sec][aria-expanded="false"]{align-self:flex-start}
 .ptcbody{margin-top:7px}
 /* 「.ptcards>」で必ずカードに限定する。バッジ(.ptsec)も data-sec と aria-expanded を持つので、
    限定しないとバッジの水色まで消えて文字が読めなくなる */
