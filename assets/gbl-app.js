@@ -837,7 +837,7 @@ ${PAGE_ROCKET ? '' : `
   そこで順位の重みを掛けたものが<b>実戦想定</b>です（環境スコアと同じ重みの付け方）。
   よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
 
-  <h4>パーティ診断のマスの図</h4>
+  <h4>パーティ診断の「🎯 穴チェック」</h4>
   <p><b>1マス＝環境の1匹</b>で、色はその相手に<b>勝てるかどうか</b>です。
   <b>緑（2匹勝ち）</b>＝2匹以上が勝てる／<b>黄（1匹頼み）</b>＝1匹しか勝てない／<b>赤（穴）</b>＝3匹とも勝てない。
   <b>1匹頼み</b>は、その1匹を先に失うとそこが<b>穴になる</b>ということです。</p>
@@ -1886,7 +1886,9 @@ function ptGridHtml(res, n) {
   }).join('');
   // 並び順は「左から採用率の高い順」。これを書かないと、マスが何の順に並んでいるのか分からない
   // (タダシさん指摘・2026-08-13。「よく当たる順」だけでは左右の並びの話だと伝わらなかった)
-  return `<div class="ptcard"><div class="ptsec"><span class="ptdic">🎯</span>相性</div>` +
+  // 見出しは「相性」ではなく「穴チェック」(2026-08-13タダシさん選択)。
+  // この図の目的は"穴がないかの点検"なので、ページのタイトル・凡例の「穴」と語彙をそろえる
+  return `<div class="ptcard"><div class="ptsec"><span class="ptdic">🎯</span>穴チェック</div>` +
     `<div class="ptgsub">環境<b>${N}匹</b>を<b>左から採用率の高い順</b>に（1マス＝1匹）</div>` +
     `<div class="ptchart"><div class="ptgwrap">${rows}</div>` +
     `<div class="ptglegend">${legend}</div></div></div>`;
@@ -2311,6 +2313,7 @@ function runParty() {
   const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
   const idxs = [0, 1, 2].filter(i => PT[i]);
   if (!idxs.length) {
+    body.style.minHeight = '';
     body.innerHTML = '<div class="mtnote">上の枠にポケモンを入れると診断します（1〜3匹）</div>';
     return;
   }
@@ -2336,7 +2339,11 @@ function runParty() {
   const tot = pols.map(ps => ps.map(() => 0));    // 構成ごとの合計スコア(同数のときの決め手)
   const grid = [];                                 // grid[相手][メンバー][構成] = マスの中身
   const names = idxs.map(i => ptName(PT[i]));
-  // 診断のまとめ(図)は表の上に置く。計算中は進み具合をここに出す
+  // 診断のまとめ(図)は表の上に置く。計算中は進み具合をここに出す。
+  // 中身を「計算中…」の1行に入れ替えるとページが一瞬短くなり、ブラウザがスクロール位置を
+  // 保てず一番上まで飛ぶ(シールドのボタンを押すたびに視点がガクッと動く・2026-08-13タダシさん報告)。
+  // 計算のあいだは前の高さのまま固定しておき、結果が出そろったら固定を外す
+  body.style.minHeight = body.offsetHeight ? body.offsetHeight + 'px' : '';
   body.innerHTML = `<div class="mtprog">計算中 0/${list.length}</div>
     <div class="ptswap" id="ptswap"></div>
     ${ctlHtml('party')}
@@ -2448,6 +2455,7 @@ function runParty() {
       renderPtSwap();
       bindCtl(body, 'party');
       applyView(body, 'party');
+      body.style.minHeight = '';   // 結果が出そろったので高さの固定を外す
       // 入れ替えた直後は、続けて次の候補を出す(提案が出なくなるまで繰り返すのが実用の使い方)
       if (PTS.chain) { PTS.chain = false; runPtSwap(); }
     }
