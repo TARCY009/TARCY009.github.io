@@ -37,9 +37,14 @@ SUPP_EC = {  # ゲージ技の特別枠へ追加
     # オリジンフォルム専用の特別技。通常フォルムには追加しない（GM未反映）
     'PALKIA_ORIGIN':           ['SPACIAL_REND'],      # あくうせつだん
     'DIALGA_ORIGIN':           ['ROAR_OF_TIME'],      # ときのほうこう
+    # GM未反映の特別技(2026-08-13確認。メガレックウザにはリスト共有で自動反映される)
+    'RAYQUAZA':                ['DRAGON_ASCENT'],     # ガリョウテンセイ(メテオライトで習得)
+    'INTELEON':                ['HYDRO_CANNON'],      # ハイドロカノン(コミュニティデイ2026-07)
 }
 SUPP_EQ = {  # 通常技の特別枠へ追加
     'MEWTWO': ['COUNTER_FAST'],                       # カウンター(GOフェス2026)
+    'OINKOLOGNE':        ['MUD_SLAP_FAST'],           # パフュートン(オス): どろかけ(GM未反映・2026-08-13確認)
+    'OINKOLOGNE_FEMALE': ['MUD_SLAP_FAST'],           # パフュートン(メス): 同上
 }
 # 2026-06シーズン「新たな歩み」の新規習得技(通常入手枠)。GM未反映のため手動補完。
 # 出典: https://pokemongo.com/ja/news/go-battle-league-forever-forward
@@ -82,6 +87,16 @@ SUPP_MOVES = {
                  'power': 135.0, 'durationMs': 3500, 'energyDelta': -50},   # 威力135・3.5秒・2ゲージ
         'learn': {'ZERAORA': 'cinematicMoves'},   # ゼラオラのゲージ技(通常枠)
     },
+    'GLAIVE_RUSH': {    # きょけんとつげき(セグレイブ・コミュニティデイ2026-06)
+        'move': {'movementId': 'GLAIVE_RUSH', 'pokemonType': 'POKEMON_TYPE_DRAGON',
+                 'power': 105.0, 'durationMs': 2000, 'energyDelta': -50},   # 威力105・2.0秒・2ゲージ
+        'learn': {'BAXCALIBUR': 'eliteCinematicMove'},   # 特別枠(CD限定)
+    },
+    'SNIPE_SHOT': {     # ねらいうち(インテレオン専用・2026-07実装)
+        'move': {'movementId': 'SNIPE_SHOT', 'pokemonType': 'POKEMON_TYPE_WATER',
+                 'power': 100.0, 'durationMs': 3500, 'energyDelta': -33},   # 威力100・3.5秒・3ゲージ
+        'learn': {'INTELEON': 'cinematicMoves'},   # 通常枠(わざマシンで習得可)
+    },
 }
 
 def apply_gm_supp(data):
@@ -115,7 +130,7 @@ MANUAL_MEGA = {
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
  'MIND_BLOWN':'ビックリヘッド','DRUM_BEATING':'ドラムアタック','PYROBALL':'かえんボール','GIGATON_HAMMER':'デカハンマー',
  'AURA_WHEEL_ELECTRIC':'オーラぐるま（でんき）','AURA_WHEEL_DARK':'オーラぐるま（あく）','DYNAMAX_CANNON':'ダイマックスほう',
- 'PLASMA_FISTS':'プラズマフィスト'}
+ 'PLASMA_FISTS':'プラズマフィスト','GLAIVE_RUSH':'きょけんとつげき','SNIPE_SHOT':'ねらいうち'}
 GEN9_JA = {'WALKINGWAKE':'ウネルミナモ','IRONLEAVES':'テツノイサハ','DIPPLIN':'カミッチュ','POLTCHAGEIST':'チャデス',
  'SINISTCHA':'ヤバソチャ','OKIDOGI':'イイネイヌ','MUNKIDORI':'マシマシラ','FEZANDIPITI':'キチキギス','OGERPON':'オーガポン',
  'ARCHALUDON':'ブリジュラス','HYDRAPPLE':'カミツオロチ','GOUGINGFIRE':'ウガツホムラ','RAGINGBOLT':'タケルライコ',
