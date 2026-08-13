@@ -857,7 +857,7 @@ ${PAGE_ROCKET ? '' : `
 
   <h4>パーティ診断の「3匹の働き」</h4>
   <p><b>横棒は勝ち数そのもの</b>です。環境上位50匹と戦って、
-  <b>シールドが残っていれば何勝（序盤🛡⭕）／切れていれば何勝（終盤🛡❌）</b>かを並べています。
+  <b>序盤🛡⭕（おたがい🛡2枚）で何勝／終盤🛡❌（おたがい🛡0枚）で何勝</b>かを並べています。
   <b>真ん中の線が半分（25匹）</b>なので、<b>線より右なら半分以上に勝てる</b>と読んでください。
   序盤と終盤は<b>同じ50匹と別々に戦った結果</b>なので、2本を足しても50にはなりません。</p>
   <p><b>役割</b>は、その線をどちら側で越えているかで決まります。
@@ -2044,7 +2044,7 @@ function ptWorkHtml(res, names, pos) {
     return `<button class="ptwk${p ? ' r-' + p.r : ''}" data-flt="only${j}" aria-pressed="false"` +
       (p ? ` style="--rc:${PT_ROLES[p.r].c}"` : '') +
       ` title="${nm}` +
-      (p ? `／シールドが残っていれば${N}匹中${p.w2}勝・切れていれば${p.w0}勝` : '') +
+      (p ? `／序盤(おたがい🛡2枚)は${N}匹中${p.w2}勝・終盤(おたがい🛡0枚)は${p.w0}勝` : '') +
       `。抜くと穴が${only}匹ふえます（この${only}匹に勝てるのはこのポケモンだけ）。タップで表を絞り込み">` +
       `<span class="ptwnm"><span class="pcolnum">${j + 1}</span>${nm}</span>` +
       (p ? ptRoleChip(p.r) : `<span class="ptwrole wait">…</span>`) +
@@ -2076,7 +2076,10 @@ function ptWorkHtml(res, names, pos) {
     `<span class="ptwsub">抜くと</span></div>`;
   return `<div class="ptcard"><div class="ptsec"><span class="ptdic">⚔️</span>3匹の働き</div>` +
     `<div class="ptgsub"><b class="e">シールドが残っている序盤</b>と<b class="l">切れた終盤</b>で` +
-    `得意なポケモンが分かれます<small>真ん中の線＝半分（${N / 2}匹）</small></div>` +
+    // どちらもおたがい同じ枚数で戦わせている。この枚数を書いておかないと
+    // 「🛡⭕は2-2? 1-1?」が分からない(タダシさん質問・2026-08-13)
+    `得意なポケモンが分かれます<small>序盤＝おたがい🛡2枚／終盤＝おたがい🛡0枚` +
+    `・真ん中の線＝半分（${N / 2}匹）</small></div>` +
     (pos && names.length > 1 ? `<p class="ptwnote">${ptRoleNote(pos, names, N)}${find}</p>` : '') +
     (pos ? head : '') + rows + '</div>';
 }
