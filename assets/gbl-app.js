@@ -490,10 +490,27 @@ const rkWorstScore = res => {
 const poolOf = cfg => (cfg && cfg.statMult ? rkPool(cfg.key) : movePool(cfg.key));
 // わざ構成の候補を作る。cfg = { fast:固定するノーマル, c1:固定するSP1, c2:指定されたSP2 }
 // c2があるときは「SP1候補+SP2」の2本セットを返し、どちらを撃つかはエンジンが相手に合わせて選ぶ
+// めざめるパワーは16タイプに展開されるので、候補の先頭を埋め尽くして
+// **実戦の定番わざを押し出してしまう**(ホウオウは19個中17個がめざパで、やきつくすが候補外だった)。
+// タイプ厳選が難しく実戦でもまず使われないので、**自動選出の候補からは外す**(手動では選べるまま)。
+// 全部めざパになるポケモンはいないが、念のため空になったら元のまま使う
+const HP_MOVE = /^めざめるパワー/;
+const autoFasts = fasts => {
+  const f = fasts.filter(m => !HP_MOVE.test(D.moves[m].n));
+  return f.length ? f : fasts;
+};
+// SPアタックの良さ。**タイプ一致(1.2倍)を込みで**ダメージ÷消費ゲージを見る。
+// これが無いと、タイプ一致でない大技(ホウオウのソーラービーム)が上位に残って実戦とズレる
+const dpeOf = (key, m) => {
+  const mv = D.moves[m];
+  return mv.p * ((D.pokemon[key].ty || []).includes(mv.t) ? 1.2 : 1) / mv.e;
+};
 function policies(key, cfg) {
-  const { fasts, chargeds } = cfg && cfg.statMult ? rkPool(key) : movePool(key);
+  const pool = cfg && cfg.statMult ? rkPool(key) : movePool(key);
+  const { chargeds } = pool;
+  const fasts = autoFasts(pool.fasts);
   const st = { atk: 1, def: 1, types: D.pokemon[key].ty, buffs: [0, 0] };
-  const dpe = m => D.moves[m].p / D.moves[m].e;
+  const dpe = m => dpeOf(key, m);
   const top = chargeds.sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
   const out = [];
   for (const f of (cfg.fast ? [cfg.fast] : fasts.slice(0, 5))) {
@@ -2289,8 +2306,9 @@ const polToMv = (key, pol) => ({ key, fast: pol.fast,
 // わざ開放でSP2本にした構成も候補に入れる(効率のよいSP上位3本の組み合わせだけ。全部やると重い)
 function ptAutoPols(key) {
   const out = policies(key, {});
-  const { fasts, chargeds } = movePool(key);
-  const dpe = m => D.moves[m].p / D.moves[m].e;
+  const { chargeds } = movePool(key);
+  const fasts = autoFasts(movePool(key).fasts);
+  const dpe = m => dpeOf(key, m);
   const top = chargeds.slice().sort((a, b) => dpe(b) - dpe(a)).slice(0, 3);
   for (const f of fasts.slice(0, 5))
     for (let a = 0; a < top.length; a++)
@@ -2415,11 +2433,18 @@ function runParty() {
       prog.textContent = `計算中 ${idx}/${list.length}`;
       setTimeout(step, 0);
     } else {
-      // 各メンバーの構成を1つに決める(勝った数が最多→同数なら合計スコアが上)。手動なら候補は1つだけ
+      // 各メンバーの構成を1つに決める。
+      // ①勝った数が最多 ②同数なら**SPアタック2本**を優先 ③それも同じなら合計スコアが上。
+      // ②は2026-08-13にタダシさん指摘で追加。実戦は**わざ開放して2本持つのが基本**で、
+      // 2本あれば相手のシールドに応じて撃ち分けられる。勝ち数が同じなら1本を選ぶ理由がない
+      const nSp = pol => (pol.charged ? pol.charged.length : (pol.throw ? 1 : 0));
       const use = idxs.map((pi, j) => {
         let bk = 0;
         pols[j].forEach((pol, pk) => {
-          if (win[j][pk] > win[j][bk] || (win[j][pk] === win[j][bk] && tot[j][pk] > tot[j][bk])) bk = pk;
+          if (win[j][pk] !== win[j][bk]) { if (win[j][pk] > win[j][bk]) bk = pk; return; }
+          const n = nSp(pol), bn = nSp(pols[j][bk]);
+          if (n !== bn) { if (n > bn) bk = pk; return; }
+          if (tot[j][pk] > tot[j][bk]) bk = pk;
         });
         PTA[pi] = polToMv(PT[pi].key, pols[j][bk]);   // 枠のわざ欄にも同じ構成を出す
         return bk;
