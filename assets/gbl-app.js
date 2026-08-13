@@ -376,6 +376,28 @@ const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 
 // 名前の中に置くと白くなってしまう。紫(#b06cff)に固定する(2026-08-13タダシさん指摘)
 const SHADOWMK = '<i class="shadowmark nmk"></i>';
 const shMark = n => (n || '').startsWith('シャドウ') ? SHADOWMK + n.slice(4) : n;
+// 診断のまとめは3枚とも**タブを押したら開く**(2026-08-13タダシさん指示)。
+// 3枚とも開いていると縦に長く、表にたどり着くまでが遠い。既定は閉じておき、
+// 開いた状態は端末に覚えさせる(毎回開き直さなくてよいように)
+const PTSEC = { hole: false, diag: false, work: false };
+try { Object.assign(PTSEC, JSON.parse(localStorage.getItem('gbl_ptsec') || '{}')); } catch (e) {}
+const savePtSec = () => { try { localStorage.setItem('gbl_ptsec', JSON.stringify(PTSEC)); } catch (e) {} };
+// パネルの頭(バッジ)。押すと開閉する
+const ptSecHead = (k, emoji, label) =>
+  `<button class="ptsec" data-sec="${k}" aria-expanded="${!!PTSEC[k]}"` +
+  ` title="タップで開きます">` +
+  `<span class="ptdic">${emoji}</span>${label}<span class="ptsecarw"></span></button>`;
+// パネルの開閉をつなぐ(描き直すたびに呼ぶ)
+function bindPtSec(root) {
+  root.querySelectorAll('.ptsec[data-sec]').forEach(b => b.onclick = () => {
+    const k = b.dataset.sec;
+    PTSEC[k] = !PTSEC[k];
+    savePtSec();
+    b.setAttribute('aria-expanded', PTSEC[k]);
+    const card = b.parentNode;
+    card.setAttribute('aria-expanded', PTSEC[k]);
+  });
+}
 const MOVE_TYPE = {};
 const MOVE_COST = {};
 const NAME_TYPES = {};
@@ -862,7 +884,7 @@ ${PAGE_ROCKET ? '' : `
   苦手な相手は<b>名前と環境順位</b>で出します（タイプだけ分かっても次の手は決まらないため）。
   深刻度は<b>環境上位10位に何匹いるか</b>で見ています（使用率の低い相手ばかりなら、急いで埋める必要はありません）。</p>
 
-  <h4>パーティ診断の「3匹の働き」</h4>
+  <h4>パーティ診断の「⚔️ 得意な場面」</h4>
   <p><b>横棒は勝ち数そのもの</b>です。環境上位50匹と戦って、
   <b>🛡2-2（シールドが残っている序盤）で何勝／🛡0-0（切れた終盤）で何勝</b>かを並べています。
   どちらも<b>おたがい同じ枚数</b>です。
@@ -872,8 +894,10 @@ ${PAGE_ROCKET ? '' : `
   <b>万能</b>＝どちらも25勝以上／<b>序盤型</b>＝🛡2-2だけ／<b>終盤型</b>＝🛡0-0だけ／
   <b>苦戦</b>＝どちらも25勝未満。シールドは<b>SPアタックしか防げない</b>ので、
   実測では<b>高威力のSPを持つほど終盤型</b>、<b>安いSPを撃てる・ノーマルアタックが強いほど序盤型</b>になります。
-  <b>3匹が同じ側に寄っていたら、逆の場面を任せられるポケモンがいない</b>ということなので、
-  <b>🔧◯◯型を探す</b>を押すと、その型を優先した入れ替え候補が出ます。</p>
+  <b>どの型で揃えるのが正解、というものはありません</b>。終盤型で揃えれば相手のシールドが早く尽きて
+  終盤に押し込みやすく、序盤型で揃えれば相手はシールドの使いどころを見失います。バランス型も当然ありです。
+  ここは<b>いまどうなっているかを映すだけ</b>なので、狙う戦い方に合わせて
+  <b>🔧序盤型を探す／🔧終盤型を探す</b>から入れ替え候補を出してください。</p>
   <p>右端の<b>穴+◯</b>は、<b>そのポケモンを抜いたときに増える穴の数</b>です
   （＝その相手に勝てるのがそのポケモンしかいない）。<b>増えない</b>と出たら、
   他の2匹で代われるので入れ替えても穴は増えません。
@@ -1901,10 +1925,11 @@ function ptGridHtml(res, n) {
   // (タダシさん指摘・2026-08-13。「よく当たる順」だけでは左右の並びの話だと伝わらなかった)
   // 見出しは「相性」ではなく「穴チェック」(2026-08-13タダシさん選択)。
   // この図の目的は"穴がないかの点検"なので、ページのタイトル・凡例の「穴」と語彙をそろえる
-  return `<div class="ptcard"><div class="ptsec"><span class="ptdic">🎯</span>穴チェック</div>` +
+  return `<div class="ptcard" data-sec="hole" aria-expanded="${!!PTSEC.hole}">` +
+    ptSecHead('hole', '🎯', '穴チェック') + `<div class="ptcbody">` +
     `<div class="ptgsub">環境<b>${N}匹</b>を<b>左から採用率の高い順</b>に（1マス＝1匹）</div>` +
     `<div class="ptchart"><div class="ptgwrap">${rows}</div>` +
-    `<div class="ptglegend">${legend}</div></div></div>`;
+    `<div class="ptglegend">${legend}</div></div></div></div>`;
 }
 // ---- 役割の判定(🛡が残る序盤 / 🛡が切れた終盤 の2つの場面) ----
 // シールドはSPアタックしか防げないので、この2つの場面で得意なポケモンがはっきり分かれる。
@@ -1958,20 +1983,24 @@ function ptCandRole(key, shadow, pol, n) {
   return { w2, w0, r: ptRoleOf(w2, w0, n) };
 }
 // 図で分かることを一言にする(数字を並べるより状況を言い切るほうが頭に入る)
+// **いまどうなっているかを言うだけ**にする(2026-08-13タダシさん指示)。
+// GBLに正解の型は無い。終盤型で揃えれば相手のシールドが早く尽きて終盤に押し込めるし、
+// 序盤型で揃えれば相手はシールドの使いどころを見失う。バランス型も当然あり。
+// だから「かたよっている」「バランスを取るべき」のような**良し悪しの言葉を使わない**
 function ptRoleNote(pos, names, n) {
   const half = n / 2;
   const lead = pos.map((p, j) => j).filter(j => pos[j].w2 >= half);
   const close = pos.map((p, j) => j).filter(j => pos[j].w0 >= half);
   const nm = j => `<b>${shMark(names[j])}</b>`;
-  if (pos.length === 1) return lead.length && close.length ? `どちらの場面も半分以上に勝てます。`
+  if (pos.length === 1) return lead.length && close.length ? `序盤も終盤も半分以上に勝てます。`
     : lead.length ? `🛡が残るうちに強いタイプです。`
     : close.length ? `🛡が切れてから強いタイプです。` : `どちらの場面も半分に届きません。`;
-  if (!lead.length && !close.length) return `どちらの場面も半分に届くポケモンがいません。`;
-  if (!lead.length) return `🛡が残るうちに戦えるポケモンがいません。`;
-  if (!close.length) return `🛡が切れてから戦えるポケモンがいません。`;
-  if (lead.length === 1 && close.length >= 2) return `序盤は${nm(lead[0])}頼み。終盤に${close.length}匹かたよっています。`;
-  if (close.length === 1 && lead.length >= 2) return `終盤は${nm(close[0])}頼み。序盤に${lead.length}匹かたよっています。`;
-  return `序盤・終盤とも担当がいます。`;
+  if (!lead.length && !close.length) return `どちらの場面も半分に届くポケモンはいません。`;
+  if (!lead.length) return `全員<b>終盤型</b>。序盤に半分以上勝てるポケモンはいません。`;
+  if (!close.length) return `全員<b>序盤型</b>。終盤に半分以上勝てるポケモンはいません。`;
+  if (lead.length === 1 && close.length >= 2) return `序盤に強いのは${nm(lead[0])}のみ。終盤に強いのが${close.length}匹です。`;
+  if (close.length === 1 && lead.length >= 2) return `終盤に強いのは${nm(close[0])}のみ。序盤に強いのが${lead.length}匹です。`;
+  return `序盤に強いのが${lead.length}匹、終盤に強いのが${close.length}匹です。`;
 }
 // 環境のどのポケモンに苦しんでいるかを、タイプではなく名前で出す。
 // 「じめんが苦手」と分かっても次の手は決まらないが、「この4匹に勝てない」なら
@@ -2019,8 +2048,8 @@ function ptDiagHtml(res, names, n) {
   const cls = !holes.length ? ' ok' : topHoles ? ' bad' : ' warn';
   // ⚠リストの枠だけは「そこに並んでいるものの色」で固定する(穴=赤 / 1匹頼み=黄)。
   // 相性の図の凡例と同じ色にして、どの区分の話か迷わないようにする
-  return `<div class="ptdiag${cls}">` +
-    `<div class="ptsec"><span class="ptdic">📋</span>診断</div>` +
+  return `<div class="ptdiag${cls}" data-sec="diag" aria-expanded="${!!PTSEC.diag}">` +
+    ptSecHead('diag', '📋', '診断') + `<div class="ptcbody">` +
     `<p class="ptdtext">${lead}${detail}</p>` +
     (list.length ? `<button class="ptwhead t-${tier}" data-flt="${flt}" aria-pressed="false"` +
       ` title="タップで表をこの相手だけに絞り込みます">⚠ ${ttl} <b>${list.length}匹</b>` +
@@ -2028,7 +2057,7 @@ function ptDiagHtml(res, names, n) {
       `<div class="ptwchips t-${tier}">` +
       list.slice(0, MAX).map(r => `<span class="ptwchip"><em>${r.idx + 1}</em>${shMark(r.m.n)}</span>`).join('') +
       (list.length > MAX ? `<span class="ptwmore">ほか${list.length - MAX}匹</span>` : '') + '</div>' : '') +
-    `<p class="ptdnext">${next}</p></div>`;
+    `<p class="ptdnext">${next}</p></div></div>`;
 }
 // 3匹それぞれの働きを「1行1匹」で出す(2026-08-13にタダシさん指示で散布図から作り直し)。
 // 旧版は左に4象限の散布図・右に勝ち数のバーを置いていたが、
@@ -2065,15 +2094,17 @@ function ptWorkHtml(res, names, pos) {
             : `<span class="ptwsub dup">増えない</span>`) +
       `</button>`;
   }).join('');
-  // 足りない役割があれば、そのまま入れ替え候補の検索につなげる(分析だけで終わらせない)
+  // 入れ替え候補を「型」で探せるようにする。
+  // **足りない型のときだけ出す作りにはしない**(2026-08-13タダシさん指示)。
+  // それだと「揃えるべき」という勧めになるが、GBLに正解の型は無い。
+  // 終盤型で揃える・序盤型で揃えるのも立派な戦術なので、**両方いつでも選べる**ようにして
+  // どちらへ寄せるかは使う人が決める
   let find = '';
-  if (pos && names.length > 1) {
-    const half = N / 2;
-    const early = pos.filter(p => p.w2 >= half).length, late = pos.filter(p => p.w0 >= half).length;
-    const want = early <= 1 && early <= late ? 'early' : late <= 1 && late < early ? 'late' : '';
-    if (want) find = `<button class="ptwfind" data-want="${want}"` +
-      ` title="この型のポケモンを優先して並べた入れ替え候補を出します">🔧 ${PT_ROLES[want].t}を探す</button>`;
-  }
+  if (pos && names.length > 1)
+    find = `<span class="ptwfindwrap">` + ['early', 'late'].map(w =>
+      `<button class="ptwfind" data-want="${w}"` +
+      ` title="${PT_ROLES[w].t}のポケモンを優先して並べた入れ替え候補を出します">` +
+      `🔧 ${PT_ROLES[w].t}を探す</button>`).join('') + `</span>`;
   // 列の見出し。**シールドあり/なしという軸が伝わって初めて役割の話が通じる**ので、
   // 小さい注記ではなく、横棒の真上に列見出しとして出す(タダシさん指摘・2026-08-13)
   // 「勝ち数の内訳」は誤り(2026-08-13タダシさん指摘で変更)。"内訳"だと2本の合計が50になると
@@ -2084,7 +2115,8 @@ function ptWorkHtml(res, names, pos) {
     `<span class="ptwbars"><span class="ptwb e"><em><b>🛡2-2</b></em></span>` +
     `<span class="ptwb l"><em><b>🛡0-0</b></em></span></span>` +
     `<span class="ptwsub">抜くと</span></div>`;
-  return `<div class="ptcard"><div class="ptsec"><span class="ptdic">⚔️</span>3匹の働き</div>` +
+  return `<div class="ptcard" data-sec="work" aria-expanded="${!!PTSEC.work}">` +
+    ptSecHead('work', '⚔️', '得意な場面') + `<div class="ptcbody">` +
     `<div class="ptgsub"><b class="e">シールドが残っている序盤</b>と<b class="l">切れた終盤</b>で` +
     // 枚数は列見出しの「🛡2-2 / 🛡0-0」が示すので、ここには**役割の基準**を書く
     // (2026-08-13タダシさん指示。何勝以上でどの型になるかが分かれば、あとは表を読むだけで済む)
@@ -2092,7 +2124,7 @@ function ptWorkHtml(res, names, pos) {
     `両方${ptRoleChip('all')}／<b class="e">🛡2-2</b>だけ${ptRoleChip('early')}／` +
     `<b class="l">🛡0-0</b>だけ${ptRoleChip('late')}／どちらも未満${ptRoleChip('weak')}</small></div>` +
     (pos && names.length > 1 ? `<p class="ptwnote">${ptRoleNote(pos, names, N)}${find}</p>` : '') +
-    (pos ? head : '') + rows + '</div>';
+    (pos ? head : '') + rows + '</div></div>';
 }
 
 // ---- パーティ3匹の穴チェック ----
@@ -2443,9 +2475,11 @@ function runParty() {
         return { w2, w0, r: ptRoleOf(w2, w0, PV.results.length) };
       });
       // 穴の数はグリッドの凡例に出るので、文字では繰り返さない(平均勝率と前提だけ添える)
-      prog.innerHTML = `<div class="ptchart">${ptGridHtml(PV.results, idxs.length)}</div>` +
+      // 3枚は同じ入れ物に入れる。閉じたパネルは幅を取らずに横へ並び、
+      // 開いたものだけ全幅になる(閉じているときはタブが1行に収まってスッキリする)
+      prog.innerHTML = `<div class="ptcards">${ptGridHtml(PV.results, idxs.length)}` +
         ptDiagHtml(PV.results, names, idxs.length) +
-        `<div class="ptrole2">${ptWorkHtml(PV.results, names, PTS.pos)}</div>` +
+        ptWorkHtml(PV.results, names, PTS.pos) + `</div>` +
         `<div class="holesub">平均勝率：<b>${avg}％</b>` +
         `<span class="wavg" title="上位の相手ほど当たりやすいので、順位の重みを掛けた勝率です。よく当たる相手に強いパーティほど高くなります（環境スコアと同じ重みの付け方）">実戦想定 <b>${wavg}％</b></span>` +
         `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>` +
@@ -2468,6 +2502,7 @@ function runParty() {
       };
       prog.querySelectorAll('[data-flt]').forEach(bindFlt);
       prog.querySelectorAll('[data-want]').forEach(bindFind);
+      bindPtSec(prog);   // 3枚のパネルの開閉
       // 入れ替え候補は、いまの診断結果を土台にして探す(パーティや条件が変わったら作り直す)
       PTS.base = { list, idxs, bases, results: PV.results,
         usedPols: idxs.map((pi, j) => pols[j][use[j]]) };

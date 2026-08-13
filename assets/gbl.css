@@ -328,11 +328,28 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   border:1px solid rgba(120,150,255,.18);
   box-shadow:0 6px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06)}
 /* 見出しのバッジ。どのパネルも同じ水色で「ここが節の頭」と分かるようにする
-   (状態を表す赤・黄・緑とは役割が別なので、色はぶつけない) */
-.ptsec{display:inline-flex;align-items:center;gap:6px;margin-bottom:7px;padding:3px 14px 3px 11px;
-  font-size:.84rem;font-weight:800;letter-spacing:.04em;color:#06243a;border-radius:99px;
-  background:linear-gradient(160deg,#9ef2ff,var(--cy));
-  box-shadow:0 3px 10px rgba(67,224,255,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+   (状態を表す赤・黄・緑とは役割が別なので、色はぶつけない)。押すと中身が開く */
+.ptsec{display:inline-flex;align-items:center;gap:6px;padding:3px 12px 3px 11px;
+  font-size:.84rem;font-weight:800;letter-spacing:.04em;color:#06243a;border:none;border-radius:99px;
+  cursor:pointer;background:linear-gradient(160deg,#9ef2ff,var(--cy));
+  box-shadow:0 3px 10px rgba(67,224,255,.35),inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .08s}
+.ptsec:hover{transform:translateY(-1px)}
+/* 開いているかどうかを示す小さな三角(閉じているとき下向き) */
+.ptsecarw{width:0;height:0;margin-left:2px;border-left:4px solid transparent;
+  border-right:4px solid transparent;border-top:5px solid #06243a;
+  transition:transform .12s}
+.ptsec[aria-expanded="true"] .ptsecarw{transform:rotate(180deg)}
+/* 閉じているときは枠を消してバッジだけにする。3枚を同じ入れ物に入れてあるので、
+   閉じたタブは横に並び、開いたものだけ全幅になる(タブが1行に収まってスッキリする) */
+.ptcards{display:flex;flex-wrap:wrap;align-items:flex-start;gap:7px;margin-bottom:9px}
+.ptcards>[data-sec]{flex:0 0 auto;margin:0}
+.ptcards>[data-sec][aria-expanded="true"]{flex:1 1 100%}
+.ptcbody{margin-top:7px}
+/* 「.ptcards>」で必ずカードに限定する。バッジ(.ptsec)も data-sec と aria-expanded を持つので、
+   限定しないとバッジの水色まで消えて文字が読めなくなる */
+.ptcards>[data-sec][aria-expanded="false"]>.ptcbody{display:none}
+.ptcards>[data-sec][aria-expanded="false"]{padding:0;background:none;border:none;box-shadow:none}
 .ptdic{font-size:1.2rem;line-height:1}
 /* パネルの副題。軸の意味など「これが分からないと図が読めない」ことはここに書く */
 .ptgsub{font-size:.72rem;line-height:1.6;color:var(--sub);margin-bottom:7px}
@@ -390,11 +407,13 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptwmore{align-self:center;font-size:.66rem;color:var(--sub)}
 /* 3匹の働き: 1行1匹。散布図(4象限)は「3点しかないのに2次元を辿らせる」ため廃止し、
    役割を言葉のバッジで出す形にした(2026-08-13)。視線が上から下の一方向で済む */
-.ptrole2{max-width:600px}
 .ptwnote{font-size:.78rem;line-height:1.7;color:var(--ink);margin:0 0 7px}
 .ptwnote b{font-weight:800;color:var(--cy)}
 /* 足りない役割を、そのまま入れ替え候補の検索につなげるボタン */
-.ptwfind{display:inline-block;vertical-align:middle;margin-left:8px;
+/* 型で探すボタンは2つ並べる(どちらへ寄せるかは使う人が決める) */
+.ptwfindwrap{display:inline-flex;gap:6px;flex-wrap:wrap;vertical-align:middle;margin-left:8px}
+.ptwfindwrap .ptwfind{margin-left:0}
+.ptwfind{display:inline-block;vertical-align:middle;
   padding:3px 12px;font-size:.68rem;font-weight:800;color:#3a2a00;border:none;border-radius:999px;
   cursor:pointer;background:linear-gradient(160deg,#ffe9a8 0%,#f5c33c 45%,#c98f10 100%);
   box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
