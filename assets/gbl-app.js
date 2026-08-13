@@ -1528,7 +1528,7 @@ function runMulti() {
   // 左パネルの表示(CP・個体値・PL・わざ)もこのリーグ/カップの内容に更新する
   const pool0 = movePool(S[0].key);
   fillMoves(0, { ...meBase, fast: S[0].fast || S[0].pin.fast || pool0.fasts[0], throw: S[0].c1 || S[0].pin.c1 || pool0.chargeds[0] });
-  const myName = (S[0].shadow ? 'シャドウ' : '') + D.pokemon[S[0].key].n;
+  const myName = (S[0].shadow ? SHADOWMK : '') + D.pokemon[S[0].key].n;
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}<small class="cnsub">マスをタップ→1対1シミュ</small></h3>
     ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
@@ -1841,7 +1841,7 @@ function runCounter() {
   const foeCfg = (pol, sh) => listSideCfg(1, foeBase, pol, sh, foeTiming);
   const pool1 = movePool(S[1].key);
   fillMoves(1, { ...foeBase, fast: S[1].fast || S[1].pin.fast || pool1.fasts[0], throw: S[1].c1 || S[1].pin.c1 || pool1.chargeds[0] });
-  const foeName = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
+  const foeName = (S[1].shadow ? SHADOWMK : '') + D.pokemon[S[1].key].n;
   // 候補が多い「全ポケモン」では、計算しながら1行ずつ描くと重いので表は最後にまとめて作る
   const all = cnTop === 'all';
   const sub = all ? `全ポケモン${list.length}匹（シャドウ込み）` : `環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}`;
@@ -2228,7 +2228,7 @@ function buildPartySlots(box, mvStore) {
             const p = D.pokemon[m.key];
             if (!p) return '';
             const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
-            return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? 'シャドウ' : ''}${p.n}${iv}</span></div>`;
+            return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span></div>`;
           }).join('')
         : '<div class="mypkempty">まだ登録がありません。1対1シミュでポケモンを選び「★登録」を押すとここに追加されます</div>';
       win.querySelectorAll('.mypkrow').forEach(row => row.onclick = () => {
@@ -3083,7 +3083,7 @@ function renderRkMy() {
     <div class="sugg rkmysugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     ${p ? `<div class="rkmysel">
       <button class="rkmyshadow" aria-pressed="${RKM.shadow}" title="シャドウとして計算する"><i class="shadowmark"></i></button>
-      <b>${RKM.shadow ? 'シャドウ' : ''}${p.n}</b>${typeIcons(p, 15)}</div>
+      <b>${RKM.shadow ? SHADOWMK : ''}${p.n}</b>${typeIcons(p, 15)}</div>
     <div class="rkmyrow">
       <label for="rkmCP">CP</label><input type="number" id="rkmCP" min="10" inputmode="numeric" placeholder="例 2387">
       <label for="rkmA">攻</label><input type="number" id="rkmA" min="0" max="15" value="15" inputmode="numeric">
@@ -3096,7 +3096,7 @@ function renderRkMy() {
       const q = D.pokemon[m.key];
       if (!q) return '';
       const iv = m.ivMode === 'manual' && m.mIvs ? `${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
-      return `<div class="rkmyrowsaved"><span>★${m.shadow ? 'シャドウ' : ''}${q.n}<i>${iv}</i></span>
+      return `<div class="rkmyrowsaved"><span>★${m.shadow ? SHADOWMK : ''}${q.n}<i>${iv}</i></span>
         <b class="rkmydel" data-del="${k}" title="消す">×</b></div>`;
     }).join('')}</div>` : ''}`;
   // ポケモンの検索
@@ -3261,7 +3261,7 @@ function rkShowSugg(i, el) {
   const rows = rkSlotRank(foe);
   const safe = RKS.mode === 'safe';
   const cand = (safe ? rows.filter(r => r.checked && r.win) : rows).slice(0, 5);
-  const hd = `<div class="rksgnote">${rktName(foe)} への対策トップ5${safe ? '（先に倒されない）' : ''}</div>`;
+  const hd = `<div class="rksgnote">${shMark(rktName(foe))} への対策トップ5${safe ? '（先に倒されない）' : ''}</div>`;
   if (!cand.length) {
     list.innerHTML = hd + '<div class="rksgnote">先に倒されない候補が見つかりません（「高火力」を見てください）</div>';
     list.style.display = 'block';
@@ -3582,7 +3582,7 @@ function rbPoints(turns, ctx, dec) {
 
 // 決断ひとつぶんの選択肢(画面に出すボタン)を作る
 function rbChoices(p, ctx) {
-  if (p.kind === 'lead') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `${SWAPMK} ${ctx.picks[k].name}`, cls: 'fire',
+  if (p.kind === 'lead') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `${SWAPMK} ${shMark(ctx.picks[k].name)}`, cls: 'fire',
     tip: '開幕にこのポケモンへ交代します(あいての打ちかけの1発は交代先に入ります)' }));
   if (p.kind === 'sp') {
     // 質問は「いちばん軽いSPが撃てるようになったターン」に出るので、重いほうのわざは
@@ -3617,15 +3617,15 @@ function rbChoices(p, ctx) {
     const opts = [];
     for (const k of ctx.swTo) {
       opts.push({ a: 'toq', to: k, cls: 'fire',
-        label: `${SWAPMK} ${ctx.picks[k].name} <i class="need">すぐ</i>`,
+        label: `${SWAPMK} ${shMark(ctx.picks[k].name)} <i class="need">すぐ</i>`,
         tip: 'いますぐ交代します(あいてはここから4.5秒動けません／自分も0.5秒動けません)' });
       if (n > 0) opts.push({ a: 'to', to: k, cls: 'fire',
-        label: `${SWAPMK} ${ctx.picks[k].name} <i class="need">${fm.n}＋${n}</i>`,
+        label: `${SWAPMK} ${shMark(ctx.picks[k].name)} <i class="need">${fm.n}＋${n}</i>`,
         tip: `あいてが動けないあいだに${fm.n}をあと${n}発打ってから交代します(硬直ぶんを殴ってから下がる)` });
     }
     return opts.concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
   }
-  return ctx.swTo.map(k => ({ a: 'to', to: k, label: ctx.picks[k].name, cls: 'fire',
+  return ctx.swTo.map(k => ({ a: 'to', to: k, label: shMark(ctx.picks[k].name), cls: 'fire',
     tip: '次にこのポケモンを出します' }));
 }
 
@@ -3952,14 +3952,14 @@ function rbAnsLabel(p, a) {
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
   if (p.kind === 'swap' || p.kind === 'lead') {
     if (a.a === 'stay') return 'このまま';
-    const nm = p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : '';
+    const nm = p.ctx.picks[a.to] ? shMark(p.ctx.picks[a.to].name) : '';
     if (p.kind === 'lead') return `${nm}に交代`;
     if (a.a === 'toq') return `${nm}にすぐ交代`;
     const fm = p.ctx.fast && D.moves[p.ctx.fast];
     const n = fm ? Math.floor((p.ctx.foeEntry || 0) / (fm.tn || 1)) : 0;
     return `${fm && n ? `${fm.n}＋${n}のあと` : ''}${nm}に交代`;
   }
-  return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? p.ctx.picks[a.to].name : '');
+  return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? shMark(p.ctx.picks[a.to].name) : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
 // 能力変化のタグ(⬆⬇)。1段階ちょうど以外は段階数を添える
@@ -4045,7 +4045,7 @@ function rbRender(body, bt, picks, foes, extra) {
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
-    items.push({ gt: base, html: `<div class="flg"><span class="me">${leg.meName}</span><em>VS</em><span class="foe">${leg.foeName}</span></div>` });
+    items.push({ gt: base, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
     if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
@@ -4109,7 +4109,7 @@ function rbRender(body, bt, picks, foes, extra) {
   if (!bt.legs.length && bt.pending && foes.length) {
     const F = rktCfg(foes[0]);
     const sA = PvpEngine.buildStats(D, picks[0].base), sF = PvpEngine.buildStats(D, F);
-    items.push({ gt: 0, html: `<div class="flg"><span class="me">${picks[0].name}</span><em>VS</em><span class="foe">${rktName(foes[0])}</span></div>` });
+    items.push({ gt: 0, html: `<div class="flg"><span class="me">${shMark(picks[0].name)}</span><em>VS</em><span class="foe">${shMark(rktName(foes[0]))}</span></div>` });
     frames[0] = { meta: { name0: picks[0].name, name1: rktName(foes[0]), cp0: sA.cp, cp1: sF.cp, max0: sA.hp, max1: sF.hp,
       sp0: rbSpList(picks[0].pol).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: F.throw ? [{ n: D.moves[F.throw].n, e: D.moves[F.throw].e }] : [] },
@@ -4407,7 +4407,7 @@ function renderMyPk() {
       const p = D.pokemon[m.key];
       if (!p || !rkFoeOk(i, m.key)) return '';   // あいて側はメガ・ゲンシを出さない
       const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
-      return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? 'シャドウ' : ''}${p.n}${iv}</span><b class="del" data-del="${k}">×</b></div>`;
+      return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span><b class="del" data-del="${k}">×</b></div>`;
     }).join('');
     box.querySelectorAll('.mypkrow').forEach(row => row.onclick = e => {
       if (e.target.dataset.del !== undefined) {   // ×で削除
@@ -4716,7 +4716,8 @@ function fillMoves(i, cfg) {
   const el = sideEl[i], { fasts, chargeds } = poolOf(cfg);
   const p = D.pokemon[cfg.key];
   el.querySelector('.pkview').style.display = 'block';
-  el.querySelector('.nm').textContent = (cfg.shadow ? 'シャドウ' : '') + p.n;
+  // 表示はシャドウマーク(入力欄以外は名前の左にマークを付ける・2026-08-13タダシさん指示)
+  el.querySelector('.nm').innerHTML = (cfg.shadow ? SHADOWMK : '') + p.n;
   el.querySelector('.ticons').innerHTML = typeIcons(p, 18);
   el.querySelector('.ticons').className = 'ticons tpair';
   const st = PvpEngine.buildStats(D, cfg);
@@ -4840,7 +4841,7 @@ function render(res, L, R, matrix) {
     const carryTxt = cfg.startHpPct != null || cfg.startEn
       ? `<div class="carrytag">連戦 HP${cfg.startHpPct != null ? cfg.startHpPct : 100}%・ゲージ${cfg.startEn || 0}</div>` : '';
     return `<div class="fighter">
-      <div class="top">${badge(i)}<span class="nm">${f.name}</span></div>
+      <div class="top">${badge(i)}<span class="nm">${shMark(f.name)}</span></div>
       ${carryTxt}
       <div class="hpbar"><i class="${pct <= 25 ? 'low' : ''}" style="width:${pct}%"></i></div>
       <div class="subline">HP ${f.hp}/${f.hpMax}（${pct}%）</div>
