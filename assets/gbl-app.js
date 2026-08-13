@@ -227,7 +227,11 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="counter" style="display:none"></div>
 <div class="multi" id="party" style="display:none">
   <div class="phead">
-    <h3>パーティ3匹の穴チェック<small class="cnsub"><b class="holeword">0匹＝穴</b>・マスをタップ→1対1シミュ</small></h3>
+    <!-- 見出しは「自分のパーティ」(2026-08-13タダシさん指示)。
+         旧「パーティ3匹の穴チェック」の"穴チェック"は下の図の見出しに移ったので、この画面の
+         入り口としては「自分のパーティを入れる場所」であることだけを言う。
+         「0匹＝穴」は図の凡例が説明するようになったため、「マスをタップ→1対1シミュ」とともに削除 -->
+    <h3>自分のパーティ</h3>
     <button class="ptauto" aria-pressed="false" title="マニュアル＝下の欄で選んだわざで計算します。オート＝環境上位にいちばん多く勝てるわざ構成を自動で選びます。タップで切り替わります"><span class="k">わざ</span><span class="v m">マニュアル</span><span class="v a">オート</span></button>
   </div>
   <div class="pslots"></div>
