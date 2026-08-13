@@ -98,6 +98,15 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 #fShadow{display:inline-flex;align-items:center;justify-content:center;font-size:1rem;padding:5px 18px}
 .mine-sum{background:linear-gradient(90deg,var(--goldbg),#fffcf1);border:1.5px solid var(--goldline);border-left:5px solid var(--goldline);border-radius:10px;padding:9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .mine-sum b{color:var(--gold)}
+/* 強化ボタン: ゲーム内ではPLが見えないので、1タップ=1回の強化(+0.5)で数えられるようにする */
+.plctl{display:flex;align-items:center;gap:6px}
+.plnow{font-size:1.15rem;font-weight:800;color:var(--gold);min-width:76px;text-align:center;letter-spacing:.02em}
+.plbtn{border:1px solid var(--goldline);background:#fff;color:#8a6100;border-radius:9px;padding:4px 10px;font-size:.8rem;font-weight:800;cursor:pointer;line-height:1.5}
+.plbtn.up{background:linear-gradient(180deg,#ffd873,#f0a827);border-color:#d99a1c;color:#4a3200;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.plbtn.up:hover:not(:disabled){transform:translateY(-1px)}
+.plbtn:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
+.plneed{flex-basis:100%;font-size:.78rem;color:#8a6100;font-weight:700}
+.plneed b{font-size:.95rem}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid #eceffa}
 #rankList .rank-row:nth-child(-n+3):not(.mine){border-radius:12px;margin:3px 0}
 #rankList .rank-row:nth-child(1):not(.mine){background:linear-gradient(90deg,#fff6d8,#fffdf3);border:1.5px solid #f2c14e}
@@ -207,7 +216,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div id="mineSummary"></div>
   <div id="rankList"><div class="empty">ボスを設定するとランキングが表示されます</div></div>
   <button class="more" id="moreBtn" style="display:none">さらに表示</button>
-  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。登録した自分のメガもこの一覧に入り、1発耐えられない場合は「何PLまで上げれば耐えるか」とそのときの火力を出します（登録したわざ・個体値で計算）。特別技はゲーム内データを公式発表と照合して補完済み。</p>
+  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。登録した自分のポケモンは「強化 +0.5」ボタンで1回の強化ぶんずつPLを上げられます（ゲーム内ではPLが表示されないため、強化の回数で数えられるようにしています。「−」で1回戻す、「↩」で入力したPLに戻る。PL50超は最高の相棒でのみ到達）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。登録した自分のメガもこの一覧に入り、1発耐えられない場合は「何PLまで上げれば耐えるか」とそのときの火力を出します（登録したわざ・個体値で計算）。特別技はゲーム内データを公式発表と照合して補完済み。</p>
 </div>
 
 <footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
@@ -474,12 +483,41 @@ document.getElementById('addBtn').onclick=()=>{
   // 防御・HPの個体値もシールド破壊(メガ)の1発耐え判定で使うので控えておく
   const ivd=isMax?15:+document.getElementById('ivD').value, ivh=isMax?15:+document.getElementById('ivH').value;
   mine.push({key:myKey,f:document.getElementById('fastSel').value,c:document.getElementById('chgSel').value,
-             lv,iva,ivd,ivh,isMax,shadow:document.getElementById('myShadow').checked});
+             lv,lv0:lv,iva,ivd,ivh,isMax,shadow:document.getElementById('myShadow').checked});
   // メガを登録したらランキング側のメガ・ゲンシも出す(メガ抜きの順位と比べると相当順位がズレるため)
   if(p.mega && !fMega){ fMega=true; syncModes(); }
   renderRank();
 };
 
+// ---- 自分のポケモンの強化(PL+0.5) ----
+// ゲーム内ではPLが表示されないため、「あと何回強化すれば届くか」をタップで数えられるようにする。
+// 強化で上げられるのはPL50まで(最高の相棒でPL51)。
+const PL_MAX=51, PL_NORM=50;   // PL50超(50.5・51)は最高の相棒でしか届かない
+const ivTxt=e=>`個体値${(e.iva===e.ivd&&e.ivd===e.ivh)?e.iva:`${e.iva}/${e.ivd}/${e.ivh}`}`;
+const mineLabel=e=>`PL${e.lv}・${ivTxt(e)}`;
+function plCtlHtml(e,i){
+  return `<span class="plctl">
+    <button class="plbtn" data-i="${i}" data-d="-0.5" ${e.lv>1?'':'disabled'} title="1回ぶん戻す">−</button>
+    <b class="plnow">PL ${e.lv}</b>
+    <button class="plbtn up" data-i="${i}" data-d="0.5" ${e.lv<PL_MAX?'':'disabled'} title="1回強化する（+0.5）">強化 +0.5</button>
+    ${e.lv!==e.lv0?`<button class="plbtn" data-i="${i}" data-rst="1" title="入力したPL${e.lv0}に戻す">↩</button>`:''}
+  </span>`;
+}
+// 「あと◯回」= 目標PLまでの強化の回数(1回=0.5)
+const plTimes=(from,to)=>Math.round((to-from)/0.5);
+function bindMineCtl(sumEl){
+  sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
+  sumEl.querySelectorAll('.plbtn').forEach(b=>b.onclick=()=>{
+    const e=mine[+b.dataset.i];
+    if(b.dataset.rst) e.lv=e.lv0;
+    else{
+      const nx=Math.min(PL_MAX,Math.max(1,e.lv+parseFloat(b.dataset.d)));
+      if(!D.cpm[String(nx)]) return;
+      e.lv=nx;
+    }
+    renderRank();
+  });
+}
 // ---- ranking ----
 const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield');
 function syncModes(){
@@ -625,10 +663,8 @@ function renderShieldRank(){
   if(!boss){listEl.innerHTML='<div class="empty">ボスを設定すると、そのボスのSPアタックを1発耐えられる「シールド破壊向きメガ」を表示します</div>';moreBtn.style.display='none';return;}
   const rows=shieldRows();
   const my=shieldMine();
-  const ivTxt=e=>e.isMax?'PL50・個体値15'
-    :`PL${e.lv}・個体値${(e.iva===e.ivd&&e.ivd===e.ivh)?e.iva:`${e.iva}/${e.ivd}/${e.ivh}`}`;
   const rankOf=d=>rows.filter(r=>r.dps>d).length+1;
-  // 自分のメガの概要(1発耐えるか / 耐えないなら必要なPL)
+  // 自分のメガの概要(1発耐えるか / 耐えないなら「あと何回強化すれば耐えるか」)
   const skipped=mine.length-my.length;
   sumEl.innerHTML=my.map(m=>{
     const right=m.hold
@@ -636,7 +672,11 @@ function renderShieldRank(){
       : (m.need
         ? `<span class="ng">🛡1発アウト</span>　<b>PL${m.need.lv}</b>以上で耐える（火力 <b>${m.need.dps.toFixed(2)}</b> ＝ <b>${rankOf(m.need.dps)}位相当</b>）`
         : `<span class="ng">🛡1発アウト</span>　PL51まで上げても耐えられません`);
-    return `<div class="mine-sum"><span>あなたの<b>${m.p.n}</b>（${ivTxt(m.e)}）</span><span>${right}　<button class="del" data-i="${m.i}">✕</button></span></div>`;
+    // ゲーム内ではPLが見えないので、必要なぶんを「強化◯回」で示す
+    const need=m.hold?'':(m.need
+      ? `<span class="plneed">🛡1発耐えまで あと <b>${plTimes(m.e.lv,m.need.lv)}回</b> の強化（PL${m.e.lv}→${m.need.lv}${m.need.lv>PL_NORM?'・PL50超は最高の相棒でのみ到達）':'）'}</span>`
+      : `<span class="plneed">強化しきっても（PL51）このボスのSPアタックは耐えられません</span>`);
+    return `<div class="mine-sum"><span>あなたの<b>${m.p.n}</b>（${ivTxt(m.e)}）</span>${plCtlHtml(m.e,m.i)}<span>${right}　<button class="del" data-i="${m.i}">✕</button></span>${need}</div>`;
   }).join('')+(skipped?`<p class="note">シールド破壊の対象はメガシンカだけなので、登録した${skipped}匹は出していません。</p>`:'');
   if(!rows.length && !my.length){listEl.innerHTML='<div class="empty">条件(1発耐え+分割SPアタック持ち)を満たすメガシンカが見つかりません</div>';moreBtn.style.display='none';return;}
   const top=Math.max(rows.length?rows[0].dps:1, ...my.map(m=>m.dps));
@@ -654,7 +694,7 @@ function renderShieldRank(){
         ? `被弾最大${r.maxHit}/HP${r.hp} で1発耐え`
         : `<span class="ng">被弾最大${r.maxHit}/HP${r.hp} で1発アウト</span>${r.need?` → <b>PL${r.need.lv}</b>で耐える（火力${r.need.dps.toFixed(2)}）`:' → PL51でも耐えられません'}`;
       return `<div class="rank-row mine"><div class="rk">${r.hold?r.rank+'位<br>相当':'PL<br>不足'}</div><div class="rmain">
-        <div class="rname">${badges(r.e.shadow,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>${ivTxt(r.e)}（あなた）</small></div>
+        <div class="rname">${badges(r.e.shadow,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>${mineLabel(r.e)}（あなた）</small></div>
         <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}${gauge}</div>
         <div class="rmoves holdline">${hold}</div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
@@ -669,7 +709,7 @@ function renderShieldRank(){
       <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
-  sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
+  bindMineCtl(sumEl);
   moreBtn.style.display=rows.length>showN?'block':'none';
 }
 function renderRank(){
@@ -682,7 +722,7 @@ function renderRank(){
   // 相当順位
   sumEl.innerHTML=my.map(m=>{
     const rank=rows.filter(r=>r.dps>m.dps).length+1;
-    return `<div class="mine-sum"><span>あなたの<b>${m.e.shadow?'S':''}${m.p.n}</b>（${m.e.isMax?'PL50・個体値15':'PL'+m.e.lv+'・攻個体'+m.e.iva}）</span><span>火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b>　<button class="del" data-i="${m.i}">✕</button></span></div>`;
+    return `<div class="mine-sum"><span>あなたの<b>${m.e.shadow?'S':''}${m.p.n}</b>（${ivTxt(m.e)}）</span>${plCtlHtml(m.e,m.i)}<span>火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b>　<button class="del" data-i="${m.i}">✕</button></span></div>`;
   }).join('');
   // 一覧（自分のポケモンを該当位置に挿入）
   const merged=[];
@@ -695,7 +735,7 @@ function renderRank(){
   listEl.innerHTML=merged.map(r=>{
     if(r.mine){
       return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div><div class="rmain">
-        <div class="rname">${badges(r.e.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.e.shadow)}<small>${r.e.isMax?'PL50・個体値15':'PL'+r.e.lv+'・攻個体'+r.e.iva}（あなた）</small></div>
+        <div class="rname">${badges(r.e.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.e.shadow)}<small>${mineLabel(r.e)}（あなた）</small></div>
         <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}</div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
         <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
@@ -707,7 +747,7 @@ function renderRank(){
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
   moreBtn.style.display=rows.length>showN?'block':'none';
-  sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
+  bindMineCtl(sumEl);
 }
 // オフライン対応＆更新の即時反映(サイト共通のService Worker)
 if ('serviceWorker' in navigator) {
