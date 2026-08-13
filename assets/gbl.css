@@ -343,24 +343,32 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptglegend button b{font-weight:800;width:24px;text-align:right}
 .ptglegend button small{font-size:.6rem;color:var(--sub)}
 .ptglegend button[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
-/* 診断文: 数字を並べるより、状況と次の一手を言い切るほうが頭に入る */
-.ptdiag{margin:0 0 9px;padding:8px 11px;max-width:520px;border-radius:10px;
-  background:rgba(63,214,128,.07);border:1px solid rgba(63,214,128,.35)}
-.ptdiag.bad{background:rgba(255,107,129,.07);border-color:rgba(255,107,129,.35)}
-.ptdttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:3px}
+/* 診断文: 数字を並べるより、状況と次の一手を言い切るほうが頭に入る。
+   枠と見出しの色は相性の図と同じ3色に連動する(緑=穴も1匹頼みも無い / 黄=1匹頼みあり / 赤=穴あり) */
+.ptdiag{--dc:61,220,132;margin:0 0 9px;padding:10px 12px 11px;max-width:520px;border-radius:12px;
+  background:rgba(var(--dc),.07);border:1px solid rgba(var(--dc),.35)}
+.ptdiag.warn{--dc:255,213,74}
+.ptdiag.bad{--dc:255,107,129}
+/* 見出しは「ここが結論」と分かるように、色つきのバッジで大きく出す */
+.ptdttl{display:inline-flex;align-items:center;gap:5px;margin-bottom:7px;padding:3px 13px;
+  font-size:.84rem;font-weight:800;letter-spacing:.04em;color:#10162e;border-radius:99px;
+  background:linear-gradient(160deg,rgba(var(--dc),1),rgba(var(--dc),.72));
+  box-shadow:0 3px 10px rgba(var(--dc),.4),inset 0 1px 0 rgba(255,255,255,.55)}
 .ptdtext{font-size:.78rem;line-height:1.65;color:var(--ink);margin:0}
 .ptdtext b{font-weight:800}
-.ptdnext{font-size:.74rem;line-height:1.6;color:var(--cy);margin:6px 0 0}
+.ptdnext{font-size:.74rem;line-height:1.6;color:var(--cy);margin:7px 0 0}
 .ptdnext b{font-weight:800}
-.ptwhead{display:block;width:100%;margin-top:7px;text-align:left;padding:4px 9px;font-size:.74rem;color:var(--ink);
-  background:var(--bg2);border:1px solid var(--line);border-radius:8px;cursor:pointer}
-.ptwhead[aria-pressed="true"]{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
+/* 弱点の見出しとチップも、その区分の色(赤=穴 / 黄=1匹頼み)にそろえる */
+.ptwhead{display:block;width:100%;margin-top:8px;text-align:left;padding:5px 10px;font-size:.76rem;
+  font-weight:700;color:rgba(var(--dc),1);background:rgba(var(--dc),.1);
+  border:1px solid rgba(var(--dc),.5);border-radius:8px;cursor:pointer}
+.ptwhead[aria-pressed="true"]{background:rgba(var(--dc),.2);box-shadow:0 0 0 1px rgba(var(--dc),.8) inset}
 .ptwhead b{font-weight:800}
-.ptwhead small{float:right;font-size:.58rem;color:var(--sub);font-weight:400;padding-top:2px}
+.ptwhead small{float:right;font-size:.58rem;color:var(--sub);font-weight:400;padding-top:3px}
 .ptwchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .ptwchip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:.7rem;color:var(--ink);
-  background:var(--bg2);border:1px solid var(--line);border-radius:99px}
-.ptwchip em{font-style:normal;font-size:.58rem;color:var(--sub)}
+  background:var(--bg2);border:1px solid rgba(var(--dc),.42);border-radius:99px}
+.ptwchip em{font-style:normal;font-size:.58rem;color:rgba(var(--dc),.95);font-weight:700}
 .ptwmore{align-self:center;font-size:.66rem;color:var(--sub)}
 /* 3匹の働き: 役割マップ(4象限)＋勝ち数のバーを1つの枠にまとめる */
 .ptrole2{margin:0 0 8px;max-width:660px}
