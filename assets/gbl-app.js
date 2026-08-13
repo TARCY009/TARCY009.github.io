@@ -838,9 +838,11 @@ ${PAGE_ROCKET ? '' : `
   よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
 
   <h4>パーティ診断のマスの図</h4>
-  <p><b>1マス＝環境の1匹</b>で、色はその相手に<b>パーティの何匹が勝てるか</b>を表します。
-  <b>楽勝</b>＝3匹とも勝てる／<b>有利</b>＝2匹／<b>綱渡り</b>＝1匹しか勝てない／<b>穴</b>＝3匹とも勝てない。
-  マスは<b>環境順（左上が1位）</b>なので、<b>上のほうに赤があるほど深刻</b>です。
+  <p><b>1マス＝環境の1匹</b>で、色はその相手に<b>勝てるかどうか</b>です。
+  <b>緑</b>＝2匹以上が勝てる／<b>黄</b>＝1匹しか勝てない（綱渡り）／<b>赤</b>＝3匹とも勝てない（穴）。</p>
+  <p>帯は<b>環境順位のグループ</b>に分かれていて、<b>上の帯ほどよく当たる相手</b>です。
+  よく当たるグループほどマスを大きくしてあるので、<b>上に赤や黄があるほど深刻</b>だと形で分かります
+  （同じ「穴1匹」でも、1位が相手なのか50位が相手なのかで重さがまるで違うため）。
   凡例をタップするとその相手だけに表を絞り込めます。</p>
 
   <h4>パーティ診断の「📋 診断」</h4>
@@ -1623,7 +1625,9 @@ function applyView(box, vn) {
   else if (V.filter === 'best') rows = rows.filter(r => r.nWin === 3);
   else if (V.filter === 'hole') rows = rows.filter(r => r.nWin === 0);
   else if (V.filter === 'thin') rows = rows.filter(r => r.nWin <= 1);
-  // 図から選んだ絞り込み(nX=勝てる数がちょうどX / onlyX=X番目のポケモンだけが勝てる相手)
+  // 図から選んだ絞り込み(safe=2匹以上が勝てる / nX=勝てる数がちょうどX /
+  // onlyX=X番目のポケモンだけが勝てる相手)
+  else if (V.filter === 'safe') rows = rows.filter(r => r.nWin >= Math.min(2, r.cells.length));
   else if (/^n\d$/.test(V.filter)) rows = rows.filter(r => r.nWin === +V.filter.slice(1));
   else if (/^only\d$/.test(V.filter)) {
     const j = +V.filter.slice(4);
@@ -1835,32 +1839,46 @@ function runCounter() {
 }
 
 // ---- パーティ診断の図(環境を1匹1マスで並べたグリッド・役割マップ) ----
-// 勝てる数の色は表の「勝てる数」列と同じ基準にそろえる(全員勝ち=緑 / 0匹=赤)
-const ptSegColor = (k, n) => k === 0 ? 'var(--lose)' : k === n ? 'var(--win)' : k === 1 ? 'var(--gold)' : '#8ce6b0';
 const ptWinColor = p => p >= 0.5 ? 'var(--win)' : p >= 0.25 ? 'var(--gold)' : 'var(--lose)';
-// 「3匹 10 / 1匹 19」のように匹数がふたつ並ぶと、どちらが何の数か読み取れない。
-// そこで状況を表す言葉を先に出す(楽勝/有利/綱渡り/穴)
-const ptRankLabel = (k, n) => k === 0 ? '穴' : k === n ? (n > 1 ? '楽勝' : '勝てる') : k === 1 ? '綱渡り' : '有利';
-const ptRankDesc = (k, n) => k === 0 ? (n > 1 ? `${n}匹とも勝てない` : '勝てない')
-  : k === n ? (n > 1 ? `${n}匹とも勝てる` : '勝てる') : k === 1 ? '1匹しか勝てない' : `${k}匹が勝てる`;
-// 環境の1匹を1マスで表す。数を読まなくても、黄(綱渡り)や赤(穴)の多さで並びの状態がつかめる
+// 色は3段階だけにする(2026-08-13変更)。旧版は 楽勝/有利/綱渡り/穴 の4段階だったが、
+// 「楽勝」と「有利」は緑どうしで見分けが付かないうえ、どちらも次の手が変わらない。
+// 手を打つかどうかで分かれるのは「勝てる／1匹しか勝てない／勝てない」の3つ
+const ptTier = (k, n) => k === 0 ? 'hole' : k < Math.min(2, n) ? 'n1' : 'safe';
+const ptTierColor = t => t === 'hole' ? 'var(--lose)' : t === 'n1' ? 'var(--gold)' : 'var(--win)';
+const PT_TIERS = ['safe', 'n1', 'hole'];
+const ptTierLabel = (t, n) => t === 'hole' ? '穴' : t === 'n1' ? '綱渡り' : '勝てる';
+const ptTierDesc = (t, n) => t === 'hole' ? (n > 1 ? `${n}匹とも勝てない` : '勝てない')
+  : t === 'n1' ? '1匹しか勝てない'
+  : n <= 1 ? '勝てる' : n === 2 ? '2匹とも勝てる' : '2匹以上が勝てる';
+// 環境の1匹を1マスで表す。
+// 旧版は50マスを10列で折り返して並べていたが、「左上ほどよく当たる」という
+// 読み方の説明が無いと図の意味がまったく通じなかった(タダシさん指摘・2026-08-13)。
+// そこで **順位のグループごとに1本の帯** にした。左から右へ読むだけなので折り返しの説明が要らず、
+// よく当たるグループほどマスを大きくしてあるので、重みも形で分かる
 function ptGridHtml(res, n) {
-  const cells = res.map(r =>
-    `<i class="ptgc" style="background:${ptSegColor(r.nWin, n)}"` +
-    ` title="${r.idx + 1}位 ${r.m.n}／${ptRankLabel(r.nWin, n)}（${ptRankDesc(r.nWin, n)}）"></i>`).join('');
-  const legend = [];
-  for (let k = n; k >= 0; k--) {
-    const cnt = res.filter(r => r.nWin === k).length;
-    if (!cnt && k !== 0) continue;   // 穴の行は0でも出す(「穴なし」が分かるように)
-    legend.push(`<button data-flt="${k === 0 ? 'hole' : 'n' + k}" aria-pressed="false"` +
-      ` title="${ptRankDesc(k, n)}相手が${cnt}匹（タップで表を絞り込み）">` +
-      `<i style="background:${ptSegColor(k, n)}"></i><span class="ptglbl">${ptRankLabel(k, n)}</span>` +
-      `<b>${cnt}</b><small>${ptRankDesc(k, n)}</small></button>`);
-  }
-  // マスは環境順(左上が1位)。上のほうに赤があるほど「よく当たる相手に負ける」＝深刻と読める
-  return `<div class="ptgwrap"><div class="ptgttl">環境<b>${res.length}匹</b>に、パーティ<b>${n}匹</b>で挑むと` +
-    `<small>1マス＝環境の1匹（左上ほどよく当たる）</small></div><div class="ptgrid">${cells}</div></div>` +
-    `<div class="ptglegend">${legend.join('')}</div>`;
+  const N = res.length;
+  const cell = (r, g) => `<i class="ptgc ${g}" style="background:${ptTierColor(ptTier(r.nWin, n))}"` +
+    ` title="${r.idx + 1}位 ${r.m.n}／${ptTierLabel(ptTier(r.nWin, n), n)}` +
+    `（${ptTierDesc(ptTier(r.nWin, n), n)}）"></i>`;
+  // マスの大きさは g1 > g2 > g3。よく当たるグループほど大きいので、重みが形でも分かる
+  const rows = [[0, 10, 'g1'], [10, 25, 'g2'], [25, N, 'g3']]
+    .map(([a, b, g]) => [Math.min(a, N), Math.min(b, N), g])
+    .filter(([a, b]) => b > a)
+    .map(([a, b, g]) => `<div class="ptgrow"><span class="ptglb">${a + 1}-${b}位</span>` +
+      `<span class="ptgline">${res.slice(a, b).map(r => cell(r, g)).join('')}</span></div>`).join('');
+  const legend = PT_TIERS.map(t => {
+    const cnt = res.filter(r => ptTier(r.nWin, n) === t).length;
+    if (!cnt && t !== 'hole') return '';   // 穴だけは0でも出す(「穴なし」が分かるように)
+    const lbl = ptTierLabel(t, n), desc = ptTierDesc(t, n);
+    return `<button data-flt="${t}" aria-pressed="false"` +
+      ` title="${desc}相手が${cnt}匹（タップで表を絞り込み）">` +
+      `<i style="background:${ptTierColor(t)}"></i><span class="ptglbl">${lbl}</span>` +
+      // 1匹だけのパーティは「勝てる／勝てる」と同じ言葉が並ぶので、そのときは添え書きを出さない
+      `<b>${cnt}</b>${desc === lbl ? '' : `<small>${desc}</small>`}</button>`;
+  }).join('');
+  return `<div class="ptgwrap"><div class="ptgttl">環境<b>${N}匹</b>との相性` +
+    `<small>よく当たる順・1マス＝1匹</small></div>${rows}</div>` +
+    `<div class="ptglegend">${legend}</div>`;
 }
 // ---- 役割マップ(🛡が残る序盤 / 🛡が切れた終盤 の2軸) ----
 // シールドはSPアタックしか防げないので、この2つの場面で得意なポケモンがはっきり分かれる。
@@ -2271,7 +2289,7 @@ function runParty() {
   const token = ++multiToken, run = ++ptrRun;
   const PV = VIEWS.party;
   // 図から選んだ絞り込みは、パーティが変わると意味が変わるので持ち越さない
-  if ((/^n\d$/.test(PV.filter) && +PV.filter.slice(1) > idxs.length)
+  if ((/^n\d$/.test(PV.filter) && (idxs.length < 2 || +PV.filter.slice(1) > idxs.length))
     || (/^only\d$/.test(PV.filter) && +PV.filter.slice(4) >= idxs.length)) PV.filter = 'all';
   PV.results = [];
   PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${ptName(PT[i])}`);

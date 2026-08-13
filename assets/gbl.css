@@ -323,12 +323,17 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .holenote{font-size:.68rem;color:var(--sub);line-height:1.5;margin-bottom:5px}
 /* パーティ診断のまとめ: 環境を1匹1マスで並べた図 + 診断文(どちらもタップで表を絞り込む) */
 .ptchart{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:2px 0 9px}
-.ptgwrap{flex-shrink:0}
-.ptgttl{font-size:.7rem;color:var(--sub);margin-bottom:5px}
+.ptgttl{font-size:.7rem;color:var(--sub);margin-bottom:6px}
 .ptgttl b{color:var(--ink);font-weight:800}
 .ptgttl small{display:block;font-size:.58rem;color:var(--sub);margin-top:1px}
-.ptgrid{display:grid;grid-template-columns:repeat(10,16px);gap:3px}
-.ptgc{display:block;width:16px;height:16px;border-radius:3px}
+/* 順位のグループごとに1本の帯。左から右へ読むだけなので折り返しの説明が要らない。
+   帯の長さはそろえ、1匹あたりの大きさで重みを示す(よく当たるグループほどマスが大きい) */
+.ptgwrap{width:min(340px,100%)}
+.ptgrow{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.ptglb{flex-shrink:0;width:50px;text-align:right;font-size:.6rem;color:var(--sub);font-weight:700}
+.ptgline{display:flex;align-items:center;gap:3px;flex:1;min-width:0}
+.ptgc{flex:1;min-width:0;aspect-ratio:1;border-radius:3px}
+.ptgc.g3{border-radius:2px}
 .ptglegend{display:flex;flex-direction:column;gap:3px;min-width:190px}
 .ptglegend button{display:flex;align-items:center;gap:7px;padding:3px 9px;font-size:.72rem;color:var(--ink);
   background:var(--bg2);border:1px solid var(--line);border-radius:8px;cursor:pointer;text-align:left}
@@ -447,7 +452,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptswlogsum em{font-style:normal;margin:0 2px}
 .ptswlogsum .sep{margin:0 7px;opacity:.5}
 @media (max-width:420px){.ptchart{gap:10px}
-  .ptgrid{grid-template-columns:repeat(10,14px);gap:2px}.ptgc{width:14px;height:14px}
+  .ptgline{gap:2px}.ptglb{width:44px}
   .ptglegend{min-width:100%}
   .ptr2body{gap:10px}.ptroles{min-width:100%}
   .ptrnm{width:88px}.ptronly{width:66px}
