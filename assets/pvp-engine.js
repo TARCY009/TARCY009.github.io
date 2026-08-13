@@ -185,7 +185,17 @@
     //  1. シールドが無い相手を倒しきれるわざがあればそれを撃つ(消費が軽いほうを優先)
     //  2. 相手にシールド(またはばけのかわ)が残っているなら、消費が軽いほうを撃つ＝ブラフ
     //     (cfg.bluff === false ならブラフをせず、常に効率が高いほうを撃つ)
-    //  3. シールドが無いなら、ダメージ効率(ダメージ÷消費ゲージ)が高いほうを撃つ
+    //  3. シールドが無いなら、ダメージ効率(ダメージ÷消費ゲージ)が高いほうを撃つ。
+    //     ただし**自分の能力が下がるわざは効率を割り引く**(2026-08-13追加)。
+    //     ブレイブバード(自分の防御-3)のような技は、撃つと以後ずっと不利を背負うので、
+    //     実戦では「倒しきれるとき(ルール1)や交代の直前」に使う。割引が無いと
+    //     効率の数字だけで序盤から連打してしまい、実戦と選び方がズレる
+    //     (1段階につき25%割り引く。-3なら 1/(1+0.75)=0.57倍)
+    const selfPenalty = m => {
+      if (m.bt !== 'self' || !m.bf) return 1;
+      const drop = -(Math.min(0, m.bf[0]) + Math.min(0, m.bf[1])) * (m.bc == null ? 1 : m.bc);
+      return drop > 0 ? 1 / (1 + drop * 0.25) : 1;
+    };
     const autoMove = (s, o) => {
       const list = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(Boolean);
       if (list.length <= 1) return list[0];
@@ -197,9 +207,10 @@
         if (lethal) return lethal;
       }
       const bluff = blocked && s.cfg.bluff !== false;
+      const eff = m => dmg(m) * selfPenalty(m) / m.e;
       return list.slice().sort(bluff
         ? (a, b) => a.e - b.e || dmg(b) - dmg(a)                 // ブラフ: 消費が軽い順
-        : (a, b) => dmg(b) / b.e - dmg(a) / a.e)[0];             // 効率が高い順
+        : (a, b) => eff(b) - eff(a))[0];                         // 効率が高い順(自分デバフは割引)
     };
 
     // 何発目にどのわざを撃つ予定かを決める(マニュアル指定 > 固定指定 > 自動選択)
