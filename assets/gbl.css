@@ -415,12 +415,8 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptwmore{align-self:center;font-size:.66rem;color:var(--sub)}
 /* 3匹の働き: 1行1匹。散布図(4象限)は「3点しかないのに2次元を辿らせる」ため廃止し、
    役割を言葉のバッジで出す形にした(2026-08-13)。視線が上から下の一方向で済む */
-.ptwnote{font-size:.78rem;line-height:1.7;color:var(--ink);margin:0 0 7px}
-.ptwnote b{font-weight:800;color:var(--cy)}
-/* 足りない役割を、そのまま入れ替え候補の検索につなげるボタン */
-/* 型で探すボタンは2つ並べる(どちらへ寄せるかは使う人が決める) */
-.ptwfindwrap{display:inline-flex;gap:6px;flex-wrap:wrap;vertical-align:middle;margin-left:8px}
-.ptwfindwrap .ptwfind{margin-left:0}
+/* 型で探すボタンは表の下に2つ並べる(現状を見てから、どちらへ寄せるかを使う人が決める) */
+.ptwfindwrap{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
 .ptwfind{display:inline-block;vertical-align:middle;
   padding:3px 12px;font-size:.68rem;font-weight:800;color:#3a2a00;border:none;border-radius:999px;
   cursor:pointer;background:linear-gradient(160deg,#ffe9a8 0%,#f5c33c 45%,#c98f10 100%);
