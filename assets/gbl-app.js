@@ -372,7 +372,9 @@ const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 
 // シャドウは「シャドウ○○」の4文字ぶん名前が長くなり、表や枠から見切れてしまう。
 // 表示するところだけ、頭のマークで表す(2026-08-13タダシさん指示)。
 // 入力欄はHTMLを入れられないので従来どおり「シャドウ○○」の文字のまま
-const SHADOWMK = '<i class="shadowmark"></i>';
+// nmk = 名前の頭に付けるシャドウマーク。マークの色は文字色を継承する作りなので、
+// 名前の中に置くと白くなってしまう。紫(#b06cff)に固定する(2026-08-13タダシさん指摘)
+const SHADOWMK = '<i class="shadowmark nmk"></i>';
 const shMark = n => (n || '').startsWith('シャドウ') ? SHADOWMK + n.slice(4) : n;
 const MOVE_TYPE = {};
 const MOVE_COST = {};
