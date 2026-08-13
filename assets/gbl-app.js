@@ -858,7 +858,8 @@ ${PAGE_ROCKET ? '' : `
   <h4>パーティ診断の「3匹の働き」</h4>
   <p><b>横棒は勝ち数そのもの</b>です。環境上位50匹と戦って、
   <b>シールドが残っていれば何勝（序盤🛡⭕）／切れていれば何勝（終盤🛡❌）</b>かを並べています。
-  <b>真ん中の線が半分（25匹）</b>なので、<b>線より右なら半分以上に勝てる</b>と読んでください。</p>
+  <b>真ん中の線が半分（25匹）</b>なので、<b>線より右なら半分以上に勝てる</b>と読んでください。
+  序盤と終盤は<b>同じ50匹と別々に戦った結果</b>なので、2本を足しても50にはなりません。</p>
   <p><b>役割</b>は、その線をどちら側で越えているかで決まります。
   <b>万能</b>＝どちらも半分以上／<b>序盤型</b>＝シールドがあるときだけ／<b>終盤型</b>＝切れてからだけ／
   <b>苦戦</b>＝どちらも半分未満。シールドは<b>SPアタックしか防げない</b>ので、
@@ -2035,9 +2036,11 @@ function ptWorkHtml(res, names, pos) {
     const only = res.filter(r => r.nWin === 1 && r.cells[j].w === 0).length;
     const p = pos && pos[j];
     // 横棒は勝ち数そのもの(50匹中◯勝)。**真ん中の線がちょうど半分**になるので、
-    // 「線より右＝半分以上に勝てる」とだけ読めばよく、役割バッジの根拠もその場で確かめられる
+    // 「線より右＝半分以上に勝てる」とだけ読めばよく、役割バッジの根拠もその場で確かめられる。
+    // 数字は「25」ではなく「25/50」と書く。序盤と終盤は**同じ50匹と別々に戦った結果**なので
+    // 2本の合計は50にならない。数字だけだと「内訳なのに50を超える?」と誤読される(タダシさん指摘・2026-08-13)
     const bar = (lbl, w, cls) => `<span class="ptwb ${cls}"><em>${lbl}</em>` +
-      `<i><b style="width:${Math.max(3, Math.round(w / N * 100))}%"></b></i><u>${w}</u></span>`;
+      `<i><b style="width:${Math.max(3, Math.round(w / N * 100))}%"></b></i><u>${w}<small>/${N}</small></u></span>`;
     return `<button class="ptwk${p ? ' r-' + p.r : ''}" data-flt="only${j}" aria-pressed="false"` +
       (p ? ` style="--rc:${PT_ROLES[p.r].c}"` : '') +
       ` title="${nm}` +
@@ -2063,8 +2066,10 @@ function ptWorkHtml(res, names, pos) {
   }
   // 列の見出し。**シールドあり/なしという軸が伝わって初めて役割の話が通じる**ので、
   // 小さい注記ではなく、横棒の真上に列見出しとして出す(タダシさん指摘・2026-08-13)
+  // 「勝ち数の内訳」は誤り(2026-08-13タダシさん指摘で変更)。"内訳"だと2本の合計が50になると
+  // 読めるが、実際は**同じ50匹と場面ごとに別々に戦った結果**。「場面ごとの勝ち数」と書く
   const head = `<div class="ptwk cap"><span></span><span></span>` +
-    `<span class="ptwcap">勝ち数の内訳<small>環境${N}匹中</small></span><span></span></div>` +
+    `<span class="ptwcap">場面ごとの勝ち数<small>それぞれ環境${N}匹と対戦</small></span><span></span></div>` +
     `<div class="ptwk head"><span class="ptwnm">ポケモン</span><span class="ptwrole hd">役割</span>` +
     `<span class="ptwbars"><span class="ptwb e"><em>序盤<b>🛡⭕</b></em></span>` +
     `<span class="ptwb l"><em>終盤<b>🛡❌</b></em></span></span>` +

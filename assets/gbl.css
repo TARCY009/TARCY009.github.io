@@ -438,8 +438,11 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptwb i b{display:block;height:100%;border-radius:99px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
 .ptwb.e i b{background:linear-gradient(90deg,rgba(67,224,255,.65),var(--cy))}
 .ptwb.l i b{background:linear-gradient(90deg,rgba(176,108,255,.65),var(--ml))}
-.ptwb>u{flex-shrink:0;width:22px;text-align:right;text-decoration:none;
+/* 数字は「25/50」の形。序盤と終盤は別々に50匹と戦った結果なので、
+   数字だけだと「2本足して50のはず」と誤読される(/50 が付いていれば単体で読める) */
+.ptwb>u{flex-shrink:0;width:46px;text-align:right;text-decoration:none;
   font-size:.78rem;font-weight:800;color:var(--ink)}
+.ptwb>u small{font-size:.6rem;font-weight:400;color:var(--sub)}
 .ptwsub{text-align:right;font-size:.64rem;color:var(--sub)}
 .ptwsub b{font-size:.82rem;font-weight:800;color:var(--lose);margin-left:2px}
 .ptwsub.dup{color:var(--gold)}
