@@ -349,6 +349,9 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:rgba(var(--dc),.07);border:1px solid rgba(var(--dc),.35)}
 .ptdiag.warn{--dc:255,213,74}
 .ptdiag.bad{--dc:255,107,129}
+/* ⚠リストの枠だけは「そこに並んでいるものの色」で固定する(相性の図の凡例と同じ色) */
+.ptwhead.t-hole,.ptwchips.t-hole{--dc:255,107,129}
+.ptwhead.t-n1,.ptwchips.t-n1{--dc:255,213,74}
 /* 見出しは「ここが結論」と分かるように、バッジで大きく出す。
    色は状態の3色（--dc）とは別の水色にする。同じ色にすると外枠や「勝てない相手」の赤と
    かぶって、どれが状態を表す色なのか分からなくなるため（2026-08-13タダシさん指摘） */

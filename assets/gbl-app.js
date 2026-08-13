@@ -1985,19 +1985,19 @@ function ptDiagHtml(res, names, n) {
   const holes = res.filter(r => r.nWin === 0);
   const thin = res.filter(r => r.nWin === 1);
   const pct = v => Math.round(v / N * 100);
-  let lead = '', detail = '', next = '', flt = '', list = [], ttl = '';
+  // よく当たる相手かどうかで優先度が変わる。平均順位で見ると
+  // 「1位に勝てないのに下位が多いから軽い」と逆の判定になるので、上位10位に何匹いるかで見る
+  const topHoles = holes.filter(r => r.idx < 10).length;
+  let lead = '', detail = '', next = '', flt = '', list = [], ttl = '', tier = '';
   if (holes.length) {
-    list = holes; flt = 'hole'; ttl = '勝てない相手';
+    list = holes; flt = 'hole'; ttl = '勝てない相手'; tier = 'hole';
     const top = holes.slice(0, 3).map(r => `${r.m.n}(${r.idx + 1}位)`).join('・');
-    // よく当たる相手かどうかで優先度が変わる。平均順位で見ると
-    // 「1位に勝てないのに下位が多いから軽い」と逆の判定になるので、上位10位に何匹いるかで見る
-    const topHoles = holes.filter(r => r.idx < 10).length;
     lead = `環境の<b>${holes.length}匹</b>（${pct(holes.length)}%）には、<b>${n}匹とも勝てません</b>。`;
     detail = `とくに <b>${top}</b>${holes.length > 3 ? ' など' : ''}。` +
       (topHoles ? `よく当たる<b>上位10位に${topHoles}匹</b>いるので、優先して埋めたいところです。`
                 : '上位の常連は避けられているので、深刻度は高くありません。');
   } else if (thin.length) {
-    list = thin; flt = 'n1'; ttl = '1匹頼みの相手';
+    list = thin; flt = 'n1'; ttl = '1匹頼みの相手'; tier = 'n1';
     // その1匹頼みをだれが支えているか＝失うと崩れる1匹
     const rely = names.map((nm, j) => ({ nm, cnt: thin.filter(r => r.cells[j].w === 0).length }))
       .sort((a, b) => b.cnt - a.cnt)[0];
@@ -2016,15 +2016,20 @@ function ptDiagHtml(res, names, n) {
   else if (holes.length) next = `→ 下の<b>入れ替え候補</b>で、この穴を埋められるポケモンを探せます。`;
   else next = `→ 下の<b>入れ替え候補</b>で、どの枠を替えるといちばん良くなるか比べられます。`;
   const MAX = 10;
-  // 枠・見出し・弱点のフレームの色は、相性の図と同じ3色に連動させる
-  // (穴あり=赤 / 穴は無いが1匹頼みあり=黄 / どちらも無い=緑)。下の要素は --dc を受け継ぐ
-  return `<div class="ptdiag${holes.length ? ' bad' : thin.length ? ' warn' : ''}">` +
+  // 外枠と見出しの色は「穴」を基準にした深刻度で決める(2026-08-13変更)。
+  // 旧版は「穴も1匹頼みも無い」を緑にしていたが、環境上位30匹から選んだ20通りのパーティで
+  // 1匹頼みは10〜24匹・0匹は1つも無く、**緑が事実上出ない**基準だった(タダシさん指摘)。
+  // 判定は診断文の深刻度ルールとそろえる: 赤=よく当たる上位10位に穴 / 黄=穴はあるが下位だけ / 緑=穴なし
+  const cls = !holes.length ? ' ok' : topHoles ? ' bad' : ' warn';
+  // ⚠リストの枠だけは「そこに並んでいるものの色」で固定する(穴=赤 / 1匹頼み=黄)。
+  // 相性の図の凡例と同じ色にして、どの区分の話か迷わないようにする
+  return `<div class="ptdiag${cls}">` +
     `<div class="ptdttl"><span class="ptdic">📋</span>診断</div>` +
     `<p class="ptdtext">${lead}${detail}</p>` +
-    (list.length ? `<button class="ptwhead" data-flt="${flt}" aria-pressed="false"` +
+    (list.length ? `<button class="ptwhead t-${tier}" data-flt="${flt}" aria-pressed="false"` +
       ` title="タップで表をこの相手だけに絞り込みます">⚠ ${ttl} <b>${list.length}匹</b>` +
       `<small>環境での順位つき・タップで絞り込み</small></button>` +
-      `<div class="ptwchips">` +
+      `<div class="ptwchips t-${tier}">` +
       list.slice(0, MAX).map(r => `<span class="ptwchip"><em>${r.idx + 1}</em>${r.m.n}</span>`).join('') +
       (list.length > MAX ? `<span class="ptwmore">ほか${list.length - MAX}匹</span>` : '') + '</div>' : '') +
     `<p class="ptdnext">${next}</p></div>`;
