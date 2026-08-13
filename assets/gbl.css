@@ -321,6 +321,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .holelist{color:var(--ink);font-size:.74rem;line-height:1.6;margin-top:2px}
 .holesub{font-size:.7rem;margin-top:4px}
 .holenote{font-size:.68rem;color:var(--sub);line-height:1.5;margin-bottom:5px}
+/* ---- 説明ありモード用の目印 ----
+   文字を減らすために画面から外した「補足」は消さずに class="expl" を付けて隠しておく。
+   のちに作る切り替えで、ルート要素に class="explain" を付ければ一斉に出せる
+   (2026-08-13タダシさん指示で仕組みだけ先に用意) */
+.expl{display:none}
+.explain .expl{display:block}
 /* ---- パーティ診断のまとめ ----
    相性の図・診断・3匹の働きの3枚を、同じ作りのパネルにそろえる(ゲーム画面のような質感) */
 .ptcard{position:relative;margin:0 0 10px;padding:11px 13px 12px;border-radius:14px;
@@ -343,7 +349,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 /* 閉じているときは枠を消してバッジだけにする。3枚を同じ入れ物に入れてあるので、
    閉じたタブは横に並び、開いたものだけ全幅になる(タブが1行に収まってスッキリする) */
 /* タブは縦に並べる(2026-08-13タダシさん指示)。横並びだと3枚が1行に詰まって窮屈だった */
-.ptcards{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:9px}
+.ptcards{display:flex;flex-direction:column;align-items:flex-start;gap:9px;margin:12px 0 14px}
 .ptcards>[data-sec]{margin:0;align-self:stretch}
 /* 閉じているカードはバッジぶんの幅だけにする(縦に並んだタブに見える) */
 .ptcards>[data-sec][aria-expanded="false"]{align-self:flex-start}
@@ -486,7 +492,6 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptsh button .shhole{margin-left:5px;padding:0 5px;border-radius:99px;font-size:.62rem;font-weight:800;
   color:#fff;background:var(--lose)}
 .ptsh button .shhole.zero{background:var(--win);color:#08210f}
-.holesub .wavg{margin-left:8px;padding:1px 7px;border-radius:99px;background:var(--bg2);border:1px solid var(--line)}
 /* 入れ替え候補: 穴を埋められるポケモンの提案(タップで枠に入る) */
 .ptswap{margin:0 0 8px}
 .ptswbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}

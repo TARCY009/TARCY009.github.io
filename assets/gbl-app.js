@@ -2453,15 +2453,9 @@ function runParty() {
       // 平均勝率は「相手1匹に何匹が勝てるか」を割合にして出す(1.50/3匹 = 50％)
       const avg = Math.round(PV.results.reduce((a, r) => a + r.nWin, 0)
         / (PV.results.length * idxs.length) * 100);
-      // 実戦想定の勝率: 上位の相手ほど当たりやすいので、環境スコアと同じ採用率の重み(順位の逆順)を掛ける。
-      // 引き分けを0.5とするのも環境一覧と同じ扱い
-      let wSum = 0, wWin = 0;
-      PV.results.forEach((r, k) => {
-        const wgt = PV.results.length - k;
-        wSum += wgt;
-        wWin += wgt * (r.nWin + r.cells.filter(c => c.w === 'draw').length * 0.5);
-      });
-      const wavg = Math.round(wWin / (wSum * idxs.length) * 100);
+      // 「実戦想定」(採用率で重みを付けた勝率)は廃止(2026-08-13タダシさん指示)。
+      // 何のパーセントか説明しないと分からず、上位の相手が重いことは
+      // 穴チェックの図がマスの大きさで、診断が「上位10位に何匹」で既に示している
       // シールドの枚数ごとの穴の数。わざの構成は選択中の枚数で決めたものを使い回す
       // (枚数ごとに構成を選び直すと、いま表に出ている構成の話ではなくなるため)
       syncPtShieldBadges(ptShieldHoles(list, bases, idxs.map((pi, j) => pols[j][use[j]]),
@@ -2481,10 +2475,9 @@ function runParty() {
         ptDiagHtml(PV.results, names, idxs.length) +
         ptWorkHtml(PV.results, names, PTS.pos) + `</div>` +
         `<div class="holesub">平均勝率：<b>${avg}％</b>` +
-        `<span class="wavg" title="上位の相手ほど当たりやすいので、順位の重みを掛けた勝率です。よく当たる相手に強いパーティほど高くなります（環境スコアと同じ重みの付け方）">実戦想定 <b>${wavg}％</b></span>` +
         `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>` +
-        // わざの前提を先に断っておく(実戦の鉄板構成とちがう結果に見えることがあるため)
-        `<div class="holenote">${ptAuto
+        // わざの前提。ふだんは出さず、のちに作る「説明ありモード」で出す(class="expl")
+        `<div class="holenote expl">${ptAuto
           ? '※わざは<b>オート選出</b>（枠に表示）／あいては環境の標準構成'
           : '※わざは枠で<b>指定した構成</b>／あいては環境の標準構成'}</div>`;
       // 図をタップしたら表を絞り込む(同じところをもう一度押すと解除)
