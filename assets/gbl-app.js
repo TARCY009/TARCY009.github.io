@@ -1885,9 +1885,10 @@ function ptGridHtml(res, n) {
   }).join('');
   // 並び順は「左から採用率の高い順」。これを書かないと、マスが何の順に並んでいるのか分からない
   // (タダシさん指摘・2026-08-13。「よく当たる順」だけでは左右の並びの話だと伝わらなかった)
-  return `<div class="ptgwrap"><div class="ptgttl">環境<b>${N}匹</b>との相性` +
-    `<small><b>左から採用率の高い順</b>（1マス＝1匹）</small></div>${rows}</div>` +
-    `<div class="ptglegend">${legend}</div>`;
+  return `<div class="ptcard"><div class="ptsec"><span class="ptdic">🎯</span>相性</div>` +
+    `<div class="ptgsub">環境<b>${N}匹</b>を<b>左から採用率の高い順</b>に（1マス＝1匹）</div>` +
+    `<div class="ptchart"><div class="ptgwrap">${rows}</div>` +
+    `<div class="ptglegend">${legend}</div></div></div>`;
 }
 // ---- 役割の判定(🛡が残る序盤 / 🛡が切れた終盤 の2つの場面) ----
 // シールドはSPアタックしか防げないので、この2つの場面で得意なポケモンがはっきり分かれる。
@@ -1950,7 +1951,8 @@ const ptPos = (a, x) => Math.round(a.filter(v => v < x).length / a.length * 100)
 // 役割の名前。序盤(🛡2-2)と終盤(🛡0-0)で環境の平均より上かどうかの組み合わせで決める。
 // 色は状態の3色(赤・黄・緑)とぶつからないよう、水色と紫を使う
 const PT_ROLES = {
-  all:   { t: '万能',   c: '61,220,132' },
+  // 万能は水色と紫の中間の青。緑にすると相性の図の「2匹勝ち」と紛れる
+  all:   { t: '万能',   c: '150,180,255' },
   early: { t: '序盤型', c: '67,224,255' },
   late:  { t: '終盤型', c: '176,108,255' },
   weak:  { t: '苦戦',   c: '139,150,194' },
@@ -2029,7 +2031,7 @@ function ptDiagHtml(res, names, n) {
   // ⚠リストの枠だけは「そこに並んでいるものの色」で固定する(穴=赤 / 1匹頼み=黄)。
   // 相性の図の凡例と同じ色にして、どの区分の話か迷わないようにする
   return `<div class="ptdiag${cls}">` +
-    `<div class="ptdttl"><span class="ptdic">📋</span>診断</div>` +
+    `<div class="ptsec"><span class="ptdic">📋</span>診断</div>` +
     `<p class="ptdtext">${lead}${detail}</p>` +
     (list.length ? `<button class="ptwhead t-${tier}" data-flt="${flt}" aria-pressed="false"` +
       ` title="タップで表をこの相手だけに絞り込みます">⚠ ${ttl} <b>${list.length}匹</b>` +
@@ -2052,16 +2054,20 @@ function ptWorkHtml(res, names, pos) {
     // その相手に勝てるのがこの1匹だけ = このポケモンを抜くとそこが穴になる
     const only = res.filter(r => r.nWin === 1 && r.cells[j].w === 0).length;
     const p = pos && pos[j];
+    // バーの真ん中に環境の平均(50)の線を引く。役割は「平均より上か」で決まるので、
+    // その基準が見えないと、バーの長さだけ見ても意味が読み取れない
     const bar = (lbl, v, cls) => `<span class="ptwb ${cls}"><em>${lbl}</em>` +
       `<i><b style="width:${Math.max(3, v)}%"></b></i></span>`;
-    return `<button class="ptwk" data-flt="only${j}" aria-pressed="false"` +
+    return `<button class="ptwk${p ? ' r-' + p.r : ''}" data-flt="only${j}" aria-pressed="false"` +
+      (p ? ` style="--rc:${PT_ROLES[p.r].c}"` : '') +
       ` title="${nm}／🛡${ptShield}-${ptShield}で${win}勝` +
-      (p ? `・序盤(🛡2-2)は環境の上位${100 - p.x}%で${p.w2}勝・終盤(🛡0-0)は上位${100 - p.y}%で${p.w0}勝` : '') +
+      (p ? `・序盤(シールドあり)は環境の上位${100 - p.x}%で${p.w2}勝` +
+           `・終盤(シールドなし)は上位${100 - p.y}%で${p.w0}勝` : '') +
       `。代役なし${only}匹＝このポケモンを抜くとそこが穴になる相手の数（タップで表を絞り込み）">` +
       `<span class="ptwnm"><span class="pcolnum">${j + 1}</span>${nm}</span>` +
       (p ? ptRoleChip(p.r) : `<span class="ptwrole wait">…</span>`) +
       `<span class="ptwbars">${p ? bar('序盤', p.x, 'e') + bar('終盤', p.y, 'l') : ''}</span>` +
-      `<span class="ptwwin"><b>${win}</b><small>勝</small></span>` +
+      `<span class="ptwwin"><b>${win}</b><small>/${res.length}</small></span>` +
       (only ? `<span class="ptwsub">代役なし<b>${only}</b></span>`
             : `<span class="ptwsub dup">代役あり</span>`) +
       `</button>`;
@@ -2074,10 +2080,18 @@ function ptWorkHtml(res, names, pos) {
     if (want) find = `<button class="ptwfind" data-want="${want}"` +
       ` title="この型のポケモンを優先して並べた入れ替え候補を出します">🔧 ${PT_ROLES[want].t}を探す</button>`;
   }
-  return `<div class="ptmttl">3匹の働き<small>勝ち数＝🛡${ptShield}-${ptShield} ／ ` +
-    `序盤＝🛡2-2・終盤＝🛡0-0での位置</small></div>` +
+  // 列の見出し。**この2つの場面（シールドあり/なし）という軸が伝わって初めて役割の話が通じる**ので、
+  // 小さい注記ではなく、バーの真上に列見出しとして大きく出す(タダシさん指摘・2026-08-13)
+  const head = `<div class="ptwk head"><span class="ptwnm">ポケモン</span><span class="ptwrole hd">役割</span>` +
+    `<span class="ptwbars"><span class="ptwb e"><em>序盤<b>シールドあり</b></em></span>` +
+    `<span class="ptwb l"><em>終盤<b>シールドなし</b></em></span></span>` +
+    `<span class="ptwwin">勝ち</span><span class="ptwsub">代役</span></div>`;
+  return `<div class="ptcard"><div class="ptsec"><span class="ptdic">⚔️</span>3匹の働き</div>` +
+    `<div class="ptgsub">シールドは<b>SPアタックしか防げない</b>ので、` +
+    `<b class="e">残っている序盤</b>と<b class="l">切れた終盤</b>で得意なポケモンが分かれます` +
+    `<small>横棒＝環境50匹の中での位置（真ん中の線＝環境の平均）／勝ちは🛡${ptShield}-${ptShield}</small></div>` +
     (pos && names.length > 1 ? `<p class="ptwnote">${ptRoleNote(pos, names)}${find}</p>` : '') +
-    rows;
+    (pos ? head : '') + rows + '</div>';
 }
 
 // ---- パーティ3匹の穴チェック ----
