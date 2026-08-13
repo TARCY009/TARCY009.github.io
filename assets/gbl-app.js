@@ -852,17 +852,18 @@ ${PAGE_ROCKET ? '' : `
   深刻度は<b>環境上位10位に何匹いるか</b>で見ています（使用率の低い相手ばかりなら、急いで埋める必要はありません）。</p>
 
   <h4>パーティ診断の「3匹の働き」</h4>
-  <p>左の図は<b>役割マップ</b>です。横は<b>シールドが残っている序盤（🛡2-2）</b>の強さ、
-  縦は<b>シールドが切れた終盤（🛡0-0）</b>の強さで、環境上位50匹の中での位置に置いています。
+  <p>1匹ずつ、<b>役割・得意な場面・勝ち数・代わりがきくか</b>を1行にまとめています。</p>
+  <p><b>役割</b>は、<b>シールドが残っている序盤（🛡2-2）</b>と<b>シールドが切れた終盤（🛡0-0）</b>の
+  どちらで環境の平均より上かで決まります（<b>万能</b>＝どちらも／<b>序盤型</b>／<b>終盤型</b>／<b>苦戦</b>＝どちらも下）。
   シールドは<b>SPアタックしか防げない</b>ので、この2つの場面で得意なポケモンははっきり分かれます。
   実測では<b>高威力のSPを持つほど終盤型</b>、<b>安いSPを撃てる・ノーマルアタックが強いほど序盤型</b>です。
-  右上＝<b>万能</b>／左上＝<b>詰め</b>／右下＝<b>切り込み</b>／左下＝<b>苦戦</b>。
-  <b>3匹が同じ側に寄っていたら、逆の場面を任せられるポケモンがいない</b>ということです。
-  わざ構成は<b>いま選んでいる🛡枚数で決まったもの</b>で計算するので、枚数を変えると点も動きます。</p>
-  <p>右の横棒はそのポケモンが勝てる相手の数。右端の<b>この1匹だけ◯</b>は、
-  <b>その相手に勝てるのがそのポケモンしかいない</b>数です（＝抜くとそこが穴になる）。
+  <b>3匹が同じ側に寄っていたら、逆の場面を任せられるポケモンがいない</b>ということなので、
+  <b>🔧◯◯型を探す</b>を押すと、その型を優先した入れ替え候補が出ます。</p>
+  <p><b>勝ち数</b>はいま選んでいる🛡枚数のもの、<b>序盤／終盤の横棒</b>は🛡2-2と🛡0-0で測った
+  環境の中での位置です（前提が違うので見出しに書いてあります）。
+  右端の<b>代役なし◯</b>は、<b>その相手に勝てるのがそのポケモンしかいない</b>数です（＝抜くとそこが穴になる）。
   <b>代役あり</b>と出たら、他の2匹で代われるので入れ替えても穴は増えません。
-  どちらもタップすると、そのポケモンだけが勝てる相手に表を絞り込みます。</p>
+  行をタップすると、そのポケモンだけが勝てる相手に表を絞り込みます。</p>
 
   <h4>パーティ診断のシールドの数字</h4>
   <p>🛡のボタンに付く数字は、<b>その枚数で戦ったときの穴の数</b>です。
@@ -1660,7 +1661,7 @@ function applyView(box, vn) {
   // セルをタップしたときは、その列(シールド枚数/パーティのメンバー)も一緒に渡す
   tb.querySelectorAll('tr[data-k] td').forEach(td => td.onclick = () =>
     V.pick(+td.parentNode.dataset.k, td.dataset.j === undefined ? null : +td.dataset.j));
-  // いまの絞り込みを、表示タブと図(グリッドの凡例・役割マップ)の両方に反映する
+  // いまの絞り込みを、表示タブと図(グリッドの凡例・3匹の働き)の両方に反映する
   box.querySelectorAll('.mtfilter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === V.filter));
   box.querySelectorAll('[data-flt]').forEach(el => el.setAttribute('aria-pressed', el.dataset.flt === V.filter));
   const cnt = box.querySelector('.mtcnt');
@@ -1841,7 +1842,7 @@ function runCounter() {
   step();
 }
 
-// ---- パーティ診断の図(環境を1匹1マスで並べたグリッド・役割マップ) ----
+// ---- パーティ診断の図(環境を1匹1マスで並べたグリッド・3匹の働き) ----
 const ptWinColor = p => p >= 0.5 ? 'var(--win)' : p >= 0.25 ? 'var(--gold)' : 'var(--lose)';
 // 色は3段階だけにする(2026-08-13変更)。旧版は 楽勝/有利/綱渡り/穴 の4段階だったが、
 // 「楽勝」と「有利」は緑どうしで見分けが付かないうえ、どちらも次の手が変わらない。
@@ -1888,7 +1889,7 @@ function ptGridHtml(res, n) {
     `<small><b>左から採用率の高い順</b>（1マス＝1匹）</small></div>${rows}</div>` +
     `<div class="ptglegend">${legend}</div>`;
 }
-// ---- 役割マップ(🛡が残る序盤 / 🛡が切れた終盤 の2軸) ----
+// ---- 役割の判定(🛡が残る序盤 / 🛡が切れた終盤 の2つの場面) ----
 // シールドはSPアタックしか防げないので、この2つの場面で得意なポケモンがはっきり分かれる。
 // 環境100匹での実測: 高威力のSPを持つほど終盤型(相関-0.68)、安いSPを撃てるほど序盤型(-0.49)、
 // ノーマルアタックが強いほど序盤型(+0.46。シールドがあっても素通りするため)
@@ -1946,23 +1947,25 @@ function ptRoleDist(pool, run, done) {
 }
 // 環境の中での位置(0=最下位・100=最上位)
 const ptPos = (a, x) => Math.round(a.filter(v => v < x).length / a.length * 100);
-// 3匹を4象限に置く。点は枠の番号だけにして、名前は右のバー(同じ①②③)で読む。
-// 名前を並べると点の位置がずれて見えるうえ、文字が増えて散らばりが読み取りにくくなる
-function ptRoleMapHtml(pos, names) {
-  const pts = pos.map((p, j) => ({ j, p, x: Math.max(7, Math.min(93, p.x)), y: Math.max(8, Math.min(92, p.y)) }))
-    .sort((a, b) => b.y - a.y);
-  // 点が重なると番号が読めないので、近すぎるものは下へずらす
-  pts.forEach((a, i) => pts.slice(0, i).forEach(b => {
-    if (Math.abs(a.x - b.x) < 12 && Math.abs(a.y - b.y) < 16) a.y = Math.max(4, b.y - 16);
-  }));
-  const q = [['ne', '万能'], ['nw', '詰め'], ['se', '切り込み'], ['sw', '苦戦']];
-  return `<div class="ptmap"><div class="ptmbox">` +
-    q.map(([c, t]) => `<span class="ptmq ${c}">${t}</span>`).join('') +
-    `<i class="ptmv"></i><i class="ptmh"></i>` +
-    pts.map(t => `<button class="ptmp" data-flt="only${t.j}" aria-pressed="false"` +
-      ` style="left:${t.x}%;bottom:${t.y}%"` +
-      ` title="${names[t.j]}／🛡2-2で${t.p.w2}勝・🛡0-0で${t.p.w0}勝（環境の中での位置: 序盤${t.p.x}・終盤${t.p.y}）">` +
-      `${t.j + 1}</button>`).join('') + `</div></div>`;
+// 役割の名前。序盤(🛡2-2)と終盤(🛡0-0)で環境の平均より上かどうかの組み合わせで決める。
+// 色は状態の3色(赤・黄・緑)とぶつからないよう、水色と紫を使う
+const PT_ROLES = {
+  all:   { t: '万能',   c: '61,220,132' },
+  early: { t: '序盤型', c: '67,224,255' },
+  late:  { t: '終盤型', c: '176,108,255' },
+  weak:  { t: '苦戦',   c: '139,150,194' },
+};
+const ptRoleOf = (x, y) => x >= 50 ? (y >= 50 ? 'all' : 'early') : (y >= 50 ? 'late' : 'weak');
+const ptRoleChip = r => `<span class="ptwrole r-${r}" style="--rc:${PT_ROLES[r].c}">${PT_ROLES[r].t}</span>`;
+const ptDistOk = () => PTR.dist && PTR.sig === ptrSig();
+// 入れ替え候補1匹の役割。分布ができていないときは null
+function ptCandRole(key, shadow, pol) {
+  if (!ptDistOk()) return null;
+  const me = { ...ptBase({ key, ivMode: 'auto', shadow, maxLv: 51 }), ...pol,
+    timing: 'optimal', bluff: metaBluff };
+  const x = ptPos(PTR.dist.d[0], ptRoleScore(me, PTR.dist.ops[0], 2).sc);
+  const y = ptPos(PTR.dist.d[1], ptRoleScore(me, PTR.dist.ops[1], 0).sc);
+  return { x, y, r: ptRoleOf(x, y) };
 }
 // 図で分かることを一言にする(数字を並べるより状況を言い切るほうが頭に入る)
 function ptRoleNote(pos, names) {
@@ -2036,27 +2039,45 @@ function ptDiagHtml(res, names, n) {
       (list.length > MAX ? `<span class="ptwmore">ほか${list.length - MAX}匹</span>` : '') + '</div>' : '') +
     `<p class="ptdnext">${next}</p></div>`;
 }
-// 3匹それぞれの働き。「この1匹だけが勝てる相手」が0匹なら、抜いても穴が増えない＝役割が被っている
-// (勝ち数が多くても役割が被っていることはあるので、入れ替えを考えるときの手がかりになる)
-function ptRoleHtml(res, names) {
-  if (names.length < 2) return '';
-  const rows = names.map((nm, j) => ({
-    j, nm,
-    win: res.filter(r => r.cells[j].w === 0).length,
+// 3匹それぞれの働きを「1行1匹」で出す(2026-08-13にタダシさん指示で散布図から作り直し)。
+// 旧版は左に4象限の散布図・右に勝ち数のバーを置いていたが、
+// ①点が番号だけなので誰か分からず左右を往復させられる ②軸の説明が図の外にある
+// ③3匹しかないのに2次元を辿らせる、という3点で「ぱっと見」に届いていなかった。
+// 役割を**言葉のバッジ**で出せば軸の説明が要らず、視線も上から下の一方向で済む。
+// pos = 環境の中での位置([{x,y,w2,w0}]・分布ができるまでは null)
+function ptWorkHtml(res, names, pos) {
+  if (!names.length) return '';
+  const rows = names.map((nm, j) => {
+    const win = res.filter(r => r.cells[j].w === 0).length;
     // その相手に勝てるのがこの1匹だけ = このポケモンを抜くとそこが穴になる
-    only: res.filter(r => r.nWin === 1 && r.cells[j].w === 0).length,
-  }));
-  const mx = Math.max(1, ...rows.map(r => r.win));
-  return `<div class="ptroles">` +
-    rows.map(r => `<button class="ptrrow" data-flt="only${r.j}" aria-pressed="false"` +
-      ` title="${r.nm}だけが勝てる相手 ${r.only}匹（タップで表を絞り込み）。0匹なら他の2匹で代われるので、入れ替えても穴は増えません">` +
-      `<span class="ptrnm"><span class="pcolnum">${r.j + 1}</span>${r.nm}</span>` +
-      `<span class="ptrbar"><i style="width:${Math.max(2, Math.round(r.win / mx * 100))}%;` +
-      `background:${ptWinColor(r.win / res.length)}"></i></span>` +
-      `<b>${r.win}</b><small>/${res.length}</small>` +
-      (r.only ? `<em class="ptronly">この1匹だけ<b>${r.only}</b></em>`
-              : `<em class="ptronly dup">代役あり</em>`) +
-      `</button>`).join('') + '</div>';
+    const only = res.filter(r => r.nWin === 1 && r.cells[j].w === 0).length;
+    const p = pos && pos[j];
+    const bar = (lbl, v, cls) => `<span class="ptwb ${cls}"><em>${lbl}</em>` +
+      `<i><b style="width:${Math.max(3, v)}%"></b></i></span>`;
+    return `<button class="ptwk" data-flt="only${j}" aria-pressed="false"` +
+      ` title="${nm}／🛡${ptShield}-${ptShield}で${win}勝` +
+      (p ? `・序盤(🛡2-2)は環境の上位${100 - p.x}%で${p.w2}勝・終盤(🛡0-0)は上位${100 - p.y}%で${p.w0}勝` : '') +
+      `。代役なし${only}匹＝このポケモンを抜くとそこが穴になる相手の数（タップで表を絞り込み）">` +
+      `<span class="ptwnm"><span class="pcolnum">${j + 1}</span>${nm}</span>` +
+      (p ? ptRoleChip(p.r) : `<span class="ptwrole wait">…</span>`) +
+      `<span class="ptwbars">${p ? bar('序盤', p.x, 'e') + bar('終盤', p.y, 'l') : ''}</span>` +
+      `<span class="ptwwin"><b>${win}</b><small>勝</small></span>` +
+      (only ? `<span class="ptwsub">代役なし<b>${only}</b></span>`
+            : `<span class="ptwsub dup">代役あり</span>`) +
+      `</button>`;
+  }).join('');
+  // 足りない役割があれば、そのまま入れ替え候補の検索につなげる(分析だけで終わらせない)
+  let find = '';
+  if (pos && names.length > 1) {
+    const early = pos.filter(p => p.x >= 50).length, late = pos.filter(p => p.y >= 50).length;
+    const want = early <= 1 && early <= late ? 'early' : late <= 1 && late < early ? 'late' : '';
+    if (want) find = `<button class="ptwfind" data-want="${want}"` +
+      ` title="この型のポケモンを優先して並べた入れ替え候補を出します">🔧 ${PT_ROLES[want].t}を探す</button>`;
+  }
+  return `<div class="ptmttl">3匹の働き<small>勝ち数＝🛡${ptShield}-${ptShield} ／ ` +
+    `序盤＝🛡2-2・終盤＝🛡0-0での位置</small></div>` +
+    (pos && names.length > 1 ? `<p class="ptwnote">${ptRoleNote(pos, names)}${find}</p>` : '') +
+    rows;
 }
 
 // ---- パーティ3匹の穴チェック ----
@@ -2394,13 +2415,10 @@ function runParty() {
       syncPtShieldBadges(ptShieldHoles(list, bases, idxs.map((pi, j) => pols[j][use[j]]),
         PV.results.filter(r => r.nWin === 0).length));
       // 穴の数はグリッドの凡例に出るので、文字では繰り返さない(平均勝率と前提だけ添える)。
-      // 役割マップは環境100匹の分布を作ってから差し込むので、先に枠だけ置く
+      // 「3匹の働き」の役割は環境100匹の分布ができてから入るので、先に枠だけ出す
       prog.innerHTML = `<div class="ptchart">${ptGridHtml(PV.results, idxs.length)}</div>` +
         ptDiagHtml(PV.results, names, idxs.length) +
-        `<div class="ptrole2"><div class="ptmttl">3匹の働き` +
-        `<small>右＝序盤(🛡2-2)・上＝終盤(🛡0-0)に強い</small></div><div class="ptr2body">` +
-        `<div class="ptmslot"><div class="ptmap"><div class="ptmbox"></div></div></div>` +
-        ptRoleHtml(PV.results, names) + '</div></div>' +
+        `<div class="ptrole2">${ptWorkHtml(PV.results, names, null)}</div>` +
         `<div class="holesub">平均勝率：<b>${avg}％</b>` +
         `<span class="wavg" title="上位の相手ほど当たりやすいので、順位の重みを掛けた勝率です。よく当たる相手に強いパーティほど高くなります（環境スコアと同じ重みの付け方）">実戦想定 <b>${wavg}％</b></span>` +
         `（環境上位${list.length}匹・🛡${ptShield}-${ptShield}）</div>` +
@@ -2413,20 +2431,29 @@ function runParty() {
         PV.filter = PV.filter === el.dataset.flt ? 'all' : el.dataset.flt;
         applyView(body, 'party');
       };
+      // 「🔧 ◯◯型を探す」= 足りない役割を優先して入れ替え候補を並べ直す
+      const bindFind = el => el.onclick = e => {
+        e.stopPropagation();                      // 行のタップ(絞り込み)と兼ねない
+        PTS.want = el.dataset.want;
+        runPtSwap();
+        const sw = document.getElementById('ptswap');
+        if (sw) sw.scrollIntoView({ block: 'nearest' });
+      };
       prog.querySelectorAll('[data-flt]').forEach(bindFlt);
-      // 役割マップ: 環境50匹の分布ができ次第、枠に差し込む(分布はリーグごとに1回だけ作る)
+      // 役割: 環境100匹の分布ができ次第、枠ごと出し直す(分布はリーグごとに1回だけ作る)
       ptRoleDist(list, run, dist => {
         if (run !== ptrRun) return;
-        const slot = prog.querySelector('.ptmslot');
+        const slot = prog.querySelector('.ptrole2');
         if (!slot) return;
-        const pos = bases.map((b, j) => {
+        PTS.pos = bases.map((b, j) => {
           const me = { ...b, ...pols[j][use[j]], timing: 'optimal', bluff: metaBluff };
           const a = ptRoleScore(me, dist.ops[0], 2), c = ptRoleScore(me, dist.ops[1], 0);
-          return { x: ptPos(dist.d[0], a.sc), y: ptPos(dist.d[1], c.sc), w2: a.win, w0: c.win };
+          return { x: ptPos(dist.d[0], a.sc), y: ptPos(dist.d[1], c.sc), w2: a.win, w0: c.win,
+            r: ptRoleOf(ptPos(dist.d[0], a.sc), ptPos(dist.d[1], c.sc)) };
         });
-        slot.innerHTML = ptRoleMapHtml(pos, names) +
-          `<p class="ptmnote">${ptRoleNote(pos, names)}</p>`;
+        slot.innerHTML = ptWorkHtml(PV.results, names, PTS.pos);
         slot.querySelectorAll('[data-flt]').forEach(bindFlt);
+        slot.querySelectorAll('[data-want]').forEach(bindFind);
         applyView(body, 'party');
       });
       // 入れ替え候補は、いまの診断結果を土台にして探す(パーティや条件が変わったら作り直す)
@@ -2453,8 +2480,9 @@ function runParty() {
 // 提案は「そこに出ているわざ構成で戦ったら」の数字なので、入れ替えるときはその構成ごと枠に入れる
 // (オートのままだと構成を選び直して数字が変わるため、わざはマニュアルへ切り替える)
 // log/start = 入れ替えの記録（はじめの状態からどう良くなったか）。chain = 入れ替えた直後に続けて次の候補を出す
+// want = 優先したい役割('early'=序盤型 / 'late'=終盤型)。pos = 3匹の役割(「3匹の働き」で計算したもの)
 const PTS = { range: 100, rows: null, base: null, busy: false, undo: null, msg: '', scan: null,
-  log: [], start: null, chain: false, sig: '' };
+  log: [], start: null, chain: false, sig: '', want: '', pos: null };
 // いまのパーティの穴の数と平均勝率(診断結果から数えるだけ。候補を計算していなくても出せる)
 function ptNowStat() {
   const B = PTS.base, n = B.idxs.length;
@@ -2685,14 +2713,28 @@ function runPtSwap() {
       // 並びは「穴がどれだけ減るか」と「勝率がどれだけ上がるか」の合計。
       // 穴だけで並べると、穴を1匹減らすかわりに勝率を大きく落とす候補が上に来てしまう
       // (穴1匹 ≒ 勝率3ポイントとして扱う)
-      const gain = r => (now.holes - r.holes) * 3 + (r.avg - now.avg) * 100;
+      const base = r => (now.holes - r.holes) * 3 + (r.avg - now.avg) * 100;
+      // 役割(序盤型/終盤型)を出す。1匹あたり100戦かかるので、見込みの高い上位だけにする。
+      // 「◯◯型を探す」を押しているときは、合う候補に穴1匹ぶん(3点)の下駄をはかせる。
+      // 並べ替えではなく下駄にするのは、型が合うだけで中身の悪い候補を上に出さないため
+      const ROLE_MAX = 60;
+      const roles = new Map();
+      const rkey = c => c.k + (c.s ? '|s' : '');
+      if (ptDistOk())
+        found.map(r => ({ r, g: Math.max(...r.gains.map(base)) })).sort((a, b) => b.g - a.g)
+          .slice(0, ROLE_MAX).forEach(({ r }) => {
+            const v = ptCandRole(r.c.k, !!r.c.s, r.pol);
+            if (v) roles.set(rkey(r.c), v);
+          });
+      const fits = ro => !!ro && (PTS.want === 'early' ? ro.x >= 50 : ro.y >= 50);
+      const gain = r => base(r) + (PTS.want && fits(r.role) ? 3 : 0);
       // 「①マリルリを替えるなら A / B / C」と枠ごとにまとめる。
       // 総合順に混ぜて並べると、どのポケモンを替える話なのか読み取りづらい
       const bySlot = new Map();
       found.forEach(r => r.gains.forEach(g => {
         const a = bySlot.get(g.j) || [];
         a.push({ key: r.c.k, name: r.c.n, shadow: !!r.c.s, holes: g.holes, avg: g.avg,
-          mv: polToMv(r.c.k, r.pol) });
+          mv: polToMv(r.c.k, r.pol), role: roles.get(rkey(r.c)) || null });
         bySlot.set(g.j, a);
       }));
       PTS.rows = [...bySlot.entries()]
@@ -2740,6 +2782,9 @@ function renderPtSwap() {
   const canUndo = u && PT[u.i] && PT[u.i].key === u.key && !!PT[u.i].shadow === !!u.shadow;
   const head = `<div class="ptswbar"><button class="ptswbtn" ${PTS.busy ? 'disabled' : ''}` +
     ` title="いまの穴を埋められるポケモンを探して、どのメンバーと入れ替えると何匹減るかを出します">🔧 入れ替え候補</button>${range}` +
+    // どの型を優先して並べているかを出す(タップで解除)。押した覚えのない並び順にならないように
+    (PTS.want ? `<button class="ptswwant" style="--rc:${PT_ROLES[PTS.want].c}"` +
+      ` title="この型を優先して並べています（タップで解除）">${PT_ROLES[PTS.want].t}を優先 ✕</button>` : '') +
     (canUndo ? `<button class="ptswundo" title="入れ替える前のポケモンに戻します">↩ 元に戻す</button>` : '') + '</div>';
   let body = '';
   if (PTS.busy) body = `<div class="ptswmsg">${PTS.msg || '計算中…'}</div>`;
@@ -2759,6 +2804,7 @@ function renderPtSwap() {
         return `<button class="ptswrow" data-g="${gi}" data-i="${i}"` +
           ` title="${names[g.j]}を${r.name}に替えたときの診断結果です（タップで枠に入れます）">` +
           `<span class="ptswnm"><b>${r.name}</b><small>${mv}</small></span>` +
+          (r.role ? ptRoleChip(r.role.r) : '') +
           `<span class="ptswd"><small>穴</small>${now.holes}<em>→</em>` +
           `<b class="${r.holes < now.holes ? 'good' : ''}">${r.holes}</b></span>` +
           `<span class="ptswd"><small>勝率</small>${Math.round(now.avg * 100)}<em>→</em>` +
@@ -2782,6 +2828,8 @@ function renderPtSwap() {
     PTS.range = b.dataset.v === 'all' ? 'all' : +b.dataset.v;
     runPtSwap();
   });
+  const wt = box.querySelector('.ptswwant');
+  if (wt) wt.onclick = () => { PTS.want = ''; runPtSwap(); };
   const un = box.querySelector('.ptswundo');
   if (un) un.onclick = () => {
     const u = PTS.undo;

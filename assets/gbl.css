@@ -376,42 +376,51 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:var(--bg2);border:1px solid rgba(var(--dc),.42);border-radius:99px}
 .ptwchip em{font-style:normal;font-size:.58rem;color:rgba(var(--dc),.95);font-weight:700}
 .ptwmore{align-self:center;font-size:.66rem;color:var(--sub)}
-/* 3匹の働き: 役割マップ(4象限)＋勝ち数のバーを1つの枠にまとめる */
-.ptrole2{margin:0 0 8px;max-width:660px}
-.ptmttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:4px}
-.ptmttl small{font-weight:400;margin-left:5px}
-.ptr2body{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
-.ptmslot{flex-shrink:0}
-.ptmbox{position:relative;width:196px;height:142px;border:1px solid var(--line);border-radius:10px;
-  background:linear-gradient(150deg,rgba(63,214,128,.08),rgba(255,107,129,.07))}
-.ptmq{position:absolute;font-size:.56rem;font-weight:700;color:var(--sub);opacity:.8}
-.ptmq.ne{right:6px;top:5px}.ptmq.nw{left:6px;top:5px}
-.ptmq.se{right:6px;bottom:5px}.ptmq.sw{left:6px;bottom:5px}
-.ptmv,.ptmh{position:absolute;background:var(--line)}
-.ptmv{left:50%;top:0;bottom:0;width:1px}
-.ptmh{top:50%;left:0;right:0;height:1px}
-/* 点は番号だけ(名前は右のバーと同じ①②③で対応する) */
-.ptmp{position:absolute;transform:translate(-50%,50%);display:flex;align-items:center;justify-content:center;
-  width:23px;height:23px;font-size:.74rem;font-weight:800;color:#eaf2ff;cursor:pointer;
-  background:linear-gradient(160deg,#5b7cff,#2f3f8c);border:1px solid rgba(255,255,255,.35);
-  border-radius:50%;box-shadow:0 2px 7px rgba(0,0,0,.45)}
-.ptmp[aria-pressed="true"]{background:linear-gradient(160deg,#8ff0ff,var(--cy));color:#06243a;
-  box-shadow:0 0 0 3px rgba(93,225,255,.35),0 2px 7px rgba(0,0,0,.45)}
-.ptmnote{font-size:.7rem;line-height:1.5;color:var(--ink);margin:6px 0 0;max-width:196px}
-.ptmnote b{font-weight:800;color:var(--cy)}
-.ptroles{flex:1;min-width:260px;max-width:420px}
-.ptrrow{display:flex;align-items:center;gap:7px;width:100%;padding:2px 6px;margin-bottom:2px;
-  background:none;border:1px solid transparent;border-radius:8px;cursor:pointer}
-.ptrrow[aria-pressed="true"]{border-color:var(--cy);background:var(--bg2)}
-.ptrnm{display:flex;align-items:center;gap:4px;flex-shrink:0;width:108px;font-size:.72rem;color:var(--ink);
+/* 3匹の働き: 1行1匹。散布図(4象限)は「3点しかないのに2次元を辿らせる」ため廃止し、
+   役割を言葉のバッジで出す形にした(2026-08-13)。視線が上から下の一方向で済む */
+.ptrole2{margin:0 0 8px;max-width:560px}
+.ptmttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:5px}
+.ptmttl small{font-weight:400;margin-left:5px;opacity:.9}
+/* flex にすると文字とポケモン名が別々の箱になって変なところで折り返すので、ふつうの文にする */
+.ptwnote{font-size:.78rem;line-height:1.7;color:var(--ink);margin:0 0 6px}
+.ptwnote b{font-weight:800;color:var(--cy)}
+/* 足りない役割を、そのまま入れ替え候補の検索につなげるボタン */
+.ptwfind{display:inline-block;vertical-align:middle;margin-left:8px;
+  padding:3px 11px;font-size:.68rem;font-weight:800;color:#3a2a00;border:none;border-radius:999px;
+  cursor:pointer;background:linear-gradient(160deg,#ffe9a8 0%,#f5c33c 45%,#c98f10 100%);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.ptwk{display:grid;grid-template-columns:118px 54px 1fr 46px 78px;align-items:center;gap:8px;
+  width:100%;padding:4px 8px;margin-bottom:3px;background:none;border:1px solid transparent;
+  border-radius:8px;cursor:pointer;text-align:left}
+.ptwk[aria-pressed="true"]{border-color:var(--cy);background:var(--bg2)}
+.ptwnm{display:flex;align-items:center;gap:4px;min-width:0;font-size:.74rem;font-weight:700;color:var(--ink);
   overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.ptrbar{flex:1;min-width:0;height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
-.ptrbar i{display:block;height:100%;border-radius:99px}
-.ptrrow>b{font-size:.72rem;font-weight:800;text-align:right}
-.ptrrow>small{font-size:.6rem;color:var(--sub);margin-left:-4px}
-.ptronly{flex-shrink:0;width:74px;text-align:right;font-style:normal;font-size:.64rem;color:var(--sub)}
-.ptronly b{font-size:.76rem;font-weight:800;color:var(--cy);margin-left:2px}
-.ptronly.dup{color:var(--gold)}
+/* 役割のバッジ。色は状態の3色(赤・黄・緑)とぶつからない水色(序盤)・紫(終盤)にする。
+   万能は「どちらも」なので水色→紫のグラデーション(緑にすると図の「2匹勝ち」と紛れる) */
+.ptwrole{font-size:.62rem;font-weight:800;text-align:center;padding:2px 0;border-radius:99px;
+  color:rgb(var(--rc));background:rgba(var(--rc),.13);border:1px solid rgba(var(--rc),.5)}
+.ptwrole.r-all{color:#dbe9ff;border-color:rgba(140,170,255,.6);
+  background:linear-gradient(120deg,rgba(67,224,255,.22),rgba(176,108,255,.22))}
+.ptwrole.wait{color:var(--sub);background:none;border-color:var(--line)}
+.ptwbars{display:flex;align-items:center;gap:10px;min-width:0}
+.ptwb{display:flex;align-items:center;gap:4px;flex:1;min-width:0}
+.ptwb em{font-style:normal;font-size:.56rem;color:var(--sub);flex-shrink:0}
+.ptwb i{flex:1;min-width:0;height:7px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.ptwb i b{display:block;height:100%;border-radius:99px}
+.ptwb.e i b{background:var(--cy)}
+.ptwb.l i b{background:var(--ml)}
+.ptwwin{text-align:right;font-size:.72rem;color:var(--ink)}
+.ptwwin b{font-size:.84rem;font-weight:800}
+.ptwwin small{font-size:.58rem;color:var(--sub);margin-left:1px}
+.ptwsub{text-align:right;font-size:.64rem;color:var(--sub)}
+.ptwsub b{font-size:.78rem;font-weight:800;color:var(--cy);margin-left:2px}
+.ptwsub.dup{color:var(--gold)}
+/* 狭い画面は、2本のバーだけ次の行へ送る(名前と数字の列は崩さない) */
+@media (max-width:520px){
+  .ptwk{grid-template-columns:1fr 54px 44px 76px;gap:6px}
+  .ptwnm{grid-area:1/1}.ptwrole{grid-area:1/2}.ptwwin{grid-area:1/3}.ptwsub{grid-area:1/4}
+  .ptwbars{grid-area:2/1/3/5;margin-top:2px}
+}
 /* シールドのボタンに出す、その枚数での穴の数 */
 .ptsh button .shhole{margin-left:5px;padding:0 5px;border-radius:99px;font-size:.62rem;font-weight:800;
   color:#fff;background:var(--lose)}
@@ -442,6 +451,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptswnm s{color:var(--sub);text-decoration-color:var(--lose)}
 .ptswnm b{font-weight:800}
 .ptswnm small{width:100%;font-size:.62rem;color:var(--sub)}
+/* 候補にも「3匹の働き」と同じ役割バッジを出す(どの型を補えるかが一目で分かる) */
+.ptswrow .ptwrole{flex-shrink:0;width:52px}
+.ptswwant{padding:4px 11px;font-size:.68rem;font-weight:800;cursor:pointer;border-radius:999px;
+  color:rgb(var(--rc));background:rgba(var(--rc),.14);border:1px solid rgba(var(--rc),.55)}
 .ptswd{flex-shrink:0;font-size:.76rem;color:var(--sub);white-space:nowrap}
 .ptswd small{font-size:.6rem;margin-right:3px}
 .ptswd em{font-style:normal;margin:0 2px;color:var(--sub)}
