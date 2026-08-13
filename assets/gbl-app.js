@@ -369,6 +369,11 @@ document.getElementById('loading').style.display = 'none';
 const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r);
 const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 18);
+// シャドウは「シャドウ○○」の4文字ぶん名前が長くなり、表や枠から見切れてしまう。
+// 表示するところだけ、頭のマークで表す(2026-08-13タダシさん指示)。
+// 入力欄はHTMLを入れられないので従来どおり「シャドウ○○」の文字のまま
+const SHADOWMK = '<i class="shadowmark"></i>';
+const shMark = n => (n || '').startsWith('シャドウ') ? SHADOWMK + n.slice(4) : n;
 const MOVE_TYPE = {};
 const MOVE_COST = {};
 const NAME_TYPES = {};
@@ -1476,7 +1481,7 @@ function runMulti() {
   box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}<small class="cnsub">マスをタップ→1対1シミュ</small></h3>
     ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
-    ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${m.n}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
+    ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${shMark(m.n)}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
     </tbody></table><div class="mtprog">計算中 0/${list.length}</div>`;
   const rowsEl = [...box.querySelectorAll('tr[data-k]')];
   rowsEl.forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
@@ -1516,7 +1521,7 @@ function runMulti() {
         tds[j + 1].innerHTML = cellHtml(c);
       });
       // 絞り込み・並び替え用に対面の結果を保存(scは0〜1000の対面スコア=与ダメ+残HP)
-      MV.results.push({ idx, m, name: `${idx + 1}. ${m.n}`, cells,
+      MV.results.push({ idx, m, name: `${idx + 1}. ${shMark(m.n)}`, cells,
         sc: (cells[0].sc + cells[1].sc + cells[2].sc) / 3,
         nWin: cells.filter(c => c.w === 0).length,
         nLose: cells.filter(c => c.w === 1).length });
@@ -1830,8 +1835,8 @@ function runCounter() {
       // 全ポケモンのときは並び順の番号に意味が無いので付けず、代わりに使ったわざを添える
       CV.results.push({ idx, m, cells,
         name: all
-          ? `${m.n}<small class="cnmv">${D.moves[m.f] ? D.moves[m.f].n : ''}${m.c1 && D.moves[m.c1] ? ' / ' + D.moves[m.c1].n : ''}</small>`
-          : `${idx + 1}. ${m.n}`,
+          ? `${shMark(m.n)}<small class="cnmv">${D.moves[m.f] ? D.moves[m.f].n : ''}${m.c1 && D.moves[m.c1] ? ' / ' + D.moves[m.c1].n : ''}</small>`
+          : `${idx + 1}. ${shMark(m.n)}`,
         sc: (cells[0].sc + cells[1].sc + cells[2].sc) / 3,
         nWin: cells.filter(c => c.w === 0).length,
         nLose: cells.filter(c => c.w === 1).length });
@@ -1955,7 +1960,7 @@ function ptRoleNote(pos, names, n) {
   const half = n / 2;
   const lead = pos.map((p, j) => j).filter(j => pos[j].w2 >= half);
   const close = pos.map((p, j) => j).filter(j => pos[j].w0 >= half);
-  const nm = j => `<b>${names[j]}</b>`;
+  const nm = j => `<b>${shMark(names[j])}</b>`;
   if (pos.length === 1) return lead.length && close.length ? `どちらの場面も半分以上に勝てます。`
     : lead.length ? `🛡が残るうちに強いタイプです。`
     : close.length ? `🛡が切れてから強いタイプです。` : `どちらの場面も半分に届きません。`;
@@ -1980,7 +1985,7 @@ function ptDiagHtml(res, names, n) {
   let lead = '', detail = '', next = '', flt = '', list = [], ttl = '', tier = '';
   if (holes.length) {
     list = holes; flt = 'hole'; ttl = '勝てない相手'; tier = 'hole';
-    const top = holes.slice(0, 3).map(r => `${r.m.n}(${r.idx + 1}位)`).join('・');
+    const top = holes.slice(0, 3).map(r => `${shMark(r.m.n)}(${r.idx + 1}位)`).join('・');
     lead = `環境の<b>${holes.length}匹</b>（${pct(holes.length)}%）には、<b>${n}匹とも勝てません</b>。`;
     detail = `とくに <b>${top}</b>${holes.length > 3 ? ' など' : ''}。` +
       (topHoles ? `よく当たる<b>上位10位に${topHoles}匹</b>いるので、優先して埋めたいところです。`
@@ -1992,7 +1997,7 @@ function ptDiagHtml(res, names, n) {
       .sort((a, b) => b.cnt - a.cnt)[0];
     lead = `<b>穴はありません</b>。ただし環境の<b>${thin.length}匹</b>（${pct(thin.length)}%）は` +
       `「勝てるのが1匹だけ」の<b>1匹頼み</b>です。`;
-    detail = rely && rely.cnt ? `そのうち<b>${rely.cnt}匹</b>は <b>${rely.nm}</b> に頼りきりなので、` +
+    detail = rely && rely.cnt ? `そのうち<b>${rely.cnt}匹</b>は <b>${shMark(rely.nm)}</b> に頼りきりなので、` +
       `この1匹を先に失うと苦しくなります。` : '';
   } else {
     lead = `どの相手にも<b>2匹以上</b>が勝てます。かなり安定した並びです。`;
@@ -2000,7 +2005,7 @@ function ptDiagHtml(res, names, n) {
   // 次の一手。抜いても穴が増えない子(＝他の子で代われる)があれば、そこが替え時
   const dup = names.map((nm, j) => ({ nm,
     only: res.filter(r => r.nWin === 1 && r.cells[j].w === 0).length })).filter(d => !d.only);
-  if (n > 1 && dup.length) next = `→ <b>${dup[0].nm}</b> は他の${n - 1}匹で代われます。` +
+  if (n > 1 && dup.length) next = `→ <b>${shMark(dup[0].nm)}</b> は他の${n - 1}匹で代われます。` +
     `下の<b>入れ替え候補</b>で、ここを替えると幅が広がりそうです。`;
   else if (holes.length) next = `→ 下の<b>入れ替え候補</b>で、この穴を埋められるポケモンを探せます。`;
   else next = `→ 下の<b>入れ替え候補</b>で、どの枠を替えるといちばん良くなるか比べられます。`;
@@ -2019,7 +2024,7 @@ function ptDiagHtml(res, names, n) {
       ` title="タップで表をこの相手だけに絞り込みます">⚠ ${ttl} <b>${list.length}匹</b>` +
       `<small>環境での順位つき・タップで絞り込み</small></button>` +
       `<div class="ptwchips t-${tier}">` +
-      list.slice(0, MAX).map(r => `<span class="ptwchip"><em>${r.idx + 1}</em>${r.m.n}</span>`).join('') +
+      list.slice(0, MAX).map(r => `<span class="ptwchip"><em>${r.idx + 1}</em>${shMark(r.m.n)}</span>`).join('') +
       (list.length > MAX ? `<span class="ptwmore">ほか${list.length - MAX}匹</span>` : '') + '</div>' : '') +
     `<p class="ptdnext">${next}</p></div>`;
 }
@@ -2049,7 +2054,7 @@ function ptWorkHtml(res, names, pos) {
       ` title="${nm}` +
       (p ? `／序盤(おたがい🛡2枚)は${N}匹中${p.w2}勝・終盤(おたがい🛡0枚)は${p.w0}勝` : '') +
       `。抜くと穴が${only}匹ふえます（この${only}匹に勝てるのはこのポケモンだけ）。タップで表を絞り込み">` +
-      `<span class="ptwnm"><span class="pcolnum">${j + 1}</span>${nm}</span>` +
+      `<span class="ptwnm"><span class="pcolnum">${j + 1}</span>${shMark(nm)}</span>` +
       (p ? ptRoleChip(p.r) : `<span class="ptwrole wait">…</span>`) +
       `<span class="ptwbars">${p ? bar('🛡2-2', p.w2, 'e') + bar('🛡0-0', p.w0, 'l') : ''}</span>` +
       // 「代役なし6」は何の数か分からなかった(タダシさん指摘・2026-08-13)ので、
@@ -2081,7 +2086,7 @@ function ptWorkHtml(res, names, pos) {
     `<div class="ptgsub"><b class="e">シールドが残っている序盤</b>と<b class="l">切れた終盤</b>で` +
     // 枚数は列見出しの「🛡2-2 / 🛡0-0」が示すので、ここには**役割の基準**を書く
     // (2026-08-13タダシさん指示。何勝以上でどの型になるかが分かれば、あとは表を読むだけで済む)
-    `得意なポケモンが分かれます<small><b>${N / 2}勝以上</b>（真ん中の線）で得意：` +
+    `得意なポケモンが分かれます<small><b>${N / 2}勝以上</b>で得意：` +
     `両方${ptRoleChip('all')}／<b class="e">🛡2-2</b>だけ${ptRoleChip('early')}／` +
     `<b class="l">🛡0-0</b>だけ${ptRoleChip('late')}／どちらも未満${ptRoleChip('weak')}</small></div>` +
     (pos && names.length > 1 ? `<p class="ptwnote">${ptRoleNote(pos, names, N)}${find}</p>` : '') +
@@ -2339,7 +2344,7 @@ function runParty() {
   if ((/^n\d$/.test(PV.filter) && (idxs.length < 2 || +PV.filter.slice(1) > idxs.length))
     || (/^only\d$/.test(PV.filter) && +PV.filter.slice(4) >= idxs.length)) PV.filter = 'all';
   PV.results = [];
-  PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${ptName(PT[i])}`);
+  PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${shMark(ptName(PT[i]))}`);
   PV.pick = (k, j) => {   // セルをタップ→そのメンバーと相手を同じシールド枚数で1対1シミュへ
     // 表で使ったわざ(オートの選出 or 手動で選んだわざ)をそのまま渡す＝一覧と1対1の結果が食い違わない
     if (j != null && PT[idxs[j]]) { applyMyPk(0, { ...PT[idxs[j]], ...ptMvOf(idxs[j]) }, true); setBothShields(ptShield); }
@@ -2406,7 +2411,7 @@ function runParty() {
       idxs.forEach(pi => syncPartySlot(pi));
       PV.results = grid.map((row, k) => {
         const cells = row.map((byPol, j) => byPol[use[j]]);
-        return { idx: k, m: list[k], name: `${k + 1}. ${list[k].n}`, cells,
+        return { idx: k, m: list[k], name: `${k + 1}. ${shMark(list[k].n)}`, cells,
           sc: cells.reduce((a, c) => a + c.sc, 0) / cells.length,
           nWin: cells.filter(c => c.w === 0).length,
           nLose: cells.filter(c => c.w === 1).length };
@@ -2770,7 +2775,7 @@ function ptSwapLogHtml() {
     `<b class="${(less ? b < a : b > a) ? 'good' : ''}">${b}</b>`;
   return `<div class="ptswlog"><div class="ptttl">入れ替えの記録<small>／${PTS.log.length}匹</small></div>` +
     PTS.log.map(l => `<div class="ptswlogrow"><span class="pcolnum">${l.i + 1}</span>` +
-      `<s>${l.from}</s><i class="swapmark"></i><b>${l.to}</b></div>`).join('') +
+      `<s>${shMark(l.from)}</s><i class="swapmark"></i><b>${shMark(l.to)}</b></div>`).join('') +
     `<div class="ptswlogsum"><small>穴</small>${arrow(PTS.start.holes, s.holes, true)}` +
     `<span class="sep">／</span><small>勝率</small>` +
     `${arrow(Math.round(PTS.start.avg * 100), Math.round(s.avg * 100), false)}<small>％</small></div></div>`;
@@ -2810,7 +2815,7 @@ function renderPtSwap() {
           .map(m => D.moves[m] ? D.moves[m].n : '').filter(Boolean).join(' / ');
         return `<button class="ptswrow" data-g="${gi}" data-i="${i}"` +
           ` title="${names[g.j]}を${r.name}に替えたときの診断結果です（タップで枠に入れます）">` +
-          `<span class="ptswnm"><b>${r.name}</b><small>${mv}</small></span>` +
+          `<span class="ptswnm"><b>${shMark(r.name)}</b><small>${mv}</small></span>` +
           (r.role ? ptRoleChip(r.role.r) : '') +
           `<span class="ptswd"><small>穴</small>${now.holes}<em>→</em>` +
           `<b class="${r.holes < now.holes ? 'good' : ''}">${r.holes}</b></span>` +
@@ -2819,7 +2824,7 @@ function renderPtSwap() {
           `</button>`;
       }).join('');
       return `<div class="ptswgrp"><div class="ptswgh"><span class="pcolnum">${B.idxs[g.j] + 1}</span>` +
-        `<b>${names[g.j]}</b>を替えるなら</div>${rows}</div>`;
+        `<b>${shMark(names[g.j])}</b>を替えるなら</div>${rows}</div>`;
     }).join('') +
       `<div class="ptswnote">タップすると、下に出ているわざのまま枠に入ります（わざは<b>マニュアル</b>に切り替わります）` +
       (PTS.scan ? '<br>' + (PTS.scan.short >= PTS.scan.pool
