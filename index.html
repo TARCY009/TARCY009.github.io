@@ -54,6 +54,7 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
 .sugg-list small{color:var(--sub)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .srow-meta{display:inline-flex;align-items:center;gap:5px}
+.ng{color:#c2410c;font-weight:700}
 .lowbulk{color:#ffd54a;background:#c2410c;border:1px solid #a33409;border-radius:6px;font-size:.62rem;font-weight:700;padding:0 5px;flex-shrink:0}
 .srow-wrap{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .srow-main{display:flex;align-items:center;gap:6px}
@@ -120,6 +121,8 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
    (自分のポケモン行は行ごとに異なるPL・個体値を持つため残す。共通値は下部の注記に記載) */
 @media (max-width:430px){.rank-row:not(.mine) .rname small{display:none}}
 .rmoves{font-size:.74rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 「PL◯◯で耐える」は結論なので、切らずに折り返して全部見せる */
+.rmoves.holdline{white-space:normal;overflow:visible}
 .rmoves .sp{color:var(--special)}
 .bar{height:6px;background:#e8ecf8;border-radius:99px;margin-top:4px;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent) 55%,var(--violet));border-radius:99px}
@@ -204,7 +207,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div id="mineSummary"></div>
   <div id="rankList"><div class="empty">ボスを設定するとランキングが表示されます</div></div>
   <button class="more" id="moreBtn" style="display:none">さらに表示</button>
-  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。特別技はゲーム内データを公式発表と照合して補完済み。</p>
+  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。登録した自分のメガもこの一覧に入り、1発耐えられない場合は「何PLまで上げれば耐えるか」とそのときの火力を出します（登録したわざ・個体値で計算）。特別技はゲーム内データを公式発表と照合して補完済み。</p>
 </div>
 
 <footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
@@ -468,8 +471,10 @@ document.getElementById('addBtn').onclick=()=>{
   const isMax=statMode()==='max';
   const lv=isMax?50:parseFloat(document.getElementById('lvOut').dataset.lv);
   const iva=isMax?15:+document.getElementById('ivA').value;
+  // 防御・HPの個体値もシールド破壊(メガ)の1発耐え判定で使うので控えておく
+  const ivd=isMax?15:+document.getElementById('ivD').value, ivh=isMax?15:+document.getElementById('ivH').value;
   mine.push({key:myKey,f:document.getElementById('fastSel').value,c:document.getElementById('chgSel').value,
-             lv,iva,isMax,shadow:document.getElementById('myShadow').checked});
+             lv,iva,ivd,ivh,isMax,shadow:document.getElementById('myShadow').checked});
   // メガを登録したらランキング側のメガ・ゲンシも出す(メガ抜きの順位と比べると相当順位がズレるため)
   if(p.mega && !fMega){ fMega=true; syncModes(); }
   renderRank();
@@ -541,25 +546,29 @@ function badges(shadow, mega, p){
 // ①ボスの通常枠SPアタック(シールド中の攻撃2倍補正込み)をどれを受けても1発で倒れない(メガ=PL50個体値15、ボス=PL40想定)
 // ②ゲージ2分割or3分割のSPアタックを持つ(シールド破壊が安定)
 // ③その中で対ボスDPSが高い順
+// ボスの通常枠SPアタックによる最大被ダメージ(シールド展開中の攻撃2倍補正込み)
+// 2026-08実測: シールド中のボス攻撃は実効約1.9〜2.2倍→2倍を採用
+function shieldMaxHit(bp, p, def){
+  const bossAtk=(bp.a+15)*D.cpm['40'];
+  let maxHit=0, maxMove=null;
+  for(const id of bp.c){
+    const m=D.moves[id];
+    if(!m||m.e>=0) continue;
+    const dmg=Math.floor(0.5*m.p*(bossAtk*2/def)*stab(bp,m)*eff(m.t,p.ty))+1;
+    if(dmg>maxHit){maxHit=dmg;maxMove=m;}
+  }
+  return {maxHit,maxMove};
+}
 function shieldRows(){
   if(!boss) return [];
   const bp=D.pokemon[boss], bt=bp.ty;
-  const bossAtk=(bp.a+15)*D.cpm['40'];
   const rows=[];
   for(const k of KEYS){
     const p=D.pokemon[k];
     if(!p.mega || p.n.startsWith('ゲンシ')) continue;
     const def=(p.df+15)*D.cpm['50'];
     const hp=Math.floor((p.h+15)*D.cpm['50']);
-    // ボスの通常枠SPアタックによる最大被ダメージ
-    let maxHit=0, maxMove=null;
-    for(const id of bp.c){
-      const m=D.moves[id];
-      if(!m||m.e>=0) continue;
-      // シールド展開中はボスの攻撃に2倍補正(2026-08実測: 実効約1.9〜2.2倍→2倍を採用)
-      const dmg=Math.floor(0.5*m.p*(bossAtk*2/def)*stab(bp,m)*eff(m.t,p.ty))+1;
-      if(dmg>maxHit){maxHit=dmg;maxMove=m;}
-    }
+    const {maxHit,maxMove}=shieldMaxHit(bp,p,def);
     if(!maxMove || maxHit>=hp) continue;   // 1発で倒れる可能性があるメガは除外
     // 2/3分割SPアタック限定で対ボス最高DPS構成
     const fs=fastMoves(p).filter(x=>D.moves[x.id].e>0 && !x.id.startsWith('HIDDEN_POWER_'));
@@ -580,23 +589,87 @@ function shieldRows(){
   rows.sort((a,b)=>b.dps-a.dps);
   return rows;
 }
+// 自分の登録メガをシールド破壊(メガ)の一覧に混ぜる。
+// HPも防御もPLで変わるので、1発耐えられないときは「PLいくつから耐えるか」まで出す
+// (登録わざで計算する。メガ以外・ゲンシはシールド破壊の対象外なので混ぜない)
+function shieldMine(){
+  if(!boss) return [];
+  const bp=D.pokemon[boss], bt=bp.ty, out=[];
+  mine.forEach((e,i)=>{
+    const p=D.pokemon[e.key];
+    if(!p.mega || p.n.startsWith('ゲンシ')) return;
+    const m1=D.moves[e.f], m2=D.moves[e.c];
+    const at=l=>{
+      const c=D.cpm[String(l)];
+      const def=(p.df+e.ivd)*c, hp=Math.floor((p.h+e.ivh)*c);
+      const {maxHit,maxMove}=shieldMaxHit(bp,p,def);
+      const r=comboDPS(p,m1,m2,(p.a+e.iva)*c,bt,e.shadow);
+      return {lv:l,hp,maxHit,maxMove,dps:r?r.dps:0,hold:!maxMove||maxHit<hp};
+    };
+    const now=at(e.lv);
+    let need=null;
+    if(!now.hold){
+      // HPは上がり被ダメは下がるので、耐えられる最小のPLを下から探す
+      for(let l=1;l<=51;l+=0.5){
+        if(l<=e.lv||!D.cpm[String(l)]) continue;
+        const s=at(l); if(s.hold){need=s;break;}
+      }
+    }
+    out.push({i,e,p,...now,need,bars:Math.round(100/Math.abs(m2.e))});
+  });
+  return out;
+}
 function renderShieldRank(){
   const listEl=document.getElementById('rankList'), sumEl=document.getElementById('mineSummary'), moreBtn=document.getElementById('moreBtn');
   sumEl.innerHTML='';
   if(!boss){listEl.innerHTML='<div class="empty">ボスを設定すると、そのボスのSPアタックを1発耐えられる「シールド破壊向きメガ」を表示します</div>';moreBtn.style.display='none';return;}
   const rows=shieldRows();
-  if(!rows.length){listEl.innerHTML='<div class="empty">条件(1発耐え+分割SPアタック持ち)を満たすメガシンカが見つかりません</div>';moreBtn.style.display='none';return;}
-  const top=rows.length?rows[0].dps:1;
-  listEl.innerHTML=rows.slice(0,showN).map((r,idx)=>{
+  const my=shieldMine();
+  const ivTxt=e=>e.isMax?'PL50・個体値15'
+    :`PL${e.lv}・個体値${(e.iva===e.ivd&&e.ivd===e.ivh)?e.iva:`${e.iva}/${e.ivd}/${e.ivh}`}`;
+  const rankOf=d=>rows.filter(r=>r.dps>d).length+1;
+  // 自分のメガの概要(1発耐えるか / 耐えないなら必要なPL)
+  const skipped=mine.length-my.length;
+  sumEl.innerHTML=my.map(m=>{
+    const right=m.hold
+      ? `🛡1発耐え　火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rankOf(m.dps)}位相当</b>`
+      : (m.need
+        ? `<span class="ng">🛡1発アウト</span>　<b>PL${m.need.lv}</b>以上で耐える（火力 <b>${m.need.dps.toFixed(2)}</b> ＝ <b>${rankOf(m.need.dps)}位相当</b>）`
+        : `<span class="ng">🛡1発アウト</span>　PL51まで上げても耐えられません`);
+    return `<div class="mine-sum"><span>あなたの<b>${m.p.n}</b>（${ivTxt(m.e)}）</span><span>${right}　<button class="del" data-i="${m.i}">✕</button></span></div>`;
+  }).join('')+(skipped?`<p class="note">シールド破壊の対象はメガシンカだけなので、登録した${skipped}匹は出していません。</p>`:'');
+  if(!rows.length && !my.length){listEl.innerHTML='<div class="empty">条件(1発耐え+分割SPアタック持ち)を満たすメガシンカが見つかりません</div>';moreBtn.style.display='none';return;}
+  const top=Math.max(rows.length?rows[0].dps:1, ...my.map(m=>m.dps));
+  // 自分のメガを火力の位置に差し込む
+  const merged=[]; const mi=[...my].sort((a,b)=>b.dps-a.dps); let pos=0;
+  rows.slice(0,showN).forEach((r,idx)=>{
+    while(pos<mi.length && mi[pos].dps>=r.dps){merged.push({mine:true,...mi[pos],rank:idx+1});pos++;}
+    merged.push({mine:false,...r,rank:idx+1});
+  });
+  while(pos<mi.length && showN>=rows.length){merged.push({mine:true,...mi[pos],rank:rankOf(mi[pos].dps)});pos++;}
+  listEl.innerHTML=merged.map(r=>{
+    if(r.mine){
+      const gauge=r.bars>1?`（${r.bars}分割）`:'（1ゲージ・破壊が不安定）';
+      const hold=r.hold
+        ? `被弾最大${r.maxHit}/HP${r.hp} で1発耐え`
+        : `<span class="ng">被弾最大${r.maxHit}/HP${r.hp} で1発アウト</span>${r.need?` → <b>PL${r.need.lv}</b>で耐える（火力${r.need.dps.toFixed(2)}）`:' → PL51でも耐えられません'}`;
+      return `<div class="rank-row mine"><div class="rk">${r.hold?r.rank+'位<br>相当':'PL<br>不足'}</div><div class="rmain">
+        <div class="rname">${badges(r.e.shadow,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>${ivTxt(r.e)}（あなた）</small></div>
+        <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}${gauge}</div>
+        <div class="rmoves holdline">${hold}</div>
+        <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
+        <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
+    }
     const barsN=Math.round(100/Math.abs(D.moves[r.c.id].e));
     return `
-    <div class="rank-row"><div class="rk">${idx+1}位</div><div class="rmain">
+    <div class="rank-row"><div class="rk">${r.rank}位</div><div class="rmain">
       <div class="rname">${badges(false,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}</div>
       <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</div>
       <div class="rmoves">被弾最大${r.maxHit}/HP${r.hp} で1発耐え（シールド中2倍補正込み・${r.maxMove.n}）</div>
       <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
+  sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
   moreBtn.style.display=rows.length>showN?'block':'none';
 }
 function renderRank(){
