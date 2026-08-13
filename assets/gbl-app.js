@@ -2313,19 +2313,19 @@ const polToMv = (key, pol) => ({ key, fast: pol.fast,
 // オートで試すわざ構成。SP1本の全通り(policies)に加えて、
 // わざ開放でSP2本にした構成も候補に入れる(効率のよいSP上位3本の組み合わせだけ。全部やると重い)
 function ptAutoPols(key) {
-  const out = policies(key, {});
   const pool = movePool(key);
   const fasts = autoFasts(pool.fasts);
   const dpe = m => dpeOf(key, m);
-  // SP2本の組み合わせは**上位8本の全ペア**から作る(2026-08-13にタダシさん指摘で3本→8本へ)。
-  // 効率上位3本だけだと、**効率の数字に出ない良いわざが組み合わせに入らない**。
-  // 実例: シャドウフォレトスの「がんせきふうじ」(相手の攻撃を下げる)が候補外で、
-  // SP2本の構成が1本の構成に7勝も負けていた
+  // **SPは必ず2本**(2026-08-13タダシさん指示・絶対条件)。わざ開放は実戦の前提なので、
+  // 1本の構成は「2本以上おぼえないポケモン」のときしか候補にしない。
+  // 以前は1本の構成も候補に混ぜていたため、勝ち数で上回ると1本が選ばれてしまった(カビゴンで発生)
+  if (pool.chargeds.length < 2)
+    return fasts.map(f => (pool.chargeds.length ? { fast: f, throw: pool.chargeds[0] } : { fast: f }));
+  // SP2本の組み合わせは**上位8本の全ペア**から作る(効率上位3本だけだと、
+  // 効率の数字に出ない良いわざ＝シャドウフォレトスのがんせきふうじ が組み合わせに入らない)
   const top = pool.chargeds.slice().sort((a, b) => dpe(b) - dpe(a)).slice(0, 8);
-  // めざめるパワーは16タイプぶんあるので、組み合わせまで作ると候補が数百通りになる。
-  // タイプで刺さるかどうかの話なので、SP1本の構成(policies)だけで十分
-  const real = fasts.filter(m => !HP_MOVE.test(D.moves[m].n));
-  for (const f of real)
+  const out = [];
+  for (const f of fasts)
     for (let a = 0; a < top.length; a++)
       for (let b = a + 1; b < top.length; b++) out.push({ fast: f, charged: [top[a], top[b]] });
   return out;
@@ -2419,7 +2419,14 @@ function runParty() {
     if (!ptAuto) { const v = ptMvOf(i); return policies(PT[i].key, { fast: v.fast, c1: v.c1 || undefined, c2: v.c2 || undefined }); }
     // オートは環境の確定値(人が確認した定番構成)を最優先。載っていないポケモンだけシミュで選ぶ
     const mm = ptMetaMoves(PT[i].key, PT[i].shadow);
-    if (mm) return policies(PT[i].key, mm);
+    if (mm) {
+      if (mm.c2) return policies(PT[i].key, mm);
+      // 確定値がSP1本だけなら、ノーマルと1本目は固定して**2本目だけ残りの全SPから選ぶ**
+      // (SP2本は絶対条件。どれを足すかがオートの仕事)
+      const rest = movePool(PT[i].key).chargeds.filter(c => c !== mm.c1);
+      if (rest.length) return rest.map(c2 => ({ fast: mm.fast, charged: [mm.c1, c2] }));
+      return policies(PT[i].key, mm);
+    }
     return ptAutoPols(PT[i].key);
   });
   const win = pols.map(ps => ps.map(() => 0));    // 構成ごとの勝った数
