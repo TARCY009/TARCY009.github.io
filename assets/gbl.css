@@ -356,19 +356,30 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:var(--bg2);border:1px solid var(--line);border-radius:99px}
 .ptwchip em{font-style:normal;font-size:.58rem;color:var(--sub)}
 .ptwmore{align-self:center;font-size:.66rem;color:var(--sub)}
-.pttypes{margin:0 0 7px;max-width:420px}
-.ptttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:3px}
-.pttrow{display:flex;align-items:center;gap:7px;width:100%;padding:2px 6px;margin-bottom:2px;
-  background:none;border:1px solid transparent;border-radius:8px;cursor:pointer}
-.pttrow[aria-pressed="true"]{border-color:var(--cy);background:var(--bg2)}
-.pttnm{display:flex;align-items:center;gap:3px;flex-shrink:0;width:108px;font-size:.72rem;color:var(--ink)}
-.pttnm small{font-size:.6rem;color:var(--sub);margin-left:auto}
-.pttbar{flex:1;min-width:0;height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
-.pttbar i{display:block;height:100%;border-radius:99px}
-.pttrow b{font-size:.72rem;font-weight:800;width:34px;text-align:right}
-/* 3匹の働き(勝ち数のバー＋この子だけが勝てる相手の数)。苦手タイプのバーと見た目をそろえる */
-.ptroles{margin:0 0 7px;max-width:420px}
-.ptttl small{font-weight:400;margin-left:2px}
+/* 3匹の働き: 役割マップ(4象限)＋勝ち数のバーを1つの枠にまとめる */
+.ptrole2{margin:0 0 8px;max-width:660px}
+.ptmttl{font-size:.66rem;color:var(--sub);font-weight:700;margin-bottom:4px}
+.ptmttl small{font-weight:400;margin-left:5px}
+.ptr2body{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.ptmslot{flex-shrink:0}
+.ptmbox{position:relative;width:196px;height:142px;border:1px solid var(--line);border-radius:10px;
+  background:linear-gradient(150deg,rgba(63,214,128,.08),rgba(255,107,129,.07))}
+.ptmq{position:absolute;font-size:.56rem;font-weight:700;color:var(--sub);opacity:.8}
+.ptmq.ne{right:6px;top:5px}.ptmq.nw{left:6px;top:5px}
+.ptmq.se{right:6px;bottom:5px}.ptmq.sw{left:6px;bottom:5px}
+.ptmv,.ptmh{position:absolute;background:var(--line)}
+.ptmv{left:50%;top:0;bottom:0;width:1px}
+.ptmh{top:50%;left:0;right:0;height:1px}
+/* 点は番号だけ(名前は右のバーと同じ①②③で対応する) */
+.ptmp{position:absolute;transform:translate(-50%,50%);display:flex;align-items:center;justify-content:center;
+  width:23px;height:23px;font-size:.74rem;font-weight:800;color:#eaf2ff;cursor:pointer;
+  background:linear-gradient(160deg,#5b7cff,#2f3f8c);border:1px solid rgba(255,255,255,.35);
+  border-radius:50%;box-shadow:0 2px 7px rgba(0,0,0,.45)}
+.ptmp[aria-pressed="true"]{background:linear-gradient(160deg,#8ff0ff,var(--cy));color:#06243a;
+  box-shadow:0 0 0 3px rgba(93,225,255,.35),0 2px 7px rgba(0,0,0,.45)}
+.ptmnote{font-size:.7rem;line-height:1.5;color:var(--ink);margin:6px 0 0;max-width:196px}
+.ptmnote b{font-weight:800;color:var(--cy)}
+.ptroles{flex:1;min-width:260px;max-width:420px}
 .ptrrow{display:flex;align-items:center;gap:7px;width:100%;padding:2px 6px;margin-bottom:2px;
   background:none;border:1px solid transparent;border-radius:8px;cursor:pointer}
 .ptrrow[aria-pressed="true"]{border-color:var(--cy);background:var(--bg2)}
@@ -435,9 +446,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptswlogsum b.good{color:var(--win)}
 .ptswlogsum em{font-style:normal;margin:0 2px}
 .ptswlogsum .sep{margin:0 7px;opacity:.5}
-@media (max-width:420px){.ptchart{gap:10px}.pttnm{width:96px}
+@media (max-width:420px){.ptchart{gap:10px}
   .ptgrid{grid-template-columns:repeat(10,14px);gap:2px}.ptgc{width:14px;height:14px}
   .ptglegend{min-width:100%}
+  .ptr2body{gap:10px}.ptroles{min-width:100%}
   .ptrnm{width:88px}.ptronly{width:66px}
   .ptswrow{gap:6px}.ptswnm{font-size:.72rem}.ptswd{font-size:.7rem}}
 /* パーティ診断の見出し行(右上に「わざ｜オート」を置く) */
