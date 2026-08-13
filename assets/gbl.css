@@ -473,9 +473,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   .ptrnm{width:88px}.ptronly{width:66px}
   .ptswrow{gap:6px}.ptswnm{font-size:.72rem}.ptswd{font-size:.7rem}}
 /* パーティ診断の見出し行(右上に「わざ｜オート」を置く) */
-.phead{display:flex;align-items:flex-start;gap:8px}
-.phead h3{flex:1;min-width:0}
-/* 「わざ｜オート」ボタン。左=見出し(濃紺)・右=いまの状態(淡い水色)の2色ピル */
+/* 狭い画面では、見出しを潰さずにボタンを次の行へ送る(2択にしてボタンが広くなったため) */
+.phead{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.phead h3{flex:1 1 175px;min-width:0}
+/* 「わざ｜マニュアル｜オート」ボタン。左=見出し(濃紺)＋2択を並べ、オンの側だけ白く点灯させる */
 .ptauto{flex-shrink:0;display:inline-flex;align-items:stretch;padding:0;border:2px solid #131c63;border-radius:999px;
   overflow:hidden;cursor:pointer;background:#0f1856;font-weight:800;letter-spacing:.03em;
   box-shadow:0 3px 0 rgba(0,0,0,.45),0 4px 12px rgba(19,28,99,.35);transition:transform .08s,box-shadow .08s}
@@ -483,11 +484,11 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ptauto:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.45)}
 .ptauto .k{padding:5px 10px;font-size:.72rem;color:#dbe9ff;
   background:linear-gradient(180deg,#233098,#101a5e);box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
-.ptauto .v{padding:5px 12px;font-size:.72rem;color:#2b3a8f;
+/* 2択はどちらも消灯が既定。選ばれている側だけ白く点灯する */
+.ptauto .v{padding:5px 10px;font-size:.72rem;color:#8f9ec2;
+  background:linear-gradient(180deg,#2a3566,#1b2450);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.ptauto[aria-pressed="false"] .m,.ptauto[aria-pressed="true"] .a{color:#2b3a8f;
   background:linear-gradient(180deg,#f2f8ff,#cfe2fa);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
-/* 手動のときは右側を消灯させて、いまオートでないことを色で示す */
-.ptauto[aria-pressed="false"] .v{color:#8f9ec2;background:linear-gradient(180deg,#2a3566,#1b2450);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
 /* 「⚙ 詳細」: ブラフ・能力変化わざを畳んでおくタブ(パーティ診断は「わざ｜オート」の右) */
 .mdet{margin-top:8px;text-align:right}
 .mdetbody{text-align:left}

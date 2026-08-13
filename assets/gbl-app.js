@@ -228,7 +228,7 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="party" style="display:none">
   <div class="phead">
     <h3>パーティ3匹の穴チェック<small class="cnsub"><b class="holeword">0匹＝穴</b>・マスをタップ→1対1シミュ</small></h3>
-    <button class="ptauto" aria-pressed="true" title="オート＝環境上位にいちばん多く勝てるわざ構成を自動で選びます。押すとマニュアルになり、下の欄で選んだわざで計算します"><span class="k">わざ</span><span class="v">オート</span></button>
+    <button class="ptauto" aria-pressed="false" title="マニュアル＝下の欄で選んだわざで計算します。オート＝環境上位にいちばん多く勝てるわざ構成を自動で選びます。タップで切り替わります"><span class="k">わざ</span><span class="v m">マニュアル</span><span class="v a">オート</span></button>
   </div>
   <div class="pslots"></div>
   <div class="pctl">
@@ -885,9 +885,11 @@ ${PAGE_ROCKET ? '' : `
   （<b>✅</b>が出ます）。何匹替えて穴と勝率がどう変わったかは<b>入れ替えの記録</b>に残ります
   （リーグやカップを変えると消えます）。</p>
 
-  <h4>パーティ診断の「わざ｜オート」</h4>
-  <p><b>オート</b>のあいだは、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
-  （対面ごとに選び直しません）。押して<b>マニュアル</b>にすると、枠のわざ欄を自分で選べます。
+  <h4>パーティ診断の「わざ」ボタン</h4>
+  <p><b>白く光っているほうが、いま効いている設定</b>です。タップで切り替わります。</p>
+  <p><b>マニュアル</b>（既定）は、枠のわざ欄を自分で選びます。空のままなら効率のよいわざが入ります。
+  <b>オート</b>にすると、<b>環境上位にいちばん多く勝てるわざ構成</b>を1匹につき1つ選んで枠に表示します
+  （対面ごとに選び直しません）。オート中はわざ欄を操作できません。
   どちらも<b>画面に出ているわざでそのまま計算</b>するので、マスをタップして開く1対1シミュと結果が食い違いません。</p>
 
   <h4>対策さがしの「範囲」</h4>
@@ -2216,8 +2218,10 @@ function syncPartySlot(i) {
 // ---- パーティ診断のわざ ----
 // オート = 環境上位にいちばん多く勝てる構成を1つ選んで固定する（対面ごとに選び直さない）。
 // 手動 = 枠のわざ欄で選んだ構成でそのまま計算する。どちらも「画面に出ているわざで戦う」ので結果と食い違わない
-let ptAuto = true;
-try { ptAuto = localStorage.getItem('gbl_party_auto') !== '0'; } catch (e) {}
+// 既定は**マニュアル**(2026-08-13タダシさん指示)。はじめて触る人は自分のわざを入れたいのに、
+// オートだと欄が操作できず「入力できない」と見えてしまうため。切り替えた設定は端末に残る
+let ptAuto = false;
+try { ptAuto = localStorage.getItem('gbl_party_auto') === '1'; } catch (e) {}
 const savePtAuto = () => { try { localStorage.setItem('gbl_party_auto', ptAuto ? '1' : '0'); } catch (e) {} };
 const PTA = [null, null, null];   // オートで選ばれた構成(計算のたびに更新して枠にも出す)
 // その枠でいま使うわざ(オート中はオートの選出、手動なら選んだわざ。未指定は効率のよい既定で埋める)
@@ -2243,12 +2247,11 @@ function ptAutoPols(key) {
       for (let b = a + 1; b < top.length; b++) out.push({ fast: f, charged: [top[a], top[b]] });
   return out;
 }
-// 「わざ｜オート／手動」ボタンの見た目を状態に合わせる
+// 「わざ｜マニュアル／オート」ボタン。両方を出して、オンの側だけ白く点灯させる
+// (片方しか出さないと、いまどちらなのか・押すとどうなるのかが読み取れないため)
 function syncPtAuto() {
   const b = document.querySelector('#party .ptauto');
-  if (!b) return;
-  b.setAttribute('aria-pressed', ptAuto);
-  b.querySelector('.v').textContent = ptAuto ? 'オート' : 'マニュアル';
+  if (b) b.setAttribute('aria-pressed', ptAuto);
 }
 // パーティのメンバー1匹分の計算用設定(理想個体値/登録した個体値)
 // capX=CP上限(ロケット団戦は制限が無いので0を渡す)
