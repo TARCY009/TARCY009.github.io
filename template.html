@@ -9,56 +9,132 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <meta name="theme-color" content="#0b1023">
+<!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
+<script>try{if(localStorage.getItem('karyoku_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <style>
-/* 配色は他ツール(/gbl/・/iv-checker/ 等)とそろえた濃紺のダークテーマ。
-   このツールの役割色は レイド=赤〜オレンジ ／ 自分=水色 ／ ランキング=紫 */
+/* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。
+   既定は他ツール(/gbl/・/iv-checker/ 等)とそろえた濃紺のダーク。
+   どちらのテーマでも、このツールの役割色は レイド=赤〜オレンジ ／ 自分=水色 ／ ランキング=紫 */
 :root{
-  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560; --card:#161d38;
+  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560;
   --accent:#5b8cff; --accent2:#43e0ff; --violet:#b06cff;
-  --raid1:#ff5470; --raid2:#ff9750;
-  --gold:#ffd54a; --goldbg:rgba(255,213,74,.13); --goldline:#7d6522;
-  --shadow:#b06cff; --special:#ff9750;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;color:var(--ink);line-height:1.55;padding:14px;min-height:100vh;
-  background:
+  --gold:#ffd54a; --goldbg:rgba(255,213,74,.13); --goldline:#7d6522; --goldbar:#c9a02c;
+  --shadow:#b06cff; --special:#ff9750; --ng:#ff8a6b;
+  --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(67,224,255,.13), transparent 62%),
     radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.15), transparent 62%),
     radial-gradient(950px 620px at 50% 115%, rgba(255,120,80,.13), transparent 62%),
     linear-gradient(165deg,#0b1023 0%,#120f27 48%,#1a1024 100%);
+  --panel:linear-gradient(180deg,rgba(26,35,66,.94),rgba(19,26,51,.94));
+  --panelsh:0 18px 34px -20px var(--cardglow,rgba(91,140,255,.5)), 0 1px 0 rgba(255,255,255,.06) inset;
+  --field:#0f1630; --fieldph:#6b76a3; --chip:#1a2342; --sugg:#161d38;
+  --sugghover:linear-gradient(90deg,rgba(91,140,255,.18),rgba(176,108,255,.16));
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
+  --rowline:#232c4f; --barbg:#232c4f;
+  --m1bg:linear-gradient(90deg,rgba(255,213,74,.16),rgba(255,213,74,.03)); --m1line:#8a6d1f; --m1ink:#ffd54a;
+  --m2bg:linear-gradient(90deg,rgba(201,214,240,.14),rgba(201,214,240,.03)); --m2line:#4d5876; --m2ink:#c9d6f0;
+  --m3bg:linear-gradient(90deg,rgba(224,149,91,.15),rgba(224,149,91,.03)); --m3line:#7a4f2e; --m3ink:#e0955b;
+  --lvbg:linear-gradient(90deg,rgba(67,224,255,.14),rgba(91,140,255,.08)); --lvline:#24506a;
+  --lvebg:linear-gradient(90deg,rgba(255,107,129,.14),rgba(255,151,80,.07)); --lveline:#6b2b3a; --lveink:#ff9aa8;
+  --delbg:#231532; --delline:#6b2b3a; --delink:#ff6b81; --delbg2:#301a3c; --delline2:#a13b52;
+  --morebg:rgba(26,35,66,.6); --moreline:#4a3a7d; --morebg2:rgba(176,108,255,.12);
+  --mainink:#062038; --disbg:#273154; --disink:#6b76a3;
+  --mcS:#c396ff; --mcM:#f58fc2; --mcC:#5fd8ea; --smaxline:#5b3f8f; --smaxink:#c396ff;
+  --helpbody:rgba(26,35,66,.9); --helpline:#4a3a7d;
+  --ballsh:0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22);
+  --ballbtm:#e9edf8;
+  --tbadge:inset 0 0 0 1px rgba(255,255,255,.16);
+}
+:root.light{
+  --ink:#20263a; --sub:#6a7391; --line:#dfe6f5;
+  --accent:#3b6ef0; --accent2:#08b4c9; --violet:#8b5cf6;
+  --gold:#b07a00; --goldbg:#fff6dd; --goldline:#f2c14e; --goldbar:#f2c14e;
+  --shadow:#7a3cc4; --special:#d1490a; --ng:#c2410c;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(8,180,201,.20), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.18), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(255,151,80,.17), transparent 62%),
+    linear-gradient(165deg,#e9f1ff 0%,#efe9ff 48%,#fff0e4 100%);
+  --panel:rgba(255,255,255,.92);
+  --panelsh:0 14px 30px -16px var(--cardglow,rgba(59,110,240,.35)), 0 1px 0 rgba(255,255,255,.8) inset;
+  --field:#fbfcff; --fieldph:#9aa3bd; --chip:#fff; --sugg:#fff;
+  --sugghover:linear-gradient(90deg,#eef3ff,#f6f1ff);
+  --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
+  --rowline:#eceffa; --barbg:#e8ecf8;
+  --m1bg:linear-gradient(90deg,#fff6d8,#fffdf3); --m1line:#f2c14e; --m1ink:#b07a00;
+  --m2bg:linear-gradient(90deg,#eef2f9,#fafcff); --m2line:#c6d2e6; --m2ink:#64748f;
+  --m3bg:linear-gradient(90deg,#fdeede,#fffaf4); --m3line:#e0b088; --m3ink:#a5652a;
+  --lvbg:linear-gradient(90deg,#eaf5ff,#f1f7ff); --lvline:#c9def7;
+  --lvebg:linear-gradient(90deg,#fdeff0,#fdf4f0); --lveline:#efc2c7; --lveink:#a33;
+  --delbg:#fff; --delline:#f0b8b8; --delink:#c33; --delbg2:#fff1f1; --delline2:#e08e8e;
+  --morebg:#fbfaff; --moreline:#cfc6f0; --morebg2:#f6f2ff;
+  --mainink:#fff; --disbg:#b9c6dd; --disink:#fff;
+  --mcS:#7a3cc4; --mcM:#c02c76; --mcC:#0b7f92; --smaxline:#c4b0ea; --smaxink:#6d3fc4;
+  --helpbody:rgba(255,255,255,.92); --helpline:#cfc6f0;
+  --ballsh:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55);
+  --ballbtm:#ffffff;
+  --tbadge:none;
+}
+/* 明るいバッジが白系背景に溶けるため極薄の縁取りを追加(ライトのときの該当4タイプのみ) */
+:root.light .tbadge[title="でんき"],:root.light .tbadge[title="こおり"],
+:root.light .tbadge[title="いわ"],:root.light .tbadge[title="じめん"]{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;color:var(--ink);line-height:1.55;padding:14px;min-height:100vh;
+  background:var(--bgimg);
   background-attachment:fixed}
 .wrap{max-width:860px;margin:0 auto}
-header{margin:6px 0 18px}
+header{margin:6px 0 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.hmain{min-width:0}
+/* ダーク⇄ライトの切り替え。排他の2択なのでタブと同じ作りでくっつけて置く(月=暗い/太陽=明るい) */
+.themesw{margin:2px 0 0;gap:2px;flex-shrink:0;flex-wrap:nowrap}
+.themesw button{padding:7px 11px;font-size:1rem;line-height:1;flex:0 0 auto}
+#thDark{--mc:#8f9ad0;--mg:linear-gradient(160deg,#7b8ae0 0%,#4453b0 45%,#2b3576 100%);--mgl:rgba(80,100,200,.45);border-radius:11px 5px 5px 11px}
+#thLight{--mc:#d99a1c;--mg:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%);--mgl:rgba(240,168,39,.45);border-radius:5px 11px 11px 5px}
+#thLight[aria-pressed="true"]{color:#4a3200}
+/* 狭い画面はスイッチのぶんだけ幅が減るので、見出しを1行に収まる大きさまで下げる */
+@media (max-width:430px){
+  .themesw button{padding:6px 9px;font-size:.92rem}
+  header h1{font-size:1.22rem}
+  header p{font-size:.74rem}
+}
 header h1{font-size:1.42rem;font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:.4em}
 header h1::before{content:'';width:1em;height:1em;border-radius:50%;flex-shrink:0;
   background:
     radial-gradient(circle at center,#fff 0 17%,#20263a 17% 30%,transparent 30%),
-    linear-gradient(180deg,#ff5470 0 44%,#20263a 44% 56%,#e9edf8 56% 100%);
-  box-shadow:0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22)}
-header h1 span{background:linear-gradient(92deg,var(--accent),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+    linear-gradient(180deg,#ff5470 0 44%,#20263a 44% 56%,var(--ballbtm) 56% 100%);
+  box-shadow:var(--ballsh)}
+/* 幅が足りないときは「ポケモンGO / 火力チェッカー」の切れ目で折り返す(語の途中で切らない) */
+header h1{flex-wrap:wrap}
+header h1 .brand,header h1 .tool{white-space:nowrap}
+header h1 .tool{background:linear-gradient(92deg,var(--accent),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
 header p{font-size:.8rem;color:var(--sub);margin-top:3px}
 /* overflow:hiddenにすると検索候補リストがカード外に出られず隠れるため使わない */
-.card{position:relative;background:linear-gradient(180deg,rgba(26,35,66,.94),rgba(19,26,51,.94));border:1px solid var(--cardline,var(--line));border-radius:16px;padding:20px 16px 16px;margin-bottom:16px;
-  box-shadow:0 18px 34px -20px var(--cardglow,rgba(91,140,255,.5)), 0 1px 0 rgba(255,255,255,.06) inset}
+.card{position:relative;background:var(--panel);border:1px solid var(--cardline,var(--line));border-radius:16px;padding:20px 16px 16px;margin-bottom:16px;
+  box-shadow:var(--panelsh)}
 .card::before{content:'';position:absolute;left:0;top:0;right:0;height:4px;border-radius:15px 15px 0 0;background:var(--cardbar,linear-gradient(90deg,var(--accent),var(--accent2)))}
+/* カードごとの役割色。上端のグラデーションバー(--cardbar)はどちらのテーマでも同じで、
+   枠・光彩・入力欄の focus 色だけテーマに合わせて濃さを変える */
 .c-boss{--cardline:#5a2b3d;--cardglow:rgba(255,84,112,.42);--cardbar:linear-gradient(90deg,#ff5470,#ff9750);--focusc:#ff7089;--focusring:rgba(255,84,112,.26)}
 .c-my  {--cardline:#1f4a5e;--cardglow:rgba(67,224,255,.34);--cardbar:linear-gradient(90deg,#43e0ff,#5b8cff);--focusc:#43e0ff;--focusring:rgba(67,224,255,.24)}
 .c-rank{--cardline:#3d2f68;--cardglow:rgba(176,108,255,.40);--cardbar:linear-gradient(90deg,#b06cff,#5b8cff);--focusc:#b06cff;--focusring:rgba(176,108,255,.26)}
+:root.light .c-boss{--cardline:#ffd6dc;--cardglow:rgba(255,84,112,.32);--cardbar:linear-gradient(90deg,#ff5470,#ff9750);--focusc:#ff5470;--focusring:rgba(255,84,112,.16)}
+:root.light .c-my  {--cardline:#c4e6ee;--cardglow:rgba(8,180,201,.30);--cardbar:linear-gradient(90deg,#08b4c9,#3b6ef0);--focusc:#08a6c9;--focusring:rgba(8,180,201,.16)}
+:root.light .c-rank{--cardline:#ddd4fb;--cardglow:rgba(139,92,246,.32);--cardbar:linear-gradient(90deg,#8b5cf6,#3b6ef0);--focusc:#8b5cf6;--focusring:rgba(139,92,246,.16)}
 .step{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .step b{background:var(--cardbar,var(--accent));color:#fff;border-radius:8px;padding:2px 10px;font-size:.75rem;letter-spacing:.06em;box-shadow:0 2px 6px -2px var(--cardglow,rgba(59,110,240,.5))}
 .step h2{font-size:1rem}
-input[type=text],input[type=number],select{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 11px;width:100%;background:#0f1630;transition:border-color .15s,box-shadow .15s}
-input::placeholder{color:#6b76a3}
-select option{background:#161d38;color:var(--ink)}
+input[type=text],input[type=number],select{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 11px;width:100%;background:var(--field);transition:border-color .15s,box-shadow .15s}
+input::placeholder{color:var(--fieldph)}
+select option{background:var(--sugg);color:var(--ink)}
 input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));box-shadow:0 0 0 3px var(--focusring,rgba(91,140,255,.26))}
 .sugg{position:relative}
-.sugg-list{position:absolute;z-index:30;left:0;right:0;top:100%;background:#161d38;border:1px solid var(--cardline,var(--line));border-radius:12px;max-height:240px;overflow:auto;box-shadow:0 18px 36px rgba(0,0,0,.5);display:none}
+.sugg-list{position:absolute;z-index:30;left:0;right:0;top:100%;background:var(--sugg);border:1px solid var(--cardline,var(--line));border-radius:12px;max-height:240px;overflow:auto;box-shadow:0 18px 36px rgba(0,0,0,.5);display:none}
 .sugg-list div{padding:8px 12px;cursor:pointer;font-size:.9rem;display:flex;justify-content:space-between;gap:8px}
-.sugg-list div:hover{background:linear-gradient(90deg,rgba(91,140,255,.18),rgba(176,108,255,.16))}
+.sugg-list div:hover{background:var(--sugghover)}
 .sugg-list small{color:var(--sub)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .srow-meta{display:inline-flex;align-items:center;gap:5px}
-.ng{color:#ff8a6b;font-weight:700}
+.ng{color:var(--ng);font-weight:700}
 .lowbulk{color:#ffd54a;background:#c2410c;border:1px solid #a33409;border-radius:6px;font-size:.62rem;font-weight:700;padding:0 5px;flex-shrink:0}
 .srow-wrap{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .srow-main{display:flex;align-items:center;gap:6px}
@@ -67,10 +143,11 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
 .bossmoves summary{cursor:pointer;color:var(--sub);font-weight:600;font-size:.8rem}
 .bm-sec{margin-top:8px;font-size:.72rem;color:var(--sub);font-weight:700}
 .bm-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.bm{display:inline-flex;align-items:center;gap:4px;background:#1a2342;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:.8rem}
+.bm{display:inline-flex;align-items:center;gap:4px;background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:.8rem}
 .bm-note{display:block;margin-top:6px;color:var(--sub);font-size:.68rem}
-/* 暗い背景に溶けるタイプ(あく等)があるので、全タイプに極薄の縁取りを付ける */
-.tbadge{box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+/* 暗い背景では あく等の暗いタイプが溶けるので、全タイプに極薄の白い縁取りを付ける
+   (ライトのときは逆に明るいタイプが溶けるので、上の :root.light の指定で4タイプだけ暗い縁にする) */
+.tbadge{box-shadow:var(--tbadge)}
 .bossinfo{margin-top:12px;font-size:.85rem;color:var(--sub);font-weight:600}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -84,43 +161,43 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .ivrow input{padding:8px 6px;text-align:center}
 .ivrow label.f{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ivrow label.f.iv{margin:2px 0 4px;text-align:center}
-.lv-out{margin-top:10px;font-size:.9rem;background:linear-gradient(90deg,rgba(67,224,255,.14),rgba(91,140,255,.08));border:1px solid #24506a;border-radius:10px;padding:8px 12px;display:none}
-.lv-out.err{background:linear-gradient(90deg,rgba(255,107,129,.14),rgba(255,151,80,.07));border-color:#6b2b3a;color:#ff9aa8}
-/* 明るい水色〜青のグラデーションなので、文字は白ではなく濃い色にして読みやすくする */
-button.main{font:inherit;font-weight:800;background:linear-gradient(92deg,var(--focusc,var(--accent)),var(--accent));color:#062038;border:none;border-radius:11px;padding:10px 24px;cursor:pointer;margin-top:14px;
+.lv-out{margin-top:10px;font-size:.9rem;background:var(--lvbg);border:1px solid var(--lvline);border-radius:10px;padding:8px 12px;display:none}
+.lv-out.err{background:var(--lvebg);border-color:var(--lveline);color:var(--lveink)}
+/* ダークでは明るい水色〜青のグラデーションになるので、文字は白ではなく濃い色にして読みやすくする */
+button.main{font:inherit;font-weight:800;background:linear-gradient(92deg,var(--focusc,var(--accent)),var(--accent));color:var(--mainink);border:none;border-radius:11px;padding:10px 24px;cursor:pointer;margin-top:14px;
   box-shadow:0 8px 18px -8px var(--cardglow,rgba(59,110,240,.6));transition:transform .15s,box-shadow .15s,filter .15s}
-button.main:disabled{background:#273154;color:#6b76a3;box-shadow:none;cursor:not-allowed}
+button.main:disabled{background:var(--disbg);color:var(--disink);box-shadow:none;cursor:not-allowed}
 button.main:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 11px 22px -8px var(--cardglow,rgba(59,110,240,.7))}
 button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
 /* 絞り込みタブ: 立体的に浮かせ、選択中はその役割の色のグラデーションで点灯する
    (全ツール共通のUIデザイン)。未選択でも文字色で役割の色を示すので、押す前から色で見分けられる */
 .modes{display:flex;gap:6px;margin:2px 0 12px;flex-wrap:wrap}
 .modes button{font:inherit;font-size:.8rem;font-weight:800;flex:0 1 auto;
-  border:1px solid var(--line);background:linear-gradient(180deg,#1e2850,#151d38);border-radius:11px;padding:8px 12px;cursor:pointer;
-  color:var(--mc,var(--sub));box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  border:1px solid var(--line);background:var(--tab);border-radius:11px;padding:8px 12px;cursor:pointer;
+  color:var(--mc,var(--sub));box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
   transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
-.modes button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+.modes button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .modes button[aria-pressed="true"]{color:#fff;border-color:transparent;transform:translateY(-1px);
   background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
 .modes button:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
 /* 役割ごとの色: シャドウ=紫 ／ メガ・ゲンシ=マゼンタ(名前横のメガマークと同系) ／ シールド破壊=水色。
    未選択のときの文字色(--mc)は、暗い土台でも読めるよう明るめの同系色にする */
-#fShadow{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45);
+#fShadow{--mc:var(--mcS);--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45);
   display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 1 auto;padding:8px 18px;font-size:.95rem}
-#fMega{--mc:#f58fc2;--mg:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%);--mgl:rgba(214,51,132,.45)}
-#mShield{--mc:#5fd8ea;--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mgl:rgba(8,180,201,.45)}
+#fMega{--mc:var(--mcM);--mg:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%);--mgl:rgba(214,51,132,.45)}
+#mShield{--mc:var(--mcC);--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mgl:rgba(8,180,201,.45)}
 /* 水色は明るいので、点灯したときだけ文字を濃くする(紫・マゼンタは白のままで読める) */
 #mShield[aria-pressed="true"],.seg button[aria-pressed="true"]{color:#042330}
 /* 自分のポケモンの計算のしかた。排他の2択(今の状態/フル強化)はくっつけて1つのまとまりに見せ、
    独立ON/OFFのシャドウは離して置く(押したときの効き方の違いが並びで分かるように) */
 .mymodes{margin:12px 0 0}
 .seg{display:flex;gap:2px;flex:0 1 auto}
-.seg button{flex:1 1 auto;--mc:#5fd8ea;--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#0a6c9a 100%);--mgl:rgba(8,180,201,.42)}
+.seg button{flex:1 1 auto;--mc:var(--mcC);--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#0a6c9a 100%);--mgl:rgba(8,180,201,.42)}
 .seg button:first-child{border-radius:11px 5px 5px 11px}
 .seg button:last-child{border-radius:5px 11px 11px 5px}
-#myShadow{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45);
+#myShadow{--mc:var(--mcS);--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45);
   display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 1 auto}
-.mine-sum{position:relative;min-height:52px;background:linear-gradient(90deg,var(--goldbg),rgba(255,213,74,.03));border:1px solid var(--goldline);border-left:5px solid #c9a02c;border-radius:10px;padding:9px 62px 9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.mine-sum{position:relative;min-height:52px;background:linear-gradient(90deg,var(--goldbg),transparent);border:1px solid var(--goldline);border-left:5px solid var(--goldbar);border-radius:10px;padding:9px 62px 9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .mine-sum b{color:var(--gold)}
 .mine-sum .msiv{color:var(--sub);font-size:.72rem;white-space:nowrap;margin-left:5px}
 /* 結論の数字(必要なPL・あと何回)は一段大きく出す */
@@ -131,15 +208,15 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 /* 狭い画面ではボタンが縦書きに潰れるので、行を分けて文字は折り返さない */
 @media (max-width:560px){.plctl{flex-basis:100%}}
 .plnow{font-size:1.15rem;font-weight:800;color:var(--gold);min-width:76px;text-align:center;letter-spacing:.02em}
-.plbtn{border:1px solid var(--goldline);background:linear-gradient(180deg,#1e2850,#151d38);color:#ffd54a;border-radius:9px;padding:4px 10px;font-size:.8rem;font-weight:800;cursor:pointer;line-height:1.5;white-space:nowrap;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.plbtn{border:1px solid var(--goldline);background:var(--tab);color:var(--gold);border-radius:9px;padding:4px 10px;font-size:.8rem;font-weight:800;cursor:pointer;line-height:1.5;white-space:nowrap;box-shadow:0 2px 0 var(--tabsh)}
 .plbtn.up{background:linear-gradient(180deg,#ffd873,#f0a827);border-color:#d99a1c;color:#4a3200}
 .plbtn.up:hover:not(:disabled){transform:translateY(-1px)}
 .plbtn:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
 /* メガLv4(スーパーマックスレベル): 名前も挙動も /gbl/・/iv-checker/ と共通。役割の色はメガの紫 */
-.plbtn.smax{border-color:#5b3f8f;color:#c396ff;font-size:.74rem;padding:4px 8px}
+.plbtn.smax{border-color:var(--smaxline);color:var(--smaxink);font-size:.74rem;padding:4px 8px}
 .plbtn.smax[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);border-color:#6d28d9;color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(-1px)}
-.plneed{flex-basis:100%;font-size:.78rem;color:#e2bb4e;font-weight:700}
-.rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid #232c4f}
+.plneed{flex-basis:100%;font-size:.78rem;color:var(--gold);font-weight:700}
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid var(--rowline)}
 /* 狭い画面では余白を削ってわざ名の行幅を稼ぐ(1行に収まる行が増えて一覧が見やすくなる) */
 @media (max-width:560px){
   .card{padding:18px 11px 14px}
@@ -149,14 +226,15 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
   .modes button,.seg{flex:1 1 auto}
 }
 #rankList .rank-row:nth-child(-n+3):not(.mine){border-radius:12px;margin:3px 0}
-/* 上位3行はメダルの色。暗い土台に薄く色を敷き、順位の数字と枠で強さを出す */
-#rankList .rank-row:nth-child(1):not(.mine){background:linear-gradient(90deg,rgba(255,213,74,.16),rgba(255,213,74,.03));border:1px solid #8a6d1f}
-#rankList .rank-row:nth-child(1):not(.mine) .rk{color:#ffd54a}
-#rankList .rank-row:nth-child(2):not(.mine){background:linear-gradient(90deg,rgba(201,214,240,.14),rgba(201,214,240,.03));border:1px solid #4d5876}
-#rankList .rank-row:nth-child(2):not(.mine) .rk{color:#c9d6f0}
-#rankList .rank-row:nth-child(3):not(.mine){background:linear-gradient(90deg,rgba(224,149,91,.15),rgba(224,149,91,.03));border:1px solid #7a4f2e}
-#rankList .rank-row:nth-child(3):not(.mine) .rk{color:#e0955b}
-.rank-row.mine{background:linear-gradient(90deg,var(--goldbg),rgba(255,213,74,.03));border:1px solid var(--goldline);border-radius:12px;margin:3px 0}
+/* 上位3行はメダルの色。ダークでは暗い土台に薄く色を敷き、順位の数字と枠で強さを出す
+   (暗い一覧の中でベタ塗りにすると浮きすぎるため) */
+#rankList .rank-row:nth-child(1):not(.mine){background:var(--m1bg);border:1px solid var(--m1line)}
+#rankList .rank-row:nth-child(1):not(.mine) .rk{color:var(--m1ink)}
+#rankList .rank-row:nth-child(2):not(.mine){background:var(--m2bg);border:1px solid var(--m2line)}
+#rankList .rank-row:nth-child(2):not(.mine) .rk{color:var(--m2ink)}
+#rankList .rank-row:nth-child(3):not(.mine){background:var(--m3bg);border:1px solid var(--m3line)}
+#rankList .rank-row:nth-child(3):not(.mine) .rk{color:var(--m3ink)}
+.rank-row.mine{background:linear-gradient(90deg,var(--goldbg),transparent);border:1px solid var(--goldline);border-radius:12px;margin:3px 0}
 .rk{width:30px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
 .rank-row.mine .rk{color:var(--gold)}
 .rmain{flex:1;min-width:0}
@@ -178,13 +256,13 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rmoves.mvline{display:flex;flex-wrap:wrap;align-items:center;column-gap:4px;white-space:normal;overflow:visible}
 .mvline .mv{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .rmoves .sp{color:var(--special)}
-.bar{height:6px;background:#232c4f;border-radius:99px;margin-top:4px;overflow:hidden}
+.bar{height:6px;background:var(--barbg);border-radius:99px;margin-top:4px;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent) 55%,var(--violet));border-radius:99px}
 .rank-row.mine .bar i,#rankList .rank-row:nth-child(1):not(.mine) .bar i{background:linear-gradient(90deg,#ffd873,#f0a827)}
 .rdps{width:64px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
 .rdps small{display:block;font-weight:400;font-size:.58rem;color:var(--sub)}
-.wchip{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:var(--ink);background:#1a2342;border:1px solid var(--line);border-radius:99px;padding:2px 9px 2px 3px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(0,0,0,.5)}
-.wchip b{font-weight:800;color:#ff8a6b}
+.wchip{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:99px;padding:2px 9px 2px 3px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(0,0,0,.5)}
+.wchip b{font-weight:800;color:var(--ng)}
 .bossline{display:flex;align-items:center;gap:12px;margin-top:12px}
 .bossname{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .catchcp{font-size:.8rem;color:var(--sub);margin-top:4px}
@@ -197,10 +275,10 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
 .sugg-list .srow{display:flex;align-items:center;gap:8px}
 /* 取り消しは枠の右下に固定。押しやすいように大きめ(44px)にする */
-.del{position:absolute;right:10px;bottom:8px;width:44px;height:34px;border:1px solid #6b2b3a;background:#231532;color:#ff6b81;cursor:pointer;font-size:1.15rem;font-weight:800;line-height:1;border-radius:9px;flex-shrink:0;padding:0}
-.del:hover{background:#301a3c;border-color:#a13b52}
-.more{width:100%;margin-top:10px;font:inherit;font-size:.82rem;border:1px dashed #4a3a7d;background:rgba(26,35,66,.6);border-radius:11px;padding:9px;cursor:pointer;color:var(--sub);transition:border-color .15s,background .15s,color .15s}
-.more:hover{border-color:var(--violet);background:rgba(176,108,255,.12);color:var(--ink)}
+.del{position:absolute;right:10px;bottom:8px;width:44px;height:34px;border:1px solid var(--delline);background:var(--delbg);color:var(--delink);cursor:pointer;font-size:1.15rem;font-weight:800;line-height:1;border-radius:9px;flex-shrink:0;padding:0}
+.del:hover{background:var(--delbg2);border-color:var(--delline2)}
+.more{width:100%;margin-top:10px;font:inherit;font-size:.82rem;border:1px dashed var(--moreline);background:var(--morebg);border-radius:11px;padding:9px;cursor:pointer;color:var(--sub);transition:border-color .15s,background .15s,color .15s}
+.more:hover{border-color:var(--violet);background:var(--morebg2);color:var(--ink)}
 .note{font-size:.72rem;color:var(--sub);margin-top:10px}
 /* 文字を減らすために画面から外した補足。消さずに隠しておき、
    のちの「説明ありモード」ではルート要素に explain を付けるだけで一斉に出せる */
@@ -210,10 +288,10 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 /* ページ最下部の「使い方」タブ。仕様・前提の説明はすべてここに集める(画面には結論だけ置く) */
 .helpwrap{margin:2px 0 6px}
 #helptab{width:100%;font:inherit;font-size:.8rem;font-weight:700;padding:11px;cursor:pointer;color:var(--sub);
-  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:12px;
-  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);transition:color .12s,border-color .12s}
-#helptab:hover,#helptab[aria-expanded="true"]{color:var(--violet);border-color:#4a3a7d}
-#helpbody{margin-top:8px;padding:14px 16px;background:rgba(26,35,66,.9);border:1px solid var(--line);border-radius:14px}
+  background:var(--tab);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:color .12s,border-color .12s}
+#helptab:hover,#helptab[aria-expanded="true"]{color:var(--violet);border-color:var(--helpline)}
+#helpbody{margin-top:8px;padding:14px 16px;background:var(--helpbody);border:1px solid var(--line);border-radius:14px}
 #helpbody h4{margin:16px 0 5px;font-size:.8rem;color:var(--violet)}
 #helpbody h4:first-child{margin-top:0}
 #helpbody p,#helpbody li{font-size:.74rem;color:var(--sub);line-height:1.75;margin:0}
@@ -226,8 +304,14 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <body>
 <div class="wrap">
 <header>
-  <h1>ポケモンGO <span>火力チェッカー</span></h1>
-  <p>ボスを選ぶと火力ランキング。自分のポケモンは今の火力と順位がわかります。</p>
+  <div class="hmain">
+    <h1><span class="brand">ポケモンGO</span><span class="tool">火力チェッカー</span></h1>
+    <p>ボスを選ぶと火力ランキング。自分のポケモンは今の火力と順位がわかります。</p>
+  </div>
+  <div class="modes themesw">
+    <button id="thDark" type="button" aria-pressed="true" aria-label="ダークモード" title="ダークモード">🌙</button>
+    <button id="thLight" type="button" aria-pressed="false" aria-label="ライトモード" title="ライトモード">☀️</button>
+  </div>
 </header>
 
 <div class="card c-boss">
@@ -850,6 +934,24 @@ function renderRank(){
   moreBtn.style.display=rows.length>showN?'block':'none';
   bindMineCtl(sumEl);
 }
+// ---- ダーク⇄ライトの切り替え（右上）----
+// 選んだテーマは端末に覚えさせるので、次に開いたときも同じ見た目になる。
+// 既定はダーク（他のツールとそろえるため）。実際の色はCSSの :root と :root.light が持つ
+const THEME_KEY='karyoku_theme';
+const thDark=document.getElementById('thDark'), thLight=document.getElementById('thLight');
+function applyTheme(t){
+  const light = t==='light';
+  document.documentElement.classList.toggle('light', light);
+  thDark.setAttribute('aria-pressed', !light);
+  thLight.setAttribute('aria-pressed', light);
+  // スマホのアドレスバーの色も合わせる
+  document.querySelector('meta[name=theme-color]').setAttribute('content', light?'#e9f1ff':'#0b1023');
+  try{ localStorage.setItem(THEME_KEY, light?'light':'dark'); }catch(e){}
+}
+thDark.onclick=()=>applyTheme('dark');
+thLight.onclick=()=>applyTheme('light');
+applyTheme(document.documentElement.classList.contains('light')?'light':'dark');
+
 // ---- 使い方（ページ最下部のタブ）----
 // 画面には結論だけを置き、仕様・前提の説明はすべてここへ集める(全ツール共通の方針)
 const HELP_HTML = `
