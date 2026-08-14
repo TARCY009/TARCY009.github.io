@@ -84,17 +84,17 @@ SUPP_Q = {  # ノーマルアタック(通常枠)へ追加
 SUPP_MOVES = {
     'PLASMA_FISTS': {   # プラズマフィスト(ゼラオラ専用・GOフェス2026実装)
         'move': {'movementId': 'PLASMA_FISTS', 'pokemonType': 'POKEMON_TYPE_ELECTRIC',
-                 'power': 135.0, 'durationMs': 3500, 'damageWindowStartMs': 2600, 'energyDelta': -50},  # 威力135・3.5秒・2ゲージ
+                 'power': 135.0, 'durationMs': 3500, 'damageWindowStartMs': 2600, 'damageWindowEndMs': 3000, 'energyDelta': -50},  # 威力135・3.5秒・2ゲージ
         'learn': {'ZERAORA': 'cinematicMoves'},   # ゼラオラのゲージ技(通常枠)
     },
     'GLAIVE_RUSH': {    # きょけんとつげき(セグレイブ・コミュニティデイ2026-06)
         'move': {'movementId': 'GLAIVE_RUSH', 'pokemonType': 'POKEMON_TYPE_DRAGON',
-                 'power': 105.0, 'durationMs': 2000, 'damageWindowStartMs': 1400, 'energyDelta': -50},  # 威力105・2.0秒・2ゲージ
+                 'power': 105.0, 'durationMs': 2000, 'damageWindowStartMs': 1400, 'damageWindowEndMs': 1700, 'energyDelta': -50},  # 威力105・2.0秒・2ゲージ
         'learn': {'BAXCALIBUR': 'eliteCinematicMove'},   # 特別枠(CD限定)
     },
     'SNIPE_SHOT': {     # ねらいうち(インテレオン専用・2026-07実装)
         'move': {'movementId': 'SNIPE_SHOT', 'pokemonType': 'POKEMON_TYPE_WATER',
-                 'power': 100.0, 'durationMs': 3500, 'damageWindowStartMs': 2600, 'energyDelta': -33},  # 威力100・3.5秒・3ゲージ
+                 'power': 100.0, 'durationMs': 3500, 'damageWindowStartMs': 2600, 'damageWindowEndMs': 3000, 'energyDelta': -33},  # 威力100・3.5秒・3ゲージ
         'learn': {'INTELEON': 'cinematicMoves'},   # 通常枠(わざマシンで習得可)
     },
 }
@@ -202,10 +202,21 @@ def main():
     pname = lambda pid: ja_map.get(f'pokemon_name_{dex.get(pid,"????")}') or GEN9_JA.get(pid) or pid
     mname = lambda mid: ja_map.get(f'move_name_{move_no.get(mid,"")}')
 
+    # ポケモンが実際に覚えるわざのID一覧(威力0のわざを収録するかの判定に使う)
+    learnable = set()
+    for e in data:
+        ps = e.get('data',{}).get('pokemonSettings')
+        if not ps: continue
+        for slot in ('quickMoves','cinematicMoves','eliteQuickMove','eliteCinematicMove'):
+            learnable.update(ps.get(slot) or [])
+
     moves = {}
     for e in data:
         ms = e.get('data',{}).get('moveSettings')
-        if ms and ms.get('power'):
+        # 威力を持たないわざ(はねる・あくび・へんしん)も、ポケモンが実際に覚えるものは収録する。
+        # 火力計算では0として扱われるだけだが、わざの性能データは欠けなく持っておく。
+        # 内部用の未実装データ(VN_BM_001 等)を拾わないよう、覚えるポケモンがいるものに限る
+        if ms and (ms.get('power') or ms.get('movementId') in learnable):
             raw = ms['movementId']
             m3 = re.match(r'^V\d{4}_MOVE_([A-Z0-9_]+)$', e['templateId'])
             mid = raw if isinstance(raw, str) else (m3.group(1) if m3 else str(raw))
@@ -213,12 +224,17 @@ def main():
             if nm is None:
                 print('警告: 日本語名未収録の技 →', mid, '(JP_MOVE_FIXに追記してください)')
                 nm = mid
-            # w = ダメージが出るまでの時間(秒)。全体の長さ(d)とは別物で、
-            #    たとえば じしん は d=3.5秒 だが w=2.6秒 で先にダメージが出る。
-            #    ジム防衛のおすすめわざ選びで使う（重いわざを見分けるため）
+            # わざの時間は3つある。全部持っておく(ツールによって使う値が違うため):
+            #   d  = 全体の長さ(秒)。撃っているあいだ動けない時間
+            #   w  = ダメージが出るまでの時間(秒)。例: じしんは d=3.5 だが w=2.6 で先にダメージが出る
+            #   we = ダメージ判定が終わる時間(秒)
+            # ジム防衛のおすすめわざ選びは d と w の両方を使う（重いわざを見分けるため）。
+            # おんがえし だけは元データに w が無いので we で代用する。
+            _we = ms.get('damageWindowEndMs', 0) / 1000
             moves[mid] = {'n':nm,'t':ms['pokemonType'].replace('POKEMON_TYPE_',''),
-                          'p':ms['power'],'d':ms.get('durationMs',0)/1000,'e':ms.get('energyDelta',0),
-                          'w':ms.get('damageWindowStartMs',0)/1000}
+                          'p':ms.get('power') or 0.0,'d':ms.get('durationMs',0)/1000,'e':ms.get('energyDelta',0),
+                          'w':ms.get('damageWindowStartMs', ms.get('damageWindowEndMs', 0))/1000,
+                          'we':_we}
 
     def display_name(pid, form):
         base = pname(pid)
@@ -391,7 +407,8 @@ def main():
         base = moves.pop('HIDDEN_POWER_FAST')
         hp_ids = [f'HIDDEN_POWER_{t}_FAST' for t in HP16]
         for t, mid in zip(HP16, hp_ids):
-            moves[mid] = {'n': f'めざめるパワー（{TYPE_JA[t]}）', 't': t, 'p': base['p'], 'd': base['d'], 'e': base['e']}
+            moves[mid] = {'n': f'めざめるパワー（{TYPE_JA[t]}）', 't': t, 'p': base['p'], 'd': base['d'],
+                          'e': base['e'], 'w': base['w'], 'we': base['we']}
         for k in final:
             for slot in ('q', 'eq'):
                 if 'HIDDEN_POWER_FAST' in final[k][slot]:
