@@ -31,9 +31,11 @@
   --cardsh:0 16px 30px -22px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.05) inset;
   --onaccent:#1a1a1a; --onaccent2:#0d1620; --sughover:#2a3644;
   --r1:#ffd54f; --r2:#cfd8dc; --r3:#d7a97c;
-  --m1bg:linear-gradient(90deg,rgba(255,213,74,.16),rgba(255,213,74,.03)); --m1line:#8a6d1f;
-  --m2bg:linear-gradient(90deg,rgba(201,214,240,.14),rgba(201,214,240,.03)); --m2line:#4d5876;
-  --m3bg:linear-gradient(90deg,rgba(224,149,91,.15),rgba(224,149,91,.03)); --m3line:#7a4f2e;
+  --m1bg:linear-gradient(160deg,rgba(255,213,74,.09),transparent 62%); --m1line:#a5842a; --m1glow:rgba(242,193,78,.20);
+  --m2bg:linear-gradient(160deg,rgba(201,214,240,.07),transparent 62%); --m2line:#6b7684; --m2glow:rgba(200,211,222,.16);
+  --m3bg:linear-gradient(160deg,rgba(224,149,91,.08),transparent 62%); --m3line:#8f5f3a; --m3glow:rgba(201,141,95,.18);
+  --gold:#f2c14e; --silver:#c8d3de; --bronze:#c98d5f;
+  --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
   --shink:#c39bff; --shline:#6b4fa0;
   --hrbg:#1d4d33; --hrink:#8be3a8; --hnbg:#3a4553; --hnink:#b7c4d0; --hwbg:#5a2620; --hwink:#ffb0a3;
   --cwbg:#54221d; --cwink:#ff9d8f; --cnbg:#333d48; --cnink:#aab8c5; --crbg:#1c3a55; --crink:#8ec6f2;
@@ -54,9 +56,11 @@
   --cardsh:0 14px 30px -18px rgba(70,110,160,.32), 0 1px 0 rgba(255,255,255,.8) inset;
   --onaccent:#ffffff; --onaccent2:#ffffff; --sughover:#eef3ff;
   --r1:#b07a00; --r2:#64748f; --r3:#a5652a;
-  --m1bg:linear-gradient(90deg,#fff6d8,#fffdf3); --m1line:#f2c14e;
-  --m2bg:linear-gradient(90deg,#eef2f9,#fafcff); --m2line:#c6d2e6;
-  --m3bg:linear-gradient(90deg,#fdeede,#fffaf4); --m3line:#e0b088;
+  --m1bg:linear-gradient(160deg,rgba(255,213,74,.16),transparent 62%); --m1line:#e8b93c; --m1glow:rgba(224,168,0,.20);
+  --m2bg:linear-gradient(160deg,rgba(154,168,184,.14),transparent 62%); --m2line:#b3c0cf; --m2glow:rgba(120,140,165,.16);
+  --m3bg:linear-gradient(160deg,rgba(192,127,74,.13),transparent 62%); --m3line:#d79a63; --m3glow:rgba(192,127,74,.18);
+  --gold:#e0a800; --silver:#9aa8b8; --bronze:#c07f4a;
+  --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
   --shink:#7a3cc4; --shline:#c4b0ea;
   --hrbg:#d6f0e0; --hrink:#1f6b40; --hnbg:#e3e8ef; --hnink:#4a5765; --hwbg:#fbdcd6; --hwink:#a03826;
   --cwbg:#fbdcd6; --cwink:#a03826; --cnbg:#e3e8ef; --cnink:#4a5765; --crbg:#d9eafa; --crink:#1a5c8a;
@@ -108,12 +112,18 @@ details.settings summary{padding:9px 15px;cursor:pointer;color:var(--sub);font-s
 /* ランキング */
 .ranklist{margin-top:16px;display:flex;flex-direction:column;gap:10px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;box-shadow:var(--cardsh)}
-.rank{font-size:1.05rem;font-weight:800;text-align:center;color:var(--sub)}
-.rank.r1{color:var(--r1)}.rank.r2{color:var(--r2)}.rank.r3{color:var(--r3)}
-/* 上位3件はメダルの色を薄く敷く(暗い一覧の中でベタ塗りにすると浮きすぎる) */
-#ranklist .card:nth-child(1){background:var(--m1bg);border-color:var(--m1line)}
-#ranklist .card:nth-child(2){background:var(--m2bg);border-color:var(--m2line)}
-#ranklist .card:nth-child(3){background:var(--m3bg);border-color:var(--m3line)}
+/* 順位はタグで出す（ジム防衛・マックスバトルと同じ見せ方） */
+.rank{font-size:.95rem;font-weight:700;text-align:center;color:var(--sub);
+  background:var(--panel2);border-radius:8px;padding:4px 0}
+/* 上位3件のメダル。金・銀・銅とも同じ作り（明るい面＋その色の光彩） */
+.rank.r1,.rank.r2,.rank.r3{font-weight:800;box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+.rank.r1{background:linear-gradient(160deg,#ffe08a 0%,var(--gold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
+.rank.r2{background:linear-gradient(160deg,#f2f6fb 0%,var(--silver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
+.rank.r3{background:linear-gradient(160deg,#e8b489 0%,var(--bronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
+/* 上位3件は枠も金・銀・銅にして、淡い光彩と色みを敷く */
+#ranklist .card:nth-child(1){background:var(--m1bg),var(--panel);border-color:var(--m1line);box-shadow:0 0 22px var(--m1glow),var(--cardsh)}
+#ranklist .card:nth-child(2){background:var(--m2bg),var(--panel);border-color:var(--m2line);box-shadow:0 0 22px var(--m2glow),var(--cardsh)}
+#ranklist .card:nth-child(3){background:var(--m3bg),var(--panel);border-color:var(--m3line);box-shadow:0 0 22px var(--m3glow),var(--cardsh)}
 .pname{font-weight:700;font-size:1.0rem;display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;min-width:0}
 .pname .hits{display:inline-flex;flex-shrink:0;align-items:center}
 .pname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -22,6 +22,10 @@
   --c-bulk:#6fcf8f; --c-type:#4fc3f7; --c-int:#f5b942; --c-yar:#b18cf0;
   --gold:#f2c14e; --silver:#c8d3de; --bronze:#c98d5f;
   --onaccent:#0d1a12; --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
+  /* 上位3件のフレーム（金・銀・銅のアウトライン＋淡い光彩）。全ツール共通の見せ方 */
+  --m1line:#a5842a; --m1glow:rgba(242,193,78,.20); --m1tint:rgba(242,193,78,.07);
+  --m2line:#6b7684; --m2glow:rgba(200,211,222,.16); --m2tint:rgba(200,211,222,.05);
+  --m3line:#8f5f3a; --m3glow:rgba(201,141,95,.18); --m3tint:rgba(201,141,95,.06);
   /* 背景はこのツールの色(緑・水色)をにじませる。土台も黒ではなく深い青緑にして、
      カードが浮いて見えるようにする(真っ黒だと沈んで見える) */
   --bgimg:
@@ -49,6 +53,9 @@
   --c-bulk:#2f9e63; --c-type:#0f80a8; --c-int:#b07a00; --c-yar:#7a52c4;
   --gold:#e0a800; --silver:#9aa8b8; --bronze:#c07f4a;
   --onaccent:#ffffff; --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
+  --m1line:#e8b93c; --m1glow:rgba(224,168,0,.20); --m1tint:rgba(255,213,74,.14);
+  --m2line:#b3c0cf; --m2glow:rgba(120,140,165,.16); --m2tint:rgba(154,168,184,.12);
+  --m3line:#d79a63; --m3glow:rgba(192,127,74,.18); --m3tint:rgba(192,127,74,.11);
   --tcolor:#eef2f7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -81,6 +88,10 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .list{margin-top:14px;display:flex;flex-direction:column;gap:8px}
 .row{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--cardsh)}
 .row.hit{border-color:var(--accent)}
+/* 上位3件は枠を金・銀・銅にして、淡い光彩と色みを敷く（全ツール共通の見せ方） */
+.row.m1{border-color:var(--m1line);background:linear-gradient(160deg,var(--m1tint),transparent 62%),var(--panel);box-shadow:0 0 22px var(--m1glow),var(--cardsh)}
+.row.m2{border-color:var(--m2line);background:linear-gradient(160deg,var(--m2tint),transparent 62%),var(--panel);box-shadow:0 0 22px var(--m2glow),var(--cardsh)}
+.row.m3{border-color:var(--m3line);background:linear-gradient(160deg,var(--m3tint),transparent 62%),var(--panel);box-shadow:0 0 22px var(--m3glow),var(--cardsh)}
 .top{display:flex;align-items:center;gap:10px}
 .rank{min-width:52px;text-align:center;font-weight:700;font-size:.95rem;border-radius:8px;padding:4px 0;background:var(--panel2);color:var(--sub)}
 /* 上位3件のメダル。金・銀・銅とも同じ作り（明るい面＋その色の光彩）で並べて見分けやすくする */
@@ -221,7 +232,8 @@ footer a{color:var(--accent2)}
     slice.forEach(e => {
       const rk = ranks[e.n];
       const row = document.createElement('div');
-      row.className = 'row' + (query ? ' hit' : '');
+      // 上位3件はフレームも金・銀・銅にする（rankClass と同じ判定）
+      row.className = 'row' + (query ? ' hit' : '') + (rk <= 3 ? ' m' + rk : '');
       const chips = typePairHTML(e.t.map(t => D.types_jp[t]), 18);
       const tot = totalOf(e);
       // バーの全長は「1位に対する合計の割合」。内訳はプラスの項目だけで按分する
