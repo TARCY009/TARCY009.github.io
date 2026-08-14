@@ -81,10 +81,13 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .suggest button:hover,.suggest button:focus{background:var(--sughover)}
 /* タブは共通の assets/tabs.css。ここでは並びと、このツール固有の見た目だけを足す
    （排他の2択＝ランキングの種類はくっつけ、独立ON/OFFの絞り込みは離して置く） */
-.gtabs{margin-top:10px}
+/* 2行のタブが混ざるので、同じ並びのボタンは高さをそろえる */
+.gtabs{margin-top:10px;align-items:stretch}
 .gtabs.modes{margin-top:14px}
 .modes .gseg button{font-size:.9rem;padding:10px 26px}
 #fShadow{font-size:1.05rem;padding:7px 18px;display:inline-flex;align-items:center;justify-content:center}
+/* 2行のタブ（1行目が主、2行目は言い換えの小さい文字） */
+.gtabs button small{display:block;font-size:.66rem;font-weight:600;opacity:.85;margin-top:1px}
 /* ポイントメーター */
 .meter{width:96px;height:6px;border-radius:3px;background:var(--bar-off);margin:4px 0 4px auto;overflow:hidden}
 .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px}
@@ -175,7 +178,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <div class="gtabs">
   <button id="fShadow" class="t-shadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
   <button id="fMega" class="t-mega" type="button" aria-pressed="false">メガ・ゲンシ</button>
-  <button id="fMulti" class="t-cyan" type="button" aria-pressed="false">わざ違い</button>
+  <button id="fMulti" class="t-cyan" type="button" aria-pressed="false">同じポケモン表示<small>（わざ違い）</small></button>
 </div>
 
 <div class="defender" id="defender"></div>
@@ -213,7 +216,8 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
   <ul>
     <li><i class="shadowmark"></i> ＝ シャドウを一覧に加える</li>
     <li><b>メガ・ゲンシ</b> ＝ メガシンカ・ゲンシカイキを一覧に加える</li>
-    <li><b>わざ違い</b> ＝ 1匹につき最大3つのわざ構成を出す（既定は最適な1構成だけ）</li>
+    <li><b>同じポケモン表示（わざ違い）</b> ＝ 同じポケモンを、わざ構成ちがいで最大3つまで並べる
+      （既定はいちばん良い1構成だけ）</li>
   </ul>
   <p>3つとも独立して切り替えられます。</p>
 </div>
