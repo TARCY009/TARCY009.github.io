@@ -131,6 +131,15 @@ _ci = json.load(open(os.path.join(BASE, 'calib_int.json')))
 C_INT, D_INT = _ci['c'], _ci['d']
 _ct = json.load(open(os.path.join(BASE, 'calib_type.json')))
 
+# 符号の歯止め: 耐性は加点(0以上)・弱点は減点(0以下)でなければならない。
+#   係数は回帰で自動的に決めているため、データの偏りで符号が逆になることがある
+#   (2026-08-14に「あく弱点なのに +0.89 の加点」「こおり耐性なのに -0.51 の減点」が見つかった)。
+#   フィットし直したときに同じ事故が起きないよう、ここで必ず正しい向きへ丸める。
+for _t, _c in _ct['coef'].items():
+    _c['res'] = max(0.0, _c['res'])
+    _c['dbl'] = max(0.0, _c['dbl'])
+    _c['weak'] = min(0.0, _c['weak'])
+
 def type_score(types):
     def m(atk):
         v = 1.0
