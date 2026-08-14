@@ -10,18 +10,28 @@
 <link rel="manifest" href="/gym-attack/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <meta name="theme-color" content="#f5b942">
 <style>
 /* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク */
 :root{
-  --bg:#101418; --panel:#1a2129; --panel2:#212b36; --line:#2e3a47;
+  --bg:#101418; --panel:linear-gradient(180deg,rgba(30,39,51,.94),rgba(22,29,39,.94)); --panel2:#212b36; --line:#2e3a47;
   --text:#e8edf2; --sub:#93a3b3; --accent:#f5b942; --accent2:#4fc3f7;
   --bar:#7ee081; --bar-off:#33404d; --warn:#ff7d6b;
-  --bgimg:#101418; --cardsh:none;
+  /* 背景はこのツールの色(黄・水色)を淡くにじませる(単色だと沈んで見える) */
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(245,185,66,.10), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(79,195,247,.11), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(245,185,66,.07), transparent 62%),
+    linear-gradient(165deg,#0e1319 0%,#111620 48%,#141319 100%);
+  --cardsh:0 16px 30px -22px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.05) inset;
   --onaccent:#1a1a1a; --onaccent2:#0d1620; --sughover:#2a3644;
   --r1:#ffd54f; --r2:#cfd8dc; --r3:#d7a97c;
+  --m1bg:linear-gradient(90deg,rgba(255,213,74,.16),rgba(255,213,74,.03)); --m1line:#8a6d1f;
+  --m2bg:linear-gradient(90deg,rgba(201,214,240,.14),rgba(201,214,240,.03)); --m2line:#4d5876;
+  --m3bg:linear-gradient(90deg,rgba(224,149,91,.15),rgba(224,149,91,.03)); --m3line:#7a4f2e;
   --shink:#c39bff; --shline:#6b4fa0;
   --hrbg:#1d4d33; --hrink:#8be3a8; --hnbg:#3a4553; --hnink:#b7c4d0; --hwbg:#5a2620; --hwink:#ffb0a3;
   --cwbg:#54221d; --cwink:#ff9d8f; --cnbg:#333d48; --cnink:#aab8c5; --crbg:#1c3a55; --crink:#8ec6f2;
@@ -42,6 +52,9 @@
   --cardsh:0 14px 30px -18px rgba(70,110,160,.32), 0 1px 0 rgba(255,255,255,.8) inset;
   --onaccent:#ffffff; --onaccent2:#ffffff; --sughover:#eef3ff;
   --r1:#b07a00; --r2:#64748f; --r3:#a5652a;
+  --m1bg:linear-gradient(90deg,#fff6d8,#fffdf3); --m1line:#f2c14e;
+  --m2bg:linear-gradient(90deg,#eef2f9,#fafcff); --m2line:#c6d2e6;
+  --m3bg:linear-gradient(90deg,#fdeede,#fffaf4); --m3line:#e0b088;
   --shink:#7a3cc4; --shline:#c4b0ea;
   --hrbg:#d6f0e0; --hrink:#1f6b40; --hnbg:#e3e8ef; --hnink:#4a5765; --hwbg:#fbdcd6; --hwink:#a03826;
   --cwbg:#fbdcd6; --cwink:#a03826; --cnbg:#e3e8ef; --cnink:#4a5765; --crbg:#d9eafa; --crink:#1a5c8a;
@@ -64,15 +77,12 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .suggest button{display:flex;width:100%;justify-content:space-between;align-items:center;padding:11px 14px;background:none;border:none;color:var(--text);font-size:.98rem;text-align:left;cursor:pointer;border-bottom:1px solid var(--line)}
 .suggest button:last-child{border-bottom:none}
 .suggest button:hover,.suggest button:focus{background:var(--sughover)}
-/* フィルタトグル */
-.filters{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.chipbtn{padding:8px 16px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s}
-.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onaccent);font-weight:700}
-#fShadow[aria-pressed="true"]{background:#8a63d2;border-color:#8a63d2;color:#fff}
-/* ランキングモード */
-.modes{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-.modebtn{flex:1;padding:11px 8px;background:var(--panel);border:none;color:var(--sub);font-size:.9rem;cursor:pointer}
-.modebtn[aria-pressed="true"]{background:var(--accent2);color:var(--onaccent2);font-weight:700}
+/* タブは共通の assets/tabs.css。ここでは並びと、このツール固有の見た目だけを足す
+   （排他の2択＝ランキングの種類はくっつけ、独立ON/OFFの絞り込みは離して置く） */
+.gtabs{margin-top:10px}
+.gtabs.modes{margin-top:14px}
+.modes .gseg button{font-size:.9rem;padding:10px 26px}
+#fShadow{font-size:1.05rem;padding:7px 18px;display:inline-flex;align-items:center;justify-content:center}
 /* ポイントメーター */
 .meter{width:96px;height:6px;border-radius:3px;background:var(--bar-off);margin:4px 0 4px auto;overflow:hidden}
 .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px}
@@ -83,8 +93,10 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .defender .dname .tpair{margin-left:6px}
 .dmeta .tlist{display:inline-flex;gap:5px;vertical-align:middle}
 /* 設定 */
-details.settings{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
-details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-size:.85rem}
+/* 詳細設定はふだん使わないので、閉じているあいだは点線の枠だけにして控えめに置く */
+details.settings{margin-top:12px;background:none;border:1px dashed var(--line);border-radius:12px}
+details.settings[open]{background:var(--panel);border-style:solid}
+details.settings summary{padding:9px 15px;cursor:pointer;color:var(--sub);font-size:.78rem}
 .settings .body{padding:0 16px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.85rem}
 .settings label{color:var(--sub)}
 .settings input{width:100%;padding:6px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text)}
@@ -93,11 +105,14 @@ details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;box-shadow:var(--cardsh)}
 .rank{font-size:1.05rem;font-weight:800;text-align:center;color:var(--sub)}
 .rank.r1{color:var(--r1)}.rank.r2{color:var(--r2)}.rank.r3{color:var(--r3)}
+/* 上位3件はメダルの色を薄く敷く(暗い一覧の中でベタ塗りにすると浮きすぎる) */
+#ranklist .card:nth-child(1){background:var(--m1bg);border-color:var(--m1line)}
+#ranklist .card:nth-child(2){background:var(--m2bg);border-color:var(--m2line)}
+#ranklist .card:nth-child(3){background:var(--m3bg);border-color:var(--m3line)}
 .pname{font-weight:700;font-size:1.0rem;display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;min-width:0}
 .pname .hits{display:inline-flex;flex-shrink:0;align-items:center}
 .pname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pname .tpair{flex-shrink:0}
-.pname .shadow{display:inline-flex;align-items:center;color:var(--shink);font-size:.85rem;border:1px solid var(--shline);border-radius:6px;padding:1px 5px;flex-shrink:0}
 #fShadow{display:inline-flex;align-items:center;justify-content:center;color:var(--shink);font-size:1.05rem;padding:6px 18px}
 .card>div{min-width:0}
 .moves{margin-top:4px;font-size:.82rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
@@ -117,12 +132,21 @@ details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-
 .hchip.hw{background:var(--cwbg);color:var(--cwink)}
 .hchip.hn{background:var(--cnbg);color:var(--cnink)}
 .hchip.hr{background:var(--crbg);color:var(--crink)}
-.note{margin-top:14px;color:var(--sub);font-size:.75rem}
+/* 文字を減らすために画面から外した補足は、消さずに隠しておく
+   （のちに「説明ありモード」を作るときは、ルート要素に explain を付けるだけで一斉に出せる） */
+.expl{display:none}
+.explain .expl{display:revert}
 .loading{margin-top:24px;color:var(--sub);text-align:center}
 footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
+/* 狭い画面は余白と文字を詰めて、名前とわざが折り返さずに収まるようにする */
 @media (max-width:480px){
-  .card{grid-template-columns:36px 1fr auto;padding:10px 10px}
+  .card{grid-template-columns:30px 1fr auto;padding:10px 8px;gap:7px}
   .nums .score{font-size:1.0rem}
+  .rank{font-size:.9rem}
+  .pname{font-size:.92rem;gap:3px 5px}
+  .moves{font-size:.72rem;gap:3px 6px}
+  .hitchip,.hchip{font-size:.6rem;padding:1px 5px;margin-left:3px}
+  .meter{width:76px}
 }
 </style>
 </head>
@@ -131,7 +155,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <header>
   <div id="themesw"></div>
   <h1>ジム挑戦オススメツール <span class="badge">連戦効率型</span></h1>
-  <p class="lead">相手の防衛ポケモンを指定すると、ゲージ分割技を優遇した「連戦向き」の攻撃ランキングを表示します。攻撃側はPL50・個体値MAX想定。</p>
+  <p class="lead expl">相手の防衛ポケモンを指定すると、ゲージ分割技を優遇した「連戦向き」の攻撃ランキングを表示します。攻撃側はPL50・個体値MAX想定。</p>
 </header>
 
 <div class="searchbox">
@@ -139,15 +163,17 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
   <div class="suggest" id="suggest"></div>
 </div>
 
-<div class="modes">
-  <button id="mPower" class="modebtn" type="button" aria-pressed="true">火力ランキング</button>
-  <button id="mTotal" class="modebtn" type="button" aria-pressed="false">総合力(耐久込み)</button>
+<div class="gtabs modes">
+  <div class="gseg">
+    <button id="mPower" class="t-gold" type="button" aria-pressed="true">火力</button>
+    <button id="mTotal" class="t-gold" type="button" aria-pressed="false">総合力</button>
+  </div>
 </div>
 
-<div class="filters">
-  <button id="fShadow" class="chipbtn" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
-  <button id="fMega" class="chipbtn" type="button" aria-pressed="false">メガ・ゲンシ</button>
-  <button id="fMulti" class="chipbtn" type="button" aria-pressed="false">複数技構成</button>
+<div class="gtabs">
+  <button id="fShadow" class="t-shadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
+  <button id="fMega" class="t-mega" type="button" aria-pressed="false">メガ・ゲンシ</button>
+  <button id="fMulti" class="t-cyan" type="button" aria-pressed="false">わざ違い</button>
 </div>
 
 <div class="defender" id="defender"></div>
@@ -167,9 +193,28 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 
 <div class="loading" id="loading">データ読み込み中…</div>
 <div class="ranklist" id="ranklist"></div>
-<p class="note" id="note" style="display:none">
-  ポイントは1位を100とした相対値。火力ランキング = 対面DPS × ゲージ補正(1本ゲージのSPアタックは大幅減点)。総合力ランキングはこれに被弾耐性補正を加味し、名前横のチップに防衛側の技タイプ数の内訳(<span style="color:var(--cwink)">弱点</span>/<span style="color:var(--cnink)">等倍</span>/<span style="color:var(--crink)">耐性</span>)を表示。耐性補正の内部計算ではノーマルアタックのタイプを低比重で扱います。デフォルトはメガ・シャドウ除外、各ポケモン最適技構成のみ表示。上のボタンで切替できます。
-</p>
+<button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+<div id="helpbody" class="helpbody" style="display:none">
+  <h4>このツールでできること</h4>
+  <p>相手の防衛ポケモンを選ぶと、<b>連戦向き</b>の攻撃ランキングが出ます。ジムは何度も殴りに行くので、
+    1本ゲージのSPアタックのように「1回の戦闘で撃ちきれないわざ」は割り引いて評価しています。
+    攻撃側は<b>PL50・個体値MAX</b>、防衛側は<b>PL40</b>（詳細設定で変更できます）。</p>
+  <h4>火力／総合力</h4>
+  <ul>
+    <li><b>火力</b> ＝ 対面DPS × ゲージ補正（1本ゲージのSPアタックは大幅に減点）</li>
+    <li><b>総合力</b> ＝ 火力に<b>被弾のしにくさ</b>を加味したもの。名前の横のチップに、防衛側のわざタイプの内訳
+      （<span style="color:var(--cwink)">弱点</span>／<span style="color:var(--cnink)">等倍</span>／<span style="color:var(--crink)">耐性</span>）が出ます</li>
+  </ul>
+  <p>ポイントは<b>1位を100とした相対値</b>です。耐性の計算では、ノーマルアタックのタイプは低い比重で扱います
+    （SPアタックほど痛くないため）。</p>
+  <h4>絞り込み</h4>
+  <ul>
+    <li><i class="shadowmark"></i> ＝ シャドウを一覧に加える</li>
+    <li><b>メガ・ゲンシ</b> ＝ メガシンカ・ゲンシカイキを一覧に加える</li>
+    <li><b>わざ違い</b> ＝ 1匹につき最大3つのわざ構成を出す（既定は最適な1構成だけ）</li>
+  </ul>
+  <p>3つとも独立して切り替えられます。</p>
+</div>
 <footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
 </div>
 
@@ -272,7 +317,8 @@ function render(def){
   const tlist=a=>a.length?`<span class="tlist">${a.map(t=>typeIconHTML(t,18)).join('')}</span>`:'';
 
   document.getElementById('defender').style.display='block';
-  const hitLegend=(MODE==='total')?` / 弱点・等倍・耐性の数は防衛側の技タイプ数`:'';
+  // 凡例は使い方タブへ集約したので、画面には出さない(説明ありモードのときだけ出る)
+  const hitLegend=(MODE==='total')?` <span class="expl">/ 弱点・等倍・耐性の数は防衛側の技タイプ数</span>`:'';
   document.getElementById('defender').innerHTML=
     `<div class="dname">防衛: ${def.name}
       ${typePairHTML(def.types.map(t=>DATA.types_jp[t]),22)}</div>
@@ -325,7 +371,8 @@ function render(def){
   rows.sort((a,b)=>b.score-a.score);
   const top=rows.slice(0,topn);
   const base=top.length?top[0].score:1;
-  const ptLabel=(MODE==='power')?'火力ポイント':'総合力ポイント';
+  // 選んでいるタブが上に出ているので、行の単位は「ポイント」だけでよい（狭い画面の折り返しも防げる）
+  const ptLabel='ポイント';
   const list=document.getElementById('ranklist');
   list.innerHTML='';
   top.forEach((r,i)=>{
@@ -344,7 +391,7 @@ function render(def){
     el.innerHTML=`
       <div class="rank ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i+1}位</div>
       <div>
-        <div class="pname"><span class="nm">${r.p.name}</span>${typePairHTML(r.p.types.map(t=>DATA.types_jp[t]),18)}${r.isShadow?'<span class="shadow" title="シャドウ"><i class="shadowmark"></i></span>':''}${hitHtml}</div>
+        <div class="pname">${r.isShadow?'<i class="shadowmark nmk" title="シャドウ"></i>':''}<span class="nm">${r.p.name}</span>${typePairHTML(r.p.types.map(t=>DATA.types_jp[t]),18)}${hitHtml}</div>
         <div class="moves">
           <span>${fm.jp}</span><span>/</span>
           <span>${cm.jp}<span class="gauge ${r.bars===1?'g1':''}">${'<i></i>'.repeat(r.bars)}</span></span>
@@ -357,9 +404,17 @@ function render(def){
       </div>`;
     list.appendChild(el);
   });
-  document.getElementById('note').style.display='block';
 }
 function val(id){return document.getElementById(id).value;}
+// 使い方タブ(仕様・前提の説明はここ1か所にまとめる)
+(function(){
+  const tab=document.getElementById('helptab'), body=document.getElementById('helpbody');
+  tab.addEventListener('click',()=>{
+    const open=tab.getAttribute('aria-expanded')==='true';
+    tab.setAttribute('aria-expanded',!open);
+    body.style.display=open?'none':'block';
+  });
+})();
 // オフライン対応＆更新の即時反映(サイト共通のService Worker)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });

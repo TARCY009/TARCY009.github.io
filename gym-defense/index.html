@@ -9,19 +9,26 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/gym-defense/apple-touch-icon.png">
 <link rel="manifest" href="/gym-defense/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <meta name="theme-color" content="#6fcf8f">
 <style>
 /* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク */
 :root{
-  --bg:#101418; --panel:#1a2129; --panel2:#212b36; --line:#2e3a47;
+  --bg:#101418; --panel:linear-gradient(180deg,rgba(30,39,51,.94),rgba(22,29,39,.94)); --panel2:#212b36; --line:#2e3a47;
   --text:#e8edf2; --sub:#93a3b3; --accent:#6fcf8f; --accent2:#4fc3f7;
   --bar-off:#33404d; --warn:#ff7d6b;
   --c-bulk:#6fcf8f; --c-type:#4fc3f7; --c-int:#f5b942; --c-yar:#b18cf0;
   --gold:#f2c14e; --silver:#c8d3de; --bronze:#c98d5f;
   --onaccent:#0d1a12; --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
-  --bgimg:#101418; --cardsh:none;
+  /* 背景はこのツールの色(緑・水色)を淡くにじませる(単色だと沈んで見える) */
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(111,207,143,.11), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(79,195,247,.11), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(111,207,143,.07), transparent 62%),
+    linear-gradient(165deg,#0d1317 0%,#111620 48%,#101a17 100%);
+  --cardsh:0 16px 30px -22px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.05) inset;
   --tcolor:#101418;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:12px;
   font-size:16px;
@@ -55,15 +62,16 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .searchbox{position:relative;margin-top:16px}
 .searchbox input{width:100%;padding:14px 16px;font-size:1.05rem;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--text);outline:none}
 .searchbox input:focus{border-color:var(--accent)}
-/* ランキングモード */
-.modes{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-.modebtn{flex:1;padding:11px 8px;background:var(--panel);border:none;color:var(--sub);font-size:.9rem;cursor:pointer}
-.modebtn[aria-pressed="true"]{background:var(--accent);color:var(--onaccent);font-weight:700}
+/* タブは共通の assets/tabs.css。ここでは並びと、このツール固有の見た目だけを足す
+   （排他の2択＝ランキングの種類はくっつけ、独立ON/OFFの絞り込みは離して置く） */
+.gtabs{margin-top:10px}
+.gtabs.modes{margin-top:14px}
+.modes .gseg button{font-size:.9rem;padding:10px 22px}
 .detail .off{opacity:.45}
-/* フィルタ */
-.filters{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
-.chipbtn{padding:8px 16px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s}
-.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onaccent);font-weight:700}
+/* 文字を減らすために画面から外した補足は、消さずに隠しておく
+   （のちに「説明ありモード」を作るときは、ルート要素に explain を付けるだけで一斉に出せる） */
+.expl{display:none}
+.explain .expl{display:revert}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;color:var(--sub);font-size:.72rem}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -93,11 +101,17 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .more{margin-top:14px;width:100%;padding:13px;border-radius:var(--radius);border:1px solid var(--line);background:var(--panel);color:var(--sub);font-size:.9rem;cursor:pointer}
 .more:hover{border-color:var(--accent)}
 .empty{margin-top:20px;color:var(--sub);text-align:center;font-size:.9rem}
-footer{margin-top:28px;color:var(--sub);font-size:.72rem;line-height:1.7}
+footer{margin-top:24px;color:var(--sub);font-size:.7rem;line-height:1.7;text-align:center}
 footer a{color:var(--accent2)}
+/* 狭い画面は余白と文字を詰めて、わざ構成の折り返しを減らす */
 @media (max-width:480px){
-  .rank{min-width:44px;font-size:.85rem}
-  .pts{min-width:70px}
+  .rank{min-width:40px;font-size:.82rem}
+  .pts{min-width:62px}
+  .row{padding:11px 10px}
+  .top{gap:8px}
+  .pname{font-size:.95rem}
+  .moves{font-size:.72rem}
+  .detail{font-size:.68rem;gap:8px}
 }
 </style>
 </head>
@@ -106,20 +120,22 @@ footer a{color:var(--accent2)}
 <header>
   <div id="themesw"></div>
   <h1>ジム防衛オススメツール <span class="badge">防衛</span></h1>
-  <p class="lead">攻撃側メタ分布(格闘・鋼中心)を加重した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
+  <p class="lead expl">攻撃側メタ分布(格闘・鋼中心)を加重した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
 </header>
 
 <div class="searchbox">
-  <input id="q" type="search" placeholder="ポケモン名で検索(自分のポケモンの順位確認)" autocomplete="off">
+  <input id="q" type="search" placeholder="ポケモン名で検索" autocomplete="off">
 </div>
 
-<div class="modes">
-  <button id="mBase" class="modebtn" aria-pressed="true">基本ランキング</button>
-  <button id="mInt" class="modebtn" aria-pressed="false">迎撃込みランキング</button>
+<div class="gtabs modes">
+  <div class="gseg">
+    <button id="mBase" class="t-green" aria-pressed="true">基本</button>
+    <button id="mInt" class="t-green" aria-pressed="false">迎撃込み</button>
+  </div>
 </div>
 
-<div class="filters">
-  <button id="fDw" class="chipbtn" aria-pressed="false">二重弱点を含める</button>
+<div class="gtabs one">
+  <button id="fDw" class="t-red" aria-pressed="false">二重弱点も</button>
 </div>
 
 <div class="legend">
@@ -133,9 +149,24 @@ footer a{color:var(--accent2)}
 <button id="more" class="more">さらに表示</button>
 <p id="empty" class="empty" style="display:none">該当するポケモンがありません</p>
 
-<footer>
-  <p>基本ランキングは 耐久 + タイプ + やる気、迎撃込みランキングはこれに迎撃ポイントを加算した総合値です。耐久はPL50・個体値15のHP×防御、タイプは攻撃側メタ分布(格闘31.5%・鋼24%ほか)への被弾しにくさ、迎撃は防衛硬直仕様を踏まえたノーマルアタック1発威力の有効度(スペシャルは低比重)、やる気は最大CP帯によるやる気低下のしにくさです。技構成はおすすめの防衛用構成で、ベスト技と大差ないスペシャルアタックがある場合は「or」で併記しています(ゲージ2分割・発生の速さを優遇して選出)。</p>
-</footer>
+<button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+<div id="helpbody" class="helpbody" style="display:none">
+  <h4>このツールでできること</h4>
+  <p>ジムに置いたときに<b>長く残りやすい</b>ポケモンのランキングです。<b>PL50・個体値15</b>想定で、
+    ジムに置けない伝説・幻・メガは外してあります。名前で検索すると、そのポケモンの順位を確かめられます。</p>
+  <h4>ポイントの中身</h4>
+  <ul>
+    <li><b>耐久</b> ＝ HP × 防御</li>
+    <li><b>タイプ</b> ＝ 攻撃側の顔ぶれ（格闘31.5%・鋼24%ほか）に対する<b>被弾のしにくさ</b></li>
+    <li><b>やる気</b> ＝ 最大CP帯から見た<b>やる気の下がりにくさ</b></li>
+    <li><b>迎撃</b> ＝ 防衛側の硬直を踏まえたノーマルアタック1発の有効度（SPアタックは低い比重）</li>
+  </ul>
+  <p><b>基本</b> ＝ 耐久＋タイプ＋やる気。<b>迎撃込み</b> ＝ これに迎撃を足した総合値です。</p>
+  <h4>わざ構成と「二重弱点も」</h4>
+  <p>わざは防衛向きの構成（ゲージ2分割・発生の速さを優遇）を選んでいます。ベストと大差ないSPアタックがあるときは
+    「or」で併記します。<b>二重弱点も</b> を押すと、二重弱点をかかえるポケモンも一覧に加えます（既定は除外）。</p>
+</div>
+<footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
 </div>
 
 <script src="data/defense_data.js"></script>
@@ -239,6 +270,15 @@ footer a{color:var(--accent2)}
   });
   moreBtn.addEventListener('click', () => { shown += PAGE; render(); });
   render();
+})();
+// 使い方タブ(仕様・前提の説明はここ1か所にまとめる)
+(function(){
+  const tab=document.getElementById('helptab'), body=document.getElementById('helpbody');
+  tab.addEventListener('click',()=>{
+    const open=tab.getAttribute('aria-expanded')==='true';
+    tab.setAttribute('aria-expanded',!open);
+    body.style.display=open?'none':'block';
+  });
 })();
 // オフライン対応＆更新の即時反映(サイト共通のService Worker)
 if ('serviceWorker' in navigator) {

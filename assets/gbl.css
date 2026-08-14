@@ -845,9 +845,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkrmain{flex:1;min-width:0}
 .rkrname{display:flex;align-items:center;gap:4px;font-size:.94rem;font-weight:700;color:var(--ink);flex-wrap:wrap}
 .rkrname .shadowmark{color:#b06cff}
-/* 名前の頭に付けるシャドウマーク。マークの色は文字色を継承する作りなので、
-   名前の中に置くと白くなる。ロケット団の一覧と同じ紫に固定する */
-.shadowmark.nmk{color:#b06cff}
+/* 名前の頭に付けるシャドウマーク（.shadowmark.nmk）は assets/shadow-icon.css に置いてある（全ツール共通） */
 .rkrmine{color:var(--gold)}
 .rkrmv{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:.8rem;flex-wrap:wrap}
 .rkrdim{font-size:.62rem;color:var(--sub);font-weight:400}

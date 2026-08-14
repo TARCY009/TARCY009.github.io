@@ -8,6 +8,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/max-battle/apple-touch-icon.png">
 <link rel="manifest" href="/max-battle/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <meta name="theme-color" content="#ff3d6e">
@@ -81,6 +82,10 @@ header{padding:26px 0 6px;text-align:left}
 h1{font-size:1.45rem;font-weight:900;letter-spacing:.03em;margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;border-radius:999px;padding:3px 12px;font-weight:800;letter-spacing:.12em}
 .lead{color:var(--sub);font-size:.82rem;margin-top:8px;max-width:60ch}
+/* 文字を減らすために画面から外した補足は、消さずに隠しておく
+   （のちに「説明ありモード」を作るときは、ルート要素に explain を付けるだけで一斉に出せる） */
+.expl{display:none}
+.explain .expl{display:revert}
 /* ボス入力 */
 .bosslabel{margin-top:20px;font-size:.72rem;color:var(--dyna);font-weight:800;letter-spacing:.22em;display:flex;align-items:center;gap:8px}
 .bosslabel::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dyna);box-shadow:0 0 10px var(--dyna)}
@@ -108,9 +113,8 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .mult{font-size:.66rem;color:var(--sub)}
 /* フィルタ */
 .filters{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}
-.chipbtn{padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s;font-family:inherit}
-.chipbtn.spbtn[aria-pressed="true"]{background:linear-gradient(135deg,#f2c14e,#e8863d) !important;border-color:transparent !important;color:#33210a !important;font-weight:800;box-shadow:0 0 14px rgba(242,193,78,.3)}
-.chipbtn[aria-pressed="true"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512;font-weight:800}
+/* 絞り込みタブの見た目は共通の assets/tabs.css（.gtabs と役割色の t-*）。ここでは大きさだけ足す */
+.gtabs button{font-size:.85rem;padding:8px 16px}
 .myq{margin-top:10px;position:relative}
 .myq.hasresult{border:1px solid var(--violet);border-radius:var(--radius);padding:10px;background:rgba(139,92,246,.07)}
 .myiv{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
@@ -231,7 +235,7 @@ footer a{color:var(--spec)}
   <div id="themesw"></div>
   <div class="eyebrow">Pok&eacute;mon GO Max Battle</div>
   <h1>マックスバトル対策ツール <span class="badge">アタッカー / タンク</span></h1>
-  <p class="lead">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
+  <p class="lead expl">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
 </header>
 
 
@@ -253,28 +257,30 @@ footer a{color:var(--spec)}
   <button id="tabTank" class="tab tank" aria-selected="false">タンク</button>
 </div>
 
-<div class="filters" id="filters" style="display:none">
-  <button id="fSp" class="chipbtn spbtn" aria-pressed="false">SP判定</button>
-  <button id="fLegacy" class="chipbtn" aria-pressed="true">レガシー・特別技を含める</button>
-  <button id="fHalf" class="chipbtn" aria-pressed="true" style="display:none">0.5秒技持ちのみ</button>
-  <button id="fSwap" class="chipbtn" aria-pressed="false" style="display:none">交代受けモード</button>
+<div class="filters gtabs" id="filters" style="display:none">
+  <button id="fSp" class="t-gold" aria-pressed="false">SP判定</button>
+  <button id="fLegacy" class="t-cyan" aria-pressed="true">特別技も</button>
+  <button id="fHalf" class="t-cyan" aria-pressed="true" style="display:none">0.5秒技だけ</button>
+  <button id="fSwap" class="t-shadow" aria-pressed="false" style="display:none">交代受け</button>
 </div>
-<p id="tankNote" class="tanknote" style="display:none">※耐久指数＝HP種族値×防御種族値（例: ラティアス 190×246=46,740）。自分のポケモンを入力した場合は、その個体のPL・個体値の実力に換算して表示します</p>
+<p id="tankNote" class="tanknote" style="display:none">耐久指数 ＝ HP種族値 × 防御種族値</p>
 
 <div id="swapMoves" class="swapmoves"></div>
 
 <div id="spPanel" class="sppanel" style="display:none">
-  <div class="sprow">
-    <button id="spStar5" class="chipbtn" aria-pressed="false">★5 (補正0.0025)</button>
-    <button id="spStar6" class="chipbtn" aria-pressed="true">★6・キョダイ (補正0.00033)</button>
+  <div class="sprow gtabs">
+    <div class="gseg">
+      <button id="spStar5" class="t-gold" aria-pressed="false">★5</button>
+      <button id="spStar6" class="t-gold" aria-pressed="true">★6・キョダイ</button>
+    </div>
     <span id="spStatus" class="spstatus"></span>
   </div>
   <div class="sprow">
     <label>ボスHP <input id="spHP" type="number" inputmode="numeric" placeholder="要入力"></label>
     <label>防御CPM <input id="spDef" type="number" step="0.01" inputmode="decimal"></label>
   </div>
-  <p class="spnote">ダイマックスフェイズへの移行はSPアタックの0.5秒あたりのチャージ量が<b>１％以上</b>ならSPを打つ方が早く、１％未満なら0.5秒技を連打する方が早い、という判定です。※未判明のボスは既定値で計算（判明したら反映させます）</p>
-  <p class="spnote">※2026年から星５・星６ボスのマックスメーターチャージ設定が調整されているため、それ以降の新登場＆再登場ポケモンの設定は不明です。SP判定のデフォルトは調整後に登場した初代御三家と同じ値に標準設定にしています</p>
+  <p class="spnote expl">ダイマックスフェイズへの移行はSPアタックの0.5秒あたりのチャージ量が<b>１％以上</b>ならSPを打つ方が早く、１％未満なら0.5秒技を連打する方が早い、という判定です。※未判明のボスは既定値で計算（判明したら反映させます）</p>
+  <p class="spnote expl">※2026年から星５・星６ボスのマックスメーターチャージ設定が調整されているため、それ以降の新登場＆再登場ポケモンの設定は不明です。SP判定のデフォルトは調整後に登場した初代御三家と同じ値に標準設定にしています</p>
 </div>
 
 <div class="myq" id="myqwrap" style="display:none">
@@ -294,6 +300,32 @@ footer a{color:var(--spec)}
 <button id="more" class="more" style="display:none">さらに表示</button>
 <p id="empty" class="empty" style="display:none">該当するポケモンがありません</p>
 <p id="placeholder" class="placeholder">上の入力欄からボスを選ぶと、アタッカー/タンクのランキングが表示されます。</p>
+
+<button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+<div id="helpbody" class="helpbody" style="display:none">
+  <h4>このツールでできること</h4>
+  <p>ボスを選ぶと、<b>ダイマックスフェイズの火力</b>が高い順にランキングが出ます。
+    <b>タンク</b>に切り替えると、ボスの攻撃に耐えられる順に並びます。</p>
+  <h4>アタッカー／タンク</h4>
+  <ul>
+    <li><b>アタッカー</b> ＝ ダイマックスわざの威力・タイプ相性・攻撃種族値から出したポイント（1位を100とした相対値）</li>
+    <li><b>タンク</b> ＝ 耐久指数（HP種族値 × 防御種族値）とボスのわざへの耐性。
+      自分のポケモンを入れた場合は、その個体のPL・個体値の実力に換算して表示します</li>
+  </ul>
+  <h4>絞り込み</h4>
+  <ul>
+    <li><b>SP判定</b> ＝ SPアタックを撃つべきかを判定して、最適なわざを選び直します</li>
+    <li><b>特別技も</b> ＝ 特別なわざ（覚えさせるのに条件が要るもの）を含めます</li>
+    <li><b>0.5秒技だけ</b> ＝ 発生の速いノーマルアタックを持つポケモンだけに絞ります</li>
+    <li><b>交代受け</b> ＝ ボスの攻撃を受け止める役として評価します</li>
+  </ul>
+  <h4>SP判定のしくみ</h4>
+  <p>ダイマックスフェイズへの移行は、SPアタックの<b>0.5秒あたりのチャージ量が1％以上</b>ならSPを撃つほうが早く、
+    1％未満なら0.5秒のノーマルアタックを連打するほうが早い、という判定です。判明していないボスは既定値で計算します
+    （分かりしだい反映します）。</p>
+  <p>2026年から★5・★6ボスのマックスメーターのチャージ設定が調整されているため、それ以降に登場したポケモンの設定は
+    分かっていません。SP判定の既定値は、調整後に登場した初代御三家と同じ値にしています。</p>
+</div>
 
 </div>
 
@@ -1054,6 +1086,15 @@ footer a{color:var(--spec)}
     else renderTank();
   }
   moreBtn.addEventListener('click', () => { shown += 30; render(); });
+})();
+// 使い方タブ(仕様・前提の説明はここ1か所にまとめる)
+(function(){
+  const tab=document.getElementById('helptab'), body=document.getElementById('helpbody');
+  tab.addEventListener('click',()=>{
+    const open=tab.getAttribute('aria-expanded')==='true';
+    tab.setAttribute('aria-expanded',!open);
+    body.style.display=open?'none':'block';
+  });
 })();
 // オフライン対応＆更新の即時反映(サイト共通のService Worker)
 if ('serviceWorker' in navigator) {

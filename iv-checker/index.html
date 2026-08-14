@@ -20,6 +20,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <style>
@@ -31,6 +32,8 @@
   --good:#3ddc84; --warn:#ff6b81;
   --bgimg:radial-gradient(1000px 500px at 50% -10%, #1d2a55 0%, transparent 60%), #0c1122;
   --sughover:#232e58; --segoff:#25305c;
+  --tabbg:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
+  --mcB:#9fc0ff; --mcU:#ffd873; --mcM:#c9a7ff; --mcC:#7fe6f5;
   --line2:rgba(42,53,96,.4); --sticky:rgba(12,17,34,.92);
   --gold:#ffd54a; --silver:#c9d6f0; --bronze:#e0955b;
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
@@ -48,6 +51,9 @@
     radial-gradient(950px 620px at 50% 115%, rgba(8,180,201,.15), transparent 62%),
     linear-gradient(165deg,#e9f1ff 0%,#efe9ff 50%,#e6f6fb 100%);
   --sughover:#eef3ff; --segoff:#d7dcea;
+  --tabbg:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
+  /* 未選択の文字色は、白い土台でも読める濃さにする(ダーク用の明るい色は白の上で消える) */
+  --mcB:#2a52b8; --mcU:#8a6000; --mcM:#7a3cc4; --mcC:#0b7a92;
   --cardsh:0 14px 30px -18px rgba(59,110,240,.35), 0 1px 0 rgba(255,255,255,.8) inset;
   --line2:rgba(32,38,58,.10); --sticky:rgba(255,255,255,.92);
   --gold:#b07a00; --silver:#64748f; --bronze:#a5652a;
@@ -103,10 +109,30 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .iv.max .seg.on{background:linear-gradient(180deg,#ff6b81,#e83e5c)}
 .iv-hint{font-size:.68rem;color:var(--sub);margin-top:4px}
 
-/* リーグタブ */
+/* タブは全ツール共通の質感（立体的に浮かせ、選択中はその役割の色のグラデーションで点灯）。
+   このツールは選択中を .act で表すので、共通の assets/tabs.css ではなくここで同じ見た目を作る。
+   未選択でも文字色（--mc）で役割の色を示すので、押す前から色で見分けられる */
+.tab,.src,.fl,.srt,.cap,.lgc{
+  font-family:inherit;border:1px solid var(--line);background:var(--tabbg);color:var(--mc,var(--sub));
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+.tab:hover:not(:disabled),.src:hover,.fl:hover,.srt:hover:not(:disabled),.cap:hover,.lgc:hover{
+  transform:translateY(-1px);box-shadow:0 4px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.tab.act,.src.act,.fl.act,.srt.act,.cap.act,.lgc.act{
+  color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);
+  background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+/* 役割ごとの色: スーパー=濃い青 ／ ハイパー=黄 ／ マスター=紫 ／ そのほかの設定=水色。
+   明るい色（黄・水色）で点灯するタブは、文字を白ではなく濃い色にする */
+.tab[data-lg="gl"]{--mc:var(--mcB);--mgl:rgba(59,110,240,.45);
+  --mg:linear-gradient(160deg,#9fc0ff 0%,#3b6ef0 45%,#23429c 100%)}
+.tab[data-lg="ul"]{--mc:var(--mcU);--mi:#4a3200;--mgl:rgba(240,168,39,.45);
+  --mg:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%)}
+.tab[data-lg="ml"]{--mc:var(--mcM);--mgl:rgba(139,92,246,.45);
+  --mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%)}
+.src,.fl,.srt,.cap{--mc:var(--mcC);--mi:#042330;--mgl:rgba(8,180,201,.42);
+  --mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%)}
 .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.tab{padding:11px 4px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--sub);
-  font-size:.82rem;font-weight:700;cursor:pointer;text-align:center}
+.tab{padding:11px 4px;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;text-align:center}
 .tab small{display:block;font-size:.65rem;font-weight:500;margin-top:2px;opacity:.8}
 .card.compact{padding:10px 12px;margin-bottom:12px}
 .card.compact label.sec{margin-bottom:5px;font-size:.66rem}
@@ -116,23 +142,15 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .card.compact .capsel{margin-top:6px;gap:5px}
 .card.compact .fl{padding:5px 3px;font-size:.7rem}
 .card.compact .capsel span{font-size:.62rem}
-.src.act{border-color:var(--cy);color:var(--ink);background:rgba(67,224,255,.1)}
-.src{padding:11px 4px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--sub);font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
+.src{padding:11px 4px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
 .src small{display:block;font-size:.65rem;font-weight:500;margin-top:2px;opacity:.8}
-.fl{flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--sub);font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-.fl.act{border-color:var(--cy);color:var(--ink);background:rgba(67,224,255,.1)}
-.srt{flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--sub);font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-.srt.act{border-color:var(--cy);color:var(--ink);background:rgba(67,224,255,.1)}
+.fl{flex:1;padding:8px 4px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
+.srt{flex:1;padding:8px 4px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
 .srt small{display:block;font-size:.58rem;font-weight:500;margin-top:2px;opacity:.75}
-.srt:disabled{opacity:.4;cursor:not-allowed}
-.tab[data-lg="gl"].act{border-color:var(--gl);color:var(--ink);background:rgba(77,141,255,.14)}
-.tab[data-lg="ul"].act{border-color:var(--ul);color:var(--ink);background:rgba(245,197,66,.12)}
-.tab[data-lg="ml"].act{border-color:var(--ml);color:var(--ink);background:rgba(176,108,255,.13)}
+.srt:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
 .capsel{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
 .capsel span{font-size:.72rem;color:var(--sub);font-weight:700;letter-spacing:.1em}
-.cap{flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);
-  color:var(--sub);font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-.cap.act{border-color:var(--cy);color:var(--ink);background:rgba(67,224,255,.1)}
+.cap{flex:1;padding:8px 4px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
 .capgroup{flex:1.6;border:1px dashed var(--line);border-radius:9px;padding:3px 4px 4px}
 .capgroup-t{font-size:.55rem;color:var(--sub);text-align:center;margin-bottom:3px;letter-spacing:.02em}
 .capgroup-b{display:flex;gap:6px}
@@ -169,15 +187,17 @@ footer{text-align:center;font-size:.65rem;color:var(--sub);margin-top:26px;line-
   font-size:.9rem;font-weight:700;display:none;justify-content:space-between;align-items:center}
 #sticky .r1{color:var(--gold)} #sticky .r10{color:var(--silver)} #sticky .r100{color:var(--bronze)}
 body.has-sticky{padding-top:52px}
-/* 3リーグ順位カード */
-.lgc{padding:10px 4px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--sub);
-  font-size:.78rem;font-weight:700;cursor:pointer;text-align:center}
+/* 3リーグ順位カード（見た目は上のタブと共通。色はリーグごと: スーパー=濃い青／ハイパー=黄／マスター=紫） */
+.lgc{padding:10px 4px;border-radius:10px;font-size:.78rem;font-weight:700;cursor:pointer;text-align:center}
 .lgc small{display:block;font-size:.6rem;font-weight:500;margin-top:3px;opacity:.75}
 .lgc .lgc-n{display:block}
-.lgc .lgc-r{display:block;font-size:1.05rem;margin-top:3px;font-variant-numeric:tabular-nums;color:var(--ink)}
-.lgc[data-lg="gl"].act{border-color:var(--gl);background:rgba(77,141,255,.14);color:var(--ink)}
-.lgc[data-lg="ul"].act{border-color:var(--ul);background:rgba(245,197,66,.12);color:var(--ink)}
-.lgc[data-lg="ml"].act{border-color:var(--ml);background:rgba(176,108,255,.13);color:var(--ink)}
+.lgc .lgc-r{display:block;font-size:1.05rem;margin-top:3px;font-variant-numeric:tabular-nums;color:inherit}
+.lgc[data-lg="gl"]{--mc:var(--mcB);--mgl:rgba(59,110,240,.45);
+  --mg:linear-gradient(160deg,#9fc0ff 0%,#3b6ef0 45%,#23429c 100%)}
+.lgc[data-lg="ul"]{--mc:var(--mcU);--mi:#4a3200;--mgl:rgba(240,168,39,.45);
+  --mg:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%)}
+.lgc[data-lg="ml"]{--mc:var(--mcM);--mgl:rgba(139,92,246,.45);
+  --mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%)}
 /* メダル色は上の :root / :root.light が持つ */
 .rank-num.r1{color:var(--gold);text-shadow:0 0 24px rgba(255,213,74,.35)}
 .rank-num.r10{color:var(--silver)}
@@ -185,6 +205,9 @@ body.has-sticky{padding-top:52px}
 .lgc-r.r1{color:var(--gold)!important}
 .lgc-r.r10{color:var(--silver)!important}
 .lgc-r.r100{color:var(--bronze)!important}
+/* 点灯中のタブでは順位もタブの文字色にそろえる(金の点灯に金文字だと読めなくなるため。
+   メダルの色は下の大きい順位が示す) */
+.lgc.act .lgc-r{color:inherit!important}
 .rank-pct.pct-gold{background:rgba(255,213,74,.14);color:var(--gold)}
 /* コピー */
 #copybtn{width:100%;margin-top:14px;padding:12px;border-radius:10px;border:1px solid var(--cy);
@@ -298,10 +321,30 @@ body.has-sticky{padding-top:52px}
   <div class="iv-hint" id="copied" style="display:none;text-align:center">コピーしました!</div>
 </div>
 
-<footer>
-  種族値・CPMデータ: ゲーム内公開データ準拠<br>
-  順位: 総合=ステータス積(SCP)基準、攻撃優先=攻撃個体値降順→SCP順。<b>攻・防・HPがぴったり同じ個体は同順位(タイ)</b>で、重なったぶんだけ次の順位を飛ばします(1位が2通りなら次は3位)。表示のSCPは切り捨ての整数なので、<b>同じ数字でも中身が違えば順位は分かれます</b>。並び順は同順位内でCP降順(CPが違っても順位は分かれません)。<br>最低個体値: 野生0 / 交換1・2・3・5(フレンドレベル) / シャドウレイド6 / レイド・ふか・リワード10<br>アメXL: PL40からの累計必要数(40〜42:各10 / 42〜44:各12 / 44〜46:各15 / 46〜48:各17 / 48〜50:各20、PL50まで合計296)
-</footer>
+<button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+<div id="helpbody" class="helpbody" style="display:none">
+  <h4>このツールでできること</h4>
+  <p>ポケモンと個体値を入れると、<b>4096通りすべてを計算</b>して、その個体がリーグ内で何位かを出します。
+    3リーグの順位を同時に表示し、タップで詳しい内容に切り替わります。</p>
+  <h4>順位の決め方</h4>
+  <ul>
+    <li><b>総合</b> ＝ ステータス積（SCP）の高い順</li>
+    <li><b>攻撃優先</b> ＝ 攻撃の個体値が高い順 → 同じならSCP順（マスターのみ）</li>
+  </ul>
+  <p><b>攻・防・HPがぴったり同じ個体は同順位（タイ）</b>で、重なったぶんだけ次の順位を飛ばします
+    （1位が2通りなら次は3位）。表示のSCPは切り捨ての整数なので、<b>同じ数字でも中身が違えば順位は分かれます</b>。
+    並びは同順位のなかではCPの高い順です（CPが違っても順位は分かれません）。</p>
+  <h4>入手方法（最低個体値）</h4>
+  <p>野生 0 ／ 交換 1・2・3・5（フレンドレベル）／ シャドウレイド 6 ／ レイド・ふか・リワード 10。
+    選ぶと、その下限を満たす個体だけで順位を数え直します。</p>
+  <h4>アメXL</h4>
+  <p>PL40からの累計の必要数です（40〜42は各10 ／ 42〜44は各12 ／ 44〜46は各15 ／ 46〜48は各17 ／
+    48〜50は各20。PL50まで合計296）。</p>
+  <h4>PL上限</h4>
+  <p>50 ／ 51（最高の相棒）。メガシンカのポケモンでは、<b>メガLv4</b> の 52 と、
+    メガLv4＋最高の相棒の 53 も選べます。アメXLを使わない場合の上限（40・41）も並べてあります。</p>
+</div>
+<footer>種族値・CPMデータ: ゲーム内公開データ準拠</footer>
 </div>
 
 <script>
@@ -703,6 +746,15 @@ document.querySelectorAll('.cap').forEach(c=>c.addEventListener('click',()=>{
   state.cap=+c.dataset.cap;
   render();
 }));
+// 使い方タブ(仕様・前提の説明はここ1か所にまとめる)
+(function(){
+  const tab=document.getElementById('helptab'), body=document.getElementById('helpbody');
+  tab.addEventListener('click',()=>{
+    const open=tab.getAttribute('aria-expanded')==='true';
+    tab.setAttribute('aria-expanded',!open);
+    body.style.display=open?'none':'block';
+  });
+})();
 </script>
 <script src="/assets/theme.js"></script>
 </body>

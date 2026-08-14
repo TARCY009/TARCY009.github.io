@@ -1,0 +1,76 @@
+/* 全ツール共通のタブ（立体グラデーション＋役割ごとの色）と「使い方」タブ。
+   /gbl/・/rocket/・火力チェッカーで確定した質感を、どのツールでも3行の読み込みだけで使えるようにしたもの。
+
+   使い方:
+     独立ON/OFF …… <div class="gtabs"><button class="t-shadow" aria-pressed="false">…</button>…</div>
+     排他の2択 …… <div class="gtabs"><div class="gseg"><button class="t-gold" …>…</button>…</div></div>
+       （排他はすき間2pxでくっつけ、独立ON/OFFは離して置く＝押したときの効き方の違いが並びで分かる）
+
+   色は下の t-* プリセットを付けるだけ。自分で決めたいときは
+   --mc(ダークの未選択の文字色) / --mcl(ライトの未選択の文字色) / --mg(点灯のグラデーション) /
+   --mgl(点灯の光彩) / --mi(点灯の文字色・既定は白) を指定する。
+   ライトの未選択の文字色を分けているのは、ダーク用の明るい色が白い土台でほぼ見えないため。 */
+.gtabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.gtabs button{font:inherit;font-size:.8rem;font-weight:800;line-height:1.5;flex:0 1 auto;cursor:pointer;
+  border:1px solid #2a3560;border-radius:11px;padding:8px 14px;
+  background:linear-gradient(180deg,#1e2850,#151d38);color:var(--mc,#9fb0d0);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+.gtabs button:hover:not(:disabled){transform:translateY(-1px);
+  box-shadow:0 4px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+.gtabs button:focus-visible{outline:2px solid #8b5cf6;outline-offset:2px}
+.gtabs button:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
+/* ライトの未選択の土台（白系）。点灯中の見た目はテーマによらず同じなので、
+   :not(…) で「点灯していないボタン」だけに限定する（限定しないと詳細度で点灯の色に勝ってしまう） */
+:root.light .gtabs button:not([aria-pressed="true"]):not([aria-selected="true"]){
+  border-color:#dfe6f5;background:linear-gradient(180deg,#fff,#eff3fc);
+  box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff;color:var(--mcl,var(--mc,#5d6b7a))}
+:root.light .gtabs button:not([aria-pressed="true"]):not([aria-selected="true"]):hover:not(:disabled){
+  box-shadow:0 4px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+.gtabs button[aria-pressed="true"],.gtabs button[aria-selected="true"]{
+  color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);
+  background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+/* 排他の2〜3択はくっつけて1つのまとまりに見せる（外側だけ角丸を大きくする） */
+.gseg{display:flex;gap:2px;flex:0 1 auto;min-width:0}
+.gseg button{flex:1 1 auto;border-radius:5px}
+.gseg button:first-child{border-radius:11px 5px 5px 11px}
+.gseg button:last-child{border-radius:5px 11px 11px 5px}
+/* 広い画面は内容ぶんの幅で左寄せ、狭い画面は横いっぱいに伸ばして押しやすくする。
+   ボタンが1つだけの並びには .one を付ける（伸ばすと排他の2択と見分けが付かなくなるため） */
+@media (max-width:560px){
+  .gtabs>button,.gseg{flex:1 1 auto}
+  .gtabs.one>button{flex:0 1 auto}
+}
+
+/* 役割ごとの色（UIデザインの共通ルール）。
+   水色・金・緑は点灯すると明るいので、文字は白ではなく濃い色（--mi）にする */
+.t-shadow{--mc:#c9a7ff;--mcl:#7a3cc4;--mgl:rgba(139,92,246,.45);
+  --mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%)}
+.t-mega{--mc:#f795c8;--mcl:#b02a6c;--mgl:rgba(214,51,132,.45);
+  --mg:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%)}
+.t-cyan{--mc:#7fe6f5;--mcl:#0b7a92;--mi:#042330;--mgl:rgba(8,180,201,.45);
+  --mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%)}
+.t-gold{--mc:#ffd873;--mcl:#8a6000;--mi:#4a3200;--mgl:rgba(240,168,39,.45);
+  --mg:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%)}
+.t-green{--mc:#8be3a8;--mcl:#1c7a44;--mi:#04301a;--mgl:rgba(63,190,109,.42);
+  --mg:linear-gradient(160deg,#9ff0b6 0%,#3fbe6d 45%,#217a45 100%)}
+.t-blue{--mc:#9fc0ff;--mcl:#2a52b8;--mgl:rgba(59,110,240,.45);
+  --mg:linear-gradient(160deg,#9fc0ff 0%,#3b6ef0 45%,#23429c 100%)}
+.t-red{--mc:#ffa694;--mcl:#b83a24;--mgl:rgba(224,74,47,.45);
+  --mg:linear-gradient(160deg,#ff9f8c 0%,#e04a2f 45%,#992a17 100%)}
+
+/* ページ最下部の「使い方」タブ。画面には結論だけを置き、仕様・前提の説明はここへ集約する。
+   文字色はツール側の変数に乗る（無いときは既定値で描く） */
+.helptab{width:100%;font:inherit;font-size:.8rem;font-weight:700;padding:11px;cursor:pointer;margin-top:22px;
+  color:var(--sub,#93a3b3);background:none;border:1px dashed var(--line,#2e3a47);border-radius:12px;
+  transition:color .12s ease,border-color .12s ease}
+.helptab:hover,.helptab[aria-expanded="true"]{color:#a78bfa;border-color:#6d4fb0}
+:root.light .helptab:hover,:root.light .helptab[aria-expanded="true"]{color:#7a3cc4;border-color:#c4b0ea}
+.helpbody{margin-top:8px;padding:14px 16px;border:1px solid var(--line,#2e3a47);border-radius:14px;
+  background:var(--panel,rgba(26,35,66,.9))}
+.helpbody h4{margin:16px 0 5px;font-size:.8rem;color:#a78bfa}
+:root.light .helpbody h4{color:#7a3cc4}
+.helpbody h4:first-child{margin-top:0}
+.helpbody p,.helpbody li{font-size:.74rem;color:var(--sub,#93a3b3);line-height:1.75;margin:0}
+.helpbody ul{margin:0;padding-left:1.15em}
+.helpbody b{color:var(--text,var(--ink,#e8edf2))}
