@@ -160,7 +160,9 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .cattag.G{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512}
 .cattag.D{background:linear-gradient(135deg,#7fb0ff,#5f86e8);color:#0a1533}
 .cattag.S{background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
-.top{display:flex;align-items:flex-start;gap:12px}
+/* 左（わざ等）と右（ポイント）の高さが違うので中央でそろえる。
+   タンクは左が1行しかなく、上そろえだと左下に大きな空白ができていた */
+.top{display:flex;align-items:center;gap:12px}
 .rank{min-width:56px;text-align:center;font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1rem;border-radius:10px;padding:6px 0;background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
 .rank.r1{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#3a2500;border-color:transparent;box-shadow:0 0 14px rgba(255,215,106,.35)}
 .rank.r2{background:linear-gradient(135deg,var(--sil1),var(--sil2));color:#20303e;border-color:transparent;box-shadow:0 0 14px rgba(200,214,230,.28)}
