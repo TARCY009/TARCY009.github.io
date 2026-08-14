@@ -119,8 +119,14 @@ INT_REF = 21000.0        # 迎撃の生値がこの値で満点。ジムに置�
 # ══════════════════════════════════════════════════════════════════
 REC_FIGHT_SE = 1.15      # かくとうの弱点を突けるタイプ(ひこう・エスパー・フェアリー)
 REC_FIGHT_NVE = 0.9      # かくとうに半減されるタイプ(いわ・むし・あく)
-REC_BARS = {1: 0.2, 2: 1.0, 3: 0.85}   # 1ゲージ技は重いので大きく割り引く
-REC_DUR_ALPHA = 0.25     # 発生の速さ (2.5秒/発生秒)^α → 1.2秒で1.20倍・5.0秒で0.84倍
+REC_BARS = {1: 0.4, 2: 1.0, 3: 0.85}   # 1ゲージ技は溜めるのに時間がかかるぶん割り引く
+# 時間の罰則は「基準を超えたぶんだけ」効かせる。全部のわざに一律で掛けると、
+# 速いわざ同士の並びまで動いてしまい、ハピナスの「マジカルシャイン or サイコキネシス」が崩れる。
+REC_DUR_REF, REC_DUR_POW = 3.5, 3    # 全体の長さ: 3.5秒を超えたぶんだけ罰する
+REC_DW_REF, REC_DW_POW = 2.6, 4      # ダメージが出るまで: 2.6秒より遅いぶんだけ罰する
+#   じしん (全体3.5 / 発生2.6) は罰則ゼロ＝採用ライン。
+#   はかいこうせん (4.0 / 3.5)・ソーラービーム (5.0 / 2.8)・オーバーヒート (4.0 / 2.6) は
+#   ここで落ちる。実測でこの3つは1匹も選ばれない
 SECOND_MOVE_RATIO = 0.80 # ベスト技スコアの80%以上なら2番手技も併記
 
 name2mon = {}
@@ -164,7 +170,10 @@ def recommend_moves(p):
         if not cm: continue
         v = cm['power'] * (1.2 if cm['type'] in p['types'] else 1.0) * fight_bonus(cm['type'])
         v *= REC_BARS.get(cm.get('bars'), 1.0)
-        v *= (SP_DUR_REF / ((cm.get('dur') or 2500) / 1000.0)) ** REC_DUR_ALPHA
+        dur = (cm.get('dur') or 2500) / 1000.0
+        dw = (cm.get('dw') or cm.get('dur') or 2500) / 1000.0   # ダメージが出るまでの時間
+        v *= min(1.0, REC_DUR_REF / dur) ** REC_DUR_POW
+        v *= min(1.0, REC_DW_REF / dw) ** REC_DW_POW
         sps.append((v, cm['jp']))
     if not best_f or not sps: return None
     sps.sort(key=lambda x: -x[0])

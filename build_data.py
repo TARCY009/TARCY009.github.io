@@ -84,17 +84,17 @@ SUPP_Q = {  # ノーマルアタック(通常枠)へ追加
 SUPP_MOVES = {
     'PLASMA_FISTS': {   # プラズマフィスト(ゼラオラ専用・GOフェス2026実装)
         'move': {'movementId': 'PLASMA_FISTS', 'pokemonType': 'POKEMON_TYPE_ELECTRIC',
-                 'power': 135.0, 'durationMs': 3500, 'energyDelta': -50},   # 威力135・3.5秒・2ゲージ
+                 'power': 135.0, 'durationMs': 3500, 'damageWindowStartMs': 2600, 'energyDelta': -50},  # 威力135・3.5秒・2ゲージ
         'learn': {'ZERAORA': 'cinematicMoves'},   # ゼラオラのゲージ技(通常枠)
     },
     'GLAIVE_RUSH': {    # きょけんとつげき(セグレイブ・コミュニティデイ2026-06)
         'move': {'movementId': 'GLAIVE_RUSH', 'pokemonType': 'POKEMON_TYPE_DRAGON',
-                 'power': 105.0, 'durationMs': 2000, 'energyDelta': -50},   # 威力105・2.0秒・2ゲージ
+                 'power': 105.0, 'durationMs': 2000, 'damageWindowStartMs': 1400, 'energyDelta': -50},  # 威力105・2.0秒・2ゲージ
         'learn': {'BAXCALIBUR': 'eliteCinematicMove'},   # 特別枠(CD限定)
     },
     'SNIPE_SHOT': {     # ねらいうち(インテレオン専用・2026-07実装)
         'move': {'movementId': 'SNIPE_SHOT', 'pokemonType': 'POKEMON_TYPE_WATER',
-                 'power': 100.0, 'durationMs': 3500, 'energyDelta': -33},   # 威力100・3.5秒・3ゲージ
+                 'power': 100.0, 'durationMs': 3500, 'damageWindowStartMs': 2600, 'energyDelta': -33},  # 威力100・3.5秒・3ゲージ
         'learn': {'INTELEON': 'cinematicMoves'},   # 通常枠(わざマシンで習得可)
     },
 }
@@ -213,8 +213,12 @@ def main():
             if nm is None:
                 print('警告: 日本語名未収録の技 →', mid, '(JP_MOVE_FIXに追記してください)')
                 nm = mid
+            # w = ダメージが出るまでの時間(秒)。全体の長さ(d)とは別物で、
+            #    たとえば じしん は d=3.5秒 だが w=2.6秒 で先にダメージが出る。
+            #    ジム防衛のおすすめわざ選びで使う（重いわざを見分けるため）
             moves[mid] = {'n':nm,'t':ms['pokemonType'].replace('POKEMON_TYPE_',''),
-                          'p':ms['power'],'d':ms.get('durationMs',0)/1000,'e':ms.get('energyDelta',0)}
+                          'p':ms['power'],'d':ms.get('durationMs',0)/1000,'e':ms.get('energyDelta',0),
+                          'w':ms.get('damageWindowStartMs',0)/1000}
 
     def display_name(pid, form):
         base = pname(pid)

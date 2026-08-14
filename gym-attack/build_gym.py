@@ -141,6 +141,9 @@ for mid in sorted(used):
     e = gm['e']
     moves[mid] = {'jp': gm['n'], 'type': ti[gm['t']], 'power': gm['p'],
                   'energy': e, 'dur': int(round(gm['d'] * 1000)),
+                  # dw = ダメージが出るまでの時間(ミリ秒)。全体の長さ(dur)とは別物。
+                  #      例: じしんは dur=3500 だが dw=2600 で先にダメージが出る
+                  'dw': int(round(gm.get('w', 0) * 1000)) or None,
                   'fast': e > 0,
                   'bars': None if e > 0 else (1 if e <= -100 else 2 if e <= -50 else 3)}
 gym['moves'] = moves
