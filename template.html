@@ -79,9 +79,7 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .ivrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .ivrow input{padding:8px 6px;text-align:center}
 .ivrow label.f{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.toggle-row{display:flex;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap;font-size:.85rem}
-.toggle-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
-.toggle-row input{accent-color:var(--focusc,var(--accent))}
+.ivrow label.f.iv{margin:2px 0 4px;text-align:center}
 .lv-out{margin-top:10px;font-size:.9rem;background:linear-gradient(90deg,#eaf5ff,#f1f7ff);border:1.5px solid #c9def7;border-radius:10px;padding:8px 12px;display:none}
 .lv-out.err{background:linear-gradient(90deg,#fdeff0,#fdf4f0);border-color:#efc2c7;color:#a33}
 button.main{font:inherit;font-weight:700;background:linear-gradient(92deg,var(--focusc,var(--accent)),var(--accent));color:#fff;border:none;border-radius:11px;padding:10px 24px;cursor:pointer;margin-top:14px;
@@ -89,15 +87,34 @@ button.main{font:inherit;font-weight:700;background:linear-gradient(92deg,var(--
 button.main:disabled{background:#b9c6dd;box-shadow:none;cursor:not-allowed}
 button.main:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 11px 22px -8px var(--cardglow,rgba(59,110,240,.7))}
 button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+/* 絞り込みタブ: 立体的に浮かせ、選択中はその役割の色のグラデーションで点灯する
+   (全ツール共通のUIデザイン)。未選択でも文字色で役割の色を示すので、押す前から色で見分けられる */
 .modes{display:flex;gap:6px;margin:2px 0 12px;flex-wrap:wrap}
-.modes button{font:inherit;font-size:.78rem;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:5px 14px;cursor:pointer;color:var(--sub);transition:border-color .15s,color .15s}
-.modes button:hover{border-color:#c9c0f2;color:var(--ink)}
-.modes button[aria-pressed="true"]{background:linear-gradient(92deg,var(--violet),var(--accent));border-color:transparent;color:#fff;font-weight:700;box-shadow:0 5px 12px -5px rgba(139,92,246,.55)}
-.modes button:disabled{opacity:.4;cursor:default}
-.modes button:disabled:hover{border-color:var(--line);color:var(--sub)}
-#fShadow{display:inline-flex;align-items:center;justify-content:center;font-size:1rem;padding:5px 18px}
+.modes button{font:inherit;font-size:.8rem;font-weight:800;flex:0 1 auto;
+  border:1.5px solid var(--line);background:linear-gradient(180deg,#fff,#eff3fc);border-radius:11px;padding:8px 12px;cursor:pointer;
+  color:var(--mc,var(--sub));box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff;
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+.modes button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+.modes button[aria-pressed="true"]{color:#fff;border-color:transparent;transform:translateY(-1px);
+  background:var(--mg);box-shadow:0 6px 16px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+.modes button:disabled{opacity:.4;cursor:default;box-shadow:none;transform:none}
+/* 役割ごとの色: シャドウ=紫 ／ メガ・ゲンシ=マゼンタ(名前横のメガマークと同系) ／ シールド破壊=水色 */
+#fShadow{--mc:#7a3cc4;--mg:linear-gradient(160deg,#bb90f2 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.42);
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 1 auto;padding:8px 18px;font-size:.95rem}
+#fMega{--mc:#c02c76;--mg:linear-gradient(160deg,#f083bb 0%,#d63384 45%,#9c1a5e 100%);--mgl:rgba(214,51,132,.42)}
+#mShield{--mc:#0b7f92;--mg:linear-gradient(160deg,#63dbec 0%,#08b4c9 45%,#067383 100%);--mgl:rgba(8,180,201,.45)}
+/* 自分のポケモンの計算のしかた。排他の2択(今の状態/フル強化)はくっつけて1つのまとまりに見せ、
+   独立ON/OFFのシャドウは離して置く(押したときの効き方の違いが並びで分かるように) */
+.mymodes{margin:12px 0 0}
+.seg{display:flex;gap:2px;flex:0 1 auto}
+.seg button{flex:1 1 auto;--mc:#0b7f92;--mg:linear-gradient(160deg,#7fd8ea 0%,#08b4c9 45%,#0a6c9a 100%);--mgl:rgba(8,180,201,.4)}
+.seg button:first-child{border-radius:11px 5px 5px 11px}
+.seg button:last-child{border-radius:5px 11px 11px 5px}
+#myShadow{--mc:#7a3cc4;--mg:linear-gradient(160deg,#bb90f2 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.42);
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 1 auto}
 .mine-sum{position:relative;min-height:52px;background:linear-gradient(90deg,var(--goldbg),#fffcf1);border:1.5px solid var(--goldline);border-left:5px solid var(--goldline);border-radius:10px;padding:9px 62px 9px 12px;font-size:.85rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .mine-sum b{color:var(--gold)}
+.mine-sum .msiv{color:var(--sub);font-size:.72rem;white-space:nowrap;margin-left:5px}
 /* 結論の数字(必要なPL・あと何回)は一段大きく出す */
 .bignum{font-size:1.15rem;font-weight:800;letter-spacing:.02em}
 .rmoves .bignum{font-size:.95rem}
@@ -115,6 +132,14 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .plbtn.smax[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);border-color:#6d28d9;color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(-1px)}
 .plneed{flex-basis:100%;font-size:.78rem;color:#8a6100;font-weight:700}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid #eceffa}
+/* 狭い画面では余白を削ってわざ名の行幅を稼ぐ(1行に収まる行が増えて一覧が見やすくなる) */
+@media (max-width:560px){
+  .card{padding:18px 11px 14px}
+  .rank-row{padding:8px 3px;gap:7px}
+  .rmoves{font-size:.72rem}
+  /* 狭い画面ではタブを横いっぱいに伸ばして押しやすくする(広い画面は内容ぶんの幅で左寄せ) */
+  .modes button,.seg{flex:1 1 auto}
+}
 #rankList .rank-row:nth-child(-n+3):not(.mine){border-radius:12px;margin:3px 0}
 #rankList .rank-row:nth-child(1):not(.mine){background:linear-gradient(90deg,#fff6d8,#fffdf3);border:1.5px solid #f2c14e}
 #rankList .rank-row:nth-child(1):not(.mine) .rk{color:#b07a00}
@@ -123,7 +148,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 #rankList .rank-row:nth-child(3):not(.mine){background:linear-gradient(90deg,#fdeede,#fffaf4)  ;border:1.5px solid #e0b088}
 #rankList .rank-row:nth-child(3):not(.mine) .rk{color:#a5652a}
 .rank-row.mine{background:linear-gradient(90deg,var(--goldbg),#fffcf1);border:1.5px solid var(--goldline);border-radius:12px;margin:3px 0}
-.rk{width:38px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
+.rk{width:30px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
 .rank-row.mine .rk{color:var(--gold)}
 .rmain{flex:1;min-width:0}
 /* 名前 → タイプアイコン → PL表記 の順。名前側のみ省略し、アイコンは常に表示 */
@@ -139,12 +164,16 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rmoves{font-size:.74rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 「PL◯◯で耐える」は結論なので、切らずに折り返して全部見せる */
 .rmoves.holdline{white-space:normal;overflow:visible}
+/* わざ構成は「どの構成でこの火力なのか」の要なので、狭い画面でも切らずに
+   わざ単位で折り返す(わざ名の途中で「シャドー…」と切れると何の構成か読めない) */
+.rmoves.mvline{display:flex;flex-wrap:wrap;align-items:center;column-gap:4px;white-space:normal;overflow:visible}
+.mvline .mv{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .rmoves .sp{color:var(--special)}
 .bar{height:6px;background:#e8ecf8;border-radius:99px;margin-top:4px;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent) 55%,var(--violet));border-radius:99px}
 .rank-row.mine .bar i,#rankList .rank-row:nth-child(1):not(.mine) .bar i{background:linear-gradient(90deg,#f0b429,#dd8a00)}
-.rdps{width:74px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
-.rdps small{display:block;font-weight:400;font-size:.62rem;color:var(--sub)}
+.rdps{width:64px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
+.rdps small{display:block;font-weight:400;font-size:.58rem;color:var(--sub)}
 .wchip{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:var(--ink);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:99px;padding:2px 9px 2px 3px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(30,40,90,.28)}
 .wchip b{font-weight:800;color:var(--accent)}
 .bossline{display:flex;align-items:center;gap:12px;margin-top:12px}
@@ -152,7 +181,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .catchcp{font-size:.8rem;color:var(--sub);margin-top:4px}
 .catchcp b{color:var(--ink)}
 .rmoves .tbadge{margin-right:3px}
-.modes button .shadowmark,.toggle-row .shadowmark{color:var(--shadow)}
+.modes button .shadowmark{color:var(--shadow)}
 .modes button[aria-pressed="true"] .shadowmark{color:#fff}
 .tag-s2{display:inline-flex;align-items:center;background:var(--shadow);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;vertical-align:1px}
@@ -164,7 +193,23 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .more{width:100%;margin-top:10px;font:inherit;font-size:.82rem;border:1.5px dashed #cfc6f0;background:#fbfaff;border-radius:11px;padding:9px;cursor:pointer;color:var(--sub);transition:border-color .15s,background .15s}
 .more:hover{border-color:var(--violet);background:#f6f2ff;color:var(--ink)}
 .note{font-size:.72rem;color:var(--sub);margin-top:10px}
+/* 文字を減らすために画面から外した補足。消さずに隠しておき、
+   のちの「説明ありモード」ではルート要素に explain を付けるだけで一斉に出せる */
+.expl{display:none}
+.explain .expl{display:revert}   /* 行の途中に置く補足もあるので、元の表示種別へ戻す */
 .empty{color:var(--sub);font-size:.85rem;text-align:center;padding:18px 0}
+/* ページ最下部の「使い方」タブ。仕様・前提の説明はすべてここに集める(画面には結論だけ置く) */
+.helpwrap{margin:2px 0 6px}
+#helptab{width:100%;font:inherit;font-size:.8rem;font-weight:700;padding:11px;cursor:pointer;color:var(--sub);
+  background:linear-gradient(180deg,#fff,#eff3fc);border:1.5px solid var(--line);border-radius:12px;
+  box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff;transition:color .12s,border-color .12s}
+#helptab:hover,#helptab[aria-expanded="true"]{color:var(--violet);border-color:#cfc6f0}
+#helpbody{margin-top:8px;padding:14px 16px;background:rgba(255,255,255,.92);border:1.5px solid var(--line);border-radius:14px}
+#helpbody h4{margin:16px 0 5px;font-size:.8rem;color:var(--violet)}
+#helpbody h4:first-child{margin-top:0}
+#helpbody p,#helpbody li{font-size:.74rem;color:var(--sub);line-height:1.75;margin:0}
+#helpbody ul{margin:0;padding-left:1.15em}
+#helpbody b{color:var(--ink)}
 footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}
 </style>
@@ -173,11 +218,11 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="wrap">
 <header>
   <h1>ポケモンGO <span>火力チェッカー</span></h1>
-  <p>ボスを設定 → 火力ランキング自動生成。自分のポケモンはCP＋個体値で今の火力がわかる。特別技・レガシー技も全対応。</p>
+  <p>ボスを選ぶと火力ランキング。自分のポケモンは今の火力と順位がわかります。</p>
 </header>
 
 <div class="card c-boss">
-  <div class="step"><b>STEP 1</b><h2>相手（レイドボス）を設定</h2></div>
+  <div class="step"><b>STEP 1</b><h2>レイドボスを選ぶ</h2></div>
   <div class="sugg">
     <input type="text" id="bossInput" placeholder="ボスのポケモン名で検索（例：メガミュウツーX）" autocomplete="off">
     <div class="sugg-list" id="bossSugg"></div>
@@ -186,7 +231,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 </div>
 
 <div class="card c-my">
-  <div class="step"><b>STEP 2</b><h2>自分のポケモンを追加（任意）</h2></div>
+  <div class="step"><b>STEP 2</b><h2>自分のポケモン（任意）</h2></div>
   <div class="sugg">
     <input type="text" id="myInput" placeholder="ポケモン名で検索（例：ネクロズマ）" autocomplete="off">
     <div class="sugg-list" id="mySugg"></div>
@@ -196,23 +241,25 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <div><label class="f">ノーマルアタック</label><div class="selrow"><select id="fastSel"></select><span class="seltype" id="fastType"></span></div></div>
       <div><label class="f">SPアタック</label><div class="selrow"><select id="chgSel"></select><span class="seltype" id="chgType"></span></div></div>
     </div>
-    <div class="toggle-row">
-      <label><input type="radio" name="statmode" value="cp" checked> 今の状態（CP＋個体値）で計算</label>
-      <label><input type="radio" name="statmode" value="max"> フル強化想定（PL50・個体値15）</label>
-      <label title="シャドウ（攻撃1.2倍・防御5/6）として計算"><input type="checkbox" id="myShadow"> <i class="shadowmark"></i>×1.2</label>
+    <div class="modes mymodes">
+      <span class="seg">
+        <button id="smCp" type="button" aria-pressed="true">今の状態</button>
+        <button id="smMax" type="button" aria-pressed="false" title="PL50・個体値15まで上げたときの火力">フル強化</button>
+      </span>
+      <button id="myShadow" type="button" aria-pressed="false" title="シャドウ（攻撃1.2倍・防御5/6）として計算"><i class="shadowmark"></i>シャドウ</button>
     </div>
     <div id="cpArea" style="margin-top:8px">
       <div class="cprow"><label class="f" id="cpLabel">CP</label><input type="number" id="myCP" min="10" placeholder="例: 2387"></div>
+      <label class="f">個体値</label>
       <div class="ivrow">
-        <div><label class="f">攻撃 個体値</label><input type="number" id="ivA" min="0" max="15" value="15"></div>
-        <div><label class="f">防御 個体値</label><input type="number" id="ivD" min="0" max="15" value="15"></div>
-        <div><label class="f">HP 個体値</label><input type="number" id="ivH" min="0" max="15" value="15"></div>
+        <div><label class="f iv">攻撃</label><input type="number" id="ivA" min="0" max="15" value="15"></div>
+        <div><label class="f iv">防御</label><input type="number" id="ivD" min="0" max="15" value="15"></div>
+        <div><label class="f iv">HP</label><input type="number" id="ivH" min="0" max="15" value="15"></div>
       </div>
     </div>
     <div class="lv-out" id="lvOut"></div>
     <button class="main" id="addBtn" disabled>ランキングに追加</button>
   </div>
-  <p class="note">「(特)」は特別技・レガシー技（イベント限定やすごいわざマシンスペシャル等で習得）。習得済みならそのまま選択できます。</p>
 </div>
 
 <div class="card c-rank">
@@ -220,12 +267,16 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div class="modes">
     <button id="fShadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
     <button id="fMega" type="button" aria-pressed="false" title="メガ・ゲンシを含める">メガ・ゲンシ</button>
-    <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドのシールド破壊向き（メガのみ）">シールド破壊(メガ)</button>
+    <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドのシールド破壊向き（メガシンカのみの一覧に切り替わります）">🛡シールド破壊</button>
   </div>
   <div id="mineSummary"></div>
-  <div id="rankList"><div class="empty">ボスを設定するとランキングが表示されます</div></div>
+  <div id="rankList"><div class="empty">ボスを選ぶとランキングが出ます</div></div>
   <button class="more" id="moreBtn" style="display:none">さらに表示</button>
-  <p class="note">火力＝ノーマルアタック100回サイクルの総合DPS（相手：防御種族値100・個体値15・PL40／表示値は自分PL50・個体値15、自分のポケモンは入力値で計算）。最適技構成はPL1〜51の全レベルで火力を算出し、最多レベルで1位となった構成を採用（1位がゲージ分割なし技の場合、分割あり技との火力差7%未満なら分割ありを優先）。登録した自分のポケモンは「強化 +0.5」ボタンで1回の強化ぶんずつPLを上げられます（ゲーム内ではPLが表示されないため、強化の回数で数えられるようにしています。「−」で1回戻す、「↩」で入力したPLに戻る。PL50超は最高の相棒でのみ到達）。メガ・ゲンシは「メガLv4」「メガLv4＋相棒」でPL上限が52・53に広がります（アメを使わないブーストなので1タップでそのPLになります。もう一度押すと解除）。「シールド破壊(メガ)」タブはスーパーメガレイド用：シールドはメガシンカポケモンがSPアタックを撃つと1枚壊せる（1人1枚・タイプ不問）ため、①ボスのSPアタック（通常枠のみ・シールド展開中の攻撃2倍補正込み）をどれを受けても1発で倒れない、②シールド破壊が安定するゲージ2分割・3分割のSPアタックを持つ、の2条件を満たすメガだけを対ボス火力(DPS)順に表示します（メガ=PL50・個体値15、ボス=PL40想定の被ダメ計算）。登録した自分のメガもこの一覧に入り、1発耐えられない場合は「何PLまで上げれば耐えるか」とそのときの火力を出します（登録したわざ・個体値で計算）。特別技はゲーム内データを公式発表と照合して補完済み。</p>
+</div>
+
+<div class="helpwrap">
+  <button id="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+  <div id="helpbody" style="display:none"></div>
 </div>
 
 <footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
@@ -399,10 +450,10 @@ function bossMovesHtml(p){
     }
     return out.join('')||'<span class="bm">なし</span>';
   };
-  return `<details class="bossmoves"><summary>ボスが使ってくるわざを見る</summary>
+  return `<details class="bossmoves"><summary>ボスのわざ</summary>
     <div class="bm-sec">ノーマルアタック</div><div class="bm-list">${fmt(p.q)}</div>
     <div class="bm-sec">SPアタック</div><div class="bm-list">${fmt(p.c)}</div>
-    <small class="bm-note">※特別わざ・レガシーわざはレイドボスは使ってこないため除外しています。</small>
+    <small class="bm-note expl">※特別わざ・レガシーわざはレイドボスは使ってこないため除外しています。</small>
   </details>`;
 }
 function renderBoss(){
@@ -452,13 +503,25 @@ function buildMyForm(){
   const pm=preMega(myKey), isMega=pm!==myKey;
   document.getElementById('cpLabel').textContent=isMega?`CP（${D.pokemon[pm].n}のとき）`:'CP';
   document.getElementById('myCP').placeholder=isMega?`メガシンカ前のCP`:'例: 2387';
-  document.getElementById('myShadow').disabled=!p.shadow;
-  if(!p.shadow) document.getElementById('myShadow').checked=false;
+  shBtn.disabled=!p.shadow;
+  if(!p.shadow) myShadowOn=false;
+  syncMyModes();
   checkLevel();
 }
 document.getElementById('fastSel').addEventListener('change',syncMoveTypeIcons);
 document.getElementById('chgSel').addEventListener('change',syncMoveTypeIcons);
-function statMode(){ return document.querySelector('input[name=statmode]:checked').value; }
+// 計算のしかた: 'cp'=入力したCPと個体値の今の状態 / 'max'=PL50・個体値15まで上げたとき
+let myMode='cp', myShadowOn=false;
+function statMode(){ return myMode; }
+const smCp=document.getElementById('smCp'), smMax=document.getElementById('smMax'), shBtn=document.getElementById('myShadow');
+function syncMyModes(){
+  smCp.setAttribute('aria-pressed',myMode==='cp');
+  smMax.setAttribute('aria-pressed',myMode==='max');
+  shBtn.setAttribute('aria-pressed',myShadowOn);
+}
+smCp.onclick=()=>{myMode='cp';syncMyModes();checkLevel();};
+smMax.onclick=()=>{myMode='max';syncMyModes();checkLevel();};
+shBtn.onclick=()=>{myShadowOn=!myShadowOn;syncMyModes();};
 function checkLevel(){
   const out=document.getElementById('lvOut'), btn=document.getElementById('addBtn');
   document.getElementById('cpArea').style.display = statMode()==='cp'?'block':'none';
@@ -477,12 +540,11 @@ function checkLevel(){
     out.dataset.lv=hits[0]; btn.disabled=false;
   }else{
     out.className='lv-out err';
-    out.textContent='このCPと個体値の組み合わせに一致するレベルが見つかりません。入力を確認してください。';
+    out.textContent='このCPと個体値になるPLがありません。入力を見直してください。';
     btn.disabled=true;
   }
 }
 ['myCP','ivA','ivD','ivH'].forEach(id=>document.getElementById(id).addEventListener('input',checkLevel));
-document.querySelectorAll('input[name=statmode]').forEach(r=>r.addEventListener('change',checkLevel));
 
 document.getElementById('addBtn').onclick=()=>{
   const p=D.pokemon[myKey];
@@ -492,7 +554,7 @@ document.getElementById('addBtn').onclick=()=>{
   // 防御・HPの個体値もシールド破壊(メガ)の1発耐え判定で使うので控えておく
   const ivd=isMax?15:+document.getElementById('ivD').value, ivh=isMax?15:+document.getElementById('ivH').value;
   mine.push({key:myKey,f:document.getElementById('fastSel').value,c:document.getElementById('chgSel').value,
-             lv,lv0:lv,iva,ivd,ivh,isMax,shadow:document.getElementById('myShadow').checked});
+             lv,lv0:lv,iva,ivd,ivh,isMax,shadow:myShadowOn});
   // メガを登録したらランキング側のメガ・ゲンシも出す(メガ抜きの順位と比べると相当順位がズレるため)
   if(p.mega && !fMega){ fMega=true; syncModes(); }
   renderRank();
@@ -683,7 +745,7 @@ function shieldMine(){
 function renderShieldRank(){
   const listEl=document.getElementById('rankList'), sumEl=document.getElementById('mineSummary'), moreBtn=document.getElementById('moreBtn');
   sumEl.innerHTML='';
-  if(!boss){listEl.innerHTML='<div class="empty">ボスを設定すると、そのボスのSPアタックを1発耐えられる「シールド破壊向きメガ」を表示します</div>';moreBtn.style.display='none';return;}
+  if(!boss){listEl.innerHTML='<div class="empty">ボスを選ぶと、シールド破壊に向いたメガを表示します</div>';moreBtn.style.display='none';return;}
   const rows=shieldRows();
   const my=shieldMine();
   const rankOf=d=>rows.filter(r=>r.dps>d).length+1;
@@ -702,11 +764,11 @@ function renderShieldRank(){
     const need=m.hold?'':(m.need
       ? `<span class="plneed">🛡1発耐えまで あと <b class="bignum">${plTimes(m.e.lv,m.need.lv)}回</b> の強化（PL${m.e.lv}→${m.need.lv}${way}）</span>`
       : `<span class="plneed">PL${plMaxOf(m.e)}まで上げてもこのボスのSPアタックは耐えられません${plMaxOf(m.e)<53&&D.pokemon[m.e.key].mega?'（メガLv4を入れるとさらに上げられます）':''}</span>`);
-    return `<div class="mine-sum"><span>あなたの<b>${m.p.n}</b>（${ivTxt(m.e)}）</span>${plCtlHtml(m.e,m.i)}<span>${right}</span>${need}<button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
+    return `<div class="mine-sum"><span><b>${badges(m.e.shadow,true,m.p)}${m.p.n}</b><small class="msiv">${ivTxt(m.e)}</small></span>${plCtlHtml(m.e,m.i)}<span>${right}</span>${need}<button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
   }).join('')
-    +(skipped?`<p class="note">シールド破壊の対象はメガシンカだけなので、登録した${skipped}匹は出していません。</p>`:'')
+    +(skipped?`<p class="note">シールド破壊はメガだけなので、登録した${skipped}匹は出していません。</p>`:'')
     // 強いボスほど1発耐えできるメガが減るので、何匹が条件を満たしたのかを必ず出す
-    +`<p class="note">このボスのSPアタック（シールド中2倍）を1発耐えられて、2/3分割SPアタックを持つメガは <b>${rows.length}匹</b>です。強いボスほど少なくなります。</p>`;
+    +`<p class="note">🛡1発耐え＋分割SPアタックを持つメガは <b>${rows.length}匹</b>（強いボスほど少なくなります）</p>`;
   if(!rows.length && !my.length){listEl.innerHTML='<div class="empty">条件(1発耐え+分割SPアタック持ち)を満たすメガシンカが見つかりません</div>';moreBtn.style.display='none';return;}
   const top=Math.max(rows.length?rows[0].dps:1, ...my.map(m=>m.dps));
   // 自分のメガを火力の位置に差し込む
@@ -720,11 +782,11 @@ function renderShieldRank(){
     if(r.mine){
       const gauge=r.bars>1?`（${r.bars}分割）`:'（1ゲージ・破壊が不安定）';
       const hold=r.hold
-        ? `被弾最大${r.maxHit}/HP${r.hp} で1発耐え`
-        : `<span class="ng">被弾最大${r.maxHit}/HP${r.hp} で1発アウト</span>${r.need?` → <b class="bignum">PL${r.need.lv}</b>で耐える（火力${r.need.dps.toFixed(2)}）`:' → PL51でも耐えられません'}`;
+        ? `🛡被弾最大${r.maxHit}／HP${r.hp} で1発耐え`
+        : `<span class="ng">🛡被弾最大${r.maxHit}／HP${r.hp} で1発アウト</span>${r.need?` → <b class="bignum">PL${r.need.lv}</b>で耐える（火力${r.need.dps.toFixed(2)}）`:` → PL${plMaxOf(r.e)}でも耐えられません`}`;
       return `<div class="rank-row mine"><div class="rk">${r.hold?r.rank+'位<br>相当':'PL<br>不足'}</div><div class="rmain">
         <div class="rname">${badges(r.e.shadow,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>${mineLabel(r.e)}（あなた）</small></div>
-        <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}${gauge}</div>
+        <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.e.f)}</span>＋<span class="mv">${moveLabel(r.p,r.e.c)}${gauge}</span></div>
         <div class="rmoves holdline">${hold}</div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
         <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
@@ -733,8 +795,8 @@ function renderShieldRank(){
     return `
     <div class="rank-row"><div class="rk">${r.rank}位</div><div class="rmain">
       <div class="rname">${badges(false,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}</div>
-      <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</div>
-      <div class="rmoves">被弾最大${r.maxHit}/HP${r.hp} で1発耐え（シールド中2倍補正込み・${r.maxMove.n}）</div>
+      <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</span></div>
+      <div class="rmoves">🛡被弾最大${r.maxHit}／HP${r.hp}<span class="expl">（シールド中2倍補正込み・${r.maxMove.n}）</span></div>
       <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
@@ -744,14 +806,15 @@ function renderShieldRank(){
 function renderRank(){
   const listEl=document.getElementById('rankList'), sumEl=document.getElementById('mineSummary'), moreBtn=document.getElementById('moreBtn');
   if(shieldMode){renderShieldRank();return;}   // シールド破壊(メガ)
-  if(!boss){listEl.innerHTML='<div class="empty">ボスを設定するとランキングが表示されます</div>';sumEl.innerHTML='';moreBtn.style.display='none';return;}
+  if(!boss){listEl.innerHTML='<div class="empty">ボスを選ぶとランキングが出ます</div>';sumEl.innerHTML='';moreBtn.style.display='none';return;}
   const rows=buildRanking();
   const top=rows.length?rows[0].dps:1;
   const my=mineRows();
   // 相当順位
   sumEl.innerHTML=my.map(m=>{
     const rank=rows.filter(r=>r.dps>m.dps).length+1;
-    return `<div class="mine-sum"><span>あなたの<b>${m.e.shadow?'S':''}${m.p.n}</b>（${ivTxt(m.e)}）</span>${plCtlHtml(m.e,m.i)}<span>火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b></span><button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
+    // シャドウ・メガは文字ではなく名前の左のマークで表す(全ツール共通)
+    return `<div class="mine-sum"><span><b>${badges(m.e.shadow,m.p.mega,m.p)}${m.p.n}</b><small class="msiv">${ivTxt(m.e)}</small></span>${plCtlHtml(m.e,m.i)}<span>火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b></span><button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
   }).join('');
   // 一覧（自分のポケモンを該当位置に挿入）
   const merged=[];
@@ -765,19 +828,65 @@ function renderRank(){
     if(r.mine){
       return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div><div class="rmain">
         <div class="rname">${badges(r.e.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.e.shadow)}<small>${mineLabel(r.e)}（あなた）</small></div>
-        <div class="rmoves">${moveLabel(r.p,r.e.f)} ＋ ${moveLabel(r.p,r.e.c)}</div>
+        <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.e.f)}</span>＋<span class="mv">${moveLabel(r.p,r.e.c)}</span></div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
         <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
     return `<div class="rank-row"><div class="rk">${r.rank}</div><div class="rmain">
       <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small>PL50・個体値15</small></div>
-      <div class="rmoves">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)} ＋ ${moveLabel(r.p,r.c.id,r.c.sp)}</div>
+      <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}</span></div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
   moreBtn.style.display=rows.length>showN?'block':'none';
   bindMineCtl(sumEl);
 }
+// ---- 使い方（ページ最下部のタブ）----
+// 画面には結論だけを置き、仕様・前提の説明はすべてここへ集める(全ツール共通の方針)
+const HELP_HTML = `
+  <h4>火力（DPS）の意味</h4>
+  <ul>
+    <li><b>ノーマルアタック100回ぶんのサイクル</b>で、1秒あたり何ダメージ出せるかです。数字が大きいほど強い</li>
+    <li>相手は<b>防御種族値100・個体値15・PL40</b>のものさしで統一しています。選んだボスの<b>タイプ相性</b>は反映されます</li>
+    <li>一覧の数字は<b>PL50・個体値15</b>のとき。登録した自分のポケモンだけは、入力したPL・個体値・わざで計算します</li>
+  </ul>
+
+  <h4>わざの選ばれ方</h4>
+  <ul>
+    <li>一覧に出るわざ構成は<b>PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だった組み合わせ</b>です</li>
+    <li>1位が<b>ゲージ分割なし（1ゲージ）</b>のわざでも、分割ありとの差が<b>7%未満</b>なら分割ありを優先します（実戦では撃ちやすいため）</li>
+    <li><b>(特)</b>は特別わざ・レガシーわざ（イベント限定やすごいわざマシンスペシャルなどで習得）。習得済みならそのまま選べます</li>
+    <li><b>めざめるパワー</b>はタイプを選べないので、そのボスに刺さるタイプをアイコンで示します</li>
+    <li>ボスのわざ一覧に<b>特別わざは出ません</b>（レイドボスは使ってこないため）</li>
+  </ul>
+
+  <h4>自分のポケモンの登録</h4>
+  <ul>
+    <li><b>CPと個体値</b>を入れるとPLを逆算します。メガ・ゲンシは<b>メガシンカ前のCP</b>を入れてください</li>
+    <li><b>強化 +0.5</b>＝1回の強化ぶんPLが上がります。ゲーム内ではPLが見えないので、<b>強化の回数</b>で数えられるようにしています（<b>−</b>で1回戻す・<b>↩</b>で入力したPLに戻る）</li>
+    <li><b>PL50より上</b>は最高の相棒でのみ届きます（PL51まで）</li>
+    <li><b>メガLv4</b>／<b>メガLv4＋相棒</b>はメガ・ゲンシだけのブーストで、PLの上限が<b>52・53</b>に広がります。アメを使わないので1タップでそのPLになります（もう一度押すと解除）</li>
+    <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）</li>
+  </ul>
+
+  <h4>🛡 シールド破壊（スーパーメガレイド用）</h4>
+  <ul>
+    <li>シールドは<b>メガシンカポケモンがSPアタックを撃つと1枚壊せます</b>（1人1枚・タイプ不問）</li>
+    <li>この一覧は<b>①ボスのSPアタックをどれを受けても1発で倒れない ②ゲージ2分割・3分割のSPアタックを持つ</b>メガだけを、火力の高い順に並べたものです</li>
+    <li>シールド展開中のボスの攻撃は<b>2倍</b>として計算しています（メガ＝PL50・個体値15、ボス＝PL40想定）</li>
+    <li>登録した自分のメガもこの一覧に入ります。1発で倒れる場合は<b>どのPLまで上げれば耐えるか</b>と、そのときの火力を出します</li>
+  </ul>`;
+(() => {
+  const tab = document.getElementById('helptab'), body = document.getElementById('helpbody');
+  tab.onclick = () => {
+    const open = body.style.display === 'none';
+    if (open && !body.innerHTML) body.innerHTML = HELP_HTML;
+    body.style.display = open ? 'block' : 'none';
+    tab.setAttribute('aria-expanded', open);
+    tab.textContent = open ? '？ 使い方・計算の前提（閉じる）' : '？ 使い方・計算の前提';
+  };
+})();
+
 // オフライン対応＆更新の即時反映(サイト共通のService Worker)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });

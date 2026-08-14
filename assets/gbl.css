@@ -335,7 +335,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
    のちに作る切り替えで、ルート要素に class="explain" を付ければ一斉に出せる
    (2026-08-13タダシさん指示で仕組みだけ先に用意) */
 .expl{display:none}
-.explain .expl{display:block}
+.explain .expl{display:revert}   /* 行の途中に置く補足もあるので、元の表示種別へ戻す */
 /* ---- パーティ診断のまとめ ----
    相性の図・診断・3匹の働きの3枚を、同じ作りのパネルにそろえる(ゲーム画面のような質感) */
 .ptcard{position:relative;margin:0 0 10px;padding:11px 13px 12px;border-radius:14px;
