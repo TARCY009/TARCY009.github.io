@@ -31,8 +31,11 @@
   --no1bg:linear-gradient(160deg,#2a142c,#1a0f24);
   /* 2位・3位も1位と同じ作り。枠のグラデーションだけ 銀→紫 / 銅→ピンク に振る */
   --no2bg:linear-gradient(160deg,#1c1c31,#161426);
-  --no3bg:linear-gradient(160deg,#2a1a24,#1c1220);
+  --no3bg:linear-gradient(160deg,#271a1b,#1a1219);
   --sil1:#e6edf7; --sil2:#9fb0c6; --brz1:#f0b183; --brz2:#c2723f;
+  /* 3位の枠だけ専用色。タグの銅色をそのまま枠に使うと、1位(明るい金＋ピンク)と
+     同じ暖色に見えてしまうため、暗い銅→焦茶→くすんだ赤紫にして落ち着かせる */
+  --f3a:#c9793a; --f3b:#8a4a22; --f3c:#7a4a5e;
   --nmink:#fff; --nmsh:rgba(0,0,0,.45);
   --ptsgrad:linear-gradient(180deg,#fff,#e9d9ff);
   --no1pts:linear-gradient(180deg,#ffd76a,#fff2c8);
@@ -57,6 +60,7 @@
   --no2bg:linear-gradient(160deg,#f4f7fc,#faf8ff);
   --no3bg:linear-gradient(160deg,#fdf1e9,#fdf6fa);
   --sil1:#ffffff; --sil2:#b9c6d6; --brz1:#f7c9a4; --brz2:#cf8551;
+  --f3a:#d98a4d; --f3b:#a35a28; --f3c:#8f5f75;
   --nmink:#241c38; --nmsh:rgba(0,0,0,.10);
   --ptsgrad:linear-gradient(180deg,#3a2d5c,#6b4aa8);
   --no1pts:linear-gradient(180deg,#c98a00,#e8a23d);
@@ -147,8 +151,8 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 /* 2位・3位も1位と同じ質感。紫を残しつつ 銀 / 銅 に振って序列を出す */
 .row.no2{background:var(--no2bg);border-color:transparent;box-shadow:0 0 22px rgba(159,176,198,.16)}
 .row.no2::before{background:linear-gradient(135deg,var(--sil1),var(--sil2),var(--violet))}
-.row.no3{background:var(--no3bg);border-color:transparent;box-shadow:0 0 22px rgba(194,114,63,.18)}
-.row.no3::before{background:linear-gradient(135deg,var(--brz1),var(--brz2),var(--dyna))}
+.row.no3{background:var(--no3bg);border-color:transparent;box-shadow:0 0 20px rgba(160,90,45,.16)}
+.row.no3::before{background:linear-gradient(135deg,var(--f3a),var(--f3b),var(--f3c))}
 .prow{display:flex;align-items:center;gap:12px;margin-bottom:9px;padding-top:9px}
 .prow .pname{margin:0;flex:1;min-width:0}
 .nameplate{max-width:100%;position:relative}
@@ -169,7 +173,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .nameplate .tgroup{margin-left:8px;vertical-align:middle}
 .row.no1 .nameplate{background:linear-gradient(135deg,rgba(255,215,106,.30),rgba(255,61,110,.20));border-color:rgba(255,215,106,.45);box-shadow:0 3px 14px rgba(242,193,78,.25), inset 0 1px 0 rgba(255,255,255,.14)}
 .row.no2 .nameplate{background:linear-gradient(135deg,rgba(230,237,247,.24),rgba(139,92,246,.16));border-color:rgba(200,214,230,.40);box-shadow:0 3px 14px rgba(159,176,198,.20), inset 0 1px 0 rgba(255,255,255,.14)}
-.row.no3 .nameplate{background:linear-gradient(135deg,rgba(240,177,131,.26),rgba(255,61,110,.16));border-color:rgba(240,177,131,.42);box-shadow:0 3px 14px rgba(194,114,63,.22), inset 0 1px 0 rgba(255,255,255,.14)}
+.row.no3 .nameplate{background:linear-gradient(135deg,rgba(201,121,58,.30),rgba(122,74,94,.20));border-color:rgba(201,121,58,.45);box-shadow:0 3px 14px rgba(160,90,45,.22), inset 0 1px 0 rgba(255,255,255,.14)}
 .cbadge{white-space:nowrap;font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;letter-spacing:.04em}
 .cbadge.G{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;box-shadow:0 0 12px rgba(255,61,110,.35)}
 .cbadge.D{background:linear-gradient(135deg,#7fb0ff,#5f86e8);color:#0a1533}
