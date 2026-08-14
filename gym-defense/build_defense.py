@@ -102,6 +102,25 @@ SP_DUR_ALPHA = 0.5       # 速さの効き具合 (2.5秒/発生秒)^α → 1.2�
 INT_MAX = 5.0            # 迎撃Pの上限(4つの中でいちばん影響を小さくする)
 INT_REF = 21000.0        # 迎撃の生値がこの値で満点。ジムに置ける946匹の上位1%が到達する高さ
                          # （中央値はおよそ2.1点。最大はシャンデラの25644で満点に張り付く）
+
+# ══════════════════════════════════════════════════════════════════
+# 画面に出す「おすすめのわざ構成」の選び方（2026-08-14・タダシさん指示）
+#   ポイント計算とは別の考え方で選ぶ。狙いは次の3つ:
+#     ① 攻撃側の最大勢力である かくとう に刺さるわざを優先する
+#     ② 発生の速いわざを優先する
+#     ③ 威力も大切にする
+#   そのうえで「はかいこうせん・ソーラービームのような重すぎるわざ」は選ばせない。
+#   重いわざ＝1ゲージ技は、防衛側が撃つまでに時間がかかるので REC_BARS で強く割り引く。
+#
+#   スコア ＝ 威力 × タイプ一致1.2 × かくとう補正 × ゲージ補正 × 速さ補正
+#
+#   検証(2026-08-14): この係数だと 1ゲージ技が選ばれるのは延べ1匹だけになる（旧版は156匹）。
+#   ハピナスは指定どおり「マジカルシャイン or サイコキネシス」。旧版との一致は 558/949。
+# ══════════════════════════════════════════════════════════════════
+REC_FIGHT_SE = 1.15      # かくとうの弱点を突けるタイプ(ひこう・エスパー・フェアリー)
+REC_FIGHT_NVE = 0.9      # かくとうに半減されるタイプ(いわ・むし・あく)
+REC_BARS = {1: 0.2, 2: 1.0, 3: 0.85}   # 1ゲージ技は重いので大きく割り引く
+REC_DUR_ALPHA = 0.25     # 発生の速さ (2.5秒/発生秒)^α → 1.2秒で1.20倍・5.0秒で0.84倍
 SECOND_MOVE_RATIO = 0.80 # ベスト技スコアの80%以上なら2番手技も併記
 
 name2mon = {}
@@ -124,6 +143,33 @@ def all_mult(atk_i, types):
     v = 1.0
     for dt in types: v *= CH[atk_i][dt]
     return v
+
+def fight_bonus(mv_type):
+    """そのタイプのわざが、かくとうタイプの相手にどれだけ刺さるか"""
+    m = CH[mv_type][FIGHT]
+    return REC_FIGHT_SE if m > 1 else (REC_FIGHT_NVE if m < 1 else 1.0)
+
+def recommend_moves(p):
+    """画面に出すおすすめのわざ構成を選ぶ（ポイント計算とは別のルール）"""
+    best_f = None
+    for f in p.get('fast', []):
+        fm = MV.get(f)
+        if not fm: continue
+        # ノーマルアタックは「1発の威力」で選ぶ（速さは見ない）
+        v = fm['power'] * (1.2 if fm['type'] in p['types'] else 1.0) * fight_bonus(fm['type'])
+        if best_f is None or v > best_f[0]: best_f = (v, fm['jp'])
+    sps = []
+    for c in p.get('charged', []):
+        cm = MV.get(c)
+        if not cm: continue
+        v = cm['power'] * (1.2 if cm['type'] in p['types'] else 1.0) * fight_bonus(cm['type'])
+        v *= REC_BARS.get(cm.get('bars'), 1.0)
+        v *= (SP_DUR_REF / ((cm.get('dur') or 2500) / 1000.0)) ** REC_DUR_ALPHA
+        sps.append((v, cm['jp']))
+    if not best_f or not sps: return None
+    sps.sort(key=lambda x: -x[0])
+    cm2 = sps[1][1] if len(sps) > 1 and sps[1][0] >= sps[0][0] * SECOND_MOVE_RATIO else None
+    return (best_f[1], sps[0][1], cm2)
 
 def yaruki(cp):
     if cp < 1500: return 10
@@ -164,31 +210,31 @@ for p in gd['pokemon']:
         na = fm['power'] * (1.2 if fm['type'] in p['types'] else 1.0)
         if best_na is None or na > best_na[0]:
             best_na = (na, fm['jp'])
-    # スペシャル: 1発の威力 × ダメージが出るまでの速さ。上位2つを併記候補にする
-    sps = []
+    # スペシャル: 1発の威力 × ダメージが出るまでの速さ
+    best_sp = None
     for c in p.get('charged', []):
         cm = MV.get(c)
         if not cm: continue
         sp = cm['power'] * (1.2 if cm['type'] in p['types'] else 1.0)
         dur = (cm.get('dur') or 2500) / 1000.0
         sp *= (SP_DUR_REF / dur) ** SP_DUR_ALPHA    # 発生の速い技ほど有利
-        sps.append((sp, cm['jp']))
-    if not best_na or not sps: continue
-    sps.sort(key=lambda x: -x[0])
-    best = (atk50 * (best_na[0] + SP_WEIGHT * sps[0][0]), best_na[1], sps[0][1])
-    cm2 = sps[1][1] if len(sps) > 1 and sps[1][0] >= sps[0][0] * SECOND_MOVE_RATIO else None
+        if best_sp is None or sp > best_sp: best_sp = sp
+    if best_na is None or best_sp is None: continue
+    # 画面に出すおすすめ構成は、ポイント計算とは別のルールで選ぶ（重いわざを避ける）
+    rec = recommend_moves(p)
+    if not rec: continue
     p_bulk = K_BULK * bulk
     p_type = type_score(p['types'])
-    # 迎撃P: 攻撃実数値 ×(ノーマル1発 + SPを0.15) を上限5点へ縮める。
+    # 迎撃P: 攻撃実数値 ×(ノーマル1発 + SP×速さ×0.45) を上限5点へ縮める。
     #   4つの中でいちばん影響を小さくする（防衛側の火力は運の要素が大きいため）
-    p_int = INT_MAX * min(1.0, best[0] / INT_REF)
+    p_int = INT_MAX * min(1.0, atk50 * (best_na[0] + SP_WEIGHT * best_sp) / INT_REF)
     p_yar = yaruki(cp)
     entries.append({
         'n': NAME_FIX.get(p['name'], p['name']), 't': p['types'], 'cp': cp,
         'pb': round(p_bulk, 1), 'pt': round(p_type, 1),
         'pi': round(p_int, 1), 'py': p_yar,
         'total': round(p_bulk + p_type + p_int + p_yar, 1),
-        'fm': best[1], 'cm': best[2], 'cm2': cm2, 'dw': 1 if double_weak(p['types']) else 0,
+        'fm': rec[0], 'cm': rec[1], 'cm2': rec[2], 'dw': 1 if double_weak(p['types']) else 0,
     })
 
 entries.sort(key=lambda x: -x['total'])
