@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ジム防衛オススメツール</title>
-<meta name="description" content="攻撃側メタ分布(格闘・鋼中心)を加重した総合ポイントで、ジム防衛におすすめのポケモンをランキング表示します。PL50・個体値15想定。">
+<meta name="description" content="耐久・かくとう相性・やる気の下がりにくさから、ジム防衛におすすめのポケモンをランキング表示します。PL50・個体値15想定。">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/gym-defense/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/gym-defense/apple-touch-icon.png">
 <link rel="manifest" href="/gym-defense/manifest.webmanifest">
@@ -124,7 +124,7 @@ footer a{color:var(--accent2)}
 <header>
   <div id="themesw"></div>
   <h1>ジム防衛オススメツール <span class="badge">防衛</span></h1>
-  <p class="lead expl">攻撃側メタ分布(格闘・鋼中心)を加重した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
+  <p class="lead expl">耐久・かくとう相性・やる気の下がりにくさから出した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
 </header>
 
 <div class="searchbox">
@@ -144,7 +144,7 @@ footer a{color:var(--accent2)}
 
 <div class="legend">
   <span><i style="background:var(--c-bulk)"></i>耐久</span>
-  <span><i style="background:var(--c-type)"></i>タイプ(被弾しにくさ)</span>
+  <span><i style="background:var(--c-type)"></i>タイプ(かくとう相性)</span>
   <span><i style="background:var(--c-yar)"></i>やる気(低下しにくさ)</span>
   <span><i style="background:var(--c-int)"></i>迎撃(1発威力)</span>
 </div>
@@ -159,13 +159,17 @@ footer a{color:var(--accent2)}
   <p>ジムに置いたときに<b>長く残りやすい</b>ポケモンのランキングです。<b>PL50・個体値15</b>想定で、
     ジムに置けない伝説・幻・メガは外してあります。名前で検索すると、そのポケモンの順位を確かめられます。</p>
   <h4>ポイントの中身</h4>
+  <p>効き方の強い順に<b>耐久 ＞ タイプ ＞ やる気 ＞ 迎撃</b>です。</p>
   <ul>
-    <li><b>耐久</b> ＝ HP × 防御</li>
-    <li><b>タイプ</b> ＝ 攻撃側の顔ぶれ（格闘31.5%・鋼24%ほか）に対する<b>被弾のしにくさ</b></li>
-    <li><b>やる気</b> ＝ 最大CP帯から見た<b>やる気の下がりにくさ</b></li>
-    <li><b>迎撃</b> ＝ 防衛側の硬直を踏まえたノーマルアタック1発の有効度（SPアタックは低い比重）</li>
+    <li><b>耐久</b>（0〜82点）＝ HP × 防御。いちばん効きます</li>
+    <li><b>タイプ</b>（-14〜+8点）＝ <b>かくとうへの相性だけ</b>を見ます。
+      二重耐性 +8 ／ 耐性 +4 ／ 等倍 0 ／ 弱点 -8 ／ 二重弱点 -14</li>
+    <li><b>やる気</b>（0〜10点）＝ 最大CP帯から見た<b>やる気の下がりにくさ</b></li>
+    <li><b>迎撃</b>（0〜5点）＝ ノーマルアタック1発の威力（SPアタックは低い比重）。いちばん効きません</li>
   </ul>
   <p><b>基本</b> ＝ 耐久＋タイプ＋やる気。<b>迎撃込み</b> ＝ これに迎撃を足した総合値です。</p>
+  <p>かくとうだけを見るのは、ジムを殴りに来る顔ぶれが入れ替わっても<b>かくとうが最大勢力という性質は変わらない</b>ためです。
+    細かいタイプ相性まで見ると、攻撃側の集計を人手で更新し続ける必要が出てしまいます。</p>
   <h4>わざ構成と「二重弱点も」</h4>
   <p>わざは防衛向きの構成（ゲージ2分割・発生の速さを優遇）を選んでいます。ベストと大差ないSPアタックがあるときは
     「or」で併記します。<b>二重弱点も</b> を押すと、二重弱点をかかえるポケモンも一覧に加えます（既定は除外）。</p>
@@ -211,8 +215,10 @@ footer a{color:var(--accent2)}
       row.className = 'row' + (query ? ' hit' : '');
       const chips = typePairHTML(e.t.map(t => D.types_jp[t]), 18);
       const tot = totalOf(e);
-      const sum = e.pb + e.pt + e.py + (withInt ? e.pi : 0);
-      const w = v => Math.max(0, v / sum * (tot / R.max) * 100).toFixed(1);
+      // バーの全長は「1位に対する合計の割合」。内訳はプラスの項目だけで按分する
+      // （タイプはマイナスになることがあり、合計で割ると全長が合計とズレるため）
+      const plus = Math.max(0.1, [e.pb, e.pt, e.py, (withInt ? e.pi : 0)].reduce((a, v) => a + Math.max(0, v), 0));
+      const w = v => Math.max(0, v / plus * (tot / R.max) * 100).toFixed(1);
       const moves = e.cm2 ? `${e.fm} / ${e.cm} or ${e.cm2}` : `${e.fm} / ${e.cm}`;
       row.innerHTML = `
         <div class="top">

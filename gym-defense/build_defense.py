@@ -2,7 +2,8 @@
 """ジム防衛オススメツール データ生成スクリプト
 gym-attack/data/gym_data.json と iv-checker の伝説フラグを元に
 防衛スコアを事前計算し data/defense_data.js を出力する。
-メタ分布(META_RAW)を更新して再実行すれば全順位が再計算される。
+ポケモンのデータは毎朝の自動更新に乗っているので、新ポケモンは自動でランキングに入る。
+手で更新するものは無い（2026-08-14に攻撃側の集計リストを廃止した。下のコメント参照）。
 """
 import json, re, os, math
 
@@ -62,35 +63,35 @@ NAME_FIX = {
     'パンプジン(4ふん)': 'パンプジン(ギガだましゅ)',
 }
 
-# ── メタ分布データ(攻撃側の使用ポケモン集計。ここを更新して再実行) ──
-# (名前, 主要攻撃技タイプ, 集計数)
-META_RAW = [
-    ('カイリキー', 'かくとう', 122), ('メタグロス', 'はがね', 66),
-    ('ルカリオ', 'かくとう', 42), ('ミュウツー', 'エスパー', 42),
-    ('マンムー', 'こおり', 38), ('ローブシン', 'かくとう', 28),
-    ('ゼクロム', 'でんき', 24), ('カイオーガ', 'みず', 24),
-    ('ダークライ', 'あく', 22), ('ギラティナ(オリジン)', 'ゴースト', 16),
-    ('メルメタル', 'はがね', 16), ('ライコウ', 'でんき', 15),
-    ('バンギラス', 'あく', 14), ('ディアルガ', 'はがね', 12),
-    ('ガブリアス', 'じめん', 12), ('レシラム', 'ほのお', 11),
-    ('サーナイト', 'フェアリー', 10), ('カイリュー', 'ドラゴン', 8),
-    ('ヒードラン', 'ほのお', 8), ('ドサイドン', 'いわ', 7),
-    ('グレイシア', 'こおり', 7), ('ゲンガー', 'ゴースト', 6),
-    ('エレキブル', 'でんき', 5), ('レックウザ', 'ドラゴン', 4),
-    ('フシギバナ', 'くさ', 3), ('トゲキッス', 'フェアリー', 3),
-    ('リザードン', 'ほのお', 3), ('ヒヒダルマ(ガラル)', 'こおり', 3),
-    ('シャンデラ', 'ゴースト', 3), ('ラグラージ', 'みず', 3),
-    ('ドリュウズ', 'じめん', 3), ('ロズレイド', 'くさ', 3),
+# ══════════════════════════════════════════════════════════════════
+# ポイントの決め方（2026-08-14・タダシさん指示で全面的に作り直した）
+#
+#   合計 = 耐久P ＋ タイプP ＋ やる気P （「迎撃込み」のときだけ ＋迎撃P）
+#
+#   優先度は 耐久 ＞ タイプ ＞ やる気 ＞ 迎撃 の順で、その順に振れ幅を大きくしてある:
+#     耐久P   0〜約82   … いちばん効く
+#     タイプP -14〜+8   … 格闘に対する相性だけを見る
+#     やる気P 0〜10
+#     迎撃P   0〜5      … いちばん効かない
+#
+#   旧版は「攻撃側の使用ポケモン32匹の集計(アンケート)」を持ち、その顔ぶれへの相性で
+#   細かく加点していた（炎で迎撃できると高い、など）。環境が変わるたびにアンケートを
+#   取り直す必要があり維持できないため、**攻撃側リストごと廃止**した。
+#   格闘だけを見るのは、ジムを殴りに来る顔ぶれが変わっても
+#   「格闘が最大勢力」という性質だけは動かないため。
+# ══════════════════════════════════════════════════════════════════
+K_BULK = 1.2328          # 耐久P = K_BULK × HP×防御/1000 (PL50, 個体値15)。旧版から据え置き
+# タイプP: 格闘に対する倍率だけで決める（他のタイプは見ない）
+FIGHT_SCORE = [
+    (0.4, 8),    # 二重耐性(×0.39以下)
+    (0.63, 4),   # 耐性(×0.625)
+    (1.6, 0),    # 等倍
+    (2.56, -8),  # 弱点(×1.6)
+    (99, -14),   # 二重弱点(×2.56)
 ]
-
-# ── キャリブレーション定数(分析メモとの最小二乗フィット結果) ──
-K_BULK = 1.2328          # 耐久P = K_BULK × HP×防御/1000 (PL50, 個体値15)
-# タイプP = チェックリスト方式: 格闘耐性+3/二重+6/弱点-6、岩弱点-3(格闘弱点時は無し)を
-# メモの明示ルールとして固定し、鋼・氷・電気・悪・ゴーストの耐性/弱点係数はメモ実測値への
-# 制約付きリッジ回帰でフィット(calib_type.jsonに保存)
-C_INT, D_INT = None, None      # 迎撃P = max(0, C + D×迎撃生値) ※calib_int.jsonから読込
-SP_WEIGHT = 0.15         # スペシャル技の比重(発動が確率依存のため低め)
-INT_WEIGHT = 1.9         # 迎撃ポイント全体の重み(火力の影響度。シャンデラが込み20位以内に入る調整)
+SP_WEIGHT = 0.15         # スペシャル技の比重(発動判定が1/2で運任せなため低め)
+INT_MAX = 5.0            # 迎撃Pの上限(いちばん影響を小さくする)
+INT_REF = 9500.0         # 迎撃の生値がこの値で満点(上位1%が到達)。中央値はおよそ2点になる
 # ゲージ分割係数: 発動判定が1/2のため早め放出が有利。2分割が最良、
 # 1ゲージは溜め切り不発リスクで大幅減点、3分割は1発が軽く効率減
 BAR_FACTOR = {2: 1.0, 3: 0.85, 1: 0.5}
@@ -101,65 +102,17 @@ name2mon = {}
 for p in gd['pokemon']:
     name2mon.setdefault(p['name'], p)
 
-meta = []
-tw = sum(c for _, _, c in META_RAW)
-for nm, mtype, cnt in META_RAW:
-    p = name2mon.get(nm)
-    if not p:
-        print('WARN meta not found:', nm); continue
-    meta.append({'name': nm, 'mt': ti[mtype], 'dt': p['types'], 'w': cnt / tw})
-
-def incoming_eff(types):
-    s = 0.0
-    for a in meta:
-        m = 1.0
-        for dt in types: m *= CH[a['mt']][dt]
-        s += a['w'] * m
-    return s
-
-def outgoing_eff(move_type):
-    s = 0.0
-    for a in meta:
-        m = 1.0
-        for dt in a['dt']: m *= CH[move_type][dt]
-        s += a['w'] * m
-    return s
-
-OUT_CACHE = {t: outgoing_eff(t) for t in range(18)}
-
-_ci = json.load(open(os.path.join(BASE, 'calib_int.json')))
-C_INT, D_INT = _ci['c'], _ci['d']
-_ct = json.load(open(os.path.join(BASE, 'calib_type.json')))
-
-# 符号の歯止め: 耐性は加点(0以上)・弱点は減点(0以下)でなければならない。
-#   係数は回帰で自動的に決めているため、データの偏りで符号が逆になることがある
-#   (2026-08-14に「あく弱点なのに +0.89 の加点」「こおり耐性なのに -0.51 の減点」が見つかった)。
-#   フィットし直したときに同じ事故が起きないよう、ここで必ず正しい向きへ丸める。
-for _t, _c in _ct['coef'].items():
-    _c['res'] = max(0.0, _c['res'])
-    _c['dbl'] = max(0.0, _c['dbl'])
-    _c['weak'] = min(0.0, _c['weak'])
+FIGHT = ti['かくとう']
 
 def type_score(types):
-    def m(atk):
-        v = 1.0
-        for dt in types: v *= CH[ti[atk]][dt]
-        return v
-    s = _ct['intercept']
-    f = m('かくとう')
-    if f <= 0.4: s += 6
-    elif f <= 0.63: s += 3
-    elif f >= 1.6: s += _ct.get('fight_weak_pen', -6)  # 格闘弱点(ユーザー調整で-8)
-    if m('いわ') >= 1.6 and f < 1.6: s -= 3
-    for t in _ct['fit_core']:
-        mu = m(t); c = _ct['coef'][t]
-        if mu <= 0.63: s += c['res']
-        if mu <= 0.4: s += c['dbl']
-        if mu >= 1.6: s += c['weak']
-    # 耐性の多さボーナス: 全18タイプ中の耐性数×係数(メタグロス等の複合耐性を評価)
-    n_res = sum(1 for t in range(18) if all_mult(t, types) <= 0.63)
-    s += _ct.get('resist_count_coef', 0) * n_res
-    return s
+    """タイプP: 格闘に対する相性だけで決める。
+    ジムを殴りに来る顔ぶれは入れ替わるが、格闘が最大勢力という性質は変わらないため、
+    そこだけを見る（他のタイプまで細かく見ると、攻撃側の集計が要る＝維持できない）。"""
+    m = 1.0
+    for dt in types: m *= CH[FIGHT][dt]
+    for lim, pt in FIGHT_SCORE:
+        if m < lim: return pt
+    return FIGHT_SCORE[-1][1]
 
 def all_mult(atk_i, types):
     v = 1.0
@@ -192,7 +145,6 @@ for p in gd['pokemon']:
     df = (p['def'] + 15) * CPM50
     cp = max(10, int((p['atk'] + 15) * math.sqrt(p['def'] + 15) * math.sqrt(p['sta'] + 15) * CPM50 ** 2 / 10))
     bulk = hp * df / 1000.0
-    eff = incoming_eff(p['types'])
     atk50 = (p['atk'] + 15) * CPM50   # 攻撃実数値(PL50, 個体値15)
     # ノーマルアタック: DPH(1発の威力)最大を選択。時間では割らない。
     #   防衛側(NPC)は1発ごとに約2秒の硬直が入るので、秒あたりで測るなら 威力/(発生秒+2) が正しい。
@@ -203,7 +155,7 @@ for p in gd['pokemon']:
     for f in p.get('fast', []):
         fm = MV.get(f)
         if not fm: continue
-        na = fm['power'] * (1.2 if fm['type'] in p['types'] else 1.0) * OUT_CACHE[fm['type']]
+        na = fm['power'] * (1.2 if fm['type'] in p['types'] else 1.0)
         if best_na is None or na > best_na[0]:
             best_na = (na, fm['jp'])
     # スペシャル: ゲージ分割係数×発生時間補正込みで全技採点し上位2つを併記候補に
@@ -211,7 +163,7 @@ for p in gd['pokemon']:
     for c in p.get('charged', []):
         cm = MV.get(c)
         if not cm: continue
-        sp = cm['power'] * (1.2 if cm['type'] in p['types'] else 1.0) * OUT_CACHE[cm['type']]
+        sp = cm['power'] * (1.2 if cm['type'] in p['types'] else 1.0)
         sp *= BAR_FACTOR.get(cm.get('bars'), 1.0)   # 2分割最良・1ゲージ減点・3分割やや減
         dur = (cm.get('dur') or 2500) / 1000.0
         sp *= (2.5 / dur) ** DUR_ALPHA              # 発生の速い技をわずかに優遇
@@ -222,7 +174,9 @@ for p in gd['pokemon']:
     cm2 = sps[1][1] if len(sps) > 1 and sps[1][0] >= sps[0][0] * SECOND_MOVE_RATIO else None
     p_bulk = K_BULK * bulk
     p_type = type_score(p['types'])
-    p_int = INT_WEIGHT * max(0.0, C_INT + D_INT * best[0])
+    # 迎撃P: 攻撃実数値 ×(ノーマル1発 + SPを0.15) を上限5点へ縮める。
+    #   4つの中でいちばん影響を小さくする（防衛側の火力は運の要素が大きいため）
+    p_int = INT_MAX * min(1.0, best[0] / INT_REF)
     p_yar = yaruki(cp)
     entries.append({
         'n': NAME_FIX.get(p['name'], p['name']), 't': p['types'], 'cp': cp,
@@ -236,7 +190,7 @@ entries.sort(key=lambda x: -x['total'])
 out = {
     'generated': True,
     'types_jp': T,
-    'meta': [{'name': m['name'], 'type': T[m['mt']], 'w': round(m['w'], 4)} for m in meta],
+    # 攻撃側リストは廃止したので出力しない（画面でも使っていない）
     'entries': entries,
 }
 os.makedirs(os.path.join(BASE, 'data'), exist_ok=True)
