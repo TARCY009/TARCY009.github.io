@@ -16,20 +16,22 @@
 <style>
 /* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク */
 :root{
-  --bg:#101418; --panel:linear-gradient(180deg,rgba(30,39,51,.94),rgba(22,29,39,.94)); --panel2:#212b36; --line:#2e3a47;
+  --bg:#0e1f26; --panel:linear-gradient(180deg,rgba(27,45,53,.92),rgba(20,34,42,.94)); --panel2:#1e303a; --line:#2c424c;
   --text:#e8edf2; --sub:#93a3b3; --accent:#6fcf8f; --accent2:#4fc3f7;
   --bar-off:#33404d; --warn:#ff7d6b;
   --c-bulk:#6fcf8f; --c-type:#4fc3f7; --c-int:#f5b942; --c-yar:#b18cf0;
   --gold:#f2c14e; --silver:#c8d3de; --bronze:#c98d5f;
   --onaccent:#0d1a12; --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
-  /* 背景はこのツールの色(緑・水色)を淡くにじませる(単色だと沈んで見える) */
+  /* 背景はこのツールの色(緑・水色)をにじませる。土台も黒ではなく深い青緑にして、
+     カードが浮いて見えるようにする(真っ黒だと沈んで見える) */
   --bgimg:
-    radial-gradient(900px 520px at -10% -10%, rgba(111,207,143,.11), transparent 62%),
-    radial-gradient(820px 540px at 112% 6%, rgba(79,195,247,.11), transparent 62%),
-    radial-gradient(950px 620px at 50% 115%, rgba(111,207,143,.07), transparent 62%),
-    linear-gradient(165deg,#0d1317 0%,#111620 48%,#101a17 100%);
+    radial-gradient(880px 520px at -8% -12%, rgba(111,207,143,.22), transparent 60%),
+    radial-gradient(760px 520px at 110% 4%, rgba(79,195,247,.20), transparent 60%),
+    radial-gradient(1100px 720px at 38% 106%, rgba(93,214,255,.15), transparent 64%),
+    radial-gradient(760px 560px at 96% 88%, rgba(111,207,143,.15), transparent 62%),
+    linear-gradient(165deg,#0e1f26 0%,#12202c 46%,#14251f 100%);
   --cardsh:0 16px 30px -22px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.05) inset;
-  --tcolor:#101418;   /* スマホのアドレスバーの色(theme.js が読む) */
+  --tcolor:#0e1f26;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:12px;
   font-size:16px;
 }
@@ -81,9 +83,11 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .row.hit{border-color:var(--accent)}
 .top{display:flex;align-items:center;gap:10px}
 .rank{min-width:52px;text-align:center;font-weight:700;font-size:.95rem;border-radius:8px;padding:4px 0;background:var(--panel2);color:var(--sub)}
-.rank.r1{background:var(--gold);color:var(--ongold)}
-.rank.r10{background:var(--silver);color:var(--onsilver)}
-.rank.r100{background:var(--bronze);color:var(--onbronze)}
+/* 上位3件のメダル。金・銀・銅とも同じ作り（明るい面＋その色の光彩）で並べて見分けやすくする */
+.rank.r1,.rank.r2,.rank.r3{font-weight:800;box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+.rank.r1{background:linear-gradient(160deg,#ffe08a 0%,var(--gold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
+.rank.r2{background:linear-gradient(160deg,#f2f6fb 0%,var(--silver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
+.rank.r3{background:linear-gradient(160deg,#e8b489 0%,var(--bronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
 .namebox{flex:1;min-width:0}
 /* 名前 → タイプアイコン → 二重弱点 の順。アイコンは常に表示(縮まない) */
 .pname{font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -192,7 +196,8 @@ footer a{color:var(--accent2)}
   }
   let R = buildRanks();
 
-  function rankClass(n){ return n===1 ? 'r1' : n<=10 ? 'r10' : n<=100 ? 'r100' : ''; }
+  // 上位3件は金・銀・銅（全ツール共通）。4位以降は色を付けない
+  function rankClass(n){ return n===1 ? 'r1' : n===2 ? 'r2' : n===3 ? 'r3' : ''; }
 
   function render(){
     const base = R.sorted.filter(e => includeDw || !e.dw);

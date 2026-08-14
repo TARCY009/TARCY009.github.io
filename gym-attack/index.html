@@ -17,15 +17,17 @@
 <style>
 /* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク */
 :root{
-  --bg:#101418; --panel:linear-gradient(180deg,rgba(30,39,51,.94),rgba(22,29,39,.94)); --panel2:#212b36; --line:#2e3a47;
+  --bg:#111a2e; --panel:linear-gradient(180deg,rgba(31,41,70,.92),rgba(23,30,54,.94)); --panel2:#222c46; --line:#2f3a5c;
   --text:#e8edf2; --sub:#93a3b3; --accent:#f5b942; --accent2:#4fc3f7;
   --bar:#7ee081; --bar-off:#33404d; --warn:#ff7d6b;
-  /* 背景はこのツールの色(黄・水色)を淡くにじませる(単色だと沈んで見える) */
+  /* 背景はこのツールの色(黄・水色)をにじませる。土台も黒ではなく紺〜すみれ寄りにして、
+     カードが浮いて見えるようにする(真っ黒だと沈んで見える) */
   --bgimg:
-    radial-gradient(900px 520px at -10% -10%, rgba(245,185,66,.10), transparent 62%),
-    radial-gradient(820px 540px at 112% 6%, rgba(79,195,247,.11), transparent 62%),
-    radial-gradient(950px 620px at 50% 115%, rgba(245,185,66,.07), transparent 62%),
-    linear-gradient(165deg,#0e1319 0%,#111620 48%,#141319 100%);
+    radial-gradient(880px 520px at -8% -12%, rgba(245,185,66,.22), transparent 60%),
+    radial-gradient(760px 520px at 110% 4%, rgba(79,195,247,.20), transparent 60%),
+    radial-gradient(1100px 720px at 38% 106%, rgba(255,140,90,.17), transparent 64%),
+    radial-gradient(760px 560px at 96% 88%, rgba(140,110,255,.16), transparent 62%),
+    linear-gradient(165deg,#111a2e 0%,#151b30 46%,#1d1730 100%);
   --cardsh:0 16px 30px -22px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.05) inset;
   --onaccent:#1a1a1a; --onaccent2:#0d1620; --sughover:#2a3644;
   --r1:#ffd54f; --r2:#cfd8dc; --r3:#d7a97c;
@@ -35,7 +37,7 @@
   --shink:#c39bff; --shline:#6b4fa0;
   --hrbg:#1d4d33; --hrink:#8be3a8; --hnbg:#3a4553; --hnink:#b7c4d0; --hwbg:#5a2620; --hwink:#ffb0a3;
   --cwbg:#54221d; --cwink:#ff9d8f; --cnbg:#333d48; --cnink:#aab8c5; --crbg:#1c3a55; --crink:#8ec6f2;
-  --tcolor:#101418;   /* スマホのアドレスバーの色(theme.js が読む) */
+  --tcolor:#111a2e;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:12px;
   font-size:16px;
 }
