@@ -33,13 +33,18 @@
   --no1pts:linear-gradient(180deg,#ffd76a,#fff2c8);
   --okink:#4ad6b8; --goldink:#f2c14e; --onwarn:#33210a;
   --res2bg:#2b6b5c; --res2ink:#bff2e4;
+  --bgimg:
+    radial-gradient(900px 480px at 50% -160px, rgba(255,61,110,.16), transparent 62%),
+    radial-gradient(700px 400px at 85% -120px, rgba(139,92,246,.12), transparent 60%),
+    #0b0912;
+  --cardsh:none;
   --tcolor:#0b0912;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:16px;
   font-size:16px;
 }
 :root.light{
   --bg:#f3f0fb; --bg2:#ffffff;
-  --card:#ffffff; --card2:#faf8ff; --line:#e6e0f5; --line2:#d6ccee;
+  --card:rgba(255,255,255,.90); --card2:rgba(252,250,255,.90); --line:#e6e0f5; --line2:#d6ccee;
   --text:#241c38; --sub:#645a80; --faint:#8d84a6;
   --warn:#c9761a;
   --bosscard:linear-gradient(160deg,#fdeef5,#f5f0fd);
@@ -49,15 +54,19 @@
   --no1pts:linear-gradient(180deg,#c98a00,#e8a23d);
   --okink:#12806a; --goldink:#a8760a; --onwarn:#ffffff;
   --res2bg:#d6f0e8; --res2ink:#14604e;
+  /* 白一色にせず、このツールの色(ピンク・紫)を淡くにじませる */
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,61,110,.16), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.17), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(255,122,92,.14), transparent 62%),
+    linear-gradient(165deg,#fdeef5 0%,#f2ecfd 50%,#fff0ea 100%);
+  --cardsh:0 14px 30px -18px rgba(150,80,170,.30), 0 1px 0 rgba(255,255,255,.8) inset;
   --tcolor:#f3f0fb;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
-  background:
-    radial-gradient(900px 480px at 50% -160px, rgba(255,61,110,.16), transparent 62%),
-    radial-gradient(700px 400px at 85% -120px, rgba(139,92,246,.12), transparent 60%),
-    var(--bg);
+  background:var(--bgimg);background-attachment:fixed;min-height:100vh;
   color:var(--text);
   font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
   line-height:1.55;padding-bottom:72px;
@@ -119,7 +128,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .myq input:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
 /* ランキング */
 .list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
-.row{position:relative;background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;transition:transform .15s, border-color .15s}
+.row{position:relative;background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--cardsh);transition:transform .15s, border-color .15s}
 .row.hit{border-color:var(--violet)}
 .row.no1{background:var(--no1bg);border-color:transparent;box-shadow:0 0 28px rgba(255,61,110,.22)}
 .row.no1::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;background:linear-gradient(135deg,var(--gold1),var(--dyna),var(--violet));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}

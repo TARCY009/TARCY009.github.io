@@ -19,6 +19,7 @@
   --bg:#101418; --panel:#1a2129; --panel2:#212b36; --line:#2e3a47;
   --text:#e8edf2; --sub:#93a3b3; --accent:#f5b942; --accent2:#4fc3f7;
   --bar:#7ee081; --bar-off:#33404d; --warn:#ff7d6b;
+  --bgimg:#101418; --cardsh:none;
   --onaccent:#1a1a1a; --onaccent2:#0d1620; --sughover:#2a3644;
   --r1:#ffd54f; --r2:#cfd8dc; --r3:#d7a97c;
   --shink:#c39bff; --shline:#6b4fa0;
@@ -29,9 +30,16 @@
   font-size:16px;
 }
 :root.light{
-  --bg:#eef2f7; --panel:#ffffff; --panel2:#f5f8fc; --line:#dde5ee;
+  --bg:#eef2f7; --panel:rgba(255,255,255,.88); --panel2:#f7fafd; --line:#dde5ee;
   --text:#20263a; --sub:#5d6b7a; --accent:#b07a00; --accent2:#0f80a8;
   --bar:#3aa85f; --bar-off:#d3dae2; --warn:#d64530;
+  /* 白一色にせず、このツールの色(黄・水色)を淡くにじませる */
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(245,185,66,.20), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(79,195,247,.17), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(245,185,66,.13), transparent 62%),
+    linear-gradient(165deg,#fff7e9 0%,#eef4fb 52%,#e9f6fb 100%);
+  --cardsh:0 14px 30px -18px rgba(70,110,160,.32), 0 1px 0 rgba(255,255,255,.8) inset;
   --onaccent:#ffffff; --onaccent2:#ffffff; --sughover:#eef3ff;
   --r1:#b07a00; --r2:#64748f; --r3:#a5652a;
   --shink:#7a3cc4; --shline:#c4b0ea;
@@ -40,7 +48,7 @@
   --tcolor:#eef2f7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
+body{background:var(--bgimg);background-attachment:fixed;color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px;min-height:100vh}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:20px 0 4px}
 /* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
@@ -82,7 +90,7 @@ details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-
 .settings input{width:100%;padding:6px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text)}
 /* ランキング */
 .ranklist{margin-top:16px;display:flex;flex-direction:column;gap:10px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;box-shadow:var(--cardsh)}
 .rank{font-size:1.05rem;font-weight:800;text-align:center;color:var(--sub)}
 .rank.r1{color:var(--r1)}.rank.r2{color:var(--r2)}.rank.r3{color:var(--r3)}
 .pname{font-weight:700;font-size:1.0rem;display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;min-width:0}

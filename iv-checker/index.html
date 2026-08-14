@@ -29,18 +29,26 @@
   --ink:#eef1fb; --sub:#8b96c2; --cy:#43e0ff;
   --gl:#4d8dff; --ul:#f5c542; --ml:#b06cff;
   --good:#3ddc84; --warn:#ff6b81;
-  --glow:#1d2a55; --sughover:#232e58; --segoff:#25305c;
+  --bgimg:radial-gradient(1000px 500px at 50% -10%, #1d2a55 0%, transparent 60%), #0c1122;
+  --sughover:#232e58; --segoff:#25305c;
   --line2:rgba(42,53,96,.4); --sticky:rgba(12,17,34,.92);
   --gold:#ffd54a; --silver:#c9d6f0; --bronze:#e0955b;
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
   --r:14px;
 }
 :root.light{
-  --bg:#eef2fc; --bg2:#f7f9ff; --panel:#ffffff; --line:#dfe6f5;
+  --bg:#eef2fc; --bg2:#fbfcff; --panel:rgba(255,255,255,.88); --line:#dfe6f5;
   --ink:#20263a; --sub:#6a7391; --cy:#0b8fa8;
   --gl:#3b6ef0; --ul:#b3820b; --ml:#8b5cf6;
   --good:#1f9d55; --warn:#d63a52;
-  --glow:#dbe6ff; --sughover:#eef3ff; --segoff:#d7dcea;
+  /* 白一色にせず、このツールの色(青・紫・水色)を淡くにじませる */
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(59,110,240,.17), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.16), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(8,180,201,.15), transparent 62%),
+    linear-gradient(165deg,#e9f1ff 0%,#efe9ff 50%,#e6f6fb 100%);
+  --sughover:#eef3ff; --segoff:#d7dcea;
+  --cardsh:0 14px 30px -18px rgba(59,110,240,.35), 0 1px 0 rgba(255,255,255,.8) inset;
   --line2:rgba(32,38,58,.10); --sticky:rgba(255,255,255,.92);
   --gold:#b07a00; --silver:#64748f; --bronze:#a5652a;
   --tcolor:#eef2fc;
@@ -49,9 +57,7 @@
 html{font-size:16px}
 body{
   font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","BIZ UDPGothic","Noto Sans JP",system-ui,sans-serif;
-  background:
-    radial-gradient(1000px 500px at 50% -10%, var(--glow) 0%, transparent 60%),
-    var(--bg);
+  background:var(--bgimg);background-attachment:fixed;
   color:var(--ink); min-height:100vh; padding:20px 16px 60px;
 }
 .wrap{max-width:560px;margin:0 auto}
@@ -62,7 +68,7 @@ header{text-align:center;margin-bottom:22px}
 h1{font-size:1.5rem;font-weight:800;margin-top:6px;letter-spacing:.04em}
 h1 small{display:block;font-size:.72rem;color:var(--sub);font-weight:500;margin-top:4px;letter-spacing:.1em}
 
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--cardsh,none)}
 label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter-spacing:.15em;margin-bottom:8px}
 
 /* ポケモン検索 */

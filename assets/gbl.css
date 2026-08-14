@@ -8,22 +8,30 @@
   --deep:#0a0f22; --line2:#3b4a86; --onml:#140a26;
   --rklink:#ff8f8f; --rklinkbg:linear-gradient(180deg,#2a1c2e,#1d1526);
   --rkkindbg:linear-gradient(180deg,#241c33,#191428); --ongold:#2b2305;
+  --bgimg:#0c1122; --cardsh:none;
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
   --r:14px;
   font-size:16px;
 }
 :root.light{
-  --bg:#eef2fb; --bg2:#f7f9ff; --panel:#ffffff; --line:#dfe6f5;
+  --bg:#eef2fb; --bg2:#fbfcff; --panel:rgba(255,255,255,.88); --line:#dfe6f5;
   --ink:#20263a; --sub:#5f6a92; --cy:#0b8fa8; --gl:#2f5fd0; --ml:#8b5cf6;
   --win:#1f9d55; --lose:#d63a52; --gold:#a8760a;
   --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
   --deep:#e8edf7; --line2:#b9c6e4; --onml:#ffffff;
   --rklink:#c62b46; --rklinkbg:linear-gradient(180deg,#fff,#ffeef1);
   --rkkindbg:linear-gradient(180deg,#fff,#fff2f4); --ongold:#ffffff;
+  /* 白一色にせず、このツールの色(青・紫・水色)を淡くにじませる */
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(59,110,240,.17), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.16), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(8,180,201,.15), transparent 62%),
+    linear-gradient(165deg,#e9f1ff 0%,#efe9ff 50%,#e6f6fb 100%);
+  --cardsh:0 14px 30px -18px rgba(59,110,240,.32), 0 1px 0 rgba(255,255,255,.8) inset;
   --tcolor:#eef2fb;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
+body{background:var(--bgimg);background-attachment:fixed;min-height:100vh;color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
 .wrap{max-width:760px;margin:0 auto;padding:14px}
 header{padding:18px 0 6px}
 h1{font-size:1.3rem;letter-spacing:.03em}
@@ -63,7 +71,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 /* 2カラム */
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .duel.solo{grid-template-columns:1fr}
-.side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0;box-shadow:var(--cardsh)}
 .side h2{font-size:.78rem;color:var(--sub);letter-spacing:.08em;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
 /* シャドウマークのタブ(文字なし・押すとシャドウ補正ON) */
 .shadowtab{display:inline-flex;align-items:center;justify-content:center;width:38px;height:30px;padding:0;font-size:1rem;background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:#7d5ca8;cursor:pointer;flex-shrink:0}

@@ -21,13 +21,21 @@
   --c-bulk:#6fcf8f; --c-type:#4fc3f7; --c-int:#f5b942; --c-yar:#b18cf0;
   --gold:#f2c14e; --silver:#c8d3de; --bronze:#c98d5f;
   --onaccent:#0d1a12; --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
+  --bgimg:#101418; --cardsh:none;
   --tcolor:#101418;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:12px;
   font-size:16px;
 }
 :root.light{
-  --bg:#eef2f7; --panel:#ffffff; --panel2:#f5f8fc; --line:#dde5ee;
+  --bg:#eef2f7; --panel:rgba(255,255,255,.88); --panel2:#f7fafd; --line:#dde5ee;
   --text:#20263a; --sub:#5d6b7a; --accent:#2f9e63; --accent2:#0f80a8;
+  /* 白一色にせず、このツールの色(緑・水色)を淡くにじませる */
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(111,207,143,.22), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(79,195,247,.17), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(111,207,143,.14), transparent 62%),
+    linear-gradient(165deg,#eefaf3 0%,#eef4fb 52%,#e9f6fb 100%);
+  --cardsh:0 14px 30px -18px rgba(60,130,110,.32), 0 1px 0 rgba(255,255,255,.8) inset;
   --bar-off:#d3dae2; --warn:#d64530;
   --c-bulk:#2f9e63; --c-type:#0f80a8; --c-int:#b07a00; --c-yar:#7a52c4;
   --gold:#e0a800; --silver:#9aa8b8; --bronze:#c07f4a;
@@ -35,7 +43,7 @@
   --tcolor:#eef2f7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
+body{background:var(--bgimg);background-attachment:fixed;color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px;min-height:100vh}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:20px 0 4px}
 /* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
@@ -61,7 +69,7 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 /* ランキング */
 .list{margin-top:14px;display:flex;flex-direction:column;gap:8px}
-.row{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.row{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--cardsh)}
 .row.hit{border-color:var(--accent)}
 .top{display:flex;align-items:center;gap:10px}
 .rank{min-width:52px;text-align:center;font-weight:700;font-size:.95rem;border-radius:8px;padding:4px 0;background:var(--panel2);color:var(--sub)}
