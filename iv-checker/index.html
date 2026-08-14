@@ -274,7 +274,7 @@ body.has-sticky{padding-top:52px}
 
 <footer>
   種族値・CPMデータ: ゲーム内公開データ準拠<br>
-  順位: 総合=ステータス積(SCP)基準、攻撃優先=攻撃個体値降順→SCP順。<b>同じSCPは同順位(タイ)</b>で、重なったぶんだけ次の順位を飛ばします(1位が2通りなら次は3位)。並び順は同順位内でCP降順。<br>最低個体値: 野生0 / 交換1・2・3・5(フレンドレベル) / シャドウレイド6 / レイド・ふか・リワード10<br>アメXL: PL40からの累計必要数(40〜42:各10 / 42〜44:各12 / 44〜46:各15 / 46〜48:各17 / 48〜50:各20、PL50まで合計296)
+  順位: 総合=ステータス積(SCP)基準、攻撃優先=攻撃個体値降順→SCP順。<b>攻・防・HPがぴったり同じ個体は同順位(タイ)</b>で、重なったぶんだけ次の順位を飛ばします(1位が2通りなら次は3位)。表示のSCPは切り捨ての整数なので、<b>同じ数字でも中身が違えば順位は分かれます</b>。並び順は同順位内でCP降順(CPが違っても順位は分かれません)。<br>最低個体値: 野生0 / 交換1・2・3・5(フレンドレベル) / シャドウレイド6 / レイド・ふか・リワード10<br>アメXL: PL40からの累計必要数(40〜42:各10 / 42〜44:各12 / 44〜46:各15 / 46〜48:各17 / 48〜50:各20、PL50まで合計296)
 </footer>
 </div>
 
@@ -311,11 +311,14 @@ function rankAll(p,capCP,maxLv,fl){
     const A=(p.a+ia)*m, D=(p.f+id_)*m, H=floor((p.h+ih)*m);
     rows.push({sp:A*D*H, cp:r[1], lv:1+r[0]/2, ia, id:id_, ih});
   }
+  // 並べ替えは丸める前のステータス積そのもの。CP降順は積が同じ個体どうしの並びを決めるだけで、
+  // 順位番号には効かせない(assignRanks を参照)
   rows.sort((x,y)=> y.sp-x.sp || y.cp-x.cp);
   return rows;
 }
 
-function scp(sp){ return Math.floor(Math.pow(sp,2/3)/10); }  // 端数は切り捨て(他ツール・外部の表示と統一)
+// 表示専用。端数は切り捨て(他ツールの表示と統一)。並べ替え・同順位の判定には使わない
+function scp(sp){ return Math.floor(Math.pow(sp,2/3)/10); }
 
 // アメXL: 半レベル毎の必要数(40→42:10, 42→44:12, 44→46:15, 46→48:17, 48→50:20 / 合計296)
 function xlStep(lv){ // lvはこの強化で到達するレベル(40.5〜50)
@@ -348,14 +351,19 @@ function sortRows(rows){
   return rows;
 }
 
-// 同じSCP(攻撃優先なら同じ攻撃個体値かつ同じSCP)は同順位=タイにして、
-// 重なったぶんだけ次の順位を飛ばす(1位が2つなら次は3位)
+// 丸める前のステータス積が完全に一致する個体だけを同順位=タイにして、
+// 重なったぶんだけ次の順位を飛ばす(1位が2つなら次は3位)。
+// 画面に出すSCPは表示専用の切り捨て整数なので、比較には絶対に使わない
+// (表示が同じ1519でも積が違えば別順位になるのが正しい)。
+// 数学的に厳密一致するケースがあるため、==ではなく相対誤差で判定する
+function spEq(a,b){ return Math.abs(a-b) <= 1e-9*Math.max(Math.abs(a),Math.abs(b)); }
 function assignRanks(rows){
-  let prevKey=null, prevRank=0;
+  let prev=null, prevRank=0;
   rows.forEach((r,i)=>{
-    const key=(state.sort==='atk'? r.ia+':' : '')+scp(r.sp);
-    if(key===prevKey){ r.rank=prevRank; }
-    else { r.rank=i+1; prevKey=key; prevRank=r.rank; }
+    // 攻撃優先の並びは攻撃個体値で先に並ぶので、攻撃個体値も一致していることが条件
+    const same = prev && spEq(prev.sp, r.sp) && (state.sort!=='atk' || prev.ia===r.ia);
+    if(same){ r.rank=prevRank; }
+    else { r.rank=i+1; prev=r; prevRank=r.rank; }
   });
   return rows;
 }
