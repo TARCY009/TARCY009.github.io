@@ -7,12 +7,18 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/max-battle/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/max-battle/apple-touch-icon.png">
 <link rel="manifest" href="/max-battle/manifest.webmanifest">
+<link rel="stylesheet" href="/assets/theme.css">
+<!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <meta name="theme-color" content="#ff3d6e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
 <meta name="description" content="ボスポケモンを入力すると、おすすめのアタッカーとタンクをランキング表示。アタッカーはダイマックスフェイズ火力、タンクはボスの全スペシャルアタックへの耐久で評価。交代受けスペシャリスト検索にも対応。PL50・個体値15想定。">
 <style>
+/* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク。
+   明るいグラデーションのバッジ類(ランク・カテゴリ・効果など)は、
+   もともと「明るい面＋濃い文字」なのでライトでもそのまま使える */
 :root{
   --bg:#0b0912; --bg2:#131022;
   --card:#171128; --card2:#1e1633; --line:#2d2347; --line2:#3d3060;
@@ -20,8 +26,30 @@
   --dyna:#ff3d6e; --dyna2:#ff7a5c; --violet:#8b5cf6;
   --dmax:#6fa0ff; --spec:#b76bff; --warn:#ffb35c;
   --gold1:#ffd76a; --gold2:#e8a23d;
+  --bosscard:linear-gradient(160deg,#221231,#170f26);
+  --no1bg:linear-gradient(160deg,#2a142c,#1a0f24);
+  --nmink:#fff; --nmsh:rgba(0,0,0,.45);
+  --ptsgrad:linear-gradient(180deg,#fff,#e9d9ff);
+  --no1pts:linear-gradient(180deg,#ffd76a,#fff2c8);
+  --okink:#4ad6b8; --goldink:#f2c14e; --onwarn:#33210a;
+  --res2bg:#2b6b5c; --res2ink:#bff2e4;
+  --tcolor:#0b0912;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:16px;
   font-size:16px;
+}
+:root.light{
+  --bg:#f3f0fb; --bg2:#ffffff;
+  --card:#ffffff; --card2:#faf8ff; --line:#e6e0f5; --line2:#d6ccee;
+  --text:#241c38; --sub:#645a80; --faint:#8d84a6;
+  --warn:#c9761a;
+  --bosscard:linear-gradient(160deg,#fdeef5,#f5f0fd);
+  --no1bg:linear-gradient(160deg,#fff1f6,#fbf5ff);
+  --nmink:#241c38; --nmsh:rgba(0,0,0,.10);
+  --ptsgrad:linear-gradient(180deg,#3a2d5c,#6b4aa8);
+  --no1pts:linear-gradient(180deg,#c98a00,#e8a23d);
+  --okink:#12806a; --goldink:#a8760a; --onwarn:#ffffff;
+  --res2bg:#d6f0e8; --res2ink:#14604e;
+  --tcolor:#f3f0fb;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -37,6 +65,8 @@ body{
 .num{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;letter-spacing:.02em}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:26px 0 6px;text-align:left}
+/* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
+.themesw{width:max-content;margin:0 0 12px auto}
 .eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:var(--dyna);text-transform:uppercase;display:flex;align-items:center;gap:10px}
 .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,61,110,.55),transparent)}
 h1{font-size:1.45rem;font-weight:900;letter-spacing:.03em;margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -54,7 +84,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .sug button:last-child{border-bottom:none}
 .sug button:hover,.sug button.sel{background:rgba(255,61,110,.10)}
 /* ボスカード */
-.bosscard{margin-top:14px;position:relative;border-radius:var(--radius);padding:16px 18px;display:none;background:linear-gradient(160deg,#221231,#170f26);overflow:hidden}
+.bosscard{margin-top:14px;position:relative;border-radius:var(--radius);padding:16px 18px;display:none;background:var(--bosscard);overflow:hidden}
 .bosscard::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;background:linear-gradient(135deg,var(--dyna),rgba(139,92,246,.7));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
 .bosscard::after{content:"";position:absolute;right:-40px;top:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle, rgba(255,61,110,.28), transparent 70%);pointer-events:none}
 .bosscard .blabel{font-family:"Oswald",sans-serif;font-size:.62rem;letter-spacing:.3em;color:var(--dyna)}
@@ -91,7 +121,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
 .row{position:relative;background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;transition:transform .15s, border-color .15s}
 .row.hit{border-color:var(--violet)}
-.row.no1{background:linear-gradient(160deg,#2a142c,#1a0f24);border-color:transparent;box-shadow:0 0 28px rgba(255,61,110,.22)}
+.row.no1{background:var(--no1bg);border-color:transparent;box-shadow:0 0 28px rgba(255,61,110,.22)}
 .row.no1::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;background:linear-gradient(135deg,var(--gold1),var(--dyna),var(--violet));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
 .prow{display:flex;align-items:center;gap:12px;margin-bottom:9px;padding-top:9px}
 .prow .pname{margin:0;flex:1;min-width:0}
@@ -109,7 +139,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .namebox{flex:1;min-width:0}
 .pname{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px}
 .nameplate{display:inline-block;padding:7px 13px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(255,61,110,.16) 65%,rgba(255,122,92,.12));border:1px solid rgba(255,255,255,.16);box-shadow:0 3px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10);line-height:1.35}
-.nameplate .nm{font-weight:900;font-size:1.31rem;letter-spacing:.02em;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.45);vertical-align:middle}
+.nameplate .nm{font-weight:900;font-size:1.31rem;letter-spacing:.02em;color:var(--nmink);text-shadow:0 1px 10px var(--nmsh);vertical-align:middle}
 .nameplate .tgroup{margin-left:8px;vertical-align:middle}
 .row.no1 .nameplate{background:linear-gradient(135deg,rgba(255,215,106,.30),rgba(255,61,110,.20));border-color:rgba(255,215,106,.45);box-shadow:0 3px 14px rgba(242,193,78,.25), inset 0 1px 0 rgba(255,255,255,.14)}
 .cbadge{white-space:nowrap;font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;letter-spacing:.04em}
@@ -120,8 +150,8 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .moves b{color:var(--text);font-weight:700}
 .legacy{font-size:.6rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 6px}
 .pts{text-align:right;min-width:88px}
-.pts b{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1.55rem;background:linear-gradient(180deg,#fff,#e9d9ff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.row.no1 .pts b{background:linear-gradient(180deg,var(--gold1),#fff2c8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pts b{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1.55rem;background:var(--ptsgrad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.row.no1 .pts b{background:var(--no1pts);-webkit-background-clip:text;background-clip:text;color:transparent}
 .pts small{color:var(--faint);font-size:.64rem;display:block;letter-spacing:.14em}
 .meter{position:relative;display:block;height:8px;border-radius:99px;overflow:hidden;background:var(--bg2);margin-top:11px}
 .meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--dyna) 60%,var(--dyna2));box-shadow:0 0 10px rgba(255,61,110,.45);transition:width .5s cubic-bezier(.2,.8,.2,1)}
@@ -129,7 +159,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .detail b{color:var(--text);font-weight:700}
 .effchip{font-size:.64rem;border-radius:999px;padding:1px 8px;font-weight:800}
 .eff256{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;box-shadow:0 0 10px rgba(255,61,110,.4)}
-.eff16{background:var(--warn);color:#33210a}
+.eff16{background:var(--warn);color:var(--onwarn)}
 .eff1{background:var(--bg2);color:var(--sub);border:1px solid var(--line)}
 .efflow{background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
 
@@ -143,11 +173,11 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .sprow input{width:110px;padding:8px 10px;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;color:var(--text);font-size:.9rem;outline:none}
 .sprow input:focus{border-color:#f2c14e}
 .spstatus{font-size:.7rem;color:var(--sub)}
-.spstatus.ok{color:#4ad6b8;font-weight:800}
+.spstatus.ok{color:var(--okink);font-weight:800}
 .tanknote{color:var(--faint);font-size:.7rem;line-height:1.6;margin:10px 2px 0}
 .spnote{color:var(--faint);font-size:.72rem;line-height:1.7;margin:0}
 .spnote + .spnote{margin-top:7px}
-.spnote b{color:#f2c14e}
+.spnote b{color:var(--goldink)}
 .spok{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
 .spng{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:var(--bg2);border:1px solid var(--line2);color:var(--faint)}
 .spv{margin-left:7px;font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:.72rem;padding:1px 8px;border-radius:999px;background:rgba(0,0,0,.26);letter-spacing:.02em}
@@ -156,7 +186,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .spmv{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-size:.74rem;padding:3px 10px;border-radius:999px;background:var(--bg2);border:1px solid var(--line2);color:var(--text)}
 .spmv.ok{border-color:#4ad6b8;background:rgba(74,214,184,.12)}
 .spmv .v{font-family:"Oswald",sans-serif;font-weight:600}
-.spmv.ok .v{color:#4ad6b8}
+.spmv.ok .v{color:var(--okink)}
 .spmv:not(.ok) .v{color:var(--faint)}
 .swapmoves{display:none;flex-wrap:wrap;gap:8px;margin-top:12px}
 .swapmoves .mvbtn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--text);font-size:.82rem;cursor:pointer;font-family:inherit}
@@ -164,10 +194,10 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .swapmoves .mvp{color:var(--faint);font-size:.7rem}
 .fastalt{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:700;background:var(--bg2);border:1px solid var(--line2);color:var(--sub)}
 .halfchip{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#cdeeff,#a9dcf6);color:#0c3346}
-.nohalf{white-space:nowrap;font-size:.7rem;border-radius:999px;padding:3px 12px;font-weight:800;background:var(--warn);color:#33210a;box-shadow:0 0 10px rgba(255,179,92,.35)}
+.nohalf{white-space:nowrap;font-size:.7rem;border-radius:999px;padding:3px 12px;font-weight:800;background:var(--warn);color:var(--onwarn);box-shadow:0 0 10px rgba(255,179,92,.35)}
 .wallb{white-space:nowrap;font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
 .effres{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
-.effres2{background:#2b6b5c;color:#bff2e4;border:1px solid #4ad6b8}
+.effres2{background:var(--res2bg);color:var(--res2ink);border:1px solid var(--okink)}
 .more{margin-top:16px;width:100%;padding:14px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.9rem;cursor:pointer;font-family:inherit;transition:all .15s}
 .more:hover{border-color:var(--dyna);color:var(--text)}
 .empty{margin-top:22px;color:var(--sub);text-align:center;font-size:.9rem}
@@ -189,6 +219,7 @@ footer a{color:var(--spec)}
 <body>
 <div class="wrap">
 <header>
+  <div id="themesw"></div>
   <div class="eyebrow">Pok&eacute;mon GO Max Battle</div>
   <h1>マックスバトル対策ツール <span class="badge">アタッカー / タンク</span></h1>
   <p class="lead">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
@@ -1020,5 +1051,6 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
 }
 </script>
+<script src="/assets/theme.js"></script>
 </body>
 </html>

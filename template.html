@@ -8,9 +8,10 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/karyoku/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
+<link rel="stylesheet" href="/assets/theme.css">
 <meta name="theme-color" content="#0b1023">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
-<script>try{if(localStorage.getItem('karyoku_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <style>
 /* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。
    既定は他ツール(/gbl/・/iv-checker/ 等)とそろえた濃紺のダーク。
@@ -44,6 +45,7 @@
   --ballsh:0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22);
   --ballbtm:#e9edf8;
   --tbadge:inset 0 0 0 1px rgba(255,255,255,.16);
+  --tcolor:#0b1023;   /* スマホのアドレスバーの色(theme.js が読む) */
 }
 :root.light{
   --ink:#20263a; --sub:#6a7391; --line:#dfe6f5;
@@ -74,6 +76,7 @@
   --ballsh:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55);
   --ballbtm:#ffffff;
   --tbadge:none;
+  --tcolor:#e9f1ff;
 }
 /* 明るいバッジが白系背景に溶けるため極薄の縁取りを追加(ライトのときの該当4タイプのみ) */
 :root.light .tbadge[title="でんき"],:root.light .tbadge[title="こおり"],
@@ -85,15 +88,9 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",syst
 .wrap{max-width:860px;margin:0 auto}
 header{margin:6px 0 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .hmain{min-width:0}
-/* ダーク⇄ライトの切り替え。排他の2択なのでタブと同じ作りでくっつけて置く(月=暗い/太陽=明るい) */
-.themesw{margin:2px 0 0;gap:2px;flex-shrink:0;flex-wrap:nowrap}
-.themesw button{padding:7px 11px;font-size:1rem;line-height:1;flex:0 0 auto}
-#thDark{--mc:#8f9ad0;--mg:linear-gradient(160deg,#7b8ae0 0%,#4453b0 45%,#2b3576 100%);--mgl:rgba(80,100,200,.45);border-radius:11px 5px 5px 11px}
-#thLight{--mc:#d99a1c;--mg:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%);--mgl:rgba(240,168,39,.45);border-radius:5px 11px 11px 5px}
-#thLight[aria-pressed="true"]{color:#4a3200}
+.themesw{margin-top:2px}
 /* 狭い画面はスイッチのぶんだけ幅が減るので、見出しを1行に収まる大きさまで下げる */
 @media (max-width:430px){
-  .themesw button{padding:6px 9px;font-size:.92rem}
   header h1{font-size:1.22rem}
   header p{font-size:.74rem}
 }
@@ -308,10 +305,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <h1><span class="brand">ポケモンGO</span><span class="tool">火力チェッカー</span></h1>
     <p>ボスを選ぶと火力ランキング。自分のポケモンは今の火力と順位がわかります。</p>
   </div>
-  <div class="modes themesw">
-    <button id="thDark" type="button" aria-pressed="true" aria-label="ダークモード" title="ダークモード">🌙</button>
-    <button id="thLight" type="button" aria-pressed="false" aria-label="ライトモード" title="ライトモード">☀️</button>
-  </div>
+  <div id="themesw"></div>
 </header>
 
 <div class="card c-boss">
@@ -376,6 +370,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 </div>
 
 <script src="/assets/type-icons.js"></script>
+<script src="/assets/theme.js"></script>
 <script>
 const D = __GODATA__;
 const TI = {}; D.types.forEach((t,i)=>TI[t]=i);
@@ -934,24 +929,6 @@ function renderRank(){
   moreBtn.style.display=rows.length>showN?'block':'none';
   bindMineCtl(sumEl);
 }
-// ---- ダーク⇄ライトの切り替え（右上）----
-// 選んだテーマは端末に覚えさせるので、次に開いたときも同じ見た目になる。
-// 既定はダーク（他のツールとそろえるため）。実際の色はCSSの :root と :root.light が持つ
-const THEME_KEY='karyoku_theme';
-const thDark=document.getElementById('thDark'), thLight=document.getElementById('thLight');
-function applyTheme(t){
-  const light = t==='light';
-  document.documentElement.classList.toggle('light', light);
-  thDark.setAttribute('aria-pressed', !light);
-  thLight.setAttribute('aria-pressed', light);
-  // スマホのアドレスバーの色も合わせる
-  document.querySelector('meta[name=theme-color]').setAttribute('content', light?'#e9f1ff':'#0b1023');
-  try{ localStorage.setItem(THEME_KEY, light?'light':'dark'); }catch(e){}
-}
-thDark.onclick=()=>applyTheme('dark');
-thLight.onclick=()=>applyTheme('light');
-applyTheme(document.documentElement.classList.contains('light')?'light':'dark');
-
 // ---- 使い方（ページ最下部のタブ）----
 // 画面には結論だけを置き、仕様・前提の説明はすべてここへ集める(全ツール共通の方針)
 const HELP_HTML = `

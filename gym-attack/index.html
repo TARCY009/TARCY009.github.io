@@ -9,21 +9,44 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/gym-attack/apple-touch-icon.png">
 <link rel="manifest" href="/gym-attack/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
+<link rel="stylesheet" href="/assets/theme.css">
+<!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <meta name="theme-color" content="#f5b942">
 <style>
+/* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク */
 :root{
   --bg:#101418; --panel:#1a2129; --panel2:#212b36; --line:#2e3a47;
   --text:#e8edf2; --sub:#93a3b3; --accent:#f5b942; --accent2:#4fc3f7;
   --bar:#7ee081; --bar-off:#33404d; --warn:#ff7d6b;
+  --onaccent:#1a1a1a; --onaccent2:#0d1620; --sughover:#2a3644;
+  --r1:#ffd54f; --r2:#cfd8dc; --r3:#d7a97c;
+  --shink:#c39bff; --shline:#6b4fa0;
+  --hrbg:#1d4d33; --hrink:#8be3a8; --hnbg:#3a4553; --hnink:#b7c4d0; --hwbg:#5a2620; --hwink:#ffb0a3;
+  --cwbg:#54221d; --cwink:#ff9d8f; --cnbg:#333d48; --cnink:#aab8c5; --crbg:#1c3a55; --crink:#8ec6f2;
+  --tcolor:#101418;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:12px;
   font-size:16px;
+}
+:root.light{
+  --bg:#eef2f7; --panel:#ffffff; --panel2:#f5f8fc; --line:#dde5ee;
+  --text:#20263a; --sub:#5d6b7a; --accent:#b07a00; --accent2:#0f80a8;
+  --bar:#3aa85f; --bar-off:#d3dae2; --warn:#d64530;
+  --onaccent:#ffffff; --onaccent2:#ffffff; --sughover:#eef3ff;
+  --r1:#b07a00; --r2:#64748f; --r3:#a5652a;
+  --shink:#7a3cc4; --shline:#c4b0ea;
+  --hrbg:#d6f0e0; --hrink:#1f6b40; --hnbg:#e3e8ef; --hnink:#4a5765; --hwbg:#fbdcd6; --hwink:#a03826;
+  --cwbg:#fbdcd6; --cwink:#a03826; --cnbg:#e3e8ef; --cnink:#4a5765; --crbg:#d9eafa; --crink:#1a5c8a;
+  --tcolor:#eef2f7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:20px 0 4px}
+/* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
+.themesw{width:max-content;margin:0 0 10px auto}
 h1{font-size:1.35rem;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
-h1 .badge{font-size:.65rem;background:var(--accent);color:#1a1a1a;border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
+h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
 .lead{color:var(--sub);font-size:.85rem;margin-top:6px}
 /* 検索 */
 .searchbox{position:relative;margin-top:16px}
@@ -32,16 +55,16 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:#1a1a1a;border-radius:
 .suggest{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);max-height:300px;overflow-y:auto;z-index:20;display:none}
 .suggest button{display:flex;width:100%;justify-content:space-between;align-items:center;padding:11px 14px;background:none;border:none;color:var(--text);font-size:.98rem;text-align:left;cursor:pointer;border-bottom:1px solid var(--line)}
 .suggest button:last-child{border-bottom:none}
-.suggest button:hover,.suggest button:focus{background:#2a3644}
+.suggest button:hover,.suggest button:focus{background:var(--sughover)}
 /* フィルタトグル */
 .filters{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .chipbtn{padding:8px 16px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s}
-.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1a1a1a;font-weight:700}
+.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onaccent);font-weight:700}
 #fShadow[aria-pressed="true"]{background:#8a63d2;border-color:#8a63d2;color:#fff}
 /* ランキングモード */
 .modes{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
 .modebtn{flex:1;padding:11px 8px;background:var(--panel);border:none;color:var(--sub);font-size:.9rem;cursor:pointer}
-.modebtn[aria-pressed="true"]{background:var(--accent2);color:#0d1620;font-weight:700}
+.modebtn[aria-pressed="true"]{background:var(--accent2);color:var(--onaccent2);font-weight:700}
 /* ポイントメーター */
 .meter{width:96px;height:6px;border-radius:3px;background:var(--bar-off);margin:4px 0 4px auto;overflow:hidden}
 .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px}
@@ -61,13 +84,13 @@ details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-
 .ranklist{margin-top:16px;display:flex;flex-direction:column;gap:10px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center}
 .rank{font-size:1.05rem;font-weight:800;text-align:center;color:var(--sub)}
-.rank.r1{color:#ffd54f}.rank.r2{color:#cfd8dc}.rank.r3{color:#d7a97c}
+.rank.r1{color:var(--r1)}.rank.r2{color:var(--r2)}.rank.r3{color:var(--r3)}
 .pname{font-weight:700;font-size:1.0rem;display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;min-width:0}
 .pname .hits{display:inline-flex;flex-shrink:0;align-items:center}
 .pname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pname .tpair{flex-shrink:0}
-.pname .shadow{display:inline-flex;align-items:center;color:#c39bff;font-size:.85rem;border:1px solid #6b4fa0;border-radius:6px;padding:1px 5px;flex-shrink:0}
-#fShadow{display:inline-flex;align-items:center;justify-content:center;color:#c39bff;font-size:1.05rem;padding:6px 18px}
+.pname .shadow{display:inline-flex;align-items:center;color:var(--shink);font-size:.85rem;border:1px solid var(--shline);border-radius:6px;padding:1px 5px;flex-shrink:0}
+#fShadow{display:inline-flex;align-items:center;justify-content:center;color:var(--shink);font-size:1.05rem;padding:6px 18px}
 .card>div{min-width:0}
 .moves{margin-top:4px;font-size:.82rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
 .gauge{display:inline-flex;gap:2px;margin-left:4px;vertical-align:middle}
@@ -78,17 +101,17 @@ details.settings summary{padding:10px 16px;cursor:pointer;color:var(--sub);font-
 .nums .dps{font-size:.72rem;color:var(--sub)}
 .nums .time{font-size:.72rem;color:var(--accent2)}
 .hitchip{font-size:.68rem;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
-.hit-resist{background:#1d4d33;color:#8be3a8}
-.hit-neutral{background:#3a4553;color:#b7c4d0}
-.hit-weak{background:#5a2620;color:#ffb0a3}
+.hit-resist{background:var(--hrbg);color:var(--hrink)}
+.hit-neutral{background:var(--hnbg);color:var(--hnink)}
+.hit-weak{background:var(--hwbg);color:var(--hwink)}
 /* 被弾内訳チップ(総合力モードのみ表示) */
 .hchip{display:inline-block;font-size:.66rem;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:5px;vertical-align:middle;letter-spacing:.02em}
-.hchip.hw{background:#54221d;color:#ff9d8f}
-.hchip.hn{background:#333d48;color:#aab8c5}
-.hchip.hr{background:#1c3a55;color:#8ec6f2}
+.hchip.hw{background:var(--cwbg);color:var(--cwink)}
+.hchip.hn{background:var(--cnbg);color:var(--cnink)}
+.hchip.hr{background:var(--crbg);color:var(--crink)}
 .note{margin-top:14px;color:var(--sub);font-size:.75rem}
 .loading{margin-top:24px;color:var(--sub);text-align:center}
-footer{margin-top:28px;color:#5c6b7a;font-size:.7rem;text-align:center}
+footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 @media (max-width:480px){
   .card{grid-template-columns:36px 1fr auto;padding:10px 10px}
   .nums .score{font-size:1.0rem}
@@ -98,6 +121,7 @@ footer{margin-top:28px;color:#5c6b7a;font-size:.7rem;text-align:center}
 <body>
 <div class="wrap">
 <header>
+  <div id="themesw"></div>
   <h1>ジム挑戦オススメツール <span class="badge">連戦効率型</span></h1>
   <p class="lead">相手の防衛ポケモンを指定すると、ゲージ分割技を優遇した「連戦向き」の攻撃ランキングを表示します。攻撃側はPL50・個体値MAX想定。</p>
 </header>
@@ -136,7 +160,7 @@ footer{margin-top:28px;color:#5c6b7a;font-size:.7rem;text-align:center}
 <div class="loading" id="loading">データ読み込み中…</div>
 <div class="ranklist" id="ranklist"></div>
 <p class="note" id="note" style="display:none">
-  ポイントは1位を100とした相対値。火力ランキング = 対面DPS × ゲージ補正(1本ゲージのSPアタックは大幅減点)。総合力ランキングはこれに被弾耐性補正を加味し、名前横のチップに防衛側の技タイプ数の内訳(<span style="color:#ff9d8f">弱点</span>/<span style="color:#aab8c5">等倍</span>/<span style="color:#8ec6f2">耐性</span>)を表示。耐性補正の内部計算ではノーマルアタックのタイプを低比重で扱います。デフォルトはメガ・シャドウ除外、各ポケモン最適技構成のみ表示。上のボタンで切替できます。
+  ポイントは1位を100とした相対値。火力ランキング = 対面DPS × ゲージ補正(1本ゲージのSPアタックは大幅減点)。総合力ランキングはこれに被弾耐性補正を加味し、名前横のチップに防衛側の技タイプ数の内訳(<span style="color:var(--cwink)">弱点</span>/<span style="color:var(--cnink)">等倍</span>/<span style="color:var(--crink)">耐性</span>)を表示。耐性補正の内部計算ではノーマルアタックのタイプを低比重で扱います。デフォルトはメガ・シャドウ除外、各ポケモン最適技構成のみ表示。上のボタンで切替できます。
 </p>
 <footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>
 </div>
@@ -333,5 +357,6 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
 }
 </script>
+<script src="/assets/theme.js"></script>
 </body>
 </html>

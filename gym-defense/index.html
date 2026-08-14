@@ -8,23 +8,40 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/gym-defense/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/gym-defense/apple-touch-icon.png">
 <link rel="manifest" href="/gym-defense/manifest.webmanifest">
+<link rel="stylesheet" href="/assets/theme.css">
+<!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <meta name="theme-color" content="#6fcf8f">
 <style>
+/* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク */
 :root{
   --bg:#101418; --panel:#1a2129; --panel2:#212b36; --line:#2e3a47;
   --text:#e8edf2; --sub:#93a3b3; --accent:#6fcf8f; --accent2:#4fc3f7;
   --bar-off:#33404d; --warn:#ff7d6b;
   --c-bulk:#6fcf8f; --c-type:#4fc3f7; --c-int:#f5b942; --c-yar:#b18cf0;
   --gold:#f2c14e; --silver:#c8d3de; --bronze:#c98d5f;
+  --onaccent:#0d1a12; --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
+  --tcolor:#101418;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:12px;
   font-size:16px;
+}
+:root.light{
+  --bg:#eef2f7; --panel:#ffffff; --panel2:#f5f8fc; --line:#dde5ee;
+  --text:#20263a; --sub:#5d6b7a; --accent:#2f9e63; --accent2:#0f80a8;
+  --bar-off:#d3dae2; --warn:#d64530;
+  --c-bulk:#2f9e63; --c-type:#0f80a8; --c-int:#b07a00; --c-yar:#7a52c4;
+  --gold:#e0a800; --silver:#9aa8b8; --bronze:#c07f4a;
+  --onaccent:#ffffff; --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
+  --tcolor:#eef2f7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:20px 0 4px}
+/* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
+.themesw{width:max-content;margin:0 0 10px auto}
 h1{font-size:1.35rem;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
-h1 .badge{font-size:.65rem;background:var(--accent);color:#0d1a12;border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
+h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
 .lead{color:var(--sub);font-size:.85rem;margin-top:6px}
 /* 検索 */
 .searchbox{position:relative;margin-top:16px}
@@ -33,12 +50,12 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:#0d1a12;border-radius:
 /* ランキングモード */
 .modes{display:flex;margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
 .modebtn{flex:1;padding:11px 8px;background:var(--panel);border:none;color:var(--sub);font-size:.9rem;cursor:pointer}
-.modebtn[aria-pressed="true"]{background:var(--accent);color:#0d1a12;font-weight:700}
+.modebtn[aria-pressed="true"]{background:var(--accent);color:var(--onaccent);font-weight:700}
 .detail .off{opacity:.45}
 /* フィルタ */
 .filters{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
 .chipbtn{padding:8px 16px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--sub);font-size:.85rem;cursor:pointer;transition:all .15s}
-.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#0d1a12;font-weight:700}
+.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onaccent);font-weight:700}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;color:var(--sub);font-size:.72rem}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -48,9 +65,9 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:#0d1a12;border-radius:
 .row.hit{border-color:var(--accent)}
 .top{display:flex;align-items:center;gap:10px}
 .rank{min-width:52px;text-align:center;font-weight:700;font-size:.95rem;border-radius:8px;padding:4px 0;background:var(--panel2);color:var(--sub)}
-.rank.r1{background:var(--gold);color:#3a2c00}
-.rank.r10{background:var(--silver);color:#232c34}
-.rank.r100{background:var(--bronze);color:#2e1c0d}
+.rank.r1{background:var(--gold);color:var(--ongold)}
+.rank.r10{background:var(--silver);color:var(--onsilver)}
+.rank.r100{background:var(--bronze);color:var(--onbronze)}
 .namebox{flex:1;min-width:0}
 /* 名前 → タイプアイコン → 二重弱点 の順。アイコンは常に表示(縮まない) */
 .pname{font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -79,6 +96,7 @@ footer a{color:var(--accent2)}
 <body>
 <div class="wrap">
 <header>
+  <div id="themesw"></div>
   <h1>ジム防衛オススメツール <span class="badge">防衛</span></h1>
   <p class="lead">攻撃側メタ分布(格闘・鋼中心)を加重した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
 </header>
@@ -219,5 +237,6 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
 }
 </script>
+<script src="/assets/theme.js"></script>
 </body>
 </html>

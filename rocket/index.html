@@ -10,7 +10,10 @@
 <link rel="manifest" href="/rocket/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/gbl.css">
+<link rel="stylesheet" href="/assets/theme.css">
 <meta name="theme-color" content="#0c1122">
+<!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <script>window.PAGE_ROCKET = true;   // 共通アプリ本体(gbl-app.js)をロケット団対策ページとして起動する</script>
 </head>
 <body>
@@ -22,5 +25,6 @@
 <script src="/assets/pvp-engine.js"></script>
 <script src="/assets/rocket_roster.js"></script>
 <script src="/assets/gbl-app.js"></script>
+<script src="/assets/theme.js"></script>
 </body>
 </html>

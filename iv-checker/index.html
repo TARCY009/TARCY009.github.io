@@ -19,25 +19,45 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="/assets/theme.css">
+<!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <style>
+/* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク */
 :root{
   --bg:#0c1122; --bg2:#131a33; --panel:#1a2342; --line:#2a3560;
   --ink:#eef1fb; --sub:#8b96c2; --cy:#43e0ff;
   --gl:#4d8dff; --ul:#f5c542; --ml:#b06cff;
   --good:#3ddc84; --warn:#ff6b81;
+  --glow:#1d2a55; --sughover:#232e58; --segoff:#25305c;
+  --line2:rgba(42,53,96,.4); --sticky:rgba(12,17,34,.92);
+  --gold:#ffd54a; --silver:#c9d6f0; --bronze:#e0955b;
+  --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
   --r:14px;
+}
+:root.light{
+  --bg:#eef2fc; --bg2:#f7f9ff; --panel:#ffffff; --line:#dfe6f5;
+  --ink:#20263a; --sub:#6a7391; --cy:#0b8fa8;
+  --gl:#3b6ef0; --ul:#b3820b; --ml:#8b5cf6;
+  --good:#1f9d55; --warn:#d63a52;
+  --glow:#dbe6ff; --sughover:#eef3ff; --segoff:#d7dcea;
+  --line2:rgba(32,38,58,.10); --sticky:rgba(255,255,255,.92);
+  --gold:#b07a00; --silver:#64748f; --bronze:#a5652a;
+  --tcolor:#eef2fc;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{font-size:16px}
 body{
   font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","BIZ UDPGothic","Noto Sans JP",system-ui,sans-serif;
   background:
-    radial-gradient(1000px 500px at 50% -10%, #1d2a55 0%, transparent 60%),
+    radial-gradient(1000px 500px at 50% -10%, var(--glow) 0%, transparent 60%),
     var(--bg);
   color:var(--ink); min-height:100vh; padding:20px 16px 60px;
 }
 .wrap{max-width:560px;margin:0 auto}
 header{text-align:center;margin-bottom:22px}
+/* ダーク⇄ライトの切り替えはページの右上。見出しは中央寄せなので、その上の行に右寄せで置く */
+.themesw{width:max-content;margin:0 0 8px auto}
 .eyebrow{font-size:.7rem;letter-spacing:.35em;color:var(--cy);font-weight:700}
 h1{font-size:1.5rem;font-weight:800;margin-top:6px;letter-spacing:.04em}
 h1 small{display:block;font-size:.72rem;color:var(--sub);font-weight:500;margin-top:4px;letter-spacing:.1em}
@@ -53,9 +73,9 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 #sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--line);
   border-radius:10px;max-height:260px;overflow-y:auto;z-index:20;display:none}
 #sugg button{display:flex;justify-content:space-between;width:100%;padding:11px 14px;background:none;border:none;
-  color:var(--ink);font-size:.95rem;text-align:left;cursor:pointer;border-bottom:1px solid rgba(42,53,96,.5)}
+  color:var(--ink);font-size:.95rem;text-align:left;cursor:pointer;border-bottom:1px solid var(--line2)}
 #sugg button:last-child{border-bottom:none}
-#sugg button:active,#sugg button:hover{background:#232e58}
+#sugg button:active,#sugg button:hover{background:var(--sughover)}
 #sugg .bs{color:var(--sub);font-size:.75rem;font-variant-numeric:tabular-nums}
 #sugg .evtag{display:inline-block;font-size:.6rem;font-weight:700;color:var(--cy);border:1px solid var(--cy);border-radius:4px;padding:1px 4px;margin-right:6px;vertical-align:1px}
 .picked{margin-top:10px;font-size:.85rem;color:var(--sub);display:none}
@@ -72,7 +92,7 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .seg:nth-child(6),.seg:nth-child(11){margin-left:8px;position:relative}
 .seg:nth-child(6)::before,.seg:nth-child(11)::before{content:"";position:absolute;left:-6px;top:-3px;bottom:-3px;width:1px;background:var(--line)}
 .scale{display:flex;justify-content:space-between;font-size:.6rem;color:var(--sub);margin-top:3px;font-variant-numeric:tabular-nums;padding:0 1px}
-.seg{background:#25305c;border-radius:3px;transition:background .08s}
+.seg{background:var(--segoff);border-radius:3px;transition:background .08s}
 .seg.on{background:linear-gradient(180deg,#ffb340,#ff8b1f)}
 .iv.max .seg.on{background:linear-gradient(180deg,#ff6b81,#e83e5c)}
 .iv-hint{font-size:.68rem;color:var(--sub);margin-top:4px}
@@ -130,7 +150,7 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 table{width:100%;border-collapse:collapse;font-size:.83rem;font-variant-numeric:tabular-nums}
 th{font-size:.65rem;color:var(--sub);font-weight:700;letter-spacing:.08em;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
 th:first-child,td:first-child{text-align:left}
-td{padding:8px 4px;text-align:right;border-bottom:1px solid rgba(42,53,96,.4)}
+td{padding:8px 4px;text-align:right;border-bottom:1px solid var(--line2)}
 tr.me td{background:rgba(67,224,255,.09);color:var(--cy);font-weight:700}
 tr:last-child td{border-bottom:none}
 .note{font-size:.7rem;color:var(--sub);line-height:1.6;margin-top:14px}
@@ -138,7 +158,7 @@ footer{text-align:center;font-size:.65rem;color:var(--sub);margin-top:26px;line-
 
 /* スティッキー順位バー */
 #sticky{position:fixed;top:0;left:0;right:0;z-index:50;display:none;
-  background:rgba(12,17,34,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+  background:var(--sticky);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
   padding:9px 16px calc(9px + env(safe-area-inset-top) * 0);padding-top:calc(9px + env(safe-area-inset-top));
   font-size:.9rem;font-weight:700;display:none;justify-content:space-between;align-items:center}
 #sticky .r1{color:var(--gold)} #sticky .r10{color:var(--silver)} #sticky .r100{color:var(--bronze)}
@@ -152,8 +172,7 @@ body.has-sticky{padding-top:52px}
 .lgc[data-lg="gl"].act{border-color:var(--gl);background:rgba(77,141,255,.14);color:var(--ink)}
 .lgc[data-lg="ul"].act{border-color:var(--ul);background:rgba(245,197,66,.12);color:var(--ink)}
 .lgc[data-lg="ml"].act{border-color:var(--ml);background:rgba(176,108,255,.13);color:var(--ink)}
-/* メダル色 */
-:root{--gold:#ffd54a;--silver:#c9d6f0;--bronze:#e0955b}
+/* メダル色は上の :root / :root.light が持つ */
 .rank-num.r1{color:var(--gold);text-shadow:0 0 24px rgba(255,213,74,.35)}
 .rank-num.r10{color:var(--silver)}
 .rank-num.r100{color:var(--bronze)}
@@ -172,6 +191,7 @@ body.has-sticky{padding-top:52px}
 <body>
 <div id="sticky"><span id="stk-name">—</span><span id="stk-rank"></span></div>
 <div class="wrap">
+<div id="themesw"></div>
 <header>
   <div class="eyebrow">GO BATTLE LEAGUE</div>
   <h1>個体値チェッカー<small>4096通り完全計算 — 順位・SCP・必要レベルを一発表示</small></h1>
@@ -678,5 +698,6 @@ document.querySelectorAll('.cap').forEach(c=>c.addEventListener('click',()=>{
   render();
 }));
 </script>
+<script src="/assets/theme.js"></script>
 </body>
 </html>

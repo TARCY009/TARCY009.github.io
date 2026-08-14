@@ -7,7 +7,8 @@ const PAGE_ROCKET = !!window.PAGE_ROCKET;
 document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
-  <h1>GOバトルリーグ <b>対面シミュレーター</b></h1>
+  <h1><span>GOバトルリーグ</span> <b>対面シミュレーター</b></h1>
+  <div id="themesw"></div>
 </header>
 
 <div class="leagues" id="leagues">
@@ -320,9 +321,10 @@ document.getElementById('app').innerHTML = `
 // ページごとの入口の違いを整える
 if (PAGE_ROCKET) {
   // ロケット団対策ページ: モードは固定なのでタブ行ごと隠し、見出しを差し替える
-  document.querySelector('header h1').innerHTML = 'GOロケット団 <b>対策シミュレーター</b>';
+  document.querySelector('header h1').innerHTML = '<span>GOロケット団</span> <b>対策シミュレーター</b>';
   document.getElementById('modes').style.display = 'none';
-  document.querySelector('header').insertAdjacentHTML('beforeend',
+  // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
+  document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
 } else {
   // GBLページ: ロケット団戦は別ページになったので、タブを同じ位置のリンクに差し替える

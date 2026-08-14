@@ -10,7 +10,10 @@
 <link rel="manifest" href="/gbl/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/gbl.css">
+<link rel="stylesheet" href="/assets/theme.css">
 <meta name="theme-color" content="#0c1122">
+<!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <script>
 // ロケット団戦は専用ページ(/rocket/)へ独立した。古い共有リンク(md=rocket)は設定ごと転送する
 (() => {
@@ -32,5 +35,6 @@
 <script src="/assets/pvp-engine.js"></script>
 <script src="/assets/rocket_roster.js"></script>
 <script src="/assets/gbl-app.js"></script>
+<script src="/assets/theme.js"></script>
 </body>
 </html>

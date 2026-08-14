@@ -1,9 +1,26 @@
+/* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。既定はダーク。
+   点灯中のタブやバッジは「明るい面＋濃い文字」なので、どちらのテーマでも同じものを使う */
 :root{
   --bg:#0c1122; --bg2:#131a33; --panel:#1a2342; --line:#2a3560;
   --ink:#eef1fb; --sub:#8b96c2; --cy:#43e0ff; --gl:#4d8dff; --ml:#b06cff;
   --win:#3ddc84; --lose:#ff6b81; --gold:#ffd54a;
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.05);
+  --deep:#0a0f22; --line2:#3b4a86; --onml:#140a26;
+  --rklink:#ff8f8f; --rklinkbg:linear-gradient(180deg,#2a1c2e,#1d1526);
+  --rkkindbg:linear-gradient(180deg,#241c33,#191428); --ongold:#2b2305;
+  --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
   --r:14px;
   font-size:16px;
+}
+:root.light{
+  --bg:#eef2fb; --bg2:#f7f9ff; --panel:#ffffff; --line:#dfe6f5;
+  --ink:#20263a; --sub:#5f6a92; --cy:#0b8fa8; --gl:#2f5fd0; --ml:#8b5cf6;
+  --win:#1f9d55; --lose:#d63a52; --gold:#a8760a;
+  --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
+  --deep:#e8edf7; --line2:#b9c6e4; --onml:#ffffff;
+  --rklink:#c62b46; --rklinkbg:linear-gradient(180deg,#fff,#ffeef1);
+  --rkkindbg:linear-gradient(180deg,#fff,#fff2f4); --ongold:#ffffff;
+  --tcolor:#eef2fb;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
@@ -17,7 +34,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
    選んでいないときは色を控えめに、押すとその色のグラデーションで点灯して立体的に浮き上がる */
 .leagues{display:flex;gap:6px;margin-top:12px}
 .lgbtn{flex:1;padding:11px 6px;font-size:.9rem;font-weight:800;letter-spacing:.02em;cursor:pointer;
-  color:var(--lu,var(--lc));opacity:.72;background:linear-gradient(180deg,#1e2850,#151d38);
+  color:var(--lu,var(--lc));opacity:.72;background:var(--tab);
   border:1px solid var(--line);border-radius:12px;
   box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
   transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
@@ -27,14 +44,21 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .lgbtn[data-cap="2500"]{--lc:#ffd54a;--l1:#fff0b8;--l2:#e0a020;--lt:#33260a;--lg:rgba(255,213,74,.38)}
 .lgbtn[data-cap="0"]{--lc:#b06cff;--l1:#e3b6ff;--l2:#7d3fd6;--lt:#1c0a33;--lg:rgba(176,108,255,.42)}
 #cupTab{--lc:#e6ebfa;--l1:#ffffff;--l2:#b9c3de;--lt:#141b33;--lg:rgba(220,230,255,.35)}
+/* ライトのときは、選んでいないタブの文字(--lu/--lc)を白い土台でも読める濃さにする。
+   点灯中のグラデーション(--l1/--lc/--l2)はどちらのテーマでも同じ */
+:root.light .lgbtn[data-cap="1500"]{--lu:#2f6fe0}
+:root.light .lgbtn[data-cap="2500"]{--lu:#a8760a}
+:root.light .lgbtn[data-cap="0"]{--lu:#7a3cc4}
+:root.light #cupTab{--lu:#5f6a92}
+:root.light .lgbtn{opacity:.85}
 .lgbtn[aria-pressed="true"]{opacity:1;color:var(--lt);border-color:var(--l1);transform:translateY(-1px);
   background:linear-gradient(160deg,var(--l1) 0%,var(--lc) 45%,var(--l2) 100%);
   box-shadow:0 6px 18px var(--lg),inset 0 1px 0 rgba(255,255,255,.6)}
 .cupwin{margin-top:8px}
 .cupslots button{flex:1 0 46%;font-size:.8rem;padding:9px 4px;font-weight:700}
 .cupslots button small{display:block;font-weight:400;font-size:.64rem;color:var(--sub);margin-top:2px}
-.cupslots button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
-.cupslots button[aria-pressed="true"] small{color:#140a26}
+.cupslots button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml)}
+.cupslots button[aria-pressed="true"] small{color:var(--onml)}
 @media (max-width:430px){.lgbtn{font-size:.76rem;padding:10px 2px}}
 /* 2カラム */
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
@@ -76,7 +100,7 @@ select.ph option{color:var(--ink)}
 select option[value=""]{color:var(--sub)}
 .opts{display:flex;gap:4px}
 .opts button{flex:1;padding:6px 4px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer}
-.opts button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26;font-weight:700}
+.opts button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml);font-weight:700}
 .opts.sh button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy)}
 /* 結果 */
 .result{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:none}
@@ -88,11 +112,11 @@ select option[value=""]{color:var(--sub)}
 .badge.win{background:var(--win);color:#052613}
 .badge.lose{background:var(--lose);color:#2b070d}
 .badge.draw{background:var(--gold);color:#2b2305}
-.hpbar{height:10px;border-radius:99px;background:#0a0f22;overflow:hidden;margin-top:6px;border:1px solid var(--line)}
+.hpbar{height:10px;border-radius:99px;background:var(--deep);overflow:hidden;margin-top:6px;border:1px solid var(--line)}
 .hpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--win),#a5f3c0)}
 .hpbar i.low{background:linear-gradient(90deg,var(--lose),#ffb3bd)}
 .subline{color:var(--sub);font-size:.72rem;margin-top:3px}
-.enbar{height:8px;border-radius:99px;background:#0a0f22;overflow:hidden;margin-top:8px;border:1px solid var(--line)}
+.enbar{height:8px;border-radius:99px;background:var(--deep);overflow:hidden;margin-top:8px;border:1px solid var(--line)}
 .enbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ml),#d8b4fe)}
 .subline b{color:var(--ink)}
 .shline .sh{font-size:1.1rem;margin-right:2px}
@@ -158,8 +182,8 @@ select option[value=""]{color:var(--sub)}
 @media (max-width:520px){.bpcols{grid-template-columns:1fr}}
 .modes{display:flex;gap:6px;margin-top:10px}
 .modes button{flex:1;padding:9px 4px;font-size:.85rem;font-weight:800;color:var(--sub);cursor:pointer;
-  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:11px;
-  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05);
+  background:var(--tab);border:1px solid var(--line);border-radius:11px;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
   transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
 .modes button:hover{color:var(--ink);transform:translateY(-1px)}
 .modes button[aria-pressed="true"]{color:#042330;border-color:#d5f2ff;transform:translateY(-1px);
@@ -170,11 +194,16 @@ select option[value=""]{color:var(--sub)}
 @media (max-width:520px){.modes{gap:4px}.modes button{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
 /* 別ページへのリンク(GBL⇄ロケット団対策)。タブと同じ見た目で置く */
 .modes a.modelink{flex:1 1 auto;padding:9px 4px;font-size:.85rem;font-weight:800;text-align:center;text-decoration:none;
-  color:#ff8f8f;background:linear-gradient(180deg,#2a1c2e,#1d1526);border:1px solid rgba(255,107,129,.3);border-radius:11px;
-  box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .12s ease,border-color .12s ease}
+  color:var(--rklink);background:var(--rklinkbg);border:1px solid rgba(255,107,129,.3);border-radius:11px;
+  box-shadow:0 2px 0 var(--tabsh);transition:transform .12s ease,border-color .12s ease}
 .modes a.modelink:hover{transform:translateY(-1px);border-color:#ff6b6b}
 @media (max-width:520px){.modes a.modelink{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+/* 見出しを伸ばして、ダーク⇄ライトの切り替え(と別ページへのリンク)を右端へ寄せる */
+header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:nowrap}
+/* 幅が足りないときは「GOバトルリーグ / 対面シミュレーター」の切れ目で折り返す(語の途中で切らない) */
+header h1{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:0 .35em}
+header h1>span,header h1>b{white-space:nowrap}
+header .themesw{align-self:center}
 header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
 /* パーティ診断 */
 .pslots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
@@ -211,12 +240,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkrow.rksep{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
 .rocket .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
 .rocket .opts{flex:1;min-width:160px}
-.rocket .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305}
+.rocket .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--ongold)}
 /* いちばん上のモード切替(1対1 / 模擬戦)はこのツールの主役なので、大きく立体的に見せる */
 .rkmoderow{margin-bottom:2px}
 .rkmode{gap:8px}
 .rkmode button{flex:1;padding:12px 6px;font-size:.95rem;font-weight:800;letter-spacing:.03em;
-  color:var(--sub);background:linear-gradient(180deg,#1e2850,#151d38);
+  color:var(--sub);background:var(--tab);
   border:1px solid var(--line);border-radius:12px;cursor:pointer;
   box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
   transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
@@ -231,12 +260,17 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 /* あいての種別はロケット団らしく赤系。したっぱ→サカキで赤が濃くなる */
 .rkkind{gap:6px}
 .rkkind button{flex:1;padding:9px 4px;font-size:.86rem;font-weight:800;color:var(--rc);
-  background:linear-gradient(180deg,#241c33,#191428);border:1px solid rgba(255,107,129,.3);border-radius:11px;
-  box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .12s ease,box-shadow .12s ease}
+  background:var(--rkkindbg);border:1px solid rgba(255,107,129,.3);border-radius:11px;
+  box-shadow:0 2px 0 var(--tabsh);transition:transform .12s ease,box-shadow .12s ease}
 .rkkind button:hover{transform:translateY(-1px);border-color:var(--rc)}
 .rkkind button[data-v="grunt"]{--rc:#ffa8a8;--rd:#e05a5a}
 .rkkind button[data-v="leader"]{--rc:#ff7676;--rd:#c62828}
 .rkkind button[data-v="boss"]{--rc:#ff4d4d;--rd:#8e0000}
+/* ライトのときは、選んでいない種別の土台を白系にして文字も読める濃さにする
+   (強敵になるほど濃い赤、という並びはそのまま) */
+:root.light .rkkind button[data-v="grunt"]{--rc:#d9636e}
+:root.light .rkkind button[data-v="leader"]{--rc:#c62828}
+:root.light .rkkind button[data-v="boss"]{--rc:#8e0000}
 .rocket .rkkind button[aria-pressed="true"]{color:#2c0406;border-color:var(--rc);
   background:linear-gradient(160deg,#ffd0d0 0%,var(--rc) 45%,var(--rd) 100%);
   box-shadow:0 5px 16px rgba(255,77,77,.38),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px)}
@@ -254,14 +288,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkwho{gap:6px}
 .rkwho button{flex:1;padding:9px 6px;font-size:.86rem;font-weight:800;color:#e8c56a;
   background:linear-gradient(180deg,#2a2440,#1c1830);border:1px solid rgba(255,213,74,.32);border-radius:11px;
-  box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+  box-shadow:0 2px 0 var(--tabsh);transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
 .rkwho button:hover{transform:translateY(-1px);border-color:#ffd54a}
 .rocket .rkwho button[aria-pressed="true"]{color:#33260a;border-color:#ffe89a;
   background:linear-gradient(160deg,#fff0b8 0%,#ffd54a 45%,#e0a020 100%);
   box-shadow:0 5px 16px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(-1px)}
 /* 手持ちのポケモンチップ。選ぶと金色に光り、押した感じが出るようにする */
 .rkchip{display:inline-flex;align-items:center;gap:3px;padding:5px 10px;font-size:.72rem;font-weight:700;
-  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:99px;
+  background:var(--tab);border:1px solid var(--line);border-radius:99px;
   color:var(--ink);cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.35);
   transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
 .rkchip:hover{transform:translateY(-1px);border-color:rgba(255,213,74,.6)}
@@ -285,7 +319,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkmvsum .ng{color:var(--lose)}
 .rkmoves table{width:100%;border-collapse:separate;border-spacing:3px}
 .rkmoves th{font-size:.62rem;color:var(--sub);font-weight:600;text-align:center}
-.rkmoves td{background:#0a0f22;border:1px solid var(--line);border-radius:8px;padding:5px 6px;
+.rkmoves td{background:var(--deep);border:1px solid var(--line);border-radius:8px;padding:5px 6px;
   font-size:.7rem;color:var(--sub);text-align:center;cursor:pointer}
 .rkmoves td:first-child{text-align:left;color:var(--ink)}
 .rkmoves td.w b{color:var(--win)}
@@ -513,7 +547,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   box-shadow:0 3px 0 rgba(0,0,0,.4),0 5px 16px rgba(245,195,60,.32),inset 0 1px 0 rgba(255,255,255,.6);
   transition:transform .08s,box-shadow .08s}
 .ptswbtn:hover{transform:translateY(-1px)}
-.ptswbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.ptswbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--tabsh)}
 .ptswbtn:disabled{opacity:.5;cursor:default;transform:none}
 .ptswundo{margin-left:auto;padding:5px 11px;font-size:.7rem;color:var(--ink);background:var(--bg2);
   border:1px solid var(--line);border-radius:999px;cursor:pointer}
@@ -584,10 +618,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .mdet{margin-top:8px;text-align:right}
 .mdetbody{text-align:left}
 .mdettab{flex-shrink:0;padding:6px 13px;font-size:.74rem;font-weight:800;color:var(--ink);
-  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:10px;
-  cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .08s,box-shadow .08s}
-.mdettab:hover{transform:translateY(-1px);box-shadow:0 3px 0 rgba(0,0,0,.4)}
-.mdettab:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+  background:var(--tab);border:1px solid var(--line);border-radius:10px;
+  cursor:pointer;box-shadow:0 2px 0 var(--tabsh);transition:transform .08s,box-shadow .08s}
+.mdettab:hover{transform:translateY(-1px);box-shadow:0 3px 0 var(--tabsh)}
+.mdettab:active{transform:translateY(1px);box-shadow:0 1px 0 var(--tabsh)}
 .mdettab[aria-expanded="true"]{color:var(--cy);border-color:var(--cy)}
 .mdetbody .gopt{margin-top:6px}
 .holeword{color:var(--lose)}
@@ -711,7 +745,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hs .hpn.g{color:#7ef0af}
 .hs .hpn.y{color:#ffd54a}
 .hs .hpn.r{color:#ff9d9d}
-.hb{height:7px;background:#0a0f22;border:1px solid var(--line);border-radius:99px;margin:4px 0 5px;overflow:hidden}
+.hb{height:7px;background:var(--deep);border:1px solid var(--line);border-radius:99px;margin:4px 0 5px;overflow:hidden}
 .hb i{display:block;height:100%;width:100%;border-radius:99px;transition:width .35s ease}
 .hb i.g{background:linear-gradient(90deg,#2bd97c,#7ef0af)}
 .hb i.y{background:linear-gradient(90deg,#e8a93d,#ffd54a)}
@@ -761,7 +795,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   .gq{width:21px;height:21px}.gq i{width:16px;height:16px}.ft{grid-template-columns:1fr 30px 1fr}
   .ev{font-size:.6rem;padding:2px 5px}.rwb button{font-size:.72rem;padding:6px 10px}}
 /* ロケット団戦 1対1: おすすめランキング */
-.rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26}
+.rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml)}
 .rkfilt button .shadowmark{margin-right:3px}
 #rkrank{padding:10px 12px}
 #rkranktitle{text-align:center}
@@ -877,7 +911,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rksum{margin-top:12px}
 .rksum table{border-collapse:separate;border-spacing:3px;width:100%;max-width:430px;margin:6px auto 0}
 .rksum th{color:var(--sub);font-weight:600;font-size:.66rem;padding:2px}
-.rksum td{background:#0a0f22;border:1px solid var(--line);border-radius:8px;text-align:center;padding:5px 2px;cursor:pointer}
+.rksum td{background:var(--deep);border:1px solid var(--line);border-radius:8px;text-align:center;padding:5px 2px;cursor:pointer}
 .rksum td b{font-size:.82rem}
 .rksum td.w b{color:var(--win)}
 .rksum td.l b{color:var(--lose)}
@@ -921,7 +955,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .shmtx table{border-collapse:separate;border-spacing:3px;width:100%;max-width:430px;margin:6px auto 0}
 .shmtx th{color:var(--sub);font-weight:600;font-size:.68rem;padding:2px}
 .shmtx th.corner{font-size:.62rem}
-.shmtx td{background:#0a0f22;border:1px solid var(--line);border-radius:8px;text-align:center;padding:5px 2px;cursor:pointer}
+.shmtx td{background:var(--deep);border:1px solid var(--line);border-radius:8px;text-align:center;padding:5px 2px;cursor:pointer}
 .shmtx td b{font-size:.82rem}
 .shmtx td.w b{color:var(--win)}
 .shmtx td.l b{color:var(--lose)}
@@ -982,15 +1016,15 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sprow{display:flex;align-items:center;gap:6px;margin-top:4px}
 .sprow .lbl{font-size:.7rem;color:var(--sub);width:3.6em;flex-shrink:0}
 .sprow button{flex:1;padding:4px 2px;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sprow button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:#140a26;font-weight:700}
+.sprow button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml);font-weight:700}
 .sprow select.tsel{flex:1 1 5em;min-width:4.6em;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:4px 2px;font-size:.72rem;outline:none}
 .sprow select.tsel:focus{border-color:var(--gl)}
 .custSp .sprow{flex-wrap:wrap;row-gap:4px}
 .custSp .sprow button{flex:0 0 2.4em;min-width:2.4em}
 /* 全ターン表示: わざ1発を所要ターン分の枠で表示 */
-.mvblock{border:2px solid #3b4a86;background:rgba(19,26,51,.5);font-size:.72rem;vertical-align:middle;padding:2px 4px}
+.mvblock{border:2px solid var(--line2);background:rgba(19,26,51,.5);font-size:.72rem;vertical-align:middle;padding:2px 4px}
 /* 行結合セルは下線が描かれないことがあるため内側シャドウで四辺を確実に描く */
-.mvblock:not(.pendingblock){box-shadow:inset 0 0 0 2px #3b4a86}
+.mvblock:not(.pendingblock){box-shadow:inset 0 0 0 2px var(--line2)}
 .mvblock.spblock:not(.pendingblock){box-shadow:inset 0 0 0 2px var(--ml)}
 .mvblock.l{text-align:left}
 .mvblock.r{text-align:right}
