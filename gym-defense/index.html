@@ -146,7 +146,7 @@ footer a{color:var(--accent2)}
   <span><i style="background:var(--c-bulk)"></i>耐久</span>
   <span><i style="background:var(--c-type)"></i>タイプ(かくとう相性)</span>
   <span><i style="background:var(--c-yar)"></i>やる気(低下しにくさ)</span>
-  <span><i style="background:var(--c-int)"></i>迎撃(1発威力)</span>
+  <span id="lgInt"><i style="background:var(--c-int)"></i>迎撃(1発威力)</span>
 </div>
 
 <div id="list" class="list"></div>
@@ -165,7 +165,7 @@ footer a{color:var(--accent2)}
     <li><b>タイプ</b>（-14〜+8点）＝ <b>かくとうへの相性だけ</b>を見ます。
       二重耐性 +8 ／ 耐性 +4 ／ 等倍 0 ／ 弱点 -8 ／ 二重弱点 -14</li>
     <li><b>やる気</b>（0〜10点）＝ 最大CP帯から見た<b>やる気の下がりにくさ</b></li>
-    <li><b>迎撃</b>（0〜5点）＝ ノーマルアタック1発の威力（SPアタックは低い比重）。いちばん効きません</li>
+    <li><b>迎撃</b>（0〜8点）＝ ノーマルアタック1発の威力（SPアタックは低い比重）。いちばん効きません</li>
   </ul>
   <p><b>基本</b> ＝ 耐久＋タイプ＋やる気。<b>迎撃込み</b> ＝ これに迎撃を足した総合値です。</p>
   <p>かくとうだけを見るのは、ジムを殴りに来る顔ぶれが入れ替わっても<b>かくとうが最大勢力という性質は変わらない</b>ためです。
@@ -248,10 +248,12 @@ footer a{color:var(--accent2)}
           <span>耐久 <b>${e.pb.toFixed(1)}</b></span>
           <span>タイプ <b>${e.pt.toFixed(1)}</b></span>
           <span>やる気 <b>${e.py}</b></span>
-          <span class="${withInt ? '' : 'off'}">迎撃 <b>${e.pi.toFixed(1)}</b>${withInt ? '' : '(参考)'}</span>
+          ${withInt ? `<span>迎撃 <b>${e.pi.toFixed(1)}</b></span>` : ''}
         </div>`;
       listEl.appendChild(row);
     });
+    // 凡例も連動させる（「基本」では迎撃を使わないので出さない）
+    document.getElementById('lgInt').style.display = withInt ? '' : 'none';
     emptyEl.style.display = filtered.length ? 'none' : '';
     moreBtn.style.display = filtered.length > shown ? '' : 'none';
   }
