@@ -54,9 +54,9 @@ document.getElementById('app').innerHTML = `
       <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">開幕</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次が出てきた直後。あいては4秒(8ターン)動けません">撃破後</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">交代後</button>
     </div>
   </div>
-  <!-- 1対1のときだけ: 見かた(おすすめランキング / シミュレート)と絞り込み -->
+  <!-- 1対1のときだけ: 対策(おすすめランキング / シミュレート)と絞り込み -->
   <div class="rkrow rkviewrow rksep" id="rkviewrow" style="display:none">
-    <span class="lbl">見かた</span>
+    <span class="lbl">対策</span>
     <div class="opts" id="rkviewbtns">
       <button data-v="power" aria-pressed="true" title="ノーマルアタックだけで殴ったとき、火力が高い順に並べます">火力</button><button data-v="safe" aria-pressed="false" title="あいてのノーマルアタックで先に倒されない中から、火力が高い順に並べます">高火力＋安定</button><button data-v="sim" aria-pressed="false" title="1匹どうしの対面を1ターンずつ詳しく計算します">シミュレート</button>
     </div>
@@ -1297,7 +1297,7 @@ function syncRocket() {
   document.querySelectorAll('#rkmode button').forEach(b => b.setAttribute('aria-pressed', RK_PLAY[b.dataset.v] === RK.play));
   syncFoeSlots();
   renderRoster();   // リーダー・サカキの手持ち(したっぱのときは隠れる)
-  // 1対1のときだけ「見かた」の切り替えを出す
+  // 1対1のときだけ「対策」の切り替えを出す
   const vr = document.getElementById('rkviewrow');
   vr.style.display = RK.play === '1v1' ? '' : 'none';
   vr.querySelectorAll('#rkviewbtns button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RKR.view));
@@ -1482,7 +1482,7 @@ document.querySelectorAll('#rkenter button').forEach(b => b.onclick = () => {
   syncRocket();
   run();
 });
-// 1対1の見かた(火力ランキング / 高火力＋安定 / シミュレート)
+// 1対1の対策(火力ランキング / 高火力＋安定 / シミュレート)
 document.querySelectorAll('#rkviewbtns button').forEach(b => b.onclick = () => {
   RKR.view = b.dataset.v;
   syncRocket(); applyMode(); run();

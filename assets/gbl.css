@@ -207,7 +207,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rocket{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
 .rkrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .rkrow+.rkrow{margin-top:6px}
-/* 設定のかたまり(あいて / 敵硬直 / 見かた)を区切って、続きものに見えないようにする */
+/* 設定のかたまり(あいて / 敵硬直 / 対策)を区切って、続きものに見えないようにする */
 .rkrow.rksep{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
 .rocket .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
 .rocket .opts{flex:1;min-width:160px}
