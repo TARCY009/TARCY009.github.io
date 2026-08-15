@@ -35,6 +35,12 @@
   --m1bg:linear-gradient(90deg,rgba(255,213,74,.16),rgba(255,213,74,.03)); --m1line:#8a6d1f; --m1ink:#ffd54a;
   --m2bg:linear-gradient(90deg,rgba(201,214,240,.14),rgba(201,214,240,.03)); --m2line:#4d5876; --m2ink:#c9d6f0;
   --m3bg:linear-gradient(90deg,rgba(224,149,91,.15),rgba(224,149,91,.03)); --m3line:#7a4f2e; --m3ink:#e0955b;
+  /* 上位3件のメダル(タグの面と枠の光彩)。他ツールと同じ見せ方にそろえてある。
+     --gold は文字色として別の役目があるので、メダル用の色は専用に持つ */
+  --mgold:#f2c14e; --msilver:#c8d3de; --mbronze:#c98d5f;
+  --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
+  --rkbg:#1a2342;   /* 4位以降のタグの面(カードの面と見分けが付く濃さにする) */
+  --m1glow:rgba(242,193,78,.20); --m2glow:rgba(200,211,222,.16); --m3glow:rgba(201,141,95,.18);
   --lvbg:linear-gradient(90deg,rgba(67,224,255,.14),rgba(91,140,255,.08)); --lvline:#24506a;
   --lvebg:linear-gradient(90deg,rgba(255,107,129,.14),rgba(255,151,80,.07)); --lveline:#6b2b3a; --lveink:#ff9aa8;
   --delbg:#231532; --delline:#6b2b3a; --delink:#ff6b81; --delbg2:#301a3c; --delline2:#a13b52;
@@ -66,6 +72,9 @@
   --m1bg:linear-gradient(90deg,#fff6d8,#fffdf3); --m1line:#f2c14e; --m1ink:#b07a00;
   --m2bg:linear-gradient(90deg,#eef2f9,#fafcff); --m2line:#c6d2e6; --m2ink:#64748f;
   --m3bg:linear-gradient(90deg,#fdeede,#fffaf4); --m3line:#e0b088; --m3ink:#a5652a;
+  --mgold:#e0a800; --msilver:#9aa8b8; --mbronze:#c07f4a;
+  --rkbg:#edf1f9;   /* カードの面が白なので、タグは薄いグレーにして面が見えるようにする */
+  --m1glow:rgba(224,168,0,.20); --m2glow:rgba(120,140,165,.16); --m3glow:rgba(192,127,74,.18);
   --lvbg:linear-gradient(90deg,#eaf5ff,#f1f7ff); --lvline:#c9def7;
   --lvebg:linear-gradient(90deg,#fdeff0,#fdf4f0); --lveline:#efc2c7; --lveink:#a33;
   --delbg:#fff; --delline:#f0b8b8; --delink:#c33; --delbg2:#fff1f1; --delline2:#e08e8e;
@@ -218,22 +227,27 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 @media (max-width:560px){
   .card{padding:18px 11px 14px}
   .rank-row{padding:8px 3px;gap:7px}
+  /* 順位のタグは狭い画面ほど詰める(幅を取るとわざ構成の折り返しが増えるため。3桁でも1行に収まる) */
+  .rk{min-width:34px;font-size:.72rem;padding:3px 2px}
   .rmoves{font-size:.72rem}
   /* 狭い画面ではタブを横いっぱいに伸ばして押しやすくする(広い画面は内容ぶんの幅で左寄せ) */
   .modes button,.seg{flex:1 1 auto}
 }
 #rankList .rank-row.md1,#rankList .rank-row.md2,#rankList .rank-row.md3{border-radius:12px;margin:3px 0}
-/* 上位3行はメダルの色。ダークでは暗い土台に薄く色を敷き、順位の数字と枠で強さを出す
-   (暗い一覧の中でベタ塗りにすると浮きすぎるため)
+/* 上位3行は枠を金・銀・銅にして、淡い光彩と色みを敷く(全ツール共通の見せ方)
    同じ火力が並ぶと1位が2行になることがあるので、並び位置(nth-child)ではなく順位の数字で色を決める */
-#rankList .rank-row.md1{background:var(--m1bg);border:1px solid var(--m1line)}
-#rankList .rank-row.md1 .rk{color:var(--m1ink)}
-#rankList .rank-row.md2{background:var(--m2bg);border:1px solid var(--m2line)}
-#rankList .rank-row.md2 .rk{color:var(--m2ink)}
-#rankList .rank-row.md3{background:var(--m3bg);border:1px solid var(--m3line)}
-#rankList .rank-row.md3 .rk{color:var(--m3ink)}
+#rankList .rank-row.md1{background:var(--m1bg);border:1px solid var(--m1line);box-shadow:0 0 22px var(--m1glow)}
+#rankList .rank-row.md2{background:var(--m2bg);border:1px solid var(--m2line);box-shadow:0 0 22px var(--m2glow)}
+#rankList .rank-row.md3{background:var(--m3bg);border:1px solid var(--m3line);box-shadow:0 0 22px var(--m3glow)}
 .rank-row.mine{background:linear-gradient(90deg,var(--goldbg),transparent);border:1px solid var(--goldline);border-radius:12px;margin:3px 0}
-.rk{width:30px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
+/* 順位はタグで出す(全ツール共通。文字色だけで表さない) */
+.rk{min-width:42px;text-align:center;font-weight:800;color:var(--sub);font-size:.8rem;line-height:1.3;flex-shrink:0;
+  background:var(--rkbg);border-radius:8px;padding:4px 4px}
+/* 上位3件のメダル。金・銀・銅とも同じ作り(明るい面＋その色の光彩) */
+#rankList .rank-row.md1 .rk,#rankList .rank-row.md2 .rk,#rankList .rank-row.md3 .rk{box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+#rankList .rank-row.md1 .rk{background:linear-gradient(160deg,#ffe08a 0%,var(--mgold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
+#rankList .rank-row.md2 .rk{background:linear-gradient(160deg,#f2f6fb 0%,var(--msilver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
+#rankList .rank-row.md3 .rk{background:linear-gradient(160deg,#e8b489 0%,var(--mbronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
 .rank-row.mine .rk{color:var(--gold)}
 .rmain{flex:1;min-width:0}
 /* 名前 → タイプアイコン → PL表記 の順。名前側のみ省略し、アイコンは常に表示 */
@@ -935,7 +949,7 @@ function renderRank(){
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
         <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
-    return `<div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk">${r.rank}</div><div class="rmain">
+    return `<div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk">${r.rank}位</div><div class="rmain">
       <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small>PL50・個体値15</small></div>
       <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}</span></div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
