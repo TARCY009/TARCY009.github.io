@@ -36,12 +36,13 @@
   --mcB:#9fc0ff; --mcU:#ffd873; --mcM:#c9a7ff; --mcC:#7fe6f5;
   --line2:rgba(42,53,96,.4); --sticky:rgba(12,17,34,.92);
   --gold:#ffd54a; --silver:#c9d6f0; --bronze:#e0955b;
-  /* 上位3件のメダル(タグの面と行の敷き)。全ツール共通の見せ方。
-     --gold は文字色として別の役目があるので、面に使う色は専用に持つ */
+  /* 大きい順位をメダルのグラデーションで塗るときの主色(--gold は文字色として別の役目がある) */
   --mgold:#f2c14e; --msilver:#c8d3de; --mbronze:#c98d5f;
-  --ongold:#3a2c00; --onsilver:#232c34; --onbronze:#2e1c0d;
-  --m1tint:rgba(242,193,78,.13); --m2tint:rgba(200,211,222,.10); --m3tint:rgba(201,141,95,.12);
-  --rkbg:#1e2850;   /* 4位以降のタグの面 */
+  /* TOP10表: 面・見出し・1行おきの敷き・あなたの行 */
+  --tbbg:rgba(13,19,42,.55); --tbline:rgba(67,224,255,.16); --think:#9fb2e8;
+  --thbg:linear-gradient(180deg,rgba(67,224,255,.10),rgba(67,224,255,.03));
+  --zebra:rgba(255,255,255,.022); --mebg:rgba(67,224,255,.12);
+  --tbsh:0 10px 24px -18px rgba(0,0,0,.9);
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
   --r:14px;
 }
@@ -64,8 +65,10 @@
   --line2:rgba(32,38,58,.10); --sticky:rgba(255,255,255,.92);
   --gold:#b07a00; --silver:#64748f; --bronze:#a5652a;
   --mgold:#e0a800; --msilver:#9aa8b8; --mbronze:#c07f4a;
-  --m1tint:rgba(255,213,74,.20); --m2tint:rgba(154,168,184,.16); --m3tint:rgba(192,127,74,.15);
-  --rkbg:#e7ecf7;   /* カードの面が白なので、タグは薄いグレーにして面が見えるようにする */
+  --tbbg:rgba(255,255,255,.6); --tbline:#d3e3f2; --think:#4a6a8c;
+  --thbg:linear-gradient(180deg,#eaf4fb,#f6fafd);
+  --zebra:rgba(59,110,240,.035); --mebg:rgba(8,180,201,.13);
+  --tbsh:0 10px 22px -18px rgba(30,60,120,.5);
   --tcolor:#eef2fc;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -182,34 +185,44 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .st .k{font-size:.62rem;color:var(--sub);letter-spacing:.08em;font-weight:700}
 .st .v{font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;margin-top:3px}
 
+/* TOP10表。順位に金・銀・銅は付けない（このツールの順位は4096通り中の順位で、
+   2位・3位に特別な意味がないため。飾りではなく表そのものの見やすさで魅せる）。
+   表全体を角丸の面に収め、見出し・1行おきの敷き・区切り線で「読ませる表」にする */
+.tblwrap{position:relative;border:1px solid var(--tbline);border-radius:12px;overflow:hidden;background:var(--tbbg);box-shadow:var(--tbsh)}
+/* 上端の細いアクセント線。表が一枚のパネルとして締まる */
+.tblwrap::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,var(--cy),rgba(67,224,255,0) 72%);opacity:.8}
+/* 「どの個体か」(順位・個体値)と「その数値」の境目に細い縦線を入れる */
+th:nth-child(3),td:nth-child(3){border-left:1px solid var(--line2)}
 table{width:100%;border-collapse:collapse;font-size:.83rem;font-variant-numeric:tabular-nums}
-th{font-size:.65rem;color:var(--sub);font-weight:700;letter-spacing:.08em;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
-/* 順位の列はタグのぶんだけあればよい(空けると個体値の列が右へ寄って読みにくい) */
-th:first-child,td:first-child{text-align:left;width:1%;white-space:nowrap}
-td{padding:8px 4px;text-align:right;border-bottom:1px solid var(--line2)}
-tr.me td{background:rgba(67,224,255,.09);color:var(--cy);font-weight:700}
-/* 自分の行は左端の水色の線でも示す(色の薄いテーマでも行の切れ目が分かるように) */
+th{font-size:.64rem;color:var(--think);font-weight:700;letter-spacing:.06em;text-align:right;
+  padding:8px 6px;background:var(--thbg);border-bottom:1px solid var(--tbline);white-space:nowrap}
+/* 左の2列(順位・個体値)は「どの個体か」を表す組。幅は内容ぶんだけ取り、
+   順位は右寄せにして個体値のすぐ隣に置く(左寄せだと「1646位」の桁ぶん間が空いて離れて見える)。
+   右の4列は数値として右寄せでそろえる */
+th:first-child,td:first-child{text-align:right;width:1%;white-space:nowrap;padding-left:11px}
+th:nth-child(2),td:nth-child(2){text-align:left;width:1%;white-space:nowrap;padding-left:10px}
+td{padding:9px 6px;text-align:right;border-bottom:1px solid var(--line2)}
+td:last-child,th:last-child{padding-right:11px}
+/* 1行おきに薄く敷いて、横に目を走らせても行を見失わないようにする */
+tbody tr:nth-child(even) td{background:var(--zebra)}
+tbody tr:last-child td{border-bottom:none}
+.rkc{color:var(--sub);font-weight:700}
+tbody tr td:nth-child(2){font-weight:700;letter-spacing:.01em}
+/* あなたの個体の行。左端の水色の線と、少し強い敷きで見つけやすくする */
+tr.me td{background:var(--mebg);color:var(--cy);font-weight:700}
 tr.me td:first-child{box-shadow:inset 3px 0 0 var(--cy)}
-tr:last-child td{border-bottom:none}
-/* 順位はタグで出す(全ツール共通。文字色だけで表さない)。上位3件は金・銀・銅 */
-.rkt{display:inline-block;min-width:44px;text-align:center;font-weight:800;font-size:.75rem;
-  border-radius:7px;padding:3px 5px;background:var(--rkbg);color:var(--sub)}
-.rkt.m1,.rkt.m2,.rkt.m3{box-shadow:0 3px 10px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
-.rkt.m1{background:linear-gradient(160deg,#ffe08a 0%,var(--mgold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
-.rkt.m2{background:linear-gradient(160deg,#f2f6fb 0%,var(--msilver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
-.rkt.m3{background:linear-gradient(160deg,#e8b489 0%,var(--mbronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
-/* 上位3行はその色みを薄く敷く(タグだけだと行として目立たない)。
-   グラデーションにするとセルごとに繰り返されて縞に見えるので、単色で敷く。
-   左端の線は「その行が何なのか」を表す共通の合図(金・銀・銅＝上位／水色＝あなた) */
-tr.t1 td{background:var(--m1tint)}
-tr.t2 td{background:var(--m2tint)}
-tr.t3 td{background:var(--m3tint)}
-tr.t1 td:first-child{box-shadow:inset 3px 0 0 var(--mgold)}
-tr.t2 td:first-child{box-shadow:inset 3px 0 0 var(--msilver)}
-tr.t3 td:first-child{box-shadow:inset 3px 0 0 var(--mbronze)}
-/* 自分の行の色を優先する(順位のメダルはタグ側が示す) */
-tr.me.t1 td,tr.me.t2 td,tr.me.t3 td{background:rgba(67,224,255,.09)}
-tr.me.t1 td:first-child,tr.me.t2 td:first-child,tr.me.t3 td:first-child{box-shadow:inset 3px 0 0 var(--cy)}
+tr.me .rkc{color:var(--cy)}
+/* 「⋮」の行は区切りなので敷きも線も持たせない */
+tr.gap td{background:none;border-bottom:none;padding:2px 0;color:var(--sub);text-align:center;line-height:1}
+/* スマホは6列を収めるために文字と余白を詰める(横スクロールさせない) */
+@media (max-width:560px){
+  table{font-size:.78rem}
+  th{font-size:.58rem;padding:7px 3px;letter-spacing:.02em}
+  td{padding:8px 3px}
+  th:first-child,td:first-child{padding-left:8px}
+  td:last-child,th:last-child{padding-right:8px}
+}
 tr.me .rkt:not(.m1):not(.m2):not(.m3){background:rgba(67,224,255,.16);color:var(--cy)}
 .note{font-size:.7rem;color:var(--sub);line-height:1.6;margin-top:14px}
 footer{text-align:center;font-size:.65rem;color:var(--sub);margin-top:26px;line-height:1.8}
@@ -353,10 +366,12 @@ body.has-sticky{padding-top:52px}
   </div>
   <div style="margin-top:18px">
     <label class="sec">TOP10 と あなたの個体</label>
-    <table>
-      <thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>アメXL</th></tr></thead>
-      <tbody id="top10"></tbody>
-    </table>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>アメXL</th></tr></thead>
+        <tbody id="top10"></tbody>
+      </table>
+    </div>
   </div>
   <div class="note" id="lvnote"></div>
   <button id="copybtn">結果をコピー</button>
@@ -549,21 +564,17 @@ function render(){
   document.getElementById('r-lv').textContent=me.lv;
   document.getElementById('r-scp').textContent=scp(me.sp);
 
-  // 上位3件は金・銀・銅(全ツール共通)。同じSCPが並ぶと1位が2行になることがあるので、
-  // 並び位置ではなく順位の数字で色を決める
-  const topCls=r=>r<=3?'t'+r:'';
-  const rktHtml=r=>'<span class="rkt '+(r<=3?'m'+r:'')+'">'+r+'位</span>';
+  const rkHtml=r=>'<span class="rkc">'+r+'位</span>';
   let html='';
   rows.slice(0,10).forEach((r,i)=>{
-    const cs=((i===idx)?'me ':'')+topCls(r.rank);
-    const cls=cs.trim()?' class="'+cs.trim()+'"':'';
+    const cls=(i===idx)?' class="me"':'';
     const xl=xlFor(r.lv);
-    html+='<tr'+cls+'><td>'+rktHtml(r.rank)+'</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td><td>'+(xl>0?xl:'—')+'</td></tr>';
+    html+='<tr'+cls+'><td>'+rkHtml(r.rank)+'</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td><td>'+(xl>0?xl:'—')+'</td></tr>';
   });
   if(idx>=10){
-    html+='<tr><td colspan="6" style="text-align:center;color:var(--sub)">⋮</td></tr>';
+    html+='<tr class="gap"><td colspan="6">⋮</td></tr>';
     const mxl=xlFor(me.lv);
-    html+='<tr class="me"><td>'+rktHtml(rank)+'</td><td>'+me.ia+'/'+me.id+'/'+me.ih+'</td><td>'+me.lv+'</td><td>'+me.cp+'</td><td>'+scp(me.sp)+'</td><td>'+(mxl>0?mxl:'—')+'</td></tr>';
+    html+='<tr class="me"><td>'+rkHtml(rank)+'</td><td>'+me.ia+'/'+me.id+'/'+me.ih+'</td><td>'+me.lv+'</td><td>'+me.cp+'</td><td>'+scp(me.sp)+'</td><td>'+(mxl>0?mxl:'—')+'</td></tr>';
   }
   document.getElementById('top10').innerHTML=html;
 
