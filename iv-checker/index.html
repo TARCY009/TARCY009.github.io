@@ -72,6 +72,10 @@
   --tcolor:#eef2fc;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* 文字を減らすために画面から外した補足は、消さずに隠しておく(のちの「説明ありモード」用)。
+   display:revert なので、行の途中に置いた <span> は行内のまま出る */
+.expl{display:none}
+.explain .expl{display:revert}
 html{font-size:16px}
 body{
   font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","BIZ UDPGothic","Noto Sans JP",system-ui,sans-serif;
@@ -157,15 +161,23 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .src{padding:11px 4px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
 .src small{display:block;font-size:.65rem;font-weight:500;margin-top:2px;opacity:.8}
 .fl{flex:1;padding:8px 4px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-.srt{flex:1;padding:8px 4px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-.srt small{display:block;font-size:.58rem;font-weight:500;margin-top:2px;opacity:.75}
+/* 設定の行のボタンは「数字が主・注記は小さく下に」の2段。中身の行数が違っても段差にならないよう、
+   行は align-items:stretch で高さをそろえ、ボタンの中は上下中央に置く
+   (旧: align-items:center ＋ 高さは中身なり。メガのときPL上限が5段の階段になっていた) */
+.srt,.cap{flex:1;min-width:0;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.2}
+.srt{font-size:.8rem}
+.cap{font-size:.9rem;font-weight:800}
+.srt small,.cap small{font-size:.57rem;font-weight:600;opacity:.78;letter-spacing:0;line-height:1.15}
 .srt:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
-.capsel{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
-.capsel span{font-size:.72rem;color:var(--sub);font-weight:700;letter-spacing:.1em}
-.cap{flex:1;padding:8px 4px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-.capgroup{flex:1.6;border:1px dashed var(--line);border-radius:9px;padding:3px 4px 4px}
-.capgroup-t{font-size:.55rem;color:var(--sub);text-align:center;margin-bottom:3px;letter-spacing:.02em}
-.capgroup-b{display:flex;gap:6px}
+.capsel{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:stretch}
+.capsel span{font-size:.72rem;color:var(--sub);font-weight:700;letter-spacing:.1em;
+  display:flex;align-items:center;flex:none}
+/* アメXLなしの上限(40・41)は本筋ではないので、点線の枠に入れて次の行へ下ろす */
+.capgroup{width:100%;border:1px dashed var(--line);border-radius:9px;padding:5px 6px;margin-top:8px;
+  display:flex;align-items:stretch;gap:8px}
+.capgroup-t{font-size:.6rem;color:var(--sub);letter-spacing:.02em;display:flex;align-items:center;flex:none}
+.capgroup-b{display:flex;gap:6px;flex:1;align-items:stretch}
 .capgroup-b .cap{flex:1}
 
 /* 結果 */
@@ -309,7 +321,7 @@ body.has-sticky{padding-top:52px}
     <div class="iv-head"><span class="iv-name">HP</span><span class="iv-val">10</span></div>
     <div class="bar"></div>
   </div>
-  <div class="iv-hint">バーをタップ・ドラッグで設定。バーの一番左端をタップすると0になります。</div>
+  <div class="iv-hint">タップ・ドラッグで設定（左端＝0）</div>
 </div>
 
 <div class="card">
@@ -319,24 +331,24 @@ body.has-sticky{padding-top:52px}
     <button class="lgc" data-lg="ul"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small>CP2500以下</small></button>
     <button class="lgc" data-lg="ml"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small>制限なし</small></button>
   </div>
-  <div class="iv-hint" style="margin-top:8px">3リーグの順位を同時表示。タップで詳細を切替。</div>
+  <div class="iv-hint expl" style="margin-top:8px">3リーグの順位を同時表示。タップで詳細を切替。</div>
   <div class="capsel">
     <span>並び順</span>
-    <button class="srt act" data-s="scp">総合(SCP)</button>
-    <button class="srt" data-s="atk" id="srt-atk">攻撃優先<small>※マスターのみ</small></button>
+    <button class="srt act" data-s="scp">総合<small>SCP</small></button>
+    <button class="srt" data-s="atk" id="srt-atk">攻撃優先<small>マスターのみ</small></button>
   </div>
   <div class="capsel">
     <span>PL上限</span>
     <button class="cap act" data-cap="50">50</button>
-    <button class="cap" data-cap="51">51 相棒</button>
-    <button class="cap smaxonly" data-cap="52" style="display:none" title="メガLv4(スーパーマックスレベル)でPL上限+2">52 メガLv4</button>
-    <button class="cap smaxonly" data-cap="53" style="display:none" title="メガLv4+最高の相棒でPL上限53">53 メガLv4＋相棒</button>
-    <div class="capgroup">
-      <div class="capgroup-t">アメXLなしの最大強化</div>
-      <div class="capgroup-b">
-        <button class="cap" data-cap="40">40</button>
-        <button class="cap" data-cap="41">41 相棒</button>
-      </div>
+    <button class="cap" data-cap="51">51<small>相棒</small></button>
+    <button class="cap smaxonly" data-cap="52" style="display:none" title="メガLv4(スーパーマックスレベル)でPL上限+2">52<small>メガLv4</small></button>
+    <button class="cap smaxonly" data-cap="53" style="display:none" title="メガLv4+最高の相棒でPL上限53">53<small>メガLv4＋相棒</small></button>
+  </div>
+  <div class="capgroup">
+    <div class="capgroup-t">アメXLなしの上限</div>
+    <div class="capgroup-b">
+      <button class="cap" data-cap="40">40</button>
+      <button class="cap" data-cap="41">41<small>相棒</small></button>
     </div>
   </div>
 </div>
@@ -388,6 +400,8 @@ body.has-sticky{padding-top:52px}
   <h4>このツールでできること</h4>
   <p>ポケモンと個体値を入れると、<b>4096通りすべてを計算</b>して、その個体がリーグ内で何位かを出します。
     3リーグの順位を同時に表示し、タップで詳しい内容に切り替わります。</p>
+  <h4>個体値の入れ方</h4>
+  <p>バーをタップ、または左右にドラッグして決めます。<b>バーの一番左端をタップすると0</b>になります。</p>
   <h4>順位の決め方</h4>
   <ul>
     <li><b>総合</b> ＝ ステータス積（SCP）の高い順</li>
