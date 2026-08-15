@@ -1,0 +1,36 @@
+/* 説明ありモード(💡)の切り替えスイッチ（全ツール共通）
+   explain.js がテーマスイッチ(#themesw)の先頭に💡ボタンを差し込むので、
+   ページ側のHTMLに追加する要素は無い。やることは theme と同じ流儀の3行だけ:
+   ・<head> に explain.css を読み込む
+   ・テーマの早期適用scriptの「直後」で次を実行する
+     （テーマ側が className='light' で丸ごと上書きするため、必ずテーマの後）:
+       <script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+   ・theme.js の「直後」に explain.js を読み込む（先に読むとテーマ側の innerHTML で消される）
+   見た目: 消灯した電球のピル型ボタン。ONで水色に点灯し、補足説明(.expl)が現れる。
+   どのツールに置いても同じ見た目になるよう、色はこのファイルで完結させる。
+   セレクタは必ず #themesw 付きにする: ボタンは #themesw の中に入るため、
+   theme.css の「.themesw button」「:root.light .themesw button」に詳細度で勝つ必要がある
+   （素の .explainsw だとライトで点灯しなくなる。実際に踏んだ）。 */
+#themesw .explainsw{font:inherit;font-size:.92rem;line-height:1;font-weight:800;
+  display:inline-flex;align-items:center;gap:5px;padding:7px 13px;margin-right:9px;
+  cursor:pointer;flex:0 0 auto;border-radius:999px;color:#9fb0e0;
+  border:1px solid #2a3560;background:linear-gradient(180deg,#1e2850,#151d38);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+#themesw .explainsw:hover{transform:translateY(-1px);box-shadow:0 4px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+#themesw .explainsw:focus-visible{outline:2px solid #8b5cf6;outline-offset:2px}
+/* 電球: OFFのあいだは消灯（色を抜いて暗く） */
+#themesw .explainsw .eb{font-style:normal;display:inline-block;filter:grayscale(1) opacity(.55);transition:filter .15s ease}
+/* ライトテーマのOFFの土台（白系）。ONの見た目はテーマによらず同じ。
+   :not([aria-pressed="true"]) の限定も必ず残す（点灯の色に勝たせないため） */
+:root.light #themesw .explainsw:not([aria-pressed="true"]){color:#5b6b96;border-color:#dfe6f5;
+  background:linear-gradient(180deg,#fff,#eff3fc);
+  box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+:root.light #themesw .explainsw:not([aria-pressed="true"]):hover{box-shadow:0 4px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+/* ON: 水色に点灯（明るい点灯色なので文字は濃色にする・全ツール共通ルール） */
+#themesw .explainsw[aria-pressed="true"]{border-color:transparent;transform:translateY(-1px);color:#042330;
+  background:linear-gradient(160deg,#8ff0fb 0%,#14b8cf 45%,#0a7f95 100%);
+  box-shadow:0 6px 18px rgba(20,185,210,.45),inset 0 1px 0 rgba(255,255,255,.55)}
+#themesw .explainsw[aria-pressed="true"] .eb{filter:none;animation:ebpop .3s ease}
+@keyframes ebpop{0%{transform:scale(1)}45%{transform:scale(1.3) rotate(-8deg)}100%{transform:scale(1)}}
+@media (max-width:430px){#themesw .explainsw{padding:6px 10px;font-size:.85rem}#themesw .explainsw .et{display:none}}

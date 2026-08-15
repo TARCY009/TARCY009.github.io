@@ -9,9 +9,11 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
 <meta name="theme-color" content="#0b1023">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
 <style>
 /* 色はすべてこの2つのブロックで決まる(画面の右上でダーク⇄ライトを切り替える)。
    既定は他ツール(/gbl/・/iv-checker/ 等)とそろえた濃紺のダーク。
@@ -386,6 +388,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 
 <script src="/assets/type-icons.js"></script>
 <script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
 <script>
 const D = __GODATA__;
 const TI = {}; D.types.forEach((t,i)=>TI[t]=i);
