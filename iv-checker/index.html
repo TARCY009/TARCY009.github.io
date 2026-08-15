@@ -195,15 +195,20 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 /* 「どの個体か」(順位・個体値)と「その数値」の境目に細い縦線を入れる */
 th:nth-child(3),td:nth-child(3){border-left:1px solid var(--line2)}
 table{width:100%;border-collapse:collapse;font-size:.83rem;font-variant-numeric:tabular-nums}
-th{font-size:.64rem;color:var(--think);font-weight:700;letter-spacing:.06em;text-align:right;
-  padding:8px 6px;background:var(--thbg);border-bottom:1px solid var(--tbline);white-space:nowrap}
-/* 左の2列(順位・個体値)は「どの個体か」を表す組。幅は内容ぶんだけ取り、
-   順位は右寄せにして個体値のすぐ隣に置く(左寄せだと「1646位」の桁ぶん間が空いて離れて見える)。
-   右の4列は数値として右寄せでそろえる */
-th:first-child,td:first-child{text-align:right;width:1%;white-space:nowrap;padding-left:11px}
-th:nth-child(2),td:nth-child(2){text-align:left;width:1%;white-space:nowrap;padding-left:26px}
-td{padding:9px 6px;text-align:right;border-bottom:1px solid var(--line2)}
-td:last-child,th:last-child{padding-right:11px}
+th{font-size:.64rem;color:var(--think);font-weight:700;letter-spacing:.06em;
+  padding:8px 5px;background:var(--thbg);border-bottom:1px solid var(--tbline);white-space:nowrap}
+td{padding:9px 5px;border-bottom:1px solid var(--line2)}
+/* 6列の間隔が均一に見えるようにする作り(2026-08-15にタダシさんの指摘で全面的に見直した)。
+   ① 全列を中央寄せにする ② 幅を「その列でいちばん長い文字＋均等な余白」の比率で配る。
+   右寄せ・左寄せを混ぜて幅を内容ぶんに固定すると、余った幅が一部の列にだけ配られて
+   「順位のまわりだけ空いて、右側はぎゅうぎゅう」になる */
+th,td{text-align:center;white-space:nowrap}
+th:nth-child(1),td:nth-child(1){width:19%;padding-left:9px}
+th:nth-child(2),td:nth-child(2){width:25%}
+th:nth-child(3),td:nth-child(3){width:12%}
+th:nth-child(4),td:nth-child(4){width:15%}
+th:nth-child(5),td:nth-child(5){width:15%}
+th:nth-child(6),td:nth-child(6){width:14%;padding-right:9px}
 /* 1行おきに薄く敷いて、横に目を走らせても行を見失わないようにする */
 tbody tr:nth-child(even) td{background:var(--zebra)}
 tbody tr:last-child td{border-bottom:none}
@@ -219,13 +224,9 @@ tr.gap td{background:none;border-bottom:none;padding:2px 0;color:var(--sub);text
 @media (max-width:560px){
   table{font-size:.78rem}
   th{font-size:.58rem;padding:7px 3px;letter-spacing:.02em}
-  td{padding:8px 3px}
-  /* 順位(右寄せ)と個体値(左寄せ)は文字どうしが向かい合うので、数値の列より広めに空ける。
-     数値の列は桁が少ない行ほど余白が出るが、この2列は常に最小の隙間になって詰まって見えるため
-     (実測: 他の列の見た目の間隔とそろう17px。表の幅は変わらない) */
-  th:nth-child(2),td:nth-child(2){padding-left:27px}
-  th:first-child,td:first-child{padding-left:6px}
-  td:last-child,th:last-child{padding-right:7px}
+  td{padding:8px 4px}
+  th:nth-child(1),td:nth-child(1){padding-left:8px}
+  th:nth-child(6),td:nth-child(6){padding-right:8px}
 }
 tr.me .rkt:not(.m1):not(.m2):not(.m3){background:rgba(67,224,255,.16);color:var(--cy)}
 .note{font-size:.7rem;color:var(--sub);line-height:1.6;margin-top:14px}
