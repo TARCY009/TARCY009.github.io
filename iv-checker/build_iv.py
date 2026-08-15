@@ -20,14 +20,20 @@
      機械生成に置き換えると29匹の表示が変わってしまうため（実測）
   3) 対戦データにしか無いもの（=新実装・新メガ）を図鑑番号の位置へ挿入する。
      名前・進化先・伝説/幻の印はここで自動生成する
-  4) ただし **「すでにあるエントリの下位フォルム」で種族値も図鑑番号も同じなら足さない**
-     （`pikachu_5th_anniversary` に対して `pikachu` があり、種族値が同じ、という形）。
-     このツールの順位は種族値だけで決まるので足しても結果は1文字も変わらず、
-     検索の候補が同じ行で埋まるだけになる（コスチュームのピカチュウ8匹、
-     フーパ(いましめられし)・ヨワシ(たんどく)が該当。実際に踏んだ）。
-     **「種族値が同じなら足さない」だけでは行き過ぎる**——ネクロズマの
-     たそがれのたてがみ／あかつきのつばさのように、**別のポケモンどうしで種族値が丸かぶり**
-     することがあり、片方が落ちてしまう（これも実際に踏んだ）
+  4) 足さないのは **「名前も図鑑番号も種族値も、すでにあるエントリと完全に同じ」ときだけ**。
+     画面上まったく同じ行が2つ並ぶだけなので、落としても失うものが無いと言い切れる。
+
+     **⚠ ここを賢くしようとしてはいけない（2026-08-15にタダシさんの指摘で作り直した）**。
+     このツールは「表示どおりに強化したのにCPが違った」が起きてはいけないので、
+     **1匹でも取りこぼすほうが、重複が1行増えるより悪い**。
+     - 「種族値が同じなら足さない」→ **ネクロズマのたそがれのたてがみ／あかつきのつばさ**のように
+       別ポケモンで種族値が丸かぶりする組が**13組**あり、片方が落ちる
+     - 「元フォルムの派生（`pikachu_5th_anniversary` に対する `pikachu`）で種族値も同じなら足さない」
+       → **地方フォルムは元と種族値が同じことが多い**ため、
+       **アローラコラッタ・ガラルマタドガス・ヒスイニューラ・パルデアウパーなど81匹が落ちる**
+       （空から作り直す検算で発覚）
+     いまのルールなら、コスチュームのピカチュウのように**名前が違うものは必ず残る**。
+     同じ結果の行が増えるだけなので害は無い
   5) 対戦データから消えたエントリは**消さずに残して報告する**（取り込み元の一時的な欠けで
      データを失わないため）
   6) 追加があった日は changes.md の末尾に足す（毎日のお知らせに載る）
@@ -92,10 +98,11 @@ def main():
     arr = json.loads(m.group(1))
     idx = {p['i']: i for i, p in enumerate(arr)}
 
-    # 図鑑番号＋種族値が同じ「元のエントリ」を引くための索引
-    sigs = {}
-    for e in arr:
-        sigs.setdefault((e['d'], e['a'], e['f'], e['h']), []).append(e['i'])
+    # 「名前・図鑑番号・種族値がすべて同じ」＝画面上まったく同じ行、を見つけるための索引
+    def row(n, d, a, f, h):
+        return (n, d, a, f, h)
+
+    sigs = {row(e['n'], e['d'], e['a'], e['f'], e['h']) for e in arr}
 
     added, updated, dup = [], [], []
     for sid, p in pvp.items():
@@ -105,16 +112,16 @@ def main():
             before = (e['a'], e['f'], e['h'], e['d'])
             if before != stat:
                 e['a'], e['f'], e['h'], e['d'] = stat
-                sigs.setdefault((e['d'], e['a'], e['f'], e['h']), []).append(e['i'])
+                sigs.add(row(e['n'], e['d'], e['a'], e['f'], e['h']))
                 updated.append((e['n'], before, stat))
             continue
-        sig = (p['dex'], p['a'], p['df'], p['h'])
-        if any(sid.startswith(base + '_') for base in sigs.get(sig, ())):
+        name = ja_name(sid, p['n'])
+        if row(name, p['dex'], p['a'], p['df'], p['h']) in sigs:
             dup.append(p['n'])
             continue
         g = src.get(sid, {})
         tags = g.get('tags') or []
-        ent = {'i': sid, 'n': ja_name(sid, p['n']), 'e': g.get('speciesName') or p['n'],
+        ent = {'i': sid, 'n': name, 'e': g.get('speciesName') or p['n'],
                'd': p['dex'], 'a': p['a'], 'f': p['df'], 'h': p['h']}
         if 'legendary' in tags or 'ultrabeast' in tags:
             ent['l'] = 1
@@ -127,10 +134,22 @@ def main():
         at = insert_at(arr, ent['d'])
         arr.insert(at, {k: ent[k] for k in ORDER if k in ent})
         idx = {q['i']: i for i, q in enumerate(arr)}
-        sigs.setdefault((ent['d'], ent['a'], ent['f'], ent['h']), []).append(sid)
+        sigs.add(row(ent['n'], ent['d'], ent['a'], ent['f'], ent['h']))
         added.append(ent)
 
     stale = [e['n'] for e in arr if e['i'] not in pvp]
+
+    # ===== 自己点検（取りこぼしがあったら止める）=====
+    # このツールは「表示どおりに強化したらCPが違った」が起きてはいけないので、
+    # 対戦データの1匹1匹について「そのポケモンを引ける行があるか」を必ず確かめる。
+    # 引けない＝取りこぼしなので、その場で止めて気づけるようにする。
+    have = {row(e['n'], e['d'], e['a'], e['f'], e['h']) for e in arr}
+    ids = {e['i'] for e in arr}
+    missing = [f'{sid}({p["n"]})' for sid, p in pvp.items()
+               if sid not in ids
+               and row(ja_name(sid, p['n']), p['dex'], p['a'], p['df'], p['h']) not in have]
+    if missing:
+        raise SystemExit('取りこぼしがあります（同じ内容の行も見つかりません）: ' + '、'.join(missing))
 
     txt = json.dumps(arr, ensure_ascii=False, separators=(',', ':'))
     out = page[:m.start(1)] + txt + page[m.end(1):]
@@ -145,7 +164,8 @@ def main():
         for n, b, a in updated:
             print(f'  種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}')
     if dup:
-        print(f'中身が同じなので足さなかったもの（{len(dup)}件）:', '、'.join(dup))
+        print(f'まったく同じ行がすでにあるので足さなかったもの（{len(dup)}件）:', '、'.join(dup))
+        print('  ※ 別のポケモンなのにここに出てきたら、名前を手で付け分けること')
     if stale:
         print(f'※ 対戦データに無いエントリ（残してあります・要確認 {len(stale)}件）:', '、'.join(stale))
 
