@@ -125,6 +125,12 @@ FORM_MOVE_FIX = {
 MANUAL_MEGA = {
     'MEWTWO_MEGA_X': ('メガミュウツーX', 399, 215, 228, ['PSYCHIC','FIGHTING'], 'MEWTWO'),
     'MEWTWO_MEGA_Y': ('メガミュウツーY', 413, 223, 228, ['PSYCHIC'],            'MEWTWO'),
+    # 実装間近のカロス御三家メガ(2026-08-15・タダシさん指示で先行収録)。
+    # 対戦データ側には載っているが未実装(released=false)扱いなので、下のPvPokeフォールバックが拾わない。
+    # Game Masterに正式収録されたらそちらを優先する(このテーブルはキーが無いときだけ効く)
+    'CHESNAUGHT_MEGA': ('メガブリガロン',  242, 282, 204, ['GRASS','FIGHTING'], 'CHESNAUGHT'),
+    'DELPHOX_MEGA':    ('メガマフォクシー', 331, 235, 181, ['FIRE','PSYCHIC'],   'DELPHOX'),
+    'GRENINJA_MEGA':   ('メガゲッコウガ',  299, 180, 176, ['WATER','DARK'],     'GRENINJA'),
 }
 # i18nに未収録の技・ポケモンの日本語名
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
@@ -372,7 +378,8 @@ def main():
     for mkey,(nm,a,df,h,ty,src) in MANUAL_MEGA.items():
         if mkey in final: continue  # Game Masterに正式収録されたら自動取得値を優先
         s = final[src]
-        final[mkey] = {'n':nm,'a':a,'df':df,'h':h,'ty':ty,'q':s['q'],'c':s['c'],'eq':s['eq'],'ec':s['ec'],'shadow':False,'mega':True}
+        final[mkey] = {'n':nm,'a':a,'df':df,'h':h,'ty':ty,'q':s['q'],'c':s['c'],'eq':s['eq'],'ec':s['ec'],
+                       'shadow':False,'mega':True,'fe':1}
 
     # ===== 新メガ・ゲンシの取りこぼし防止（PvPokeフォールバック） =====
     # Game Masterの tempEvoOverrides に未収録の新メガ（メガエアームド・メガライチュウX/Y等）が
