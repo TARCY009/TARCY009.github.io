@@ -9,6 +9,7 @@
 #   gym-defense/build_defense.py → defense_data.js/json（ジム防衛）
 #   max-battle/build_max.py  → max_data.js（マックスバトル）
 #   build_pvp_data.py        → pvp_data.js/json（GBL対面シミュ・ロケット団対策）
+#   iv-checker/build_iv.py   → iv-checker/index.html（個体値チェッカー。pvp_data.jsonから同期）
 name: auto-update-check
 
 on:
@@ -48,6 +49,10 @@ jobs:
       - name: GBL・ロケット団対策データを再生成
         run: python3 build_pvp_data.py
 
+      # 個体値チェッカーだけ手作業更新でメガ4匹が取り残されていたため、2026-08-15に同期を追加した
+      - name: 個体値チェッカーのポケモンを同期
+        run: python3 iv-checker/build_iv.py
+
       # わざの追加や削除で確定値がずれることがあるので、環境上位のわざ構成も作り直す
       # （報告は changes.md にまとまるので、ここでは meta_changes.md を書き換えない）
       - name: 環境上位のわざ構成を作り直す
@@ -65,7 +70,8 @@ jobs:
                  gym-attack/data/gym_data.json gym-attack/data/gym_data.js
                  gym-defense/data/defense_data.js gym-defense/data/defense_data.json
                  max-battle/data/max_data.js
-                 pvp_data.js pvp_data.json assets/meta_moves.js"
+                 pvp_data.js pvp_data.json assets/meta_moves.js
+                 iv-checker/index.html"
           if git diff --quiet -- $FILES; then
             echo "データに変化なし。今回は更新しない"
             echo "changed=0" >> "$GITHUB_OUTPUT"
