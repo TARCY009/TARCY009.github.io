@@ -329,28 +329,28 @@ body.has-sticky{padding-top:52px}
 <div class="card">
   <label class="sec">リーグ</label>
   <div class="tabs">
-    <button class="lgc act" data-lg="gl"><span class="lgc-n">スーパー</span><span class="lgc-r" id="lgr-gl">—</span><small>CP1500以下</small></button>
-    <button class="lgc" data-lg="ul"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small>CP2500以下</small></button>
-    <button class="lgc" data-lg="ml"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small>制限なし</small></button>
+    <button class="lgc act" data-lg="gl" title="CP1500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">スーパー</span><span class="lgc-r" id="lgr-gl">—</span><small>CP1500以下</small></button>
+    <button class="lgc" data-lg="ul" title="CP2500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small>CP2500以下</small></button>
+    <button class="lgc" data-lg="ml" title="CP制限なしでのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small>制限なし</small></button>
   </div>
   <div class="iv-hint expl" style="margin-top:8px">3リーグの順位を同時表示。タップで詳細を切替。</div>
   <div class="capsel">
     <span>並び順</span>
-    <button class="srt act" data-s="scp">総合<small>SCP</small></button>
-    <button class="srt" data-s="atk" id="srt-atk">攻撃優先<small>マスターのみ</small></button>
+    <button class="srt act" data-s="scp" title="耐久込みの総合的な強さ（SCP）が高い順。対戦向けの基本の並びです">総合<small>SCP</small></button>
+    <button class="srt" data-s="atk" id="srt-atk" title="攻撃の実数値が高い順。わざの撃ち合いで先に当てられる（CMP勝ち）個体をさがす並びで、CP上限のないマスターだけで選べます">攻撃優先<small>マスターのみ</small></button>
   </div>
   <div class="capsel">
     <span>PL上限</span>
-    <button class="cap act" data-cap="50">50</button>
-    <button class="cap" data-cap="51">51<small>相棒</small></button>
+    <button class="cap act" data-cap="50" title="通常の強化上限（PL50）まで上げる前提で順位を出します">50</button>
+    <button class="cap" data-cap="51" title="相棒ブーストでPL51まで上げる前提で順位を出します">51<small>相棒</small></button>
     <button class="cap smaxonly" data-cap="52" style="display:none" title="メガLv4(スーパーマックスレベル)でPL上限+2">52<small>メガLv4</small></button>
     <button class="cap smaxonly" data-cap="53" style="display:none" title="メガLv4+最高の相棒でPL上限53">53<small>メガLv4＋相棒</small></button>
   </div>
   <div class="capgroup">
     <div class="capgroup-t">アメXLなしの上限</div>
     <div class="capgroup-b">
-      <button class="cap" data-cap="40">40</button>
-      <button class="cap" data-cap="41">41<small>相棒</small></button>
+      <button class="cap" data-cap="40" title="アメXLを使わない上限（PL40）で止める前提の順位です">40</button>
+      <button class="cap" data-cap="41" title="アメXLなし＋相棒ブーストの上限（PL41）で止める前提の順位です">41<small>相棒</small></button>
     </div>
   </div>
 </div>
@@ -358,10 +358,10 @@ body.has-sticky{padding-top:52px}
 <div class="card compact">
   <label class="sec">入手方法(最低個体値)</label>
   <div class="tabs" style="grid-template-columns:1fr 1fr">
-    <button class="src act" data-floor="0">野生<small>最低 0</small></button>
-    <button class="src" data-floor="t">交換<small>最低 1〜5</small></button>
-    <button class="src" data-floor="6">シャドウレイド<small>最低 6</small></button>
-    <button class="src" data-floor="10">レイド/ふか/リワード<small>最低 10</small></button>
+    <button class="src act" data-floor="0" title="野生で捕まえる前提（個体値0からありうる）">野生<small>最低 0</small></button>
+    <button class="src" data-floor="t" title="交換で入手する前提。フレンドの仲良し度で最低個体値が1〜5に変わります">交換<small>最低 1〜5</small></button>
+    <button class="src" data-floor="6" title="シャドウレイドで捕まえる前提（最低個体値6）">シャドウレイド<small>最低 6</small></button>
+    <button class="src" data-floor="10" title="レイド・ふか・リワードで入手する前提（最低個体値10）">レイド/ふか/リワード<small>最低 10</small></button>
   </div>
   <div class="capsel" id="tradeRow" style="display:none">
     <span>フレンド</span>

@@ -146,20 +146,20 @@ footer a{color:var(--accent2)}
 
 <div class="gtabs modes">
   <div class="gseg">
-    <button id="mBase" class="t-green" aria-pressed="true">基本</button>
-    <button id="mInt" class="t-green" aria-pressed="false">迎撃込み</button>
+    <button id="mBase" class="t-green" aria-pressed="true" title="耐久・かくとう相性・やる気の3つのポイントで並べます">基本</button>
+    <button id="mInt" class="t-green" aria-pressed="false" title="基本の3つに、殴り返す力（迎撃ポイント）を足して並べます">迎撃込み</button>
   </div>
 </div>
 
 <div class="gtabs one">
-  <button id="fDw" class="t-red" aria-pressed="false">二重弱点も</button>
+  <button id="fDw" class="t-red" aria-pressed="false" title="二重弱点を持つポケモンもランキングに含めます（ふだんは除外しています）">二重弱点も</button>
 </div>
 
 <div class="legend">
-  <span><i style="background:var(--c-bulk)"></i>耐久</span>
-  <span><i style="background:var(--c-type)"></i>タイプ(かくとう相性)</span>
-  <span><i style="background:var(--c-yar)"></i>やる気(低下しにくさ)</span>
-  <span id="lgInt"><i style="background:var(--c-int)"></i>迎撃(1発威力)</span>
+  <span title="HP種族値×防御種族値から出した硬さ。配点がいちばん大きい項目です"><i style="background:var(--c-bulk)"></i>耐久</span>
+  <span title="攻撃側の最大勢力かくとうタイプへの相性。耐性なら加点・弱点なら減点します"><i style="background:var(--c-type)"></i>タイプ(かくとう相性)</span>
+  <span title="CPが低いほどやる気が下がりにくく、長くジムに残れます"><i style="background:var(--c-yar)"></i>やる気(低下しにくさ)</span>
+  <span id="lgInt" title="殴り返す力。わざ1発の威力と攻撃実数値から出します。発動が運まかせのぶん配点は小さめです"><i style="background:var(--c-int)"></i>迎撃(1発威力)</span>
 </div>
 
 <div id="list" class="list"></div>

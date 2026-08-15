@@ -52,7 +52,9 @@
   }
   function targetAt(x, y) {
     var el = document.elementFromPoint(x, y);
-    return el && el.closest('[title],[data-help]');
+    // タイプアイコン(.tbadge)と class="noexp" は説明の対象にしない(絵を見ればわかるもの。
+    // titleはライトテーマのCSSと読み上げが使うので残してある)
+    return el && el.closest('[title]:not(.tbadge):not(.noexp),[data-help]:not(.tbadge):not(.noexp)');
   }
   // 照準が合った部品の名前(ウィンドウの見出しに出す)
   function labelOf(el) {

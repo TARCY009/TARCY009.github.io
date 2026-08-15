@@ -182,15 +182,15 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 
 <div class="gtabs modes">
   <div class="gseg">
-    <button id="mPower" class="t-gold" type="button" aria-pressed="true">火力</button>
-    <button id="mTotal" class="t-gold" type="button" aria-pressed="false">総合力</button>
+    <button id="mPower" class="t-gold" type="button" aria-pressed="true" title="与えるダメージの効率だけで並べます">火力</button>
+    <button id="mTotal" class="t-gold" type="button" aria-pressed="false" title="火力に被弾のしにくさ（防衛側のわざへの耐性）を加味して並べます">総合力</button>
   </div>
 </div>
 
 <div class="gtabs">
-  <button id="fShadow" class="t-shadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
-  <button id="fMega" class="t-mega" type="button" aria-pressed="false">メガ・ゲンシ</button>
-  <button id="fMulti" class="t-cyan" type="button" aria-pressed="false">同じポケモン表示<small>（わざ違い）</small></button>
+  <button id="fShadow" class="t-shadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i></button>
+  <button id="fMega" class="t-mega" type="button" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+  <button id="fMulti" class="t-cyan" type="button" aria-pressed="false" title="同じポケモンのわざ構成違いもまとめて表示します（ふだんは1匹につき最良の構成だけ）">同じポケモン表示<small>（わざ違い）</small></button>
 </div>
 
 <div class="defender" id="defender"></div>

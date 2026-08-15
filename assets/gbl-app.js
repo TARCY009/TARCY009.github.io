@@ -12,9 +12,9 @@ document.getElementById('app').innerHTML = `
 </header>
 
 <div class="leagues" id="leagues">
-  <button class="lgbtn" data-cap="1500" aria-pressed="true">スーパー</button>
-  <button class="lgbtn" data-cap="2500" aria-pressed="false">ハイパー</button>
-  <button class="lgbtn" data-cap="0" aria-pressed="false">マスター</button>
+  <button class="lgbtn" data-cap="1500" aria-pressed="true" title="CP1500以下で戦うリーグ">スーパー</button>
+  <button class="lgbtn" data-cap="2500" aria-pressed="false" title="CP2500以下で戦うリーグ">ハイパー</button>
+  <button class="lgbtn" data-cap="0" aria-pressed="false" title="CP制限なしのリーグ">マスター</button>
   <button class="lgbtn" id="cupTab" aria-pressed="false" title="特殊レギュレーションの一覧を開く">特殊カップ</button>
 </div>
 <div class="popwin cupwin" id="cupwin" style="display:none">
@@ -23,7 +23,7 @@ document.getElementById('app').innerHTML = `
 </div>
 
 <div class="modes" id="modes">
-  <button data-m="duel" aria-pressed="true">1対1シミュ</button>
+  <button data-m="duel" aria-pressed="true" title="1匹どうしの対面を、わざ・個体値・シールドまで指定して詳しくシミュレートする">1対1シミュ</button>
   <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧</button>
   <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモン（対策）を環境上位から総当たりで探す">対策さがし</button>
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
@@ -65,7 +65,7 @@ document.getElementById('app').innerHTML = `
   <div class="rkrow rkfiltrow" id="rkfiltrow" style="display:none">
     <span class="lbl">含める</span>
     <div class="opts rkfilt" id="rkfilt">
-      <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガ・ゲンシを含める">メガ・ゲンシ</button>
+      <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     </div>
   </div>
 </div>
@@ -385,9 +385,14 @@ const PTSEC = { hole: false, diag: false, work: false };
 try { Object.assign(PTSEC, JSON.parse(localStorage.getItem('gbl_ptsec') || '{}')); } catch (e) {}
 const savePtSec = () => { try { localStorage.setItem('gbl_ptsec', JSON.stringify(PTSEC)); } catch (e) {} };
 // パネルの頭(バッジ)。押すと開閉する
+const PTSEC_TIPS = {
+  hole: '環境上位を1匹1マスで並べた図。赤いマス＝3匹とも勝てない相手（穴）。タップで開閉します',
+  diag: 'パーティの弱点と次の一手を短い文でまとめます。タップで開閉します',
+  work: 'シールドが残る序盤と切れた終盤、どちらが得意かを1匹ずつ出します。タップで開閉します',
+};
 const ptSecHead = (k, emoji, label) =>
   `<button class="ptsec" data-sec="${k}" aria-expanded="${!!PTSEC[k]}"` +
-  ` title="タップで開きます">` +
+  ` title="${PTSEC_TIPS[k] || 'タップで開きます'}">` +
   `<span class="ptdic">${emoji}</span>${label}<span class="ptsecarw"></span></button>`;
 // パネルの開閉をつなぐ(描き直すたびに呼ぶ)
 function bindPtSec(root) {

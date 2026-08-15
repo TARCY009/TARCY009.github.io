@@ -276,25 +276,25 @@ footer a{color:var(--spec)}
 </div>
 
 <div id="tabs" class="tabs">
-  <button id="tabAtk" class="tab" aria-selected="true">アタッカー</button>
-  <button id="tabTank" class="tab tank" aria-selected="false">タンク</button>
+  <button id="tabAtk" class="tab" aria-selected="true" title="ダイマックスフェイズで与えるダメージが高い順のランキングです">アタッカー</button>
+  <button id="tabTank" class="tab tank" aria-selected="false" title="通常フェイズでボスの攻撃を受け止める役のランキングです（ボスのSPアタックへの耐久で評価）">タンク</button>
 </div>
 
 <div class="filters gtabs" id="filters" style="display:none">
-  <button id="fSp" class="t-gold" aria-pressed="false">SP判定</button>
-  <button id="fLegacy" class="t-cyan" aria-pressed="true">特別技も</button>
-  <button id="fHalf" class="t-cyan" aria-pressed="true" style="display:none">0.5秒技だけ</button>
-  <button id="fSwap" class="t-shadow" aria-pressed="false" style="display:none">交代受け</button>
+  <button id="fSp" class="t-gold" aria-pressed="false" title="SPアタックを打つべきボスかの判定を出します（0.5秒あたりのチャージ量が1%以上ならSPを打つ方が早い）">SP判定</button>
+  <button id="fLegacy" class="t-cyan" aria-pressed="true" title="特別なわざ（いまは覚えられない限定のわざ）も候補に含めます">特別技も</button>
+  <button id="fHalf" class="t-cyan" aria-pressed="true" style="display:none" title="発生0.5秒のノーマルアタックを持つポケモンだけに絞ります（連打でマックスメーターを速く溜められます）">0.5秒技だけ</button>
+  <button id="fSwap" class="t-shadow" aria-pressed="false" style="display:none" title="ボスのわざを選んで、交代でそれを受け止めたときの被ダメージの少なさで並べます">交代受け</button>
 </div>
-<p id="tankNote" class="tanknote" style="display:none">耐久指数 ＝ HP種族値 × 防御種族値</p>
+<p id="tankNote" class="tanknote expl" style="display:none">耐久指数 ＝ HP種族値 × 防御種族値</p>
 
 <div id="swapMoves" class="swapmoves"></div>
 
 <div id="spPanel" class="sppanel" style="display:none">
   <div class="sprow gtabs">
     <div class="gseg">
-      <button id="spStar5" class="t-gold" aria-pressed="false">★5</button>
-      <button id="spStar6" class="t-gold" aria-pressed="true">★6・キョダイ</button>
+      <button id="spStar5" class="t-gold" aria-pressed="false" title="★5ボスのマックスメーター設定で判定します">★5</button>
+      <button id="spStar6" class="t-gold" aria-pressed="true" title="★6・キョダイマックスボスのマックスメーター設定で判定します">★6・キョダイ</button>
     </div>
     <span id="spStatus" class="spstatus"></span>
   </div>

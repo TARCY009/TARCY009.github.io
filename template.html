@@ -347,10 +347,10 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     </div>
     <div class="modes mymodes">
       <span class="seg">
-        <button id="smCp" type="button" aria-pressed="true">今の状態</button>
-        <button id="smMax" type="button" aria-pressed="false" title="PL50・個体値15まで上げたときの火力">フル強化</button>
+        <button id="smCp" type="button" aria-pressed="true" title="入力したCPと個体値のまま、いまの火力で計算します">今の状態</button>
+        <button id="smMax" type="button" aria-pressed="false" title="PL50・個体値15まで強化したと想定した火力で計算します">フル強化</button>
       </span>
-      <button id="myShadow" type="button" aria-pressed="false" title="シャドウ（攻撃1.2倍・防御5/6）として計算"><i class="shadowmark"></i>シャドウ</button>
+      <button id="myShadow" type="button" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i>シャドウ</button>
     </div>
     <div id="cpArea" style="margin-top:8px">
       <div class="cprow"><label class="f" id="cpLabel">CP</label><input type="number" id="myCP" min="10" placeholder="例: 2387"></div>
@@ -369,9 +369,9 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="card c-rank">
   <div class="step"><b>RANK</b><h2>火力ランキング</h2></div>
   <div class="modes">
-    <button id="fShadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウを含める"><i class="shadowmark"></i></button>
-    <button id="fMega" type="button" aria-pressed="false" title="メガ・ゲンシを含める">メガ・ゲンシ</button>
-    <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドのシールド破壊向き（メガシンカのみの一覧に切り替わります）">🛡シールド破壊</button>
+    <button id="fShadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i></button>
+    <button id="fMega" type="button" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+    <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドでボスのシールドを壊す役向きのランキングに切り替えます（使えるのはメガシンカだけなのでメガのみの一覧になります）">🛡シールド破壊</button>
   </div>
   <div id="mineSummary"></div>
   <div id="rankList"><div class="empty">ボスを選ぶとランキングが出ます</div></div>
