@@ -222,15 +222,16 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
   /* 狭い画面ではタブを横いっぱいに伸ばして押しやすくする(広い画面は内容ぶんの幅で左寄せ) */
   .modes button,.seg{flex:1 1 auto}
 }
-#rankList .rank-row:nth-child(-n+3):not(.mine){border-radius:12px;margin:3px 0}
+#rankList .rank-row.md1,#rankList .rank-row.md2,#rankList .rank-row.md3{border-radius:12px;margin:3px 0}
 /* 上位3行はメダルの色。ダークでは暗い土台に薄く色を敷き、順位の数字と枠で強さを出す
-   (暗い一覧の中でベタ塗りにすると浮きすぎるため) */
-#rankList .rank-row:nth-child(1):not(.mine){background:var(--m1bg);border:1px solid var(--m1line)}
-#rankList .rank-row:nth-child(1):not(.mine) .rk{color:var(--m1ink)}
-#rankList .rank-row:nth-child(2):not(.mine){background:var(--m2bg);border:1px solid var(--m2line)}
-#rankList .rank-row:nth-child(2):not(.mine) .rk{color:var(--m2ink)}
-#rankList .rank-row:nth-child(3):not(.mine){background:var(--m3bg);border:1px solid var(--m3line)}
-#rankList .rank-row:nth-child(3):not(.mine) .rk{color:var(--m3ink)}
+   (暗い一覧の中でベタ塗りにすると浮きすぎるため)
+   同じ火力が並ぶと1位が2行になることがあるので、並び位置(nth-child)ではなく順位の数字で色を決める */
+#rankList .rank-row.md1{background:var(--m1bg);border:1px solid var(--m1line)}
+#rankList .rank-row.md1 .rk{color:var(--m1ink)}
+#rankList .rank-row.md2{background:var(--m2bg);border:1px solid var(--m2line)}
+#rankList .rank-row.md2 .rk{color:var(--m2ink)}
+#rankList .rank-row.md3{background:var(--m3bg);border:1px solid var(--m3line)}
+#rankList .rank-row.md3 .rk{color:var(--m3ink)}
 .rank-row.mine{background:linear-gradient(90deg,var(--goldbg),transparent);border:1px solid var(--goldline);border-radius:12px;margin:3px 0}
 .rk{width:30px;text-align:center;font-weight:800;color:var(--sub);font-size:.85rem;flex-shrink:0}
 .rank-row.mine .rk{color:var(--gold)}
@@ -255,7 +256,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rmoves .sp{color:var(--special)}
 .bar{height:6px;background:var(--barbg);border-radius:99px;margin-top:4px;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent) 55%,var(--violet));border-radius:99px}
-.rank-row.mine .bar i,#rankList .rank-row:nth-child(1):not(.mine) .bar i{background:linear-gradient(90deg,#ffd873,#f0a827)}
+.rank-row.mine .bar i,#rankList .rank-row.md1 .bar i{background:linear-gradient(90deg,#ffd873,#f0a827)}
 .rdps{width:64px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
 .rdps small{display:block;font-weight:400;font-size:.58rem;color:var(--sub)}
 .wchip{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:99px;padding:2px 9px 2px 3px;margin:2px 3px 2px 0;box-shadow:0 2px 6px -2px rgba(0,0,0,.5)}
@@ -706,6 +707,20 @@ shieldBtn.onclick=()=>{shieldMode=!shieldMode;showN=30;syncModes();renderRank();
 syncModes();
 document.getElementById('moreBtn').onclick=()=>{showN+=50;renderRank();};
 
+// ---- 同じ火力は同順位（個体値チェッカーのSCPと同じ扱い）----
+// 攻撃種族値・わざ・タイプ一致が同じなら火力もぴったり同じになる(対ドラゴンのオノノクスとレックウザなど)。
+// 同じ数字なのに順位が別々になるのはおかしいので、同じ火力は同順位にして重なったぶんは次の順位を飛ばす。
+// 計算の順序でごく小さい誤差が出ることがある(同じ344/7でも末尾がズレる)ので、相対1e-9までは同じ値とみなす。
+const sameDps=(a,b)=>Math.abs(a-b)<=1e-9*Math.max(Math.abs(a),Math.abs(b),1);
+// 火力の降順に並んだ配列へ順位(rk)を振る
+function assignRanks(rows){
+  let rk=0;
+  rows.forEach((r,i)=>{ if(i===0||!sameDps(r.dps,rows[i-1].dps)) rk=i+1; r.rk=rk; });
+  return rows;
+}
+// 一覧に無いもの(登録した自分のポケモン)の「◯位相当」。上と同じ基準なので一覧の順位と食い違わない
+const rankIn=(rows,d)=>rows.filter(r=>r.dps>d&&!sameDps(r.dps,d)).length+1;
+
 function buildRanking(){
   if(!boss) return [];
   const bt=D.pokemon[boss].ty, rows=[];
@@ -721,7 +736,7 @@ function buildRanking(){
     }
   }
   rows.sort((a,b)=>b.dps-a.dps);
-  return rows;
+  return assignRanks(rows);
 }
 function mineRows(){
   if(!boss) return [];
@@ -798,7 +813,7 @@ function shieldRows(){
     rows.push({k,p,...best,hp,maxHit,maxMove});
   }
   rows.sort((a,b)=>b.dps-a.dps);
-  return rows;
+  return assignRanks(rows);
 }
 // 自分の登録メガをシールド破壊(メガ)の一覧に混ぜる。
 // HPも防御もPLで変わるので、1発耐えられないときは「PLいくつから耐えるか」まで出す
@@ -836,7 +851,7 @@ function renderShieldRank(){
   if(!boss){listEl.innerHTML='<div class="empty">ボスを選ぶと、シールド破壊に向いたメガを表示します</div>';moreBtn.style.display='none';return;}
   const rows=shieldRows();
   const my=shieldMine();
-  const rankOf=d=>rows.filter(r=>r.dps>d).length+1;
+  const rankOf=d=>rankIn(rows,d);
   // 自分のメガの概要(1発耐えるか / 耐えないなら「あと何回強化すれば耐えるか」)
   const skipped=mine.length-my.length;
   sumEl.innerHTML=my.map(m=>{
@@ -861,9 +876,9 @@ function renderShieldRank(){
   const top=Math.max(rows.length?rows[0].dps:1, ...my.map(m=>m.dps));
   // 自分のメガを火力の位置に差し込む
   const merged=[]; const mi=[...my].sort((a,b)=>b.dps-a.dps); let pos=0;
-  rows.slice(0,showN).forEach((r,idx)=>{
-    while(pos<mi.length && mi[pos].dps>=r.dps){merged.push({mine:true,...mi[pos],rank:idx+1});pos++;}
-    merged.push({mine:false,...r,rank:idx+1});
+  rows.slice(0,showN).forEach(r=>{
+    while(pos<mi.length && mi[pos].dps>=r.dps){merged.push({mine:true,...mi[pos],rank:rankOf(mi[pos].dps)});pos++;}
+    merged.push({mine:false,...r,rank:r.rk});
   });
   while(pos<mi.length && showN>=rows.length){merged.push({mine:true,...mi[pos],rank:rankOf(mi[pos].dps)});pos++;}
   listEl.innerHTML=merged.map(r=>{
@@ -881,7 +896,7 @@ function renderShieldRank(){
     }
     const barsN=Math.round(100/Math.abs(D.moves[r.c.id].e));
     return `
-    <div class="rank-row"><div class="rk">${r.rank}位</div><div class="rmain">
+    <div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk">${r.rank}位</div><div class="rmain">
       <div class="rname">${badges(false,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}</div>
       <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</span></div>
       <div class="rmoves">🛡被弾最大${r.maxHit}／HP${r.hp}<span class="expl">（シールド中2倍補正込み・${r.maxMove.n}）</span></div>
@@ -900,18 +915,18 @@ function renderRank(){
   const my=mineRows();
   // 相当順位
   sumEl.innerHTML=my.map(m=>{
-    const rank=rows.filter(r=>r.dps>m.dps).length+1;
+    const rank=rankIn(rows,m.dps);
     // シャドウ・メガは文字ではなく名前の左のマークで表す(全ツール共通)
     return `<div class="mine-sum"><span><b>${badges(m.e.shadow,m.p.mega,m.p)}${m.p.n}</b><small class="msiv">${ivTxt(m.e)}</small></span>${plCtlHtml(m.e,m.i)}<span>火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b></span><button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
   }).join('');
   // 一覧（自分のポケモンを該当位置に挿入）
   const merged=[];
   let mi=[...my].sort((a,b)=>b.dps-a.dps), pos=0;
-  rows.slice(0,showN).forEach((r,idx)=>{
-    while(pos<mi.length && mi[pos].dps>=r.dps){merged.push({mine:true,...mi[pos],rank:idx+1});pos++;}
-    merged.push({mine:false,...r,rank:idx+1});
+  rows.slice(0,showN).forEach(r=>{
+    while(pos<mi.length && mi[pos].dps>=r.dps){merged.push({mine:true,...mi[pos],rank:rankIn(rows,mi[pos].dps)});pos++;}
+    merged.push({mine:false,...r,rank:r.rk});
   });
-  while(pos<mi.length && showN>=rows.length){merged.push({mine:true,...mi[pos],rank:rows.filter(r=>r.dps>mi[pos].dps).length+1});pos++;}
+  while(pos<mi.length && showN>=rows.length){merged.push({mine:true,...mi[pos],rank:rankIn(rows,mi[pos].dps)});pos++;}
   listEl.innerHTML=merged.map(r=>{
     if(r.mine){
       return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div><div class="rmain">
@@ -920,7 +935,7 @@ function renderRank(){
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
         <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
-    return `<div class="rank-row"><div class="rk">${r.rank}</div><div class="rmain">
+    return `<div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk">${r.rank}</div><div class="rmain">
       <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small>PL50・個体値15</small></div>
       <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}</span></div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
@@ -937,6 +952,7 @@ const HELP_HTML = `
     <li><b>ノーマルアタック100回ぶんのサイクル</b>で、1秒あたり何ダメージ出せるかです。数字が大きいほど強い</li>
     <li>相手は<b>防御種族値100・個体値15・PL40</b>のものさしで統一しています。選んだボスの<b>タイプ相性</b>は反映されます</li>
     <li>一覧の数字は<b>PL50・個体値15</b>のとき。登録した自分のポケモンだけは、入力したPL・個体値・わざで計算します</li>
+    <li><b>火力が同じなら同順位</b>です（攻撃種族値・わざ・タイプ一致が同じだと火力もぴったり同じになります）。同順位が2匹並んだら次は3位、というように<b>重なったぶんの順位は飛ばします</b></li>
   </ul>
 
   <h4>わざの選ばれ方</h4>
