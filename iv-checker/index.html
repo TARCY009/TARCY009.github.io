@@ -201,7 +201,7 @@ th{font-size:.64rem;color:var(--think);font-weight:700;letter-spacing:.06em;text
    順位は右寄せにして個体値のすぐ隣に置く(左寄せだと「1646位」の桁ぶん間が空いて離れて見える)。
    右の4列は数値として右寄せでそろえる */
 th:first-child,td:first-child{text-align:right;width:1%;white-space:nowrap;padding-left:11px}
-th:nth-child(2),td:nth-child(2){text-align:left;width:1%;white-space:nowrap;padding-left:10px}
+th:nth-child(2),td:nth-child(2){text-align:left;width:1%;white-space:nowrap;padding-left:26px}
 td{padding:9px 6px;text-align:right;border-bottom:1px solid var(--line2)}
 td:last-child,th:last-child{padding-right:11px}
 /* 1行おきに薄く敷いて、横に目を走らせても行を見失わないようにする */
@@ -220,8 +220,12 @@ tr.gap td{background:none;border-bottom:none;padding:2px 0;color:var(--sub);text
   table{font-size:.78rem}
   th{font-size:.58rem;padding:7px 3px;letter-spacing:.02em}
   td{padding:8px 3px}
-  th:first-child,td:first-child{padding-left:8px}
-  td:last-child,th:last-child{padding-right:8px}
+  /* 順位(右寄せ)と個体値(左寄せ)は文字どうしが向かい合うので、数値の列より広めに空ける。
+     数値の列は桁が少ない行ほど余白が出るが、この2列は常に最小の隙間になって詰まって見えるため
+     (実測: 他の列の見た目の間隔とそろう17px。表の幅は変わらない) */
+  th:nth-child(2),td:nth-child(2){padding-left:17px}
+  th:first-child,td:first-child{padding-left:6px}
+  td:last-child,th:last-child{padding-right:7px}
 }
 tr.me .rkt:not(.m1):not(.m2):not(.m3){background:rgba(67,224,255,.16);color:var(--cy)}
 .note{font-size:.7rem;color:var(--sub);line-height:1.6;margin-top:14px}
