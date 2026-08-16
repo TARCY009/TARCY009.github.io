@@ -65,7 +65,7 @@ document.getElementById('app').innerHTML = `
   <div class="rkrow rkfiltrow" id="rkfiltrow" style="display:none">
     <span class="lbl">含める</span>
     <div class="opts rkfilt" id="rkfilt">
-      <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+      <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（シャドウポケモンは攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     </div>
   </div>
 </div>

@@ -369,7 +369,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="card c-rank">
   <div class="step"><b>RANK</b><h2>火力ランキング</h2></div>
   <div class="modes">
-    <button id="fShadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i></button>
+    <button id="fShadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（シャドウポケモンは攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i></button>
     <button id="fMega" type="button" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドでボスのシールドを壊す役向きのランキングに切り替えます（使えるのはメガシンカだけなのでメガのみの一覧になります）">🛡シールド破壊</button>
   </div>
@@ -888,7 +888,8 @@ function renderShieldRank(){
   }).join('')
     +(skipped?`<p class="note">シールド破壊はメガだけなので、登録した${skipped}匹は出していません。</p>`:'')
     // 強いボスほど1発耐えできるメガが減るので、何匹が条件を満たしたのかを必ず出す
-    +`<p class="note">🛡1発耐え＋分割SPアタックを持つメガは <b>${rows.length}匹</b>（強いボスほど少なくなります）</p>`;
+    +`<p class="note">🛡1発耐え＋分割SPアタックを持つメガは <b>${rows.length}匹</b>（強いボスほど少なくなります）</p>`
+    +`<p class="note">ボスがシールドを展開したときにメガシンカポケモンを場に出すと、<b>最初からゲージが50たまった状態</b>になります。分割SPアタック持ちならすぐ撃ってシールドを壊せます</p>`;
   if(!rows.length && !my.length){listEl.innerHTML='<div class="empty">条件(1発耐え+分割SPアタック持ち)を満たすメガシンカが見つかりません</div>';moreBtn.style.display='none';return;}
   const top=Math.max(rows.length?rows[0].dps:1, ...my.map(m=>m.dps));
   // 自分のメガを火力の位置に差し込む
@@ -993,6 +994,7 @@ const HELP_HTML = `
   <h4>🛡 シールド破壊（スーパーメガレイド用）</h4>
   <ul>
     <li>シールドは<b>メガシンカポケモンがSPアタックを撃つと1枚壊せます</b>（1人1枚・タイプ不問）</li>
+    <li>ボスがシールドを展開したときにメガを場に出すと<b>最初からゲージが50たまっている</b>ので、分割SPアタック持ちならすぐ撃って壊せます</li>
     <li>この一覧は<b>①ボスのSPアタックをどれを受けても1発で倒れない ②ゲージ2分割・3分割のSPアタックを持つ</b>メガだけを、火力の高い順に並べたものです</li>
     <li>シールド展開中のボスの攻撃は<b>2倍</b>として計算しています（メガ＝PL50・個体値15、ボス＝PL40想定）</li>
     <li>登録した自分のメガもこの一覧に入ります。1発で倒れる場合は<b>どのPLまで上げれば耐えるか</b>と、そのときの火力を出します</li>
