@@ -42,8 +42,9 @@
   --mgold:#f2c14e; --msilver:#c8d3de; --mbronze:#c98d5f;
   /* TOP10表: 面・見出し・1行おきの敷き・あなたの行 */
   --tbbg:rgba(13,19,42,.55); --tbline:rgba(67,224,255,.16); --think:#9fb2e8;
-  /* 見出し行はこのツールの役割色(青→紫→水色)のグラデーション帯(2026-08-16タダシさん指示) */
-  --thbg:linear-gradient(100deg,#3b6ef0 0%,#7c4fe0 52%,#0aa6c4 100%);
+  /* 見出し行はこのツールの役割色(青→紫→水色)のグラデーション帯(2026-08-16タダシさん指示)。
+     ベタ塗り感が出ないよう半透明にして、下の面をうっすら透けさせる(同日指示) */
+  --thbg:linear-gradient(100deg,rgba(59,110,240,.55) 0%,rgba(124,79,224,.55) 52%,rgba(10,166,196,.55) 100%);
   --zebra:rgba(255,255,255,.022); --mebg:rgba(67,224,255,.12); --meline:rgba(67,224,255,.45);
   --tbsh:0 10px 24px -18px rgba(0,0,0,.9);
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
@@ -69,7 +70,8 @@
   --gold:#b07a00; --silver:#64748f; --bronze:#a5652a;
   --mgold:#e0a800; --msilver:#9aa8b8; --mbronze:#c07f4a;
   --tbbg:rgba(255,255,255,.6); --tbline:#d3e3f2; --think:#4a6a8c;
-  --thbg:linear-gradient(100deg,#4a7bf5 0%,#8b5cf6 52%,#0fb4d0 100%);
+  /* ライトは白い面に透けるぶん色が薄まるので、透明度はダークより控えめ(白文字が読める濃さを保つ) */
+  --thbg:linear-gradient(100deg,rgba(74,123,245,.78) 0%,rgba(139,92,246,.75) 52%,rgba(15,180,208,.78) 100%);
   --zebra:rgba(59,110,240,.035); --mebg:rgba(8,180,201,.13); --meline:rgba(11,143,168,.5);
   --tbsh:0 10px 22px -18px rgba(30,60,120,.5);
   --tcolor:#eef2fc;
