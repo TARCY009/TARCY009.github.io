@@ -134,13 +134,13 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 /* タブは全ツール共通の質感（立体的に浮かせ、選択中はその役割の色のグラデーションで点灯）。
    このツールは選択中を .act で表すので、共通の assets/tabs.css ではなくここで同じ見た目を作る。
    未選択でも文字色（--mc）で役割の色を示すので、押す前から色で見分けられる */
-.tab,.src,.fl,.srt,.cap,.lgc,.evb,.evf{
+.tab,.src,.fl,.srt,.cap,.evb,.evf{
   font-family:inherit;border:1px solid var(--line);background:var(--tabbg);color:var(--mc,var(--sub));
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
   transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
-.tab:hover:not(:disabled),.src:hover,.fl:hover,.srt:hover:not(:disabled),.cap:hover,.lgc:hover,.evb:hover,.evf:hover{
+.tab:hover:not(:disabled),.src:hover,.fl:hover,.srt:hover:not(:disabled),.cap:hover,.evb:hover,.evf:hover{
   transform:translateY(-1px);box-shadow:0 4px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
-.tab.act,.src.act,.fl.act,.srt.act,.cap.act,.lgc.act,.evb.act,.evf.act{
+.tab.act,.src.act,.fl.act,.srt.act,.cap.act,.evb.act,.evf.act{
   color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);
   background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
 /* 役割ごとの色: スーパー=濃い青 ／ ハイパー=黄 ／ マスター=紫 ／ そのほかの設定=水色。
@@ -257,55 +257,38 @@ footer{text-align:center;font-size:.65rem;color:var(--sub);margin-top:26px;line-
   font-size:.9rem;font-weight:700;display:none;justify-content:space-between;align-items:center}
 #sticky .r1{color:var(--gold)} #sticky .r10{color:var(--silver)} #sticky .r100{color:var(--bronze)}
 body.has-sticky{padding-top:52px}
-/* 3リーグ順位カード（見た目は上のタブと共通。色はリーグごと: スーパー=濃い青／ハイパー=黄／マスター=紫） */
-.lgc{padding:10px 4px;border-radius:10px;font-size:.78rem;font-weight:700;cursor:pointer;text-align:center}
-.lgc small{display:block;font-size:.6rem;font-weight:500;margin-top:3px;opacity:.75}
-.lgc .lgc-n{display:block}
-.lgc .lgc-r{display:block;font-size:1.05rem;margin-top:3px;font-variant-numeric:tabular-nums;color:inherit}
-.lgc[data-lg="gl"]{--mc:var(--mcB);--mgl:rgba(59,110,240,.45);
-  --mg:linear-gradient(160deg,#9fc0ff 0%,#3b6ef0 45%,#23429c 100%)}
-.lgc[data-lg="ul"]{--mc:var(--mcU);--mi:#4a3200;--mgl:rgba(240,168,39,.45);
-  --mg:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%)}
-.lgc[data-lg="ml"]{--mc:var(--mcM);--mgl:rgba(139,92,246,.45);
-  --mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%)}
+/* 3リーグ順位カード。「ボタン」ではなく「順位の表示」として見せる(2026-08-16タダシさん指示)。
+   点灯の塗りつぶし(グラデーション)をやめて面は落ち着いた土台のまま、順位の数字を大きく主役にする。
+   選択中はリーグ色の枠線と光彩で示す(色: スーパー=青／ハイパー=黄／マスター=紫) */
+.lgc{font-family:inherit;cursor:pointer;text-align:center;padding:9px 2px 10px;border-radius:10px;
+  border:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),var(--panel));
+  box-shadow:inset 0 1px 0 var(--tabin);transition:transform .12s ease,border-color .12s ease}
+.lgc:hover{transform:translateY(-1px)}
+.lgc .lgc-n{display:block;font-size:.68rem;font-weight:700;letter-spacing:.08em}
+.lgc[data-lg="gl"] .lgc-n{color:var(--gl)}
+.lgc[data-lg="ul"] .lgc-n{color:var(--ul)}
+.lgc[data-lg="ml"] .lgc-n{color:var(--ml)}
+.lgc small{display:block;font-size:.6rem;font-weight:500;margin-top:2px;opacity:.75;color:var(--sub)}
+/* 文字色は詳細度の低い .lgc-r に置く(下のメダル色 .lgc-r.r1 等が勝てるように) */
+.lgc-r{color:var(--ink)}
+.lgc .lgc-r{display:block;font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:3px}
+.lgc .lgc-r .u{font-size:.78rem;color:var(--sub);font-weight:700;margin-left:1px}
+.lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 14px rgba(77,141,255,.3),inset 0 1px 0 var(--tabin)}
+.lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 14px rgba(245,197,66,.26),inset 0 1px 0 var(--tabin)}
+.lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 14px rgba(176,108,255,.3),inset 0 1px 0 var(--tabin)}
 /* メダル色は上の :root / :root.light が持つ。
    大きい順位はベタ塗りではなくメダルのグラデーションで塗る(タグ・フレームと同じ質感にそろえる)。
    「位」は子要素なので自分の色(--sub)のまま残る。
    ※ 色は必ず background-image で指定する。background のショートハンドを使うと
    background-clip:text がリセットされ、文字ではなく帯が塗られてしまう(実際に踏んだ) */
-.rank-num.r1,.rank-num.r10,.rank-num.r100,.lgs-r.r1,.lgs-r.r10,.lgs-r.r100{-webkit-background-clip:text;background-clip:text;color:transparent}
-.rank-num.r1,.lgs-r.r1{background-image:linear-gradient(180deg,#ffeaa8 0%,var(--mgold) 52%,#c08d12 100%);
+.rank-num.r1,.rank-num.r10,.rank-num.r100,.lgc-r.r1,.lgc-r.r10,.lgc-r.r100{-webkit-background-clip:text;background-clip:text;color:transparent}
+.rank-num.r1,.lgc-r.r1{background-image:linear-gradient(180deg,#ffeaa8 0%,var(--mgold) 52%,#c08d12 100%);
   filter:drop-shadow(0 3px 16px rgba(242,193,78,.45))}
-.rank-num.r10,.lgs-r.r10{background-image:linear-gradient(180deg,#ffffff 0%,var(--msilver) 52%,#8f9dad 100%);
+.rank-num.r10,.lgc-r.r10{background-image:linear-gradient(180deg,#ffffff 0%,var(--msilver) 52%,#8f9dad 100%);
   filter:drop-shadow(0 3px 14px rgba(200,211,222,.32))}
-.rank-num.r100,.lgs-r.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%);
+.rank-num.r100,.lgc-r.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%);
   filter:drop-shadow(0 3px 14px rgba(201,141,95,.32))}
-.lgc-r.r1{color:var(--gold)!important}
-.lgc-r.r10{color:var(--silver)!important}
-.lgc-r.r100{color:var(--bronze)!important}
-/* 点灯中のタブでは順位もタブの文字色にそろえる(金の点灯に金文字だと読めなくなるため。
-   メダルの色は下の大きい順位が示す) */
-.lgc.act .lgc-r{color:inherit!important}
 .rank-pct.pct-gold{background:rgba(255,213,74,.14);color:var(--gold)}
-/* 3リーグ順位のまとめ(結果カードの先頭)。入力したらまず3リーグの順位が大きく見える。
-   タップで下の詳細リーグを切り替える(上のリーグタブと連動) */
-.lgsum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px}
-.lgs{font-family:inherit;cursor:pointer;text-align:center;padding:8px 2px 9px;border-radius:10px;
-  border:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),var(--panel));
-  box-shadow:inset 0 1px 0 var(--tabin);transition:transform .12s ease,border-color .12s ease}
-.lgs:hover{transform:translateY(-1px)}
-.lgs .lgs-n{display:block;font-size:.66rem;font-weight:700;letter-spacing:.08em}
-.lgs[data-lg="gl"] .lgs-n{color:var(--gl)}
-.lgs[data-lg="ul"] .lgs-n{color:var(--ul)}
-.lgs[data-lg="ml"] .lgs-n{color:var(--ml)}
-/* 文字色は詳細度の低い .lgs-r に置く(上のメダル色 .lgs-r.r1 等が勝てるように。
-   .lgs .lgs-r に書くと同じ詳細度の後勝ちでメダルの色が消える。実際に踏んだ) */
-.lgs-r{color:var(--ink)}
-.lgs .lgs-r{display:block;font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:3px}
-.lgs .lgs-r .u{font-size:.78rem;color:var(--sub);font-weight:700;margin-left:1px}
-.lgs.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 14px rgba(77,141,255,.3),inset 0 1px 0 var(--tabin)}
-.lgs.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 14px rgba(245,197,66,.26),inset 0 1px 0 var(--tabin)}
-.lgs.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 14px rgba(176,108,255,.3),inset 0 1px 0 var(--tabin)}
 /* 進化前CP: TOP10の見出し行(左=ラベル・右=トグル)と、どの姿から進化させるかのチップ */
 .tophead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .tophead label.sec{margin-bottom:0}
@@ -417,11 +400,6 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 </div>
 
 <div class="card" id="result">
-  <div class="lgsum">
-    <button class="lgs act" data-lg="gl" title="スーパーリーグ(CP1500以下)でのこの個体の順位です。タップで下の詳細を切り替えます"><span class="lgs-n">スーパー</span><span class="lgs-r" id="lgs-gl">—</span></button>
-    <button class="lgs" data-lg="ul" title="ハイパーリーグ(CP2500以下)でのこの個体の順位です。タップで下の詳細を切り替えます"><span class="lgs-n">ハイパー</span><span class="lgs-r" id="lgs-ul">—</span></button>
-    <button class="lgs" data-lg="ml" title="マスターリーグ(CP制限なし)でのこの個体の順位です。タップで下の詳細を切り替えます"><span class="lgs-n">マスター</span><span class="lgs-r" id="lgs-ml">—</span></button>
-  </div>
   <div class="rank-hero">
     <div class="rank-num"><span id="rk">—</span><span class="unit" id="rk-unit"></span></div>
     <div class="rank-den">/ 4096通り中</div>
@@ -611,18 +589,13 @@ function render(){
     const idx=belowFloor? -1 : findRank(rows, state.iv);
     detail[lg]={rows, idx};
     const el=document.getElementById('lgr-'+lg);
-    const el2=document.getElementById('lgs-'+lg);   // 結果カード先頭の大きい3リーグ表示
     if(idx>=0){
       const r=rows[idx].rank;
-      el.textContent=r+'位';
+      el.innerHTML=r+'<span class="u">位</span>';
       el.className='lgc-r '+medalCls(r);
-      el2.innerHTML=r+'<span class="u">位</span>';
-      el2.className='lgs-r '+medalCls(r);
     } else {
       el.textContent='—';
       el.className='lgc-r';
-      el2.textContent='—';
-      el2.className='lgs-r';
     }
   });
 
@@ -904,11 +877,9 @@ setupBar('iv-a',0); setupBar('iv-d',1); setupBar('iv-h',2);
 updateSortAvail();
 
 // --- リーグ/キャップ ---
-// リーグ切替は上のタブと結果カード先頭の3リーグ表示のどちらからでもできる(点灯を連動させる)
 function setLeague(lg){
   state.league=lg;
   document.querySelectorAll('.lgc').forEach(x=>x.classList.toggle('act', x.dataset.lg===lg));
-  document.querySelectorAll('.lgs').forEach(x=>x.classList.toggle('act', x.dataset.lg===lg));
   updateSortAvail();
   // CP制限リーグ(GL/UL)に切替時、伝説・UBなら交換(最低1)をデフォルト適用
   if((lg==='gl'||lg==='ul') && state.p && state.p.l===1){
@@ -916,7 +887,7 @@ function setLeague(lg){
   }
   render();
 }
-document.querySelectorAll('.lgc,.lgs').forEach(t=>t.addEventListener('click',()=>setLeague(t.dataset.lg)));
+document.querySelectorAll('.lgc').forEach(t=>t.addEventListener('click',()=>setLeague(t.dataset.lg)));
 
 // --- 進化前CP(トグルと「どの姿から」チップ) ---
 function syncEvoUi(){
