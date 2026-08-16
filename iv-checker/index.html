@@ -118,6 +118,13 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
    文字は1.82rem(2026-08-16タダシさん指示で1.4remから30%アップ) */
 .lgtitle{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;
   margin:2px 0 12px;font-size:1.82rem;font-weight:800;letter-spacing:.02em;text-align:center}
+/* 名前の右のCP・PL・SCP(選択中のリーグの値。render()が更新する)。
+   順位はすぐ下の3リーグのカードが担当するので、ここには出さない */
+.lgtstats{display:inline-flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:center;letter-spacing:0}
+.lgts{display:inline-flex;align-items:baseline;gap:3px}
+.lgts i{font-style:normal;font-size:.6rem;color:var(--sub);font-weight:700;letter-spacing:.05em}
+.lgts b{font-size:.98rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.lgterr{font-size:.7rem;color:var(--warn);font-weight:700}
 
 /* IVバー(シグネチャー: ゲーム内評価バー風) */
 .iv{margin-bottom:14px}
@@ -195,20 +202,6 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 
 /* 結果 */
 #result{display:none}
-.rank-hero{text-align:center;padding:8px 0 14px}
-.rank-num{font-size:3.2rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
-.rank-num .unit{font-size:1.4rem;color:var(--sub);font-weight:700;margin-left:2px}
-.rank-den{font-size:.8rem;color:var(--sub);margin-top:4px}
-.rank-pct{display:inline-block;margin-top:8px;padding:4px 14px;border-radius:99px;font-size:.8rem;font-weight:700}
-.pct-top{background:rgba(61,220,132,.15);color:var(--good)}
-.pct-mid{background:rgba(245,197,66,.13);color:var(--ul)}
-.pct-low{background:rgba(255,107,129,.13);color:var(--warn)}
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:6px}
-/* 3つの数字はカードの中の小さな面。タブと同じ立体感(上が明るい面＋内側のハイライト)でそろえる */
-.st{background:linear-gradient(180deg,var(--bg2),var(--panel));border:1px solid var(--line);
-  border-radius:10px;padding:10px 6px;text-align:center;box-shadow:inset 0 1px 0 var(--tabin)}
-.st .k{font-size:.62rem;color:var(--sub);letter-spacing:.08em;font-weight:700}
-.st .v{font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;margin-top:3px}
 
 /* TOP10表。順位に金・銀・銅は付けない（このツールの順位は4096通り中の順位で、
    2位・3位に特別な意味がないため。飾りではなく表そのものの見やすさで魅せる）。
@@ -293,14 +286,13 @@ body.has-sticky{padding-top:52px}
    「位」は子要素なので自分の色(--sub)のまま残る。
    ※ 色は必ず background-image で指定する。background のショートハンドを使うと
    background-clip:text がリセットされ、文字ではなく帯が塗られてしまう(実際に踏んだ) */
-.rank-num.r1,.rank-num.r10,.rank-num.r100,.lgc-r.r1,.lgc-r.r10,.lgc-r.r100{-webkit-background-clip:text;background-clip:text;color:transparent}
-.rank-num.r1,.lgc-r.r1{background-image:linear-gradient(180deg,#ffeaa8 0%,var(--mgold) 52%,#c08d12 100%);
+.lgc-r.r1,.lgc-r.r10,.lgc-r.r100{-webkit-background-clip:text;background-clip:text;color:transparent}
+.lgc-r.r1{background-image:linear-gradient(180deg,#ffeaa8 0%,var(--mgold) 52%,#c08d12 100%);
   filter:drop-shadow(0 3px 16px rgba(242,193,78,.45))}
-.rank-num.r10,.lgc-r.r10{background-image:linear-gradient(180deg,#ffffff 0%,var(--msilver) 52%,#8f9dad 100%);
+.lgc-r.r10{background-image:linear-gradient(180deg,#ffffff 0%,var(--msilver) 52%,#8f9dad 100%);
   filter:drop-shadow(0 3px 14px rgba(200,211,222,.32))}
-.rank-num.r100,.lgc-r.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%);
+.lgc-r.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%);
   filter:drop-shadow(0 3px 14px rgba(201,141,95,.32))}
-.rank-pct.pct-gold{background:rgba(255,213,74,.14);color:var(--gold)}
 /* 進化前CP: TOP10の見出し行(左=ラベル・右=トグル)と、どの姿から進化させるかのチップ */
 .tophead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .tophead label.sec{margin-bottom:0}
@@ -413,17 +405,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 </div>
 
 <div class="card" id="result">
-  <div class="rank-hero">
-    <div class="rank-num"><span id="rk">—</span><span class="unit" id="rk-unit"></span></div>
-    <div class="rank-den">/ 4096通り中</div>
-    <div class="rank-pct" id="pct"></div>
-  </div>
-  <div class="stats" style="grid-template-columns:1fr 1fr 1fr">
-    <div class="st"><div class="k">CP</div><div class="v" id="r-cp">—</div></div>
-    <div class="st"><div class="k">レベル</div><div class="v" id="r-lv">—</div></div>
-    <div class="st"><div class="k">SCP</div><div class="v" id="r-scp">—</div></div>
-  </div>
-  <div style="margin-top:18px">
+  <div>
     <div class="tophead">
       <label class="sec">TOP10</label>
       <button id="evobtn" class="evb" style="display:none" title="進化する前の姿のまま同じPL・同じ個体値まで強化したときのCPを一覧に足します。そのCPまで強化してから進化させる目安になります">進化前CP</button>
@@ -618,7 +600,8 @@ function render(){
   // --- 選択リーグの詳細 ---
   const {rows, idx}=detail[state.league];
   res.style.display='block';
-  const rkEl=document.getElementById('rk');
+  // CP・PL・SCPは大きなポケモン名の右横に出す(選択中のリーグの値)
+  const stEl=document.getElementById('lgtstats');
 
   // 進化前CPの列(トグルONのときだけ7列にする)。進化してもPL・個体値は変わらないので、
   // 進化前の種族値に同じ個体値・同じPLのCPM(float32表)を当てるだけでよい
@@ -629,32 +612,24 @@ function render(){
   const evoTd=r=> evo? '<td>'+cp(evo.a+r.ia, evo.f+r.id, evo.h+r.ih, CPMS[(r.lv-1)*2])+'</td>' : '';
 
   if(idx<0){
-    rkEl.textContent='—'; rkEl.parentElement.className='rank-num';
-    document.getElementById('rk-unit').textContent='';
-    const pe=document.getElementById('pct'); pe.style.display='inline-block'; pe.className='rank-pct pct-low';
-    pe.textContent= belowFloor ? '入力個体値がこの入手方法の最低値('+state.floor+')未満です'
-                               : 'この個体はリーグCP制限を満たせません';
-    ['r-cp','r-lv','r-scp'].forEach(i=>document.getElementById(i).textContent='—');
+    if(stEl) stEl.innerHTML='<span class="lgterr">'+(belowFloor
+      ? '入力個体値がこの入手方法の最低値('+state.floor+')未満です'
+      : 'この個体はリーグCP制限を満たせません')+'</span>';
     document.getElementById('top10').innerHTML='';
     document.getElementById('mewrap').style.display='none';
     document.getElementById('lvnote').textContent='';
     sticky.style.display='none';
     document.body.classList.remove('has-sticky');
     lastShare='';
-    document.querySelector('.rank-den').textContent='/ '+pool+'通り中(最低個体値 '+state.floor+')';
     return;
   }
 
   const me=rows[idx], rank=me.rank;
   const mcls=medalCls(rank);
-  rkEl.textContent=rank;
-  rkEl.parentElement.className='rank-num '+mcls;
-  document.getElementById('rk-unit').textContent='位';
-  document.querySelector('.rank-den').textContent='/ '+pool+'通り中(最低個体値 '+state.floor+')';
-  document.getElementById('pct').style.display='none';
-  document.getElementById('r-cp').textContent=me.cp;
-  document.getElementById('r-lv').textContent=me.lv;
-  document.getElementById('r-scp').textContent=scp(me.sp);
+  if(stEl) stEl.innerHTML=
+    '<span class="lgts"><i>CP</i><b>'+me.cp+'</b></span>'+
+    '<span class="lgts"><i>PL</i><b>'+me.lv+'</b></span>'+
+    '<span class="lgts"><i>SCP</i><b>'+scp(me.sp)+'</b></span>';
 
   const rkHtml=r=>'<span class="rkc">'+r+'位</span>';
   let html='';
@@ -732,7 +707,8 @@ function typesHtml(p,size){
 function setLgTitle(){
   const el=document.getElementById('lgtitle');
   if(!state.p){ el.style.display='none'; return; }
-  el.innerHTML='<span>'+state.p.n+'</span>'+typesHtml(state.p,26);
+  // 名前＋タイプの右にCP・PL・SCPの置き場(#lgtstats)を作る。中身はrender()が選択中リーグの値で更新する
+  el.innerHTML='<span>'+state.p.n+'</span>'+typesHtml(state.p,26)+'<span class="lgtstats" id="lgtstats"></span>';
   el.style.display='flex';
 }
 
