@@ -52,20 +52,14 @@ document.getElementById('app').innerHTML = `
   <div class="rkrow rksep" id="rkenterrow">
     <span class="lbl" title="この対面が始まった時点で、あいてが動けない状態かどうか">敵硬直</span>
     <div class="opts rkenter" id="rkenter">
-      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">開幕</button><button data-v="ko" aria-pressed="false" title="前のポケモンが倒されて次が出てきた直後。あいては4秒(8ターン)動けません">撃破後</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">交代後</button>
+      <button data-v="first" aria-pressed="true" title="開幕から出ている1匹目。硬直なしで動き出します">開幕</button><button data-v="ko" aria-pressed="false" title="ポケモンが倒れて（自分or敵）次が出てきた直後。あいては4秒(8ターン)動けません">撃破後</button><button data-v="swap" aria-pressed="false" title="自分から交代した直後。あいては4.5秒(9ターン)動けませんが、自分も0.5秒(1ターン)動けません">交代後</button>
     </div>
   </div>
   <!-- 1対1のときだけ: 対策(おすすめランキング / シミュレート)と絞り込み -->
   <div class="rkrow rkviewrow rksep" id="rkviewrow" style="display:none">
     <span class="lbl">対策</span>
     <div class="opts" id="rkviewbtns">
-      <button data-v="power" aria-pressed="true" title="ノーマルアタックだけで殴ったとき、火力が高い順に並べます">火力</button><button data-v="safe" aria-pressed="false" title="あいてのノーマルアタックで先に倒されない中から、火力が高い順に並べます">高火力＋安定</button><button data-v="sim" aria-pressed="false" title="1匹どうしの対面を1ターンずつ詳しく計算します">シミュレート</button>
-    </div>
-  </div>
-  <div class="rkrow rkfiltrow" id="rkfiltrow" style="display:none">
-    <span class="lbl">含める</span>
-    <div class="opts rkfilt" id="rkfilt">
-      <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（シャドウポケモンは攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+      <button data-v="power" aria-pressed="true" title="ノーマルアタックだけで攻撃したとき、火力が高い順に並べます">火力</button><button data-v="safe" aria-pressed="false" title="あいてのノーマルアタックで先に倒されない中から、火力が高い順に並べます">高火力＋安定</button><button data-v="sim" aria-pressed="false" title="1匹どうしの対面を1ターンずつ詳しく計算します">シミュレート</button>
     </div>
   </div>
 </div>
@@ -269,6 +263,15 @@ document.getElementById('app').innerHTML = `
 <!-- ロケット団戦 1対1: おすすめランキング(あいてを決めると出る) -->
 <div class="multi" id="rkrank" style="display:none">
   <h3 id="rkranktitle">ノーマルアタック火力ランキング</h3>
+  <!-- 絞り込みチップはランキングの枠内(火力チェッカーと同じ形)。
+       右端の「⚙ 詳細」で敵硬直(対面の始まり方)を開く(2026-08-17タダシさん指示) -->
+  <div class="rkfrow">
+    <div class="opts rkfilt" id="rkfilt">
+      <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（シャドウポケモンは攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+    </div>
+    <button class="mdettab" id="rkentdet" aria-expanded="false" title="対面の始まり方（敵硬直）の設定を開きます">⚙ 詳細</button>
+  </div>
+  <div class="rkentbox" id="rkentbox" style="display:none"></div>
   <div class="rkmy" id="rkmy">
     <button class="rkmytab" id="rkmytab" aria-expanded="false" title="CPと個体値を入れると、自分の個体の実力でランキングに並びます">＋ 自分のポケモン</button>
     <div class="rkmybody" id="rkmybody" style="display:none"></div>
@@ -1008,7 +1011,7 @@ ${PAGE_ROCKET ? '' : `
   行をタップすると、そのわざで来たときの詳細に切り替わります。</p>
 
   <h4>おすすめランキング（1対1）</h4>
-  <p>あいてを決めると、<b>ノーマルアタックだけで殴ったときに火力が出る順</b>に並べます。
+  <p>あいてを決めると、<b>ノーマルアタックだけで攻撃したときに火力が出る順</b>に並べます。
   ロケット団戦は早く倒すほど有利なので、SPアタックを撃たずに押し切れる相手を先に見つけるのが近道です。</p>
   <ul>
     <li>大きい数字は<b>倒しきるまでの秒数</b>、右下の小さい数字は<b>1秒あたりのダメージ</b>です</li>
@@ -1035,7 +1038,7 @@ ${PAGE_ROCKET ? '' : `
   <ul>
     <li><b>⚡ SPアタック</b>… 撃つわざをタップ／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）／<b>おまかせ</b>（AIの判断で進める）</li>
     <li><b>🛡 〜が来る！</b>… シールドで<b>使う</b>か、<b>受ける</b>か（受けた場合のダメージつき）</li>
-    <li><b>${SWAPMK} 交代する？</b>… あいての交代直後（硬直中に殴ったあと）に聞かれます</li>
+    <li><b>${SWAPMK} 交代する？</b>… あいての交代直後（硬直中に攻撃したあと）に聞かれます</li>
     <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
@@ -1297,9 +1300,22 @@ function applyMode() {
 function syncRocket() {
   const sp = rkSpec();
   document.querySelectorAll('#rkkind button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.kind));
-  // 敵硬直は「途中の対面を切り出す」1対1専用の設定。模擬戦は開幕からの通しなので隠す
+  // 敵硬直は「途中の対面を切り出す」1対1専用の設定。模擬戦は開幕からの通しなので隠す。
+  // ランキング表示中はパネルではなく、枠内チップ行の右端「⚙ 詳細」の中へ行ごと移す
   if (RK.team) RK.enter = 'first';
-  document.getElementById('rkenterrow').style.display = RK.team ? 'none' : '';
+  const rankView = RK.play === '1v1' && RKR.view !== 'sim';
+  const entRow = document.getElementById('rkenterrow');
+  if (rankView) {
+    document.getElementById('rkentbox').appendChild(entRow);
+    entRow.classList.remove('rksep');
+    entRow.style.display = '';
+  } else {   // シミュレートはパネルの行に戻す(模擬戦では隠す)
+    document.getElementById('rkviewrow').before(entRow);
+    entRow.classList.add('rksep');
+    entRow.style.display = RK.team ? 'none' : '';
+  }
+  document.getElementById('rkentdet').setAttribute('aria-expanded', RKR.det ? 'true' : 'false');
+  document.getElementById('rkentbox').style.display = (rankView && RKR.det) ? '' : 'none';
   document.querySelectorAll('#rkenter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.enter));
   document.querySelectorAll('#rkmode button').forEach(b => b.setAttribute('aria-pressed', RK_PLAY[b.dataset.v] === RK.play));
   syncFoeSlots();
@@ -1308,7 +1324,6 @@ function syncRocket() {
   const vr = document.getElementById('rkviewrow');
   vr.style.display = RK.play === '1v1' ? '' : 'none';
   vr.querySelectorAll('#rkviewbtns button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RKR.view));
-  document.getElementById('rkfiltrow').style.display = (RK.play === '1v1' && RKR.view !== 'sim') ? '' : 'none';
   document.querySelectorAll('#rkfilt button').forEach(b => b.setAttribute('aria-pressed', !!RKR[b.dataset.f]));
   // あいての条件(シャドウ・ステータス倍率・シールド枚数・硬直)は画面に出さない。
   // 見て何かを変えられる情報ではないので、説明はすべて最下部の「使い方」へ。
@@ -1489,6 +1504,8 @@ document.querySelectorAll('#rkenter button').forEach(b => b.onclick = () => {
   syncRocket();
   run();
 });
+// ランキング枠内の「⚙ 詳細」(敵硬直の開閉)
+document.getElementById('rkentdet').onclick = () => { RKR.det = !RKR.det; syncRocket(); };
 // 1対1の対策(火力ランキング / 高火力＋安定 / シミュレート)
 document.querySelectorAll('#rkviewbtns button').forEach(b => b.onclick = () => {
   RKR.view = b.dataset.v;
@@ -3120,10 +3137,10 @@ function syncFoeSlots() {
 
 // ---- ロケット団戦 1対1: おすすめランキング ----
 // ロケット団戦の目的は「いかに早く倒すか」なので、あいてを決めたらまず
-// 「ノーマルアタックだけで殴ったときにいちばん火力が出るポケモンとわざ」を並べる。
+// 「ノーマルアタックだけで攻撃したときにいちばん火力が出るポケモンとわざ」を並べる。
 // 火力＝そのあいてに対するノーマルアタックのDPS(ダメージ÷秒)。
 // あいてのわざはランダムなので、倒され判定(⚠)は「いちばんキツいわざで来た場合」で見る。
-const RKR = { view: 'power', shadow: true, mega: false, top: 30, cache: null };
+const RKR = { view: 'power', shadow: true, mega: false, top: 30, cache: null, det: false };   // det=枠内「⚙ 詳細」(敵硬直)の開閉
 
 // ---- 「自分のポケモン」の追加(CPと個体値からPLを逆算して★登録リストに入れる) ----
 // 保存先は★登録リストと同じ(gbl_mypoke)なので、追加したものは左右パネルからも呼び出せる
@@ -3263,7 +3280,7 @@ function rkRankFor(foe, respectPicked) {
   // ただし★登録リストの自分の個体は、順位が下でも必ず調べる(必ず一覧に出すため)
   const CHECK = 160;
   rows.filter((r, i) => i < CHECK || r.mine).forEach(r => {
-    // SPアタックは撃たない(ノーマルアタックだけで殴る前提)。
+    // SPアタックは撃たない(ノーマルアタックだけで攻撃する前提)。
     // こちらがSPを撃たないぶん、シールド2枚はまるごとあいてのSPを防ぐのに使える
     const L = { ...r.me, fast: r.fast, charged: [], shields: 2, timing: 'shots', shotPlan: [], shotRest: null };
     // 勝ち負けを分けるのは主に「あいてのノーマルアタックがどれか」なので、そこでまとめる
@@ -3584,9 +3601,9 @@ function rbPicks(mine, foes, myShields, moves) {
 // ---- 模擬戦「1手ずつ」: 決断が要る場面だけ止まって選ぶ ----
 // 実際のバトルと同じ流れを再現する。ノーマルアタックの応酬はまとめて進み、
 // 次の4つのどれかに来たら止まって選択肢を出す(選ぶたびに先へ伸びていく):
-//   sp   … 自分のSPアタックが撃てるようになった → 撃つ(どちらを) / 撃たない / あとN発殴ってから
+//   sp   … 自分のSPアタックが撃てるようになった → 撃つ(どちらを) / 撃たない / あとN発攻撃してから
 //   sh   … あいてのSPアタックが飛んできた → シールドを使う / 使わない
-//   swap … あいての次のポケモンが出てきた(倒した直後など) → すぐ交代 / 硬直ぶん殴ってから交代 / このまま
+//   swap … あいての次のポケモンが出てきた(倒した直後など) → すぐ交代 / 硬直ぶん攻撃してから交代 / このまま
 //   next … 自分が倒された → 次にどれを出すか
 // 答えは RB.ans[キー] に持つ。キーは「対面の番号:種別:連番:待った発数」なので、
 // 前の決断を変えなければ後ろの決断のキーも変わらない(選び直しに強い)。
@@ -3621,10 +3638,10 @@ function rbPoints(turns, ctx, dec) {
     // SPアタックは次の行動ターンに発動するので、すでに倒しきった(倒された)ターンで
     // 「撃つ?」と聞いても撃ちようがない。あいてのHPが0なのにSPを聞かれて見えていた原因
     const over = t.state[0].hp <= 0 || t.state[1].hp <= 0;
-    // 交代すると決めたあとはSPの質問を出さない(殴って下がる途中に撃つ判断は混乱のもと)
+    // 交代すると決めたあとはSPの質問を出さない(攻撃して下がる途中に撃つ判断は混乱のもと)
     if (!armed && !asked && !over && !dec.hold && dec.swapTo == null && cost && t.state[0].en >= cost) { armed = true; normals = 0; }
     if (armed && !over) {
-      // 「あとN発殴ってから」を選んでいれば、そのぶん後ろにずれたところが判断の場面
+      // 「あとN発攻撃してから」を選んでいれば、そのぶん後ろにずれたところが判断の場面
       // (撃つと決めた発は、そのとき決めた待ち発数の位置に判断の場面が残る＝キーが変わらない)
       const dw = spIdx < dec.shots.length ? dec.shots[spIdx].wait : dec.wait;
       const w = typeof dw === 'number' ? dw : 0;
@@ -3687,7 +3704,7 @@ function rbChoices(p, ctx) {
         tip: 'いますぐ交代します(あいてはここから4.5秒動けません／自分も0.5秒動けません)' });
       if (n > 0) opts.push({ a: 'to', to: k, cls: 'fire',
         label: `${SWAPMK} ${shMark(ctx.picks[k].name)} <i class="need">${fm.n}＋${n}</i>`,
-        tip: `あいてが動けないあいだに${fm.n}をあと${n}発打ってから交代します(硬直ぶんを殴ってから下がる)` });
+        tip: `あいてが動けないあいだに${fm.n}をあと${n}発打ってから交代します(硬直ぶんを攻撃してから下がる)` });
     }
     return opts.concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
   }
@@ -3846,7 +3863,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       if (p.kind === 'swap') {
         if (a.a === 'stay') continue;             // 交代しないなら、そのまま先へ
         dec.swapTo = a.to;
-        // すぐ交代=そのターンのうちに ／ それ以外=硬直のあいだ殴りきってから(旧共有リンクの t~ も同じ)
+        // すぐ交代=そのターンのうちに ／ それ以外=硬直のあいだ攻撃しきってから(旧共有リンクの t~ も同じ)
         dec.swapAt = a.a === 'toq' ? 1 : Math.max(1, ctx.foeEntry);
         continue;
       }
@@ -4124,7 +4141,7 @@ function rbRender(body, bt, picks, foes, extra) {
     //           撃つ場合も発動は次の行動ターン。質問ターンの出来事はすべて確定なので全部見せる
     //           (隠すと「＋2で待った2発目」が見えず、打ったかどうか確認できない。実装時に踏んだ)
     //   sh待ち: 質問対象のあいてのSPから先を隠す(それより前のノーマルの応酬は決まっている)
-    //   swap待ち: そのターンまで殴ってから聞く仕様なので、ターンはすべて見せる
+    //   swap待ち: そのターンまで攻撃してから聞く仕様なので、ターンはすべて見せる
     const pend = leg.pending && leg.pending.kind !== 'next' ? leg.pending : null;
     rbTurns(res).forEach(t => {
       if (pend && t.tn > pend.tn) return;
@@ -4578,7 +4595,7 @@ function run() {
   if (mode === 'multi') { runMulti(); return; }
   if (mode === 'counter') { runCounter(); return; }
   if (mode === 'party') { runParty(); return; }
-  // ロケット団戦の1対1は、まず「誰で殴ればいいか」のランキングを出す
+  // ロケット団戦の1対1は、まず「誰で攻撃すればいいか」のランキングを出す
   if (mode === 'rocket' && RK.play === '1v1' && RKR.view !== 'sim') { setProbTab(false); runRkRank(); return; }
   if (mode === 'rocket' && RK.team) { runRkBuild(); return; }   // 模擬戦(3匹の通し)
   const rk = mode === 'rocket';       // ロケット団戦: 相手はNPC、CP制限なし

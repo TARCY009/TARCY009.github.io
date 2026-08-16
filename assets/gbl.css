@@ -805,6 +805,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 /* ロケット団戦 1対1: おすすめランキング */
 .rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml)}
 .rkfilt button .shadowmark{margin-right:3px}
+/* 絞り込みチップはランキングの枠内(火力チェッカーと同じ形)。右端の「⚙ 詳細」で敵硬直を開く */
+.rkfrow{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
+.rkfrow .rkfilt{flex:1;min-width:0}
+.rkfrow .rkfilt button{flex:0 1 auto;padding:6px 14px}
+.rkfrow .mdettab{margin-left:auto}
+.rkentbox{margin:0 0 8px;padding:9px 10px;border:1px dashed var(--line);border-radius:10px}
+.rkentbox .opts{flex:1;min-width:160px}
+.rkentbox .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--ongold)}
 #rkrank{padding:10px 12px}
 #rkranktitle{text-align:center}
 #rkranktitle small{font-size:.62rem;font-weight:400;color:var(--sub);margin-left:7px}
