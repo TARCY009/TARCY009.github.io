@@ -283,9 +283,11 @@ body.has-sticky{padding-top:52px}
 .lgc-r{color:var(--ink)}
 .lgc .lgc-r{display:block;font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:3px}
 .lgc .lgc-r .u{font-size:.78rem;color:var(--sub);font-weight:700;margin-left:1px}
-.lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 14px rgba(77,141,255,.3),inset 0 1px 0 var(--tabin)}
-.lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 14px rgba(245,197,66,.26),inset 0 1px 0 var(--tabin)}
-.lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 14px rgba(176,108,255,.3),inset 0 1px 0 var(--tabin)}
+/* 選択中の枠は少しだけ太く見せる(2026-08-16タダシさん指示)。
+   borderを太らせると中身がずれるので、枠線の外へ同色のリングを重ねて実質2.5pxにする */
+.lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--gl),0 0 14px rgba(77,141,255,.3),inset 0 1px 0 var(--tabin)}
+.lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 0 1.5px var(--ul),0 0 14px rgba(245,197,66,.26),inset 0 1px 0 var(--tabin)}
+.lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 0 1.5px var(--ml),0 0 14px rgba(176,108,255,.3),inset 0 1px 0 var(--tabin)}
 /* メダル色は上の :root / :root.light が持つ。
    大きい順位はベタ塗りではなくメダルのグラデーションで塗る(タグ・フレームと同じ質感にそろえる)。
    「位」は子要素なので自分の色(--sub)のまま残る。
