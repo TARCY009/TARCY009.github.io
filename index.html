@@ -889,7 +889,7 @@ function renderShieldRank(){
     +(skipped?`<p class="note">シールド破壊はメガだけなので、登録した${skipped}匹は出していません。</p>`:'')
     // 強いボスほど1発耐えできるメガが減るので、何匹が条件を満たしたのかを必ず出す
     +`<p class="note">🛡1発耐え＋分割SPアタックを持つメガは <b>${rows.length}匹</b>（強いボスほど少なくなります）</p>`
-    +`<p class="note">ボスがシールドを展開したときにメガシンカポケモンを場に出すと、<b>最初からゲージが50たまった状態</b>になります。分割SPアタック持ちならすぐ撃ってシールドを壊せます</p>`;
+    +`<p class="note expl">ボスがシールドを展開したときにメガシンカポケモンを場に出すと、<b>最初からゲージが50たまった状態</b>になります。分割SPアタック持ちならすぐ撃ってシールドを壊せます</p>`;
   if(!rows.length && !my.length){listEl.innerHTML='<div class="empty">条件(1発耐え+分割SPアタック持ち)を満たすメガシンカが見つかりません</div>';moreBtn.style.display='none';return;}
   const top=Math.max(rows.length?rows[0].dps:1, ...my.map(m=>m.dps));
   // 自分のメガを火力の位置に差し込む
