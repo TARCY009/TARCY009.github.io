@@ -6,8 +6,10 @@
   --win:#3ddc84; --lose:#ff6b81; --gold:#ffd54a;
   --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.05);
   --deep:#0a0f22; --line2:#3b4a86; --onml:#140a26;
+  --mcS:#c396ff; --mcM:#f58fc2;   /* 絞り込みタブの未選択文字色(火力チェッカーと同じ値) */
+  --goldc:#e8c56a;                /* 金系タブの未選択文字色 */
   --rklink:#ff8f8f; --rklinkbg:linear-gradient(180deg,#2a1c2e,#1d1526);
-  --rkkindbg:linear-gradient(180deg,#241c33,#191428); --ongold:#2b2305;
+  --rkkindbg:linear-gradient(180deg,#241c33,#191428);
   --bgimg:#0c1122; --cardsh:none;
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
   --r:14px;
@@ -19,8 +21,10 @@
   --win:#1f9d55; --lose:#d63a52; --gold:#a8760a;
   --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
   --deep:#e8edf7; --line2:#b9c6e4; --onml:#ffffff;
+  --mcS:#7a3cc4; --mcM:#c02c76;
+  --goldc:#a8760a;
   --rklink:#c62b46; --rklinkbg:linear-gradient(180deg,#fff,#ffeef1);
-  --rkkindbg:linear-gradient(180deg,#fff,#fff2f4); --ongold:#ffffff;
+  --rkkindbg:linear-gradient(180deg,#fff,#fff2f4);
   /* 白一色にせず、このツールの色(青・紫・水色)を淡くにじませる */
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(59,110,240,.17), transparent 62%),
@@ -246,9 +250,21 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkrow+.rkrow{margin-top:6px}
 /* 設定のかたまり(あいて / 敵硬直 / 対策)を区切って、続きものに見えないようにする */
 .rkrow.rksep{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
-.rocket .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
+.rocket .lbl,.rkentbox .lbl{font-size:.68rem;color:var(--sub);font-weight:600;flex-shrink:0}
 .rocket .opts{flex:1;min-width:160px}
-.rocket .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--ongold)}
+/* 対策(火力/高火力＋安定/シミュレート)と敵硬直(開幕/撃破後/交代後)は金系の立体タブ。
+   ベタ塗りのフォールバックはやめて、他の行と同じ「立体＋選択中はグラデーションで点灯」にそろえる。
+   敵硬直はランキング枠内の詳細ボックス(.rkentbox)へ移動することがあるのでIDで当てる */
+#rkviewbtns button,#rkenter button{flex:1;padding:9px 4px;font-size:.82rem;font-weight:800;
+  color:var(--goldc);background:var(--tab);border:1px solid var(--line);border-radius:11px;cursor:pointer;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+#rkviewbtns button:hover,#rkenter button:hover{transform:translateY(-1px);
+  box-shadow:0 4px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+#rkviewbtns button[aria-pressed="true"],#rkenter button[aria-pressed="true"]{
+  color:#2b2305;border-color:transparent;transform:translateY(-1px);
+  background:linear-gradient(160deg,#ffe38f 0%,#ffd54a 45%,#c99b1f 100%);
+  box-shadow:0 5px 16px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.6)}
 /* いちばん上のモード切替(1対1 / 模擬戦)はこのツールの主役なので、大きく立体的に見せる */
 .rkmoderow{margin-bottom:2px}
 .rkmode{gap:8px}
@@ -803,16 +819,27 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   .gq{width:21px;height:21px}.gq i{width:16px;height:16px}.ft{grid-template-columns:1fr 30px 1fr}
   .ev{font-size:.6rem;padding:2px 5px}.rwb button{font-size:.72rem;padding:6px 10px}}
 /* ロケット団戦 1対1: おすすめランキング */
-.rkfilt button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml)}
 .rkfilt button .shadowmark{margin-right:3px}
-/* 絞り込みチップはランキングの枠内(火力チェッカーと同じ形)。右端の「⚙ 詳細」で敵硬直を開く */
-.rkfrow{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
-.rkfrow .rkfilt{flex:1;min-width:0}
-.rkfrow .rkfilt button{flex:0 1 auto;padding:6px 14px}
+/* 絞り込みチップはランキングの枠内(火力チェッカーと同じ形)。右端の「⚙ 詳細」で敵硬直を開く。
+   見た目も火力チェッカーの絞り込みタブと同じ(立体に浮かせ、選択中は役割色のグラデーションで点灯。
+   点灯グラデは両テーマ共通なので直書き・未選択の文字色だけテーマ変数--mcS/--mcM) */
+.rkfrow{display:flex;align-items:center;gap:6px;margin:2px 0 10px}
+.rkfrow .rkfilt{flex:1;min-width:0;gap:6px}
+.rkfrow .rkfilt button{flex:0 1 auto;font-size:.86rem;font-weight:800;padding:8px 16px;
+  background:var(--tab);border:1px solid var(--line);border-radius:11px;color:var(--mcS);
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+.rkfrow .rkfilt button:hover{transform:translateY(-1px);box-shadow:0 4px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.rkfrow .rkfilt button[data-f="mega"]{color:var(--mcM)}
+.rkfrow .rkfilt button[aria-pressed="true"]{color:#fff;border-color:transparent;transform:translateY(-1px);
+  background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);
+  box-shadow:0 6px 18px rgba(139,92,246,.45),inset 0 1px 0 rgba(255,255,255,.5)}
+.rkfrow .rkfilt button[data-f="mega"][aria-pressed="true"]{
+  background:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%);
+  box-shadow:0 6px 18px rgba(214,51,132,.45),inset 0 1px 0 rgba(255,255,255,.5)}
 .rkfrow .mdettab{margin-left:auto}
 .rkentbox{margin:0 0 8px;padding:9px 10px;border:1px dashed var(--line);border-radius:10px}
 .rkentbox .opts{flex:1;min-width:160px}
-.rkentbox .opts button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--ongold)}
 #rkrank{padding:10px 12px}
 #rkranktitle{text-align:center}
 #rkranktitle small{font-size:.62rem;font-weight:400;color:var(--sub);margin-left:7px}
