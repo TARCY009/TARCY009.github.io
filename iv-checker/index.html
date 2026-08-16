@@ -42,7 +42,8 @@
   --mgold:#f2c14e; --msilver:#c8d3de; --mbronze:#c98d5f;
   /* TOP10表: 面・見出し・1行おきの敷き・あなたの行 */
   --tbbg:rgba(13,19,42,.55); --tbline:rgba(67,224,255,.16); --think:#9fb2e8;
-  --thbg:linear-gradient(180deg,rgba(67,224,255,.10),rgba(67,224,255,.03));
+  /* 見出し行はこのツールの役割色(青→紫→水色)のグラデーション帯(2026-08-16タダシさん指示) */
+  --thbg:linear-gradient(100deg,#3b6ef0 0%,#7c4fe0 52%,#0aa6c4 100%);
   --zebra:rgba(255,255,255,.022); --mebg:rgba(67,224,255,.12); --meline:rgba(67,224,255,.45);
   --tbsh:0 10px 24px -18px rgba(0,0,0,.9);
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
@@ -68,7 +69,7 @@
   --gold:#b07a00; --silver:#64748f; --bronze:#a5652a;
   --mgold:#e0a800; --msilver:#9aa8b8; --mbronze:#c07f4a;
   --tbbg:rgba(255,255,255,.6); --tbline:#d3e3f2; --think:#4a6a8c;
-  --thbg:linear-gradient(180deg,#eaf4fb,#f6fafd);
+  --thbg:linear-gradient(100deg,#4a7bf5 0%,#8b5cf6 52%,#0fb4d0 100%);
   --zebra:rgba(59,110,240,.035); --mebg:rgba(8,180,201,.13); --meline:rgba(11,143,168,.5);
   --tbsh:0 10px 22px -18px rgba(30,60,120,.5);
   --tcolor:#eef2fc;
@@ -217,8 +218,13 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 /* 「どの個体か」(順位・個体値)と「その数値」の境目に細い縦線を入れる */
 th:nth-child(3),td:nth-child(3){border-left:1px solid var(--line2)}
 table{width:100%;border-collapse:collapse;font-size:.83rem;font-variant-numeric:tabular-nums}
-th{font-size:.64rem;color:var(--think);font-weight:700;letter-spacing:.06em;
-  padding:8px 5px;background:var(--thbg);border-bottom:1px solid var(--tbline);white-space:nowrap}
+/* グラデーションは行(tr)に敷く。thに敷くとセルごとに描き直されて継ぎ目が出る(実際に踏んだ) */
+thead tr{background:var(--thbg)}
+th{font-size:.64rem;color:#fff;font-weight:700;letter-spacing:.06em;text-shadow:0 1px 2px rgba(0,0,0,.35);
+  padding:8px 5px;border-bottom:1px solid var(--tbline);white-space:nowrap;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+/* 見出し行の縦の区切り線は、グラデーションの上でも見えるように白系にする */
+th:nth-child(3){border-left-color:rgba(255,255,255,.3)}
 td{padding:9px 5px;border-bottom:1px solid var(--line2)}
 /* 6列の間隔が均一に見えるようにする作り(2026-08-15にタダシさんの指摘で全面的に見直した)。
    ① 全列を中央寄せにする ② 幅を「その列でいちばん長い文字＋均等な余白」の比率で配る。
