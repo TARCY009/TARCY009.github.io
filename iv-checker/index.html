@@ -415,7 +415,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div>
     <div class="tophead">
       <label class="sec">TOP10</label>
-      <button id="evobtn" class="evb" style="display:none" title="進化する前の姿のまま同じPL・同じ個体値まで強化したときのCPを一覧に足します。そのCPまで強化してから進化させる目安になります">進化前CP</button>
+      <button id="evobtn" class="evb" style="display:none" title="進化する前の姿を同じPL・同じ個体値にしたときのCPを一覧に足します。ゲーム画面ではPLを確認できないため、進化前のいまのCPがこの値を超えていなければ、進化させてもCP制限に収まるという確認に使えます">進化前CP</button>
     </div>
     <div class="capsel" id="evorow" style="display:none;margin:0 0 8px"></div>
     <div class="iv-hint" id="evonote" style="display:none;margin:0 0 8px"></div>
@@ -464,8 +464,11 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <p>50 ／ 51（最高の相棒）。メガシンカのポケモンでは、<b>メガLv4</b> の 52 と、
     メガLv4＋最高の相棒の 53 も選べます。アメXLを使わない場合の上限（40・41）も並べてあります。</p>
   <h4>進化前CP</h4>
-  <p>進化形のポケモンでは、一覧の右上の「進化前CP」で<b>進化する前の姿を同じPL・同じ個体値まで強化したときのCP</b>の列を足せます。
-    進化してもPL・個体値は変わらないので、<b>進化前の姿をこのCPまで強化してから進化させれば、その行の個体になります</b>。
+  <p>進化形のポケモンでは、一覧の右上の「進化前CP」で<b>進化する前の姿を同じPL・同じ個体値にしたときのCP</b>の列を足せます。
+    入手時からPLが高い個体もいますが、ゲーム画面ではPLを確認できません。そのため高順位だと思って進化させたら
+    CP制限を超えていた、ということが起こります。進化してもPL・個体値は変わらないので、
+    <b>進化前のいまのCPがこの値を超えていなければ、進化させてもCP制限に収まります</b>。
+    強化するときも、進化前の姿をこのCPまで強化してから進化させれば、その行の個体になります。
     進化前が2段階あるポケモンは、どの姿のまま強化するかを選べます。</p>
 </div>
 <footer>種族値・CPMデータ: ゲーム内公開データ準拠</footer>
@@ -735,7 +738,7 @@ POKE.forEach(p=>{
 // ⚠ vは外部対戦データ由来の「家系」で、ゲーム内で実際に進化できるかと数か所ずれている
 // (原作にしかない進化や、レイド限定で進化では手に入らないポケモンが混ざる)。
 // ゲーム内公開データの進化定義(evolutionBranch)全件と突き合わせて確定した補正(2026-08-16):
-// EVO_NOT=ゲーム内では進化で作れない子(進化前CPを出すと誤案内になるので外す)
+// EVO_NOT=ゲーム内では進化で作れないポケモン(進化前CPを出すと誤案内になるので外す)
 // EVO_ADD=実際に進化できるのにvに欠けているペア
 const EVO_NOT={marowak_alolan:1,kleavor:1,wyrdeer:1,basculegion_female:1,basculegion_male:1,
   archaludon:1,farigiraf:1,poltchageist:1};
