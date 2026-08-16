@@ -5248,14 +5248,25 @@ function timelineTable(res, tlMode) {
         // SPアタックの枠は「発動したターンの先頭行〜そのターンの最終行(次の番号行の直前)」。
         // それより前の待ちは行ごとの空セルにして罫線を通常どおり区切る
         const isSp = row.ev[i].full !== undefined;
-        const s = isSp ? Math.max(start, turnStart) : start;
+        // ノーマルアタックは番号ターンでしか開始できない。直前に相手のSP解決行(tn='-')があると
+        // 枠がその行から始まって「SPと同じタイミングで打ち始めた」ように見えてしまうので、
+        // 先頭の'-'行は待ちセルに逃がす(例: 2ターンわざがT10に発生→相手SP解決('-')→次の1発の開始はT11から。
+        // 差し込みで'-'行に完了したわざは、開始した番号ターンから枠が始まる=このスキップで正しい位置になる)
+        let s;
+        if (isSp) s = Math.max(start, turnStart);
+        else { s = start; while (s < idx && res.rows[s].tn === '-') s++; }
         for (let k = start; k < s; k++) blocks[i].push({ start: k, end: k, ev: null, idle: true });
         let e = idx;
         if (isSp) while (e + 1 < n && res.rows[e + 1].tn === '-') e++;
         blocks[i].push({ start: s, end: e, evRow: idx, ev: row.ev[i] });
         start = e + 1;
       });
-      if (start < n) blocks[i].push({ start, end: n - 1, ev: null });   // 打ちかけで終了した分
+      if (start < n) {   // 打ちかけで終了した分(こちらも先頭の'-'行は待ちセルへ)
+        let s = start;
+        while (s < n && res.rows[s].tn === '-') s++;
+        for (let k = start; k < s; k++) blocks[i].push({ start: k, end: k, ev: null, idle: true });
+        if (s < n) blocks[i].push({ start: s, end: n - 1, ev: null });
+      }
     }
     const shieldRows = [[], []];   // その側がシールドを使った行
     const disguiseRows = [[], []];   // その側のばけのかわが発動した行
