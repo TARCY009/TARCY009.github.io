@@ -346,7 +346,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 </div>
 
 <div class="card">
-  <label class="sec">個体値(ゲーム内の評価画面の値)</label>
+  <label class="sec">個体値</label>
   <div class="iv" id="iv-a">
     <div class="iv-head"><span class="iv-name">こうげき</span><span class="iv-val">10</span></div>
     <div class="bar"></div>
@@ -376,7 +376,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     <span>並び順</span>
     <div class="seg">
       <button class="srt act" data-s="scp" title="耐久込みの総合的な強さ（SCP）が高い順。対戦向けの基本の並びです">総合<small>SCP</small></button>
-      <button class="srt" data-s="atk" id="srt-atk" title="攻撃の実数値が高い順。わざの撃ち合いで先に当てられる（CMP勝ち）個体をさがす並びで、CP上限のないマスターだけで選べます">攻撃優先<small>マスターのみ</small></button>
+      <button class="srt" data-s="atk" id="srt-atk" title="攻撃の実数値が高い順。SPアタックの同時発動では高い方が先制（同値ならランダム）となるため、攻撃を優先したい場合の並びで、CP上限のないマスターだけで選べます">攻撃優先<small>マスターのみ</small></button>
     </div>
   </div>
   <div class="capsel">
@@ -421,7 +421,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     <div class="iv-hint" id="evonote" style="display:none;margin:0 0 8px"></div>
     <div class="tblwrap">
       <table id="rktbl">
-        <thead><tr id="thd"><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>アメXL</th></tr></thead>
+        <thead><tr id="thd"><th>順位</th><th title="攻撃／防御／HPの個体値の組み合わせです">個体値</th><th title="CP上限いっぱいまで強化したときのポケモンレベル（PL）です。マスターはPL上限タブの値になります">PL</th><th title="そのPLまで強化したときのCPです">CP</th><th title="攻撃・防御・HPから計算する対戦向けの総合的な強さです。総合の並びはこの値が高い順で、同じSCPは同順位になります">SCP</th><th title="PL40から上の強化に必要なアメXLの合計です。通常個体の必要数で、シャドウは1.2倍、ライトは0.9倍になります">アメXL</th></tr></thead>
         <tbody id="top10"></tbody>
       </table>
     </div>
@@ -615,7 +615,7 @@ function render(){
   const evo=(state.evoCol && state.evoFrom!==null)? POKE[IDX[state.evoFrom]] : null;
   document.getElementById('rktbl').classList.toggle('evo', !!evo);
   document.getElementById('thd').innerHTML=
-    '<th>順位</th><th>個体値</th><th>PL</th><th>CP</th>'+(evo?'<th class="evoth">進化前CP</th>':'')+'<th>SCP</th><th>アメXL</th>';
+    '<th>順位</th><th title="攻撃／防御／HPの個体値の組み合わせです">個体値</th><th title="CP上限いっぱいまで強化したときのポケモンレベル（PL）です。マスターはPL上限タブの値になります">PL</th><th title="そのPLまで強化したときのCPです">CP</th>'+(evo?'<th class="evoth">進化前CP</th>':'')+'<th title="攻撃・防御・HPから計算する対戦向けの総合的な強さです。総合の並びはこの値が高い順で、同じSCPは同順位になります">SCP</th><th title="PL40から上の強化に必要なアメXLの合計です。通常個体の必要数で、シャドウは1.2倍、ライトは0.9倍になります">アメXL</th>';
   const evoTd=r=> evo? '<td>'+cp(evo.a+r.ia, evo.f+r.id, evo.h+r.ih, CPMS[(r.lv-1)*2])+'</td>' : '';
 
   if(idx<0){
@@ -660,11 +660,9 @@ function render(){
 
   const notes=[];
   if(me.lv>50) notes.push('PL'+me.lv+'到達には「最高の相棒」ブーストが必要です。');
-  else if(me.lv>40) notes.push('PL'+me.lv+'到達にはアメXLが必要です。');
   if(state.cap===41||state.cap===51) notes.push('アメXL数は相棒ブースト適用前提(実強化レベル=表示PL−1)で計算。');
   if(state.cap===52) notes.push('メガLv4の+2はメガシンカ中のブーストでアメ消費なし(アメXLは実強化レベル=表示PL−2分)。');
   if(state.cap===53) notes.push('メガLv4(+2)+最高の相棒(+1)はブーストでアメ消費なし(アメXLは実強化レベル=表示PL−3分)。');
-  notes.push('アメXLは通常個体の必要数。シャドウは1.2倍、ライトは0.9倍。');
   document.getElementById('lvnote').textContent=notes.join(' ');
 
   // --- スティッキーバー ---
