@@ -275,6 +275,10 @@ body.has-sticky{padding-top:52px}
 .lgc[data-lg="ul"] .lgc-n{color:var(--ul)}
 .lgc[data-lg="ml"] .lgc-n{color:var(--ml)}
 .lgc small{display:block;font-size:.6rem;font-weight:500;margin-top:2px;opacity:.75;color:var(--sub)}
+/* CP1500以下などの注記は説明ありモード(💡)のときだけ出す(2026-08-16タダシさん指示)。
+   .expl{display:none} は詳細度で上の .lgc small{display:block} に負けるので、専用の上書きが要る */
+.lgc small.expl{display:none}
+.explain .lgc small.expl{display:block}
 /* 文字色は詳細度の低い .lgc-r に置く(下のメダル色 .lgc-r.r1 等が勝てるように) */
 .lgc-r{color:var(--ink)}
 .lgc .lgc-r{display:block;font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:3px}
@@ -361,9 +365,9 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div id="lgtitle" class="lgtitle" style="display:none"></div>
   <label class="sec">リーグ</label>
   <div class="tabs">
-    <button class="lgc act" data-lg="gl" title="CP1500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">スーパー</span><span class="lgc-r" id="lgr-gl">—</span><small>CP1500以下</small></button>
-    <button class="lgc" data-lg="ul" title="CP2500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small>CP2500以下</small></button>
-    <button class="lgc" data-lg="ml" title="CP制限なしでのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small>制限なし</small></button>
+    <button class="lgc act" data-lg="gl" title="CP1500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">スーパー</span><span class="lgc-r" id="lgr-gl">—</span><small class="expl">CP1500以下</small></button>
+    <button class="lgc" data-lg="ul" title="CP2500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small class="expl">CP2500以下</small></button>
+    <button class="lgc" data-lg="ml" title="CP制限なしでのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small class="expl">制限なし</small></button>
   </div>
   <div class="iv-hint expl" style="margin-top:8px">3リーグの順位を同時表示。タップで詳細を切替。</div>
   <div class="capsel">
