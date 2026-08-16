@@ -43,7 +43,7 @@
   /* TOP10表: 面・見出し・1行おきの敷き・あなたの行 */
   --tbbg:rgba(13,19,42,.55); --tbline:rgba(67,224,255,.16); --think:#9fb2e8;
   --thbg:linear-gradient(180deg,rgba(67,224,255,.10),rgba(67,224,255,.03));
-  --zebra:rgba(255,255,255,.022); --mebg:rgba(67,224,255,.12);
+  --zebra:rgba(255,255,255,.022); --mebg:rgba(67,224,255,.12); --meline:rgba(67,224,255,.45);
   --tbsh:0 10px 24px -18px rgba(0,0,0,.9);
   --tcolor:#0c1122;   /* スマホのアドレスバーの色(theme.js が読む) */
   --r:14px;
@@ -69,7 +69,7 @@
   --mgold:#e0a800; --msilver:#9aa8b8; --mbronze:#c07f4a;
   --tbbg:rgba(255,255,255,.6); --tbline:#d3e3f2; --think:#4a6a8c;
   --thbg:linear-gradient(180deg,#eaf4fb,#f6fafd);
-  --zebra:rgba(59,110,240,.035); --mebg:rgba(8,180,201,.13);
+  --zebra:rgba(59,110,240,.035); --mebg:rgba(8,180,201,.13); --meline:rgba(11,143,168,.5);
   --tbsh:0 10px 22px -18px rgba(30,60,120,.5);
   --tcolor:#eef2fc;
 }
@@ -232,8 +232,8 @@ tbody tr td:nth-child(2){font-weight:700;letter-spacing:.01em}
 tr.me td{background:var(--mebg);color:var(--cy);font-weight:700}
 tr.me td:first-child{box-shadow:inset 3px 0 0 var(--cy)}
 tr.me .rkc{color:var(--cy)}
-/* 「⋮」の行は区切りなので敷きも線も持たせない */
-tr.gap td{background:none;border-bottom:none;padding:2px 0;color:var(--sub);text-align:center;line-height:1}
+/* あなたの個体の別枠(11位以下のときだけ出す)。枠線を水色にして「自分のもの」を示す */
+#mewrap .tblwrap{border-color:var(--meline)}
 /* スマホは6列を収めるために文字と余白を詰める(横スクロールさせない) */
 @media (max-width:560px){
   table{font-size:.78rem}
@@ -428,7 +428,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   </div>
   <div style="margin-top:18px">
     <div class="tophead">
-      <label class="sec">TOP10 と あなたの個体</label>
+      <label class="sec">TOP10</label>
       <button id="evobtn" class="evb" style="display:none" title="進化する前の姿のまま同じPL・同じ個体値まで強化したときのCPを一覧に足します。そのCPまで強化してから進化させる目安になります">進化前CP</button>
     </div>
     <div class="capsel" id="evorow" style="display:none;margin:0 0 8px"></div>
@@ -438,6 +438,13 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
         <thead><tr id="thd"><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>アメXL</th></tr></thead>
         <tbody id="top10"></tbody>
       </table>
+    </div>
+    <!-- 11位以下のあなたの個体はTOP10の枠に混ぜず、別の枠で出す -->
+    <div id="mewrap" style="display:none;margin-top:12px">
+      <label class="sec">あなたの個体</label>
+      <div class="tblwrap">
+        <table id="metbl"><tbody id="mebody"></tbody></table>
+      </div>
     </div>
   </div>
   <div class="note" id="lvnote"></div>
@@ -624,7 +631,6 @@ function render(){
   document.getElementById('thd').innerHTML=
     '<th>順位</th><th>個体値</th><th>PL</th><th>CP</th>'+(evo?'<th class="evoth">進化前CP</th>':'')+'<th>SCP</th><th>アメXL</th>';
   const evoTd=r=> evo? '<td>'+cp(evo.a+r.ia, evo.f+r.id, evo.h+r.ih, CPMS[(r.lv-1)*2])+'</td>' : '';
-  const cols=evo?7:6;
 
   if(idx<0){
     rkEl.textContent='—'; rkEl.parentElement.className='rank-num';
@@ -634,6 +640,7 @@ function render(){
                                : 'この個体はリーグCP制限を満たせません';
     ['r-cp','r-lv','r-scp'].forEach(i=>document.getElementById(i).textContent='—');
     document.getElementById('top10').innerHTML='';
+    document.getElementById('mewrap').style.display='none';
     document.getElementById('lvnote').textContent='';
     sticky.style.display='none';
     document.body.classList.remove('has-sticky');
@@ -660,12 +667,18 @@ function render(){
     const xl=xlFor(r.lv);
     html+='<tr'+cls+'><td>'+rkHtml(r.rank)+'</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td>'+evoTd(r)+'<td>'+scp(r.sp)+'</td><td>'+(xl>0?xl:'—')+'</td></tr>';
   });
-  if(idx>=10){
-    html+='<tr class="gap"><td colspan="'+cols+'">⋮</td></tr>';
-    const mxl=xlFor(me.lv);
-    html+='<tr class="me"><td>'+rkHtml(rank)+'</td><td>'+me.ia+'/'+me.id+'/'+me.ih+'</td><td>'+me.lv+'</td><td>'+me.cp+'</td>'+evoTd(me)+'<td>'+scp(me.sp)+'</td><td>'+(mxl>0?mxl:'—')+'</td></tr>';
-  }
   document.getElementById('top10').innerHTML=html;
+  // 11位以下のあなたの個体はTOP10の枠に混ぜず、下の別枠に出す(枠はTOP10で切る)
+  const mw=document.getElementById('mewrap');
+  if(idx>=10){
+    const mxl=xlFor(me.lv);
+    document.getElementById('metbl').classList.toggle('evo', !!evo);
+    document.getElementById('mebody').innerHTML=
+      '<tr class="me"><td>'+rkHtml(rank)+'</td><td>'+me.ia+'/'+me.id+'/'+me.ih+'</td><td>'+me.lv+'</td><td>'+me.cp+'</td>'+evoTd(me)+'<td>'+scp(me.sp)+'</td><td>'+(mxl>0?mxl:'—')+'</td></tr>';
+    mw.style.display='block';
+  } else {
+    mw.style.display='none';
+  }
 
   const notes=[];
   if(me.lv>50) notes.push('PL'+me.lv+'到達には「最高の相棒」ブーストが必要です。');
