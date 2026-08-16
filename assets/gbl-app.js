@@ -61,7 +61,10 @@ document.getElementById('app').innerHTML = `
     <div class="opts" id="rkviewbtns">
       <button data-v="power" aria-pressed="true" title="ノーマルアタックだけで攻撃したとき、火力が高い順に並べます">火力</button><button data-v="safe" aria-pressed="false" title="あいてのノーマルアタックで先に倒されない中から、火力が高い順に並べます">高火力＋安定</button><button data-v="sim" aria-pressed="false" title="1匹どうしの対面を1ターンずつ詳しく計算します">シミュレート</button>
     </div>
+    <button class="mdettab" id="rksimdet" aria-expanded="false" style="display:none" title="こまかい設定（敵硬直・能力変化わざ）を開きます"><i class="gear">⚙</i> 詳細</button>
   </div>
+  <!-- シミュレート表示の「⚙ 詳細」の中身(敵硬直の行と能力変化わざをここへ移す) -->
+  <div class="rkentbox" id="rksimbox" style="display:none"></div>
 </div>
 
 
@@ -242,7 +245,7 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="rkteam" style="display:none">
   <div class="rksuggbar" id="rksuggbar"><span class="lbl">おすすめ</span>
     <button data-m="power" aria-pressed="false" title="じぶんの枠の入力欄をタップすると、同じ順番のあいてをいちばん速く倒せるポケモン トップ5を出します">高火力</button><button data-m="safe" aria-pressed="false" title="あいてのどのわざでも先に倒されないポケモンだけに絞って、火力トップ5を出します">高火力＋安定</button>
-    <button class="rkdetailtab" id="rkdetailtab" aria-expanded="false" title="こまかい設定（確率で上下するわざ・じぶんの個体値とPL・あいてのわざランダム）を開きます">⚙ 詳細</button></div>
+    <button class="rkdetailtab" id="rkdetailtab" aria-expanded="false" title="こまかい設定（確率で上下するわざ・じぶんの個体値とPL・あいてのわざランダム）を開きます"><i class="gear">⚙</i> 詳細/button></div>
   <div class="rkdetail" id="rkdetail" style="display:none">
     <div class="rkdbody"></div>
     <div class="rkdprob"></div>
@@ -269,7 +272,7 @@ document.getElementById('app').innerHTML = `
     <div class="opts rkfilt" id="rkfilt">
       <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（シャドウポケモンは攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     </div>
-    <button class="mdettab" id="rkentdet" aria-expanded="false" title="対面の始まり方（敵硬直）の設定を開きます">⚙ 詳細</button>
+    <button class="mdettab" id="rkentdet" aria-expanded="false" title="対面の始まり方（敵硬直）の設定を開きます"><i class="gear">⚙</i> 詳細/button>
   </div>
   <div class="rkentbox" id="rkentbox" style="display:none"></div>
   <div class="rkmy" id="rkmy">
@@ -281,7 +284,7 @@ document.getElementById('app').innerHTML = `
 
 <!-- 一覧系3モードの「⚙ 詳細」。ブラフ・能力変化わざはここへ畳んで、画面の幅と文字を減らす -->
 <div class="mdet" id="mdet" style="display:none">
-  <button class="mdettab" id="mdettab" aria-expanded="false" title="こまかい設定（ブラフ・能力変化わざ）を開きます">⚙ 詳細</button>
+  <button class="mdettab" id="mdettab" aria-expanded="false" title="こまかい設定（ブラフ・能力変化わざ）を開きます"><i class="gear">⚙</i> 詳細/button>
   <div class="mdetbody" id="mdetbody" style="display:none"></div>
 </div>
 
@@ -1280,6 +1283,10 @@ function applyMode() {
     if (rkTeam) {
       const pr = document.querySelector('#rkdetail .rkdprob');
       if (pr && goptEl.parentElement !== pr) pr.appendChild(goptEl);
+    } else if (mode === 'rocket' && RK.play === '1v1' && RKR.view === 'sim') {
+      // ロケット団1対1のシミュレートは「⚙ 詳細」の中(敵硬直の下)へ
+      const box = document.getElementById('rksimbox');
+      if (goptEl.parentElement !== box) box.appendChild(goptEl);
     } else {
       const anchor = document.getElementById('result');
       if (goptEl.nextElementSibling !== anchor) anchor.parentElement.insertBefore(goptEl, anchor);
@@ -1304,18 +1311,24 @@ function syncRocket() {
   // ランキング表示中はパネルではなく、枠内チップ行の右端「⚙ 詳細」の中へ行ごと移す
   if (RK.team) RK.enter = 'first';
   const rankView = RK.play === '1v1' && RKR.view !== 'sim';
+  const simView = RK.play === '1v1' && RKR.view === 'sim';
   const entRow = document.getElementById('rkenterrow');
-  if (rankView) {
-    document.getElementById('rkentbox').appendChild(entRow);
+  if (rankView || simView) {   // どちらの表示でも「⚙ 詳細」の中(先頭)へ行ごと移す
+    const box = document.getElementById(rankView ? 'rkentbox' : 'rksimbox');
+    if (entRow.parentElement !== box) box.insertBefore(entRow, box.firstChild);
     entRow.classList.remove('rksep');
     entRow.style.display = '';
-  } else {   // シミュレートはパネルの行に戻す(模擬戦では隠す)
+  } else {   // 模擬戦はパネルの行に戻して隠す(開幕固定)
     document.getElementById('rkviewrow').before(entRow);
     entRow.classList.add('rksep');
-    entRow.style.display = RK.team ? 'none' : '';
+    entRow.style.display = 'none';
   }
   document.getElementById('rkentdet').setAttribute('aria-expanded', RKR.det ? 'true' : 'false');
   document.getElementById('rkentbox').style.display = (rankView && RKR.det) ? '' : 'none';
+  const simDet = document.getElementById('rksimdet');
+  simDet.style.display = simView ? '' : 'none';
+  simDet.setAttribute('aria-expanded', RKR.det ? 'true' : 'false');
+  document.getElementById('rksimbox').style.display = (simView && RKR.det) ? '' : 'none';
   document.querySelectorAll('#rkenter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.enter));
   document.querySelectorAll('#rkmode button').forEach(b => b.setAttribute('aria-pressed', RK_PLAY[b.dataset.v] === RK.play));
   syncFoeSlots();
@@ -1504,8 +1517,9 @@ document.querySelectorAll('#rkenter button').forEach(b => b.onclick = () => {
   syncRocket();
   run();
 });
-// ランキング枠内の「⚙ 詳細」(敵硬直の開閉)
+// ランキング枠内・シミュレートの「⚙ 詳細」(開閉の状態は共通)
 document.getElementById('rkentdet').onclick = () => { RKR.det = !RKR.det; syncRocket(); };
+document.getElementById('rksimdet').onclick = () => { RKR.det = !RKR.det; syncRocket(); };
 // 1対1の対策(火力ランキング / 高火力＋安定 / シミュレート)
 document.querySelectorAll('#rkviewbtns button').forEach(b => b.onclick = () => {
   RKR.view = b.dataset.v;
