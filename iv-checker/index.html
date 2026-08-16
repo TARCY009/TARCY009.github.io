@@ -182,7 +182,8 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 #capseg:not(.mega)>button[data-cap="51"]{border-radius:5px 10px 10px 5px}
 .src{padding:6px 2px;font-size:.62rem;font-weight:700;cursor:pointer;text-align:center;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.25;
-  word-break:keep-all}  /* 「レイド/ふか/リワード」を語の途中で切らず、/ の位置でだけ折り返す */
+  word-break:keep-all}  /* 語の途中で切らない。折り返してよい位置はHTML側の<wbr>で明示する
+                           (iOSのSafariはkeep-allだと「/」の後ろでも折り返さず、はみ出す。実際に踏んだ) */
 .src small{display:block;font-size:.5rem;font-weight:500;opacity:.8;white-space:nowrap}
 .fl{padding:5px 2px;font-size:.78rem;font-weight:800;cursor:pointer;text-align:center;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15}
@@ -390,8 +391,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div class="seg">
     <button class="src act" data-floor="0" title="野生で捕まえる前提（個体値0からありうる）">野生<small>最低 0</small></button>
     <button class="src" data-floor="t" title="交換で入手する前提。フレンドの仲良し度で最低個体値が1〜5に変わります">交換<small>最低 1〜5</small></button>
-    <button class="src" data-floor="6" title="シャドウレイドで捕まえる前提（最低個体値6）">シャドウレイド<small>最低 6</small></button>
-    <button class="src" data-floor="10" title="レイド・ふか・リワードで入手する前提（最低個体値10）">レイド/ふか/リワード<small>最低 10</small></button>
+    <button class="src" data-floor="6" title="シャドウレイドで捕まえる前提（最低個体値6）">シャドウ<wbr>レイド<small>最低 6</small></button>
+    <button class="src" data-floor="10" title="レイド・ふか・リワードで入手する前提（最低個体値10）">レイド/ふか/<wbr>リワード<small>最低 10</small></button>
   </div>
   <div class="capsel" id="tradeRow" style="display:none">
     <span>フレンド</span>
