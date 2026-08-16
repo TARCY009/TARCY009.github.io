@@ -41,6 +41,7 @@
   --shink:#c39bff; --shline:#6b4fa0;
   --hrbg:#1d4d33; --hrink:#8be3a8; --hnbg:#3a4553; --hnink:#b7c4d0; --hwbg:#5a2620; --hwink:#ffb0a3;
   --cwbg:#54221d; --cwink:#ff9d8f; --cnbg:#333d48; --cnink:#aab8c5; --crbg:#1c3a55; --crink:#8ec6f2;
+  --ctkbg:#1c4032; --ctkink:#8fe0b4;
   --tcolor:#111a2e;   /* スマホのアドレスバーの色(theme.js が読む) */
   --radius:12px;
   font-size:16px;
@@ -66,6 +67,7 @@
   --shink:#7a3cc4; --shline:#c4b0ea;
   --hrbg:#d6f0e0; --hrink:#1f6b40; --hnbg:#e3e8ef; --hnink:#4a5765; --hwbg:#fbdcd6; --hwink:#a03826;
   --cwbg:#fbdcd6; --cwink:#a03826; --cnbg:#e3e8ef; --cnink:#4a5765; --crbg:#d9eafa; --crink:#1a5c8a;
+  --ctkbg:#d9f3e6; --ctkink:#187a4c;
   --tcolor:#eef2f7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -149,6 +151,7 @@ details.settings summary{padding:9px 15px;cursor:pointer;color:var(--sub);font-s
 .hchip.hw{background:var(--cwbg);color:var(--cwink)}
 .hchip.hn{background:var(--cnbg);color:var(--cnink)}
 .hchip.hr{background:var(--crbg);color:var(--crink)}
+.hchip.ht{background:var(--ctkbg);color:var(--ctkink)}
 /* 文字を減らすために画面から外した補足は、消さずに隠しておく
    （のちに「説明ありモード」を作るときは、ルート要素に explain を付けるだけで一斉に出せる） */
 .expl{display:none}
@@ -183,7 +186,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <div class="gtabs modes">
   <div class="gseg">
     <button id="mPower" class="t-gold" type="button" aria-pressed="true" title="与えるダメージの効率だけで並べます">火力</button>
-    <button id="mTotal" class="t-gold" type="button" aria-pressed="false" title="火力に被弾のしにくさ（防衛側のわざへの耐性）を加味して並べます">総合力</button>
+    <button id="mTotal" class="t-gold" type="button" aria-pressed="false" title="火力に被弾のしにくさを加味して並べます。被弾のしにくさは、防衛側のわざへの相性と耐久指数（防御×HP・シャドウは防御5/6）で計算します">総合力</button>
   </div>
 </div>
 
@@ -201,7 +204,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
     <div><label>1ゲージSPアタック補正</label><input id="c1" type="number" step="0.05" value="0.65"></div>
     <div><label>2ゲージSPアタック補正</label><input id="c2" type="number" step="0.05" value="0.95"></div>
     <div><label>3ゲージSPアタック補正</label><input id="c3" type="number" step="0.05" value="1.00"></div>
-    <div><label>耐性補正の強さ(指数)</label><input id="rex" type="number" step="0.05" value="0.25"></div>
+    <div><label>被弾補正の強さ(指数)</label><input id="rex" type="number" step="0.05" value="0.25"></div>
     <div><label>ノーマルアタックの被弾比重</label><input id="wf" type="number" step="0.05" value="0.30" min="0" max="1"></div>
     <div><label>防衛側PL</label><input id="dpl" type="number" step="10" value="40" min="40" max="50"></div>
     <div><label>表示件数</label><input id="topn" type="number" step="10" value="30" min="10" max="100"></div>
@@ -219,10 +222,13 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
   <h4>火力／総合力</h4>
   <ul>
     <li><b>火力</b> ＝ 対面DPS × ゲージ補正（1本ゲージのSPアタックは大幅に減点）</li>
-    <li><b>総合力</b> ＝ 火力に<b>被弾のしにくさ</b>を加味したもの。名前の横のチップに、防衛側のわざタイプの内訳
-      （<span style="color:var(--cwink)">弱点</span>／<span style="color:var(--cnink)">等倍</span>／<span style="color:var(--crink)">耐性</span>）が出ます</li>
+    <li><b>総合力</b> ＝ 火力に<b>被弾のしにくさ</b>を加味したもの。被弾のしにくさは
+      <b>防衛側のわざタイプへの相性 × 耐久指数（防御×HP）</b>で計算し、シャドウは防御5/6で見ます。
+      名前の横のチップに、防衛側のわざタイプの内訳
+      （<span style="color:var(--cwink)">弱点</span>／<span style="color:var(--cnink)">等倍</span>／<span style="color:var(--crink)">耐性</span>）と、
+      <span style="color:var(--ctkink)">🛡◯発</span> ＝ 防衛側の<b>いちばん痛いわざを何発耐えられるか</b>（実ダメージ計算）が出ます</li>
   </ul>
-  <p>ポイントは<b>1位を100とした相対値</b>です。耐性の計算では、ノーマルアタックのタイプは低い比重で扱います
+  <p>ポイントは<b>1位を100とした相対値</b>です。相性の計算では、ノーマルアタックのタイプは低い比重で扱います
     （SPアタックほど痛くないため）。</p>
   <h4>絞り込み</h4>
   <ul>
@@ -240,6 +246,9 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <script src="/assets/type-icons.js"></script>
 <script>
 const CFG={CPM50:0.84029999,CPM_TBL:{40:0.7903,50:0.84029999},IV:15,HP_MULT:2};
+// 耐久の基準値＝全収録ポケモンの(防御+15)×(HP+15)の平均(2026-08-17時点で31522)。
+// 総合力は1位を100とした相対値なので、この値は補正の中心を1倍前後にする見た目の調整でしかない
+const BULK_REF=31500;
 let DATA=null, currentDefender=null;
 
 if(window.GYM_DATA){
@@ -322,6 +331,7 @@ function render(def){
   const wFast=Math.min(1,Math.max(0,+val('wf')||0.3));
   const cpmD=CFG.CPM_TBL[dpl]||CFG.CPM_TBL[40];
   const defStat=(def.def+CFG.IV)*cpmD;
+  const defAtk=(def.atk+CFG.IV)*cpmD; // 防衛側の攻撃実数値(「何発耐えるか」の被ダメ計算に使う)
   const defHP=Math.floor((def.sta+CFG.IV)*cpmD)*CFG.HP_MULT;
   // 防衛側の技タイプ(被弾評価用): スペシャル技=比重1.0 / 通常技のみのタイプ=比重wFast
   const typeW={};
@@ -356,7 +366,20 @@ function render(def){
         if(e>=1.6){hitW+=w;cW++;} else if(e<1){hitR+=w;cR++;} else {hitN+=w;cN++;}
       }
       const avgInc=tw?inc/tw:1;
-      const resist=Math.pow(1/avgInc,rex);
+      // 被弾のしにくさ＝タイプ相性(avgInc)×ステータス耐久(耐久指数。シャドウは防御5/6込み)。
+      // どちらも同じ指数(rex)で穏やかに効かせる
+      const bulk=(p.def+CFG.IV)*(p.sta+CFG.IV)*(isShadow?5/6:1)/BULK_REF;
+      const resist=Math.pow(bulk/avgInc,rex);
+      // 防衛側のいちばん痛いわざ(実ダメージ)を何発耐えるか(総合力モードのチップ用)
+      const myDef=(p.def+CFG.IV)*CFG.CPM50*(isShadow?5/6:1);
+      const myHP=Math.floor((p.sta+CFG.IV)*CFG.CPM50);
+      let worst=null;
+      for(const m of [...def.fast,...def.charged]){
+        const mv=DATA.moves[m]; if(!mv||!mv.power) continue;
+        const d=dmg(defAtk,myDef,mv.power,stab(mv.type,def.types),eff(mv.type,p.types),1.0);
+        if(!worst||d>worst.d) worst={d,jp:mv.jp};
+      }
+      const tank=worst?{n:Math.max(0,Math.ceil(myHP/worst.d)-1),jp:worst.jp,d:worst.d,hp:myHP}:null;
       const local=[];
       for(const f of p.fast){
         const fm=DATA.moves[f]; if(!fm) continue;
@@ -373,7 +396,7 @@ function render(def){
           const sTotal=sPower*resist;
           const score=(MODE==='power')?sPower:sTotal;
           if(!isFinite(score)||score<=0) continue; // わるあがき等の異常値を除外
-          local.push({p,isShadow,f,cmid,bars:cm.bars,dps,score,hitW,hitN,hitR,cW,cN,cR});
+          local.push({p,isShadow,f,cmid,bars:cm.bars,dps,score,hitW,hitN,hitR,cW,cN,cR,tank});
         }
       }
       local.sort((a,b)=>b.score-a.score);
@@ -403,6 +426,7 @@ function render(def){
         +(r.cW>0?`<span class="hchip hw">弱点${r.cW}</span>`:'')
         +(r.cN>0?`<span class="hchip hn">等倍${r.cN}</span>`:'')
         +(r.cR>0?`<span class="hchip hr">耐性${r.cR}</span>`:'')
+        +(r.tank?`<span class="hchip ${r.tank.n===0?'hw':'ht'}" title="防衛側のいちばん痛いわざ（${r.tank.jp}・${r.tank.d}ダメージ）を、HP${r.tank.hp}で${r.tank.n}発耐えます${r.tank.n===0?'（1発で倒されます）':''}">🛡${r.tank.n}発</span>`:'')
         +`</span>`;
     }
     const el=document.createElement('div'); el.className='card';
