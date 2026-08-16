@@ -158,33 +158,36 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .tab small{display:block;font-size:.65rem;font-weight:500;margin-top:2px;opacity:.8}
 .card.compact{padding:10px 12px;margin-bottom:12px}
 .card.compact label.sec{margin-bottom:5px;font-size:.66rem}
-.card.compact .tabs{gap:5px}
-.card.compact .src{padding:6px 3px;font-size:.7rem}
-.card.compact .src small{font-size:.56rem;margin-top:1px}
 .card.compact .capsel{margin-top:6px;gap:5px}
-.card.compact .fl{padding:5px 3px;font-size:.7rem}
 .card.compact .capsel span{font-size:.62rem}
-.src{padding:11px 4px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-.src small{display:block;font-size:.65rem;font-weight:500;margin-top:2px;opacity:.8}
-.fl{flex:1;padding:8px 4px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;text-align:center}
-/* 設定の行のボタンは「数字が主・注記は小さく下に」の2段。中身の行数が違っても段差にならないよう、
-   行は align-items:stretch で高さをそろえ、ボタンの中は上下中央に置く
-   (旧: align-items:center ＋ 高さは中身なり。メガのときPL上限が5段の階段になっていた) */
-.srt,.cap{flex:1;min-width:0;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.2}
-.srt{font-size:.8rem}
-.cap{font-size:.9rem;font-weight:800}
-.srt small,.cap small{font-size:.57rem;font-weight:600;opacity:.78;letter-spacing:0;line-height:1.15}
+/* 設定の行は「1行のセグメント」にまとめる(2026-08-16タダシさん指示: 行を減らしてスッキリ)。
+   排他の選択肢はすき間2pxでくっつけて1つのまとまりに見せる(全ツール共通ルールの.gsegと同じ形)。
+   詰めてもぎゅうぎゅうに見えないよう、ボタンは「主の文字＋小さな注記」の2段の薄いチップにする */
+.seg{display:flex;gap:2px;flex:1;align-items:stretch;min-width:0}
+.seg>button{flex:1 1 0;min-width:0;border-radius:5px}
+.seg>button:first-child{border-radius:10px 5px 5px 10px}
+.seg>button:last-child{border-radius:5px 10px 10px 5px}
+/* PL上限のセグメントは、メガ以外のとき52/53が隠れて51が右端になる */
+#capseg:not(.mega)>button[data-cap="51"]{border-radius:5px 10px 10px 5px}
+.src{padding:6px 2px;font-size:.62rem;font-weight:700;cursor:pointer;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.25;
+  word-break:keep-all}  /* 「レイド/ふか/リワード」を語の途中で切らず、/ の位置でだけ折り返す */
+.src small{display:block;font-size:.5rem;font-weight:500;opacity:.8;white-space:nowrap}
+.fl{padding:5px 2px;font-size:.78rem;font-weight:800;cursor:pointer;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15}
+.fl small{display:block;font-size:.5rem;font-weight:500;opacity:.8;white-space:nowrap}
+/* ボタンの中は「主の文字＋注記」の2段。注記の行数が違っても段差にならないよう、
+   行は align-items:stretch で高さをそろえ、ボタンの中は上下中央に置く */
+.srt,.cap{min-width:0;padding:5px 2px;font-weight:700;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15}
+.srt{font-size:.74rem}
+.cap{font-size:.85rem;font-weight:800}
+.srt small,.cap small{font-size:.5rem;font-weight:600;opacity:.78;letter-spacing:0;line-height:1.15;
+  white-space:normal;text-align:center}
 .srt:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
-.capsel{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:stretch}
+.capsel{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:stretch}
 .capsel span{font-size:.72rem;color:var(--sub);font-weight:700;letter-spacing:.1em;
   display:flex;align-items:center;flex:none}
-/* アメXLなしの上限(40・41)は本筋ではないので、点線の枠に入れて次の行へ下ろす */
-.capgroup{width:100%;border:1px dashed var(--line);border-radius:9px;padding:5px 6px;margin-top:8px;
-  display:flex;align-items:stretch;gap:8px}
-.capgroup-t{font-size:.6rem;color:var(--sub);letter-spacing:.02em;display:flex;align-items:center;flex:none}
-.capgroup-b{display:flex;gap:6px;flex:1;align-items:stretch}
-.capgroup-b .cap{flex:1}
 
 /* 結果 */
 #result{display:none}
@@ -363,28 +366,27 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div class="iv-hint expl" style="margin-top:8px">3リーグの順位を同時表示。タップで詳細を切替。</div>
   <div class="capsel">
     <span>並び順</span>
-    <button class="srt act" data-s="scp" title="耐久込みの総合的な強さ（SCP）が高い順。対戦向けの基本の並びです">総合<small>SCP</small></button>
-    <button class="srt" data-s="atk" id="srt-atk" title="攻撃の実数値が高い順。わざの撃ち合いで先に当てられる（CMP勝ち）個体をさがす並びで、CP上限のないマスターだけで選べます">攻撃優先<small>マスターのみ</small></button>
+    <div class="seg">
+      <button class="srt act" data-s="scp" title="耐久込みの総合的な強さ（SCP）が高い順。対戦向けの基本の並びです">総合<small>SCP</small></button>
+      <button class="srt" data-s="atk" id="srt-atk" title="攻撃の実数値が高い順。わざの撃ち合いで先に当てられる（CMP勝ち）個体をさがす並びで、CP上限のないマスターだけで選べます">攻撃優先<small>マスターのみ</small></button>
+    </div>
   </div>
   <div class="capsel">
     <span>PL上限</span>
-    <button class="cap act" data-cap="50" title="通常の強化上限（PL50）まで上げる前提で順位を出します">50</button>
-    <button class="cap" data-cap="51" title="相棒ブーストでPL51まで上げる前提で順位を出します">51<small>相棒</small></button>
-    <button class="cap smaxonly" data-cap="52" style="display:none" title="メガLv4(スーパーマックスレベル)でPL上限+2">52<small>メガLv4</small></button>
-    <button class="cap smaxonly" data-cap="53" style="display:none" title="メガLv4+最高の相棒でPL上限53">53<small>メガLv4＋相棒</small></button>
-  </div>
-  <div class="capgroup">
-    <div class="capgroup-t">アメXLなしの上限</div>
-    <div class="capgroup-b">
-      <button class="cap" data-cap="40" title="アメXLを使わない上限（PL40）で止める前提の順位です">40</button>
-      <button class="cap" data-cap="41" title="アメXLなし＋相棒ブーストの上限（PL41）で止める前提の順位です">41<small>相棒</small></button>
+    <div class="seg" id="capseg">
+      <button class="cap" data-cap="40" title="アメXLを使わない上限（PL40）で止める前提の順位です">40<small>XLなし</small></button>
+      <button class="cap" data-cap="41" title="アメXLなし＋相棒ブーストの上限（PL41）で止める前提の順位です">41<small>XLなし＋相棒</small></button>
+      <button class="cap act" data-cap="50" title="通常の強化上限（PL50）まで上げる前提で順位を出します">50<small>通常</small></button>
+      <button class="cap" data-cap="51" title="相棒ブーストでPL51まで上げる前提で順位を出します">51<small>相棒</small></button>
+      <button class="cap smaxonly" data-cap="52" style="display:none" title="メガLv4(スーパーマックスレベル)でPL上限+2">52<small>メガLv4</small></button>
+      <button class="cap smaxonly" data-cap="53" style="display:none" title="メガLv4+最高の相棒でPL上限53">53<small>メガLv4＋相棒</small></button>
     </div>
   </div>
 </div>
 
 <div class="card compact">
   <label class="sec">入手方法(最低個体値)</label>
-  <div class="tabs" style="grid-template-columns:1fr 1fr">
+  <div class="seg">
     <button class="src act" data-floor="0" title="野生で捕まえる前提（個体値0からありうる）">野生<small>最低 0</small></button>
     <button class="src" data-floor="t" title="交換で入手する前提。フレンドの仲良し度で最低個体値が1〜5に変わります">交換<small>最低 1〜5</small></button>
     <button class="src" data-floor="6" title="シャドウレイドで捕まえる前提（最低個体値6）">シャドウレイド<small>最低 6</small></button>
@@ -392,10 +394,12 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   </div>
   <div class="capsel" id="tradeRow" style="display:none">
     <span>フレンド</span>
-    <button class="fl" data-f="1">1 友達</button>
-    <button class="fl" data-f="2">2 仲良し</button>
-    <button class="fl" data-f="3">3 親友</button>
-    <button class="fl act" data-f="5">5 大親友</button>
+    <div class="seg">
+      <button class="fl" data-f="1">1<small>友達</small></button>
+      <button class="fl" data-f="2">2<small>仲良し</small></button>
+      <button class="fl" data-f="3">3<small>親友</small></button>
+      <button class="fl act" data-f="5">5<small>大親友</small></button>
+    </div>
   </div>
 </div>
 
@@ -589,7 +593,10 @@ function render(){
     const idx=belowFloor? -1 : findRank(rows, state.iv);
     detail[lg]={rows, idx};
     const el=document.getElementById('lgr-'+lg);
-    if(idx>=0){
+    // 「攻撃優先」はマスター専用の並びなので、スーパー・ハイパーには順位を出さない
+    // (出すと「攻撃優先での順位」に見えてしまう。2026-08-16タダシさん指示)
+    const na=(state.sort==='atk' && lg!=='ml');
+    if(idx>=0 && !na){
       const r=rows[idx].rank;
       el.innerHTML=r+'<span class="u">位</span>';
       el.className='lgc-r '+medalCls(r);
@@ -807,6 +814,8 @@ sugg.addEventListener('click',e=>{
   // メガ・ゲンシのみスーパーマックスレベル(52/53)のタブを表示。非メガ選択時は50に戻す
   const mega=state.p.i.includes('_mega')||state.p.i.includes('_primal');
   document.querySelectorAll('.smaxonly').forEach(x=>x.style.display=mega?'':'none');
+  // セグメント右端の角丸を、見えている最後のボタン(51 or 53)に付けるための印
+  document.getElementById('capseg').classList.toggle('mega', mega);
   if(!mega&&(state.cap===52||state.cap===53)){
     state.cap=50;
     document.querySelectorAll('.cap').forEach(x=>x.classList.toggle('act',+x.dataset.cap===50));
