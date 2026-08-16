@@ -14,7 +14,8 @@
   実装間近のポケモンが入らず範囲が狭い。
 
 同期のルール（既存の表示名・並びを壊さないための安全設計。build_gym.py と同じ考え方）:
-  1) speciesId が一致する既存エントリは **種族値と図鑑番号だけ** 対戦データの値で更新する
+  1) speciesId が一致する既存エントリは **種族値・図鑑番号・タイプ(t)だけ** 対戦データの値で更新する
+     （t は 2026-08-16 にタイプアイコン表示のため追加）
   2) **表示名（n/e）・進化先（v）・伝説(l)・幻(m)は既存のものに触らない**
      このツールだけ「リザードン(メガY)」「バケッチャ(M)」のように短く手直しした名前を使っており、
      機械生成に置き換えると29匹の表示が変わってしまうため（実測）
@@ -58,7 +59,9 @@ TAG_JA = {'mega': 'メガ', 'primal': 'ゲンシ', 'alolan': 'アローラ',
           'galarian': 'ガラル', 'hisuian': 'ヒスイ', 'paldean': 'パルデア'}
 FORM_RE = re.compile(r'^(.*?)_(mega(?:_[xy])?|primal|alolan|galarian|hisuian|paldean)$')
 # 出力するキーの並び（既存ファイルと同じにして無駄な差分を出さない）
-ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 'l', 'v', 'm']
+# t=タイプ(対戦データのtyそのまま・大文字英語)。2026-08-16にタイプアイコン表示のため追加。
+# 種族値と同じく毎回同期する(タイプ変更の告知は無いが、元データに追従しておく)
+ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm']
 
 
 def ja_name(sid, name):
@@ -107,6 +110,7 @@ def main():
     added, updated, dup = [], [], []
     for sid, p in pvp.items():
         stat = (p['a'], p['df'], p['h'], p['dex'])
+        ty = [x for x in (p.get('ty') or []) if x and x != 'NONE']
         if sid in idx:
             e = arr[idx[sid]]
             before = (e['a'], e['f'], e['h'], e['d'])
@@ -114,6 +118,8 @@ def main():
                 e['a'], e['f'], e['h'], e['d'] = stat
                 sigs.add(row(e['n'], e['d'], e['a'], e['f'], e['h']))
                 updated.append((e['n'], before, stat))
+            if ty and e.get('t') != ty:
+                e['t'] = ty
             continue
         name = ja_name(sid, p['n'])
         if row(name, p['dex'], p['a'], p['df'], p['h']) in sigs:
@@ -123,6 +129,8 @@ def main():
         tags = g.get('tags') or []
         ent = {'i': sid, 'n': name, 'e': g.get('speciesName') or p['n'],
                'd': p['dex'], 'a': p['a'], 'f': p['df'], 'h': p['h']}
+        if ty:
+            ent['t'] = ty
         if 'legendary' in tags or 'ultrabeast' in tags:
             ent['l'] = 1
         # 進化先は、このツールが持っているものだけ（取り込み元に綴り違いの項目が混じることがある）
@@ -151,6 +159,8 @@ def main():
     if missing:
         raise SystemExit('取りこぼしがあります（同じ内容の行も見つかりません）: ' + '、'.join(missing))
 
+    # キーの並びをORDERへそろえる(あとから足したtが末尾に散らばらないように)
+    arr = [{k: e[k] for k in ORDER if k in e} for e in arr]
     txt = json.dumps(arr, ensure_ascii=False, separators=(',', ':'))
     out = page[:m.start(1)] + txt + page[m.end(1):]
     changed = out != page
