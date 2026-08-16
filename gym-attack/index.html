@@ -186,7 +186,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <div class="gtabs modes">
   <div class="gseg">
     <button id="mPower" class="t-gold" type="button" aria-pressed="true" title="与えるダメージの効率だけで並べます">火力</button>
-    <button id="mTotal" class="t-gold" type="button" aria-pressed="false" title="火力に被弾のしにくさを加味して並べます。被弾のしにくさは、防衛側のわざへの相性と耐久指数（防御×HP・シャドウは防御5/6）で計算します">総合力</button>
+    <button id="mTotal" class="t-gold" type="button" aria-pressed="false" title="火力に被弾のしにくさを加味して並べます。被弾のしにくさは、防衛側のわざへの相性と「いちばん痛いわざを何発耐えるか」で計算します（シャドウは防御5/6）">総合力</button>
   </div>
 </div>
 
@@ -223,7 +223,8 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
   <ul>
     <li><b>火力</b> ＝ 対面DPS × ゲージ補正（1本ゲージのSPアタックは大幅に減点）</li>
     <li><b>総合力</b> ＝ 火力に<b>被弾のしにくさ</b>を加味したもの。被弾のしにくさは
-      <b>防衛側のわざタイプへの相性 × 耐久指数（防御×HP）</b>で計算し、シャドウは防御5/6で見ます。
+      <b>防衛側のわざタイプへの相性 × いちばん痛いわざを何発耐えるか</b>で計算します（シャドウは防御5/6）。
+      1発で倒れるポケモンは大きく下がります。
       名前の横のチップに、防衛側のわざタイプの内訳
       （<span style="color:var(--cwink)">弱点</span>／<span style="color:var(--cnink)">等倍</span>／<span style="color:var(--crink)">耐性</span>）と、
       <span style="color:var(--ctkink)">🛡◯発</span> ＝ 防衛側の<b>いちばん痛いわざを何発耐えられるか</b>（実ダメージ計算）が出ます</li>
@@ -246,9 +247,6 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <script src="/assets/type-icons.js"></script>
 <script>
 const CFG={CPM50:0.84029999,CPM_TBL:{40:0.7903,50:0.84029999},IV:15,HP_MULT:2};
-// 耐久の基準値＝全収録ポケモンの(防御+15)×(HP+15)の平均(2026-08-17時点で31522)。
-// 総合力は1位を100とした相対値なので、この値は補正の中心を1倍前後にする見た目の調整でしかない
-const BULK_REF=31500;
 let DATA=null, currentDefender=null;
 
 if(window.GYM_DATA){
@@ -366,11 +364,8 @@ function render(def){
         if(e>=1.6){hitW+=w;cW++;} else if(e<1){hitR+=w;cR++;} else {hitN+=w;cN++;}
       }
       const avgInc=tw?inc/tw:1;
-      // 被弾のしにくさ＝タイプ相性(avgInc)×ステータス耐久(耐久指数。シャドウは防御5/6込み)。
-      // どちらも同じ指数(rex)で穏やかに効かせる
-      const bulk=(p.def+CFG.IV)*(p.sta+CFG.IV)*(isShadow?5/6:1)/BULK_REF;
-      const resist=Math.pow(bulk/avgInc,rex);
-      // 防衛側のいちばん痛いわざ(実ダメージ)を何発耐えるか(総合力モードのチップ用)
+      // 防衛側のいちばん痛いわざ(実ダメージ)を何発耐えるか(チップ表示と被弾補正の両方に使う)。
+      // シャドウの防御5/6はmyDefに入る
       const myDef=(p.def+CFG.IV)*CFG.CPM50*(isShadow?5/6:1);
       const myHP=Math.floor((p.sta+CFG.IV)*CFG.CPM50);
       let worst=null;
@@ -380,6 +375,12 @@ function render(def){
         if(!worst||d>worst.d) worst={d,jp:mv.jp};
       }
       const tank=worst?{n:Math.max(0,Math.ceil(myHP/worst.d)-1),jp:worst.jp,d:worst.d,hp:myHP}:null;
+      // 被弾のしにくさ＝タイプ相性(avgInc)^rex × 耐え数の飽和カーブ r/(r+2)。
+      // r=HP÷最大被ダメ(小数のまま)。1発で倒れる紙耐久を大きく割り引き、
+      // 十分耐えるポケモン同士では火力の差が順位を決める。
+      // 耐久指数の比率を掛ける案は、超高HPなだけのポケモン(ムゲンダイナ等)が浮上するので不採用
+      const rHit=worst?myHP/worst.d:9;
+      const resist=Math.pow(1/avgInc,rex)*(rHit/(rHit+2));
       const local=[];
       for(const f of p.fast){
         const fm=DATA.moves[f]; if(!fm) continue;
