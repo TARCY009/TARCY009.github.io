@@ -1034,6 +1034,7 @@ ${PAGE_ROCKET ? '' : `
   「こちらのわざ構成とゲージから撃たれそうなわざ」を<b>予測</b>して判断します。
   軽いわざでのブラフには本物の対戦相手と同じように引っ掛かります。
   またAIは<b>まだ場に出ていないこちらのポケモンを知りません</b>（実戦と同じで、残りの数は分かっても中身は分かりません）。
+  そのかわり、<b>採用率とパーティの相性から「残りは何がいそうか」を予測</b>して、迷ったときの判断材料にします。
   シールドには<b>チームの文脈</b>も見ます: あとで戻ってくるこちらのポケモンに勝てるAIの控えが
   1匹しかいないときは、その1匹を温存するために<b>いまの対面をシールドを使ってでも確実に突破</b>しにきます
   （<b>使わなくても勝てる対面では使いません</b>。あくまで「使えば取れる対面で、こちらの動きに合わせて使う」動きです）。
@@ -4748,6 +4749,31 @@ function gbMoveByName(name) {
 }
 // 確定で自分の能力が下がるわざ(溜め打ちの対象と同じ判定)
 const gbSelfDebuff = mv => !!(mv && mv.bf && mv.bt !== 'opponent' && (mv.bc == null || mv.bc >= 1) && (mv.bf[0] < 0 || mv.bf[1] < 0));
+// ---- ユーザーの「まだ出ていないポケモン」の裏読み(2026-08-18タダシさん指示) ----
+// **知識ではなく予測**。実際の控えは絶対に見ず、環境リストと「見えている情報」だけで組み立てる
+// (見てしまうと恒久ルール「AIは未登場のポケモンを知らない」に違反する)。材料は3つ:
+//  ①**採用率**(環境リストの順位。上位ほど組まれやすい)
+//  ②**相性の補完**(見えているポケモンに刺さるタイプを受けられるか＝一緒に組まれやすい)
+//  ③**並びの型**(ABB/ABA。見えている裏のポケモンと役割が似たものが残っていそう
+//    → CLAUDE.md「GBLのパーティ構成の考え方」)
+// 断定はせず**確率の重み**として持ち、使いどころは**優先度をいちばん低く**する(タダシさん指示)。
+const GB_PRED_TOP = 40;   // 予測に使う環境上位の数
+const GB_PRED_N = 5;      // 予測として残す候補の数
+const gbMetaPool = () => cup ? (cup.list || []) : ((window.META_LISTS || {})[String(cap)] || []);
+// そのポケモンに「刺さるタイプ」「受けられるタイプ」(タイプ相性表から。1匹1回だけ計算)
+const GBTP = new Map();
+function gbTypeProf(key) {
+  const ck = key;
+  if (!GBTP.has(ck)) {
+    const ty = D.pokemon[key].ty, weak = new Set(), res = new Set();
+    for (const t of D.types) {
+      const e = PvpEngine.effectiveness(D, t, ty);
+      if (e > 1.05) weak.add(t); else if (e < 0.95) res.add(t);
+    }
+    GBTP.set(ck, { weak, res, ty });
+  }
+  return GBTP.get(ck);
+}
 // 場面から作るコイントス。読み合いにならない場面(両者が同時に倒れたときの出し直し)で使う。
 // **同じ場面なら必ず同じ結果**になるので、決断を選び直して計算し直しても結果がぶれない
 // (毎回ランダムにすると、別の場面を選び直すたびにここの結果まで変わって混乱する)
@@ -5112,6 +5138,73 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     return null;
   };
+  // ---- ユーザーの控えの裏読み(予測)。実際の控えは見ない ----
+  // 見えているポケモンの組み合わせごとに1回だけ作って使い回す
+  const predCache = {};
+  const aiPredict = () => {
+    const ck = [...seen[0]].sort().join(',');
+    if (ck in predCache) return predCache[ck];
+    const shownIdx = [...seen[0]];
+    const shownKeys = shownIdx.map(i => picks[i].m.key);
+    const shownSet = new Set(shownKeys);
+    const profs = shownKeys.map(k => gbTypeProf(k));
+    // 見えている「裏」のポケモン(初手以外)。ABB/ABAの読みに使う
+    const back = shownIdx.filter(i => i !== 0)[0];
+    const backProf = back != null ? gbTypeProf(picks[back].m.key) : null;
+    const rows = [], usedK = new Set();
+    gbMetaPool().slice(0, GB_PRED_TOP).forEach((m, idx) => {
+      if (shownSet.has(m.k)) return;
+      // 環境リストは通常とシャドウが別の行なので、予測では**同じポケモンとしてまとめる**
+      // (分けると同じ名前が2つ並び、確率も割れてしまう)。順位が上のほうを代表にする
+      if (usedK.has(m.k)) return;
+      usedK.add(m.k);
+      const q = gbTypeProf(m.k);
+      let sc = (GB_PRED_TOP - idx) / GB_PRED_TOP;   // ①採用率(順位が上ほど高い)
+      let comp = 0, n = 0;                           // ②相性の補完
+      for (const r of profs) for (const t of r.weak) {
+        n++;
+        if (q.res.has(t)) comp += 1;                 // 見えている子の弱点を受けられる＝組まれやすい
+        else if (q.weak.has(t)) comp -= 0.6;         // 同じ弱点が重なる＝組まれにくい
+      }
+      if (n) sc += 0.9 * (comp / n);
+      if (backProf) {                                // ③ABB: 裏の役割が似ていると、残りも似た役割
+        const same = [...q.res].filter(t => backProf.res.has(t)).length;
+        const tot = new Set([...q.res, ...backProf.res]).size || 1;
+        sc += 0.35 * (same / tot);
+      }
+      rows.push({ k: m.k, s: !!m.s, f: m.f, c1: m.c1, c2: m.c2, sc: Math.max(0.01, sc) });
+    });
+    rows.sort((a, b) => b.sc - a.sc);
+    const top = rows.slice(0, GB_PRED_N);
+    // 確率にする。素の点数の比だとほぼ横並び(19〜24%)になって読みが効かないので、
+    // 差を強調してから正規化する(それでも断定はせず、あくまで重み)
+    top.forEach(r => { r.w = Math.exp(r.sc * 3); });
+    const sum = top.reduce((t, r) => t + r.w, 0) || 1;
+    top.forEach(r => { r.p = r.w / sum; });
+    predCache[ck] = top;
+    return top;
+  };
+  // 予測した相手に対する強さ(シミュではなく軽い式。優先度の低いタイブレークなので精度より速さ)
+  const predCache2 = {};
+  const aiPredScore = k => {
+    const ck = k + '|' + [...seen[0]].sort().join(',');
+    if (ck in predCache2) return predCache2[ck];
+    const list = aiPredict();
+    const P = ros[1][k];
+    const me = { ...PvpEngine.buildStats(D, P.base), buffs: [0, 0] };
+    let s = 0;
+    for (const c of list) {
+      const foe = { ...PvpEngine.buildStats(D, ptRoughBase(c.k, !!c.s)), buffs: [0, 0] };
+      const mp = movePool(c.k);
+      const mine = ptBestDpt([P.pol.fast], P.pol.charged || [], me, foe);
+      const theirs = ptBestDpt(c.f ? [c.f] : mp.fasts,
+        [c.c1, c.c2].filter(Boolean).length ? [c.c1, c.c2].filter(Boolean) : mp.chargeds, foe, me);
+      if (!mine || !theirs) continue;
+      s += c.p * Math.min(2.5, (me.hp / theirs) / (foe.hp / mine));
+    }
+    predCache2[ck] = s;
+    return s;
+  };
   // 倒されたあと「次に誰を出すか」(2026-08-18タダシさん指示・基本理念「効率よく行動する」)。
   // 順番は次のとおり:
   //  ①**起点にできる候補**をさがす＝いまのユーザーのポケモンを**SPアタックを1発も撃たずに**倒せて、
@@ -5124,7 +5217,9 @@ function gbPlay(picks, foes, ans, stepwise) {
   //    (2026-08-18タダシさん指示)
   //  ④チャージ効率が同じくらい(15%以内)なら **被ダメージが少ないほう**を出す
   //    (相手のノーマルアタックとSPアタックの両方で見る)
-  //  ⑤起点にできる候補が無ければ、従来どおり「その相手にいちばん強い1匹」を出す
+  //  ⑤ここまで全部並んだら、**ユーザーの控えの裏読み**(採用率・相性の補完・並びの型からの予測)で
+  //    決める。断定できない読みなので**優先度はいちばん低く**する(2026-08-18タダシさん指示)
+  //  ⑥起点にできる候補が無ければ、従来どおり「その相手にいちばん強い1匹」を出す
   const aiNextPick = rest => {
     if (!rest || !rest.length) return null;
     if (rest.length === 1) return rest[0];
@@ -5169,11 +5264,14 @@ function gbPlay(picks, foes, ans, stepwise) {
         || band(b) - band(a)                     // ③チャージ効率が高いほう(横並びの幅つき)
         || a.take - b.take                       // ④被ダメージが少ないほう
         || b.gain - a.gain                       // それでも並ぶなら効率が高いほう
+        || aiPredScore(b.k) - aiPredScore(a.k)   // ⑤ここまで並んだら「裏読み」で決める(優先度は最低)
         || a.margin - b.margin);                 // 最後は強いほうを後に取っておく
       return farmers[0].k;
     }
     // ④起点にできないなら、その相手にいちばん強い1匹で受ける
-    const best = rows.slice().sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0) || b.margin - a.margin)[0];
+    // 起点にできる候補が無いときも、勝敗と勝ち幅が並んだら裏読みで決める(優先度は最低)
+    const best = rows.slice().sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0)
+      || b.margin - a.margin || aiPredScore(b.k) - aiPredScore(a.k))[0];
     return best ? best.k : null;
   };
   const shvCache = {};
