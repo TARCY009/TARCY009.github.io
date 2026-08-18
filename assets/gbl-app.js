@@ -4607,6 +4607,14 @@ const GB_LOCK_MIN = 40;
 const GB_FARM_HURT = 0.40;
 // 起点づくりの「チャージ効率が同じくらい」とみなす幅(15%以内なら横並びとして被ダメージで決める)
 const GB_FARM_TIE = 0.15;
+// 「勝ち幅が同じくらい」とみなす幅(1000点満点で50点以内)
+const GB_MARGIN_TIE = 50;
+// 起点にする1匹を選ぶときの点数の重み(大きいほど優先)。
+// **裏読み(GB_W_PRED)だけ意図的に小さい**＝上の基準が拮抗したときにしか結論を動かさない
+const GB_W_SHOWN = 1000;   // ②まだ見せていない3匹目は温存する
+const GB_W_GAIN = 300;     // ③チャージ効率(いちばん高い候補を1.0とした比)
+const GB_W_TAKE = 8;       // ④被ダメージ(残HP比の点。ふつう5〜25点ぶんの差になる)
+const GB_W_PRED = 25;      // ⑤ユーザーの控えの裏読み(ふつう0〜10点ぶんの差)
 
 // ---- じぶんのわざ(GBL模擬戦用。ロケット団のRBM・パーティ診断のPTとは別に持つ) ----
 const GBM = [null, null, null];
@@ -5217,8 +5225,10 @@ function gbPlay(picks, foes, ans, stepwise) {
   //    (2026-08-18タダシさん指示)
   //  ④チャージ効率が同じくらい(15%以内)なら **被ダメージが少ないほう**を出す
   //    (相手のノーマルアタックとSPアタックの両方で見る)
-  //  ⑤ここまで全部並んだら、**ユーザーの控えの裏読み**(採用率・相性の補完・並びの型からの予測)で
-  //    決める。断定できない読みなので**優先度はいちばん低く**する(2026-08-18タダシさん指示)
+  //  ⑤**ユーザーの控えの裏読み**(採用率・相性の補完・並びの型からの予測)。断定できない読みなので
+  //    **重みをいちばん小さく**する(2026-08-18タダシさん指示)＝上の基準が拮抗したときだけ効く
+  //  ②〜⑤は**順番に比べるのではなく点数を足して比べる**。順番待ちだと②でほぼ決着してしまい、
+  //  ⑤に順番が回ってこない(実測: 候補が並ぶ30場面すべてが②〜④で決着し、⑤の出番は0回だった)
   //  ⑥起点にできる候補が無ければ、従来どおり「その相手にいちばん強い1匹」を出す
   const aiNextPick = rest => {
     if (!rest || !rest.length) return null;
@@ -5257,21 +5267,26 @@ function gbPlay(picks, foes, ans, stepwise) {
     const farmers = rows.filter(r => r.farm && r.safe);
     if (farmers.length) {
       // ③チャージ効率は「同じくらい(15%以内)」なら横並びとして④被ダメージで決める
+      // **順番に比べるのではなく点数で決める**(2026-08-18)。
+      // 順番待ちだと、上の基準(とくに「3匹目の温存」)でほぼ決着してしまい、
+      // 優先度の低い⑤裏読みに**一生順番が回ってこない**(実測で256編成中0回だった)。
+      // 点数なら、上の基準が拮抗したときにだけ裏読みが結論を動かせる
       const top = Math.max(...farmers.map(r => r.gain));
-      const band = r => (top > 0 && r.gain >= top * (1 - GB_FARM_TIE)) ? 1 : 0;
-      farmers.sort((a, b) =>
-        (b.shown ? 1 : 0) - (a.shown ? 1 : 0)   // ②見せていない3匹目は温存する
-        || band(b) - band(a)                     // ③チャージ効率が高いほう(横並びの幅つき)
-        || a.take - b.take                       // ④被ダメージが少ないほう
-        || b.gain - a.gain                       // それでも並ぶなら効率が高いほう
-        || aiPredScore(b.k) - aiPredScore(a.k)   // ⑤ここまで並んだら「裏読み」で決める(優先度は最低)
-        || a.margin - b.margin);                 // 最後は強いほうを後に取っておく
+      const score = r =>
+        (r.shown ? GB_W_SHOWN : 0)                                  // ②見せていない3匹目の温存(最重視)
+        + (top > 0 ? r.gain / top : 0) * GB_W_GAIN                  // ③チャージ効率
+        - r.take * GB_W_TAKE                                        // ④被ダメージ
+        + aiPredScore(r.k) * GB_W_PRED;                             // ⑤裏読み(重みは小さく)
+      farmers.sort((a, b) => score(b) - score(a) || a.margin - b.margin);
       return farmers[0].k;
     }
     // ④起点にできないなら、その相手にいちばん強い1匹で受ける
     // 起点にできる候補が無いときも、勝敗と勝ち幅が並んだら裏読みで決める(優先度は最低)
+    const marginTie = (x, y) => Math.abs(x.margin - y.margin) <= GB_MARGIN_TIE;
     const best = rows.slice().sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0)
-      || b.margin - a.margin || aiPredScore(b.k) - aiPredScore(a.k))[0];
+      || (marginTie(a, b) ? 0 : b.margin - a.margin)   // 勝ち幅が同じくらいなら裏読みで決める
+      || aiPredScore(b.k) - aiPredScore(a.k)
+      || b.margin - a.margin)[0];
     return best ? best.k : null;
   };
   const shvCache = {};
