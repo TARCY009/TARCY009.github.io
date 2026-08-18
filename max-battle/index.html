@@ -838,8 +838,8 @@ footer a{color:var(--spec)}
     if(!b) return '<div class="catline"><span class="spng">SP判定: 技データなし</span></div>';
     const pct = `<b class="spv">${b.per.toFixed(2)}%</b>`;
     const verdict = b.ok
-      ? `<span class="spok">SP打ってOK: ${b.m.jp}${pct}</span>`
-      : `<span class="nohalf">SP封印推奨(0.5秒技連打)${pct}</span>`;
+      ? `<span class="spok" title="数字は0.5秒あたりのマックスメーターのチャージ量です。1%を超えるSPアタックは、撃った方がメーターを速く溜められます">SP打ってOK: ${b.m.jp}${pct}</span>`
+      : `<span class="nohalf" title="どのSPアタックも0.5秒あたりのチャージ量が1%未満なので、ノーマルアタック連打の方がメーターが速く溜まります（数字はいちばん高いSPの参考値）">SP封印推奨(0.5秒技連打)${pct}</span>`;
     return `<div class="catline">${verdict}</div>`;
   }
 
@@ -963,13 +963,13 @@ footer a{color:var(--spec)}
       let fastInfo = '';
       if(r.fast){ // ダイマックス勢: 選出したノーマルアタック(=マックスわざのタイプ)
         const halfTag = r.fast.q
-          ? ' <span class="halfchip">0.5秒</span>'
-          : ' <span class="nohalf">0.5秒技なし</span>';
+          ? ' <span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒</span>'
+          : ' <span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>';
         fastInfo = `<span>ノーマルアタック: <b>${r.fast.jp}</b>${r.fast.e ? ' <span class="legacy">特別/レガシー</span>' : ''}${halfTag}</span>`;
       }else if(r.rec){ // キョダイ・特別枠: 推奨ノーマルアタック(0.5秒技を最優先)
         const halfTag = r.rec.q
-          ? ' <span class="halfchip">0.5秒</span>'
-          : ' <span class="nohalf">0.5秒技なし</span>';
+          ? ' <span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒</span>'
+          : ' <span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>';
         fastInfo = `<span>ノーマルアタック: <b>${r.rec.jp}</b>${r.rec.e ? ' <span class="legacy">特別/レガシー</span>' : ''}${halfTag}</span>`;
       }
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank <= 3 ? ' no' + r.rank : ''}">
@@ -983,7 +983,7 @@ footer a{color:var(--spec)}
             <div class="moves">${atkSpText(r.p, r._own && r._own.atkR)}</div>
             ${spLine(r.p, r._own && r._own.atkR)}
           </div>
-          <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
+          <div class="pts" title="ダイマックスフェイズの与ダメージを、1位を100として換算したポイントです"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
         </div>
         <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
         <div class="detail">
@@ -999,8 +999,8 @@ footer a{color:var(--spec)}
   function renderTank(){
     paint(r => {
       const halfChip = r.half
-        ? `<span class="halfchip">0.5秒技 ${r.half.jp}${r.half.e ? '(特別/レガシー)' : ''}</span>`
-        : `<span class="nohalf">0.5秒技なし</span>${r.bf ? ` <span class="fastalt">最速わざ ${r.bf.jp}(${(r.bf.d/1000).toFixed(1).replace(/\.0$/,'')}秒)</span>` : ''}`;
+        ? `<span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒技 ${r.half.jp}${r.half.e ? '(特別/レガシー)' : ''}</span>`
+        : `<span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>${r.bf ? ` <span class="fastalt">最速わざ ${r.bf.jp}(${(r.bf.d/1000).toFixed(1).replace(/\.0$/,'')}秒)</span>` : ''}`;
       const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank <= 3 && !r._all ? ' no' + r.rank : ''}">
         <div class="prow">
@@ -1012,12 +1012,12 @@ footer a{color:var(--spec)}
             <div class="catline">${halfChip} ${wallChip}</div>
             ${spLine(r.p, r._own && r._own.atkR)}
           </div>
-          <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
+          <div class="pts" title="耐久指数にボスのわざへのタイプ相性を掛けた受け性能を、1位を100として換算したポイントです"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
         </div>
         <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
         <div class="detail">
           ${r._own ? `<span>あなたの個体 <b>PL${r._own.L}・CP${r._own.cp}${r._own.exact ? '' : '?'}</b></span>` : ''}
-          <span>耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
+          <span title="HP種族値×防御種族値です。ボスの攻撃をどれだけ受け止められるかの目安です">耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
           <span>ボスの技: <b>弱点${r.weak}${r.weak2 ? `(二重弱点${r.weak2})` : ''}・等倍${r.eq}・耐性${r.res}${r.res2 ? `(二重耐性${r.res2})` : ''}</b></span>
         </div>
       </div>`;
@@ -1040,12 +1040,12 @@ footer a{color:var(--spec)}
             <div class="catline">${defChip(r.mult)} ${wallChip}</div>
             ${spLine(r.p, r._own && r._own.atkR)}
           </div>
-          <div class="pts"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
+          <div class="pts" title="選んだボスのわざへの受け性能（耐久指数÷タイプ相性の倍率）を、1位を100として換算したポイントです"><b>${r.pts >= 100 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
         </div>
         <div class="meter"><i style="width:${Math.max(2, r.pts)}%"></i></div>
         <div class="detail">
           ${r._own ? `<span>あなたの個体 <b>PL${r._own.L}・CP${r._own.cp}${r._own.exact ? '' : '?'}</b></span>` : ''}
-          <span>耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
+          <span title="HP種族値×防御種族値です。ボスの攻撃をどれだけ受け止められるかの目安です">耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(盾込み)' : ''}</span>
           ${halfInfo}
         </div>
       </div>`;

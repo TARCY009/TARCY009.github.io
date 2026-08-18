@@ -247,10 +247,10 @@ footer a{color:var(--accent2)}
         <div class="top">
           <div class="rank ${rankClass(rk)}">${rk}位</div>
           <div class="namebox">
-            <div class="pname">${e.n} ${chips} ${e.dw ? '<span class="dwflag">二重弱点</span>' : ''}</div>
-            <div class="moves">${moves}　CP${e.cp}</div>
+            <div class="pname">${e.n} ${chips} ${e.dw ? '<span class="dwflag" title="ダメージを4倍で受けてしまう二重弱点のタイプを持っています">二重弱点</span>' : ''}</div>
+            <div class="moves" title="防衛でのおすすめのわざ構成です（威力・発生の速さ・かくとう相性で選出。2本目は1本目に近い強さのときだけ併記します）。CPはPL50・個体値15のときの値です">${moves}　CP${e.cp}</div>
           </div>
-          <div class="pts"><b>${tot.toFixed(1)}</b><small>ポイント</small></div>
+          <div class="pts" title="耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントです。内訳は下のバーと数字のとおりです"><b>${tot.toFixed(1)}</b><small>ポイント</small></div>
         </div>
         <div class="stack">
           <i style="width:${w(e.pb)}%;background:var(--c-bulk)"></i>

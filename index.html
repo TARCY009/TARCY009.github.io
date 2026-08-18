@@ -522,7 +522,14 @@ function attachSugg(inputEl, listEl, onPick, filterFn, rowFn){
 function typeIcons(p, size){ return typePairHTML(p.ty.map(t=>D.typeJa[t]), size); }
 // 耐久指数(防御種族値×HP種族値)が16000未満は極低耐久として注意表示
 // シャドウは防御5/6の補正込みで判定(素16000以上でもシャドウで16000未満になる場合がある)
-const lowBulk=(p,shadow)=>(p.df*(shadow?5/6:1)*p.h<16000)?'<span class="lowbulk">⚠️極低耐久</span>':'';
+const lowBulk=(p,shadow)=>(p.df*(shadow?5/6:1)*p.h<16000)?'<span class="lowbulk" title="倒されやすい目安です（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定します）">⚠️極低耐久</span>':'';
+// 長押し説明(💡)の文言。ランキング行の描画で使い回す
+const T_DPS='1秒あたりの与ダメージです。ノーマルアタック100回ぶんのサイクルで計算し、ボスへのタイプ相性も反映しています';
+const T_RANK='火力が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
+const T_RANKME='登録した自分のポケモンを、この一覧に当てはめたときの順位です';
+const T_MOVES='PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だったわざの組み合わせです';
+const T_MOVES_SH='ゲージ2分割・3分割のSPアタックの中で、いちばん火力が出る組み合わせです';
+const T_PL50='一覧は全ポケモンをPL50・個体値15にそろえて比べています';
 const cp100=(p,l)=>{const c=D.cpm[String(l)];return Math.max(10,Math.floor((p.a+15)*Math.sqrt(p.df+15)*Math.sqrt(p.h+15)*c*c/10));};
 // レイドボスの「捕獲時のすがた」: 合体後・王のフォルム・メガ/ゲンシは元のすがたで捕獲される
 function catchForm(k){
@@ -905,21 +912,21 @@ function renderShieldRank(){
       const hold=r.hold
         ? `🛡被弾最大${r.maxHit}／HP${r.hp} で1発耐え`
         : `<span class="ng">🛡被弾最大${r.maxHit}／HP${r.hp} で1発アウト</span>${r.need?` → <b class="bignum">PL${r.need.lv}</b>で耐える（火力${r.need.dps.toFixed(2)}）`:` → PL${plMaxOf(r.e)}でも耐えられません`}`;
-      return `<div class="rank-row mine"><div class="rk">${r.hold?r.rank+'位<br>相当':'PL<br>不足'}</div><div class="rmain">
+      return `<div class="rank-row mine"><div class="rk" title="${T_RANKME}">${r.hold?r.rank+'位<br>相当':'PL<br>不足'}</div><div class="rmain">
         <div class="rname">${badges(r.e.shadow,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}<small>${mineLabel(r.e)}（あなた）</small></div>
         <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.e.f)}</span>＋<span class="mv">${moveLabel(r.p,r.e.c)}${gauge}</span></div>
         <div class="rmoves holdline">${hold}</div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
-        <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
+        <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
     const barsN=Math.round(100/Math.abs(D.moves[r.c.id].e));
     return `
-    <div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk">${r.rank}位</div><div class="rmain">
+    <div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk" title="${T_RANK}">${r.rank}位</div><div class="rmain">
       <div class="rname">${badges(false,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}</div>
-      <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</span></div>
-      <div class="rmoves">🛡被弾最大${r.maxHit}／HP${r.hp}<span class="expl">（シールド中2倍補正込み・${r.maxMove.n}）</span></div>
+      <div class="rmoves mvline" title="${T_MOVES_SH}"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</span></div>
+      <div class="rmoves" title="ボスのいちばん痛いわざ（${r.maxMove.n}）を1発受けたときの最大ダメージです。シールド展開中の2倍補正込みで、HPを下回っていれば1発耐えられます">🛡被弾最大${r.maxHit}／HP${r.hp}<span class="expl">（シールド中2倍補正込み・${r.maxMove.n}）</span></div>
       <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
-      <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
+      <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
   bindMineCtl(sumEl);
   moreBtn.style.display=rows.length>showN?'block':'none';
@@ -935,7 +942,7 @@ function renderRank(){
   sumEl.innerHTML=my.map(m=>{
     const rank=rankIn(rows,m.dps);
     // シャドウ・メガは文字ではなく名前の左のマークで表す(全ツール共通)
-    return `<div class="mine-sum"><span><b>${badges(m.e.shadow,m.p.mega,m.p)}${m.p.n}</b><small class="msiv">${ivTxt(m.e)}</small></span>${plCtlHtml(m.e,m.i)}<span>火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b></span><button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
+    return `<div class="mine-sum"><span><b>${badges(m.e.shadow,m.p.mega,m.p)}${m.p.n}</b><small class="msiv">${ivTxt(m.e)}</small></span>${plCtlHtml(m.e,m.i)}<span title="${T_RANKME}">火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b></span><button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
   }).join('');
   // 一覧（自分のポケモンを該当位置に挿入）
   const merged=[];
@@ -947,17 +954,17 @@ function renderRank(){
   while(pos<mi.length && showN>=rows.length){merged.push({mine:true,...mi[pos],rank:rankIn(rows,mi[pos].dps)});pos++;}
   listEl.innerHTML=merged.map(r=>{
     if(r.mine){
-      return `<div class="rank-row mine"><div class="rk">${r.rank}位<br>相当</div><div class="rmain">
+      return `<div class="rank-row mine"><div class="rk" title="${T_RANKME}">${r.rank}位<br>相当</div><div class="rmain">
         <div class="rname">${badges(r.e.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.e.shadow)}<small>${mineLabel(r.e)}（あなた）</small></div>
         <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.e.f)}</span>＋<span class="mv">${moveLabel(r.p,r.e.c)}</span></div>
         <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
-        <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
+        <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
-    return `<div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk">${r.rank}位</div><div class="rmain">
-      <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small>PL50・個体値15</small></div>
-      <div class="rmoves mvline"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}</span></div>
+    return `<div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk" title="${T_RANK}">${r.rank}位</div><div class="rmain">
+      <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small title="${T_PL50}">PL50・個体値15</small></div>
+      <div class="rmoves mvline" title="${T_MOVES}"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}</span></div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
-      <div class="rdps">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
+      <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
   moreBtn.style.display=rows.length>showN?'block':'none';
   bindMineCtl(sumEl);

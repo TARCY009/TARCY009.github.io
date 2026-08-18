@@ -435,15 +435,15 @@ function render(def){
       <div class="rank ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i+1}位</div>
       <div>
         <div class="pname">${r.isShadow?'<i class="shadowmark nmk" title="シャドウ"></i>':''}<span class="nm">${r.p.name}</span>${typePairHTML(r.p.types.map(t=>DATA.types_jp[t]),18)}${hitHtml}</div>
-        <div class="moves">
+        <div class="moves" title="この防衛ポケモンにいちばんダメージ効率よく攻撃できるわざの組み合わせです。SPアタックの丸はゲージの分割数です">
           <span>${fm.jp}</span><span>/</span>
           <span>${cm.jp}<span class="gauge ${r.bars===1?'g1':''}">${'<i></i>'.repeat(r.bars)}</span></span>
         </div>
       </div>
       <div class="nums">
-        <div class="score">${pts.toFixed(1)}<span style="font-size:.65rem;color:var(--sub)"> ${ptLabel}</span></div>
+        <div class="score" title="${MODE==='total'?'火力に打たれ強さを加味した総合力を、1位を100として換算したポイントです':'与えるダメージの効率を、1位を100として換算したポイントです'}">${pts.toFixed(1)}<span style="font-size:.65rem;color:var(--sub)"> ${ptLabel}</span></div>
         <div class="meter"><i style="width:${Math.max(2,pts)}%"></i></div>
-        <div class="dps">DPS ${r.dps.toFixed(1)}</div>
+        <div class="dps" title="1秒あたりの与ダメージです（タイプ相性込み）">DPS ${r.dps.toFixed(1)}</div>
       </div>`;
     list.appendChild(el);
   });
