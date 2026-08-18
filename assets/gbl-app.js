@@ -4975,6 +4975,11 @@ function gbPlay(picks, foes, ans, stepwise) {
   const seen = [new Set(), new Set()];
   const revealed0 = () => benches(0).filter(k => seen[0].has(k));   // 見えているユーザーの控え
   let base = 0, pending = null, lead = null;
+  // **追っている側かどうか**(2026-08-19タダシさん指示)。ユーザーが自分から交代した＝不利だから
+  // 逃げた、ということなので、そのあとAIは「追っている側」になる。
+  // 追っている側の基本は**対面を維持したい**なので、五分の対面でも安定して突破できる控えがいるなら
+  // 出していく(勝ち負けがはっきりしない対面に付き合って主導権を手放さない)
+  let chase = false;
   const legs = [];
   const nextAlive = (sd, from) => {
     for (let i = 0; i < st[sd].length; i++) { const k = (from + i) % st[sd].length; if (st[sd][k].alive) return k; }
@@ -5449,7 +5454,10 @@ function gbPlay(picks, foes, ans, stepwise) {
       // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り20秒以上)は、
       // どっちもどっちの対面でも有利な控えを差し込む(相手は逃げられない)。相手が自由なら負けのときだけ
       const locked = ctx.swOk[0] - (ctx.base + p.tn) >= GB_LOCK_MIN;
-      const to = aiSwapTo(1, { even: locked, ...ov });
+      // **追っている側は対面を維持したい**(2026-08-19タダシさん指示)。
+      // ユーザーが不利で逃げた直後は主導権がこちらにあるので、五分の対面に付き合わず、
+      // 安定して突破できる(勝率の高い)控えがいるなら出して対面を取り続ける
+      const to = aiSwapTo(1, { even: locked || (p.seq === 0 && ctx.chase), ...ov });
       if (to == null) {
         // 勝てる控えが無い＝いま下がっても有利にならない。ただし
         // **SPを1発入れてから下がれば裏が勝てる**なら、撃つために残る(2026-08-18タダシさん指示)。
@@ -5501,6 +5509,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       st[1][0].resume = { hp: maxF, en: hit ? Math.min(100, hit.eg) : 0, buffs: [0, 0], stall: 0 };
       cur[0] = to;
       swOk[0] = GB_SWAP_CD;
+      chase = true;   // 開幕からユーザーが逃げた＝ここからAIは追っている側
       lead = { hit: hit && { mv: hit.mv, dmg: hit.dmg },
         pt: { kind: 'lead', side: 0, seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts, ans: a, auto: !ans[key] } };
     }
@@ -5521,6 +5530,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       shLeft: shLeft.slice(), swOk: swOk.slice(),
       maxHp: [PvpEngine.buildStats(D, P0.base).hp, PvpEngine.buildStats(D, P1.base).hp],
       swTo: [benches(0), benches(1)], newIn: newIn.slice(),
+      chase,                      // 追っている側か(ユーザーが自分から交代した直後)
       enAt: [enOf(0), enOf(1)],   // 対面開始時のゲージ(「撃ってから交代」の判断に使う)
       bAt: [0, 1].map(sd => {     // 対面開始時の能力変化(受けたデバフの追跡の起点)
         const r = st[sd][cur[sd]].resume;
@@ -5617,6 +5627,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     if (pending) break;
     // 手動交代の実行(両方同時なら、お互いの打ちかけの1発は無しにする)
+    chase = swapped[0] && !swapped[1];   // ユーザーだけが逃げた → AIは追っている側
     const both = swapped[0] && swapped[1];
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
