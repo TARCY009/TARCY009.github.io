@@ -1015,14 +1015,19 @@ ${PAGE_ROCKET ? '' : `
   （きほん／かけひき＝ブラフしてくる／温存＝小さいSPにシールドを使わない／<b>スイッチ＝基本戦術の逃げ回り</b>／実戦＝全部あり）を選べます。
   スイッチの中身は実戦の基本どおりです: <b>出し負けたらすぐ交代</b>（ためたSPは、防がれず効く一撃のときだけ撃ってから）・
   <b>勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ</b>（起点づくり）・
-  <b>倒されたら、いまの相手に有利な控えから出し直す</b>・<b>裏に出しても有利にならないときは、
-  SPを1発入れて削ってから下がる</b>。不利な相手から逃げ回りながら戦ってきます。
+  <b>裏に出しても有利にならないときは、SPを1発入れて削ってから下がる</b>。
+  不利な相手から逃げ回りながら戦ってきます。</p>
+  <p><b>倒されたあと「次に誰を出すか」も効率で決めます</b>: こちらのゲージが乏しくてSPアタックを撃たれない
+  （撃たれても痛手にならない）ときは、<b>あえて有利でないポケモンを出して起点</b>にし、ノーマルアタックだけで
+  倒してゲージをためてきます（有利なポケモンは後の対面まで温存）。並んだときは
+  <b>まだ見せていない3匹目を温存</b>し、それでも並べば<b>被ダメージが少ないほう</b>を出します。
   さらに、<b>こちらが交代できないあいだ（交代直後の45秒）は五分の対面でも有利な控えを差し込み</b>、
   こちらの交代に合わせて有利なポケモンを出し返し、<b>デバフを受けたら不利・五分の対面なら交代で下げ消し</b>します
   （有利な対面ならそのまま戦い、勝てる控えがいなければ残ります）。</p>
   <p>AIは<b>ずるをしません</b>: シールドを使うかどうかは、実際に飛んできたわざではなく
   「こちらのわざ構成とゲージから撃たれそうなわざ」を<b>予測</b>して判断します。
   軽いわざでのブラフには本物の対戦相手と同じように引っ掛かります。
+  またAIは<b>まだ場に出ていないこちらのポケモンを知りません</b>（実戦と同じで、残りの数は分かっても中身は分かりません）。
   シールドには<b>チームの文脈</b>も見ます: あとで戻ってくるこちらのポケモンに勝てるAIの控えが
   1匹しかいないときは、その1匹を温存するために<b>いまの対面をシールドを使ってでも確実に突破</b>しにきます
   （<b>使わなくても勝てる対面では使いません</b>。あくまで「使えば取れる対面で、こちらの動きに合わせて使う」動きです）。
@@ -4579,7 +4584,7 @@ const GB_AI = {
   save:   { label: '温存',     bluff: false, save: true,  sw: false, farm: false,
     tip: '小さいSPアタックにはシールドを使いません。実際に飛んできたわざではなく「撃たれそうなわざ」をこちらのわざ構成とゲージから予測して判断します(軽いわざのブラフには引っ掛かります)。負けが見えている対面では受けてシールドを後続のために残し、逆に「戻ってくる相手への答えが控えに1匹しかない」ときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
   switch: { label: 'スイッチ', bluff: false, save: false, sw: true, farm: true,
-    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPは、防がれず効く一撃のときだけ撃ってから)。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、いまの相手に有利な控えから出し直します。こちらが交代できないあいだ(クールタイム中)は五分の対面でも有利な控えを差し込み、デバフを受けたら不利・五分の対面なら交代で下げ消しします。裏に出しても有利にならないときは、SPを1発入れて削ってから下がることもあります。戻ってくる相手への答えが控えに1匹しかないときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
+    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPは、防がれず効く一撃のときだけ撃ってから)。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、次に出すポケモンを効率で選びます(相手のゲージが乏しければ、あえて有利でないポケモンを起点にしてゲージをため、有利なポケモンは温存。まだ見せていない3匹目も温存します)。こちらが交代できないあいだ(クールタイム中)は五分の対面でも有利な控えを差し込み、デバフを受けたら不利・五分の対面なら交代で下げ消しします。裏に出しても有利にならないときは、SPを1発入れて削ってから下がることもあります。戻ってくる相手への答えが控えに1匹しかないときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
   pro:    { label: '実戦',     bluff: true,  save: true,  sw: true, farm: true,
     tip: 'かけひき＋温存＋スイッチの全部あり(いちばん人間らしい動き)' },
 };
@@ -4590,6 +4595,8 @@ const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメー�
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
 // 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
 const GB_LOCK_MIN = 40;
+// 「起点にできる」とみなすSPアタックの痛さの上限(候補の残りHPの30%未満なら痛手にならない)
+const GB_FARM_HURT = 0.30;
 
 // ---- じぶんのわざ(GBL模擬戦用。ロケット団のRBM・パーティ診断のPTとは別に持つ) ----
 const GBM = [null, null, null];
@@ -4905,6 +4912,11 @@ function gbPlay(picks, foes, ans, stepwise) {
   const st = ros.map(r => r.map(() => ({ alive: true, resume: null })));
   const cur = [0, 0], shLeft = [2, 2], swOk = [0, 0];
   const newIn = [false, false];   // この対面の頭で「新しく出てきた」側(交代質問のきっかけ)
+  // **AIは場に出ていないユーザーのポケモンを知らない**(2026-08-18タダシさん指示・恒久ルール)。
+  // 一度でも場に出たポケモンだけ「見えている」として、AIの下読みに使ってよい
+  // (何匹残っているかは分かるが、それが何かは分からない、が実戦の情報量)
+  const seen = [new Set(), new Set()];
+  const revealed0 = () => benches(0).filter(k => seen[0].has(k));   // 見えているユーザーの控え
   let base = 0, pending = null, lead = null;
   const legs = [];
   const nextAlive = (sd, from) => {
@@ -5037,11 +5049,64 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     return null;
   };
+  // 倒されたあと「次に誰を出すか」(2026-08-18タダシさん指示・基本理念「効率よく行動する」)。
+  // 順番は次のとおり:
+  //  ①**起点にできる候補**をさがす＝いまのユーザーのポケモンを**SPアタックを1発も撃たずに**倒せて、
+  //    かつ**撃ち返されても痛手にならない**(ユーザーのいまのゲージで撃てるSPが、その候補の残りHPの
+  //    30%未満)。ここに入るなら、有利不利にかかわらず出してよい＝ノーマルアタックだけで倒してためる
+  //  ②起点にできる候補が複数なら **まだ見せていない3匹目は温存**して、すでに見せたポケモンから出す
+  //    (手の内を隠す。タダシさん指示)
+  //  ③それでも並ぶなら **被ダメージが少ないほう**を出す(相手のノーマルアタックとSPアタックの両方で見る)
+  //  ④起点にできる候補が無ければ、従来どおり「その相手にいちばん強い1匹」を出す
+  const aiNextPick = rest => {
+    if (!rest || !rest.length) return null;
+    if (rest.length === 1) return rest[0];
+    const u = cur[0], P0 = ros[0][u];
+    // 同じターンにこちらも倒れて、相手が出し直す前(cur[0]が未確定)なら順番どおりに任せる
+    if (!P0 || !st[0][u]) return null;
+    const uRs = st[0][u].resume;
+    const uEn = uRs ? (uRs.en || 0) : 0;
+    const att = { ...PvpEngine.buildStats(D, P0.base), buffs: uRs && uRs.buffs ? uRs.buffs.slice() : [0, 0] };
+    const uFast = D.moves[P0.pol.fast];
+    const uSp = (P0.pol.charged || []).map(id => D.moves[id]).filter(Boolean);
+    const rows = rest.map(k => {
+      const stK = PvpEngine.buildStats(D, ros[1][k].base);
+      const rsK = st[1][k].resume;
+      const dfn = { ...stK, buffs: rsK && rsK.buffs ? rsK.buffs.slice() : [0, 0] };
+      const hpK = rsK ? Math.max(1, rsK.hp) : stK.hp;
+      // 被ダメージ: ノーマルアタック(1ターンあたり)とSPアタック(いちばん痛い1発)を残HP比で見る
+      const fd = uFast ? PvpEngine.damage(D, uFast, att, dfn) / (uFast.tn || 1) : 0;
+      const sdMax = uSp.length ? Math.max(...uSp.map(m => PvpEngine.damage(D, m, att, dfn))) : 0;
+      // いまのゲージで実際に撃てるSPの痛さ(これが小さければ「撃たれても痛手にならない」)
+      const nowSp = uSp.filter(m => m.e <= uEn);
+      const sdNow = nowSp.length ? Math.max(...nowSp.map(m => PvpEngine.damage(D, m, att, dfn))) : 0;
+      // SPを1発も撃たずに倒しきれるか(＝起点にできるか)
+      const R = { ...plainCfg(1, k), timing: 'shots', shotPlan: [], shotRest: null };
+      const farm = PvpEngine.simulate(D, plainCfg(0, u), R, SIMOPT).winner === 1;
+      const r = duel(u, k);
+      const win = r.winner === 1;
+      const margin = 500 * (1 - r.final[0].hp / r.final[0].hpMax) + 500 * (r.final[1].hp / r.final[1].hpMax);
+      return { k, farm, safe: sdNow < GB_FARM_HURT * hpK, take: fd / hpK * 100 + sdMax / hpK * 50,
+        shown: seen[1].has(k), win, margin };
+    });
+    const farmers = rows.filter(r => r.farm && r.safe);
+    if (farmers.length) {
+      farmers.sort((a, b) =>
+        (b.shown ? 1 : 0) - (a.shown ? 1 : 0)   // ②見せていない3匹目は温存する
+        || a.take - b.take                       // ③被ダメージが少ないほう
+        || a.margin - b.margin);                 // 同じなら強いほうを後に取っておく
+      return farmers[0].k;
+    }
+    // ④起点にできないなら、その相手にいちばん強い1匹で受ける
+    const best = rows.slice().sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0) || b.margin - a.margin)[0];
+    return best ? best.k : null;
+  };
   const shvCache = {};
   const teamShieldValue = li => {
     if (!(li in shvCache)) {
       let v = null;
-      const myBench = benches(1), userOff = benches(0);
+      // ユーザーの控えは**一度でも場に出たもの**だけ数える(まだ見ていないポケモンは知らない)
+      const myBench = benches(1), userOff = revealed0();
       // シールド無しでも取れる対面なら、そもそも使う必要がない
       const freeWin = () => PvpEngine.simulate(D, plainCfg(0, cur[0]),
         { ...plainCfg(1, cur[1]), shields: 0 }, SIMOPT).winner === 1;
@@ -5135,17 +5200,14 @@ function gbPlay(picks, foes, ans, stepwise) {
       return { a: 'toq', to };
     }
     if (p.kind === 'next') {
-      // 倒れたら、いまの相手にいちばん有利な控えを出す(倒した起点の初手を出し直す動きを含む)。
-      // 逃げ回りのAIだけ。それ以外は次の枠の順(どちらもチップで変更できる)
+      // 倒されたあと、次に出すポケモンを選ぶ。逃げ回りのAIだけ(それ以外は次の枠の順)。
+      // **タイプ相性や勝てるかどうかだけで決めない**(2026-08-18タダシさん指示・戦いの基本理念
+      // 「なるべく無駄な動きはせず効率よく行動する」)。ユーザーのゲージが乏しくてSPアタックを
+      // 撃たれない(撃たれても痛手にならない)なら、**あえて有利でないポケモンを出して起点にする**
+      // ＝ノーマルアタックだけで倒してゲージをため、有利なポケモンは後の対面のために取っておく
       if (!ai.sw) return { a: 'order' };
-      let best = null;
-      for (const k of ctx.swTo[1]) {
-        const r = duel(cur[0], k);
-        const sc = (r.winner === 1 ? 1e6 : 0)
-          + 500 * (1 - r.final[0].hp / r.final[0].hpMax) + 500 * (r.final[1].hp / r.final[1].hpMax);
-        if (!best || sc > best.sc) best = { k, sc };
-      }
-      return best ? { a: 'to', to: best.k } : { a: 'order' };
+      const to = aiNextPick(ctx.swTo[1]);
+      return to == null ? { a: 'order' } : { a: 'to', to };
     }
     return { a: 'order' };
   };
@@ -5177,6 +5239,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   newIn[0] = true;
   while (cur[0] >= 0 && cur[1] >= 0 && legs.length < 16 && !pending) {
     const li = legs.length;
+    seen[0].add(cur[0]); seen[1].add(cur[1]);   // 場に出た＝おたがいに見えた
     const P0 = picks[cur[0]], P1 = foes[cur[1]];
     const spL = [P0, P1].map(P => (P.pol.charged || []).slice());
     const enOf = sd => { const r = st[sd][cur[sd]].resume; return r ? (r.en || 0) : 0; };
@@ -5263,8 +5326,10 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (rest.length > 1) {
         const key = gbKey(li, s, 'next', 0, 0);
         const nctx = { ...ctx, swTo: s ? [ctx.swTo[0], rest] : [rest, ctx.swTo[1]] };
+        // 両方が同時に倒れたときは、AIはユーザーが次に何を出すか**分からない**ので順番どおりにする
+        // (この配列は s=0 → s=1 の順に処理するため、そのまま読むとユーザーの選択が見えてしまう)
         const a = ans[key] || (stepwise && s === 0 ? null
-          : (s === 1 ? aiAnswer({ kind: 'next', side: 1 }, nctx) : RB_AUTO.next));
+          : (s === 1 ? (down[0] ? { a: 'order' } : aiAnswer({ kind: 'next', side: 1 }, nctx)) : RB_AUTO.next));
         const pt = { kind: 'next', side: s, seq: 0, w: 0, key, tn: res.turns, gt: base, ctx: nctx,
           opts: gbChoices({ kind: 'next', side: s }, nctx), ans: a, auto: !ans[key] };
         if (!a) { pending = pt; legs[legs.length - 1].pending = pt; break; }
