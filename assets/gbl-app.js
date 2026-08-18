@@ -1015,7 +1015,10 @@ ${PAGE_ROCKET ? '' : `
   （きほん／かけひき＝ブラフしてくる／温存＝小さいSPにシールドを使わない／<b>スイッチ＝基本戦術の逃げ回り</b>／実戦＝全部あり）を選べます。
   スイッチの中身は実戦の基本どおりです: <b>出し負けたらすぐ交代</b>（ためたSPは、防がれず効く一撃のときだけ撃ってから）・
   <b>勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ</b>（起点づくり）・
-  <b>倒されたら、いまの相手に有利な控えから出し直す</b>。不利な相手から逃げ回りながら戦ってきます。</p>
+  <b>倒されたら、いまの相手に有利な控えから出し直す</b>。不利な相手から逃げ回りながら戦ってきます。
+  さらに、<b>こちらが交代できないあいだ（交代直後の45秒）は五分の対面でも有利な控えを差し込み</b>、
+  こちらの交代に合わせて有利なポケモンを出し返し、<b>デバフを受けたら不利・五分の対面なら交代で下げ消し</b>します
+  （有利な対面ならそのまま戦い、勝てる控えがいなければ残ります）。</p>
   <p>AIは<b>ずるをしません</b>: シールドを使うかどうかは、実際に飛んできたわざではなく
   「こちらのわざ構成とゲージから撃たれそうなわざ」を<b>予測</b>して判断します。
   軽いわざでのブラフには本物の対戦相手と同じように引っ掛かります。
@@ -4572,13 +4575,14 @@ const GB_AI = {
   save:   { label: '温存',     bluff: false, save: true,  sw: false, farm: false,
     tip: '小さいSPアタックにはシールドを使いません。実際に飛んできたわざではなく「撃たれそうなわざ」をこちらのわざ構成とゲージから予測して判断します(軽いわざのブラフには引っ掛かります)。負けが見えている対面では受けて、シールドを後続のために残します' },
   switch: { label: 'スイッチ', bluff: false, save: false, sw: true, farm: true,
-    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPは、防がれず効く一撃のときだけ撃ってから)。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、いまの相手に有利な控えから出し直します' },
+    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPは、防がれず効く一撃のときだけ撃ってから)。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、いまの相手に有利な控えから出し直します。こちらが交代できないあいだ(クールタイム中)は五分の対面でも有利な控えを差し込み、デバフを受けたら不利・五分の対面なら交代で下げ消しします' },
   pro:    { label: '実戦',     bluff: true,  save: true,  sw: true, farm: true,
     tip: 'かけひき＋温存＋スイッチの全部あり(いちばん人間らしい動き)' },
 };
 const GB_SWAP_CD = 90;        // 交代のクールタイム45秒(90ターン)
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
+const GB_LOCK_MIN = 20;       // 「クールタイム狙い」とみなす相手の交代不能の残り(20ターン=10秒以上)
 
 // ---- じぶんのわざ(GBL模擬戦用。ロケット団のRBM・パーティ診断のPTとは別に持つ) ----
 const GBM = [null, null, null];
@@ -4776,6 +4780,30 @@ function gbPoints(turns, ctx, dec) {
     if (ctx.newIn[o] && ctx.base + 1 >= ctx.swOk[s] && ctx.swTo[s].length && dec[s].swapTo == null)
       pts.push({ side: s, kind: 'swap', seq: 0, w: 0, tn: 1 });
   }
+  // 受けたデバフの下げ消し交代(w=1・あいて側だけ・逃げ回りのAIのとき):
+  // ターンを歩きながら能力変化を追いかけ、こちらのわざであいての能力が下がった直後に交代質問を置く。
+  // その瞬間のHP・ゲージ・能力変化を持たせて、AIが「その状態で有利か不利か」を下読みできるようにする
+  if (ctx.foeDump && ctx.swTo[1].length) {
+    const bb = [ctx.bAt[0].slice(), ctx.bAt[1].slice()];
+    let seq = 0;
+    for (const t of turns) {
+      if (t.tn > cut) break;
+      const over = t.state[0].hp <= 0 || t.state[1].hp <= 0;
+      let hit = false;
+      for (let i = 0; i < 2; i++) for (const e of t.ev[i]) {
+        if (!e.buff) continue;
+        const tgt = e.buff.target === 'opponent' ? 1 - i : i;
+        bb[tgt] = e.buff.to.slice();
+        if (i === 0 && tgt === 1 && (e.buff.to[0] < 0 || e.buff.to[1] < 0)) hit = true;
+      }
+      if (hit && !over && dec[1].swapTo == null && ctx.base + t.tn >= ctx.swOk[1]) {
+        pts.push({ side: 1, kind: 'swap', seq: seq, w: 1, tn: t.tn,
+          st0: { hp: t.state[0].hp, en: t.state[0].en, b: bb[0].slice() },
+          st1: { hp: t.state[1].hp, en: t.state[1].en, b: bb[1].slice() } });
+      }
+      if (hit) seq++;   // 質問を出さなかった回も数えて、キーが前の決断とずれないようにする
+    }
+  }
   // 時系列の順に(同じターンは交代→その他、じぶん→あいての順)
   pts.sort((a, b) => a.tn - b.tn || (a.kind === 'swap' ? -1 : b.kind === 'swap' ? 1 : 0) || a.side - b.side);
   return pts;
@@ -4863,22 +4891,29 @@ function gbPlay(picks, foes, ans, stepwise) {
     return -1;
   };
   const benches = sd => ros[sd].map((p, k) => k).filter(k => k !== cur[sd] && st[sd][k].alive);
-  // 側sd・番号idxの「いまの状態込み」の設定(交代AIの下読みに使う。おまかせ最適で通す)
-  const plainCfg = (sd, idx) => {
+  // 側sd・番号idxの「いまの状態込み」の設定(交代AIの下読みに使う。おまかせ最適で通す)。
+  // ov を渡すと、その状態(対面の途中のHP・ゲージ・能力変化)から始める
+  const plainCfg = (sd, idx, ov) => {
     const P = ros[sd][idx];
     const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(),
       shields: shLeft[sd], timing: 'optimal', bluff: sd === 1 ? ai.bluff : false };
-    if (st[sd][idx].resume) c.resume = st[sd][idx].resume;
+    const rs = ov || st[sd][idx].resume;
+    if (rs) c.resume = rs;
     return c;
   };
-  const duel = (i0, i1) => PvpEngine.simulate(D, plainCfg(0, i0), plainCfg(1, i1), SIMOPT);
-  // 交代AI: いまの対面をおまかせで通して負けるなら、勝てる控えのうち一番よいものを返す(なければnull)
-  const aiSwapTo = sd => {
-    const now = sd === 1 ? duel(cur[0], cur[1]) : duel(cur[0], cur[1]);
-    if (now.winner === sd) return null;   // いまの対面で勝てるなら残る
+  const duelAt = (i0, i1, ov0, ov1) => PvpEngine.simulate(D, plainCfg(0, i0, ov0), plainCfg(1, i1, ov1), SIMOPT);
+  const duel = (i0, i1) => duelAt(i0, i1);
+  // 交代AI: いまの対面をおまかせで通して勝てないなら、勝てる控えのうち一番よいものを返す(なければnull)。
+  //  opt.even=true … どっちもどっち(引き分け・時間切れ)でも交代を探す(既定は負けのときだけ)
+  //  opt.ov0/ov1  … 対面の途中の状態から下読みする(受けたデバフの下げ消し交代で使う)
+  const aiSwapTo = (sd, opt) => {
+    const o = opt || {};
+    const now = duelAt(cur[0], cur[1], o.ov0, o.ov1);
+    if (now.winner === sd) return null;                     // 勝てる対面なら残る
+    if (now.winner !== (1 - sd) && !o.even) return null;    // どっちもどっちは指定があるときだけ動く
     let best = null;
     for (const k of benches(sd)) {
-      const r = sd === 1 ? duel(cur[0], k) : duel(k, cur[1]);
+      const r = sd === 1 ? duelAt(cur[0], k, o.ov0, null) : duelAt(k, cur[1], null, o.ov1);
       if (r.winner !== sd) continue;
       const own = r.final[sd], opp = r.final[1 - sd];
       const sc = 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
@@ -4971,8 +5006,20 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     if (p.kind === 'swap') {
       if (!ai.sw) return { a: 'stay' };
-      const to = aiSwapTo(1);
-      if (to == null) return { a: 'stay' };   // いまの対面で勝てる(または勝てる控えが無い)なら残る
+      // 受けたデバフの下げ消し交代(w=1・2026-08-18タダシさん指示):
+      // それなりに有利ならそのまま戦い、不利かどっちもどっちなら交代でリセット。
+      // ただし勝てる控えがいなければ残って戦う。下読みは「その瞬間のHP・ゲージ・能力変化」で行う
+      if (p.w === 1) {
+        const to = aiSwapTo(1, { even: true,
+          ov0: { hp: p.st0.hp, en: p.st0.en, buffs: p.st0.b, stall: 0 },
+          ov1: { hp: p.st1.hp, en: p.st1.en, buffs: p.st1.b, stall: 0 } });
+        return to == null ? { a: 'stay' } : { a: 'toq', to };
+      }
+      // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り10秒以上)は、
+      // どっちもどっちの対面でも有利な控えを差し込む(相手は逃げられない)。相手が自由なら負けのときだけ
+      const locked = ctx.swOk[0] - (ctx.base + p.tn) >= GB_LOCK_MIN;
+      const to = aiSwapTo(1, { even: locked });
+      if (to == null) return { a: 'stay' };   // 勝てる対面(または勝てる控えが無い)なら残る
       // 不利対面: 「撃ってから交代」は状況判断(2026-08-18タダシさん指示)。
       // ゲージは交代しても残るので、撃つのは「ちゃんと当たって効く」ときだけ:
       //  - 相手にシールドが残っている(防がれる)なら撃たずにすぐ交代
@@ -5040,6 +5087,10 @@ function gbPlay(picks, foes, ans, stepwise) {
       maxHp: [PvpEngine.buildStats(D, P0.base).hp, PvpEngine.buildStats(D, P1.base).hp],
       swTo: [benches(0), benches(1)], newIn: newIn.slice(),
       enAt: [enOf(0), enOf(1)],   // 対面開始時のゲージ(「撃ってから交代」の判断に使う)
+      bAt: [0, 1].map(sd => {     // 対面開始時の能力変化(受けたデバフの追跡の起点)
+        const r = st[sd][cur[sd]].resume;
+        return r && r.buffs ? r.buffs.slice() : [0, 0];
+      }),
       foeDump: ai.sw };           // あいてが逃げ回りのAIなら、SPを撃った直後にも交代を検討する
     newIn[0] = newIn[1] = false;
     const dec = [0, 1].map(() => ({ shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 }));
