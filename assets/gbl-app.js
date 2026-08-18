@@ -4993,6 +4993,26 @@ function gbPlay(picks, foes, ans, stepwise) {
   };
   const duelAt = (i0, i1, ov0, ov1) => PvpEngine.simulate(D, plainCfg(0, i0, ov0), plainCfg(1, i1, ov1), SIMOPT);
   const duel = (i0, i1) => duelAt(i0, i1);
+  // 「安定して勝てるか」＝**シールドの持ち方を総当たりしたときの勝率**(2026-08-19タダシさん指示)。
+  // どちらの控えでも倒せる状況では、1対1の勝率が高い＝安定して対面させられるほうを出す。
+  // ユーザーが先に交代していればゲージも溜まっているが、それは resume(いまの状態)に入っているので
+  // そのまま計算に乗る。返すのは 勝率 と、平均の勝ち幅(同率のときの比べ物)
+  const wrCache = {};
+  const aiWinRate = (k, ov0, ov1) => {
+    const ck = k + '|' + cur[0] + '|' + shLeft.join(',') + '|' + (ov0 ? ov0.hp + ',' + ov0.en : '') + '|' + (ov1 ? ov1.hp + ',' + ov1.en : '');
+    if (ck in wrCache) return wrCache[ck];
+    let win = 0, n = 0, mg = 0;
+    for (let a = 0; a <= shLeft[0]; a++) for (let b = 0; b <= shLeft[1]; b++) {
+      const r = PvpEngine.simulate(D, { ...plainCfg(0, cur[0], ov0), shields: a },
+        { ...plainCfg(1, k, ov1), shields: b }, SIMOPT);
+      n++;
+      if (r.winner === 1) win++;
+      mg += 500 * (1 - r.final[0].hp / r.final[0].hpMax) + 500 * (r.final[1].hp / r.final[1].hpMax);
+    }
+    const v = { rate: n ? win / n : 0, margin: n ? mg / n : 0 };
+    wrCache[ck] = v;
+    return v;
+  };
   // 交代AI: いまの対面をおまかせで通して勝てないなら、勝てる控えのうち一番よいものを返す(なければnull)。
   //  opt.even=true … どっちもどっち(引き分け・時間切れ)でも交代を探す(既定は負けのときだけ)
   //  opt.ov0/ov1  … 対面の途中の状態から下読みする(受けたデバフの下げ消し交代で使う)
@@ -5005,8 +5025,12 @@ function gbPlay(picks, foes, ans, stepwise) {
     for (const k of benches(sd)) {
       const r = sd === 1 ? duelAt(cur[0], k, o.ov0, null) : duelAt(k, cur[1], null, o.ov1);
       if (r.winner !== sd) continue;
+      // **どちらも倒せるなら、1対1の勝率が高い＝安定して対面させられるほうを出す**
+      // (シールドの持ち方を総当たりして数える。AI側だけこの見方をする)
       const own = r.final[sd], opp = r.final[1 - sd];
-      const sc = 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
+      const mg = 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
+      const w = sd === 1 ? aiWinRate(k, o.ov0, null) : null;
+      const sc = w ? w.rate * 1e4 + w.margin : mg;
       if (!best || sc > best.sc) best = { k, sc };
     }
     return best ? best.k : null;
@@ -5067,6 +5091,9 @@ function gbPlay(picks, foes, ans, stepwise) {
   // ---- 対面の頭(相手の新しいポケモンが出てきた場面)の交代基準 ----
   // 2026-08-18タダシさんが伝えた詳細な基準をそのまま実装したもの。
   // 「対応力の高いほう」＝ その相手に勝てる幅(残HP・削り)＋わざのタイプの広さ＋耐久 で決める
+  // 「対応力の高いほう」＝**まず1対1の勝率（シールドの持ち方を総当たりした勝ち数）**
+  // (2026-08-19タダシさん指示: どちらも倒せる状況では「安定して倒せる」＝勝率の高いほうを出す)。
+  // 勝率が同じくらいのときだけ、勝ち幅・わざのタイプの広さ・耐久で比べる
   const aiAdaptive = list => {
     let best = null;
     for (const { k, r } of list) {
@@ -5075,7 +5102,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       const types = new Set([P.pol.fast].concat(P.pol.charged || [])
         .map(id => D.moves[id] && D.moves[id].t).filter(Boolean));
       const s2 = PvpEngine.buildStats(D, P.base);
-      const sc = margin + types.size * 60 + s2.def * s2.hp / 1000;
+      const w = aiWinRate(k, null, null);
+      const sc = w.rate * 1e6 + margin + types.size * 60 + s2.def * s2.hp / 1000;
       if (!best || sc > best.sc) best = { k, sc };
     }
     return best ? best.k : null;
@@ -5287,10 +5315,15 @@ function gbPlay(picks, foes, ans, stepwise) {
       return farmers[0].k;
     }
     // ④起点にできないなら、その相手にいちばん強い1匹で受ける
-    // 起点にできる候補が無いときも、勝敗と勝ち幅が並んだら裏読みで決める(優先度は最低)
+    // 起点にできる候補が無いときは「その相手にいちばん強い1匹」。
+    // **勝敗が並んだら勝率(シールド総当たり)が高いほう＝安定して倒せるほう**を出す
+    // (2026-08-19タダシさん指示)。それも並んだら裏読みで決める(優先度は最低)
+    const wr = k => aiWinRate(k, null, null);
+    const rateTie = (x, y) => Math.abs(wr(x.k).rate - wr(y.k).rate) < 0.01;
     const marginTie = (x, y) => Math.abs(x.margin - y.margin) <= GB_MARGIN_TIE;
     const best = rows.slice().sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0)
-      || (marginTie(a, b) ? 0 : b.margin - a.margin)   // 勝ち幅が同じくらいなら裏読みで決める
+      || (rateTie(a, b) ? 0 : wr(b.k).rate - wr(a.k).rate)   // 安定して倒せるほう
+      || (marginTie(a, b) ? 0 : b.margin - a.margin)
       || aiPredScore(b.k) - aiPredScore(a.k)
       || b.margin - a.margin)[0];
     return best ? best.k : null;
@@ -5319,6 +5352,19 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 下読みはどれも「対面が始まった時点の状態」で行う(対面の途中の削れまでは見ない近似)
   const aiAnswer = (p, ctx) => {
     if (p.kind === 'sp') {
+      // **確定で自分の能力が上がるSPは即打ち**(2026-08-19タダシさん指示)。
+      // 上がった能力はその対面のあいだ効き続けるので、早く撃つほど得
+      // (例: オコリザルの「ふんどのこぶし」=確定で攻撃+1。ノーマルアタックが2ターンなら
+      //  待つ理由がなく、能力が上がるならなおさら即打ちが正解)。
+      // 起点づくりでゲージをためる判断より優先する
+      if (ai.sw || ai.farm) {
+        const buff = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] })).filter(x => {
+          const m = x.m;
+          return m && m.bf && m.bt !== 'opponent' && (m.bc == null || m.bc >= 1)
+            && (m.bf[0] > 0 || m.bf[1] > 0);
+        }).sort((x, y) => x.m.e - y.m.e)[0];
+        if (buff) return { a: 'fire', mv: buff.id };
+      }
       // 起点づくり: 撃たなくても勝てる対面では撃たず、ゲージを次の相手に持ち越す。
       // ただし**ゲージが満タン(100)に近づいたら撃つ**(2026-08-19タダシさん報告で修正)。
       // 「撃たない」と一度答えるとその対面では二度と撃たなくなるので、満タンでも撃たず
