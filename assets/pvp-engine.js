@@ -228,6 +228,23 @@
         : (a, b) => eff(b) - eff(a))[0];                         // 効率が高い順(自分デバフは割引)
     };
 
+    // 最適(CCT)の発動判断: 相手の通常技の最終ターン(cd===1)を狙って撃つ(差し込みで相手を得させない)。
+    // 倒しきれる場合はタイミングを待たず即撃ち。技周期が同じ対面は最終ターンが永遠に来ないため
+    // 同時開始(cd===0)のタイミングで発動する(最新シミュレータ実測準拠)。
+    // 保険: 撃てるのに最適タイミングが来ないまま3回待ったら発動する(周期のズレ等での硬直防止)。
+    // true=このターンに撃つ。false のときは待ちを1回数える(呼び出し側は通常技を開始する)
+    const optWindow = (s, o, mv) => {
+      // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
+      const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
+      const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
+      const sameTn = s.fast.tn === o.fast.tn;
+      const oppFinal = o.cd === 1 || (o.cd === 0 && (o.fast.tn === 1 || sameTn));
+      const stuck = (s.waitCnt || 0) >= 3;
+      if (dealt >= o.hp || oppFinal || stuck) return true;
+      s.waitCnt = (s.waitCnt || 0) + 1;
+      return false;
+    };
+
     // 何発目にどのわざを撃つ予定かを決める(マニュアル指定 > 固定指定 > 自動選択)
     const plannedMove = (s, o) => {
       let mvId = null;
@@ -264,22 +281,37 @@
             continue;
           }
         } else if (s.cfg.timing === 'optimal') {
-          // 最適(CCT): 相手の通常技の最終ターンを狙って撃つ(差し込みで相手を得させない)。
-          // 倒しきれる場合はタイミングを待たず即撃ち。待つターンは通常技を開始する。
+          // 最適(CCT): 待つターンは通常技を開始する(判断本体は optWindow)
           const o = sides[1 - i];
           const mv = plannedMove(s, o);
+          if (mv && s.en >= mv.e && optWindow(s, o, mv)) { s.waitCnt = 0; charging[i] = mv; continue; }
+        } else if (s.cfg.timing === 'stock') {
+          // 溜め打ち: 自分の能力が下がるわざを2発分ためてから2連射する実戦テク(2026-08-18タダシさん指示)。
+          // 溜め目標は「2発分」。ただしゲージ上限100で2発分に届かないわざ(消費55以上)は、
+          // 次の通常技でゲージが100を超えて無駄になる「一歩手前」まで溜める(オーバーチャージ回避)。
+          // 1発目は目標まで溜めてから最適と同じタイミングで撃つ(今撃てば倒しきれるなら待たない)。
+          // 2発目はたまっているのですぐ連射。2連射を終えたら以後は「最適」と同じ撃ち方に戻る。
+          const o = sides[1 - i];
+          const fired = s.stockFired || 0;
+          // 2連射の対象=確定で自分の能力が下がるわざ(2本ともそうなら消費が軽いほう)
+          const debuf = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)])
+            .filter(m => m && m.bf && m.bt !== 'opponent' && (m.bc == null || m.bc >= 1) && (m.bf[0] < 0 || m.bf[1] < 0))
+            .sort((a, b) => a.e - b.e)[0];
+          const mv = fired < 2 && debuf ? debuf : plannedMove(s, o);
           if (mv && s.en >= mv.e) {
-            // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
-            const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
-            const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
-            // 相手の最終ターン(cd===1)か1ターン技の開始が最適。技周期が同じ対面(ミラー等)は
-            // 最終ターンが永遠に来ないため、同時開始(cd===0)のタイミングで発動する(最新シミュレータ実測準拠)
-            const sameTn = s.fast.tn === o.fast.tn;
-            const oppFinal = o.cd === 1 || (o.cd === 0 && (o.fast.tn === 1 || sameTn));
-            // 保険: 撃てるのに最適タイミングが来ないまま待ち続けたら発動する(周期のズレ等での硬直防止)
-            const stuck = (s.waitCnt || 0) >= 3;
-            if (dealt >= o.hp || oppFinal || stuck) { s.waitCnt = 0; charging[i] = mv; continue; }
-            s.waitCnt = (s.waitCnt || 0) + 1;
+            if (fired >= 2 || !debuf) {   // 3発目以降(対象わざが無いときも)は最適と同じ
+              if (optWindow(s, o, mv)) { s.waitCnt = 0; charging[i] = mv; continue; }
+            } else if (fired === 1) {     // 2発目: すぐ連射
+              s.stockFired = 2; charging[i] = mv; continue;
+            } else {
+              // 1発目: 目標(2発分 or オーバーチャージ直前)まで溜める
+              const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
+              const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
+              const goal = s.en >= 2 * mv.e || s.en + s.fast.eg > 100;
+              if (dealt >= o.hp || (goal && optWindow(s, o, mv))) {
+                s.waitCnt = 0; s.stockFired = 1; charging[i] = mv; continue;
+              }
+            }
           }
         } else if (s.cfg.timing === 'shots') {
           // 発ごとの設定: n発目のSPをどのタイミング(最適/最短/+N発)でどのわざで打つか
@@ -299,13 +331,7 @@
                 else s.shotWait = (s.shotWait || 0) + 1;
               } else {
                 // 最適: 通常タイミングAIと同じ判断
-                const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
-                const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
-                const sameTn = s.fast.tn === o.fast.tn;
-                const oppFinal = o.cd === 1 || (o.cd === 0 && (o.fast.tn === 1 || sameTn));
-                const stuck = (s.waitCnt || 0) >= 3;
-                if (dealt >= o.hp || oppFinal || stuck) fire = true;
-                else s.waitCnt = (s.waitCnt || 0) + 1;
+                fire = optWindow(s, o, mv);
               }
               if (fire) { s.waitCnt = 0; s.shotWait = 0; charging[i] = mv; continue; }
             }

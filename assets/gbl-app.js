@@ -121,7 +121,7 @@ document.getElementById('app').innerHTML = `
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="never" aria-pressed="false" style="display:none" title="SPアタックを撃たずにノーマルアタックだけで戦う">撃たない</button><button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+        <button data-v="never" aria-pressed="false" style="display:none" title="SPアタックを撃たずにノーマルアタックだけで戦う">撃たない</button><button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="stock" aria-pressed="false" style="display:none" title="自分の能力が下がるわざを2発分ためてから2連射します（ためても2発分に届かないわざはゲージが無駄になる一歩手前まで）。実戦の「ためて連続で撃って交代」の撃ち方です。2連射のあとは最適と同じ撃ち方に戻ります">溜め打ち</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <label class="f">連戦</label>
       <div class="opts carry">
@@ -196,7 +196,7 @@ document.getElementById('app').innerHTML = `
       </div>
       <label class="f">SPアタックタイミング</label>
       <div class="opts timing">
-        <button data-v="never" aria-pressed="false" style="display:none" title="SPアタックを撃たずにノーマルアタックだけで戦う">撃たない</button><button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
+        <button data-v="never" aria-pressed="false" style="display:none" title="SPアタックを撃たずにノーマルアタックだけで戦う">撃たない</button><button data-v="optimal" aria-pressed="true" title="相手のノーマルアタックの最終ターンに合わせて撃つ(上級者の動き)">最適</button><button data-v="asap" aria-pressed="false" title="ゲージが溜まりしだいすぐ撃つ">最短</button><button data-v="sync" aria-pressed="false" title="相手がSPアタックを撃つターンに合わせて撃つ(先に当たるのは攻撃の実数値が高いほう)。相手が撃たないままゲージが満タンになったら合わせるのをやめて撃つ">同時</button><button data-v="stock" aria-pressed="false" style="display:none" title="自分の能力が下がるわざを2発分ためてから2連射します（ためても2発分に届かないわざはゲージが無駄になる一歩手前まで）。実戦の「ためて連続で撃って交代」の撃ち方です。2連射のあとは最適と同じ撃ち方に戻ります">溜め打ち</button><button data-v="plan" aria-pressed="false" title="打つターンを自由に指定">ﾏﾆｭｱﾙ</button>
       </div>
       <label class="f">連戦</label>
       <div class="opts carry">
@@ -1382,11 +1382,14 @@ function syncRocket() {
 function syncTimingTabs(rk) {
   sideEl.forEach((el, i) => {
     el.querySelectorAll('.timing button').forEach(b => {
+      // 溜め打ちはGBL専用で、表示するかどうかは run() が「自分デバフわざを選んでいるか」で決める。
+      // ここではロケット団戦で隠すことだけ受け持つ
+      if (b.dataset.v === 'stock') { if (rk) b.style.display = 'none'; return; }
       const hide = rk ? b.dataset.v === 'sync' : b.dataset.v === 'never';
       b.style.display = hide ? 'none' : '';
     });
     // 隠したタブが選ばれたままにならないよう「最適」へ戻す
-    if ((rk && S[i].timing === 'sync') || (!rk && S[i].timing === 'never')) {
+    if ((rk && ['sync', 'stock'].includes(S[i].timing)) || (!rk && S[i].timing === 'never')) {
       S[i].timing = 'optimal';
       resetSpPlan(i);
     }
@@ -4654,6 +4657,19 @@ function run() {
   // 能力変化わざの設定は、そういうわざを実際に選んでいるときだけ出す
   const selCfg = i => ({ fast: S[i].fast, throw: S[i].c1, charged: [S[i].c1, S[i].c2].filter(Boolean) });
   setProbTab(anyProbMove([selCfg(0), selCfg(1)]));
+  // 溜め打ちタブ: 確定で自分の能力が下がるSPアタックを選んでいる側にだけ出す(GBL専用・2026-08-18)。
+  // 対象わざを外したら隠し、選ばれたままなら「最適」へ戻す(隠れた設定が裏で効かないように)
+  const selfDebuf = id => { const m = id && D.moves[id];
+    return !!(m && m.bf && m.bt !== 'opponent' && (m.bc == null || m.bc >= 1) && (m.bf[0] < 0 || m.bf[1] < 0)); };
+  [0, 1].forEach(i => {
+    const ok = !rk && [S[i].c1, S[i].c2].some(selfDebuf);
+    const b = sideEl[i].querySelector('.timing button[data-v="stock"]');
+    if (b) b.style.display = ok ? '' : 'none';
+    if (!ok && S[i].timing === 'stock') {
+      S[i].timing = 'optimal';
+      sideEl[i].querySelectorAll('.timing button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'optimal'));
+    }
+  });
   if (needMv(0) || (!rk && needMv(1))) { hideDuelResult(true); return; }
   // わざの自動最適化(ﾏﾆｭｱﾙタイミング側は「最適」扱いでわざだけ決める)
   // わざの最適化も実際のシールド枚数で行う(一覧のマスをタップしたときに結果が一致する)
@@ -4662,7 +4678,7 @@ function run() {
   // わざの候補(policies)側でSP1/SP2の組を決めるので、ここではポケモン・シールド・タイミングだけ渡す
   const optCfg = (i, sh) => {
     const c = { ...base[i], shields: sh, bluff: S[i].bluff,
-      timing: ['plan', 'never'].includes(S[i].timing) ? 'optimal' : S[i].timing,
+      timing: ['plan', 'never', 'stock'].includes(S[i].timing) ? 'optimal' : S[i].timing,
       ...polOpts(i) };
     // 「撃たない」ときは、わざの選び方もSPを撃たない前提にそろえる(表示と結果を食い違わせない)
     if (S[i].timing === 'never') { c.timing = 'shots'; c.shotPlan = []; c.shotRest = null; }
@@ -4694,9 +4710,10 @@ function run() {
     const m1 = S[i].c1 || (pol.charged ? pol.charged[0] : c.throw), m2 = S[i].c2 || m1;
     c.charged = [m1, S[i].c2].filter(Boolean);
     c.throw = m1;   // 画面のSPアタック欄にも実際に使うわざを表示する
-    // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(自動/1/2)を指定
+    // 発ごとの設定: 各発のタイミング(最適/最短/+N発)とわざ(自動/1/2)を指定。
+    // 溜め打ちはエンジン側が撃つ発とタイミングを決めるので、SP2本選択時でも発ごとの設定へ変換しない
     if (S[i].timing === 'never') { c.timing = 'shots'; c.shotPlan = []; c.shotRest = null; }
-    else if (S[i].timing === 'plan' || S[i].c2) Object.assign(c, shotsCfg(i, m1, m2));
+    else if (S[i].timing !== 'stock' && (S[i].timing === 'plan' || S[i].c2)) Object.assign(c, shotsCfg(i, m1, m2));
     else c.timing = S[i].timing;
     return rk && i === 1 ? rkCfg(c) : c;
   };
@@ -4870,8 +4887,9 @@ function fillMoves(i, cfg) {
   el.querySelector('.bluffwrap').style.display =
     S[i].c2 && !['multi', 'counter', 'party'].includes(mode) ? 'block' : 'none';
   el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));
-  // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示(カウンター検索は手順を指定しないので出さない)
-  const showSp = S[i].timing !== 'never' && (S[i].timing === 'plan' || !!S[i].c2) && mode !== 'counter';
+  // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示(カウンター検索は手順を指定しないので出さない)。
+  // 溜め打ちは撃つ発をエンジンが決めるので窓を出さない
+  const showSp = !['never', 'stock'].includes(S[i].timing) && (S[i].timing === 'plan' || !!S[i].c2) && mode !== 'counter';
   el.querySelector('.custSp').style.display = showSp ? 'block' : 'none';
   if (showSp) buildSpConfig(i, S[i].c1 || cfg.throw, S[i].c2);
 }
@@ -5385,7 +5403,7 @@ document.getElementById('copyUrl').onclick = async () => {
     S[i].shields = +q.get(k);
     sideEl[i].querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === S[i].shields));
   }});
-  ['tl', 'tr'].forEach((k, i) => { if (['optimal', 'asap', 'sync', 'plan', 'never'].includes(q.get(k))) {
+  ['tl', 'tr'].forEach((k, i) => { if (['optimal', 'asap', 'sync', 'plan', 'never', 'stock'].includes(q.get(k))) {
     timingFromUrl = true;
     S[i].timing = q.get(k);
     sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));

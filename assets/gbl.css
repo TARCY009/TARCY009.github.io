@@ -112,6 +112,9 @@ select.ph option{color:var(--ink)}
 select option[value=""]{color:var(--sub)}
 .opts{display:flex;gap:4px}
 .opts button{flex:1;padding:6px 4px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer}
+/* タイミングは「溜め打ち」で5タブになる。狭い画面では文字を縦に潰さず行を折り返す */
+.opts.timing{flex-wrap:wrap}
+.opts.timing button{white-space:nowrap}
 .opts button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml);font-weight:700}
 .opts.sh button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy)}
 /* 結果 */
