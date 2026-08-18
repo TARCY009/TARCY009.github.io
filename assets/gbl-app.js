@@ -5319,8 +5319,27 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 下読みはどれも「対面が始まった時点の状態」で行う(対面の途中の削れまでは見ない近似)
   const aiAnswer = (p, ctx) => {
     if (p.kind === 'sp') {
-      // 起点づくり: 撃たなくても勝てる対面では撃たず、ゲージを次の相手に持ち越す
-      if (ai.farm && aiFarmWin(ctx.li)) return { a: 'hold' };
+      // 起点づくり: 撃たなくても勝てる対面では撃たず、ゲージを次の相手に持ち越す。
+      // ただし**ゲージが満タン(100)に近づいたら撃つ**(2026-08-19タダシさん報告で修正)。
+      // 「撃たない」と一度答えるとその対面では二度と撃たなくなるので、満タンでも撃たず
+      // ゲージを捨てていた。ためる意味があるあいだだけ待って、無駄になる手前で撃つ
+      if (ai.farm && aiFarmWin(ctx.li)) {
+        const fm = D.moves[ctx.fast[p.side]];
+        const eg = fm ? (fm.eg || 0) : 0;
+        const en = p.en != null ? p.en : 0;
+        if (eg > 0 && en + eg * 2 <= 100) {
+          // 満タンの一歩手前までノーマルアタックで引っぱる(そこでもう一度考える)
+          return { a: 'wait', n: Math.max(1, Math.floor((100 - en) / eg) - 1) };
+        }
+        // これ以上ためても無駄になるので撃つ。**おまかせ(auto)では溜めた意味が消える**
+        // (auto は「発ごとの指定」を捨ててエンジンの最適タイミングに任せるので、
+        //  ためる前の早い段階で撃ったことになってしまう)。撃つわざを名指しして、
+        //  ここまで引っぱった位置で発射させる。わざは**いちばん軽いもの**
+        //  (ためたぶんを無駄なく吐き出せて、続けてもう1発にもつなげやすい)
+        const av = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] }))
+          .filter(x => x.m && x.m.e <= en).sort((a, b) => a.m.e - b.m.e)[0];
+        return av ? { a: 'fire', mv: av.id } : { a: 'auto' };
+      }
       // 「撃ってから交代」(2026-08-18タダシさん指示): このまま下がっても裏が有利にならないが、
       // ここでSPを入れてから下がれば裏が勝てる——というときは、待たずにすぐ撃って下がる準備をする
       if (ai.sw && aiLosing(ctx.li)) {
@@ -5652,8 +5671,11 @@ function gbRender(body, bt, picks, foes) {
       e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>`;
     return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
+  // チップには**どちらの判断か**を必ず書く(2026-08-19タダシさん報告で追加)。
+  // 枠の色(金＝あいて)だけでは伝わらず、あいての「撃たない」を自分の判断だと誤解する
+  // (実例: オコリザルが起点づくりでSPを温存した場面を、こちらのSP判断だと思われた)
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc${p.side ? ' foe' : ''}"><button class="fchip${p.auto ? ' auto' : ''}${p.side ? ' foe' : ''}"
-    data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'タップすると、この場面からやり直せます'}">${RB_ICON[p.kind]}<b>${gbAnsLabel(p, p.ans)}</b></button></div>` });
+    data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'じぶんの行動です。タップすると、この場面からやり直せます'}"><i class="who">${p.side ? 'あいて' : 'じぶん'}</i>${RB_ICON[p.kind]}<b>${gbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
     const res = leg.res, base = leg.base;
     const meta = {

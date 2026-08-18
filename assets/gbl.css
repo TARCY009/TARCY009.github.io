@@ -1102,5 +1102,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 /* あいての行動のチップ・決断ウィンドウは金色(あいて側の色)で見分ける */
 .fchip.foe{border-color:rgba(255,213,74,.45)}
 .fchip.foe:hover{border-color:var(--gold)}
+/* チップの「じぶん／あいて」の札。色だけでは伝わらないので必ず文字でも出す */
+.fchip .who{font-style:normal;font-size:.58rem;font-weight:800;letter-spacing:.02em;
+  padding:1px 5px;border-radius:99px;background:rgba(67,224,255,.16);color:var(--cy)}
+.fchip.foe .who{background:rgba(255,213,74,.16);color:var(--gold)}
 .rbwin.foe{border-color:var(--gold)}
 .rbwho{font-style:normal;font-weight:900;color:var(--gold);font-size:.72rem}
