@@ -1091,3 +1091,16 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   .tltbl td{padding:2px}
   .evbox{padding:1px 4px}
 }
+
+/* ==== GBL模擬戦(/gbl/ モード 'mock')。作りはロケット団の模擬戦と共通で、ここは差分だけ ==== */
+.gbaibar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.gbaibar .lbl{font-size:.7rem;color:var(--sub);font-weight:700}
+.gbai{flex:1;min-width:0;flex-wrap:wrap}
+.gbai button{flex:0 1 auto;padding:5px 10px;font-size:.72rem;font-weight:700}
+.gbai button[aria-pressed="true"]{background:linear-gradient(160deg,#ffe9a3 0%,#ffd54a 45%,#c99a12 100%);
+  border-color:#ffd54a;color:#2b2305;box-shadow:0 4px 12px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+/* あいての行動のチップ・決断ウィンドウは金色(あいて側の色)で見分ける */
+.fchip.foe{border-color:rgba(255,213,74,.45)}
+.fchip.foe:hover{border-color:var(--gold)}
+.rbwin.foe{border-color:var(--gold)}
+.rbwho{font-style:normal;font-weight:900;color:var(--gold);font-size:.72rem}
