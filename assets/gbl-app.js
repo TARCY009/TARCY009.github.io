@@ -1020,7 +1020,9 @@ ${PAGE_ROCKET ? '' : `
   <p><b>倒されたあと「次に誰を出すか」も効率で決めます</b>: こちらのゲージが乏しくてSPアタックを撃たれない
   （撃たれても痛手にならない）ときは、<b>あえて有利でないポケモンを出して起点</b>にし、ノーマルアタックだけで
   倒してゲージをためてきます（有利なポケモンは後の対面まで温存）。並んだときは
-  <b>まだ見せていない3匹目を温存</b>し、それでも並べば<b>被ダメージが少ないほう</b>を出します。
+  <b>まだ見せていない3匹目を温存</b>し、次に<b>ノーマルアタックのチャージ効率が高いほう</b>
+  （＝より多くためられる＝起点づくりに向いている）、それも同じくらいなら<b>被ダメージが少ないほう</b>を出します。
+  <b>おたがいが同時に倒れたとき</b>は読み合いになりようがないので、2分の1で決まります。
   さらに、<b>こちらが交代できないあいだ（交代直後の45秒）は五分の対面でも有利な控えを差し込み</b>、
   こちらの交代に合わせて有利なポケモンを出し返し、<b>デバフを受けたら不利・五分の対面なら交代で下げ消し</b>します
   （有利な対面ならそのまま戦い、勝てる控えがいなければ残ります）。</p>
@@ -4595,8 +4597,11 @@ const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメー�
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
 // 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
 const GB_LOCK_MIN = 40;
-// 「起点にできる」とみなすSPアタックの痛さの上限(候補の残りHPの30%未満なら痛手にならない)
-const GB_FARM_HURT = 0.30;
+// 「起点にできる」とみなすSPアタックの痛さの上限(候補の残りHPの40%未満なら痛手にならない。
+// 2026-08-18タダシさん指示で30%→40%)
+const GB_FARM_HURT = 0.40;
+// 起点づくりの「チャージ効率が同じくらい」とみなす幅(15%以内なら横並びとして被ダメージで決める)
+const GB_FARM_TIE = 0.15;
 
 // ---- じぶんのわざ(GBL模擬戦用。ロケット団のRBM・パーティ診断のPTとは別に持つ) ----
 const GBM = [null, null, null];
@@ -4739,6 +4744,14 @@ function gbMoveByName(name) {
 }
 // 確定で自分の能力が下がるわざ(溜め打ちの対象と同じ判定)
 const gbSelfDebuff = mv => !!(mv && mv.bf && mv.bt !== 'opponent' && (mv.bc == null || mv.bc >= 1) && (mv.bf[0] < 0 || mv.bf[1] < 0));
+// 場面から作るコイントス。読み合いにならない場面(両者が同時に倒れたときの出し直し)で使う。
+// **同じ場面なら必ず同じ結果**になるので、決断を選び直して計算し直しても結果がぶれない
+// (毎回ランダムにすると、別の場面を選び直すたびにここの結果まで変わって混乱する)
+function gbCoin(seed) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0);
+}
 
 // 1対面ぶんのシミュ結果から、決断が要る場面を両側ぶん時系列に並べる。
 // 中身はロケット団の rbPoints と同じ考え方を側ごとに繰り返す＋GBL特有の交代質問:
@@ -5053,11 +5066,15 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 順番は次のとおり:
   //  ①**起点にできる候補**をさがす＝いまのユーザーのポケモンを**SPアタックを1発も撃たずに**倒せて、
   //    かつ**撃ち返されても痛手にならない**(ユーザーのいまのゲージで撃てるSPが、その候補の残りHPの
-  //    30%未満)。ここに入るなら、有利不利にかかわらず出してよい＝ノーマルアタックだけで倒してためる
+  //    40%未満)。ここに入るなら、有利不利にかかわらず出してよい＝ノーマルアタックだけで倒してためる
   //  ②起点にできる候補が複数なら **まだ見せていない3匹目は温存**して、すでに見せたポケモンから出す
   //    (手の内を隠す。タダシさん指示)
-  //  ③それでも並ぶなら **被ダメージが少ないほう**を出す(相手のノーマルアタックとSPアタックの両方で見る)
-  //  ④起点にできる候補が無ければ、従来どおり「その相手にいちばん強い1匹」を出す
+  //  ③**ノーマルアタックのチャージ効率が高いほう**(1ターンあたりのゲージ増)。
+  //    起点づくりの目的はゲージをためることなので、より多くためられるポケモンが向いている
+  //    (2026-08-18タダシさん指示)
+  //  ④チャージ効率が同じくらい(15%以内)なら **被ダメージが少ないほう**を出す
+  //    (相手のノーマルアタックとSPアタックの両方で見る)
+  //  ⑤起点にできる候補が無ければ、従来どおり「その相手にいちばん強い1匹」を出す
   const aiNextPick = rest => {
     if (!rest || !rest.length) return null;
     if (rest.length === 1) return rest[0];
@@ -5086,15 +5103,23 @@ function gbPlay(picks, foes, ans, stepwise) {
       const r = duel(u, k);
       const win = r.winner === 1;
       const margin = 500 * (1 - r.final[0].hp / r.final[0].hpMax) + 500 * (r.final[1].hp / r.final[1].hpMax);
+      // チャージ効率＝1ターンあたりのゲージ増(起点づくりに向いているかの本体)
+      const myFast = D.moves[ros[1][k].pol.fast];
+      const gain = myFast ? (myFast.eg || 0) / (myFast.tn || 1) : 0;
       return { k, farm, safe: sdNow < GB_FARM_HURT * hpK, take: fd / hpK * 100 + sdMax / hpK * 50,
-        shown: seen[1].has(k), win, margin };
+        gain, shown: seen[1].has(k), win, margin };
     });
     const farmers = rows.filter(r => r.farm && r.safe);
     if (farmers.length) {
+      // ③チャージ効率は「同じくらい(15%以内)」なら横並びとして④被ダメージで決める
+      const top = Math.max(...farmers.map(r => r.gain));
+      const band = r => (top > 0 && r.gain >= top * (1 - GB_FARM_TIE)) ? 1 : 0;
       farmers.sort((a, b) =>
         (b.shown ? 1 : 0) - (a.shown ? 1 : 0)   // ②見せていない3匹目は温存する
-        || a.take - b.take                       // ③被ダメージが少ないほう
-        || a.margin - b.margin);                 // 同じなら強いほうを後に取っておく
+        || band(b) - band(a)                     // ③チャージ効率が高いほう(横並びの幅つき)
+        || a.take - b.take                       // ④被ダメージが少ないほう
+        || b.gain - a.gain                       // それでも並ぶなら効率が高いほう
+        || a.margin - b.margin);                 // 最後は強いほうを後に取っておく
       return farmers[0].k;
     }
     // ④起点にできないなら、その相手にいちばん強い1匹で受ける
@@ -5326,10 +5351,14 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (rest.length > 1) {
         const key = gbKey(li, s, 'next', 0, 0);
         const nctx = { ...ctx, swTo: s ? [ctx.swTo[0], rest] : [rest, ctx.swTo[1]] };
-        // 両方が同時に倒れたときは、AIはユーザーが次に何を出すか**分からない**ので順番どおりにする
-        // (この配列は s=0 → s=1 の順に処理するため、そのまま読むとユーザーの選択が見えてしまう)
+        // 両方が同時に倒れたときは、AIはユーザーが次に何を出すか**分からない**ので読み合いにならない。
+        // 完全な運まかせなので**2分の1のコイントス**にする(2026-08-18タダシさん指示)。
+        // ただし決断を1つ選ぶたびに1ターン目から回し直す作りなので、**同じ場面なら必ず同じ結果**に
+        // なる決め方(場面から作るハッシュ)にしないと、選び直すたびに勝手に変わってしまう
         const a = ans[key] || (stepwise && s === 0 ? null
-          : (s === 1 ? (down[0] ? { a: 'order' } : aiAnswer({ kind: 'next', side: 1 }, nctx)) : RB_AUTO.next));
+          : (s === 1 ? (down[0] ? { a: 'to', to: rest[gbCoin(key + rest.join(',')) % rest.length] }
+                                : aiAnswer({ kind: 'next', side: 1 }, nctx))
+                     : RB_AUTO.next));
         const pt = { kind: 'next', side: s, seq: 0, w: 0, key, tn: res.turns, gt: base, ctx: nctx,
           opts: gbChoices({ kind: 'next', side: s }, nctx), ans: a, auto: !ans[key] };
         if (!a) { pending = pt; legs[legs.length - 1].pending = pt; break; }
