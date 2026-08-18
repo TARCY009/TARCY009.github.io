@@ -4582,7 +4582,10 @@ const GB_AI = {
 const GB_SWAP_CD = 90;        // 交代のクールタイム45秒(90ターン)
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
-const GB_LOCK_MIN = 20;       // 「クールタイム狙い」とみなす相手の交代不能の残り(20ターン=10秒以上)
+// 「クールタイム狙い」とみなす相手の交代不能の残り(40ターン=20秒以上)。
+// 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
+// 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
+const GB_LOCK_MIN = 40;
 
 // ---- じぶんのわざ(GBL模擬戦用。ロケット団のRBM・パーティ診断のPTとは別に持つ) ----
 const GBM = [null, null, null];
@@ -5015,7 +5018,7 @@ function gbPlay(picks, foes, ans, stepwise) {
           ov1: { hp: p.st1.hp, en: p.st1.en, buffs: p.st1.b, stall: 0 } });
         return to == null ? { a: 'stay' } : { a: 'toq', to };
       }
-      // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り10秒以上)は、
+      // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り20秒以上)は、
       // どっちもどっちの対面でも有利な控えを差し込む(相手は逃げられない)。相手が自由なら負けのときだけ
       const locked = ctx.swOk[0] - (ctx.base + p.tn) >= GB_LOCK_MIN;
       const to = aiSwapTo(1, { even: locked });
