@@ -1012,7 +1012,10 @@ ${PAGE_ROCKET ? '' : `
     下がった能力は交代で消えるので、「ためて連射して下がる」の実戦の動きを再現できます</li>
   </ul>
   <p><b>あいての行動はAIが自動で判断</b>します。上の<b>「あいてのAI」</b>で判断のクセ
-  （きほん／かけひき＝ブラフしてくる／温存＝小さいSPにシールドを使わない／スイッチ＝不利なら交代してくる／実戦＝全部あり）を選べます。
+  （きほん／かけひき＝ブラフしてくる／温存＝小さいSPにシールドを使わない／<b>スイッチ＝基本戦術の逃げ回り</b>／実戦＝全部あり）を選べます。
+  スイッチの中身は実戦の基本どおりです: <b>出し負けたらすぐ交代</b>（ためたSPがあれば撃ってから）・
+  <b>勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ</b>（起点づくり）・
+  <b>倒されたら、いまの相手に有利な控えから出し直す</b>。不利な相手から逃げ回りながら戦ってきます。
   バトル中・バトル後に<b>金色のチップ</b>（あいての行動）をタップすれば、
   「ここでシールドを使われなかったら？」のように<b>あいての行動も選び直せます</b>。</p>
   <p><b>🔎 オートバトルの「最善」</b>を押して選んでからバトルスタートすると、
@@ -4553,17 +4556,21 @@ const MK = { ai: 'basic', leadSwap: false };
 try { const v = localStorage.getItem('gbl_mock_ai'); if (v) MK.ai = v; } catch (e) {}
 const saveMkAi = () => { try { localStorage.setItem('gbl_mock_ai', MK.ai); } catch (e) {} };
 // あいてのAIの性格(2026-08-18タダシさん指示「AIの設定を3〜5つ作れるといいね」):
-//  bluff=軽いSPでシールドを釣る ／ save=小さいSPにはシールドを使わない ／ sw=不利対面なら交代する
+//  bluff=軽いSPでシールドを釣る ／ save=小さいSPにはシールドを使わない ／
+//  sw=基本戦術の「逃げ回り」(2026-08-18タダシさん指示で追加。不利な相手との対面は長引くほど負けに
+//  つながるので、①出し負けたらすぐ交代 ②ためたSPがあれば撃ってから交代 ③倒されたら、いまの相手に
+//  いちばん有利な控え(倒した起点の初手など)を出し直す) ／
+//  farm=起点づくり(SPを撃たなくても勝てる対面ではノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ)
 const GB_AI = {
-  basic:  { label: 'きほん',   bluff: false, save: false, sw: false,
+  basic:  { label: 'きほん',   bluff: false, save: false, sw: false, farm: false,
     tip: 'シールドは残っていれば必ず使い、自分からは交代しません(いちばん素直な動き)' },
-  bluff:  { label: 'かけひき', bluff: true,  save: false, sw: false,
+  bluff:  { label: 'かけひき', bluff: true,  save: false, sw: false, farm: false,
     tip: 'シールドが残っているあいだは消費の軽いSPアタックを先に撃って、シールドを使わせにきます' },
-  save:   { label: '温存',     bluff: false, save: true,  sw: false,
+  save:   { label: '温存',     bluff: false, save: true,  sw: false, farm: false,
     tip: '小さいSPアタックにはシールドを使わず、大ダメージ(最大HPの30%以上)か倒される一撃だけ防ぎます' },
-  switch: { label: 'スイッチ', bluff: false, save: false, sw: true,
-    tip: '不利な対面になったら、勝てる控えに交代してきます(自分の能力が下がったときも下げ消しに交代)' },
-  pro:    { label: '実戦',     bluff: true,  save: true,  sw: true,
+  switch: { label: 'スイッチ', bluff: false, save: false, sw: true, farm: true,
+    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPがあれば撃ってから)。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、いまの相手に有利な控えから出し直します' },
+  pro:    { label: '実戦',     bluff: true,  save: true,  sw: true, farm: true,
     tip: 'かけひき＋温存＋スイッチの全部あり(いちばん人間らしい動き)' },
 };
 const GB_SWAP_CD = 90;        // 交代のクールタイム45秒(90ターン)
@@ -4737,11 +4744,13 @@ function gbPoints(turns, ctx, dec) {
       const fired = t.ev[s].find(e => e.full !== undefined);
       if (fired) {
         spIdx++; armed = false; asked = false; normals = 0;
-        // 自分の能力が下がるSPを撃った直後は「交代する？」(下げた能力は交代で消える実戦の動き)
+        // SPを撃った直後の「交代する？」:
+        //  - 自分の能力が下がるSPのあと(下げた能力は交代で消える実戦の動き・両側)
+        //  - あいてが「逃げ回り」のAIのとき(不利対面でためたSPを撃ってから下がる基本戦術・ctx.foeDump)
         const mv = gbMoveByName(fired.move);
         const over0 = t.state[0].hp <= 0 || t.state[1].hp <= 0;
-        if (gbSelfDebuff(mv) && !over0 && d.swapTo == null && ctx.swTo[s].length
-            && ctx.base + t.tn >= ctx.swOk[s])
+        if ((gbSelfDebuff(mv) || (s === 1 && ctx.foeDump)) && !over0 && d.swapTo == null
+            && ctx.swTo[s].length && ctx.base + t.tn >= ctx.swOk[s])
           pts.push({ side: s, kind: 'swap', seq: spIdx, w: 0, tn: t.tn });
         continue;
       }
@@ -4899,20 +4908,52 @@ function gbPlay(picks, foes, ans, stepwise) {
     swOk[sd] = gt + GB_SWAP_CD;
     newIn[sd] = true;
   };
-  // あいてのAIの自動回答(ansに答えがあればそちらが優先される)
+  // 起点づくり(farm)の下読み: いまの対面、あいてはSPを1発も撃たなくても勝てるか。
+  // 勝てるならノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ(基本戦術)。
+  // 対面ごとに1回だけ計算して使い回す
+  const farmCache = {};
+  const aiFarmWin = li => {
+    if (!(li in farmCache)) {
+      const R = { ...plainCfg(1, cur[1]), timing: 'shots', shotPlan: [], shotRest: null };
+      farmCache[li] = PvpEngine.simulate(D, plainCfg(0, cur[0]), R, SIMOPT).winner === 1;
+    }
+    return farmCache[li];
+  };
+  // あいてのAIの自動回答(ansに答えがあればそちらが優先される)。
+  // 下読みはどれも「対面が始まった時点の状態」で行う(対面の途中の削れまでは見ない近似)
   const aiAnswer = (p, ctx) => {
-    if (p.kind === 'sp') return { a: 'auto' };
+    if (p.kind === 'sp') {
+      // 起点づくり: 撃たなくても勝てる対面では撃たず、ゲージを次の相手に持ち越す
+      if (ai.farm && aiFarmWin(ctx.li)) return { a: 'hold' };
+      return { a: 'auto' };
+    }
     if (p.kind === 'sh') {
       if (!ai.save) return { a: 'use' };
       return (p.ko || p.dmg >= GB_SHIELD_BIG * ctx.maxHp[1]) ? { a: 'use' } : { a: 'no' };
     }
     if (p.kind === 'swap') {
       if (!ai.sw) return { a: 'stay' };
-      // 下読みは対面が始まった時点の状態で行う(対面の途中の削れまでは見ない近似)
       const to = aiSwapTo(1);
-      return to == null ? { a: 'stay' } : { a: 'toq', to };
+      if (to == null) return { a: 'stay' };   // いまの対面で勝てる(または勝てる控えが無い)なら残る
+      // 不利対面: ためたSPがあれば撃ってから下がる(撃った直後にもう一度この質問が出る)。
+      // 無ければすぐ交代(不利な対面は長引くほど負けにつながる)
+      if (p.seq === 0 && ctx.spList[1].length && ctx.enAt[1] >= ctx.cost[1]) return { a: 'stay' };
+      return { a: 'toq', to };
     }
-    return { a: 'order' };   // 倒れたら次の枠の順(チップで変更できる)
+    if (p.kind === 'next') {
+      // 倒れたら、いまの相手にいちばん有利な控えを出す(倒した起点の初手を出し直す動きを含む)。
+      // 逃げ回りのAIだけ。それ以外は次の枠の順(どちらもチップで変更できる)
+      if (!ai.sw) return { a: 'order' };
+      let best = null;
+      for (const k of ctx.swTo[1]) {
+        const r = duel(cur[0], k);
+        const sc = (r.winner === 1 ? 1e6 : 0)
+          + 500 * (1 - r.final[0].hp / r.final[0].hpMax) + 500 * (r.final[1].hp / r.final[1].hpMax);
+        if (!best || sc > best.sc) best = { k, sc };
+      }
+      return best ? { a: 'to', to: best.k } : { a: 'order' };
+    }
+    return { a: 'order' };
   };
 
   // ---- 開幕交代(じぶん側のみ・枠のトグルON時) ----
@@ -4937,16 +4978,22 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
   }
 
+  // 開幕は、あいて側から見て「相手の初手が出てきた」場面として扱う＝出し負けなら初手からすぐ交代を
+  // 検討できる(基本戦術。じぶん側の開幕交代は枠のトグルで行うので、じぶんには質問を出さない)
+  newIn[0] = true;
   while (cur[0] >= 0 && cur[1] >= 0 && legs.length < 16 && !pending) {
     const li = legs.length;
     const P0 = picks[cur[0]], P1 = foes[cur[1]];
     const spL = [P0, P1].map(P => (P.pol.charged || []).slice());
+    const enOf = sd => { const r = st[sd][cur[sd]].resume; return r ? (r.en || 0) : 0; };
     const ctx = { li, base, ros, cur: cur.slice(),
       cost: spL.map(l => l.length ? Math.min(...l.map(id => D.moves[id].e)) : 0),
       spList: spL, fast: [P0.pol.fast, P1.pol.fast],
       shLeft: shLeft.slice(), swOk: swOk.slice(),
       maxHp: [PvpEngine.buildStats(D, P0.base).hp, PvpEngine.buildStats(D, P1.base).hp],
-      swTo: [benches(0), benches(1)], newIn: newIn.slice() };
+      swTo: [benches(0), benches(1)], newIn: newIn.slice(),
+      enAt: [enOf(0), enOf(1)],   // 対面開始時のゲージ(「撃ってから交代」の判断に使う)
+      foeDump: ai.sw };           // あいてが逃げ回りのAIなら、SPを撃った直後にも交代を検討する
     newIn[0] = newIn[1] = false;
     const dec = [0, 1].map(() => ({ shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 }));
     const legCfg = s => {
@@ -5018,7 +5065,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (rest.length > 1) {
         const key = gbKey(li, s, 'next', 0, 0);
         const nctx = { ...ctx, swTo: s ? [ctx.swTo[0], rest] : [rest, ctx.swTo[1]] };
-        const a = ans[key] || (stepwise && s === 0 ? null : (s === 1 ? { a: 'order' } : RB_AUTO.next));
+        const a = ans[key] || (stepwise && s === 0 ? null
+          : (s === 1 ? aiAnswer({ kind: 'next', side: 1 }, nctx) : RB_AUTO.next));
         const pt = { kind: 'next', side: s, seq: 0, w: 0, key, tn: res.turns, gt: base, ctx: nctx,
           opts: gbChoices({ kind: 'next', side: s }, nctx), ans: a, auto: !ans[key] };
         if (!a) { pending = pt; legs[legs.length - 1].pending = pt; break; }
