@@ -1013,9 +1013,12 @@ ${PAGE_ROCKET ? '' : `
   </ul>
   <p><b>あいての行動はAIが自動で判断</b>します。上の<b>「あいてのAI」</b>で判断のクセ
   （きほん／かけひき＝ブラフしてくる／温存＝小さいSPにシールドを使わない／<b>スイッチ＝基本戦術の逃げ回り</b>／実戦＝全部あり）を選べます。
-  スイッチの中身は実戦の基本どおりです: <b>出し負けたらすぐ交代</b>（ためたSPがあれば撃ってから）・
+  スイッチの中身は実戦の基本どおりです: <b>出し負けたらすぐ交代</b>（ためたSPは、防がれず効く一撃のときだけ撃ってから）・
   <b>勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ</b>（起点づくり）・
-  <b>倒されたら、いまの相手に有利な控えから出し直す</b>。不利な相手から逃げ回りながら戦ってきます。
+  <b>倒されたら、いまの相手に有利な控えから出し直す</b>。不利な相手から逃げ回りながら戦ってきます。</p>
+  <p>AIは<b>ずるをしません</b>: シールドを使うかどうかは、実際に飛んできたわざではなく
+  「こちらのわざ構成とゲージから撃たれそうなわざ」を<b>予測</b>して判断します。
+  軽いわざでのブラフには本物の対戦相手と同じように引っ掛かります。
   バトル中・バトル後に<b>金色のチップ</b>（あいての行動）をタップすれば、
   「ここでシールドを使われなかったら？」のように<b>あいての行動も選び直せます</b>。</p>
   <p><b>🔎 オートバトルの「最善」</b>を押して選んでからバトルスタートすると、
@@ -4567,14 +4570,15 @@ const GB_AI = {
   bluff:  { label: 'かけひき', bluff: true,  save: false, sw: false, farm: false,
     tip: 'シールドが残っているあいだは消費の軽いSPアタックを先に撃って、シールドを使わせにきます' },
   save:   { label: '温存',     bluff: false, save: true,  sw: false, farm: false,
-    tip: '小さいSPアタックにはシールドを使わず、大ダメージ(最大HPの30%以上)か倒される一撃だけ防ぎます' },
+    tip: '小さいSPアタックにはシールドを使いません。実際に飛んできたわざではなく「撃たれそうなわざ」をこちらのわざ構成とゲージから予測して判断します(軽いわざのブラフには引っ掛かります)。負けが見えている対面では受けて、シールドを後続のために残します' },
   switch: { label: 'スイッチ', bluff: false, save: false, sw: true, farm: true,
-    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPがあれば撃ってから)。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、いまの相手に有利な控えから出し直します' },
+    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPは、防がれず効く一撃のときだけ撃ってから)。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、いまの相手に有利な控えから出し直します' },
   pro:    { label: '実戦',     bluff: true,  save: true,  sw: true, farm: true,
     tip: 'かけひき＋温存＋スイッチの全部あり(いちばん人間らしい動き)' },
 };
 const GB_SWAP_CD = 90;        // 交代のクールタイム45秒(90ターン)
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
+const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
 
 // ---- じぶんのわざ(GBL模擬戦用。ロケット団のRBM・パーティ診断のPTとは別に持つ) ----
 const GBM = [null, null, null];
@@ -4735,9 +4739,14 @@ function gbPoints(turns, ctx, dec) {
       if (t.tn > cut) break;
       for (const e of t.ev[o]) {   // 相手のSPアタックが飛んできた(シールドを使うかどうか)
         if (e.full === undefined) continue;
-        if (ctx.shLeft[s] - shUsed > 0)
+        if (ctx.shLeft[s] - shUsed > 0) {
+          // hpB=被弾前のHP ／ enB=相手が撃つ直前のゲージ(あいてAIの「わざ予測」に使う。
+          // 実際に飛んできたわざで判断するとユーザーから見てインチキになるため)
+          const mvA = gbMoveByName(e.move);
           pts.push({ side: s, kind: 'sh', seq: shSeq, w: 0, tn: t.tn, spSeen: shSeq + 1,
-            mv: e.move, dmg: e.full, ko: t.state[s].hp <= 0 });
+            mv: e.move, dmg: e.full, ko: t.state[s].hp <= 0,
+            hpB: t.state[s].hp + e.full, enB: t.state[o].en + (mvA ? mvA.e : 0) });
+        }
         if (d.shieldAt.includes(shSeq + 1)) shUsed++;
         shSeq++;
       }
@@ -4908,16 +4917,27 @@ function gbPlay(picks, foes, ans, stepwise) {
     swOk[sd] = gt + GB_SWAP_CD;
     newIn[sd] = true;
   };
+  // ステータス(いまの能力変化込み・対面開始時点の近似)。AIの下読み用
+  const sbuf = (sd, idx) => {
+    const stt = PvpEngine.buildStats(D, ros[sd][idx].base);
+    const rs = st[sd][idx].resume;
+    return { ...stt, buffs: rs && rs.buffs ? rs.buffs.slice() : [0, 0] };
+  };
   // 起点づくり(farm)の下読み: いまの対面、あいてはSPを1発も撃たなくても勝てるか。
   // 勝てるならノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ(基本戦術)。
   // 対面ごとに1回だけ計算して使い回す
-  const farmCache = {};
+  const farmCache = {}, loseCache = {};
   const aiFarmWin = li => {
     if (!(li in farmCache)) {
       const R = { ...plainCfg(1, cur[1]), timing: 'shots', shotPlan: [], shotRest: null };
       farmCache[li] = PvpEngine.simulate(D, plainCfg(0, cur[0]), R, SIMOPT).winner === 1;
     }
     return farmCache[li];
+  };
+  // 後の戦況の下読み: いまの対面、あいては(SPも使って)おまかせで通して負けるか
+  const aiLosing = li => {
+    if (!(li in loseCache)) loseCache[li] = duel(cur[0], cur[1]).winner !== 1;
+    return loseCache[li];
   };
   // あいてのAIの自動回答(ansに答えがあればそちらが優先される)。
   // 下読みはどれも「対面が始まった時点の状態」で行う(対面の途中の削れまでは見ない近似)
@@ -4929,15 +4949,42 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     if (p.kind === 'sh') {
       if (!ai.save) return { a: 'use' };
-      return (p.ko || p.dmg >= GB_SHIELD_BIG * ctx.maxHp[1]) ? { a: 'use' } : { a: 'no' };
+      // インチキ防止(2026-08-18タダシさん指示): 実際に飛んできたわざでは判断しない。
+      // ユーザー側のわざ構成とゲージから「撃ってくる可能性の高いわざ」を予測して判断する
+      // (予測=倒しきれるわざがあればそれ、なければ能力変化込みの効率が高いほう。
+      //  なので軽いわざのブラフには正しく引っ掛かる)
+      const att = sbuf(0, cur[0]), dfn = sbuf(1, cur[1]);
+      const dmgOf = m => PvpEngine.damage(D, m, att, dfn);
+      const cand = ctx.spList[0].map(id => D.moves[id]).filter(m => m && m.e <= (p.enB || 0));
+      let pred = null;
+      if (cand.length) {
+        const lethal = cand.filter(m => dmgOf(m) >= (p.hpB || 0)).sort((a, b) => a.e - b.e)[0];
+        pred = lethal || cand.slice().sort((a, b) =>
+          dmgOf(b) * PvpEngine.buffAdj(b) / b.e - dmgOf(a) * PvpEngine.buffAdj(a) / a.e)[0];
+      }
+      const predDmg = pred ? dmgOf(pred) : (p.dmg || 0);
+      // 後の戦況: どうせ負けの対面なら(倒される一撃でも)受けて、シールドは後続のために残す。
+      // 控えがいないときは残す先が無いので、ふつうに判断する
+      if (benches(1).length && aiLosing(ctx.li)) return { a: 'no' };
+      if (p.hpB && predDmg >= p.hpB) return { a: 'use' };   // 倒される予測なら防ぐ
+      return predDmg >= GB_SHIELD_BIG * ctx.maxHp[1] ? { a: 'use' } : { a: 'no' };
     }
     if (p.kind === 'swap') {
       if (!ai.sw) return { a: 'stay' };
       const to = aiSwapTo(1);
       if (to == null) return { a: 'stay' };   // いまの対面で勝てる(または勝てる控えが無い)なら残る
-      // 不利対面: ためたSPがあれば撃ってから下がる(撃った直後にもう一度この質問が出る)。
-      // 無ければすぐ交代(不利な対面は長引くほど負けにつながる)
-      if (p.seq === 0 && ctx.spList[1].length && ctx.enAt[1] >= ctx.cost[1]) return { a: 'stay' };
+      // 不利対面: 「撃ってから交代」は状況判断(2026-08-18タダシさん指示)。
+      // ゲージは交代しても残るので、撃つのは「ちゃんと当たって効く」ときだけ:
+      //  - 相手にシールドが残っている(防がれる)なら撃たずにすぐ交代
+      //  - 当ててもダメージが薄い(相手の現在HPの25%未満)なら撃たずにすぐ交代
+      if (p.seq === 0 && ctx.spList[1].length && ctx.enAt[1] >= ctx.cost[1] && shLeft[0] === 0) {
+        const att = sbuf(1, cur[1]), dfn = sbuf(0, cur[0]);
+        const rs0 = st[0][cur[0]].resume;
+        const myHp = rs0 ? rs0.hp : ctx.maxHp[0];
+        const best = Math.max(0, ...ctx.spList[1].map(id => D.moves[id])
+          .filter(m => m && m.e <= ctx.enAt[1]).map(m => PvpEngine.damage(D, m, att, dfn)));
+        if (best >= myHp || best >= GB_DUMP_WORTH * myHp) return { a: 'stay' };
+      }
       return { a: 'toq', to };
     }
     if (p.kind === 'next') {
