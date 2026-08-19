@@ -316,9 +316,11 @@ SI_MAX = max(e['si'] for e in entries)
 # タイプは素の値が -7〜11 と小さく、他のタブと桁がそろわないので 0〜100 に引き伸ばす
 # （最小を0・最大を100にするだけの一次変換なので、並び順は変わらない）
 ST_MIN, ST_MAX = min(e['st'] for e in entries), max(e['st'] for e in entries)
+SY_MAX = max(e['sy'] for e in entries)
 for e in entries:
     e['si'] = round(100.0 * e['si'] / SI_MAX, 1)
     e['st'] = round(100.0 * (e['st'] - ST_MIN) / (ST_MAX - ST_MIN), 1)
+    e['sy'] = round(100.0 * e['sy'] / SY_MAX, 1)
 
 entries.sort(key=lambda x: -x['total'])
 out = {
