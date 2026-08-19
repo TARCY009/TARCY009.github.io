@@ -266,7 +266,7 @@ document.getElementById('app').innerHTML = `
 
 <!-- GBL模擬戦(3匹×3匹の対人戦)。じぶん3枠はパーティ診断・ロケット団と共通のPT -->
 <div class="multi" id="mock" style="display:none">
-  <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の行動の決め方。SPアタック・シールド・交代の判断のクセを選びます。どの設定でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいてのAI</span>
+  <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の強さ。EASY=反応がおそく、シールドをすぐ使う入門向け ／ NORMAL=実戦の基本戦術で戦う標準 ／ HARD=こちらのポケモンとわざを最初から知っていて、ブラフも効かない最強。どの難易度でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいて難易度</span>
     <div class="opts gbai" id="gbai"></div></div>
   <div class="rkteams">
     <div class="rkteamcol">
@@ -1011,12 +1011,21 @@ ${PAGE_ROCKET ? '' : `
     <li><b>自分の能力が下がるSPアタック</b>（ブレイブバードなど）を撃った直後は「交代する？」と聞きます。
     下がった能力は交代で消えるので、「ためて連射して下がる」の実戦の動きを再現できます</li>
   </ul>
-  <p><b>あいての行動はAIが自動で判断</b>します。上の<b>「あいてのAI」</b>で判断のクセ
-  （きほん／かけひき＝ブラフしてくる／温存＝小さいSPにシールドを使わない／<b>スイッチ＝基本戦術の逃げ回り</b>／実戦＝全部あり）を選べます。
-  スイッチの中身は実戦の基本どおりです: <b>出し負けたらすぐ交代</b>（ためたSPは、防がれず効く一撃のときだけ撃ってから）・
-  <b>勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ</b>（起点づくり）・
-  <b>裏に出しても有利にならないときは、SPを1発入れて削ってから下がる</b>。
-  不利な相手から逃げ回りながら戦ってきます。</p>
+  <p><b>あいての行動はAIが自動で判断</b>します。上の<b>「あいて難易度」</b>で強さを選べます:</p>
+  <ul>
+    <li><b>EASY（やさしい）</b>: はじめての人向け。SPアタックは撃てるようになっても<b>ひと呼吸おくれて</b>撃ち、
+    2本持っていても<b>消費の軽いほうしか使いません</b>。シールドは残っていれば必ず使うので
+    <b>軽いわざのブラフにも引っ掛かり</b>、自分からは交代しません</li>
+    <li><b>NORMAL（標準・既定）</b>: 実戦の基本戦術で戦う相手。<b>出し負けたらすぐ交代</b>
+    （ためたSPは、防がれず効く一撃のときだけ撃ってから）・
+    <b>勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ</b>（起点づくり）・
+    <b>裏に出しても有利にならないときは、SPを1発入れて削ってから下がる</b>・
+    ブラフやシールドの温存も使います。不利な相手から逃げ回りながら戦ってきます</li>
+    <li><b>HARD（最強）</b>: <b>こちらの3匹とわざ構成を最初から全部知っている</b>相手。
+    シールドは実際に飛んでくるわざのダメージで判断するので<b>ブラフが効きません</b>。
+    戦術はNORMALと同じ基本戦術ですが、控えの読みが予測ではなく実物なので、判断に迷いがありません</li>
+  </ul>
+  <p>NORMAL・HARDの細かい判断基準は次のとおりです。</p>
   <p><b>対面の頭の交代には細かい基準があります</b>: <b>五分の対面</b>でも控えの2匹がどちらもこちらの
   ポケモンに強ければ、<b>対応力の高いほうへ即交代</b>して有利を取りにきます。逆に<b>不利な対面</b>でも、
   控えの片方が明らかに弱いときは<b>交代せず残って戦い</b>ます（残る1匹の答えを安売りしないため）。
@@ -1030,11 +1039,13 @@ ${PAGE_ROCKET ? '' : `
   さらに、<b>こちらが交代できないあいだ（交代直後の45秒）は五分の対面でも有利な控えを差し込み</b>、
   こちらの交代に合わせて有利なポケモンを出し返し、<b>デバフを受けたら不利・五分の対面なら交代で下げ消し</b>します
   （有利な対面ならそのまま戦い、勝てる控えがいなければ残ります）。</p>
-  <p>AIは<b>ずるをしません</b>: シールドを使うかどうかは、実際に飛んできたわざではなく
+  <p>EASYとNORMALのAIは<b>ずるをしません</b>: シールドを使うかどうかは、実際に飛んできたわざではなく
   「こちらのわざ構成とゲージから撃たれそうなわざ」を<b>予測</b>して判断します。
   軽いわざでのブラフには本物の対戦相手と同じように引っ掛かります。
-  またAIは<b>まだ場に出ていないこちらのポケモンを知りません</b>（実戦と同じで、残りの数は分かっても中身は分かりません）。
-  そのかわり、<b>採用率とパーティの相性から「残りは何がいそうか」を予測</b>して、迷ったときの判断材料にします。
+  また<b>まだ場に出ていないこちらのポケモンを知りません</b>（実戦と同じで、残りの数は分かっても中身は分かりません）。
+  そのかわりNORMALは、<b>採用率とパーティの相性から「残りは何がいそうか」を予測</b>して、迷ったときの判断材料にします。
+  <b>HARDだけはこのルールの例外</b>で、こちらの手の内（3匹・わざ・飛んでくるわざのダメージ）を
+  すべて知ったうえで戦ってきます。
   シールドには<b>チームの文脈</b>も見ます: あとで戻ってくるこちらのポケモンに勝てるAIの控えが
   1匹しかいないときは、その1匹を温存するために<b>いまの対面をシールドを使ってでも確実に突破</b>しにきます
   （<b>使わなくても勝てる対面では使いません</b>。あくまで「使えば取れる対面で、こちらの動きに合わせて使う」動きです）。
@@ -4596,35 +4607,41 @@ function rbRender(body, bt, picks, foes, extra) {
 //  - 手動交代では、相手の打ちかけのノーマルアタック1発が交代先に入る(開幕交代と同じ扱い)。
 //    自分の打ちかけのノーマルアタックは失われる
 //  - あいても人間なので、あいて側にも決断(SP・シールド・交代)がある。
-//    既定は「あいてのAI」(GB_AI・性格を選べる)が自動で答え、
+//    既定は「あいて難易度」(GB_AI・EASY/NORMAL/HARD)のAIが自動で答え、
 //    タイムラインのチップをタップすれば「ここでシールドを使わなかったら？」を試せる
 // 再生まわりの状態(RB/RBV/RBUI)と決断の共有コーデック(rb=)はロケット団と共用する
 // (ロケット団は/rocket/専用・この画面は/gbl/専用なので、同じページで混ざることはない)
 // ==================================================================
-// 既定は**実戦**(2026-08-18タダシさん報告で変更)。既定が「きほん」だと、こちらが開幕交代しても
-// あいてが合わせて交代してこず「相手が不利なまま戦っている」ように見えてしまう
-// (きほんは仕様どおり自分からは交代しない設定。模擬戦は本番の練習なので、既定は人間らしい動きにする)
-const MK = { ai: 'pro', leadSwap: false };
-try { const v = localStorage.getItem('gbl_mock_ai'); if (v) MK.ai = v; } catch (e) {}
-const saveMkAi = () => { try { localStorage.setItem('gbl_mock_ai', MK.ai); } catch (e) {} };
-// あいてのAIの性格(2026-08-18タダシさん指示「AIの設定を3〜5つ作れるといいね」):
+// あいて難易度(2026-08-20タダシさん指示で、5種の「性格」から EASY/NORMAL/HARD の3段階へ作り替えた)。
+// 既定は**NORMAL**＝これまでの「実戦」AIそのまま(かけひき＋温存＋スイッチの全部あり)。
+// フラグの意味:
 //  bluff=軽いSPでシールドを釣る ／ save=小さいSPにはシールドを使わない ／
-//  sw=基本戦術の「逃げ回り」(2026-08-18タダシさん指示で追加。不利な相手との対面は長引くほど負けに
+//  sw=基本戦術の「逃げ回り」(2026-08-18タダシさん指示。不利な相手との対面は長引くほど負けに
 //  つながるので、①出し負けたらすぐ交代 ②ためたSPがあれば撃ってから交代 ③倒されたら、いまの相手に
 //  いちばん有利な控え(倒した起点の初手など)を出し直す) ／
-//  farm=起点づくり(SPを撃たなくても勝てる対面ではノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ)
+//  farm=起点づくり(SPを撃たなくても勝てる対面ではノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ) ／
+//  lag=EASY専用: SPアタックの反応がひと呼吸おくれて、消費の軽いわざしか撃たない ／
+//  omni=HARD専用: **ユーザーの3匹とわざ構成を最初から知っている**(「AIはずるをしない」恒久ルールの
+//  明示的な例外。2026-08-20タダシさん指示「常にユーザーの手を知った上で最適な行動を取る」) ／
+//  truth=HARD専用: シールドは予測ではなく**実際に飛んでくるわざのダメージ**で判断する(ブラフが効かない)
 const GB_AI = {
-  basic:  { label: 'きほん',   bluff: false, save: false, sw: false, farm: false,
-    tip: 'シールドは残っていれば必ず使い、自分からは交代しません(いちばん素直な動き)' },
-  bluff:  { label: 'かけひき', bluff: true,  save: false, sw: false, farm: false,
-    tip: 'シールドが残っているあいだは消費の軽いSPアタックを先に撃って、シールドを使わせにきます' },
-  save:   { label: '温存',     bluff: false, save: true,  sw: false, farm: false,
-    tip: '小さいSPアタックにはシールドを使いません。実際に飛んできたわざではなく「撃たれそうなわざ」をこちらのわざ構成とゲージから予測して判断します(軽いわざのブラフには引っ掛かります)。負けが見えている対面では受けてシールドを後続のために残し、逆に「戻ってくる相手への答えが控えに1匹しかない」ときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
-  switch: { label: 'スイッチ', bluff: false, save: false, sw: true, farm: true,
-    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(開幕もふくむ。あいてが開幕に交代したときは、こちらも1秒後に交代するか選べます)。ためたSPは、防がれず効く一撃のときだけ撃ってから下がります。五分の対面でも控えの2匹がどちらもこちらの初手に強ければ、対応力の高いほうへ即交代。逆に不利でも控えの片方が明らかに弱いなら残って戦い、そのときシールドは使いません。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、次に出すポケモンを効率で選びます(相手のゲージが乏しければ、あえて有利でないポケモンを起点にしてゲージをため、有利なポケモンは温存。まだ見せていない3匹目も温存します)。こちらが交代できないあいだ(クールタイム中)は五分の対面でも有利な控えを差し込み、デバフを受けたら不利・五分の対面なら交代で下げ消しします。裏に出しても有利にならないときは、SPを1発入れて削ってから下がることもあります。戻ってくる相手への答えが控えに1匹しかないときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
-  pro:    { label: '実戦',     bluff: true,  save: true,  sw: true, farm: true,
-    tip: 'かけひき＋温存＋スイッチの全部あり(いちばん人間らしい動き)' },
+  easy: { label: 'EASY', jp: 'やさしい', bluff: false, save: false, sw: false, farm: false, lag: true,
+    tip: 'はじめての人向け。SPアタックが撃てるようになってもひと呼吸おくれて撃ち、2本持っていても消費の軽いほうしか使いません。シールドは飛んできたSPアタックに残っていれば必ず使い(軽いわざのブラフにも引っ掛かります)、自分からは交代しません' },
+  normal: { label: 'NORMAL', jp: '標準', bluff: true, save: true, sw: true, farm: true,
+    tip: '実戦の基本戦術で戦う標準の相手(これまでの「実戦」AIと同じ)。かけひき(ブラフ)・シールドの温存・出し負けたらすぐ交代・起点づくりを全部使いますが、こちらのまだ見せていないポケモンは知らない、という実戦と同じ情報量で戦います' },
+  hard: { label: 'HARD', jp: '最強', bluff: true, save: true, sw: true, farm: true, omni: true, truth: true,
+    tip: 'こちらの3匹とわざ構成を最初から全部知っている最強の相手。シールドは実際に飛んでくるわざのダメージで判断するのでブラフは効きません。控えの読みも予測ではなく実物で行い、常にこちらの手の内を知った上で最適な行動を取ります' },
 };
+const MK = { ai: 'normal', leadSwap: false };
+// 旧「あいてのAIの性格」(basic/bluff/save/switch/pro)の保存値・共有リンクは難易度へ読み替える
+// (きほん→EASY・それ以外→NORMAL。かけひき/温存/スイッチはNORMALの部分集合なのでNORMALへ寄せる)
+const GB_AI_OLD = { basic: 'easy', bluff: 'normal', save: 'normal', switch: 'normal', pro: 'normal' };
+try {
+  const v = localStorage.getItem('gbl_mock_ai');
+  if (v) MK.ai = GB_AI_OLD[v] || v;
+  if (!GB_AI[MK.ai]) MK.ai = 'normal';
+} catch (e) {}
+const saveMkAi = () => { try { localStorage.setItem('gbl_mock_ai', MK.ai); } catch (e) {} };
 const GB_SWAP_CD = 90;        // 交代のクールタイム45秒(90ターン)
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
@@ -5022,10 +5039,10 @@ function gbAnsLabel(p, a) {
 // ---- 通しの計算 ----
 // picks/foes = [{ m, base, pol:{fast, charged[]}, name }]。わざは画面の欄の具体値で固定
 // (表示と結果を食い違わせない)。ans=決断の答え(RB.ans)。stepwise=1手ずつ(じぶんの決断で止まる)。
-// あいての決断は止まらず、AIの性格(GB_AI)が自動で答える(ansにあればそちらを優先)
+// あいての決断は止まらず、あいて難易度(GB_AI)のAIが自動で答える(ansにあればそちらを優先)
 function gbPlay(picks, foes, ans, stepwise) {
   ans = ans || {};
-  const ai = GB_AI[MK.ai] || GB_AI.basic;
+  const ai = GB_AI[MK.ai] || GB_AI.normal;
   const ros = [picks, foes];
   const st = ros.map(r => r.map(() => ({ alive: true, resume: null })));
   const cur = [0, 0], shLeft = [2, 2], swOk = [0, 0];
@@ -5033,9 +5050,12 @@ function gbPlay(picks, foes, ans, stepwise) {
   const koIn = [false, false];    // そのうち「倒されて出し直した」側(あいての交代判断を1秒遅らせる)
   // **AIは場に出ていないユーザーのポケモンを知らない**(2026-08-18タダシさん指示・恒久ルール)。
   // 一度でも場に出たポケモンだけ「見えている」として、AIの下読みに使ってよい
-  // (何匹残っているかは分かるが、それが何かは分からない、が実戦の情報量)
+  // (何匹残っているかは分かるが、それが何かは分からない、が実戦の情報量)。
+  // **HARD(omni)だけはこのルールの明示的な例外**(2026-08-20タダシさん指示):
+  // ユーザーの手の内を最初から知っているので、控えも実物で下読みする
   const seen = [new Set(), new Set()];
-  const revealed0 = () => benches(0).filter(k => seen[0].has(k));   // 見えているユーザーの控え
+  const revealed0 = () => ai.omni ? benches(0)
+    : benches(0).filter(k => seen[0].has(k));   // 見えているユーザーの控え
   let base = 0, pending = null;
   // 開幕交代(0秒)。両者が同時に決めるので、おたがい相手の選択は見えない
   const leadPts = [null, null], leadHits = [null, null];
@@ -5282,6 +5302,17 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 見えているポケモンの組み合わせごとに1回だけ作って使い回す
   const predCache = {};
   const aiPredict = () => {
+    // HARD(omni): 裏読みではなく**実物の控え**をそのまま使う(手の内を知っているので予測が要らない)。
+    // わざも画面の欄の具体値。確率は等分(どれを出してくるかまでは決め打ちしない)
+    if (ai.omni) {
+      const rest = benches(0);
+      const ck = 'omni:' + rest.join(',');
+      if (!(ck in predCache)) predCache[ck] = rest.map(i => ({
+        k: picks[i].m.key, s: !!picks[i].m.shadow, f: picks[i].pol.fast,
+        c1: (picks[i].pol.charged || [])[0] || null, c2: (picks[i].pol.charged || [])[1] || null,
+        p: 1 / rest.length }));
+      return predCache[ck];
+    }
     const ck = [...seen[0]].sort().join(',');
     if (ck in predCache) return predCache[ck];
     const shownIdx = [...seen[0]];
@@ -5327,7 +5358,8 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 予測した相手に対する強さ(シミュではなく軽い式。優先度の低いタイブレークなので精度より速さ)
   const predCache2 = {};
   const aiPredScore = k => {
-    const ck = k + '|' + [...seen[0]].sort().join(',');
+    // omniのときは「見えた順」ではなく控えの実物でキーを作る(倒れて控えが減ったら読み直す)
+    const ck = k + '|' + (ai.omni ? 'omni:' + benches(0).join(',') : [...seen[0]].sort().join(','));
     if (ck in predCache2) return predCache2[ck];
     const list = aiPredict();
     const P = ros[1][k];
@@ -5458,6 +5490,15 @@ function gbPlay(picks, foes, ans, stepwise) {
       ov0: { hp: p.st0.hp, en: p.st0.en, buffs: p.st0.b.slice(), stall: 0, _sh: p.st0.sh },
       ov1: { hp: p.st1.hp, en: p.st1.en, buffs: p.st1.b.slice(), stall: 0, _sh: p.st1.sh } } : null;
     if (p.kind === 'sp') {
+      // EASY(lag): 反応がひと呼吸おくれる＝撃てるようになってもノーマルアタックを1発はさみ、
+      // 撃つのは**消費の軽いわざだけ**(2本持っていても大技を使わない入門向けの相手)。
+      // タイミングをエンジンの最適(auto)に任せず、この位置で名指しして撃つ
+      if (ai.lag) {
+        if ((p.w || 0) < 1) return { a: 'wait', n: 1 };
+        const av = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] }))
+          .filter(x => x.m && x.m.e <= (p.en != null ? p.en : 0)).sort((a, b) => a.m.e - b.m.e)[0];
+        return av ? { a: 'fire', mv: av.id } : { a: 'auto' };
+      }
       // **確定で自分の能力が上がるSPは即打ち**(2026-08-19タダシさん指示)。
       // 上がった能力はその対面のあいだ効き続けるので、早く撃つほど得
       // (例: オコリザルの「ふんどのこぶし」=確定で攻撃+1。ノーマルアタックが2ターンなら
@@ -5504,18 +5545,24 @@ function gbPlay(picks, foes, ans, stepwise) {
       // インチキ防止(2026-08-18タダシさん指示): 実際に飛んできたわざでは判断しない。
       // ユーザー側のわざ構成とゲージから「撃ってくる可能性の高いわざ」を予測して判断する
       // (予測=倒しきれるわざがあればそれ、なければ能力変化込みの効率が高いほう。
-      //  なので軽いわざのブラフには正しく引っ掛かる)
-      const att = { ...sbuf(0, cur[0]), buffs: p.st0 ? p.st0.b.slice() : sbuf(0, cur[0]).buffs };
-      const dfn = { ...sbuf(1, cur[1]), buffs: p.st1 ? p.st1.b.slice() : sbuf(1, cur[1]).buffs };
-      const dmgOf = m => PvpEngine.damage(D, m, att, dfn);
-      const cand = ctx.spList[0].map(id => D.moves[id]).filter(m => m && m.e <= (p.enB || 0));
-      let pred = null;
-      if (cand.length) {
-        const lethal = cand.filter(m => dmgOf(m) >= (p.hpB || 0)).sort((a, b) => a.e - b.e)[0];
-        pred = lethal || cand.slice().sort((a, b) =>
-          dmgOf(b) * PvpEngine.buffAdj(b) / b.e - dmgOf(a) * PvpEngine.buffAdj(a) / a.e)[0];
+      //  なので軽いわざのブラフには正しく引っ掛かる)。
+      // **HARD(truth)だけは明示的な例外**(2026-08-20タダシさん指示):
+      // 実際に飛んでくるわざのダメージそのもので判断する＝**ブラフが効かない**
+      let predDmg;
+      if (ai.truth) predDmg = p.dmg || 0;
+      else {
+        const att = { ...sbuf(0, cur[0]), buffs: p.st0 ? p.st0.b.slice() : sbuf(0, cur[0]).buffs };
+        const dfn = { ...sbuf(1, cur[1]), buffs: p.st1 ? p.st1.b.slice() : sbuf(1, cur[1]).buffs };
+        const dmgOf = m => PvpEngine.damage(D, m, att, dfn);
+        const cand = ctx.spList[0].map(id => D.moves[id]).filter(m => m && m.e <= (p.enB || 0));
+        let pred = null;
+        if (cand.length) {
+          const lethal = cand.filter(m => dmgOf(m) >= (p.hpB || 0)).sort((a, b) => a.e - b.e)[0];
+          pred = lethal || cand.slice().sort((a, b) =>
+            dmgOf(b) * PvpEngine.buffAdj(b) / b.e - dmgOf(a) * PvpEngine.buffAdj(a) / a.e)[0];
+        }
+        predDmg = pred ? dmgOf(pred) : (p.dmg || 0);
       }
-      const predDmg = pred ? dmgOf(pred) : (p.dmg || 0);
       // ---- 下読みは「この一撃をどう処理したあと」の状態で行う(2026-08-19タダシさん指摘) ----
       // blockOv=防いだあと(ダメージ1) ／ takeOv=受けたあと(予測ダメージ)。
       // 「どうせ負け」の判定は**防いでも負けるか**で見る(受けたあとで見ると、
@@ -5649,7 +5696,7 @@ function gbPlay(picks, foes, ans, stepwise) {
           ans: a, auto: !ans[key] };
       }
     }
-    // あいて: 自分から交代するAI(スイッチ・実戦)のときだけ。チップをタップして選び直せる
+    // あいて: 自分から交代するAI(NORMAL・HARD)のときだけ。チップをタップして選び直せる
     if (!pending && ai.sw && foes.length > 1) {
       const key = gbKey(0, 1, 'lead', 0, 0);
       const lctx = { li: 0, base: 0, ros, swTo: [benches(0), benches(1)] };
@@ -5766,9 +5813,11 @@ function gbPlay(picks, foes, ans, stepwise) {
         // 両方が同時に倒れたときは、AIはユーザーが次に何を出すか**分からない**ので読み合いにならない。
         // 完全な運まかせなので**2分の1のコイントス**にする(2026-08-18タダシさん指示)。
         // ただし決断を1つ選ぶたびに1ターン目から回し直す作りなので、**同じ場面なら必ず同じ結果**に
-        // なる決め方(場面から作るハッシュ)にしないと、選び直すたびに勝手に変わってしまう
+        // なる決め方(場面から作るハッシュ)にしないと、選び直すたびに勝手に変わってしまう。
+        // **HARD(omni)は例外**: ユーザーの選択(この時点でcur[0]に入っている)を見てから、
+        // それに合わせて出す(手の内おみとおしの難易度なのでコイントスにしない)
         const a = ans[key] || (stepwise && s === 0 ? null
-          : (s === 1 ? (down[0] ? { a: 'to', to: rest[gbCoin(key + rest.join(',')) % rest.length] }
+          : (s === 1 ? ((down[0] && !ai.omni) ? { a: 'to', to: rest[gbCoin(key + rest.join(',')) % rest.length] }
                                 : aiAnswer({ kind: 'next', side: 1 }, nctx))
                      : RB_AUTO.next));
         const pt = { kind: 'next', side: s, seq: 0, w: 0, key, tn: res.turns, gt: base, ctx: nctx,
@@ -6881,7 +6930,7 @@ function updateUrl() {
   if (cup) qp.cup = cup.slug;
   if (mode !== 'duel' && !PAGE_ROCKET) qp.md = mode;
   if (mode === 'mock') {   // GBL模擬戦の設定(じぶんのパーティは端末内保存なのでURLには入れない)
-    if (MK.ai !== 'basic') qp.gai = MK.ai;
+    if (MK.ai !== 'normal') qp.gai = MK.ai;   // 既定(NORMAL)以外のときだけ書く
     if (MK.leadSwap) qp.gls = 1;   // 開幕交代
     if (!RB.step) qp.rbs = 0;      // 見かた(結果だけ)。ロケット団の模擬戦と同じパラメータ
     const t = [0, 1, 2].filter(i => GBT[i]).map(i =>
@@ -7256,8 +7305,12 @@ document.getElementById('copyUrl').onclick = async () => {
     const [key, fast, c1] = s.split('~');
     if (D.pokemon[key]) RKT[i] = { key, fast: fast || null, c1: c1 || null };
   });
-  // GBL模擬戦の復元(あいての3枠・AIの性格・開幕交代)
-  if (GB_AI[q.get('gai')]) MK.ai = q.get('gai');
+  // GBL模擬戦の復元(あいての3枠・あいて難易度・開幕交代)。
+  // 旧リンクの gai=basic〜pro は難易度へ読み替える(GB_AI_OLD)
+  if (q.get('gai')) {
+    const gv = GB_AI_OLD[q.get('gai')] || q.get('gai');
+    if (GB_AI[gv]) MK.ai = gv;
+  }
   if (q.get('gls') === '1') MK.leadSwap = true;
   if (q.get('gt')) q.get('gt').split(',').slice(0, 3).forEach((s, i) => {
     const [key, sh, fast, c1, c2] = s.split('~');
@@ -7291,13 +7344,13 @@ document.getElementById('copyUrl').onclick = async () => {
   };
   syncPtAuto();
   buildFoeSlots();
-  // GBL模擬戦: じぶん3枠(PT共有・わざはGBM)とあいて3枠(GBT)・あいてのAIの性格チップ
+  // GBL模擬戦: じぶん3枠(PT共有・わざはGBM)とあいて3枠(GBT)・あいて難易度タブ
   buildPartySlots(document.querySelector('#mock .myslots'), 'gbm');
   buildGbFoeSlots();
   const aiBox = document.getElementById('gbai');
   if (aiBox) {
     aiBox.innerHTML = Object.keys(GB_AI).map(k =>
-      `<button data-v="${k}" aria-pressed="${MK.ai === k}" title="${GB_AI[k].tip}">${GB_AI[k].label}</button>`).join('');
+      `<button data-v="${k}" aria-pressed="${MK.ai === k}" title="${GB_AI[k].tip}"><b>${GB_AI[k].label}</b><small>${GB_AI[k].jp}</small></button>`).join('');
     aiBox.querySelectorAll('button').forEach(b => b.onclick = () => {
       MK.ai = b.dataset.v; saveMkAi();
       aiBox.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === MK.ai));

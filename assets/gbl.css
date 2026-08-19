@@ -1099,12 +1099,42 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 }
 
 /* ==== GBL模擬戦(/gbl/ モード 'mock')。作りはロケット団の模擬戦と共通で、ここは差分だけ ==== */
-.gbaibar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.gbaibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 2px}
 .gbaibar .lbl{font-size:.7rem;color:var(--sub);font-weight:700}
-.gbai{flex:1;min-width:0;flex-wrap:wrap}
-.gbai button{flex:0 1 auto;padding:5px 10px;font-size:.72rem;font-weight:700}
-.gbai button[aria-pressed="true"]{background:linear-gradient(160deg,#ffe9a3 0%,#ffd54a 45%,#c99a12 100%);
-  border-color:#ffd54a;color:#2b2305;box-shadow:0 4px 12px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+/* あいて難易度(EASY/NORMAL/HARD)。他のタブよりひと目立ちさせる特別デザイン(2026-08-20タダシさん指示):
+   3色のグラデーションの縁取りで1つのまとまりに見せ、選択中はその難易度の色で点灯して光の帯が流れる */
+.gbai{flex:0 1 auto;min-width:0;gap:4px;padding:4px;border-radius:14px;
+  border:1px solid transparent;
+  background:linear-gradient(var(--bg2),var(--bg2)) padding-box,
+    linear-gradient(120deg,#3ddc84 0%,#43e0ff 50%,#ff5470 100%) border-box;
+  box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.gbai button{flex:0 1 auto;display:flex;flex-direction:column;align-items:center;gap:0;
+  padding:5px 14px 6px;border-radius:10px;color:var(--dc);opacity:.8;
+  background:var(--tab);border:1px solid var(--line);
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
+  transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
+.gbai button b{font-size:.76rem;font-weight:900;letter-spacing:.1em;line-height:1.25}
+.gbai button small{font-size:.55rem;font-weight:700;letter-spacing:.06em;opacity:.8;line-height:1.2}
+.gbai button:hover{opacity:1;transform:translateY(-1px)}
+/* 難易度ごとの色: EASY=緑(やさしい) / NORMAL=水色(標準・バトルの基調色) / HARD=赤(最強・危険) */
+.gbai button[data-v="easy"]{--dc:#7fe6a8;--d1:#c8ffdd;--dm:#2fcf72;--d2:#0d7a3e;--dt:#06341a;--dg:rgba(61,220,132,.42)}
+.gbai button[data-v="normal"]{--dc:#7fd7ff;--d1:#c9f4ff;--dm:#17b0dd;--d2:#0a6c94;--dt:#042330;--dg:rgba(67,224,255,.42)}
+.gbai button[data-v="hard"]{--dc:#ff8f9e;--d1:#ffc2a1;--dm:#e6373f;--d2:#66103a;--dt:#fff;--dg:rgba(255,84,112,.5)}
+:root.light .gbai button[data-v="easy"]{--dc:#168a4a}
+:root.light .gbai button[data-v="normal"]{--dc:#0b7fa0}
+:root.light .gbai button[data-v="hard"]{--dc:#c62b46}
+.gbai button[aria-pressed="true"]{opacity:1;color:var(--dt);border-color:var(--d1);transform:translateY(-1px);
+  background:linear-gradient(160deg,var(--d1) 0%,var(--dm) 45%,var(--d2) 100%);
+  box-shadow:0 5px 16px var(--dg),inset 0 1px 0 rgba(255,255,255,.6);
+  position:relative;overflow:hidden}
+.gbai button[aria-pressed="true"] small{opacity:1}
+/* 選択中は光の帯がひとすじ流れる(派手にしすぎない) */
+.gbai button[aria-pressed="true"]::after{content:"";position:absolute;top:0;bottom:0;left:-70%;width:45%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-18deg);animation:gdshine 3.4s ease-in-out infinite;pointer-events:none}
+@keyframes gdshine{0%{left:-70%}55%,100%{left:135%}}
+@media (prefers-reduced-motion:reduce){.gbai button[aria-pressed="true"]::after{animation:none;display:none}}
+@media (max-width:560px){.gbai{flex:1 1 100%;display:flex}.gbai button{flex:1;padding:5px 4px}}
 /* あいての行動のチップ・決断ウィンドウは金色(あいて側の色)で見分ける */
 .fchip.foe{border-color:rgba(255,213,74,.45)}
 .fchip.foe:hover{border-color:var(--gold)}
