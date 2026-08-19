@@ -78,6 +78,9 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .gtabs{margin-top:10px}
 .gtabs.modes{margin-top:14px}
 .modes .gseg button{font-size:.9rem;padding:10px 22px}
+/* 並び替えの5択。項目が多いので左右の余白は詰める(狭い画面ではさらに詰めて1行に収める) */
+.sorts .gseg button{padding:9px 10px}
+@media (max-width:560px){ .sorts .gseg button{padding:9px 2px;font-size:.76rem} }
 .detail .off{opacity:.45}
 /* 文字を減らすために画面から外した補足は、消さずに隠しておく
    （のちに「説明ありモード」を作るときは、ルート要素に explain を付けるだけで一斉に出せる） */
@@ -151,6 +154,16 @@ footer a{color:var(--accent2)}
   </div>
 </div>
 
+<div class="gtabs sorts">
+  <div class="gseg">
+    <button id="sTotal" class="t-blue" aria-pressed="true" title="合計ポイントの高い順に並べます">総合</button>
+    <button id="sPb" class="t-green" aria-pressed="false" title="耐久ポイント（HP×防御の硬さ）だけで並べます">耐久</button>
+    <button id="sPt" class="t-cyan" aria-pressed="false" title="かくとうへの相性だけで並べます。同じ相性のポケモンは同順位です">タイプ</button>
+    <button id="sPy" class="t-shadow" aria-pressed="false" title="やる気の下がりにくさだけで並べます。同じCP帯のポケモンは同順位です">やる気</button>
+    <button id="sPi" class="t-gold" aria-pressed="false" title="迎撃ポイント（わざ1発の威力）だけで並べます。押すと「迎撃込み」に切り替わります">迎撃</button>
+  </div>
+</div>
+
 <div class="gtabs one">
   <button id="fDw" class="t-red" aria-pressed="false" title="二重弱点を持つポケモンもランキングに含めます（ふだんは除外しています）">二重弱点も</button>
 </div>
@@ -181,6 +194,13 @@ footer a{color:var(--accent2)}
     <li><b>迎撃</b>（0〜8点）＝ ノーマルアタック1発の威力（SPアタックは低い比重）。いちばん効きません</li>
   </ul>
   <p><b>基本</b> ＝ 耐久＋タイプ＋やる気。<b>迎撃込み</b> ＝ これに迎撃を足した総合値です。</p>
+  <h4>並び替え</h4>
+  <p><b>総合</b>のほか、<b>耐久・タイプ・やる気・迎撃</b>の項目ごとに並べ替えられます。項目を選ぶと、
+    右の大きな数字とバーがその項目の値に変わり、合計は「総合 ◯◯（◯位）」として下に出ます。
+    <b>迎撃</b>を選ぶと自動で「迎撃込み」に切り替わります。</p>
+  <p><b>同じポイントのポケモンは同順位</b>です（重なったぶんだけ次の順位を飛ばします）。
+    タイプとやる気は取りうる値が少ないので、同点1位が何十匹も並びます。
+    同点の順位には金・銀・銅は付けず、同点どうしは総合ポイントの高い順に並べています。</p>
   <p>かくとうだけを見るのは、ジムを攻撃しに来る顔ぶれが入れ替わっても<b>かくとうが最大勢力という性質は変わらない</b>ためです。
     細かいタイプ相性まで見ると、攻撃側の集計を人手で更新し続ける必要が出てしまいます。</p>
   <h4>おすすめのわざ構成</h4>
@@ -209,16 +229,44 @@ footer a{color:var(--accent2)}
   const emptyEl = document.getElementById('empty');
   const q = document.getElementById('q');
   const fDw = document.getElementById('fDw');
-  let includeDw = false, query = '', shown = 50, withInt = false;
+  let includeDw = false, query = '', shown = 50, withInt = false, sortKey = 'total';
   const PAGE = 50;
   const totalOf = e => e.pb + e.pt + e.py + (withInt ? e.pi : 0);
+  // 並び替えの項目。色は下のバー・凡例とそろえる(タブの点灯色も同じ)
+  const SORTS = {
+    total:{ lb:'ポイント', c:'var(--accent)',  ti:'' },
+    pb:   { lb:'耐久',     c:'var(--c-bulk)',  ti:'耐久ポイント（HP×防御から出した硬さ）。この項目で並べています' },
+    pt:   { lb:'タイプ',   c:'var(--c-type)',  ti:'かくとうへの相性のポイント。この項目で並べています' },
+    py:   { lb:'やる気',   c:'var(--c-yar)',   ti:'やる気の下がりにくさのポイント。この項目で並べています' },
+    pi:   { lb:'迎撃',     c:'var(--c-int)',   ti:'迎撃ポイント（わざ1発の威力）。この項目で並べています' }
+  };
+  const valOf = (e,k) => k === 'total' ? totalOf(e) : e[k];
+  // 大きい数字は下の内訳と同じ書き方にする（やる気だけ整数、ほかは小数第1位まで）
+  const fmt = (v,k) => k === 'py' ? String(v) : v.toFixed(1);
+
+  // 同じポイントは同順位にして、重なったぶんだけ次の順位を飛ばす（1位が2匹なら次は3位）。
+  // c には順位ごとの人数を持つ（同点の順位には金・銀・銅を付けないため）
+  function rankMap(pool, vf){
+    const r = {}, c = {};
+    let i = 0, prev = null, pr = 0;
+    pool.forEach(e => {
+      i++;
+      const v = vf(e);
+      if (prev !== null && v === prev) r[e.n] = pr; else { r[e.n] = i; pr = i; prev = v; }
+      c[r[e.n]] = (c[r[e.n]] || 0) + 1;
+    });
+    return { r, c };
+  }
 
   function buildRanks(){
-    const sorted = D.entries.slice().sort((a,b)=> totalOf(b)-totalOf(a));
-    const rNoDw = {}, rAll = {};
-    let r = 0;
-    sorted.forEach((e,i)=>{ rAll[e.n]=i+1; if(!e.dw){ r++; rNoDw[e.n]=r; } });
-    return { sorted, rNoDw, rAll, max: totalOf(sorted[0]) };
+    const vf = e => valOf(e, sortKey);
+    // 同じ値のときは合計ポイントの高い順（タイプ・やる気は値の種類が少なく、大量に並ぶため）
+    const sorted = D.entries.slice().sort((a,b)=> vf(b)-vf(a) || totalOf(b)-totalOf(a));
+    const A = rankMap(sorted, vf), N = rankMap(sorted.filter(e=>!e.dw), vf);
+    // 単独の項目で並べているときも「総合◯位」を出せるように、合計の順位は別に持つ
+    const tsort = D.entries.slice().sort((a,b)=> totalOf(b)-totalOf(a));
+    const T = rankMap(tsort, totalOf), TN = rankMap(tsort.filter(e=>!e.dw), totalOf);
+    return { sorted, A, N, T, TN, max: totalOf(tsort[0]) };
   }
   let R = buildRanks();
 
@@ -228,14 +276,27 @@ footer a{color:var(--accent2)}
   function render(){
     const base = R.sorted.filter(e => includeDw || !e.dw);
     const filtered = query ? base.filter(e => e.n.includes(query)) : base;
-    const ranks = includeDw ? R.rAll : R.rNoDw;
+    const RK = includeDw ? R.A : R.N;      // いま並べている項目での順位
+    const TR = includeDw ? R.T : R.TN;     // 合計ポイントでの順位
+    const sub = sortKey !== 'total';
+    const S = SORTS[sortKey];
+    // 単独の項目で並べるときは、その項目の値でバーを描く（並び順とバーの長さを一致させる）。
+    // タイプはマイナスになるので、いちばん低い値を左端(0%)にする
+    let vlo = 0, vsp = 1;
+    if (sub) {
+      const vs = base.map(e => e[sortKey]);
+      vlo = Math.min(0, ...vs);
+      vsp = Math.max(0.1, Math.max(...vs) - vlo);
+    }
     listEl.innerHTML = '';
     const slice = filtered.slice(0, shown);
     slice.forEach(e => {
-      const rk = ranks[e.n];
+      const rk = RK.r[e.n];
       const row = document.createElement('div');
-      // 上位3件はフレームも金・銀・銅にする（rankClass と同じ判定）
-      row.className = 'row' + (query ? ' hit' : '') + (rk <= 3 ? ' m' + rk : '');
+      // 上位3件はフレームも金・銀・銅にする（rankClass と同じ判定）。
+      // ただし同点が並ぶ順位には付けない（タイプ・やる気は同点1位が100匹近くいるため）
+      const medal = rk <= 3 && RK.c[rk] === 1;
+      row.className = 'row' + (query ? ' hit' : '') + (medal ? ' m' + rk : '');
       const chips = typePairHTML(e.t.map(t => D.types_jp[t]), 18);
       const tot = totalOf(e);
       // バーの全長は「1位に対する合計の割合」。内訳はプラスの項目だけで按分する
@@ -245,24 +306,26 @@ footer a{color:var(--accent2)}
       const moves = e.cm2 ? `${e.fm} / ${e.cm} or ${e.cm2}` : `${e.fm} / ${e.cm}`;
       row.innerHTML = `
         <div class="top">
-          <div class="rank ${rankClass(rk)}">${rk}位</div>
+          <div class="rank ${medal ? rankClass(rk) : ''}">${rk}位</div>
           <div class="namebox">
             <div class="pname">${e.n} ${chips} ${e.dw ? '<span class="dwflag" title="ダメージを4倍で受けてしまう二重弱点のタイプを持っています">二重弱点</span>' : ''}</div>
             <div class="moves" title="防衛でのおすすめのわざ構成です（威力・発生の速さ・かくとう相性で選出。2本目は1本目に近い強さのときだけ併記します）。CPはPL50・個体値15のときの値です">${moves}　CP${e.cp}</div>
           </div>
-          <div class="pts" title="耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントです。内訳は下のバーと数字のとおりです"><b>${tot.toFixed(1)}</b><small>ポイント</small></div>
+          <div class="pts" title="${sub ? S.ti : `耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントです。内訳は下のバーと数字のとおりです`}"><b>${sub ? fmt(e[sortKey], sortKey) : tot.toFixed(1)}</b><small>${S.lb}</small></div>
         </div>
-        <div class="stack">
-          <i style="width:${w(e.pb)}%;background:var(--c-bulk)"></i>
-          <i style="width:${w(e.pt)}%;background:var(--c-type)"></i>
-          <i style="width:${w(e.py)}%;background:var(--c-yar)"></i>
-          ${withInt ? `<i style="width:${w(e.pi)}%;background:var(--c-int)"></i>` : ''}
+        <div class="stack">${sub
+          ? `<i style="width:${((e[sortKey]-vlo)/vsp*100).toFixed(1)}%;background:${S.c}"></i>`
+          : `<i style="width:${w(e.pb)}%;background:var(--c-bulk)"></i>
+             <i style="width:${w(e.pt)}%;background:var(--c-type)"></i>
+             <i style="width:${w(e.py)}%;background:var(--c-yar)"></i>
+             ${withInt ? `<i style="width:${w(e.pi)}%;background:var(--c-int)"></i>` : ''}`}
         </div>
         <div class="detail">
           <span>耐久 <b>${e.pb.toFixed(1)}</b></span>
           <span>タイプ <b>${e.pt.toFixed(1)}</b></span>
           <span>やる気 <b>${e.py}</b></span>
           ${withInt ? `<span>迎撃 <b>${e.pi.toFixed(1)}</b></span>` : ''}
+          ${sub ? `<span title="耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントと、その順位です">総合 <b>${tot.toFixed(1)}</b>（${TR.r[e.n]}位）</span>` : ''}
         </div>`;
       listEl.appendChild(row);
     });
@@ -274,15 +337,31 @@ footer a{color:var(--accent2)}
 
   const mBase = document.getElementById('mBase');
   const mInt = document.getElementById('mInt');
+  const SBTN = { total:'sTotal', pb:'sPb', pt:'sPt', py:'sPy', pi:'sPi' };
+  function markMode(){
+    mBase.setAttribute('aria-pressed', !withInt);
+    mInt.setAttribute('aria-pressed', withInt);
+  }
+  function markSort(){
+    for (const k in SBTN) document.getElementById(SBTN[k]).setAttribute('aria-pressed', k === sortKey);
+  }
+  function apply(){ R = buildRanks(); render(); }
   function setMode(v){
     withInt = v;
-    mBase.setAttribute('aria-pressed', !v);
-    mInt.setAttribute('aria-pressed', v);
-    R = buildRanks();
-    render();
+    // 「基本」は迎撃を使わないので、迎撃で並べていたら総合へ戻す
+    if (!v && sortKey === 'pi') sortKey = 'total';
+    markMode(); markSort(); apply();
+  }
+  function setSort(k){
+    sortKey = k;
+    // 迎撃で並べるときは「迎撃込み」に切り替える（基本では迎撃を出さないため）
+    if (k === 'pi') withInt = true;
+    shown = query ? 9999 : PAGE;
+    markMode(); markSort(); apply();
   }
   mBase.addEventListener('click', () => setMode(false));
   mInt.addEventListener('click', () => setMode(true));
+  for (const k in SBTN) document.getElementById(SBTN[k]).addEventListener('click', () => setSort(k));
   // ひらがな入力はカタカナに読み替えて絞り込み(確定時は入力欄の値もカタカナ化)
   const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
   q.addEventListener('compositionend', () => {
