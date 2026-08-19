@@ -89,20 +89,29 @@ FIGHT_SCORE = [
     (2.56, -8),  # 弱点(×1.6)
     (99, -14),   # 二重弱点(×2.56)
 ]
-# ── 迎撃P（2026-08-14・タダシさん指示で中身を作り直した）──────────────
-#   迎撃の生値 = 攻撃実数値 ×（ノーマル1発の威力 ＋ SP1発の威力 × 速さ × SP_WEIGHT）
-#     ・ノーマル・SPとも「1発の威力」がいちばん高いわざを選ぶ（タイプ一致1.2倍込み）
-#     ・SPだけ、ダメージが出るまでの速さも効かせる
-#     ・攻撃種族値は攻撃実数値としてそのまま掛かる（ダメージは攻撃に比例するため）
-#   ゲージ分割による減点は入れない。防衛側のゲージは被弾でほぼ常に満タンなので、
-#   1ゲージの大技でも問題なく撃ててしまう（2026-08-14に記録した仕様に合わせた）。
+# ── 迎撃P（2026-08-19・タダシさんの前提訂正を受けて作り直した）──────────────
+#   【前提の訂正】防衛側のゲージは**常に満タンではない**。挑戦者の火力が高い・人数が多い・
+#   防衛側の防御が低い、といった条件がそろって初めて満タンに近い状態になることがある、が正しい。
+#   （2026-08-14版はこれを「ほぼ常に満タン」と受け取り、ゲージ分割の減点を入れていなかった）
+#
+#   そこで、ツールが確実に言えるぶんだけで測る:
+#     迎撃の生値 = 攻撃実数値 ×（ノーマルのDPS ＋ SP_WEIGHT × SPのDPS × 速さ）
+#       ・ノーマルのDPS = 1発の威力 ÷（わざの長さ ＋ 硬直2秒）
+#         …防衛側は1発ごとに約2秒の硬直が入る（タダシさん提供の仕様）
+#       ・SPのDPS = 1発の威力 ÷ 消費ゲージ × ノーマルのゲージ獲得速度
+#         …**自分のノーマルアタックでためるぶん**だけで撃つ頻度を出す。
+#           被弾でたまるぶんは相手次第なので入れない（入れると挑戦者を仮定することになる）
+#       ・ノーマルとSPの組み合わせは総当たりで、合計がいちばん高い1組を採る
+#     これで1ゲージの大技（デカハンマー=威力300・100消費）が正しく割り引かれ、
+#     上位の団子（1位と2位の差2.8%）が解消する（差10.1%）。
+#
+#   頭打ちもやめた。旧版は生値21000で満点=8点だったため**10匹が同点1位**になっていた
+#   （タダシさん指摘）。いまは最大値を8点として比例配分するので同点1位は出ない。
 SP_WEIGHT = 0.45         # SPの比重。発動判定が1/2で運任せなぶんノーマルより軽く見る
 SP_DUR_REF = 2.5         # 速さ補正の基準(秒)。これより速ければ加点・遅ければ減点
 SP_DUR_ALPHA = 0.5       # 速さの効き具合 (2.5秒/発生秒)^α → 1.2秒で1.44倍・4.7秒で0.73倍
-INT_MAX = 8.0            # 迎撃Pの上限(4つの中ではいちばん小さいが、2026-08-14に5→8へ引き上げ。
-                         #   5点では「基本」と「迎撃込み」で上位の顔ぶれがほとんど動かなかったため)
-INT_REF = 21000.0        # 迎撃の生値がこの値で満点。ジムに置ける946匹の上位1%が到達する高さ
-                         # （中央値はおよそ2.1点。最大はシャンデラの25644で満点に張り付く）
+DEF_STALL = 2.0          # 防衛側が1発ごとに固まる時間(秒)
+INT_MAX = 8.0            # 迎撃Pの幅(4つの中ではいちばん小さいまま。総合の配点バランスは変えない)
 
 # ══════════════════════════════════════════════════════════════════
 # 並べ替えタブ用のスコア（2026-08-19・タダシさん指示。合計＝総合の計算は一切変えない）
@@ -244,53 +253,55 @@ for p in gd['pokemon']:
     cp = max(10, int((p['atk'] + 15) * math.sqrt(p['def'] + 15) * math.sqrt(p['sta'] + 15) * CPM50 ** 2 / 10))
     bulk = hp * df / 1000.0
     atk50 = (p['atk'] + 15) * CPM50   # 攻撃実数値(PL50, 個体値15)
-    # ノーマルアタック: DPH(1発の威力)最大を選択。時間では割らない。
-    #   防衛側(NPC)は1発ごとに約2秒の硬直が入るので、秒あたりで測るなら 威力/(発生秒+2) が正しい。
-    #   ただし防衛側のゲージは被弾でほぼ常に満タンになり、SPの発動判定も1/2で運任せなので、
-    #   撃つ速さを点数に強く出す意味が薄い(2026-08-14タダシさん判断。CLAUDE.mdに記録)。
-    #   なお2秒が支配的なため、時間あたりに直しても順位はほとんど変わらない見込み。
-    best_na = None
+    # 迎撃: ノーマルとSPの組み合わせを総当たりして、いちばん強い1組を採る。
+    #   ノーマルは「威力 ÷ (長さ + 硬直2秒)」、SPは「威力 ÷ 消費ゲージ × ノーマルのゲージ獲得速度」。
+    #   ゲージは自分のノーマルアタックでためるぶんだけを見る（被弾ぶんは挑戦者次第なので入れない）。
+    best_int = None
     for f in p.get('fast', []):
         fm = MV.get(f)
         if not fm: continue
-        na = fm['power'] * (1.2 if fm['type'] in p['types'] else 1.0)
-        if best_na is None or na > best_na[0]:
-            best_na = (na, fm['jp'])
-    # スペシャル: 1発の威力 × ダメージが出るまでの速さ
-    best_sp = None
-    for c in p.get('charged', []):
-        cm = MV.get(c)
-        if not cm: continue
-        sp = cm['power'] * (1.2 if cm['type'] in p['types'] else 1.0)
-        dur = (cm.get('dur') or 2500) / 1000.0
-        sp *= (SP_DUR_REF / dur) ** SP_DUR_ALPHA    # 発生の速い技ほど有利
-        if best_sp is None or sp > best_sp: best_sp = sp
-    if best_na is None or best_sp is None: continue
+        na_dmg = fm['power'] * (1.2 if fm['type'] in p['types'] else 1.0)
+        cyc = (fm.get('dur') or 500) / 1000.0 + DEF_STALL   # 1発にかかる時間(硬直込み)
+        na_dps = na_dmg / cyc
+        eg = (fm.get('energy') or 0) / cyc                  # 1秒あたりにたまるゲージ
+        for c in p.get('charged', []):
+            cm = MV.get(c)
+            if not cm: continue
+            sp_dmg = cm['power'] * (1.2 if cm['type'] in p['types'] else 1.0)
+            cost = abs(cm.get('energy') or 100)             # 消費ゲージ(1ゲージ技=100)
+            dur = (cm.get('dur') or 2500) / 1000.0
+            sp_dps = sp_dmg / cost * eg * (SP_DUR_REF / dur) ** SP_DUR_ALPHA
+            v = atk50 * (na_dps + SP_WEIGHT * sp_dps)
+            if best_int is None or v > best_int[0]:
+                best_int = (v, fm['jp'], cm['jp'])
+    if best_int is None: continue
     # 画面に出すおすすめ構成は、ポイント計算とは別のルールで選ぶ（重いわざを避ける）
     rec = recommend_moves(p)
     if not rec: continue
     p_bulk = K_BULK * bulk
     p_type = type_score(p['types'])
-    # 迎撃P: 攻撃実数値 ×(ノーマル1発 + SP×速さ×0.45) を上限5点へ縮める。
-    #   4つの中でいちばん影響を小さくする（防衛側の火力は運の要素が大きいため）
-    p_int = INT_MAX * min(1.0, atk50 * (best_na[0] + SP_WEIGHT * best_sp) / INT_REF)
     p_yar = yaruki(cp)
     rs, ws = res_weak(p['types'])
     entries.append({
         'n': NAME_FIX.get(p['name'], p['name']), 't': p['types'], 'cp': cp,
-        'pb': round(p_bulk, 1), 'pt': round(p_type, 1),
-        'pi': round(p_int, 1), 'py': p_yar,
-        'total': round(p_bulk + p_type + p_int + p_yar, 1),
+        'pb': round(p_bulk, 1), 'pt': round(p_type, 1), 'py': p_yar,
         'rs': rs, 'ws': ws, 'bk': round(bulk * 1000),   # 耐性の数・弱点の数・耐久指数(HP×防御)
+        'iv': best_int[0], 'im': best_int[1] + '＋' + best_int[2],  # 迎撃の生値と、その元になったわざ
         'fm': rec[0], 'cm': rec[1], 'cm2': rec[2], 'dw': 1 if double_weak(p['types']) else 0,
     })
 
-# 並べ替えタブ用のスコア（総合は上でもう出してあるので、ここでは触らない）
+# 迎撃Pと、並べ替えタブ用のスコア（耐久・タイプ・やる気の配点は変えない）
 BK_MAX = max(e['bk'] for e in entries)
+IV_MAX = max(e['iv'] for e in entries)
 for e in entries:
+    # 迎撃は頭打ちにせず、いちばん強いポケモンを8点として比例配分する（同点1位を作らないため）
+    e['pi'] = round(INT_MAX * e['iv'] / IV_MAX, 1)
+    e['si'] = round(100.0 * e['iv'] / IV_MAX, 1)   # 迎撃タブ用（0〜100・頭打ちなし）
+    e['total'] = round(e['pb'] + e['pt'] + e['pi'] + e['py'], 1)
     e['st'] = round((e['rs'] - e['ws']) + TYPE_FIGHT_W * (e['pt'] / 4.0)
                     + TYPE_BULK_W * e['bk'] / BK_MAX, 1)
     e['sy'] = round((e['py'] + YARUKI_FIGHT_W * e['pt']) * e['bk'] / BK_MAX * 10, 1)
+    del e['iv']
 
 entries.sort(key=lambda x: -x['total'])
 out = {
