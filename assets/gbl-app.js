@@ -266,7 +266,7 @@ document.getElementById('app').innerHTML = `
 
 <!-- GBL模擬戦(3匹×3匹の対人戦)。じぶん3枠はパーティ診断・ロケット団と共通のPT -->
 <div class="multi" id="mock" style="display:none">
-  <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の強さ。EASY=反応がおそく、シールドをすぐ使う入門向け ／ NORMAL=実戦の基本戦術で戦う標準 ／ HARD=こちらのポケモンとわざを最初から知っていて、ブラフも効かない最強。どの難易度でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいて難易度</span>
+  <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の強さ。EASY=軽いSPをすぐ撃ち、シールドもすぐ使う入門向け ／ NORMAL=実戦の基本戦術で戦う標準 ／ HARD=こちらのポケモンとわざを最初から知っていて、ブラフも効かない最強。どの難易度でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいて難易度</span>
     <div class="opts gbai" id="gbai"></div></div>
   <div class="rkteams">
     <div class="rkteamcol">
@@ -1013,7 +1013,7 @@ ${PAGE_ROCKET ? '' : `
   </ul>
   <p><b>あいての行動はAIが自動で判断</b>します。上の<b>「あいて難易度」</b>で強さを選べます:</p>
   <ul>
-    <li><b>EASY（やさしい）</b>: はじめての人向け。SPアタックは撃てるようになっても<b>ひと呼吸おくれて</b>撃ち、
+    <li><b>EASY（やさしい）</b>: はじめての人向け。SPアタックは撃てるようになったら<b>すぐ撃ちます</b>が、
     2本持っていても<b>消費の軽いほうしか使いません</b>。シールドは残っていれば必ず使うので
     <b>軽いわざのブラフにも引っ掛かり</b>、自分からは交代しません</li>
     <li><b>NORMAL（標準・既定）</b>: 実戦の基本戦術で戦う相手。<b>出し負けたらすぐ交代</b>
@@ -4620,13 +4620,14 @@ function rbRender(body, bt, picks, foes, extra) {
 //  つながるので、①出し負けたらすぐ交代 ②ためたSPがあれば撃ってから交代 ③倒されたら、いまの相手に
 //  いちばん有利な控え(倒した起点の初手など)を出し直す) ／
 //  farm=起点づくり(SPを撃たなくても勝てる対面ではノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ) ／
-//  lag=EASY専用: SPアタックの反応がひと呼吸おくれて、消費の軽いわざしか撃たない ／
+//  spam=EASY専用: SPアタックは撃てるようになったらすぐ撃つが、消費の軽いわざしか撃たない
+//  (「反応がおくれる」案は2026-08-20タダシさん指示で不採用。初心者でも画面連打は常にするため) ／
 //  omni=HARD専用: **ユーザーの3匹とわざ構成を最初から知っている**(「AIはずるをしない」恒久ルールの
 //  明示的な例外。2026-08-20タダシさん指示「常にユーザーの手を知った上で最適な行動を取る」) ／
 //  truth=HARD専用: シールドは予測ではなく**実際に飛んでくるわざのダメージ**で判断する(ブラフが効かない)
 const GB_AI = {
-  easy: { label: 'EASY', jp: 'やさしい', bluff: false, save: false, sw: false, farm: false, lag: true,
-    tip: 'はじめての人向け。SPアタックが撃てるようになってもひと呼吸おくれて撃ち、2本持っていても消費の軽いほうしか使いません。シールドは飛んできたSPアタックに残っていれば必ず使い(軽いわざのブラフにも引っ掛かります)、自分からは交代しません' },
+  easy: { label: 'EASY', jp: 'やさしい', bluff: false, save: false, sw: false, farm: false, spam: true,
+    tip: 'はじめての人向け。SPアタックは撃てるようになったらすぐ撃ちますが、2本持っていても消費の軽いほうしか使いません。シールドは飛んできたSPアタックに残っていれば必ず使い(軽いわざのブラフにも引っ掛かります)、自分からは交代しません' },
   normal: { label: 'NORMAL', jp: '標準', bluff: true, save: true, sw: true, farm: true,
     tip: '実戦の基本戦術で戦う標準の相手(これまでの「実戦」AIと同じ)。かけひき(ブラフ)・シールドの温存・出し負けたらすぐ交代・起点づくりを全部使いますが、こちらのまだ見せていないポケモンは知らない、という実戦と同じ情報量で戦います' },
   hard: { label: 'HARD', jp: '最強', bluff: true, save: true, sw: true, farm: true, omni: true, truth: true,
@@ -5490,11 +5491,12 @@ function gbPlay(picks, foes, ans, stepwise) {
       ov0: { hp: p.st0.hp, en: p.st0.en, buffs: p.st0.b.slice(), stall: 0, _sh: p.st0.sh },
       ov1: { hp: p.st1.hp, en: p.st1.en, buffs: p.st1.b.slice(), stall: 0, _sh: p.st1.sh } } : null;
     if (p.kind === 'sp') {
-      // EASY(lag): 反応がひと呼吸おくれる＝撃てるようになってもノーマルアタックを1発はさみ、
-      // 撃つのは**消費の軽いわざだけ**(2本持っていても大技を使わない入門向けの相手)。
-      // タイミングをエンジンの最適(auto)に任せず、この位置で名指しして撃つ
-      if (ai.lag) {
-        if ((p.w || 0) < 1) return { a: 'wait', n: 1 };
+      // EASY(spam): SPアタックは撃てるようになったら**すぐ撃つ**。ただし
+      // 2本持っていても**消費の軽いわざしか使わない**(入門向けの相手)。
+      // 「反応がノーマルアタック1発ぶんおくれる」案は不採用(2026-08-20タダシさん指示。
+      // 初心者のレートでも画面連打は常にするので、撃てるようになってからの遅れは実態に合わない)。
+      // タイミングをエンジンの最適(auto)に任せず、この場で名指しして即撃ちする
+      if (ai.spam) {
         const av = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] }))
           .filter(x => x.m && x.m.e <= (p.en != null ? p.en : 0)).sort((a, b) => a.m.e - b.m.e)[0];
         return av ? { a: 'fire', mv: av.id } : { a: 'auto' };
