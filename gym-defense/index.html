@@ -158,8 +158,8 @@ footer a{color:var(--accent2)}
   <div class="gseg">
     <button id="sTotal" class="t-blue" aria-pressed="true" title="合計ポイントの高い順に並べます">総合</button>
     <button id="sPb" class="t-green" aria-pressed="false" title="耐久ポイント（HP×防御の硬さ）だけで並べます">耐久</button>
-    <button id="sPt" class="t-cyan" aria-pressed="false" title="かくとうへの相性だけで並べます。同じ相性のポケモンは同順位です">タイプ</button>
-    <button id="sPy" class="t-shadow" aria-pressed="false" title="やる気の下がりにくさだけで並べます。同じCP帯のポケモンは同順位です">やる気</button>
+    <button id="sPt" class="t-cyan" aria-pressed="false" title="耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアで並べます">タイプ</button>
+    <button id="sPy" class="t-shadow" aria-pressed="false" title="やる気の下がりにくさを主役にして並べます。耐久とかくとう相性は1/5の重さで効きます">やる気</button>
     <button id="sPi" class="t-gold" aria-pressed="false" title="迎撃ポイント（わざ1発の威力）だけで並べます。押すと「迎撃込み」に切り替わります">迎撃</button>
   </div>
 </div>
@@ -195,11 +195,21 @@ footer a{color:var(--accent2)}
   </ul>
   <p><b>基本</b> ＝ 耐久＋タイプ＋やる気。<b>迎撃込み</b> ＝ これに迎撃を足した総合値です。</p>
   <h4>並び替え</h4>
-  <p><b>総合</b>のほか、<b>耐久・タイプ・やる気・迎撃</b>の項目ごとに並べ替えられます。項目を選ぶと、
-    右の大きな数字とバーがその項目の値に変わり、合計は「総合 ◯◯（◯位）」として下に出ます。
-    <b>迎撃</b>を選ぶと自動で「迎撃込み」に切り替わります。</p>
-  <p><b>同じポイントのポケモンは同順位</b>です（重なったぶんだけ次の順位を飛ばします）。
-    タイプとやる気は取りうる値が少ないので、同点1位が何十匹も並びます。
+  <p><b>総合</b>のほか、<b>耐久・タイプ・やる気・迎撃</b>の観点で並べ替えられます。項目を選ぶと、
+    右の大きな数字とバーがその観点のスコアに変わり、合計は「総合 ◯◯（◯位）」として下に出ます。
+    <b>迎撃</b>を選ぶと自動で「迎撃込み」に切り替わります。<b>総合の点数は変わりません</b>。</p>
+  <ul>
+    <li><b>耐久</b> ＝ 耐久指数（HP×防御）そのもの。総合の耐久ポイントと同じ並びです</li>
+    <li><b>タイプ</b> ＝ <b>耐性の数 − 弱点の数 ＋ かくとうへの相性 ＋ 耐久指数</b>。
+      かくとうは攻撃側の最大勢力なので、耐性なら耐性1つぶんの上乗せ・弱点なら弱点2つぶんの重さで効かせます。
+      耐久指数はいちばん硬いポケモンで耐性4つぶん</li>
+    <li><b>やる気</b> ＝ やる気の下がりにくさが主役。耐久とかくとう相性も効きますが、総合の1/5の重さです</li>
+    <li><b>迎撃</b> ＝ 総合の迎撃ポイントと同じです</li>
+  </ul>
+  <p>タイプとやる気の重みは<b>実際のデータで測って決めました</b>。上位20匹について
+    「その観点が主役のままか」「実戦で置く硬さか」「総合ランキングと別物になっているか」
+    「重みを動かしたときに顔ぶれが安定しているか」を見比べています。</p>
+  <p><b>同じスコアのポケモンは同順位</b>です（重なったぶんだけ次の順位を飛ばします）。
     同点の順位には金・銀・銅は付けず、同点どうしは総合ポイントの高い順に並べています。</p>
   <p>かくとうだけを見るのは、ジムを攻撃しに来る顔ぶれが入れ替わっても<b>かくとうが最大勢力という性質は変わらない</b>ためです。
     細かいタイプ相性まで見ると、攻撃側の集計を人手で更新し続ける必要が出てしまいます。</p>
@@ -232,17 +242,21 @@ footer a{color:var(--accent2)}
   let includeDw = false, query = '', shown = 50, withInt = false, sortKey = 'total';
   const PAGE = 50;
   const totalOf = e => e.pb + e.pt + e.py + (withInt ? e.pi : 0);
-  // 並び替えの項目。色は下のバー・凡例とそろえる(タブの点灯色も同じ)
+  // 並び替えの項目。色は下のバー・凡例とそろえる(タブの点灯色も同じ)。
+  //   f … 使うデータ。タイプ相性(st)とやる気(sy)は、その項目を主役にした専用スコアを持つ
+  //       （st = 耐性の数−弱点の数＋かくとう相性＋耐久指数 ／ sy = やる気＋0.2×(耐久+かくとう)）
   const SORTS = {
-    total:{ lb:'ポイント', c:'var(--accent)',  ti:'' },
-    pb:   { lb:'耐久',     c:'var(--c-bulk)',  ti:'耐久ポイント（HP×防御から出した硬さ）。この項目で並べています' },
-    pt:   { lb:'タイプ',   c:'var(--c-type)',  ti:'かくとうへの相性のポイント。この項目で並べています' },
-    py:   { lb:'やる気',   c:'var(--c-yar)',   ti:'やる気の下がりにくさのポイント。この項目で並べています' },
-    pi:   { lb:'迎撃',     c:'var(--c-int)',   ti:'迎撃ポイント（わざ1発の威力）。この項目で並べています' }
+    total:{ f:'total', lb:'ポイント', c:'var(--accent)',  ti:'' },
+    pb:   { f:'pb', lb:'耐久',   c:'var(--c-bulk)', ti:'耐久ポイント（HP×防御から出した硬さ）。この項目で並べています' },
+    pt:   { f:'st', lb:'タイプ', c:'var(--c-type)', ti:'耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアです。この項目で並べています' },
+    py:   { f:'sy', lb:'やる気', c:'var(--c-yar)',  ti:'やる気の下がりにくさを主役に、耐久とかくとう相性を1/5の重さで足したスコアです。この項目で並べています' },
+    pi:   { f:'pi', lb:'迎撃',   c:'var(--c-int)',  ti:'迎撃ポイント（わざ1発の威力）。この項目で並べています' }
   };
-  const valOf = (e,k) => k === 'total' ? totalOf(e) : e[k];
-  // 大きい数字は下の内訳と同じ書き方にする（やる気だけ整数、ほかは小数第1位まで）
-  const fmt = (v,k) => k === 'py' ? String(v) : v.toFixed(1);
+  const valOf = (e,k) => k === 'total' ? totalOf(e) : e[SORTS[k].f];
+  const fmt = v => v.toFixed(1);
+  // かくとうへの相性は タイプP(8/4/0/-8/-14) から言葉にする
+  const fightLabel = pt => pt >= 8 ? 'かくとう二重耐性' : pt >= 4 ? 'かくとう耐性'
+    : pt <= -14 ? 'かくとう二重弱点' : pt <= -8 ? 'かくとう弱点' : 'かくとう等倍';
 
   // 同じポイントは同順位にして、重なったぶんだけ次の順位を飛ばす（1位が2匹なら次は3位）。
   // c には順位ごとの人数を持つ（同点の順位には金・銀・銅を付けないため）
@@ -284,7 +298,7 @@ footer a{color:var(--accent2)}
     // タイプはマイナスになるので、いちばん低い値を左端(0%)にする
     let vlo = 0, vsp = 1;
     if (sub) {
-      const vs = base.map(e => e[sortKey]);
+      const vs = base.map(e => e[S.f]);
       vlo = Math.min(0, ...vs);
       vsp = Math.max(0.1, Math.max(...vs) - vlo);
     }
@@ -294,8 +308,9 @@ footer a{color:var(--accent2)}
       const rk = RK.r[e.n];
       const row = document.createElement('div');
       // 上位3件はフレームも金・銀・銅にする（rankClass と同じ判定）。
-      // ただし同点が並ぶ順位には付けない（タイプ・やる気は同点1位が100匹近くいるため）
-      const medal = rk <= 3 && RK.c[rk] === 1;
+      // ただし1〜3位のどこかに同点がいる列では付けない（迎撃のように同点1位が何十匹も並ぶことがある。
+      // 金が出ない列で銅だけ出るのも不自然なので、1・2・3位がそろって1匹ずつのときだけ付ける）
+      const medal = rk <= 3 && [1, 2, 3].slice(0, rk).every(j => RK.c[j] === 1);
       row.className = 'row' + (query ? ' hit' : '') + (medal ? ' m' + rk : '');
       const chips = typePairHTML(e.t.map(t => D.types_jp[t]), 18);
       const tot = totalOf(e);
@@ -311,18 +326,20 @@ footer a{color:var(--accent2)}
             <div class="pname">${e.n} ${chips} ${e.dw ? '<span class="dwflag" title="ダメージを4倍で受けてしまう二重弱点のタイプを持っています">二重弱点</span>' : ''}</div>
             <div class="moves" title="防衛でのおすすめのわざ構成です（威力・発生の速さ・かくとう相性で選出。2本目は1本目に近い強さのときだけ併記します）。CPはPL50・個体値15のときの値です">${moves}　CP${e.cp}</div>
           </div>
-          <div class="pts" title="${sub ? S.ti : `耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントです。内訳は下のバーと数字のとおりです`}"><b>${sub ? fmt(e[sortKey], sortKey) : tot.toFixed(1)}</b><small>${S.lb}</small></div>
+          <div class="pts" title="${sub ? S.ti : `耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントです。内訳は下のバーと数字のとおりです`}"><b>${sub ? fmt(e[S.f]) : tot.toFixed(1)}</b><small>${S.lb}</small></div>
         </div>
         <div class="stack">${sub
-          ? `<i style="width:${((e[sortKey]-vlo)/vsp*100).toFixed(1)}%;background:${S.c}"></i>`
+          ? `<i style="width:${((e[S.f]-vlo)/vsp*100).toFixed(1)}%;background:${S.c}"></i>`
           : `<i style="width:${w(e.pb)}%;background:var(--c-bulk)"></i>
              <i style="width:${w(e.pt)}%;background:var(--c-type)"></i>
              <i style="width:${w(e.py)}%;background:var(--c-yar)"></i>
              ${withInt ? `<i style="width:${w(e.pi)}%;background:var(--c-int)"></i>` : ''}`}
         </div>
         <div class="detail">
-          <span>耐久 <b>${e.pb.toFixed(1)}</b></span>
-          <span>タイプ <b>${e.pt.toFixed(1)}</b></span>
+          <span${sortKey === 'pb' ? ' title="耐久ポイントの元になっている耐久指数（HP×防御・PL50個体値15）です"' : ''}>耐久 <b>${e.pb.toFixed(1)}</b>${sortKey === 'pb' ? `（指数 ${e.bk.toLocaleString()}）` : ''}</span>
+          ${sortKey === 'pt'
+            ? `<span title="18タイプから受けたときの耐性の数・弱点の数と、かくとうへの相性です。この3つと耐久指数からタイプのスコアを出しています">耐性 <b>${e.rs}</b> 弱点 <b>${e.ws}</b> ${fightLabel(e.pt)}</span>`
+            : `<span>タイプ <b>${e.pt.toFixed(1)}</b></span>`}
           <span>やる気 <b>${e.py}</b></span>
           ${withInt ? `<span>迎撃 <b>${e.pi.toFixed(1)}</b></span>` : ''}
           ${sub ? `<span title="耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントと、その順位です">総合 <b>${tot.toFixed(1)}</b>（${TR.r[e.n]}位）</span>` : ''}
