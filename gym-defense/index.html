@@ -159,7 +159,7 @@ footer a{color:var(--accent2)}
     <button id="sTotal" class="t-blue" aria-pressed="true" title="合計ポイントの高い順に並べます">総合</button>
     <button id="sPb" class="t-green" aria-pressed="false" title="耐久ポイント（HP×防御の硬さ）だけで並べます">耐久</button>
     <button id="sPt" class="t-cyan" aria-pressed="false" title="耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアで並べます">タイプ</button>
-    <button id="sPy" class="t-shadow" aria-pressed="false" title="やる気の下がりにくさを主役にして並べます。耐久とかくとう相性は1/5の重さで効きます">やる気</button>
+    <button id="sPy" class="t-shadow" aria-pressed="false" title="やる気の下がりにくさで並べます。やる気の点数に かくとう相性を足し、硬さ（耐久指数の割合）を掛けたスコアです">やる気</button>
     <button id="sPi" class="t-gold" aria-pressed="false" title="迎撃ポイント（わざ1発の威力）だけで並べます。押すと「迎撃込み」に切り替わります">迎撃</button>
   </div>
 </div>
@@ -203,7 +203,9 @@ footer a{color:var(--accent2)}
     <li><b>タイプ</b> ＝ <b>耐性の数 − 弱点の数 ＋ かくとうへの相性 ＋ 耐久指数</b>。
       かくとうは攻撃側の最大勢力なので、耐性なら耐性1つぶんの上乗せ・弱点なら弱点2つぶんの重さで効かせます。
       耐久指数はいちばん硬いポケモンで耐性4つぶん</li>
-    <li><b>やる気</b> ＝ やる気の下がりにくさが主役。耐久とかくとう相性も効きますが、総合の1/5の重さです</li>
+    <li><b>やる気</b> ＝ <b>（やる気 ＋ かくとうへの相性）× 硬さ</b>。
+      硬さは耐久指数がいちばん硬いポケモンの何%かです。
+      やる気が下がりにくくても<b>1発で溶けるポケモンはジムに残らない</b>ので、やる気の点数を硬さで実質化しています</li>
     <li><b>迎撃</b> ＝ 総合の迎撃ポイントと同じです</li>
   </ul>
   <p>タイプとやる気の重みは<b>実際のデータで測って決めました</b>。上位20匹について
@@ -249,11 +251,12 @@ footer a{color:var(--accent2)}
     total:{ f:'total', lb:'ポイント', c:'var(--accent)',  ti:'' },
     pb:   { f:'pb', lb:'耐久',   c:'var(--c-bulk)', ti:'耐久ポイント（HP×防御から出した硬さ）。この項目で並べています' },
     pt:   { f:'st', lb:'タイプ', c:'var(--c-type)', ti:'耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアです。この項目で並べています' },
-    py:   { f:'sy', lb:'やる気', c:'var(--c-yar)',  ti:'やる気の下がりにくさを主役に、耐久とかくとう相性を1/5の重さで足したスコアです。この項目で並べています' },
+    py:   { f:'sy', lb:'やる気', c:'var(--c-yar)',  ti:'やる気の点数に かくとうへの相性を足し、耐久指数の割合（硬さ）を掛けたスコアです。やる気が下がりにくくても、1発で溶けるポケモンはジムに残らないためです' },
     pi:   { f:'pi', lb:'迎撃',   c:'var(--c-int)',  ti:'迎撃ポイント（わざ1発の威力）。この項目で並べています' }
   };
   const valOf = (e,k) => k === 'total' ? totalOf(e) : e[SORTS[k].f];
   const fmt = v => v.toFixed(1);
+  const BKMAX = Math.max(...D.entries.map(e => e.bk));   // 耐久指数の最大(やる気タブの「硬さ」の分母)
   // かくとうへの相性は タイプP(8/4/0/-8/-14) から言葉にする
   const fightLabel = pt => pt >= 8 ? 'かくとう二重耐性' : pt >= 4 ? 'かくとう耐性'
     : pt <= -14 ? 'かくとう二重弱点' : pt <= -8 ? 'かくとう弱点' : 'かくとう等倍';
@@ -340,7 +343,9 @@ footer a{color:var(--accent2)}
           ${sortKey === 'pt'
             ? `<span title="18タイプから受けたときの耐性の数・弱点の数と、かくとうへの相性です。この3つと耐久指数からタイプのスコアを出しています">耐性 <b>${e.rs}</b> 弱点 <b>${e.ws}</b> ${fightLabel(e.pt)}</span>`
             : `<span>タイプ <b>${e.pt.toFixed(1)}</b></span>`}
-          <span>やる気 <b>${e.py}</b></span>
+          ${sortKey === 'py'
+            ? `<span title="やる気の点数に かくとうへの相性を足し、硬さ（耐久指数がいちばん硬いポケモンの何%か）を掛けてスコアを出しています">やる気 <b>${e.py}</b> × 硬さ <b>${Math.round(e.bk / BKMAX * 100)}%</b> ${fightLabel(e.pt)}</span>`
+            : `<span>やる気 <b>${e.py}</b></span>`}
           ${withInt ? `<span>迎撃 <b>${e.pi.toFixed(1)}</b></span>` : ''}
           ${sub ? `<span title="耐久＋タイプ＋やる気${withInt ? '＋迎撃' : ''}を合計したポイントと、その順位です">総合 <b>${tot.toFixed(1)}</b>（${TR.r[e.n]}位）</span>` : ''}
         </div>`;
