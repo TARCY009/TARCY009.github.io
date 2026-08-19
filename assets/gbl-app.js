@@ -4885,9 +4885,17 @@ function gbPoints(turns, ctx, dec) {
         }
       }
     }
-    // 対面の頭の交代質問: 相手の新しいポケモンが出てきた対面で、交代できるなら聞く
-    if (ctx.newIn[o] && ctx.base + 1 >= ctx.swOk[s] && ctx.swTo[s].length && dec[s].swapTo == null)
-      pts.push({ side: s, kind: 'swap', seq: 0, w: 0, tn: 1 });
+    // 対面の頭の交代質問: 相手の新しいポケモンが出てきた対面で、交代できるなら聞く。
+    // **相手が倒されて次を出した直後だけは、あいて(AI)は1秒たってから聞く**
+    // (2026-08-19タダシさん指示)。出てきたポケモンを確認してから決める動きなので、
+    // 開幕交代の反応と同じ間合いにする(0.5秒わざなら2発・1秒〜のわざなら1発ぶん攻撃してから交代)
+    if (ctx.newIn[o] && ctx.swTo[s].length && dec[s].swapTo == null) {
+      const htn = s === 1 && ctx.koIn && ctx.koIn[o] ? gbReactTn(D.moves[ctx.fast[s]]) : 1;
+      const ht = htn > 1 ? turns.find(x => x.tn === htn) : null;
+      if (ctx.base + htn >= ctx.swOk[s] && htn <= cut
+          && (htn === 1 || (ht && ht.state[0].hp > 0 && ht.state[1].hp > 0)))
+        pts.push({ side: s, kind: 'swap', seq: 0, w: 0, tn: htn, ...(htn > 1 ? (snap[htn] || {}) : {}) });
+    }
     // 開幕に**片方だけ**が交代したとき、もう片方は**1秒後**に「交代する？」を選べる(gbReactTn)
     if (ctx.react && ctx.react.side === s && ctx.swTo[s].length && dec[s].swapTo == null
         && ctx.base + ctx.react.tn >= ctx.swOk[s]) {
@@ -4995,6 +5003,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   const st = ros.map(r => r.map(() => ({ alive: true, resume: null })));
   const cur = [0, 0], shLeft = [2, 2], swOk = [0, 0];
   const newIn = [false, false];   // この対面の頭で「新しく出てきた」側(交代質問のきっかけ)
+  const koIn = [false, false];    // そのうち「倒されて出し直した」側(あいての交代判断を1秒遅らせる)
   // **AIは場に出ていないユーザーのポケモンを知らない**(2026-08-18タダシさん指示・恒久ルール)。
   // 一度でも場に出たポケモンだけ「見えている」として、AIの下読みに使ってよい
   // (何匹残っているかは分かるが、それが何かは分からない、が実戦の情報量)
@@ -5523,10 +5532,13 @@ function gbPlay(picks, foes, ans, stepwise) {
       // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り20秒以上)は、
       // どっちもどっちの対面でも有利な控えを差し込む(相手は逃げられない)。相手が自由なら負けのときだけ
       const locked = ctx.swOk[0] - (ctx.base + p.tn) >= GB_LOCK_MIN;
+      // **手持ちがラスト1匹**のときも同じ扱い(2026-08-19タダシさん指示)。
+      // 交代先そのものが無いので、こちらが有利対面を取りに動いても逃げられない
+      const noEsc = locked || ctx.swTo[0].length === 0;
       // **追っている側は対面を維持したい**(2026-08-19タダシさん指示)。
       // ユーザーが不利で逃げた直後は主導権がこちらにあるので、五分の対面に付き合わず、
       // 安定して突破できる(勝率の高い)控えがいるなら出して対面を取り続ける
-      const to = aiSwapTo(1, { even: locked || (p.seq === 0 && ctx.chase), ...ov });
+      const to = aiSwapTo(1, { even: noEsc || (p.seq === 0 && ctx.chase), ...ov });
       if (to == null) {
         // 勝てる控えが無い＝いま下がっても有利にならない。ただし
         // **SPを1発入れてから下がれば裏が勝てる**なら、撃つために残る(2026-08-18タダシさん指示)。
@@ -5640,7 +5652,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       spList: spL, fast: [P0.pol.fast, P1.pol.fast],
       shLeft: shLeft.slice(), swOk: swOk.slice(),
       maxHp: [PvpEngine.buildStats(D, P0.base).hp, PvpEngine.buildStats(D, P1.base).hp],
-      swTo: [benches(0), benches(1)], newIn: newIn.slice(),
+      swTo: [benches(0), benches(1)], newIn: newIn.slice(), koIn: koIn.slice(),
       chase,                      // 追っている側か(ユーザーが自分から交代した直後)
       react: li === 0 ? react : null,   // 開幕に片方だけ交代したとき、もう片方が反応できる場面
       enAt: [enOf(0), enOf(1)],   // 対面開始時のゲージ(「撃ってから交代」の判断に使う)
@@ -5649,7 +5661,7 @@ function gbPlay(picks, foes, ans, stepwise) {
         return r && r.buffs ? r.buffs.slice() : [0, 0];
       }),
       foeDump: ai.sw };           // あいてが逃げ回りのAIなら、SPを撃った直後にも交代を検討する
-    newIn[0] = newIn[1] = false;
+    newIn[0] = newIn[1] = koIn[0] = koIn[1] = false;
     const dec = [0, 1].map(() => ({ shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 }));
     const legCfg = s => {
       const P = ros[s][cur[s]], d = dec[s];
@@ -5737,6 +5749,7 @@ function gbPlay(picks, foes, ans, stepwise) {
         cur[s] = a.a === 'to' && ros[s][a.to] ? a.to : nextAlive(s, cur[s]);
       } else cur[s] = rest[0];
       newIn[s] = true;
+      koIn[s] = true;   // 倒されて出し直した＝相手はこれを見てから交代を決める(1秒後)
     }
     if (pending) break;
     // 手動交代の実行(両方同時なら、お互いの打ちかけの1発は無しにする)
