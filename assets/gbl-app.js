@@ -4143,14 +4143,16 @@ function rbAnsLabel(p, a) {
   return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? shMark(p.ctx.picks[a.to].name) : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
-// ウッウのフォルム名。咥えた瞬間と、吐き出した瞬間をタイムラインに出す
+// ウッウのフォルム名。咥えた瞬間と、吐き出した瞬間をタイムラインに出す。
+// マークは咥えている獲物: うのみ=サシカマス🐟 ／ まるのみ=ピカチュウ⚡(2026-08-20タダシさん指示)
 const GULP_JA = { gulping: 'うのみ', gorging: 'まるのみ' };
+const GULP_MK = { gulping: '🐟', gorging: '⚡' };
 // 咥えた(gulpOn)／吐き出した(gulp)を、SPアタックを撃った側のセルに続けて出す。
 // 吐き出しの能力ダウンは**撃った側が受ける**ので、そのセルの中では「相手」を付けずに書く
 function gulpCell(e) {
   let h = '';
-  if (e.gulpOn) h += `<span class="ev gulp">🐟${GULP_JA[e.gulpOn]}のすがた</span>`;
-  if (e.gulp) h += `<span class="ev gulp spit">🐟${GULP_JA[e.gulp.form]}を吐き出し${
+  if (e.gulpOn) h += `<span class="ev gulp">${GULP_MK[e.gulpOn]}${GULP_JA[e.gulpOn]}のすがた</span>`;
+  if (e.gulp) h += `<span class="ev gulp spit">${GULP_MK[e.gulp.form]}${GULP_JA[e.gulp.form]}を吐き出し${
     e.gulp.dmg ? `<b class="dmg">-${e.gulp.dmg}</b>` : ''}${buffTag({ ...e.gulp.buff, target: 'self' })}</span>`;
   return h;
 }
@@ -4405,7 +4407,7 @@ function rbRender(body, bt, picks, foes, extra) {
       Rf.hpn.className = 'hpn ' + cls;
       Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
-      Rf.bfs.innerHTML = (g ? `<i class="bf gulp" title="${GULP_JA[g]}のすがた（相手のSPアタックを受けると吐き出します）">🐟${GULP_JA[g]}</i>` : '') +
+      Rf.bfs.innerHTML = (g ? `<i class="bf gulp" title="${GULP_JA[g]}のすがた（相手のSPアタックを受けると吐き出します）">${GULP_MK[g]}${GULP_JA[g]}</i>` : '') +
         [0, 1].map(k => !b[k] ? '' :
         `<i class="bf ${b[k] > 0 ? 'up' : 'dn'}">${'攻防'[k]}${b[k] > 0 ? '⬆' : '⬇'}${Math.abs(b[k]) === 1 ? '' : Math.abs(b[k])}</i>`).join('');
       // SPゲージ: 1周=1発ぶん。2周目・3周目は色を変えて重ね、数字は「いま撃てる発数」
@@ -6057,7 +6059,7 @@ function gbRender(body, bt, picks, foes) {
       Rf.hpn.className = 'hpn ' + cls;
       Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
-      Rf.bfs.innerHTML = (g ? `<i class="bf gulp" title="${GULP_JA[g]}のすがた（相手のSPアタックを受けると吐き出します）">🐟${GULP_JA[g]}</i>` : '') +
+      Rf.bfs.innerHTML = (g ? `<i class="bf gulp" title="${GULP_JA[g]}のすがた（相手のSPアタックを受けると吐き出します）">${GULP_MK[g]}${GULP_JA[g]}</i>` : '') +
         [0, 1].map(k => !b[k] ? '' :
         `<i class="bf ${b[k] > 0 ? 'up' : 'dn'}">${'攻防'[k]}${b[k] > 0 ? '⬆' : '⬇'}${Math.abs(b[k]) === 1 ? '' : Math.abs(b[k])}</i>`).join('');
       Rf.gqs.querySelectorAll('.gq').forEach(g => {
@@ -6965,8 +6967,8 @@ function timelineTable(res, tlMode) {
       t += buffTxt(e);
       h = `<span class="evbox">${t}</span>`;
       // ウッウ: 獲物を咥えた／吐き出した(吐き出しの能力ダウンは撃った側が受ける)
-      if (e.gulpOn) h += ` <span class="evbox gulp">🐟${GULP_JA[e.gulpOn]}のすがた</span>`;
-      if (e.gulp) h += ` <span class="evbox gulp">🐟${GULP_JA[e.gulp.form]}を吐き出し${
+      if (e.gulpOn) h += ` <span class="evbox gulp">${GULP_MK[e.gulpOn]}${GULP_JA[e.gulpOn]}のすがた</span>`;
+      if (e.gulp) h += ` <span class="evbox gulp">${GULP_MK[e.gulp.form]}${GULP_JA[e.gulp.form]}を吐き出し${
         e.gulp.dmg ? ` <b>-${e.gulp.dmg}</b>` : ''}${buffTxt({ buff: { ...e.gulp.buff, target: 'self' } })}</span>`;
     }
     // シールドは「使った側」に表示する
@@ -7067,8 +7069,8 @@ function timelineTable(res, tlMode) {
         if (ex) moveHtml += ` <span class="extra">(${ex})</span>`;
         moveHtml += buffTxt(b.ev);
         // ウッウ: 獲物を咥えた／吐き出した(吐き出しの能力ダウンは撃った側が受けるので「相手」は付けない)
-        if (b.ev.gulpOn) moveHtml += ` <span class="gulpbox">🐟${GULP_JA[b.ev.gulpOn]}のすがた</span>`;
-        if (b.ev.gulp) moveHtml += ` <span class="gulpbox">🐟${GULP_JA[b.ev.gulp.form]}を吐き出し${
+        if (b.ev.gulpOn) moveHtml += ` <span class="gulpbox">${GULP_MK[b.ev.gulpOn]}${GULP_JA[b.ev.gulpOn]}のすがた</span>`;
+        if (b.ev.gulp) moveHtml += ` <span class="gulpbox">${GULP_MK[b.ev.gulp.form]}${GULP_JA[b.ev.gulp.form]}を吐き出し${
           b.ev.gulp.dmg ? ` <b>-${b.ev.gulp.dmg}</b>` : ''}${buffTxt({ buff: { ...b.ev.gulp.buff, target: 'self' } })}</span>`;
       }
       // ロケット団戦の硬直(この側が動けないターン)は、わざの入っていない枠に「硬直」と出す
