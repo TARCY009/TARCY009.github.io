@@ -61,6 +61,7 @@ SUPP_C = {  # ゲージ技(通常枠)へ追加
     'KABUTOPS':       ['AQUA_JET'],         # カブトプス: アクアジェット
     'SWANNA':         ['AQUA_JET'],         # スワンナ: アクアジェット
     'KINGDRA':        ['SURF'],             # キングドラ: なみのり
+    'CRAMORANT':      ['SURF', 'DIVE'],     # ウッウ: なみのり・ダイビング(フォルムチェンジのきっかけになるわざ)
     'XATU':           ['SHADOW_BALL'],      # ネイティオ: シャドーボール
     'QWILFISH':       ['SHADOW_BALL'],      # ハリーセン: シャドーボール
     'SYLVEON':        ['SHADOW_BALL'],      # ニンフィア: シャドーボール
@@ -120,7 +121,13 @@ FORCE_SPLIT = {'KELDEO_RESOLUTE'}
 # フォルム専用の技調整: remove=そのフォルムが覚えない技を除去 / add_ec=特別枠へ追加
 FORM_MOVE_FIX = {
     'KELDEO_RESOLUTE': {'add_ec': ['SECRET_SWORD']},  # かくご: せいなるつるぎに加え、しんぴのつるぎが追加される
+    # ウッウ: 実装時のわざはハイドロポンプ/なみのり/そらをとぶ/ダイビングの4つ。
+    # ゲーム内公開データ(更新停止中)に残っているドリルくちばしは覚えないので外す
+    'CRAMORANT': {'remove': ['DRILL_PECK']},
 }
+# 対戦データ側がまだ「未実装(released=false)」のままだが、ゲームには実装済みのポケモン。
+# ここに入れると未実装除外の対象から外れる。提供元が追いついたら消してよい
+MANUAL_RELEASED = {'CRAMORANT'}   # ウッウ(2026-08-18実装)
 # Game Master未収録のメガ等を手動登録: key: (名前, 攻, 防, HP, [タイプ], 元ポケモンkey)
 MANUAL_MEGA = {
     'MEWTWO_MEGA_X': ('メガミュウツーX', 399, 215, 228, ['PSYCHIC','FIGHTING'], 'MEWTWO'),
@@ -344,7 +351,7 @@ def main():
                 rel = released_map[cand]; break
         if rel is None:  # 最後の手段: アンダースコア無視で照合
             rel = released_nound.get(k.lower().replace('_',''))
-        if rel is False:
+        if rel is False and k not in MANUAL_RELEASED:
             excluded.append(final[k]['n']); del final[k]
     print(f'未実装として除外: {len(excluded)}種（例: {"、".join(excluded[:6])} …）')
 

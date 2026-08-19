@@ -27,6 +27,11 @@ JP_MOVE_FIX_PVP = {
     'AEGISLASH_CHARGE_PSYCHO_CUT': 'サイコカッター（独自性能）',
 }
 # PvPoke固有IDでGMフォルムキーに機械照合できないポケモンの日本語名
+# 提供元がまだ「未実装(released=false)」扱いのままだが、ゲームには実装済みのポケモン。
+# rが0だと各ツールの候補から外れる(KEYSのフィルタ)ので、実装済みとして出す。
+# 提供元が追いついたら消してよい
+MANUAL_RELEASED = {'cramorant'}   # ウッウ(2026-08-18実装)
+
 SPECIES_JA_FIX = {
     'pikachu_5th_anniversary': 'ピカチュウ（5しゅうねん）',
     'pikachu_flying': 'そらをとぶピカチュウ',
@@ -172,7 +177,7 @@ def main():
                       'q': p.get('fastMoves', []), 'c': p.get('chargedMoves', []),
                       'eq': [m for m in p.get('eliteMoves', []) if m.endswith('_FAST') or (m in moves and 'eg' in moves[m])],
                       'ec': [m for m in p.get('eliteMoves', []) if m in moves and 'e' in moves[m]],
-                      'r': 1 if p.get('released') else 0}
+                      'r': 1 if (p.get('released') or sid in MANUAL_RELEASED) else 0}
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
     for sid in shadow_ok:
