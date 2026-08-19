@@ -151,7 +151,7 @@ footer a{color:var(--accent2)}
   <div class="gseg">
     <button id="sTotal" class="t-blue" aria-pressed="true" title="合計ポイントの高い順に並べます">総合</button>
     <button id="sPb" class="t-green" aria-pressed="false" title="耐久ポイント（HP×防御の硬さ）だけで並べます">耐久</button>
-    <button id="sPt" class="t-cyan" aria-pressed="false" title="耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアで並べます">タイプ</button>
+    <button id="sPt" class="t-cyan" aria-pressed="false" title="耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアで並べます（1位を100とした値）">タイプ</button>
     <button id="sPy" class="t-shadow" aria-pressed="false" title="やる気の下がりにくさで並べます。やる気の点数に かくとう相性を足し、硬さ（耐久指数の割合）を掛けたスコアです">やる気</button>
     <button id="sPi" class="t-gold" aria-pressed="false" title="迎撃力 × 硬さ ＋ かくとうへの相性で並べます">迎撃</button>
   </div>
@@ -195,7 +195,7 @@ footer a{color:var(--accent2)}
     <li><b>耐久</b> ＝ 耐久指数（HP×防御）そのもの。総合の耐久ポイントと同じ並びです</li>
     <li><b>タイプ</b> ＝ <b>耐性の数 − 弱点の数 ＋ かくとうへの相性 ＋ 耐久指数</b>。
       かくとうは攻撃側の最大勢力なので、耐性なら耐性1つぶんの上乗せ・弱点なら弱点2つぶんの重さで効かせます。
-      耐久指数はいちばん硬いポケモンで耐性4つぶん</li>
+      耐久指数はいちばん硬いポケモンで耐性4つぶん。表示は1位を100とした値です</li>
     <li><b>やる気</b> ＝ <b>（やる気 ＋ かくとうへの相性）× 硬さ</b>。
       硬さは耐久指数がいちばん硬いポケモンの何%かです。
       やる気が下がりにくくても<b>1発で溶けるポケモンはジムに残らない</b>ので、やる気の点数を硬さで実質化しています</li>
@@ -251,7 +251,7 @@ footer a{color:var(--accent2)}
   const SORTS = {
     total:{ f:'total', lb:'ポイント', c:'var(--accent)',  ti:'' },
     pb:   { f:'pb', lb:'耐久',   c:'var(--c-bulk)', ti:'耐久ポイント（HP×防御から出した硬さ）。この項目で並べています' },
-    pt:   { f:'st', lb:'タイプ', c:'var(--c-type)', ti:'耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアです。この項目で並べています' },
+    pt:   { f:'st', lb:'タイプ', c:'var(--c-type)', ti:'耐性の数から弱点の数を引き、かくとうへの相性と耐久指数を足したスコアです（1位を100とした値）。この項目で並べています' },
     py:   { f:'sy', lb:'やる気', c:'var(--c-yar)',  ti:'やる気の点数に かくとうへの相性を足し、耐久指数の割合（硬さ）を掛けたスコアです。やる気が下がりにくくても、1発で溶けるポケモンはジムに残らないためです' },
     pi:   { f:'si', lb:'迎撃',   c:'var(--c-int)',  ti:'迎撃力 × 硬さ ＋ かくとうへの相性のスコアです（1位を100とした値）。殴れても1発で溶けるポケモンは撃つ前に倒されるためです' }
   };

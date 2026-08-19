@@ -307,13 +307,18 @@ for e in entries:
     e['si'] = (100.0 * e['iv'] / IV_MAX) * (INT_TAB_FLOOR + (1 - INT_TAB_FLOOR) * e['bk'] / BK_MAX) \
         + INT_TAB_FIGHT * (e['pt'] / 8.0)
     e['total'] = round(e['pb'] + e['pt'] + e['py'], 1)   # 迎撃は足さない（専用タブで見る）
+    # 小数第1位で丸めてから引き伸ばす（丸めをあとにすると同点が割れて順位が動くため）
     e['st'] = round((e['rs'] - e['ws']) + TYPE_FIGHT_W * (e['pt'] / 4.0)
                     + TYPE_BULK_W * e['bk'] / BK_MAX, 1)
     e['sy'] = round((e['py'] + YARUKI_FIGHT_W * e['pt']) * e['bk'] / BK_MAX * 10, 1)
     del e['iv']
 SI_MAX = max(e['si'] for e in entries)
+# タイプは素の値が -7〜11 と小さく、他のタブと桁がそろわないので 0〜100 に引き伸ばす
+# （最小を0・最大を100にするだけの一次変換なので、並び順は変わらない）
+ST_MIN, ST_MAX = min(e['st'] for e in entries), max(e['st'] for e in entries)
 for e in entries:
     e['si'] = round(100.0 * e['si'] / SI_MAX, 1)
+    e['st'] = round(100.0 * (e['st'] - ST_MIN) / (ST_MAX - ST_MIN), 1)
 
 entries.sort(key=lambda x: -x['total'])
 out = {
