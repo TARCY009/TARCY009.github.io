@@ -720,6 +720,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .c.me .ev .dmg{color:var(--gold)}
 .c.foe .ev .dmg{color:var(--lose)}
 .ev.sp{border-color:var(--gold);background:rgba(255,213,74,.1);font-weight:700}
+/* ウッウ: 獲物を咥えた／吐き出した(みず色でSPアタックの金と分ける) */
+.ev.gulp{border-color:rgba(67,224,255,.5);background:rgba(67,224,255,.1);color:var(--cy);font-weight:700}
+.ev.gulp.spit{border-color:rgba(255,107,129,.5);background:rgba(255,107,129,.1);color:var(--lose)}
+.evbox.gulp{border-color:rgba(67,224,255,.5);background:rgba(67,224,255,.1);color:var(--cy);font-weight:700}
+.bf.gulp{color:var(--cy);background:rgba(67,224,255,.14)}
+.gulpbox{display:inline-block;color:var(--cy);font-size:.72rem;font-weight:700;white-space:nowrap}
 .fi.in .dmg{animation:dpop .4s}
 @keyframes dpop{0%{transform:scale(.5)}55%{transform:scale(1.3)}100%{transform:scale(1)}}
 .blk{font-style:normal;font-size:.78rem;color:var(--cy);font-weight:800}

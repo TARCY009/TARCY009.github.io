@@ -3876,6 +3876,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
         eg: D.moves[R0.fast] ? D.moves[R0.fast].eg : 0 };
       const maxB = PvpEngine.buildStats(D, picks[to].base).hp;
       const maxF = PvpEngine.buildStats(D, R0).hp;
+      gulpOff(st[mi].resume);   // ウッウ: 場を離れると通常の姿に戻る
       mi = to;
       st[to].resume = { hp: Math.max(0, maxB - hit.dmg), en: 0, buffs: [0, 0], stall: 0 };
       foeResume = { hp: maxF, en: Math.min(100, hit.eg), buffs: [0, 0], stall: 0 };
@@ -3979,7 +3980,9 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
              b0: ((st[mi].resume && st[mi].resume.buffs) || [0, 0]).slice(),
              hp1: foeResume ? Math.max(0, foeResume.hp) : res.final[1].hpMax,
              en1: foeResume ? foeResume.en : 0,
-             b1: ((foeResume && foeResume.buffs) || [0, 0]).slice() },
+             b1: ((foeResume && foeResume.buffs) || [0, 0]).slice(),
+             g0: (st[mi].resume && st[mi].resume.gulp) || null,
+             g1: (foeResume && foeResume.gulp) || null },
       pending: pending && pending.key.slice(0, pending.key.indexOf(':')) === String(li) ? pending : null });
     if (pending) break;
     base += res.turns;
@@ -3991,6 +3994,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     if (!meDown && !foeDown && !swapped) break;   // 上限ターンまで決着せず
     if (foeDown) fi++;
     if (swapped) {
+      gulpOff(st[mi].resume);   // ウッウ: 場を離れると通常の姿に戻る
       mi = dec.swapTo;
       swOkAt = base + RK.swapCd;
       foeEntry = Math.max(RK_ENTER.swap.foe, foeDown ? RK.koFoe : 0);
@@ -4139,6 +4143,19 @@ function rbAnsLabel(p, a) {
   return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? shMark(p.ctx.picks[a.to].name) : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
+// ウッウのフォルム名。咥えた瞬間と、吐き出した瞬間をタイムラインに出す
+const GULP_JA = { gulping: 'うのみ', gorging: 'まるのみ' };
+// 咥えた(gulpOn)／吐き出した(gulp)を、SPアタックを撃った側のセルに続けて出す。
+// 吐き出しの能力ダウンは**撃った側が受ける**ので、そのセルの中では「相手」を付けずに書く
+function gulpCell(e) {
+  let h = '';
+  if (e.gulpOn) h += `<span class="ev gulp">🐟${GULP_JA[e.gulpOn]}のすがた</span>`;
+  if (e.gulp) h += `<span class="ev gulp spit">🐟${GULP_JA[e.gulp.form]}を吐き出し${
+    e.gulp.dmg ? `<b class="dmg">-${e.gulp.dmg}</b>` : ''}${buffTag({ ...e.gulp.buff, target: 'self' })}</span>`;
+  return h;
+}
+// 場を離れたら通常の姿に戻る(交代でリセット)。引き継ぎ状態からフォルムを落とす
+const gulpOff = rs => { if (rs && rs.gulp) rs.gulp = null; };
 // 能力変化のタグ(⬆⬇)。1段階ちょうど以外は段階数を添える
 function buffTag(bf) {
   let out = '';
@@ -4203,7 +4220,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const evCell = list => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
-      e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>`;
+      e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
     return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc"><button class="fchip${p.auto ? ' auto' : ''}"
@@ -4221,12 +4238,13 @@ function rbRender(body, bt, picks, foes, extra) {
       swOk: leg.swOk || 0,   // 交代が解禁される通しターン(残り秒は表示時に gt から計算)
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
+    let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
     if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
     items.push({ gt: base, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
     if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
-      b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
     // 決断待ちより先は「まだ起きていない」ので描かない。ただし同じターンの中でも
@@ -4251,15 +4269,21 @@ function rbRender(body, bt, picks, foes, extra) {
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
+        // ウッウ: 咥えた(撃った側)／吐き出した(受けた側が通常の姿に戻り、撃った側の能力が下がる)
+        if (e.gulpOn) { if (i === 0) g0 = e.gulpOn; else g1 = e.gulpOn; }
+        if (e.gulp) {
+          if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
+          else { g0 = null; b1 = e.gulp.buff.to.slice(); }
+        }
       }
       if (!partial) {
         frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
-          b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       } else {
         // 決断待ちのターンのHUDは、前のターンのHP・ゲージのまま(結果はまだ決まっていない)
         const pf = frames[gt - 1] || frames[base];
         frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
-          b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       }
       const e0 = evCell(ev0);
       const e1 = evCell(ev1) + (t.stalled && !ev1.length ? '<i class="stall">⏸</i>' : '');
@@ -4370,7 +4394,7 @@ function rbRender(body, bt, picks, foes, extra) {
         Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
-    const set = (Rf, hp, max, en, sh, shMax, alive, total, b) => {
+    const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
       // HPが1でも残っているうちはバーを空に見せない(残りわずかでも「まだ倒せていない」と分かるように)
       Rf.bar.style.width = (hp > 0 ? Math.max(pct, 4) : 0) + '%';
@@ -4381,7 +4405,8 @@ function rbRender(body, bt, picks, foes, extra) {
       Rf.hpn.className = 'hpn ' + cls;
       Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
-      Rf.bfs.innerHTML = [0, 1].map(k => !b[k] ? '' :
+      Rf.bfs.innerHTML = (g ? `<i class="bf gulp" title="${GULP_JA[g]}のすがた（相手のSPアタックを受けると吐き出します）">🐟${GULP_JA[g]}</i>` : '') +
+        [0, 1].map(k => !b[k] ? '' :
         `<i class="bf ${b[k] > 0 ? 'up' : 'dn'}">${'攻防'[k]}${b[k] > 0 ? '⬆' : '⬇'}${Math.abs(b[k]) === 1 ? '' : Math.abs(b[k])}</i>`).join('');
       // SPゲージ: 1周=1発ぶん。2周目・3周目は色を変えて重ね、数字は「いま撃てる発数」
       // (グロウパンチ35なら最大2.86周。何発ぶん溜まっているかが一目で分かるように)
@@ -4399,9 +4424,9 @@ function rbRender(body, bt, picks, foes, extra) {
     };
     const GQC_ME = ['#43e0ff', '#ffd54a', '#ff6b81'], GQC_FOE = ['#ffd54a', '#ff6b81', '#b06cff'];
     let cols = GQC_ME;
-    set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0);
+    set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
-    set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1);
+    set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
     clk.textContent = rbSec(gt);
     trn.textContent = gt + 'T';
     // 交代のクールタイム(45秒)の残り。0になったら消える＝出ていなければいつでも交代できる
@@ -5095,6 +5120,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // sd側の手動交代を実行する。withHit=false は両者同時交代(打ちかけの1発は無し)
   const doSwap = (sd, to, gt, withHit) => {
     const od = 1 - sd;
+    gulpOff(st[sd][cur[sd]].resume);   // ウッウ: 場を離れると通常の姿に戻る(咥え直しが必要)
     if (withHit) {
       const hit = swapHit(sd, to);
       if (hit) {
@@ -5577,6 +5603,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // ゲージを得る(両者が同時に交代したときは無し)。次の交代は45秒後
   const doLead = (sd, to, withHit) => {
     const od = 1 - sd;
+    gulpOff(st[sd][cur[sd]].resume);   // ウッウ: 場を離れると通常の姿に戻る
     const hit = withHit ? swapHit(sd, to) : null;
     const maxB = PvpEngine.buildStats(D, ros[sd][to].base).hp;
     st[sd][to].resume = { hp: Math.max(1, maxB - (hit ? hit.dmg : 0)), en: 0, buffs: [0, 0], stall: 0 };
@@ -5714,7 +5741,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       hud: { hp0: rs0 ? Math.max(0, rs0.hp) : res.final[0].hpMax, en0: rs0 ? rs0.en : 0,
              b0: ((rs0 && rs0.buffs) || [0, 0]).slice(),
              hp1: rs1 ? Math.max(0, rs1.hp) : res.final[1].hpMax, en1: rs1 ? rs1.en : 0,
-             b1: ((rs1 && rs1.buffs) || [0, 0]).slice() },
+             b1: ((rs1 && rs1.buffs) || [0, 0]).slice(),
+             g0: (rs0 && rs0.gulp) || null, g1: (rs1 && rs1.gulp) || null },
       pending: pending && pending.key.slice(0, pending.key.indexOf(':')) === String(li) ? pending : null });
     if (pending) break;
     base += res.turns;
@@ -5851,7 +5879,7 @@ function gbRender(body, bt, picks, foes) {
   const evCell = list => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
-      e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>`;
+      e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
     return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
   // チップには**どちらの判断か**を必ず書く(2026-08-19タダシさん報告で追加)。
@@ -5870,6 +5898,7 @@ function gbRender(body, bt, picks, foes) {
       swOk: leg.swOk || 0, fswOk: leg.fswOk || 0,
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
+    let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
     (leg.leadPts || []).forEach(p => { if (p) items.push(chipItem(p, base)); });
     items.push({ gt: base, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
@@ -5879,7 +5908,7 @@ function gbRender(body, bt, picks, foes) {
         <div class="c foe">${h.side === 0 ? cell : ''}</div></div>` });
     } });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
-      b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
     // 決断待ちより先は「まだ起きていない」ので描かない(ロケット団の模擬戦と同じ規則):
@@ -5900,14 +5929,20 @@ function gbRender(body, bt, picks, foes) {
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
+        // ウッウ: 咥えた(撃った側)／吐き出した(受けた側が通常の姿に戻り、撃った側の能力が下がる)
+        if (e.gulpOn) { if (i === 0) g0 = e.gulpOn; else g1 = e.gulpOn; }
+        if (e.gulp) {
+          if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
+          else { g0 = null; b1 = e.gulp.buff.to.slice(); }
+        }
       }
       if (!partial) {
         frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
-          b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       } else {
         const pf = frames[gt - 1] || frames[base];
         frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
-          b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       }
       const e0 = evCell(ev0);
       const e1 = evCell(ev1);
@@ -6013,7 +6048,7 @@ function gbRender(body, bt, picks, foes) {
         Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
-    const set = (Rf, hp, max, en, sh, shMax, alive, total, b) => {
+    const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
       Rf.bar.style.width = (hp > 0 ? Math.max(pct, 4) : 0) + '%';
       const cls = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
@@ -6022,7 +6057,8 @@ function gbRender(body, bt, picks, foes) {
       Rf.hpn.className = 'hpn ' + cls;
       Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
-      Rf.bfs.innerHTML = [0, 1].map(k => !b[k] ? '' :
+      Rf.bfs.innerHTML = (g ? `<i class="bf gulp" title="${GULP_JA[g]}のすがた（相手のSPアタックを受けると吐き出します）">🐟${GULP_JA[g]}</i>` : '') +
+        [0, 1].map(k => !b[k] ? '' :
         `<i class="bf ${b[k] > 0 ? 'up' : 'dn'}">${'攻防'[k]}${b[k] > 0 ? '⬆' : '⬇'}${Math.abs(b[k]) === 1 ? '' : Math.abs(b[k])}</i>`).join('');
       Rf.gqs.querySelectorAll('.gq').forEach(g => {
         const e = +g.dataset.e;
@@ -6038,9 +6074,9 @@ function gbRender(body, bt, picks, foes) {
     };
     const GQC_ME = ['#43e0ff', '#ffd54a', '#ff6b81'], GQC_FOE = ['#ffd54a', '#ff6b81', '#b06cff'];
     let cols = GQC_ME;
-    set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0);
+    set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
-    set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1);
+    set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
     clk.textContent = rbSec(gt);
     trn.textContent = gt + 'T';
     const swLeft = Math.max(0, (f.meta.swOk || 0) - gt);
@@ -6928,6 +6964,10 @@ function timelineTable(res, tlMode) {
       if (row._extra && row._extra[i]) t += ` <span class="extra">(${row._extra[i]})</span>`;
       t += buffTxt(e);
       h = `<span class="evbox">${t}</span>`;
+      // ウッウ: 獲物を咥えた／吐き出した(吐き出しの能力ダウンは撃った側が受ける)
+      if (e.gulpOn) h += ` <span class="evbox gulp">🐟${GULP_JA[e.gulpOn]}のすがた</span>`;
+      if (e.gulp) h += ` <span class="evbox gulp">🐟${GULP_JA[e.gulp.form]}を吐き出し${
+        e.gulp.dmg ? ` <b>-${e.gulp.dmg}</b>` : ''}${buffTxt({ buff: { ...e.gulp.buff, target: 'self' } })}</span>`;
     }
     // シールドは「使った側」に表示する
     if (opp && opp.shielded) h += (h ? ' ' : '') + '<span class="evbox shield">🛡シールド</span>';
@@ -7026,6 +7066,10 @@ function timelineTable(res, tlMode) {
         const ex = res.rows[b.evRow]._extra && res.rows[b.evRow]._extra[i];
         if (ex) moveHtml += ` <span class="extra">(${ex})</span>`;
         moveHtml += buffTxt(b.ev);
+        // ウッウ: 獲物を咥えた／吐き出した(吐き出しの能力ダウンは撃った側が受けるので「相手」は付けない)
+        if (b.ev.gulpOn) moveHtml += ` <span class="gulpbox">🐟${GULP_JA[b.ev.gulpOn]}のすがた</span>`;
+        if (b.ev.gulp) moveHtml += ` <span class="gulpbox">🐟${GULP_JA[b.ev.gulp.form]}を吐き出し${
+          b.ev.gulp.dmg ? ` <b>-${b.ev.gulp.dmg}</b>` : ''}${buffTxt({ buff: { ...b.ev.gulp.buff, target: 'self' } })}</span>`;
       }
       // ロケット団戦の硬直(この側が動けないターン)は、わざの入っていない枠に「硬直」と出す
       let stn = 0;

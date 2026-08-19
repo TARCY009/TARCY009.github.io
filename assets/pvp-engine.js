@@ -110,7 +110,19 @@
     return { target: mv.bt || 'self', from: before, to: target.buffs.slice() };
   }
 
-  // ---- バトル中フォルムチェンジ持ち(ギルガルド/モルペコ/ミミッキュ)の特殊仕様 ----
+  // ---- バトル中フォルムチェンジ持ち(ギルガルド/モルペコ/ミミッキュ/ウッウ)の特殊仕様 ----
+  // ウッウ: なみのり・ダイビングを撃つと獲物を咥える(HP50%以上=うのみ / 50%未満=まるのみ)。
+  // フォルム中に**相手のSPアタックを受ける**と獲物を吐き出し、相手にダメージ＋能力ダウンを与えて
+  // 通常の姿に戻る。**シールドで防いだときは発動せず、すがたも維持**。**ひんしになっても発動する**。
+  // **交代するとリセット**(場を離れた時点で通常の姿。再度なみのり/ダイビングが必要)
+  const CRAM_SPIT = {
+    // ⚠ 吐き出しのダメージ量は公開されていない(2026-08-20時点でどの情報源にも数字が無い)。
+    // 勝手に決めると全対面の結果が動くので、実測が取れるまで0にしてある。
+    // 数字が分かったらここだけ直せばよい(0より大きくすると相手にそのぶんのダメージが入る)
+    dmg: 0,
+    gulping: [0, -1],   // うのみ(サシカマス): 相手の[攻撃, 防御]の段階変化 → 防御を1段階ダウン
+    gorging: [-2, 0],   // まるのみ(ピカチュウ): 攻撃を2段階ダウン
+  };
   const AEGIS_FAST_BLADE = { AEGISLASH_CHARGE_PSYCHO_CUT: 'PSYCHO_CUT', AEGISLASH_CHARGE_AIR_SLASH: 'AIR_SLASH' };
   const AEGIS_FAST_SHIELD = { PSYCHO_CUT: 'AEGISLASH_CHARGE_PSYCHO_CUT', AIR_SLASH: 'AEGISLASH_CHARGE_AIR_SLASH' };
 
@@ -143,7 +155,7 @@
       const st = buildStats(D, cfg);
       const s = {
         cfg, ...st,
-        hp: st.hp, en: 0, cd: 0, buffs: [0, 0],
+        hp: st.hp, hpMax: st.hp, en: 0, cd: 0, buffs: [0, 0],
         shields: cfg.shields != null ? cfg.shields : 2,
         fast: D.moves[cfg.fast],
         fastId: cfg.fast,
@@ -169,6 +181,9 @@
         s.disguise = true;
       } else if (cfg.key === 'morpeko_full_belly') {  // まんぷくで開始
         s.mform = 'full';
+      } else if (cfg.key === 'cramorant') {        // ウッウ: 通常の姿で開始
+        s.cram = true;
+        s.gulp = null;
       }
       // 3匹の連戦: 前の対面を生き延びた側は、その続きの状態(HP・ゲージ・能力変化・硬直・
       // ばけのかわ/フォルム)から始める。cfg.resume には前の対面の res.final[].resume を渡す
@@ -180,6 +195,8 @@
         if (rs.stall != null) s.stall = Math.max(s.stall, rs.stall);
         if (rs.disguise === false) s.disguise = false;
         if (rs.mform) s.mform = rs.mform;
+        // ウッウ: 咥えたまま次の相手を迎える(交代で下がったときは呼び出し側がリセットする)
+        if (s.cram && rs.gulp) s.gulp = rs.gulp;
         if (rs.form === 'blade' && s.bladeSt) {   // ギルガルド: ブレードのまま次の相手を迎える
           s.form = 'blade';
           s.atk = s.bladeSt.atk; s.def = s.bladeSt.def;
@@ -390,6 +407,11 @@
         const s = sides[i], o = sides[1 - i];
         if (s.hp <= 0 && !koByFast[i]) continue;   // 同ターンの相手ゲージ技で倒れた場合のみ不発
         s.en -= mv.e;
+        // ウッウ: なみのり・ダイビングを撃つと獲物を咥える。**撃った時点のHP**で姿が決まる
+        // (50%以上=うのみ / 50%未満=まるのみ)。相手がシールドで防いでも姿は変わる
+        let gulpOn = null;
+        if (s.cram && (mv === D.moves.SURF || mv === D.moves.DIVE))
+          gulpOn = s.gulp = s.hp / s.hpMax >= 0.5 ? 'gulping' : 'gorging';
         // ギルガルド: SPアタック使用の直前にブレードフォルム化(このSPからブレードの攻撃で計算)
         if (s.form === 'shield') {
           s.form = 'blade';
@@ -426,11 +448,25 @@
         }
         s.thrown = (s.thrown || 0) + 1;
         o.hp -= dealt;
+        // ウッウ: 咥えているときに相手のSPアタックを受けたら吐き出す(シールドで防いだときは
+        // 発動せず、すがたも維持)。**ひんしになっても発動する**ので、HPが尽きていても処理する
+        let gulp = null;
+        if (!shielded && o.gulp) {
+          const bf = CRAM_SPIT[o.gulp], before = s.buffs.slice();
+          s.buffs[0] = Math.max(-4, Math.min(4, s.buffs[0] + bf[0]));
+          s.buffs[1] = Math.max(-4, Math.min(4, s.buffs[1] + bf[1]));
+          if (CRAM_SPIT.dmg > 0) s.hp -= CRAM_SPIT.dmg;
+          gulp = { form: o.gulp, dmg: CRAM_SPIT.dmg,
+                   buff: { target: 'opponent', from: before, to: s.buffs.slice() } };
+          o.gulp = null;
+        }
         // ロケット団戦: どちらがSPアタックを撃っても、相手(NPC)は一定ターン動けなくなる(硬直)
         for (const x of sides) if (x.npc && x.stallSp) { x.stall = x.stallSp; x.cd = 0; }
         const buff = applyBuffs(mv, s, o, opt);
         const ev = [null, null];
         ev[i] = { move: mv.n, dmg: dealt, full, shielded, disguised, buff };
+        if (gulp) ev[i].gulp = gulp;      // 吐き出し(撃った側が受ける)
+        if (gulpOn) ev[i].gulpOn = gulpOn;   // 獲物を咥えた(撃った側の姿が変わる)
         // モルペコ: SPアタックを打つたびに まんぷく⇄はらぺこ が切り替わる(オーラぐるまのタイプが変化)
         if (s.mform) s.mform = s.mform === 'full' ? 'hangry' : 'full';
         // 表示規則: 番号行が空(通常技の自然完了なし)ならゲージ技は番号行に入る
@@ -442,7 +478,7 @@
           rows.push({ tn: '-', ev, state: sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })) });
         }
         s.used[mv.n] = (s.used[mv.n] || 0) + 1;
-        if (o.hp <= 0) break;
+        if (o.hp <= 0 || s.hp <= 0) break;   // 吐き出しのダメージで撃った側が倒れることもある
         // 差し込み: 発動側の演出中に、相手の打ちかけ(未完了)の通常技が前倒しで完了する
         // (このターンに自然完了する技は通常処理で発生済み。完了後、相手は次ターンに仕切り直し)
         if (!charging[1 - i] && o.cd > 0) {
@@ -472,7 +508,7 @@
         en: s.en, shields: s.shields, buffs: s.buffs,
         // 3匹の連戦で次の対面へ引き継ぐ状態(生き残った側だけ使う)
         resume: { hp: Math.max(0, s.hp), en: s.en, buffs: s.buffs.slice(), stall: s.stall,
-                  disguise: !!s.disguise, form: s.form, mform: s.mform },
+                  disguise: !!s.disguise, form: s.form, mform: s.mform, gulp: s.gulp || null },
       })),
     };
   }
