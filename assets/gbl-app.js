@@ -4846,9 +4846,16 @@ function gbPoints(turns, ctx, dec) {
           // hpB=被弾前のHP ／ enB=相手が撃つ直前のゲージ(あいてAIの「わざ予測」に使う。
           // 実際に飛んできたわざで判断するとユーザーから見てインチキになるため)
           const mvA = gbMoveByName(e.move);
+          // st0/st1 = **その瞬間の状態**(HP・ゲージ・能力変化)。AIはこれを使って
+          // 「いまの形勢」を読み直す(対面の頭の読みを使い回すと、途中でひっくり返った形勢に
+          // ついていけない。2026-08-19タダシさん指摘)。被弾するHPだけは当たる前の値に戻す
+          const sn = snap[t.tn];
+          const hpB = t.state[s].hp + e.full;
           pts.push({ side: s, kind: 'sh', seq: shSeq, w: 0, tn: t.tn, spSeen: shSeq + 1,
             mv: e.move, dmg: e.full, ko: t.state[s].hp <= 0,
-            hpB: t.state[s].hp + e.full, enB: t.state[o].en + (mvA ? mvA.e : 0) });
+            hpB, enB: t.state[o].en + (mvA ? mvA.e : 0),
+            st0: sn && { ...sn.st0, hp: s === 0 ? hpB : sn.st0.hp },
+            st1: sn && { ...sn.st1, hp: s === 1 ? hpB : sn.st1.hp } });
         }
         if (d.shieldAt.includes(shSeq + 1)) shUsed++;
         shSeq++;
@@ -5015,7 +5022,8 @@ function gbPlay(picks, foes, ans, stepwise) {
     const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(),
       shields: shLeft[sd], timing: 'optimal', bluff: sd === 1 ? ai.bluff : false };
     const rs = ov || st[sd][idx].resume;
-    if (rs) c.resume = rs;
+    // _sh = その下読みでのシールドの残り枚数(「防いだあと」は1枚減った状態で読む)
+    if (rs) { const { _sh, ...r } = rs; c.resume = r; if (_sh != null) c.shields = _sh; }
     return c;
   };
   const duelAt = (i0, i1, ov0, ov1) => PvpEngine.simulate(D, plainCfg(0, i0, ov0), plainCfg(1, i1, ov1), SIMOPT);
@@ -5099,21 +5107,45 @@ function gbPlay(picks, foes, ans, stepwise) {
     const rs = st[sd][idx].resume;
     return { ...stt, buffs: rs && rs.buffs ? rs.buffs.slice() : [0, 0] };
   };
-  // 起点づくり(farm)の下読み: いまの対面、あいてはSPを1発も撃たなくても勝てるか。
-  // 勝てるならノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ(基本戦術)。
-  // 対面ごとに1回だけ計算して使い回す
-  const farmCache = {}, loseCache = {};
-  const aiFarmWin = li => {
-    if (!(li in farmCache)) {
-      const R = { ...plainCfg(1, cur[1]), timing: 'shots', shotPlan: [], shotRest: null };
-      farmCache[li] = PvpEngine.simulate(D, plainCfg(0, cur[0]), R, SIMOPT).winner === 1;
-    }
-    return farmCache[li];
+  // ---- 下読みは**決断のたびに、その瞬間の状態から**やり直す(2026-08-19タダシさん指摘) ----
+  // GBLは1手で形勢がひっくり返るので、対面の頭で1回読んだ結果を対面の終わりまで使い回すと、
+  // 「もう勝てるようになっているのにシールドを温存し続ける」ような判断のズレが出る。
+  // ov = { ov0, ov1 } … その瞬間のHP・ゲージ・能力変化。同じ状態なら計算し直さない(キャッシュのキー)
+  // 飛んできたSPアタックを「防いだあと(ダメージ1)」「受けたあと(予測ダメージ)」の状態にする。
+  // これを挟まないと、**当たる直前のHPのまま**下読みしてしまい、
+  // 「いま食らう一撃を勘定に入れずに『まだ勝てる』と読む」ズレが出る
+  const ovHit = (ov, sd, dmg, useSh) => {
+    if (!ov) return null;
+    const o = { ov0: { ...ov.ov0, buffs: (ov.ov0.buffs || []).slice() },
+                ov1: { ...ov.ov1, buffs: (ov.ov1.buffs || []).slice() } };
+    const k = sd ? 'ov1' : 'ov0';
+    o[k].hp = Math.max(1, o[k].hp - dmg);
+    // 防ぐならシールドを1枚使う。ここを減らさずに読むと「まだ2枚ある前提」で強気に読んでしまい、
+    // 使っては読み直し…を繰り返してシールドを無駄打ちする(実測でAIが弱くなった)
+    if (useSh) o[k]._sh = Math.max(0, (o[k]._sh != null ? o[k]._sh : shLeft[sd]) - 1);
+    return o;
   };
-  // 後の戦況の下読み: いまの対面、あいては(SPも使って)おまかせで通して負けるか
-  const aiLosing = li => {
-    if (!(li in loseCache)) loseCache[li] = duel(cur[0], cur[1]).winner !== 1;
-    return loseCache[li];
+  const ovKey = ov => {
+    if (!ov || (!ov.ov0 && !ov.ov1)) return '';
+    const f = o => o ? [o.hp, o.en, (o.buffs || []).join('/'), o._sh].join(',') : '';
+    return f(ov.ov0) + '|' + f(ov.ov1);
+  };
+  // 起点づくり(farm)の下読み: いまの対面、あいてはSPを1発も撃たなくても勝てるか。
+  // 勝てるならノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ(基本戦術)
+  const farmCache = {}, loseCache = {};
+  const aiFarmWin = (li, ov) => {
+    const ck = li + '#' + ovKey(ov);
+    if (!(ck in farmCache)) {
+      const R = { ...plainCfg(1, cur[1], ov && ov.ov1), timing: 'shots', shotPlan: [], shotRest: null };
+      farmCache[ck] = PvpEngine.simulate(D, plainCfg(0, cur[0], ov && ov.ov0), R, SIMOPT).winner === 1;
+    }
+    return farmCache[ck];
+  };
+  // 後の戦況の下読み: いまの状態から、あいては(SPも使って)おまかせで通して負けるか
+  const aiLosing = (li, ov) => {
+    const ck = li + '#' + ovKey(ov);
+    if (!(ck in loseCache)) loseCache[ck] = duelAt(cur[0], cur[1], ov && ov.ov0, ov && ov.ov1).winner !== 1;
+    return loseCache[ck];
   };
   // ---- 対面の頭(相手の新しいポケモンが出てきた場面)の交代基準 ----
   // 2026-08-18タダシさんが伝えた詳細な基準をそのまま実装したもの。
@@ -5121,7 +5153,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 「対応力の高いほう」＝**まず1対1の勝率（シールドの持ち方を総当たりした勝ち数）**
   // (2026-08-19タダシさん指示: どちらも倒せる状況では「安定して倒せる」＝勝率の高いほうを出す)。
   // 勝率が同じくらいのときだけ、勝ち幅・わざのタイプの広さ・耐久で比べる
-  const aiAdaptive = list => {
+  const aiAdaptive = (list, ov) => {
     let best = null;
     for (const { k, r } of list) {
       const margin = 500 * (1 - r.final[0].hp / r.final[0].hpMax) + 500 * (r.final[1].hp / r.final[1].hpMax);
@@ -5129,7 +5161,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const types = new Set([P.pol.fast].concat(P.pol.charged || [])
         .map(id => D.moves[id] && D.moves[id].t).filter(Boolean));
       const s2 = PvpEngine.buildStats(D, P.base);
-      const w = aiWinRate(k, null, null);
+      const w = aiWinRate(k, ov && ov.ov0, null);
       const sc = w.rate * 1e6 + margin + types.size * 60 + s2.def * s2.hp / 1000;
       if (!best || sc > best.sc) best = { k, sc };
     }
@@ -5137,33 +5169,35 @@ function gbPlay(picks, foes, ans, stepwise) {
   };
   // ①どっちもどっちの対面で、**控えの2匹がどちらもユーザーの初手に強い**なら、
   //   対応力の高いほうへ**即座に交代**する(五分の対面に付き合わず、有利を取りにいく)
-  const aiEvenSwitch = li => {
-    const r = duel(cur[0], cur[1]);
+  const aiEvenSwitch = (li, ov) => {
+    const r = duelAt(cur[0], cur[1], ov && ov.ov0, ov && ov.ov1);
     if (r.winner === 0 || r.winner === 1) return null;   // 勝ち負けがはっきりしている＝五分ではない
     const bench = benches(1);
     if (bench.length < 2) return null;
-    const wins = bench.map(k => ({ k, r: duel(cur[0], k) })).filter(x => x.r.winner === 1);
+    const wins = bench.map(k => ({ k, r: duelAt(cur[0], k, ov && ov.ov0, null) }))
+      .filter(x => x.r.winner === 1);
     if (wins.length !== bench.length) return null;       // 「2匹ともユーザーの初手に強い」が条件
-    return aiAdaptive(wins);
+    return aiAdaptive(wins, ov);
   };
   // ②AIの初手がユーザーの初手に**弱く**、かつ**控えの2匹のうち片方が明らかに弱い**なら、
   //   交代せず残って戦う(残る1匹の答えを安売りしない)。
   //   このとき**シールドは使わない**——不利な状況で無理に受けても非効率だから(タダシさん指示・重要)。
   //   「明らかに弱い」＝その控えでも負け、しかもユーザーのポケモンが半分以上HPを残す
   const weakCache = {};
-  const aiStayWeak = li => {
-    if (!(li in weakCache)) {
+  const aiStayWeak = (li, ov) => {
+    const ck = li + '#' + ovKey(ov);
+    if (!(ck in weakCache)) {
       let v = false;
-      if (aiLosing(li)) {
+      if (aiLosing(li, ov)) {
         const bench = benches(1);
         v = bench.length >= 2 && bench.some(k => {
-          const r = duel(cur[0], k);
+          const r = duelAt(cur[0], k, ov && ov.ov0, null);
           return r.winner !== 1 && r.final[0].hp >= r.final[0].hpMax * 0.5;
         });
       }
-      weakCache[li] = v;
+      weakCache[ck] = v;
     }
-    return weakCache[li];
+    return weakCache[ck];
   };
   // チーム文脈での「ここでシールドを使う価値」(2026-08-18タダシさん指示):
   // ユーザー側の場にいないポケモン(あとで戻ってくる)に勝てるAIの控えが**1匹しかいない**なら、
@@ -5356,28 +5390,36 @@ function gbPlay(picks, foes, ans, stepwise) {
     return best ? best.k : null;
   };
   const shvCache = {};
-  const teamShieldValue = li => {
-    if (!(li in shvCache)) {
+  const teamShieldValue = (li, ov, freeOv) => {
+    const ck = li + '#' + ovKey(ov) + '#' + ovKey(freeOv);
+    if (!(ck in shvCache)) {
       let v = null;
       // ユーザーの控えは**一度でも場に出たもの**だけ数える(まだ見ていないポケモンは知らない)
       const myBench = benches(1), userOff = revealed0();
       // シールド無しでも取れる対面なら、そもそも使う必要がない
-      const freeWin = () => PvpEngine.simulate(D, plainCfg(0, cur[0]),
-        { ...plainCfg(1, cur[1]), shields: 0 }, SIMOPT).winner === 1;
-      if (myBench.length && userOff.length && shLeft[1] > 0 && !aiLosing(li) && !freeWin()) {
+      // 「使わなくても取れる対面」か＝この一撃を受けたあと、以後もシールド無しで勝てるか
+      const fo = freeOv || ov;
+      const freeWin = () => PvpEngine.simulate(D, plainCfg(0, cur[0], fo && fo.ov0),
+        { ...plainCfg(1, cur[1], fo && fo.ov1), shields: 0 }, SIMOPT).winner === 1;
+      if (myBench.length && userOff.length && shLeft[1] > 0 && !aiLosing(li, ov) && !freeWin()) {
         for (const u of userOff) {
           let winners = 0;
           for (const k of myBench) if (duelAt(u, k).winner === 1) winners++;
           if (winners === 1) { v = 'use'; break; }
         }
       }
-      shvCache[li] = v;
+      shvCache[ck] = v;
     }
-    return shvCache[li];
+    return shvCache[ck];
   };
   // あいてのAIの自動回答(ansに答えがあればそちらが優先される)。
-  // 下読みはどれも「対面が始まった時点の状態」で行う(対面の途中の削れまでは見ない近似)
+  // **下読みは決断のたびに、その瞬間の状態(p.st0/p.st1)から読み直す**(2026-08-19タダシさん指摘)
   const aiAnswer = (p, ctx) => {
+    // その瞬間のHP・ゲージ・能力変化・**シールドの残り枚数**。
+    // 枚数まで入れないと「相手はまだ2枚持っている」と読んで、AIが弱気になる(実測で判明)
+    const nowOv = p.st0 && p.st1 ? {
+      ov0: { hp: p.st0.hp, en: p.st0.en, buffs: p.st0.b.slice(), stall: 0, _sh: p.st0.sh },
+      ov1: { hp: p.st1.hp, en: p.st1.en, buffs: p.st1.b.slice(), stall: 0, _sh: p.st1.sh } } : null;
     if (p.kind === 'sp') {
       // **確定で自分の能力が上がるSPは即打ち**(2026-08-19タダシさん指示)。
       // 上がった能力はその対面のあいだ効き続けるので、早く撃つほど得
@@ -5396,7 +5438,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       // ただし**ゲージが満タン(100)に近づいたら撃つ**(2026-08-19タダシさん報告で修正)。
       // 「撃たない」と一度答えるとその対面では二度と撃たなくなるので、満タンでも撃たず
       // ゲージを捨てていた。ためる意味があるあいだだけ待って、無駄になる手前で撃つ
-      if (ai.farm && aiFarmWin(ctx.li)) {
+      if (ai.farm && aiFarmWin(ctx.li, nowOv)) {
         const fm = D.moves[ctx.fast[p.side]];
         const eg = fm ? (fm.eg || 0) : 0;
         const en = p.en != null ? p.en : 0;
@@ -5415,25 +5457,19 @@ function gbPlay(picks, foes, ans, stepwise) {
       }
       // 「撃ってから交代」(2026-08-18タダシさん指示): このまま下がっても裏が有利にならないが、
       // ここでSPを入れてから下がれば裏が勝てる——というときは、待たずにすぐ撃って下がる準備をする
-      if (ai.sw && aiLosing(ctx.li)) {
+      if (ai.sw && aiLosing(ctx.li, nowOv)) {
         const mv = aiSpThenSwap(ctx, p);
         if (mv) return { a: 'fire', mv };
       }
       return { a: 'auto' };
     }
     if (p.kind === 'sh') {
-      // 不利な初手対面で「残って戦う」と決めた場面では**シールドを使わない**
-      // (不利な状況で無理に受けても非効率。2026-08-18タダシさん指示・重要)
-      if (ai.sw && aiStayWeak(ctx.li)) return { a: 'no' };
-      // チーム文脈: いまの対面を確実に取る価値が高い(勝てる控えが1匹だけの相手が戻ってくる)なら、
-      // 逃げ回り・温存のAIはためらわずシールドを使って突破する
-      if ((ai.sw || ai.save) && teamShieldValue(ctx.li) === 'use') return { a: 'use' };
-      if (!ai.save) return { a: 'use' };
       // インチキ防止(2026-08-18タダシさん指示): 実際に飛んできたわざでは判断しない。
       // ユーザー側のわざ構成とゲージから「撃ってくる可能性の高いわざ」を予測して判断する
       // (予測=倒しきれるわざがあればそれ、なければ能力変化込みの効率が高いほう。
       //  なので軽いわざのブラフには正しく引っ掛かる)
-      const att = sbuf(0, cur[0]), dfn = sbuf(1, cur[1]);
+      const att = { ...sbuf(0, cur[0]), buffs: p.st0 ? p.st0.b.slice() : sbuf(0, cur[0]).buffs };
+      const dfn = { ...sbuf(1, cur[1]), buffs: p.st1 ? p.st1.b.slice() : sbuf(1, cur[1]).buffs };
       const dmgOf = m => PvpEngine.damage(D, m, att, dfn);
       const cand = ctx.spList[0].map(id => D.moves[id]).filter(m => m && m.e <= (p.enB || 0));
       let pred = null;
@@ -5443,9 +5479,22 @@ function gbPlay(picks, foes, ans, stepwise) {
           dmgOf(b) * PvpEngine.buffAdj(b) / b.e - dmgOf(a) * PvpEngine.buffAdj(a) / a.e)[0];
       }
       const predDmg = pred ? dmgOf(pred) : (p.dmg || 0);
+      // ---- 下読みは「この一撃をどう処理したあと」の状態で行う(2026-08-19タダシさん指摘) ----
+      // blockOv=防いだあと(ダメージ1) ／ takeOv=受けたあと(予測ダメージ)。
+      // 「どうせ負け」の判定は**防いでも負けるか**で見る(受けたあとで見ると、
+      //  受けたせいで負けになる＝受ける理由が自分で作れてしまう)
+      const blockOv = ovHit(nowOv, p.side, 1, true);
+      const takeOv = ovHit(nowOv, p.side, predDmg);
+      // 不利な初手対面で「残って戦う」と決めた場面では**シールドを使わない**
+      // (不利な状況で無理に受けても非効率。2026-08-18タダシさん指示・重要)
+      if (ai.sw && aiStayWeak(ctx.li, blockOv)) return { a: 'no' };
+      // チーム文脈: いまの対面を確実に取る価値が高い(勝てる控えが1匹だけの相手が戻ってくる)なら、
+      // 逃げ回り・温存のAIはためらわずシールドを使って突破する
+      if ((ai.sw || ai.save) && teamShieldValue(ctx.li, blockOv, takeOv) === 'use') return { a: 'use' };
+      if (!ai.save) return { a: 'use' };
       // 後の戦況: どうせ負けの対面なら(倒される一撃でも)受けて、シールドは後続のために残す。
       // 控えがいないときは残す先が無いので、ふつうに判断する
-      if (benches(1).length && aiLosing(ctx.li)) return { a: 'no' };
+      if (benches(1).length && aiLosing(ctx.li, blockOv)) return { a: 'no' };
       if (p.hpB && predDmg >= p.hpB) return { a: 'use' };   // 倒される予測なら防ぐ
       return predDmg >= GB_SHIELD_BIG * ctx.maxHp[1] ? { a: 'use' } : { a: 'no' };
     }
@@ -5453,9 +5502,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (!ai.sw) return { a: 'stay' };
       // 対面の途中の質問(SPを撃った直後・デバフを受けた直後)は、その瞬間の状態で下読みする。
       // これがあるので「SPで削ってから交代すれば裏が勝てる」という判断が成り立つ
-      const ov = p.st0 ? {
-        ov0: { hp: p.st0.hp, en: p.st0.en, buffs: p.st0.b, stall: 0 },
-        ov1: { hp: p.st1.hp, en: p.st1.en, buffs: p.st1.b, stall: 0 } } : {};
+      const ov = nowOv || {};
       // 受けたデバフの下げ消し交代(w=1・2026-08-18タダシさん指示):
       // それなりに有利ならそのまま戦い、不利かどっちもどっちなら交代でリセット。
       // ただし勝てる控えがいなければ残って戦う
@@ -5467,10 +5514,10 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (p.seq === 0) {
         // ②不利な対面でも、控えの片方が明らかに弱いなら交代せず残って戦う
         //   (残る1匹の答えを安売りしない。このときシールドも使わない＝上のsh分岐)
-        if (aiStayWeak(ctx.li)) return { a: 'stay' };
+        if (aiStayWeak(ctx.li, nowOv)) return { a: 'stay' };
         // ①どっちもどっちの対面で、控えの2匹がどちらもユーザーの初手に強いなら、
         //   対応力の高いほうへ即座に交代する
-        const ev = aiEvenSwitch(ctx.li);
+        const ev = aiEvenSwitch(ctx.li, nowOv);
         if (ev != null) return { a: 'toq', to: ev };
       }
       // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り20秒以上)は、
@@ -5535,8 +5582,8 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 下読みのキャッシュは対面(li)ごとなので、開幕の判断は 'lead' という別のキーで持つ
   // (対面0のキャッシュを汚すと、交代後の対面で古い読みが使い回されてしまう)
   const aiLead = () => {
-    if (aiStayWeak('lead')) return { a: 'stay' };
-    const ev = aiEvenSwitch('lead');
+    if (aiStayWeak('lead', null)) return { a: 'stay' };
+    const ev = aiEvenSwitch('lead', null);
     if (ev != null) return { a: 'to', to: ev };
     const to = aiSwapTo(1, {});
     return to == null ? { a: 'stay' } : { a: 'to', to };
