@@ -2332,7 +2332,7 @@ function buildPartySlots(box, mvStore) {
   box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}" data-mv="${mvStore || ''}">
     <div class="phd"><span class="pnum">${i + 1}匹目</span>${isRk && i === 0
       ? `<button class="plead" aria-pressed="${RK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいては4.5秒硬直・打ちかけの1発は交代先に入ります)">${SWAPMK}開幕交代</button>` : ''}${isMock && i === 0
-      ? `<button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいての打ちかけの1発は交代先に入ります)">${SWAPMK}開幕交代</button>` : ''}
+      ? `<button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいての打ちかけの1発は交代先に入ります)。あいても開幕に交代してくることがあり、そのときは1秒後にこちらも交代するか選べます">${SWAPMK}開幕交代</button>` : ''}
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
       <button class="pclr" title="この枠を空にする">×</button></div>
@@ -4594,7 +4594,7 @@ const GB_AI = {
   save:   { label: '温存',     bluff: false, save: true,  sw: false, farm: false,
     tip: '小さいSPアタックにはシールドを使いません。実際に飛んできたわざではなく「撃たれそうなわざ」をこちらのわざ構成とゲージから予測して判断します(軽いわざのブラフには引っ掛かります)。負けが見えている対面では受けてシールドを後続のために残し、逆に「戻ってくる相手への答えが控えに1匹しかない」ときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
   switch: { label: 'スイッチ', bluff: false, save: false, sw: true, farm: true,
-    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(ためたSPは、防がれず効く一撃のときだけ撃ってから)。五分の対面でも控えの2匹がどちらもこちらの初手に強ければ、対応力の高いほうへ即交代。逆に不利でも控えの片方が明らかに弱いなら残って戦い、そのときシールドは使いません。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、次に出すポケモンを効率で選びます(相手のゲージが乏しければ、あえて有利でないポケモンを起点にしてゲージをため、有利なポケモンは温存。まだ見せていない3匹目も温存します)。こちらが交代できないあいだ(クールタイム中)は五分の対面でも有利な控えを差し込み、デバフを受けたら不利・五分の対面なら交代で下げ消しします。裏に出しても有利にならないときは、SPを1発入れて削ってから下がることもあります。戻ってくる相手への答えが控えに1匹しかないときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
+    tip: '基本戦術の逃げ回り: 出し負けたらすぐ交代(開幕もふくむ。あいてが開幕に交代したときは、こちらも1秒後に交代するか選べます)。ためたSPは、防がれず効く一撃のときだけ撃ってから下がります。五分の対面でも控えの2匹がどちらもこちらの初手に強ければ、対応力の高いほうへ即交代。逆に不利でも控えの片方が明らかに弱いなら残って戦い、そのときシールドは使いません。勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃ちます。倒されたら、次に出すポケモンを効率で選びます(相手のゲージが乏しければ、あえて有利でないポケモンを起点にしてゲージをため、有利なポケモンは温存。まだ見せていない3匹目も温存します)。こちらが交代できないあいだ(クールタイム中)は五分の対面でも有利な控えを差し込み、デバフを受けたら不利・五分の対面なら交代で下げ消しします。裏に出しても有利にならないときは、SPを1発入れて削ってから下がることもあります。戻ってくる相手への答えが控えに1匹しかないときは、シールドを使えば取れる対面にかぎって確実に取りにいきます(使わなくても勝てるなら使いません)' },
   pro:    { label: '実戦',     bluff: true,  save: true,  sw: true, farm: true,
     tip: 'かけひき＋温存＋スイッチの全部あり(いちばん人間らしい動き)' },
 };
@@ -4801,6 +4801,13 @@ function gbCoin(seed) {
 // 中身はロケット団の rbPoints と同じ考え方を側ごとに繰り返す＋GBL特有の交代質問:
 //  - 対面の頭: 相手の新しいポケモンが出てきたら「交代する？」(クールタイム中・控えなしは出さない)
 //  - 自分の能力が下がるSPを撃った直後: 「交代する？」(溜め打ち→2連射して交代、の再現)
+// 開幕に**片方だけ**が交代したとき、もう片方が「交代する？」を選べるようになるターン
+// (2026-08-19タダシさん指示)。**1秒たってから**、かつ**打ちかけのノーマルアタックが終わり次第**なので、
+// 0.5秒わざは2発目が終わる1秒後(2ターン)、1.5秒わざは1.5秒後(3ターン)、2秒わざは2秒後(4ターン)
+function gbReactTn(fm) {
+  const tn = Math.max(1, (fm && fm.tn) || 1);
+  return tn * Math.ceil(2 / tn);
+}
 function gbPoints(turns, ctx, dec) {
   const pts = [];
   // 交代の打ち切りが決まっているなら、それより先のターンの質問は出さない(その先は次の対面の話)
@@ -4874,6 +4881,13 @@ function gbPoints(turns, ctx, dec) {
     // 対面の頭の交代質問: 相手の新しいポケモンが出てきた対面で、交代できるなら聞く
     if (ctx.newIn[o] && ctx.base + 1 >= ctx.swOk[s] && ctx.swTo[s].length && dec[s].swapTo == null)
       pts.push({ side: s, kind: 'swap', seq: 0, w: 0, tn: 1 });
+    // 開幕に**片方だけ**が交代したとき、もう片方は**1秒後**に「交代する？」を選べる(gbReactTn)
+    if (ctx.react && ctx.react.side === s && ctx.swTo[s].length && dec[s].swapTo == null
+        && ctx.base + ctx.react.tn >= ctx.swOk[s]) {
+      const rt = turns.find(x => x.tn === ctx.react.tn);
+      if (rt && rt.tn <= cut && rt.state[0].hp > 0 && rt.state[1].hp > 0)
+        pts.push({ side: s, kind: 'swap', seq: 0, w: 0, tn: ctx.react.tn, ...(snap[rt.tn] || {}) });
+    }
   }
   // 受けたデバフの下げ消し交代(w=1・あいて側だけ・逃げ回りのAIのとき):
   // ターンを歩きながら能力変化を追いかけ、こちらのわざであいての能力が下がった直後に交代質問を置く。
@@ -4899,9 +4913,14 @@ function gbPoints(turns, ctx, dec) {
 function gbChoices(p, ctx) {
   const s = p.side || 0;
   const ros = ctx.ros;
-  if (p.kind === 'lead') return ctx.swTo[0].map(k => ({ a: 'to', to: k, cls: 'fire',
-    label: `${SWAPMK} ${shMark(ros[0][k].name)}`,
-    tip: '開幕にこのポケモンへ交代します(あいての打ちかけの1発は交代先に入ります)' }));
+  if (p.kind === 'lead') {
+    const list = ctx.swTo[s].map(k => ({ a: 'to', to: k, cls: 'fire',
+      label: `${SWAPMK} ${shMark(ros[s][k].name)}`,
+      tip: '開幕にこのポケモンへ交代します(相手の打ちかけの1発は交代先に入ります)' }));
+    // あいての開幕交代はAIが決めるので、「交代しない」も選び直せるようにする
+    return s ? list.concat([{ a: 'stay', label: 'このまま', cls: 'hold',
+      tip: '開幕は交代せず、そのまま戦います' }]) : list;
+  }
   if (p.kind === 'sp') {
     const fm = ctx.fast[s] && D.moves[ctx.fast[s]];
     const list = ctx.spList[s].map(id => {
@@ -4935,7 +4954,7 @@ function gbChoices(p, ctx) {
 }
 function gbAskTitle(p) {
   const who = p.side ? '<i class="rbwho">あいて</i> ' : '';
-  if (p.kind === 'lead') return SWAPMK + ' 開幕交代';
+  if (p.kind === 'lead') return who + SWAPMK + ' 開幕交代';
   if (p.kind === 'sp') return who + '⚡ SPアタック';
   if (p.kind === 'sh') return `${who}🛡 ${p.mv || 'SPアタック'}が来る！`;
   if (p.kind === 'swap') return who + SWAPMK + ' 交代する？';
@@ -4974,7 +4993,10 @@ function gbPlay(picks, foes, ans, stepwise) {
   // (何匹残っているかは分かるが、それが何かは分からない、が実戦の情報量)
   const seen = [new Set(), new Set()];
   const revealed0 = () => benches(0).filter(k => seen[0].has(k));   // 見えているユーザーの控え
-  let base = 0, pending = null, lead = null;
+  let base = 0, pending = null;
+  // 開幕交代(0秒)。両者が同時に決めるので、おたがい相手の選択は見えない
+  const leadPts = [null, null], leadHits = [null, null];
+  let react = null;   // 片方だけが開幕交代したとき、もう片方が反応できる場面 {side, tn}
   // **追っている側かどうか**(2026-08-19タダシさん指示)。ユーザーが自分から交代した＝不利だから
   // 逃げた、ということなので、そのあとAIは「追っている側」になる。
   // 追っている側の基本は**対面を維持したい**なので、五分の対面でも安定して突破できる控えがいるなら
@@ -5492,32 +5514,74 @@ function gbPlay(picks, foes, ans, stepwise) {
     return { a: 'order' };
   };
 
-  // ---- 開幕交代(じぶん側のみ・枠のトグルON時) ----
-  if (MK.leadSwap && picks.length > 1 && foes.length) {
-    const key = gbKey(0, 0, 'lead', 0, 0);
-    const lctx = { li: 0, base: 0, ros, swTo: [picks.map((p, k) => k).filter(k => k > 0), []] };
-    const opts = gbChoices({ kind: 'lead', side: 0 }, lctx);
-    const a = ans[key] || (stepwise ? null : { a: 'to', to: 1 });
-    if (!a) {
-      pending = { kind: 'lead', side: 0, seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts };
-    } else {
-      const to = picks[a.to] ? a.to : 1;
-      const hit = swapHit(0, to);
-      const maxB = PvpEngine.buildStats(D, picks[to].base).hp;
-      st[0][to].resume = { hp: Math.max(1, maxB - (hit ? hit.dmg : 0)), en: 0, buffs: [0, 0], stall: 0 };
-      const maxF = PvpEngine.buildStats(D, foes[0].base).hp;
-      st[1][0].resume = { hp: maxF, en: hit ? Math.min(100, hit.eg) : 0, buffs: [0, 0], stall: 0 };
-      cur[0] = to;
-      swOk[0] = GB_SWAP_CD;
-      chase = true;   // 開幕からユーザーが逃げた＝ここからAIは追っている側
-      lead = { hit: hit && { mv: hit.mv, dmg: hit.dmg },
-        pt: { kind: 'lead', side: 0, seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts, ans: a, auto: !ans[key] } };
+  // 開幕交代の実行。交代先には**相手の打ちかけのノーマルアタック1発**が入り、相手はそのぶん
+  // ゲージを得る(両者が同時に交代したときは無し)。次の交代は45秒後
+  const doLead = (sd, to, withHit) => {
+    const od = 1 - sd;
+    const hit = withHit ? swapHit(sd, to) : null;
+    const maxB = PvpEngine.buildStats(D, ros[sd][to].base).hp;
+    st[sd][to].resume = { hp: Math.max(1, maxB - (hit ? hit.dmg : 0)), en: 0, buffs: [0, 0], stall: 0 };
+    const o = st[od][cur[od]].resume;
+    const maxO = PvpEngine.buildStats(D, ros[od][cur[od]].base).hp;
+    st[od][cur[od]].resume = { hp: o ? o.hp : maxO,
+      en: Math.min(100, (o ? o.en || 0 : 0) + (hit ? hit.eg : 0)), buffs: [0, 0], stall: 0 };
+    cur[sd] = to;
+    swOk[sd] = GB_SWAP_CD;
+    leadHits[sd] = hit && { side: sd, mv: hit.mv, dmg: hit.dmg };
+  };
+  // あいての開幕交代の判断(2026-08-19タダシさん指示)。基準は**対面の頭の交代とそろえる**:
+  // 出し負けていて勝てる控えがいるなら出る／控えの片方が明らかに弱いなら残って戦う／
+  // どっちもどっちで控えの2匹とも初手に強いなら、対応力の高いほうへ即座に交代する。
+  // 下読みのキャッシュは対面(li)ごとなので、開幕の判断は 'lead' という別のキーで持つ
+  // (対面0のキャッシュを汚すと、交代後の対面で古い読みが使い回されてしまう)
+  const aiLead = () => {
+    if (aiStayWeak('lead')) return { a: 'stay' };
+    const ev = aiEvenSwitch('lead');
+    if (ev != null) return { a: 'to', to: ev };
+    const to = aiSwapTo(1, {});
+    return to == null ? { a: 'stay' } : { a: 'to', to };
+  };
+
+  // ---- 開幕交代(0秒・両者が同時に決める) ----
+  // **おたがい相手の選択は見えない**(AIはずるをしない・恒久ルール)ので、あいての判断は
+  // ユーザーが開幕交代する**前**の初手に対して行う
+  const leadTo = [null, null];
+  if (foes.length && picks.length) {
+    // じぶん: 枠の「開幕交代」トグルがONのときだけ(交代先は選ぶ)
+    if (MK.leadSwap && picks.length > 1) {
+      const key = gbKey(0, 0, 'lead', 0, 0);
+      const lctx = { li: 0, base: 0, ros, swTo: [benches(0), benches(1)] };
+      const opts = gbChoices({ kind: 'lead', side: 0 }, lctx);
+      const a = ans[key] || (stepwise ? null : { a: 'to', to: 1 });
+      if (!a) pending = { kind: 'lead', side: 0, seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts };
+      else {
+        if (a.a !== 'stay' && picks[a.to]) leadTo[0] = a.to;
+        else if (a.a !== 'stay') leadTo[0] = 1;
+        leadPts[0] = { kind: 'lead', side: 0, seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts,
+          ans: a, auto: !ans[key] };
+      }
+    }
+    // あいて: 自分から交代するAI(スイッチ・実戦)のときだけ。チップをタップして選び直せる
+    if (!pending && ai.sw && foes.length > 1) {
+      const key = gbKey(0, 1, 'lead', 0, 0);
+      const lctx = { li: 0, base: 0, ros, swTo: [benches(0), benches(1)] };
+      const opts = gbChoices({ kind: 'lead', side: 1 }, lctx);
+      const a = ans[key] || aiLead();
+      if (a.a !== 'stay' && foes[a.to]) leadTo[1] = a.to;
+      leadPts[1] = { kind: 'lead', side: 1, seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts,
+        ans: a, auto: !ans[key] };
     }
   }
-
-  // 開幕は、あいて側から見て「相手の初手が出てきた」場面として扱う＝出し負けなら初手からすぐ交代を
-  // 検討できる(基本戦術。じぶん側の開幕交代は枠のトグルで行うので、じぶんには質問を出さない)
-  newIn[0] = true;
+  if (!pending && (leadTo[0] != null || leadTo[1] != null)) {
+    const bothLead = leadTo[0] != null && leadTo[1] != null;
+    [0, 1].forEach(sd => { if (leadTo[sd] != null) doLead(sd, leadTo[sd], !bothLead); });
+    chase = leadTo[0] != null && leadTo[1] == null;   // ユーザーだけが逃げた＝AIは追っている側
+    if (!bothLead) {
+      // 交代しなかった側は、**1秒たってから**「交代する？」を選べる(打ちかけのわざが終わり次第)
+      const rs = leadTo[0] != null ? 1 : 0;
+      react = { side: rs, tn: gbReactTn(D.moves[ros[rs][cur[rs]].pol.fast]) };
+    }
+  }
   while (cur[0] >= 0 && cur[1] >= 0 && legs.length < 16 && !pending) {
     const li = legs.length;
     seen[0].add(cur[0]); seen[1].add(cur[1]);   // 場に出た＝おたがいに見えた
@@ -5531,6 +5595,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       maxHp: [PvpEngine.buildStats(D, P0.base).hp, PvpEngine.buildStats(D, P1.base).hp],
       swTo: [benches(0), benches(1)], newIn: newIn.slice(),
       chase,                      // 追っている側か(ユーザーが自分から交代した直後)
+      react: li === 0 ? react : null,   // 開幕に片方だけ交代したとき、もう片方が反応できる場面
       enAt: [enOf(0), enOf(1)],   // 対面開始時のゲージ(「撃ってから交代」の判断に使う)
       bAt: [0, 1].map(sd => {     // 対面開始時の能力変化(受けたデバフの追跡の起点)
         const r = st[sd][cur[sd]].resume;
@@ -5585,7 +5650,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       swapped0: swapped[0], swapped1: swapped[1],
       swapTo0: swapped[0] ? dec[0].swapTo : null, swapTo1: swapped[1] ? dec[1].swapTo : null,
       pol: P0.pol, foePol: P1.pol, li, points,
-      leadHit: li === 0 && lead ? lead.hit : null, leadPt: li === 0 && lead ? lead.pt : null,
+      leadPts: li === 0 ? leadPts : [null, null],
+      leadHits: li === 0 ? leadHits : [null, null],
       hud: { hp0: rs0 ? Math.max(0, rs0.hp) : res.final[0].hpMax, en0: rs0 ? rs0.en : 0,
              b0: ((rs0 && rs0.buffs) || [0, 0]).slice(),
              hp1: rs1 ? Math.max(0, rs1.hp) : res.final[1].hpMax, en1: rs1 ? rs1.en : 0,
@@ -5715,7 +5781,7 @@ function gbRender(body, bt, picks, foes) {
   setProbTab(anyProbMove(picks.concat(foes).map(p => ({ fast: p.pol.fast, charged: p.pol.charged }))));
   RBUI.pts = {}; RBUI.order = [];
   const regPt = p => { if (p) { RBUI.pts[p.key] = p; RBUI.order.push(p.key); } };
-  bt.legs.forEach(leg => { regPt(leg.leadPt); (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.foeNextPoint); regPt(leg.pending); });
+  bt.legs.forEach(leg => { (leg.leadPts || []).forEach(regPt); (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.foeNextPoint); regPt(leg.pending); });
 
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
   const items = [], frames = [];
@@ -5744,10 +5810,14 @@ function gbRender(body, bt, picks, foes) {
       swOk: leg.swOk || 0, fswOk: leg.fswOk || 0,
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
-    if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
+    (leg.leadPts || []).forEach(p => { if (p) items.push(chipItem(p, base)); });
     items.push({ gt: base, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
-    if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
-      <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
+    // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
+    (leg.leadHits || []).forEach(h => { if (h) {
+      const cell = evCell([{ move: h.mv, dmg: h.dmg }]);
+      items.push({ gt: base, html: `<div class="ft"><div class="c me">${h.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
+        <div class="c foe">${h.side === 0 ? cell : ''}</div></div>` });
+    } });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), sh0, sh1, alive0, alive1 };
     const ptAt = {};
