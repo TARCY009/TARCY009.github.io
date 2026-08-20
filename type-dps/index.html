@@ -400,7 +400,7 @@ function graphSVG(forSave){
   const B=Math.round(H-PAD-nameH);                 // 棒の底(これより下が名前)
   const y=v=>B-(v-v0)/(v1-v0)*(B-T);
   // 保存する画像だけ、四隅を丸めて明るい青系のグラデーション枠を付ける(角の外は透明で書き出される)
-  const M=3.5, RX=34;
+  const M=2.8, RX=34;
   let s=`<svg${forSave?'':' id="gsvg"'} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif">
   <defs>
     <linearGradient id="gbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111a35"/><stop offset="1" stop-color="#0b1023"/></linearGradient>
