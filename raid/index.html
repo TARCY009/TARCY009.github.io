@@ -149,6 +149,9 @@ table.res th{background:var(--thbg);font-size:.72rem;color:var(--sub);padding:6p
 table.res td{border-bottom:1px solid var(--rowline);padding:7px 4px;text-align:center}
 table.res tr.sel td{background:var(--mero)}
 table.res tbody tr{cursor:pointer}
+/* 右端の▼/▶(タップでタイムラインが開く印)。選択中の行は▼を水色に点灯して下のタイムラインとつなぐ */
+table.res td.tlc{width:26px;color:var(--sub);font-size:.68rem;padding-left:0;padding-right:6px}
+table.res tr.sel td.tlc{color:var(--accent2);font-weight:800}
 .okw{color:var(--accent2);font-weight:800}
 .ngw{color:var(--ng);font-weight:700}
 /* タイムライン(外部シミュレータと同じ4列) */
@@ -595,24 +598,27 @@ function renderResult(){
                alt:'ボスがSPを2回に1回撃ってくる場合に勝てる最少の人数',
                coin:`勝率50%以上になる最少の人数（${TRIALS}回試行）`};
   const head=minN
-    ?`<div class="bigppl"><span>実戦の目安</span><b>${minN}人</b><span class="bigsub">${SPTXT[spMode]}</span></div>`
+    ?`<div class="bigppl"><span title="${SPTXT[spMode]}">実戦の目安</span><b title="${SPTXT[spMode]}">${minN}人</b><span class="bigsub expl">${SPTXT[spMode]}</span></div>`
     :`<div class="bigppl"><span class="ngw">20人でも倒しきれない計算です</span></div>`;
+  // 右端の▼/▶: どの行をタップしてもその人数のタイムラインが下に開く(選択中は▼で下とつながって見える)
+  const tlc=on=>`<td class="tlc">${on?'▼':'▶'}</td>`;
   const trs=rows.map(r=>{
-    const sel=r.n===selN?' class="sel"':'';
+    const on=r.n===selN, sel=on?' class="sel"':'';
+    const tip=` title="タップすると${r.n}人のときのタイムラインを下に表示します"`;
     if(spMode==='coin'){
-      return `<tr${sel} data-n="${r.n}"><td>${r.n}人</td>
+      return `<tr${sel}${tip} data-n="${r.n}"><td>${r.n}人</td>
         <td>${r.rate>=0.5?`<span class="okw">勝率${Math.round(r.rate*100)}%</span>`:`<span class="ngw">勝率${Math.round(r.rate*100)}%</span>`}</td>
         <td>${r.med!==null?`残り${(t.time-r.med).toFixed(1)}秒`:'—'}</td>
-        <td>${r.faints.toFixed(1)}回</td><td>${r.wipes.toFixed(1)}回</td></tr>`;
+        <td>${r.faints.toFixed(1)}回</td><td>${r.wipes.toFixed(1)}回</td>${tlc(on)}</tr>`;
     }
-    return `<tr${sel} data-n="${r.n}"><td>${r.n}人</td>
+    return `<tr${sel}${tip} data-n="${r.n}"><td>${r.n}人</td>
       <td>${r.win?'<span class="okw">勝ち</span>':`<span class="ngw">時間切れ（残${Math.round(r.left/t.hp*100)}%）</span>`}</td>
       <td>${r.win?`残り${(t.time-r.t).toFixed(1)}秒`:'—'}</td>
-      <td>${r.faints}回</td><td>${r.wipes}回</td></tr>`;
+      <td>${r.faints}回</td><td>${r.wipes}回</td>${tlc(on)}</tr>`;
   }).join('');
   $('resBody').innerHTML=head+
-    `<table class="res"><thead><tr><th>人数</th><th>結果</th><th title="倒しきったときの残り時間です">残り時間</th><th title="1人あたり何匹倒されるか（ひんし→次まで1秒）">ひんし</th><th title="6匹全滅して再突入した回数">全滅</th></tr></thead><tbody>${trs}</tbody></table>
-    <p class="note">行をタップするとその人数のタイムラインが下に出ます${spMode==='coin'?'（ランダムの1例）':''}</p>`+
+    `<table class="res"><thead><tr><th>人数</th><th>結果</th><th title="倒しきったときの残り時間です">残り時間</th><th title="1人あたり何匹倒されるか（ひんし→次まで1秒）">ひんし</th><th title="6匹全滅して再突入した回数">全滅</th><th></th></tr></thead><tbody>${trs}</tbody></table>
+    <p class="note expl">行をタップするとその人数のタイムラインが下に出ます${spMode==='coin'?'（ランダムの1例）':''}</p>`+
     timelineHtml();
   $('resBody').querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>{selN=+tr.dataset.n;renderResult();});
 }
