@@ -71,6 +71,17 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .cupslots button small{display:block;font-weight:400;font-size:.64rem;color:var(--sub);margin-top:2px}
 .cupslots button[aria-pressed="true"]{background:var(--ml);border-color:var(--ml);color:var(--onml)}
 .cupslots button[aria-pressed="true"] small{color:var(--onml)}
+/* 過去のカップ(そのカップが最後に開催されたときの環境)。使う頻度が低いので畳んでおく */
+.pasttab{display:block;width:100%;margin-top:8px;padding:7px 6px;font-size:.72rem;font-weight:700;
+  background:var(--tab);border:1px solid var(--line);border-radius:9px;color:var(--gold);cursor:pointer;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.pasttab:hover{transform:translateY(-1px)}
+.pasttab[aria-expanded="true"]{background:linear-gradient(160deg,#ffe89a 0%,var(--gold) 45%,#b8860b 100%);
+  border-color:var(--gold);color:#2a1e00;box-shadow:0 5px 16px rgba(255,213,74,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.pastslots{margin-top:6px;max-height:46vh;overflow-y:auto}
+.pastyear{flex:1 0 100%;font-size:.64rem;font-weight:700;color:var(--sub);margin:6px 0 0;padding-left:2px}
+.pastyear:first-child{margin-top:0}
+.pastload{flex:1 0 100%;font-size:.72rem;color:var(--sub);padding:8px 2px}
 @media (max-width:430px){.lgbtn{font-size:.76rem;padding:10px 2px}}
 /* 2カラム */
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}

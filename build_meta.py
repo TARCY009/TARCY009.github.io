@@ -9,6 +9,7 @@ PvPokeのランキング(オープンソース・シーズンごとに更新)か
 シーズンが変わったら再実行すれば最新の環境に更新される。
 """
 import json
+import os
 import urllib.request
 
 TOP_N = 50    # 環境一覧・パーティ診断・環境スコアが使う基準の件数(変えると環境スコアの基準が動くので固定)
@@ -18,19 +19,20 @@ LEAGUES = {          # 出力キー: (PvPokeのCP, 表示名)
     "2500": (2500, "ハイパー"),
     "0":    (10000, "マスター"),
 }
-# 特殊カップ(スラッグ, CP上限, 日本語名)。PvPoke側にデータが無いものは自動でスキップされる
-CUPS = [
-    ("mega", 1500, "メガバージョン(スーパー)"),
-    ("mega", 2500, "メガバージョン(ハイパー)"),
-    ("mega", 10000, "メガバージョン(マスター)"),
-    ("premier", 10000, "マスタープレミア"),
-    ("premier", 2500, "ハイパープレミア"),
-    ("classic", 10000, "マスタークラシック"),
-    ("remix", 1500, "スーパーリミックス"),
-    ("little", 500, "リトルカップ"),
-    ("summer", 1500, "サマーカップ"),
-    ("catch", 1500, "キャッチカップ"),
+# 特殊カップ。いま開催されているものはカップ定義から自動で拾う(下は常設ぶんの土台)。
+# 日本語名は past_cup_names.json から引く(過去のカップと同じ表記にそろえるため)
+BASE_CUPS = [
+    ("mega", 1500), ("mega", 2500), ("mega", 10000),
+    ("premier", 10000), ("premier", 2500), ("classic", 10000),
+    ("remix", 1500), ("little", 500), ("summer", 1500), ("catch", 1500),
 ]
+# ゲーム内のカップではない(大会・コミュニティ主催)フォーマットを外すための目印
+COMMUNITY = ("Devon", "Battle Frontier", "Battle Tower", "Gymbreakers", "Championship Series",
+             "Invitational", "Spice Bowl", "UFC", "Zygarden", "P!P", "Continental", "Worlds",
+             "ADL", "TeamUp", "Slitzko", "Faction", "Remix V2", "Silph", "GO Stadium",
+             "Draft League", "San Benedetto", "Arrohh")
+URL_FORMATS = "https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/gamemaster/formats.json"
+
 URL = "https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/rankings/all/overall/rankings-{cp}.json"
 URL_CUP = "https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/rankings/{cup}/overall/rankings-{cp}.json"
 
@@ -86,13 +88,46 @@ for lg, (cp, label) in LEAGUES.items():
     meta_ext[lg] = picked[TOP_N:]
     print(f"{label}(CP{cp}): {len(meta[lg])}匹採用(+拡張{len(meta_ext[lg])}匹) / 変換不可 {len(skipped)}件 {skipped[:5]}")
 
+def build_cup_list():
+    """いま開催中のカップ + 常設ぶん を、日本語名つきで並べる"""
+    names = {}
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "past_cup_names.json"), encoding="utf-8") as f:
+            names = json.load(f)
+    except FileNotFoundError:
+        print("past_cup_names.json が見つからないので英語名で出す")
+    live, titles = [], {}
+    try:
+        with urllib.request.urlopen(URL_FORMATS, timeout=30) as r:
+            for f in json.load(r):
+                slug, cp = f.get("cup"), f.get("cp")
+                if not slug or slug == "custom" or not cp:
+                    continue
+                t = f.get("title", "")
+                titles[f"{slug}-{cp}"] = t
+                if any(c.lower() in t.lower() for c in COMMUNITY):
+                    continue          # ゲーム内のカップではないので出さない
+                live.append((slug, cp))
+    except Exception as e:
+        print(f"カップ定義が取れなかったので常設ぶんだけ出す ({e})")
+    out, seen = [], set()
+    for slug, cp in live + BASE_CUPS:
+        key = f"{slug}-{cp}"
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((slug, cp, names.get(key) or titles.get(key) or key))
+    return out
+
+
 def fetch_cup(cup, cp):
     with urllib.request.urlopen(URL_CUP.format(cup=cup, cp=cp), timeout=30) as r:
         return json.load(r)
 
 
 cups_out = []
-for slug, cp, label in CUPS:
+for slug, cp, label in build_cup_list():
     try:
         rows = fetch_cup(slug, cp)
     except Exception as e:

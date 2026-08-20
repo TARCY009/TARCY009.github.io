@@ -20,6 +20,8 @@ document.getElementById('app').innerHTML = `
 <div class="popwin cupwin" id="cupwin" style="display:none">
   <div class="popttl">特殊カップを選ぶ</div>
   <div class="slots cupslots" id="cupslots"></div>
+  <button class="pasttab" id="pasttab" aria-expanded="false" title="過去に開催された特殊カップの環境。そのカップが最後に開催されたときの上位100匹を残してあります">🕘 過去のカップ</button>
+  <div class="slots cupslots pastslots" id="pastslots" style="display:none"></div>
 </div>
 
 <div class="modes" id="modes">
@@ -866,15 +868,56 @@ document.getElementById('leagues').querySelectorAll('.lgbtn[data-cap]').forEach(
 let cup = null;
 const cupTab = document.getElementById('cupTab');
 const cupwin = document.getElementById('cupwin');
+// 過去のカップ(そのカップが最後に開催されたときの環境)。現行と同じ形なので、選べば全モードがそのまま動く。
+// ファイルが大きいので、一覧を開いたときだけ読みに行く
+let pastCups = null, pastOpen = false, pastLoad = null;
+const cupYm = c => c.ym ? `${+c.ym.slice(0, 4)}年${+c.ym.slice(5, 7)}月` : '';
+const cupTitle = c => c.label + (c.ym ? `・${cupYm(c)}` : '');
+function loadPast() {
+  if (pastLoad) return pastLoad;
+  pastLoad = new Promise(res => {
+    const sc = document.createElement('script');
+    sc.src = '/assets/meta_past.js';
+    sc.onload = sc.onerror = () => {
+      const live = new Set((window.CUP_LISTS || []).map(c => c.slug));
+      // いま一覧に出ているカップは二重に出さない(中身は同じ)
+      pastCups = (window.PAST_CUPS || []).filter(c => !live.has(c.slug));
+      res(pastCups);
+    };
+    document.head.appendChild(sc);
+  });
+  return pastLoad;
+}
+const cupBtn = c =>
+  `<button data-slug="${c.slug}" aria-pressed="${!!(cup && cup.slug === c.slug)}">${c.label}<small>${c.ym ? cupYm(c) + '・' : ''}${c.cp === 10000 ? 'CP上限なし' : 'CP' + c.cp}</small></button>`;
+function pastHtml() {
+  if (!pastCups) return '<div class="pastload">読み込み中…</div>';
+  let year = '';
+  return pastCups.map(c => {
+    const y = c.ym.slice(0, 4);
+    const head = y === year ? '' : `<div class="pastyear">${+y}年</div>`;
+    year = y;
+    return head + cupBtn(c);
+  }).join('');
+}
 function renderCups() {
   const box = document.getElementById('cupslots');
-  box.innerHTML = (window.CUP_LISTS || []).map(c =>
-    `<button data-slug="${c.slug}" aria-pressed="${!!(cup && cup.slug === c.slug)}">${c.label}<small>${c.cp === 10000 ? 'CP上限なし' : 'CP' + c.cp}</small></button>`).join('');
-  box.querySelectorAll('button').forEach(b => b.onclick = () => selectCup(b.dataset.slug));
+  const pbox = document.getElementById('pastslots');
+  box.innerHTML = (window.CUP_LISTS || []).map(cupBtn).join('');
+  document.getElementById('pasttab').setAttribute('aria-expanded', pastOpen);
+  pbox.style.display = pastOpen ? 'flex' : 'none';
+  if (pastOpen) pbox.innerHTML = pastHtml();
+  [box, pbox].forEach(b => b.querySelectorAll('button[data-slug]')
+    .forEach(x => x.onclick = () => selectCup(x.dataset.slug)));
 }
 function selectCup(slug) {
-  const c = (window.CUP_LISTS || []).find(x => x.slug === slug);
-  if (!c) return;
+  const c = (window.CUP_LISTS || []).find(x => x.slug === slug)
+    || (pastCups || []).find(x => x.slug === slug);
+  if (!c) {
+    // 共有リンクから開いたときは、過去のカップをまだ読んでいないことがある
+    if (!pastCups) loadPast().then(ps => { if (ps.some(x => x.slug === slug)) selectCup(slug); });
+    return;
+  }
   cup = c;
   cap = c.cp === 10000 ? 0 : c.cp;
   document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', false));
@@ -883,6 +926,11 @@ function selectCup(slug) {
   cupwin.style.display = 'none';
   afterCapChange();
 }
+document.getElementById('pasttab').onclick = () => {
+  pastOpen = !pastOpen;
+  renderCups();
+  if (pastOpen && !pastCups) loadPast().then(() => { if (pastOpen) renderCups(); });
+};
 cupTab.onclick = () => {
   const open = cupwin.style.display === 'none';
   renderCups();
@@ -999,6 +1047,16 @@ ${PAGE_ROCKET ? '' : `
   <b>そのあいてにいちばん効くノーマル／SPを1本ずつ</b>計算式で選び、名前の下に出しています。
   もっと詰めたいときは行をタップして1対1シミュでわざを変えてみてください。
   表は<b>並び順の上位200件</b>まで出します（全部の件数は表の上に出ます）。</p>
+
+  <h4>特殊カップの「🕘 過去のカップ」</h4>
+  <p>特殊カップは開催されていない期間は環境を確かめられませんが、
+  <b>そのカップが最後に開催されたときの環境上位100匹</b>を残してあります。
+  選べば通常のリーグと同じように<b>環境一覧・対策さがし・パーティ診断・環境スコア</b>が使えるので、
+  次にそのカップが来たときに向けて、いまの手持ちで戦えるかを先に試せます。</p>
+  <p>カップ名の下の<b>年月がそのカップの最後の開催時期</b>です。
+  ここに出るのは<b>環境上位の顔ぶれとわざ構成</b>で、週ごとの推移や実際の使用率ではありません。
+  また、勝ち負けの計算は<b>いまのわざ・種族値</b>で行うので、
+  古いカップほど当時の実際の戦いとは差が出ます。</p>
 
   <h4>模擬戦（GBL）の使い方</h4>
   <p><b>じぶん3匹×あいて3匹の対人戦を、実際のバトルの流れで再現する</b>モードです。
@@ -1723,7 +1781,7 @@ function runMulti() {
   const pool0 = movePool(S[0].key);
   fillMoves(0, { ...meBase, fast: S[0].fast || S[0].pin.fast || pool0.fasts[0], throw: S[0].c1 || S[0].pin.c1 || pool0.chargeds[0] });
   const myName = (S[0].shadow ? SHADOWMK : '') + D.pokemon[S[0].key].n;
-  box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}<small class="cnsub">マスをタップ→1対1シミュ</small></h3>
+  box.innerHTML = `<h3>${myName} × 環境上位${list.length}匹${cup ? `（${cupTitle(cup)}）` : ''}<small class="cnsub">マスをタップ→1対1シミュ</small></h3>
     ${ctlHtml('multi')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">相手</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
     ${list.map((m, k) => `<tr data-k="${k}"><td class="opname">${k + 1}. ${shMark(m.n)}</td><td>…</td><td>…</td><td>…</td></tr>`).join('')}
@@ -2040,7 +2098,7 @@ function runCounter() {
   const foeName = (S[1].shadow ? SHADOWMK : '') + D.pokemon[S[1].key].n;
   // 候補が多い「全ポケモン」では、計算しながら1行ずつ描くと重いので表は最後にまとめて作る
   const all = cnTop === 'all';
-  const sub = all ? `全ポケモン${list.length}匹（シャドウ込み）` : `環境上位${list.length}匹${cup ? `（${cup.label}）` : ''}`;
+  const sub = all ? `全ポケモン${list.length}匹（シャドウ込み）` : `環境上位${list.length}匹${cup ? `（${cupTitle(cup)}）` : ''}`;
   box.innerHTML = `<h3>${foeName} に勝てるのは？<small class="cnsub">${sub}・マスをタップ→1対1シミュ</small></h3>
     ${ctlHtml('counter')}
     <table class="mttbl"><tbody><tr><th style="text-align:left">勝てる候補</th><th>🛡0-0</th><th>🛡1-1</th><th>🛡2-2</th></tr>
