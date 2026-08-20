@@ -356,55 +356,69 @@ function renderRank(){
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 // シャドウの炎マーク(shadow-icon.cssと同じ形・viewBox 800×1024)
 const FLAME='M348 8C362 130 400 232 452 330C512 442 566 536 572 640C575 700 560 742 540 772C566 700 566 620 552 556C596 596 640 660 656 726C672 668 682 610 676 548C724 610 768 686 782 772C800 884 700 1010 470 1018C250 1026 30 962 14 812C2 700 60 596 132 520C124 590 138 650 168 700C168 620 196 540 244 486C244 546 258 596 282 634C300 566 292 486 268 410C238 314 262 150 348 8Z';
+// 文字幅の見積もり(全角=1文字ぶん・半角=0.62文字ぶん)。SVGは中央寄せの左端が測れないため
+const tw=(str,fs)=>[...String(str)].reduce((a,ch)=>a+(ch.charCodeAt(0)>255?fs:fs*0.62),0);
+// タダシさんのエクセル版と同じ「縦棒グラフ」(2026-08-20指示)。
+// 値は棒の上・名前は棒の下・目盛りの下限は最下位の少し下(差がはっきり見える)
 function graphSVG(){
   const rows=buildRows().slice(0,showN);
   const [c1,c2]=TC[curT], ja=JA[curT];
   const W=1980,H=1440;
-  const top=176,bottom=1392,x0=640,x1=1806;
-  const n=rows.length||1, rowH=(bottom-top)/n;
-  const fs=Math.min(34,Math.max(19,Math.floor(rowH*0.56)));   // 名前の文字サイズ(件数で自動調整)
-  const barH=Math.min(rowH*0.62,fs*1.5);
-  const max=rows.length?rows[0].dps:1;
-  const cond=`PL50・個体値15${fShadow?'・シャドウ含む':''}${fMega?'・メガ・ゲンシ含む':''}`;
-  const chipW=ja.length*58+52;
+  const n=rows.length||1;
+  // 目盛り: 下限=最下位の3%下を5刻みで切り下げ・上限=1位の少し上
+  const dmax=rows.length?rows[0].dps:10, dmin=rows.length?rows[rows.length-1].dps:0;
+  const step=(dmax-dmin)<6?1:(dmax-dmin)<14?2:5;
+  const v0=Math.max(0,Math.floor(dmin*0.97/step)*step);
+  const v1=Math.ceil(dmax*1.02/step)*step;
+  const L=118,R=1928,T=210,B=1168;                 // 描画エリア(Bより下は名前)
+  const y=v=>B-(v-v0)/(v1-v0)*(B-T);
+  const colW=(R-L)/n, barW=colW*0.6;
+  const vfs=n<=20?27:n<=30?21:16;                  // 値の文字サイズ
+  let nfs=n<=20?20:n<=30?16:13;                    // 名前の文字サイズ(1行4文字前後入る大きさ)
+  const title=`${ja}タイプ火力ランキングTOP${showN}`+(fShadow?'【シャドウ含む】':'')+(fMega?'【メガ・ゲンシ含む】':'');
+  const tfs=Math.min(52,Math.floor(1700/Math.max(1,tw(title,1)/1)));  // 帯に収まるよう調整
+  const bandW=tw(title,tfs)+96;
   let s=`<svg id="gsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif">
   <defs>
     <linearGradient id="gbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111a35"/><stop offset="1" stop-color="#0b1023"/></linearGradient>
-    <linearGradient id="gbar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>
+    <linearGradient id="gbar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${c1}"/></linearGradient>
     <linearGradient id="gchip" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${c1}"/></linearGradient>
   </defs>
   <rect width="${W}" height="${H}" fill="url(#gbg)"/>
-  <rect x="60" y="46" width="${chipW}" height="66" rx="16" fill="url(#gchip)"/>
-  <text x="${60+chipW/2}" y="94" font-size="46" font-weight="800" fill="#0b1023" text-anchor="middle">${esc(ja)}</text>
-  <text x="${60+chipW+26}" y="96" font-size="54" font-weight="800" fill="#ffffff">タイプ 火力ランキング</text>
-  <text x="1920" y="92" font-size="27" fill="#8b96c2" text-anchor="end">${esc(cond)}</text>
-  <line x1="60" y1="132" x2="1920" y2="132" stroke="${c1}" stroke-width="3" opacity=".55"/>
+  <rect x="${(W-bandW)/2}" y="38" width="${bandW}" height="${tfs*1.62}" rx="14" fill="url(#gchip)"/>
+  <text x="${W/2}" y="${38+tfs*1.17}" font-size="${tfs}" font-weight="800" fill="#ffffff" text-anchor="middle">${esc(title)}</text>
+  <text x="1920" y="176" font-size="26" fill="#8b96c2" text-anchor="end">PL50・個体値15</text>
   <text x="1920" y="1424" font-size="24" fill="#5b6591" text-anchor="end">tarcy009.github.io</text>`;
-  const MD={1:['#ffe08a','#c99a14','#4a3200'],2:['#f2f6fb','#8f9dad','#26313c'],3:['#e8b489','#a06437','#3c2413']};
+  // 目盛り線とラベル
+  for(let v=v0;v<=v1;v+=step){
+    const gy=y(v);
+    s+=`<line x1="${L}" y1="${gy.toFixed(1)}" x2="${R}" y2="${gy.toFixed(1)}" stroke="#2a3560" stroke-width="${v===v0?2:1}"/>
+    <text x="${L-14}" y="${(gy+9).toFixed(1)}" font-size="24" fill="#8b96c2" text-anchor="end">${v}</text>`;
+  }
   rows.forEach((r,i)=>{
-    const cy=top+rowH*i+rowH/2;
-    const bw=Math.max(6,(r.dps/max)*(x1-x0));
-    // 順位
-    const md=MD[r.rank];
-    if(md) s+=`<rect x="36" y="${cy-fs*0.78}" width="86" height="${fs*1.56}" rx="9" fill="${md[0]}"/>
-      <rect x="36" y="${cy-fs*0.78}" width="86" height="${fs*1.56}" rx="9" fill="url(#gbg)" opacity="0"/>
-      <text x="79" y="${cy+fs*0.36}" font-size="${fs}" font-weight="800" fill="${md[2]}" text-anchor="middle">${r.rank}位</text>`;
-    else s+=`<text x="79" y="${cy+fs*0.36}" font-size="${fs*0.92}" font-weight="700" fill="#8b96c2" text-anchor="middle">${r.rank}位</text>`;
-    // シャドウの炎マーク＋名前(メガ・ゲンシは名前に含まれる)
-    let nx=140;
-    if(r.shadow){
-      const sc=fs/1024*1.15;
-      s+=`<path d="${FLAME}" transform="translate(${nx},${cy-fs*0.62}) scale(${sc})" fill="#b06cff"/>`;
-      nx+=800*sc+8;
-    }
-    s+=`<text x="${nx}" y="${cy+fs*0.36}" font-size="${fs}" font-weight="700" fill="#eef1fb">${esc(r.p.n)}</text>`;
-    // バー＋わざ構成＋DPS
-    s+=`<rect x="${x0}" y="${cy-barH/2}" width="${bw.toFixed(1)}" height="${barH}" rx="${Math.min(10,barH/2)}" fill="url(#gbar)"/>`;
-    if(bw>430){
-      const mv1=r.f.id.startsWith('HIDDEN_POWER_')?'めざめるパワー':D.moves[r.f.id].n;
-      s+=`<text x="${x0+16}" y="${cy+fs*0.26}" font-size="${(fs*0.68).toFixed(0)}" font-weight="700" fill="#0b1023" opacity=".78">${esc(mv1)}＋${esc(D.moves[r.c.id].n)}</text>`;
-    }
-    s+=`<text x="${x0+bw+16}" y="${cy+fs*0.34}" font-size="${(fs*0.95).toFixed(0)}" font-weight="800" fill="#ffffff">${r.dps.toFixed(1)}</text>`;
+    const cx=L+colW*i+colW/2;
+    const by=y(r.dps), bh=B-by;
+    s+=`<rect x="${(cx-barW/2).toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="${Math.min(8,barW/4)}" fill="url(#gbar)"/>`;
+    // 値(棒の上)
+    s+=`<text x="${cx.toFixed(1)}" y="${(by-12).toFixed(1)}" font-size="${vfs}" font-weight="800" fill="#ffffff" text-anchor="middle">${r.dps.toFixed(2)}</text>`;
+    // 名前(棒の下・列の幅で折り返し・シャドウは炎マーク)
+    let fs=nfs, maxC=Math.max(3,Math.floor((colW-6)/fs));
+    while([...r.p.n].length>maxC*3&&fs>11){ fs-=2; maxC=Math.max(3,Math.floor((colW-6)/fs)); }
+    // 行数を決めてから均等に割る(「ズガド/ーン」のような1文字残りを避ける)
+    const chars=[...r.p.n], nl=Math.min(3,Math.ceil(chars.length/maxC)), per=Math.ceil(chars.length/nl);
+    const lines=[];
+    for(let p2=0;p2<chars.length;p2+=per) lines.push(chars.slice(p2,p2+per).join(''));
+    lines.slice(0,3).forEach((ln,li)=>{
+      const ly=B+30+fs*0.9+li*fs*1.2;
+      if(li===0&&r.shadow){
+        const w2=tw(ln,fs), sc=fs/1024*1.1, fw=800*sc;
+        const sx=cx-(w2+fw+4)/2;
+        s+=`<path d="${FLAME}" transform="translate(${sx.toFixed(1)},${(ly-fs*0.88).toFixed(1)}) scale(${sc})" fill="#b06cff"/>
+        <text x="${(sx+fw+4).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fs}" font-weight="700" fill="#eef1fb">${esc(ln)}</text>`;
+      }else{
+        s+=`<text x="${cx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fs}" font-weight="700" fill="#eef1fb" text-anchor="middle">${esc(ln)}</text>`;
+      }
+    });
   });
   s+='</svg>';
   return s;
