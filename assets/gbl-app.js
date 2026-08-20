@@ -248,7 +248,7 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="rkteam" style="display:none">
   <div class="rksuggbar" id="rksuggbar"><span class="lbl">おすすめ</span>
     <button data-m="power" aria-pressed="false" title="じぶんの枠の入力欄をタップすると、同じ順番のあいてをいちばん速く倒せるポケモン トップ5を出します">高火力</button><button data-m="safe" aria-pressed="false" title="あいてのどのわざでも先に倒されないポケモンだけに絞って、火力トップ5を出します">高火力＋安定</button>
-    <button class="rkdetailtab" id="rkdetailtab" aria-expanded="false" title="こまかい設定（確率で上下するわざ・じぶんの個体値とPL・あいてのわざランダム）を開きます"><i class="gear">⚙</i> 詳細/button></div>
+    <button class="rkdetailtab" id="rkdetailtab" aria-expanded="false" title="こまかい設定（確率で上下するわざ・じぶんの個体値とPL・あいてのわざランダム）を開きます"><i class="gear">⚙</i> 詳細</button></div>
   <div class="rkdetail" id="rkdetail" style="display:none">
     <div class="rkdbody"></div>
     <div class="rkdprob"></div>
@@ -293,7 +293,7 @@ document.getElementById('app').innerHTML = `
     <div class="opts rkfilt" id="rkfilt">
       <button data-f="shadow" aria-pressed="true" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（シャドウポケモンは攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i>シャドウ</button><button data-f="mega" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     </div>
-    <button class="mdettab" id="rkentdet" aria-expanded="false" title="対面の始まり方（敵硬直）の設定を開きます"><i class="gear">⚙</i> 詳細/button>
+    <button class="mdettab" id="rkentdet" aria-expanded="false" title="対面の始まり方（敵硬直）の設定を開きます"><i class="gear">⚙</i> 詳細</button>
   </div>
   <div class="rkentbox" id="rkentbox" style="display:none"></div>
   <div class="rkmy" id="rkmy">
@@ -305,7 +305,7 @@ document.getElementById('app').innerHTML = `
 
 <!-- 一覧系3モードの「⚙ 詳細」。ブラフ・能力変化わざはここへ畳んで、画面の幅と文字を減らす -->
 <div class="mdet" id="mdet" style="display:none">
-  <button class="mdettab" id="mdettab" aria-expanded="false" title="こまかい設定（ブラフ・能力変化わざ）を開きます"><i class="gear">⚙</i> 詳細/button>
+  <button class="mdettab" id="mdettab" aria-expanded="false" title="こまかい設定（ブラフ・能力変化わざ）を開きます"><i class="gear">⚙</i> 詳細</button>
   <div class="mdetbody" id="mdetbody" style="display:none"></div>
 </div>
 
