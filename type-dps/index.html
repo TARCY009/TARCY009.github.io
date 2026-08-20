@@ -173,8 +173,8 @@ h1 b{white-space:nowrap}
 
 <section class="panel">
   <div class="ghead">
-    <span class="gttl">グラフ</span>
-    <span class="gsub expl">保存すると1980×1440の画像になります</span>
+    <span class="gttl">グラフ<small style="color:var(--sub);font-weight:700"> TOP10</small></span>
+    <span class="gsub expl">グラフは上位10位まで。保存すると1980×1440の画像になります</span>
     <button id="saveBtn" type="button" title="いま表示しているグラフを1980×1440のPNG画像として保存します">📷 画像を保存</button>
   </div>
   <div id="gwrap"></div>
@@ -194,7 +194,7 @@ h1 b{white-space:nowrap}
     <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）</li>
   </ul>
   <h4>グラフの保存</h4>
-  <p>「📷 画像を保存」でいま表示しているランキングのグラフを<b>1980×1440のPNG画像</b>として保存できます。動画や共有にそのまま使えます。</p>
+  <p>グラフは<b>上位10位まで</b>を表示します（一覧の20位・30位・40位の切り替えとは独立）。「📷 画像を保存」で<b>1980×1440のPNG画像</b>として保存でき、動画や共有にそのまま使えます。</p>
   <h4>データの更新</h4>
   <p>ポケモン・わざのデータは毎朝自動で更新されます。</p>
 </div>
@@ -359,9 +359,10 @@ const FLAME='M348 8C362 130 400 232 452 330C512 442 566 536 572 640C575 700 560 
 // 文字幅の見積もり(全角=1文字ぶん・半角=0.62文字ぶん)。SVGは中央寄せの左端が測れないため
 const tw=(str,fs)=>[...String(str)].reduce((a,ch)=>a+(ch.charCodeAt(0)>255?fs:fs*0.62),0);
 // タダシさんのエクセル版と同じ「縦棒グラフ」(2026-08-20指示)。
-// 値は棒の上・名前は棒の下・目盛りの下限は最下位の少し下(差がはっきり見える)
+// 値は棒の上・名前は棒の下・目盛りの下限は最下位の少し下(差がはっきり見える)。
+// グラフは常にTOP10(一覧の20/30/40位とは独立。それ以上はぎゅうぎゅうになる・タダシさん指示)
 function graphSVG(){
-  const rows=buildRows().slice(0,showN);
+  const rows=buildRows().slice(0,10);
   const [c1,c2]=TC[curT], ja=JA[curT];
   const W=1980,H=1440;
   const n=rows.length||1;
@@ -373,9 +374,9 @@ function graphSVG(){
   const L=118,R=1928,T=210,B=1168;                 // 描画エリア(Bより下は名前)
   const y=v=>B-(v-v0)/(v1-v0)*(B-T);
   const colW=(R-L)/n, barW=colW*0.6;
-  const vfs=n<=20?27:n<=30?21:16;                  // 値の文字サイズ
-  let nfs=n<=20?20:n<=30?16:13;                    // 名前の文字サイズ(1行4文字前後入る大きさ)
-  const title=`${ja}タイプ火力ランキングTOP${showN}`+(fShadow?'【シャドウ含む】':'')+(fMega?'【メガ・ゲンシ含む】':'');
+  const vfs=32;                                    // 値の文字サイズ
+  let nfs=26;                                      // 名前の文字サイズ(10列なら1行7文字前後入る)
+  const title=`${ja}タイプ火力ランキングTOP10`+(fShadow?'【シャドウ含む】':'')+(fMega?'【メガ・ゲンシ含む】':'');
   const tfs=Math.min(52,Math.floor(1700/Math.max(1,tw(title,1)/1)));  // 帯に収まるよう調整
   const bandW=tw(title,tfs)+96;
   let s=`<svg id="gsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif">
@@ -440,7 +441,7 @@ $('saveBtn').onclick=()=>{
     cv.toBlob(b=>{
       const a=document.createElement('a');
       a.href=URL.createObjectURL(b);
-      a.download=`タイプ別火力ランキング_${JA[curT]}_TOP${showN}.png`;
+      a.download=`タイプ別火力ランキング_${JA[curT]}_TOP10.png`;
       a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     },'image/png');
