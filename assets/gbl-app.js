@@ -353,6 +353,8 @@ if (PAGE_ROCKET) {
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
+  // リンクのぶん幅が足りず、狭い画面では見出しがリンクに重なる。CSSで2段にするための目印
+  document.querySelector('header').classList.add('haslink');
 } else {
   // GBLページ: ロケット団戦は別ページになったので、タブを同じ位置のリンクに差し替える
   const rb = document.querySelector('#modes button[data-m="rocket"]');

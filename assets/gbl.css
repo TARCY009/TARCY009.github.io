@@ -231,6 +231,13 @@ header h1{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:0 .35em}
 header h1>span,header h1>b{white-space:nowrap}
 header .themesw{align-self:center}
 header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
+/* ロケット団ページは右に「GBL対面シミュ ↗」がある。狭い画面では見出しの幅が足りず
+   タイトルがリンクに重なるので、見出しを1行使い切ってボタン類を下の段へ送る */
+@media (max-width:560px){
+  header.haslink{flex-wrap:wrap;align-items:center;row-gap:6px}
+  header.haslink h1{flex:1 1 100%}
+  header.haslink .pagelink{margin-left:auto}
+}
 /* パーティ診断 */
 .pslots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
 .pslot{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px;min-width:0}
