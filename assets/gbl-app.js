@@ -274,7 +274,8 @@ document.getElementById('app').innerHTML = `
       <div class="pslots myslots"></div>
     </div>
     <div class="rkteamcol">
-      <div class="rkcolttl foe" title="あいての3匹。わざの既定は環境の定番構成です(選び直せます)">あいて</div>
+      <div class="rkcolttl foe gfhead"><span title="あいての3匹。わざの既定は環境の定番構成です(選び直せます)">あいて</span>
+        <button class="ptauto gfauto" aria-pressed="false" title="オートにすると、あいてのわざ欄を隠して環境の定番構成で戦います＝どのわざが飛んでくるかは飛んでくるまで分かりません(実戦と同じ)。えらぶ＝今までどおり自分でわざを選び、構成を見ながら戦えます"><i class="k">わざ</i><span class="v m">えらぶ</span><span class="v a">オート</span></button></div>
       <div class="pslots foeslots gfoeslots"></div>
     </div>
   </div>
@@ -1010,6 +1011,14 @@ ${PAGE_ROCKET ? '' : `
     <li>1匹目の枠の「${SWAPMK}開幕交代」をONにすると、バトル開始と同時に2匹目か3匹目へ交代できます</li>
     <li><b>自分の能力が下がるSPアタック</b>（ブレイブバードなど）を撃った直後は「交代する？」と聞きます。
     下がった能力は交代で消えるので、「ためて連射して下がる」の実戦の動きを再現できます</li>
+    <li>SPアタックの選択肢の<b>「⭐ 最適」</b>を押すと、いちばん効率のよいタイミングと撃つわざを
+    おまかせで選びます（「＋2」なら、ノーマルアタックをあと2発はさんでから撃つのが最適という意味）。
+    ＋1〜＋3発の細かい指定は<b>「…詳細」</b>の中にあります</li>
+    <li><b>あいてのSPアタックが2本のときは、どちらが飛んでくるか分かりません</b>（実戦と同じ。
+    見えてしまうと、あいてのブラフが成立しないため）。飛んできたわざはタイムラインで確認できます</li>
+    <li>あいての枠の右上の<b>「わざ えらぶ｜オート」</b>で、あいてのわざを<b>オート</b>にすると
+    わざ欄が隠れて環境の定番構成で戦います＝<b>何が飛んでくるか完全に分からない実戦の練習</b>ができます。
+    「えらぶ」なら今までどおり構成を見ながら戦えます</li>
   </ul>
   <p><b>あいての行動はAIが自動で判断</b>します。上の<b>「あいて難易度」</b>で強さを選べます:</p>
   <ul>
@@ -1020,7 +1029,11 @@ ${PAGE_ROCKET ? '' : `
     （ためたSPは、防がれず効く一撃のときだけ撃ってから）・
     <b>勝てる対面はノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ</b>（起点づくり）・
     <b>裏に出しても有利にならないときは、SPを1発入れて削ってから下がる</b>・
-    ブラフやシールドの温存も使います。不利な相手から逃げ回りながら戦ってきます</li>
+    ブラフやシールドの温存も使います。不利な相手から逃げ回りながら戦ってきます。
+    SPアタックの撃ち方もセオリーどおり: こちらにシールドが残っているあいだは、
+    <b>本命の重いわざが撃てるゲージまでためてから</b>撃ってきます（撃つのは軽いほう＝防がれても
+    ゲージが残り、重いわざの脅威も消えない）。ためないのは、余裕がないときや、
+    軽いわざが弱点を突く・重いわざが通らないなど見せかけの必要がないときです</li>
     <li><b>HARD（最強）</b>: <b>こちらの3匹とわざ構成を最初から全部知っている</b>相手。
     シールドは実際に飛んでくるわざのダメージで判断するので<b>ブラフが効きません</b>。
     戦術はNORMALと同じ基本戦術ですが、控えの読みが予測ではなく実物なので、判断に迷いがありません</li>
@@ -4642,7 +4655,12 @@ const GB_AI = {
   hard: { label: 'HARD', jp: '最強', bluff: true, save: true, sw: true, farm: true, omni: true, truth: true,
     tip: 'こちらの3匹とわざ構成を最初から全部知っている最強の相手。シールドは実際に飛んでくるわざのダメージで判断するのでブラフは効きません。控えの読みも予測ではなく実物で行い、常にこちらの手の内を知った上で最適な行動を取ります' },
 };
-const MK = { ai: 'normal', leadSwap: false };
+// foeAuto=あいてのわざを「オート」にする(2026-08-20タダシさん指示)。
+// ONのあいだ、あいてのわざ欄を隠して環境の定番構成(mockDefaultMoves)で戦う＝
+// どのわざが飛んでくるか、飛んでくるまで分からない(実戦と同じ情報量)。既定はOFF(今までどおり選べる)
+const MK = { ai: 'normal', leadSwap: false, foeAuto: false };
+try { if (localStorage.getItem('gbl_mock_foeauto') === '1') MK.foeAuto = true; } catch (e) {}
+const saveMkFoeAuto = () => { try { localStorage.setItem('gbl_mock_foeauto', MK.foeAuto ? '1' : '0'); } catch (e) {} };
 // 旧「あいてのAIの性格」(basic/bluff/save/switch/pro)の保存値・共有リンクは難易度へ読み替える
 // (きほん→EASY・それ以外→NORMAL。かけひき/温存/スイッチはNORMALの部分集合なのでNORMALへ寄せる)
 const GB_AI_OLD = { basic: 'easy', bluff: 'normal', save: 'normal', switch: 'normal', pro: 'normal' };
@@ -4777,6 +4795,11 @@ function buildGbFoeSlots() {
 }
 // あいての枠の表示(名前・わざの選択肢・実数値)を今の設定に合わせる
 function syncGbFoeSlots() {
+  // わざオート(2026-08-20): ONのあいだ、わざの選択欄を隠す(CSSの .gfoeslots.auto)
+  const box = document.querySelector('#mock .gfoeslots');
+  if (box) box.classList.toggle('auto', MK.foeAuto);
+  const ab = document.querySelector('#mock .gfauto');
+  if (ab) ab.setAttribute('aria-pressed', MK.foeAuto);
   document.querySelectorAll('#mock .gfoe').forEach(el => {
     const m = GBT[+el.dataset.i];
     const fb = el.querySelector('.fbody');
@@ -5001,17 +5024,32 @@ function gbChoices(p, ctx) {
         tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打ってから発動します`
                   : `ゲージ${D.moves[id].e} のSPアタックをここで撃ちます` };
     });
+    // ⭐最適(2026-08-20タダシさん指示): いちばん効率のよいタイミングと撃つわざをエンジンに任せる。
+    // 「あと何発ノーマルアタックをはさむか」をラベルに出す(タイミング管理に詳しくなくても効率よく撃てる)。
+    // ＋1〜＋3の細かい指定は使う頻度が低いので「…詳細」(det)に畳む
+    list.push({ a: 'auto', cls: 'best',
+      label: `⭐ 最適${p.optN > 0 ? `<i class="need">＋${p.optN}</i>` : ''}`,
+      tip: p.optN > 0
+        ? `いちばん効率のよいタイミングまでノーマルアタックをあと${p.optN}発はさんでから、いちばんよいわざを撃ちます`
+        : 'いちばん効率のよいタイミングと撃つわざをおまかせで選びます' });
     return list.concat([
-      { a: 'wait', n: 1, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
-      { a: 'wait', n: 2, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
-      { a: 'wait', n: 3, label: '＋3', cls: 'wait', tip: 'ノーマルアタックをあと3発打ってから、もう一度ここで選びます' },
       { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この対面では撃たず、ゲージを次の対面に持ち越します' },
+      { a: 'wait', n: 1, det: true, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
+      { a: 'wait', n: 2, det: true, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
+      { a: 'wait', n: 3, det: true, label: '＋3', cls: 'wait', tip: 'ノーマルアタックをあと3発打ってから、もう一度ここで選びます' },
     ]);
   }
-  if (p.kind === 'sh') return [
-    { a: 'use', label: '🛡 使う', cls: 'fire', tip: 'シールドで防ぎます(ダメージ1)' },
-    { a: 'no', label: `受ける${p.dmg ? `<b class="dmg">-${p.dmg}</b>` : ''}`, cls: 'hold', tip: 'シールドを使わずにダメージを受けます' },
-  ];
+  if (p.kind === 'sh') {
+    // あいてがSPを2本持っている(またはわざオート)なら、どちらが飛んでくるかを見せない
+    // (2026-08-20タダシさん指示。見せるとあいてのブラフが成立しない。実戦でも飛んでくるまで分からない)
+    const hide = !s && ((ctx.spList[1] || []).length >= 2 || MK.foeAuto);
+    return [
+      { a: 'use', label: '🛡 使う', cls: 'fire', tip: 'シールドで防ぎます(ダメージ1)' },
+      { a: 'no', label: `受ける${!hide && p.dmg ? `<b class="dmg">-${p.dmg}</b>` : ''}`, cls: 'hold',
+        tip: hide ? 'シールドを使わずにダメージを受けます(どのわざが飛んでくるかは受けるまで分かりません)'
+                  : 'シールドを使わずにダメージを受けます' },
+    ];
+  }
   if (p.kind === 'swap') {
     const opts = ctx.swTo[s].map(k => ({ a: 'toq', to: k, cls: 'fire',
       label: `${SWAPMK} ${shMark(ros[s][k].name)}`,
@@ -5025,15 +5063,24 @@ function gbAskTitle(p) {
   const who = p.side ? '<i class="rbwho">あいて</i> ' : '';
   if (p.kind === 'lead') return who + SWAPMK + ' 開幕交代';
   if (p.kind === 'sp') return who + '⚡ SPアタック';
-  if (p.kind === 'sh') return `${who}🛡 ${p.mv || 'SPアタック'}が来る！`;
+  if (p.kind === 'sh') {
+    // あいてのSPが2本(またはわざオート)のときは、どちらが飛んでくるか見せない(2026-08-20タダシさん指示)
+    const hide = !p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
+    return `${who}🛡 ${hide ? 'SPアタック' : (p.mv || 'SPアタック')}が来る！`;
+  }
   if (p.kind === 'swap') return who + SWAPMK + ' 交代する？';
   return who + '💀 次に出すのは？';
 }
 function gbAnsLabel(p, a) {
   if (!a) return '？';
   if (p.kind === 'sp') {
-    if (a.a === 'auto') return 'おまかせ';
-    if (a.a === 'fire') return `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'auto') return '⭐ 最適';
+    // あいてのSPが2本(またはわざオート)なら、チップにもわざ名を出さない(2026-08-20タダシさん指示。
+    // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
+    if (a.a === 'fire') {
+      const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
+      return hide ? '▶ SPアタック' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    }
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
   }
@@ -5558,6 +5605,30 @@ function gbPlay(picks, foes, ans, stepwise) {
         const mv = aiSpThenSwap(ctx, p);
         if (mv) return { a: 'fire', mv };
       }
+      // ---- 「重いわざぶんためてから撃つ」セオリー(2026-08-20タダシさん指示・基本中の基本) ----
+      // 相手はどちらのSPが飛んでくるか分からないので、シールドを使うかの読み合いになる。
+      // だから本命の重いわざが撃てるゲージまでためてから、(ブラフでもブラフでなくても)撃つのがセオリー。
+      // ためきったら**軽いほう**を撃つ＝防がれてもゲージが残り、重いわざの脅威も消えない。
+      // ためない例外: ①余裕がない(この対面が負け読み) ②見せかけの必要がない
+      // (軽いわざが弱点を突く／重いわざが等倍未満で本命にならない) ③相手のシールドが無い
+      if (ai.bluff && p.st0 && p.st0.sh > 0 && !aiLosing(ctx.li, nowOv)) {
+        const mvs = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] })).filter(x => x.m)
+          .sort((a, b) => a.m.e - b.m.e);
+        if (mvs.length >= 2 && mvs[mvs.length - 1].m.e > mvs[0].m.e) {
+          const light = mvs[0], heavy = mvs[mvs.length - 1];
+          const uTy = D.pokemon[ros[0][cur[0]].m.key].ty;
+          const effL = PvpEngine.effectiveness(D, light.m.t, uTy);
+          const effH = PvpEngine.effectiveness(D, heavy.m.t, uTy);
+          if (effH >= 1 && effL < 1.6) {
+            const en = p.en != null ? p.en : 0;
+            const fm = D.moves[ctx.fast[p.side]];
+            const eg = fm ? (fm.eg || 0) : 0;
+            if (en < heavy.m.e && eg > 0)
+              return { a: 'wait', n: Math.max(1, Math.ceil((heavy.m.e - en) / eg)) };
+            if (en >= heavy.m.e) return { a: 'fire', mv: light.id };
+          }
+        }
+      }
       return { a: 'auto' };
     }
     if (p.kind === 'sh') {
@@ -5782,6 +5853,25 @@ function gbPlay(picks, foes, ans, stepwise) {
     };
     const handled = new Set(), log = [];
     let res = null;
+    // 「⭐最適」ボタン用: この発を最適タイミング(エンジンまかせ)にしたとき、あと何発
+    // ノーマルアタックをはさんでから撃つことになるかを、1回だけシミュして数える(ラベルに出す)
+    const optNOf = p => {
+      if (p.kind !== 'sp') return null;
+      const s = p.side, d = dec[s], len = d.shots.length, save = d.shots[p.seq];
+      d.shots[p.seq] = { wait: 'opt', mv: null };
+      const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
+      const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
+        { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
+      if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
+      let spCnt = 0, fasts = 0;
+      for (const t of rbTurns(r)) for (const e of t.ev[s]) {
+        if (e.full !== undefined) {
+          if (spCnt === p.seq) return fasts;
+          spCnt++;
+        } else if (spCnt === p.seq && t.tn > p.tn) fasts++;
+      }
+      return null;
+    };
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す。1回のシミュは0.02ms未満)
     for (let guard = 0; guard < 90; guard++) {
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
@@ -5793,7 +5883,11 @@ function gbPlay(picks, foes, ans, stepwise) {
       p.key = gbKey(li, p.side, p.kind, p.seq, p.w);
       p.gt = base + p.tn;
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
-      if (!a) { pending = { ...p, ctx, opts: gbChoices(p, ctx) }; break; }
+      if (!a) {
+        pending = { ...p, optN: optNOf(p), ctx };
+        pending.opts = gbChoices(pending, ctx);
+        break;
+      }
       handled.add(p.key);
       log.push({ ...p, ans: a, auto: !ans[p.key] });
       if (p.kind === 'swap') {
@@ -5809,7 +5903,13 @@ function gbPlay(picks, foes, ans, stepwise) {
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
     const swapped = [0, 1].map(s =>
       !!(res.stopped && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
-    const points = log.map(p => ({ ...p, gt: base + p.tn, ctx, opts: gbChoices(p, ctx) }));
+    // optNはじぶん側のSPだけ計算する(あいて側の編集ウィンドウでは⭐最適に発数が付かないだけ。
+    // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
+    const points = log.map(p => {
+      const q = { ...p, gt: base + p.tn, optN: p.kind === 'sp' && p.side === 0 ? optNOf(p) : null, ctx };
+      q.opts = gbChoices(q, ctx);
+      return q;
+    });
     const rs0 = st[0][cur[0]].resume, rs1 = st[1][cur[1]].resume;
     legs.push({ res, base, myIdx: cur[0], foeIdx: cur[1], meName: P0.name, foeName: P1.name,
       swOk: swOk[0], fswOk: swOk[1],   // 交代解禁の通しターン(HUDの交代タイマー用・両側)
@@ -5929,7 +6029,7 @@ function runMockBuild() {
   }
   // 入力(ポケモン・わざ・リーグ・AI等)が変わったら、前のバトルの選択と再生位置は仕切り直す
   const sig = JSON.stringify(['mock', PT, GBT, [0, 1, 2].map(i => PT[i] && gbmOf(i)),
-    cap, cup && cup.slug, SIMOPT.buffMode, MK.ai, MK.leadSwap]);
+    cap, cup && cup.slug, SIMOPT.buffMode, MK.ai, MK.leadSwap, MK.foeAuto]);
   if (RBV.sig !== sig) {
     if (RBV.sig !== undefined) { RB.ans = {}; RBUI.open = null; RB.found = null; }
     RBV.sig = sig; RBV.started = false; RBV.cur = 0; RBV.playing = true;
@@ -5941,8 +6041,10 @@ function runMockBuild() {
   });
   const foes = foesIdx.map(i => {
     const f = GBT[i];
+    // わざオート(2026-08-20): 枠の選択を無視して環境の定番構成で戦う(選択は消さずに残す)
+    const mv = MK.foeAuto ? mockDefaultMoves(f.key, f.shadow) : f;
     return { m: f, base: gbtBase(f),
-      pol: { fast: f.fast, charged: [f.c1, f.c2].filter(Boolean) }, name: gbtName(f) };
+      pol: { fast: mv.fast, charged: [mv.c1, mv.c2].filter(Boolean) }, name: gbtName(f) };
   });
   const bt = gbPlay(picks, foes, RB.ans, RB.step);
   gbRender(body, bt, picks, foes);
@@ -6127,11 +6229,15 @@ function gbRender(body, bt, picks, foes) {
     const legKey = f.meta.name0 + '|' + f.meta.name1;
     if (legKey !== curLegKey) {
       curLegKey = legKey;
-      [[R0, f.meta.name0, f.meta.cp0, f.meta.sp0], [R1, f.meta.name1, f.meta.cp1, f.meta.sp1]].forEach(([Rf, nm, cp, sps]) => {
+      [[R0, f.meta.name0, f.meta.cp0, f.meta.sp0, false], [R1, f.meta.name1, f.meta.cp1, f.meta.sp1, true]].forEach(([Rf, nm, cp, sps, isFoe]) => {
         Rf.nm.textContent = nm.replace(/^シャドウ/, 'S');   // 下のフレームは幅が狭い(確定仕様の縮め方)
         Rf.nm.title = nm;
         Rf.cp.textContent = 'CP' + cp;
-        Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
+        // わざオート中は、あいてのゲージ円にわざ名・タイプを出さない(何が飛んでくるか分からない設定)
+        const hide = isFoe && MK.foeAuto;
+        Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${
+          hide ? 'あいてのSPアタック(わざオート中はどれか分かりません)' : `${m.n}（ゲージ${m.e}）`}"><i>${
+          hide ? '？' : typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
@@ -6188,23 +6294,28 @@ function gbRender(body, bt, picks, foes) {
     const b = hud.querySelector('.hplay');
     if (b) b.textContent = ended() ? '↻' : RBV.timer ? '⏸' : '▶';
   };
-  function showWin(p, editing) {
+  function showWin(p, editing, det) {
     RBV.playing = !editing && RBV.playing;
     stopTimer(); setPlayBtn();
-    const btns = p.opts.map((o, i) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
+    // det=trueで「…詳細」(＋1〜＋3の細かい待ち指定)を開く。閉じているあいだは det付きの選択肢を隠す
+    const hasDet = p.opts.some(o => o.det);
+    const btns = p.opts.map((o, i) => ({ o, i })).filter(x => det || !x.o.det)
+      .map(({ o, i }) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
         data-k="${p.key}" data-i="${i}" title="${o.tip || ''}">${o.label}</button>`).join('')
-      + (p.kind === 'sp' ? `<button class="hold" data-k="${p.key}" data-i="auto" title="AIの判断にまかせます">おまかせ</button>` : '')
+      + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin${p.side ? ' foe' : ''}">
       <div class="rwt">${gbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.gt)}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
       <div class="rwb">${btns}</div></div>`;
-    winbox.querySelectorAll('.rwb button').forEach(b => b.onclick = () => {
-      rbTrim(p.key);
-      if (b.dataset.i === 'reset') delete RB.ans[p.key];
-      else if (b.dataset.i === 'auto') RB.ans[p.key] = { ...RB_AUTO[p.kind] };
-      else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
-      RBUI.open = null; RBV.playing = true;
-      run();
+    winbox.querySelectorAll('.rwb button').forEach(b => {
+      if (b.classList.contains('wdet')) { b.onclick = () => showWin(p, editing, true); return; }
+      b.onclick = () => {
+        rbTrim(p.key);
+        if (b.dataset.i === 'reset') delete RB.ans[p.key];
+        else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
+        RBUI.open = null; RBV.playing = true;
+        run();
+      };
     });
     const wx = winbox.querySelector('.wx');
     if (wx) wx.onclick = () => { RBUI.open = null; RBV.playing = true; run(); };
@@ -6967,6 +7078,7 @@ function updateUrl() {
   if (mode === 'mock') {   // GBL模擬戦の設定(じぶんのパーティは端末内保存なのでURLには入れない)
     if (MK.ai !== 'normal') qp.gai = MK.ai;   // 既定(NORMAL)以外のときだけ書く
     if (MK.leadSwap) qp.gls = 1;   // 開幕交代
+    if (MK.foeAuto) qp.gfa = 1;    // あいてのわざオート(何が飛んでくるか分からない)
     if (!RB.step) qp.rbs = 0;      // 見かた(結果だけ)。ロケット団の模擬戦と同じパラメータ
     const t = [0, 1, 2].filter(i => GBT[i]).map(i =>
       [GBT[i].key, GBT[i].shadow ? 1 : '', GBT[i].fast || '', GBT[i].c1 || '', GBT[i].c2 || ''].join('~'));
@@ -7347,6 +7459,7 @@ document.getElementById('copyUrl').onclick = async () => {
     if (GB_AI[gv]) MK.ai = gv;
   }
   if (q.get('gls') === '1') MK.leadSwap = true;
+  if (q.get('gfa') === '1') MK.foeAuto = true;
   if (q.get('gt')) q.get('gt').split(',').slice(0, 3).forEach((s, i) => {
     const [key, sh, fast, c1, c2] = s.split('~');
     if (!D.pokemon[key]) return;
@@ -7392,6 +7505,11 @@ document.getElementById('copyUrl').onclick = async () => {
       run();   // バトルの署名が変わるので、スタート待ちから仕切り直しになる
     });
   }
+  // あいてのわざ「えらぶ｜オート」(2026-08-20)。オート=欄を隠して環境の定番構成で戦う
+  const gfAuto = document.querySelector('#mock .gfauto');
+  if (gfAuto) gfAuto.onclick = () => {
+    MK.foeAuto = !MK.foeAuto; saveMkFoeAuto(); syncGbFoeSlots(); run();
+  };
   // 模擬戦のおすすめタブ(高火力/高火力＋安定)。同じタブをもう一度押すとオフ
   document.querySelectorAll('#rksuggbar button[data-m]').forEach(b => b.onclick = () => {
     RKS.mode = RKS.mode === b.dataset.m ? null : b.dataset.m;
