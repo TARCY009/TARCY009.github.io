@@ -8,6 +8,8 @@
    ・ボスのSPアタックは「即打ち」「2回に1回(交互・乱数なし)」「ランダム(撃てるとき1/2)」
    ・SPのみ回避(cfg.dodgeSp): ボスのSPだけ回避する。被ダメージ75%カット(最低1)・
      回避に0.5秒かかるぶん、こちらの次の攻撃が0.5秒遅れる(公開データの回避仕様)
+   ・天候ブースト(cfg.wxTypes=対象タイプの配列): 対象タイプのわざが1.2倍。
+     こちらだけでなく「ボスのわざ」にも掛かる(2026-08-20タダシさん確認。例: 曇りのきあいだま)
    ・ひんし→次のポケモンは1秒固定。全滅→再突入は既定10秒(設定で変更可)
    検証: 外部シミュレータのタイムライン5例(タダシさん提供のスクショ)と完全一致 */
 (function (root) {
@@ -56,14 +58,17 @@
     function dmgOf(a, d, mv, ap, dp, mult) {
       return damage(mv.p, a, d, stab(ap, mv), eff(mv.t, dp.types), mult);
     }
+    // 天候ブースト: 対象タイプのわざは両者とも1.2倍(ボスのわざにも掛かる)
+    var wx = cfg.wxTypes || [];
+    function wxMul(mv) { return wx.indexOf(mv.t) >= 0 ? 1.2 : 1; }
     // 6匹ぶんのダメージを前計算(与ダメ2種・被ダメ2種)
     var myF = [], myC = [], bF = [], bC = [];
     for (var i = 0; i < team.length; i++) {
       var m = team[i];
-      myF[i] = dmgOf(m.atk, bs.def, m.fast, m, bs, m.mult);
-      myC[i] = m.chg ? dmgOf(m.atk, bs.def, m.chg, m, bs, m.mult) : 0;
-      bF[i] = dmgOf(bs.atk, m.def, bs.fast, bs, m, 1);
-      bC[i] = bs.chg ? dmgOf(bs.atk, m.def, bs.chg, bs, m, 1) : 0;
+      myF[i] = dmgOf(m.atk, bs.def, m.fast, m, bs, m.mult * wxMul(m.fast));
+      myC[i] = m.chg ? dmgOf(m.atk, bs.def, m.chg, m, bs, m.mult * wxMul(m.chg)) : 0;
+      bF[i] = dmgOf(bs.atk, m.def, bs.fast, bs, m, wxMul(bs.fast));
+      bC[i] = bs.chg ? dmgOf(bs.atk, m.def, bs.chg, bs, m, wxMul(bs.chg)) : 0;
     }
 
     // イベント処理: 同じ時刻なら pr の小さい順。
