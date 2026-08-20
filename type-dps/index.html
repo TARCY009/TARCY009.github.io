@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケモンGO タイプ別火力ランキング</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/karyoku/favicon-32.png">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/tabs.css">
+<meta name="theme-color" content="#0b1023">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<style>
+/* 色は :root(ダーク=既定) と :root.light の2ブロックだけで決める(全ツール共通ルール)。
+   背景のにじみはタイプの虹色を淡く(このツールの役割=全タイプを扱うため) */
+:root{
+  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560;
+  --accent:#5b8cff; --accent2:#43e0ff; --violet:#b06cff;
+  --gold:#ffd54a; --special:#ff9750; --shadow:#b06cff;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(119,188,109,.13), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.14), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(94,143,210,.14), transparent 62%),
+    linear-gradient(165deg,#0b1023 0%,#101a2e 48%,#141024 100%);
+  --panel:linear-gradient(180deg,rgba(26,35,66,.94),rgba(19,26,51,.94));
+  --panelsh:0 18px 34px -20px rgba(91,140,255,.5), 0 1px 0 rgba(255,255,255,.06) inset;
+  --chip:#1a2342; --rkbg:#1a2342; --barbg:#121a38; --rowline:#232c4f;
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
+  --mgold:#f2c14e; --msilver:#c8d3de; --mbronze:#c98d5f;
+  --m1line:#8a6c1e; --m2line:#5a6b7d; --m3line:#7a5231;
+  --ongold:#4a3200; --onsilver:#26313c; --onbronze:#3c2413;
+  --helpline:#4a3a7d;
+  --tbadge:inset 0 0 0 1px rgba(255,255,255,.16);
+  --tcolor:#0b1023;
+}
+:root.light{
+  --ink:#20263a; --sub:#6a7391; --line:#dfe6f5;
+  --accent:#3b6ef0; --accent2:#08b4c9; --violet:#8b5cf6;
+  --gold:#b07a00; --special:#d1490a; --shadow:#7a3cc4;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(119,188,109,.16), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.16), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(94,143,210,.18), transparent 62%),
+    linear-gradient(165deg,#eaf4ec 0%,#e9f1ff 48%,#f1ecff 100%);
+  --panel:rgba(255,255,255,.9);
+  --panelsh:0 14px 30px -16px rgba(59,110,240,.3), 0 1px 0 rgba(255,255,255,.8) inset;
+  --chip:#fff; --rkbg:#edf1f9; --barbg:#e8edf8; --rowline:#eceffa;
+  --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
+  --mgold:#f2c14e; --msilver:#b9c6d4; --mbronze:#c98d5f;
+  --m1line:#e0b53a; --m2line:#9fb0c1; --m3line:#bd8557;
+  --helpline:#cfc6f0;
+  --tbadge:none;
+  --tcolor:#eaf4ec;
+}
+:root.light .tbadge[title="でんき"],:root.light .tbadge[title="こおり"],
+:root.light .tbadge[title="いわ"],:root.light .tbadge[title="じめん"]{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.tbadge{box-shadow:var(--tbadge)}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
+  color:var(--ink);background:var(--bgimg);background-attachment:fixed;min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:14px 12px 40px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;margin:4px 2px 14px}
+h1{font-size:1.12rem;margin:0;flex:1;min-width:0;line-height:1.35}
+h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-spacing:.08em}
+h1 b{white-space:nowrap}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--panelsh);padding:14px;margin-bottom:14px}
+
+/* ── タイプの選択(アイコンのグリッド) ── */
+.typegrid{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;padding:12px}
+.tbtn{font:inherit;width:50px;height:50px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:1px solid var(--line);border-radius:13px;background:var(--tab);
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
+  transition:transform .12s,box-shadow .12s;padding:0}
+.tbtn:hover{transform:translateY(-1px)}
+.tbtn[aria-pressed="true"]{transform:translateY(-1px);border-color:var(--tc);
+  box-shadow:0 0 0 2px var(--tc),0 6px 18px var(--tcg),inset 0 1px 0 rgba(255,255,255,.25)}
+
+/* ── ランキング ── */
+.rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.tttl{display:inline-flex;align-items:center;gap:8px;font-size:1.05rem;font-weight:800}
+.rhead .gtabs{margin-left:auto}
+.cond{font-size:.72rem;color:var(--sub);margin:0 0 10px}
+.expl{display:none}
+.explain .expl{display:revert}
+
+.rank-row{display:flex;align-items:center;gap:10px;padding:7px 6px;border-bottom:1px solid var(--rowline);position:relative}
+.rank-row:last-child{border-bottom:none}
+/* 上位3件: くっきりした枠線＋左端4pxの帯(2026-08-20確定の火力チェッカー形式) */
+.rank-row.md1,.rank-row.md2,.rank-row.md3{border-radius:12px;margin:3px 0;overflow:hidden;padding-left:12px;border-bottom:none}
+.rank-row.md1{border:1px solid var(--m1line);--mbar:linear-gradient(180deg,#ffe08a,var(--mgold) 55%,#c99a14)}
+.rank-row.md2{border:1px solid var(--m2line);--mbar:linear-gradient(180deg,#f2f6fb,var(--msilver) 55%,#8f9dad)}
+.rank-row.md3{border:1px solid var(--m3line);--mbar:linear-gradient(180deg,#e8b489,var(--mbronze) 55%,#a06437)}
+.rank-row.md1::before,.rank-row.md2::before,.rank-row.md3::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mbar)}
+.rk{min-width:42px;text-align:center;font-weight:800;color:var(--sub);font-size:.8rem;line-height:1.3;flex-shrink:0;
+  background:var(--rkbg);border-radius:8px;padding:4px 4px}
+.rank-row.md1 .rk,.rank-row.md2 .rk,.rank-row.md3 .rk{box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+.rank-row.md1 .rk{background:linear-gradient(160deg,#ffe08a 0%,var(--mgold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
+.rank-row.md2 .rk{background:linear-gradient(160deg,#f2f6fb 0%,var(--msilver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
+.rank-row.md3 .rk{background:linear-gradient(160deg,#e8b489 0%,var(--mbronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
+.rmain{flex:1;min-width:0}
+.rname{display:flex;align-items:center;gap:5px;font-size:.88rem;font-weight:700;white-space:nowrap;min-width:0}
+.rname>*{flex-shrink:0}
+.rname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rname small{flex:0 999 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--sub);font-weight:400;font-size:.72rem}
+.rmoves{font-size:.74rem;color:var(--sub);display:flex;flex-wrap:wrap;align-items:center;column-gap:4px}
+.rmoves .mv{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.rmoves .sp{color:var(--special)}
+.bar{height:6px;background:var(--barbg);border-radius:99px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--tgrad,linear-gradient(90deg,var(--accent2),var(--accent)));border-radius:99px}
+.rdps{width:64px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
+.rdps small{display:block;font-weight:400;font-size:.58rem;color:var(--sub)}
+.tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;vertical-align:1px}
+.tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
+.tag-s2{display:inline-flex;align-items:center;background:#7c3aed;color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;vertical-align:1px}
+.lowbulk{color:#ffd54a;background:#c2410c;border:1px solid #a33409;border-radius:6px;font-size:.62rem;font-weight:700;padding:0 5px;flex-shrink:0}
+.gtabs .shadowmark{color:var(--shadow)}
+.gtabs button[aria-pressed="true"] .shadowmark{color:#fff}
+.empty{color:var(--sub);font-size:.82rem;text-align:center;padding:18px 0}
+
+/* ── グラフ ── */
+.ghead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.gttl{font-size:.95rem;font-weight:800}
+.gsub{font-size:.68rem;color:var(--sub)}
+#saveBtn{margin-left:auto;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;
+  border:1px solid #8a6c1e;border-radius:11px;padding:8px 14px;color:#4a3200;
+  background:linear-gradient(160deg,#ffe08a 0%,#f2c14e 55%,#e0a92e 100%);
+  box-shadow:0 4px 14px rgba(242,193,78,.35),inset 0 1px 0 rgba(255,255,255,.5);
+  transition:transform .12s,box-shadow .12s;white-space:nowrap}
+#saveBtn:hover{transform:translateY(-1px)}
+#gwrap{border-radius:12px;overflow:hidden;line-height:0}
+#gwrap svg{width:100%;height:auto;display:block}
+
+@media (max-width:560px){
+  .tbtn{width:44px;height:44px;flex:0 0 auto}
+  .gtabs button{flex:1 1 auto}
+  .rhead .gtabs{margin-left:0;width:100%}
+  .rdps{width:56px;font-size:.92rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1><small>ポケモンGO</small><b>タイプ別火力ランキング</b></h1>
+  <div id="themesw"></div>
+</header>
+
+<section class="panel typegrid" id="typeGrid"></section>
+
+<section class="panel">
+  <div class="rhead">
+    <span class="tttl" id="curType"></span>
+    <div class="gtabs">
+      <button id="fShadow" class="t-shadow" type="button" aria-pressed="false" aria-label="シャドウを含める"
+        title="シャドウ個体をランキングに含めます（攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i></button>
+      <button id="fMega" class="t-mega" type="button" aria-pressed="false"
+        title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+      <span class="gseg" id="cntSeg">
+        <button class="t-cyan" type="button" data-n="20" title="上位20位まで表示します">20位</button>
+        <button class="t-cyan" type="button" data-n="30" title="上位30位まで表示します">30位</button>
+        <button class="t-cyan" type="button" data-n="40" title="上位40位まで表示します">40位</button>
+      </span>
+    </div>
+  </div>
+  <p class="cond expl">全ポケモンをPL50・個体値15にそろえ、ノーマルアタックとSPアタックが両方このタイプの構成で比べています。</p>
+  <div id="rankList"></div>
+</section>
+
+<section class="panel">
+  <div class="ghead">
+    <span class="gttl">グラフ</span>
+    <span class="gsub expl">保存すると1980×1440の画像になります</span>
+    <button id="saveBtn" type="button" title="いま表示しているグラフを1980×1440のPNG画像として保存します">📷 画像を保存</button>
+  </div>
+  <div id="gwrap"></div>
+</section>
+
+<button class="helptab" id="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+<div class="helpbody" id="helpbody" hidden>
+  <h4>このツールでわかること</h4>
+  <p>タイプごとの火力(DPS)ランキングです。上のタイプアイコンをタップすると切り替わります。</p>
+  <h4>計算の前提</h4>
+  <ul>
+    <li>全ポケモンを<b>PL50・個体値15</b>にそろえ、相手は防御種族値100・PL40・個体値15のものさしで比べます（火力チェッカーと同じ基準）</li>
+    <li><b>ノーマルアタックとSPアタックが両方そのタイプ</b>の構成だけを対象にします</li>
+    <li>火力(DPS)は1秒あたりの与ダメージ。ノーマルアタック100回ぶんのサイクルで計算します</li>
+    <li>わざの組み合わせはPL1〜51の全レベルで計算し、いちばん多くのレベルで1位だったもの。1ゲージ技と分割あり技の差が7%未満なら分割ありを優先します</li>
+    <li>候補は最終進化とメガシンカ・ゲンシカイキ。<b>シャドウ</b>は攻撃1.2倍、<b>オレンジ色のわざ</b>は特別わざ・レガシーわざです</li>
+    <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）</li>
+  </ul>
+  <h4>グラフの保存</h4>
+  <p>「📷 画像を保存」でいま表示しているランキングのグラフを<b>1980×1440のPNG画像</b>として保存できます。動画や共有にそのまま使えます。</p>
+  <h4>データの更新</h4>
+  <p>ポケモン・わざのデータは毎朝自動で更新されます。</p>
+</div>
+</div>
+
+<script src="/assets/type-icons.js"></script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+<script type="module">
+const D = await (await fetch('/godata.json')).json();
+
+// ノーマルを除く17タイプ(並びはタダシさんのエクセル版と同じ)
+const TYPES=[
+  ['GRASS','くさ'],['FIRE','ほのお'],['WATER','みず'],['ELECTRIC','でんき'],['ICE','こおり'],
+  ['ROCK','いわ'],['FLYING','ひこう'],['BUG','むし'],['PSYCHIC','エスパー'],['GHOST','ゴースト'],
+  ['FIGHTING','かくとう'],['GROUND','じめん'],['POISON','どく'],['DRAGON','ドラゴン'],
+  ['STEEL','はがね'],['DARK','あく'],['FAIRY','フェアリー'],
+];
+// バーの色(タイプアイコンと同じパレット)
+const TC={
+  GRASS:['#77B860','#76C080'], FIRE:['#F1A062','#F3B15F'], WATER:['#5E8FD2','#84C0E0'],
+  ELECTRIC:['#EED35A','#F6E382'], ICE:['#89CBC0','#A1DAD4'], ROCK:['#C5B991','#D4CB9A'],
+  FLYING:['#95A7D8','#ABBFEC'], BUG:['#9AC14A','#B0C74F'], PSYCHIC:['#E77678','#F1A69B'],
+  GHOST:['#5768A7','#7772CE'], FIGHTING:['#BD4B6B','#D35155'], GROUND:['#CD7C50','#CB9B6F'],
+  POISON:['#9D69C2','#B967CE'], DRAGON:['#2E67BA','#397FB7'], STEEL:['#5F879A','#6BA6AB'],
+  DARK:['#595365','#6F7483'], FAIRY:['#E193E2','#E9ABE1'],
+};
+const JA=Object.fromEntries(TYPES);
+const DEF_ENEMY=(100+15)*0.7903;
+const KEYS=Object.keys(D.pokemon);
+const LEVELS=[];
+for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) LEVELS.push(m); }
+const CPM50=D.cpm['50'];
+
+// ---- 状態(共有URL: t=タイプ, n=件数, sh=1, mg=1) ----
+const Q=new URLSearchParams(location.search);
+let curT=(TYPES.find(t=>t[0].toLowerCase()===Q.get('t'))||TYPES[0])[0];
+let showN=[20,30,40].includes(+Q.get('n'))?+Q.get('n'):20;
+let fShadow=Q.get('sh')==='1', fMega=Q.get('mg')==='1';
+
+// ---- 計算(火力チェッカーと同じサイクルDPS・タイプ内のわざに限定) ----
+function movesOf(p, ids, eids, tEn, fast){
+  const out=[];
+  for(const id of ids) if(D.moves[id]&&D.moves[id].t===tEn&&(fast?D.moves[id].e>0:D.moves[id].e<0)) out.push({id,sp:false});
+  for(const id of eids) if(D.moves[id]&&D.moves[id].t===tEn&&(fast?D.moves[id].e>0:D.moves[id].e<0)) out.push({id,sp:true});
+  return out;
+}
+// PL1〜51の多数決で最適構成を決める(1位が1ゲージ技なら、分割あり技との差7%未満で分割あり優先)
+function bestOfType(p, tEn, shadow){
+  const fs=movesOf(p,p.q,p.eq,tEn,true), cs=movesOf(p,p.c,p.ec,tEn,false);
+  if(!fs.length||!cs.length) return null;
+  const stab=p.ty.includes(tEn)?1.2:1.0;
+  const coef={};
+  for(const x of [...fs,...cs]) coef[x.id]=0.5*D.moves[x.id].p*stab*(shadow?1.2:1)/DEF_ENEMY;
+  const combos=[];
+  for(const f of fs){ const m1=D.moves[f.id];
+    for(const c of cs){ const m2=D.moves[c.id];
+      const n2=(m1.e*100)/Math.abs(m2.e);
+      const t=m1.d*100+m2.d*n2;
+      if(t>0) combos.push({f,c,n2,t,split:Math.abs(m2.e)<100});
+    }}
+  if(!combos.length) return null;
+  const tally=new Map();
+  for(const m of LEVELS){
+    const atk=(p.a+15)*m;
+    let best=null,bestSplit=null;
+    for(const cb of combos){
+      const d1=Math.floor(coef[cb.f.id]*atk+1), d2=Math.floor(coef[cb.c.id]*atk+1);
+      const v=(d1*100+d2*cb.n2)/cb.t;
+      if(!best||v>best.v) best={v,cb};
+      if(cb.split&&(!bestSplit||v>bestSplit.v)) bestSplit={v,cb};
+    }
+    let win=best;
+    if(!best.cb.split&&bestSplit&&(best.v-bestSplit.v)/best.v<0.07) win=bestSplit;
+    const key=win.cb.f.id+'|'+win.cb.c.id;
+    tally.set(key,(tally.get(key)||0)+1);
+  }
+  const atk50=(p.a+15)*CPM50;
+  let winner=null;
+  for(const cb of combos){
+    const votes=tally.get(cb.f.id+'|'+cb.c.id)||0;
+    if(!votes) continue;
+    const d1=Math.floor(coef[cb.f.id]*atk50+1), d2=Math.floor(coef[cb.c.id]*atk50+1);
+    const dps=(d1*100+d2*cb.n2)/cb.t;
+    if(!winner||votes>winner.votes||(votes===winner.votes&&dps>winner.dps))
+      winner={votes,dps,f:cb.f,c:cb.c};
+  }
+  return winner;
+}
+const rankCache=new Map();
+function buildRows(){
+  const key=curT+'|'+fShadow+'|'+fMega;
+  if(rankCache.has(key)) return rankCache.get(key);
+  const rows=[];
+  for(const k of KEYS){
+    const p=D.pokemon[k];
+    if(!p.mega&&!p.fe) continue;
+    if(p.mega&&!fMega) continue;
+    const b=bestOfType(p,curT,false);
+    if(b) rows.push({p,shadow:false,dps:b.dps,f:b.f,c:b.c});
+    if(fShadow&&p.shadow){
+      const s=bestOfType(p,curT,true);
+      if(s) rows.push({p,shadow:true,dps:s.dps,f:s.f,c:s.c});
+    }
+  }
+  rows.sort((a,b)=>b.dps-a.dps);
+  let rank=0, prev=null;
+  rows.forEach((r,i)=>{ const v=r.dps.toFixed(2); if(v!==prev){rank=i+1;prev=v;} r.rank=rank; });
+  rankCache.set(key,rows);
+  return rows;
+}
+
+// ---- 表示 ----
+const $=id=>document.getElementById(id);
+function badges(shadow,mega,p){
+  const gen=/^ゲンシ/.test(p.n);
+  return (mega?`<span class="tag-m2${gen?' tag-p2':''}">${gen?'ゲンシ':'メガ'}</span>`:'')+
+         (shadow?'<span class="tag-s2" title="シャドウ"><i class="shadowmark"></i></span>':'');
+}
+const lowBulk=(p,shadow)=>(p.df*(shadow?5/6:1)*p.h<16000)
+  ?'<span class="lowbulk" title="倒されやすい目安です（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定します）">⚠️極低耐久</span>':'';
+const mvName=x=>{
+  const m=D.moves[x.id];
+  const n=x.id.startsWith('HIDDEN_POWER_')?'めざめるパワー':m.n;
+  return `<span class="mv${x.sp?' sp':''}"${x.sp?' title="特別わざ・レガシーわざです"':''}>${n}</span>`;
+};
+const T_DPS='1秒あたりの与ダメージです。ノーマルアタック100回ぶんのサイクルで計算しています';
+const T_RANK='火力が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
+
+function renderTypeGrid(){
+  $('typeGrid').innerHTML=TYPES.map(([en,ja])=>{
+    const c=TC[en];
+    return `<button class="tbtn" type="button" data-t="${en}" aria-pressed="${en===curT}"
+      style="--tc:${c[0]};--tcg:${c[0]}55" title="${ja}タイプのランキングを表示します">${typeIconHTML(ja,30)}</button>`;
+  }).join('');
+  document.querySelectorAll('.tbtn').forEach(b=>b.onclick=()=>{curT=b.dataset.t;sync();});
+}
+function renderRank(){
+  const rows=buildRows().slice(0,showN);
+  const c=TC[curT];
+  $('curType').innerHTML=`${typeIconHTML(JA[curT],26)}${JA[curT]}タイプ`;
+  const list=$('rankList');
+  list.style.setProperty('--tgrad',`linear-gradient(90deg,${c[0]},${c[1]})`);
+  if(!rows.length){ list.innerHTML='<div class="empty">このタイプのわざ構成を持つポケモンがいません</div>'; return; }
+  const max=rows[0].dps;
+  list.innerHTML=rows.map(r=>`
+    <div class="rank-row${r.rank<=3?' md'+r.rank:''}">
+      <div class="rk" title="${T_RANK}">${r.rank}位</div>
+      <div class="rmain">
+        <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${lowBulk(r.p,r.shadow)}<small class="expl">PL50・個体値15</small></div>
+        <div class="rmoves">${mvName(r.f)}<span>＋</span>${mvName(r.c)}</div>
+        <div class="bar"><i style="width:${(r.dps/max*100).toFixed(1)}%"></i></div>
+      </div>
+      <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>DPS</small></div>
+    </div>`).join('');
+}
+
+// ---- グラフ(1980×1440・保存して動画にそのまま使えるサイズ) ----
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// シャドウの炎マーク(shadow-icon.cssと同じ形・viewBox 800×1024)
+const FLAME='M348 8C362 130 400 232 452 330C512 442 566 536 572 640C575 700 560 742 540 772C566 700 566 620 552 556C596 596 640 660 656 726C672 668 682 610 676 548C724 610 768 686 782 772C800 884 700 1010 470 1018C250 1026 30 962 14 812C2 700 60 596 132 520C124 590 138 650 168 700C168 620 196 540 244 486C244 546 258 596 282 634C300 566 292 486 268 410C238 314 262 150 348 8Z';
+function graphSVG(){
+  const rows=buildRows().slice(0,showN);
+  const [c1,c2]=TC[curT], ja=JA[curT];
+  const W=1980,H=1440;
+  const top=176,bottom=1392,x0=640,x1=1806;
+  const n=rows.length||1, rowH=(bottom-top)/n;
+  const fs=Math.min(34,Math.max(19,Math.floor(rowH*0.56)));   // 名前の文字サイズ(件数で自動調整)
+  const barH=Math.min(rowH*0.62,fs*1.5);
+  const max=rows.length?rows[0].dps:1;
+  const cond=`PL50・個体値15${fShadow?'・シャドウ含む':''}${fMega?'・メガ・ゲンシ含む':''}`;
+  const chipW=ja.length*58+52;
+  let s=`<svg id="gsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif">
+  <defs>
+    <linearGradient id="gbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111a35"/><stop offset="1" stop-color="#0b1023"/></linearGradient>
+    <linearGradient id="gbar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>
+    <linearGradient id="gchip" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${c1}"/></linearGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#gbg)"/>
+  <rect x="60" y="46" width="${chipW}" height="66" rx="16" fill="url(#gchip)"/>
+  <text x="${60+chipW/2}" y="94" font-size="46" font-weight="800" fill="#0b1023" text-anchor="middle">${esc(ja)}</text>
+  <text x="${60+chipW+26}" y="96" font-size="54" font-weight="800" fill="#ffffff">タイプ 火力ランキング</text>
+  <text x="1920" y="92" font-size="27" fill="#8b96c2" text-anchor="end">${esc(cond)}</text>
+  <line x1="60" y1="132" x2="1920" y2="132" stroke="${c1}" stroke-width="3" opacity=".55"/>
+  <text x="1920" y="1424" font-size="24" fill="#5b6591" text-anchor="end">tarcy009.github.io</text>`;
+  const MD={1:['#ffe08a','#c99a14','#4a3200'],2:['#f2f6fb','#8f9dad','#26313c'],3:['#e8b489','#a06437','#3c2413']};
+  rows.forEach((r,i)=>{
+    const cy=top+rowH*i+rowH/2;
+    const bw=Math.max(6,(r.dps/max)*(x1-x0));
+    // 順位
+    const md=MD[r.rank];
+    if(md) s+=`<rect x="36" y="${cy-fs*0.78}" width="86" height="${fs*1.56}" rx="9" fill="${md[0]}"/>
+      <rect x="36" y="${cy-fs*0.78}" width="86" height="${fs*1.56}" rx="9" fill="url(#gbg)" opacity="0"/>
+      <text x="79" y="${cy+fs*0.36}" font-size="${fs}" font-weight="800" fill="${md[2]}" text-anchor="middle">${r.rank}位</text>`;
+    else s+=`<text x="79" y="${cy+fs*0.36}" font-size="${fs*0.92}" font-weight="700" fill="#8b96c2" text-anchor="middle">${r.rank}位</text>`;
+    // シャドウの炎マーク＋名前(メガ・ゲンシは名前に含まれる)
+    let nx=140;
+    if(r.shadow){
+      const sc=fs/1024*1.15;
+      s+=`<path d="${FLAME}" transform="translate(${nx},${cy-fs*0.62}) scale(${sc})" fill="#b06cff"/>`;
+      nx+=800*sc+8;
+    }
+    s+=`<text x="${nx}" y="${cy+fs*0.36}" font-size="${fs}" font-weight="700" fill="#eef1fb">${esc(r.p.n)}</text>`;
+    // バー＋わざ構成＋DPS
+    s+=`<rect x="${x0}" y="${cy-barH/2}" width="${bw.toFixed(1)}" height="${barH}" rx="${Math.min(10,barH/2)}" fill="url(#gbar)"/>`;
+    if(bw>430){
+      const mv1=r.f.id.startsWith('HIDDEN_POWER_')?'めざめるパワー':D.moves[r.f.id].n;
+      s+=`<text x="${x0+16}" y="${cy+fs*0.26}" font-size="${(fs*0.68).toFixed(0)}" font-weight="700" fill="#0b1023" opacity=".78">${esc(mv1)}＋${esc(D.moves[r.c.id].n)}</text>`;
+    }
+    s+=`<text x="${x0+bw+16}" y="${cy+fs*0.34}" font-size="${(fs*0.95).toFixed(0)}" font-weight="800" fill="#ffffff">${r.dps.toFixed(1)}</text>`;
+  });
+  s+='</svg>';
+  return s;
+}
+function renderGraph(){ $('gwrap').innerHTML=graphSVG(); }
+
+// PNG保存(1980×1440固定。動画にそのまま使えるサイズ)
+$('saveBtn').onclick=()=>{
+  const svg=document.getElementById('gsvg');
+  const xml=new XMLSerializer().serializeToString(svg);
+  const url=URL.createObjectURL(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}));
+  const img=new Image();
+  img.onload=()=>{
+    const cv=document.createElement('canvas');
+    cv.width=1980; cv.height=1440;
+    const ctx=cv.getContext('2d');
+    ctx.drawImage(img,0,0,1980,1440);
+    URL.revokeObjectURL(url);
+    cv.toBlob(b=>{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(b);
+      a.download=`タイプ別火力ランキング_${JA[curT]}_TOP${showN}.png`;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    },'image/png');
+  };
+  img.src=url;
+};
+
+// ---- 操作 ----
+function syncUrl(){
+  const q=new URLSearchParams();
+  if(curT!=='GRASS') q.set('t',curT.toLowerCase());
+  if(showN!==20) q.set('n',showN);
+  if(fShadow) q.set('sh','1');
+  if(fMega) q.set('mg','1');
+  const qs=q.toString();
+  history.replaceState(null,'',location.pathname+(qs?'?'+qs:''));
+}
+function sync(){
+  document.querySelectorAll('.tbtn').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===curT)));
+  $('fShadow').setAttribute('aria-pressed',String(fShadow));
+  $('fMega').setAttribute('aria-pressed',String(fMega));
+  document.querySelectorAll('#cntSeg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===showN)));
+  renderRank(); renderGraph(); syncUrl();
+}
+$('fShadow').onclick=()=>{fShadow=!fShadow;sync();};
+$('fMega').onclick=()=>{fMega=!fMega;sync();};
+document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.dataset.n;sync();});
+{
+  const tab=$('helptab'),body=$('helpbody');
+  tab.onclick=()=>{const o=body.hidden;body.hidden=!o;tab.setAttribute('aria-expanded',String(o));};
+}
+renderTypeGrid();
+sync();
+</script>
+</body>
+</html>
