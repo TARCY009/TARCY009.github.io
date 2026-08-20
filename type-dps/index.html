@@ -167,7 +167,7 @@ h1 b{white-space:nowrap}
       </span>
     </div>
   </div>
-  <p class="cond expl">全ポケモンをPL50・個体値15にそろえ、ノーマルアタックとSPアタックが両方このタイプの構成で比べています。</p>
+  <p class="cond expl">全ポケモンをPL50・個体値15にそろえ、ノーマルアタックとSPアタックが両方このタイプの構成で、そのタイプが弱点の相手（×1.6）に攻撃したときの火力を比べています。</p>
   <div id="rankList"></div>
 </section>
 
@@ -186,9 +186,9 @@ h1 b{white-space:nowrap}
   <p>タイプごとの火力(DPS)ランキングです。上のタイプアイコンをタップすると切り替わります。</p>
   <h4>計算の前提</h4>
   <ul>
-    <li>全ポケモンを<b>PL50・個体値15</b>にそろえ、相手は防御種族値100・PL40・個体値15のものさしで比べます（火力チェッカーと同じ基準）</li>
+    <li>全ポケモンを<b>PL50・個体値15</b>にそろえ、相手は防御種族値100・PL40・個体値15のものさしで比べます</li>
     <li><b>ノーマルアタックとSPアタックが両方そのタイプ</b>の構成だけを対象にします</li>
-    <li>火力(DPS)は1秒あたりの与ダメージ。ノーマルアタック100回ぶんのサイクルで計算します</li>
+    <li>火力(DPS)は1秒あたりの与ダメージ。ノーマルアタック100回ぶんのサイクルで計算し、<b>そのタイプが弱点の相手（×1.6）</b>に攻撃したときの値です</li>
     <li>わざの組み合わせはPL1〜51の全レベルで計算し、いちばん多くのレベルで1位だったもの。1ゲージ技と分割あり技の差が7%未満なら分割ありを優先します</li>
     <li>候補は最終進化とメガシンカ・ゲンシカイキ。<b>シャドウ</b>は攻撃1.2倍、<b>オレンジ色のわざ</b>は特別わざ・レガシーわざです</li>
     <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）</li>
@@ -224,6 +224,10 @@ const TC={
 };
 const JA=Object.fromEntries(TYPES);
 const DEF_ENEMY=(100+15)*0.7903;
+// 相手はそのタイプが弱点(×1.6)。タダシさんが使ってきたエクセル版と同じ前提にそろえた(2026-08-20指示)。
+// ⚠ 倍率は「切り捨ての前」に掛ける。あとから1.6倍しても同じ数字にはならない
+// (カミツルギ: 正しく34.633663366→55.386138614 ／ あとから1.6倍だと55.41で不一致)
+const WEAK=1.6;
 const KEYS=Object.keys(D.pokemon);
 const LEVELS=[];
 for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) LEVELS.push(m); }
@@ -248,7 +252,7 @@ function bestOfType(p, tEn, shadow){
   if(!fs.length||!cs.length) return null;
   const stab=p.ty.includes(tEn)?1.2:1.0;
   const coef={};
-  for(const x of [...fs,...cs]) coef[x.id]=0.5*D.moves[x.id].p*stab*(shadow?1.2:1)/DEF_ENEMY;
+  for(const x of [...fs,...cs]) coef[x.id]=0.5*D.moves[x.id].p*stab*WEAK*(shadow?1.2:1)/DEF_ENEMY;
   const combos=[];
   for(const f of fs){ const m1=D.moves[f.id];
     for(const c of cs){ const m2=D.moves[c.id];
