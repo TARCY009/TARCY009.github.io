@@ -98,10 +98,10 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .tbadge{box-shadow:var(--tbadge)}
 /* タブ(立体グラデーション・全ツール共通の見た目) */
 .modes{display:flex;gap:6px;margin:2px 0 4px;flex-wrap:wrap}
-.modes button,.seg button{font:inherit;font-size:.8rem;font-weight:800;flex:0 1 auto;border:1px solid var(--line);background:var(--tab);border-radius:11px;padding:8px 12px;cursor:pointer;
+.modes button,.seg button,.optbtn{font:inherit;font-size:.8rem;font-weight:800;flex:0 1 auto;border:1px solid var(--line);background:var(--tab);border-radius:11px;padding:8px 12px;cursor:pointer;
   color:var(--mc,var(--sub));box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:transform .12s,box-shadow .12s,color .12s}
-.modes button:hover,.seg button:hover{transform:translateY(-1px)}
-.modes button[aria-pressed="true"],.seg button[aria-pressed="true"]{color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+.modes button:hover,.seg button:hover,.optbtn:hover{transform:translateY(-1px)}
+.modes button[aria-pressed="true"],.seg button[aria-pressed="true"],.optbtn[aria-pressed="true"]{color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
 .seg{display:flex;gap:2px;flex:0 1 auto}
 .seg button:first-child{border-radius:11px 5px 5px 11px}
 .seg button:last-child{border-radius:5px 11px 11px 5px}
@@ -132,7 +132,11 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 :root.light .shbtn{color:#7a3cc4}
 .shbtn[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5)}
 .shbtn:disabled{opacity:.3;cursor:default}
-.setrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.setrow{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-top:4px}
+.optbtn{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45)}
+:root.light .optbtn{--mc:#7a3cc4}
+.setgrp{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.setsel{width:auto;padding:6px 8px;font-size:.8rem}
 .setrow .lbl{font-size:.78rem;color:var(--sub);font-weight:700}
 #rejoinSec{width:84px;text-align:center}
 /* 結果 */
@@ -238,6 +242,21 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <button type="button" data-m="coin" aria-pressed="false" title="撃てるとき2分の1の確率で撃ちます（実戦と同じ運まかせ。30回試して勝率で判定します）">ランダム</button>
     </span>
     <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span class="lbl" title="手持ち6匹が全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
+    <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SPのみ回避</button>
+    <button type="button" class="optbtn" id="wxBtn" aria-pressed="false" title="自分のわざに天候ブースト（1.2倍）が乗っている前提で計算します">天候ブースト</button>
+    <button type="button" class="optbtn" id="zcBtn" aria-pressed="false" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
+    <span class="setgrp"><span class="lbl" title="フレンドと一緒に参加したときの攻撃ボーナスです">フレンド</span><select id="frSel" class="setsel">
+      <option value="1" selected>なし</option>
+      <option value="1.03">友達 ×1.03</option>
+      <option value="1.05">仲良し ×1.05</option>
+      <option value="1.07">親友 ×1.07</option>
+      <option value="1.10">大親友 ×1.10</option>
+    </select></span>
+    <span class="setgrp"><span class="lbl" title="他の参加者がメガシンカを出しているときの応援ボーナスです（同タイプ＝自分のわざとメガのタイプが同じとき）">メガ応援</span><select id="mgSel" class="setsel">
+      <option value="1" selected>なし</option>
+      <option value="1.1">別タイプ ×1.1</option>
+      <option value="1.3">同タイプ ×1.3</option>
+    </select></span>
   </div>
   <div id="resBody"><div class="empty">ボスを選ぶと結果が出ます</div></div>
 </div>
@@ -491,10 +510,16 @@ function renderMy(){
 }
 
 // ---- シミュレート ----
+// ブースト(天候・フレンド・ザシアン・メガ応援)はこちらの攻撃にまとめて掛ける。
+// 天候・メガ応援は本当はわざのタイプごとに効くが、ここでは全わざに掛かる前提(使い方タブに明記)
+let dodgeSp=false, wxOn=false, zcOn=false;
+function boostMult(){
+  return (wxOn?1.2:1)*(zcOn?1.1:1)*(+$('frSel').value||1)*(+$('mgSel').value||1);
+}
 function monCfg(k,sh,f,c){
   const p=D.pokemon[k];
   return {types:p.ty,atk:(p.a+15)*CPM50,def:(p.df+15)*CPM50*(sh?5/6:1),
-    hp:Math.floor((p.h+15)*CPM50),mult:sh?1.2:1,
+    hp:Math.floor((p.h+15)*CPM50),mult:(sh?1.2:1)*boostMult(),
     fast:mvObj(f),chg:c?mvObj(c):null,name:p.n};
 }
 function buildTeamCfg(){
@@ -511,7 +536,7 @@ function buildCfg(N,seed,wantLog){
   const bp=D.pokemon[boss], t=tierOf(tier);
   const bossCfg={types:bp.ty,atk:(bp.a+15)*t.cpm,def:(bp.df+15)*t.cpm,hp:t.hp,
     fast:mvObj($('bfSel').value),chg:$('bcSel').value?mvObj($('bcSel').value):null};
-  return {limit:t.time,eff,boss:bossCfg,team:buildTeamCfg(),N,spMode,
+  return {limit:t.time,eff,boss:bossCfg,team:buildTeamCfg(),N,spMode,dodgeSp,
     rejoin:Math.max(0,Math.min(60,+$('rejoinSec').value||0)),seed,wantLog};
 }
 const TRIALS=30;
@@ -579,7 +604,7 @@ function timelineHtml(){
     const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
     const cls=x.side==='me'?'me':'boss';
     return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
-      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}</td><td>${x.miss?'—':x.dmg}</td></tr>`;
+      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td></tr>`;
   }).join('');
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
   const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で勝ち`:`時間切れ（ボス残りHP${Math.round(r.bossLeft/t.hp*100)}%）`;
@@ -610,6 +635,11 @@ $('spSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
   runAll();
 });
 $('rejoinSec').addEventListener('input',runAll);
+$('dodgeBtn').onclick=()=>{dodgeSp=!dodgeSp;$('dodgeBtn').setAttribute('aria-pressed',dodgeSp);runAll();};
+$('wxBtn').onclick=()=>{wxOn=!wxOn;$('wxBtn').setAttribute('aria-pressed',wxOn);runAll();};
+$('zcBtn').onclick=()=>{zcOn=!zcOn;$('zcBtn').setAttribute('aria-pressed',zcOn);runAll();};
+$('frSel').addEventListener('change',runAll);
+$('mgSel').addEventListener('change',runAll);
 ['bfSel','bcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('bfSel','bfType');syncTypeIcon('bcSel','bcType');runAll();}));
 ['mfSel','mcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('mfSel','mfType');syncTypeIcon('mcSel','mcType');runAll();}));
 $('myShadow').onclick=()=>{myShadow=!myShadow;renderMy();runAll();};
@@ -628,7 +658,7 @@ const HELP_HTML=`
   <h4>このツールで分かること</h4>
   <ul>
     <li>火力チェッカーの「最低クリア人数」は<b>倒されない前提の理論値</b>です。こちらは<b>倒される時間・SPアタックの被弾・ゲージのやりとりまで再現した実戦ベース</b>で、何人いれば勝てるかを出します</li>
-    <li>参加者は全員が<b>同じパーティ（PL50・個体値15）</b>で、回避せずに攻撃し続ける想定です。天候ブースト・フレンドボーナス・メガシンカの応援は入れていません（あるぶんだけ実際は楽になります）</li>
+    <li>参加者は全員が<b>同じパーティ（PL50・個体値15）</b>で攻撃し続ける想定です。回避・ブーストは設定の行で選べます（既定はすべてオフ）</li>
   </ul>
   <h4>バトルの再現（実測で確認済み）</h4>
   <ul>
@@ -647,6 +677,13 @@ const HELP_HTML=`
   <ul>
     <li><b>1位おまかせ</b>＝そのボスへの火力1位を自動選出して6匹そろえます。<b>えらぶ</b>＝1匹選んで6匹そろえます</li>
     <li><b>6匹編成</b>＝好きな6匹のパーティを組めます（上から順に出します・PL50・個体値15）。組んだパーティは端末に保存されて次回も残ります</li>
+  </ul>
+  <h4>回避とブースト（設定の行・既定はすべてオフ）</h4>
+  <ul>
+    <li><b>SPのみ回避</b>＝ボスのSPアタックだけ回避します。被ダメージ<b>75%カット</b>（最低1）で、回避に<b>0.5秒</b>かかるぶん次の攻撃が遅れます（ノーマルアタックは受けたまま攻撃し続けます）</li>
+    <li><b>天候ブースト</b>＝自分のわざが1.2倍 ／ <b>ザシアン効果</b>＝フィールド効果で攻撃1.1倍 ／ <b>フレンド</b>＝友達×1.03〜大親友×1.10 ／ <b>メガ応援</b>＝他の参加者のメガシンカで別タイプ×1.1・同タイプ×1.3</li>
+    <li>天候ブースト・メガ応援は、本当は<b>わざのタイプごと</b>に効きますが、ここでは選んだ倍率が<b>全部のわざに掛かる</b>前提です。ノーマルとSPでタイプがちがう構成では少しだけ強めに出ます</li>
+    <li>ダメージが増えるとボスのゲージも速くたまるので、ブーストを入れるとSPアタックが飛んでくる頻度も上がります（そこまで込みで計算しています）</li>
   </ul>
   <h4>倒されたとき</h4>
   <ul>

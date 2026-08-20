@@ -6,6 +6,8 @@
    ・ゲージ: わざぶんも被弾ぶんも「ダメージが入った瞬間」に入る(被弾は0.5×ダメージ)。
      ボスは参加者全員の与ダメージ×0.5でためる
    ・ボスのSPアタックは「即打ち」「2回に1回(交互・乱数なし)」「ランダム(撃てるとき1/2)」
+   ・SPのみ回避(cfg.dodgeSp): ボスのSPだけ回避する。被ダメージ75%カット(最低1)・
+     回避に0.5秒かかるぶん、こちらの次の攻撃が0.5秒遅れる(公開データの回避仕様)
    ・ひんし→次のポケモンは1秒固定。全滅→再突入は既定10秒(設定で変更可)
    検証: 外部シミュレータのタイムライン5例(タダシさん提供のスクショ)と完全一致 */
 (function (root) {
@@ -17,6 +19,8 @@
   var SWAP_SEC = 1.0;              // ひんし→次のポケモン(固定)
   var ENERGY_PER_HP = 0.5;         // 被弾1ダメージあたりのゲージ(両者共通)
   var MAX_ENERGY = 100;
+  var DODGE_SEC = 0.5;             // 回避モーション(公開データ dodgeDurationMs=500)
+  var DODGE_CUT = 0.25;            // 回避時に受けるダメージの割合(75%カット)
 
   // 再現できる乱数(同じseedなら同じ結果)。ランダムSPの試行に使う
   function mulberry32(a) {
@@ -79,10 +83,12 @@
     var myHP = team[0].hp, myE = 0, bE = 0, total = 0, win = false, endT = null;
     var spOpp = 0;        // 'alt'用: SPを撃てた機会の数(2回に1回撃つ)
     var activeFrom = 0;   // この時刻までこちらのポケモンは場にいない(交代・再突入の待ち)
+    var pendAct = null;   // 予約中のこちらの行動(回避したらこの開始を0.5秒うしろへずらす)
     var log = [];
     function L(o) { if (cfg.wantLog) log.push(o); }
+    function pushAct(tt, g) { pendAct = { t: tt, pr: 0, k: 'act', g: g }; ev.push(pendAct); }
 
-    ev.push({ t: PLAYER_START, pr: 0, k: 'act', g: 0 });
+    pushAct(PLAYER_START, 0);
     ev.push({ t: BOSS_STARTS[0], pr: 0.5, k: 'bact', n: 1 });
 
     while (ev.length) {
@@ -95,7 +101,7 @@
         var mv = useC ? cur.chg : cur.fast;
         if (useC) myE -= Math.abs(cur.chg.e);
         ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, dmg: useC ? myC[mon] : myF[mon], sp: useC, mi: mon });
-        ev.push({ t: t + mv.d, pr: 0, k: 'act', g: myGen });
+        pushAct(t + mv.d, myGen);
       } else if (e.k === 'hit') {                // こちらのダメージが入る(ゲージもこの瞬間に入る)
         if (e.g !== myGen) continue;             // 撃っている途中で倒れたぶんは消える
         total += e.dmg;
@@ -123,10 +129,16 @@
           continue;
         }
         var d = e.sp ? bC[mon] : bF[mon];
+        var dodged = false;
+        if (e.sp && cfg.dodgeSp) {               // SPのみ回避: 75%カット+次の攻撃が0.5秒遅れる
+          d = Math.max(1, Math.floor(d * DODGE_CUT));
+          if (pendAct && pendAct.g === myGen && pendAct.t > t - 1e-9) pendAct.t += DODGE_SEC;
+          dodged = true;
+        }
         myHP -= d;
         myE = Math.min(MAX_ENERGY, myE + d * ENERGY_PER_HP);
         if (!e.sp) bE = Math.min(MAX_ENERGY, bE + e.mv.e);   // ボスも自分のわざぶんをためる
-        L({ t: t, side: 'boss', mv: e.mv, dmg: d, sp: e.sp, mi: mon });
+        L({ t: t, side: 'boss', mv: e.mv, dmg: d, sp: e.sp, mi: mon, dodged: dodged });
         if (myHP <= 0) {
           myGen++; faints++;
           myE = 0;
@@ -140,7 +152,7 @@
             L({ t: t, side: 'sys', note: '全滅 → 再突入(' + cfg.rejoin + '秒)' });
           }
           myHP = team[mon].hp;
-          ev.push({ t: activeFrom, pr: 0, k: 'act', g: myGen });
+          pushAct(activeFrom, myGen);
         }
       }
     }
