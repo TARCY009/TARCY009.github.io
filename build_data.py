@@ -413,6 +413,22 @@ def main():
                       'shadow':False,'mega':True,'fe':1}
         print('PvPokeから新メガ・ゲンシを補完 →', final[key]['n'])
 
+    # ===== 伝説・幻の印(lg) =====
+    # レイドのランク判定に使う(メガ伝説・ゲンシは★6・HP22500、ふつうのメガは★4・HP9000)。
+    # メガ・ゲンシは元のポケモンの分類を引き継ぐ。該当するものだけ lg:1 を持たせる(データを太らせない)
+    LG_CLASS = {'POKEMON_CLASS_LEGENDARY', 'POKEMON_CLASS_MYTHIC'}
+    pclass = {}
+    for e in data:
+        ps = e.get('data', {}).get('pokemonSettings')
+        if ps and ps.get('pokemonClass'):
+            pclass.setdefault(ps['pokemonId'], ps['pokemonClass'])
+    for k in final:
+        base = re.sub(r'_(MEGA(?:_[XY])?|PRIMAL)$', '', k)
+        if (pclass.get(base) or pclass.get(base.split('_')[0])) in LG_CLASS:
+            final[k]['lg'] = 1
+    print(f'伝説・幻: {sum(1 for p in final.values() if p.get("lg"))}種'
+          f'（うちメガ・ゲンシ {sum(1 for p in final.values() if p.get("lg") and p.get("mega"))}種）')
+
     # めざめるパワーはタイプ別16種(ノーマル/フェアリーは実在しない)に展開し、
     # ボスごとに最適なタイプで火力評価できるようにする
     HP16 = ['FIGHTING','FLYING','POISON','GROUND','ROCK','BUG','GHOST','STEEL',
