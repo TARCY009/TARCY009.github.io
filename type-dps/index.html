@@ -358,6 +358,8 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'
 const FLAME='M348 8C362 130 400 232 452 330C512 442 566 536 572 640C575 700 560 742 540 772C566 700 566 620 552 556C596 596 640 660 656 726C672 668 682 610 676 548C724 610 768 686 782 772C800 884 700 1010 470 1018C250 1026 30 962 14 812C2 700 60 596 132 520C124 590 138 650 168 700C168 620 196 540 244 486C244 546 258 596 282 634C300 566 292 486 268 410C238 314 262 150 348 8Z';
 // 文字幅の見積もり(全角=1文字ぶん・半角=0.62文字ぶん)。SVGは中央寄せの左端が測れないため
 const tw=(str,fs)=>[...String(str)].reduce((a,ch)=>a+(ch.charCodeAt(0)>255?fs:fs*0.62),0);
+// グラフのポケモン名は「うっすらとした水色」(2026-08-20タダシさん指示)。白だと値の数字と同じ強さになる
+const GNAME='#bfe6f5';
 // 色の明暗(f>0で白へ・f<0で黒へ近づける)
 const shade=(hex,f)=>{
   const nn=parseInt(hex.slice(1),16),r=nn>>16,g=nn>>8&255,b=nn&255;
@@ -415,19 +417,19 @@ function graphSVG(){
   pills.push({t:'PL50・個体値15',fill:'#1a2342',line:'#2a3560',dim:true});
   let px=1910;
   for(const p2 of [...pills].reverse()){
-    const pfs=25, padL=p2.flame?46:20;
-    const pw=tw(p2.t,pfs)+padL+20;
+    const pfs=31, ph=60, py=92, padL=p2.flame?58:24;
+    const pw=tw(p2.t,pfs)+padL+24;
     px-=pw;
-    s+=`<rect x="${px}" y="96" width="${pw}" height="46" rx="23" fill="${p2.fill}"${p2.line?` stroke="${p2.line}" stroke-width="1.5"`:''}/>
-    <rect x="${px}" y="96" width="${pw}" height="22" rx="11" fill="url(#ghl)" opacity="${p2.dim?0.12:0.5}"/>`;
+    s+=`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="${ph/2}" fill="${p2.fill}"${p2.line?` stroke="${p2.line}" stroke-width="1.5"`:''}/>
+    <rect x="${px}" y="${py}" width="${pw}" height="${ph/2}" rx="${ph/4}" fill="url(#ghl)" opacity="${p2.dim?0.12:0.5}"/>`;
     if(p2.flame){
-      const sc=30/1024;
-      s+=`<path d="${FLAME}" transform="translate(${px+14},${104}) scale(${sc})" fill="#ffffff"/>`;
+      const sc=40/1024;
+      s+=`<path d="${FLAME}" transform="translate(${px+16},${py+9}) scale(${sc})" fill="#ffffff"/>`;
     }
-    s+=`<text x="${px+padL}" y="${128}" font-size="${pfs}" font-weight="800" fill="${p2.dim?'#8b96c2':'#ffffff'}">${esc(p2.t)}</text>`;
-    px-=14;
+    s+=`<text x="${px+padL}" y="${py+ph/2+11}" font-size="${pfs}" font-weight="800" fill="${p2.dim?'#8b96c2':'#ffffff'}">${esc(p2.t)}</text>`;
+    px-=16;
   }
-  s+=`<text x="1920" y="1424" font-size="24" fill="#5b6591" text-anchor="end">tarcy009.github.io</text>`;
+  s+=`<text x="1920" y="1424" font-size="26" font-weight="700" fill="#5b6591" letter-spacing="3" text-anchor="end">TARCY</text>`;
   // ── 目盛り(点線)とラベル
   s+=`<text x="${L-14}" y="${T-20}" font-size="22" font-weight="700" fill="#6b76a3" text-anchor="end">DPS</text>`;
   for(let v=v0;v<=v1;v+=step){
@@ -461,9 +463,9 @@ function graphSVG(){
         const w3=tw(ln,fs), sc=fs/1024*1.1, fw=800*sc;
         const sx=cx-(w3+fw+4)/2;
         s+=`<path d="${FLAME}" transform="translate(${sx.toFixed(1)},${(ly-fs*0.88).toFixed(1)}) scale(${sc})" fill="#b06cff"/>
-        <text x="${(sx+fw+4).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fs}" font-weight="700" fill="#eef1fb">${esc(ln)}</text>`;
+        <text x="${(sx+fw+4).toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fs}" font-weight="700" fill="${GNAME}">${esc(ln)}</text>`;
       }else{
-        s+=`<text x="${cx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fs}" font-weight="700" fill="#eef1fb" text-anchor="middle">${esc(ln)}</text>`;
+        s+=`<text x="${cx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="${fs}" font-weight="700" fill="${GNAME}" text-anchor="middle">${esc(ln)}</text>`;
       }
     });
   });
