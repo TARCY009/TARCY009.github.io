@@ -170,6 +170,16 @@ REC_DW_REF, REC_DW_POW = 2.6, 4      # ダメージが出るまで: 2.6秒より
 #   ここで落ちる。実測でこの3つは1匹も選ばれない
 SECOND_MOVE_RATIO = 0.80 # ベスト技スコアの80%以上なら2番手技も併記
 
+# 人が確認した確定構成（式より優先・/gbl/ の meta_moves と同じ考え方）。
+# 式は「威力ベース＋基準超過だけ罰する」なので、速さが取り柄のわざを拾えないことがある。
+# 全体の係数をいじると他の確定仕様（ハピナスの構成・重いわざ0匹）が崩れるため、
+# 個別の指示はここに書く。わざを覚えなくなったら式の選出へ戻して警告を出す（自動更新を止めない）。
+#   トゲキッス: はどうだんは無補正100点で マジカルシャイン138点(タイプ一致1.2×対かくとう1.15) の
+#   72.5%＝併記ライン80%に届かないが、2.0秒と速く実戦価値が高い（2026-08-20タダシさん指示）
+MANUAL_RECOMMEND = {
+    'トゲキッス': ('マジカルシャイン', 'はどうだん'),
+}
+
 name2mon = {}
 for p in gd['pokemon']:
     name2mon.setdefault(p['name'], p)
@@ -285,6 +295,13 @@ for p in gd['pokemon']:
     # 画面に出すおすすめ構成は、ポイント計算とは別のルールで選ぶ（重いわざを避ける）
     rec = recommend_moves(p)
     if not rec: continue
+    ov = MANUAL_RECOMMEND.get(p['name'])
+    if ov:
+        jp_charged = {MV[c]['jp'] for c in p.get('charged', []) if c in MV}
+        if all(m in jp_charged for m in ov if m):
+            rec = (rec[0], ov[0], ov[1])
+        else:
+            print(f"warn: MANUAL_RECOMMEND {p['name']} のわざが見つからないため式の選出に戻す")
     p_bulk = K_BULK * bulk
     p_type = type_score(p['types'])
     p_yar = yaruki(cp)
