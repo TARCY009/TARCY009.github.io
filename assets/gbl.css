@@ -767,6 +767,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   box-shadow:inset 0 0 12px rgba(255,213,74,.1)}
 .rwb button.best .need{color:inherit;opacity:.85}
 .rwb button.best.on{background:var(--gold);border-color:var(--gold);color:#2b2305}
+/* わざごとのフレーム(2026-08-20タダシさん指示): 見出し=わざ名＋ゲージ、
+   中に「⭐最適」「即打ち」の2大ボタン(最適が左) */
+.rwb .mvopt{flex:1 1 240px;min-width:0;border:1px solid var(--line2);border-radius:12px;
+  padding:7px 9px 9px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:7px}
+.rwb .mvopt .mh{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rwb .mvopt .mb{display:flex;gap:7px}
+.rwb .mvopt .mb button{flex:1;min-width:0}
 .rwb .cost{font-style:normal;font-size:.58rem;font-weight:800;color:#06202b;background:var(--gold);border-radius:99px;padding:1px 6px}
 .rwb .need{font-style:normal;font-size:.6rem;font-weight:700;color:var(--sub)}
 .rwb .dmg{color:var(--lose)}

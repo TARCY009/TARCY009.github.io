@@ -1011,8 +1011,10 @@ ${PAGE_ROCKET ? '' : `
     <li>1匹目の枠の「${SWAPMK}開幕交代」をONにすると、バトル開始と同時に2匹目か3匹目へ交代できます</li>
     <li><b>自分の能力が下がるSPアタック</b>（ブレイブバードなど）を撃った直後は「交代する？」と聞きます。
     下がった能力は交代で消えるので、「ためて連射して下がる」の実戦の動きを再現できます</li>
-    <li>SPアタックの選択肢の<b>「⭐ 最適」</b>を押すと、いちばん効率のよいタイミングと撃つわざを
-    おまかせで選びます（「＋2」なら、ノーマルアタックをあと2発はさんでから撃つのが最適という意味）。
+    <li>SPアタックの選択肢は<b>わざごとのフレーム</b>に<b>「⭐ 最適」「即打ち」</b>の2つのボタンがあります。
+    <b>⭐ 最適</b>＝そのわざをいちばん効率のよいタイミングで撃つ（「＋2」なら、ノーマルアタックを
+    あと2発はさんでから撃つのが最適という意味）。<b>即打ち</b>＝タイミングを待たず、たまり次第すぐ撃つ。
+    おたがいのノーマルアタックが同じターン数の対面では、タイミングを合わせる意味が無いので最適＝即打ちになります。
     ＋1〜＋3発の細かい指定は<b>「…詳細」</b>の中にあります</li>
     <li><b>あいてのSPアタックが2本のときは、どちらが飛んでくるか分かりません</b>（実戦と同じ。
     見えてしまうと、あいてのブラフが成立しないため）。飛んできたわざはタイムラインで確認できます</li>
@@ -3629,10 +3631,10 @@ function rkRankCard(r, i) {
 const RB = { ans: {}, step: true, found: null, goal: null };
 const rbAnsCount = () => Object.keys(RB.ans).length;
 // 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
-const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a' };
+const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p' };
 const rbAnsToStr = () => Object.keys(RB.ans).map(k => {
   const a = RB.ans[k], c = RB_CODE[a.a] || 'a';
-  const v = a.a === 'fire' ? a.mv : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
+  const v = (a.a === 'fire' || a.a === 'opt') ? a.mv : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
   return `${k.replace(/:/g, '.')}~${c}${v != null ? '~' + v : ''}`;
 }).join(',');
 function rbAnsFromStr(str) {
@@ -3640,6 +3642,7 @@ function rbAnsFromStr(str) {
     const [k, c, v] = s.split('~');
     if (!k || !c) return;
     const a = c === 'f' ? (D.moves[v] ? { a: 'fire', mv: v } : null)
+      : c === 'p' ? (D.moves[v] ? { a: 'opt', mv: v } : null)   // このわざを最適タイミングで(2026-08-20)
       : c === 'w' ? { a: 'wait', n: Math.max(1, Math.min(9, +v || 1)) }
       : c === 'h' ? { a: 'hold' } : c === 'u' ? { a: 'use' } : c === 'n' ? { a: 'no' }
       : c === 'y' ? { a: 'stay' } : c === 'o' ? { a: 'order' }
@@ -3840,6 +3843,8 @@ function rbApply(dec, p, ans) {
   if (p.kind === 'sp') {
     // おまかせ＝エンジンの最適タイミング判断にゆだねる(従来の自動とまったく同じ動き)
     if (ans.a === 'auto') { dec.shots[p.seq] = { wait: 'opt', mv: null }; dec.wait = 0; }
+    // 最適(わざ指定・2026-08-20): このわざを、エンジンの最適タイミングで撃つ
+    else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait, mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'wait') dec.wait += ans.n;
     else dec.hold = true;
@@ -5030,24 +5035,29 @@ function gbChoices(p, ctx) {
       tip: '開幕は交代せず、そのまま戦います' }]) : list;
   }
   if (p.kind === 'sp') {
-    const fm = ctx.fast[s] && D.moves[ctx.fast[s]];
-    const list = ctx.spList[s].map(id => {
-      const need = fm && fm.eg > 0 && p.en != null
-        ? Math.max(0, Math.ceil((D.moves[id].e - p.en) / fm.eg)) : 0;
-      return { a: 'fire', mv: id, cls: 'fire',
-        label: `${mvChip(D.moves[id].n, 14)}<i class="cost">${D.moves[id].e}</i>${
-          need ? `<i class="need">${fm.n}＋${need}</i>` : ''}`,
-        tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打ってから発動します`
-                  : `ゲージ${D.moves[id].e} のSPアタックをここで撃ちます` };
-    });
-    // ⭐最適(2026-08-20タダシさん指示): いちばん効率のよいタイミングと撃つわざをエンジンに任せる。
-    // 「あと何発ノーマルアタックをはさむか」をラベルに出す(タイミング管理に詳しくなくても効率よく撃てる)。
+    // わざごとのフレームに「最適」「即打ち」の2大ボタン(2026-08-20タダシさん指示・最適が左)。
+    // 最適=このわざをいちばん効率のよいタイミングで撃つ(＋N=あと何発ノーマルアタックをはさむか)
+    // 即打ち=タイミングを待たず、たまり次第すぐ撃つ。
     // ＋1〜＋3の細かい指定は使う頻度が低いので「…詳細」(det)に畳む
-    list.push({ a: 'auto', cls: 'best',
-      label: `⭐ 最適${p.optN > 0 ? `<i class="need">＋${p.optN}</i>` : ''}`,
-      tip: p.optN > 0
-        ? `いちばん効率のよいタイミングまでノーマルアタックをあと${p.optN}発はさんでから、いちばんよいわざを撃ちます`
-        : 'いちばん効率のよいタイミングと撃つわざをおまかせで選びます' });
+    const fm = ctx.fast[s] && D.moves[ctx.fast[s]];
+    const list = [];
+    ctx.spList[s].forEach(id => {
+      const m = D.moves[id];
+      const need = fm && fm.eg > 0 && p.en != null
+        ? Math.max(0, Math.ceil((m.e - p.en) / fm.eg)) : 0;
+      const head = `${mvChip(m.n, 14)}<i class="cost">${m.e}</i>${
+        need ? `<i class="need">${fm.n}＋${need}</i>` : ''}`;
+      const optN = p.optNs ? p.optNs[id] : null;
+      list.push({ a: 'opt', mv: id, grp: id, head, cls: 'best',
+        label: `⭐ 最適${optN > 0 ? `<i class="need">＋${optN}</i>` : ''}`,
+        tip: optN > 0
+          ? `${m.n}を、いちばん効率のよいタイミングで撃ちます(ノーマルアタックをあと${optN}発はさんでから)`
+          : `${m.n}を、いちばん効率のよいタイミングで撃ちます` });
+      list.push({ a: 'fire', mv: id, grp: id, cls: 'fire',
+        label: '即打ち',
+        tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打って、たまり次第すぐ${m.n}を撃ちます`
+                  : `タイミングを待たず、ここですぐ${m.n}を撃ちます` });
+    });
     return list.concat([
       { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この対面では撃たず、ゲージを次の対面に持ち越します' },
       { a: 'wait', n: 1, det: true, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
@@ -5090,13 +5100,12 @@ function gbAskTitle(p) {
 function gbAnsLabel(p, a) {
   if (!a) return '？';
   if (p.kind === 'sp') {
-    if (a.a === 'auto') return '⭐ 最適';
+    if (a.a === 'auto') return '⭐ おまかせ';
     // あいてのSPが2本(またはわざオート)なら、チップにもわざ名を出さない(2026-08-20タダシさん指示。
     // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
-    if (a.a === 'fire') {
-      const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
-      return hide ? '▶ SPアタック' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
-    }
+    const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
+    if (a.a === 'opt') return hide ? '⭐ SPアタック' : `⭐ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'fire') return hide ? '▶ SPアタック' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
   }
@@ -5869,12 +5878,12 @@ function gbPlay(picks, foes, ans, stepwise) {
     };
     const handled = new Set(), log = [];
     let res = null;
-    // 「⭐最適」ボタン用: この発を最適タイミング(エンジンまかせ)にしたとき、あと何発
+    // 「⭐最適」ボタン用: この発を最適タイミング(mvId指定)にしたとき、あと何発
     // ノーマルアタックをはさんでから撃つことになるかを、1回だけシミュして数える(ラベルに出す)
-    const optNOf = p => {
+    const optNOf = (p, mvId) => {
       if (p.kind !== 'sp') return null;
       const s = p.side, d = dec[s], len = d.shots.length, save = d.shots[p.seq];
-      d.shots[p.seq] = { wait: 'opt', mv: null };
+      d.shots[p.seq] = { wait: 'opt', mv: mvId || null };
       const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
       const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
         { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
@@ -5888,6 +5897,13 @@ function gbPlay(picks, foes, ans, stepwise) {
       }
       return null;
     };
+    // わざごとの「最適まであと何発か」(じぶん側のSPだけ計算=探索を重くしない)
+    const optNsOf = p => {
+      if (p.kind !== 'sp' || p.side !== 0) return null;
+      const m = {};
+      (ctx.spList[0] || []).forEach(id => { m[id] = optNOf(p, id); });
+      return m;
+    };
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す。1回のシミュは0.02ms未満)
     for (let guard = 0; guard < 90; guard++) {
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
@@ -5900,7 +5916,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       p.gt = base + p.tn;
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
-        pending = { ...p, optN: optNOf(p), ctx };
+        pending = { ...p, optNs: optNsOf(p), ctx };
         pending.opts = gbChoices(pending, ctx);
         break;
       }
@@ -5919,10 +5935,10 @@ function gbPlay(picks, foes, ans, stepwise) {
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
     const swapped = [0, 1].map(s =>
       !!(res.stopped && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
-    // optNはじぶん側のSPだけ計算する(あいて側の編集ウィンドウでは⭐最適に発数が付かないだけ。
+    // optNsはじぶん側のSPだけ計算する(あいて側の編集ウィンドウでは⭐最適に発数が付かないだけ。
     // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
     const points = log.map(p => {
-      const q = { ...p, gt: base + p.tn, optN: p.kind === 'sp' && p.side === 0 ? optNOf(p) : null, ctx };
+      const q = { ...p, gt: base + p.tn, optNs: optNsOf(p), ctx };
       q.opts = gbChoices(q, ctx);
       return q;
     });
@@ -6325,9 +6341,23 @@ function gbRender(body, bt, picks, foes) {
     stopTimer(); setPlayBtn();
     // det=trueで「…詳細」(＋1〜＋3の細かい待ち指定)を開く。閉じているあいだは det付きの選択肢を隠す
     const hasDet = p.opts.some(o => o.det);
-    const btns = p.opts.map((o, i) => ({ o, i })).filter(x => det || !x.o.det)
-      .map(({ o, i }) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
-        data-k="${p.key}" data-i="${i}" title="${o.tip || ''}">${o.label}</button>`).join('')
+    const btn = ({ o, i }) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
+        data-k="${p.key}" data-i="${i}" title="${o.tip || ''}">${o.label}</button>`;
+    // わざごとのフレーム(grp): 見出し=わざ名＋ゲージ、中に「最適」「即打ち」の2大ボタン
+    // (2026-08-20タダシさん指示・最適が左)
+    const groups = [];
+    const rest = [];
+    p.opts.forEach((o, i) => {
+      if (o.grp) {
+        let g = groups.find(x => x.grp === o.grp);
+        if (!g) { g = { grp: o.grp, head: '', items: [] }; groups.push(g); }
+        if (o.head) g.head = o.head;
+        g.items.push({ o, i });
+      } else rest.push({ o, i });
+    });
+    const btns = groups.map(g =>
+      `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')
+      + rest.filter(x => det || !x.o.det).map(btn).join('')
       + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin${p.side ? ' foe' : ''}">
