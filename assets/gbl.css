@@ -767,6 +767,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   box-shadow:inset 0 0 12px rgba(255,213,74,.1)}
 .rwb button.best .need{color:inherit;opacity:.85}
 .rwb button.best.on{background:var(--gold);border-color:var(--gold);color:#2b2305}
+/* 「撃たない」がおすすめの場面は緑に点灯(2026-08-20タダシさん指示。
+   ノーマルアタックだけで倒しきれて相手のSPも飛んでこない=撃つのはもったいない) */
+.rwb button.reco{border-color:var(--win);color:var(--win);background:rgba(61,220,132,.13);
+  font-weight:800;box-shadow:0 0 14px rgba(61,220,132,.25),inset 0 0 10px rgba(61,220,132,.08)}
+.rwb .rtag{font-style:normal;font-size:.56rem;font-weight:800;padding:1px 6px;border-radius:99px;
+  background:var(--win);color:#06341a;margin-left:2px}
 /* わざごとのフレーム(2026-08-20タダシさん指示): 見出し=わざ名＋ゲージ、
    中に「⭐最適」「即打ち」の2大ボタン(最適が左) */
 .rwb .mvopt{flex:1 1 240px;min-width:0;border:1px solid var(--line2);border-radius:12px;
@@ -1154,6 +1160,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    オート中はわざの選択欄を隠す(環境の定番構成で戦い、何が飛んでくるかは分からない) */
 #mock .gfhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #mock .gfoeslots.auto .fbody select{display:none}
+/* HUDのゲージ残量の数字(2026-08-20タダシさん指示・ゲージ管理の要なので大きめに) */
+.rbhud .gqn{font-size:1.06rem;font-weight:900;color:var(--cy);min-width:2ch;text-align:center;line-height:1}
+.rbhud .hs.foe .gqn{color:var(--gold)}
 /* あいての行動のチップ・決断ウィンドウは金色(あいて側の色)で見分ける */
 .fchip.foe{border-color:rgba(255,213,74,.45)}
 .fchip.foe:hover{border-color:var(--gold)}

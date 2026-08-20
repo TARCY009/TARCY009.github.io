@@ -1015,7 +1015,10 @@ ${PAGE_ROCKET ? '' : `
     <b>⭐ 最適</b>＝そのわざをいちばん効率のよいタイミングで撃つ（「＋2」なら、ノーマルアタックを
     あと2発はさんでから撃つのが最適という意味）。<b>即打ち</b>＝タイミングを待たず、たまり次第すぐ撃つ。
     おたがいのノーマルアタックが同じターン数の対面では、タイミングを合わせる意味が無いので最適＝即打ちになります。
-    ＋1〜＋3発の細かい指定は<b>「…詳細」</b>の中にあります</li>
+    ＋1〜＋3発の細かい指定は<b>「…詳細」</b>の中にあります。
+    <b>ノーマルアタックだけで倒しきれて、相手のSPアタックも飛んでこない</b>場面では
+    <b>「撃たない」が緑に点灯</b>します（撃つのはもったいない＝ゲージを次の対面へ持ち越すのが定石。
+    あいてのAIも同じ判断で撃ちません）</li>
     <li><b>あいてのSPアタックが2本のときは、どちらが飛んでくるか分かりません</b>（実戦と同じ。
     見えてしまうと、あいてのブラフが成立しないため）。飛んできたわざはタイムラインで確認できます</li>
     <li>あいての枠の右上の<b>「わざ えらぶ｜オート」</b>で、あいてのわざを<b>オート</b>にすると
@@ -4406,7 +4409,7 @@ function rbRender(body, bt, picks, foes, extra) {
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqs"></span><span class="bfs"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
@@ -4414,7 +4417,7 @@ function rbRender(body, bt, picks, foes, extra) {
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="bfs"></span><span class="gqs"></span><span class="shds"></span><span class="balls"></span></div>
+          <div class="hx"><span class="bfs"></span><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="shds"></span><span class="balls"></span></div>
         </div>
       </div>
     </div>`;
@@ -4430,7 +4433,7 @@ function rbRender(body, bt, picks, foes, extra) {
     return { nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
       hpn: el.querySelector('.hpn'),
       balls: el.querySelector('.balls'), shds: el.querySelector('.shds'),
-      gqs: el.querySelector('.gqs'), bfs: el.querySelector('.bfs') };
+      gqs: el.querySelector('.gqs'), gqn: el.querySelector('.gqn'), bfs: el.querySelector('.bfs') };
   };
   const R0 = sideRefs('me'), R1 = sideRefs('foe');
   const clk = hud.querySelector('.clk'), trn = hud.querySelector('.trn');
@@ -4458,6 +4461,7 @@ function rbRender(body, bt, picks, foes, extra) {
       Rf.bar.className = cls;
       // バーだけでは残りわずかが読み取れないので、実数値も出す(色はバーと同じ基準)
       Rf.hpn.textContent = hp + '/' + max;
+      if (Rf.gqn) Rf.gqn.textContent = Math.floor(en);   // ゲージ残量を数字で大きく(2026-08-20タダシさん指示)
       Rf.hpn.className = 'hpn ' + cls;
       Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
@@ -5058,8 +5062,13 @@ function gbChoices(p, ctx) {
         tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打って、たまり次第すぐ${m.n}を撃ちます`
                   : `タイミングを待たず、ここですぐ${m.n}を撃ちます` });
     });
+    // 「撃たない」が正解の場面(noSp)は点灯させておすすめ表示(2026-08-20タダシさん指示。
+    // ノーマルアタックだけで倒しきれて相手のSPも飛んでこない=撃つのはもったいない)
     return list.concat([
-      { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この対面では撃たず、ゲージを次の対面に持ち越します' },
+      p.noSp
+        ? { a: 'hold', label: '撃たない<i class="rtag">おすすめ</i>', cls: 'hold reco',
+            tip: 'ノーマルアタックだけで倒しきれて、相手のSPアタックも飛んできません。撃たずにゲージを次の対面へ持ち越すのがおすすめです' }
+        : { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この対面では撃たず、ゲージを次の対面に持ち越します' },
       { a: 'wait', n: 1, det: true, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
       { a: 'wait', n: 2, det: true, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
       { a: 'wait', n: 3, det: true, label: '＋3', cls: 'wait', tip: 'ノーマルアタックをあと3発打ってから、もう一度ここで選びます' },
@@ -5590,6 +5599,12 @@ function gbPlay(picks, foes, ans, stepwise) {
           .filter(x => x.m && x.m.e <= (p.en != null ? p.en : 0)).sort((a, b) => a.m.e - b.m.e)[0];
         return av ? { a: 'fire', mv: av.id } : { a: 'auto' };
       }
+      // **ノーマルアタックだけで倒しきれる相手にはSPを撃たない**(2026-08-20タダシさん指示)。
+      // 残りHPわずかな相手にSPを使うのはもったいない・ふつうはやらない。
+      // 条件は「撃たなくても倒しきれる」＋「相手のSPも飛んでこない」。ゲージは次の対面へ持ち越す。
+      // **確定自己バフSPの即打ち(2026-08-19)よりもこちらを優先**する(実例: HPわずかなウッウに
+      // モルペコがオーラぐるまを撃っていた。バフ即打ちルールが先に効いていたため)
+      if ((ai.sw || ai.farm) && ctx.finishNoSp && ctx.finishNoSp(p)) return { a: 'hold' };
       // **確定で自分の能力が上がるSPは即打ち**(2026-08-19タダシさん指示)。
       // 上がった能力はその対面のあいだ効き続けるので、早く撃つほど得
       // (例: オコリザルの「ふんどのこぶし」=確定で攻撃+1。ノーマルアタックが2ターンなら
@@ -5904,6 +5919,27 @@ function gbPlay(picks, foes, ans, stepwise) {
       (ctx.spList[0] || []).forEach(id => { m[id] = optNOf(p, id); });
       return m;
     };
+    // 「撃たない」が正解の場面か(2026-08-20タダシさん指示):
+    // この発から先SPを撃たなくても**ノーマルアタックだけで倒しきれて**、相手のSPアタックも
+    // **飛んでこない**なら、撃つのはもったいない(ふつうはやらない)。ゲージは次の対面へ持ち越す。
+    // じぶん側は「撃たない」ボタンの点灯(おすすめ表示)、あいて側はAIの判断にそのまま使う
+    const finishNoSp = p => {
+      if (p.kind !== 'sp') return false;
+      const s = p.side, d = dec[s];
+      const tail = d.shots.splice(p.seq);   // この発から先は撃たない、で回してみる
+      const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
+      const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
+        { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
+      d.shots.push(...tail);
+      if (r.winner !== s) return false;
+      const o = 1 - s;
+      for (const t of rbTurns(r)) {
+        if (t.tn < p.tn) continue;
+        if (t.ev[o].some(e => e.full !== undefined)) return false;   // 相手のSPが飛んでくる
+      }
+      return true;
+    };
+    ctx.finishNoSp = finishNoSp;   // あいてのAI(aiAnswer)からも同じ判断を使う
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す。1回のシミュは0.02ms未満)
     for (let guard = 0; guard < 90; guard++) {
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
@@ -5916,7 +5952,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       p.gt = base + p.tn;
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
-        pending = { ...p, optNs: optNsOf(p), ctx };
+        pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p), ctx };
         pending.opts = gbChoices(pending, ctx);
         break;
       }
@@ -5935,10 +5971,11 @@ function gbPlay(picks, foes, ans, stepwise) {
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
     const swapped = [0, 1].map(s =>
       !!(res.stopped && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
-    // optNsはじぶん側のSPだけ計算する(あいて側の編集ウィンドウでは⭐最適に発数が付かないだけ。
+    // optNs・noSpはじぶん側のSPだけ計算する(あいて側の編集ウィンドウでは表示に出ないだけ。
     // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
     const points = log.map(p => {
-      const q = { ...p, gt: base + p.tn, optNs: optNsOf(p), ctx };
+      const q = { ...p, gt: base + p.tn, optNs: optNsOf(p),
+        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), ctx };
       q.opts = gbChoices(q, ctx);
       return q;
     });
@@ -6233,7 +6270,7 @@ function gbRender(body, bt, picks, foes) {
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqs"></span><span class="bfs"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
@@ -6241,7 +6278,7 @@ function gbRender(body, bt, picks, foes) {
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="bfs"></span><span class="gqs"></span><span class="shds"></span><span class="balls"></span></div>
+          <div class="hx"><span class="bfs"></span><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="shds"></span><span class="balls"></span></div>
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
       </div>
@@ -6258,7 +6295,7 @@ function gbRender(body, bt, picks, foes) {
     return { nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
       hpn: el.querySelector('.hpn'),
       balls: el.querySelector('.balls'), shds: el.querySelector('.shds'),
-      gqs: el.querySelector('.gqs'), bfs: el.querySelector('.bfs') };
+      gqs: el.querySelector('.gqs'), gqn: el.querySelector('.gqn'), bfs: el.querySelector('.bfs') };
   };
   const R0 = sideRefs('me'), R1 = sideRefs('foe');
   const clk = hud.querySelector('.clk'), trn = hud.querySelector('.trn');
@@ -6288,6 +6325,7 @@ function gbRender(body, bt, picks, foes) {
       const cls = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
       Rf.bar.className = cls;
       Rf.hpn.textContent = hp + '/' + max;
+      if (Rf.gqn) Rf.gqn.textContent = Math.floor(en);   // ゲージ残量を数字で大きく(2026-08-20タダシさん指示)
       Rf.hpn.className = 'hpn ' + cls;
       Rf.balls.innerHTML = Array.from({ length: total }, (_, i) => `<i class="pb${i < alive ? '' : ' off'}"></i>`).join('');
       Rf.shds.innerHTML = Array.from({ length: shMax }, (_, i) => `<i class="shd${i < sh ? '' : ' off'}">🛡</i>`).join('');
