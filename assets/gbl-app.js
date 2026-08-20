@@ -5159,6 +5159,10 @@ function gbPlay(picks, foes, ans, stepwise) {
   // **直前に自分から引っ込んだユーザーのポケモン**(2026-08-20タダシさん指示・「答えの温存」に使う)。
   // 交代で下がった=倒されていない=あとで必ず戻ってくる相手
   let went0 = null;
+  // 直前の交代で交代先に入った「打ちかけのノーマルアタック1発」。次の対面の頭に表示する
+  // (2026-08-20タダシさん報告: 表示しないと、対面の切れ目をまたいだノーマルアタックが
+  //  タイムラインから消えたように見える。HPは正しく減っていた=表示だけの問題)
+  let swapHitEv = null;
   const legs = [];
   const nextAlive = (sd, from) => {
     for (let i = 0; i < st[sd].length; i++) { const k = (from + i) % st[sd].length; if (st[sd][k].alive) return k; }
@@ -5251,6 +5255,7 @@ function gbPlay(picks, foes, ans, stepwise) {
         st[sd][to].resume = { ...rs, hp: Math.max(1, rs.hp - hit.dmg) };
         const ors = st[od][cur[od]].resume;
         if (ors) ors.en = Math.min(100, (ors.en || 0) + hit.eg);
+        swapHitEv = { side: sd, mv: hit.mv, dmg: hit.dmg };   // 次の対面の頭に表示する
       }
     }
     cur[sd] = to;
@@ -5862,6 +5867,8 @@ function gbPlay(picks, foes, ans, stepwise) {
   }
   while (cur[0] >= 0 && cur[1] >= 0 && legs.length < 16 && !pending) {
     const li = legs.length;
+    const legSwapHit = swapHitEv;   // 直前の交代で交代先に入った1発(この対面の頭に表示)
+    swapHitEv = null;
     seen[0].add(cur[0]); seen[1].add(cur[1]);   // 場に出た＝おたがいに見えた
     const P0 = picks[cur[0]], P1 = foes[cur[1]];
     const spL = [P0, P1].map(P => (P.pol.charged || []).slice());
@@ -5992,6 +5999,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       pol: P0.pol, foePol: P1.pol, li, points,
       leadPts: li === 0 ? leadPts : [null, null],
       leadHits: li === 0 ? leadHits : [null, null],
+      swapHit: legSwapHit,   // 交代で交代先に入った打ちかけの1発(対面の頭に表示)
       hud: { hp0: rs0 ? Math.max(0, rs0.hp) : res.final[0].hpMax, en0: rs0 ? rs0.en : 0,
              b0: ((rs0 && rs0.buffs) || [0, 0]).slice(),
              hp1: rs1 ? Math.max(0, rs1.hp) : res.final[1].hpMax, en1: rs1 ? rs1.en : 0,
@@ -6168,6 +6176,13 @@ function gbRender(body, bt, picks, foes) {
       items.push({ gt: base, html: `<div class="ft"><div class="c me">${h.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
         <div class="c foe">${h.side === 0 ? cell : ''}</div></div>` });
     } });
+    // 手動交代で交代先に入った「打ちかけの1発」も同じ形で対面の頭に出す(2026-08-20タダシさん報告。
+    // 出さないと、対面の切れ目をまたいだノーマルアタックがタイムラインから消えたように見える)
+    if (leg.swapHit) {
+      const cell = evCell([{ move: leg.swapHit.mv, dmg: leg.swapHit.dmg }]);
+      items.push({ gt: base, html: `<div class="ft"><div class="c me">${leg.swapHit.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
+        <div class="c foe">${leg.swapHit.side === 0 ? cell : ''}</div></div>` });
+    }
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
     const ptAt = {};
