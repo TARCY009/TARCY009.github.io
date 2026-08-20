@@ -4122,7 +4122,10 @@ function rbTurns(res) {
     // SPアタック・シールド・能力変化・決着のあるターンは「見どころ」として必ず表示する
     const key = ev.some(list => list.some(e => e.full !== undefined || e.buff || e.shielded || e.disguised)) ||
       last.state[0].hp === 0 || last.state[1].hp === 0;
-    return { tn: t.tn, ev, state: last.state, stalled, key };
+    // sub=エンジンの行そのまま(処理された順)。模擬戦のタイムラインはこの順で1行ずつ描く
+    // (2026-08-20タダシさん指示。同じターンのSPの撃ち合いはCMP=攻撃実数値の高い側が先に解決される。
+    //  ターン単位にまとめて描くと、この順番とどちらがブロックしたのかが見えなくなる)
+    return { tn: t.tn, ev, state: last.state, stalled, key, sub: t.rows };
   });
 }
 // じぶんが撃てるSPアタックの一覧(1本でも2本でも同じ形にする)
@@ -4294,13 +4297,18 @@ function rbRender(body, bt, picks, foes, extra) {
       if (pend && t.tn > pend.tn) return;
       const gt = base + t.tn;
       const partial = pend && pend.kind === 'sh' && t.tn === pend.tn;
-      let ev0 = t.ev[0], ev1 = t.ev[1];
+      // 出来事は**処理された順**のまま1行ずつ描く(2026-08-20タダシさん指示・GBL模擬戦と同じ)。
+      // 同じターンにSPを撃ち合うとCMP(攻撃実数値×能力変化の高い側が先)で解決の先後が決まる
+      let subs = t.sub;
       if (partial) {
-        const k = ev1.findIndex(e => e.full !== undefined);
-        if (k >= 0) ev1 = ev1.slice(0, k);
+        // sh待ち: 質問対象のあいてのSPが入った行から先は「まだ起きていない」ので隠す
+        const k = subs.findIndex(r => r.ev[1] && r.ev[1].full !== undefined);
+        if (k >= 0) subs = subs.slice(0, k);
       }
       // シールド・能力変化の追跡は「見せる出来事」だけに対して行う(仮の結果を混ぜない)
-      for (let i = 0; i < 2; i++) for (const e of (i ? ev1 : ev0)) {
+      for (const r of subs) for (let i = 0; i < 2; i++) {
+        const e = r.ev[i];
+        if (!e) continue;
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
@@ -4320,11 +4328,19 @@ function rbRender(body, bt, picks, foes, extra) {
         frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       }
-      const e0 = evCell(ev0) + shdCell(ev1);   // 相手のSPを防いだ🛡は防いだ側の列に出す
-      const e1 = evCell(ev1) + shdCell(ev0) + (t.stalled && !ev1.length ? '<i class="stall">⏸</i>' : '');
-      items.push(!e0 && !e1
-        ? { gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` }
-        : { gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${gt}</i><div class="c foe">${e1}</div></div>` });
+      // ロケット団: あいてが硬直で1歩も動かないターンは⏸を出す(最初の行の右列)
+      let stallMark = t.stalled && !t.ev[1].length ? '<i class="stall">⏸</i>' : '';
+      let first = true;
+      for (const r of subs) {
+        const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []);
+        const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []) + (first ? stallMark : '');
+        if (!e0 && !e1) continue;
+        items.push({ gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        first = false;
+      }
+      if (first) items.push({ gt, html: stallMark
+        ? `<div class="ft"><div class="c me"></div><i class="tn">${gt}</i><div class="c foe">${stallMark}</div></div>`
+        : `<div class="ft q"><i class="tn">${gt}</i></div>` });
       (ptAt[t.tn] || []).forEach(p => items.push(chipItem(p, gt)));
     });
     const endGt = base + res.turns;
@@ -6107,13 +6123,19 @@ function gbRender(body, bt, picks, foes) {
       if (pend && t.tn > pend.tn) return;
       const gt = base + t.tn;
       const partial = pend && pend.kind === 'sh' && t.tn === pend.tn;
-      let ev0 = t.ev[0], ev1 = t.ev[1];
+      // 出来事は**処理された順**のまま1行ずつ描く(2026-08-20タダシさん指示)。
+      // 同じターンにSPを撃ち合うと、CMP(攻撃実数値×能力変化の高い側が先)で解決の先後が決まる。
+      // ターン単位に左右へまとめると、この順番と「どちらがブロックしたのか」が見えなくなる
+      let subs = t.sub;
       if (partial) {
-        // sh待ちはじぶん側だけで起きる(あいての決断は止まらない)＝隠すのはあいてのSP
-        const k = ev1.findIndex(e => e.full !== undefined);
-        if (k >= 0) ev1 = ev1.slice(0, k);
+        // sh待ちはじぶん側だけで起きる＝質問対象のあいてのSPが入った行から先は「まだ起きていない」
+        // (そのSPより後に解決される出来事は、シールドの答えしだいで変わりうるので隠す)
+        const k = subs.findIndex(r => r.ev[1] && r.ev[1].full !== undefined);
+        if (k >= 0) subs = subs.slice(0, k);
       }
-      for (let i = 0; i < 2; i++) for (const e of (i ? ev1 : ev0)) {
+      for (const r of subs) for (let i = 0; i < 2; i++) {
+        const e = r.ev[i];
+        if (!e) continue;
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
@@ -6132,11 +6154,15 @@ function gbRender(body, bt, picks, foes) {
         frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       }
-      const e0 = evCell(ev0) + shdCell(ev1);   // 相手のSPを防いだ🛡は防いだ側の列に出す
-      const e1 = evCell(ev1) + shdCell(ev0);
-      items.push(!e0 && !e1
-        ? { gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` }
-        : { gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${gt}</i><div class="c foe">${e1}</div></div>` });
+      let first = true;
+      for (const r of subs) {
+        const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []);
+        const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []);
+        if (!e0 && !e1) continue;
+        items.push({ gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        first = false;
+      }
+      if (first) items.push({ gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` });
       (ptAt[t.tn] || []).forEach(p => items.push(chipItem(p, gt)));
     });
     const endGt = base + res.turns;
