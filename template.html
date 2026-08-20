@@ -165,6 +165,12 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
 .minppl{margin-top:8px;display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;font-size:.85rem}
 .minppl .bignum{font-size:1.35rem}
 .mp-sub{color:var(--sub);font-size:.74rem;font-weight:400}
+/* 実戦シミュ(/raid/)へのリンク。別ページへ飛ぶことを赤系で示す(ロケット団リンクと同じ考え方) */
+.raidlink{font-size:.74rem;font-weight:700;color:#ff8fa0;text-decoration:none;border:1px solid var(--line);
+  background:var(--tab);border-radius:9px;padding:3px 10px;box-shadow:0 2px 0 var(--tabsh);white-space:nowrap}
+.raidlink:hover{transform:translateY(-1px);color:#ffb3be}
+:root.light .raidlink{color:#c22646}
+:root.light .raidlink:hover{color:#ff5470}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
@@ -663,6 +669,7 @@ function renderMinPlayers(){
   if(!r){out.innerHTML='';return;}
   out.innerHTML=`<span title="${T_MP}">理論上 <b class="bignum">${r.n}人</b></span>
     <span class="mp-sub">全員が1位の ${badges(r.best.shadow,!!r.best.p.mega,r.best.p)}${r.best.p.n} で攻撃し続けた場合</span>
+    <a class="raidlink" href="/raid/?b=${boss}&t=${raidTier}" title="倒される時間・SPアタックの被弾まで再現した実戦ベースのシミュレートを、このボス・このランクのまま開きます">実戦シミュ ↗</a>
     <small class="mp-sub expl">HP${r.t.hp}・制限時間${r.t.time}秒・対ボス火力${r.best.dps.toFixed(2)}/秒（ランク補正込みのボス防御で計算）</small>`;
 }
 

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケモンGO レイドシミュレータ｜実戦ベースの最低クリア人数</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/karyoku/favicon-32.png">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
+<meta name="theme-color" content="#0b1023">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<style>
+/* 色は :root(ダーク=既定) と :root.light の2ブロックだけで決める(全ツール共通ルール)。
+   役割色は火力チェッカーと同じ: ボス=赤〜オレンジ ／ じぶん=水色 ／ 結果=紫 */
+:root{
+  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560;
+  --accent:#5b8cff; --accent2:#43e0ff; --violet:#b06cff;
+  --gold:#ffd54a; --ng:#ff8a6b;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,84,112,.12), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.15), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(67,224,255,.12), transparent 62%),
+    linear-gradient(165deg,#0b1023 0%,#120f27 48%,#1a1024 100%);
+  --panel:linear-gradient(180deg,rgba(26,35,66,.94),rgba(19,26,51,.94));
+  --panelsh:0 18px 34px -20px var(--cardglow,rgba(91,140,255,.5)), 0 1px 0 rgba(255,255,255,.06) inset;
+  --field:#0f1630; --fieldph:#6b76a3; --chip:#1a2342; --sugg:#161d38;
+  --sugghover:linear-gradient(90deg,rgba(91,140,255,.18),rgba(176,108,255,.16));
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
+  --rowline:#232c4f;
+  --mero:rgba(67,224,255,.10); --bossro:rgba(255,84,112,.10);
+  --thbg:rgba(91,140,255,.14);
+  --helpbody:rgba(26,35,66,.9); --helpline:#4a3a7d;
+  --tbadge:inset 0 0 0 1px rgba(255,255,255,.16);
+  --tcolor:#0b1023;
+}
+:root.light{
+  --ink:#20263a; --sub:#6a7391; --line:#dfe6f5;
+  --accent:#3b6ef0; --accent2:#08b4c9; --violet:#8b5cf6;
+  --gold:#b07a00; --ng:#c2410c;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,84,112,.14), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.18), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(8,180,201,.16), transparent 62%),
+    linear-gradient(165deg,#e9f1ff 0%,#efe9ff 48%,#fff0e4 100%);
+  --panel:rgba(255,255,255,.92);
+  --panelsh:0 14px 30px -16px var(--cardglow,rgba(59,110,240,.35)), 0 1px 0 rgba(255,255,255,.8) inset;
+  --field:#fbfcff; --fieldph:#9aa3bd; --chip:#fff; --sugg:#fff;
+  --sugghover:linear-gradient(90deg,#eef3ff,#f6f1ff);
+  --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
+  --rowline:#eceffa;
+  --mero:rgba(8,180,201,.09); --bossro:rgba(255,84,112,.09);
+  --thbg:rgba(59,110,240,.10);
+  --helpbody:rgba(255,255,255,.92); --helpline:#cfc6f0;
+  --tbadge:none;
+  --tcolor:#e9f1ff;
+}
+:root.light .tbadge[title="でんき"],:root.light .tbadge[title="こおり"],
+:root.light .tbadge[title="いわ"],:root.light .tbadge[title="じめん"]{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;color:var(--ink);line-height:1.55;padding:14px;min-height:100vh;
+  background:var(--bgimg);background-attachment:fixed}
+.wrap{max-width:860px;margin:0 auto}
+header{margin:6px 0 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+header h1{font-size:1.42rem;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;display:flex;align-items:center;gap:.4em}
+header h1 .brand,header h1 .tool{white-space:nowrap}
+header h1 .tool{background:linear-gradient(92deg,#ff5470,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{font-size:.8rem;color:var(--sub);margin-top:3px}
+.pagelink{display:inline-block;margin-top:6px;font-size:.74rem;font-weight:700;color:var(--accent2);text-decoration:none;
+  border:1px solid var(--line);background:var(--tab);border-radius:9px;padding:4px 10px;box-shadow:0 2px 0 var(--tabsh)}
+@media (max-width:430px){header h1{font-size:1.2rem}header p{font-size:.72rem}}
+.card{position:relative;background:var(--panel);border:1px solid var(--cardline,var(--line));border-radius:16px;padding:20px 16px 16px;margin-bottom:16px;box-shadow:var(--panelsh)}
+.card::before{content:'';position:absolute;left:0;top:0;right:0;height:4px;border-radius:15px 15px 0 0;background:var(--cardbar)}
+.c-boss{--cardline:#5a2b3d;--cardglow:rgba(255,84,112,.42);--cardbar:linear-gradient(90deg,#ff5470,#ff9750);--focusc:#ff7089;--focusring:rgba(255,84,112,.26)}
+.c-my  {--cardline:#1f4a5e;--cardglow:rgba(67,224,255,.34);--cardbar:linear-gradient(90deg,#43e0ff,#5b8cff);--focusc:#43e0ff;--focusring:rgba(67,224,255,.24)}
+.c-res {--cardline:#3d2f68;--cardglow:rgba(176,108,255,.40);--cardbar:linear-gradient(90deg,#b06cff,#5b8cff);--focusc:#b06cff;--focusring:rgba(176,108,255,.26)}
+:root.light .c-boss{--cardline:#ffd6dc;--cardglow:rgba(255,84,112,.32)}
+:root.light .c-my  {--cardline:#c4e6ee;--cardglow:rgba(8,180,201,.30)}
+:root.light .c-res {--cardline:#ddd4fb;--cardglow:rgba(139,92,246,.32)}
+.step{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.step b{background:var(--cardbar);color:#fff;border-radius:8px;padding:2px 10px;font-size:.75rem;letter-spacing:.06em}
+.step h2{font-size:1rem}
+input[type=text],input[type=number],select{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 11px;width:100%;background:var(--field);transition:border-color .15s,box-shadow .15s}
+input::placeholder{color:var(--fieldph)}
+select option{background:var(--sugg);color:var(--ink)}
+input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));box-shadow:0 0 0 3px var(--focusring,rgba(91,140,255,.26))}
+@media (max-width:540px){input[type=text],input[type=number],select{font-size:16px}} /* iOSの自動拡大よけ */
+.sugg{position:relative}
+.sugg-list{position:absolute;z-index:30;left:0;right:0;top:100%;background:var(--sugg);border:1px solid var(--cardline,var(--line));border-radius:12px;max-height:240px;overflow:auto;box-shadow:0 18px 36px rgba(0,0,0,.5);display:none}
+.sugg-list div{padding:8px 12px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;gap:8px}
+.sugg-list div:hover{background:var(--sugghover)}
+label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.selrow{display:flex;align-items:center;gap:6px}
+.selrow select{flex:1;min-width:0}
+.seltype{flex-shrink:0;display:inline-flex}
+.tbadge{box-shadow:var(--tbadge)}
+/* タブ(立体グラデーション・全ツール共通の見た目) */
+.modes{display:flex;gap:6px;margin:2px 0 4px;flex-wrap:wrap}
+.modes button,.seg button{font:inherit;font-size:.8rem;font-weight:800;flex:0 1 auto;border:1px solid var(--line);background:var(--tab);border-radius:11px;padding:8px 12px;cursor:pointer;
+  color:var(--mc,var(--sub));box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:transform .12s,box-shadow .12s,color .12s}
+.modes button:hover,.seg button:hover{transform:translateY(-1px)}
+.modes button[aria-pressed="true"],.seg button[aria-pressed="true"]{color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+.seg{display:flex;gap:2px;flex:0 1 auto}
+.seg button:first-child{border-radius:11px 5px 5px 11px}
+.seg button:last-child{border-radius:5px 11px 11px 5px}
+.seg button{border-radius:5px}
+@media (max-width:560px){.modes button,.seg{flex:1 1 auto}}
+/* ランク=ボスの赤 */
+.tierrow .seg button{--mc:#ff8fa0;--mg:linear-gradient(160deg,#ff9d8a 0%,#ff5470 45%,#b91d3e 100%);--mgl:rgba(255,84,112,.42)}
+:root.light .tierrow .seg button{--mc:#c22646}
+/* じぶん側=水色(点灯は濃い文字) ／ シャドウ=紫 */
+.cyanseg button{--mc:#5fd8ea;--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mgl:rgba(8,180,201,.45);--mi:#042330}
+:root.light .cyanseg button{--mc:#0b7f92}
+#myShadow{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45);display:inline-flex;align-items:center;gap:5px}
+:root.light #myShadow{--mc:#7a3cc4}
+/* 設定(結果カード内)=紫 */
+.vioseg button{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45)}
+:root.light .vioseg button{--mc:#7a3cc4}
+.bossname{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.bossinfo{margin-top:10px;font-size:.85rem;color:var(--sub);font-weight:600}
+.mysum{margin-top:10px;font-size:.9rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mysum b{font-size:1rem}
+.tag-s2{display:inline-flex;align-items:center;background:#7c3aed;color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px}
+.tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px}
+.tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
+.setrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.setrow .lbl{font-size:.78rem;color:var(--sub);font-weight:700}
+#rejoinSec{width:84px;text-align:center}
+/* 結果 */
+.bigppl{margin:14px 0 4px;font-size:1rem;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.bigppl b{font-size:1.9rem;letter-spacing:.02em;background:linear-gradient(92deg,var(--accent2),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bigsub{font-size:.74rem;color:var(--sub)}
+table.res{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84rem}
+table.res th{background:var(--thbg);font-size:.72rem;color:var(--sub);padding:6px 4px}
+table.res td{border-bottom:1px solid var(--rowline);padding:7px 4px;text-align:center}
+table.res tr.sel td{background:var(--mero)}
+table.res tbody tr{cursor:pointer}
+.okw{color:var(--accent2);font-weight:800}
+.ngw{color:var(--ng);font-weight:700}
+/* タイムライン(外部シミュレータと同じ4列) */
+details.tl{margin-top:14px}
+details.tl summary{cursor:pointer;color:var(--sub);font-weight:700;font-size:.8rem}
+.tlwrap{overflow-x:auto;margin-top:8px}
+table.tl{width:100%;border-collapse:collapse;font-size:.8rem}
+table.tl th{background:var(--thbg);font-size:.7rem;color:var(--sub);padding:5px 4px}
+table.tl td{border-bottom:1px solid var(--rowline);padding:4px 6px;text-align:center}
+table.tl tr.me td{background:var(--mero)}
+table.tl tr.boss td{background:var(--bossro)}
+table.tl tr.sys td{color:var(--sub);font-size:.72rem}
+table.tl td.nm{text-align:left;white-space:nowrap}
+.spm{color:var(--ng);font-weight:800}
+.note{font-size:.72rem;color:var(--sub);margin-top:10px}
+.expl{display:none}
+.explain .expl{display:revert}
+.empty{color:var(--sub);font-size:.85rem;text-align:center;padding:18px 0}
+.helpwrap{margin:2px 0 6px}
+#helptab{width:100%;font:inherit;font-size:.8rem;font-weight:700;padding:11px;cursor:pointer;color:var(--sub);background:var(--tab);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+#helptab:hover,#helptab[aria-expanded="true"]{color:var(--violet);border-color:var(--helpline)}
+#helpbody{margin-top:8px;padding:14px 16px;background:var(--helpbody);border:1px solid var(--line);border-radius:14px}
+#helpbody h4{margin:16px 0 5px;font-size:.8rem;color:var(--violet)}
+#helpbody h4:first-child{margin-top:0}
+#helpbody p,#helpbody li{font-size:.74rem;color:var(--sub);line-height:1.75;margin:0}
+#helpbody ul{margin:0;padding-left:1.15em}
+#helpbody b{color:var(--ink)}
+footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="hmain">
+    <h1><span class="brand">ポケモンGO</span><span class="tool">レイドシミュレータ</span></h1>
+    <p>倒される時間まで含めた実戦ベースで、レイドの最低クリア人数を出します。</p>
+    <a class="pagelink" href="/">火力チェッカー ↗</a>
+  </div>
+  <div id="themesw"></div>
+</header>
+
+<div class="card c-boss">
+  <div class="step"><b>STEP 1</b><h2>レイドボスを選ぶ</h2></div>
+  <div class="sugg">
+    <input type="text" id="bossInput" placeholder="ボスのポケモン名で検索（例：ホウオウ）" autocomplete="off">
+    <div class="sugg-list" id="bossSugg"></div>
+  </div>
+  <div id="bossView" style="display:none">
+    <div class="bossname" id="bossName"></div>
+    <div class="bossinfo">ランク：</div>
+    <div class="modes tierrow"><span class="seg" id="tierSeg"></span></div>
+    <div class="grid2" style="margin-top:4px">
+      <div><label class="f">ボスのノーマルアタック</label><div class="selrow"><select id="bfSel"></select><span class="seltype" id="bfType"></span></div></div>
+      <div><label class="f">ボスのSPアタック</label><div class="selrow"><select id="bcSel"></select><span class="seltype" id="bcType"></span></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card c-my">
+  <div class="step"><b>STEP 2</b><h2>じぶんのアタッカー</h2></div>
+  <div class="modes"><span class="seg cyanseg" id="mySeg">
+    <button type="button" data-m="auto" aria-pressed="true" title="そのボスに対して火力が最大のアタッカー(PL50・個体値15)を自動で選びます">1位おまかせ</button>
+    <button type="button" data-m="pick" aria-pressed="false" title="使うポケモンとわざを自分で選びます">えらぶ</button>
+  </span></div>
+  <div class="sugg" id="myPickRow" style="display:none;margin-top:8px">
+    <input type="text" id="myInput" placeholder="ポケモン名で検索" autocomplete="off">
+    <div class="sugg-list" id="mySugg"></div>
+  </div>
+  <div id="myView" style="display:none">
+    <div class="mysum" id="mySum"></div>
+    <div class="grid2" style="margin-top:4px">
+      <div><label class="f">ノーマルアタック</label><div class="selrow"><select id="mfSel"></select><span class="seltype" id="mfType"></span></div></div>
+      <div><label class="f">SPアタック</label><div class="selrow"><select id="mcSel"></select><span class="seltype" id="mcType"></span></div></div>
+    </div>
+    <div class="modes" style="margin-top:10px" id="shRow">
+      <button type="button" id="myShadow" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i>シャドウ</button>
+    </div>
+    <p class="note expl">全員がこのアタッカー6匹（PL50・個体値15）のパーティで参加する想定です。</p>
+  </div>
+</div>
+
+<div class="card c-res">
+  <div class="step"><b>結果</b><h2>実戦シミュレート</h2></div>
+  <div class="setrow">
+    <span class="lbl" title="ボスがSPアタックを撃つ条件です。実際のボスは撃てるときに2分の1の確率で撃ちます">ボスのSP</span>
+    <span class="seg vioseg" id="spSeg">
+      <button type="button" data-m="asap" aria-pressed="true" title="ゲージがたまったら必ず撃ちます（きびしめの前提）">即打ち</button>
+      <button type="button" data-m="coin" aria-pressed="false" title="撃てるとき2分の1で撃ちます（実戦と同じ。30回試して勝率で判定します）">ランダム</button>
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span class="lbl" title="手持ち6匹が全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
+  </div>
+  <div id="resBody"><div class="empty">ボスを選ぶと結果が出ます</div></div>
+</div>
+
+<div class="helpwrap">
+  <button id="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+  <div id="helpbody" style="display:none"></div>
+</div>
+
+<footer>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
+</div>
+
+<script src="/assets/type-icons.js"></script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+<script src="/assets/raid-engine.js"></script>
+<script>
+(async()=>{
+const D = await (await fetch('/godata.json')).json();
+const TI = {}; D.types.forEach((t,i)=>TI[t]=i);
+const KEYS = Object.keys(D.pokemon);
+const eff=(mt,dts)=>dts.reduce((m,t)=>m*D.chart[mt][TI[t]],1);
+const CPM50 = D.cpm['50'];
+
+// ランクごとの前提(★2は存在しない・★4=メガレイド)。値の根拠はCLAUDE.mdのレイド仕様
+const TIERS=[
+  {id:'t1',label:'★1',hp:600,  time:180,cpm:0.5974,help:'★1レイド（HP600・制限時間180秒）'},
+  {id:'t3',label:'★3',hp:3600, time:180,cpm:0.7300,help:'★3レイド（HP3600・制限時間180秒）'},
+  {id:'t4',label:'★4',hp:9000, time:300,cpm:0.7903,help:'メガレイド（HP9000・制限時間300秒）'},
+  {id:'t5',label:'★5',hp:15000,time:300,cpm:0.7903,help:'★5伝説レイド（HP15000・制限時間300秒）'},
+  {id:'t6',label:'★6',hp:22500,time:300,cpm:0.7903,help:'メガ伝説・ゲンシカイキのレイド（HP22500・制限時間300秒）'},
+  {id:'t7',label:'★7',hp:25000,time:300,cpm:0.7903,help:'スーパーメガレイド（HP25000・制限時間300秒）'},
+];
+const tierOf=id=>TIERS.find(t=>t.id===id);
+const guessTier=k=>{const p=D.pokemon[k]; return p.mega?(p.lg?'t6':'t4'):'t5';};
+
+// ---- 状態 ----
+let boss=null, tier='t5';
+let myMode='auto', myKey=null, myShadow=false;   // えらぶ のときに使う
+let spMode='asap';
+
+const $=id=>document.getElementById(id);
+const typeIcons=(p,s)=>typePairHTML(p.ty.map(t=>D.typeJa[t]),s);
+const badges=(shadow,mega,p)=>{
+  const mgLabel=(p&&/^ゲンシ/.test(p.n))?'ゲンシ':'メガ';
+  return (mega?`<span class="tag-m2${mgLabel==='ゲンシ'?' tag-p2':''}">${mgLabel}</span>`:'')
+       +(shadow?'<span class="tag-s2" title="シャドウ"><i class="shadowmark"></i></span>':'');
+};
+const mvObj=id=>({id,...D.moves[id]});
+const fastIds=p=>[...p.q,...p.eq].filter(id=>D.moves[id]&&D.moves[id].e>0);
+const chgIds=p=>[...p.c,...p.ec].filter(id=>D.moves[id]&&D.moves[id].e<0);
+// ボスは特別わざ・レガシーわざを使わない(通常枠のみ)
+const bossFastIds=p=>p.q.filter(id=>D.moves[id]&&D.moves[id].e>0);
+const bossChgIds=p=>p.c.filter(id=>D.moves[id]&&D.moves[id].e<0);
+
+// ---- 検索(ひらがな→カタカナ読み替え・火力チェッカーと同じ) ----
+const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+function attachSugg(inputEl,listEl,onPick,filterFn){
+  inputEl.addEventListener('compositionend',()=>{
+    const v=toKata(inputEl.value);
+    if(v!==inputEl.value)inputEl.value=v;
+    inputEl.dispatchEvent(new Event('input'));
+  });
+  inputEl.addEventListener('input',e=>{
+    if(!e.isComposing){const v=toKata(inputEl.value); if(v!==inputEl.value)inputEl.value=v;}
+    const q=toKata(inputEl.value.trim());
+    if(!q){listEl.style.display='none';return;}
+    const res=KEYS.filter(k=>D.pokemon[k].n.includes(q)&&(!filterFn||filterFn(k))).slice(0,12);
+    if(!res.length){listEl.style.display='none';return;}
+    listEl.innerHTML=res.map(k=>{const p=D.pokemon[k];return `<div data-k="${k}"><span>${p.n}</span>${typeIcons(p,18)}</div>`;}).join('');
+    listEl.style.display='block';
+    listEl.querySelectorAll('div').forEach(el=>el.onclick=()=>{listEl.style.display='none';inputEl.value=D.pokemon[el.dataset.k].n;onPick(el.dataset.k);});
+  });
+  document.addEventListener('click',e=>{if(!listEl.contains(e.target)&&e.target!==inputEl)listEl.style.display='none';});
+}
+
+// ---- アタッカーの自動選出(そのボスの実防御での最高火力構成・PL50個体値15) ----
+function bestComboVs(p,bt,bossDef,shadow){
+  const atk=(p.a+15)*CPM50;
+  const mult=shadow?1.2:1;
+  let best=null;
+  for(const f of fastIds(p)){const m1=D.moves[f];
+    for(const c of chgIds(p)){const m2=D.moves[c];
+      const d1=RaidEngine.damage(m1.p,atk,bossDef,p.ty.includes(m1.t)?1.2:1,eff(m1.t,bt),mult);
+      const d2=RaidEngine.damage(m2.p,atk,bossDef,p.ty.includes(m2.t)?1.2:1,eff(m2.t,bt),mult);
+      const n2=(m1.e*100)/Math.abs(m2.e);
+      const tt=m1.d*100+m2.d*n2;
+      if(tt<=0)continue;
+      const dps=(d1*100+d2*n2)/tt;
+      if(!best||dps>best.dps)best={f,c,dps};
+    }}
+  return best;
+}
+let topCache={key:null,val:null};
+function topAttacker(){
+  const ck=boss+'|'+tier;
+  if(topCache.key===ck)return topCache.val;
+  const bp=D.pokemon[boss], bt=bp.ty, bossDef=(bp.df+15)*tierOf(tier).cpm;
+  let best=null;
+  for(const k of KEYS){
+    const p=D.pokemon[k];
+    if(p.mega&&!p.fe)continue;
+    if(!p.mega&&!p.fe)continue;
+    const b=bestComboVs(p,bt,bossDef,false);
+    if(b&&(!best||b.dps>best.dps))best={k,shadow:false,...b};
+    if(p.shadow){
+      const s=bestComboVs(p,bt,bossDef,true);
+      if(s&&(!best||s.dps>best.dps))best={k,shadow:true,...s};
+    }
+  }
+  topCache={key:ck,val:best};
+  return best;
+}
+
+// ---- ボスのわざの既定(いちばん痛い組み合わせ=安全側。あとから選び直せる) ----
+function defaultBossMoves(){
+  const bp=D.pokemon[boss];
+  const meP=D.pokemon[curMyKey()];
+  const mt=meP?meP.ty:['NORMAL'];
+  const score=(id,perSec)=>{const m=D.moves[id];
+    const d=m.p*(bp.ty.includes(m.t)?1.2:1)*eff(m.t,mt);
+    return perSec?d/(m.d+2):d;};
+  const fs=bossFastIds(bp), cs=bossChgIds(bp);
+  const bf=fs.slice().sort((a,b)=>score(b,true)-score(a,true))[0]||null;
+  const bc=cs.slice().sort((a,b)=>score(b,false)-score(a,false))[0]||null;
+  return {bf,bc};
+}
+
+// ---- 画面の組み立て ----
+function curMyKey(){ return myMode==='auto'?(topAttacker()||{}).k:myKey; }
+function curMyShadow(){ return myMode==='auto'?(topAttacker()||{}).shadow:myShadow; }
+
+function fillMoveSel(sel,ids,val){
+  sel.innerHTML=ids.map(id=>`<option value="${id}">${D.moves[id].n}${(D.pokemon[curMyKey()]?.eq.includes(id)||D.pokemon[curMyKey()]?.ec.includes(id))?' (特)':''}</option>`).join('');
+  if(val&&ids.includes(val))sel.value=val;
+}
+function syncTypeIcon(selId,spanId){
+  const v=$(selId).value;
+  $(spanId).innerHTML=v?typeIconHTML(D.typeJa[D.moves[v].t],20):'';
+}
+
+function renderBoss(){
+  const bp=D.pokemon[boss];
+  $('bossView').style.display='block';
+  $('bossName').innerHTML=`${badges(false,bp.mega,bp)}${bp.n}${typeIcons(bp,22)}`;
+  $('tierSeg').innerHTML=TIERS.map(t=>`<button type="button" data-t="${t.id}" aria-pressed="${t.id===tier}" title="${t.help}として計算します">${t.label}</button>`).join('');
+  $('tierSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{tier=b.dataset.t;topCache.key=null;renderBoss();renderMy();runAll();});
+  const fs=bossFastIds(bp), cs=bossChgIds(bp);
+  const cur=defaultBossMoves();
+  fillBossSel($('bfSel'),fs,$('bfSel').dataset.boss===boss?$('bfSel').value:cur.bf);
+  fillBossSel($('bcSel'),cs,$('bcSel').dataset.boss===boss?$('bcSel').value:cur.bc);
+  $('bfSel').dataset.boss=boss; $('bcSel').dataset.boss=boss;
+  syncTypeIcon('bfSel','bfType'); syncTypeIcon('bcSel','bcType');
+}
+function fillBossSel(sel,ids,val){
+  sel.innerHTML=ids.map(id=>`<option value="${id}">${D.moves[id].n}</option>`).join('')||'<option value="">なし</option>';
+  if(val&&ids.includes(val))sel.value=val;
+}
+
+function renderMy(){
+  if(!boss){$('myView').style.display='none';return;}
+  const k=curMyKey();
+  if(!k){$('myView').style.display='none';return;}
+  const p=D.pokemon[k];
+  $('myView').style.display='block';
+  const auto=myMode==='auto';
+  $('myPickRow').style.display=auto?'none':'block';
+  const sh=curMyShadow();
+  $('mySum').innerHTML=`${badges(sh,p.mega,p)}<b>${p.n}</b>${typeIcons(p,20)}<small style="color:var(--sub)">PL50・個体値15${auto?'（このボスへの火力1位）':''}</small>`;
+  const top=auto?topAttacker():null;
+  const fs=fastIds(p), cs=chgIds(p);
+  const keep=$('mfSel').dataset.k===k&&!auto;
+  fillMoveSel($('mfSel'),fs,auto?top.f:(keep?$('mfSel').value:(bestComboVs(p,D.pokemon[boss].ty,(D.pokemon[boss].df+15)*tierOf(tier).cpm,sh)||{}).f));
+  fillMoveSel($('mcSel'),cs,auto?top.c:(keep?$('mcSel').value:(bestComboVs(p,D.pokemon[boss].ty,(D.pokemon[boss].df+15)*tierOf(tier).cpm,sh)||{}).c));
+  $('mfSel').dataset.k=k; $('mcSel').dataset.k=k;
+  $('mfSel').disabled=auto; $('mcSel').disabled=auto;
+  syncTypeIcon('mfSel','mfType'); syncTypeIcon('mcSel','mcType');
+  $('myShadow').setAttribute('aria-pressed',sh);
+  $('myShadow').disabled=auto||!p.shadow;
+  $('shRow').style.display=auto?'none':'flex';
+}
+
+// ---- シミュレート ----
+function buildCfg(N,seed,wantLog){
+  const bp=D.pokemon[boss], t=tierOf(tier);
+  const mk=curMyKey(), mp=D.pokemon[mk], sh=curMyShadow();
+  const bossCfg={types:bp.ty,atk:(bp.a+15)*t.cpm,def:(bp.df+15)*t.cpm,hp:t.hp,
+    fast:mvObj($('bfSel').value),chg:$('bcSel').value?mvObj($('bcSel').value):null};
+  const meCfg={types:mp.ty,atk:(mp.a+15)*CPM50,def:(mp.df+15)*CPM50*(sh?5/6:1),
+    hp:Math.floor((mp.h+15)*CPM50),mult:sh?1.2:1,
+    fast:mvObj($('mfSel').value),chg:$('mcSel').value?mvObj($('mcSel').value):null};
+  return {limit:t.time,eff,boss:bossCfg,me:meCfg,N,spMode,
+    rejoin:Math.max(0,Math.min(60,+$('rejoinSec').value||0)),seed,wantLog};
+}
+const TRIALS=30;
+let rows=[],minN=null,selN=null;
+function runAll(){
+  if(!boss||!curMyKey()||!$('bfSel').value){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
+  rows=[];minN=null;
+  for(let n=1;n<=20;n++){
+    if(spMode==='coin'){
+      let wins=0,times=[],fs=0,ws=0;
+      for(let s=1;s<=TRIALS;s++){
+        const r=RaidEngine.simulate(buildCfg(n,s,false));
+        if(r.win){wins++;times.push(r.t);}
+        fs+=r.faints;ws+=r.wipes;
+      }
+      times.sort((a,b)=>a-b);
+      rows.push({n,rate:wins/TRIALS,med:times.length?times[Math.floor(times.length/2)]:null,
+        faints:fs/TRIALS,wipes:ws/TRIALS});
+      if(minN===null&&wins/TRIALS>=0.5)minN=n;
+    }else{
+      const r=RaidEngine.simulate(buildCfg(n,1,false));
+      rows.push({n,win:r.win,t:r.t,left:r.bossLeft,faints:r.faints,wipes:r.wipes});
+      if(minN===null&&r.win)minN=n;
+    }
+    if(minN!==null&&n>=Math.min(20,minN+2))break;
+  }
+  selN=minN||rows[rows.length-1].n;
+  renderResult();
+}
+function renderResult(){
+  const t=tierOf(tier);
+  const head=minN
+    ?`<div class="bigppl"><span>実戦の目安</span><b>${minN}人</b><span class="bigsub">${spMode==='coin'?`勝率50%以上になる最少の人数（${TRIALS}回試行）`:'ボスがSPを必ず即打ちしても勝てる最少の人数'}</span></div>`
+    :`<div class="bigppl"><span class="ngw">20人でも倒しきれない計算です</span></div>`;
+  const trs=rows.map(r=>{
+    const sel=r.n===selN?' class="sel"':'';
+    if(spMode==='coin'){
+      return `<tr${sel} data-n="${r.n}"><td>${r.n}人</td>
+        <td>${r.rate>=0.5?`<span class="okw">勝率${Math.round(r.rate*100)}%</span>`:`<span class="ngw">勝率${Math.round(r.rate*100)}%</span>`}</td>
+        <td>${r.med!==null?`残り${(t.time-r.med).toFixed(1)}秒`:'—'}</td>
+        <td>${r.faints.toFixed(1)}回</td><td>${r.wipes.toFixed(1)}回</td></tr>`;
+    }
+    return `<tr${sel} data-n="${r.n}"><td>${r.n}人</td>
+      <td>${r.win?'<span class="okw">勝ち</span>':`<span class="ngw">時間切れ（残${Math.round(r.left/t.hp*100)}%）</span>`}</td>
+      <td>${r.win?`残り${(t.time-r.t).toFixed(1)}秒`:'—'}</td>
+      <td>${r.faints}回</td><td>${r.wipes}回</td></tr>`;
+  }).join('');
+  $('resBody').innerHTML=head+
+    `<table class="res"><thead><tr><th>人数</th><th>結果</th><th title="倒しきったときの残り時間です">残り時間</th><th title="1人あたり何匹倒されるか（ひんし→次まで1秒）">ひんし</th><th title="6匹全滅して再突入した回数">全滅</th></tr></thead><tbody>${trs}</tbody></table>
+    <p class="note">行をタップするとその人数のタイムラインが下に出ます${spMode==='coin'?'（ランダムの1例）':''}</p>`+
+    timelineHtml();
+  $('resBody').querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>{selN=+tr.dataset.n;renderResult();});
+}
+function timelineHtml(){
+  const t=tierOf(tier);
+  const r=RaidEngine.simulate(buildCfg(selN,1,true));
+  const MAXROW=500;
+  const mk=curMyKey(); const mp=D.pokemon[mk]; const bp=D.pokemon[boss];
+  const rowsH=r.log.slice(0,MAXROW).map(x=>{
+    if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td></tr>`;
+    const nm=x.side==='me'?mp.n:bp.n;
+    const cls=x.side==='me'?'me':'boss';
+    return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
+      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}</td><td>${x.miss?'—':x.dmg}</td></tr>`;
+  }).join('');
+  const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
+  const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で勝ち`:`時間切れ（ボス残りHP${Math.round(r.bossLeft/t.hp*100)}%）`;
+  return `<details class="tl" open><summary>タイムライン（${selN}人のとき・${sum}・ひんし${r.faints}回/全滅${r.wipes}回）</summary>
+    <div class="tlwrap"><table class="tl"><thead><tr><th>ポケモン</th><th>タイム</th><th>わざ</th><th>ダメージ</th></tr></thead><tbody>${rowsH}</tbody></table></div>${more}</details>`;
+}
+
+// ---- イベント ----
+attachSugg($('bossInput'),$('bossSugg'),k=>{
+  boss=k;tier=guessTier(k);topCache.key=null;
+  renderBoss();renderMy();runAll();
+});
+attachSugg($('myInput'),$('mySugg'),k=>{
+  myKey=k;myShadow=false;
+  renderMy();runAll();
+});
+$('mySeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  myMode=b.dataset.m;
+  $('mySeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  if(myMode==='pick'&&!myKey){$('myPickRow').style.display='block';renderMy();return;}
+  renderMy();runAll();
+});
+$('spSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  spMode=b.dataset.m;
+  $('spSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  runAll();
+});
+$('rejoinSec').addEventListener('input',runAll);
+['bfSel','bcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('bfSel','bfType');syncTypeIcon('bcSel','bcType');runAll();}));
+['mfSel','mcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('mfSel','mfType');syncTypeIcon('mcSel','mcType');runAll();}));
+$('myShadow').onclick=()=>{myShadow=!myShadow;renderMy();runAll();};
+
+// 共有リンク(?b=ボスkey&t=ランク)から開いた場合
+const q=new URLSearchParams(location.search);
+if(q.get('b')&&D.pokemon[q.get('b')]){
+  boss=q.get('b');
+  tier=TIERS.some(t=>t.id===q.get('t'))?q.get('t'):guessTier(boss);
+  $('bossInput').value=D.pokemon[boss].n;
+  renderBoss();renderMy();runAll();
+}
+
+// ---- 使い方 ----
+const HELP_HTML=`
+  <h4>このツールで分かること</h4>
+  <ul>
+    <li>火力チェッカーの「最低クリア人数」は<b>倒されない前提の理論値</b>です。こちらは<b>倒される時間・SPアタックの被弾・ゲージのやりとりまで再現した実戦ベース</b>で、何人いれば勝てるかを出します</li>
+    <li>全員が<b>同じアタッカー6匹（PL50・個体値15）</b>で参加し、回避せずに攻撃し続ける想定です。天候ブースト・フレンドボーナス・メガシンカの応援は入れていません（あるぶんだけ実際は楽になります）</li>
+  </ul>
+  <h4>バトルの再現（実測で確認済み）</h4>
+  <ul>
+    <li>こちらの1手目は<b>0.7秒</b>。以後わざの長さの間隔で撃ち続け、ゲージがたまったらSPアタックを撃ちます</li>
+    <li>ボスは<b>1.6秒・2.6秒・4.6秒</b>に撃ち始め（開幕3発はわざの性能を無視した固定タイミング）、4発目以降は<b>わざの長さ＋2秒の硬直</b>ごとに撃ちます。ダメージが入るのは撃ち始めから<b>そのわざのダメージ発生時間</b>のあとです</li>
+    <li>ゲージは<b>与えたわざのぶん</b>と<b>受けたダメージ×0.5</b>でたまります。ボスは<b>参加者全員の与えたダメージ×0.5</b>でたまるので、人数が多いほどSPアタックが飛んできます</li>
+    <li>この再現は外部シミュレータのタイムライン5例と<b>完全一致</b>することを確認してあります</li>
+  </ul>
+  <h4>ボスのSPアタック</h4>
+  <ul>
+    <li><b>即打ち</b>（既定）＝ゲージがたまったら必ず撃つ、きびしめの前提。<b>ランダム</b>＝実際のボスと同じく撃てるとき2分の1で撃ちます（30回試行して勝率と中央値を出します）</li>
+  </ul>
+  <h4>倒されたとき</h4>
+  <ul>
+    <li>ひんし→次のポケモンは<b>1秒</b>（固定）。手持ち6匹が全滅したら<b>再突入</b>の秒数（既定10秒・変更可）だけ攻撃が止まります</li>
+  </ul>
+  <h4>ランクごとの前提</h4>
+  <ul>
+    <li>★1＝HP600・180秒 ／ ★3＝HP3600・180秒 ／ ★4（メガ）＝HP9000・300秒 ／ ★5＝HP15000・300秒 ／ ★6（メガ伝説・ゲンシ）＝HP22500・300秒 ／ ★7（スーパーメガ）＝HP25000・300秒</li>
+    <li>ボスの攻撃・防御は<b>（種族値＋15）×ランクごとの補正</b>、HPは上の固定値です</li>
+    <li>ボスのわざは通常枠だけ（特別わざ・レガシーわざは使ってきません）。既定では<b>いちばん痛い組み合わせ</b>を選んでいます</li>
+  </ul>`;
+(()=>{
+  const tab=$('helptab'),body=$('helpbody');
+  tab.onclick=()=>{
+    const open=body.style.display==='none';
+    if(open&&!body.innerHTML)body.innerHTML=HELP_HTML;
+    body.style.display=open?'block':'none';
+    tab.setAttribute('aria-expanded',open);
+    tab.textContent=open?'？ 使い方・計算の前提（閉じる）':'？ 使い方・計算の前提';
+  };
+})();
+})();
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});
+}
+</script>
+</body>
+</html>
