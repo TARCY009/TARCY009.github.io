@@ -165,12 +165,27 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
 .minppl{margin-top:8px;display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;font-size:.85rem}
 .minppl .bignum{font-size:1.35rem}
 .mp-sub{color:var(--sub);font-size:.74rem;font-weight:400}
-/* 実戦シミュ(/raid/)へのリンク。別ページへ飛ぶことを赤系で示す(ロケット団リンクと同じ考え方) */
-.raidlink{font-size:.74rem;font-weight:700;color:#ff8fa0;text-decoration:none;border:1px solid var(--line);
-  background:var(--tab);border-radius:9px;padding:3px 10px;box-shadow:0 2px 0 var(--tabsh);white-space:nowrap}
-.raidlink:hover{transform:translateY(-1px);color:#ffb3be}
-:root.light .raidlink{color:#c22646}
-:root.light .raidlink:hover{color:#ff5470}
+/* 実戦シミュ(/raid/)への大きなボタン。別ページへ飛ぶことをレイドの赤〜紫のグラデーションで示す。
+   立体+光彩+ホバーで持ち上がる、全ツール共通のデザイン言語に合わせた主役級ボタン */
+.raidbtn{display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px 16px;text-decoration:none;
+  flex:1 1 100%;max-width:480px;
+  border-radius:14px;border:1px solid rgba(255,255,255,.14);position:relative;overflow:hidden;
+  background:linear-gradient(115deg,#ff5470 0%,#e0447f 45%,#8b5cf6 100%);
+  box-shadow:0 10px 26px -10px rgba(255,84,112,.55),0 6px 20px -8px rgba(139,92,246,.45),inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform .15s,box-shadow .15s,filter .15s}
+.raidbtn:hover{transform:translateY(-2px);filter:brightness(1.06);
+  box-shadow:0 14px 30px -10px rgba(255,84,112,.65),0 8px 24px -8px rgba(139,92,246,.55),inset 0 1px 0 rgba(255,255,255,.4)}
+/* 斜めに走る光の帯(上品なひとすじ。動きを抑える設定では止まる) */
+.raidbtn::after{content:'';position:absolute;top:-40%;bottom:-40%;left:-30%;width:34px;transform:rotate(18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.30),transparent);animation:rbshine 3.2s ease-in-out infinite}
+@keyframes rbshine{0%,55%{left:-20%}90%,100%{left:115%}}
+@media (prefers-reduced-motion: reduce){.raidbtn::after{animation:none;display:none}}
+.raidbtn .rbi{font-size:1.5rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));flex-shrink:0}
+.raidbtn .rbtx{min-width:0}
+.raidbtn .rbt{display:block;color:#fff;font-weight:800;font-size:1rem;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.raidbtn .rbs{display:block;color:rgba(255,255,255,.85);font-size:.7rem;margin-top:1px}
+.raidbtn .rba{margin-left:auto;color:#fff;font-weight:800;font-size:1.1rem;flex-shrink:0;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+:root.light .raidbtn{border-color:rgba(255,255,255,.5)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
@@ -338,7 +353,6 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <header>
   <div class="hmain">
     <h1><span class="brand">ポケモンGO</span><span class="tool">火力チェッカー</span></h1>
-    <p>ボスを選ぶと火力ランキング。自分のポケモンは今の火力と順位がわかります。</p>
   </div>
   <div id="themesw"></div>
 </header>
@@ -669,8 +683,12 @@ function renderMinPlayers(){
   if(!r){out.innerHTML='';return;}
   out.innerHTML=`<span title="${T_MP}">理論上 <b class="bignum">${r.n}人</b></span>
     <span class="mp-sub">全員が1位の ${badges(r.best.shadow,!!r.best.p.mega,r.best.p)}${r.best.p.n} で攻撃し続けた場合</span>
-    <a class="raidlink" href="/raid/?b=${boss}&t=${raidTier}" title="倒される時間・SPアタックの被弾まで再現した実戦ベースのシミュレートを、このボス・このランクのまま開きます">実戦シミュ ↗</a>
-    <small class="mp-sub expl">HP${r.t.hp}・制限時間${r.t.time}秒・対ボス火力${r.best.dps.toFixed(2)}/秒（ランク補正込みのボス防御で計算）</small>`;
+    <small class="mp-sub expl">HP${r.t.hp}・制限時間${r.t.time}秒・対ボス火力${r.best.dps.toFixed(2)}/秒（ランク補正込みのボス防御で計算）</small>
+    <a class="raidbtn" href="/raid/?b=${boss}&t=${raidTier}" title="倒される時間・SPアタックの被弾まで再現した実戦ベースのシミュレートを、このボス・このランクのまま開きます">
+      <span class="rbi">⚔️</span>
+      <span class="rbtx"><span class="rbt">実戦シミュレータ</span><span class="rbs">倒される時間まで含めた実戦ベースの人数がわかります</span></span>
+      <span class="rba">↗</span>
+    </a>`;
 }
 
 // ---- my pokemon ----
