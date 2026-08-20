@@ -720,6 +720,8 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .c.me .ev .dmg{color:var(--gold)}
 .c.foe .ev .dmg{color:var(--lose)}
 .ev.sp{border-color:var(--gold);background:rgba(255,213,74,.1);font-weight:700}
+/* 🛡ブロック: シールドを**使った側**の列に出すチップ(2026-08-20タダシさん指示) */
+.ev.shd{border-color:rgba(67,224,255,.55);background:rgba(67,224,255,.1)}
 /* ウッウ: 獲物を咥えた／吐き出した(みず色でSPアタックの金と分ける) */
 .ev.gulp{border-color:rgba(67,224,255,.5);background:rgba(67,224,255,.1);color:var(--cy);font-weight:700}
 .ev.gulp.spit{border-color:rgba(255,107,129,.5);background:rgba(255,107,129,.1);color:var(--lose)}

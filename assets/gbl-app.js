@@ -1026,7 +1026,12 @@ ${PAGE_ROCKET ? '' : `
     戦術はNORMALと同じ基本戦術ですが、控えの読みが予測ではなく実物なので、判断に迷いがありません</li>
   </ul>
   <p>NORMAL・HARDの細かい判断基準は次のとおりです。</p>
-  <p><b>対面の頭の交代には細かい基準があります</b>: <b>五分の対面</b>でも控えの2匹がどちらもこちらの
+  <p><b>対面の頭の交代には細かい基準があります</b>: こちらが<b>自分から交代した</b>ときは、
+  いま場にいるあいてのポケモンが「引っ込んだこちらのポケモンへの答え」なら<b>その対面のために温存</b>し、
+  新しく出てきたこちらのポケモンには<b>勝てる控えを差し込んで</b>きます
+  （例: ウッウ対モルペコでウッウがハガネールに逃げたら、モルペコはウッウ担当のまま下げて、
+  ハガネールに勝てる控えを出す——役割の割り当てを守る基本の動きです）。
+  <b>五分の対面</b>でも控えの2匹がどちらもこちらの
   ポケモンに強ければ、<b>対応力の高いほうへ即交代</b>して有利を取りにきます。逆に<b>不利な対面</b>でも、
   控えの片方が明らかに弱いときは<b>交代せず残って戦い</b>ます（残る1匹の答えを安売りしないため）。
   このとき<b>シールドは使いません</b>——不利な状況で無理に受けても非効率だからです。</p>
@@ -4233,9 +4238,13 @@ function rbRender(body, bt, picks, foes, extra) {
   const evCell = list => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
-      e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
+      e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
     return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
+  // 🛡ブロックのマークは**シールドを使った側**の列に出す(2026-08-20タダシさん指示。
+  // 撃った側の列に出すと「どちらが使ったのか」がややこしく、使った側の列に何も出ない)
+  const shdCell = oppList => oppList.filter(e => e.shielded)
+    .map(e => `<span class="ev shd" title="相手の${e.move}をシールドで防ぎました(ダメージ1)"><i class="blk">🛡ブロック</i></span>`).join('');
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc"><button class="fchip${p.auto ? ' auto' : ''}"
     data-k="${p.key}" title="タップすると、この場面からやり直せます">${RB_ICON[p.kind]}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
@@ -4298,8 +4307,8 @@ function rbRender(body, bt, picks, foes, extra) {
         frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       }
-      const e0 = evCell(ev0);
-      const e1 = evCell(ev1) + (t.stalled && !ev1.length ? '<i class="stall">⏸</i>' : '');
+      const e0 = evCell(ev0) + shdCell(ev1);   // 相手のSPを防いだ🛡は防いだ側の列に出す
+      const e1 = evCell(ev1) + shdCell(ev0) + (t.stalled && !ev1.length ? '<i class="stall">⏸</i>' : '');
       items.push(!e0 && !e1
         ? { gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` }
         : { gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${gt}</i><div class="c foe">${e1}</div></div>` });
@@ -5066,6 +5075,9 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 追っている側の基本は**対面を維持したい**なので、五分の対面でも安定して突破できる控えがいるなら
   // 出していく(勝ち負けがはっきりしない対面に付き合って主導権を手放さない)
   let chase = false;
+  // **直前に自分から引っ込んだユーザーのポケモン**(2026-08-20タダシさん指示・「答えの温存」に使う)。
+  // 交代で下がった=倒されていない=あとで必ず戻ってくる相手
+  let went0 = null;
   const legs = [];
   const nextAlive = (sd, from) => {
     for (let i = 0; i < st[sd].length; i++) { const k = (from + i) % st[sd].length; if (st[sd][k].alive) return k; }
@@ -5110,9 +5122,13 @@ function gbPlay(picks, foes, ans, stepwise) {
   //  opt.ov0/ov1  … 対面の途中の状態から下読みする(受けたデバフの下げ消し交代で使う)
   const aiSwapTo = (sd, opt) => {
     const o = opt || {};
-    const now = duelAt(cur[0], cur[1], o.ov0, o.ov1);
-    if (now.winner === sd) return null;                     // 勝てる対面なら残る
-    if (now.winner !== (1 - sd) && !o.even) return null;    // どっちもどっちは指定があるときだけ動く
+    // force=true は「答えの温存」用: いまの対面に勝てるかどうかを見ずに、
+    // 新しく出てきた相手に勝てる控えを探す(2026-08-20タダシさん指示)
+    if (!o.force) {
+      const now = duelAt(cur[0], cur[1], o.ov0, o.ov1);
+      if (now.winner === sd) return null;                     // 勝てる対面なら残る
+      if (now.winner !== (1 - sd) && !o.even) return null;    // どっちもどっちは指定があるときだけ動く
+    }
     let best = null;
     for (const k of benches(sd)) {
       const r = sd === 1 ? duelAt(cur[0], k, o.ov0, null) : duelAt(k, cur[1], null, o.ov1);
@@ -5143,6 +5159,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // sd側の手動交代を実行する。withHit=false は両者同時交代(打ちかけの1発は無し)
   const doSwap = (sd, to, gt, withHit) => {
     const od = 1 - sd;
+    if (sd === 0) went0 = cur[0];   // 自分から引っ込んだ=あとで戻ってくる(答えの温存の対象)
     gulpOff(st[sd][cur[sd]].resume);   // ウッウ: 場を離れると通常の姿に戻る(咥え直しが必要)
     if (withHit) {
       const hit = swapHit(sd, to);
@@ -5596,6 +5613,18 @@ function gbPlay(picks, foes, ans, stepwise) {
         const to = aiSwapTo(1, { even: true, ...ov });
         return to == null ? { a: 'stay' } : { a: 'toq', to };
       }
+      // ---- 答えの温存(2026-08-20タダシさん指示・基本の考え方) ----
+      // 相手が**自分から**交代した場面(開幕交代・手動交代)では、いま場にいるこのポケモンが
+      // 「引っ込んだ相手への答え」(=その相手に勝てる)なら、あとで必ず戻ってくるその相手のために温存する。
+      // 例: ウッウ対モルペコでウッウがハガネールに逃げた → モルペコはウッウ担当のまま下げて、
+      // ハガネールには勝てる控えを差し込む。**いまの対面に勝てるかどうかより役割の割り当てを守る**
+      // (モルペコがハガネールにシミュ上勝てる場合でも、接戦を拾いにいかず割り当てを優先する)
+      if (p.seq === 0 && ctx.chase && went0 != null && went0 !== cur[0]
+          && st[0][went0] && st[0][went0].alive
+          && duelAt(went0, cur[1], null, nowOv && nowOv.ov1).winner === 1) {
+        const to = aiSwapTo(1, { force: true, ...(nowOv || {}) });
+        if (to != null) return { a: 'toq', to };
+      }
       // ---- 対面の頭の基準(2026-08-18タダシさんが伝えた詳細ルール) ----
       if (p.seq === 0) {
         // ②不利な対面でも、控えの片方が明らかに弱いなら交代せず残って戦う
@@ -5654,6 +5683,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // ゲージを得る(両者が同時に交代したときは無し)。次の交代は45秒後
   const doLead = (sd, to, withHit) => {
     const od = 1 - sd;
+    if (sd === 0) went0 = cur[0];   // 開幕交代で引っ込んだ初手(答えの温存の対象)
     gulpOff(st[sd][cur[sd]].resume);   // ウッウ: 場を離れると通常の姿に戻る
     const hit = withHit ? swapHit(sd, to) : null;
     const maxB = PvpEngine.buildStats(D, ros[sd][to].base).hp;
@@ -5932,9 +5962,12 @@ function gbRender(body, bt, picks, foes) {
   const evCell = list => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
-      e.shielded ? '<i class="blk">🛡ブロック</i>' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
+      e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
     return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
+  // 🛡ブロックのマークは**シールドを使った側**の列に出す(2026-08-20タダシさん指示)
+  const shdCell = oppList => oppList.filter(e => e.shielded)
+    .map(e => `<span class="ev shd" title="相手の${e.move}をシールドで防ぎました(ダメージ1)"><i class="blk">🛡ブロック</i></span>`).join('');
   // チップには**どちらの判断か**を必ず書く(2026-08-19タダシさん報告で追加)。
   // 枠の色(金＝あいて)だけでは伝わらず、あいての「撃たない」を自分の判断だと誤解する
   // (実例: オコリザルが起点づくりでSPを温存した場面を、こちらのSP判断だと思われた)
@@ -5997,8 +6030,8 @@ function gbRender(body, bt, picks, foes) {
         frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       }
-      const e0 = evCell(ev0);
-      const e1 = evCell(ev1);
+      const e0 = evCell(ev0) + shdCell(ev1);   // 相手のSPを防いだ🛡は防いだ側の列に出す
+      const e1 = evCell(ev1) + shdCell(ev0);
       items.push(!e0 && !e1
         ? { gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` }
         : { gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${gt}</i><div class="c foe">${e1}</div></div>` });
