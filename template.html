@@ -235,12 +235,17 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
   /* 狭い画面ではタブを横いっぱいに伸ばして押しやすくする(広い画面は内容ぶんの幅で左寄せ) */
   .modes button,.seg{flex:1 1 auto}
 }
-#rankList .rank-row.md1,#rankList .rank-row.md2,#rankList .rank-row.md3{border-radius:12px;margin:3px 0}
-/* 上位3行は枠を金・銀・銅にして、淡い光彩と色みを敷く(全ツール共通の見せ方)
+/* 上位3行: 中の面は通常の行と同じにして、文字の読みやすさを落とさない(2026-08-20タダシさん指摘で
+   「ぼやっとした光彩＋色の敷き」を廃止。にじむ光が視認性を下げていた)。
+   メダル色は くっきりした枠線＋左端の帯(メダルと同じグラデーション) で示す。
    同じ火力が並ぶと1位が2行になることがあるので、並び位置(nth-child)ではなく順位の数字で色を決める */
-#rankList .rank-row.md1{background:var(--m1bg);border:1px solid var(--m1line);box-shadow:0 0 22px var(--m1glow)}
-#rankList .rank-row.md2{background:var(--m2bg);border:1px solid var(--m2line);box-shadow:0 0 22px var(--m2glow)}
-#rankList .rank-row.md3{background:var(--m3bg);border:1px solid var(--m3line);box-shadow:0 0 22px var(--m3glow)}
+#rankList .rank-row.md1,#rankList .rank-row.md2,#rankList .rank-row.md3{
+  border-radius:12px;margin:3px 0;position:relative;overflow:hidden;padding-left:12px}
+#rankList .rank-row.md1{border:1px solid var(--m1line);--mbar:linear-gradient(180deg,#ffe08a,var(--mgold) 55%,#c99a14)}
+#rankList .rank-row.md2{border:1px solid var(--m2line);--mbar:linear-gradient(180deg,#f2f6fb,var(--msilver) 55%,#8f9dad)}
+#rankList .rank-row.md3{border:1px solid var(--m3line);--mbar:linear-gradient(180deg,#e8b489,var(--mbronze) 55%,#a06437)}
+#rankList .rank-row.md1::before,#rankList .rank-row.md2::before,#rankList .rank-row.md3::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mbar)}
 .rank-row.mine{background:linear-gradient(90deg,var(--goldbg),transparent);border:1px solid var(--goldline);border-radius:12px;margin:3px 0}
 /* 順位はタグで出す(全ツール共通。文字色だけで表さない) */
 .rk{min-width:42px;text-align:center;font-weight:800;color:var(--sub);font-size:.8rem;line-height:1.3;flex-shrink:0;
