@@ -5925,14 +5925,18 @@ function gbPlay(picks, foes, ans, stepwise) {
     // じぶん側は「撃たない」ボタンの点灯(おすすめ表示)、あいて側はAIの判断にそのまま使う
     const finishNoSp = p => {
       if (p.kind !== 'sp') return false;
-      const s = p.side, d = dec[s];
+      const s = p.side, o = 1 - s, d = dec[s];
       const tail = d.shots.splice(p.seq);   // この発から先は撃たない、で回してみる
       const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
-      const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
+      // **相手は「この先もふつうに撃ってくる」前提で読む**(決め済みの発の続きは最適タイミングの自動)。
+      // legCfgのままだと、まだ決断していない相手のSPがシミュに出てこず
+      // 「相手のSPは飛んでこない」と誤判定する(実際に踏んだ: 開幕近くの満タン同士でもおすすめが点灯した)
+      const cfgS = legCfg(s);
+      const cfgO = { ...legCfg(o), shotRest: { mode: 'opt', move: null } };
+      const r = PvpEngine.simulate(D, s === 0 ? cfgS : cfgO, s === 0 ? cfgO : cfgS,
         { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
       d.shots.push(...tail);
       if (r.winner !== s) return false;
-      const o = 1 - s;
       for (const t of rbTurns(r)) {
         if (t.tn < p.tn) continue;
         if (t.ev[o].some(e => e.full !== undefined)) return false;   // 相手のSPが飛んでくる
