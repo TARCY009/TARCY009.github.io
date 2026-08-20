@@ -125,6 +125,13 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .tag-s2{display:inline-flex;align-items:center;background:#7c3aed;color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px}
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px}
 .tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
+/* 6匹編成: 1匹=1行(検索・わざ2つ・シャドウ)。狭い画面は検索を1行目に全幅で出す */
+.slot{display:grid;gap:6px;align-items:center;margin-top:8px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) 44px}
+@media (max-width:620px){.slot{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px}.slot .sugg{grid-column:1/-1}}
+.shbtn{font:inherit;border:1px solid var(--line);background:var(--tab);color:#c396ff;border-radius:10px;height:40px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
+:root.light .shbtn{color:#7a3cc4}
+.shbtn[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5)}
+.shbtn:disabled{opacity:.3;cursor:default}
 .setrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
 .setrow .lbl{font-size:.78rem;color:var(--sub);font-weight:700}
 #rejoinSec{width:84px;text-align:center}
@@ -199,8 +206,9 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="card c-my">
   <div class="step"><b>STEP 2</b><h2>じぶんのアタッカー</h2></div>
   <div class="modes"><span class="seg cyanseg" id="mySeg">
-    <button type="button" data-m="auto" aria-pressed="true" title="そのボスに対して火力が最大のアタッカー(PL50・個体値15)を自動で選びます">1位おまかせ</button>
-    <button type="button" data-m="pick" aria-pressed="false" title="使うポケモンとわざを自分で選びます">えらぶ</button>
+    <button type="button" data-m="auto" aria-pressed="true" title="そのボスに対して火力が最大のアタッカー(PL50・個体値15)を自動で選び、6匹そろえて出します">1位おまかせ</button>
+    <button type="button" data-m="pick" aria-pressed="false" title="使うポケモンとわざを1匹選び、6匹そろえて出します">えらぶ</button>
+    <button type="button" data-m="team" aria-pressed="false" title="好きな6匹のパーティを組んでシミュレートします（上から順に出します）">6匹編成</button>
   </span></div>
   <div class="sugg" id="myPickRow" style="display:none;margin-top:8px">
     <input type="text" id="myInput" placeholder="ポケモン名で検索" autocomplete="off">
@@ -217,6 +225,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     </div>
     <p class="note expl">全員がこのアタッカー6匹（PL50・個体値15）のパーティで参加する想定です。</p>
   </div>
+  <div id="teamBox" style="display:none"></div>
 </div>
 
 <div class="card c-res">
@@ -225,7 +234,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <span class="lbl" title="ボスがSPアタックを撃つ条件です。実際のボスは撃てるときに2分の1の確率で撃ちます">ボスのSP</span>
     <span class="seg vioseg" id="spSeg">
       <button type="button" data-m="asap" aria-pressed="true" title="ゲージがたまったら必ず撃ちます（きびしめの前提）">即打ち</button>
-      <button type="button" data-m="coin" aria-pressed="false" title="撃てるとき2分の1で撃ちます（実戦と同じ。30回試して勝率で判定します）">ランダム</button>
+      <button type="button" data-m="alt" aria-pressed="false" title="撃てる機会の2回に1回だけ撃ちます（確率どおりの平均的な動き。乱数を使わないので毎回同じ結果になります）">2回に1回</button>
+      <button type="button" data-m="coin" aria-pressed="false" title="撃てるとき2分の1の確率で撃ちます（実戦と同じ運まかせ。30回試して勝率で判定します）">ランダム</button>
     </span>
     <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span class="lbl" title="手持ち6匹が全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
   </div>
@@ -268,6 +278,17 @@ const guessTier=k=>{const p=D.pokemon[k]; return p.mega?(p.lg?'t6':'t4'):'t5';};
 let boss=null, tier='t5';
 let myMode='auto', myKey=null, myShadow=false;   // えらぶ のときに使う
 let spMode='asap';
+// 6匹編成(上から順に出す)。端末に保存して次回も同じパーティで開く
+let TEAM=[];
+function loadTeam(){
+  try{
+    const s=JSON.parse(localStorage.getItem('raid_party')||'null');
+    if(s&&Array.isArray(s.slots)) TEAM=s.slots.map(x=>x&&D.pokemon[x.k]?x:null);
+  }catch(e){}
+  while(TEAM.length<6)TEAM.push(null);
+  TEAM=TEAM.slice(0,6);
+}
+function saveTeam(){try{localStorage.setItem('raid_party',JSON.stringify({v:1,slots:TEAM}));}catch(e){}}
 
 const $=id=>document.getElementById(id);
 const typeIcons=(p,s)=>typePairHTML(p.ty.map(t=>D.typeJa[t]),s);
@@ -357,7 +378,11 @@ function defaultBossMoves(){
 }
 
 // ---- 画面の組み立て ----
-function curMyKey(){ return myMode==='auto'?(topAttacker()||{}).k:myKey; }
+// ボスのわざの既定などに使う「代表の1匹」。6匹編成のときは1匹目
+function curMyKey(){
+  if(myMode==='team')return (TEAM.find(s=>s)||{}).k||(topAttacker()||{}).k;
+  return myMode==='auto'?(topAttacker()||{}).k:myKey;
+}
 function curMyShadow(){ return myMode==='auto'?(topAttacker()||{}).shadow:myShadow; }
 
 function fillMoveSel(sel,ids,val){
@@ -387,7 +412,62 @@ function fillBossSel(sel,ids,val){
   if(val&&ids.includes(val))sel.value=val;
 }
 
+// ---- 6匹編成のUI(起動時に1回だけ組み立て、以後は中身だけ差し替える) ----
+function slotDefault(){
+  const top=topAttacker();
+  return top?{k:top.k,f:top.f,c:top.c,sh:top.shadow}:null;
+}
+function buildTeamUI(){
+  const box=$('teamBox');
+  box.innerHTML='<label class="f">パーティ（上から順に出します・PL50・個体値15）</label>'+
+    [0,1,2,3,4,5].map(i=>`<div class="slot">
+      <div class="sugg"><input type="text" id="tIn${i}" placeholder="${i+1}匹目のポケモン" autocomplete="off"><div class="sugg-list" id="tSg${i}"></div></div>
+      <select id="tF${i}" title="ノーマルアタック"></select>
+      <select id="tC${i}" title="SPアタック"></select>
+      <button type="button" class="shbtn" id="tSh${i}" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i></button>
+    </div>`).join('');
+  for(let i=0;i<6;i++){
+    attachSugg($('tIn'+i),$('tSg'+i),k=>{TEAM[i]={k,f:null,c:null,sh:false};fillSlot(i,true);saveTeam();runAll();});
+    $('tF'+i).addEventListener('change',()=>{if(TEAM[i]){TEAM[i].f=$('tF'+i).value;saveTeam();runAll();}});
+    $('tC'+i).addEventListener('change',()=>{if(TEAM[i]){TEAM[i].c=$('tC'+i).value||null;saveTeam();runAll();}});
+    $('tSh'+i).onclick=()=>{if(TEAM[i]){TEAM[i].sh=!TEAM[i].sh;fillSlot(i,false);saveTeam();runAll();}};
+  }
+}
+function fillSlot(i,pickBest){
+  const s=TEAM[i], p=s&&D.pokemon[s.k];
+  const fi=$('tIn'+i), fs=$('tF'+i), cs=$('tC'+i), sb=$('tSh'+i);
+  if(!p){fi.value='';fs.innerHTML='';cs.innerHTML='';sb.disabled=true;sb.setAttribute('aria-pressed','false');return;}
+  fi.value=p.n;
+  const fids=fastIds(p), cids=chgIds(p);
+  if(pickBest||!s.f||!fids.includes(s.f)){
+    const b=boss?bestComboVs(p,D.pokemon[boss].ty,(D.pokemon[boss].df+15)*tierOf(tier).cpm,s.sh):null;
+    s.f=(b&&b.f)||fids[0]; s.c=(b&&b.c)||cids[0]||null;
+  }
+  const opt=(id)=>`<option value="${id}">${D.moves[id].n}${(p.eq.includes(id)||p.ec.includes(id))?' (特)':''}</option>`;
+  fs.innerHTML=fids.map(opt).join(''); if(s.f)fs.value=s.f;
+  cs.innerHTML=cids.map(opt).join('')||'<option value="">なし</option>'; if(s.c)cs.value=s.c;
+  if(!p.shadow)s.sh=false;
+  sb.disabled=!p.shadow;
+  sb.setAttribute('aria-pressed',String(!!s.sh));
+}
+function renderTeam(){
+  // 空いている枠は1位で埋めて具体的なパーティにする(空欄のまま計算しない)
+  let changed=false;
+  for(let i=0;i<6;i++){
+    if(!TEAM[i]){TEAM[i]=slotDefault();changed=true;}
+    fillSlot(i,false);
+  }
+  if(changed)saveTeam();
+}
 function renderMy(){
+  const team=myMode==='team';
+  $('teamBox').style.display=team&&boss?'block':'none';
+  if(team){
+    $('myView').style.display='none';
+    $('myPickRow').style.display='none';
+    if(boss)renderTeam();
+    return;
+  }
   if(!boss){$('myView').style.display='none';return;}
   const k=curMyKey();
   if(!k){$('myView').style.display='none';return;}
@@ -411,21 +491,33 @@ function renderMy(){
 }
 
 // ---- シミュレート ----
+function monCfg(k,sh,f,c){
+  const p=D.pokemon[k];
+  return {types:p.ty,atk:(p.a+15)*CPM50,def:(p.df+15)*CPM50*(sh?5/6:1),
+    hp:Math.floor((p.h+15)*CPM50),mult:sh?1.2:1,
+    fast:mvObj(f),chg:c?mvObj(c):null,name:p.n};
+}
+function buildTeamCfg(){
+  if(myMode==='team'){
+    const slots=TEAM.filter(s=>s&&D.pokemon[s.k]&&s.f);
+    if(slots.length)return slots.map(s=>monCfg(s.k,!!s.sh,s.f,s.c));
+    return null;
+  }
+  const mk=curMyKey(); if(!mk||!$('mfSel').value)return null;
+  const one=monCfg(mk,curMyShadow(),$('mfSel').value,$('mcSel').value||null);
+  return [one,one,one,one,one,one];   // 同じアタッカー6匹
+}
 function buildCfg(N,seed,wantLog){
   const bp=D.pokemon[boss], t=tierOf(tier);
-  const mk=curMyKey(), mp=D.pokemon[mk], sh=curMyShadow();
   const bossCfg={types:bp.ty,atk:(bp.a+15)*t.cpm,def:(bp.df+15)*t.cpm,hp:t.hp,
     fast:mvObj($('bfSel').value),chg:$('bcSel').value?mvObj($('bcSel').value):null};
-  const meCfg={types:mp.ty,atk:(mp.a+15)*CPM50,def:(mp.df+15)*CPM50*(sh?5/6:1),
-    hp:Math.floor((mp.h+15)*CPM50),mult:sh?1.2:1,
-    fast:mvObj($('mfSel').value),chg:$('mcSel').value?mvObj($('mcSel').value):null};
-  return {limit:t.time,eff,boss:bossCfg,me:meCfg,N,spMode,
+  return {limit:t.time,eff,boss:bossCfg,team:buildTeamCfg(),N,spMode,
     rejoin:Math.max(0,Math.min(60,+$('rejoinSec').value||0)),seed,wantLog};
 }
 const TRIALS=30;
 let rows=[],minN=null,selN=null;
 function runAll(){
-  if(!boss||!curMyKey()||!$('bfSel').value){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
+  if(!boss||!$('bfSel').value||!buildTeamCfg()){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
   rows=[];minN=null;
   for(let n=1;n<=20;n++){
     if(spMode==='coin'){
@@ -451,8 +543,11 @@ function runAll(){
 }
 function renderResult(){
   const t=tierOf(tier);
+  const SPTXT={asap:'ボスがSPを必ず即打ちしても勝てる最少の人数',
+               alt:'ボスがSPを2回に1回撃ってくる場合に勝てる最少の人数',
+               coin:`勝率50%以上になる最少の人数（${TRIALS}回試行）`};
   const head=minN
-    ?`<div class="bigppl"><span>実戦の目安</span><b>${minN}人</b><span class="bigsub">${spMode==='coin'?`勝率50%以上になる最少の人数（${TRIALS}回試行）`:'ボスがSPを必ず即打ちしても勝てる最少の人数'}</span></div>`
+    ?`<div class="bigppl"><span>実戦の目安</span><b>${minN}人</b><span class="bigsub">${SPTXT[spMode]}</span></div>`
     :`<div class="bigppl"><span class="ngw">20人でも倒しきれない計算です</span></div>`;
   const trs=rows.map(r=>{
     const sel=r.n===selN?' class="sel"':'';
@@ -475,12 +570,13 @@ function renderResult(){
 }
 function timelineHtml(){
   const t=tierOf(tier);
-  const r=RaidEngine.simulate(buildCfg(selN,1,true));
+  const cfg=buildCfg(selN,1,true);
+  const r=RaidEngine.simulate(cfg);
   const MAXROW=500;
-  const mk=curMyKey(); const mp=D.pokemon[mk]; const bp=D.pokemon[boss];
+  const bp=D.pokemon[boss];
   const rowsH=r.log.slice(0,MAXROW).map(x=>{
     if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td></tr>`;
-    const nm=x.side==='me'?mp.n:bp.n;
+    const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
     const cls=x.side==='me'?'me':'boss';
     return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
       <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}</td><td>${x.miss?'—':x.dmg}</td></tr>`;
@@ -492,6 +588,8 @@ function timelineHtml(){
 }
 
 // ---- イベント ----
+loadTeam();
+buildTeamUI();
 attachSugg($('bossInput'),$('bossSugg'),k=>{
   boss=k;tier=guessTier(k);topCache.key=null;
   renderBoss();renderMy();runAll();
@@ -530,7 +628,7 @@ const HELP_HTML=`
   <h4>このツールで分かること</h4>
   <ul>
     <li>火力チェッカーの「最低クリア人数」は<b>倒されない前提の理論値</b>です。こちらは<b>倒される時間・SPアタックの被弾・ゲージのやりとりまで再現した実戦ベース</b>で、何人いれば勝てるかを出します</li>
-    <li>全員が<b>同じアタッカー6匹（PL50・個体値15）</b>で参加し、回避せずに攻撃し続ける想定です。天候ブースト・フレンドボーナス・メガシンカの応援は入れていません（あるぶんだけ実際は楽になります）</li>
+    <li>参加者は全員が<b>同じパーティ（PL50・個体値15）</b>で、回避せずに攻撃し続ける想定です。天候ブースト・フレンドボーナス・メガシンカの応援は入れていません（あるぶんだけ実際は楽になります）</li>
   </ul>
   <h4>バトルの再現（実測で確認済み）</h4>
   <ul>
@@ -541,7 +639,14 @@ const HELP_HTML=`
   </ul>
   <h4>ボスのSPアタック</h4>
   <ul>
-    <li><b>即打ち</b>（既定）＝ゲージがたまったら必ず撃つ、きびしめの前提。<b>ランダム</b>＝実際のボスと同じく撃てるとき2分の1で撃ちます（30回試行して勝率と中央値を出します）</li>
+    <li><b>即打ち</b>（既定）＝ゲージがたまったら必ず撃つ、きびしめの前提</li>
+    <li><b>2回に1回</b>＝撃てる機会の2回に1回だけ撃ちます。実際のボスの確率（2分の1）どおりの平均的な動きで、乱数を使わないので毎回同じ結果になります</li>
+    <li><b>ランダム</b>＝撃てるとき2分の1の確率で撃つ、実戦と同じ運まかせ。30回試行して勝率と中央値を出します</li>
+  </ul>
+  <h4>じぶんのアタッカー</h4>
+  <ul>
+    <li><b>1位おまかせ</b>＝そのボスへの火力1位を自動選出して6匹そろえます。<b>えらぶ</b>＝1匹選んで6匹そろえます</li>
+    <li><b>6匹編成</b>＝好きな6匹のパーティを組めます（上から順に出します・PL50・個体値15）。組んだパーティは端末に保存されて次回も残ります</li>
   </ul>
   <h4>倒されたとき</h4>
   <ul>

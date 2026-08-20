@@ -5,7 +5,7 @@
    ・ダメージが入るのは「撃ち始め + そのわざのダメージ発生時間(w)」
    ・ゲージ: わざぶんも被弾ぶんも「ダメージが入った瞬間」に入る(被弾は0.5×ダメージ)。
      ボスは参加者全員の与ダメージ×0.5でためる
-   ・ボスのSPアタックは「即打ち」か「ランダム(撃てるとき1/2・外れたら次の攻撃で再判定)」
+   ・ボスのSPアタックは「即打ち」「2回に1回(交互・乱数なし)」「ランダム(撃てるとき1/2)」
    ・ひんし→次のポケモンは1秒固定。全滅→再突入は既定10秒(設定で変更可)
    検証: 外部シミュレータのタイムライン5例(タダシさん提供のスクショ)と完全一致 */
 (function (root) {
@@ -37,24 +37,30 @@
      limit  … 制限時間(秒)
      eff    … function(わざタイプ, まもり側タイプ[]) → 相性倍率
      boss   … {types, atk, def, hp, fast, chg}   わざ={n,t,p,d,e,w}
-     me     … {types, atk, def, hp, fast, chg, mult}  mult=シャドウ1.2など攻撃補正
-     N      … 人数(全員が同じアタッカーの想定。ボスの被ダメ・ゲージに掛かる)
-     spMode … 'asap'(即打ち・既定) | 'coin'(撃てるとき1/2)
+     team   … こちらのパーティ(最大6匹・上から順に出す)。各={types, atk, def, hp, fast, chg, mult}
+              mult=シャドウ1.2など攻撃補正。全滅したら同じ6匹で再突入する
+     N      … 人数(全員が同じパーティの想定。ボスの被ダメ・ゲージに掛かる)
+     spMode … 'asap'(即打ち・既定) | 'alt'(撃てる機会の2回に1回・交互) | 'coin'(撃てるとき1/2)
      rejoin … 全滅→再突入の秒数
      seed   … 乱数の種(coin用)
      wantLog… タイムラインを返すか */
   function simulate(cfg) {
-    var LB = cfg.limit, me = cfg.me, bs = cfg.boss, N = cfg.N;
+    var LB = cfg.limit, team = cfg.team, bs = cfg.boss, N = cfg.N;
     var rng = mulberry32(cfg.seed || 1);
     var eff = cfg.eff;
     function stab(p, mv) { return p.types.indexOf(mv.t) >= 0 ? 1.2 : 1; }
     function dmgOf(a, d, mv, ap, dp, mult) {
       return damage(mv.p, a, d, stab(ap, mv), eff(mv.t, dp.types), mult);
     }
-    var myF = dmgOf(me.atk, bs.def, me.fast, me, bs, me.mult);
-    var myC = me.chg ? dmgOf(me.atk, bs.def, me.chg, me, bs, me.mult) : 0;
-    var bF = dmgOf(bs.atk, me.def, bs.fast, bs, me, 1);
-    var bC = bs.chg ? dmgOf(bs.atk, me.def, bs.chg, bs, me, 1) : 0;
+    // 6匹ぶんのダメージを前計算(与ダメ2種・被ダメ2種)
+    var myF = [], myC = [], bF = [], bC = [];
+    for (var i = 0; i < team.length; i++) {
+      var m = team[i];
+      myF[i] = dmgOf(m.atk, bs.def, m.fast, m, bs, m.mult);
+      myC[i] = m.chg ? dmgOf(m.atk, bs.def, m.chg, m, bs, m.mult) : 0;
+      bF[i] = dmgOf(bs.atk, m.def, bs.fast, bs, m, 1);
+      bC[i] = bs.chg ? dmgOf(bs.atk, m.def, bs.chg, bs, m, 1) : 0;
+    }
 
     // イベント処理: 同じ時刻なら pr の小さい順。
     //   行動判断(こちら0 → ボス0.5) → ダメージ(こちら1 → ボス1.5)
@@ -70,7 +76,8 @@
     }
 
     var t = 0, myGen = 0, mon = 0, faints = 0, wipes = 0;
-    var myHP = me.hp, myE = 0, bE = 0, total = 0, win = false, endT = null;
+    var myHP = team[0].hp, myE = 0, bE = 0, total = 0, win = false, endT = null;
+    var spOpp = 0;        // 'alt'用: SPを撃てた機会の数(2回に1回撃つ)
     var activeFrom = 0;   // この時刻までこちらのポケモンは場にいない(交代・再突入の待ち)
     var log = [];
     function L(o) { if (cfg.wantLog) log.push(o); }
@@ -83,24 +90,31 @@
       if (t > LB + 1e-9) break;
       if (e.k === 'act') {                       // こちらの行動(わざを選んで撃ち始める)
         if (e.g !== myGen) continue;             // ひんし前に予約した行動は無効
-        var useC = me.chg && myE >= Math.abs(me.chg.e);
-        var mv = useC ? me.chg : me.fast;
-        if (useC) myE -= Math.abs(me.chg.e);
-        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, dmg: useC ? myC : myF, sp: useC });
+        var cur = team[mon];
+        var useC = cur.chg && myE >= Math.abs(cur.chg.e);
+        var mv = useC ? cur.chg : cur.fast;
+        if (useC) myE -= Math.abs(cur.chg.e);
+        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, dmg: useC ? myC[mon] : myF[mon], sp: useC, mi: mon });
         ev.push({ t: t + mv.d, pr: 0, k: 'act', g: myGen });
       } else if (e.k === 'hit') {                // こちらのダメージが入る(ゲージもこの瞬間に入る)
         if (e.g !== myGen) continue;             // 撃っている途中で倒れたぶんは消える
         total += e.dmg;
         if (!e.sp) myE = Math.min(MAX_ENERGY, myE + e.mv.e);
         bE = Math.min(MAX_ENERGY, bE + e.dmg * ENERGY_PER_HP * N);   // ボスは全員ぶんでためる
-        L({ t: t, side: 'me', mv: e.mv, dmg: e.dmg, sp: e.sp });
+        L({ t: t, side: 'me', mv: e.mv, dmg: e.dmg, sp: e.sp, mi: e.mi });
         if (total * N >= bs.hp) { win = true; endT = t; break; }
       } else if (e.k === 'bact') {               // ボスの行動
         var canC = bs.chg && bE >= Math.abs(bs.chg.e);
-        var bUseC = canC && (cfg.spMode === 'coin' ? rng() < 0.5 : true);
+        var bUseC = false;
+        if (canC) {
+          if (cfg.spMode === 'coin') bUseC = rng() < 0.5;
+          else if (cfg.spMode === 'alt') { spOpp++; bUseC = spOpp % 2 === 0; }  // 2回に1回(交互)
+          else bUseC = true;                                                    // 即打ち
+        }
         var bmv = bUseC ? bs.chg : bs.fast;
         if (bUseC) bE -= Math.abs(bs.chg.e);
-        ev.push({ t: t + bmv.w, pr: 1.5, k: 'bhit', mv: bmv, dmg: bUseC ? bC : bF, sp: bUseC });
+        // 被ダメージは当たった瞬間に「そのとき場にいるポケモン」で計算する
+        ev.push({ t: t + bmv.w, pr: 1.5, k: 'bhit', mv: bmv, sp: bUseC });
         var nt = e.n < 3 ? BOSS_STARTS[e.n] : t + bmv.d + BOSS_GAP;
         ev.push({ t: nt, pr: 0.5, k: 'bact', n: e.n + 1 });
       } else if (e.k === 'bhit') {               // ボスのダメージが入る
@@ -108,14 +122,15 @@
           L({ t: t, side: 'boss', mv: e.mv, dmg: 0, sp: e.sp, miss: true });
           continue;
         }
-        myHP -= e.dmg;
-        myE = Math.min(MAX_ENERGY, myE + e.dmg * ENERGY_PER_HP);
+        var d = e.sp ? bC[mon] : bF[mon];
+        myHP -= d;
+        myE = Math.min(MAX_ENERGY, myE + d * ENERGY_PER_HP);
         if (!e.sp) bE = Math.min(MAX_ENERGY, bE + e.mv.e);   // ボスも自分のわざぶんをためる
-        L({ t: t, side: 'boss', mv: e.mv, dmg: e.dmg, sp: e.sp });
+        L({ t: t, side: 'boss', mv: e.mv, dmg: d, sp: e.sp, mi: mon });
         if (myHP <= 0) {
           myGen++; faints++;
-          myHP = me.hp; myE = 0;
-          if (mon < 5) {
+          myE = 0;
+          if (mon < team.length - 1) {
             mon++;
             activeFrom = t + SWAP_SEC;
             L({ t: t, side: 'sys', note: 'ひんし → 次のポケモン(1秒)' });
@@ -124,6 +139,7 @@
             activeFrom = t + cfg.rejoin;
             L({ t: t, side: 'sys', note: '全滅 → 再突入(' + cfg.rejoin + '秒)' });
           }
+          myHP = team[mon].hp;
           ev.push({ t: activeFrom, pr: 0, k: 'act', g: myGen });
         }
       }
