@@ -237,7 +237,15 @@
     //     「割り引かない戦術」はタイミング「溜め打ち」で明示できるようになったため)。
     //     **発動確率のぶんだけ効かせる**(ねっとう30%なら0.3段階ぶん)
     const autoMove = (s, o) => {
-      const list = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(Boolean);
+      let list = (s.cfg.charged || []).map(id => D.moves[rmv(s, id)]).filter(Boolean);
+      // **同じターン数の対面は充電待ちをしない**(2026-08-20タダシさん指示・「最適」の即打ち仕様)。
+      // おたがいのノーマルアタックが同じターン数なら、タイミングを合わせる意味が無い＝
+      // 撃てるようになったら即打ちが正しい。自動選択も「いま撃てるわざ」の中から選び、
+      // 大きいわざのためにゲージをため続けない(1本も撃てないときは従来どおり=どうせ撃てない)
+      if (s.fast && o.fast && s.fast.tn === o.fast.tn) {
+        const avail = list.filter(m => s.en >= m.e);
+        if (avail.length) list = avail;
+      }
       if (list.length <= 1) return list[0];
       const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
       const dmg = m => damage(D, m, att, o);
@@ -254,16 +262,17 @@
     };
 
     // 最適(CCT)の発動判断: 相手の通常技の最終ターン(cd===1)を狙って撃つ(差し込みで相手を得させない)。
-    // 倒しきれる場合はタイミングを待たず即撃ち。技周期が同じ対面は最終ターンが永遠に来ないため
-    // 同時開始(cd===0)のタイミングで発動する(最新シミュレータ実測準拠)。
+    // 倒しきれる場合はタイミングを待たず即撃ち。
+    // **技周期(ターン数)が同じ対面は「最適も何もない」ので即打ち**(2026-08-20タダシさん指示。
+    // タイミングを合わせる意味が無い。従来は同時開始(cd===0)を待っていたが、常に撃つに変更)。
     // 保険: 撃てるのに最適タイミングが来ないまま3回待ったら発動する(周期のズレ等での硬直防止)。
     // true=このターンに撃つ。false のときは待ちを1回数える(呼び出し側は通常技を開始する)
     const optWindow = (s, o, mv) => {
+      if (s.fast.tn === o.fast.tn) return true;   // 同じターン数=即打ち
       // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
       const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
       const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
-      const sameTn = s.fast.tn === o.fast.tn;
-      const oppFinal = o.cd === 1 || (o.cd === 0 && (o.fast.tn === 1 || sameTn));
+      const oppFinal = o.cd === 1 || (o.cd === 0 && o.fast.tn === 1);
       const stuck = (s.waitCnt || 0) >= 3;
       if (dealt >= o.hp || oppFinal || stuck) return true;
       s.waitCnt = (s.waitCnt || 0) + 1;
