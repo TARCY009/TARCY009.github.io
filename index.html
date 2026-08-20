@@ -259,9 +259,8 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rname .tag-s{color:var(--shadow);font-weight:800}
 /* 幅が足りない時はPL表記から先に縮め、ポケモン名を優先的に残す */
 .rname small{flex:0 999 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--sub);font-weight:400;font-size:.72rem}
-/* 狭い幅では全行共通の「PL50・個体値15」を隠して名前とアイコンを優先
-   (自分のポケモン行は行ごとに異なるPL・個体値を持つため残す。共通値は下部の注記に記載) */
-@media (max-width:430px){.rank-row:not(.mine) .rname small{display:none}}
+/* 全行共通の「PL50・個体値15」は💡説明モード限定(class="expl"・2026-08-20タダシさん指示)。
+   自分のポケモン行は行ごとに異なるPL・個体値を持つため常に出す */
 .rmoves{font-size:.74rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 「PL◯◯で耐える」は結論なので、切らずに折り返して全部見せる */
 .rmoves.holdline{white-space:normal;overflow:visible}
@@ -961,7 +960,7 @@ function renderRank(){
         <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
     }
     return `<div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk" title="${T_RANK}">${r.rank}位</div><div class="rmain">
-      <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small title="${T_PL50}">PL50・個体値15</small></div>
+      <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}${lowBulk(r.p,r.shadow)}<small class="expl" title="${T_PL50}">PL50・個体値15</small></div>
       <div class="rmoves mvline" title="${T_MOVES}"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp,r.hpTypes)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}</span></div>
       <div class="bar"><i style="width:${(r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
