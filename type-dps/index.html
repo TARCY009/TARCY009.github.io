@@ -358,8 +358,9 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'
 const FLAME='M348 8C362 130 400 232 452 330C512 442 566 536 572 640C575 700 560 742 540 772C566 700 566 620 552 556C596 596 640 660 656 726C672 668 682 610 676 548C724 610 768 686 782 772C800 884 700 1010 470 1018C250 1026 30 962 14 812C2 700 60 596 132 520C124 590 138 650 168 700C168 620 196 540 244 486C244 546 258 596 282 634C300 566 292 486 268 410C238 314 262 150 348 8Z';
 // 文字幅の見積もり(全角=1文字ぶん・半角=0.62文字ぶん)。SVGは中央寄せの左端が測れないため
 const tw=(str,fs)=>[...String(str)].reduce((a,ch)=>a+(ch.charCodeAt(0)>255?fs:fs*0.62),0);
-// グラフのポケモン名は「うっすらとした水色」(2026-08-20タダシさん指示)。白だと値の数字と同じ強さになる
-const GNAME='#bfe6f5';
+// グラフのポケモン名は「かなり薄い水色」(2026-08-20タダシさん指示)。白だと値の数字と同じ強さになる。
+// 緑が混じらないよう青を強くする(前の #bfe6f5 は青緑に見えるとの指摘で変更)
+const GNAME='#cfe3ff';
 // 色の明暗(f>0で白へ・f<0で黒へ近づける)
 const shade=(hex,f)=>{
   const nn=parseInt(hex.slice(1),16),r=nn>>16,g=nn>>8&255,b=nn&255;
@@ -370,7 +371,7 @@ const shade=(hex,f)=>{
 // デザインはエクセル再現をやめてサイトの言語(立体・光彩・役割色のピル)に寄せた同日2回目の指示:
 //   棒は細く＋光彩とハイライトで立体に／順位は棒の中／
 //   タイトルはタイプ名だけグラデーション文字＋TOP10チップ／【シャドウ含む】はマーク入りピル
-function graphSVG(){
+function graphSVG(forSave){
   const rows=buildRows().slice(0,10);
   const [c1,c2]=TC[curT], ja=JA[curT];
   const W=1980,H=1440;
@@ -380,11 +381,27 @@ function graphSVG(){
   const step=(dmax-dmin)<6?1:(dmax-dmin)<14?2:5;
   const v0=Math.max(0,Math.floor(dmin*0.97/step)*step);
   const v1=Math.ceil(dmax*1.02/step)*step;
-  const L=118,R=1928,T=252,B=1168;                 // 描画エリア(Bより下は名前)
-  const y=v=>B-(v-v0)/(v1-v0)*(B-T);
+  const L=118,R=1928,T=252;
   const colW=(R-L)/n, barW=Math.min(colW*0.42,96); // 細めの棒
   const vfs=34, nfs=26;
-  let s=`<svg id="gsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif">
+  // 名前の行組みを先に決める。折り返しの行数で下の余白が変わるので、
+  // それを見てから棒の底(B)を置く＝下の余白をタイトル上と同じ(PAD)にそろえる(タダシさん指示)
+  const PAD=52;
+  const names=rows.map(r=>{
+    let fs=nfs, maxC=Math.max(3,Math.floor((colW-6)/fs));
+    while([...r.p.n].length>maxC*3&&fs>11){ fs-=2; maxC=Math.max(3,Math.floor((colW-6)/fs)); }
+    // 行数を決めてから均等に割る(「ズガド/ーン」のような1文字残りを避ける)
+    const chars=[...r.p.n], nl=Math.min(3,Math.ceil(chars.length/maxC)), per=Math.ceil(chars.length/nl);
+    const lines=[];
+    for(let p2=0;p2<chars.length;p2+=per) lines.push(chars.slice(p2,p2+per).join(''));
+    return {fs,lines:lines.slice(0,3)};
+  });
+  const nameH=Math.max(...names.map(x=>34+x.fs*0.9+(x.lines.length-1)*x.fs*1.2+x.fs*0.3),40);
+  const B=Math.round(H-PAD-nameH);                 // 棒の底(これより下が名前)
+  const y=v=>B-(v-v0)/(v1-v0)*(B-T);
+  // 保存する画像だけ、四隅を丸めて明るい青系のグラデーション枠を付ける(角の外は透明で書き出される)
+  const M=7, RX=34;
+  let s=`<svg${forSave?'':' id="gsvg"'} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif">
   <defs>
     <linearGradient id="gbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111a35"/><stop offset="1" stop-color="#0b1023"/></linearGradient>
     <radialGradient id="gtint" cx="0.12" cy="0" r="1"><stop offset="0" stop-color="${c1}" stop-opacity=".16"/><stop offset=".55" stop-color="${c1}" stop-opacity="0"/></radialGradient>
@@ -395,10 +412,17 @@ function graphSVG(){
     <linearGradient id="gul" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c1}" stop-opacity="0"/></linearGradient>
     <linearGradient id="ghl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".25" stop-color="#ffffff" stop-opacity=".12"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
     <linearGradient id="gmega" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d63384"/><stop offset="1" stop-color="#7a3cc4"/></linearGradient>
+    <linearGradient id="gedge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ee7ff"/><stop offset=".5" stop-color="#4f8dff"/><stop offset="1" stop-color="#8a7bff"/></linearGradient>
     <filter id="gblur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="13"/></filter>
-  </defs>
-  <rect width="${W}" height="${H}" fill="url(#gbg)"/>
-  <rect width="${W}" height="${H}" fill="url(#gtint)"/>`;
+  </defs>`;
+  if(forSave){
+    s+=`<rect x="${M}" y="${M}" width="${W-M*2}" height="${H-M*2}" rx="${RX}" fill="url(#gbg)"/>
+    <rect x="${M}" y="${M}" width="${W-M*2}" height="${H-M*2}" rx="${RX}" fill="url(#gtint)"/>
+    <rect x="${M}" y="${M}" width="${W-M*2}" height="${H-M*2}" rx="${RX}" fill="none" stroke="url(#gedge)" stroke-width="${M*2}"/>`;
+  }else{
+    s+=`<rect width="${W}" height="${H}" fill="url(#gbg)"/>
+    <rect width="${W}" height="${H}" fill="url(#gtint)"/>`;
+  }
   // ── タイトル(左寄せ): 小さな前書き → タイプ名(グラデーション文字)＋火力ランキング＋TOP10チップ → 下線
   s+=`<text x="72" y="74" font-size="26" font-weight="700" fill="#8b96c2" letter-spacing="6">ポケモンGO タイプ別火力ランキング</text>`;
   const t1=ja+'タイプ', tfs2=62;
@@ -410,11 +434,11 @@ function graphSVG(){
   <rect x="${chx}" y="104" width="150" height="26" rx="13" fill="url(#ghl)"/>
   <text x="${chx+75}" y="144" font-size="32" font-weight="800" fill="#0b1023" text-anchor="middle">TOP10</text>
   <rect x="72" y="176" width="640" height="5" rx="2.5" fill="url(#gul)"/>`;
-  // ── 条件ピル(右上・右詰め): シャドウ(紫＋炎)／メガ・ゲンシ(マゼンタ)／PL50・個体値15(無彩色)
+  // ── 条件ピル(右上・右詰め): シャドウ(紫＋炎)／メガ・ゲンシ(マゼンタ)。
+  // 「PL50・個体値15」は2026-08-20タダシさん指示で削除(動画で使うため画面の情報を絞る)
   const pills=[];
   if(fShadow) pills.push({t:'シャドウ',fill:'#7c3aed',flame:true});
   if(fMega) pills.push({t:'メガ・ゲンシ',fill:'url(#gmega)'});
-  pills.push({t:'PL50・個体値15',fill:'#1a2342',line:'#2a3560',dim:true});
   let px=1910;
   for(const p2 of [...pills].reverse()){
     const pfs=31, ph=60, py=92, padL=p2.flame?58:24;
@@ -429,7 +453,6 @@ function graphSVG(){
     s+=`<text x="${px+padL}" y="${py+ph/2+11}" font-size="${pfs}" font-weight="800" fill="${p2.dim?'#8b96c2':'#ffffff'}">${esc(p2.t)}</text>`;
     px-=16;
   }
-  s+=`<text x="1920" y="1424" font-size="26" font-weight="700" fill="#5b6591" letter-spacing="3" text-anchor="end">TARCY</text>`;
   // ── 目盛り(点線)とラベル
   s+=`<text x="${L-14}" y="${T-20}" font-size="22" font-weight="700" fill="#6b76a3" text-anchor="end">DPS</text>`;
   for(let v=v0;v<=v1;v+=step){
@@ -450,14 +473,9 @@ function graphSVG(){
     if(bh>52) s+=`<text x="${cx.toFixed(1)}" y="${(B-16).toFixed(1)}" font-size="27" font-weight="800" fill="${MD[r.rank]||'#ffffff'}" opacity="${MD[r.rank]?0.95:0.5}" text-anchor="middle">${r.rank}</text>`;
     // 値(棒の上)
     s+=`<text x="${cx.toFixed(1)}" y="${(by-16).toFixed(1)}" font-size="${vfs}" font-weight="800" fill="#ffffff" text-anchor="middle">${r.dps.toFixed(2)}</text>`;
-    // 名前(棒の下・列の幅で折り返し・シャドウは炎マーク)
-    let fs=nfs, maxC=Math.max(3,Math.floor((colW-6)/fs));
-    while([...r.p.n].length>maxC*3&&fs>11){ fs-=2; maxC=Math.max(3,Math.floor((colW-6)/fs)); }
-    // 行数を決めてから均等に割る(「ズガド/ーン」のような1文字残りを避ける)
-    const chars=[...r.p.n], nl=Math.min(3,Math.ceil(chars.length/maxC)), per=Math.ceil(chars.length/nl);
-    const lines=[];
-    for(let p2=0;p2<chars.length;p2+=per) lines.push(chars.slice(p2,p2+per).join(''));
-    lines.slice(0,3).forEach((ln,li)=>{
+    // 名前(棒の下・行組みは上で計算済み・シャドウは炎マーク)
+    const fs=names[i].fs;
+    names[i].lines.forEach((ln,li)=>{
       const ly=B+34+fs*0.9+li*fs*1.2;
       if(li===0&&r.shadow){
         const w3=tw(ln,fs), sc=fs/1024*1.1, fw=800*sc;
@@ -474,10 +492,10 @@ function graphSVG(){
 }
 function renderGraph(){ $('gwrap').innerHTML=graphSVG(); }
 
-// PNG保存(1980×1440固定。動画にそのまま使えるサイズ)
+// PNG保存(1980×1440固定。動画にそのまま使えるサイズ)。
+// 保存用は graphSVG(true) で作り直す＝四隅の丸みと青系のグラデーション枠が付く(画面には出さない)
 $('saveBtn').onclick=()=>{
-  const svg=document.getElementById('gsvg');
-  const xml=new XMLSerializer().serializeToString(svg);
+  const xml=graphSVG(true);
   const url=URL.createObjectURL(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}));
   const img=new Image();
   img.onload=()=>{
