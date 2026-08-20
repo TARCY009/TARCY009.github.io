@@ -157,6 +157,14 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
    (ライトのときは逆に明るいタイプが溶けるので、上の :root.light の指定で4タイプだけ暗い縁にする) */
 .tbadge{box-shadow:var(--tbadge)}
 .bossinfo{margin-top:12px;font-size:.85rem;color:var(--sub);font-weight:600}
+/* 最低クリア人数(理論値): ランクは排他の選択なのでくっつけたタブ(.seg)。色はボスカードの赤 */
+.tierrow{margin:6px 0 0}
+.tierrow .seg button{--mc:#ff8fa0;--mg:linear-gradient(160deg,#ff9d8a 0%,#ff5470 45%,#b91d3e 100%);--mgl:rgba(255,84,112,.42)}
+.tierrow .seg button[aria-pressed="true"]{color:#fff}
+:root.light .tierrow .seg button{--mc:#c22646}
+.minppl{margin-top:8px;display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;font-size:.85rem}
+.minppl .bignum{font-size:1.35rem}
+.mp-sub{color:var(--sub);font-size:.74rem;font-weight:400}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
@@ -401,12 +409,13 @@ const KEYS = Object.keys(D.pokemon);
 
 function eff(moveType, defTypes){ let m=1; for(const t of defTypes) m*=D.chart[moveType][TI[t]]; return m; }
 function stab(p, mv){ return p.ty.includes(mv.t) ? 1.2 : 1.0; }
-function dmg(p, mv, atkReal, bossTypes, shadow){
-  return Math.floor(0.5*(atkReal/DEF_ENEMY)*mv.p*stab(p,mv)*eff(mv.t,bossTypes)*(shadow?1.2:1)+1);
+// def省略時はものさし防御(DEF_ENEMY)。最低クリア人数の計算だけ実際のボス防御を渡す
+function dmg(p, mv, atkReal, bossTypes, shadow, def){
+  return Math.floor(0.5*(atkReal/(def||DEF_ENEMY))*mv.p*stab(p,mv)*eff(mv.t,bossTypes)*(shadow?1.2:1)+1);
 }
-function comboDPS(p, m1, m2, atkReal, bossTypes, shadow){
+function comboDPS(p, m1, m2, atkReal, bossTypes, shadow, def){
   if(!m1.e || m1.e<=0 || !m2.e) return null;
-  const d1=dmg(p,m1,atkReal,bossTypes,shadow), d2=dmg(p,m2,atkReal,bossTypes,shadow);
+  const d1=dmg(p,m1,atkReal,bossTypes,shadow,def), d2=dmg(p,m2,atkReal,bossTypes,shadow,def);
   const n2=(m1.e*100)/Math.abs(m2.e);
   const t=(m1.d*100)+(m2.d*n2);
   if(t<=0) return null;
@@ -534,6 +543,7 @@ const T_RANKME='登録した自分のポケモンを、この一覧に当ては�
 const T_MOVES='PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だったわざの組み合わせです';
 const T_MOVES_SH='ゲージ2分割・3分割のSPアタックの中で、いちばん火力が出る組み合わせです';
 const T_PL50='一覧は全ポケモンをPL50・個体値15にそろえて比べています';
+const T_MP='レイドボスのHPを、全員がランキング1位のアタッカー（PL50・個体値15・最適わざ）で制限時間いっぱい攻撃し続けたときに倒しきれる、いちばん少ない人数です。倒されて出し直す時間やブーストは入れていない理論値なので、実際はこの人数より多めが安全です';
 const cp100=(p,l)=>{const c=D.cpm[String(l)];return Math.max(10,Math.floor((p.a+15)*Math.sqrt(p.df+15)*Math.sqrt(p.h+15)*c*c/10));};
 // レイドボスの「捕獲時のすがた」: 合体後・王のフォルム・メガ/ゲンシは元のすがたで捕獲される
 function catchForm(k){
@@ -547,7 +557,7 @@ function catchForm(k){
   return (MAP[k] && D.pokemon[MAP[k]]) ? MAP[k] : k;
 }
 attachSugg(document.getElementById('bossInput'),document.getElementById('bossSugg'),k=>{
-  boss=k; renderBoss(); renderRank();
+  boss=k; raidTier=guessTier(k); renderBoss(); renderRank();
 },null,(p,k)=>{
   const c=D.pokemon[catchForm(k)];
   return `<span class="srow-wrap"><span class="srow-main"><span class="srow">${p.n}</span>${typeIcons(p,18)}</span>
@@ -584,7 +594,73 @@ function renderBoss(){
        <div><div class="bossname">${p.n}${typeIcons(p,24)}</div>
        <div class="catchcp">捕獲100%CP <b>${cp100(cf,20)}</b>（PL20）/ <b>${cp100(cf,25)}</b>（PL25 天候ブースト）${cf!==p?`・<b>${cf.n}</b>のすがたで捕獲`:''}</div></div></div>
      <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>
+     <div class="bossinfo" title="${T_MP}">最低クリア人数：</div>
+     <div class="modes tierrow"><span class="seg" id="tierSeg">${RAID_TIERS.map(t=>`<button type="button" data-t="${t.id}" title="${t.help}">${t.label}</button>`).join('')}</span></div>
+     <div class="minppl" id="mpOut"></div>
      ${bossMovesHtml(p)}`;
+  document.querySelectorAll('#tierSeg button').forEach(b=>b.onclick=()=>{raidTier=b.dataset.t;renderMinPlayers();});
+  renderMinPlayers();
+}
+
+// ---- 最低クリア人数(理論値) ----
+// ボスのHPを「全員がランキング1位のアタッカー(PL50・個体値15・最適わざ)で制限時間いっぱい
+// 攻撃し続けた」ときに倒しきれる最少の人数。データにレイドのランクは無いので、
+// HP・制限時間・ボスのステータス補正(CPM)はランクのタブで切り替える
+const RAID_TIERS=[
+  {id:'t1',  label:'★1', hp:600,  time:180,cpm:0.5974,help:'★1レイド（HP600・制限時間180秒）として計算します'},
+  {id:'t3',  label:'★3', hp:3600, time:180,cpm:0.7300,help:'★3レイド（HP3600・制限時間180秒）として計算します'},
+  {id:'t5',  label:'★5', hp:15000,time:300,cpm:0.7903,help:'★5伝説レイド（HP15000・制限時間300秒）として計算します'},
+  {id:'mega',label:'メガ',hp:15000,time:300,cpm:0.7903,help:'メガレイド（HP15000・制限時間300秒）として計算します'},
+  {id:'t6',  label:'★6', hp:22500,time:300,cpm:0.7903,help:'ゲンシカイキ・メガ伝説級のレイド（HP22500・制限時間300秒）として計算します'},
+];
+let raidTier='t5';
+// ボスからランクの見当を付ける(メガ→メガ・ゲンシ→★6・それ以外→★5)。違えばタブで替えてもらう
+function guessTier(k){
+  const p=D.pokemon[k];
+  if(p.n.startsWith('ゲンシ')) return 't6';
+  if(p.mega) return 'mega';
+  return 't5';
+}
+// 1位アタッカーの候補: ものさし防御の火力順で上位8件だけ控えておき、
+// ランクごとの実際のボス防御で計算し直して1位を選ぶ(防御は全わざ共通の係数なので順位はほぼ動かない)
+let mpTopCache={boss:null,rows:null};
+function mpTop(){
+  if(mpTopCache.boss===boss) return mpTopCache.rows;
+  const bt=D.pokemon[boss].ty, rows=[];
+  for(const k of KEYS){
+    const p=D.pokemon[k];
+    if(!p.mega && !p.fe) continue;   // ランキングと同じ範囲(最終進化＋メガ)
+    const b=bestCombo(p,bt,false);
+    if(b) rows.push({p,f:b.f,c:b.c,shadow:false,dps:b.dps});
+    if(p.shadow){
+      const s=bestCombo(p,bt,true);
+      if(s) rows.push({p,f:s.f,c:s.c,shadow:true,dps:s.dps});
+    }
+  }
+  rows.sort((a,b)=>b.dps-a.dps);
+  mpTopCache={boss,rows:rows.slice(0,8)};
+  return mpTopCache.rows;
+}
+function mpCalc(tierId){
+  const t=RAID_TIERS.find(x=>x.id===tierId), bp=D.pokemon[boss];
+  const def=(bp.df+15)*t.cpm;   // ランク補正込みの実際のボス防御
+  let best=null;
+  for(const r of mpTop()){
+    const res=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],(r.p.a+15)*D.cpm['50'],bp.ty,r.shadow,def);
+    if(res&&(!best||res.dps>best.dps)) best={...r,dps:res.dps};
+  }
+  if(!best) return null;
+  return {t,best,n:Math.max(1,Math.ceil(t.hp/(best.dps*t.time)))};
+}
+function renderMinPlayers(){
+  const seg=document.getElementById('tierSeg'), out=document.getElementById('mpOut');
+  if(!seg||!boss) return;
+  seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===raidTier)));
+  const r=mpCalc(raidTier);
+  if(!r){out.innerHTML='';return;}
+  out.innerHTML=`<span title="${T_MP}">理論上 <b class="bignum">${r.n}人</b></span>
+    <span class="mp-sub">全員が1位の ${badges(r.best.shadow,!!r.best.p.mega,r.best.p)}${r.best.p.n} で攻撃し続けた場合</span>
+    <small class="mp-sub expl">HP${r.t.hp}・制限時間${r.t.time}秒・対ボス火力${r.best.dps.toFixed(2)}/秒（ランク補正込みのボス防御で計算）</small>`;
 }
 
 // ---- my pokemon ----
@@ -982,6 +1058,15 @@ const HELP_HTML = `
     <li>相手は<b>防御種族値100・個体値15・PL40</b>のものさしで統一しています。選んだボスの<b>タイプ相性</b>は反映されます</li>
     <li>一覧の数字は<b>PL50・個体値15</b>のとき。登録した自分のポケモンだけは、入力したPL・個体値・わざで計算します</li>
     <li><b>火力が同じなら同順位</b>です（攻撃種族値・わざ・タイプ一致が同じだと火力もぴったり同じになります）。同順位が2匹並んだら次は3位、というように<b>重なったぶんの順位は飛ばします</b></li>
+  </ul>
+
+  <h4>最低クリア人数（理論値）</h4>
+  <ul>
+    <li>ボスのHPを、<b>全員がランキング1位のアタッカー</b>（PL50・個体値15・最適わざ）で<b>制限時間いっぱい攻撃し続けた</b>ときに倒しきれる、いちばん少ない人数です</li>
+    <li>ランクごとの前提: <b>★1</b>＝HP600・180秒 ／ <b>★3</b>＝HP3600・180秒 ／ <b>★5</b>＝HP15000・300秒 ／ <b>メガ</b>＝HP15000・300秒 ／ <b>★6</b>＝HP22500・300秒（ゲンシカイキ・メガ伝説級）</li>
+    <li>ランクはボスから見当を付けて自動で選びます（メガ→メガ、ゲンシ→★6、それ以外→★5）。違うランクのときはタップで替えてください</li>
+    <li>この計算だけは、ものさし防御100ではなく<b>そのボスの実際の防御（ランクごとの補正込み）</b>でダメージを出し直しています</li>
+    <li>倒されて出し直す時間・天候ブースト・フレンドボーナス・メガシンカの応援は入れていません。ブーストがあれば理論値より少なくなることもありますが、<b>実際はこの人数より多めが安全</b>です</li>
   </ul>
 
   <h4>わざの選ばれ方</h4>
