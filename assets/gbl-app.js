@@ -1069,6 +1069,10 @@ ${PAGE_ROCKET ? '' : `
   選ぶとそこから先が計算し直されて、バトルが続きます。</p>
   <ul>
     <li>シールドは<b>両者2枚</b>、交代のクールタイムは<b>両者45秒</b>（GBLの仕様）</li>
+    <li><b>SPアタックを撃つと1発につき約10秒かかります</b>（アイコン入力のミニゲームと演出）。
+    実際のバトルではそのあいだも<b>タイマーが止まらない</b>ので、下のフレームの時計・タイムラインの
+    <b>⏱</b>・決着までの秒数にその時間を足しています。<b>交代のクールタイム45秒にも算入される</b>ので、
+    SPを撃つほど次の交代が早く明けます</li>
     <li>手動で交代すると、<b>相手の打ちかけのノーマルアタック1発が交代先に入ります</b>（開幕交代も同じ）</li>
     <li>1匹目の枠の「${SWAPMK}開幕交代」をONにすると、バトル開始と同時に2匹目か3匹目へ交代できます</li>
     <li><b>自分の能力が下がるSPアタック</b>（ブレイブバードなど）を撃った直後は「交代する？」と聞きます。
@@ -4758,6 +4762,27 @@ try {
 } catch (e) {}
 const saveMkAi = () => { try { localStorage.setItem('gbl_mock_ai', MK.ai); } catch (e) {} };
 const GB_SWAP_CD = 90;        // 交代のクールタイム45秒(90ターン)
+// SPアタック1発ぶんの時間(2026-08-21タダシさん指示・10秒＝20ターン)。
+// SPアタックを撃つと、アイコン入力のミニゲームと演出のあいだ手が止まるが、
+// **バトルのタイマーはそのあいだも止まらない**ので、その時間ぶんだけ実時間が進む。
+// したがって経過時間の表示だけでなく、**交代のクールタイム45秒にも算入する**。
+// 根拠: ゲーム内公開データの minigameDurationSeconds は7.0秒(アイコン入力のミニゲームだけ)。
+// 演出まで含めた1発ぶんとして、外部シミュレータと同じ10秒を採る(タダシさん選択)。
+// **ロケット団戦には適用しない**(今年のアプデでSPの発動がGBLより速くなったため。実測待ち)
+const GB_SP_TURNS = 20;
+// この対面の「ターンごとの累計SP発動数」(両者ぶん)。時計 = ターン + GB_SP_TURNS×累計
+function gbSpc(res) {
+  const a = [];
+  let n = 0;
+  (res.rows || []).forEach(r => {
+    const tn = r.tn === '-' ? Math.max(0, a.length - 1) : r.tn;
+    while (a.length <= tn) a.push(n);
+    for (let i = 0; i < 2; i++) if (r.ev[i] && r.ev[i].full !== undefined) n++;
+    a[tn] = n;
+  });
+  return a;
+}
+const gbSpAt = (spc, tn) => spc.length ? spc[Math.max(0, Math.min(tn, spc.length - 1))] : 0;
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
 // 「クールタイム狙い」とみなす相手の交代不能の残り(40ターン=20秒以上)。
@@ -4979,6 +5004,9 @@ function gbReactTn(fm) {
 }
 function gbPoints(turns, ctx, dec) {
   const pts = [];
+  // ck(tn) = その時点の**時計**(通しターン + 撃ったSPアタックぶんの時間)。
+  // 交代のクールタイムは実時間なので、SPの演出中も進む(GB_SP_TURNSの項)
+  const ck = ctx.ck || (tn => ctx.base + tn);
   // 交代の打ち切りが決まっているなら、それより先のターンの質問は出さない(その先は次の対面の話)
   const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
   const cut = cutA.length ? Math.min(...cutA) : Infinity;
@@ -5038,7 +5066,7 @@ function gbPoints(turns, ctx, dec) {
         const mv = gbMoveByName(fired.move);
         const over0 = t.state[0].hp <= 0 || t.state[1].hp <= 0;
         if ((gbSelfDebuff(mv) || (s === 1 && ctx.foeDump)) && !over0 && d.swapTo == null
-            && ctx.swTo[s].length && ctx.base + t.tn >= ctx.swOk[s])
+            && ctx.swTo[s].length && ck(t.tn) >= ctx.swOk[s])
           pts.push({ side: s, kind: 'swap', seq: spIdx, w: 0, tn: t.tn, ...(snap[t.tn] || {}) });
         continue;
       }
@@ -5061,13 +5089,13 @@ function gbPoints(turns, ctx, dec) {
     if (ctx.newIn[o] && ctx.swTo[s].length && dec[s].swapTo == null) {
       const htn = s === 1 && ctx.koIn && ctx.koIn[o] ? gbReactTn(D.moves[ctx.fast[s]]) : 1;
       const ht = htn > 1 ? turns.find(x => x.tn === htn) : null;
-      if (ctx.base + htn >= ctx.swOk[s] && htn <= cut
+      if (ck(htn) >= ctx.swOk[s] && htn <= cut
           && (htn === 1 || (ht && ht.state[0].hp > 0 && ht.state[1].hp > 0)))
         pts.push({ side: s, kind: 'swap', seq: 0, w: 0, tn: htn, ...(htn > 1 ? (snap[htn] || {}) : {}) });
     }
     // 開幕に**片方だけ**が交代したとき、もう片方は**1秒後**に「交代する？」を選べる(gbReactTn)
     if (ctx.react && ctx.react.side === s && ctx.swTo[s].length && dec[s].swapTo == null
-        && ctx.base + ctx.react.tn >= ctx.swOk[s]) {
+        && ck(ctx.react.tn) >= ctx.swOk[s]) {
       const rt = turns.find(x => x.tn === ctx.react.tn);
       if (rt && rt.tn <= cut && rt.state[0].hp > 0 && rt.state[1].hp > 0)
         pts.push({ side: s, kind: 'swap', seq: 0, w: 0, tn: ctx.react.tn, ...(snap[rt.tn] || {}) });
@@ -5082,13 +5110,14 @@ function gbPoints(turns, ctx, dec) {
       if (t.tn > cut) break;
       const over = t.state[0].hp <= 0 || t.state[1].hp <= 0;
       if (!dbf[t.tn]) continue;
-      if (!over && dec[1].swapTo == null && ctx.base + t.tn >= ctx.swOk[1])
+      if (!over && dec[1].swapTo == null && ck(t.tn) >= ctx.swOk[1])
         pts.push({ side: 1, kind: 'swap', seq: seq, w: 1, tn: t.tn, ...(snap[t.tn] || {}) });
       seq++;   // 質問を出さなかった回も数えて、キーが前の決断とずれないようにする
     }
   }
   // 時系列の順に(同じターンは交代→その他、じぶん→あいての順)
   pts.sort((a, b) => a.tn - b.tn || (a.kind === 'swap' ? -1 : b.kind === 'swap' ? 1 : 0) || a.side - b.side);
+  pts.forEach(p => { p.ck = ck(p.tn); });   // 決断ごとの時計(表示とAIの交代判断に使う)
   return pts;
 }
 
@@ -5214,7 +5243,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   const seen = [new Set(), new Set()];
   const revealed0 = () => ai.omni ? benches(0)
     : benches(0).filter(k => seen[0].has(k));   // 見えているユーザーの控え
-  let base = 0, pending = null;
+  let base = 0, spTot = 0, pending = null;
   // 開幕交代(0秒)。両者が同時に決めるので、おたがい相手の選択は見えない
   const leadPts = [null, null], leadHits = [null, null];
   let react = null;   // 片方だけが開幕交代したとき、もう片方が反応できる場面 {side, tn}
@@ -5820,7 +5849,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       }
       // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り20秒以上)は、
       // どっちもどっちの対面でも有利な控えを差し込む(相手は逃げられない)。相手が自由なら負けのときだけ
-      const locked = ctx.swOk[0] - (ctx.base + p.tn) >= GB_LOCK_MIN;
+      const locked = ctx.swOk[0] - (p.ck != null ? p.ck : ctx.base + p.tn) >= GB_LOCK_MIN;
       // **手持ちがラスト1匹**のときも同じ扱い(2026-08-19タダシさん指示)。
       // 交代先そのものが無いので、こちらが有利対面を取りに動いても逃げられない
       const noEsc = locked || ctx.swTo[0].length === 0;
@@ -6026,6 +6055,9 @@ function gbPlay(picks, foes, ans, stepwise) {
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
       const sopt = { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 };
       res = PvpEngine.simulate(D, legCfg(0), legCfg(1), sopt);
+      // 撃ったSPアタックぶんだけ実時間が進む。交代のクールタイムの判定にも使う
+      const spc = gbSpc(res);
+      ctx.ck = tn => base + tn + GB_SP_TURNS * (spTot + gbSpAt(spc, tn));
       const pts = gbPoints(rbTurns(res), ctx, dec);
       const p = pts.find(x => !handled.has(gbKey(li, x.side, x.kind, x.seq, x.w)));
       if (!p) break;
@@ -6078,6 +6110,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       pending: pending && pending.key.slice(0, pending.key.indexOf(':')) === String(li) ? pending : null });
     if (pending) break;
     base += res.turns;
+    spTot += gbSpAt(gbSpc(res), res.turns);   // この対面で撃たれたSPアタックの数(両者ぶん)
     shLeft[0] = res.final[0].shields;
     shLeft[1] = res.final[1].shields;
     [0, 1].forEach(s => {
@@ -6119,7 +6152,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     const both = swapped[0] && swapped[1];
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
-      doSwap(s, dec[s].swapTo, base, !both);
+      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot, !both);   // 交代解禁は時計で持つ
     }
   }
   const meLeft = st[0].filter(x => x.alive).length;
@@ -6132,6 +6165,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     return sum + (x.resume ? Math.max(0, x.resume.hp) / max : 1);
   }, 0);
   return { legs, picks, foes, st, outcome, meLeft, foeLeft, pending, turns: base, hpLeft,
+    clock: base + GB_SP_TURNS * spTot,   // 実時間(ターン換算)。SPアタックの演出ぶんを含む
     myShLeft: shLeft[0], foeShLeft: shLeft[1], nMe: picks.length, nFoe: foes.length };
 }
 
@@ -6141,7 +6175,7 @@ function gbPlay(picks, foes, ans, stepwise) {
 function gbScore(bt) {
   const win = bt.outcome === 'win' ? 1 : 0;
   const killed = bt.nFoe - bt.foeLeft;
-  return win * 1e7 + killed * 1e5 + bt.meLeft * 2000 + bt.hpLeft * 800 - bt.turns;
+  return win * 1e7 + killed * 1e5 + bt.meLeft * 2000 + bt.hpLeft * 800 - (bt.clock != null ? bt.clock : bt.turns);
 }
 function gbFind(picks, foes) {
   const evalAns = ans => {
@@ -6209,6 +6243,12 @@ function gbRender(body, bt, picks, foes) {
 
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
   const items = [], frames = [];
+  // 通しターンごとの「それまでに撃たれたSPアタックの数」。実時間はSPの演出ぶんだけ余分に進む
+  // (GB_SP_TURNSの項)。経過時間の表示と交代のクールタイムの残りはこの時計で出す
+  const spByGt = [];
+  let spSeen = 0;
+  const ckOf = gt => gt + GB_SP_TURNS *
+    (spByGt.length ? spByGt[Math.max(0, Math.min(gt, spByGt.length - 1))] : 0);
   let alive0 = picks.length, alive1 = foes.length;
   let sh0 = 2, sh1 = 2;
   const shMax0 = 2, shMax1 = 2;
@@ -6228,6 +6268,7 @@ function gbRender(body, bt, picks, foes) {
     data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'じぶんの行動です。タップすると、この場面からやり直せます'}"><i class="who">${p.side ? 'あいて' : 'じぶん'}</i>${RB_ICON[p.kind]}<b>${gbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
     const res = leg.res, base = leg.base;
+    while (spByGt.length <= base) spByGt.push(spSeen);
     const meta = {
       name0: leg.meName, name1: leg.foeName,
       cp0: res.final[0].cp, cp1: res.final[1].cp,
@@ -6278,6 +6319,7 @@ function gbRender(body, bt, picks, foes) {
       for (const r of subs) for (let i = 0; i < 2; i++) {
         const e = r.ev[i];
         if (!e) continue;
+        if (e.full !== undefined) spSeen++;   // SPアタック1発ぶん、実時間が余分に進む
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
@@ -6288,6 +6330,8 @@ function gbRender(body, bt, picks, foes) {
           else { g0 = null; b1 = e.gulp.buff.to.slice(); }
         }
       }
+      while (spByGt.length <= gt) spByGt.push(spSeen);
+      spByGt[gt] = spSeen;
       if (!partial) {
         frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
@@ -6310,7 +6354,7 @@ function gbRender(body, bt, picks, foes) {
     const endGt = base + res.turns;
     if (!pend) {
       if (leg.foeDown) { alive1--; items.push({ gt: endGt,
-        html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(endGt)}</i></div>` }); }
+        html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
       if (leg.meDown) { alive0--; items.push({ gt: endGt,
         html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
       if (leg.meDown || leg.foeDown) {
@@ -6337,7 +6381,7 @@ function gbRender(body, bt, picks, foes) {
     const o = RK_OUTCOME[bt.outcome];
     items.push({ gt: stop, html: `<div class="rbfin">
       <div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
-        <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
+        <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.clock != null ? bt.clock : bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
     </div>` });
   }
 
@@ -6438,11 +6482,12 @@ function gbRender(body, bt, picks, foes) {
     set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
-    clk.textContent = rbSec(gt);
+    clk.textContent = rbSec(ckOf(gt));   // SPアタックの演出ぶんを含む実時間
     trn.textContent = gt + 'T';
-    const swLeft = Math.max(0, (f.meta.swOk || 0) - gt);
+    // 交代のクールタイム(45秒)の残り。SPの演出中も進むので、時計どうしで引く
+    const swLeft = Math.max(0, (f.meta.swOk || 0) - ckOf(gt));
     swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
-    const fswLeft = Math.max(0, (f.meta.fswOk || 0) - gt);
+    const fswLeft = Math.max(0, (f.meta.fswOk || 0) - ckOf(gt));
     fswapEl.innerHTML = fswLeft > 0 ? `<b>${Math.ceil(fswLeft / 2)}</b><small>秒</small>${SWAPMK}` : '';
   }
   const revealTo = g => {
@@ -6488,7 +6533,7 @@ function gbRender(body, bt, picks, foes) {
       + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin${p.side ? ' foe' : ''}">
-      <div class="rwt">${gbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.gt)}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
+      <div class="rwt">${gbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.ck != null ? p.ck : p.gt)}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
       <div class="rwb">${btns}</div></div>`;
     winbox.querySelectorAll('.rwb button').forEach(b => {
       if (b.classList.contains('wdet')) { b.onclick = () => showWin(p, editing, true); return; }
@@ -6547,7 +6592,7 @@ function gbRender(body, bt, picks, foes) {
     RB.ans = r.ans; RBUI.open = null;
     const o2 = RK_OUTCOME[r.bt.outcome];
     RB.found = `🔎 最善 → <b class="${o2.cls === 'win' ? 'ok' : 'ng'}">${o2.txt}</b>` +
-      `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
+      `　⏱<b>${rbSec(r.bt.clock != null ? r.bt.clock : r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
     RBV.cur = 0; RBV.playing = true; RBV.started = true;
     run();
   };
