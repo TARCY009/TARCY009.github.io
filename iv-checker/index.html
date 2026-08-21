@@ -99,7 +99,7 @@ h1 small{display:block;font-size:.72rem;color:var(--sub);font-weight:500;margin-
 label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter-spacing:.15em;margin-bottom:8px}
 
 /* ポケモン検索 */
-.searchbox{position:relative}
+.searchbox,.inbox{position:relative}
 #q,#cpin{width:100%;padding:13px 14px;font-size:1.05rem;border-radius:10px;border:1px solid var(--line);
   background:var(--bg2);color:var(--ink);outline:none}
 #q:focus,#cpin:focus{border-color:var(--cy)}
@@ -110,7 +110,7 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
   font-size:1rem;line-height:1;cursor:pointer;padding:0;align-items:center;justify-content:center}
 .clrbtn.on{display:flex}
 .clrbtn:hover,.clrbtn:active{background:var(--line);color:var(--ink)}
-.searchbox.hasclr input{padding-right:42px}
+.hasclr #q,.hasclr #cpin{padding-right:42px}
 #sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--line);
   border-radius:10px;max-height:260px;overflow-y:auto;z-index:20;display:none}
 #sugg button{display:flex;justify-content:space-between;width:100%;padding:11px 14px;background:none;border:none;
@@ -384,8 +384,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 
 <div class="card" id="cpcard" style="display:none">
   <label class="sec">CP</label>
-  <div class="searchbox">
-    <input id="cpin" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="CPを入れる(例: 1425)" autocomplete="off">
+  <div class="inbox">
+    <input id="cpin" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="CPを入れる(例: 1425)" autocomplete="off" autocorrect="off" autocapitalize="off">
     <button id="cpclr" class="clrbtn" type="button" aria-label="入力を消す" title="入力を消します">✕</button>
   </div>
   <div class="iv-hint expl">野生で出たときのCPから、当てはまる個体値をすべて出します(PL1〜35の整数レベル)。</div>
@@ -936,7 +936,7 @@ const qclr=document.getElementById('qclr');
 function syncClr(input,btn){
   const on=!!input.value;
   btn.classList.toggle('on',on);
-  input.closest('.searchbox').classList.toggle('hasclr',on);
+  input.parentNode.classList.toggle('hasclr',on);
 }
 function syncQclr(){ syncClr(q,qclr); }
 qclr.addEventListener('click',()=>{
@@ -947,12 +947,19 @@ qclr.addEventListener('click',()=>{
 });
 // CP欄(数字だけ)。打つたびに当てはまる個体値を出し直す
 const cpin=document.getElementById('cpin'), cpclr=document.getElementById('cpclr');
-cpin.addEventListener('input',()=>{
-  const v=cpin.value.replace(/[^0-9]/g,'').slice(0,5);
+// ⚠ 日本語キーボードだと数字も「変換中の文字」として入ってくる。
+// そのときに欄を書き換えると変換が壊れて、1文字も打てない状態になる(実機で発生)。
+// ・変換中(e.isComposing)は何もしない。確定したとき(compositionend)にまとめて整える
+// ・全角数字は消さずに半角へ直す(消すと打つそばから消えて「打てない」ように見える)
+function cpNormalize(){
+  const v=cpin.value.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/[^0-9]/g,'').slice(0,5);
   if(v!==cpin.value) cpin.value=v;
   syncClr(cpin,cpclr);
   render();
-});
+}
+cpin.addEventListener('input',e=>{ if(e && e.isComposing) return; cpNormalize(); });
+cpin.addEventListener('compositionend',cpNormalize);
 cpclr.addEventListener('click',()=>{
   cpin.value='';
   syncClr(cpin,cpclr);
