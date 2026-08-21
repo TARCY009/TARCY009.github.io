@@ -515,6 +515,33 @@ function rkPool(key) {
     chargeds: [...new Set(p.c)].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION'),
   };
 }
+// ロケット団戦のSPアタック1発ぶんの待ち時間(2026-08-21タダシさん提供の実測)。
+// SPアタックを撃つと入力と演出のあいだ手が止まるが、バトルのタイマーは止まらないので、
+// その時間ぶんだけ実時間が進む。**GBLの10秒とは別の値**(ロケット団のほうが短い):
+//   じぶんが撃つ      … 9秒(18ターン)
+//   あいてが撃つ      … シールドで防ぐと7秒(14ターン)／防がないと5秒(10ターン)
+// ＝**あいてに撃たせたほうが待ち時間が短い**。ロケット団戦でいちばん大事な「早さ」に直結する。
+// あいて(NPC)の硬直(SP後3.5秒など)は**バトル内のターンの話**なので、これとは別に従来どおり効く
+const RK_SP_TURNS = { me: 18, foeShd: 14, foe: 10 };
+// この対面の「ターンごとの累計待ち時間(ターン換算)」。実時間 = ターン + この値
+function rkSpc(res) {
+  const a = [];
+  let n = 0;
+  (res.rows || []).forEach(r => {
+    const tn = r.tn === '-' ? Math.max(0, a.length - 1) : r.tn;
+    while (a.length <= tn) a.push(n);
+    for (let i = 0; i < 2; i++) {
+      const e = r.ev[i];
+      if (e && e.full !== undefined)
+        n += i === 0 ? RK_SP_TURNS.me : (e.shielded ? RK_SP_TURNS.foeShd : RK_SP_TURNS.foe);
+    }
+    a[tn] = n;
+  });
+  return a;
+}
+const rkSpAt = (spc, tn) => spc.length ? spc[Math.max(0, Math.min(tn, spc.length - 1))] : 0;
+// 1回のシミュぶんの実時間(ターン換算)。秒にするときは /2
+const rkClock = res => res.turns + rkSpAt(rkSpc(res), res.turns);
 // ロケット団戦で「こちらにいちばんキツいわざ」を選ぶための評価。低いほどキツい。
 // 勝ち負けがまず最優先。勝つ場合は、ロケット団戦でいちばん大事な「早さ」を先に見る
 // (決着が遅いほどキツい)＝最悪ケースの秒数が主結果より短く見える逆転を防ぐ。
@@ -522,7 +549,7 @@ function rkPool(key) {
 // scoreOf は最大1000なので、勝ちはどれも2000以上になり負けと混ざらない
 const rkWorstScore = res => {
   if (res.winner !== 0) return scoreOf(res, 0);
-  return 2000 + (1000 - res.turns) * 10 + res.final[0].hp / res.final[0].hpMax;
+  return 2000 + (1000 - rkClock(res)) * 10 + res.final[0].hp / res.final[0].hpMax;
 };
 // ロケット団のあいてかどうかは statMult(倍率でステータスが決まる)の有無で見分ける
 const poolOf = cfg => (cfg && cfg.statMult ? rkPool(cfg.key) : movePool(cfg.key));
@@ -1206,6 +1233,11 @@ ${PAGE_ROCKET ? '' : `
     <li><b>⚡ SPアタック</b>… 撃つわざをタップ／<b>＋1〜＋3</b>（ノーマルアタックをそのぶん打ってからもう一度選ぶ）／<b>撃たない</b>（この相手には撃たず、ゲージを次の相手に持ち越す）／<b>おまかせ</b>（AIの判断で進める）</li>
     <li><b>🛡 〜が来る！</b>… シールドで<b>使う</b>か、<b>受ける</b>か（受けた場合のダメージつき）</li>
     <li><b>${SWAPMK} 交代する？</b>… あいての交代直後（硬直中に攻撃したあと）に聞かれます</li>
+    <li><b>SPアタックには待ち時間があります</b>（入力と演出のあいだ手が止まる）。
+    <b>じぶんが撃つと9秒</b>、<b>あいてが撃つと5秒</b>（シールドで防ぐと7秒）。
+    ＝<b>あいてに撃たせたほうが待ち時間が短い</b>ので、ノーマルアタックで押し切れるなら
+    そのほうが速く倒せます。時計・⏱・決着までの秒数・<b>交代のクールタイム45秒</b>に算入しています
+    （あいての硬直はバトル内のターンの話なので、これとは別に効きます）</li>
     <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
@@ -3493,7 +3525,7 @@ function rkRankFor(foe, respectPicked) {
     // 秒数は「勝てる中でいちばん遅いケース」＝安全側で出す
     const wins = list.filter(x => x.win);
     const show = (wins.length ? wins : list).reduce((a, b) => rkWorstScore(a.res) < rkWorstScore(b.res) ? a : b);
-    r.turns = show.res.turns;
+    r.turns = rkClock(show.res);   // 表示する秒数はSPの待ち時間込みの実時間
     r.myPct = Math.round(show.res.final[0].hp / show.res.final[0].hpMax * 100);
     r.foePct = Math.round(show.res.final[1].hp / show.res.final[1].hpMax * 100);
     r.anyWin = wins.length > 0;
@@ -3848,7 +3880,7 @@ function rbPoints(turns, ctx, dec) {
   // 質問は「次のあいてが出てきたターン」に出す。すぐ交代するか、硬直のあいだ
   // ノーマルアタックを打ちきってから交代するか(rbChoices)を選べる。
   // クールタイムが明けない・出せる控えが無いときは出さない
-  if (ctx.foeEntry > 0 && ctx.base + ctx.foeEntry >= ctx.swOkAt && ctx.swTo.length) {
+  if (ctx.foeEntry > 0 && (ctx.ck ? ctx.ck(ctx.foeEntry) : ctx.base + ctx.foeEntry) >= ctx.swOkAt && ctx.swTo.length) {
     pts.push({ kind: 'swap', seq: 0, tn: 1 });
   }
   // 質問は必ず時系列の順に出す(同じターンに並んだら交代→SP・シールドの順。
@@ -3943,7 +3975,8 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
   // 固定し、こちらの交代・被弾後の出し直しで同じあいてと再戦しても選び直さない
   const foeMvLock = {};
   let myEntry = RK_ENTER[RK.enter].me, foeEntry = RK_ENTER[RK.enter].foe;
-  let swOkAt = 0;
+  let swOkAt = 0;   // 交代が解禁される**実時間**(ターン換算)
+  let spTot = 0;    // ここまでに撃たれたSPの待ち時間の合計(ターン換算)
   // ---- 開幕交代(1匹目を出してすぐ交代し、あいての硬直4.5秒を序盤に稼ぐ) ----
   // あいての打ちかけのノーマルアタック1発は交代先に入り、あいてはそのぶんのゲージを得る。
   // そのあと あいて9ターン硬直・自分1ターン硬直・交代クールタイム開始(通常の手動交代と同じ)
@@ -3996,7 +4029,8 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     const spList = rbSpList(pol);
     const cost = spList.length ? Math.min(...spList.map(id => D.moves[id].e)) : 0;
     const swTo = picks.map((p, k) => k).filter(k => k !== mi && st[k].alive);
-    const ctx = { li, base, cost, spList, picks, myShLeft, foeEntry, swOkAt, swTo, fast: pol.fast };
+    const ctx = { li, base, cost, spList, picks, myShLeft, foeEntry, swOkAt, swTo, fast: pol.fast,
+      ck: tn => base + tn + spTot };   // その時点の実時間(SPの待ち時間を含む)
     const dec = { shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 };
     // 決めた場面はキーで覚える(「撃たない」を選ぶとその場面自体が消えるなど、
     // 決めるたびに場面の並びが変わるので、番号ではなくキーで対応づける)
@@ -4089,6 +4123,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       pending: pending && pending.key.slice(0, pending.key.indexOf(':')) === String(li) ? pending : null });
     if (pending) break;
     base += res.turns;
+    spTot += rkSpAt(rkSpc(res), res.turns);   // この対面で撃たれたSPの待ち時間
     myShLeft = res.final[0].shields;
     foeShLeft = res.final[1].shields;
     st[mi].alive = !meDown;
@@ -4099,7 +4134,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     if (swapped) {
       gulpOff(st[mi].resume);   // ウッウ: 場を離れると通常の姿に戻る
       mi = dec.swapTo;
-      swOkAt = base + RK.swapCd;
+      swOkAt = base + spTot + RK.swapCd;   // 交代の45秒はSPの演出中も進む
       foeEntry = Math.max(RK_ENTER.swap.foe, foeDown ? RK.koFoe : 0);
       myEntry = RK_ENTER.swap.me;
     } else {
@@ -4131,6 +4166,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     return sum + (s.resume ? Math.max(0, s.resume.hp) / max : 1);
   }, 0);
   return { legs, picks, st, outcome, meLeft, foeLeft, pending, turns: base, hpLeft,
+    clock: base + spTot,   // 実時間(ターン換算)。SPアタックの待ち時間を含む
     myShLeft, foeShLeft, nMe: picks.length, nFoe: foes.length };
 }
 
@@ -4147,9 +4183,10 @@ function rbScore(bt, goal) {
   const killed = bt.nFoe - bt.foeLeft;
   // まず「倒した数」、次に目的に応じて 速さ / 残り、の順で比べる
   const core = win * 1e7 + killed * 1e5;
+  const clock = bt.clock != null ? bt.clock : bt.turns;   // SPの待ち時間込みの実時間で比べる
   return goal === 'fast'
-    ? core - bt.turns * 10 + bt.hpLeft * 20 + bt.meLeft * 30
-    : core + bt.meLeft * 2000 + bt.hpLeft * 800 - bt.turns;
+    ? core - clock * 10 + bt.hpLeft * 20 + bt.meLeft * 30
+    : core + bt.meLeft * 2000 + bt.hpLeft * 800 - clock;
 }
 // 「最速 / 安定」の手順をさがす。決断そのものを組み合わせて探すので、
 // 見つかった手順は**そのまま画面の選択(ans)になる**＝探索の結果と表示が食い違わない。
@@ -4322,6 +4359,12 @@ function rbRender(body, bt, picks, foes, extra) {
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
   // items は時系列どおりに積む(gt=通しターン。表示はそこまで「再生」が進んだら出す)
   const items = [], frames = [];
+  // 通しターンごとの「それまでのSPアタックの待ち時間」(RK_SP_TURNSの項)。
+  // 経過時間の表示と交代クールタイムの残りは、この実時間で出す
+  const spByGt = [];
+  let spSeen = 0;
+  const ckOf = gt => gt +
+    (spByGt.length ? spByGt[Math.max(0, Math.min(gt, spByGt.length - 1))] : 0);
   let alive0 = picks.length, alive1 = foes.length;
   let sh0 = RK.sh, sh1 = rkShields();
   const shMax0 = RK.sh, shMax1 = rkShields();
@@ -4339,6 +4382,7 @@ function rbRender(body, bt, picks, foes, extra) {
     data-k="${p.key}" title="タップすると、この場面からやり直せます">${RB_ICON[p.kind]}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
     const res = leg.res, base = leg.base;
+    while (spByGt.length <= base) spByGt.push(spSeen);
     // あいてのSPは実際に採用されたわざ(自動なら「いちばんキツい」と選ばれたもの)で出す
     const fsp = leg.foeMv ? leg.foeMv.sp : rktCfg(foes[leg.foeIdx]).throw;
     const meta = {
@@ -4383,6 +4427,9 @@ function rbRender(body, bt, picks, foes, extra) {
       for (const r of subs) for (let i = 0; i < 2; i++) {
         const e = r.ev[i];
         if (!e) continue;
+        // SPアタック1発ぶんの待ち時間(じぶん9秒／あいて5秒・シールドで防ぐと7秒)
+        if (e.full !== undefined)
+          spSeen += i === 0 ? RK_SP_TURNS.me : (e.shielded ? RK_SP_TURNS.foeShd : RK_SP_TURNS.foe);
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
@@ -4393,6 +4440,8 @@ function rbRender(body, bt, picks, foes, extra) {
           else { g0 = null; b1 = e.gulp.buff.to.slice(); }
         }
       }
+      while (spByGt.length <= gt) spByGt.push(spSeen);
+      spByGt[gt] = spSeen;
       if (!partial) {
         frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
@@ -4421,7 +4470,7 @@ function rbRender(body, bt, picks, foes, extra) {
     // 決断待ちのあいだは倒れたかどうかもまだ決まっていない(仮の結果)ので出さない
     if (!pend) {
       if (leg.foeDown) { alive1--; items.push({ gt: endGt,
-        html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(endGt)}</i></div>` }); }
+        html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
       if (leg.meDown) { alive0--; items.push({ gt: endGt,
         html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
       if (leg.meDown || leg.foeDown) {
@@ -4449,11 +4498,11 @@ function rbRender(body, bt, picks, foes, extra) {
     const wo = extra.worst && RK_OUTCOME[extra.worst.outcome];
     items.push({ gt: stop, html: `<div class="rbfin">
       <div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
-        <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
+        <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.clock != null ? bt.clock : bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
       ${!wo ? '' : `<div class="rkworst ${wo.cls === 'win' ? 'ok' : 'ng'}"
         title="あいてが対面ごとに、こちらにいちばんキツいわざを打ってきた場合">
         🎲 わざ運が最悪でも <b>${wo.txt}</b>
-        <small>じぶん${extra.worst.meLeft}/${extra.worst.nMe} ／ あいて${extra.worst.foeLeft}/${extra.worst.nFoe} ・ ⏱${rbSec(extra.worst.turns)}秒</small></div>`}
+        <small>じぶん${extra.worst.meLeft}/${extra.worst.nMe} ／ あいて${extra.worst.foeLeft}/${extra.worst.nFoe} ・ ⏱${rbSec(extra.worst.clock != null ? extra.worst.clock : extra.worst.turns)}秒</small></div>`}
     </div>` });
   }
 
@@ -4553,10 +4602,11 @@ function rbRender(body, bt, picks, foes, extra) {
     set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
-    clk.textContent = rbSec(gt);
+    clk.textContent = rbSec(ckOf(gt));   // SPアタックの待ち時間を含む実時間
     trn.textContent = gt + 'T';
-    // 交代のクールタイム(45秒)の残り。0になったら消える＝出ていなければいつでも交代できる
-    const swLeft = Math.max(0, (f.meta.swOk || 0) - gt);
+    // 交代のクールタイム(45秒)の残り。0になったら消える＝出ていなければいつでも交代できる。
+    // SPの演出中もタイマーは止まらないので、実時間どうしで引く
+    const swLeft = Math.max(0, (f.meta.swOk || 0) - ckOf(gt));
     swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
   }
   const revealTo = g => {
@@ -4586,7 +4636,7 @@ function rbRender(body, bt, picks, foes, extra) {
       + (p.kind === 'sp' ? `<button class="hold" data-k="${p.key}" data-i="auto" title="AIの判断にまかせます">おまかせ</button>` : '')
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin">
-      <div class="rwt">${rbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.gt)}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
+      <div class="rwt">${rbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(ckOf(p.gt))}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
       <div class="rwb">${btns}</div></div>`;
     winbox.querySelectorAll('.rwb button').forEach(b => b.onclick = () => {
       rbTrim(p.key);
@@ -4649,7 +4699,7 @@ function rbRender(body, bt, picks, foes, extra) {
     RB.ans = r.ans; RBUI.open = null;
     const o2 = RK_OUTCOME[r.bt.outcome];
     RB.found = `🔎 ${RB_GOAL[RB.goal].label} → <b class="${o2.cls === 'win' ? 'ok' : 'ng'}">${o2.txt}</b>` +
-      `　⏱<b>${rbSec(r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
+      `　⏱<b>${rbSec(r.bt.clock != null ? r.bt.clock : r.bt.turns)}</b>秒　じぶん ${r.bt.meLeft}/${r.bt.nMe}`;
     RBV.cur = 0; RBV.playing = true; RBV.started = true;
     run();
   };
@@ -6961,7 +7011,7 @@ function rkAllMoves(L, R) {
   for (const f of fasts) for (const sp of spList) {
     const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, SIMOPT);
     const me = r.final[0], foe = r.final[1];
-    rows.push({ fast: f, sp, win: r.winner === 0, draw: r.winner === 'draw', turns: r.turns,
+    rows.push({ fast: f, sp, win: r.winner === 0, draw: r.winner === 'draw', turns: rkClock(r),
       pct: Math.round(me.hp / me.hpMax * 100), foePct: Math.round(foe.hp / foe.hpMax * 100),
       score: rkWorstScore(r),   // 自分から見た良さ。低いほどキツい
       cur: f === R.fast && sp === (R.throw || null) });
@@ -7187,7 +7237,7 @@ function render(res, L, R, matrix) {
   // あいてのわざはランダムなので、全通り試した結果も添える
   let rkHtml = '';
   if (rkMode) {
-    rkHtml = `<div class="rktime">⏱ <b>${(res.turns / 2).toFixed(1)}</b>秒</div>` + rkMovesHtml(rkAllMoves(L, R));
+    rkHtml = `<div class="rktime">⏱ <b>${(rkClock(res) / 2).toFixed(1)}</b>秒</div>` + rkMovesHtml(rkAllMoves(L, R));
   }
   // 技一覧もHPバー等と同じ左右2列に揃える(中央のVSは列幅合わせ用の不可視スペーサー)
   rEl.innerHTML = `
