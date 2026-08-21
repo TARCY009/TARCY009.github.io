@@ -176,36 +176,17 @@ select option[value=""]{color:var(--sub)}
 .carrytag{font-size:.66rem;color:var(--gold);margin-top:2px}
 .ivnote{margin-top:6px;font-size:.72rem;color:var(--sub)}
 .ivnote .over{color:#ff7b8e;font-weight:700}
-.bp{margin-top:10px}
-.bp summary{cursor:pointer;color:var(--sub);font-size:.74rem}
-.bp summary small{font-size:.62rem;margin-left:6px;opacity:.8}
-.bpcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px;align-items:start}
-.bpside{min-width:0;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-.bphd{font-size:.74rem;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* 1行=「わざ／ダメージの変化／必要な実数値／届くか」の2段グリッド */
-.bpitem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 8px;align-items:baseline;
-  margin-top:7px;padding-top:7px;border-top:1px solid var(--line)}
-.bpttl{display:flex;align-items:center;gap:4px;min-width:0;font-size:.74rem}
-.bpttl .mvname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bpk{font-style:normal;font-size:.78rem;opacity:.85;flex-shrink:0}
-.bpdmg{white-space:nowrap;text-align:right;font-size:.78rem;color:var(--sub);min-width:0}
-.bpdmg b{font-size:.95rem;color:var(--ink)}
-.bpdmg b.hit{color:var(--win)}
-.bpdmg b.same{color:var(--sub)}
+/* ブレイクポイント専用ページ(/breakpoint/)へのリンク。旧details版は2026-08-21に専用ページへ移行 */
+.bplink{display:flex;align-items:center;gap:8px;margin-top:12px;padding:11px 14px;border-radius:12px;
+  font-size:.82rem;font-weight:800;text-decoration:none;color:var(--ongold,#3a2a00);
+  background:linear-gradient(160deg,#ffe27a 0%,#f0a827 45%,#c47f10 100%);
+  box-shadow:0 4px 14px rgba(240,168,39,.35),inset 0 1px 0 rgba(255,255,255,.55);
+  transition:transform .12s ease,box-shadow .12s ease}
+.bplink:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(240,168,39,.45),inset 0 1px 0 rgba(255,255,255,.55)}
+.bplink small{font-size:.64rem;font-weight:700;opacity:.8;flex:1;text-align:left}
+.bplink b{font-size:.9rem}
 .ivstats{margin-top:3px;font-size:.7rem;color:var(--sub)}
 .ivstats b{color:var(--ink);font-weight:700}
-.bpdmg i{font-style:normal;margin:0 3px;opacity:.6}
-.bpdmg small{font-size:.62rem;margin-left:5px}
-.bpreq{font-size:.66rem;color:var(--sub);line-height:1.6;min-width:0}
-.bpreq b{color:var(--ink);font-weight:700}
-.bpreq b.need{color:var(--gold)}
-.bpreq i{font-style:normal;margin:0 2px;opacity:.6}
-.bpst{font-size:.64rem;text-align:right;font-weight:700;min-width:0}
-.bpst small{display:block;font-size:.58rem;font-weight:400;color:var(--sub)}
-.bp .ok{color:var(--win)}
-.bp .ng{color:var(--sub);font-weight:400}
-.bpnote{color:var(--sub);font-size:.64rem;margin-top:8px;line-height:1.6}
-@media (max-width:520px){.bpcols{grid-template-columns:1fr}}
 .modes{display:flex;gap:6px;margin-top:10px}
 .modes button{flex:1;padding:9px 4px;font-size:.85rem;font-weight:800;color:var(--sub);cursor:pointer;
   background:var(--tab);border:1px solid var(--line);border-radius:11px;

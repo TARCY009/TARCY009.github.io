@@ -357,6 +357,15 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 #copybtn{width:100%;margin-top:14px;padding:12px;border-radius:10px;border:1px solid var(--cy);
   background:rgba(67,224,255,.1);color:var(--cy);font-size:.9rem;font-weight:700;cursor:pointer}
 #copybtn:active{background:rgba(67,224,255,.22)}
+/* ブレイクポイント専用ページ(/breakpoint/)へのリンク(GBLの .bplink と同じ質感) */
+.bplink{display:flex;align-items:center;gap:8px;margin-top:10px;padding:11px 14px;border-radius:12px;
+  font-size:.82rem;font-weight:800;text-decoration:none;color:#3a2a00;
+  background:linear-gradient(160deg,#ffe27a 0%,#f0a827 45%,#c47f10 100%);
+  box-shadow:0 4px 14px rgba(240,168,39,.35),inset 0 1px 0 rgba(255,255,255,.55);
+  transition:transform .12s ease,box-shadow .12s ease}
+.bplink:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(240,168,39,.45),inset 0 1px 0 rgba(255,255,255,.55)}
+.bplink small{font-size:.64rem;font-weight:700;opacity:.8;flex:1;text-align:left}
+.bplink b{font-size:.9rem}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -509,6 +518,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div class="note" id="lvnote"></div>
   <button id="copybtn">結果をコピー</button>
   <div class="iv-hint" id="copied" style="display:none;text-align:center">コピーしました!</div>
+  <a id="bplink" class="bplink" href="/breakpoint/" title="この個体値のまま、環境上位の相手にダメージが変わる境目（ブレイクポイント）を調べる専用ページへ移動します">🎯 ブレイクポイント<small>この個体で境目を先回りできる相手を調べる</small><b>↗</b></a>
 </div>
 
 <button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
@@ -754,6 +764,11 @@ function render(){
   if(state.cap===52) notes.push('メガLv4の+2はメガシンカ中のブーストでアメ消費なし(アメXLは実強化レベル=表示PL−2分)。');
   if(state.cap===53) notes.push('メガLv4(+2)+最高の相棒(+1)はブーストでアメ消費なし(アメXLは実強化レベル=表示PL−3分)。');
   document.getElementById('lvnote').textContent=notes.join(' ');
+
+  // ブレイクポイントページへのリンク(選択中のリーグ・この個体値を引き継ぐ)
+  const lgv={gl:'1500',ul:'2500',ml:'0'}[state.league];
+  document.getElementById('bplink').href='/breakpoint/?'+(lgv==='0'?'':'lg='+lgv+'&')+
+    'me='+encodeURIComponent(state.p.i)+'&miv='+state.iv.join('.');
 
   // --- スティッキーバー ---
   const lgName={gl:'スーパー',ul:'ハイパー',ml:'マスター'}[state.league];

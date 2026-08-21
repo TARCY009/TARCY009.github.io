@@ -632,29 +632,25 @@ function optimize(cfgL, cfgR) {
   return { left: PL[a], right: PR[b] };
 }
 
-// ---- ブレイクポイント検出(ノーマルアタックのダメージ境界) ----
-// 全個体値×リーグ上限内最大PLの実ステータス表(ポケモン×リーグごとに1回だけ計算)
-const ivTableCache = new Map();
-function ivTable(key, capV, maxLv) {
-  const ck = key + ':' + capV + ':' + (maxLv || 51);
-  if (!ivTableCache.has(ck)) {
-    const LV = levelsUpTo(maxLv);
-    const rows = [];
-    for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
-      let lo = 0, hi = LV.length - 1, li = -1;
-      while (lo <= hi) {   // CP上限内で最大のPLを二分探索
-        const mid = (lo + hi) >> 1;
-        const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LV[mid] });
-        if (!capV || st.cp <= capV) { li = mid; lo = mid + 1; } else hi = mid - 1;
-      }
-      if (li < 0) continue;
-      const st = PvpEngine.buildStats(D, { key, ivs: [a, d, h], level: LV[li] });
-      rows.push({ ivs: [a, d, h], level: LV[li], atk: st.atk, def: st.def, hp: st.hp, cp: st.cp });
-    }
-    ivTableCache.set(ck, rows);
-  }
-  return ivTableCache.get(ck);
+// ---- ブレイクポイント(専用ページ /breakpoint/ へのリンク) ----
+// じぶん側は個体値・PLをそのまま渡す(向こうで強化の余地を計算する)。
+// あいて側は実数値ごと渡す(fst=攻~防~HP)。ロケット団のNPC補正込みの実数値もこの形でそのまま扱える
+function bpUrl(L, R) {
+  const q = new URLSearchParams();
+  if (!PAGE_ROCKET && cap) q.set('lg', String(cap));
+  q.set('me', L.key);
+  if (L.shadow) q.set('msh', '1');
+  if (L.ivs) q.set('miv', L.ivs.join('.'));
+  if (L.level) q.set('mpl', L.level);
+  if (L.fast) q.set('mv', L.fast);
+  q.set('foe', R.key);
+  if (R.shadow) q.set('fsh', '1');
+  const st = PvpEngine.buildStats(D, R);
+  q.set('fst', [st.atk.toFixed(2), st.def.toFixed(2), st.hp].join('~'));
+  if (R.fast) q.set('fmv', R.fast);
+  return '/breakpoint/?' + q.toString();
 }
+
 // 指定個体値でCP上限を超えない最大PLを返す
 function maxLevelFor(key, ivs, capV, maxLv) {
   const LV = levelsUpTo(maxLv);
@@ -666,19 +662,6 @@ function maxLevelFor(key, ivs, capV, maxLv) {
   }
   return LV[li];
 }
-// 必要な攻撃/防御実数値を満たす個体値・PLの例を探す(なければnull)
-// 条件を満たす中で「残りのステータス積」が最大の組み合わせを例として返す
-function findIvFor(key, need, capV, maxLv) {
-  let best = null;
-  for (const r of ivTable(key, capV, maxLv)) {
-    if (need.atk && r.atk < need.atk) continue;
-    if (need.def && r.def <= need.def) continue;
-    const score = need.atk ? r.def * r.hp : r.atk * r.hp;
-    if (!best || score > best.score) best = { ...r, score };
-  }
-  return best;
-}
-
 // ---- 画面状態 ----
 let cap = 1500;
 const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1: null, c2: null,
@@ -7250,59 +7233,7 @@ function render(res, L, R, matrix) {
       <div class="vsmark" style="visibility:hidden">VS</div>
       <div class="mvside"><div class="mvhead">${res.final[1].name}の技</div>${mvRows(1)}</div>
     </div>
-    <details class="bp"><summary>ブレイクポイント<small>ダメージが変わる境目</small></summary>
-      <div class="bpbody"></div></details>`;
-  // ブレイクポイント: 開いた時だけ計算する(個体値例の探索が少し重いため)
-  const bpBody = () => {
-    const cfgs = [L, R];
-    const fmt = v => (Math.round(v * 10) / 10).toFixed(1);
-    const side = i => {
-      const me = cfgs[i], op = cfgs[1 - i];
-      const stM = { ...PvpEngine.buildStats(D, me), buffs: [0, 0] };
-      const stO = { ...PvpEngine.buildStats(D, op), buffs: [0, 0] };
-      const mv = D.moves[me.fast], mvO = D.moves[op.fast];
-      // 与ダメ: 攻撃実数値がいくつあれば1上がるか
-      const effM = PvpEngine.effectiveness(D, mv.t, stO.types);
-      const stabM = stM.types.includes(mv.t) ? 1.2 : 1;
-      const K = 0.5 * mv.p * effM * stabM * 1.3 / stO.def;   // ダメ = floor(攻×K)+1
-      const cur = PvpEngine.damage(D, mv, stM, stO);
-      const atkReq = cur / K;
-      const exA = findIvFor(me.key, { atk: atkReq }, cap, S[i].maxLv);
-      // 1行ぶんの表示: わざ・ダメージの変化・必要な実数値・届くかどうか
-      // 1行の作り: わざ ／ ダメージの変化 ／ 必要な実数値(いまの値→必要な値) ／ 届くか。
-      // このリーグの個体値・PLでは届かないときは「5→5 変化なし」と出す(ユーザー指示)
-      const item = (mark, mvName, from, to, statLbl, now, need, ex, note) => `<div class="bpitem">
-        <div class="bpttl"><i class="bpk">${mark}</i>${mvChip(mvName, 13)}</div>
-        <div class="bpdmg">${note ? `<b>${from}</b><small>${note}</small>`
-          : `<b>${from}</b><i>→</i><b class="${ex ? 'hit' : 'same'}">${ex ? to : from}</b>`}</div>
-        ${note ? '' : `<div class="bpreq">${statLbl} <i>いま</i><b>${fmt(now)}</b><i>→ 必要</i><b class="need">${fmt(need)}</b></div>
-        <div class="bpst ${ex ? 'ok' : 'ng'}">${ex ? `変化あり<small>${ex.ivs.join('/')} PL${ex.level}</small>`
-          : `変化なし<small>最大まで上げても届かない</small>`}</div>`}
-      </div>`;
-      const give = item('💥', mv.n, cur, cur + 1, '攻撃', stM.atk, atkReq, exA);
-      // 被ダメ: 防御実数値がいくつあれば1減るか
-      let take;
-      const curT = PvpEngine.damage(D, mvO, stO, stM);
-      if (curT <= 1) take = item('🛡', mvO.n, 1, 1, '防御', 0, 0, null, 'これ以上減らない');
-      else {
-        const effO = PvpEngine.effectiveness(D, mvO.t, stM.types);
-        const stabO = stO.types.includes(mvO.t) ? 1.2 : 1;
-        const KO = 0.5 * mvO.p * effO * stabO * 1.3 * stO.atk;   // ダメ = floor(KO÷防)+1
-        const defReq = KO / (curT - 1);
-        const exD = findIvFor(me.key, { def: defReq }, cap, S[i].maxLv);
-        take = item('🛡', mvO.n, curT, curT - 1, '防御', stM.def, defReq, exD);
-      }
-      return `<div class="bpside"><div class="bphd">${stM.name}</div>${give}${take}</div>`;
-    };
-    return `<div class="bpcols">${side(0)}${side(1)}</div>
-      <div class="bpnote">※開始時点（バフなし）・いま選んでいるノーマルアタックで計算。<i class="bpk">💥</i>与ダメ ／ <i class="bpk">🛡</i>被ダメ</div>`;
-  };
-  const bpEl = rEl.querySelector('.bp');
-  bpEl.addEventListener('toggle', () => {
-    bpOpen = bpEl.open;
-    if (bpEl.open && !bpEl.querySelector('.bpbody').innerHTML) bpEl.querySelector('.bpbody').innerHTML = bpBody();
-  });
-  if (bpOpen) bpEl.open = true;
+    <a class="bplink" href="${bpUrl(L, R)}">🎯 ブレイクポイント<small>ダメージが変わる境目を先回り</small><b>↗</b></a>`;
   // 3×3表のマスをタップ→両者のシールド枚数をその組み合わせに変更
   rEl.querySelectorAll('.shmtx td[data-a]').forEach(td => td.onclick = () => {
     [+td.dataset.a, +td.dataset.b].forEach((v, i) => {
@@ -7385,7 +7316,7 @@ function updateUrl() {
 }
 
 // ---- タイムライン(ダイジェスト/全ターン切替) ----
-let lastRes = null, tlMode = 'all', bpOpen = false;
+let lastRes = null, tlMode = 'all';
 // タイムラインの表を作る(1対1シミュで使う)
 function timelineTable(res, tlMode) {
   // HPの残り割合で色分け: 緑(50%以上)・黄(20〜50%未満)・赤(20%未満)

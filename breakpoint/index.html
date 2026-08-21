@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケモンGO GBLブレイクポイント計算</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/breakpoint/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/breakpoint/apple-touch-icon.png">
+<link rel="manifest" href="/breakpoint/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="ブレイクポイント">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/tabs.css">
+<meta name="theme-color" content="#0b1023">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<style>
+/* 色は :root(ダーク=既定) と :root.light の2ブロックだけで決める(全ツール共通ルール)。
+   役割色: じぶん=水色 / 境目(次の段)=金 / 受ける=紫 (GBLのデザイン言語に合わせる) */
+:root{
+  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560;
+  --accent:#08b4c9; --accent2:#43e0ff; --violet:#b06cff; --gold:#ffd54a; --red:#ff7b7b; --green:#7ee787;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(8,180,201,.13), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(255,213,74,.10), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(176,108,255,.13), transparent 62%),
+    linear-gradient(165deg,#0b1023 0%,#101a2e 48%,#141024 100%);
+  --panel:linear-gradient(180deg,rgba(26,35,66,.94),rgba(19,26,51,.94));
+  --panelsh:0 18px 34px -20px rgba(91,140,255,.5), 0 1px 0 rgba(255,255,255,.06) inset;
+  --chip:#1a2342; --rowline:#232c4f; --barpast:#243158; --barbg:#121a38;
+  --curgrad:linear-gradient(180deg,#2a6f7d,#1c4c57); --curtext:#bff0f8;
+  --goldgrad:linear-gradient(160deg,#ffe27a,#ffd54a 45%,#c99a00); --ongold:#3a2a00;
+  --violgrad:linear-gradient(160deg,#c9a6ff,#b06cff 45%,#7838d0);
+  --okbg:rgba(126,231,135,.10); --okline:rgba(126,231,135,.32);
+  --upbg:rgba(255,213,74,.10); --upline:rgba(255,213,74,.35);
+  --ngbg:rgba(255,123,123,.08); --ngline:rgba(255,123,123,.3);
+  --inbg:#111936; --inline2:#2a3560;
+  --tcolor:#0b1023;
+}
+:root.light{
+  --ink:#20263a; --sub:#6a7391; --line:#dfe6f5;
+  --accent:#08a4b8; --accent2:#0b7a92; --violet:#8b5cf6; --gold:#b07a00; --red:#d9534f; --green:#1c7a44;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(8,180,201,.14), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(240,168,39,.13), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(139,92,246,.14), transparent 62%),
+    linear-gradient(165deg,#eafaf4 0%,#e9f1ff 48%,#f1ecff 100%);
+  --panel:rgba(255,255,255,.9);
+  --panelsh:0 14px 30px -16px rgba(59,110,240,.3), 0 1px 0 rgba(255,255,255,.8) inset;
+  --chip:#fff; --rowline:#eceffa; --barpast:#dfe6f5; --barbg:#eef2fb;
+  --curgrad:linear-gradient(180deg,#9adfe9,#5fc3d2); --curtext:#053a44;
+  --goldgrad:linear-gradient(160deg,#ffe27a,#f0c132 45%,#cf9c00); --ongold:#3a2a00;
+  --violgrad:linear-gradient(160deg,#c9a6ff,#a37bf0 45%,#7a4fd0);
+  --okbg:rgba(28,122,68,.08); --okline:rgba(28,122,68,.3);
+  --upbg:rgba(240,168,39,.1); --upline:rgba(240,168,39,.45);
+  --ngbg:rgba(217,83,79,.07); --ngline:rgba(217,83,79,.3);
+  --inbg:#fff; --inline2:#c9d4ea;
+  --tcolor:#eafaf4;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif;
+  color:var(--ink);background:var(--bgimg);background-attachment:fixed;min-height:100vh;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:14px 12px 40px}
+header{display:flex;align-items:center;gap:10px;margin:4px 2px 14px}
+h1{font-size:1.12rem;margin:0;flex:1;min-width:0;line-height:1.35}
+h1 b{white-space:nowrap}
+h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-spacing:.05em}
+.pagelink{font-size:.7rem;font-weight:800;color:#9fc0ff;text-decoration:none;white-space:nowrap;
+  border:1px solid #3b6ef0;border-radius:10px;padding:7px 10px;background:rgba(59,110,240,.12)}
+:root.light .pagelink{color:#2a52b8;background:rgba(59,110,240,.07)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--panelsh);padding:12px 12px 14px;margin-bottom:12px}
+.sec{display:inline-block;font-size:.72rem;font-weight:800;padding:4px 12px;border-radius:999px;
+  background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330;
+  box-shadow:0 3px 10px rgba(8,180,201,.3);margin-bottom:10px}
+/* ---- じぶんカード ---- */
+.merow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sugg{position:relative;flex:1 1 190px;min-width:0}
+.sugg input{width:100%;font:inherit;font-size:.9rem;padding:9px 30px 9px 11px;border-radius:11px;
+  border:1px solid var(--inline2);background:var(--inbg);color:var(--ink)}
+.sugg input::placeholder{color:var(--sub);opacity:.75}
+.sugg-list{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);max-height:290px;overflow:auto;
+  background:var(--chip);border:1px solid var(--line);border-radius:12px;display:none;
+  box-shadow:0 14px 30px rgba(0,0,0,.4)}
+.sugg-list div{display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:.82rem;cursor:pointer;
+  border-bottom:1px solid var(--rowline)}
+.sugg-list div:last-child{border-bottom:none}
+.sugg-list div:hover{background:rgba(8,180,201,.12)}
+.clrbtn{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;
+  color:var(--sub);font-size:1rem;cursor:pointer;padding:4px 6px;display:none}
+.mypkwin{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--chip);
+  padding:6px;display:none;max-height:250px;overflow:auto}
+.mypkrow{display:flex;align-items:center;gap:8px;padding:7px 9px;font-size:.8rem;cursor:pointer;
+  border-radius:8px}
+.mypkrow:hover{background:rgba(8,180,201,.12)}
+.mypkrow i.iv{font-style:normal;color:var(--sub);font-size:.7rem;margin-left:auto}
+.mypkempty{font-size:.72rem;color:var(--sub);padding:8px}
+.ivrow{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:10px}
+.ivrow label{display:flex;flex-direction:column;gap:3px;font-size:.62rem;color:var(--sub);font-weight:700}
+.ivrow input{width:52px;font:inherit;font-size:.88rem;text-align:center;padding:7px 4px;border-radius:9px;
+  border:1px solid var(--inline2);background:var(--inbg);color:var(--ink)}
+.ivrow .cpv{font-size:.72rem;color:var(--sub);padding-bottom:9px}
+.ivrow .cpv b{color:var(--ink);font-size:.85rem}
+.mvrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.mvrow .lbl{font-size:.66rem;color:var(--sub);font-weight:700}
+.mvchip{font:inherit;font-size:.76rem;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;
+  background:linear-gradient(180deg,#1e2850,#151d38);color:#9fb0d0}
+:root.light .mvchip{background:linear-gradient(180deg,#fff,#eff3fc);color:#5d6b7a;border-color:#dfe6f5}
+.mvchip[aria-pressed="true"]{background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);
+  color:#042330;border-color:transparent;box-shadow:0 4px 12px rgba(8,180,201,.35)}
+.mvchip small{font-weight:700;opacity:.75}
+.lgrow{margin:14px 2px 12px}
+/* ---- 一括リスト ---- */
+.sumline{font-size:.78rem;color:var(--sub);margin:2px 2px 10px}
+.sumline b{color:var(--gold)}
+.bkrow{border:1px solid var(--line);border-radius:13px;background:var(--panel);margin-bottom:7px;overflow:hidden}
+.bkrow.up{border-color:var(--upline)}
+.bkrow.pin{border-color:var(--accent)}
+.bkhead{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;min-height:44px}
+.bkhead:hover{background:rgba(8,180,201,.06)}
+.bkhead .rk{font-size:.62rem;color:var(--sub);width:26px;text-align:right;flex:none}
+.bkhead .nm{font-size:.84rem;font-weight:800;display:flex;align-items:center;gap:5px;min-width:0;flex:1 1 auto}
+.bkhead .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bkhead .dm{font-size:.72rem;color:var(--sub);white-space:nowrap;flex:none}
+.bkhead .dm b{color:var(--ink);font-size:.92rem}
+.vchip{flex:none;font-size:.68rem;font-weight:800;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.vchip.up{background:var(--goldgrad);color:var(--ongold);box-shadow:0 3px 9px rgba(255,213,74,.3)}
+.vchip.no{background:var(--chip);color:var(--sub);border:1px solid var(--line)}
+.bkhead .arw{flex:none;color:var(--sub);font-size:.7rem;transition:transform .15s}
+.bkrow.open .arw{transform:rotate(90deg)}
+.bkdetail{border-top:1px solid var(--rowline);padding:12px 12px 14px;display:none}
+.bkrow.open .bkdetail{display:block}
+/* ---- 詳細カード ---- */
+.dtabs{display:flex;gap:2px;margin-bottom:12px}
+.dtabs button{flex:1;font:inherit;font-size:.8rem;font-weight:800;padding:8px 0;cursor:pointer;border:none;
+  background:linear-gradient(180deg,#1e2850,#151d38);color:#9fb0d0}
+:root.light .dtabs button{background:linear-gradient(180deg,#fff,#eff3fc);color:#5d6b7a}
+.dtabs button:first-child{border-radius:10px 4px 4px 10px}
+.dtabs button:last-child{border-radius:4px 10px 10px 4px}
+.dtabs button[aria-pressed="true"].give{background:var(--goldgrad);color:var(--ongold);
+  box-shadow:0 3px 10px rgba(255,213,74,.3)}
+.dtabs button[aria-pressed="true"].take{background:var(--violgrad);color:#fff;
+  box-shadow:0 3px 10px rgba(176,108,255,.32)}
+.dsub{font-size:.72rem;color:var(--sub);margin-bottom:4px}
+.dsub b{color:var(--ink)}
+.fmvsel{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 2px}
+.fmvsel .mvchip{font-size:.68rem;padding:4px 10px}
+.nowline{display:flex;align-items:baseline;gap:7px;margin:10px 0 4px;flex-wrap:wrap}
+.nowline .l{font-size:.76rem;color:var(--sub)}
+.nowline .v{font-size:1.8rem;font-weight:800;line-height:1}
+.nowline .r{margin-left:auto;font-size:.78rem;color:var(--ink)}
+/* ものさしバー */
+.scale{margin:14px 0 4px}
+.scale .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
+.sbar{display:flex;height:26px;border-radius:7px;overflow:hidden;font-size:.68rem;font-weight:800}
+.sbar>div{display:flex;align-items:center;justify-content:center;min-width:30px;white-space:nowrap;overflow:hidden}
+.sbar .past{background:var(--barpast);color:var(--sub)}
+.sbar .cur{background:var(--curgrad);color:var(--curtext)}
+.sbar .next{background:var(--goldgrad);color:var(--ongold)}
+.smk{position:relative;height:17px;font-size:.6rem;color:var(--sub)}
+.smk span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.smk .me{color:var(--accent2);font-weight:800}
+.smk .bp{color:var(--gold);font-weight:800}
+/* 結論ボックス */
+.vbox{border-radius:11px;padding:10px 12px;margin-top:12px;border:1px solid}
+.vbox.up{background:var(--upbg);border-color:var(--upline)}
+.vbox.ok{background:var(--okbg);border-color:var(--okline)}
+.vbox.ng{background:var(--ngbg);border-color:var(--ngline)}
+.vbox .hd{font-size:.92rem;font-weight:800;margin-bottom:5px}
+.vbox.up .hd{color:var(--gold)}
+.vbox.ok .hd{color:var(--green)}
+.vbox.ng .hd{color:var(--red)}
+.vbox .fx{display:flex;gap:13px;font-size:.8rem;flex-wrap:wrap}
+.vbox .fx b{color:var(--green)}
+.vbox .nt{font-size:.68rem;color:var(--sub);margin-top:6px;line-height:1.6}
+/* 個体値バー */
+.ivbar{margin-top:14px}
+.ivbar .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
+.ivcells{display:flex;gap:1px}
+.ivcells i{flex:1;height:20px;font-style:normal;font-size:.56rem;display:flex;align-items:center;
+  justify-content:center;color:transparent}
+.ivcells i:first-child{border-radius:4px 0 0 4px}
+.ivcells i:last-child{border-radius:0 4px 4px 0}
+.ivcells i.past{background:var(--barpast)}
+.ivcells i.cur{background:var(--curgrad)}
+.ivcells i.next{background:var(--goldgrad)}
+.ivcells i.mine{outline:2px solid var(--accent2);outline-offset:-2px;color:var(--curtext);font-weight:800}
+.ivcells i.mine.next{color:var(--ongold)}
+.ivcells i.lb{color:var(--sub)}
+.ivcells i.mine{color:var(--curtext)}
+.ivcells i.mine.next{color:var(--ongold)}
+.ivnote{font-size:.62rem;color:var(--sub);margin-top:4px;line-height:1.6}
+.ivnote .g{color:var(--gold)}
+/* 空状態 */
+.empty{font-size:.8rem;color:var(--sub);text-align:center;padding:26px 10px;line-height:1.9}
+.expl{display:none}
+.explain .expl{display:revert}
+@media (max-width:540px){
+  .sugg input,.ivrow input{font-size:16px}
+  .bkhead .dm small{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1><b>🎯 GBLブレイクポイント</b><small>ダメージが変わる境目を先回り</small></h1>
+  <a class="pagelink" href="/gbl/">GBL対面シミュ ↗</a>
+  <div id="themesw"></div>
+</header>
+
+<div class="card" id="mecard">
+  <span class="sec">じぶんのポケモン</span>
+  <div class="merow">
+    <div class="sugg">
+      <input type="search" id="meq" placeholder="ポケモン名で検索" autocomplete="off">
+      <button class="clrbtn" id="meclr" aria-label="消す">✕</button>
+      <div class="sugg-list" id="melist"></div>
+    </div>
+    <div class="gtabs">
+      <button class="t-gold" id="mestar" aria-pressed="false" title="★登録リスト（GBL対面シミュと共通）から選びます">★ 登録リスト</button>
+      <button class="t-shadow" id="meshadow" aria-pressed="false" title="シャドウ（攻撃1.2倍・防御5/6）として計算します"><i class="shadowmark"></i> シャドウ</button>
+    </div>
+  </div>
+  <div class="mypkwin" id="mypkwin"></div>
+  <div class="ivrow" id="ivrow" style="display:none">
+    <label>攻撃<input type="number" id="ivA" min="0" max="15" inputmode="numeric"></label>
+    <label>防御<input type="number" id="ivD" min="0" max="15" inputmode="numeric"></label>
+    <label>HP<input type="number" id="ivH" min="0" max="15" inputmode="numeric"></label>
+    <label>PL<input type="number" id="ivL" min="1" max="53" step="0.5" inputmode="decimal"></label>
+    <div class="gtabs one"><button class="t-cyan" id="ideal" title="このリーグの理想個体値・最大PLに戻します">理想に戻す</button></div>
+    <div class="cpv" id="cpv"></div>
+  </div>
+  <div class="mvrow" id="mvrow" style="display:none"></div>
+</div>
+
+<div class="gtabs lgrow"><div class="gseg">
+  <button class="t-blue" data-lg="1500">スーパー</button>
+  <button class="t-gold" data-lg="2500">ハイパー</button>
+  <button class="t-shadow" data-lg="0">マスター</button>
+</div></div>
+
+<div class="card">
+  <span class="sec">あいて</span>
+  <div class="merow">
+    <div class="sugg">
+      <input type="search" id="foeq" placeholder="ポケモン名で検索" autocomplete="off">
+      <button class="clrbtn" id="foeclr" aria-label="消す">✕</button>
+      <div class="sugg-list" id="foelist"></div>
+    </div>
+    <div class="gtabs">
+      <button class="t-shadow" id="foeshadow" aria-pressed="false" title="あいてをシャドウ（攻撃1.2倍・防御5/6）として計算します"><i class="shadowmark"></i> シャドウ</button>
+    </div>
+  </div>
+  <p class="expl" style="font-size:.68rem;color:var(--sub);margin:8px 0 0;line-height:1.7">検索したあいては一覧のいちばん上に固定されます。下の環境上位50匹は理想個体値、検索したあいては理想個体値（GBL対面シミュから来たときはその画面の個体値そのまま）で計算します。</p>
+</div>
+
+<div id="pinbox"></div>
+<div class="sumline" id="sumline" style="display:none"></div>
+<div id="list"></div>
+
+<button class="helptab" id="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+<div class="helpbody" id="helpbody" style="display:none">
+  <h4>ブレイクポイントとは</h4>
+  <p>ポケモンGOのダメージは整数に切り捨てられるため、攻撃の実数値が少し上がっても<b>ダメージは階段状にしか増えません</b>。その「段が上がる境目」がブレイクポイントです。とくに<b>1ターン(0.5秒)のノーマルアタック</b>は、ダメージが5→6になるだけで火力が20%上がるため影響が大きく、マスターリーグでは勝敗を分けます。</p>
+  <h4>この画面でわかること</h4>
+  <ul>
+    <li><b>一覧</b>: いまの個体（個体値・PL）のまま強化すると、環境上位50匹のどの相手にダメージ+1を取れるか。🔥のついた相手が「強化で伸びる相手」です</li>
+    <li><b>行をタップ</b>: その相手との詳細。あとどれだけ強化すれば届くか（ものさしバー）、個体値がいくつなら届くか（個体値バー）が見えます</li>
+    <li><b>🛡 受ける</b>: あいてのノーマルアタックをいくつで受けられるか。防御側にも同じ境目があります</li>
+  </ul>
+  <h4>計算の前提</h4>
+  <ul>
+    <li>ダメージ式・実数値はGBL対面シミュのエンジンと同じもの。<b>同じ条件なら結果は必ず一致します</b></li>
+    <li>能力変化（バフ・デバフ）が無い開始時点で計算します</li>
+    <li>環境上位50匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成が基準です</li>
+    <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4＋相棒で53まで</li>
+    <li>SPアタックは対象外です。SPの+1はバトル全体で1〜2回しか発生せず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
+  </ul>
+  <h4>入口</h4>
+  <p>GBL対面シミュの1対1の結果、個体値チェッカーの結果からもこのページへ飛べます。対面や個体値は引き継がれるので、入力し直す必要はありません。</p>
+</div>
+</div>
+
+<script src="/pvp_data.js"></script>
+<script src="/assets/pvp-engine.js"></script>
+<script src="/assets/meta_lists.js"></script>
+<script src="/assets/meta_moves.js"></script>
+<script src="/assets/type-icons.js"></script>
+<script>
+'use strict';
+const D = window.PVP_DATA, E = window.PvpEngine;
+const $ = id => document.getElementById(id);
+const LEVELS_ALL = Object.keys(D.cpm).map(Number).filter(l => l <= 53).sort((a, b) => a - b);
+const levelsUpTo = m => LEVELS_ALL.filter(l => l <= (m || 51));
+const isMega = k => !!k && (k.includes('_mega') || k.includes('_primal'));
+const KEYS = Object.keys(D.pokemon).sort((a, b) => D.pokemon[a].dex - D.pokemon[b].dex);
+const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+const SHADOWMK = '<i class="shadowmark nmk"></i>';
+const typeIcons = (p, size) => window.typePairHTML(p.ty.map(t => D.typeJa[t]), size || 16);
+const SEARCH_MAX = 100;
+const fmtLv = l => (Math.round(l * 10) / 10) % 1 ? l.toFixed(1) : String(Math.round(l));
+
+// ---- 画面状態 ----
+// LG: '1500' | '2500' | '0'(マスター)。ME: じぶんの個体。PIN: 検索/引き継ぎで固定したあいて
+let LG = '0';
+let ME = { key: null, shadow: false, ivs: [15, 15, 15], level: 50, fast: null, edited: false };
+let PIN = null;   // { key, shadow, atk, def, hp, name, fast(あいてのわざの初期値), label }
+let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
+let DTAB = {};    // 行ごとの 与える/受ける タブ状態
+const capV = () => +LG || 0;
+const maxLvOf = () => isMega(ME.key) ? 53 : 51;
+
+// ---- 実数値・ダメージ(エンジンと同じ式を使う=食い違い禁止) ----
+const statsOf = (key, ivs, level, shadow) =>
+  E.buildStats(D, { key, ivs, level, shadow });
+const dmgOf = (mv, atS, dfS) =>
+  E.damage(D, mv, { ...atS, buffs: [0, 0] }, { ...dfS, buffs: [0, 0] });
+
+// 理想個体値(GBLの環境リストと同じ基準: CP制限ありはランク1・マスターは15/15/15 PL50)
+const R1C = new Map();
+function rank1(key, cap) {
+  const ck = key + '|' + cap;
+  if (R1C.has(ck)) return R1C.get(ck);
+  const p = D.pokemon[key], LV = levelsUpTo(isMega(key) ? 53 : 51);
+  let best = null;
+  if (!cap) best = { ivs: [15, 15, 15], level: 50 };
+  else {
+    for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+      let lo = 0, hi = LV.length - 1, li = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        const c = D.cpm[String(LV[mid])];
+        const cp = Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
+        if (cp <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      if (li < 0) continue;
+      const c = D.cpm[String(LV[li])];
+      const prod = (p.a + a) * c * (p.df + d) * c * Math.floor((p.h + h) * c);
+      if (!best || prod > best.prod) best = { prod, ivs: [a, d, h], level: LV[li] };
+    }
+    if (!best) best = { ivs: [15, 15, 15], level: 50 };
+  }
+  R1C.set(ck, best);
+  return best;
+}
+// 指定個体値でCP上限を超えない最大PL(マスターはPL上限そのもの)
+function maxLevelFor(key, ivs, cap, maxLv) {
+  const LV = levelsUpTo(maxLv);
+  if (!cap) return LV[LV.length - 1];
+  let lo = 0, hi = LV.length - 1, li = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (statsOf(key, ivs, LV[mid], false).cp <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  return LV[li];
+}
+
+// じぶんのPLはしご(いまの個体値でリーグ上限内のPL全部の実数値)。foeに依らないので使い回す
+let ladderCache = { sig: null, rows: null };
+function myLadder() {
+  const sig = [ME.key, ME.ivs.join('.'), ME.shadow ? 1 : 0, LG].join('|');
+  if (ladderCache.sig === sig) return ladderCache.rows;
+  const cap = capV(), rows = [];
+  for (const lv of levelsUpTo(maxLvOf())) {
+    const st = statsOf(ME.key, ME.ivs, lv, ME.shadow);
+    if (cap && st.cp > cap) break;   // CPはPLに対して単調増加
+    rows.push({ lv, st });
+  }
+  ladderCache = { sig, rows };
+  return rows;
+}
+
+// ---- わざ ----
+function fastMoves(key) {
+  const p = D.pokemon[key];
+  return [...new Set([...(p.q || []), ...(p.eq || [])])].filter(m => D.moves[m]);
+}
+// 既定のノーマルアタック: 環境の確定値 > タイプ一致込みダメージ効率(威力×1.2÷ターン)が最高
+function defaultFast(key, shadow, lg) {
+  const mm = (window.META_MOVES || {})[lg] || {};
+  const row = mm[key + (shadow ? '|s' : '')] || mm[key];
+  if (row && D.moves[row[0]]) return row[0];
+  const p = D.pokemon[key];
+  let best = null, bv = -1;
+  for (const id of fastMoves(key)) {
+    const mv = D.moves[id];
+    const v = mv.p * (p.ty.includes(mv.t) ? 1.2 : 1) / mv.tn;
+    if (v > bv) { bv = v; best = id; }
+  }
+  return best;
+}
+
+// ---- 環境リスト ----
+const metaList = () => (window.META_LISTS || {})[LG] || [];
+function foeEntryOf(e) {   // メタ行 → 計算用のあいて(理想個体値)
+  const r1 = rank1(e.k, capV());
+  const st = statsOf(e.k, r1.ivs, r1.level, !!e.s);
+  return { key: e.k, shadow: !!e.s, st, fast: e.f, name: D.pokemon[e.k].n };
+}
+
+// ---- ブレイクポイント計算 ----
+// 与える: PLはしごの各段でのダメージ → 段の切れ目がブレイクポイント
+function giveScan(mv, foeSt) {
+  return myLadder().map(r => ({ lv: r.lv, d: dmgOf(mv, r.st, foeSt) }));
+}
+// 受ける: あいてのわざをじぶんが受けるダメージ(防御・HPはPLで変わる)
+function takeScan(fmv, foeSt) {
+  return myLadder().map(r => ({ lv: r.lv, d: dmgOf(fmv, foeSt, r.st), hp: r.st.hp }));
+}
+const shotsToKO = (hp, d) => Math.ceil(hp / d);
+
+// 与える側の判定。rows=giveScan / cur=いまのPLの行
+function giveVerdict(rows, foe, mv) {
+  const cur = rows.filter(r => r.lv <= ME.level).pop() || rows[0];
+  const next = rows.find(r => r.lv > cur.lv && r.d > cur.d);
+  const hp = foe.st.hp;
+  const base = { cur, dNow: cur.d, shotsNow: shotsToKO(hp, cur.d) };
+  if (next) {
+    const shotsNew = shotsToKO(hp, next.d);
+    const sec = (base.shotsNow - shotsNew) * mv.tn * 0.5;
+    return { ...base, type: 'up', at: next.lv, to: next.d, dPl: Math.round((next.lv - cur.lv) * 10) / 10,
+             shotsNew, sec, pct: Math.round((next.d - cur.d) / cur.d * 100) };
+  }
+  // 届かない: 攻撃個体値がいくつなら届くか(防御/HPはいまの個体のまま)
+  const cap = capV();
+  for (let a = ME.ivs[0] + 1; a <= 15; a++) {
+    const iv2 = [a, ME.ivs[1], ME.ivs[2]];
+    const lv2 = maxLevelFor(ME.key, iv2, cap, maxLvOf());
+    const d2 = dmgOf(mv, statsOf(ME.key, iv2, lv2, ME.shadow), foe.st);
+    if (d2 > cur.d) return { ...base, type: 'wall', needIv: a, to: d2 };
+  }
+  return { ...base, type: 'max' };
+}
+// 受ける側の判定
+function takeVerdict(rows, foe, fmv) {
+  const cur = rows.filter(r => r.lv <= ME.level).pop() || rows[0];
+  const base = { cur, dNow: cur.d, shotsNow: shotsToKO(cur.hp, cur.d) };
+  if (cur.d <= 1) return { ...base, type: 'min' };
+  const next = rows.find(r => r.lv > cur.lv && r.d < cur.d);
+  if (next) {
+    const shotsNew = shotsToKO(next.hp, next.d);
+    const sec = (shotsNew - base.shotsNow) * fmv.tn * 0.5;
+    return { ...base, type: 'up', at: next.lv, to: next.d, dPl: Math.round((next.lv - cur.lv) * 10) / 10,
+             shotsNew, sec };
+  }
+  const cap = capV();
+  for (let d = ME.ivs[1] + 1; d <= 15; d++) {
+    const iv2 = [ME.ivs[0], d, ME.ivs[2]];
+    const lv2 = maxLevelFor(ME.key, iv2, cap, maxLvOf());
+    const st2 = statsOf(ME.key, iv2, lv2, ME.shadow);
+    const d2 = dmgOf(fmv, foe.st, st2);
+    if (d2 < cur.d) return { ...base, type: 'wall', needIv: d, to: d2 };
+  }
+  return { ...base, type: 'max' };
+}
+
+// ---- ものさしバー(段の切れ目を幅で見せる。表示は いまの段の前後だけ=3段まで) ----
+function scaleBar(rows, curLv, dir) {
+  // 段ごとにまとめる(dir='give'は増える向き・'take'は減る向き)
+  const tiers = [];
+  for (const r of rows) {
+    const last = tiers[tiers.length - 1];
+    if (last && last.d === r.d) last.to = r.lv;
+    else tiers.push({ d: r.d, from: r.lv, to: r.lv });
+  }
+  const ci = tiers.findIndex(t => curLv >= t.from && curLv <= t.to);
+  if (ci < 0) return '';
+  const show = tiers.slice(Math.max(0, ci - 1), ci + 2);
+  // 段の幅を先に%で決めて、マーカーの位置も同じ幅の上で計算する(線形位置だとずれる)
+  const raw = show.map(t => Math.max(9, (t.to - t.from + 0.5)));
+  const total = raw.reduce((a, b) => a + b, 0);
+  const width = raw.map(w => w / total * 100);
+  const segs = show.map((t, i) => {
+    const isNext = dir === 'give' ? t.d > tiers[ci].d : t.d < tiers[ci].d;
+    const cls = t.d === tiers[ci].d ? 'cur' : isNext ? 'next' : 'past';
+    const lbl = t.d === tiers[ci].d ? `${t.d} ← いま` : String(t.d);
+    return `<div class="${cls}" style="flex:${width[i].toFixed(2)}">${lbl}</div>`;
+  }).join('');
+  // マーカー位置 = 前の段の幅の合計 + いる段の中での割合
+  const pos = v => {
+    let acc = 0;
+    for (let i = 0; i < show.length; i++) {
+      const t = show[i];
+      if (v >= t.from && v <= t.to) return acc + (v - t.from + 0.25) / (t.to - t.from + 0.5) * width[i];
+      acc += width[i];
+    }
+    return 100;
+  };
+  const clamp = v => Math.min(96, Math.max(4, v));
+  const nextTier = dir === 'give' ? tiers.slice(ci + 1).find(t => t.d > tiers[ci].d)
+                                  : tiers.slice(ci + 1).find(t => t.d < tiers[ci].d);
+  const mePos = clamp(pos(curLv));
+  let marks = `<span class="me" style="left:${mePos}%">▲PL${fmtLv(curLv)}</span>`;
+  if (nextTier && show.includes(nextTier)) {
+    const bpPos = clamp(pos(nextTier.from));
+    if (Math.abs(bpPos - mePos) > 11)   // いまのPLと重なるときは出さない(数字は結論ボックスにある)
+      marks += `<span class="bp" style="left:${bpPos}%">PL${fmtLv(nextTier.from)}</span>`;
+  }
+  return `<div class="scale"><div class="t">つよさのものさし（PL）— 色が変わるところが境目</div>
+    <div class="sbar">${segs}</div><div class="smk">${marks}</div></div>`;
+}
+
+// ---- 個体値バー(個体値0〜15を最大まで強化したときの到達点。個体選びの判断用) ----
+function ivBar(foe, mv, dir) {
+  const cap = capV(), cells = [];
+  const mineIv = dir === 'give' ? ME.ivs[0] : ME.ivs[1];
+  let dMine = null;
+  for (let x = 0; x <= 15; x++) {
+    const iv2 = dir === 'give' ? [x, ME.ivs[1], ME.ivs[2]] : [ME.ivs[0], x, ME.ivs[2]];
+    const lv2 = maxLevelFor(ME.key, iv2, cap, maxLvOf());
+    const st2 = statsOf(ME.key, iv2, lv2, ME.shadow);
+    const d = dir === 'give' ? dmgOf(mv, st2, foe.st) : dmgOf(mv, foe.st, st2);
+    cells.push({ x, d });
+    if (x === mineIv) dMine = d;
+  }
+  if (new Set(cells.map(c => c.d)).size === 1) return '';   // 個体値では変わらない対面なら出さない
+  const better = d => dir === 'give' ? d > dMine : d < dMine;
+  const html = cells.map(c => {
+    const cls = better(c.d) ? 'next' : c.d === dMine ? 'cur' : 'past';
+    const lbl = c.x === mineIv ? c.x : (c.x === 0 || c.x === 15) ? c.x : '';
+    return `<i class="${cls}${c.x === mineIv ? ' mine' : ''}${lbl !== '' ? ' lb' : ''}">${lbl}</i>`;
+  }).join('');
+  const statName = dir === 'give' ? '攻撃' : '防御';
+  // 境目の説明を1行で: 上の段に届く個体値があればそれを、無ければ自分の段の始まりを
+  const gold = cells.find(c => better(c.d));
+  const curStart = cells.find(c => c.d === dMine);
+  const note = gold
+    ? `<span class="g">${statName}の個体値 ${gold.x} 以上なら ${dMine}→${gold.d}</span>`
+    : `<span class="g">${statName}の個体値 ${curStart.x} が境目（いまは ${mineIv} で有利な側）</span>`;
+  return `<div class="ivbar"><div class="t">${statName}の個体値ごとの到達点（最大まで強化したとき・▲がいまの個体）</div>
+    <div class="ivcells">${html}</div>
+    <div class="ivnote">${note}</div></div>`;
+}
+
+// ---- 詳細カード ----
+function detailHTML(foe, rowId) {
+  const tab = DTAB[rowId] || 'give';
+  const mv = D.moves[ME.fast];
+  let body = '';
+  if (tab === 'give') {
+    const rows = giveScan(mv, foe.st);
+    const v = giveVerdict(rows, foe, mv);
+    let vb = '';
+    if (v.type === 'up') {
+      const buddy = v.at > 50 ? `（PL${fmtLv(v.at)} は最高の相棒ブーストの範囲です）` : '';
+      vb = `<div class="vbox up"><div class="hd">🔥 あと PL${v.dPl} で ${v.dNow} → ${v.to}</div>
+        <div class="fx"><span>1発 <b>+${v.pct}%</b></span><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>で倒せる</span>
+        ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>はやく倒せる</span>` : ''}</div>
+        ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
+    } else if (v.type === 'wall') {
+      vb = `<div class="vbox ng"><div class="hd">⚠ この個体では届きません</div>
+        <div class="nt">攻撃の個体値 <b>${v.needIv}</b> 以上の個体なら、最大まで強化すると ${v.dNow}→${v.to} に届きます</div></div>`;
+    } else {
+      vb = `<div class="vbox ok"><div class="hd">✅ 取り切っています</div>
+        <div class="nt">この対面で取れるダメージはいまが最大です（個体値15でも変わりません）</div></div>`;
+    }
+    body = `<div class="dsub">じぶんの <b>${mv.n}</b>（${mv.tn}ターン） → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
+      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">ダメージ</span>
+        <span class="r">${v.shotsNow}発で倒せる</span></div>
+      ${scaleBar(rows, v.cur.lv, 'give')}${vb}${ivBar(foe, mv, 'give')}`;
+  } else {
+    // 受ける: あいてのノーマルアタックを選べる(既定は環境の定番)
+    const pool = fastMoves(foe.key);
+    const sel = DTAB[rowId + ':fmv'] || foe.fast || pool[0];
+    const fmv = D.moves[sel];
+    const rows = takeScan(fmv, foe.st);
+    const v = takeVerdict(rows, foe, fmv);
+    let vb = '';
+    if (v.type === 'up') {
+      const buddy = v.at > 50 ? `（PL${fmtLv(v.at)} は最高の相棒ブーストの範囲です）` : '';
+      vb = `<div class="vbox up"><div class="hd">🛡 あと PL${v.dPl} で 被ダメ ${v.dNow} → ${v.to}</div>
+        <div class="fx"><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>耐える</span>
+        ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>長く戦える</span>` : ''}</div>
+        ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
+    } else if (v.type === 'wall') {
+      vb = `<div class="vbox ng"><div class="hd">⚠ この個体では減りません</div>
+        <div class="nt">防御の個体値 <b>${v.needIv}</b> 以上の個体なら ${v.dNow}→${v.to} に減ります</div></div>`;
+    } else if (v.type === 'min') {
+      vb = `<div class="vbox ok"><div class="hd">✅ これ以上減りません</div></div>`;
+    } else {
+      vb = `<div class="vbox ok"><div class="hd">✅ 有利な側にいます</div>
+        <div class="nt">この対面で受けるダメージはいまが最小です（強化しても変わりません）</div></div>`;
+    }
+    const chips = pool.length > 1 ? `<div class="fmvsel">${pool.map(id =>
+      `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}<small>${D.moves[id].tn}T</small></button>`).join('')}</div>` : '';
+    body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>（${fmv.tn}ターン） → じぶん</div>
+      ${chips}
+      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">被ダメージ</span>
+        <span class="r">${v.shotsNow}発 耐える</span></div>
+      ${scaleBar(rows, v.cur.lv, 'take')}${vb}${ivBar(foe, fmv, 'take')}`;
+  }
+  return `<div class="dtabs">
+      <button class="give" data-dtab="give" aria-pressed="${tab === 'give'}">💥 与える</button>
+      <button class="take" data-dtab="take" aria-pressed="${tab === 'take'}">🛡 受ける</button>
+    </div>${body}`;
+}
+
+// ---- 一覧 ----
+function rowHTML(foe, rowId, rank, verdict) {
+  const open = OPEN === rowId;
+  const chip = verdict.type === 'up'
+    ? `<span class="vchip up">🔥 あとPL${verdict.dPl} ${verdict.dNow}→${verdict.to}</span>`
+    : `<span class="vchip no">—</span>`;
+  return `<div class="bkrow${verdict.type === 'up' ? ' up' : ''}${open ? ' open' : ''}${rank == null ? ' pin' : ''}" data-row="${rowId}">
+    <div class="bkhead">
+      ${rank != null ? `<span class="rk">${rank}</span>` : `<span class="rk">🔎</span>`}
+      <span class="nm">${foe.shadow ? SHADOWMK : ''}<span>${foe.name}</span>${typeIcons(D.pokemon[foe.key], 15)}</span>
+      <span class="dm"><b>${verdict.dNow}</b>ダメ<small>・${verdict.shotsNow}発</small></span>
+      ${chip}<span class="arw">▶</span>
+    </div>
+    <div class="bkdetail">${open ? detailHTML(foe, rowId) : ''}</div>
+  </div>`;
+}
+
+function render() {
+  syncMeCard();
+  const listEl = $('list'), pinEl = $('pinbox'), sumEl = $('sumline');
+  if (!ME.key || !ME.fast) {
+    pinEl.innerHTML = '';
+    sumEl.style.display = 'none';
+    listEl.innerHTML = `<div class="empty">じぶんのポケモンを選ぶと、環境上位50匹への<br>ブレイクポイント判定がここに並びます</div>`;
+    updateUrl();
+    return;
+  }
+  const mv = D.moves[ME.fast];
+  // 固定したあいて(検索 or GBLから引き継ぎ)
+  if (PIN) {
+    const v = giveVerdict(giveScan(mv, PIN.st), PIN, mv);
+    pinEl.innerHTML = rowHTML(PIN, 'pin', null, v);
+  } else pinEl.innerHTML = '';
+  // 環境上位50匹
+  const rowsHtml = [];
+  let hot = 0;
+  metaList().forEach((e, i) => {
+    const foe = foeEntryOf(e);
+    const v = giveVerdict(giveScan(mv, foe.st), foe, mv);
+    if (v.type === 'up') hot++;
+    rowsHtml.push(rowHTML(foe, i, i + 1, v));
+  });
+  sumEl.style.display = '';
+  const lad = myLadder();
+  const atCapMax = lad.length && lad[lad.length - 1].lv <= ME.level;
+  const zeroNote = hot ? '' : atCapMax && capV()
+    ? '<br><small>この個体はCP上限の上限PLに達しています（PLの強化では変わりません。行を開くと個体値の境目が見えます）</small>'
+    : '<br><small>いまの個体で取れる境目は取り切っています（行を開くと個体値の境目が見えます）</small>';
+  sumEl.innerHTML = `環境上位${metaList().length}匹のうち、強化で伸びる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（🔥の行をタップすると、あとどれだけ強化すればいいかが出ます）</span>`;
+  listEl.innerHTML = rowsHtml.join('');
+  bindRows();
+  updateUrl();
+}
+
+function bindRows() {
+  document.querySelectorAll('.bkrow').forEach(el => {
+    const id = el.dataset.row === 'pin' ? 'pin' : +el.dataset.row;
+    el.querySelector('.bkhead').onclick = () => {
+      OPEN = OPEN === id ? null : id;
+      render();
+      if (OPEN !== null) {
+        const opened = document.querySelector('.bkrow.open');
+        if (opened) opened.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    };
+    el.querySelectorAll('[data-dtab]').forEach(b => b.onclick = ev => {
+      ev.stopPropagation();
+      DTAB[id] = b.dataset.dtab;
+      render();
+    });
+    el.querySelectorAll('[data-fmv]').forEach(b => b.onclick = ev => {
+      ev.stopPropagation();
+      DTAB[id + ':fmv'] = b.dataset.fmv;
+      render();
+    });
+  });
+}
+
+// ---- じぶんカードの同期 ----
+function syncMeCard() {
+  const has = !!ME.key;
+  $('ivrow').style.display = has ? 'flex' : 'none';
+  $('mvrow').style.display = has ? 'flex' : 'none';
+  $('meshadow').setAttribute('aria-pressed', ME.shadow);
+  $('meclr').style.display = $('meq').value ? 'block' : 'none';
+  if (!has) return;
+  $('ivA').value = ME.ivs[0]; $('ivD').value = ME.ivs[1]; $('ivH').value = ME.ivs[2];
+  $('ivL').value = ME.level;
+  const st = statsOf(ME.key, ME.ivs, ME.level, ME.shadow);
+  $('cpv').innerHTML = `CP <b>${st.cp}</b>` + (capV() && st.cp > capV() ? ` <span style="color:var(--red)">CP超過</span>` : '');
+  const pool = fastMoves(ME.key);
+  $('mvrow').innerHTML = `<span class="lbl">ノーマルアタック</span>` + pool.map(id =>
+    `<button class="mvchip" data-mv="${id}" aria-pressed="${id === ME.fast}">${D.moves[id].n}<small>${D.moves[id].tn}T</small></button>`).join('');
+  $('mvrow').querySelectorAll('[data-mv]').forEach(b => b.onclick = () => { ME.fast = b.dataset.mv; render(); });
+}
+
+// じぶんを理想個体値に戻す(リーグ切り替え・理想ボタン)
+function setIdeal() {
+  if (!ME.key) return;
+  const r1 = rank1(ME.key, capV());
+  ME.ivs = [...r1.ivs]; ME.level = r1.level; ME.edited = false;
+}
+function pickMe(key, opts) {
+  ME.key = key;
+  ME.shadow = !!(opts && opts.shadow) || (!!D.pokemon[key].shadow && ME.shadow && !(opts && 'shadow' in opts));
+  if (opts && opts.ivs) { ME.ivs = opts.ivs; ME.level = opts.level; ME.edited = true; }
+  else setIdeal();
+  ME.fast = (opts && opts.fast && D.moves[opts.fast]) ? opts.fast : defaultFast(key, ME.shadow, LG);
+  $('meq').value = (ME.shadow ? 'シャドウ' : '') + D.pokemon[key].n;
+  OPEN = null; DTAB = {};
+  render();
+}
+
+// ---- あいての固定(検索・GBLからの引き継ぎ) ----
+function pinFoe(key, opts, quiet) {
+  const shadow = !!(opts && opts.shadow);
+  let st;
+  if (opts && opts.st) st = opts.st;   // GBLから実数値そのまま
+  else {
+    const r1 = rank1(key, capV());
+    st = statsOf(key, r1.ivs, r1.level, shadow);
+  }
+  const e = ((window.META_MOVES || {})[LG] || {})[key + (shadow ? '|s' : '')];
+  PIN = { key, shadow, st, name: D.pokemon[key].n,
+          fast: (opts && opts.fast) || (e && e[0]) || null };
+  if (!quiet) {
+    OPEN = 'pin';
+    render();
+    window.scrollTo({ top: $('pinbox').offsetTop - 10, behavior: 'smooth' });
+  }
+}
+
+// ---- 検索欄(共通の作り: isComposing中は触らない・16px) ----
+function setupSearch(inpId, listId, clrId, onPick) {
+  const inp = $(inpId), list = $(listId), clr = $(clrId);
+  const sync = () => { clr.style.display = inp.value ? 'block' : 'none'; };
+  inp.addEventListener('compositionend', () => {
+    const v = toKata(inp.value);
+    if (v !== inp.value) inp.value = v;
+    inp.dispatchEvent(new Event('input'));
+  });
+  inp.addEventListener('input', e => {
+    if (e.isComposing) return;
+    const v = toKata(inp.value);
+    if (v !== inp.value) inp.value = v;
+    sync();
+    const q = toKata(inp.value.trim());
+    if (!q) { list.style.display = 'none'; return; }
+    const hit = [], sub = [];
+    for (const k of KEYS) {
+      const n = D.pokemon[k].n, i = n.indexOf(q.replace(/^シャドウ/, ''));
+      if (i === 0) hit.push(k); else if (i > 0) sub.push(k);
+      if (hit.length + sub.length >= SEARCH_MAX) break;
+    }
+    const hits = hit.concat(sub).slice(0, SEARCH_MAX);
+    if (!hits.length) { list.style.display = 'none'; return; }
+    list.innerHTML = hits.map(k =>
+      `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+    list.style.display = 'block';
+    list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+      list.style.display = 'none';
+      onPick(d.dataset.k);
+      sync();
+    });
+  });
+  clr.onclick = () => { inp.value = ''; list.style.display = 'none'; sync(); inp.focus(); };
+  document.addEventListener('click', e => {
+    if (!list.contains(e.target) && e.target !== inp) list.style.display = 'none';
+  });
+}
+setupSearch('meq', 'melist', 'meclr', k => pickMe(k));
+setupSearch('foeq', 'foelist', 'foeclr', k => pinFoe(k, { shadow: $('foeshadow').getAttribute('aria-pressed') === 'true' }));
+
+// ---- ★登録リスト(GBLと共通のlocalStorage) ----
+$('mestar').onclick = () => {
+  const win = $('mypkwin'), open = win.style.display !== 'block';
+  $('mestar').setAttribute('aria-pressed', open);
+  win.style.display = open ? 'block' : 'none';
+  if (!open) return;
+  let listData = [];
+  try { listData = JSON.parse(localStorage.getItem('gbl_mypoke')) || []; } catch (e) {}
+  if (!listData.length) {
+    win.innerHTML = '<div class="mypkempty">まだ登録がありません。GBL対面シミュで「★登録」したポケモンがここに並びます</div>';
+    return;
+  }
+  win.innerHTML = listData.map((m, i) => {
+    const p = D.pokemon[m.key];
+    if (!p) return '';
+    const iv = m.ivMode === 'manual' && m.mIvs ? `${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
+    return `<div class="mypkrow" data-i="${i}"><span>${m.shadow ? SHADOWMK : ''}${p.n}</span><i class="iv">${iv}</i></div>`;
+  }).join('');
+  win.querySelectorAll('.mypkrow').forEach(r => r.onclick = () => {
+    const m = listData[+r.dataset.i];
+    win.style.display = 'none';
+    $('mestar').setAttribute('aria-pressed', 'false');
+    pickMe(m.key, m.ivMode === 'manual' && m.mIvs
+      ? { shadow: m.shadow, ivs: m.mIvs.map(Number), level: +m.mLevel, fast: m.fast }
+      : { shadow: m.shadow, fast: m.fast });
+  });
+};
+
+// ---- シャドウ・個体値・PL・理想・リーグ ----
+$('meshadow').onclick = () => {
+  ME.shadow = $('meshadow').getAttribute('aria-pressed') !== 'true';
+  if (ME.key) {
+    ME.fast = ME.fast || defaultFast(ME.key, ME.shadow, LG);
+    $('meq').value = (ME.shadow ? 'シャドウ' : '') + D.pokemon[ME.key].n;
+  }
+  render();
+};
+$('foeshadow').onclick = () => {
+  const on = $('foeshadow').getAttribute('aria-pressed') !== 'true';
+  $('foeshadow').setAttribute('aria-pressed', on);
+  if (PIN) pinFoe(PIN.key, { shadow: on, fast: PIN.fast });
+};
+['ivA', 'ivD', 'ivH', 'ivL'].forEach((id, i) => {
+  $(id).addEventListener('change', () => {
+    if (!ME.key) return;
+    if (i < 3) {
+      const v = Math.max(0, Math.min(15, Math.round(+$(id).value || 0)));
+      ME.ivs[i] = v;
+    } else {
+      let v = Math.max(1, Math.min(maxLvOf(), Math.round((+$(id).value || 1) * 2) / 2));
+      ME.level = v;
+    }
+    ME.edited = true;
+    // CP超過なら上限内の最大PLへ落とす
+    const cap = capV();
+    if (cap && statsOf(ME.key, ME.ivs, ME.level, false).cp > cap)
+      ME.level = maxLevelFor(ME.key, ME.ivs, cap, maxLvOf());
+    render();
+  });
+});
+$('ideal').onclick = () => { setIdeal(); render(); };
+document.querySelectorAll('[data-lg]').forEach(b => b.onclick = () => {
+  if (LG === b.dataset.lg) return;
+  LG = b.dataset.lg;
+  document.querySelectorAll('[data-lg]').forEach(x => x.setAttribute('aria-pressed', x.dataset.lg === LG));
+  if (ME.key && !ME.edited) setIdeal();
+  else if (ME.key) {   // 手で入れた個体はPLだけ上限内へ
+    const cap = capV();
+    if (cap && statsOf(ME.key, ME.ivs, ME.level, false).cp > cap)
+      ME.level = maxLevelFor(ME.key, ME.ivs, cap, maxLvOf());
+  }
+  if (ME.key) ME.fast = defaultFast(ME.key, ME.shadow, LG);
+  R1C.clear();
+  // 固定したあいては新しいリーグの理想個体値で計算し直す(GBLから実数値ごと来たものはそのまま)
+  if (PIN && !PIN.rawSt) pinFoe(PIN.key, { shadow: PIN.shadow, fast: PIN.fast }, true);
+  OPEN = null;
+  render();
+});
+
+// ---- 使い方タブ ----
+$('helptab').onclick = () => {
+  const open = $('helpbody').style.display === 'none';
+  $('helpbody').style.display = open ? '' : 'none';
+  $('helptab').setAttribute('aria-expanded', open);
+};
+
+// ---- 共有URL ----
+function updateUrl() {
+  const q = new URLSearchParams();
+  if (LG !== '0') q.set('lg', LG);
+  if (ME.key) {
+    q.set('me', ME.key);
+    if (ME.shadow) q.set('msh', '1');
+    q.set('miv', ME.ivs.join('.'));
+    q.set('mpl', ME.level);
+    if (ME.fast) q.set('mv', ME.fast);
+  }
+  if (PIN) {
+    q.set('foe', PIN.key);
+    if (PIN.shadow) q.set('fsh', '1');
+    if (PIN.rawSt) q.set('fst', PIN.rawSt);
+    if (PIN.fast) q.set('fmv', PIN.fast);
+  }
+  const s = q.toString();
+  history.replaceState(null, '', s ? '?' + s : location.pathname);
+}
+function loadUrl() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('lg') && ['1500', '2500', '0'].includes(q.get('lg'))) LG = q.get('lg');
+  document.querySelectorAll('[data-lg]').forEach(x => x.setAttribute('aria-pressed', x.dataset.lg === LG));
+  const me = q.get('me');
+  if (me && D.pokemon[me]) {
+    const iv = (q.get('miv') || '').split('.').map(Number);
+    const pl = parseFloat(q.get('mpl'));
+    const opts = { shadow: q.get('msh') === '1', fast: q.get('mv') };
+    if (iv.length === 3 && iv.every(v => v >= 0 && v <= 15)) {
+      opts.ivs = iv;
+      // PL指定なし(個体値チェッカーからの形)は、その個体値の上限PLで始める。
+      // マスターはPL50から(51にすると相棒ブーストの境目が最初から消えてしまう)
+      opts.level = pl >= 1 ? pl : (capV() ? maxLevelFor(me, iv, capV(), isMega(me) ? 53 : 51) : 50);
+    }
+    pickMe(me, opts);
+  }
+  const foe = q.get('foe');
+  if (foe && D.pokemon[foe]) {
+    const opts = { shadow: q.get('fsh') === '1', fast: q.get('fmv') };
+    const fst = (q.get('fst') || '').split('~').map(Number);
+    if (fst.length === 3 && fst.every(v => v > 0)) {
+      opts.st = { atk: fst[0], def: fst[1], hp: fst[2], types: D.pokemon[foe].ty, name: D.pokemon[foe].n };
+    }
+    pinFoe(foe, opts);
+    if (opts.st) PIN.rawSt = q.get('fst');
+    $('foeq').value = (PIN.shadow ? 'シャドウ' : '') + PIN.name;
+    $('foeshadow').setAttribute('aria-pressed', PIN.shadow);
+  }
+  if (!me) render();
+}
+loadUrl();
+</script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+</body>
+</html>
