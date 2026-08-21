@@ -315,6 +315,17 @@ body.has-sticky{padding-top:52px}
 #cptbl th:nth-child(4),#cptbl td:nth-child(4){width:20%}
 #cptbl th:nth-child(5),#cptbl td:nth-child(5){width:20%}
 #cptbl td:nth-child(2){color:var(--ink)}
+/* 100位以内に入る確率。表とはくっつけず少し離すが、3リーグの列は表と同じ位置にそろえる */
+.probwrap{margin-bottom:10px}
+#cpprob td{border-bottom:none;padding:10px 5px;border-left:none}
+#cpprob td:nth-child(1){width:40%}
+#cpprob td:nth-child(2),#cpprob td:nth-child(3),#cpprob td:nth-child(4){width:20%;
+  font-size:1.05rem;font-weight:800;color:var(--mbronze)}
+/* 表と同じ位置(個体値とスーパーの境目)に縦線を入れる */
+#cpprob td:nth-child(2){border-left:1px solid var(--line2)}
+#cpprob .plabel{font-size:.72rem;font-weight:700;color:var(--sub);letter-spacing:.04em}
+#cpprob .z{color:var(--sub);font-size:.86rem;font-weight:700}
+#cpprob .u{font-size:.7rem;font-weight:700;margin-left:1px}
 .rkc.r1{color:var(--mgold)} .rkc.r10{color:var(--msilver)} .rkc.r100{color:var(--mbronze)}
 .cpempty{font-size:.8rem;color:var(--sub);text-align:center;padding:18px 6px;line-height:1.7}
 .cpcnt{color:var(--cy);font-weight:800;margin-left:6px;letter-spacing:0}
@@ -446,6 +457,12 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div class="tophead">
     <label class="sec">当てはまる個体値<span class="cpcnt" id="cpcnt"></span></label>
   </div>
+  <div class="tblwrap probwrap" id="cpprobwrap">
+    <table id="cpprob"><tbody><tr>
+      <td class="plabel" colspan="2" title="当てはまる組み合わせのうち、100位以内に入るものの割合です(どの組み合わせも同じ確率で出るものとして計算)">100位以内の確率</td>
+      <td id="pb-gl"></td><td id="pb-ul"></td><td id="pb-ml"></td>
+    </tr></tbody></table>
+  </div>
   <div class="tblwrap" id="cptblwrap">
     <table id="cptbl">
       <thead><tr>
@@ -519,6 +536,9 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     野生で出たポケモンにマスターボールを使うか決めるときに使います。
     出るのは<b>ありうる組み合わせの全部</b>で、そのどれかが当たり、というものです（どれかは分かりません）。
     順位は1位が金・10位以内が銀・100位以内が銅で色が付きます。</p>
+  <p>一覧の上には、<b>3リーグそれぞれで100位以内に入る確率</b>を出します（マスターボールを使うかの判断用）。
+    当てはまる組み合わせのうち100位以内が何通りあるかの割合で、<b>どの組み合わせも同じ確率で出るものとして</b>計算しています。
+    列は下の表と同じ並び（スーパー・ハイパー・マスター）です。</p>
   <p>探すのは<b>PL1〜35の整数レベル</b>です（野生で出るのは整数レベルなので、強化したあとの半端なPLは対象外）。
     順位は「入手方法」「PL上限」の前提で数えるので、<b>野生の想定なら入手方法は「野生」（最低個体値0）</b>にします
     （「CP→個体値」を押すと自動で野生になり、もう一度押して戻すと元の設定に戻ります）。</p>
@@ -804,6 +824,7 @@ function renderCp(){
   const wrap=document.getElementById('cptblwrap'), empty=document.getElementById('cpempty');
   if(!pats.length){
     wrap.style.display='none';
+    document.getElementById('cpprobwrap').style.display='none';
     empty.style.display='block';
     // PL35より上(＝強化したあと)なら当てはまるCPかどうかまで見て、その旨を出す。
     // 「ありません」だけだと、野生では出ないCPなのか入力ミスなのかが分からない
@@ -814,6 +835,16 @@ function renderCp(){
   }
   wrap.style.display='';
   empty.style.display='none';
+  // 100位以内に入る割合。どの組み合わせも同じ確率で出るものとして数える
+  document.getElementById('cpprobwrap').style.display='';
+  ['gl','ul','ml'].forEach(lg=>{
+    const n=pats.filter(r=>{ const v=rankOf(lg,r); return v && v<=100; }).length;
+    const pct=n/pats.length*100;
+    const el=document.getElementById('pb-'+lg);
+    if(!n){ el.innerHTML='<span class="z">なし</span>'; }
+    else if(pct<1){ el.innerHTML='1<span class="u">%未満</span>'; }
+    else { el.innerHTML=Math.round(pct)+'<span class="u">%</span>'; }
+  });
   const cell=(lg,r)=>{
     const v=rankOf(lg,r);
     return v? '<span class="rkc '+medalCls(v)+'">'+v+'位</span>' : '<span class="rkc">—</span>';
