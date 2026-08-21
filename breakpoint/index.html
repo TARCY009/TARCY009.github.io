@@ -131,21 +131,27 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .vchip{flex:none;font-size:.68rem;font-weight:800;border-radius:999px;padding:4px 10px;white-space:nowrap}
 .vchip.up{background:var(--goldgrad);color:var(--ongold);box-shadow:0 3px 9px rgba(255,213,74,.3)}
 .vchip.no{background:var(--chip);color:var(--sub);border:1px solid var(--line)}
+.vchip.lose{background:linear-gradient(160deg,#ff9f8c,#e04a2f 45%,#992a17);color:#fff;box-shadow:0 3px 9px rgba(224,74,47,.3)}
+.bkrow.dn{border-color:var(--ngline)}
+/* ターンバッジ。1Tわざ=境目の影響が最大なので金で点灯させる */
+.tb{font-style:normal;font-size:.6rem;font-weight:800;padding:1px 6px;border-radius:999px;
+  background:rgba(140,155,190,.22);line-height:1.5}
+.tb1{background:var(--goldgrad);color:var(--ongold);box-shadow:0 2px 6px rgba(255,213,74,.4)}
+/* 与える/受けるの切り替え(一覧の直上) */
+.dirrow{margin:2px 2px 10px}
+.dirrow button{flex:1 1 auto}
+/* 1対1シミュへの遷移ボタン */
+.simlink{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;padding:10px;
+  border-radius:11px;font-size:.8rem;font-weight:800;text-decoration:none;color:#fff;
+  background:linear-gradient(160deg,#9fc0ff 0%,#3b6ef0 45%,#23429c 100%);
+  box-shadow:0 4px 14px rgba(59,110,240,.35),inset 0 1px 0 rgba(255,255,255,.4);
+  transition:transform .12s ease}
+.simlink:hover{transform:translateY(-1px)}
 .bkhead .arw{flex:none;color:var(--sub);font-size:.7rem;transition:transform .15s}
 .bkrow.open .arw{transform:rotate(90deg)}
 .bkdetail{border-top:1px solid var(--rowline);padding:12px 12px 14px;display:none}
 .bkrow.open .bkdetail{display:block}
 /* ---- 詳細カード ---- */
-.dtabs{display:flex;gap:2px;margin-bottom:12px}
-.dtabs button{flex:1;font:inherit;font-size:.8rem;font-weight:800;padding:8px 0;cursor:pointer;border:none;
-  background:linear-gradient(180deg,#1e2850,#151d38);color:#9fb0d0}
-:root.light .dtabs button{background:linear-gradient(180deg,#fff,#eff3fc);color:#5d6b7a}
-.dtabs button:first-child{border-radius:10px 4px 4px 10px}
-.dtabs button:last-child{border-radius:4px 10px 10px 4px}
-.dtabs button[aria-pressed="true"].give{background:var(--goldgrad);color:var(--ongold);
-  box-shadow:0 3px 10px rgba(255,213,74,.3)}
-.dtabs button[aria-pressed="true"].take{background:var(--violgrad);color:#fff;
-  box-shadow:0 3px 10px rgba(176,108,255,.32)}
 .dsub{font-size:.72rem;color:var(--sub);margin-bottom:4px}
 .dsub b{color:var(--ink)}
 .fmvsel{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 2px}
@@ -264,6 +270,10 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <p class="expl" style="font-size:.68rem;color:var(--sub);margin:8px 0 0;line-height:1.7">検索したあいては一覧のいちばん上に固定されます。下の環境上位50匹は理想個体値、検索したあいては理想個体値（GBL対面シミュから来たときはその画面の個体値そのまま）で計算します。</p>
 </div>
 
+<div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
+  <button class="t-gold" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">💥 与える</button>
+  <button class="t-shadow" data-dir="take" aria-pressed="false" title="相手のノーマルアタックから受けるダメージの境目を見ます">🛡 受ける</button>
+</div></div>
 <div id="pinbox"></div>
 <div class="sumline" id="sumline" style="display:none"></div>
 <div id="list"></div>
@@ -274,9 +284,11 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <p>ポケモンGOのダメージは整数に切り捨てられるため、攻撃の実数値が少し上がっても<b>ダメージは階段状にしか増えません</b>。その「段が上がる境目」がブレイクポイントです。とくに<b>1ターン(0.5秒)のノーマルアタック</b>は、ダメージが5→6になるだけで火力が20%上がるため影響が大きく、マスターリーグでは勝敗を分けます。</p>
   <h4>この画面でわかること</h4>
   <ul>
-    <li><b>一覧</b>: いまの個体（個体値・PL）のまま強化すると、環境上位50匹のどの相手にダメージ+1を取れるか。🔥のついた相手が「強化で伸びる相手」です</li>
-    <li><b>行をタップ</b>: その相手との詳細。あとどれだけ強化すれば届くか（ものさしバー）、個体値がいくつなら届くか（個体値バー）が見えます</li>
-    <li><b>🛡 受ける</b>: あいてのノーマルアタックをいくつで受けられるか。防御側にも同じ境目があります</li>
+    <li><b>💥与える／🛡受ける</b>（一覧の上のタブ）: 一覧全体の視点を切り替えます。与える=じぶんのノーマルアタックの境目／受ける=あいてのノーマルアタックをいくつで受けるか</li>
+    <li><b>マスターの一覧</b>: いまの個体のまま強化すると、どの相手にダメージ+1を取れるか。🔥が「強化で伸びる相手」です</li>
+    <li><b>スーパー・ハイパーの一覧</b>: CP制限があるリーグでは、防御・HPの個体値を下げるとPLを上げられるため、<b>攻撃だけでなく全部の個体値がダメージに効きます</b>。そこで「ブレイクを取れる個体に変えると、🛡0-0/1-1/2-2の3パターンの合計勝ち数が変わるか」をシミュレートし、🔥勝ち+1／⚠勝ち-1のチップで出します（⚠は耐久を削るぶん逆に不利になる相手）</li>
+    <li><b>行をタップ</b>: その相手との詳細。あとどれだけ強化すれば届くか（ものさしバー）、届く個体の例、1対1シミュへの遷移ボタンが出ます</li>
+    <li><b>1T🔥のわざ</b>: 1ターンわざはダメージ+1の影響がいちばん大きい（5→6で+20%）ので金色で目立たせています</li>
   </ul>
   <h4>計算の前提</h4>
   <ul>
@@ -286,6 +298,8 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4＋相棒で53まで</li>
     <li>SPアタックは対象外です。SPの+1はバトル全体で1〜2回しか発生せず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
   </ul>
+  <h4>勝敗シミュレートの前提</h4>
+  <p>あいては理想個体値・人が確認した実戦の定番わざ構成。じぶんのSPアタックも定番構成（画面で選んだノーマルアタック＋確定値のSP）。ブラフなし・確率わざ不発・最適タイミングで、GBL対面シミュの一覧系と同じ前提です。</p>
   <h4>入口</h4>
   <p>GBL対面シミュの1対1の結果、個体値チェッカーの結果からもこのページへ飛べます。対面や個体値は引き継がれるので、入力し直す必要はありません。</p>
 </div>
@@ -309,10 +323,15 @@ const SHADOWMK = '<i class="shadowmark nmk"></i>';
 const typeIcons = (p, size) => window.typePairHTML(p.ty.map(t => D.typeJa[t]), size || 16);
 const SEARCH_MAX = 100;
 const fmtLv = l => (Math.round(l * 10) / 10) % 1 ? l.toFixed(1) : String(Math.round(l));
+// ターンバッジ。1Tわざは境目の影響が最大(1発+1で火力+20%以上)なので金で点灯させる
+const tnBadge = tn => `<i class="tb${tn === 1 ? ' tb1' : ''}" title="${tn === 1
+  ? '1ターンわざ。ダメージ+1の影響がいちばん大きいわざです'
+  : tn + 'ターンわざ。ターン数が少ないわざほどブレイクポイントの影響が大きくなります'}">${tn}T${tn === 1 ? '🔥' : ''}</i>`;
 
 // ---- 画面状態 ----
 // LG: '1500' | '2500' | '0'(マスター)。ME: じぶんの個体。PIN: 検索/引き継ぎで固定したあいて
 let LG = '0';
+let DIR = 'give';   // 一覧全体の視点(💥与える / 🛡受ける)
 let ME = { key: null, shadow: false, ivs: [15, 15, 15], level: 50, fast: null, edited: false };
 let PIN = null;   // { key, shadow, atk, def, hp, name, fast(あいてのわざの初期値), label }
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
@@ -402,10 +421,22 @@ function defaultFast(key, shadow, lg) {
 
 // ---- 環境リスト ----
 const metaList = () => (window.META_LISTS || {})[LG] || [];
-function foeEntryOf(e) {   // メタ行 → 計算用のあいて(理想個体値)
+function foeEntryOf(e) {   // メタ行 → 計算用のあいて(理想個体値・シミュ設定つき)
   const r1 = rank1(e.k, capV());
   const st = statsOf(e.k, r1.ivs, r1.level, !!e.s);
-  return { key: e.k, shadow: !!e.s, st, fast: e.f, name: D.pokemon[e.k].n };
+  const cfg = { key: e.k, ivs: r1.ivs, level: r1.level, shadow: !!e.s, timing: 'optimal', cap: capV(),
+                bluff: false, fast: e.f || fastMoves(e.k)[0], charged: [e.c1, e.c2].filter(Boolean) };
+  return { key: e.k, shadow: !!e.s, st, fast: e.f, name: D.pokemon[e.k].n, cfg };
+}
+// SPアタック2本(勝敗シミュ用): 環境の確定値 > タイプ一致込みダメージ効率の上位2本
+function chargedOf(key, shadow) {
+  const mm = ((window.META_MOVES || {})[LG] || {});
+  const row = mm[key + (shadow ? '|s' : '')] || mm[key];
+  if (row) return [row[1], row[2]].filter(id => id && D.moves[id]);
+  const p = D.pokemon[key];
+  const pool = [...new Set([...(p.c || []), ...(p.ec || [])])].filter(id => D.moves[id]);
+  const dpe = id => { const m = D.moves[id]; return m.p * (p.ty.includes(m.t) ? 1.2 : 1) / m.eg; };
+  return pool.sort((x, y) => dpe(y) - dpe(x)).slice(0, 2);
 }
 
 // ---- ブレイクポイント計算 ----
@@ -418,6 +449,80 @@ function takeScan(fmv, foeSt) {
   return myLadder().map(r => ({ lv: r.lv, d: dmgOf(fmv, foeSt, r.st), hp: r.st.hp }));
 }
 const shotsToKO = (hp, d) => Math.ceil(hp / d);
+
+// ---- CP制限リーグ: 全個体値4096通り(各の上限PLの実数値)。ブレイク個体の探索に使う ----
+// CP制限では防御・HPの個体値を下げるとPLを上げられる=攻撃実数値が上がるため、
+// 攻撃個体値だけを見ると「低個体のほうが届く」逆転を見逃す(実例: アーマーガアのすなかけ)
+const ivtCache = new Map();
+function ivTable() {
+  const ck = [ME.key, LG, ME.shadow ? 1 : 0].join('|');
+  if (ivtCache.has(ck)) return ivtCache.get(ck);
+  const cap = capV(), rows = [];
+  for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+    const ivs = [a, d, h];
+    const lv = maxLevelFor(ME.key, ivs, cap, maxLvOf());
+    rows.push({ ivs, level: lv, st: statsOf(ME.key, ivs, lv, ME.shadow) });
+  }
+  ivtCache.set(ck, rows);
+  return rows;
+}
+// 与ダメの段を1つ上げられる個体(=ブレイク個体)。候補の中では耐久(防×HP)最大を代表にする
+function breakRepGive(mv, foe, dNow) {
+  const stab = D.pokemon[ME.key].ty.includes(mv.t) ? 1.2 : 1;
+  const K = 0.5 * mv.p * E.effectiveness(D, mv.t, foe.st.types) * stab * 1.3 / foe.st.def;
+  const atkReq = dNow / K;   // ダメ=floor(攻×K)+1 なので、攻≧これで dNow+1 以上
+  let best = null;
+  for (const r of ivTable()) {
+    if (r.st.atk < atkReq) continue;
+    const bulk = r.st.def * r.st.hp;
+    if (!best || bulk > best.bulk) best = { ...r, bulk };
+  }
+  if (best) best.d = Math.floor(best.st.atk * K) + 1;
+  return best;
+}
+// 被ダメの段を1つ下げられる個体。候補の中では残り(攻×HP)最大を代表にする
+function breakRepTake(fmv, foe, dNow) {
+  if (dNow <= 1) return null;
+  const stab = foe.st.types.includes(fmv.t) ? 1.2 : 1;
+  const C = 0.5 * fmv.p * foe.st.atk * E.effectiveness(D, fmv.t, D.pokemon[ME.key].ty) * stab * 1.3;
+  const defReq = C / (dNow - 1);   // 被ダメ=floor(C÷防)+1 なので、防＞これで dNow-1 以下
+  let best = null;
+  for (const r of ivTable()) {
+    if (r.st.def <= defReq) continue;
+    const rest = r.st.atk * r.st.hp;
+    if (!best || rest > best.rest) best = { ...r, rest };
+  }
+  if (best) best.d = Math.floor(C / best.st.def) + 1;
+  return best;
+}
+// 3シールド(0-0/1-1/2-2)の勝ち数。前提はGBLの一覧系と同じ(ブラフなし・確率わざ不発・最適タイミング)
+const SIMOPT = { buffMode: 'none' };
+function winsOf(ivs, level, foeCfg) {
+  let w = 0;
+  for (const sh of [0, 1, 2]) {
+    const L = { key: ME.key, ivs, level, shadow: ME.shadow, timing: 'optimal', cap: capV(),
+                bluff: false, shields: sh, fast: ME.fast, charged: chargedOf(ME.key, ME.shadow) };
+    if (E.simulate(D, L, { ...foeCfg, shields: sh }, SIMOPT).winner === 0) w++;
+  }
+  return w;
+}
+// ブレイク個体との勝敗くらべ(結果は対面ごとに1回だけ計算して覚える)
+let brkCache = { sig: null, map: new Map() };
+function breakWins(mv, foe, dNow) {
+  const sig = [ME.key, ME.ivs.join('.'), ME.level, ME.shadow ? 1 : 0, LG, ME.fast].join('|');
+  if (brkCache.sig !== sig) brkCache = { sig, map: new Map() };
+  const ck = foe.key + (foe.shadow ? '|s' : '');
+  if (brkCache.map.has(ck)) return brkCache.map.get(ck);
+  let out = null;
+  const rep = breakRepGive(mv, foe, dNow);
+  if (rep && foe.cfg) {
+    const wNow = winsOf(ME.ivs, ME.level, foe.cfg);
+    const wBrk = winsOf(rep.ivs, rep.level, foe.cfg);
+    out = { rep, wNow, wBrk, diff: wBrk - wNow };
+  } else if (rep) out = { rep };
+  brkCache.map.set(ck, out);
+  return out;
+}
 
 // 与える側の判定。rows=giveScan / cur=いまのPLの行
 function giveVerdict(rows, foe, mv) {
@@ -544,10 +649,10 @@ function ivBar(foe, mv, dir) {
 
 // ---- 詳細カード ----
 function detailHTML(foe, rowId) {
-  const tab = DTAB[rowId] || 'give';
+  const capped = !!capV();
   const mv = D.moves[ME.fast];
   let body = '';
-  if (tab === 'give') {
+  if (DIR === 'give') {
     const rows = giveScan(mv, foe.st);
     const v = giveVerdict(rows, foe, mv);
     let vb = '';
@@ -557,17 +662,39 @@ function detailHTML(foe, rowId) {
         <div class="fx"><span>1発 <b>+${v.pct}%</b></span><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>で倒せる</span>
         ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>はやく倒せる</span>` : ''}</div>
         ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
-    } else if (v.type === 'wall') {
-      vb = `<div class="vbox ng"><div class="hd">⚠ この個体では届きません</div>
-        <div class="nt">攻撃の個体値 <b>${v.needIv}</b> 以上なら ${v.dNow}→${v.to} に届きます（最大強化時）</div></div>`;
-    } else {
-      vb = `<div class="vbox ok"><div class="hd">✅ ダメージを最大化できています</div>
-        <div class="nt">強化や個体値では変わりません</div></div>`;
     }
-    body = `<div class="dsub"><b>${mv.n}</b>（${mv.tn}T） → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
+    let extra = '';
+    if (capped) {
+      // CP制限: 4096通りからブレイク個体を探し、勝敗(🛡0-0/1-1/2-2の合計)のちがいまで見せる
+      const b = breakWins(mv, foe, v.dNow);
+      if (b && b.wNow != null) {
+        const ex = `届く個体の例: <b>${b.rep.ivs.join('/')}</b> PL${fmtLv(b.rep.level)}（CP${b.rep.st.cp}・ダメージ ${v.dNow}→${b.rep.d}）`;
+        extra = b.diff > 0
+          ? `<div class="vbox up"><div class="hd">🔥 ブレイクすると勝ちが増えます（🛡3パターン合計 ${b.wNow}勝 → ${b.wBrk}勝）</div><div class="nt">${ex}</div></div>`
+          : b.diff < 0
+          ? `<div class="vbox ng"><div class="hd">⚠ ブレイクすると勝ちが減ります（${b.wNow}勝 → ${b.wBrk}勝）</div><div class="nt">耐久を削ってPLを上げるぶん、逆に不利になる相手です<br>${ex}</div></div>`
+          : `<div class="vbox ok"><div class="hd">ブレイクしても勝敗は変わりません（${b.wNow}勝のまま）</div><div class="nt">${ex}</div></div>`;
+      } else if (b) {
+        extra = `<div class="vbox up"><div class="nt">届く個体の例: <b>${b.rep.ivs.join('/')}</b> PL${fmtLv(b.rep.level)}（CP${b.rep.st.cp}・ダメージ ${v.dNow}→${b.rep.d}）</div></div>`;
+      } else if (v.type !== 'up') {
+        extra = `<div class="vbox ok"><div class="hd">✅ ダメージを最大化できています</div>
+          <div class="nt">どの個体値・PLでも変わりません（4096通りすべて確認済み）</div></div>`;
+      }
+    } else {
+      // マスター: PL自由なので攻撃個体値だけが効く=従来の判定とバーが正確
+      if (v.type === 'wall') {
+        vb += `<div class="vbox ng"><div class="hd">⚠ この個体では届きません</div>
+          <div class="nt">攻撃の個体値 <b>${v.needIv}</b> 以上なら ${v.dNow}→${v.to} に届きます（最大強化時）</div></div>`;
+      } else if (v.type === 'max') {
+        vb += `<div class="vbox ok"><div class="hd">✅ ダメージを最大化できています</div>
+          <div class="nt">強化や個体値では変わりません</div></div>`;
+      }
+      extra = ivBar(foe, mv, 'give');
+    }
+    body = `<div class="dsub"><b>${mv.n}</b>${tnBadge(mv.tn)} → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
       <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">ダメージ</span>
         <span class="r">${v.shotsNow}発で倒せる</span></div>
-      ${scaleBar(rows, v.cur.lv, 'give')}${vb}${ivBar(foe, mv, 'give')}`;
+      ${scaleBar(rows, v.cur.lv, 'give')}${vb}${extra}`;
   } else {
     // 受ける: あいてのノーマルアタックを選べる(既定は環境の定番)
     const pool = fastMoves(foe.key);
@@ -582,79 +709,146 @@ function detailHTML(foe, rowId) {
         <div class="fx"><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>耐える</span>
         ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>長く戦える</span>` : ''}</div>
         ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
-    } else if (v.type === 'wall') {
-      vb = `<div class="vbox ng"><div class="hd">⚠ この個体では減らせません</div>
-        <div class="nt">防御の個体値 <b>${v.needIv}</b> 以上なら ${v.dNow}→${v.to} に減ります（最大強化時）</div></div>`;
     } else if (v.type === 'min') {
       vb = `<div class="vbox ok"><div class="hd">✅ これ以上減りません</div></div>`;
-    } else {
-      vb = `<div class="vbox ok"><div class="hd">✅ 被ダメージを最小化できています</div>
-        <div class="nt">強化や個体値では変わりません</div></div>`;
+    }
+    let extra = '';
+    if (capped && v.type !== 'min') {
+      const rep = breakRepTake(fmv, foe, v.dNow);
+      if (rep) {
+        const w = foe.cfg ? { now: winsOf(ME.ivs, ME.level, foe.cfg), brk: winsOf(rep.ivs, rep.level, foe.cfg) } : null;
+        const ex = `減らせる個体の例: <b>${rep.ivs.join('/')}</b> PL${fmtLv(rep.level)}（CP${rep.st.cp}・被ダメ ${v.dNow}→${rep.d}）`;
+        const wd = w ? (w.brk > w.now ? `<div class="hd">🔥 この個体なら勝ちが増えます（🛡3パターン合計 ${w.now}勝 → ${w.brk}勝）</div>`
+          : w.brk < w.now ? `<div class="hd">⚠ この個体だと勝ちは減ります（${w.now}勝 → ${w.brk}勝）</div>`
+          : `<div class="hd">勝敗は変わりません（${w.now}勝のまま）</div>`) : '';
+        extra = `<div class="vbox ${w && w.brk > w.now ? 'up' : w && w.brk < w.now ? 'ng' : 'ok'}">${wd}<div class="nt">${ex}</div></div>`;
+      } else if (v.type !== 'up') {
+        extra = `<div class="vbox ok"><div class="hd">✅ 被ダメージを最小化できています</div>
+          <div class="nt">どの個体値・PLでも変わりません（4096通りすべて確認済み）</div></div>`;
+      }
+    } else if (!capped) {
+      if (v.type === 'wall') {
+        vb += `<div class="vbox ng"><div class="hd">⚠ この個体では減らせません</div>
+          <div class="nt">防御の個体値 <b>${v.needIv}</b> 以上なら ${v.dNow}→${v.to} に減ります（最大強化時）</div></div>`;
+      } else if (v.type === 'max') {
+        vb += `<div class="vbox ok"><div class="hd">✅ 被ダメージを最小化できています</div>
+          <div class="nt">強化や個体値では変わりません</div></div>`;
+      }
+      extra = ivBar(foe, fmv, 'take');
     }
     const chips = pool.length > 1 ? `<div class="fmvsel">${pool.map(id =>
-      `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}<small>${D.moves[id].tn}T</small></button>`).join('')}</div>` : '';
-    body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>（${fmv.tn}T） → じぶん</div>
+      `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}${tnBadge(D.moves[id].tn)}</button>`).join('')}</div>` : '';
+    body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>${tnBadge(fmv.tn)} → じぶん</div>
       ${chips}
       <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">被ダメージ</span>
         <span class="r">${v.shotsNow}発 耐える</span></div>
-      ${scaleBar(rows, v.cur.lv, 'take')}${vb}${ivBar(foe, fmv, 'take')}`;
+      ${scaleBar(rows, v.cur.lv, 'take')}${vb}${extra}`;
   }
-  return `<div class="dtabs">
-      <button class="give" data-dtab="give" aria-pressed="${tab === 'give'}">💥 与える</button>
-      <button class="take" data-dtab="take" aria-pressed="${tab === 'take'}">🛡 受ける</button>
-    </div>${body}`;
+  const sel = DIR === 'take' ? (DTAB[rowId + ':fmv'] || foe.fast) : foe.fast;
+  return `${body}<a class="simlink" href="${duelUrl(foe, sel)}">⚔️ 1対1シミュで詳しく見る ↗</a>`;
+}
+
+// GBLの1対1シミュへ、この対面(リーグ・個体値・わざ)を引き継いで飛ぶ
+function duelUrl(foe, foeFast) {
+  const q = new URLSearchParams();
+  q.set('lg', capV() || 0);
+  q.set('l', ME.key); q.set('r', foe.key);
+  if (ME.shadow) q.set('shl', 1);
+  if (foe.shadow) q.set('shr', 1);
+  q.set('il', ME.ivs.join('.') + '.' + ME.level);
+  // わざはSPまで渡す(1対1は「わざを選ぶまで結果を出さない」ので、渡さないと開いても結果が出ない)
+  const mvOf = (fast, ch) => [fast ? '!' + fast : '', ch[0] ? '!' + ch[0] : '', ch[1] || ''].join('~').replace(/~+$/, '');
+  if (ME.fast) q.set('mvl', mvOf(ME.fast, chargedOf(ME.key, ME.shadow)));
+  const fc = foe.cfg ? foe.cfg.charged : chargedOf(foe.key, foe.shadow);
+  if (foeFast) q.set('mvr', mvOf(foeFast, fc || []));
+  return '/gbl/?' + q.toString();
 }
 
 // ---- 一覧 ----
-function rowHTML(foe, rowId, rank, verdict) {
+function rowHTML(foe, rowId, rank, v, winChip) {
   const open = OPEN === rowId;
-  const chip = verdict.type === 'up'
-    ? `<span class="vchip up">🔥 あとPL${verdict.dPl}<small> ${verdict.dNow}→${verdict.to}</small></span>`
-    : `<span class="vchip no">—</span>`;
-  return `<div class="bkrow${verdict.type === 'up' ? ' up' : ''}${open ? ' open' : ''}${rank == null ? ' pin' : ''}" data-row="${rowId}">
+  // チップ: CP制限=ブレイクで勝敗が変わるか / マスター=あとPL○で届くか
+  const chip = winChip != null ? winChip
+    : v.type === 'up'
+      ? `<span class="vchip up">${DIR === 'give' ? '🔥' : '🛡'} あとPL${v.dPl}<small> ${v.dNow}→${v.to}</small></span>`
+      : `<span class="vchip no">—</span>`;
+  const hot = chip.includes('vchip up');
+  const dn = chip.includes('vchip lose');
+  const dm = DIR === 'give'
+    ? `<b>${v.dNow}</b>ダメ<small>・${v.shotsNow}発</small>`
+    : `被<b>${v.dNow}</b><small>・${v.shotsNow}発耐え</small>`;
+  return `<div class="bkrow${hot ? ' up' : ''}${dn ? ' dn' : ''}${open ? ' open' : ''}${rank == null ? ' pin' : ''}" data-row="${rowId}">
     <div class="bkhead">
       ${rank != null ? `<span class="rk">${rank}</span>` : `<span class="rk">🔎</span>`}
       <span class="nm">${foe.shadow ? SHADOWMK : ''}<span>${foe.name}</span>${typeIcons(D.pokemon[foe.key], 15)}</span>
-      <span class="dm"><b>${verdict.dNow}</b>ダメ<small>・${verdict.shotsNow}発</small></span>
+      <span class="dm">${dm}</span>
       ${chip}<span class="arw">▶</span>
     </div>
     <div class="bkdetail">${open ? detailHTML(foe, rowId) : ''}</div>
   </div>`;
 }
 
+// 行1件ぶんの判定(視点と、CP制限なら勝敗チップも)
+function calcRow(foe, rowId) {
+  const mv = D.moves[ME.fast];
+  let v;
+  if (DIR === 'give') v = giveVerdict(giveScan(mv, foe.st), foe, mv);
+  else {
+    const sel = DTAB[rowId + ':fmv'] || foe.fast || fastMoves(foe.key)[0];
+    v = takeVerdict(takeScan(D.moves[sel], foe.st), foe, D.moves[sel]);
+  }
+  let winChip = null, diff = null;
+  if (capV() && foe.cfg) {
+    // 勝敗チップは「与えるの段を1つ上げるブレイク」基準(視点によらず同じ値)
+    const dGive = DIR === 'give' ? v.dNow : dmgOf(mv, statsOf(ME.key, ME.ivs, ME.level, ME.shadow), foe.st);
+    const b = breakWins(mv, foe, dGive);
+    diff = b && b.wNow != null ? b.diff : null;
+    winChip = diff > 0 ? `<span class="vchip up">🔥 勝ち+${diff}</span>`
+      : diff < 0 ? `<span class="vchip lose">⚠ 勝ち${diff}</span>`
+      : `<span class="vchip no">—</span>`;
+  }
+  return { v, winChip, diff };
+}
+
 function render() {
   syncMeCard();
-  const listEl = $('list'), pinEl = $('pinbox'), sumEl = $('sumline');
+  const listEl = $('list'), pinEl = $('pinbox'), sumEl = $('sumline'), dirEl = $('dirrow');
   if (!ME.key || !ME.fast) {
     pinEl.innerHTML = '';
     sumEl.style.display = 'none';
+    dirEl.style.display = 'none';
     listEl.innerHTML = `<div class="empty">じぶんのポケモンを選ぶと、環境上位50匹への<br>ブレイクポイント判定がここに並びます</div>`;
     updateUrl();
     return;
   }
-  const mv = D.moves[ME.fast];
+  dirEl.style.display = '';
+  const capped = !!capV();
   // 固定したあいて(検索 or GBLから引き継ぎ)
   if (PIN) {
-    const v = giveVerdict(giveScan(mv, PIN.st), PIN, mv);
-    pinEl.innerHTML = rowHTML(PIN, 'pin', null, v);
+    const r = calcRow(PIN, 'pin');
+    pinEl.innerHTML = rowHTML(PIN, 'pin', null, r.v, r.winChip);
   } else pinEl.innerHTML = '';
   // 環境上位50匹
   const rowsHtml = [];
-  let hot = 0;
+  let hot = 0, dn = 0;
   metaList().forEach((e, i) => {
     const foe = foeEntryOf(e);
-    const v = giveVerdict(giveScan(mv, foe.st), foe, mv);
-    if (v.type === 'up') hot++;
-    rowsHtml.push(rowHTML(foe, i, i + 1, v));
+    const r = calcRow(foe, i);
+    if (capped) { if (r.diff > 0) hot++; else if (r.diff < 0) dn++; }
+    else if (r.v.type === 'up') hot++;
+    rowsHtml.push(rowHTML(foe, i, i + 1, r.v, r.winChip));
   });
   sumEl.style.display = '';
-  const lad = myLadder();
-  const atCapMax = lad.length && lad[lad.length - 1].lv <= ME.level;
-  const zeroNote = hot ? '' : (atCapMax && capV()
-    ? '<br><small>CP上限まで強化済みのため、これ以上は変わりません</small>'
-    : '<br><small>強化で変わる相手はいません</small>')
-    + '<span class="expl"><small>（行を開くと個体値の境目が見えます）</small></span>';
-  sumEl.innerHTML = `環境上位${metaList().length}匹のうち、強化で伸びる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（🔥の行をタップすると、あとどれだけ強化すればいいかが出ます）</span>`;
+  if (capped) {
+    sumEl.innerHTML = `ブレイクで勝敗が変わる相手: <b>🔥 勝ちが増える ${hot}匹</b>${dn ? ` ／ <span style="color:var(--red)">⚠ 減る ${dn}匹</span>` : ''}` +
+      `<span class="expl">（🛡0-0/1-1/2-2の3パターンでシミュレートした合計勝ち数のちがいです。行をタップすると届く個体の例が出ます）</span>`;
+  } else {
+    const lad = myLadder();
+    const atCapMax = lad.length && lad[lad.length - 1].lv <= ME.level;
+    const zeroNote = hot ? '' : '<br><small>強化で変わる相手はいません</small>' +
+      '<span class="expl"><small>（行を開くと個体値の境目が見えます）</small></span>';
+    sumEl.innerHTML = `環境上位${metaList().length}匹のうち、強化で伸びる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（🔥の行をタップすると、あとどれだけ強化すればいいかが出ます）</span>`;
+  }
   listEl.innerHTML = rowsHtml.join('');
   bindRows();
   updateUrl();
@@ -671,11 +865,6 @@ function bindRows() {
         if (opened) opened.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     };
-    el.querySelectorAll('[data-dtab]').forEach(b => b.onclick = ev => {
-      ev.stopPropagation();
-      DTAB[id] = b.dataset.dtab;
-      render();
-    });
     el.querySelectorAll('[data-fmv]').forEach(b => b.onclick = ev => {
       ev.stopPropagation();
       DTAB[id + ':fmv'] = b.dataset.fmv;
@@ -692,13 +881,15 @@ function syncMeCard() {
   $('meshadow').setAttribute('aria-pressed', ME.shadow);
   $('meclr').style.display = $('meq').value ? 'block' : 'none';
   if (!has) return;
-  $('ivA').value = ME.ivs[0]; $('ivD').value = ME.ivs[1]; $('ivH').value = ME.ivs[2];
-  $('ivL').value = ME.level;
+  // 入力中(フォーカス中)の欄には書き戻さない。スピナー連打や打ちかけの値を壊さないため
+  const setIf = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
+  setIf('ivA', ME.ivs[0]); setIf('ivD', ME.ivs[1]); setIf('ivH', ME.ivs[2]);
+  setIf('ivL', ME.level);
   const st = statsOf(ME.key, ME.ivs, ME.level, ME.shadow);
   $('cpv').innerHTML = `CP <b>${st.cp}</b>` + (capV() && st.cp > capV() ? ` <span style="color:var(--red)">CP超過</span>` : '');
   const pool = fastMoves(ME.key);
   $('mvrow').innerHTML = `<span class="lbl">ノーマルアタック</span>` + pool.map(id =>
-    `<button class="mvchip" data-mv="${id}" aria-pressed="${id === ME.fast}">${D.moves[id].n}<small>${D.moves[id].tn}T</small></button>`).join('');
+    `<button class="mvchip" data-mv="${id}" aria-pressed="${id === ME.fast}">${D.moves[id].n}${tnBadge(D.moves[id].tn)}</button>`).join('');
   $('mvrow').querySelectorAll('[data-mv]').forEach(b => b.onclick = () => { ME.fast = b.dataset.mv; render(); });
 }
 
@@ -731,6 +922,12 @@ function pinFoe(key, opts, quiet) {
   const e = ((window.META_MOVES || {})[LG] || {})[key + (shadow ? '|s' : '')];
   PIN = { key, shadow, st, name: D.pokemon[key].n,
           fast: (opts && opts.fast) || (e && e[0]) || null };
+  // 検索で固定したあいて(理想個体値)は勝敗シミュの設定も組める。実数値ごと来たあいて(fst)は組めない
+  if (!(opts && opts.st)) {
+    const r1 = rank1(key, capV());
+    PIN.cfg = { key, ivs: r1.ivs, level: r1.level, shadow, timing: 'optimal', cap: capV(), bluff: false,
+                fast: PIN.fast || fastMoves(key)[0], charged: chargedOf(key, shadow) };
+  }
   if (!quiet) {
     OPEN = 'pin';
     render();
@@ -821,27 +1018,49 @@ $('foeshadow').onclick = () => {
   $('foeshadow').setAttribute('aria-pressed', on);
   if (PIN) pinFoe(PIN.key, { shadow: on, fast: PIN.fast });
 };
+// 個体値・PL欄。input=1ステップごとに追従(スピナー長押しでも滑らかに動く)/change=確定時にクランプ。
+// 入力途中の半端な値(範囲外・打ちかけ)は確定まで反映しない=打っている最中に書き換えない
+let renderTimer = null;
+function scheduleRender(now) {
+  clearTimeout(renderTimer);
+  if (now) { render(); return; }
+  renderTimer = setTimeout(render, 40);
+}
 ['ivA', 'ivD', 'ivH', 'ivL'].forEach((id, i) => {
-  $(id).addEventListener('change', () => {
+  const apply = commit => {
     if (!ME.key) return;
-    if (i < 3) {
-      const v = Math.max(0, Math.min(15, Math.round(+$(id).value || 0)));
-      ME.ivs[i] = v;
-    } else {
-      let v = Math.max(1, Math.min(maxLvOf(), Math.round((+$(id).value || 1) * 2) / 2));
-      ME.level = v;
-    }
+    const el = $(id), n = parseFloat(el.value);
+    if (isNaN(n)) { if (commit) el.value = i < 3 ? ME.ivs[i] : ME.level; return; }   // 空欄で確定→いまの値に戻す
+    const v = i < 3 ? Math.max(0, Math.min(15, Math.round(n)))
+                    : Math.max(1, Math.min(maxLvOf(), Math.round(n * 2) / 2));
+    if (!commit && v !== n) return;   // 入力途中の範囲外は確定を待つ
+    if (i < 3) ME.ivs[i] = v; else ME.level = v;
     ME.edited = true;
     // CP超過なら上限内の最大PLへ落とす
     const cap = capV();
     if (cap && statsOf(ME.key, ME.ivs, ME.level, false).cp > cap)
       ME.level = maxLevelFor(ME.key, ME.ivs, cap, maxLvOf());
-    render();
-  });
+    if (commit) el.value = i < 3 ? ME.ivs[i] : ME.level;   // 確定時だけクランプ結果を書き戻す
+    scheduleRender(commit);
+  };
+  $(id).addEventListener('input', () => apply(false));
+  $(id).addEventListener('change', () => apply(true));
 });
-$('ideal').onclick = () => { setIdeal(); render(); };
+// ボタン操作で画面が切り替わるときは、入力欄のフォーカスを外して値を確定させる
+// (フォーカス中の欄は書き戻さないため、外さないと欄の表示と計算がずれる)
+const blurInputs = () => ['ivA', 'ivD', 'ivH', 'ivL'].forEach(id => {
+  if (document.activeElement === $(id)) $(id).blur();
+});
+$('ideal').onclick = () => { blurInputs(); setIdeal(); render(); };
+document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => {
+  if (DIR === b.dataset.dir) return;
+  DIR = b.dataset.dir;
+  document.querySelectorAll('[data-dir]').forEach(x => x.setAttribute('aria-pressed', x.dataset.dir === DIR));
+  render();
+});
 document.querySelectorAll('[data-lg]').forEach(b => b.onclick = () => {
   if (LG === b.dataset.lg) return;
+  blurInputs();
   LG = b.dataset.lg;
   document.querySelectorAll('[data-lg]').forEach(x => x.setAttribute('aria-pressed', x.dataset.lg === LG));
   if (ME.key && !ME.edited) setIdeal();
@@ -869,6 +1088,7 @@ $('helptab').onclick = () => {
 function updateUrl() {
   const q = new URLSearchParams();
   if (LG !== '0') q.set('lg', LG);
+  if (DIR === 'take') q.set('dir', 'take');
   if (ME.key) {
     q.set('me', ME.key);
     if (ME.shadow) q.set('msh', '1');
@@ -888,6 +1108,10 @@ function updateUrl() {
 function loadUrl() {
   const q = new URLSearchParams(location.search);
   if (q.get('lg') && ['1500', '2500', '0'].includes(q.get('lg'))) LG = q.get('lg');
+  if (q.get('dir') === 'take') {
+    DIR = 'take';
+    document.querySelectorAll('[data-dir]').forEach(x => x.setAttribute('aria-pressed', x.dataset.dir === DIR));
+  }
   document.querySelectorAll('[data-lg]').forEach(x => x.setAttribute('aria-pressed', x.dataset.lg === LG));
   const me = q.get('me');
   if (me && D.pokemon[me]) {
