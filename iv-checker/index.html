@@ -308,22 +308,7 @@ body.has-sticky{padding-top:52px}
   filter:drop-shadow(0 3px 14px rgba(200,211,222,.32))}
 .lgc-r.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%);
   filter:drop-shadow(0 3px 14px rgba(201,141,95,.32))}
-/* CPから: 3リーグそれぞれの「いちばんいい個体値と順位」。
-   リーグ順位カード(.lgc)と同じ質感にそろえるが、こちらは押すものではないので枠は常時点灯 */
-.cpbest{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.cpb{text-align:center;padding:9px 2px 10px;border-radius:10px;border:1px solid var(--line);
-  background:linear-gradient(180deg,var(--bg2),var(--panel));box-shadow:inset 0 1px 0 var(--tabin)}
-.cpb .lgc-n{display:block;font-size:.68rem;font-weight:700;letter-spacing:.08em}
-.cpb[data-lg="gl"] .lgc-n{color:var(--gl)}
-.cpb[data-lg="ul"] .lgc-n{color:var(--ul)}
-.cpb[data-lg="ml"] .lgc-n{color:var(--ml)}
-.cpb[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--gl),0 0 14px rgba(77,141,255,.3),inset 0 1px 0 var(--tabin)}
-.cpb[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 0 1.5px var(--ul),0 0 14px rgba(245,197,66,.26),inset 0 1px 0 var(--tabin)}
-.cpb[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 0 1.5px var(--ml),0 0 14px rgba(176,108,255,.3),inset 0 1px 0 var(--tabin)}
-.cpb .lgc-r{display:block;font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:3px}
-.cpb .lgc-r .u{font-size:.78rem;color:var(--sub);font-weight:700;margin-left:1px}
-.cpb .cpiv{display:block;font-size:.82rem;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;color:var(--ink)}
-/* 当てはまる個体値の表(5列)。順位の色は1位=金／10位以内=銀／100位以内=銅のグループ分け */
+/* CPから: 当てはまる個体値の表(5列)。順位の色は1位=金／10位以内=銀／100位以内=銅のグループ分け */
 #cptbl th:nth-child(1),#cptbl td:nth-child(1){width:13%}
 #cptbl th:nth-child(2),#cptbl td:nth-child(2){width:27%}
 #cptbl th:nth-child(3),#cptbl td:nth-child(3){width:20%}
@@ -458,9 +443,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 </div>
 
 <div class="card" id="cpresult" style="display:none">
-  <label class="sec">いちばんいい個体値</label>
-  <div class="cpbest" id="cpbest"></div>
-  <div class="tophead" style="margin-top:16px">
+  <div class="tophead">
     <label class="sec">当てはまる個体値<span class="cpcnt" id="cpcnt"></span></label>
   </div>
   <div class="tblwrap" id="cptblwrap">
@@ -533,8 +516,9 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     メガLv4＋最高の相棒の 53 も選べます。アメXLを使わない場合の上限（40・41）も並べてあります。</p>
   <h4>CP→個体値（逆引き）</h4>
   <p>ポケモン欄の右上の「<b>CP→個体値</b>」を押してCPを入れると、<b>そのCPになりうる個体値の組み合わせを全部</b>出します。
-    野生で出たポケモンにマスターボールを使うか決めるときに使います
-    （上の3枠に、スーパー・ハイパー・マスターそれぞれで<b>いちばんいい個体値と順位</b>が出ます）。</p>
+    野生で出たポケモンにマスターボールを使うか決めるときに使います。
+    出るのは<b>ありうる組み合わせの全部</b>で、そのどれかが当たり、というものです（どれかは分かりません）。
+    順位は1位が金・10位以内が銀・100位以内が銅で色が付きます。</p>
   <p>探すのは<b>PL1〜35の整数レベル</b>です（野生で出るのは整数レベルなので、強化したあとの半端なPLは対象外）。
     順位は「入手方法」「PL上限」の前提で数えるので、<b>野生の想定なら入手方法は「野生」（最低個体値0）</b>にします
     （「CP→個体値」を押すと自動で野生になり、もう一度押して戻すと元の設定に戻ります）。</p>
@@ -802,7 +786,6 @@ function cpAboveWild(cpv){
   }
   return false;
 }
-const LG_NAME={gl:'スーパー',ul:'ハイパー',ml:'マスター'};
 function renderCp(){
   document.getElementById('result').style.display='none';
   document.getElementById('sticky').style.display='none';
@@ -813,17 +796,10 @@ function renderCp(){
   box.style.display='block';
   const pats=cpPatterns(cpv);
   const maps=cpRankMaps();
+  // ⚠ 「いちばんいい個体値」を大きく出すのは廃止(2026-08-21タダシさん指示)。
+  // いくつもあるパターンのうちの1つでしかないのに「その順位で確定」と読めてしまい、
+  // あとでガッカリさせる。一覧の中で高順位の数字が色分けされていれば足りる
   const rankOf=(lg,r)=>maps[lg][r.ia+'/'+r.id+'/'+r.ih];
-  // リーグごとに、当てはまる組み合わせの中でいちばん順位が高いものを目立たせる
-  document.getElementById('cpbest').innerHTML=['gl','ul','ml'].map(lg=>{
-    let b=null;
-    pats.forEach(r=>{ const rk=rankOf(lg,r); if(rk && (!b || rk<b.rk)) b={rk, r}; });
-    const num=b? b.rk+'<span class="u">位</span>' : '—';
-    const iv=b? b.r.ia+'/'+b.r.id+'/'+b.r.ih : '&nbsp;';
-    return '<div class="cpb" data-lg="'+lg+'"><span class="lgc-n">'+LG_NAME[lg]+'</span>'+
-      '<span class="lgc-r '+(b?medalCls(b.rk):'')+'">'+num+'</span>'+
-      '<span class="cpiv">'+iv+'</span></div>';
-  }).join('');
   document.getElementById('cpcnt').textContent=pats.length? pats.length+'通り' : '';
   const wrap=document.getElementById('cptblwrap'), empty=document.getElementById('cpempty');
   if(!pats.length){
