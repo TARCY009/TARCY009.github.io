@@ -877,6 +877,9 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hswap small{font-size:.62rem;color:var(--sub);font-weight:700}
 .hswap:empty{display:none}
 .hswap.fswap{justify-content:flex-end}
+/* SPゲージの円とその残量の数字は1つのまとまり(折り返しでばらけさせない) */
+.gqg{display:inline-flex;align-items:center;gap:6px}
+.hs.foe .gqg{flex-direction:row-reverse}
 .gqs{display:inline-flex;gap:4px}
 .gq{position:relative;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   background:conic-gradient(var(--gqc) var(--p,0%),rgba(255,255,255,.09) 0)}

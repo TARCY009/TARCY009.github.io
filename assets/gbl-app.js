@@ -4471,7 +4471,7 @@ function rbRender(body, bt, picks, foes, extra) {
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
@@ -4479,7 +4479,7 @@ function rbRender(body, bt, picks, foes, extra) {
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
         </div>
       </div>
     </div>`;
@@ -6359,7 +6359,7 @@ function gbRender(body, bt, picks, foes) {
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
@@ -6367,7 +6367,7 @@ function gbRender(body, bt, picks, foes) {
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
       </div>
