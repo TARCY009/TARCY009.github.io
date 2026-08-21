@@ -4479,7 +4479,7 @@ function rbRender(body, bt, picks, foes, extra) {
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="bfs"></span><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="shds"></span><span class="balls"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
         </div>
       </div>
     </div>`;
@@ -6367,7 +6367,7 @@ function gbRender(body, bt, picks, foes) {
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
-          <div class="hx"><span class="bfs"></span><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="shds"></span><span class="balls"></span></div>
+          <div class="hx"><span class="balls"></span><span class="shds"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b><span class="gqs"></span><span class="bfs"></span></div>
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
       </div>
@@ -6443,7 +6443,7 @@ function gbRender(body, bt, picks, foes) {
     const swLeft = Math.max(0, (f.meta.swOk || 0) - gt);
     swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
     const fswLeft = Math.max(0, (f.meta.fswOk || 0) - gt);
-    fswapEl.innerHTML = fswLeft > 0 ? `${SWAPMK}<b>${Math.ceil(fswLeft / 2)}</b><small>秒</small>` : '';
+    fswapEl.innerHTML = fswLeft > 0 ? `<b>${Math.ceil(fswLeft / 2)}</b><small>秒</small>${SWAPMK}` : '';
   }
   const revealTo = g => {
     while (ptr < els.length && +els[ptr].dataset.gt <= g) {

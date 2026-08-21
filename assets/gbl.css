@@ -857,7 +857,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hb i.y{background:linear-gradient(90deg,#e8a93d,#ffd54a)}
 .hb i.r{background:linear-gradient(90deg,#ff6b81,#ff9d9d)}
 .hx{display:flex;align-items:center;gap:6px;min-height:24px;flex-wrap:wrap}
-.hs.foe .hx{justify-content:flex-end}
+/* あいて側は鏡写し。DOMはじぶんと同じ並びにして row-reverse で反転させる
+   (justify-content:flex-end だと折り返す位置がじぶん側とずれて左右で並びが変わる) */
+.hs.foe .hx{flex-direction:row-reverse}
+.hs.foe .gq b{right:auto;left:-4px}
 .balls{display:inline-flex;gap:3px}
 .pb{width:12px;height:12px;border-radius:50%;position:relative;display:inline-block;
   background:linear-gradient(#ff5d5d 0 43%,#0c1122 43% 57%,#eef1fb 57% 100%);box-shadow:0 1px 2px rgba(0,0,0,.6)}
@@ -873,6 +876,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hswap b{font-size:1.25rem;line-height:1}
 .hswap small{font-size:.62rem;color:var(--sub);font-weight:700}
 .hswap:empty{display:none}
+.hswap.fswap{justify-content:flex-end}
 .gqs{display:inline-flex;gap:4px}
 .gq{position:relative;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   background:conic-gradient(var(--gqc) var(--p,0%),rgba(255,255,255,.09) 0)}
