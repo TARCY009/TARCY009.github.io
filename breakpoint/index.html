@@ -102,6 +102,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivrow label{display:flex;flex-direction:column;gap:3px;font-size:.62rem;color:var(--sub);font-weight:700}
 .ivrow input{width:52px;font:inherit;font-size:.88rem;text-align:center;padding:7px 4px;border-radius:9px;
   border:1px solid var(--inline2);background:var(--inbg);color:var(--ink)}
+#ivL{width:66px}
 .ivrow .cpv{font-size:.72rem;color:var(--sub);padding-bottom:9px}
 .ivrow .cpv b{color:var(--ink);font-size:.85rem}
 .mvrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
@@ -199,9 +200,13 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .empty{font-size:.8rem;color:var(--sub);text-align:center;padding:26px 10px;line-height:1.9}
 .expl{display:none}
 .explain .expl{display:revert}
+@media (max-width:560px){
+  header{flex-wrap:wrap}
+  h1{flex:1 1 100%}
+}
 @media (max-width:540px){
   .sugg input,.ivrow input{font-size:16px}
-  .bkhead .dm small{display:none}
+  .bkhead .dm small,.vchip small{display:none}
 }
 </style>
 </head>
@@ -501,7 +506,7 @@ function scaleBar(rows, curLv, dir) {
     if (Math.abs(bpPos - mePos) > 11)   // いまのPLと重なるときは出さない(数字は結論ボックスにある)
       marks += `<span class="bp" style="left:${bpPos}%">PL${fmtLv(nextTier.from)}</span>`;
   }
-  return `<div class="scale"><div class="t">つよさのものさし（PL）— 色が変わるところが境目</div>
+  return `<div class="scale"><div class="t">PLのものさし<span class="expl">（色が変わるPL＝ダメージが変わる境目です）</span></div>
     <div class="sbar">${segs}</div><div class="smk">${marks}</div></div>`;
 }
 
@@ -531,8 +536,8 @@ function ivBar(foe, mv, dir) {
   const curStart = cells.find(c => c.d === dMine);
   const note = gold
     ? `<span class="g">${statName}の個体値 ${gold.x} 以上なら ${dMine}→${gold.d}</span>`
-    : `<span class="g">${statName}の個体値 ${curStart.x} が境目（いまは ${mineIv} で有利な側）</span>`;
-  return `<div class="ivbar"><div class="t">${statName}の個体値ごとの到達点（最大まで強化したとき・▲がいまの個体）</div>
+    : `<span class="g">境目は個体値 ${curStart.x}（いまは ${mineIv} で有利な側）</span>`;
+  return `<div class="ivbar"><div class="t">${statName}の個体値 0〜15 ではどうなるか（最大強化時・▲いまの個体）</div>
     <div class="ivcells">${html}</div>
     <div class="ivnote">${note}</div></div>`;
 }
@@ -547,19 +552,19 @@ function detailHTML(foe, rowId) {
     const v = giveVerdict(rows, foe, mv);
     let vb = '';
     if (v.type === 'up') {
-      const buddy = v.at > 50 ? `（PL${fmtLv(v.at)} は最高の相棒ブーストの範囲です）` : '';
+      const buddy = v.at > 50 ? 'PL50より上は最高の相棒が必要です' : '';
       vb = `<div class="vbox up"><div class="hd">🔥 あと PL${v.dPl} で ${v.dNow} → ${v.to}</div>
         <div class="fx"><span>1発 <b>+${v.pct}%</b></span><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>で倒せる</span>
         ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>はやく倒せる</span>` : ''}</div>
         ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
     } else if (v.type === 'wall') {
       vb = `<div class="vbox ng"><div class="hd">⚠ この個体では届きません</div>
-        <div class="nt">攻撃の個体値 <b>${v.needIv}</b> 以上の個体なら、最大まで強化すると ${v.dNow}→${v.to} に届きます</div></div>`;
+        <div class="nt">攻撃の個体値 <b>${v.needIv}</b> 以上なら ${v.dNow}→${v.to} に届きます（最大強化時）</div></div>`;
     } else {
-      vb = `<div class="vbox ok"><div class="hd">✅ 取り切っています</div>
-        <div class="nt">この対面で取れるダメージはいまが最大です（個体値15でも変わりません）</div></div>`;
+      vb = `<div class="vbox ok"><div class="hd">✅ ダメージを最大化できています</div>
+        <div class="nt">強化や個体値では変わりません</div></div>`;
     }
-    body = `<div class="dsub">じぶんの <b>${mv.n}</b>（${mv.tn}ターン） → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
+    body = `<div class="dsub"><b>${mv.n}</b>（${mv.tn}T） → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
       <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">ダメージ</span>
         <span class="r">${v.shotsNow}発で倒せる</span></div>
       ${scaleBar(rows, v.cur.lv, 'give')}${vb}${ivBar(foe, mv, 'give')}`;
@@ -572,23 +577,23 @@ function detailHTML(foe, rowId) {
     const v = takeVerdict(rows, foe, fmv);
     let vb = '';
     if (v.type === 'up') {
-      const buddy = v.at > 50 ? `（PL${fmtLv(v.at)} は最高の相棒ブーストの範囲です）` : '';
+      const buddy = v.at > 50 ? 'PL50より上は最高の相棒が必要です' : '';
       vb = `<div class="vbox up"><div class="hd">🛡 あと PL${v.dPl} で 被ダメ ${v.dNow} → ${v.to}</div>
         <div class="fx"><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>耐える</span>
         ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>長く戦える</span>` : ''}</div>
         ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
     } else if (v.type === 'wall') {
-      vb = `<div class="vbox ng"><div class="hd">⚠ この個体では減りません</div>
-        <div class="nt">防御の個体値 <b>${v.needIv}</b> 以上の個体なら ${v.dNow}→${v.to} に減ります</div></div>`;
+      vb = `<div class="vbox ng"><div class="hd">⚠ この個体では減らせません</div>
+        <div class="nt">防御の個体値 <b>${v.needIv}</b> 以上なら ${v.dNow}→${v.to} に減ります（最大強化時）</div></div>`;
     } else if (v.type === 'min') {
       vb = `<div class="vbox ok"><div class="hd">✅ これ以上減りません</div></div>`;
     } else {
-      vb = `<div class="vbox ok"><div class="hd">✅ 有利な側にいます</div>
-        <div class="nt">この対面で受けるダメージはいまが最小です（強化しても変わりません）</div></div>`;
+      vb = `<div class="vbox ok"><div class="hd">✅ 被ダメージを最小化できています</div>
+        <div class="nt">強化や個体値では変わりません</div></div>`;
     }
     const chips = pool.length > 1 ? `<div class="fmvsel">${pool.map(id =>
       `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}<small>${D.moves[id].tn}T</small></button>`).join('')}</div>` : '';
-    body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>（${fmv.tn}ターン） → じぶん</div>
+    body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>（${fmv.tn}T） → じぶん</div>
       ${chips}
       <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">被ダメージ</span>
         <span class="r">${v.shotsNow}発 耐える</span></div>
@@ -604,7 +609,7 @@ function detailHTML(foe, rowId) {
 function rowHTML(foe, rowId, rank, verdict) {
   const open = OPEN === rowId;
   const chip = verdict.type === 'up'
-    ? `<span class="vchip up">🔥 あとPL${verdict.dPl} ${verdict.dNow}→${verdict.to}</span>`
+    ? `<span class="vchip up">🔥 あとPL${verdict.dPl}<small> ${verdict.dNow}→${verdict.to}</small></span>`
     : `<span class="vchip no">—</span>`;
   return `<div class="bkrow${verdict.type === 'up' ? ' up' : ''}${open ? ' open' : ''}${rank == null ? ' pin' : ''}" data-row="${rowId}">
     <div class="bkhead">
@@ -645,9 +650,10 @@ function render() {
   sumEl.style.display = '';
   const lad = myLadder();
   const atCapMax = lad.length && lad[lad.length - 1].lv <= ME.level;
-  const zeroNote = hot ? '' : atCapMax && capV()
-    ? '<br><small>この個体はCP上限の上限PLに達しています（PLの強化では変わりません。行を開くと個体値の境目が見えます）</small>'
-    : '<br><small>いまの個体で取れる境目は取り切っています（行を開くと個体値の境目が見えます）</small>';
+  const zeroNote = hot ? '' : (atCapMax && capV()
+    ? '<br><small>CP上限まで強化済みのため、これ以上は変わりません</small>'
+    : '<br><small>強化で変わる相手はいません</small>')
+    + '<span class="expl"><small>（行を開くと個体値の境目が見えます）</small></span>';
   sumEl.innerHTML = `環境上位${metaList().length}匹のうち、強化で伸びる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（🔥の行をタップすると、あとどれだけ強化すればいいかが出ます）</span>`;
   listEl.innerHTML = rowsHtml.join('');
   bindRows();
