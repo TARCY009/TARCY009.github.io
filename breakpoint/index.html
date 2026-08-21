@@ -147,6 +147,21 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   box-shadow:0 4px 14px rgba(59,110,240,.35),inset 0 1px 0 rgba(255,255,255,.4);
   transition:transform .12s ease}
 .simlink:hover{transform:translateY(-1px)}
+/* ブレイクする個体値の一覧(SCP順) */
+.ivlistbtn{display:flex;align-items:center;gap:6px;width:100%;margin-top:10px;padding:9px 12px;cursor:pointer;
+  font:inherit;font-size:.76rem;font-weight:800;color:var(--gold);text-align:left;
+  background:none;border:1px dashed var(--upline);border-radius:11px}
+.ivlistbtn i{font-style:normal;margin-left:auto;opacity:.8}
+.ivlistbtn[aria-expanded="true"]{border-style:solid}
+.ivlist{border:1px solid var(--line);border-top:none;border-radius:0 0 11px 11px;margin:-6px 6px 0;
+  padding:8px 10px 10px;background:var(--chip)}
+.ivlcap{font-size:.62rem;color:var(--sub);margin-bottom:6px}
+.ivlist table{width:100%;border-collapse:collapse;font-size:.72rem;text-align:center}
+.ivlist th{font-size:.6rem;color:var(--sub);font-weight:700;padding:3px 2px;border-bottom:1px solid var(--rowline)}
+.ivlist td{padding:4px 2px;border-bottom:1px solid var(--rowline)}
+.ivlist tr:last-child td{border-bottom:none}
+.ivlist tr.mine td{color:var(--accent2);font-weight:800}
+.ivlist td:nth-child(1){color:var(--sub)}
 .bkhead .arw{flex:none;color:var(--sub);font-size:.7rem;transition:transform .15s}
 .bkrow.open .arw{transform:rotate(90deg)}
 .bkdetail{border-top:1px solid var(--rowline);padding:12px 12px 14px;display:none}
@@ -466,34 +481,28 @@ function ivTable() {
   ivtCache.set(ck, rows);
   return rows;
 }
-// 与ダメの段を1つ上げられる個体(=ブレイク個体)。候補の中では耐久(防×HP)最大を代表にする
-function breakRepGive(mv, foe, dNow) {
+// SCP(総合的な強さ)。個体値チェッカーと同じ式(実数値積の2/3乗÷10)
+const scpRaw = st => st.atk * st.def * st.hp;
+const scpOf = st => Math.floor(Math.pow(scpRaw(st), 2 / 3) / 10);
+// ブレイクする個体(段を1つ動かせる個体)をSCPの高い順に集める。代表(rep)は最上位=SCP最大
+function breakCandsGive(mv, foe, dNow) {
   const stab = D.pokemon[ME.key].ty.includes(mv.t) ? 1.2 : 1;
   const K = 0.5 * mv.p * E.effectiveness(D, mv.t, foe.st.types) * stab * 1.3 / foe.st.def;
   const atkReq = dNow / K;   // ダメ=floor(攻×K)+1 なので、攻≧これで dNow+1 以上
-  let best = null;
-  for (const r of ivTable()) {
-    if (r.st.atk < atkReq) continue;
-    const bulk = r.st.def * r.st.hp;
-    if (!best || bulk > best.bulk) best = { ...r, bulk };
-  }
-  if (best) best.d = Math.floor(best.st.atk * K) + 1;
-  return best;
+  const all = ivTable().filter(r => r.st.atk >= atkReq);
+  all.sort((x, y) => scpRaw(y.st) - scpRaw(x.st));
+  const list = all.slice(0, 100).map(r => ({ ...r, d: Math.floor(r.st.atk * K) + 1 }));
+  return { count: all.length, list, rep: list[0] || null };
 }
-// 被ダメの段を1つ下げられる個体。候補の中では残り(攻×HP)最大を代表にする
-function breakRepTake(fmv, foe, dNow) {
-  if (dNow <= 1) return null;
+function breakCandsTake(fmv, foe, dNow) {
+  if (dNow <= 1) return { count: 0, list: [], rep: null };
   const stab = foe.st.types.includes(fmv.t) ? 1.2 : 1;
   const C = 0.5 * fmv.p * foe.st.atk * E.effectiveness(D, fmv.t, D.pokemon[ME.key].ty) * stab * 1.3;
   const defReq = C / (dNow - 1);   // 被ダメ=floor(C÷防)+1 なので、防＞これで dNow-1 以下
-  let best = null;
-  for (const r of ivTable()) {
-    if (r.st.def <= defReq) continue;
-    const rest = r.st.atk * r.st.hp;
-    if (!best || rest > best.rest) best = { ...r, rest };
-  }
-  if (best) best.d = Math.floor(C / best.st.def) + 1;
-  return best;
+  const all = ivTable().filter(r => r.st.def > defReq);
+  all.sort((x, y) => scpRaw(y.st) - scpRaw(x.st));
+  const list = all.slice(0, 100).map(r => ({ ...r, d: Math.floor(C / r.st.def) + 1 }));
+  return { count: all.length, list, rep: list[0] || null };
 }
 // 3シールド(0-0/1-1/2-2)の勝ち数。前提はGBLの一覧系と同じ(ブラフなし・確率わざ不発・最適タイミング)
 const SIMOPT = { buffMode: 'none' };
@@ -514,12 +523,12 @@ function breakWins(mv, foe, dNow) {
   const ck = foe.key + (foe.shadow ? '|s' : '');
   if (brkCache.map.has(ck)) return brkCache.map.get(ck);
   let out = null;
-  const rep = breakRepGive(mv, foe, dNow);
-  if (rep && foe.cfg) {
+  const c = breakCandsGive(mv, foe, dNow);
+  if (c.rep && foe.cfg) {
     const wNow = winsOf(ME.ivs, ME.level, foe.cfg);
-    const wBrk = winsOf(rep.ivs, rep.level, foe.cfg);
-    out = { rep, wNow, wBrk, diff: wBrk - wNow };
-  } else if (rep) out = { rep };
+    const wBrk = winsOf(c.rep.ivs, c.rep.level, foe.cfg);
+    out = { ...c, wNow, wBrk, diff: wBrk - wNow };
+  } else if (c.rep) out = c;
   brkCache.map.set(ck, out);
   return out;
 }
@@ -665,17 +674,19 @@ function detailHTML(foe, rowId) {
     }
     let extra = '';
     if (capped) {
-      // CP制限: 4096通りからブレイク個体を探し、勝敗(🛡0-0/1-1/2-2の合計)のちがいまで見せる
+      // CP制限: 4096通りからブレイクする個体を探し、勝敗(🛡0-0/1-1/2-2の合計)のちがいまで見せる
       const b = breakWins(mv, foe, v.dNow);
       if (b && b.wNow != null) {
-        const ex = `届く個体の例: <b>${b.rep.ivs.join('/')}</b> PL${fmtLv(b.rep.level)}（CP${b.rep.st.cp}・ダメージ ${v.dNow}→${b.rep.d}）`;
-        extra = b.diff > 0
+        const ex = `いちばん強い例: <b>${b.rep.ivs.join('/')}</b> PL${fmtLv(b.rep.level)}（CP${b.rep.st.cp}・ダメージ ${v.dNow}→${b.rep.d}）`;
+        extra = (b.diff > 0
           ? `<div class="vbox up"><div class="hd">🔥 ブレイクすると勝ちが増えます（🛡3パターン合計 ${b.wNow}勝 → ${b.wBrk}勝）</div><div class="nt">${ex}</div></div>`
           : b.diff < 0
           ? `<div class="vbox ng"><div class="hd">⚠ ブレイクすると勝ちが減ります（${b.wNow}勝 → ${b.wBrk}勝）</div><div class="nt">耐久を削ってPLを上げるぶん、逆に不利になる相手です<br>${ex}</div></div>`
-          : `<div class="vbox ok"><div class="hd">ブレイクしても勝敗は変わりません（${b.wNow}勝のまま）</div><div class="nt">${ex}</div></div>`;
+          : `<div class="vbox ok"><div class="hd">ブレイクしても勝敗は変わりません（${b.wNow}勝のまま）</div><div class="nt">${ex}</div></div>`)
+          + ivListHtml(b, rowId, v.dNow);
       } else if (b) {
-        extra = `<div class="vbox up"><div class="nt">届く個体の例: <b>${b.rep.ivs.join('/')}</b> PL${fmtLv(b.rep.level)}（CP${b.rep.st.cp}・ダメージ ${v.dNow}→${b.rep.d}）</div></div>`;
+        extra = `<div class="vbox up"><div class="nt">いちばん強い例: <b>${b.rep.ivs.join('/')}</b> PL${fmtLv(b.rep.level)}（CP${b.rep.st.cp}・ダメージ ${v.dNow}→${b.rep.d}）</div></div>`
+          + ivListHtml(b, rowId, v.dNow);
       } else if (v.type !== 'up') {
         extra = `<div class="vbox ok"><div class="hd">✅ ダメージを最大化できています</div>
           <div class="nt">どの個体値・PLでも変わりません（4096通りすべて確認済み）</div></div>`;
@@ -694,7 +705,7 @@ function detailHTML(foe, rowId) {
     body = `<div class="dsub"><b>${mv.n}</b>${tnBadge(mv.tn)} → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
       <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">ダメージ</span>
         <span class="r">${v.shotsNow}発で倒せる</span></div>
-      ${scaleBar(rows, v.cur.lv, 'give')}${vb}${extra}`;
+      ${capped ? '' : scaleBar(rows, v.cur.lv, 'give')}${vb}${extra}`;
   } else {
     // 受ける: あいてのノーマルアタックを選べる(既定は環境の定番)
     const pool = fastMoves(foe.key);
@@ -714,14 +725,16 @@ function detailHTML(foe, rowId) {
     }
     let extra = '';
     if (capped && v.type !== 'min') {
-      const rep = breakRepTake(fmv, foe, v.dNow);
-      if (rep) {
+      const c = breakCandsTake(fmv, foe, v.dNow);
+      if (c.rep) {
+        const rep = c.rep;
         const w = foe.cfg ? { now: winsOf(ME.ivs, ME.level, foe.cfg), brk: winsOf(rep.ivs, rep.level, foe.cfg) } : null;
-        const ex = `減らせる個体の例: <b>${rep.ivs.join('/')}</b> PL${fmtLv(rep.level)}（CP${rep.st.cp}・被ダメ ${v.dNow}→${rep.d}）`;
+        const ex = `いちばん強い例: <b>${rep.ivs.join('/')}</b> PL${fmtLv(rep.level)}（CP${rep.st.cp}・被ダメ ${v.dNow}→${rep.d}）`;
         const wd = w ? (w.brk > w.now ? `<div class="hd">🔥 この個体なら勝ちが増えます（🛡3パターン合計 ${w.now}勝 → ${w.brk}勝）</div>`
           : w.brk < w.now ? `<div class="hd">⚠ この個体だと勝ちは減ります（${w.now}勝 → ${w.brk}勝）</div>`
           : `<div class="hd">勝敗は変わりません（${w.now}勝のまま）</div>`) : '';
-        extra = `<div class="vbox ${w && w.brk > w.now ? 'up' : w && w.brk < w.now ? 'ng' : 'ok'}">${wd}<div class="nt">${ex}</div></div>`;
+        extra = `<div class="vbox ${w && w.brk > w.now ? 'up' : w && w.brk < w.now ? 'ng' : 'ok'}">${wd}<div class="nt">${ex}</div></div>`
+          + ivListHtml(c, rowId, v.dNow, 'take');
       } else if (v.type !== 'up') {
         extra = `<div class="vbox ok"><div class="hd">✅ 被ダメージを最小化できています</div>
           <div class="nt">どの個体値・PLでも変わりません（4096通りすべて確認済み）</div></div>`;
@@ -742,10 +755,25 @@ function detailHTML(foe, rowId) {
       ${chips}
       <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">被ダメージ</span>
         <span class="r">${v.shotsNow}発 耐える</span></div>
-      ${scaleBar(rows, v.cur.lv, 'take')}${vb}${extra}`;
+      ${capped ? '' : scaleBar(rows, v.cur.lv, 'take')}${vb}${extra}`;
   }
   const sel = DIR === 'take' ? (DTAB[rowId + ':fmv'] || foe.fast) : foe.fast;
   return `${body}<a class="simlink" href="${duelUrl(foe, sel)}">⚔️ 1対1シミュで詳しく見る ↗</a>`;
+}
+
+// ブレイクする個体値の一覧(SCPの高い順・上位100件)。ボタンで開閉する
+function ivListHtml(c, rowId, dNow, dir) {
+  if (!c.count) return '';
+  const open = !!DTAB[rowId + ':list'];
+  const cap100 = c.count > 100 ? `SCPが高い順・${c.count}通りのうち上位100件` : `SCPが高い順・全${c.count}通り`;
+  const btn = `<button class="ivlistbtn" data-ivlist aria-expanded="${open}">📋 ブレイクする個体値 <b>${c.count}通り</b><i>${open ? '▾' : '▸'}</i></button>`;
+  if (!open) return btn;
+  const rows = c.list.map((r, i) => `<tr${r.ivs.join() === ME.ivs.join() ? ' class="mine"' : ''}>
+    <td>${i + 1}</td><td>${r.ivs.join('/')}</td><td>${fmtLv(r.level)}</td><td>${r.st.cp}</td><td>${scpOf(r.st)}</td>
+    <td>${dNow}→${r.d}</td></tr>`).join('');
+  return `${btn}<div class="ivlist"><div class="ivlcap">${cap100}</div>
+    <table><thead><tr><th>#</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>${dir === 'take' ? '被ダメ' : 'ダメ'}</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
 }
 
 // GBLの1対1シミュへ、この対面(リーグ・個体値・わざ)を引き継いで飛ぶ
@@ -868,6 +896,11 @@ function bindRows() {
     el.querySelectorAll('[data-fmv]').forEach(b => b.onclick = ev => {
       ev.stopPropagation();
       DTAB[id + ':fmv'] = b.dataset.fmv;
+      render();
+    });
+    el.querySelectorAll('[data-ivlist]').forEach(b => b.onclick = ev => {
+      ev.stopPropagation();
+      DTAB[id + ':list'] = !DTAB[id + ':list'];
       render();
     });
   });

@@ -669,7 +669,7 @@ const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
   spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
-  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51,
+  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51, spOpen: false,
   carry: false, cHp: 100, cEn: 0, bluff: false });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
@@ -678,6 +678,14 @@ const spModeOf = i => S[i].timing === 'asap' ? 'min' : S[i].timing === 'sync' ? 
 
 // ---- 検索候補 ----
 sideEl.forEach((el, i) => {
+  // 「発ごとのSP設定」の見出しをタップで開閉(SPアタック2選択時は既定で折りたたむ)
+  el.querySelector('.custSp .popttl').onclick = () => {
+    if (S[i].timing === 'plan') return;   // ﾏﾆｭｱﾙ中は常に開いたまま
+    S[i].spOpen = !S[i].spOpen;
+    const spEl = el.querySelector('.custSp');
+    spEl.classList.toggle('fold', !S[i].spOpen);
+    spEl.querySelector('.popttl').setAttribute('aria-expanded', S[i].spOpen);
+  };
   const inp = el.querySelector('input'), list = el.querySelector('.sugg-list');
   inp.addEventListener('compositionend', () => {
     const v = toKata(inp.value);
@@ -7092,7 +7100,13 @@ function fillMoves(i, cfg) {
   // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示(カウンター検索は手順を指定しないので出さない)。
   // 溜め打ちは撃つ発をエンジンが決めるので窓を出さない
   const showSp = !['never', 'stock'].includes(S[i].timing) && (S[i].timing === 'plan' || !!S[i].c2) && mode !== 'counter';
-  el.querySelector('.custSp').style.display = showSp ? 'block' : 'none';
+  const spEl = el.querySelector('.custSp');
+  spEl.style.display = showSp ? 'block' : 'none';
+  // SPアタック2を選んだだけのときは折りたたむ(出っぱなしだと縦に長くて目のノイズになる)。
+  // タイミング「ﾏﾆｭｱﾙ」は手順を指定する画面なので常に開く
+  const open = S[i].timing === 'plan' || S[i].spOpen;
+  spEl.classList.toggle('fold', !open);
+  spEl.querySelector('.popttl').setAttribute('aria-expanded', open);
   if (showSp) buildSpConfig(i, S[i].c1 || cfg.throw, S[i].c2);
 }
 

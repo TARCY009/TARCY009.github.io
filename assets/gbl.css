@@ -1119,6 +1119,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .tltbl .mvname{white-space:nowrap}
 .popwin{margin-top:6px;border:1px solid var(--gl);border-radius:10px;padding:8px;background:var(--bg2)}
 .popttl{font-size:.7rem;color:var(--sub);font-weight:600;margin-bottom:6px}
+/* 発ごとのSP設定の折りたたみ(SPアタック2選択時の既定)。見出しタップで開閉 */
+.custSp .popttl{cursor:pointer;user-select:none}
+.custSp .popttl::after{content:'▾';margin-left:6px;opacity:.7}
+.custSp.fold .popttl::after{content:'▸'}
+.custSp.fold .popttl{margin-bottom:0}
+.custSp.fold .legend,.custSp.fold .sprows{display:none}
 .slots{display:flex;flex-wrap:wrap;gap:4px}
 .slots button{flex:1 0 30%;padding:5px 2px;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--sub);cursor:pointer;white-space:nowrap}
 .slots button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b;font-weight:700}
