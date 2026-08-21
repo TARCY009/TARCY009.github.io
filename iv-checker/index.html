@@ -319,12 +319,17 @@ body.has-sticky{padding-top:52px}
 .probwrap{margin-bottom:10px}
 #cpprob td{border-bottom:none;padding:10px 5px;border-left:none}
 #cpprob td:nth-child(1){width:40%}
-#cpprob td:nth-child(2),#cpprob td:nth-child(3),#cpprob td:nth-child(4){width:20%;
-  font-size:1.05rem;font-weight:800;color:var(--mbronze)}
+#cpprob td:nth-child(2),#cpprob td:nth-child(3),#cpprob td:nth-child(4){width:20%}
+/* どの列がどのリーグかを一目で分かるようにする(表の見出しは下にあるので、数字を先に読んでしまう)。
+   リーグ名はリーグ色(スーパー=青／ハイパー=黄／マスター=紫)、確率は銅で下の表の「100位以内」とつなぐ */
+#cpprob td i{display:block;font-size:.6rem;font-weight:800;letter-spacing:.04em;font-style:normal;
+  line-height:1.2;margin-bottom:1px}
+#cpprob td b{display:block;font-size:1.05rem;font-weight:800;color:var(--mbronze);line-height:1.2}
+#pb-gl i{color:var(--gl)} #pb-ul i{color:var(--ul)} #pb-ml i{color:var(--ml)}
 /* 表と同じ位置(個体値とスーパーの境目)に縦線を入れる */
 #cpprob td:nth-child(2){border-left:1px solid var(--line2)}
 #cpprob .plabel{font-size:.72rem;font-weight:700;color:var(--sub);letter-spacing:.04em}
-#cpprob .z{color:var(--sub);font-size:.86rem;font-weight:700}
+#cpprob td b.z{color:var(--sub);font-size:.86rem}
 #cpprob .u{font-size:.7rem;font-weight:700;margin-left:1px}
 .rkc.r1{color:var(--mgold)} .rkc.r10{color:var(--msilver)} .rkc.r100{color:var(--mbronze)}
 .cpempty{font-size:.8rem;color:var(--sub);text-align:center;padding:18px 6px;line-height:1.7}
@@ -837,13 +842,14 @@ function renderCp(){
   empty.style.display='none';
   // 100位以内に入る割合。どの組み合わせも同じ確率で出るものとして数える
   document.getElementById('cpprobwrap').style.display='';
+  const LGN={gl:'スーパー',ul:'ハイパー',ml:'マスター'};
   ['gl','ul','ml'].forEach(lg=>{
     const n=pats.filter(r=>{ const v=rankOf(lg,r); return v && v<=100; }).length;
     const pct=n/pats.length*100;
-    const el=document.getElementById('pb-'+lg);
-    if(!n){ el.innerHTML='<span class="z">なし</span>'; }
-    else if(pct<1){ el.innerHTML='1<span class="u">%未満</span>'; }
-    else { el.innerHTML=Math.round(pct)+'<span class="u">%</span>'; }
+    const val=!n ? '<b class="z">なし</b>'
+      : (pct<1 ? '<b>1<span class="u">%未満</span></b>'
+               : '<b>'+Math.round(pct)+'<span class="u">%</span></b>');
+    document.getElementById('pb-'+lg).innerHTML='<i>'+LGN[lg]+'</i>'+val;
   });
   const cell=(lg,r)=>{
     const v=rankOf(lg,r);
