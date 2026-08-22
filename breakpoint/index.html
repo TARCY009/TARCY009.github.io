@@ -242,23 +242,35 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .plseg button:last-child{border-radius:4px 999px 999px 4px}
 .ivsum .plseg button small{font-size:.52rem;font-weight:600}
 .ivsum .plseg button[aria-pressed="true"]{background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330;border-color:transparent}
-.ivsum .cells{display:flex;gap:2px;margin-top:4px}
-.ivsum .cells i{flex:1;height:34px;font-style:normal;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border-radius:5px;background:var(--barpast);color:var(--sub);font-size:.62rem;font-weight:700;line-height:1.1}
-.ivsum .cells i b{font-size:.66rem;color:var(--gold)}
+.ivsum .barrow{display:flex;gap:6px;align-items:stretch;margin-top:10px}
+.ivsum .lowbtn{flex:none;font:inherit;font-size:.6rem;font-weight:800;color:var(--sub);cursor:pointer;padding:0 8px;
+  background:none;border:1px dashed var(--line);border-radius:9px;line-height:1.25;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ivsum .lowbtn b{color:var(--gold);font-size:.66rem}
+.ivsum .lowbtn[aria-pressed="true"]{border-style:solid;color:var(--ink)}
+.ivsum .cells{display:flex;gap:3px;flex:1;min-width:0}
+.ivsum .cells i{flex:1;min-width:0;height:46px;font-style:normal;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  border-radius:8px;background:var(--barpast);color:var(--sub);font-weight:800;line-height:1}
+.ivsum .cells i span{font-size:.92rem}
+.ivsum .cells i b{font-size:.6rem;color:var(--gold);font-weight:800}
+.ivsum .lowrow{display:flex;gap:6px;align-items:center;margin-top:6px}
+.ivsum .lowrow .ll{flex:none;font-size:.6rem;font-weight:800;color:var(--sub);width:52px;text-align:center}
+.ivsum .cells i.lo{height:30px;opacity:.85;border-radius:6px}
+.ivsum .cells i.lo span{font-size:.7rem}
+.ivsum .cells i.lo b{font-size:.54rem}
 .ivsum .cells i.hit{box-shadow:inset 0 0 0 1.5px var(--gold)}
-.ivsum .cells i.ok{background:var(--goldgrad);color:var(--ongold)}
+.ivsum .cells i.ok{background:var(--goldgrad);color:var(--ongold);box-shadow:0 3px 10px rgba(255,213,74,.25)}
 .ivsum .cells i.ok b{color:var(--ongold)}
-.ivsum .cells i:first-child{border-radius:8px 5px 5px 8px}
-.ivsum .cells i:last-child{border-radius:5px 8px 8px 5px}
-.ivsum .concl{margin-top:10px;font-size:.92rem;font-weight:800;color:var(--ink);line-height:1.5}
+.ivsum .concl{margin-top:8px;font-size:.98rem;font-weight:800;color:var(--ink);line-height:1.45}
 .ivsum .concl b{color:var(--gold)}
-.ivsum .grp{margin-top:8px;display:flex;flex-direction:column;gap:5px}
-.ivsum .grp div{display:flex;gap:8px;align-items:flex-start;font-size:.74rem;line-height:1.6}
-.ivsum .grp .k{flex:none;min-width:5.2em;font-weight:800;color:var(--gold)}
-.ivsum .grp .k.lo{color:var(--sub)}
-.ivsum .grp .n{color:var(--ink)}
-.ivsum .grp .n .sep{color:var(--sub);margin:0 3px}
+.ivsum .concl small{display:block;font-size:.7rem;font-weight:700;color:var(--sub);margin-top:2px}
+.ivsum .grp{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.ivsum .grp div{display:flex;gap:8px;align-items:flex-start;font-size:.74rem;line-height:1.5}
+.ivsum .grp div.lo{opacity:.8}
+.ivsum .grp .k{flex:none;min-width:4.6em;font-weight:800;color:var(--sub);padding-top:3px}
+.ivsum .grp .k.top{color:var(--gold)}
+.ivsum .grp .n{display:flex;flex-wrap:wrap;gap:4px}
+.ivsum .grp .fc{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.ivsum .grp .fc small{color:var(--sub);font-weight:700}
 .ivsum .none{margin-top:8px;font-size:.78rem;color:var(--sub)}
 /* 個体値バー */
 .ivcells{display:flex;gap:1px}
@@ -411,6 +423,7 @@ let DIR = 'give';   // 一覧全体の視点(💥与える / 🛡受ける)
 let ME = { key: null, shadow: false, ivs: [15, 15, 15], level: 50, fast: null, edited: false };
 let PIN = null;   // { key, shadow, atk, def, hp, name, fast(あいてのわざの初期値), label }
 let SUMPL = 50;   // 個体値まとめの基準PL(50=通常 / 51=最高の相棒)
+let IVLOW = false;   // 個体値まとめで0〜9も見せるか(既定は10〜15だけ)
 let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
 let DTAB = {};    // 行ごとの 与える/受ける タブ状態
@@ -765,26 +778,32 @@ function ivSumHtml() {
   const byIv = Array.from({ length: 16 }, () => []);
   for (const f of foes) for (const st of ivStepsOf(f.foe, dir)) byIv[st.x].push({ ...f, ...st });
   const statName = dir === 'give' ? '攻撃' : '防御';
-  const hits = byIv.map(a => a.length);
-  const top = Math.max(...hits.map((h, x) => h ? x : -1));
-  const cells = byIv.map((a, x) => `<i class="${top >= 0 && x >= top ? 'ok' : ''}${a.length ? ' hit' : ''}">${x}${a.length ? `<b>+${a.length}</b>` : ''}</i>`).join('');
-  const nm = r => `${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${tnBadge(r.mv.tn)}<small style="color:var(--sub)"> ${r.from}→${r.to}</small>`;
+  const top = Math.max(...byIv.map((a, x) => a.length ? x : -1));
+  const lowN = byIv.slice(0, 10).reduce((n, a) => n + a.length, 0);
+  const N = metaList().length;
+  // 0〜9は採用する人がほぼいないので畳む(「9以下」で開く)
+  const cell = x => `<i class="${top >= 0 && x >= top ? 'ok' : ''}${byIv[x].length ? ' hit' : ''}${x < 10 ? ' lo' : ''}"><span>${x}</span>${byIv[x].length ? `<b>+${byIv[x].length}</b>` : '<b>&nbsp;</b>'}</i>`;
+  const cells = byIv.map((a, x) => x >= 10 ? cell(x) : '').join('');
+  const lowRow = IVLOW ? `<div class="lowrow"><span class="ll">0〜9</span><div class="cells">${byIv.map((a, x) => x < 10 ? cell(x) : '').join('')}</div></div>` : '';
+  const lowBtn = `<button class="lowbtn" data-ivlow aria-pressed="${IVLOW}">${IVLOW ? '9以下を隠す' : `9以下${lowN ? `<b>+${lowN}</b>` : ''}`}</button>`;
+  const nm = r => `<span class="fc">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${tnBadge(r.mv.tn)}<small>${r.from}→${r.to}</small></span>`;
   let concl, grp = '';
-  if (top < 0) {
-    concl = `${statName}の個体値では変わりません`;
-  } else {
+  if (top < 0) concl = `${statName}の個体値では変わりません`;
+  else if (top < 10) concl = `${statName}IV <b>10</b> 以上なら環境上位${N}匹すべて${dir === 'give' ? 'に届く' : '最小'}<small>（境目は9以下だけ）</small>`;
+  else {
     const miss = byIv[top].length;
     concl = dir === 'give'
-      ? `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${metaList().length}匹すべてに届く。${top - 1}以下は <b>${miss}匹</b> を取りこぼす`
-      : `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${metaList().length}匹すべて最小。${top - 1}以下は <b>${miss}匹</b> から受けるダメージが増える`;
-    grp = `<div class="grp">` + byIv.map((a, x) => a.length
-      ? `<div><span class="k${x === top ? '' : ' lo'}">${x}${x === 15 ? ' だけ' : ' 以上'}</span><span class="n">${a.map(nm).join('<span class="sep">・</span>')}</span></div>` : '')
-      .reverse().join('') + `</div>`;
+      ? `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${N}匹すべてに届く<small>${top - 1}以下は <b>${miss}匹</b> を取りこぼす</small>`
+      : `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${N}匹すべて最小<small>${top - 1}以下は <b>${miss}匹</b> から受けるダメージが増える</small>`;
+  }
+  if (top >= 0) {
+    const row = (a, x) => a.length ? `<div class="${x < 10 ? 'lo' : ''}"><span class="k${x === top ? ' top' : ''}">${x}${x === 15 ? 'だけ' : '以上'}</span><span class="n">${a.map(nm).join('')}</span></div>` : '';
+    grp = `<div class="grp">` + byIv.map((a, x) => (x >= 10 || IVLOW) ? row(a, x) : '').reverse().join('') + `</div>`;
   }
   const plseg = `<span class="plseg"><button data-spl="50" aria-pressed="${SUMPL === 50}">PL50</button><button data-spl="51" aria-pressed="${SUMPL === 51}">PL51<small>相棒</small></button></span>`;
   return `<div class="ivsum"><div class="dt">${dir === 'give' ? '💥 攻撃の個体値でどこまで届くか' : '🛡 防御の個体値でどこまで減らせるか'}<span class="ds">あいては個体値100%</span>${plseg}</div>
-    <div class="cells">${cells}</div>
-    <div class="concl">${concl}</div>${grp}</div>`;
+    <div class="concl">${concl}</div>
+    <div class="barrow">${lowBtn}<div class="cells">${cells}</div></div>${lowRow}${grp}</div>`;
 }
 
 // ---- 詳細カード ----
@@ -981,6 +1000,7 @@ function render() {
   const capped = !!capV();
   $('ivsum').innerHTML = ivSumHtml();
   $('ivsum').querySelectorAll('[data-spl]').forEach(b => b.onclick = () => { SUMPL = +b.dataset.spl; render(); });
+  $('ivsum').querySelectorAll('[data-ivlow]').forEach(b => b.onclick = () => { IVLOW = !IVLOW; render(); });
   // 固定したあいて(検索 or GBLから引き継ぎ)
   if (PIN) {
     const r = calcRow(PIN, 'pin');
