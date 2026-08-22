@@ -228,6 +228,9 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .plmx td.up{background:var(--goldgrad);color:var(--ongold)}
 .plmx td.dn{background:var(--ngbg);color:var(--red);box-shadow:inset 0 0 0 1px var(--ngline)}
 .plmx td.me{outline:2px solid var(--accent2);outline-offset:-2px;background:var(--curgrad);color:var(--accent2)}
+/* メガ4トグル(与える/受けるの右・丸みのあるタブ) */
+.dirrow{align-items:center}
+.dirrow .mega4{border-radius:999px!important;padding:8px 16px;margin-left:8px;flex:none}
 /* 個体値の条件まとめ(主役) */
 .ivtog{display:flex;align-items:center;gap:7px;margin-top:10px;padding:7px 12px;cursor:pointer;font:inherit;
   font-size:.74rem;font-weight:800;color:var(--accent2);background:none;border:1px dashed var(--line);border-radius:10px;width:100%;text-align:left}
@@ -293,7 +296,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   background:var(--fcbg);border:1px solid var(--fcline);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 6px rgba(0,0,0,.18);color:var(--ink);
   white-space:nowrap;flex-wrap:nowrap;width:100%;min-width:0}
 .ivsum .grp .fn{display:flex;flex-direction:column;align-items:flex-start;gap:4px;white-space:normal;flex:1 1 auto;min-width:0;font-size:.88rem}
-.ivsum .grp .fn .nm{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;font-weight:800}
+.ivsum .grp .fn .nm{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;font-weight:800;word-break:keep-all;overflow-wrap:anywhere}
 .ivsum .grp .fn .mvl{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
 .ivsum .grp .fn .mvl .tb{flex:none;align-self:center}
 .ivsum .grp .fn small{white-space:nowrap;font-size:.82rem}
@@ -402,7 +405,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
   <button class="t-gold" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">🗡️ 与える</button>
   <button class="t-shadow" data-dir="take" aria-pressed="false" title="相手のノーマルアタックから受けるダメージの境目を見ます">🛡 受ける</button>
-</div></div>
+</div><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button></div>
 <div id="ivsum"></div>
 <div id="listwrap">
 <div id="pinbox"></div>
@@ -468,6 +471,7 @@ let ME = { key: null, shadow: false, ivs: [15, 15, 15], level: 50, fast: null, e
 let PIN = null;   // { key, shadow, atk, def, hp, name, fast(あいてのわざの初期値), label }
 let IVSEL = 15;   // 個体値まとめで見せる下限(タップで下げる・既定は15だけ)
 let IVHIDE = new Set();   // 点灯中のうち、タップで非表示にしたグループ(12だけ見たいときに13〜15を消す)
+let MEGA4 = false;   // メガLv4(PL52/53)を計算に入れるか(メガの相手も並べる)
 let IVLOW = false;   // 個体値まとめで0〜9も見せるか(既定は10〜15だけ)
 let FOEOPEN = false;  // 「あいてを追加」を開いているか
 let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
@@ -807,7 +811,7 @@ function plMatrix(foe, mv, dir) {
 // 「最大(与える)/最小(受ける)のダメージに届く最小の個体値」と、そのときのダメージ変化を出す
 // 戻り値: null(どの組み合わせでも個体値で変わらない) /
 //   {x(いちばん厳しい値), from, to, mv, mePls, foePls, grid:{'50/50':{x,from,to}|{d}}}
-const plsOf = key => isMega(key) ? [50, 51, 52, 53] : [50, 51];
+const plsOf = key => MEGA4 && isMega(key) ? [50, 51, 52, 53] : [50, 51];
 function ivNeedOf(foe, dir) {
   const mv = dir === 'give' ? D.moves[ME.fast] : D.moves[foe.fast || fastMoves(foe.key)[0]];
   if (!mv || foe.rawSt) return null;
@@ -845,10 +849,25 @@ function miniGrid(nd) {
     });
   });
   const head = foePls.map((f, ci) => `<b class="h" style="grid-column:${ci + 3};grid-row:2">${f}</b>`).join('');
-  const colw = C > 2 ? 44 : 58, rowh = 32;
+  const colw = C > 2 ? (innerWidth <= 540 ? 40 : 46) : 58, rowh = 32;
   return `<span class="mg" style="grid-template-columns:auto auto repeat(${C},${colw}px);grid-template-rows:auto auto repeat(${R},${rowh}px)">
     <b class="axf" style="grid-column:3/${C + 3}">あいて</b>${head}
     <b class="axm" style="grid-row:3/${R + 3}">じぶん</b>${cells.join('')}</span>`;
+}
+// メガ4: 環境の相手のうちメガシンカできるポケモンを、メガの姿でも相手に加える(通常とシャドウの重複は1つに)
+function megaFoes() {
+  const out = [], seen = new Set();
+  for (const e of metaList()) {
+    if (isMega(e.k)) continue;
+    for (const suf of ['_mega', '_mega_x', '_mega_y']) {
+      const k = e.k + suf;
+      if (!D.pokemon[k] || seen.has(k)) continue;
+      seen.add(k);
+      const st = statsOf(k, [15, 15, 15], 50, false);
+      out.push({ key: k, shadow: false, st, name: D.pokemon[k].n, fast: defaultFast(k, false, LG) });
+    }
+  }
+  return out;
 }
 function ivSumHtml() {
   if (capV()) return '';
@@ -856,6 +875,7 @@ function ivSumHtml() {
   const foes = [];
   if (PIN && !PIN.rawSt) foes.push({ foe: PIN, rank: null });
   metaList().forEach((e, i) => foes.push({ foe: foeEntryOf(e), rank: i + 1 }));
+  if (MEGA4) for (const m of megaFoes()) foes.push({ foe: m, rank: null });
   const byIv = Array.from({ length: 16 }, () => []);
   for (const f of foes) { const nd = ivNeedOf(f.foe, dir); if (nd) byIv[nd.x].push({ ...f, ...nd }); }
   byIv.forEach(a => a.sort((p, q) => (p.mv.tn - q.mv.tn) || ((p.rank ?? 0) - (q.rank ?? 0))));
@@ -877,7 +897,7 @@ function ivSumHtml() {
   const total = byIv.reduce((n, a) => n + a.length, 0);
   const body = total ? `<div class="grp">${grp || `<div class="none">${statName}${IVSEL}以上でブレイクする相手はいません</div>`}</div>`
                      : `<div class="none">${statName}の個体値では変わりません</div>`;
-  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表はじぶん・あいてのPLの組み合わせごとのダメージ（あいて個体値100%・メガはPL53まで）</span></div>
+  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表はじぶん・あいてのPLの組み合わせごとのダメージ（あいて個体値100%${MEGA4 ? '・メガ4はPL53まで' : ''}）</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 
@@ -1079,7 +1099,7 @@ function render() {
   $('ivsum').querySelectorAll('[data-ivsel]').forEach(c => c.onclick = () => {
     const x = +c.dataset.ivsel;
     if (x >= IVSEL) { if (IVHIDE.has(x)) IVHIDE.delete(x); else IVHIDE.add(x); }   // 点灯中: そのグループの表示/非表示
-    else { IVSEL = x; IVHIDE.clear(); }                                           // 消灯中: 下限をそこまで下げる
+    else IVSEL = x;                                                               // 消灯中: 下限をそこまで下げる(非表示にしたものは維持)
     render();
   });
   $('ivsum').querySelectorAll('[data-ivreset]').forEach(b => b.onclick = () => { IVSEL = 15; IVHIDE.clear(); render(); });
@@ -1323,6 +1343,7 @@ const blurInputs = () => ['ivA', 'ivD', 'ivH', 'ivL'].forEach(id => {
 });
 $('ideal').onclick = () => { blurInputs(); setIdeal(); render(); };
 $('ivtog').onclick = () => { IVOPEN = !IVOPEN; render(); };
+$('mega4').onclick = () => { MEGA4 = !MEGA4; $('mega4').setAttribute('aria-pressed', MEGA4); render(); };
 $('foetog').onclick = () => { FOEOPEN = !FOEOPEN; syncMeCard(); if (FOEOPEN) $('foeq').focus(); };
 document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => {
   if (DIR === b.dataset.dir) return;
