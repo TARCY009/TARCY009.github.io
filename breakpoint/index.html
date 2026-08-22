@@ -259,7 +259,9 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .cells i b{font-size:.58rem;color:var(--sub);font-weight:800}
 .ivsum .cells i.on{background:var(--goldgrad);color:var(--ongold);box-shadow:0 3px 10px rgba(255,213,74,.25)}
 .ivsum .cells i.on b{color:var(--ongold)}
-.ivsum .cells i.sel{outline:2px solid #fff;outline-offset:-2px}
+.ivsum .cells i.on.hid{background:var(--barpast);color:var(--gold);box-shadow:inset 0 0 0 1.5px var(--gold);opacity:.75}
+.ivsum .cells i.on.hid b{color:var(--gold)}
+.ivsum .lowbtn.reset b{color:var(--sub);font-size:.52rem}
 .ivsum .lowrow{display:flex;gap:6px;align-items:center;margin-top:6px}
 .ivsum .lowrow .ll{flex:none;font-size:.6rem;font-weight:800;color:var(--sub);width:52px;text-align:center}
 .ivsum .cells i.lo{height:32px;border-radius:6px}
@@ -465,6 +467,7 @@ let DIR = 'give';   // 一覧全体の視点(💥与える / 🛡受ける)
 let ME = { key: null, shadow: false, ivs: [15, 15, 15], level: 50, fast: null, edited: false };
 let PIN = null;   // { key, shadow, atk, def, hp, name, fast(あいてのわざの初期値), label }
 let IVSEL = 15;   // 個体値まとめで見せる下限(タップで下げる・既定は15だけ)
+let IVHIDE = new Set();   // 点灯中のうち、タップで非表示にしたグループ(12だけ見たいときに13〜15を消す)
 let IVLOW = false;   // 個体値まとめで0〜9も見せるか(既定は10〜15だけ)
 let FOEOPEN = false;  // 「あいてを追加」を開いているか
 let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
@@ -859,16 +862,18 @@ function ivSumHtml() {
   const statName = dir === 'give' ? '攻撃' : '防御';
   const lowN = byIv.slice(0, 10).reduce((n, a) => n + a.length, 0);
   // マスは「その個体値以上でブレイクする相手が何匹ふえるか」。タップした値以上のグループを下に出す(既定は15だけ)
-  const cell = x => `<i class="${x >= IVSEL ? 'on' : ''}${x === IVSEL ? ' sel' : ''}${x < 10 ? ' lo' : ''}" data-ivsel="${x}"><span>${x}</span><b>${byIv[x].length ? byIv[x].length + '匹' : '&nbsp;'}</b></i>`;
+  // 点灯中のマスをもう一度タップすると、そのグループだけ非表示(薄く表示)。消灯中のマスをタップすると下限をそこまで下げる
+  const cell = x => `<i class="${x >= IVSEL ? (IVHIDE.has(x) ? 'on hid' : 'on') : ''}${x < 10 ? ' lo' : ''}" data-ivsel="${x}"><span>${x}</span><b>${byIv[x].length ? byIv[x].length + '匹' : '&nbsp;'}</b></i>`;
   const cells = [15, 14, 13, 12, 11, 10].map(cell).join('');
   const lowRow = IVLOW ? `<div class="lowrow"><span class="ll">0〜9</span><div class="cells">${[9,8,7,6,5,4,3,2,1,0].map(cell).join('')}</div></div>` : '';
-  const lowBtn = `<button class="lowbtn" data-ivlow aria-pressed="${IVLOW}">${IVLOW ? '9以下を隠す' : `9以下${lowN ? `<b>${lowN}匹</b>` : ''}`}</button>`;
+  const resetBtn = IVSEL < 15 || IVHIDE.size ? `<button class="lowbtn reset" data-ivreset>15だけ<b>に戻す</b></button>` : '';
+  const lowBtn = resetBtn + `<button class="lowbtn" data-ivlow aria-pressed="${IVLOW}">${IVLOW ? '9以下を隠す' : `9以下${lowN ? `<b>${lowN}匹</b>` : ''}`}</button>`;
   // 受ける側は「どのノーマルアタックで受けるか」が境目を決めるのでわざ名を出す(与える側はじぶんのわざなので不要)
   const nm = r => `<span class="fc"><span class="fn"><span class="nm">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${typeIcons(D.pokemon[r.foe.key], 15)}</span>
     <span class="mvl">${dir === 'take' ? `<span class="mvn">${r.mv.n}</span>` : ''}${tnBadge(r.mv.tn)}</span></span>${miniGrid(r)}</span>`;
   const row = (a, x) => a.length ? `<div><span class="k${x === 15 ? ' top' : ''}">${x}${x === 15 ? '' : '<small>以上</small>'}</span><span class="n">${a.map(nm).join('')}</span></div>` : '';
   let grp = '';
-  for (let x = 15; x >= IVSEL; x--) grp += row(byIv[x], x);
+  for (let x = 15; x >= IVSEL; x--) if (!IVHIDE.has(x)) grp += row(byIv[x], x);
   const total = byIv.reduce((n, a) => n + a.length, 0);
   const body = total ? `<div class="grp">${grp || `<div class="none">${statName}${IVSEL}以上でブレイクする相手はいません</div>`}</div>`
                      : `<div class="none">${statName}の個体値では変わりません</div>`;
@@ -1071,7 +1076,13 @@ function render() {
   // 一覧(環境100匹の行)は「自分の個体で確かめる」を開いたときだけ(上のまとめと情報が二重になるため)
   $('listwrap').style.display = IVOPEN || capped ? '' : 'none';
   $('ivsum').querySelectorAll('[data-ivlow]').forEach(b => b.onclick = () => { IVLOW = !IVLOW; if (!IVLOW && IVSEL < 10) IVSEL = 10; render(); });
-  $('ivsum').querySelectorAll('[data-ivsel]').forEach(c => c.onclick = () => { IVSEL = +c.dataset.ivsel; render(); });
+  $('ivsum').querySelectorAll('[data-ivsel]').forEach(c => c.onclick = () => {
+    const x = +c.dataset.ivsel;
+    if (x >= IVSEL) { if (IVHIDE.has(x)) IVHIDE.delete(x); else IVHIDE.add(x); }   // 点灯中: そのグループの表示/非表示
+    else { IVSEL = x; IVHIDE.clear(); }                                           // 消灯中: 下限をそこまで下げる
+    render();
+  });
+  $('ivsum').querySelectorAll('[data-ivreset]').forEach(b => b.onclick = () => { IVSEL = 15; IVHIDE.clear(); render(); });
   // 固定したあいて(検索 or GBLから引き継ぎ)
   if (PIN) {
     const r = calcRow(PIN, 'pin');
