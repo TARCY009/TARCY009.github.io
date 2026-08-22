@@ -280,8 +280,8 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 @media (min-width:760px){.ivsum .grp .n{grid-template-columns:1fr 1fr}}
 @media (max-width:540px){
   .ivsum .grp .fc{gap:8px;padding:8px 9px 8px 11px}
-  .ivsum .grp .fn{min-width:5.5em;font-size:.82rem}
-  .ivsum .mg{grid-template-columns:auto auto 32px 32px;grid-template-rows:auto auto 27px 27px}
+  .ivsum .grp .fn{font-size:.84rem}
+  .ivsum .mg{grid-template-columns:auto auto 50px 50px;grid-template-rows:auto auto 29px 29px}
   .ivsum .grp>div{flex-direction:column;gap:7px}
   .ivsum .grp .k{align-self:flex-start;margin-top:0;padding:3px 10px}
   .ivsum .grp .n{width:100%}
@@ -289,12 +289,14 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .grp .fc{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px 9px 14px;border-radius:14px;
   background:var(--fcbg);border:1px solid var(--fcline);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 6px rgba(0,0,0,.18);color:var(--ink);
   white-space:nowrap;flex-wrap:nowrap;width:100%;min-width:0}
-.ivsum .grp .fn{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;white-space:normal;word-break:break-all;flex:1 1 auto;min-width:8.5em;font-size:.86rem}
-.ivsum .grp .fn small{white-space:nowrap}
+.ivsum .grp .fn{display:flex;flex-direction:column;align-items:flex-start;gap:4px;white-space:normal;flex:1 1 auto;min-width:0;font-size:.88rem}
+.ivsum .grp .fn .nm{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;font-weight:800}
+.ivsum .grp .fn .mvl{display:inline-flex}
+.ivsum .grp .fn small{white-space:nowrap;font-size:.82rem}
 .ivsum .grp .fn .tb{white-space:nowrap}
 .ivsum .grp .fc small{color:var(--sub);font-weight:700}
 /* チップの中のミニPL表(軸バーは大きい表と同じ: じぶん=水色の縦バー／あいて=紫の横バー) */
-.ivsum .mg{flex:none;display:grid;grid-template-columns:auto auto 36px 36px;grid-template-rows:auto auto 29px 29px;gap:2px 3px;align-items:stretch;justify-items:stretch;font-size:.56rem;line-height:1;color:var(--sub)}
+.ivsum .mg{flex:none;display:grid;grid-template-columns:auto auto 58px 58px;grid-template-rows:auto auto 30px 30px;gap:2px 3px;align-items:stretch;justify-items:stretch;font-size:.56rem;line-height:1;color:var(--sub)}
 .ivsum .mg b{font-weight:800;display:flex;align-items:center;justify-content:center}
 .ivsum .mg .axf{grid-column:3/5;grid-row:1;font-size:.54rem;padding:2px 0;border-radius:999px;background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff}
 .ivsum .mg .h{grid-row:2;color:var(--foec);font-size:.66rem}
@@ -836,7 +838,8 @@ function ivSumHtml() {
   const cells = [15, 14, 13, 12, 11, 10].map(cell).join('');
   const lowRow = IVLOW ? `<div class="lowrow"><span class="ll">0〜9</span><div class="cells">${[9,8,7,6,5,4,3,2,1,0].map(cell).join('')}</div></div>` : '';
   const lowBtn = `<button class="lowbtn" data-ivlow aria-pressed="${IVLOW}">${IVLOW ? '9以下を隠す' : `9以下${lowN ? `<b>${lowN}匹</b>` : ''}`}</button>`;
-  const nm = r => `<span class="fc"><span class="fn">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${tnBadge(r.mv.tn)}<small>${r.from}→${r.to}</small></span>${miniGrid(r.grid, r.x)}</span>`;
+  const nm = r => `<span class="fc"><span class="fn"><span class="nm">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${typeIcons(D.pokemon[r.foe.key], 15)}</span>
+    <span class="mvl">${tnBadge(r.mv.tn)}</span><small>${r.from}→${r.to}</small></span>${miniGrid(r.grid, r.x)}</span>`;
   const row = (a, x) => a.length ? `<div><span class="k${x === 15 ? ' top' : ''}">${x}${x === 15 ? '' : '<small>以上</small>'}</span><span class="n">${a.map(nm).join('')}</span></div>` : '';
   let grp = '';
   for (let x = 15; x >= IVSEL; x--) grp += row(byIv[x], x);
