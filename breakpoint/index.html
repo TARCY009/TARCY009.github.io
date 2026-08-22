@@ -20,7 +20,7 @@
    役割色: じぶん=水色 / 境目(次の段)=金 / 受ける=紫 (GBLのデザイン言語に合わせる) */
 :root{
   --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560;
-  --accent:#08b4c9; --accent2:#43e0ff; --violet:#b06cff; --gold:#ffd54a; --red:#ff7b7b; --green:#7ee787;
+  --accent:#08b4c9; --foec:#c79bff;--accent2:#43e0ff; --violet:#b06cff; --gold:#ffd54a; --red:#ff7b7b; --green:#7ee787;
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(8,180,201,.13), transparent 62%),
     radial-gradient(820px 540px at 112% 6%, rgba(255,213,74,.10), transparent 62%),
@@ -40,7 +40,7 @@
 }
 :root.light{
   --ink:#20263a; --sub:#6a7391; --line:#dfe6f5;
-  --accent:#08a4b8; --accent2:#0b7a92; --violet:#8b5cf6; --gold:#b07a00; --red:#d9534f; --green:#1c7a44;
+  --accent:#08a4b8; --foec:#7a3fd6; --accent2:#0b7a92; --violet:#8b5cf6; --gold:#b07a00; --red:#d9534f; --green:#1c7a44;
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(8,180,201,.14), transparent 62%),
     radial-gradient(820px 540px at 112% 6%, rgba(240,168,39,.13), transparent 62%),
@@ -212,9 +212,12 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .plmx table{border-collapse:separate;border-spacing:3px;font-size:.86rem;text-align:center;margin-left:-3px}
 .plmx th{font-size:.6rem;font-weight:700;color:var(--sub);padding:2px 4px;white-space:nowrap;line-height:1.2}
 .plmx th small{display:block;font-size:.52rem;font-weight:600;opacity:.85}
-.plmx th.c{font-size:.54rem;text-align:left;font-weight:600}
-.plmx tbody th{text-align:left;padding-right:10px}
-.plmx tbody th b{color:var(--accent2)}
+.plmx th.c{text-align:left;vertical-align:bottom}
+.plmx thead tr:last-child th{color:var(--foec)}
+.plmx tbody th{text-align:left;padding-right:10px;color:var(--accent2)}
+.plmx .ax{display:inline-block;font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.plmx .ax.me{background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330}
+.plmx .ax.foe{background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff}
 .plmx td{width:46px;padding:7px 0;border-radius:7px;background:var(--barpast);font-weight:800;color:var(--sub)}
 .plmx td.up{background:var(--goldgrad);color:var(--ongold)}
 .plmx td.dn{background:var(--ngbg);color:var(--red);box-shadow:inset 0 0 0 1px var(--ngline)}
@@ -684,13 +687,14 @@ function plMatrix(foe, mv, dir) {
       const cls = better(d) ? 'up' : worse(d) ? 'dn' : '';
       return `<td class="${cls}${l === now && i === 0 ? ' me' : ''}">${d}</td>`;
     }).join('');
-    return `<tr><th>${l === now ? `<b>いま</b> ` : ''}PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>${cells}</tr>`;
+    return `<tr><th>PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>${cells}</tr>`;
   }).join('');
   const allSame = !rows.includes('class="up') && !rows.includes('class="dn');
   if (allSame) return '';
   const head = foeLv.map(l => `<th>PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>`).join('');
-  return `<div class="dpan plmx"><div class="dt">PLの組み合わせ<span class="ds">あいては個体値100%</span></div>
-    <table><thead><tr><th class="c">じぶん＼あいて</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="dpan plmx"><div class="dt">じぶん＆あいてのPL表<span class="ds">あいて個体値100%</span></div>
+    <table><thead><tr><th class="c"><span class="ax me">じぶん ↓</span></th><th colspan="${foeLv.length}"><span class="ax foe">あいて →</span></th></tr>
+    <tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 // ---- 詳細カード ----
