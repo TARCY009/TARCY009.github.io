@@ -609,14 +609,18 @@ function goalBox(v, dir) {
   const to = v.at, now = v.cur.lv;
   const dmg = dir === 'give' ? `${v.to} ダメージにするには` : `被ダメージを ${v.to} にするには`;
   let how, note = '';
+  // メガLv4はメガシンカ中に自動でPL+2相当になる(強化するものではない)。PL52・53はそれでしか届かない
   if (to > 51 && mega) {
-    how = `<b>メガLv4</b>にして PL<b>${fmtLv(to)}</b> まで強化`;
-    if (to > 52) note = 'PL53は最高の相棒の状態が必要です';
+    const base = Math.round((to - 2) * 10) / 10;
+    how = base > now ? `PL<b>${fmtLv(base)}</b> にして <b>メガLv4</b>でメガシンカ` : `<b>メガLv4</b>でメガシンカ（強化は不要）`;
+    note = `メガシンカ中は自動的に＋2＝PL${fmtLv(to)}相当になります` + (base > 50 ? `。PL${fmtLv(base)}には最高の相棒の状態が必要です` : '');
   } else if (to > 50) {
     how = `<b>最高の相棒</b>にして PL<b>${fmtLv(to)}</b> 以上に強化`;
     note = now >= 50 ? 'PL50より上は最高の相棒の状態でしか強化できません' : `PL50までは通常の強化、そこから先は最高の相棒が必要です`;
+    if (mega) note += `<br>メガLv4なら PL${fmtLv(to - 2)} でも届きます（メガシンカ中は＋2相当）`;
   } else {
     how = `PL<b>${fmtLv(to)}</b> まで強化`;
+    if (mega && to - 2 >= now) note = `メガLv4なら PL${fmtLv(to - 2)} でも届きます（メガシンカ中は＋2相当）`;
   }
   const ico = dir === 'give' ? '🔥' : '🛡';
   return `<div class="vbox up goal"><div class="hd">${ico} ${dmg}</div>
