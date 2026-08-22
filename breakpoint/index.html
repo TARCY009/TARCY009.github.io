@@ -173,7 +173,9 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .fmvsel .mvchip{font-size:.68rem;padding:4px 10px}
 .nowline{display:flex;align-items:baseline;gap:7px;margin:10px 0 4px;flex-wrap:wrap}
 .nowline .l{font-size:.76rem;color:var(--sub)}
-.nowline .v{font-size:1.8rem;font-weight:800;line-height:1}
+.nowline .v{font-size:2.1rem;font-weight:800;line-height:1}
+.nowline .v.nx{color:var(--gold)}
+.nowline .arw{font-size:1.3rem;color:var(--sub);align-self:center}
 .nowline .r{margin-left:auto;font-size:.78rem;color:var(--ink)}
 /* 結論ボックス */
 .vbox{border-radius:11px;padding:10px 12px;margin-top:12px;border:1px solid}
@@ -191,6 +193,19 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .vbox.goal .how{font-size:1.12rem;font-weight:800;color:var(--ink);line-height:1.4}
 .vbox.goal .how b{color:var(--gold)}
 .vbox.goal .how small{display:block;font-size:.66rem;font-weight:700;color:var(--sub);margin-top:3px}
+/* じぶんPL×あいてPLの表 */
+.plmx{margin-top:14px}
+.plmx .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
+.plmx table{width:100%;border-collapse:separate;border-spacing:2px;font-size:.8rem;text-align:center}
+.plmx th{font-size:.62rem;font-weight:700;color:var(--sub);padding:4px 2px;white-space:nowrap}
+.plmx th small{display:block;font-size:.54rem;font-weight:600;opacity:.85}
+.plmx th.c{font-size:.56rem;text-align:left}
+.plmx tbody th{text-align:left}
+.plmx tbody th b{color:var(--accent2)}
+.plmx td{padding:6px 2px;border-radius:6px;background:var(--barpast);font-weight:800;color:var(--sub)}
+.plmx td.up{background:var(--goldgrad);color:var(--ongold)}
+.plmx td.dn{background:var(--ngbg);color:var(--red);border:1px solid var(--ngline)}
+.plmx td.me{outline:2px solid var(--accent2);outline-offset:-2px;background:var(--curgrad);color:var(--curtext)}
 /* 個体値バー */
 .ivbar{margin-top:14px}
 .ivbar .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
@@ -596,7 +611,7 @@ function ivBar(foe, mv, dir) {
   const curStart = cells.find(c => c.d === dMine);
   const note = gold
     ? `<span class="g">${statName}の個体値 ${gold.x} 以上なら ${dMine}→${gold.d}</span>`
-    : `<span class="g">境目は個体値 ${curStart.x}（いまは ${mineIv} で有利な側）</span>`;
+    : `<span class="g">境目は個体値 ${curStart.x}</span>`;
   return `<div class="ivbar"><div class="t">${statName}の個体値 0〜15 ではどうなるか（最大強化時・▲いまの個体）</div>
     <div class="ivcells">${html}</div>
     <div class="ivnote">${note}</div></div>`;
@@ -607,25 +622,73 @@ function ivBar(foe, mv, dir) {
 function goalBox(v, dir) {
   const mega = isMega(ME.key);
   const to = v.at, now = v.cur.lv;
-  const dmg = dir === 'give' ? `${v.to} ダメージにするには` : `被ダメージを ${v.to} にするには`;
-  let how, note = '';
+  let how, note = '', expl = '';
   // メガLv4はメガシンカ中に自動でPL+2相当になる(強化するものではない)。PL52・53はそれでしか届かない
   if (to > 51 && mega) {
     const base = Math.round((to - 2) * 10) / 10;
     how = base > now ? `PL<b>${fmtLv(base)}</b> にして <b>メガLv4</b>でメガシンカ` : `<b>メガLv4</b>でメガシンカ（強化は不要）`;
     note = `メガシンカ中は自動的に＋2＝PL${fmtLv(to)}相当になります` + (base > 50 ? `。PL${fmtLv(base)}には最高の相棒の状態が必要です` : '');
   } else if (to > 50) {
-    how = `<b>最高の相棒</b>にして PL<b>${fmtLv(to)}</b> 以上に強化`;
-    note = now >= 50 ? 'PL50より上は最高の相棒の状態でしか強化できません' : `PL50までは通常の強化、そこから先は最高の相棒が必要です`;
-    if (mega) note += `<br>メガLv4なら PL${fmtLv(to - 2)} でも届きます（メガシンカ中は＋2相当）`;
+    how = `<b>最高の相棒</b>にして PL<b>${fmtLv(to)}</b> 以上`;
+    // 相棒の説明は知っている前提なので💡説明モードだけ
+    expl = now >= 50 ? 'PL50より上は最高の相棒の状態でしか強化できません' : 'PL50までは通常の強化、そこから先は最高の相棒が必要です';
+    if (mega) note = `メガLv4なら PL${fmtLv(to - 2)} でも届きます`;
   } else {
-    how = `PL<b>${fmtLv(to)}</b> まで強化`;
-    if (mega && to - 2 >= now) note = `メガLv4なら PL${fmtLv(to - 2)} でも届きます（メガシンカ中は＋2相当）`;
+    how = `PL<b>${fmtLv(to)}</b> 以上`;
+    if (mega && to - 2 >= now) note = `メガLv4なら PL${fmtLv(to - 2)} でも届きます`;
   }
   const ico = dir === 'give' ? '🔥' : '🛡';
-  return `<div class="vbox up goal"><div class="hd">${ico} ${dmg}</div>
+  return `<div class="vbox up goal"><div class="hd">${ico} ブレイク条件</div>
     <div class="how">${how}<small>いま PL${fmtLv(now)}・あと ${v.dPl}</small></div>
-    ${note ? `<div class="nt">${note}</div>` : ''}</div>`;
+    ${note ? `<div class="nt">${note}</div>` : ''}${expl ? `<div class="nt expl">${expl}</div>` : ''}</div>`;
+}
+// 「いま ◯ → ◯」の行。ブレイクで変わる先の数字も同じ大きさで並べる
+function nowLine(v, unit) {
+  const next = v.type === 'up' ? v.to : null;
+  return `<div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span>
+    ${next != null ? `<span class="arw">→</span><span class="v nx">${next}</span>` : ''}<span class="l">${unit}</span></div>`;
+}
+
+// ---- マスター: じぶんのPL × あいてのPL の表(あいては理想個体値。PL50/50.5/51、メガなら53まで) ----
+// 「相手が最高の相棒だったら」で結果が変わる対面を、ぱっと見で分かるようにする
+function plMatrix(foe, mv, dir) {
+  if (capV() || !foe.key || foe.rawSt) return '';
+  const now = ME.level;
+  const foeLv = isMega(foe.key) ? [50, 51, 52, 53] : [50, 50.5, 51];
+  const foeSt = foeLv.map(l => statsOf(foe.key, [15, 15, 15], l, foe.shadow));
+  const dmg = (mySt, fSt) => dir === 'give' ? dmgOf(mv, mySt, fSt) : dmgOf(mv, fSt, mySt);
+  // じぶんのPL候補: いま・50/50.5/51(メガは52/53も)・各列でダメージが変わる最初のPL
+  const set = new Set([now, 50, 50.5, 51].concat(isMega(ME.key) ? [52, 53] : []));
+  const lv = levelsUpTo(maxLvOf());
+  for (const fs of foeSt) {
+    const d0 = dmg(statsOf(ME.key, ME.ivs, now, ME.shadow), fs);
+    for (const l of lv) {
+      if (l <= now) continue;
+      if (dmg(statsOf(ME.key, ME.ivs, l, ME.shadow), fs) !== d0) { set.add(l); break; }
+    }
+  }
+  const myLv = [...set].filter(l => l >= now && l <= maxLvOf()).sort((a, b) => a - b);
+  const base = dmg(statsOf(ME.key, ME.ivs, now, ME.shadow), foeSt[0]);
+  const better = d => dir === 'give' ? d > base : d < base;
+  const worse = d => dir === 'give' ? d < base : d > base;
+  // 前の行と結果が同じ行は省く(「いま」と、どこかの列が変わる行だけ並べる)
+  let prev = null;
+  const rows = myLv.map(l => {
+    const st = statsOf(ME.key, ME.ivs, l, ME.shadow);
+    const ds = foeSt.map(fs => dmg(st, fs));
+    if (prev && ds.join() === prev) return '';
+    prev = ds.join();
+    const cells = ds.map((d, i) => {
+      const cls = better(d) ? 'up' : worse(d) ? 'dn' : '';
+      return `<td class="${cls}${l === now && i === 0 ? ' me' : ''}">${d}</td>`;
+    }).join('');
+    return `<tr><th>${l === now ? `<b>いま</b> ` : ''}PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>${cells}</tr>`;
+  }).join('');
+  const allSame = !rows.includes('class="up') && !rows.includes('class="dn');
+  if (allSame) return '';
+  const head = foeLv.map(l => `<th>PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>`).join('');
+  return `<div class="plmx"><div class="t">あいてのPL次第では<span class="expl">（あいては個体値100%。相手が最高の相棒だと結果が変わることがあります）</span></div>
+    <table><thead><tr><th class="c">じぶん ↓ ／ あいて →</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 // ---- 詳細カード ----
@@ -666,10 +729,10 @@ function detailHTML(foe, rowId) {
         vb += `<div class="vbox ok"><div class="hd">✅ ダメージを最大化できています</div>
           <div class="nt">強化や個体値では変わりません</div></div>`;
       }
-      extra = ivBar(foe, mv, 'give');
+      extra = plMatrix(foe, mv, 'give') + ivBar(foe, mv, 'give');
     }
     body = `<div class="dsub"><b>${mv.n}</b>${tnBadge(mv.tn)} → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
-      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">ダメージ</span></div>
+      ${nowLine(v, 'ダメージ')}
       ${vb}${extra}`;
   } else {
     // 受ける: あいてのノーマルアタックを選べる(既定は環境の定番)
@@ -707,13 +770,13 @@ function detailHTML(foe, rowId) {
         vb += `<div class="vbox ok"><div class="hd">✅ 被ダメージを最小化できています</div>
           <div class="nt">強化や個体値では変わりません</div></div>`;
       }
-      extra = ivBar(foe, fmv, 'take');
+      extra = plMatrix(foe, fmv, 'take') + ivBar(foe, fmv, 'take');
     }
     const chips = pool.length > 1 ? `<div class="fmvsel">${pool.map(id =>
       `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}${tnBadge(D.moves[id].tn)}</button>`).join('')}</div>` : '';
     body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>${tnBadge(fmv.tn)} → じぶん</div>
       ${chips}
-      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">被ダメージ</span></div>
+      ${nowLine(v, '被ダメージ')}
       ${vb}${extra}`;
   }
   const sel = DIR === 'take' ? (DTAB[rowId + ':fmv'] || foe.fast) : foe.fast;
@@ -912,7 +975,7 @@ function pinFoe(key, opts, quiet) {
     st = statsOf(key, r1.ivs, r1.level, shadow);
   }
   const e = ((window.META_MOVES || {})[LG] || {})[key + (shadow ? '|s' : '')];
-  PIN = { key, shadow, st, name: D.pokemon[key].n,
+  PIN = { key, shadow, st, name: D.pokemon[key].n, rawSt: !!(opts && opts.st),
           fast: (opts && opts.fast) || (e && e[0]) || null };
   // 検索で固定したあいて(理想個体値)は勝敗シミュの設定も組める。実数値ごと来たあいて(fst)は組めない
   if (!(opts && opts.st)) {
