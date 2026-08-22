@@ -354,11 +354,11 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
       <button class="t-shadow" id="foeshadow" aria-pressed="false" title="あいてをシャドウ（攻撃1.2倍・防御5/6）として計算します"><i class="shadowmark"></i> シャドウ</button>
     </div>
   </div>
-  <p class="expl" style="font-size:.68rem;color:var(--sub);margin:8px 0 0;line-height:1.7">検索したあいては一覧のいちばん上に固定されます。下の環境上位50匹は理想個体値、検索したあいては理想個体値（GBL対面シミュから来たときはその画面の個体値そのまま）で計算します。</p>
+  <p class="expl" style="font-size:.68rem;color:var(--sub);margin:8px 0 0;line-height:1.7">検索したあいては一覧のいちばん上に固定されます。下の環境上位100匹は理想個体値、検索したあいては理想個体値（GBL対面シミュから来たときはその画面の個体値そのまま）で計算します。</p>
 </div>
 
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
-  <button class="t-gold" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">💥 与える</button>
+  <button class="t-gold" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">🗡️ 与える</button>
   <button class="t-shadow" data-dir="take" aria-pressed="false" title="相手のノーマルアタックから受けるダメージの境目を見ます">🛡 受ける</button>
 </div></div>
 <div id="ivsum"></div>
@@ -372,7 +372,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <p>ポケモンGOのダメージは整数に切り捨てられるため、攻撃の実数値が少し上がっても<b>ダメージは階段状にしか増えません</b>。その「段が上がる境目」がブレイクポイントです。とくに<b>1ターン(0.5秒)のノーマルアタック</b>は、ダメージが5→6になるだけで火力が20%上がるため影響が大きく、マスターリーグでは勝敗を分けます。</p>
   <h4>この画面でわかること</h4>
   <ul>
-    <li><b>💥与える／🛡受ける</b>（一覧の上のタブ）: 一覧全体の視点を切り替えます。与える=じぶんのノーマルアタックの境目／受ける=あいてのノーマルアタックをいくつで受けるか</li>
+    <li><b>🗡️与える／🛡受ける</b>（一覧の上のタブ）: 一覧全体の視点を切り替えます。与える=じぶんのノーマルアタックの境目／受ける=あいてのノーマルアタックをいくつで受けるか</li>
     <li><b>マスターの一覧</b>: いまの個体のまま強化すると、どの相手にダメージ+1を取れるか。🔥が「強化で伸びる相手」です</li>
     <li><b>スーパー・ハイパーの一覧</b>: CP制限があるリーグでは、防御・HPの個体値を下げるとPLを上げられるため、<b>攻撃だけでなく全部の個体値がダメージに効きます</b>。そこで「ブレイクを取れる個体に変えると、🛡0-0/1-1/2-2の3パターンの合計勝ち数が変わるか」をシミュレートし、🔥勝ち+1／⚠勝ち-1のチップで出します（⚠は耐久を削るぶん逆に不利になる相手）</li>
     <li><b>行をタップ</b>: その相手との詳細。いまのダメージと、どこまで強化すればブレイクするか（PL50より上は最高の相棒が必要）、届く個体の例、1対1シミュへの遷移ボタンが出ます</li>
@@ -382,7 +382,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <ul>
     <li>ダメージ式・実数値はGBL対面シミュのエンジンと同じもの。<b>同じ条件なら結果は必ず一致します</b></li>
     <li>能力変化（バフ・デバフ）が無い開始時点で計算します</li>
-    <li>環境上位50匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成が基準です</li>
+    <li>環境上位100匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成が基準です</li>
     <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4＋相棒で53まで</li>
     <li>SPアタックは対象外です。SPの+1はバトル全体で1〜2回しか発生せず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
   </ul>
@@ -511,7 +511,8 @@ function defaultFast(key, shadow, lg) {
 }
 
 // ---- 環境リスト ----
-const metaList = () => (window.META_LISTS || {})[LG] || [];
+// 環境上位100匹(上位50＋51〜100位)。厳選は長い目で見るので、いま50位未満のポケモンまで含める
+const metaList = () => ((window.META_LISTS || {})[LG] || []).concat((window.META_EXT || {})[LG] || []);
 function foeEntryOf(e) {   // メタ行 → 計算用のあいて(理想個体値・シミュ設定つき)
   const r1 = rank1(e.k, capV());
   const st = statsOf(e.k, r1.ivs, r1.level, !!e.s);
@@ -782,26 +783,26 @@ function ivSumHtml() {
   const lowN = byIv.slice(0, 10).reduce((n, a) => n + a.length, 0);
   const N = metaList().length;
   // 0〜9は採用する人がほぼいないので畳む(「9以下」で開く)
-  const cell = x => `<i class="${top >= 0 && x >= top ? 'ok' : ''}${byIv[x].length ? ' hit' : ''}${x < 10 ? ' lo' : ''}"><span>${x}</span>${byIv[x].length ? `<b>+${byIv[x].length}</b>` : '<b>&nbsp;</b>'}</i>`;
+  const cell = x => `<i class="${top >= 0 && x >= top ? 'ok' : ''}${byIv[x].length ? ' hit' : ''}${x < 10 ? ' lo' : ''}"><span>${x}</span>${byIv[x].length ? `<b>${byIv[x].length}匹</b>` : '<b>&nbsp;</b>'}</i>`;
   const cells = byIv.map((a, x) => x >= 10 ? cell(x) : '').join('');
   const lowRow = IVLOW ? `<div class="lowrow"><span class="ll">0〜9</span><div class="cells">${byIv.map((a, x) => x < 10 ? cell(x) : '').join('')}</div></div>` : '';
-  const lowBtn = `<button class="lowbtn" data-ivlow aria-pressed="${IVLOW}">${IVLOW ? '9以下を隠す' : `9以下${lowN ? `<b>+${lowN}</b>` : ''}`}</button>`;
+  const lowBtn = `<button class="lowbtn" data-ivlow aria-pressed="${IVLOW}">${IVLOW ? '9以下を隠す' : `9以下${lowN ? `<b>${lowN}匹</b>` : ''}`}</button>`;
   const nm = r => `<span class="fc">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${tnBadge(r.mv.tn)}<small>${r.from}→${r.to}</small></span>`;
   let concl, grp = '';
   if (top < 0) concl = `${statName}の個体値では変わりません`;
-  else if (top < 10) concl = `${statName}IV <b>10</b> 以上なら環境上位${N}匹すべて${dir === 'give' ? 'に届く' : '最小'}<small>（境目は9以下だけ）</small>`;
+  else if (top < 10) concl = `${statName} <b>10</b> 以上なら環境上位${N}匹すべて${dir === 'give' ? 'に届く' : '最小'}<small>（境目は9以下だけ）</small>`;
   else {
     const miss = byIv[top].length;
     concl = dir === 'give'
-      ? `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${N}匹すべてに届く<small>${top - 1}以下は <b>${miss}匹</b> を取りこぼす</small>`
-      : `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${N}匹すべて最小<small>${top - 1}以下は <b>${miss}匹</b> から受けるダメージが増える</small>`;
+      ? `${statName} <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${N}匹すべてに届く<small>${top - 1}以下は <b>${miss}匹</b> を取りこぼす</small>`
+      : `${statName} <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${N}匹すべて最小<small>${top - 1}以下は <b>${miss}匹</b> から受けるダメージが増える</small>`;
   }
   if (top >= 0) {
     const row = (a, x) => a.length ? `<div class="${x < 10 ? 'lo' : ''}"><span class="k${x === top ? ' top' : ''}">${x}${x === 15 ? 'だけ' : '以上'}</span><span class="n">${a.map(nm).join('')}</span></div>` : '';
     grp = `<div class="grp">` + byIv.map((a, x) => (x >= 10 || IVLOW) ? row(a, x) : '').reverse().join('') + `</div>`;
   }
   const plseg = `<span class="plseg"><button data-spl="50" aria-pressed="${SUMPL === 50}">PL50</button><button data-spl="51" aria-pressed="${SUMPL === 51}">PL51<small>相棒</small></button></span>`;
-  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '💥 攻撃の個体値でどこまで届くか' : '🛡 防御の個体値でどこまで減らせるか'}<span class="ds">あいては個体値100%</span>${plseg}</div>
+  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃の個体値でどこまで届くか' : '🛡 防御の個体値でどこまで減らせるか'}<span class="ds">あいては個体値100%</span>${plseg}</div>
     <div class="concl">${concl}</div>
     <div class="barrow">${lowBtn}<div class="cells">${cells}</div></div>${lowRow}${grp}</div>`;
 }
@@ -962,7 +963,7 @@ function calcRow(foe, rowId) {
     const tmp = DIR === 'give' ? giveVerdict(giveScan(mv, foe.st), foe, mv)
       : (() => { const sel = DTAB[rowId + ':fmv'] || foe.fast || fastMoves(foe.key)[0]; return takeVerdict(takeScan(D.moves[sel], foe.st), foe, D.moves[sel]); })();
     const chip = topStep
-      ? `<span class="vchip up">${DIR === 'give' ? '攻' : '防'}IV${topStep.x}${topStep.x === 15 ? 'だけ' : '以上'}<small> ${topStep.from}→${topStep.to}</small></span>`
+      ? `<span class="vchip up">${DIR === 'give' ? '攻撃' : '防御'}${topStep.x}${topStep.x === 15 ? 'だけ' : '以上'}<small> ${topStep.from}→${topStep.to}</small></span>`
       : `<span class="vchip no">—</span>`;
     return { v: tmp, winChip: chip, diff: null, ivHit: !!topStep };
   }
@@ -992,7 +993,7 @@ function render() {
     $('ivsum').innerHTML = '';
     sumEl.style.display = 'none';
     dirEl.style.display = 'none';
-    listEl.innerHTML = `<div class="empty">じぶんのポケモンを選ぶと、環境上位50匹への<br>ブレイクポイント判定がここに並びます</div>`;
+    listEl.innerHTML = `<div class="empty">じぶんのポケモンを選ぶと、環境上位100匹への<br>ブレイクポイント判定がここに並びます</div>`;
     updateUrl();
     return;
   }
@@ -1006,7 +1007,7 @@ function render() {
     const r = calcRow(PIN, 'pin');
     pinEl.innerHTML = rowHTML(PIN, 'pin', null, r.v, r.winChip);
   } else pinEl.innerHTML = '';
-  // 環境上位50匹
+  // 環境上位100匹
   const rowsHtml = [];
   let hot = 0, dn = 0;
   metaList().forEach((e, i) => {
