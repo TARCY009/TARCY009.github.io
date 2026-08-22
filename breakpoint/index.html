@@ -141,7 +141,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .dirrow{margin:2px 2px 10px}
 .dirrow button{flex:1 1 auto}
 /* 1対1シミュへの遷移ボタン */
-.simlink{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;padding:10px;
+.simlink{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;padding:9px;
   border-radius:11px;font-size:.8rem;font-weight:800;text-decoration:none;color:#fff;
   background:linear-gradient(160deg,#9fc0ff 0%,#3b6ef0 45%,#23429c 100%);
   box-shadow:0 4px 14px rgba(59,110,240,.35),inset 0 1px 0 rgba(255,255,255,.4);
@@ -171,15 +171,18 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .dsub b{color:var(--ink)}
 .fmvsel{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 2px}
 .fmvsel .mvchip{font-size:.68rem;padding:4px 10px}
-.nowline{display:flex;align-items:baseline;gap:7px;margin:2px 0 4px;flex-wrap:wrap}
-.nowline .l{font-size:.76rem;color:var(--sub)}
-.nowline .v{font-size:2.1rem;font-weight:800;line-height:1}
-.nowline .v.nx{color:var(--gold)}
-.nowline .nxa{font-size:1.3rem;color:var(--sub);align-self:center}
-.nowttl{font-size:.7rem;color:var(--sub);margin-top:10px}
-.nowline .r{margin-left:auto;font-size:.78rem;color:var(--ink)}
+/* ダメージ＋条件のカード */
+.dhero{margin-top:8px;border:1px solid var(--upline);border-radius:12px;background:var(--upbg);overflow:hidden}
+.dmgrow{display:flex;align-items:center;gap:12px;padding:10px 14px 8px;flex-wrap:wrap}
+.dmgrow .u{font-size:.74rem;font-weight:800;color:var(--sub);min-width:4.2em}
+.dmgrow .num{display:flex;align-items:baseline;gap:5px}
+.dmgrow .num b{font-size:2.3rem;font-weight:800;line-height:1}
+.dmgrow .num small{font-size:.66rem;color:var(--sub);font-weight:700}
+.dmgrow .num.nx b{color:var(--gold)}
+.dmgrow .nxa{font-size:1.3rem;color:var(--sub)}
 /* 結論ボックス */
 .vbox{border-radius:11px;padding:10px 12px;margin-top:12px;border:1px solid}
+.dhero .vbox{margin:0;border:none;border-top:1px solid var(--upline);border-radius:0;background:none}
 .vbox.up{background:var(--upbg);border-color:var(--upline)}
 .vbox.ok{background:var(--okbg);border-color:var(--okline)}
 .vbox.ng{background:var(--ngbg);border-color:var(--ngline)}
@@ -190,28 +193,35 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .vbox .fx{display:flex;gap:13px;font-size:.8rem;flex-wrap:wrap}
 .vbox .fx b{color:var(--green)}
 .vbox .nt{font-size:.68rem;color:var(--sub);margin-top:6px;line-height:1.6}
-.vbox.goal .hd{font-size:.8rem;color:var(--sub);margin-bottom:4px}
-.vbox.goal .how{font-size:1.12rem;font-weight:800;color:var(--ink);line-height:1.4}
+.vbox.goal{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 14px}
+.vbox.goal .hd{font-size:.74rem;color:var(--gold);margin:0;min-width:6.4em}
+.vbox.goal .how{font-size:1.05rem;font-weight:800;color:var(--ink);line-height:1.3;flex:1 1 200px}
 .vbox.goal .how b{color:var(--gold)}
-.vbox.goal .how small{display:block;font-size:.66rem;font-weight:700;color:var(--sub);margin-top:3px}
+.vbox.goal .how small{display:block;font-size:.64rem;font-weight:700;color:var(--sub);margin-top:2px}
+.vbox.goal .nt{flex:1 1 100%;margin-top:0}
+.dhero .vbox.ok,.dhero .vbox.ng{padding:9px 14px}
+.dhero .vbox .hd{font-size:.86rem;margin-bottom:2px}
+/* 下段: 2枚のパネル(広い画面は左右・狭い画面は縦) */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.dgrid:empty{display:none}
+.dpan{border:1px solid var(--line);border-radius:12px;padding:9px 11px 10px;background:var(--chip);min-width:0}
+.dt{font-size:.74rem;font-weight:800;color:var(--ink);margin-bottom:7px;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.dt .ds{font-size:.6rem;font-weight:600;color:var(--sub)}
+@media (max-width:600px){.dgrid{grid-template-columns:1fr}}
 /* じぶんPL×あいてPLの表 */
-.plmx{margin-top:14px}
-.plmx .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
-.plmx table{width:100%;border-collapse:separate;border-spacing:2px;font-size:.8rem;text-align:center}
-.plmx th{font-size:.62rem;font-weight:700;color:var(--sub);padding:4px 2px;white-space:nowrap}
-.plmx th small{display:block;font-size:.54rem;font-weight:600;opacity:.85}
-.plmx th.c{font-size:.56rem;text-align:left}
-.plmx tbody th{text-align:left}
+.plmx table{border-collapse:separate;border-spacing:3px;font-size:.86rem;text-align:center;margin-left:-3px}
+.plmx th{font-size:.6rem;font-weight:700;color:var(--sub);padding:2px 4px;white-space:nowrap;line-height:1.2}
+.plmx th small{display:block;font-size:.52rem;font-weight:600;opacity:.85}
+.plmx th.c{font-size:.54rem;text-align:left;font-weight:600}
+.plmx tbody th{text-align:left;padding-right:10px}
 .plmx tbody th b{color:var(--accent2)}
-.plmx td{padding:6px 2px;border-radius:6px;background:var(--barpast);font-weight:800;color:var(--sub)}
+.plmx td{width:46px;padding:7px 0;border-radius:7px;background:var(--barpast);font-weight:800;color:var(--sub)}
 .plmx td.up{background:var(--goldgrad);color:var(--ongold)}
-.plmx td.dn{background:var(--ngbg);color:var(--red);border:1px solid var(--ngline)}
+.plmx td.dn{background:var(--ngbg);color:var(--red);box-shadow:inset 0 0 0 1px var(--ngline)}
 .plmx td.me{outline:2px solid var(--accent2);outline-offset:-2px;background:var(--curgrad);color:var(--curtext)}
 /* 個体値バー */
-.ivbar{margin-top:14px}
-.ivbar .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
 .ivcells{display:flex;gap:1px}
-.ivcells i{flex:1;height:20px;font-style:normal;font-size:.56rem;display:flex;align-items:center;
+.ivcells i{flex:1;height:22px;font-style:normal;font-size:.56rem;display:flex;align-items:center;
   justify-content:center;color:transparent}
 .ivcells i:first-child{border-radius:4px 0 0 4px}
 .ivcells i:last-child{border-radius:0 4px 4px 0}
@@ -611,9 +621,9 @@ function ivBar(foe, mv, dir) {
   const gold = cells.find(c => better(c.d));
   const curStart = cells.find(c => c.d === dMine);
   const note = gold
-    ? `<span class="g">${statName}の個体値 ${gold.x} 以上なら ${dMine}→${gold.d}</span>`
+    ? `<span class="g">${gold.x} 以上なら ${dMine}→${gold.d}</span>`
     : `<span class="g">境目は個体値 ${curStart.x}</span>`;
-  return `<div class="ivbar"><div class="t">${statName}の個体値 0〜15 ではどうなるか（最大強化時・▲いまの個体）</div>
+  return `<div class="dpan ivbar"><div class="dt">${statName}の個体値<span class="ds">最大強化したとき</span></div>
     <div class="ivcells">${html}</div>
     <div class="ivnote">${note}</div></div>`;
 }
@@ -640,16 +650,18 @@ function goalBox(v, dir) {
   }
   const ico = dir === 'give' ? '🔥' : '🛡';
   return `<div class="vbox up goal"><div class="hd">${ico} ブレイク条件</div>
-    <div class="how">${how}<small>いま PL${fmtLv(now)}・あと ${v.dPl}</small></div>
+    <div class="how">${how}<small>いま PL${fmtLv(now)}・あと${v.dPl}</small></div>
     ${note ? `<div class="nt">${note}</div>` : ''}${expl ? `<div class="nt expl">${expl}</div>` : ''}</div>`;
 }
 // 「いま ◯ → ◯」の行。ブレイクで変わる先の数字も同じ大きさで並べる
 function nowLine(v, unit) {
   const next = v.type === 'up' ? v.to : null;
-  return `<div class="nowttl">${unit}</div>
-    <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span>
-    ${next != null ? `<span class="nxa">→</span><span class="v nx">${next}</span><span class="l">ブレイク後</span>` : ''}</div>`;
+  return `<div class="dmgrow"><span class="u">${unit}</span>
+    <span class="num"><b>${v.dNow}</b><small>いま</small></span>
+    ${next != null ? `<span class="nxa">→</span><span class="num nx"><b>${next}</b><small>ブレイク後</small></span>` : ''}</div>`;
 }
+// ダメージの行と条件の箱を1枚のカードにまとめる
+const heroHTML = (v, unit, cond) => `<div class="dhero">${nowLine(v, unit)}${cond}</div>`;
 
 // ---- マスター: じぶんのPL × あいてのPL の表(あいては理想個体値。PL50/50.5/51、メガなら53まで) ----
 // 「相手が最高の相棒だったら」で結果が変わる対面を、ぱっと見で分かるようにする
@@ -677,8 +689,8 @@ function plMatrix(foe, mv, dir) {
   const allSame = !rows.includes('class="up') && !rows.includes('class="dn');
   if (allSame) return '';
   const head = foeLv.map(l => `<th>PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>`).join('');
-  return `<div class="plmx"><div class="t">あいてのPL次第では<span class="expl">（あいては個体値100%。相手が最高の相棒だと結果が変わることがあります）</span></div>
-    <table><thead><tr><th class="c">じぶん ↓ ／ あいて →</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="dpan plmx"><div class="dt">PLの組み合わせ<span class="ds">あいては個体値100%</span></div>
+    <table><thead><tr><th class="c">じぶん＼あいて</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 // ---- 詳細カード ----
@@ -719,11 +731,10 @@ function detailHTML(foe, rowId) {
         vb += `<div class="vbox ok"><div class="hd">✅ ダメージを最大化できています</div>
           <div class="nt">強化や個体値では変わりません</div></div>`;
       }
-      extra = plMatrix(foe, mv, 'give') + ivBar(foe, mv, 'give');
+      extra = `<div class="dgrid">${plMatrix(foe, mv, 'give')}${ivBar(foe, mv, 'give')}</div>`;
     }
     body = `<div class="dsub"><b>${mv.n}</b>${tnBadge(mv.tn)} → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
-      ${nowLine(v, 'ダメージ')}
-      ${vb}${extra}`;
+      ${heroHTML(v, 'ダメージ', vb)}${extra}`;
   } else {
     // 受ける: あいてのノーマルアタックを選べる(既定は環境の定番)
     const pool = fastMoves(foe.key);
@@ -760,14 +771,13 @@ function detailHTML(foe, rowId) {
         vb += `<div class="vbox ok"><div class="hd">✅ 被ダメージを最小化できています</div>
           <div class="nt">強化や個体値では変わりません</div></div>`;
       }
-      extra = plMatrix(foe, fmv, 'take') + ivBar(foe, fmv, 'take');
+      extra = `<div class="dgrid">${plMatrix(foe, fmv, 'take')}${ivBar(foe, fmv, 'take')}</div>`;
     }
     const chips = pool.length > 1 ? `<div class="fmvsel">${pool.map(id =>
       `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}${tnBadge(D.moves[id].tn)}</button>`).join('')}</div>` : '';
     body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>${tnBadge(fmv.tn)} → じぶん</div>
       ${chips}
-      ${nowLine(v, '被ダメージ')}
-      ${vb}${extra}`;
+      ${heroHTML(v, '被ダメージ', vb)}${extra}`;
   }
   const sel = DIR === 'take' ? (DTAB[rowId + ':fmv'] || foe.fast) : foe.fast;
   return `${body}<a class="simlink" href="${duelUrl(foe, sel)}">⚔️ 1対1シミュで詳しく見る ↗</a>`;
