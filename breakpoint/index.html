@@ -267,23 +267,30 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .concl{margin-top:8px;font-size:.98rem;font-weight:800;color:var(--ink);line-height:1.45}
 .ivsum .concl b{color:var(--gold)}
 .ivsum .concl small{display:block;font-size:.7rem;font-weight:700;color:var(--sub);margin-top:2px}
-.ivsum .grp{margin-top:10px;display:flex;flex-direction:column;gap:6px}
-.ivsum .grp div{display:flex;gap:8px;align-items:flex-start;font-size:.74rem;line-height:1.5}
-.ivsum .grp div.lo{opacity:.8}
-.ivsum .grp .k{flex:none;min-width:4.6em;font-weight:800;color:var(--sub);padding-top:3px}
-.ivsum .grp .k.top{color:var(--gold)}
-.ivsum .grp .n{display:flex;flex-wrap:wrap;gap:4px}
-.ivsum .grp .fc{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--ink);white-space:nowrap;flex-wrap:wrap}
+.ivsum .grp{margin-top:12px;display:flex;flex-direction:column}
+.ivsum .grp>div{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--rowline)}
+.ivsum .grp>div:first-child{border-top:none;padding-top:4px}
+.ivsum .grp .k{flex:none;min-width:3.6em;display:inline-flex;align-items:baseline;justify-content:center;gap:2px;
+  font-weight:800;font-size:.84rem;color:var(--sub);padding:4px 9px;border-radius:8px;background:var(--chip);border:1px solid var(--line);margin-top:4px}
+.ivsum .grp .k small{font-size:.58rem;font-weight:700}
+.ivsum .grp .k.top{font-size:1.05rem;color:var(--gold);border-color:var(--upline)}
+.ivsum .grp .n{display:flex;flex-wrap:wrap;gap:8px;flex:1;min-width:0}
+.ivsum .grp .fc{display:inline-flex;align-items:center;gap:12px;padding:8px 10px 8px 13px;border-radius:14px;background:var(--chip);border:1px solid var(--line);color:var(--ink);
+  white-space:nowrap;flex-wrap:nowrap;max-width:100%}
+.ivsum .grp .fn{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;white-space:normal;word-break:break-all;flex:1 1 auto;min-width:8.5em;font-size:.86rem}
+.ivsum .grp .fn small{white-space:nowrap}
+.ivsum .grp .fn .tb{white-space:nowrap}
 .ivsum .grp .fc small{color:var(--sub);font-weight:700}
-.ivsum .grp .fc{padding:4px 8px 4px 10px;gap:8px;flex-wrap:nowrap;max-width:100%}
-.ivsum .grp .fn{white-space:normal;flex:1 1 auto;min-width:0}
-.ivsum .mg{flex:none}
-.ivsum .grp .fn{display:inline-flex;align-items:center;gap:3px}
-.ivsum .mg{display:grid;grid-template-columns:auto repeat(2,20px);gap:1px 2px;align-items:center;font-size:.5rem;line-height:1;color:var(--sub)}
-.ivsum .mg b{font-weight:700;text-align:center;color:var(--sub)}
-.ivsum .mg b:nth-child(3n+1){text-align:right;padding-right:1px}
-.ivsum .mg i{font-style:normal;font-size:.6rem;font-weight:800;text-align:center;padding:2px 0;border-radius:4px;background:var(--barpast);color:var(--ink)}
+/* チップの中のミニPL表(軸バーは大きい表と同じ: じぶん=水色の縦バー／あいて=紫の横バー) */
+.ivsum .mg{flex:none;display:grid;grid-template-columns:auto auto 30px 30px;grid-template-rows:auto auto 26px 26px;gap:2px 3px;align-items:stretch;justify-items:stretch;font-size:.56rem;line-height:1;color:var(--sub)}
+.ivsum .mg b{font-weight:800;display:flex;align-items:center;justify-content:center}
+.ivsum .mg .axf{grid-column:3/5;grid-row:1;font-size:.54rem;padding:2px 0;border-radius:999px;background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff}
+.ivsum .mg .h{grid-row:2;color:var(--foec);font-size:.62rem}
+.ivsum .mg .axm{grid-column:1;grid-row:3/5;writing-mode:vertical-rl;font-size:.54rem;padding:0 2px;border-radius:999px;background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330}
+.ivsum .mg .r{grid-column:2;color:var(--accent2);font-size:.62rem;padding:0 3px}
+.ivsum .mg i{font-style:normal;font-size:.82rem;font-weight:800;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--barpast);color:var(--ink)}
 .ivsum .mg i.hi{background:var(--goldgrad);color:var(--ongold)}
+.ivsum .mg i.na{color:var(--sub)}
 .ivsum .none{margin-top:8px;font-size:.78rem;color:var(--sub)}
 /* 個体値バー */
 .ivcells{display:flex;gap:1px}
@@ -797,8 +804,10 @@ function ivNeedOf(foe, dir) {
 }
 // チップの中のミニPL表(じぶん50/51 × あいて50/51 の必要個体値)
 function miniGrid(grid, top) {
-  const c = k => grid[k] == null ? '<i>—</i>' : `<i class="${grid[k] === top ? 'hi' : ''}">${grid[k]}</i>`;
-  return `<span class="mg"><b></b><b>あ50</b><b>あ51</b><b>じ50</b>${c('50/50')}${c('50/51')}<b>じ51</b>${c('51/50')}${c('51/51')}</span>`;
+  const c = (k, col, row) => `<i style="grid-column:${col};grid-row:${row}" class="${grid[k] == null ? 'na' : grid[k] === top ? 'hi' : ''}">${grid[k] == null ? '—' : grid[k]}</i>`;
+  return `<span class="mg"><b class="axf">あいて</b><b class="h" style="grid-column:3;grid-row:2">50</b><b class="h" style="grid-column:4;grid-row:2">51</b>
+    <b class="axm">じぶん</b><b class="r" style="grid-row:3">50</b><b class="r" style="grid-row:4">51</b>
+    ${c('50/50', 3, 3)}${c('50/51', 4, 3)}${c('51/50', 3, 4)}${c('51/51', 4, 4)}</span>`;
 }
 function ivSumHtml() {
   if (capV()) return '';
@@ -816,13 +825,13 @@ function ivSumHtml() {
   const lowRow = IVLOW ? `<div class="lowrow"><span class="ll">0〜9</span><div class="cells">${[9,8,7,6,5,4,3,2,1,0].map(cell).join('')}</div></div>` : '';
   const lowBtn = `<button class="lowbtn" data-ivlow aria-pressed="${IVLOW}">${IVLOW ? '9以下を隠す' : `9以下${lowN ? `<b>${lowN}匹</b>` : ''}`}</button>`;
   const nm = r => `<span class="fc"><span class="fn">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${tnBadge(r.mv.tn)}<small>${r.from}→${r.to}</small></span>${miniGrid(r.grid, r.x)}</span>`;
-  const row = (a, x) => a.length ? `<div><span class="k${x === 15 ? ' top' : ''}">${x}${x === 15 ? 'だけ' : '以上'}</span><span class="n">${a.map(nm).join('')}</span></div>` : '';
+  const row = (a, x) => a.length ? `<div><span class="k${x === 15 ? ' top' : ''}">${x}${x === 15 ? '' : '<small>以上</small>'}</span><span class="n">${a.map(nm).join('')}</span></div>` : '';
   let grp = '';
   for (let x = 15; x >= IVSEL; x--) grp += row(byIv[x], x);
   const total = byIv.reduce((n, a) => n + a.length, 0);
   const body = total ? `<div class="grp">${grp || `<div class="none">${statName}${IVSEL}以上でブレイクする相手はいません</div>`}</div>`
                      : `<div class="none">${statName}の個体値では変わりません</div>`;
-  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">じぶん・あいてともPL50/51の4通り／あいては個体値100%</span></div>
+  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表はじぶん・あいてPL50/51の4通り（あいて個体値100%）</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 
