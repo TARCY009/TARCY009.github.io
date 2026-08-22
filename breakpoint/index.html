@@ -175,18 +175,6 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .nowline .l{font-size:.76rem;color:var(--sub)}
 .nowline .v{font-size:1.8rem;font-weight:800;line-height:1}
 .nowline .r{margin-left:auto;font-size:.78rem;color:var(--ink)}
-/* ものさしバー */
-.scale{margin:14px 0 4px}
-.scale .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
-.sbar{display:flex;height:26px;border-radius:7px;overflow:hidden;font-size:.68rem;font-weight:800}
-.sbar>div{display:flex;align-items:center;justify-content:center;min-width:30px;white-space:nowrap;overflow:hidden}
-.sbar .past{background:var(--barpast);color:var(--sub)}
-.sbar .cur{background:var(--curgrad);color:var(--curtext)}
-.sbar .next{background:var(--goldgrad);color:var(--ongold)}
-.smk{position:relative;height:17px;font-size:.6rem;color:var(--sub)}
-.smk span{position:absolute;transform:translateX(-50%);white-space:nowrap}
-.smk .me{color:var(--accent2);font-weight:800}
-.smk .bp{color:var(--gold);font-weight:800}
 /* 結論ボックス */
 .vbox{border-radius:11px;padding:10px 12px;margin-top:12px;border:1px solid}
 .vbox.up{background:var(--upbg);border-color:var(--upline)}
@@ -199,6 +187,10 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .vbox .fx{display:flex;gap:13px;font-size:.8rem;flex-wrap:wrap}
 .vbox .fx b{color:var(--green)}
 .vbox .nt{font-size:.68rem;color:var(--sub);margin-top:6px;line-height:1.6}
+.vbox.goal .hd{font-size:.8rem;color:var(--sub);margin-bottom:4px}
+.vbox.goal .how{font-size:1.12rem;font-weight:800;color:var(--ink);line-height:1.4}
+.vbox.goal .how b{color:var(--gold)}
+.vbox.goal .how small{display:block;font-size:.66rem;font-weight:700;color:var(--sub);margin-top:3px}
 /* 個体値バー */
 .ivbar{margin-top:14px}
 .ivbar .t{font-size:.66rem;color:var(--sub);margin-bottom:5px}
@@ -302,7 +294,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li><b>💥与える／🛡受ける</b>（一覧の上のタブ）: 一覧全体の視点を切り替えます。与える=じぶんのノーマルアタックの境目／受ける=あいてのノーマルアタックをいくつで受けるか</li>
     <li><b>マスターの一覧</b>: いまの個体のまま強化すると、どの相手にダメージ+1を取れるか。🔥が「強化で伸びる相手」です</li>
     <li><b>スーパー・ハイパーの一覧</b>: CP制限があるリーグでは、防御・HPの個体値を下げるとPLを上げられるため、<b>攻撃だけでなく全部の個体値がダメージに効きます</b>。そこで「ブレイクを取れる個体に変えると、🛡0-0/1-1/2-2の3パターンの合計勝ち数が変わるか」をシミュレートし、🔥勝ち+1／⚠勝ち-1のチップで出します（⚠は耐久を削るぶん逆に不利になる相手）</li>
-    <li><b>行をタップ</b>: その相手との詳細。あとどれだけ強化すれば届くか（ものさしバー）、届く個体の例、1対1シミュへの遷移ボタンが出ます</li>
+    <li><b>行をタップ</b>: その相手との詳細。いまのダメージと、どこまで強化すればブレイクするか（PL50より上は最高の相棒が必要）、届く個体の例、1対1シミュへの遷移ボタンが出ます</li>
     <li><b>1T🔥のわざ</b>: 1ターンわざはダメージ+1の影響がいちばん大きい（5→6で+20%）ので金色で目立たせています</li>
   </ul>
   <h4>計算の前提</h4>
@@ -578,52 +570,6 @@ function takeVerdict(rows, foe, fmv) {
   return { ...base, type: 'max' };
 }
 
-// ---- ものさしバー(段の切れ目を幅で見せる。表示は いまの段の前後だけ=3段まで) ----
-function scaleBar(rows, curLv, dir) {
-  // 段ごとにまとめる(dir='give'は増える向き・'take'は減る向き)
-  const tiers = [];
-  for (const r of rows) {
-    const last = tiers[tiers.length - 1];
-    if (last && last.d === r.d) last.to = r.lv;
-    else tiers.push({ d: r.d, from: r.lv, to: r.lv });
-  }
-  const ci = tiers.findIndex(t => curLv >= t.from && curLv <= t.to);
-  if (ci < 0) return '';
-  const show = tiers.slice(Math.max(0, ci - 1), ci + 2);
-  // 段の幅を先に%で決めて、マーカーの位置も同じ幅の上で計算する(線形位置だとずれる)
-  const raw = show.map(t => Math.max(9, (t.to - t.from + 0.5)));
-  const total = raw.reduce((a, b) => a + b, 0);
-  const width = raw.map(w => w / total * 100);
-  const segs = show.map((t, i) => {
-    const isNext = dir === 'give' ? t.d > tiers[ci].d : t.d < tiers[ci].d;
-    const cls = t.d === tiers[ci].d ? 'cur' : isNext ? 'next' : 'past';
-    const lbl = t.d === tiers[ci].d ? `${t.d} ← いま` : String(t.d);
-    return `<div class="${cls}" style="flex:${width[i].toFixed(2)}">${lbl}</div>`;
-  }).join('');
-  // マーカー位置 = 前の段の幅の合計 + いる段の中での割合
-  const pos = v => {
-    let acc = 0;
-    for (let i = 0; i < show.length; i++) {
-      const t = show[i];
-      if (v >= t.from && v <= t.to) return acc + (v - t.from + 0.25) / (t.to - t.from + 0.5) * width[i];
-      acc += width[i];
-    }
-    return 100;
-  };
-  const clamp = v => Math.min(96, Math.max(4, v));
-  const nextTier = dir === 'give' ? tiers.slice(ci + 1).find(t => t.d > tiers[ci].d)
-                                  : tiers.slice(ci + 1).find(t => t.d < tiers[ci].d);
-  const mePos = clamp(pos(curLv));
-  let marks = `<span class="me" style="left:${mePos}%">▲PL${fmtLv(curLv)}</span>`;
-  if (nextTier && show.includes(nextTier)) {
-    const bpPos = clamp(pos(nextTier.from));
-    if (Math.abs(bpPos - mePos) > 11)   // いまのPLと重なるときは出さない(数字は結論ボックスにある)
-      marks += `<span class="bp" style="left:${bpPos}%">PL${fmtLv(nextTier.from)}</span>`;
-  }
-  return `<div class="scale"><div class="t">PLのものさし<span class="expl">（色が変わるPL＝ダメージが変わる境目です）</span></div>
-    <div class="sbar">${segs}</div><div class="smk">${marks}</div></div>`;
-}
-
 // ---- 個体値バー(個体値0〜15を最大まで強化したときの到達点。個体選びの判断用) ----
 function ivBar(foe, mv, dir) {
   const cap = capV(), cells = [];
@@ -656,6 +602,28 @@ function ivBar(foe, mv, dir) {
     <div class="ivnote">${note}</div></div>`;
 }
 
+// ---- 「どうすればブレイクするか」の箱(マスター・CP制限共通。PLの目標を絶対値で言う) ----
+// PL50より上は最高の相棒(メガはメガLv4で52・53まで)が要るので、その条件を本文に書く
+function goalBox(v, dir) {
+  const mega = isMega(ME.key);
+  const to = v.at, now = v.cur.lv;
+  const dmg = dir === 'give' ? `${v.to} ダメージにするには` : `被ダメージを ${v.to} にするには`;
+  let how, note = '';
+  if (to > 51 && mega) {
+    how = `<b>メガLv4</b>にして PL<b>${fmtLv(to)}</b> まで強化`;
+    if (to > 52) note = 'PL53は最高の相棒の状態が必要です';
+  } else if (to > 50) {
+    how = `<b>最高の相棒</b>にして PL<b>${fmtLv(to)}</b> 以上に強化`;
+    note = now >= 50 ? 'PL50より上は最高の相棒の状態でしか強化できません' : `PL50までは通常の強化、そこから先は最高の相棒が必要です`;
+  } else {
+    how = `PL<b>${fmtLv(to)}</b> まで強化`;
+  }
+  const ico = dir === 'give' ? '🔥' : '🛡';
+  return `<div class="vbox up goal"><div class="hd">${ico} ${dmg}</div>
+    <div class="how">${how}<small>いま PL${fmtLv(now)}・あと ${v.dPl}</small></div>
+    ${note ? `<div class="nt">${note}</div>` : ''}</div>`;
+}
+
 // ---- 詳細カード ----
 function detailHTML(foe, rowId) {
   const capped = !!capV();
@@ -665,13 +633,7 @@ function detailHTML(foe, rowId) {
     const rows = giveScan(mv, foe.st);
     const v = giveVerdict(rows, foe, mv);
     let vb = '';
-    if (v.type === 'up') {
-      const buddy = v.at > 50 ? 'PL50より上は最高の相棒が必要です' : '';
-      vb = `<div class="vbox up"><div class="hd">🔥 あと PL${v.dPl} で ${v.dNow} → ${v.to}</div>
-        <div class="fx"><span>1発 <b>+${v.pct}%</b></span><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>で倒せる</span>
-        ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>はやく倒せる</span>` : ''}</div>
-        ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
-    }
+    if (v.type === 'up') vb = goalBox(v, 'give');
     let extra = '';
     if (capped) {
       // CP制限: 4096通りからブレイクする個体を探し、勝敗(🛡0-0/1-1/2-2の合計)のちがいまで見せる
@@ -703,9 +665,8 @@ function detailHTML(foe, rowId) {
       extra = ivBar(foe, mv, 'give');
     }
     body = `<div class="dsub"><b>${mv.n}</b>${tnBadge(mv.tn)} → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
-      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">ダメージ</span>
-        <span class="r">${v.shotsNow}発で倒せる</span></div>
-      ${capped ? '' : scaleBar(rows, v.cur.lv, 'give')}${vb}${extra}`;
+      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">ダメージ</span></div>
+      ${vb}${extra}`;
   } else {
     // 受ける: あいてのノーマルアタックを選べる(既定は環境の定番)
     const pool = fastMoves(foe.key);
@@ -714,13 +675,8 @@ function detailHTML(foe, rowId) {
     const rows = takeScan(fmv, foe.st);
     const v = takeVerdict(rows, foe, fmv);
     let vb = '';
-    if (v.type === 'up') {
-      const buddy = v.at > 50 ? 'PL50より上は最高の相棒が必要です' : '';
-      vb = `<div class="vbox up"><div class="hd">🛡 あと PL${v.dPl} で 被ダメ ${v.dNow} → ${v.to}</div>
-        <div class="fx"><span>${v.shotsNow}発 → <b>${v.shotsNew}発</b>耐える</span>
-        ${v.sec > 0 ? `<span><b>${v.sec.toFixed(1)}秒</b>長く戦える</span>` : ''}</div>
-        ${buddy ? `<div class="nt">${buddy}</div>` : ''}</div>`;
-    } else if (v.type === 'min') {
+    if (v.type === 'up') vb = goalBox(v, 'take');
+    else if (v.type === 'min') {
       vb = `<div class="vbox ok"><div class="hd">✅ これ以上減りません</div></div>`;
     }
     let extra = '';
@@ -753,9 +709,8 @@ function detailHTML(foe, rowId) {
       `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}${tnBadge(D.moves[id].tn)}</button>`).join('')}</div>` : '';
     body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>${tnBadge(fmv.tn)} → じぶん</div>
       ${chips}
-      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">被ダメージ</span>
-        <span class="r">${v.shotsNow}発 耐える</span></div>
-      ${capped ? '' : scaleBar(rows, v.cur.lv, 'take')}${vb}${extra}`;
+      <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span><span class="l">被ダメージ</span></div>
+      ${vb}${extra}`;
   }
   const sel = DIR === 'take' ? (DTAB[rowId + ':fmv'] || foe.fast) : foe.fast;
   return `${body}<a class="simlink" href="${duelUrl(foe, sel)}">⚔️ 1対1シミュで詳しく見る ↗</a>`;
