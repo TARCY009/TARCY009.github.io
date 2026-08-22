@@ -226,6 +226,40 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .plmx td.up{background:var(--goldgrad);color:var(--ongold)}
 .plmx td.dn{background:var(--ngbg);color:var(--red);box-shadow:inset 0 0 0 1px var(--ngline)}
 .plmx td.me{outline:2px solid var(--accent2);outline-offset:-2px;background:var(--curgrad);color:var(--accent2)}
+/* 個体値の条件まとめ(主役) */
+.ivtog{display:flex;align-items:center;gap:7px;margin-top:10px;padding:7px 12px;cursor:pointer;font:inherit;
+  font-size:.74rem;font-weight:800;color:var(--accent2);background:none;border:1px dashed var(--line);border-radius:10px;width:100%;text-align:left}
+.ivtog i{font-style:normal;transition:transform .15s}
+.ivtog[aria-expanded="true"] i{transform:rotate(90deg)}
+.ivtog[aria-expanded="true"]{border-style:solid}
+.ivtog small{font-weight:600;color:var(--sub);margin-left:auto}
+.ivsum{border:1px solid var(--upline);border-radius:14px;padding:12px 14px 12px;margin-bottom:12px;background:var(--upbg)}
+.ivsum .dt{font-size:.86rem}
+.ivsum .plseg{margin-left:auto;display:inline-flex;gap:2px}
+.ivsum .plseg button{font:inherit;font-size:.62rem;font-weight:800;padding:3px 9px;cursor:pointer;color:var(--sub);
+  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);display:flex;align-items:center;gap:3px}
+.ivsum .plseg button:first-child{border-radius:999px 4px 4px 999px}
+.ivsum .plseg button:last-child{border-radius:4px 999px 999px 4px}
+.ivsum .plseg button small{font-size:.52rem;font-weight:600}
+.ivsum .plseg button[aria-pressed="true"]{background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330;border-color:transparent}
+.ivsum .cells{display:flex;gap:2px;margin-top:4px}
+.ivsum .cells i{flex:1;height:34px;font-style:normal;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:5px;background:var(--barpast);color:var(--sub);font-size:.62rem;font-weight:700;line-height:1.1}
+.ivsum .cells i b{font-size:.66rem;color:var(--gold)}
+.ivsum .cells i.hit{box-shadow:inset 0 0 0 1.5px var(--gold)}
+.ivsum .cells i.ok{background:var(--goldgrad);color:var(--ongold)}
+.ivsum .cells i.ok b{color:var(--ongold)}
+.ivsum .cells i:first-child{border-radius:8px 5px 5px 8px}
+.ivsum .cells i:last-child{border-radius:5px 8px 8px 5px}
+.ivsum .concl{margin-top:10px;font-size:.92rem;font-weight:800;color:var(--ink);line-height:1.5}
+.ivsum .concl b{color:var(--gold)}
+.ivsum .grp{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.ivsum .grp div{display:flex;gap:8px;align-items:flex-start;font-size:.74rem;line-height:1.6}
+.ivsum .grp .k{flex:none;min-width:5.2em;font-weight:800;color:var(--gold)}
+.ivsum .grp .k.lo{color:var(--sub)}
+.ivsum .grp .n{color:var(--ink)}
+.ivsum .grp .n .sep{color:var(--sub);margin:0 3px}
+.ivsum .none{margin-top:8px;font-size:.78rem;color:var(--sub)}
 /* 個体値バー */
 .ivcells{display:flex;gap:1px}
 .ivcells i{flex:1;height:22px;font-style:normal;font-size:.56rem;display:flex;align-items:center;
@@ -278,6 +312,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     </div>
   </div>
   <div class="mypkwin" id="mypkwin"></div>
+  <button class="ivtog" id="ivtog" type="button" aria-expanded="false" style="display:none" title="自分の個体値・PLを入れて、その個体がどうなるかを確かめます"><i>▸</i> 自分の個体で確かめる<small>個体値・PLを入力</small></button>
   <div class="ivrow" id="ivrow" style="display:none">
     <label>攻撃<input type="number" id="ivA" min="0" max="15" inputmode="numeric"></label>
     <label>防御<input type="number" id="ivD" min="0" max="15" inputmode="numeric"></label>
@@ -314,6 +349,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <button class="t-gold" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">💥 与える</button>
   <button class="t-shadow" data-dir="take" aria-pressed="false" title="相手のノーマルアタックから受けるダメージの境目を見ます">🛡 受ける</button>
 </div></div>
+<div id="ivsum"></div>
 <div id="pinbox"></div>
 <div class="sumline" id="sumline" style="display:none"></div>
 <div id="list"></div>
@@ -374,6 +410,8 @@ let LG = '0';
 let DIR = 'give';   // 一覧全体の視点(💥与える / 🛡受ける)
 let ME = { key: null, shadow: false, ivs: [15, 15, 15], level: 50, fast: null, edited: false };
 let PIN = null;   // { key, shadow, atk, def, hp, name, fast(あいてのわざの初期値), label }
+let SUMPL = 50;   // 個体値まとめの基準PL(50=通常 / 51=最高の相棒)
+let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
 let DTAB = {};    // 行ごとの 与える/受ける タブ状態
 const capV = () => +LG || 0;
@@ -703,6 +741,52 @@ function plMatrix(foe, mv, dir) {
     <tr><th></th><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+// ---- 個体値の条件まとめ(マスター・主役): 個体値を入れる前に「どの個体値なら届くか」を出す ----
+// PL50・他の個体値15で、攻撃IV(与える)／防御IV(受ける)を0〜15に振ったときダメージが変わる境目を相手ごとに集める
+function ivStepsOf(foe, dir) {
+  const mv = dir === 'give' ? D.moves[ME.fast] : D.moves[foe.fast || fastMoves(foe.key)[0]];
+  if (!mv) return [];
+  const ds = [];
+  for (let x = 0; x <= 15; x++) {
+    const ivs = dir === 'give' ? [x, 15, 15] : [15, x, 15];
+    const st = statsOf(ME.key, ivs, SUMPL, ME.shadow);
+    ds.push(dir === 'give' ? dmgOf(mv, st, foe.st) : dmgOf(mv, foe.st, st));
+  }
+  const steps = [];
+  for (let x = 1; x <= 15; x++) if (ds[x] !== ds[x - 1]) steps.push({ x, from: ds[x - 1], to: ds[x], mv });
+  return steps;
+}
+function ivSumHtml() {
+  if (capV()) return '';
+  const dir = DIR;
+  const foes = [];
+  if (PIN && !PIN.rawSt) foes.push({ foe: PIN, rank: null });
+  metaList().forEach((e, i) => foes.push({ foe: foeEntryOf(e), rank: i + 1 }));
+  const byIv = Array.from({ length: 16 }, () => []);
+  for (const f of foes) for (const st of ivStepsOf(f.foe, dir)) byIv[st.x].push({ ...f, ...st });
+  const statName = dir === 'give' ? '攻撃' : '防御';
+  const hits = byIv.map(a => a.length);
+  const top = Math.max(...hits.map((h, x) => h ? x : -1));
+  const cells = byIv.map((a, x) => `<i class="${top >= 0 && x >= top ? 'ok' : ''}${a.length ? ' hit' : ''}">${x}${a.length ? `<b>+${a.length}</b>` : ''}</i>`).join('');
+  const nm = r => `${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${tnBadge(r.mv.tn)}<small style="color:var(--sub)"> ${r.from}→${r.to}</small>`;
+  let concl, grp = '';
+  if (top < 0) {
+    concl = `${statName}の個体値では変わりません`;
+  } else {
+    const miss = byIv[top].length;
+    concl = dir === 'give'
+      ? `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${metaList().length}匹すべてに届く。${top - 1}以下は <b>${miss}匹</b> を取りこぼす`
+      : `${statName}IV <b>${top}</b> ${top === 15 ? 'だけ' : '以上'}で環境上位${metaList().length}匹すべて最小。${top - 1}以下は <b>${miss}匹</b> から受けるダメージが増える`;
+    grp = `<div class="grp">` + byIv.map((a, x) => a.length
+      ? `<div><span class="k${x === top ? '' : ' lo'}">${x}${x === 15 ? ' だけ' : ' 以上'}</span><span class="n">${a.map(nm).join('<span class="sep">・</span>')}</span></div>` : '')
+      .reverse().join('') + `</div>`;
+  }
+  const plseg = `<span class="plseg"><button data-spl="50" aria-pressed="${SUMPL === 50}">PL50</button><button data-spl="51" aria-pressed="${SUMPL === 51}">PL51<small>相棒</small></button></span>`;
+  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '💥 攻撃の個体値でどこまで届くか' : '🛡 防御の個体値でどこまで減らせるか'}<span class="ds">あいては個体値100%</span>${plseg}</div>
+    <div class="cells">${cells}</div>
+    <div class="concl">${concl}</div>${grp}</div>`;
+}
+
 // ---- 詳細カード ----
 function detailHTML(foe, rowId) {
   const capped = !!capV();
@@ -852,6 +936,17 @@ function rowHTML(foe, rowId, rank, v, winChip) {
 function calcRow(foe, rowId) {
   const mv = D.moves[ME.fast];
   let v;
+  // マスター: 行のチップは「どの個体値なら届くか」(PL50基準)。個体の検算は行を開いたときだけ
+  if (!capV() && !foe.rawSt) {
+    const steps = ivStepsOf(foe, DIR);
+    const topStep = steps[steps.length - 1];
+    const tmp = DIR === 'give' ? giveVerdict(giveScan(mv, foe.st), foe, mv)
+      : (() => { const sel = DTAB[rowId + ':fmv'] || foe.fast || fastMoves(foe.key)[0]; return takeVerdict(takeScan(D.moves[sel], foe.st), foe, D.moves[sel]); })();
+    const chip = topStep
+      ? `<span class="vchip up">${DIR === 'give' ? '攻' : '防'}IV${topStep.x}${topStep.x === 15 ? 'だけ' : '以上'}<small> ${topStep.from}→${topStep.to}</small></span>`
+      : `<span class="vchip no">—</span>`;
+    return { v: tmp, winChip: chip, diff: null, ivHit: !!topStep };
+  }
   if (DIR === 'give') v = giveVerdict(giveScan(mv, foe.st), foe, mv);
   else {
     const sel = DTAB[rowId + ':fmv'] || foe.fast || fastMoves(foe.key)[0];
@@ -875,6 +970,7 @@ function render() {
   const listEl = $('list'), pinEl = $('pinbox'), sumEl = $('sumline'), dirEl = $('dirrow');
   if (!ME.key || !ME.fast) {
     pinEl.innerHTML = '';
+    $('ivsum').innerHTML = '';
     sumEl.style.display = 'none';
     dirEl.style.display = 'none';
     listEl.innerHTML = `<div class="empty">じぶんのポケモンを選ぶと、環境上位50匹への<br>ブレイクポイント判定がここに並びます</div>`;
@@ -883,6 +979,8 @@ function render() {
   }
   dirEl.style.display = '';
   const capped = !!capV();
+  $('ivsum').innerHTML = ivSumHtml();
+  $('ivsum').querySelectorAll('[data-spl]').forEach(b => b.onclick = () => { SUMPL = +b.dataset.spl; render(); });
   // 固定したあいて(検索 or GBLから引き継ぎ)
   if (PIN) {
     const r = calcRow(PIN, 'pin');
@@ -895,7 +993,7 @@ function render() {
     const foe = foeEntryOf(e);
     const r = calcRow(foe, i);
     if (capped) { if (r.diff > 0) hot++; else if (r.diff < 0) dn++; }
-    else if (r.v.type === 'up') hot++;
+    else if (r.ivHit) hot++;
     rowsHtml.push(rowHTML(foe, i, i + 1, r.v, r.winChip));
   });
   sumEl.style.display = '';
@@ -905,9 +1003,8 @@ function render() {
   } else {
     const lad = myLadder();
     const atCapMax = lad.length && lad[lad.length - 1].lv <= ME.level;
-    const zeroNote = hot ? '' : '<br><small>強化で変わる相手はいません</small>' +
-      '<span class="expl"><small>（行を開くと個体値の境目が見えます）</small></span>';
-    sumEl.innerHTML = `環境上位${metaList().length}匹のうち、強化で伸びる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（🔥の行をタップすると、あとどれだけ強化すればいいかが出ます）</span>`;
+    const zeroNote = hot ? '' : '<br><small>個体値で変わる相手はいません</small>';
+    sumEl.innerHTML = `環境上位${metaList().length}匹のうち、個体値で結果が変わる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（行をタップすると、自分の個体での検算とPLの組み合わせが出ます）</span>`;
   }
   listEl.innerHTML = rowsHtml.join('');
   bindRows();
@@ -941,7 +1038,9 @@ function bindRows() {
 // ---- じぶんカードの同期 ----
 function syncMeCard() {
   const has = !!ME.key;
-  $('ivrow').style.display = has ? 'flex' : 'none';
+  $('ivtog').style.display = has ? 'flex' : 'none';
+  $('ivtog').setAttribute('aria-expanded', IVOPEN);
+  $('ivrow').style.display = has && IVOPEN ? 'flex' : 'none';
   $('mvrow').style.display = has ? 'flex' : 'none';
   $('meshadow').setAttribute('aria-pressed', ME.shadow);
   $('meclr').style.display = $('meq').value ? 'block' : 'none';
@@ -967,7 +1066,7 @@ function setIdeal() {
 function pickMe(key, opts) {
   ME.key = key;
   ME.shadow = !!(opts && opts.shadow) || (!!D.pokemon[key].shadow && ME.shadow && !(opts && 'shadow' in opts));
-  if (opts && opts.ivs) { ME.ivs = opts.ivs; ME.level = opts.level; ME.edited = true; }
+  if (opts && opts.ivs) { ME.ivs = opts.ivs; ME.level = opts.level; ME.edited = true; IVOPEN = true; }
   else setIdeal();
   ME.fast = (opts && opts.fast && D.moves[opts.fast]) ? opts.fast : defaultFast(key, ME.shadow, LG);
   $('meq').value = (ME.shadow ? 'シャドウ' : '') + D.pokemon[key].n;
@@ -1117,6 +1216,7 @@ const blurInputs = () => ['ivA', 'ivD', 'ivH', 'ivL'].forEach(id => {
   if (document.activeElement === $(id)) $(id).blur();
 });
 $('ideal').onclick = () => { blurInputs(); setIdeal(); render(); };
+$('ivtog').onclick = () => { IVOPEN = !IVOPEN; syncMeCard(); };
 document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => {
   if (DIR === b.dataset.dir) return;
   DIR = b.dataset.dir;
