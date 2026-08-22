@@ -309,8 +309,6 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .mg i.hi{background:var(--goldgrad);color:var(--ongold)}
 .ivsum .mg i.hi span{font-size:1rem;font-weight:800;line-height:1;display:flex;align-items:baseline;gap:1px}
 .ivsum .mg i.hi span small{font-size:.62rem;font-weight:700;opacity:.75}
-.ivsum .mg i.hi em{font-style:normal;font-size:.5rem;font-weight:800;opacity:.85}
-.ivsum .mg i.top{outline:2px solid #fff;outline-offset:-2px}
 .ivsum .grp .fn .mvn{font-size:.76rem;font-weight:700;color:var(--ink);margin-right:3px}
 .ivsum .none{margin-top:8px;font-size:.78rem;color:var(--sub)}
 /* 個体値バー */
@@ -822,30 +820,29 @@ function ivNeedOf(foe, dir) {
       ds.push(dir === 'give' ? dmgOf(mv, st, fst) : dmgOf(mv, fst, st));
     }
     let x = 15; while (x > 0 && ds[x - 1] === ds[15]) x--;
-    const k = mePl + '/' + foePl;
-    if (x === 0) { grid[k] = { d: ds[15] }; continue; }   // この組み合わせでは個体値で変わらない
-    grid[k] = { x, from: ds[x - 1], to: ds[15] };
-    if (!best || x > best.x) best = { x, from: ds[x - 1], to: ds[15] };
+    grid[mePl + '/' + foePl] = { x, ds };   // x=0 はこの組み合わせでは個体値で変わらない
+    if (x > 0 && (!best || x > best.x)) best = { x, from: ds[x - 1], to: ds[15] };
   }
   return best ? { ...best, mv, mePls, foePls, grid } : null;
 }
-// チップの中のミニPL表。マスはダメージ(ブレイクしない組み合わせはグレーの数字／する組み合わせは 5→6 と必要な個体値)
+// チップの中のミニPL表。そのグループの個体値 g を前提にしたダメージ:
+// g でちょうど段が上がる組み合わせは金の「4→5」、それ以外はグレーの数字(その個体値でのダメージ)
 function miniGrid(nd) {
-  const { mePls, foePls, grid, x: top } = nd;
+  const { mePls, foePls, grid, x: g } = nd;
   const C = foePls.length, R = mePls.length;
   const cells = [];
   mePls.forEach((m, ri) => {
     cells.push(`<b class="r" style="grid-column:2;grid-row:${ri + 3}">${m}</b>`);
     foePls.forEach((f, ci) => {
-      const g = grid[m + '/' + f];
+      const c = grid[m + '/' + f];
       const pos = `grid-column:${ci + 3};grid-row:${ri + 3}`;
-      cells.push(g.x == null
-        ? `<i class="na" style="${pos}">${g.d}</i>`
-        : `<i class="hi${g.x === top ? ' top' : ''}" style="${pos}"><span><small>${g.from}→</small>${g.to}</span><em>${DIR === 'give' ? '攻撃' : '防御'}${g.x}</em></i>`);
+      cells.push(c.ds[g] !== c.ds[g - 1]
+        ? `<i class="hi" style="${pos}"><span><small>${c.ds[g - 1]}→</small>${c.ds[g]}</span></i>`
+        : `<i class="na" style="${pos}">${c.ds[g]}</i>`);
     });
   });
   const head = foePls.map((f, ci) => `<b class="h" style="grid-column:${ci + 3};grid-row:2">${f}</b>`).join('');
-  const colw = C > 2 ? 44 : 58, rowh = 38;
+  const colw = C > 2 ? 44 : 58, rowh = 32;
   return `<span class="mg" style="grid-template-columns:auto auto repeat(${C},${colw}px);grid-template-rows:auto auto repeat(${R},${rowh}px)">
     <b class="axf" style="grid-column:3/${C + 3}">あいて</b>${head}
     <b class="axm" style="grid-row:3/${R + 3}">じぶん</b>${cells.join('')}</span>`;
