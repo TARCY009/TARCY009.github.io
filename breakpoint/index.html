@@ -171,11 +171,12 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .dsub b{color:var(--ink)}
 .fmvsel{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 2px}
 .fmvsel .mvchip{font-size:.68rem;padding:4px 10px}
-.nowline{display:flex;align-items:baseline;gap:7px;margin:10px 0 4px;flex-wrap:wrap}
+.nowline{display:flex;align-items:baseline;gap:7px;margin:2px 0 4px;flex-wrap:wrap}
 .nowline .l{font-size:.76rem;color:var(--sub)}
 .nowline .v{font-size:2.1rem;font-weight:800;line-height:1}
 .nowline .v.nx{color:var(--gold)}
-.nowline .arw{font-size:1.3rem;color:var(--sub);align-self:center}
+.nowline .nxa{font-size:1.3rem;color:var(--sub);align-self:center}
+.nowttl{font-size:.7rem;color:var(--sub);margin-top:10px}
 .nowline .r{margin-left:auto;font-size:.78rem;color:var(--ink)}
 /* 結論ボックス */
 .vbox{border-radius:11px;padding:10px 12px;margin-top:12px;border:1px solid}
@@ -645,8 +646,9 @@ function goalBox(v, dir) {
 // 「いま ◯ → ◯」の行。ブレイクで変わる先の数字も同じ大きさで並べる
 function nowLine(v, unit) {
   const next = v.type === 'up' ? v.to : null;
-  return `<div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span>
-    ${next != null ? `<span class="arw">→</span><span class="v nx">${next}</span>` : ''}<span class="l">${unit}</span></div>`;
+  return `<div class="nowttl">${unit}</div>
+    <div class="nowline"><span class="l">いま</span><span class="v">${v.dNow}</span>
+    ${next != null ? `<span class="nxa">→</span><span class="v nx">${next}</span><span class="l">ブレイク後</span>` : ''}</div>`;
 }
 
 // ---- マスター: じぶんのPL × あいてのPL の表(あいては理想個体値。PL50/50.5/51、メガなら53まで) ----
@@ -654,30 +656,18 @@ function nowLine(v, unit) {
 function plMatrix(foe, mv, dir) {
   if (capV() || !foe.key || foe.rawSt) return '';
   const now = ME.level;
-  const foeLv = isMega(foe.key) ? [50, 51, 52, 53] : [50, 50.5, 51];
+  const foeLv = isMega(foe.key) ? [50, 51, 52, 53] : [50, 51];
   const foeSt = foeLv.map(l => statsOf(foe.key, [15, 15, 15], l, foe.shadow));
   const dmg = (mySt, fSt) => dir === 'give' ? dmgOf(mv, mySt, fSt) : dmgOf(mv, fSt, mySt);
-  // じぶんのPL候補: いま・50/50.5/51(メガは52/53も)・各列でダメージが変わる最初のPL
-  const set = new Set([now, 50, 50.5, 51].concat(isMega(ME.key) ? [52, 53] : []));
-  const lv = levelsUpTo(maxLvOf());
-  for (const fs of foeSt) {
-    const d0 = dmg(statsOf(ME.key, ME.ivs, now, ME.shadow), fs);
-    for (const l of lv) {
-      if (l <= now) continue;
-      if (dmg(statsOf(ME.key, ME.ivs, l, ME.shadow), fs) !== d0) { set.add(l); break; }
-    }
-  }
+  // じぶんのPL候補: いま・50/51(メガは52/53も)。PL50.5のような半端は実戦では使わないので出さない
+  const set = new Set([now, 50, 51].concat(isMega(ME.key) ? [52, 53] : []));
   const myLv = [...set].filter(l => l >= now && l <= maxLvOf()).sort((a, b) => a - b);
   const base = dmg(statsOf(ME.key, ME.ivs, now, ME.shadow), foeSt[0]);
   const better = d => dir === 'give' ? d > base : d < base;
   const worse = d => dir === 'give' ? d < base : d > base;
-  // 前の行と結果が同じ行は省く(「いま」と、どこかの列が変わる行だけ並べる)
-  let prev = null;
   const rows = myLv.map(l => {
     const st = statsOf(ME.key, ME.ivs, l, ME.shadow);
     const ds = foeSt.map(fs => dmg(st, fs));
-    if (prev && ds.join() === prev) return '';
-    prev = ds.join();
     const cells = ds.map((d, i) => {
       const cls = better(d) ? 'up' : worse(d) ? 'dn' : '';
       return `<td class="${cls}${l === now && i === 0 ? ' me' : ''}">${d}</td>`;
