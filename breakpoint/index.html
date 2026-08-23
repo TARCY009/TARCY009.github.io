@@ -374,6 +374,17 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .recocard td.bk b.dn{color:var(--red)}
 .recocard td.bk .z{color:var(--sub)}
 .recocard td.bk small{display:block;font-size:.54rem;color:var(--sub);line-height:1}
+.recocard td.bk.tap{cursor:pointer;border-radius:6px}
+.recocard td.bk.tap:hover{background:rgba(255,213,74,.08)}
+.recocard td.bk.on{background:rgba(255,213,74,.14);box-shadow:inset 0 0 0 1.5px var(--gold)}
+.recocard tr.sub td{padding:8px 10px;background:rgba(255,255,255,.03);white-space:normal;text-align:left}
+.recocard .bkl{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.recocard .bkt{font-size:.62rem;font-weight:800;color:var(--sub);margin-right:4px}
+.recocard .bkc{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:var(--barpast)}
+.recocard .bkc b{font-size:.7rem}
+.recocard .bkc.up b{color:var(--gold)}
+.recocard .bkc.dn b{color:var(--red)}
+.recocard .bkc.dn{border-color:rgba(255,123,123,.4)}
 .recocard tr.ref td{background:rgba(255,213,74,.08);border-bottom:2px solid var(--upline)}
 .recocard tr.ref td.no{font-size:.58rem;color:var(--gold);font-weight:800}
 .recocard td.w b{font-size:.98rem}
@@ -382,7 +393,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .recocard td.w small{display:block;font-size:.54rem;color:var(--sub);line-height:1}
 .recocard th small{font-weight:700}
 .recocard tr.mine td{background:rgba(67,224,255,.1);color:var(--accent2)}
-.recocard tbody tr:nth-child(n+2):nth-child(-n+4) td.no{color:var(--gold);font-weight:800}
+.recocard tr.top3 td.no{color:var(--gold);font-weight:800}
 .recocard .recofoot{margin-top:6px;font-size:.6rem;color:var(--sub);text-align:right}
 @media (max-width:540px){.recocard table{font-size:.72rem}.recocard td{padding:5px 2px}.dirrow .reco{margin-left:0;margin-top:6px;flex:1 1 100%}}
 /* CP制限のチップ: 右側は「段の変化(金)・順位と個体の例・勝敗チップ・開閉」。タップで下にブレイクする個体の一覧 */
@@ -572,6 +583,7 @@ let RSEL = 0, RHIDE = new Set(), RLOW = false;
 const FOE_RNG = [1, 10, 100, 1000, 4096];
 let FRNG = 100;
 let RECO = false;   // 🏆おすすめ個体の表を出しているか
+let RECO_OPEN = null;   // おすすめ個体の表で開いている内訳('個体値|g' or '個体値|t')
 const RECO_SORT = 'win';   // 並びは勝ち数だけ(2026-08-23タダシさん判断。合計・🛡優先のタブは廃止)
 // 勝ち数(環境100匹×🛡3パターン)のキャッシュ。1個体300戦=約20msなので、候補の上位だけ少しずつ計算する
 let winCache = { sig: null, map: new Map(), ref: null, timer: null };
@@ -1151,13 +1163,13 @@ function recoRows() {
     const hg = hardestFoe(foe, 'give');
     const K = 0.5 * mv.p * E.effectiveness(D, mv.t, foe.st.types) * stab * 1.3 / hg.def;
     const dRef = dmgOf(mv, st1, hg);
-    gTh.push({ up: dRef / K, dn: (dRef - 1) / K });
+    gTh.push({ up: dRef / K, dn: (dRef - 1) / K, foe, dRef });
     const fmv = D.moves[foe.fast || fastMoves(foe.key)[0]];
     const ht = hardestFoe(foe, 'take');
     const fstab = foe.st.types.includes(fmv.t) ? 1.2 : 1;
     const C = 0.5 * fmv.p * ht.atk * E.effectiveness(D, fmv.t, D.pokemon[ME.key].ty) * fstab * 1.3;
     const tRef = dmgOf(fmv, ht, st1);
-    tTh.push({ up: tRef > 1 ? C / (tRef - 1) : Infinity, dn: C / tRef });   // 防 > up で1段下がる(よい) / 防 ≦ dn で1段上がる(わるい)
+    tTh.push({ up: tRef > 1 ? C / (tRef - 1) : Infinity, dn: C / tRef, foe, dRef: tRef, mv: fmv });   // 防 > up で1段下がる(よい) / 防 ≦ dn で1段上がる(わるい)
   }
   const rows = ivTable().map(r => {
     let gu = 0, gd = 0, tu = 0, td = 0;
@@ -1181,20 +1193,39 @@ function recoRows() {
   const key = RECO_SORT === 'take' ? byTake : RECO_SORT === 'sum' ? bySum
             : (x, y) => (W(y) - W(x)) || bySum(x, y);
   cands.sort(key);
-  return { rows: cands, ref: refRow, foes, n: foes.length };
+  return { rows: cands, ref: refRow, foes, n: foes.length, gTh, tTh };
 }
 function recoHtml() {
   if (!RECO || !capV() || !ME.key || !ME.fast) { clearTimeout(winCache.timer); return ''; }
-  const { rows, ref, foes, n } = recoRows();
+  const { rows, ref, foes, n, gTh, tTh } = recoRows();
   recoSchedule(rows, ref, foes);
+  // ブレイクの内訳(タップで開く): その個体で段が動く相手を、上がる=金 / 落ちる=赤 のチップで並べる
+  const subRow = (r, kind) => {
+    const th = kind === 'g' ? gTh : tTh;
+    const ups = [], dns = [];
+    th.forEach(t => {
+      const v = kind === 'g' ? r.st.atk : r.st.def;
+      const up = kind === 'g' ? v >= t.up : v > t.up;
+      const dn = kind === 'g' ? v < t.dn : v <= t.dn;
+      const nm = `${t.foe.shadow ? SHADOWMK : ''}${t.foe.name}`;
+      const d = kind === 'g' ? t.dRef : t.dRef;
+      if (up) ups.push(`<span class="bkc up">${nm}<b>${d}→${kind === 'g' ? d + 1 : d - 1}</b></span>`);
+      else if (dn) dns.push(`<span class="bkc dn">${nm}<b>${d}→${kind === 'g' ? d - 1 : d + 1}</b></span>`);
+    });
+    const ttl = kind === 'g' ? '🗡️ 与えるダメージ' : '🛡 被ダメージ';
+    return `<tr class="sub"><td colspan="8"><div class="bkl"><span class="bkt">${ttl}</span>${ups.join('')}${dns.join('')}${!ups.length && !dns.length ? '<span class="z">変わる相手はいません</span>' : ''}</div></td></tr>`;
+  };
+  const bkTd = (r, kind, v, gu, gd) => {
+    const k = r.ivs.join('.') + '|' + kind, on = RECO_OPEN === k, has = gu || gd;
+    return `<td class="bk${has ? ' tap' : ''}${on ? ' on' : ''}"${has ? ` data-bk="${k}"` : ''}>${pm(v)}<small>${gd ? `+${gu} −${gd}` : ''}</small></td>`;
+  };
   const mine = ME.ivs.join();
   const pm = v => v > 0 ? `<b class="up">+${v}</b>` : v < 0 ? `<b class="dn">${v}</b>` : `<span class="z">0</span>`;
   const wcell = r => r.w == null ? `<td class="w"><span class="z">…</span></td>`
     : `<td class="w"><b class="${ref.w == null ? '' : r.w > ref.w ? 'up' : r.w < ref.w ? 'dn' : ''}">${r.w}</b>${ref.w != null && r.w !== ref.w ? `<small>${r.w > ref.w ? '+' : ''}${r.w - ref.w}</small>` : ''}</td>`;
-  const tr = rows.map((r, i) => `<tr${r.ivs.join() === mine && IVOPEN ? ' class="mine"' : ''}>
+  const tr = rows.map((r, i) => `<tr class="${i < 3 ? 'top3' : ''}${r.ivs.join() === mine && IVOPEN ? ' mine' : ''}">
     <td class="no">${i + 1}</td><td>${r.rank}位</td><td class="iv">${r.ivs.join('/')}</td><td>${fmtLv(r.level)}</td><td>${r.st.cp}</td>
-    <td class="bk">${pm(r.g)}<small>${r.gd ? `+${r.gu} −${r.gd}` : ''}</small></td>
-    <td class="bk">${pm(r.t)}<small>${r.td ? `+${r.tu} −${r.td}` : ''}</small></td>${wcell(r)}</tr>`).join('');
+    ${bkTd(r, 'g', r.g, r.gu, r.gd)}${bkTd(r, 't', r.t, r.tu, r.td)}${wcell(r)}</tr>${RECO_OPEN === r.ivs.join('.') + '|g' ? subRow(r, 'g') : RECO_OPEN === r.ivs.join('.') + '|t' ? subRow(r, 't') : ''}`).join('');
   const refTr = `<tr class="ref"><td class="no">基準</td><td>1位</td><td class="iv">${ref.ivs.join('/')}</td><td>${fmtLv(ref.level)}</td><td>${ref.st.cp}</td>
     <td class="bk"><span class="z">0</span></td><td class="bk"><span class="z">0</span></td><td class="w">${ref.w == null ? '<span class="z">…</span>' : `<b>${ref.w}</b>`}</td></tr>`;
   const done = rows.filter(r => r.w != null).length + (ref.w != null ? 1 : 0), all = rows.length + 1;
@@ -1423,6 +1454,7 @@ function render() {
   $('reco').innerHTML = recoHtml();
   $('recobtn').style.display = capped ? '' : 'none';
   $('recobtn').setAttribute('aria-pressed', RECO);
+  $('reco').querySelectorAll('[data-bk]').forEach(td => td.onclick = () => { RECO_OPEN = RECO_OPEN === td.dataset.bk ? null : td.dataset.bk; render(); });
   // 一覧(環境100匹の行)は「自分の個体で確かめる」を開いたときだけ(上のまとめと情報が二重になるため)
   $('listwrap').style.display = IVOPEN ? '' : 'none';
   $('mega4').style.display = capped ? 'none' : '';
