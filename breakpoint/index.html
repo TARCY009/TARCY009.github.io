@@ -481,8 +481,8 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
       <div class="sugg-list" id="melist"></div>
     </div>
     <div class="gtabs">
-      <button class="t-gold" id="mestar" aria-pressed="false" title="★登録リスト（GBL対面シミュと共通）から選びます">★ 登録リスト</button>
-      <button class="t-shadow" id="meshadow" aria-pressed="false" title="シャドウ（攻撃1.2倍・防御5/6）として計算します"><i class="shadowmark"></i> シャドウ</button>
+      <button class="t-gold" id="mestar" aria-pressed="false" title="★登録リストに入れてある自分のポケモンから選びます（GBL対面シミュと同じリスト）">★ 登録リスト</button>
+      <button class="t-shadow" id="meshadow" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i> シャドウ</button>
     </div>
   </div>
   <div class="mypkwin" id="mypkwin"></div>
@@ -490,13 +490,13 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 </div>
 
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
-  <button class="t-atk" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">🗡️ 与える</button>
-  <button class="t-shadow" data-dir="take" aria-pressed="false" title="相手のノーマルアタックから受けるダメージの境目を見ます">🛡 受ける</button>
-</div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="ブレイクする相手の数がいちばん多く、その中でも被ダメージをいちばん抑えられる個体はどれか。4096通りの個体値を並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button></div>
+  <button class="t-atk" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックのダメージが1上がる境目を見ます">🗡️ 与える</button>
+  <button class="t-shadow" data-dir="take" aria-pressed="false" title="あいてのノーマルアタックから受けるダメージが1下がる境目を見ます">🛡 受ける</button>
+</div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="4096通りの個体値をぜんぶ試して、環境100匹との勝ち数が多い順に並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button></div>
 <div id="reco"></div>
 <div id="ivsum"></div>
 <!-- 自分の個体の入力は環境100匹の一覧の直上に置く(2026-08-23タダシさん指示: まとめ・おすすめ個体には効かないので、入力→関係ない表→一覧と跨がせない) -->
-<button class="ivtog mine" id="ivtog" type="button" aria-expanded="false" style="display:none" title="自分の個体値・PLを入れて、環境上位100匹それぞれにどうなるかを確かめます"><i>▸</i> 自分の個体で確かめる<small>個体値・PLを入力</small></button>
+<button class="ivtog mine" id="ivtog" type="button" aria-expanded="false" style="display:none" title="手持ちの個体の個体値・PLを入れて、環境100匹それぞれへのダメージを確かめます"><i>▸</i> 自分の個体で確かめる<small>個体値・PLを入力</small></button>
 <div id="listwrap">
 <div class="card ivcard" id="ivcard">
   <span class="sec">じぶんの個体</span>
@@ -505,7 +505,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <label>防御<input type="number" id="ivD" min="0" max="15" inputmode="numeric"></label>
     <label>HP<input type="number" id="ivH" min="0" max="15" inputmode="numeric"></label>
     <label>PL<input type="number" id="ivL" min="1" max="53" step="0.5" inputmode="decimal"></label>
-    <div class="gtabs one"><button class="t-cyan" id="ideal" title="このリーグの理想個体値・最大PLに戻します">理想に戻す</button></div>
+    <div class="gtabs one"><button class="t-cyan" id="ideal" title="このリーグで1位の個体値・PLに戻します">理想に戻す</button></div>
     <div class="cpv" id="cpv"></div>
   </div>
 </div>
@@ -517,29 +517,42 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 <button class="helptab" id="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
 <div class="helpbody" id="helpbody" style="display:none">
   <h4>ブレイクポイントとは</h4>
-  <p>ポケモンGOのダメージは整数に切り捨てられるため、攻撃の実数値が少し上がっても<b>ダメージは階段状にしか増えません</b>。その「段が上がる境目」がブレイクポイントです。とくに<b>1ターン(0.5秒)のノーマルアタック</b>は、ダメージが5→6になるだけで火力が20%上がるため影響が大きく、マスターリーグでは勝敗を分けます。</p>
-  <h4>この画面でわかること</h4>
-  <p>ポケモンとリーグを選ぶだけで、<b>環境上位100匹それぞれに「どの個体ならブレイクポイントに届くか」</b>が並びます。個体値を入れて検算するのは補助です。</p>
+  <p>ポケモンGOのダメージは小数を切り捨てた整数です。そのため攻撃の実数値が少し上がっても、ダメージは<b>5→5→5→6</b>のように<b>階段状にしか増えません</b>。この「段が1つ上がる境目」がブレイクポイントです。</p>
+  <p>とくに<b>1ターン(0.5秒)のノーマルアタック</b>は、ダメージが5→6になるだけで火力が20%上がります。マスターリーグでは、ここで勝敗が分かれることがよくあります。</p>
+  <h4>まず見るところ</h4>
+  <p>ポケモンとリーグを選ぶと、<b>環境上位100匹それぞれに「どの個体ならブレイクポイントに届くか」</b>が並びます。個体値を入れなくても使えます。</p>
   <ul>
-    <li><b>🗡️与える／🛡受ける</b>: 与える=じぶんのノーマルアタックのダメージが1段上がる境目／受ける=あいてのノーマルアタックの被ダメージが1段下がる境目</li>
-    <li><b>マスター</b>: 相手ごとに「攻撃（受けるは防御）の個体値がいくつ以上なら届くか」を出します。上のタブは個体値で、<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます（点灯中のタブをもう一度タップするとそのグループだけ隠れます）。チップの中の表は、じぶん（縦）とあいて（横）のPL50/51の組み合わせごとのダメージで、そのグループの個体値でちょうど段が上がる組み合わせだけ金色です。<b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
-    <li><b>スーパー・ハイパー</b>: CP制限があるリーグは個体値3つとPLがセットで決まるので、軸は<b>個体の順位（SCP順・個体値チェッカーと同じ）</b>です。<b>「あいての順位」</b>でまず相手の前提を選びます（既定は100位以内）。同じポケモンでも順位によって実数値が動くので、<b>その範囲のどの個体が相手でも届く個体</b>（与える=範囲でいちばん硬い個体、受ける=いちばん攻撃が高い個体を基準）だけを出します。範囲を広げるほど条件は厳しくなり、「合わせるのは現実的でない」相手は消えます。相手ごとに、届く個体のうちいちばん順位が高いものを出し、その順位でグループ分けします。上のタブは<b>10位以内が既定</b>で、50位をタップすると11〜50位の個体で届く相手が追加されます。チップには <b>4→5</b>（ダメージの変化）・<b>順位と個体の例</b>・<b>🔥勝ち+1／⚠勝ち-1</b>（1位の個体と比べて🛡0-0/1-1/2-2の合計勝ち数がどう変わるか。⚠は耐久を削るぶん逆に不利）が出ます。チップをタップするとブレイクする個体の一覧（SCPが高い順・上位100件）が開きます</li>
-    <li><b>▸ 自分の個体で確かめる</b>（まとめの下）: 個体値とPLを入れると、その個体での一覧と、行をタップした詳細（いまのダメージ・ブレイク条件・1対1シミュへのボタン）が出ます</li>
-    <li><b>GBL対面シミュから来たとき</b>: その画面のあいて（個体値そのまま）が一覧のいちばん上に🔎付きで固定されます</li>
-    <li><b>1T🔥のわざ</b>: 1ターンわざはダメージ+1の影響がいちばん大きい（5→6で+20%）ので金色で目立たせています</li>
+    <li><b>🗡️与える</b>＝じぶんのノーマルアタックのダメージが1上がる境目</li>
+    <li><b>🛡受ける</b>＝あいてのノーマルアタックから受けるダメージが1下がる境目</li>
+    <li><b>1T🔥</b>＝1ターンわざ。上の理由でいちばん影響が大きいので金色で目立たせています</li>
   </ul>
+  <h4>マスターリーグの見かた</h4>
+  <p>PLは自由に上げられるので、効くのは<b>攻撃（受けるは防御）の個体値</b>だけです。相手ごとに「個体値がいくつ以上なら届くか」を出します。</p>
+  <ul>
+    <li>上のタブは個体値です。<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます。点灯中のタブをもう一度タップすると、そのグループだけ隠れます</li>
+    <li>相手ごとのチップの中の表は、<b>じぶんのPL（縦）×あいてのPL（横）</b>ごとのダメージです。そのグループの個体値でちょうど段が上がる組み合わせだけ金色になります</li>
+    <li><b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
+  </ul>
+  <h4>スーパー・ハイパーの見かた</h4>
+  <p>CP制限があるリーグは、個体値3つとPLがセットで決まります。そこで軸は個体値ではなく<b>個体の順位</b>（個体値チェッカーと同じ順位）です。</p>
+  <ul>
+    <li><b>あいての順位</b>（紫）: 先に相手の前提を選びます（既定は100位以内）。同じポケモンでも順位によって実数値が変わるので、<b>その範囲のどの個体が相手でも届く</b>、じぶんの個体だけを出します。範囲を広げるほど条件はきびしくなり、「合わせるのは現実的でない」相手は消えます</li>
+    <li><b>じぶんの順位</b>（水色）: 相手ごとに「届く個体のうちいちばん順位が高いもの」を探し、その順位でグループ分けします。<b>10位以内が既定</b>。50位をタップすると11〜50位の個体で届く相手が追加されます</li>
+    <li>チップの中身: <b>4→5</b>＝ダメージの変化／<b>順位と個体の例</b>／<b>🔥勝ち+1・⚠勝ち-1</b>＝1位の個体とくらべた勝ち数の差（🛡0-0/1-1/2-2の合計）。⚠は防御・HPを下げてPLを上げるぶん逆に不利になる相手です。チップをタップすると、届く個体の一覧（順位が高い順・上位100件）が開きます</li>
+    <li><b>🏆おすすめ個体</b>: 4096通りの個体値をぜんぶ試し、環境100匹との<b>勝ち数が多い順</b>に並べます。🗡️・🛡の列は、1位の個体よりダメージが1上がる（被ダメージが1下がる）相手の数です。勝ち数が並んだら🗡️🛡で選んでください。マスをタップすると、どの相手で段が動くかが開きます</li>
+  </ul>
+  <h4>自分の個体で確かめる</h4>
+  <p>上の機能は「これからどの個体を選ぶか」のためのものです。<b>手持ちの個体がどうなのか</b>を見たいときは、<b>▸ 自分の個体で確かめる</b>を開いて個体値とPLを入れてください。環境100匹それぞれへのいまのダメージが並び、行をタップすると詳細（ブレイク条件・届く個体の例・1対1シミュへのボタン）が出ます。</p>
+  <p>GBL対面シミュの1対1の結果や、個体値チェッカーの結果からもこのページへ飛べます。対面や個体値は引き継がれます。GBLから来たときは、その画面のあいてが一覧のいちばん上に🔎付きで固定されます。</p>
   <h4>計算の前提</h4>
   <ul>
-    <li>ダメージ式・実数値はGBL対面シミュのエンジンと同じもの。<b>同じ条件なら結果は必ず一致します</b></li>
-    <li>能力変化（バフ・デバフ）が無い開始時点で計算します</li>
-    <li>環境上位100匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成が基準です</li>
+    <li>ダメージ式・実数値はGBL対面シミュのエンジンと同じです。<b>同じ条件なら結果は必ず一致します</b></li>
+    <li>能力変化（バフ・デバフ）が無い、バトル開始時点で計算します</li>
+    <li>環境上位100匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成です</li>
     <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4（メガシンカ中に自動で＋2相当）＋相棒で53まで</li>
-    <li>SPアタックは対象外です。SPの+1はバトル全体で1〜2回しか発生せず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
+    <li><b>SPアタックは対象外</b>です。SPのダメージ+1はバトル全体で1〜2回しか起きず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
+    <li>勝ち数のシミュレート: あいては理想個体値・定番わざ構成、じぶんは画面で選んだノーマルアタック＋定番のSPアタック。ブラフなし・確率わざ不発・最適タイミング（GBL対面シミュの一覧系と同じ前提）</li>
   </ul>
-  <h4>勝敗シミュレートの前提</h4>
-  <p>あいては理想個体値・人が確認した実戦の定番わざ構成。じぶんのSPアタックも定番構成（画面で選んだノーマルアタック＋確定値のSP）。ブラフなし・確率わざ不発・最適タイミングで、GBL対面シミュの一覧系と同じ前提です。</p>
-  <h4>入口</h4>
-  <p>GBL対面シミュの1対1の結果、個体値チェッカーの結果からもこのページへ飛べます。対面や個体値は引き継がれるので、入力し直す必要はありません。</p>
 </div>
 </div>
 
@@ -563,7 +576,7 @@ const SEARCH_MAX = 100;
 const fmtLv = l => (Math.round(l * 10) / 10) % 1 ? l.toFixed(1) : String(Math.round(l));
 // ターンバッジ。1Tわざは境目の影響が最大(1発+1で火力+20%以上)なので金で点灯させる
 const tnBadge = tn => `<i class="tb${tn === 1 ? ' tb1' : ''}" title="${tn === 1
-  ? '1ターンわざ。ダメージ+1の影響がいちばん大きいわざです'
+  ? '1ターン(0.5秒)わざ。ダメージが1上がるだけで火力が大きく伸びます（5→6なら+20%）'
   : tn + 'ターンわざ。ターン数が少ないわざほどブレイクポイントの影響が大きくなります'}">${tn}T${tn === 1 ? '🔥' : ''}</i>`;
 
 // ---- 画面状態 ----
@@ -888,7 +901,7 @@ function goalBox(v, dir) {
   } else if (to > 50) {
     how = `<b>最高の相棒</b>にして PL<b>${fmtLv(to)}</b> 以上`;
     // 相棒の説明は知っている前提なので💡説明モードだけ
-    expl = now >= 50 ? 'PL50より上は最高の相棒の状態でしか強化できません' : 'PL50までは通常の強化、そこから先は最高の相棒が必要です';
+    expl = now >= 50 ? 'PL50より上は、最高の相棒にしているあいだだけ＋1されます' : 'PL50までは通常の強化。そこから上は最高の相棒にしているあいだだけ＋1されます';
     if (mega) note = `メガLv4なら PL${fmtLv(to - 2)} でも届きます`;
   } else {
     how = `PL<b>${fmtLv(to)}</b> 以上`;
@@ -1038,7 +1051,7 @@ function ivSumHtml() {
   const total = byIv.reduce((n, a) => n + a.length, 0);
   const body = total ? `<div class="grp">${grp || `<div class="none">${statName}${IVSEL}以上でブレイクする相手はいません</div>`}</div>`
                      : `<div class="none">${statName}の個体値では変わりません</div>`;
-  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表はじぶん・あいてのPLの組み合わせごとのダメージ（あいて個体値100%${MEGA4 ? '・メガ4はPL53まで' : ''}）</span></div>
+  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表は じぶんのPL（縦）×あいてのPL（横）ごとのダメージ（あいては個体値100%${MEGA4 ? '・メガ4はPL53まで' : ''}）</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 
@@ -1158,15 +1171,15 @@ function ivSumCapHtml() {
                      : `<div class="none">${FRNG > 1 ? 'この範囲の相手に合わせてブレイクできる個体はありません' : `1位の個体で、どの相手にも${dir === 'give' ? 'ダメージを最大化' : '被ダメージを最小化'}できています`}</div>`;
   const rngLbl = n => n === 1 ? '1位' : n >= 4096 ? '全個体' : `${n}位<small>以内</small>`;
   const seg = `<div class="foerng"><span class="ax foe">あいて</span><span class="rl">の順位</span><span class="seg">${FOE_RNG.map(n =>
-    `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}のときでもブレイクする個体を探します。範囲を広げるほど条件は厳しくなります">${rngLbl(n)}</button>`).join('')}</span></div>`;
+    `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}でも届く、じぶんの個体を探します。範囲を広げるほど条件はきびしくなります">${rngLbl(n)}</button>`).join('')}</span></div>`;
   // 💡説明モードの文。「あいて」の前提 → 「じぶん」のどの個体が届くか、の順で1文ずつ
   const hardNote = (FRNG > 1
-    ? `あいては「${RNG_LBL(FRNG)}の個体」を想定。その中で${dir === 'give' ? 'いちばん防御が高い' : 'いちばん攻撃が高い'}個体を相手にしても${dir === 'give' ? 'ダメージが1段上がる' : '被ダメージが1段下がる'}、じぶんの個体を表示します`
-    : `あいては「1位の個体」を想定。それに対して${dir === 'give' ? 'ダメージが1段上がる' : '被ダメージが1段下がる'}、じぶんの個体を表示します`)
-    + `。じぶんの順位は個体値チェッカーと同じSCP順です`;
+    ? `あいてが${RNG_LBL(FRNG)}のどの個体でも${dir === 'give' ? 'ダメージが1上がる' : '被ダメージが1下がる'}、じぶんの個体を出します（${dir === 'give' ? 'いちばん硬い' : 'いちばん攻撃が高い'}個体を基準）`
+    : `あいてが1位の個体のとき、${dir === 'give' ? 'ダメージが1上がる' : '被ダメージが1下がる'}じぶんの個体を出します`)
+    + `。順位は個体値チェッカーと同じです`;
   return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds expl">${hardNote}</span></div>
     ${seg}
-    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd expl">相手ごとに${dir === 'give' ? 'ダメージが1段上がる' : '被ダメージが1段下がる'}最も順位が高い個体を探し、その順位がどこに入るかで分けています（タップで範囲を広げる・もう一度タップで隠す）</span></div>
+    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd expl">相手ごとに「${dir === 'give' ? 'ダメージが1上がる' : '被ダメージが1下がる'}個体のうち、いちばん順位が高いもの」を探し、その順位で分けています。タップで範囲を広げ、もう一度タップでそのグループを隠します</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 const unitName = dir => dir === 'give' ? 'ダメージ' : '被ダメージ';
@@ -1255,9 +1268,9 @@ function recoHtml() {
   const done = rows.filter(r => r.w != null).length + (ref.w != null ? 1 : 0), all = rows.length + 1;
   // 右上: 「あいての順位」の前提(下のパネルと同じ FRNG に連動)。ここで切り替えても下のタブが一緒に動く
   const rngMini = `<span class="rngmini"><span class="ax foe">あいて</span>${FOE_RNG.map(n =>
-    `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="ブレイクの列は、あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}でも届くか、で数えます（下のパネルの「あいての順位」と連動）">${n === 1 ? '1位' : n >= 4096 ? '全個体' : n + '位'}</button>`).join('')}</span>`;
+    `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="🗡️🛡の列は、あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}でも届く相手の数です（下のパネルの「あいての順位」と同じ設定）">${n === 1 ? '1位' : n >= 4096 ? '全個体' : n + '位'}</button>`).join('')}</span>`;
   return `<div class="ivsum cp recocard"><div class="dt">🏆 おすすめ個体<span class="ds">勝ち数が多い順</span>${rngMini}</div>
-    <div class="ds">1位の個体とくらべて <b class="up">🗡️</b>ダメージが1段上がる相手／<b class="up">🛡</b>被ダメージが1段下がる相手が何匹いるか、そして<b class="up">勝ち数</b>（環境${n}匹×🛡0-0/1-1/2-2＝${n * 3}戦）<span class="expl">。マイナスは逆に1段落ちる相手の数。あいては上の「あいての順位」と同じ前提（${RNG_LBL(FRNG)}）。勝ち数のシミュレートは1位のあいて・ブラフなし・最適タイミング（GBLの一覧系と同じ前提）で、候補の上位${rows.length}件だけ計算します。1〜2勝の差は前提しだいで動く範囲なので、勝ち数が並んでいる行はブレイクの列で選んでください</span></div>
+    <div class="ds"><b class="up">勝ち数</b>＝環境${n}匹と🛡0-0/1-1/2-2で戦った合計（${n * 3}戦）。<b class="up">🗡️</b>＝1位の個体よりダメージが1上がる相手の数／<b class="up">🛡</b>＝被ダメージが1下がる相手の数<span class="expl">。マイナスは逆に1落ちる相手の数。🗡️🛡のあいては右上の順位（${RNG_LBL(FRNG)}）、勝ち数のあいては1位の個体で、ブラフなし・最適タイミング（GBLの一覧系と同じ前提）。勝ち数は候補の上位${rows.length}件だけ計算します。1〜2勝の差は前提しだいで動くので、勝ち数が並んだら🗡️🛡で選んでください</span></div>
     <div class="recowrap"><table>
       <thead><tr><th></th><th><span class="ax me">じぶん</span><br>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>🗡️<br>ブレイク</th><th>🛡<br>ブレイク</th><th>勝ち数<br><small>/${n * 3}</small></th></tr></thead>
       <tbody>${refTr}${tr}</tbody></table></div>
@@ -1302,7 +1315,7 @@ function detailHTML(foe, rowId) {
         extra = (b.diff > 0
           ? `<div class="vbox up"><div class="hd">🔥 ブレイクすると勝ちが増えます（🛡3パターン合計 ${b.wNow}勝 → ${b.wBrk}勝）</div><div class="nt">${ex}</div></div>`
           : b.diff < 0
-          ? `<div class="vbox ng"><div class="hd">⚠ ブレイクすると勝ちが減ります（${b.wNow}勝 → ${b.wBrk}勝）</div><div class="nt">耐久を削ってPLを上げるぶん、逆に不利になる相手です<br>${ex}</div></div>`
+          ? `<div class="vbox ng"><div class="hd">⚠ ブレイクすると勝ちが減ります（${b.wNow}勝 → ${b.wBrk}勝）</div><div class="nt">防御・HPの個体値を下げてPLを上げるぶん、この相手には逆に不利になります<br>${ex}</div></div>`
           : `<div class="vbox ok"><div class="hd">ブレイクしても勝敗は変わりません（${b.wNow}勝のまま）</div><div class="nt">${ex}</div></div>`)
           + ivListHtml(b, rowId, v.dNow);
       } else if (b) {
@@ -1533,12 +1546,12 @@ function render() {
   sumEl.style.display = '';
   if (capped) {
     sumEl.innerHTML = `ブレイクで勝敗が変わる相手: <b>🔥 勝ちが増える ${hot}匹</b>${dn ? ` ／ <span style="color:var(--red)">⚠ 減る ${dn}匹</span>` : ''}` +
-      `<span class="expl">（🛡0-0/1-1/2-2の3パターンでシミュレートした合計勝ち数のちがいです。行をタップすると届く個体の例が出ます）</span>`;
+      `<span class="expl">（いまの個体とブレイク個体で、🛡0-0/1-1/2-2の合計勝ち数をくらべたもの。行をタップすると届く個体の例が出ます）</span>`;
   } else {
     const lad = myLadder();
     const atCapMax = lad.length && lad[lad.length - 1].lv <= ME.level;
     const zeroNote = hot ? '' : '<br><small>個体値で変わる相手はいません</small>';
-    sumEl.innerHTML = `環境上位${metaList().length}匹のうち、個体値で結果が変わる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（行をタップすると、自分の個体での検算とPLの組み合わせが出ます）</span>`;
+    sumEl.innerHTML = `環境上位${metaList().length}匹のうち、個体値で結果が変わる相手 <b>🔥 ${hot}匹</b>${zeroNote}<span class="expl">（行をタップすると、いまのダメージ・ブレイク条件・PLの組み合わせ表が出ます）</span>`;
   }
   listEl.innerHTML = rowsHtml.join('');
   bindRows();
