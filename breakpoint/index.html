@@ -572,7 +572,7 @@ let RSEL = 0, RHIDE = new Set(), RLOW = false;
 const FOE_RNG = [1, 10, 100, 1000, 4096];
 let FRNG = 100;
 let RECO = false;   // 🏆おすすめ個体の表を出しているか
-let RECO_SORT = 'win';   // 並び: win(勝ち数) / sum(🗡️+🛡の合計) / take(🛡優先)
+const RECO_SORT = 'win';   // 並びは勝ち数だけ(2026-08-23タダシさん判断。合計・🛡優先のタブは廃止)
 // 勝ち数(環境100匹×🛡3パターン)のキャッシュ。1個体300戦=約20msなので、候補の上位だけ少しずつ計算する
 let winCache = { sig: null, map: new Map(), ref: null, timer: null };
 const RECO_POOL = 30, RECO_POOL_T = 15;
@@ -1198,10 +1198,8 @@ function recoHtml() {
   const refTr = `<tr class="ref"><td class="no">基準</td><td>1位</td><td class="iv">${ref.ivs.join('/')}</td><td>${fmtLv(ref.level)}</td><td>${ref.st.cp}</td>
     <td class="bk"><span class="z">0</span></td><td class="bk"><span class="z">0</span></td><td class="w">${ref.w == null ? '<span class="z">…</span>' : `<b>${ref.w}</b>`}</td></tr>`;
   const done = rows.filter(r => r.w != null).length + (ref.w != null ? 1 : 0), all = rows.length + 1;
-  const sortSeg = `<span class="plseg">${[['win', '勝ち数'], ['sum', '🗡️＋🛡'], ['take', '🛡優先']].map(([k, l]) =>
-    `<button data-rsort="${k}" aria-pressed="${k === RECO_SORT}">${l}</button>`).join('')}</span>`;
-  return `<div class="ivsum cp recocard"><div class="dt">🏆 おすすめ個体${sortSeg}</div>
-    <div class="ds">1位の個体とくらべて <b class="up">🗡️</b>ダメージが1段上がる相手／<b class="up">🛡</b>被ダメージが1段下がる相手が何匹いるか、そして<b class="up">勝ち数</b>（環境${n}匹×🛡0-0/1-1/2-2＝${n * 3}戦）<span class="expl">。マイナスは逆に1段落ちる相手の数。あいては上の「あいての順位」と同じ前提（${RNG_LBL(FRNG)}）。勝ち数のシミュレートは1位のあいて・ブラフなし・最適タイミング（GBLの一覧系と同じ前提）で、候補の上位${rows.length}件だけ計算します</span></div>
+  return `<div class="ivsum cp recocard"><div class="dt">🏆 おすすめ個体<span class="ds">勝ち数が多い順</span></div>
+    <div class="ds">1位の個体とくらべて <b class="up">🗡️</b>ダメージが1段上がる相手／<b class="up">🛡</b>被ダメージが1段下がる相手が何匹いるか、そして<b class="up">勝ち数</b>（環境${n}匹×🛡0-0/1-1/2-2＝${n * 3}戦）<span class="expl">。マイナスは逆に1段落ちる相手の数。あいては上の「あいての順位」と同じ前提（${RNG_LBL(FRNG)}）。勝ち数のシミュレートは1位のあいて・ブラフなし・最適タイミング（GBLの一覧系と同じ前提）で、候補の上位${rows.length}件だけ計算します。1〜2勝の差は前提しだいで動く範囲なので、勝ち数が並んでいる行はブレイクの列で選んでください</span></div>
     <div class="recowrap"><table>
       <thead><tr><th></th><th><span class="ax me">じぶん</span><br>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>🗡️<br>ブレイク</th><th>🛡<br>ブレイク</th><th>勝ち数<br><small>/${n * 3}</small></th></tr></thead>
       <tbody>${refTr}${tr}</tbody></table></div>
@@ -1424,7 +1422,6 @@ function render() {
   $('ivsum').innerHTML = ivSumHtml();
   $('reco').innerHTML = recoHtml();
   $('recobtn').style.display = capped ? '' : 'none';
-  $('reco').querySelectorAll('[data-rsort]').forEach(b => b.onclick = () => { RECO_SORT = b.dataset.rsort; render(); });
   $('recobtn').setAttribute('aria-pressed', RECO);
   // 一覧(環境100匹の行)は「自分の個体で確かめる」を開いたときだけ(上のまとめと情報が二重になるため)
   $('listwrap').style.display = IVOPEN ? '' : 'none';
