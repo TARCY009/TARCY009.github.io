@@ -178,9 +178,10 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .dmgrow{display:flex;align-items:center;gap:12px;padding:10px 14px 8px;flex-wrap:wrap}
 .dmgrow .u{font-size:.74rem;font-weight:800;color:var(--sub);min-width:4.2em}
 .dmgrow .num{display:flex;align-items:baseline;gap:5px}
-.dmgrow .num b{font-size:2.3rem;font-weight:800;line-height:1;color:var(--accent2)}
+.dmgrow .num b{font-size:2.3rem;font-weight:800;line-height:1;color:var(--ink)}
 .dmgrow .num small{font-size:.66rem;color:var(--sub);font-weight:700}
 .dmgrow .num.nx b{color:var(--gold)}
+.dmgrow .num.nx.same b{color:var(--sub);opacity:.85}
 .dmgrow .nxa{font-size:1.3rem;color:var(--sub)}
 /* 結論ボックス */
 .vbox{border-radius:11px;padding:10px 12px;margin-top:12px;border:1px solid}
@@ -816,14 +817,17 @@ function goalBox(v, dir) {
     ${note ? `<div class="nt">${note}</div>` : ''}${expl ? `<div class="nt expl">${expl}</div>` : ''}</div>`;
 }
 // 「いま ◯ → ◯」の行。ブレイクで変わる先の数字も同じ大きさで並べる
-function nowLine(v, unit) {
-  const next = v.type === 'up' ? v.to : null;
+// 「いま ◯ → ◯ ブレイク後」。変わらない対面は「2→2」と同じ数字を並べて、一目で変化なしと分かるようにする
+// (いまは白・ブレイク後は金。altNext=CP制限でブレイク個体に替えたときのダメージ)
+function nowLine(v, unit, altNext) {
+  const next = v.type === 'up' ? v.to : altNext != null ? altNext : v.dNow;
+  const same = next === v.dNow;
   return `<div class="dmgrow"><span class="u">${unit}</span>
     <span class="num"><b>${v.dNow}</b><small>いま</small></span>
-    ${next != null ? `<span class="nxa">→</span><span class="num nx"><b>${next}</b><small>ブレイク後</small></span>` : ''}</div>`;
+    <span class="nxa">→</span><span class="num nx${same ? ' same' : ''}"><b>${next}</b><small>${same ? '変化なし' : 'ブレイク後'}</small></span></div>`;
 }
 // ダメージの行と条件の箱を1枚のカードにまとめる
-const heroHTML = (v, unit, cond) => `<div class="dhero">${nowLine(v, unit)}${cond}</div>`;
+const heroHTML = (v, unit, cond, altNext) => `<div class="dhero">${nowLine(v, unit, altNext)}${cond}</div>`;
 
 // ---- マスター: じぶんのPL × あいてのPL の表(あいては理想個体値。PL50/50.5/51、メガなら53まで) ----
 // 「相手が最高の相棒だったら」で結果が変わる対面を、ぱっと見で分かるようにする
@@ -1113,8 +1117,9 @@ function detailHTML(foe, rowId) {
       }
       extra = `<div class="dgrid">${plMatrix(foe, mv, 'give')}${ivBar(foe, mv, 'give')}</div>`;
     }
+    const altG = capped ? (() => { const b = breakWins(mv, foe, v.dNow); return b && b.rep ? b.rep.d : null; })() : null;
     body = `<div class="dsub"><b>${mv.n}</b>${tnBadge(mv.tn)} → ${foe.shadow ? SHADOWMK : ''}${foe.name}</div>
-      ${heroHTML(v, 'ダメージ', vb)}${extra}`;
+      ${heroHTML(v, 'ダメージ', vb, altG)}${extra}`;
   } else {
     // 受ける: あいてのノーマルアタックを選べる(既定は環境の定番)
     const pool = fastMoves(foe.key);
@@ -1157,7 +1162,7 @@ function detailHTML(foe, rowId) {
       `<button class="mvchip" data-fmv="${id}" aria-pressed="${id === sel}">${D.moves[id].n}${tnBadge(D.moves[id].tn)}</button>`).join('')}</div>` : '';
     body = `<div class="dsub">${foe.shadow ? SHADOWMK : ''}${foe.name}の <b>${fmv.n}</b>${tnBadge(fmv.tn)} → じぶん</div>
       ${chips}
-      ${heroHTML(v, '被ダメージ', vb)}${extra}`;
+      ${heroHTML(v, '被ダメージ', vb, capped && v.type !== 'min' ? (() => { const c = breakCandsTake(fmv, foe, v.dNow); return c.rep ? c.rep.d : null; })() : null)}${extra}`;
   }
   const sel = DIR === 'take' ? (DTAB[rowId + ':fmv'] || foe.fast) : foe.fast;
   return `${body}<a class="simlink" href="${duelUrl(foe, sel)}">⚔️ 1対1シミュで詳しく見る ↗</a>`;
