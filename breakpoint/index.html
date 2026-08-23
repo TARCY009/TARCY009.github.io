@@ -1094,7 +1094,7 @@ function ivSumCapHtml() {
     + `。じぶんの順位は個体値チェッカーと同じSCP順です`;
   return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds expl">${hardNote}</span></div>
     ${seg}
-    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd expl">相手ごとに、届く個体のうちいちばん順位が高いものを探し、その順位がどこに入るかで分けています（タップで範囲を広げる・もう一度タップで隠す）</span></div>
+    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd expl">相手ごとに${dir === 'give' ? 'ダメージが1段上がる' : '被ダメージが1段下がる'}最も順位が高い個体を探し、その順位がどこに入るかで分けています（タップで範囲を広げる・もう一度タップで隠す）</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 const unitName = dir => dir === 'give' ? 'ダメージ' : '被ダメージ';
