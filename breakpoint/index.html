@@ -342,6 +342,19 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   .ivsum.cp .cells i b{font-size:.54rem}
   .ivsum.cp .lowbtn{min-width:44px;padding:0 5px;font-size:.56rem}
 }
+.ivsum .myrng{display:flex;align-items:center;gap:6px;margin-top:12px;flex-wrap:wrap}
+.ivsum .myrng .ax,.ivsum .foerng .ax.me,.ivsum .grp .fc .ax.me{font-size:.58rem;padding:3px 9px;border-radius:999px;font-weight:800;background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330}
+.ivsum .myrng .rl{font-size:.68rem;font-weight:800;color:var(--sub)}
+.ivsum .myrng .rd{font-size:.6rem;color:var(--sub);margin-left:4px}
+.ivsum.cp .barrow{margin-top:6px}
+.ivsum .grp .k.me{flex-direction:column;gap:0;line-height:1.1}
+.ivsum .grp .k.me em{font-style:normal;font-size:.5rem;font-weight:800;color:var(--accent2);letter-spacing:.04em}
+.ivsum .grp .fc .fb{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
+.ivsum .grp .fc .fb .ax{font-size:.52rem;padding:2px 7px;border-radius:999px;font-weight:800;background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff}
+.ivsum .grp .fc .fb b{font-size:.8rem;color:var(--foec)}
+.ivsum .grp .fc .fb small{font-size:.58rem;white-space:normal}
+.ivsum .grp .fc.cp .cpb .rep .ax{font-size:.52rem;padding:2px 7px;margin-bottom:1px}
+@media (max-width:540px){.ivsum .myrng .rd{flex-basis:100%;margin-left:0}}
 /* CP制限のチップ: 右側は「段の変化(金)・順位と個体の例・勝敗チップ・開閉」。タップで下にブレイクする個体の一覧 */
 .ivsum .grp .fc.cp{flex-wrap:wrap;cursor:pointer}
 .ivsum .grp .fc.cp.open{grid-column:1/-1}
@@ -1003,7 +1016,8 @@ function foeTable(key, shadow) {
 // 範囲(FRNG位以内)でいちばん厳しいあいて: 与える=防御が最高の個体 / 受ける=攻撃が最高の個体。
 // 1位だけのときは従来どおり rank1() の個体(=foe.st)を使う
 function hardestFoe(foe, dir) {
-  if (FRNG <= 1 || foe.rawSt) return foe.st;
+  if (foe.rawSt) return foe.st;
+  if (FRNG <= 1) { const r1 = rank1(foe.key, capV()); return { ...foe.st, rank: 1, ivs: r1.ivs, level: r1.level }; }
   const rows = foeTable(foe.key, foe.shadow).filter(r => r.rank <= FRNG);
   const h = rows.reduce((p, r) => (dir === 'give' ? r.def > p.def : r.atk > p.atk) ? r : p, rows[0]);
   return { ...foe.st, atk: h.atk, def: h.def, hp: h.hp, rank: h.rank, ivs: h.ivs, level: h.level };
@@ -1034,6 +1048,7 @@ function capBreakOf(foe, dir) {
   capCache.map.set(ck, out);
   return out;
 }
+const RNG_LBL = n => n >= 4096 ? '全個体' : `${n}位以内`;
 const rankGrpOf = rk => { const i = RANK_GRP.findIndex(g => rk <= g); return i < 0 ? RANK_GRP.length : i; };
 function ivSumCapHtml() {
   const dir = DIR, statName = dir === 'give' ? '攻撃' : '防御';
@@ -1055,13 +1070,15 @@ function ivSumCapHtml() {
     const win = r.diff == null ? '' : r.diff > 0 ? `<span class="vchip up">🔥 勝ち+${r.diff}</span>`
       : r.diff < 0 ? `<span class="vchip lose">⚠ 勝ち${r.diff}</span>` : `<span class="vchip no">勝敗は同じ</span>`;
     const unit = dir === 'give' ? '' : '被';
+    // 基準にしたあいての個体(範囲でいちばん厳しい個体)を左に明記する。「この順位表はじぶんの？」と迷わせない
+    const fb = r.hard && r.hard.rank ? `<span class="fb"><span class="ax foe">あいて</span><b>${r.hard.rank}位</b><small>${r.hard.ivs.join('/')} PL${fmtLv(r.hard.level)}${FRNG > 1 ? `・${RNG_LBL(FRNG)}で最も${dir === 'give' ? '硬い' : '攻撃が高い'}` : ''}</small></span>` : '';
     return `<span class="fc cp${open ? ' open' : ''}" data-cpl="${ck}"><span class="fn"><span class="nm">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${typeIcons(D.pokemon[r.foe.key], 15)}</span>
-      <span class="mvl">${dir === 'take' ? `<span class="mvn">${r.mv.n}</span>` : ''}${tnBadge(r.mv.tn)}</span></span>
+      <span class="mvl">${dir === 'take' ? `<span class="mvn">${r.mv.n}</span>` : ''}${tnBadge(r.mv.tn)}</span>${fb}</span>
       <span class="cpb"><i class="hi"><span><small>${unit}${r.dRef}→</small>${r.rep.d}</span></i>
-        <span class="rep"><b>${r.rank}位</b><small>${r.rep.ivs.join('/')} PL${fmtLv(r.rep.level)}</small></span>${win}<i class="arw">${open ? '▾' : '▸'}</i></span>
+        <span class="rep"><span class="ax me">じぶん</span><b>${r.rank}位</b><small>${r.rep.ivs.join('/')} PL${fmtLv(r.rep.level)}</small></span>${win}<i class="arw">${open ? '▾' : '▸'}</i></span>
       ${open ? `<span class="cpl">${ivListHtml(r.c, ck, r.dRef, dir, true)}</span>` : ''}</span>`;
   };
-  const row = (a, i) => a.length ? `<div><span class="k${i === 0 ? ' top' : ''}">${i < RANK_GRP.length ? RANK_GRP[i] + '位' : '1001位'}<small>${i < RANK_GRP.length ? '以内' : '〜'}</small></span><span class="n">${a.map(chipOf).join('')}</span></div>` : '';
+  const row = (a, i) => a.length ? `<div><span class="k me${i === 0 ? ' top' : ''}"><em>じぶん</em>${i < RANK_GRP.length ? RANK_GRP[i] + '位' : '1001位'}<small>${i < RANK_GRP.length ? '以内' : '〜'}</small></span><span class="n">${a.map(chipOf).join('')}</span></div>` : '';
   let grp = '';
   for (let i = 0; i <= RSEL; i++) if (!RHIDE.has(i)) grp += row(byG[i], i);
   const total = byG.reduce((n, a) => n + a.length, 0);
@@ -1073,6 +1090,7 @@ function ivSumCapHtml() {
   const hardNote = FRNG > 1 ? `範囲の中でいちばん${dir === 'give' ? '硬い' : '攻撃が高い'}個体が相手でも届く個体` : '1位の個体より1段' + (dir === 'give' ? '上' : '下') + 'に届く個体';
   return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">${hardNote}を、じぶんの順位（SCP順・個体値チェッカーと同じ）で分けています</span></div>
     ${seg}
+    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd">ブレイクする個体のうち、いちばん順位が高いものがどこにあるか</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 const unitName = dir => dir === 'give' ? 'ダメージ' : '被ダメージ';
