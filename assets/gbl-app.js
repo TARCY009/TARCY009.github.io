@@ -3890,24 +3890,39 @@ function rbChoices(p, ctx) {
   if (p.kind === 'lead') return ctx.swTo.map(k => ({ a: 'to', to: k, label: `${SWAPMK} ${shMark(ctx.picks[k].name)}`, cls: 'fire',
     tip: '開幕にこのポケモンへ交代します(あいての打ちかけの1発は交代先に入ります)' }));
   if (p.kind === 'sp') {
+    // GBL模擬戦と同じ形(2026-08-23にロケット団へ反映): わざごとのフレームに「⭐最適」「即打ち」の2大ボタン。
+    // ロケット団は「SPを撃たずに速く倒す」が基本なので「撃たない」をいちばん左に置く(確定仕様)。
+    // ＋1〜＋3の細かい指定は「…詳細」に畳む。
     // 質問は「いちばん軽いSPが撃てるようになったターン」に出るので、重いほうのわざは
-    // ゲージが足りず、ノーマルを追加で打ってからの発動になる。それをボタンに出さないと
-    // 「選んだらすぐ撃てる」と錯覚しやすい(例: グロウパンチ35で質問→はっけい＋1でコメットパンチ)
+    // ゲージが足りず、ノーマルを追加で打ってからの発動になる。それをボタンに出す(「選んだらすぐ撃てる」と錯覚しないように)
     const fm = ctx.fast && D.moves[ctx.fast];
-    const list = ctx.spList.map(id => {
+    const list = [
+      p.noSp
+        ? { a: 'hold', label: '撃たない<i class="rtag">おすすめ</i>', cls: 'hold reco',
+            tip: 'ノーマルアタックだけで倒しきれて、あいてのSPアタックも飛んできません。撃たずにゲージを次の相手へ持ち越すのがおすすめです' }
+        : { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この相手には撃たず、ゲージを次の相手に持ち越します' },
+    ];
+    ctx.spList.forEach(id => {
+      const m = D.moves[id];
       const need = fm && fm.eg > 0 && p.en != null
-        ? Math.max(0, Math.ceil((D.moves[id].e - p.en) / fm.eg)) : 0;
-      return { a: 'fire', mv: id, cls: 'fire',
-        label: `${mvChip(D.moves[id].n, 14)}<i class="cost">${D.moves[id].e}</i>${
-          need ? `<i class="need">${fm.n}＋${need}</i>` : ''}`,
-        tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打ってから発動します`
-                  : `ゲージ${D.moves[id].e} のSPアタックをここで撃ちます` };
+        ? Math.max(0, Math.ceil((m.e - p.en) / fm.eg)) : 0;
+      const head = `${mvChip(m.n, 14)}<i class="cost">${m.e}</i>${
+        need ? `<i class="need">${fm.n}＋${need}</i>` : ''}`;
+      const optN = p.optNs ? p.optNs[id] : null;
+      list.push({ a: 'opt', mv: id, grp: id, head, cls: 'best',
+        label: `⭐ 最適${optN > 0 ? `<i class="need">＋${optN}</i>` : ''}`,
+        tip: optN > 0
+          ? `${m.n}を、いちばん効率のよいタイミングで撃ちます(ノーマルアタックをあと${optN}発はさんでから)`
+          : `${m.n}を、いちばん効率のよいタイミングで撃ちます` });
+      list.push({ a: 'fire', mv: id, grp: id, cls: 'fire',
+        label: '即打ち',
+        tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打って、たまり次第すぐ${m.n}を撃ちます`
+                  : `タイミングを待たず、ここですぐ${m.n}を撃ちます` });
     });
     return list.concat([
-      { a: 'wait', n: 1, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
-      { a: 'wait', n: 2, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
-      { a: 'wait', n: 3, label: '＋3', cls: 'wait', tip: 'ノーマルアタックをあと3発打ってから、もう一度ここで選びます' },
-      { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この相手には撃たず、ゲージを次の相手に持ち越します' },
+      { a: 'wait', n: 1, det: true, label: '＋1', cls: 'wait', tip: 'ノーマルアタックをあと1発打ってから、もう一度ここで選びます' },
+      { a: 'wait', n: 2, det: true, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
+      { a: 'wait', n: 3, det: true, label: '＋3', cls: 'wait', tip: 'ノーマルアタックをあと3発打ってから、もう一度ここで選びます' },
     ]);
   }
   if (p.kind === 'sh') return [
@@ -4072,17 +4087,54 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       const fList = lock ? [lock.fast] : (worst || !foes[fi].fast) ? pool.fasts : [R.fast];
       const spL = lock ? [lock.sp]
         : (worst || !foes[fi].c1) ? (pool.chargeds.length ? pool.chargeds : [null]) : [R.throw || null];
-      res = null; let sc = null;
-      for (const f of fList) for (const sp of spL) {
-        const r = PvpEngine.simulate(D, L, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, sopt);
-        const s = rkWorstScore(r);
-        if (!res || s < sc) { res = r; sc = s; foeMv = { fast: f, sp: sp || null }; }
-      }
+      // じぶんの設定(Lx)で、あいてのわざ候補を全部回して最悪ケースを返す(下読みにも同じ基準を使う)
+      const simWorst = Lx => {
+        let best = null, bsc = null, mv = null;
+        for (const f of fList) for (const sp of spL) {
+          const r = PvpEngine.simulate(D, Lx, { ...R, fast: f, charged: sp ? [sp] : [], throw: sp }, sopt);
+          const sc = rkWorstScore(r);
+          if (!best || sc < bsc) { best = r; bsc = sc; mv = { fast: f, sp: sp || null }; }
+        }
+        return { res: best, mv };
+      };
+      const w0 = simWorst(L);
+      res = w0.res; foeMv = w0.mv;
+      const withShots = shots => ({ ...L, shotPlan: shots.map(x => ({ mode: x.wait, move: x.mv })) });
+      // 「⭐最適」ボタン用: この発を最適タイミング(mvId指定)にしたとき、あと何発ノーマルアタックを
+      // はさんでから撃つことになるか(GBL模擬戦と同じ・2026-08-23にロケット団へ反映)
+      const optNOf = (p, mvId) => {
+        if (p.kind !== 'sp') return null;
+        const shots = dec.shots.slice(); shots[p.seq] = { wait: 'opt', mv: mvId || null };
+        const r = simWorst(withShots(shots)).res;
+        let spCnt = 0, fasts = 0;
+        for (const t of rbTurns(r)) for (const e of t.ev[0]) {
+          if (e.full !== undefined) { if (spCnt === p.seq) return fasts; spCnt++; }
+          else if (spCnt === p.seq && t.tn > p.tn) fasts++;
+        }
+        return null;
+      };
+      const optNsOf = p => {
+        if (p.kind !== 'sp') return null;
+        const m = {}; spList.forEach(id => { m[id] = optNOf(p, id); }); return m;
+      };
+      // 「撃たない」が正解の場面か(GBL模擬戦と同じ判定): この発から先SPを撃たなくても
+      // ノーマルアタックだけで倒しきれて、あいてのSPアタックも飛んでこないなら撃つのはもったいない
+      const finishNoSp = p => {
+        if (p.kind !== 'sp') return false;
+        const r = simWorst(withShots(dec.shots.slice(0, p.seq))).res;
+        if (r.winner !== 0) return false;
+        for (const t of rbTurns(r)) {
+          if (t.tn < p.tn) continue;
+          if (t.ev[1].some(e => e.full !== undefined)) return false;
+        }
+        return true;
+      };
       const pts = rbPoints(rbTurns(res), ctx, dec);
       const p = pts.find(x => !handled.has(rbKey(li, x.kind, x.seq, x.w)));
       if (!p) break;                              // この対面で決めることはもう無い
       p.key = rbKey(li, p.kind, p.seq, p.w);
       p.gt = base + p.tn;
+      if (p.kind === 'sp') { p.optNs = optNsOf(p); p.noSp = finishNoSp(p); }
       const a = ans[p.key] || (stepwise ? null : RB_AUTO[p.kind]);
       if (!a) { pending = { ...p, ctx, opts: rbChoices(p, ctx) }; break; }
       handled.add(p.key);
@@ -4262,7 +4314,8 @@ function rbAskTitle(p) {
 function rbAnsLabel(p, a) {
   if (!a) return '？';
   if (p.kind === 'sp') {
-    if (a.a === 'auto') return 'おまかせ';
+    if (a.a === 'auto') return '⭐ おまかせ';
+    if (a.a === 'opt') return `⭐ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'fire') return `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
@@ -4623,23 +4676,42 @@ function rbRender(body, bt, picks, foes, extra) {
     const b = hud.querySelector('.hplay');
     if (b) b.textContent = ended() ? '↻' : RBV.timer ? '⏸' : '▶';
   };
-  function showWin(p, editing) {
+  function showWin(p, editing, det) {
     RBV.playing = !editing && RBV.playing;
     stopTimer(); setPlayBtn();
-    const btns = p.opts.map((o, i) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
-        data-k="${p.key}" data-i="${i}" title="${o.tip || ''}">${o.label}</button>`).join('')
-      + (p.kind === 'sp' ? `<button class="hold" data-k="${p.key}" data-i="auto" title="AIの判断にまかせます">おまかせ</button>` : '')
+    // GBL模擬戦と同じ作り(2026-08-23反映): わざごとのフレーム(grp)＋「…詳細」(det)で＋1〜＋3を畳む
+    const hasDet = p.opts.some(o => o.det);
+    const btn = ({ o, i }) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
+        data-k="${p.key}" data-i="${i}" title="${o.tip || ''}">${o.label}</button>`;
+    const groups = [], rest = [];
+    p.opts.forEach((o, i) => {
+      if (o.grp) {
+        let g = groups.find(x => x.grp === o.grp);
+        if (!g) { g = { grp: o.grp, head: '', items: [] }; groups.push(g); }
+        if (o.head) g.head = o.head;
+        g.items.push({ o, i });
+      } else rest.push({ o, i });
+    });
+    // ロケット団は「撃たない」が先頭(det無しのrestの先頭に来る)。フレームはそのあと
+    const lead = rest.filter(x => !x.o.det && x.o.a === 'hold');
+    const tail = rest.filter(x => !(x.o.a === 'hold' && !x.o.det));
+    const btns = lead.map(btn).join('')
+      + groups.map(g => `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')
+      + tail.filter(x => det || !x.o.det).map(btn).join('')
+      + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin">
       <div class="rwt">${rbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(ckOf(p.gt))}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
       <div class="rwb">${btns}</div></div>`;
-    winbox.querySelectorAll('.rwb button').forEach(b => b.onclick = () => {
-      rbTrim(p.key);
-      if (b.dataset.i === 'reset') delete RB.ans[p.key];
-      else if (b.dataset.i === 'auto') RB.ans[p.key] = { ...RB_AUTO[p.kind] };
-      else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
-      RBUI.open = null; RBV.playing = true;
-      run();
+    winbox.querySelectorAll('.rwb button').forEach(b => {
+      if (b.classList.contains('wdet')) { b.onclick = () => showWin(p, editing, true); return; }
+      b.onclick = () => {
+        rbTrim(p.key);
+        if (b.dataset.i === 'reset') delete RB.ans[p.key];
+        else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
+        RBUI.open = null; RBV.playing = true;
+        run();
+      };
     });
     const wx = winbox.querySelector('.wx');
     if (wx) wx.onclick = () => { RBUI.open = null; RBV.playing = true; run(); };
