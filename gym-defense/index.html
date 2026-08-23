@@ -93,10 +93,12 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .list{margin-top:14px;display:flex;flex-direction:column;gap:8px}
 .row{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--cardsh)}
 .row.hit{border-color:var(--accent)}
-/* 上位3件は枠を金・銀・銅にして、淡い光彩と色みを敷く（全ツール共通の見せ方） */
-.row.m1{border-color:var(--m1line);background:linear-gradient(160deg,var(--m1tint),transparent 62%),var(--panel);box-shadow:0 0 22px var(--m1glow),var(--cardsh)}
-.row.m2{border-color:var(--m2line);background:linear-gradient(160deg,var(--m2tint),transparent 62%),var(--panel);box-shadow:0 0 22px var(--m2glow),var(--cardsh)}
-.row.m3{border-color:var(--m3line);background:linear-gradient(160deg,var(--m3tint),transparent 62%),var(--panel);box-shadow:0 0 22px var(--m3glow),var(--cardsh)}
+/* 上位3件はくっきりした枠線＋左端4pxのメダル色の帯(火力チェッカーと同じ確定形。2026-08-23に光彩と色の敷きを廃止) */
+.row.m1,.row.m2,.row.m3{position:relative;overflow:hidden}
+.row.m1{border-color:var(--m1line);--mbar:linear-gradient(180deg,#ffe08a,#f2c14e 55%,#c99a14)}
+.row.m2{border-color:var(--m2line);--mbar:linear-gradient(180deg,#f2f6fb,#c8d3de 55%,#8f9dad)}
+.row.m3{border-color:var(--m3line);--mbar:linear-gradient(180deg,#e8b489,#c98d5f 55%,#a06437)}
+.row.m1::before,.row.m2::before,.row.m3::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mbar)}
 .top{display:flex;align-items:center;gap:10px}
 .rank{min-width:52px;text-align:center;font-weight:700;font-size:.95rem;border-radius:8px;padding:4px 0;background:var(--panel2);color:var(--sub)}
 /* 上位3件のメダル。金・銀・銅とも同じ作り（明るい面＋その色の光彩）で並べて見分けやすくする */

@@ -147,13 +147,16 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
 .row{position:relative;background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--cardsh);transition:transform .15s, border-color .15s}
 .row.hit{border-color:var(--violet)}
-.row.no1{background:var(--no1bg);border-color:transparent;box-shadow:0 0 28px rgba(255,61,110,.22)}
+/* 上位3件: 1pxのグラデーション枠＋左端4pxの帯。光彩と色の敷きは2026-08-23に廃止(火力チェッカーと同じ理由・枠内の視認性) */
+.row.no1,.row.no2,.row.no3{border-color:transparent;overflow:hidden}
+.row.no1::after,.row.no2::after,.row.no3::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;pointer-events:none}
+.row.no1::after{background:linear-gradient(180deg,#ffe08a,#f2c14e 55%,#c99a14)}
+.row.no2::after{background:linear-gradient(180deg,#f2f6fb,#c8d3de 55%,#8f9dad)}
+.row.no3::after{background:linear-gradient(180deg,#e8b489,#c98d5f 55%,#a06437)}
 .row.no1::before,.row.no2::before,.row.no3::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
 .row.no1::before{background:linear-gradient(135deg,var(--gold1),var(--dyna),var(--violet))}
 /* 2位・3位も1位と同じ質感。紫を残しつつ 銀 / 銅 に振って序列を出す */
-.row.no2{background:var(--no2bg);border-color:transparent;box-shadow:0 0 22px rgba(159,176,198,.16)}
 .row.no2::before{background:linear-gradient(135deg,var(--sil1),var(--sil2),var(--violet))}
-.row.no3{background:var(--no3bg);border-color:transparent;box-shadow:0 0 20px rgba(160,90,45,.16)}
 .row.no3::before{background:linear-gradient(135deg,var(--f3a),var(--f3b),var(--f3c))}
 .prow{display:flex;align-items:center;gap:12px;margin-bottom:9px;padding-top:9px}
 .prow .pname{margin:0;flex:1;min-width:0}
