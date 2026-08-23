@@ -1087,10 +1087,14 @@ function ivSumCapHtml() {
   const rngLbl = n => n === 1 ? '1位' : n >= 4096 ? '全個体' : `${n}位<small>以内</small>`;
   const seg = `<div class="foerng"><span class="ax foe">あいて</span><span class="rl">の順位</span><span class="seg">${FOE_RNG.map(n =>
     `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}のときでもブレイクする個体を探します。範囲を広げるほど条件は厳しくなります">${rngLbl(n)}</button>`).join('')}</span></div>`;
-  const hardNote = FRNG > 1 ? `範囲の中でいちばん${dir === 'give' ? '硬い' : '攻撃が高い'}個体が相手でも届く個体` : '1位の個体より1段' + (dir === 'give' ? '上' : '下') + 'に届く個体';
-  return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds expl">${hardNote}を、じぶんの順位（SCP順・個体値チェッカーと同じ）で分けています</span></div>
+  // 💡説明モードの文。「あいて」の前提 → 「じぶん」のどの個体が届くか、の順で1文ずつ
+  const hardNote = (FRNG > 1
+    ? `あいては「${RNG_LBL(FRNG)}の個体」を想定。その中で${dir === 'give' ? 'いちばん防御が高い' : 'いちばん攻撃が高い'}個体を相手にしても${dir === 'give' ? 'ダメージが1段上がる' : '被ダメージが1段下がる'}、じぶんの個体だけを出します`
+    : `あいては「1位の個体」を想定。それに対して${dir === 'give' ? 'ダメージが1段上がる' : '被ダメージが1段下がる'}、じぶんの個体だけを出します`)
+    + `。じぶんの順位は個体値チェッカーと同じSCP順です`;
+  return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds expl">${hardNote}</span></div>
     ${seg}
-    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd expl">ブレイクする個体のうち、いちばん順位が高いものがどこにあるか</span></div>
+    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd expl">相手ごとに、届く個体のうちいちばん順位が高いものを探し、その順位がどこに入るかで分けています（タップで範囲を広げる・もう一度タップで隠す）</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 const unitName = dir => dir === 'give' ? 'ダメージ' : '被ダメージ';
