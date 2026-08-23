@@ -356,6 +356,16 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .grp .fc .fb small{font-size:.58rem;white-space:normal}
 .ivsum .grp .fc.cp .cpb .rep .ax{font-size:.52rem;padding:2px 7px;margin-bottom:1px}
 @media (max-width:540px){.ivsum .myrng .rd{flex-basis:100%;margin-left:0}}
+/* おすすめ個体の右上: あいての順位の前提(下のパネルと連動)。小さな紫のセグメント */
+.recocard .dt .rngmini{margin-left:auto;display:inline-flex;align-items:center;gap:2px;flex-wrap:wrap}
+.recocard .dt .rngmini .ax{font-size:.52rem;padding:2px 7px;border-radius:999px;font-weight:800;background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff;margin-right:3px}
+.recocard .dt .rngmini button{font:inherit;font-size:.58rem;font-weight:800;padding:3px 7px;cursor:pointer;color:var(--sub);white-space:nowrap;
+  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:4px;box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.recocard .dt .rngmini button:first-of-type{border-radius:999px 4px 4px 999px}
+.recocard .dt .rngmini button:last-of-type{border-radius:4px 999px 999px 4px}
+.recocard .dt .rngmini button[aria-pressed="true"]{background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(176,108,255,.4)}
+:root.light .recocard .dt .rngmini button:not([aria-pressed="true"]){background:linear-gradient(180deg,#fff,#eef1f8);color:#5a4a80}
+@media (max-width:540px){.recocard .dt .rngmini{margin-left:0;flex-basis:100%}}
 /* 🏆おすすめ個体の表 */
 .dirrow .reco{margin-left:8px}
 .recocard .dt{display:flex;align-items:center}
@@ -1255,7 +1265,10 @@ function recoHtml() {
   const refTr = `<tr class="ref"><td class="no">基準</td><td>1位</td><td class="iv">${ref.ivs.join('/')}</td><td>${fmtLv(ref.level)}</td><td>${ref.st.cp}</td>
     <td class="bk"><span class="z">0</span></td><td class="bk"><span class="z">0</span></td><td class="w">${ref.w == null ? '<span class="z">…</span>' : `<b>${ref.w}</b>`}</td></tr>`;
   const done = rows.filter(r => r.w != null).length + (ref.w != null ? 1 : 0), all = rows.length + 1;
-  return `<div class="ivsum cp recocard"><div class="dt">🏆 おすすめ個体<span class="ds">勝ち数が多い順</span></div>
+  // 右上: 「あいての順位」の前提(下のパネルと同じ FRNG に連動)。ここで切り替えても下のタブが一緒に動く
+  const rngMini = `<span class="rngmini"><span class="ax foe">あいて</span>${FOE_RNG.map(n =>
+    `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="ブレイクの列は、あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}でも届くか、で数えます（下のパネルの「あいての順位」と連動）">${n === 1 ? '1位' : n >= 4096 ? '全個体' : n + '位'}</button>`).join('')}</span>`;
+  return `<div class="ivsum cp recocard"><div class="dt">🏆 おすすめ個体<span class="ds">勝ち数が多い順</span>${rngMini}</div>
     <div class="ds">1位の個体とくらべて <b class="up">🗡️</b>ダメージが1段上がる相手／<b class="up">🛡</b>被ダメージが1段下がる相手が何匹いるか、そして<b class="up">勝ち数</b>（環境${n}匹×🛡0-0/1-1/2-2＝${n * 3}戦）<span class="expl">。マイナスは逆に1段落ちる相手の数。あいては上の「あいての順位」と同じ前提（${RNG_LBL(FRNG)}）。勝ち数のシミュレートは1位のあいて・ブラフなし・最適タイミング（GBLの一覧系と同じ前提）で、候補の上位${rows.length}件だけ計算します。1〜2勝の差は前提しだいで動く範囲なので、勝ち数が並んでいる行はブレイクの列で選んでください</span></div>
     <div class="recowrap"><table>
       <thead><tr><th></th><th><span class="ax me">じぶん</span><br>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>🗡️<br>ブレイク</th><th>🛡<br>ブレイク</th><th>勝ち数<br><small>/${n * 3}</small></th></tr></thead>
@@ -1498,7 +1511,7 @@ function render() {
     else RSEL = i;
     render();
   });
-  $('ivsum').querySelectorAll('[data-frng]').forEach(b => b.onclick = () => { FRNG = +b.dataset.frng; render(); });
+  document.querySelectorAll('#ivsum [data-frng], #reco [data-frng]').forEach(b => b.onclick = () => { FRNG = +b.dataset.frng; render(); });
   $('ivsum').querySelectorAll('[data-rreset]').forEach(b => b.onclick = () => { RSEL = 0; RHIDE.clear(); render(); });
   $('ivsum').querySelectorAll('[data-cpl]').forEach(c => c.onclick = ev => {
     if (ev.target.closest('.cpl')) return;   // 開いた一覧の中をさわっても閉じない
