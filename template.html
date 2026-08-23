@@ -338,11 +338,14 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
   background:var(--tab);border:1px solid var(--line);border-radius:12px;
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:color .12s,border-color .12s}
 #helptab:hover,#helptab[aria-expanded="true"]{color:var(--violet);border-color:var(--helpline)}
-#helpbody{margin-top:8px;padding:14px 16px;background:var(--helpbody);border:1px solid var(--line);border-radius:14px}
-#helpbody h4{margin:16px 0 5px;font-size:.8rem;color:var(--violet)}
-#helpbody h4:first-child{margin-top:0}
-#helpbody p,#helpbody li{font-size:.74rem;color:var(--sub);line-height:1.75;margin:0}
-#helpbody ul{margin:0;padding-left:1.15em}
+#helpbody{margin-top:8px;padding:16px 18px;background:var(--helpbody);border:1px solid var(--line);border-radius:14px}
+#helpbody h4{margin:26px 0 10px;padding-top:14px;border-top:1px solid var(--line,#2e3a47);font-size:.82rem;color:var(--violet)}
+#helpbody h4:first-child{margin-top:0;padding-top:0;border-top:0}
+#helpbody p,#helpbody li{font-size:.76rem;color:var(--sub,#93a3b3);line-height:1.9;margin:0 0 12px}
+#helpbody p:last-child,#helpbody li:last-child{margin-bottom:0}
+#helpbody ul{margin:0 0 12px;padding-left:1.2em}
+#helpbody ul:last-child{margin-bottom:0}
+#helpbody li{margin-bottom:9px}
 #helpbody b{color:var(--ink)}
 footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}

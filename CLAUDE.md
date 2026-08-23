@@ -1975,6 +1975,9 @@ theme.css と同じ流儀で**自己完結**させてあるので、次に新し
   ライトの未選択の見た目は **`:not([aria-pressed="true"]):not([aria-selected="true"])` で限定する**
   （限定しないと詳細度で点灯の色に勝ってしまい、**ライトだけ点灯しなくなる**。実際に踏んだ）
 - **使い方タブは `.helptab` / `.helpbody`**。文字色はツール側の変数（`--sub`/`--line`/`--panel`/`--text` か `--ink`）に乗る
+- **使い方タブの余白は全ツール同じ設計**（2026-08-23タダシさん指示「ぎゅうぎゅう」で統一）: 段落のあと12px空ける・
+  箇条書きは項目ごとに9px・節の見出し(h4)は上に区切り線＋26px・行間1.9・文字.76rem。
+  定義は4か所（`tabs.css`／`gbl.css`の`#helpbody`／`template.html`／`raid/index.html`）にあるので、変えるときは4つそろえる
 - **名前の頭に付けるシャドウマーク `.shadowmark.nmk` は `assets/shadow-icon.css` に移した**（全ツール共通。
   gbl.css に置いたままだと /gbl/・/rocket/ でしか使えない）
 

@@ -66,11 +66,14 @@
   transition:color .12s ease,border-color .12s ease}
 .helptab:hover,.helptab[aria-expanded="true"]{color:#a78bfa;border-color:#6d4fb0}
 :root.light .helptab:hover,:root.light .helptab[aria-expanded="true"]{color:#7a3cc4;border-color:#c4b0ea}
-.helpbody{margin-top:8px;padding:14px 16px;border:1px solid var(--line,#2e3a47);border-radius:14px;
+.helpbody{margin-top:8px;padding:16px 18px;border:1px solid var(--line,#2e3a47);border-radius:14px;
   background:var(--panel,rgba(26,35,66,.9))}
-.helpbody h4{margin:16px 0 5px;font-size:.8rem;color:#a78bfa}
-:root.light .helpbody h4{color:#7a3cc4}
-.helpbody h4:first-child{margin-top:0}
-.helpbody p,.helpbody li{font-size:.74rem;color:var(--sub,#93a3b3);line-height:1.75;margin:0}
-.helpbody ul{margin:0;padding-left:1.15em}
+.helpbody h4{margin:26px 0 10px;padding-top:14px;border-top:1px solid var(--line,#2e3a47);font-size:.82rem;color:#a78bfa}
+.helpbody h4:first-child{margin-top:0;padding-top:0;border-top:0}
+.helpbody p,.helpbody li{font-size:.76rem;color:var(--sub,#93a3b3);line-height:1.9;margin:0 0 12px}
+.helpbody p:last-child,.helpbody li:last-child{margin-bottom:0}
+.helpbody ul{margin:0 0 12px;padding-left:1.2em}
+.helpbody ul:last-child{margin-bottom:0}
+.helpbody li{margin-bottom:9px}
 .helpbody b{color:var(--text,var(--ink,#e8edf2))}
+:root.light .helpbody h4{color:#7a3cc4}
