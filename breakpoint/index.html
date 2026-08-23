@@ -597,6 +597,8 @@ const capV = () => +LG || 0;
 const maxLvOf = () => isMega(ME.key) ? 53 : 51;
 // 交換できないポケモン(幻・ジガルデ等。pvp_data の ivf)は最低個体値10。10未満の個体はゲーム内に存在しない(恒久ルール)
 const ivFloorOf = key => (D.pokemon[key] && D.pokemon[key].ivf) || 0;
+// PLの下限(ジガルデはPL20未満の個体が存在しない)。CP制限でこのPLに収まらない個体は「存在しない」として除く
+const lvFloorOf = key => (D.pokemon[key] && D.pokemon[key].lvf) || 1;
 
 // ---- 実数値・ダメージ(エンジンと同じ式を使う=食い違い禁止) ----
 const statsOf = (key, ivs, level, shadow) =>
@@ -622,12 +624,12 @@ function rank1(key, cap) {
         const cp = Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
         if (cp <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
       }
-      if (li < 0) continue;
+      if (li < 0 || LV[li] < lvFloorOf(key)) continue;
       const c = D.cpm[String(LV[li])];
       const prod = (p.a + a) * c * (p.df + d) * c * Math.floor((p.h + h) * c);
       if (!best || prod > best.prod) best = { prod, ivs: [a, d, h], level: LV[li] };
     }
-    if (!best) best = { ivs: [15, 15, 15], level: 50 };
+    if (!best) best = { ivs: [15, 15, 15], level: 50, none: true };   // このリーグに存在する個体が無い
   }
   R1C.set(ck, best);
   return best;
@@ -739,6 +741,7 @@ function ivTable() {
   for (let a = fl; a <= 15; a++) for (let d = fl; d <= 15; d++) for (let h = fl; h <= 15; h++) {
     const ivs = [a, d, h];
     const lv = maxLevelFor(ME.key, ivs, cap, maxLvOf());
+    if (lv < lvFloorOf(ME.key)) continue;
     rows.push({ ivs, level: lv, st: statsOf(ME.key, ivs, lv, ME.shadow) });
   }
   ivtCache.set(ck, rows);
@@ -1072,7 +1075,7 @@ function foeTable(key, shadow) {
       const cp = Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
       if (!cap || cp <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
     }
-    if (li < 0) continue;
+    if (li < 0 || LV[li] < lvFloorOf(key)) continue;
     const c = D.cpm[String(LV[li])];
     const atk = (p.a + a) * c * sA, def = (p.df + d) * c * sD, hp = Math.floor((p.h + h) * c);
     rows.push({ ivs: [a, d, h], level: LV[li], atk, def, hp, s: Math.floor(Math.pow(atk * def * hp, 2 / 3) / 10) });
@@ -1089,6 +1092,7 @@ function hardestFoe(foe, dir) {
   if (foe.rawSt) return foe.st;
   if (FRNG <= 1) { const r1 = rank1(foe.key, capV()); return { ...foe.st, rank: 1, ivs: r1.ivs, level: r1.level }; }
   const rows = foeTable(foe.key, foe.shadow).filter(r => r.rank <= FRNG);
+  if (!rows.length) return foe.st;
   const h = rows.reduce((p, r) => (dir === 'give' ? r.def > p.def : r.atk > p.atk) ? r : p, rows[0]);
   return { ...foe.st, atk: h.atk, def: h.def, hp: h.hp, rank: h.rank, ivs: h.ivs, level: h.level };
 }
@@ -1472,6 +1476,13 @@ function render() {
   }
   dirEl.style.display = '';
   const capped = !!capV();
+  if (capped && rank1(ME.key, capV()).none) {
+    pinEl.innerHTML = ''; $('reco').innerHTML = ''; $('recobtn').style.display = 'none';
+    $('ivsum').innerHTML = `<div class="ivsum cp"><div class="none">${D.pokemon[ME.key].n}はPL${lvFloorOf(ME.key)}未満の個体が存在しないため、このリーグのCP制限に収まる個体がありません</div></div>`;
+    $('listwrap').style.display = 'none'; sumEl.style.display = 'none';
+    updateUrl();
+    return;
+  }
   $('ivsum').innerHTML = ivSumHtml();
   $('reco').innerHTML = recoHtml();
   $('recobtn').style.display = capped ? '' : 'none';
@@ -1724,7 +1735,7 @@ function scheduleRender(now) {
     const el = $(id), n = parseFloat(el.value);
     if (isNaN(n)) { if (commit) el.value = i < 3 ? ME.ivs[i] : ME.level; return; }   // 空欄で確定→いまの値に戻す
     const v = i < 3 ? Math.max(ivFloorOf(ME.key), Math.min(15, Math.round(n)))
-                    : Math.max(1, Math.min(maxLvOf(), Math.round(n * 2) / 2));
+                    : Math.max(lvFloorOf(ME.key), Math.min(maxLvOf(), Math.round(n * 2) / 2));
     if (!commit && v !== n) return;   // 入力途中の範囲外は確定を待つ
     if (i < 3) ME.ivs[i] = v; else ME.level = v;
     ME.edited = true;

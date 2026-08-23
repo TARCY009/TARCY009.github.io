@@ -61,7 +61,7 @@ FORM_RE = re.compile(r'^(.*?)_(mega(?:_[xy])?|primal|alolan|galarian|hisuian|pal
 # 出力するキーの並び（既存ファイルと同じにして無駄な差分を出さない）
 # t=タイプ(対戦データのtyそのまま・大文字英語)。2026-08-16にタイプアイコン表示のため追加。
 # 種族値と同じく毎回同期する(タイプ変更の告知は無いが、元データに追従しておく)
-ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm', 'u']
+ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm', 'u', 'lf']
 
 
 def ja_name(sid, name):
@@ -125,6 +125,10 @@ def main():
                 if p.get('ivf'): e['u'] = 1
                 else: e.pop('u', None)
                 updated.append((e['n'], 'u', bool(p.get('ivf'))))
+            if (p.get('lvf') or None) != e.get('lf'):
+                if p.get('lvf'): e['lf'] = p['lvf']
+                else: e.pop('lf', None)
+                updated.append((e['n'], 'u', f'PL下限 {p.get("lvf")}'))
             continue
         name = ja_name(sid, p['n'])
         if row(name, p['dex'], p['a'], p['df'], p['h']) in sigs:
@@ -146,6 +150,8 @@ def main():
             ent['m'] = 1
         if p.get('ivf'):
             ent['u'] = 1   # 交換不可=最低個体値10
+        if p.get('lvf'):
+            ent['lf'] = p['lvf']   # PLの下限(ジガルデ20)
         at = insert_at(arr, ent['d'])
         arr.insert(at, {k: ent[k] for k in ORDER if k in ent})
         idx = {q['i']: i for i, q in enumerate(arr)}

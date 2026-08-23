@@ -465,6 +465,7 @@ function cpOf(p, a, d, h, c) {
 const R1C = new Map();
 // 交換できないポケモン(幻・ジガルデ等。pvp_data の ivf)は最低個体値10。個体値10未満の個体はゲーム内に存在しない(恒久ルール・2026-08-23)
 const ivFloorOf = key => (D.pokemon[key] && D.pokemon[key].ivf) || 0;
+const lvFloorOf = key => (D.pokemon[key] && D.pokemon[key].lvf) || 1;   // PLの下限(ジガルデ20)
 function rank1(key, cap, minIv, maxLv) {
   minIv = Math.max(minIv || 0, ivFloorOf(key));
   const ck = key + '|' + cap + '|' + (minIv || 0) + '|' + (maxLv || '');
@@ -486,7 +487,7 @@ function rank1Calc(key, cap, minIv, maxLv) {
       const mid = (lo + hi) >> 1;
       if (cpOf(p, a, d, h, D.cpm[String(LV[mid])]) <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
     }
-    if (li < 0) continue;
+    if (li < 0 || LV[li] < lvFloorOf(key)) continue;   // PL下限未満の個体は存在しない
     const c = D.cpm[String(LV[li])];
     const prod = (p.a + a) * c * (p.df + d) * c * Math.floor((p.h + h) * c);
     if (!best || prod > best.prod) best = { prod, ivs: [a, d, h], level: LV[li] };
@@ -784,7 +785,7 @@ sideEl.forEach((el, i) => {
       // 個体値に合わせてPLをCP上限内の最大(最適)レベルへ自動調整
       S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap, S[i].maxLv);
       ivInputs[3].value = S[i].mLevel;
-    } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, 1, S[i].maxLv); inp.value = S[i].mLevel; }
+    } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, lvFloorOf(S[i].key), S[i].maxLv); inp.value = S[i].mLevel; }
     run();
   });
   // スーパーマックスレベル(メガ専用): PL上限を52/53へ拡張。同じタブ再タップで解除

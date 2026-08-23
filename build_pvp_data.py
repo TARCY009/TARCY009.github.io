@@ -30,10 +30,12 @@ JP_MOVE_FIX_PVP = {
 # 提供元がまだ「未実装(released=false)」扱いのままだが、ゲームには実装済みのポケモン。
 # rが0だと各ツールの候補から外れる(KEYSのフィルタ)ので、実装済みとして出す。
 # 提供元が追いついたら消してよい
-# 交換できる幻(レイド産)。これ以外の幻は交換不可=最低個体値10
-TRADEABLE_MYTH = {'deoxys', 'darkrai', 'genesect', 'meltan', 'melmetal'}
+# 交換できる幻。これ以外の幻は交換不可=最低個体値10(2026-08-23タダシさん確認: デオキシス・ダークライ・ゲノセクトも交換不可)
+TRADEABLE_MYTH = {'meltan', 'melmetal'}
 # 幻ではないが交換できないポケモン
 UNTRADEABLE_EXTRA = {'zygarde'}
+# PLの下限(その未満の個体がゲーム内に存在しない)。ジガルデはセルを集めて作るためPL20未満は存在しない
+LEVEL_FLOOR = {'zygarde': 20}
 MANUAL_RELEASED = {'cramorant'}   # ウッウ(2026-08-18実装)
 
 SPECIES_JA_FIX = {
@@ -200,17 +202,23 @@ def main():
         return bool(pokes[sid].get('myth'))
     for sid in pokes:
         if untradeable(sid): pokes[sid]['ivf'] = 10
+        for x, lv in LEVEL_FLOOR.items():
+            if sid == x or sid.startswith(x + '_'): pokes[sid]['lvf'] = lv
     # 前回との差分を報告に足す(新しい幻が情報元に入ったときに気づけるように)
     try:
         prev = json.load(open('pvp_data.json', encoding='utf-8'))['pokemon']
         prev_u = {k for k, v in prev.items() if v.get('ivf')}
+        prev_l = {k for k, v in prev.items() if v.get('lvf')}
     except Exception:
         prev_u = None
     now_u = {k for k, v in pokes.items() if v.get('ivf')}
-    if prev_u is not None and now_u != prev_u:
-        lines = ['', '## 交換できないポケモン（最低個体値10）の変更', '']
+    now_l = {k for k, v in pokes.items() if v.get('lvf')}
+    if prev_u is not None and (now_u != prev_u or now_l != prev_l):
+        lines = ['', '## 交換できないポケモン（最低個体値10）・PL下限の変更', '']
         for k in sorted(now_u - prev_u): lines.append(f'- 追加: {pokes[k]["n"]} ({k}) → 全ツールで最低個体値10として扱います')
         for k in sorted(prev_u - now_u): lines.append(f'- 解除: {prev[k]["n"]} ({k})')
+        for k in sorted(now_l - prev_l): lines.append(f'- PL下限: {pokes[k]["n"]} ({k}) → PL{pokes[k]["lvf"]}未満は存在しない扱い')
+        for k in sorted(prev_l - now_l): lines.append(f'- PL下限の解除: {prev[k]["n"]} ({k})')
         lines.append('')
         print('\n'.join(lines))
         try: open('changes.md', 'a', encoding='utf-8').write('\n'.join(lines))
