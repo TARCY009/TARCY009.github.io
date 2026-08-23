@@ -34,8 +34,11 @@ JP_MOVE_FIX_PVP = {
 TRADEABLE_MYTH = {'meltan', 'melmetal'}
 # 幻ではないが交換できないポケモン
 UNTRADEABLE_EXTRA = {'zygarde'}
-# PLの下限(その未満の個体がゲーム内に存在しない)。ジガルデはセルを集めて作るためPL20未満は存在しない
-LEVEL_FLOOR = {'zygarde': 20}
+# PLの下限(その未満の個体がゲーム内に存在しない)。2026-08-23タダシさん確認:
+#   スペシャルリサーチ産=PL15 / レイド産のみ=PL20 / ジガルデ(セル)=PL20。
+#   交換不可のポケモン(幻+ジガルデ)は既定でPL15。レイドでしか配られていないものだけ20
+LEVEL_FLOOR_DEFAULT = 15          # 交換不可ポケモンの既定(スペシャルリサーチ産)
+LEVEL_FLOOR = {'zygarde': 20, 'deoxys': 20, 'darkrai': 20}   # レイドでしか手に入らない(ゲノセクトはタスク産があるので15)
 MANUAL_RELEASED = {'cramorant'}   # ウッウ(2026-08-18実装)
 
 SPECIES_JA_FIX = {
@@ -201,24 +204,26 @@ def main():
             if sid == x or sid.startswith(x + '_'): return True
         return bool(pokes[sid].get('myth'))
     for sid in pokes:
-        if untradeable(sid): pokes[sid]['ivf'] = 10
+        if untradeable(sid):
+            pokes[sid]['ivf'] = 10
+            pokes[sid]['lvf'] = LEVEL_FLOOR_DEFAULT
         for x, lv in LEVEL_FLOOR.items():
             if sid == x or sid.startswith(x + '_'): pokes[sid]['lvf'] = lv
     # 前回との差分を報告に足す(新しい幻が情報元に入ったときに気づけるように)
     try:
         prev = json.load(open('pvp_data.json', encoding='utf-8'))['pokemon']
         prev_u = {k for k, v in prev.items() if v.get('ivf')}
-        prev_l = {k for k, v in prev.items() if v.get('lvf')}
+        prev_l = {k: v.get('lvf') for k, v in prev.items() if v.get('lvf')}
     except Exception:
         prev_u = None
     now_u = {k for k, v in pokes.items() if v.get('ivf')}
-    now_l = {k for k, v in pokes.items() if v.get('lvf')}
+    now_l = {k: v.get('lvf') for k, v in pokes.items() if v.get('lvf')}
     if prev_u is not None and (now_u != prev_u or now_l != prev_l):
         lines = ['', '## 交換できないポケモン（最低個体値10）・PL下限の変更', '']
         for k in sorted(now_u - prev_u): lines.append(f'- 追加: {pokes[k]["n"]} ({k}) → 全ツールで最低個体値10として扱います')
         for k in sorted(prev_u - now_u): lines.append(f'- 解除: {prev[k]["n"]} ({k})')
-        for k in sorted(now_l - prev_l): lines.append(f'- PL下限: {pokes[k]["n"]} ({k}) → PL{pokes[k]["lvf"]}未満は存在しない扱い')
-        for k in sorted(prev_l - now_l): lines.append(f'- PL下限の解除: {prev[k]["n"]} ({k})')
+        for k in sorted(k for k in now_l if now_l[k] != prev_l.get(k)): lines.append(f'- PL下限: {pokes[k]["n"]} ({k}) → PL{pokes[k]["lvf"]}未満は存在しない扱い')
+        for k in sorted(set(prev_l) - set(now_l)): lines.append(f'- PL下限の解除: {prev[k]["n"]} ({k})')
         lines.append('')
         print('\n'.join(lines))
         try: open('changes.md', 'a', encoding='utf-8').write('\n'.join(lines))

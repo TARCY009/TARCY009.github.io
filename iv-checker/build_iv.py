@@ -128,7 +128,7 @@ def main():
             if (p.get('lvf') or None) != e.get('lf'):
                 if p.get('lvf'): e['lf'] = p['lvf']
                 else: e.pop('lf', None)
-                updated.append((e['n'], 'u', f'PL下限 {p.get("lvf")}'))
+                updated.append((e['n'], 'lf', p.get('lvf')))
             continue
         name = ja_name(sid, p['n'])
         if row(name, p['dex'], p['a'], p['df'], p['h']) in sigs:
@@ -186,6 +186,7 @@ def main():
     if updated:
         for n, b, a in updated:
             if b == 'u': print(f'  交換不可(最低個体値10)の印: {n} → {"付けた" if a else "外した"}')
+            elif b == 'lf': print(f'  PL下限: {n} → {("PL" + str(a)) if a else "解除"}')
             else: print(f'  種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}')
     if dup:
         print(f'まったく同じ行がすでにあるので足さなかったもの（{len(dup)}件）:', '、'.join(dup))
