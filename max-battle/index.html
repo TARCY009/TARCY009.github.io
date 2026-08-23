@@ -250,6 +250,7 @@ footer a{color:var(--spec)}
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important;animation:none !important}
 }
+.enote{font-size:.72rem;color:var(--sub);line-height:1.75;margin:6px 2px 10px}
 </style>
 </head>
 <body>
@@ -279,6 +280,7 @@ footer a{color:var(--spec)}
   <button id="tabAtk" class="tab" aria-selected="true" title="ダイマックスフェイズで与えるダメージが高い順のランキングです">アタッカー</button>
   <button id="tabTank" class="tab tank" aria-selected="false" title="通常フェイズでボスの攻撃を受け止める役のランキングです（ボスのSPアタックへの耐久で評価）">タンク</button>
 </div>
+<p class="enote expl">アタッカー＝ダイマックスフェイズで与えるダメージが高い順。タンク＝通常フェイズでボスの攻撃を受け止める役を、ボスのSPアタックへの耐久で並べます。どちらもPL50・個体値15で計算します。</p>
 
 <div class="filters gtabs" id="filters" style="display:none">
   <button id="fSp" class="t-gold" aria-pressed="false" title="SPアタックを打った方がマックスメーターのチャージを早められる場合は「SP打ってOK」と表示。打たない方がチャージが早い場合は「SP封印推奨」と表示します">SP判定</button>

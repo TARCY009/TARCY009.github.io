@@ -1948,6 +1948,11 @@ function ctlHtml(vn) {
     <div class="mtctlrow"><span class="lbl">表示</span>${grp('mtfilter', V.filters, V.filter)}</div>
     <div class="mtctlrow"><span class="lbl">並び</span>${grp('mtsort', V.sorts, V.sort)}</div>
     ${vn === 'counter' ? `<div class="mtctlrow"><span class="lbl">範囲</span>${grp('mtrange', CN_RANGES, String(cnTop))}</div>` : ''}
+    <div class="enote expl">${vn === 'multi'
+      ? '相手は環境上位50匹（理想個体値・実戦の定番わざ構成）。🛡の列は「おたがい同じ枚数」で戦った結果です。環境スコア＝環境からランダムに2回対面したとき、少なくとも1回は勝てる確率'
+      : vn === 'counter'
+      ? 'マスの「残◯%」＝勝った側に残るHPの割合。あいてのわざは「候補にいちばんキツい構成」で判定するので、実戦では表より有利になることが多いです'
+      : '相手は環境上位50匹（理想個体値・実戦の定番わざ構成）。穴＝3匹とも勝てない相手。🛡は「おたがい同じ枚数」で戦った結果です'}</div>
   </div>`;
 }
 function bindCtl(box, vn) {

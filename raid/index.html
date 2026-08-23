@@ -187,6 +187,7 @@ table.tl td.nm{text-align:left;white-space:nowrap}
 #helpbody b{color:var(--ink)}
 footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}
+.enote{font-size:.72rem;color:var(--sub);line-height:1.75;margin:6px 2px 10px}
 </style>
 </head>
 <body>
@@ -253,6 +254,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     </span>
     <span class="setgrp"><span class="lbl" title="手持ち6匹が全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
   </div>
+  <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝6匹が全滅してからバトルに戻るまでの秒数です。</p>
   <div class="setrow">
     <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SPのみ回避</button>
     <span class="setgrp"><span class="lbl" title="選んだ天候で1.2倍になるタイプのわざが強くなります。自分のわざだけでなく、ボスのわざにも掛かります（例: 曇りならボスのきあいだまも1.2倍）">天候</span><select id="wxSel" class="setsel">
