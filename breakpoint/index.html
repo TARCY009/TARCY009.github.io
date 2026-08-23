@@ -240,6 +240,9 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivtog[aria-expanded="true"] i{transform:rotate(90deg)}
 .ivtog[aria-expanded="true"]{border-style:solid}
 .ivtog small{font-weight:600;color:var(--sub);margin-left:auto}
+.ivtog.mine{margin-top:14px;width:100%}
+.ivcard{margin-top:8px}
+.ivcard .ivrow{margin-top:6px}
 #foetog{margin:0 0 12px;background:var(--panel)}
 #foecard{margin-top:-4px}
 .ivsum{border:1px solid var(--upline);border-radius:14px;padding:12px 14px 12px;margin-bottom:12px;background:var(--sumbg);box-shadow:var(--cardsh,none)}
@@ -485,15 +488,6 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     </div>
   </div>
   <div class="mypkwin" id="mypkwin"></div>
-  <button class="ivtog" id="ivtog" type="button" aria-expanded="false" style="display:none" title="自分の個体値・PLを入れて、その個体がどうなるかを確かめます"><i>▸</i> 自分の個体で確かめる<small>個体値・PLを入力</small></button>
-  <div class="ivrow" id="ivrow" style="display:none">
-    <label>攻撃<input type="number" id="ivA" min="0" max="15" inputmode="numeric"></label>
-    <label>防御<input type="number" id="ivD" min="0" max="15" inputmode="numeric"></label>
-    <label>HP<input type="number" id="ivH" min="0" max="15" inputmode="numeric"></label>
-    <label>PL<input type="number" id="ivL" min="1" max="53" step="0.5" inputmode="decimal"></label>
-    <div class="gtabs one"><button class="t-cyan" id="ideal" title="このリーグの理想個体値・最大PLに戻します">理想に戻す</button></div>
-    <div class="cpv" id="cpv"></div>
-  </div>
   <div class="mvrow" id="mvrow" style="display:none"></div>
 </div>
 
@@ -519,7 +513,20 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 </div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="ブレイクする相手の数がいちばん多く、その中でも被ダメージをいちばん抑えられる個体はどれか。4096通りの個体値を並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button></div>
 <div id="reco"></div>
 <div id="ivsum"></div>
+<!-- 自分の個体の入力は環境100匹の一覧の直上に置く(2026-08-23タダシさん指示: まとめ・おすすめ個体には効かないので、入力→関係ない表→一覧と跨がせない) -->
+<button class="ivtog mine" id="ivtog" type="button" aria-expanded="false" style="display:none" title="自分の個体値・PLを入れて、環境上位100匹それぞれにどうなるかを確かめます"><i>▸</i> 自分の個体で確かめる<small>個体値・PLを入力</small></button>
 <div id="listwrap">
+<div class="card ivcard" id="ivcard">
+  <span class="sec">じぶんの個体</span>
+  <div class="ivrow" id="ivrow" style="display:none">
+    <label>攻撃<input type="number" id="ivA" min="0" max="15" inputmode="numeric"></label>
+    <label>防御<input type="number" id="ivD" min="0" max="15" inputmode="numeric"></label>
+    <label>HP<input type="number" id="ivH" min="0" max="15" inputmode="numeric"></label>
+    <label>PL<input type="number" id="ivL" min="1" max="53" step="0.5" inputmode="decimal"></label>
+    <div class="gtabs one"><button class="t-cyan" id="ideal" title="このリーグの理想個体値・最大PLに戻します">理想に戻す</button></div>
+    <div class="cpv" id="cpv"></div>
+  </div>
+</div>
 <div id="pinbox"></div>
 <div class="sumline" id="sumline" style="display:none"></div>
 <div id="list"></div>
@@ -535,7 +542,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li><b>🗡️与える／🛡受ける</b>: 与える=じぶんのノーマルアタックのダメージが1段上がる境目／受ける=あいてのノーマルアタックの被ダメージが1段下がる境目</li>
     <li><b>マスター</b>: 相手ごとに「攻撃（受けるは防御）の個体値がいくつ以上なら届くか」を出します。上のタブは個体値で、<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます（点灯中のタブをもう一度タップするとそのグループだけ隠れます）。チップの中の表は、じぶん（縦）とあいて（横）のPL50/51の組み合わせごとのダメージで、そのグループの個体値でちょうど段が上がる組み合わせだけ金色です。<b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
     <li><b>スーパー・ハイパー</b>: CP制限があるリーグは個体値3つとPLがセットで決まるので、軸は<b>個体の順位（SCP順・個体値チェッカーと同じ）</b>です。<b>「あいての順位」</b>でまず相手の前提を選びます（既定は100位以内）。同じポケモンでも順位によって実数値が動くので、<b>その範囲のどの個体が相手でも届く個体</b>（与える=範囲でいちばん硬い個体、受ける=いちばん攻撃が高い個体を基準）だけを出します。範囲を広げるほど条件は厳しくなり、「合わせるのは現実的でない」相手は消えます。相手ごとに、届く個体のうちいちばん順位が高いものを出し、その順位でグループ分けします。上のタブは<b>10位以内が既定</b>で、50位をタップすると11〜50位の個体で届く相手が追加されます。チップには <b>4→5</b>（ダメージの変化）・<b>順位と個体の例</b>・<b>🔥勝ち+1／⚠勝ち-1</b>（1位の個体と比べて🛡0-0/1-1/2-2の合計勝ち数がどう変わるか。⚠は耐久を削るぶん逆に不利）が出ます。チップをタップするとブレイクする個体の一覧（SCPが高い順・上位100件）が開きます</li>
-    <li><b>▸ 自分の個体で確かめる</b>: 個体値とPLを入れると、その個体での一覧と、行をタップした詳細（いまのダメージ・ブレイク条件・1対1シミュへのボタン）が出ます</li>
+    <li><b>▸ 自分の個体で確かめる</b>（まとめの下）: 個体値とPLを入れると、その個体での一覧と、行をタップした詳細（いまのダメージ・ブレイク条件・1対1シミュへのボタン）が出ます</li>
     <li><b>▸ あいてを追加</b>: 環境上位100匹に入っていない相手や、特定の相手を足して調べます</li>
     <li><b>1T🔥のわざ</b>: 1ターンわざはダメージ+1の影響がいちばん大きい（5→6で+20%）ので金色で目立たせています</li>
   </ul>
@@ -1590,6 +1597,7 @@ function syncMeCard() {
   $('foetog').setAttribute('aria-expanded', FOEOPEN);
   $('foecard').style.display = has && FOEOPEN ? '' : 'none';
   $('ivrow').style.display = has && IVOPEN ? 'flex' : 'none';
+  $('ivcard').style.display = has && IVOPEN ? '' : 'none';
   $('mvrow').style.display = has ? 'flex' : 'none';
   $('meshadow').setAttribute('aria-pressed', ME.shadow);
   $('meclr').style.display = $('meq').value ? 'block' : 'none';
