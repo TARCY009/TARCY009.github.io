@@ -243,8 +243,6 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivtog.mine{margin-top:14px;width:100%}
 .ivcard{margin-top:8px}
 .ivcard .ivrow{margin-top:6px}
-#foetog{margin:0 0 12px;background:var(--panel)}
-#foecard{margin-top:-4px}
 .ivsum{border:1px solid var(--upline);border-radius:14px;padding:12px 14px 12px;margin-bottom:12px;background:var(--sumbg);box-shadow:var(--cardsh,none)}
 .ivsum .dt{font-size:.86rem}
 .ivsum .plseg{margin-left:auto;display:inline-flex;gap:2px}
@@ -491,22 +489,6 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <div class="mvrow" id="mvrow" style="display:none"></div>
 </div>
 
-<button class="ivtog" id="foetog" type="button" aria-expanded="false" style="display:none" title="環境上位100匹に入っていない相手や、特定の相手を足して調べます"><i>▸</i> あいてを追加<small>環境外の相手・特定の相手</small></button>
-<div class="card" id="foecard" style="display:none">
-  <span class="sec">あいて</span>
-  <div class="merow">
-    <div class="sugg">
-      <input type="search" id="foeq" placeholder="ポケモン名で検索" autocomplete="off">
-      <button class="clrbtn" id="foeclr" aria-label="消す">✕</button>
-      <div class="sugg-list" id="foelist"></div>
-    </div>
-    <div class="gtabs">
-      <button class="t-shadow" id="foeshadow" aria-pressed="false" title="あいてをシャドウ（攻撃1.2倍・防御5/6）として計算します"><i class="shadowmark"></i> シャドウ</button>
-    </div>
-  </div>
-  <p class="expl" style="font-size:.68rem;color:var(--sub);margin:8px 0 0;line-height:1.7">検索したあいては一覧のいちばん上に固定されます。下の環境上位100匹は理想個体値、検索したあいては理想個体値（GBL対面シミュから来たときはその画面の個体値そのまま）で計算します。</p>
-</div>
-
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
   <button class="t-atk" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">🗡️ 与える</button>
   <button class="t-shadow" data-dir="take" aria-pressed="false" title="相手のノーマルアタックから受けるダメージの境目を見ます">🛡 受ける</button>
@@ -543,7 +525,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li><b>マスター</b>: 相手ごとに「攻撃（受けるは防御）の個体値がいくつ以上なら届くか」を出します。上のタブは個体値で、<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます（点灯中のタブをもう一度タップするとそのグループだけ隠れます）。チップの中の表は、じぶん（縦）とあいて（横）のPL50/51の組み合わせごとのダメージで、そのグループの個体値でちょうど段が上がる組み合わせだけ金色です。<b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
     <li><b>スーパー・ハイパー</b>: CP制限があるリーグは個体値3つとPLがセットで決まるので、軸は<b>個体の順位（SCP順・個体値チェッカーと同じ）</b>です。<b>「あいての順位」</b>でまず相手の前提を選びます（既定は100位以内）。同じポケモンでも順位によって実数値が動くので、<b>その範囲のどの個体が相手でも届く個体</b>（与える=範囲でいちばん硬い個体、受ける=いちばん攻撃が高い個体を基準）だけを出します。範囲を広げるほど条件は厳しくなり、「合わせるのは現実的でない」相手は消えます。相手ごとに、届く個体のうちいちばん順位が高いものを出し、その順位でグループ分けします。上のタブは<b>10位以内が既定</b>で、50位をタップすると11〜50位の個体で届く相手が追加されます。チップには <b>4→5</b>（ダメージの変化）・<b>順位と個体の例</b>・<b>🔥勝ち+1／⚠勝ち-1</b>（1位の個体と比べて🛡0-0/1-1/2-2の合計勝ち数がどう変わるか。⚠は耐久を削るぶん逆に不利）が出ます。チップをタップするとブレイクする個体の一覧（SCPが高い順・上位100件）が開きます</li>
     <li><b>▸ 自分の個体で確かめる</b>（まとめの下）: 個体値とPLを入れると、その個体での一覧と、行をタップした詳細（いまのダメージ・ブレイク条件・1対1シミュへのボタン）が出ます</li>
-    <li><b>▸ あいてを追加</b>: 環境上位100匹に入っていない相手や、特定の相手を足して調べます</li>
+    <li><b>GBL対面シミュから来たとき</b>: その画面のあいて（個体値そのまま）が一覧のいちばん上に🔎付きで固定されます</li>
     <li><b>1T🔥のわざ</b>: 1ターンわざはダメージ+1の影響がいちばん大きい（5→6で+20%）ので金色で目立たせています</li>
   </ul>
   <h4>計算の前提</h4>
@@ -606,7 +588,6 @@ const RECO_SORT = 'win';   // 並びは勝ち数だけ(2026-08-23タダシさん
 // 勝ち数(環境100匹×🛡3パターン)のキャッシュ。1個体300戦=約20msなので、候補の上位だけ少しずつ計算する
 let winCache = { sig: null, map: new Map(), ref: null, timer: null };
 const RECO_POOL = 30, RECO_POOL_T = 15;
-let FOEOPEN = false;  // 「あいてを追加」を開いているか
 let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
 let DTAB = {};    // 行ごとの 与える/受ける タブ状態
@@ -1593,9 +1574,6 @@ function syncMeCard() {
   const has = !!ME.key;
   $('ivtog').style.display = has ? 'flex' : 'none';
   $('ivtog').setAttribute('aria-expanded', IVOPEN);
-  $('foetog').style.display = has ? 'flex' : 'none';
-  $('foetog').setAttribute('aria-expanded', FOEOPEN);
-  $('foecard').style.display = has && FOEOPEN ? '' : 'none';
   $('ivrow').style.display = has && IVOPEN ? 'flex' : 'none';
   $('ivcard').style.display = has && IVOPEN ? '' : 'none';
   $('mvrow').style.display = has ? 'flex' : 'none';
@@ -1641,10 +1619,9 @@ function pinFoe(key, opts, quiet) {
     st = statsOf(key, r1.ivs, r1.level, shadow);
   }
   const e = ((window.META_MOVES || {})[LG] || {})[key + (shadow ? '|s' : '')];
-  FOEOPEN = true;
   PIN = { key, shadow, st, name: D.pokemon[key].n, rawSt: !!(opts && opts.st),
           fast: (opts && opts.fast) || (e && e[0]) || null };
-  // 検索で固定したあいて(理想個体値)は勝敗シミュの設定も組める。実数値ごと来たあいて(fst)は組めない
+  // 理想個体値で固定したあいては勝敗シミュの設定も組める。実数値ごと来たあいて(fst)は組めない
   if (!(opts && opts.st)) {
     const r1 = rank1(key, capV());
     PIN.cfg = { key, ivs: r1.ivs, level: r1.level, shadow, timing: 'optimal', cap: capV(), bluff: false,
@@ -1696,9 +1673,6 @@ function setupSearch(inpId, listId, clrId, onPick, onClear) {
   });
 }
 setupSearch('meq', 'melist', 'meclr', k => pickMe(k));
-// ✕であいての固定も外す(外さないと共有URLに残り、読み込み直すたびに「あいてを追加」が開いた状態になる)
-setupSearch('foeq', 'foelist', 'foeclr', k => pinFoe(k, { shadow: $('foeshadow').getAttribute('aria-pressed') === 'true' }),
-  () => { PIN = null; if (OPEN === 'pin') OPEN = null; render(); });
 
 // ---- ★登録リスト(GBLと共通のlocalStorage) ----
 $('mestar').onclick = () => {
@@ -1737,11 +1711,6 @@ $('meshadow').onclick = () => {
   }
   render();
 };
-$('foeshadow').onclick = () => {
-  const on = $('foeshadow').getAttribute('aria-pressed') !== 'true';
-  $('foeshadow').setAttribute('aria-pressed', on);
-  if (PIN) pinFoe(PIN.key, { shadow: on, fast: PIN.fast });
-};
 // 個体値・PL欄。input=1ステップごとに追従(スピナー長押しでも滑らかに動く)/change=確定時にクランプ。
 // 入力途中の半端な値(範囲外・打ちかけ)は確定まで反映しない=打っている最中に書き換えない
 let renderTimer = null;
@@ -1779,7 +1748,6 @@ $('ideal').onclick = () => { blurInputs(); setIdeal(); render(); };
 $('ivtog').onclick = () => { IVOPEN = !IVOPEN; render(); };
 $('recobtn').onclick = () => { RECO = !RECO; render(); if (RECO) $('reco').scrollIntoView({ block: 'start', behavior: 'smooth' }); };
 $('mega4').onclick = () => { MEGA4 = !MEGA4; $('mega4').setAttribute('aria-pressed', MEGA4); render(); };
-$('foetog').onclick = () => { FOEOPEN = !FOEOPEN; syncMeCard(); if (FOEOPEN) $('foeq').focus(); };
 document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => {
   if (DIR === b.dataset.dir) return;
   DIR = b.dataset.dir;
@@ -1849,8 +1817,6 @@ function loadUrl() {
     }
     pinFoe(foe, opts);
     if (opts.st) PIN.rawSt = q.get('fst');
-    $('foeq').value = (PIN.shadow ? 'シャドウ' : '') + PIN.name;
-    $('foeshadow').setAttribute('aria-pressed', PIN.shadow);
   }
   if (!me) render();
 }
