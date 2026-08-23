@@ -676,6 +676,23 @@ function defaultFast(key, shadow, lg) {
 }
 
 // ---- 環境リスト ----
+// 環境上位のわざ構成は「人が確認した確定値」(meta_moves.js)で上書きする(GBLの applyMetaMoves と同じ処理)。
+// これをしないと情報元の推奨のまま(300行中116行・ノーマル22行がずれる。実例: ユレイドル ようかいえき→タネマシンガン)
+(function applyMetaMoves() {
+  const MM = window.META_MOVES;
+  if (!MM) return;
+  const put = (list, tbl) => (list || []).forEach(m => {
+    const mv = tbl[m.k + (m.s ? '|s' : '')];
+    if (!mv) return;
+    m.f = mv[0] || m.f;
+    m.c1 = mv[1] || m.c1;
+    if (mv[2]) m.c2 = mv[2]; else delete m.c2;
+  });
+  Object.keys(MM).forEach(lg => {
+    put((window.META_LISTS || {})[lg], MM[lg]);
+    put((window.META_EXT || {})[lg], MM[lg]);
+  });
+})();
 // 環境上位100匹(上位50＋51〜100位)。厳選は長い目で見るので、いま50位未満のポケモンまで含める
 const metaList = () => ((window.META_LISTS || {})[LG] || []).concat((window.META_EXT || {})[LG] || []);
 function foeEntryOf(e) {   // メタ行 → 計算用のあいて(理想個体値・シミュ設定つき)
