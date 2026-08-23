@@ -374,6 +374,13 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .recocard td.bk b.dn{color:var(--red)}
 .recocard td.bk .z{color:var(--sub)}
 .recocard td.bk small{display:block;font-size:.54rem;color:var(--sub);line-height:1}
+.recocard tr.ref td{background:rgba(255,213,74,.08);border-bottom:2px solid var(--upline)}
+.recocard tr.ref td.no{font-size:.58rem;color:var(--gold);font-weight:800}
+.recocard td.w b{font-size:.98rem}
+.recocard td.w b.up{color:var(--gold)}
+.recocard td.w b.dn{color:var(--red)}
+.recocard td.w small{display:block;font-size:.54rem;color:var(--sub);line-height:1}
+.recocard th small{font-weight:700}
 .recocard tr.mine td{background:rgba(67,224,255,.1);color:var(--accent2)}
 .recocard tbody tr:nth-child(-n+3) td.no{color:var(--gold);font-weight:800}
 .recocard .recofoot{margin-top:6px;font-size:.6rem;color:var(--sub);text-align:right}
@@ -565,7 +572,10 @@ let RSEL = 0, RHIDE = new Set(), RLOW = false;
 const FOE_RNG = [1, 10, 100, 1000, 4096];
 let FRNG = 100;
 let RECO = false;   // 🏆おすすめ個体の表を出しているか
-let RECO_SORT = 'sum';   // 並び: sum(🗡️+🛡の合計) / give(🗡️優先) / take(🛡優先)
+let RECO_SORT = 'win';   // 並び: win(勝ち数) / sum(🗡️+🛡の合計) / take(🛡優先)
+// 勝ち数(環境100匹×🛡3パターン)のキャッシュ。1個体300戦=約20msなので、候補の上位だけ少しずつ計算する
+let winCache = { sig: null, map: new Map(), ref: null, timer: null };
+const RECO_POOL = 30, RECO_POOL_T = 15;
 let FOEOPEN = false;  // 「あいてを追加」を開いているか
 let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
@@ -1155,32 +1165,66 @@ function recoRows() {
     for (const t of tTh) { if (r.st.def > t.up) tu++; else if (r.st.def <= t.dn) td++; }
     return { ...r, gu, gd, tu, td, g: gu - gd, t: tu - td, rank: rankOf(r.ivs) };
   });
-  // 並び: 合計=🗡️と🛡の差し引きの合計(攻撃だけに振った個体が上に来ないように) / 🗡️優先 / 🛡優先。同点はSCPが高い順
-  const key = RECO_SORT === 'give' ? (x, y) => (y.g - x.g) || (y.t - x.t)
-            : RECO_SORT === 'take' ? (x, y) => (y.t - x.t) || (y.g - x.g)
-            : (x, y) => ((y.g + y.t) - (x.g + x.t)) || (y.g - x.g);
-  rows.sort((x, y) => key(x, y) || (scpRaw(y.st) - scpRaw(x.st)));
-  return { rows, n: foes.length };
+  // 候補の母集団: 🗡️＋🛡の合計の上位30 ＋ 🛡優先の上位15(重複は1つに)。勝ち数はこの母集団だけシミュレートする
+  const bySum = (x, y) => ((y.g + y.t) - (x.g + x.t)) || (y.g - x.g) || (scpRaw(y.st) - scpRaw(x.st));
+  const byTake = (x, y) => (y.t - x.t) || (y.g - x.g) || (scpRaw(y.st) - scpRaw(x.st));
+  const pool = new Map();
+  rows.slice().sort(bySum).slice(0, RECO_POOL).forEach(r => pool.set(r.ivs.join('.'), r));
+  rows.slice().sort(byTake).slice(0, RECO_POOL_T).forEach(r => pool.set(r.ivs.join('.'), r));
+  const cands = [...pool.values()];
+  // 勝ち数(計算済みのぶんだけ)を付ける
+  const wsig = [ME.key, ME.shadow ? 1 : 0, LG, ME.fast, PIN && !PIN.rawSt ? PIN.key : ''].join('|');
+  if (winCache.sig !== wsig) winCache = { sig: wsig, map: new Map(), ref: null, timer: null };
+  cands.forEach(r => { r.w = winCache.map.get(r.ivs.join('.')); });
+  const refRow = { ivs: r1.ivs, level: r1.level, st: st1, rank: 1, w: winCache.ref };
+  const W = r => r.w == null ? -1 : r.w;
+  const key = RECO_SORT === 'take' ? byTake : RECO_SORT === 'sum' ? bySum
+            : (x, y) => (W(y) - W(x)) || bySum(x, y);
+  cands.sort(key);
+  return { rows: cands, ref: refRow, foes, n: foes.length };
 }
 function recoHtml() {
-  if (!RECO || !capV() || !ME.key || !ME.fast) return '';
-  const t0 = performance.now();
-  const { rows, n } = recoRows();
-  const top = rows.slice(0, 30);
+  if (!RECO || !capV() || !ME.key || !ME.fast) { clearTimeout(winCache.timer); return ''; }
+  const { rows, ref, foes, n } = recoRows();
+  recoSchedule(rows, ref, foes);
   const mine = ME.ivs.join();
   const pm = v => v > 0 ? `<b class="up">+${v}</b>` : v < 0 ? `<b class="dn">${v}</b>` : `<span class="z">0</span>`;
-  const tr = top.map((r, i) => `<tr${r.ivs.join() === mine && IVOPEN ? ' class="mine"' : ''}>
+  const wcell = r => r.w == null ? `<td class="w"><span class="z">…</span></td>`
+    : `<td class="w"><b class="${ref.w == null ? '' : r.w > ref.w ? 'up' : r.w < ref.w ? 'dn' : ''}">${r.w}</b>${ref.w != null && r.w !== ref.w ? `<small>${r.w > ref.w ? '+' : ''}${r.w - ref.w}</small>` : ''}</td>`;
+  const tr = rows.map((r, i) => `<tr${r.ivs.join() === mine && IVOPEN ? ' class="mine"' : ''}>
     <td class="no">${i + 1}</td><td>${r.rank}位</td><td class="iv">${r.ivs.join('/')}</td><td>${fmtLv(r.level)}</td><td>${r.st.cp}</td>
     <td class="bk">${pm(r.g)}<small>${r.gd ? `+${r.gu} −${r.gd}` : ''}</small></td>
-    <td class="bk">${pm(r.t)}<small>${r.td ? `+${r.tu} −${r.td}` : ''}</small></td></tr>`).join('');
-  const sortSeg = `<span class="plseg">${[['sum', '🗡️＋🛡'], ['give', '🗡️優先'], ['take', '🛡優先']].map(([k, l]) =>
+    <td class="bk">${pm(r.t)}<small>${r.td ? `+${r.tu} −${r.td}` : ''}</small></td>${wcell(r)}</tr>`).join('');
+  const refTr = `<tr class="ref"><td class="no">基準</td><td>1位</td><td class="iv">${ref.ivs.join('/')}</td><td>${fmtLv(ref.level)}</td><td>${ref.st.cp}</td>
+    <td class="bk"><span class="z">0</span></td><td class="bk"><span class="z">0</span></td><td class="w">${ref.w == null ? '<span class="z">…</span>' : `<b>${ref.w}</b>`}</td></tr>`;
+  const done = rows.filter(r => r.w != null).length + (ref.w != null ? 1 : 0), all = rows.length + 1;
+  const sortSeg = `<span class="plseg">${[['win', '勝ち数'], ['sum', '🗡️＋🛡'], ['take', '🛡優先']].map(([k, l]) =>
     `<button data-rsort="${k}" aria-pressed="${k === RECO_SORT}">${l}</button>`).join('')}</span>`;
   return `<div class="ivsum cp recocard"><div class="dt">🏆 おすすめ個体${sortSeg}</div>
-    <div class="ds">1位の個体とくらべて <b class="up">🗡️</b>ダメージが1段上がる相手／<b class="up">🛡</b>被ダメージが1段下がる相手が何匹いるか<span class="expl">。マイナスは逆に1段落ちる相手の数。あいては上の「あいての順位」と同じ前提（${RNG_LBL(FRNG)}）・環境上位${n}匹。🗡️＋🛡は両方の差し引きの合計で並べます（攻撃だけに振った個体が上に来ないように）</span></div>
+    <div class="ds">1位の個体とくらべて <b class="up">🗡️</b>ダメージが1段上がる相手／<b class="up">🛡</b>被ダメージが1段下がる相手が何匹いるか、そして<b class="up">勝ち数</b>（環境${n}匹×🛡0-0/1-1/2-2＝${n * 3}戦）<span class="expl">。マイナスは逆に1段落ちる相手の数。あいては上の「あいての順位」と同じ前提（${RNG_LBL(FRNG)}）。勝ち数のシミュレートは1位のあいて・ブラフなし・最適タイミング（GBLの一覧系と同じ前提）で、候補の上位${rows.length}件だけ計算します</span></div>
     <div class="recowrap"><table>
-      <thead><tr><th></th><th><span class="ax me">じぶん</span><br>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>🗡️<br>ブレイク</th><th>🛡<br>ブレイク</th></tr></thead>
-      <tbody>${tr}</tbody></table></div>
-    <div class="recofoot">上位30件（${Math.round(performance.now() - t0)}ms）</div></div>`;
+      <thead><tr><th></th><th><span class="ax me">じぶん</span><br>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>🗡️<br>ブレイク</th><th>🛡<br>ブレイク</th><th>勝ち数<br><small>/${n * 3}</small></th></tr></thead>
+      <tbody>${refTr}${tr}</tbody></table></div>
+    <div class="recofoot">${done < all ? `勝ち数を計算中… ${done}/${all}` : `候補${rows.length}件`}</div></div>`;
+}
+// 勝ち数を少しずつ計算する(1個体=300戦≒20ms。スマホでも画面が固まらないよう1個体ずつ)
+function recoSchedule(rows, ref, foes) {
+  clearTimeout(winCache.timer);
+  const todo = [];
+  if (ref.w == null) todo.push({ ivs: ref.ivs, level: ref.level, isRef: true });
+  for (const r of rows) if (r.w == null) todo.push(r);
+  if (!todo.length) return;
+  const sig = winCache.sig;
+  const step = () => {
+    if (winCache.sig !== sig || !RECO) return;
+    const r = todo.shift();
+    let w = 0;
+    for (const f of foes) w += winsOf(r.ivs, r.level, f.cfg);
+    if (r.isRef) winCache.ref = w; else winCache.map.set(r.ivs.join('.'), w);
+    if (todo.length) { $('reco').querySelector('.recofoot').textContent = `勝ち数を計算中… ${rows.length + 1 - todo.length}/${rows.length + 1}`; winCache.timer = setTimeout(step, 0); }
+    else render();
+  };
+  winCache.timer = setTimeout(step, 0);
 }
 
 // ---- 詳細カード ----
