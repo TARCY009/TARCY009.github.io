@@ -595,6 +595,8 @@ let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
 let DTAB = {};    // 行ごとの 与える/受ける タブ状態
 const capV = () => +LG || 0;
 const maxLvOf = () => isMega(ME.key) ? 53 : 51;
+// 交換できないポケモン(幻・ジガルデ等。pvp_data の ivf)は最低個体値10。10未満の個体はゲーム内に存在しない(恒久ルール)
+const ivFloorOf = key => (D.pokemon[key] && D.pokemon[key].ivf) || 0;
 
 // ---- 実数値・ダメージ(エンジンと同じ式を使う=食い違い禁止) ----
 const statsOf = (key, ivs, level, shadow) =>
@@ -609,9 +611,10 @@ function rank1(key, cap) {
   if (R1C.has(ck)) return R1C.get(ck);
   const p = D.pokemon[key], LV = levelsUpTo(isMega(key) ? 53 : 51);
   let best = null;
+  const fl = ivFloorOf(key);
   if (!cap) best = { ivs: [15, 15, 15], level: 50 };
   else {
-    for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+    for (let a = fl; a <= 15; a++) for (let d = fl; d <= 15; d++) for (let h = fl; h <= 15; h++) {
       let lo = 0, hi = LV.length - 1, li = -1;
       while (lo <= hi) {
         const mid = (lo + hi) >> 1;
@@ -732,8 +735,8 @@ const ivtCache = new Map();
 function ivTable() {
   const ck = [ME.key, LG, ME.shadow ? 1 : 0].join('|');
   if (ivtCache.has(ck)) return ivtCache.get(ck);
-  const cap = capV(), rows = [];
-  for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+  const cap = capV(), rows = [], fl = ivFloorOf(ME.key);
+  for (let a = fl; a <= 15; a++) for (let d = fl; d <= 15; d++) for (let h = fl; h <= 15; h++) {
     const ivs = [a, d, h];
     const lv = maxLevelFor(ME.key, ivs, cap, maxLvOf());
     rows.push({ ivs, level: lv, st: statsOf(ME.key, ivs, lv, ME.shadow) });
@@ -843,7 +846,7 @@ function ivBar(foe, mv, dir) {
   const cap = capV(), cells = [];
   const mineIv = dir === 'give' ? ME.ivs[0] : ME.ivs[1];
   let dMine = null;
-  for (let x = 0; x <= 15; x++) {
+  for (let x = ivFloorOf(ME.key); x <= 15; x++) {
     const iv2 = dir === 'give' ? [x, ME.ivs[1], ME.ivs[2]] : [ME.ivs[0], x, ME.ivs[2]];
     const lv2 = maxLevelFor(ME.key, iv2, cap, maxLvOf());
     const st2 = statsOf(ME.key, iv2, lv2, ME.shadow);
@@ -962,9 +965,10 @@ function ivNeedOf(foe, dir) {
       const st = statsOf(ME.key, ivs, mePl, ME.shadow);
       ds.push(dir === 'give' ? dmgOf(mv, st, fst) : dmgOf(mv, fst, st));
     }
-    let x = 15; while (x > 0 && ds[x - 1] === ds[15]) x--;
-    grid[mePl + '/' + foePl] = { x, ds };   // x=0 はこの組み合わせでは個体値で変わらない
-    if (x > 0 && (!best || x > best.x)) best = { x, from: ds[x - 1], to: ds[15] };
+    const fl = ivFloorOf(ME.key);   // 交換不可は10未満の個体が存在しないので、境目が10未満なら「変わらない」扱い
+    let x = 15; while (x > fl && ds[x - 1] === ds[15]) x--;
+    grid[mePl + '/' + foePl] = { x: x > fl ? x : 0, ds };   // x=0 はこの組み合わせでは個体値で変わらない
+    if (x > fl && (!best || x > best.x)) best = { x, from: ds[x - 1], to: ds[15] };
   }
   return best ? { ...best, mv, mePls, foePls, grid } : null;
 }
@@ -1060,8 +1064,8 @@ function foeTable(key, shadow) {
   if (foeTblCache.has(ck)) return foeTblCache.get(ck);
   const p = D.pokemon[key], cap = capV(), LV = levelsUpTo(isMega(key) ? 53 : 51);
   const sA = shadow ? D.settings.shadowAtkMult : 1, sD = shadow ? D.settings.shadowDefMult : 1;
-  const rows = [];
-  for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+  const rows = [], fl = ivFloorOf(key);
+  for (let a = fl; a <= 15; a++) for (let d = fl; d <= 15; d++) for (let h = fl; h <= 15; h++) {
     let lo = 0, hi = LV.length - 1, li = -1;
     while (lo <= hi) {
       const mid = (lo + hi) >> 1, c = D.cpm[String(LV[mid])];
@@ -1587,7 +1591,7 @@ function setIdeal() {
 function pickMe(key, opts) {
   ME.key = key;
   ME.shadow = !!(opts && opts.shadow) || (!!D.pokemon[key].shadow && ME.shadow && !(opts && 'shadow' in opts));
-  if (opts && opts.ivs) { ME.ivs = opts.ivs; ME.level = opts.level; ME.edited = true; IVOPEN = true; }
+  if (opts && opts.ivs) { const fl = ivFloorOf(key); ME.ivs = opts.ivs.map(v => Math.max(fl, v)); ME.level = opts.level; ME.edited = true; IVOPEN = true; }
   else setIdeal();
   ME.fast = (opts && opts.fast && D.moves[opts.fast]) ? opts.fast : defaultFast(key, ME.shadow, LG);
   $('meq').value = (ME.shadow ? 'シャドウ' : '') + D.pokemon[key].n;
@@ -1719,7 +1723,7 @@ function scheduleRender(now) {
     if (!ME.key) return;
     const el = $(id), n = parseFloat(el.value);
     if (isNaN(n)) { if (commit) el.value = i < 3 ? ME.ivs[i] : ME.level; return; }   // 空欄で確定→いまの値に戻す
-    const v = i < 3 ? Math.max(0, Math.min(15, Math.round(n)))
+    const v = i < 3 ? Math.max(ivFloorOf(ME.key), Math.min(15, Math.round(n)))
                     : Math.max(1, Math.min(maxLvOf(), Math.round(n * 2) / 2));
     if (!commit && v !== n) return;   // 入力途中の範囲外は確定を待つ
     if (i < 3) ME.ivs[i] = v; else ME.level = v;

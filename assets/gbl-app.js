@@ -463,7 +463,10 @@ function cpOf(p, a, d, h, c) {
 // 同じ条件なら答えは変わらないので覚えておく(全ポケモンを回す「対策さがし(全ポケモン)」で
 // 1匹あたり4096通りの計算を毎回やり直すと1秒以上かかるため)
 const R1C = new Map();
+// 交換できないポケモン(幻・ジガルデ等。pvp_data の ivf)は最低個体値10。個体値10未満の個体はゲーム内に存在しない(恒久ルール・2026-08-23)
+const ivFloorOf = key => (D.pokemon[key] && D.pokemon[key].ivf) || 0;
 function rank1(key, cap, minIv, maxLv) {
+  minIv = Math.max(minIv || 0, ivFloorOf(key));
   const ck = key + '|' + cap + '|' + (minIv || 0) + '|' + (maxLv || '');
   if (R1C.has(ck)) return R1C.get(ck);
   const v = rank1Calc(key, cap, minIv, maxLv);
@@ -777,7 +780,7 @@ sideEl.forEach((el, i) => {
     if (!S[i].mIvs) S[i].mIvs = [15, 15, 15];
     el.querySelectorAll('.ivpresets button').forEach(x => x.setAttribute('aria-pressed', false));   // 手入力したらパターン選択を解除
     if (k < 3) {
-      S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), 0, 15); inp.value = S[i].mIvs[k];
+      S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), ivFloorOf(S[i].key), 15); inp.value = S[i].mIvs[k];   // 交換不可は10未満にできない
       // 個体値に合わせてPLをCP上限内の最大(最適)レベルへ自動調整
       S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap, S[i].maxLv);
       ivInputs[3].value = S[i].mLevel;
@@ -6853,6 +6856,9 @@ function run() {
     [el2.querySelector('.ivpresetttl'), el2.querySelector('.ivpresets')].forEach(n => {
       if (n) n.style.display = noCap ? 'none' : '';
     });
+    // 交換できないポケモンは下限10未満の入手方法(大親友交換・シャドウレイド)を出さない
+    const fl = ivFloorOf(s.key);
+    el2.querySelectorAll('.ivpresets button').forEach(b => { b.style.display = +b.dataset.f < fl ? 'none' : ''; });
   });
   // 1対1シミュは「自分で選んだ構成の結果を見る」画面なので、
   // わざを選ぶまでは結果を出さない(わざ欄だけ先に用意して選べるようにする)

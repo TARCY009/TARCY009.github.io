@@ -30,6 +30,10 @@ JP_MOVE_FIX_PVP = {
 # 提供元がまだ「未実装(released=false)」扱いのままだが、ゲームには実装済みのポケモン。
 # rが0だと各ツールの候補から外れる(KEYSのフィルタ)ので、実装済みとして出す。
 # 提供元が追いついたら消してよい
+# 交換できる幻(レイド産)。これ以外の幻は交換不可=最低個体値10
+TRADEABLE_MYTH = {'deoxys', 'darkrai', 'genesect', 'meltan', 'melmetal'}
+# 幻ではないが交換できないポケモン
+UNTRADEABLE_EXTRA = {'zygarde'}
 MANUAL_RELEASED = {'cramorant'}   # ウッウ(2026-08-18実装)
 
 SPECIES_JA_FIX = {
@@ -180,8 +184,37 @@ def main():
                       'r': 1 if (p.get('released') or sid in MANUAL_RELEASED) else 0}
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
+            if 'mythical' in p['tags']: pokes[sid]['myth'] = 1
     for sid in shadow_ok:
         if sid in pokes: pokes[sid]['shadow'] = 1
+    # ---- 交換できないポケモンは最低個体値10(個体値10未満の個体はゲーム内に存在しない) ----
+    # 幻(mythical)は原則交換不可。ただしレイド産で交換できるもの(TRADEABLE_MYTH)は除く。
+    # 幻でなくても交換できないもの(UNTRADEABLE_EXTRA)は足す。ゲーム内の変更はタダシさんから指示が出る。
+    # メガ・フォルム違いは元の扱いを引き継ぐ(キーの先頭一致)
+    def untradeable(sid):
+        base = sid
+        for x in TRADEABLE_MYTH:
+            if sid == x or sid.startswith(x + '_'): return False
+        for x in UNTRADEABLE_EXTRA:
+            if sid == x or sid.startswith(x + '_'): return True
+        return bool(pokes[sid].get('myth'))
+    for sid in pokes:
+        if untradeable(sid): pokes[sid]['ivf'] = 10
+    # 前回との差分を報告に足す(新しい幻が情報元に入ったときに気づけるように)
+    try:
+        prev = json.load(open('pvp_data.json', encoding='utf-8'))['pokemon']
+        prev_u = {k for k, v in prev.items() if v.get('ivf')}
+    except Exception:
+        prev_u = None
+    now_u = {k for k, v in pokes.items() if v.get('ivf')}
+    if prev_u is not None and now_u != prev_u:
+        lines = ['', '## 交換できないポケモン（最低個体値10）の変更', '']
+        for k in sorted(now_u - prev_u): lines.append(f'- 追加: {pokes[k]["n"]} ({k}) → 全ツールで最低個体値10として扱います')
+        for k in sorted(prev_u - now_u): lines.append(f'- 解除: {prev[k]["n"]} ({k})')
+        lines.append('')
+        print('\n'.join(lines))
+        try: open('changes.md', 'a', encoding='utf-8').write('\n'.join(lines))
+        except Exception: pass
 
     # ---- 対戦の基本定数(PvPoke settings + 公知の仕様値) ----
     s = pvp.get('settings', {})

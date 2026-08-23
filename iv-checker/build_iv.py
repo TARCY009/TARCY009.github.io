@@ -61,7 +61,7 @@ FORM_RE = re.compile(r'^(.*?)_(mega(?:_[xy])?|primal|alolan|galarian|hisuian|pal
 # 出力するキーの並び（既存ファイルと同じにして無駄な差分を出さない）
 # t=タイプ(対戦データのtyそのまま・大文字英語)。2026-08-16にタイプアイコン表示のため追加。
 # 種族値と同じく毎回同期する(タイプ変更の告知は無いが、元データに追従しておく)
-ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm']
+ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm', 'u']
 
 
 def ja_name(sid, name):
@@ -120,6 +120,11 @@ def main():
                 updated.append((e['n'], before, stat))
             if ty and e.get('t') != ty:
                 e['t'] = ty
+            # 交換できないポケモン(最低個体値10)の印 u は対戦データの ivf に追従する
+            if bool(p.get('ivf')) != bool(e.get('u')):
+                if p.get('ivf'): e['u'] = 1
+                else: e.pop('u', None)
+                updated.append((e['n'], 'u', bool(p.get('ivf'))))
             continue
         name = ja_name(sid, p['n'])
         if row(name, p['dex'], p['a'], p['df'], p['h']) in sigs:
@@ -139,6 +144,8 @@ def main():
             ent['v'] = ev
         if 'mythical' in tags:
             ent['m'] = 1
+        if p.get('ivf'):
+            ent['u'] = 1   # 交換不可=最低個体値10
         at = insert_at(arr, ent['d'])
         arr.insert(at, {k: ent[k] for k in ORDER if k in ent})
         idx = {q['i']: i for i, q in enumerate(arr)}
@@ -172,7 +179,8 @@ def main():
         print('追加:', '、'.join(e['n'] for e in added))
     if updated:
         for n, b, a in updated:
-            print(f'  種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}')
+            if b == 'u': print(f'  交換不可(最低個体値10)の印: {n} → {"付けた" if a else "外した"}')
+            else: print(f'  種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}')
     if dup:
         print(f'まったく同じ行がすでにあるので足さなかったもの（{len(dup)}件）:', '、'.join(dup))
         print('  ※ 別のポケモンなのにここに出てきたら、名前を手で付け分けること')
