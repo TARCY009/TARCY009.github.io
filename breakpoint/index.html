@@ -140,6 +140,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   background:rgba(140,155,190,.22);line-height:1.5}
 .tb1{background:var(--goldgrad);color:var(--ongold);box-shadow:0 2px 6px rgba(255,213,74,.4)}
 /* 与える/受けるの切り替え(一覧の直上) */
+.t-atk{--mc:#ffb08a;--mcl:#b84a1e;--mi:#fff;--mgl:rgba(255,110,60,.45);--mg:linear-gradient(160deg,#ffb27a 0%,#ff6a3d 45%,#c23a1a 100%)}
 .dirrow{margin:2px 2px 10px}
 .dirrow button{flex:1 1 auto}
 /* 1対1シミュへの遷移ボタン */
@@ -503,7 +504,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 </div>
 
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
-  <button class="t-gold" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">🗡️ 与える</button>
+  <button class="t-atk" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックが相手に与えるダメージの境目を見ます">🗡️ 与える</button>
   <button class="t-shadow" data-dir="take" aria-pressed="false" title="相手のノーマルアタックから受けるダメージの境目を見ます">🛡 受ける</button>
 </div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="ブレイクする相手の数がいちばん多く、その中でも被ダメージをいちばん抑えられる個体はどれか。4096通りの個体値を並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button></div>
 <div id="reco"></div>
