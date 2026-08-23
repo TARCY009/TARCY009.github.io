@@ -1352,7 +1352,7 @@ function pinFoe(key, opts, quiet) {
 }
 
 // ---- 検索欄(共通の作り: isComposing中は触らない・16px) ----
-function setupSearch(inpId, listId, clrId, onPick) {
+function setupSearch(inpId, listId, clrId, onPick, onClear) {
   const inp = $(inpId), list = $(listId), clr = $(clrId);
   const sync = () => { clr.style.display = inp.value ? 'block' : 'none'; };
   inp.addEventListener('compositionend', () => {
@@ -1384,13 +1384,15 @@ function setupSearch(inpId, listId, clrId, onPick) {
       sync();
     });
   });
-  clr.onclick = () => { inp.value = ''; list.style.display = 'none'; sync(); inp.focus(); };
+  clr.onclick = () => { inp.value = ''; list.style.display = 'none'; sync(); if (onClear) onClear(); inp.focus(); };
   document.addEventListener('click', e => {
     if (!list.contains(e.target) && e.target !== inp) list.style.display = 'none';
   });
 }
 setupSearch('meq', 'melist', 'meclr', k => pickMe(k));
-setupSearch('foeq', 'foelist', 'foeclr', k => pinFoe(k, { shadow: $('foeshadow').getAttribute('aria-pressed') === 'true' }));
+// ✕であいての固定も外す(外さないと共有URLに残り、読み込み直すたびに「あいてを追加」が開いた状態になる)
+setupSearch('foeq', 'foelist', 'foeclr', k => pinFoe(k, { shadow: $('foeshadow').getAttribute('aria-pressed') === 'true' }),
+  () => { PIN = null; if (OPEN === 'pin') OPEN = null; render(); });
 
 // ---- ★登録リスト(GBLと共通のlocalStorage) ----
 $('mestar').onclick = () => {
