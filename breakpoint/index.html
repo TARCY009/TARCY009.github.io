@@ -315,6 +315,34 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .mg i.hi span{font-size:1.08rem;font-weight:900;line-height:1;display:flex;align-items:baseline;gap:2px;color:#9b1c1c}
 .ivsum .mg i.hi span small{font-size:.64rem;font-weight:700;color:#1a1f3a;opacity:.8}
 .ivsum .grp .fn .mvn{font-size:.76rem;font-weight:700;color:var(--ink);margin-right:3px}
+
+.ivsum.cp .cells i span{white-space:nowrap;font-size:.86rem}
+.ivsum.cp .cells{gap:3px}
+@media (max-width:540px){
+  .ivsum.cp .cells i{height:42px;border-radius:8px}
+  .ivsum.cp .cells i span{font-size:.7rem}
+  .ivsum.cp .cells i b{font-size:.54rem}
+  .ivsum.cp .lowbtn{min-width:44px;padding:0 5px;font-size:.56rem}
+}
+/* CP制限のチップ: 右側は「段の変化(金)・順位と個体の例・勝敗チップ・開閉」。タップで下にブレイクする個体の一覧 */
+.ivsum .grp .fc.cp{flex-wrap:wrap;cursor:pointer}
+.ivsum .grp .fc.cp.open{grid-column:1/-1}
+.ivsum .grp .n{align-items:start}
+.ivsum .grp .fc.cp .cpb{flex:none;display:flex;align-items:center;gap:8px;margin-left:auto}
+.ivsum .grp .fc.cp .cpb .hi{font-style:normal;display:flex;align-items:center;justify-content:center;min-width:58px;height:32px;padding:0 8px;border-radius:7px;background:var(--goldgrad);color:var(--ongold)}
+.ivsum .grp .fc.cp .cpb .hi span{font-size:1.08rem;font-weight:900;line-height:1;display:flex;align-items:baseline;gap:2px;color:#9b1c1c}
+.ivsum .grp .fc.cp .cpb .hi span small{font-size:.64rem;font-weight:700;color:#1a1f3a;opacity:.8}
+.ivsum .grp .fc.cp .cpb .rep{display:flex;flex-direction:column;align-items:flex-start;gap:1px;line-height:1.15}
+.ivsum .grp .fc.cp .cpb .rep b{font-size:.98rem;color:var(--accent2)}
+.ivsum .grp .fc.cp .cpb .rep small{font-size:.62rem;color:var(--sub);font-weight:700;white-space:nowrap}
+.ivsum .grp .fc.cp .cpb .arw{font-style:normal;color:var(--sub);font-size:.8rem}
+.ivsum .grp .fc.cp .cpl{flex:1 1 100%;cursor:default}
+.ivsum .grp .fc.cp .cpl .ivlist{margin:4px 0 0;border-top:1px solid var(--line);border-radius:11px;max-height:300px;overflow:auto}
+@media (max-width:540px){
+  .ivsum .grp .fc.cp .cpb{gap:6px}
+  .ivsum .grp .fc.cp .cpb .rep small{font-size:.58rem}
+  .ivsum .grp .fc.cp .cpb .vchip{padding:4px 7px;font-size:.62rem}
+}
 .ivsum .none{margin-top:8px;font-size:.78rem;color:var(--sub)}
 /* 個体値バー */
 .ivcells{display:flex;gap:1px}
@@ -418,11 +446,13 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <h4>ブレイクポイントとは</h4>
   <p>ポケモンGOのダメージは整数に切り捨てられるため、攻撃の実数値が少し上がっても<b>ダメージは階段状にしか増えません</b>。その「段が上がる境目」がブレイクポイントです。とくに<b>1ターン(0.5秒)のノーマルアタック</b>は、ダメージが5→6になるだけで火力が20%上がるため影響が大きく、マスターリーグでは勝敗を分けます。</p>
   <h4>この画面でわかること</h4>
+  <p>ポケモンとリーグを選ぶだけで、<b>環境上位100匹それぞれに「どの個体ならブレイクポイントに届くか」</b>が並びます。個体値を入れて検算するのは補助です。</p>
   <ul>
-    <li><b>🗡️与える／🛡受ける</b>（一覧の上のタブ）: 一覧全体の視点を切り替えます。与える=じぶんのノーマルアタックの境目／受ける=あいてのノーマルアタックをいくつで受けるか</li>
-    <li><b>マスターの一覧</b>: いまの個体のまま強化すると、どの相手にダメージ+1を取れるか。🔥が「強化で伸びる相手」です</li>
-    <li><b>スーパー・ハイパーの一覧</b>: CP制限があるリーグでは、防御・HPの個体値を下げるとPLを上げられるため、<b>攻撃だけでなく全部の個体値がダメージに効きます</b>。そこで「ブレイクを取れる個体に変えると、🛡0-0/1-1/2-2の3パターンの合計勝ち数が変わるか」をシミュレートし、🔥勝ち+1／⚠勝ち-1のチップで出します（⚠は耐久を削るぶん逆に不利になる相手）</li>
-    <li><b>行をタップ</b>: その相手との詳細。いまのダメージと、どこまで強化すればブレイクするか（PL50より上は最高の相棒が必要）、届く個体の例、1対1シミュへの遷移ボタンが出ます</li>
+    <li><b>🗡️与える／🛡受ける</b>: 与える=じぶんのノーマルアタックのダメージが1段上がる境目／受ける=あいてのノーマルアタックの被ダメージが1段下がる境目</li>
+    <li><b>マスター</b>: 相手ごとに「攻撃（受けるは防御）の個体値がいくつ以上なら届くか」を出します。上のタブは個体値で、<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます（点灯中のタブをもう一度タップするとそのグループだけ隠れます）。チップの中の表は、じぶん（縦）とあいて（横）のPL50/51の組み合わせごとのダメージで、そのグループの個体値でちょうど段が上がる組み合わせだけ金色です。<b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
+    <li><b>スーパー・ハイパー</b>: CP制限があるリーグは個体値3つとPLがセットで決まるので、軸は<b>個体の順位（SCP順・個体値チェッカーと同じ）</b>です。相手ごとに「1位の個体より1段上（受けるは1段下）に届く個体のうち、いちばん順位が高いもの」を出し、その順位でグループ分けします。上のタブは<b>10位以内が既定</b>で、50位をタップすると11〜50位の個体で届く相手が追加されます。チップには <b>4→5</b>（ダメージの変化）・<b>順位と個体の例</b>・<b>🔥勝ち+1／⚠勝ち-1</b>（1位の個体と比べて🛡0-0/1-1/2-2の合計勝ち数がどう変わるか。⚠は耐久を削るぶん逆に不利）が出ます。チップをタップするとブレイクする個体の一覧（SCPが高い順・上位100件）が開きます</li>
+    <li><b>▸ 自分の個体で確かめる</b>: 個体値とPLを入れると、その個体での一覧と、行をタップした詳細（いまのダメージ・ブレイク条件・1対1シミュへのボタン）が出ます</li>
+    <li><b>▸ あいてを追加</b>: 環境上位100匹に入っていない相手や、特定の相手を足して調べます</li>
     <li><b>1T🔥のわざ</b>: 1ターンわざはダメージ+1の影響がいちばん大きい（5→6で+20%）ので金色で目立たせています</li>
   </ul>
   <h4>計算の前提</h4>
@@ -430,7 +460,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li>ダメージ式・実数値はGBL対面シミュのエンジンと同じもの。<b>同じ条件なら結果は必ず一致します</b></li>
     <li>能力変化（バフ・デバフ）が無い開始時点で計算します</li>
     <li>環境上位100匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成が基準です</li>
-    <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4＋相棒で53まで</li>
+    <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4（メガシンカ中に自動で＋2相当）＋相棒で53まで</li>
     <li>SPアタックは対象外です。SPの+1はバトル全体で1〜2回しか発生せず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
   </ul>
   <h4>勝敗シミュレートの前提</h4>
@@ -473,6 +503,9 @@ let IVSEL = 15;   // 個体値まとめで見せる下限(タップで下げる�
 let IVHIDE = new Set();   // 点灯中のうち、タップで非表示にしたグループ(12だけ見たいときに13〜15を消す)
 let MEGA4 = false;   // メガLv4(PL52/53)を計算に入れるか(メガの相手も並べる)
 let IVLOW = false;   // 個体値まとめで0〜9も見せるか(既定は10〜15だけ)
+// CP制限リーグのまとめ: 順位(SCP順)のグループ。RSEL=点灯している最後のグループ番号・RHIDE=非表示にしたグループ・RLOW=1001位以下も見せるか
+const RANK_GRP = [10, 50, 100, 300, 1000];
+let RSEL = 0, RHIDE = new Set(), RLOW = false;
 let FOEOPEN = false;  // 「あいてを追加」を開いているか
 let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
@@ -870,7 +903,7 @@ function megaFoes() {
   return out;
 }
 function ivSumHtml() {
-  if (capV()) return '';
+  if (capV()) return ivSumCapHtml();
   const dir = DIR;
   const foes = [];
   if (PIN && !PIN.rawSt) foes.push({ foe: PIN, rank: null });
@@ -900,6 +933,84 @@ function ivSumHtml() {
   return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表はじぶん・あいてのPLの組み合わせごとのダメージ（あいて個体値100%${MEGA4 ? '・メガ4はPL53まで' : ''}）</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
+
+// ---- CP制限リーグ(主役): 「1位の個体より1段上のダメージに届く個体はあるか」を相手ごとに出す ----
+// CP制限では個体値3つとPLがセットで決まるので、軸は「個体の順位(SCP順・個体値チェッカーと同じ)」。
+// 相手ごとに、段を上げられる個体のうちSCPが最も高いもの(=犠牲が最小の個体)の順位でグループ分けする
+const rankCache = new Map();
+function rankMapOf() {   // 個体値 → 順位(同じSCPは同順位)
+  const ck = [ME.key, LG, ME.shadow ? 1 : 0].join('|');
+  if (rankCache.has(ck)) return rankCache.get(ck);
+  const rows = ivTable().map(r => ({ k: r.ivs.join('.'), s: scpOf(r.st) })).sort((x, y) => y.s - x.s);
+  const m = new Map();
+  let rk = 0;
+  rows.forEach((r, i) => { if (i === 0 || r.s !== rows[i - 1].s) rk = i + 1; m.set(r.k, rk); });
+  rankCache.set(ck, m);
+  return m;
+}
+const rankOf = ivs => rankMapOf().get(ivs.join('.')) || 4096;
+// 相手1匹ぶん: {c(候補), dRef(1位のダメージ), rep, rank, wRef, wBrk, diff} / null(1位で最大・最小)
+let capCache = { sig: null, map: new Map() };
+function capBreakOf(foe, dir) {
+  const mv = dir === 'give' ? D.moves[ME.fast] : D.moves[foe.fast || fastMoves(foe.key)[0]];
+  if (!mv) return null;
+  const sig = [ME.key, ME.shadow ? 1 : 0, LG, ME.fast, dir].join('|');
+  if (capCache.sig !== sig) capCache = { sig, map: new Map() };
+  const ck = foe.key + (foe.shadow ? '|s' : '') + (foe.rawSt ? '|' + foe.rawSt : '') + '|' + mv.n;
+  if (capCache.map.has(ck)) return capCache.map.get(ck);
+  const r1 = rank1(ME.key, capV());
+  const st1 = statsOf(ME.key, r1.ivs, r1.level, ME.shadow);
+  const dRef = dir === 'give' ? dmgOf(mv, st1, foe.st) : dmgOf(mv, foe.st, st1);
+  const c = dir === 'give' ? breakCandsGive(mv, foe, dRef) : breakCandsTake(mv, foe, dRef);
+  let out = null;
+  if (c.rep) {
+    out = { c, mv, dRef, rep: c.rep, rank: rankOf(c.rep.ivs), wRef: null, wBrk: null, diff: null };
+    if (foe.cfg) {
+      out.wRef = winsOf(r1.ivs, r1.level, foe.cfg);
+      out.wBrk = winsOf(c.rep.ivs, c.rep.level, foe.cfg);
+      out.diff = out.wBrk - out.wRef;
+    }
+  }
+  capCache.map.set(ck, out);
+  return out;
+}
+const rankGrpOf = rk => { const i = RANK_GRP.findIndex(g => rk <= g); return i < 0 ? RANK_GRP.length : i; };
+function ivSumCapHtml() {
+  const dir = DIR, statName = dir === 'give' ? '攻撃' : '防御';
+  const foes = [];
+  if (PIN) foes.push({ foe: PIN, rank: null });
+  metaList().forEach((e, i) => foes.push({ foe: foeEntryOf(e), rank: i + 1 }));
+  const byG = Array.from({ length: RANK_GRP.length + 1 }, () => []);
+  for (const f of foes) { const b = capBreakOf(f.foe, dir); if (b) byG[rankGrpOf(b.rank)].push({ ...f, ...b }); }
+  byG.forEach(a => a.sort((p, q) => (p.rank - q.rank) || (p.mv.tn - q.mv.tn) || ((p.rank ?? 0) - (q.rank ?? 0))));
+  const lowN = byG[RANK_GRP.length].length;
+  const cell = i => `<i class="${i <= RSEL ? (RHIDE.has(i) ? 'on hid' : 'on') : ''}${i >= RANK_GRP.length ? ' lo' : ''}" data-rsel="${i}"><span>${i < RANK_GRP.length ? RANK_GRP[i] + '位' : '1001位〜'}</span><b>${byG[i].length ? byG[i].length + '匹' : '&nbsp;'}</b></i>`;
+  const cells = RANK_GRP.map((_, i) => cell(i)).join('');
+  const lowRow = RLOW ? `<div class="lowrow"><div class="cells">${cell(RANK_GRP.length)}</div></div>` : '';
+  const resetBtn = RSEL > 0 || RHIDE.size ? `<button class="lowbtn reset" data-rreset>10位<b>に戻す</b></button>` : '';
+  const lowBtn = resetBtn + `<button class="lowbtn" data-rlow aria-pressed="${RLOW}">${RLOW ? '1001位〜を隠す' : `1001位〜${lowN ? `<b>${lowN}匹</b>` : ''}`}</button>`;
+  const chipOf = r => {
+    const ck = 'sum:' + r.foe.key + (r.foe.shadow ? '|s' : '');
+    const open = !!DTAB[ck + ':list'];
+    const win = r.diff == null ? '' : r.diff > 0 ? `<span class="vchip up">🔥 勝ち+${r.diff}</span>`
+      : r.diff < 0 ? `<span class="vchip lose">⚠ 勝ち${r.diff}</span>` : `<span class="vchip no">勝敗は同じ</span>`;
+    const unit = dir === 'give' ? '' : '被';
+    return `<span class="fc cp${open ? ' open' : ''}" data-cpl="${ck}"><span class="fn"><span class="nm">${r.foe.shadow ? SHADOWMK : ''}${r.foe.name}${typeIcons(D.pokemon[r.foe.key], 15)}</span>
+      <span class="mvl">${dir === 'take' ? `<span class="mvn">${r.mv.n}</span>` : ''}${tnBadge(r.mv.tn)}</span></span>
+      <span class="cpb"><i class="hi"><span><small>${unit}${r.dRef}→</small>${r.rep.d}</span></i>
+        <span class="rep"><b>${r.rank}位</b><small>${r.rep.ivs.join('/')} PL${fmtLv(r.rep.level)}</small></span>${win}<i class="arw">${open ? '▾' : '▸'}</i></span>
+      ${open ? `<span class="cpl">${ivListHtml(r.c, ck, r.dRef, dir, true)}</span>` : ''}</span>`;
+  };
+  const row = (a, i) => a.length ? `<div><span class="k${i === 0 ? ' top' : ''}">${i < RANK_GRP.length ? RANK_GRP[i] + '位' : '1001位'}<small>${i < RANK_GRP.length ? '以内' : '〜'}</small></span><span class="n">${a.map(chipOf).join('')}</span></div>` : '';
+  let grp = '';
+  for (let i = 0; i <= RSEL; i++) if (!RHIDE.has(i)) grp += row(byG[i], i);
+  const total = byG.reduce((n, a) => n + a.length, 0);
+  const body = total ? `<div class="grp">${grp || `<div class="none">${RANK_GRP[RSEL]}位以内の個体でブレイクする相手はいません</div>`}</div>`
+                     : `<div class="none">1位の個体で、どの相手にも${dir === 'give' ? 'ダメージを最大化' : '被ダメージを最小化'}できています</div>`;
+  return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">1位の個体より1段${dir === 'give' ? '上' : '下'}の${unitName(dir)}に届く個体を、順位（SCP順・個体値チェッカーと同じ）で分けています（あいて理想個体値）</span></div>
+    <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
+}
+const unitName = dir => dir === 'give' ? 'ダメージ' : '被ダメージ';
 
 // ---- 詳細カード ----
 function detailHTML(foe, rowId) {
@@ -992,17 +1103,17 @@ function detailHTML(foe, rowId) {
 }
 
 // ブレイクする個体値の一覧(SCPの高い順・上位100件)。ボタンで開閉する
-function ivListHtml(c, rowId, dNow, dir) {
+function ivListHtml(c, rowId, dNow, dir, noBtn) {
   if (!c.count) return '';
-  const open = !!DTAB[rowId + ':list'];
+  const open = noBtn || !!DTAB[rowId + ':list'];
   const cap100 = c.count > 100 ? `SCPが高い順・${c.count}通りのうち上位100件` : `SCPが高い順・全${c.count}通り`;
   const btn = `<button class="ivlistbtn" data-ivlist aria-expanded="${open}">📋 ブレイクする個体値 <b>${c.count}通り</b><i>${open ? '▾' : '▸'}</i></button>`;
   if (!open) return btn;
   const rows = c.list.map((r, i) => `<tr${r.ivs.join() === ME.ivs.join() ? ' class="mine"' : ''}>
-    <td>${i + 1}</td><td>${r.ivs.join('/')}</td><td>${fmtLv(r.level)}</td><td>${r.st.cp}</td><td>${scpOf(r.st)}</td>
+    <td>${rankOf(r.ivs)}</td><td>${r.ivs.join('/')}</td><td>${fmtLv(r.level)}</td><td>${r.st.cp}</td><td>${scpOf(r.st)}</td>
     <td>${dNow}→${r.d}</td></tr>`).join('');
-  return `${btn}<div class="ivlist"><div class="ivlcap">${cap100}</div>
-    <table><thead><tr><th>#</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>${dir === 'take' ? '被ダメ' : 'ダメ'}</th></tr></thead>
+  return `${noBtn ? '' : btn}<div class="ivlist"><div class="ivlcap">${cap100}</div>
+    <table><thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>${dir === 'take' ? '被ダメ' : 'ダメ'}</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
@@ -1094,7 +1205,22 @@ function render() {
   const capped = !!capV();
   $('ivsum').innerHTML = ivSumHtml();
   // 一覧(環境100匹の行)は「自分の個体で確かめる」を開いたときだけ(上のまとめと情報が二重になるため)
-  $('listwrap').style.display = IVOPEN || capped ? '' : 'none';
+  $('listwrap').style.display = IVOPEN ? '' : 'none';
+  $('mega4').style.display = capped ? 'none' : '';
+  $('ivsum').querySelectorAll('[data-rlow]').forEach(b => b.onclick = () => { RLOW = !RLOW; if (!RLOW && RSEL >= RANK_GRP.length) RSEL = RANK_GRP.length - 1; render(); });
+  $('ivsum').querySelectorAll('[data-rsel]').forEach(c => c.onclick = () => {
+    const i = +c.dataset.rsel;
+    if (i <= RSEL) { if (RHIDE.has(i)) RHIDE.delete(i); else RHIDE.add(i); }
+    else RSEL = i;
+    render();
+  });
+  $('ivsum').querySelectorAll('[data-rreset]').forEach(b => b.onclick = () => { RSEL = 0; RHIDE.clear(); render(); });
+  $('ivsum').querySelectorAll('[data-cpl]').forEach(c => c.onclick = ev => {
+    if (ev.target.closest('.cpl')) return;   // 開いた一覧の中をさわっても閉じない
+    const k = c.dataset.cpl + ':list';
+    DTAB[k] = !DTAB[k];
+    render();
+  });
   $('ivsum').querySelectorAll('[data-ivlow]').forEach(b => b.onclick = () => { IVLOW = !IVLOW; if (!IVLOW && IVSEL < 10) IVSEL = 10; render(); });
   $('ivsum').querySelectorAll('[data-ivsel]').forEach(c => c.onclick = () => {
     const x = +c.dataset.ivsel;
@@ -1385,8 +1511,7 @@ function updateUrl() {
   if (ME.key) {
     q.set('me', ME.key);
     if (ME.shadow) q.set('msh', '1');
-    q.set('miv', ME.ivs.join('.'));
-    q.set('mpl', ME.level);
+    if (ME.edited) { q.set('miv', ME.ivs.join('.')); q.set('mpl', ME.level); }
     if (ME.fast) q.set('mv', ME.fast);
   }
   if (PIN) {
