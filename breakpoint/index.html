@@ -316,6 +316,23 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .mg i.hi span small{font-size:.64rem;font-weight:700;color:#1a1f3a;opacity:.8}
 .ivsum .grp .fn .mvn{font-size:.76rem;font-weight:700;color:var(--ink);margin-right:3px}
 
+/* あいての順位の前提(CP制限): 紫の「あいて」札＋くっつけた5択。点灯はあいて色(紫) */
+.ivsum .foerng{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.ivsum .foerng .ax{font-size:.58rem;padding:3px 9px;border-radius:999px;font-weight:800;background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff}
+.ivsum .foerng .rl{font-size:.68rem;font-weight:800;color:var(--sub);margin-right:2px}
+.ivsum .foerng .seg{display:inline-flex;gap:2px;flex:1 1 auto}
+.ivsum .foerng .seg button{flex:1 1 auto;font:inherit;font-size:.7rem;font-weight:800;padding:6px 8px;cursor:pointer;color:var(--sub);white-space:nowrap;
+  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);border-radius:5px;box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .12s}
+.ivsum .foerng .seg button:first-child{border-radius:999px 5px 5px 999px}
+.ivsum .foerng .seg button:last-child{border-radius:5px 999px 999px 5px}
+.ivsum .foerng .seg button small{font-size:.54rem;font-weight:700;margin-left:1px}
+.ivsum .foerng .seg button:hover{transform:translateY(-1px)}
+.ivsum .foerng .seg button[aria-pressed="true"]{background:linear-gradient(160deg,#e9b8ff,#b06cff 45%,#6a2fc2);color:#fff;border-color:transparent;box-shadow:0 5px 16px rgba(176,108,255,.4),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px)}
+:root.light .ivsum .foerng .seg button:not([aria-pressed="true"]){background:linear-gradient(180deg,#fff,#eef1f8);color:#5a4a80}
+@media (max-width:540px){
+  .ivsum .foerng .seg button{font-size:.62rem;padding:6px 4px}
+  .ivsum .foerng .seg button small{display:none}
+}
 .ivsum.cp .cells i span{white-space:nowrap;font-size:.86rem}
 .ivsum.cp .cells{gap:3px}
 @media (max-width:540px){
@@ -450,7 +467,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <ul>
     <li><b>🗡️与える／🛡受ける</b>: 与える=じぶんのノーマルアタックのダメージが1段上がる境目／受ける=あいてのノーマルアタックの被ダメージが1段下がる境目</li>
     <li><b>マスター</b>: 相手ごとに「攻撃（受けるは防御）の個体値がいくつ以上なら届くか」を出します。上のタブは個体値で、<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます（点灯中のタブをもう一度タップするとそのグループだけ隠れます）。チップの中の表は、じぶん（縦）とあいて（横）のPL50/51の組み合わせごとのダメージで、そのグループの個体値でちょうど段が上がる組み合わせだけ金色です。<b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
-    <li><b>スーパー・ハイパー</b>: CP制限があるリーグは個体値3つとPLがセットで決まるので、軸は<b>個体の順位（SCP順・個体値チェッカーと同じ）</b>です。相手ごとに「1位の個体より1段上（受けるは1段下）に届く個体のうち、いちばん順位が高いもの」を出し、その順位でグループ分けします。上のタブは<b>10位以内が既定</b>で、50位をタップすると11〜50位の個体で届く相手が追加されます。チップには <b>4→5</b>（ダメージの変化）・<b>順位と個体の例</b>・<b>🔥勝ち+1／⚠勝ち-1</b>（1位の個体と比べて🛡0-0/1-1/2-2の合計勝ち数がどう変わるか。⚠は耐久を削るぶん逆に不利）が出ます。チップをタップするとブレイクする個体の一覧（SCPが高い順・上位100件）が開きます</li>
+    <li><b>スーパー・ハイパー</b>: CP制限があるリーグは個体値3つとPLがセットで決まるので、軸は<b>個体の順位（SCP順・個体値チェッカーと同じ）</b>です。<b>「あいての順位」</b>でまず相手の前提を選びます（既定は100位以内）。同じポケモンでも順位によって実数値が動くので、<b>その範囲のどの個体が相手でも届く個体</b>（与える=範囲でいちばん硬い個体、受ける=いちばん攻撃が高い個体を基準）だけを出します。範囲を広げるほど条件は厳しくなり、「合わせるのは現実的でない」相手は消えます。相手ごとに、届く個体のうちいちばん順位が高いものを出し、その順位でグループ分けします。上のタブは<b>10位以内が既定</b>で、50位をタップすると11〜50位の個体で届く相手が追加されます。チップには <b>4→5</b>（ダメージの変化）・<b>順位と個体の例</b>・<b>🔥勝ち+1／⚠勝ち-1</b>（1位の個体と比べて🛡0-0/1-1/2-2の合計勝ち数がどう変わるか。⚠は耐久を削るぶん逆に不利）が出ます。チップをタップするとブレイクする個体の一覧（SCPが高い順・上位100件）が開きます</li>
     <li><b>▸ 自分の個体で確かめる</b>: 個体値とPLを入れると、その個体での一覧と、行をタップした詳細（いまのダメージ・ブレイク条件・1対1シミュへのボタン）が出ます</li>
     <li><b>▸ あいてを追加</b>: 環境上位100匹に入っていない相手や、特定の相手を足して調べます</li>
     <li><b>1T🔥のわざ</b>: 1ターンわざはダメージ+1の影響がいちばん大きい（5→6で+20%）ので金色で目立たせています</li>
@@ -506,6 +523,9 @@ let IVLOW = false;   // 個体値まとめで0〜9も見せるか(既定は10〜
 // CP制限リーグのまとめ: 順位(SCP順)のグループ。RSEL=点灯している最後のグループ番号・RHIDE=非表示にしたグループ・RLOW=1001位以下も見せるか
 const RANK_GRP = [10, 50, 100, 300, 1000];
 let RSEL = 0, RHIDE = new Set(), RLOW = false;
+// あいての順位の前提(CP制限)。「その範囲のどの個体が相手でも届く」基準にする。1=1位だけ・4096=全個体
+const FOE_RNG = [1, 10, 100, 1000, 4096];
+let FRNG = 100;
 let FOEOPEN = false;  // 「あいてを追加」を開いているか
 let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの入力)を開いているか
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
@@ -949,22 +969,58 @@ function rankMapOf() {   // 個体値 → 順位(同じSCPは同順位)
   return m;
 }
 const rankOf = ivs => rankMapOf().get(ivs.join('.')) || 4096;
+
+// あいての全個体(4096通り・各の上限PL)の実数値をSCP順に。エンジンと同じ式を軽く書き直したもの(相手100匹ぶん作るため)
+const foeTblCache = new Map();
+function foeTable(key, shadow) {
+  const ck = key + '|' + LG + '|' + (shadow ? 1 : 0);
+  if (foeTblCache.has(ck)) return foeTblCache.get(ck);
+  const p = D.pokemon[key], cap = capV(), LV = levelsUpTo(isMega(key) ? 53 : 51);
+  const sA = shadow ? D.settings.shadowAtkMult : 1, sD = shadow ? D.settings.shadowDefMult : 1;
+  const rows = [];
+  for (let a = 0; a <= 15; a++) for (let d = 0; d <= 15; d++) for (let h = 0; h <= 15; h++) {
+    let lo = 0, hi = LV.length - 1, li = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1, c = D.cpm[String(LV[mid])];
+      const cp = Math.max(10, Math.floor((p.a + a) * Math.sqrt(p.df + d) * Math.sqrt(p.h + h) * c * c / 10));
+      if (!cap || cp <= cap) { li = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    if (li < 0) continue;
+    const c = D.cpm[String(LV[li])];
+    const atk = (p.a + a) * c * sA, def = (p.df + d) * c * sD, hp = Math.floor((p.h + h) * c);
+    rows.push({ ivs: [a, d, h], level: LV[li], atk, def, hp, s: Math.floor(Math.pow(atk * def * hp, 2 / 3) / 10) });
+  }
+  rows.sort((x, y) => y.s - x.s);
+  let rk = 0;
+  rows.forEach((r, i) => { if (i === 0 || r.s !== rows[i - 1].s) rk = i + 1; r.rank = rk; });
+  foeTblCache.set(ck, rows);
+  return rows;
+}
+// 範囲(FRNG位以内)でいちばん厳しいあいて: 与える=防御が最高の個体 / 受ける=攻撃が最高の個体。
+// 1位だけのときは従来どおり rank1() の個体(=foe.st)を使う
+function hardestFoe(foe, dir) {
+  if (FRNG <= 1 || foe.rawSt) return foe.st;
+  const rows = foeTable(foe.key, foe.shadow).filter(r => r.rank <= FRNG);
+  const h = rows.reduce((p, r) => (dir === 'give' ? r.def > p.def : r.atk > p.atk) ? r : p, rows[0]);
+  return { ...foe.st, atk: h.atk, def: h.def, hp: h.hp, rank: h.rank, ivs: h.ivs, level: h.level };
+}
 // 相手1匹ぶん: {c(候補), dRef(1位のダメージ), rep, rank, wRef, wBrk, diff} / null(1位で最大・最小)
 let capCache = { sig: null, map: new Map() };
 function capBreakOf(foe, dir) {
   const mv = dir === 'give' ? D.moves[ME.fast] : D.moves[foe.fast || fastMoves(foe.key)[0]];
   if (!mv) return null;
-  const sig = [ME.key, ME.shadow ? 1 : 0, LG, ME.fast, dir].join('|');
+  const sig = [ME.key, ME.shadow ? 1 : 0, LG, ME.fast, dir, FRNG].join('|');
   if (capCache.sig !== sig) capCache = { sig, map: new Map() };
   const ck = foe.key + (foe.shadow ? '|s' : '') + (foe.rawSt ? '|' + foe.rawSt : '') + '|' + mv.n;
   if (capCache.map.has(ck)) return capCache.map.get(ck);
   const r1 = rank1(ME.key, capV());
   const st1 = statsOf(ME.key, r1.ivs, r1.level, ME.shadow);
-  const dRef = dir === 'give' ? dmgOf(mv, st1, foe.st) : dmgOf(mv, foe.st, st1);
-  const c = dir === 'give' ? breakCandsGive(mv, foe, dRef) : breakCandsTake(mv, foe, dRef);
+  const hst = hardestFoe(foe, dir), hf = { ...foe, st: hst };
+  const dRef = dir === 'give' ? dmgOf(mv, st1, hst) : dmgOf(mv, hst, st1);
+  const c = dir === 'give' ? breakCandsGive(mv, hf, dRef) : breakCandsTake(mv, hf, dRef);
   let out = null;
   if (c.rep) {
-    out = { c, mv, dRef, rep: c.rep, rank: rankOf(c.rep.ivs), wRef: null, wBrk: null, diff: null };
+    out = { c, mv, dRef, rep: c.rep, rank: rankOf(c.rep.ivs), hard: hst, wRef: null, wBrk: null, diff: null };
     if (foe.cfg) {
       out.wRef = winsOf(r1.ivs, r1.level, foe.cfg);
       out.wBrk = winsOf(c.rep.ivs, c.rep.level, foe.cfg);
@@ -1006,8 +1062,13 @@ function ivSumCapHtml() {
   for (let i = 0; i <= RSEL; i++) if (!RHIDE.has(i)) grp += row(byG[i], i);
   const total = byG.reduce((n, a) => n + a.length, 0);
   const body = total ? `<div class="grp">${grp || `<div class="none">${RANK_GRP[RSEL]}位以内の個体でブレイクする相手はいません</div>`}</div>`
-                     : `<div class="none">1位の個体で、どの相手にも${dir === 'give' ? 'ダメージを最大化' : '被ダメージを最小化'}できています</div>`;
-  return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">1位の個体より1段${dir === 'give' ? '上' : '下'}の${unitName(dir)}に届く個体を、順位（SCP順・個体値チェッカーと同じ）で分けています（あいて理想個体値）</span></div>
+                     : `<div class="none">${FRNG > 1 ? 'この範囲の相手に合わせてブレイクできる個体はありません' : `1位の個体で、どの相手にも${dir === 'give' ? 'ダメージを最大化' : '被ダメージを最小化'}できています`}</div>`;
+  const rngLbl = n => n === 1 ? '1位' : n >= 4096 ? '全個体' : `${n}位<small>以内</small>`;
+  const seg = `<div class="foerng"><span class="ax foe">あいて</span><span class="rl">の順位</span><span class="seg">${FOE_RNG.map(n =>
+    `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}のときでもブレイクする個体を探します。範囲を広げるほど条件は厳しくなります">${rngLbl(n)}</button>`).join('')}</span></div>`;
+  const hardNote = FRNG > 1 ? `範囲の中でいちばん${dir === 'give' ? '硬い' : '攻撃が高い'}個体が相手でも届く個体` : '1位の個体より1段' + (dir === 'give' ? '上' : '下') + 'に届く個体';
+  return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">${hardNote}を、じぶんの順位（SCP順・個体値チェッカーと同じ）で分けています</span></div>
+    ${seg}
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 const unitName = dir => dir === 'give' ? 'ダメージ' : '被ダメージ';
@@ -1214,6 +1275,7 @@ function render() {
     else RSEL = i;
     render();
   });
+  $('ivsum').querySelectorAll('[data-frng]').forEach(b => b.onclick = () => { FRNG = +b.dataset.frng; render(); });
   $('ivsum').querySelectorAll('[data-rreset]').forEach(b => b.onclick = () => { RSEL = 0; RHIDE.clear(); render(); });
   $('ivsum').querySelectorAll('[data-cpl]').forEach(c => c.onclick = ev => {
     if (ev.target.closest('.cpl')) return;   // 開いた一覧の中をさわっても閉じない
@@ -1510,6 +1572,7 @@ function updateUrl() {
   const q = new URLSearchParams();
   if (LG !== '0') q.set('lg', LG);
   if (DIR === 'take') q.set('dir', 'take');
+  if (LG !== '0' && FRNG !== 100) q.set('fr', FRNG);
   if (ME.key) {
     q.set('me', ME.key);
     if (ME.shadow) q.set('msh', '1');
@@ -1528,6 +1591,7 @@ function updateUrl() {
 function loadUrl() {
   const q = new URLSearchParams(location.search);
   if (q.get('lg') && ['1500', '2500', '0'].includes(q.get('lg'))) LG = q.get('lg');
+  if (FOE_RNG.includes(+q.get('fr'))) FRNG = +q.get('fr');
   if (q.get('dir') === 'take') {
     DIR = 'take';
     document.querySelectorAll('[data-dir]').forEach(x => x.setAttribute('aria-pressed', x.dataset.dir === DIR));
