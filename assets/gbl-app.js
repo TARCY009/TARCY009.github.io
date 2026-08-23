@@ -38,7 +38,7 @@ document.getElementById('app').innerHTML = `
 <div class="rocket" id="rocket" style="display:none">
   <div class="rkrow rkmoderow">
     <div class="opts rkmode" id="rkmode">
-      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1モード</button><button data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで戦います。SPアタックを撃つ・温存する・シールドを使う・交代するを、決断の場面ごとに自分で選べます">模擬戦モード</button>
+      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1モード</button><button class="mockhero" data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで戦います。SPアタックを撃つ・温存する・シールドを使う・交代するを、決断の場面ごとに自分で選べます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦モード</b><span class="t2">3匹の通しを実戦そのままに戦う</span></span></button>
     </div>
   </div>
   <div class="rkrow">

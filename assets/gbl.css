@@ -212,12 +212,12 @@ select option[value=""]{color:var(--sub)}
   letter-spacing:.04em;margin:2px 0 -2px;padding-left:2px}
 .modes .modegrp:first-child{margin-top:0}
 .modes .modegrp+button{margin-top:0}
-.modes button.mockhero{flex:1 0 100%;display:flex;align-items:center;gap:12px;
+.modes button.mockhero,.rkmode button.mockhero{flex:1 0 100%;display:flex;align-items:center;gap:12px;
   padding:13px 16px;border:none;border-radius:16px;text-align:left;position:relative;overflow:hidden;
   background:linear-gradient(135deg,#241a5c 0%,#6d28d9 42%,#c026d3 78%,#f59e0b 130%);
   box-shadow:0 8px 22px rgba(139,92,246,.45),inset 0 1px 0 rgba(255,255,255,.35)}
-.modes button.mockhero:hover{transform:translateY(-1px)}
-.modes button.mockhero[aria-pressed="true"]{color:inherit;border:none;transform:translateY(-1px);
+.modes button.mockhero:hover,.rkmode button.mockhero:hover{transform:translateY(-1px)}
+.modes button.mockhero[aria-pressed="true"],.rocket .rkmode button.mockhero[aria-pressed="true"]{color:inherit;border:none;transform:translateY(-1px);
   box-shadow:0 8px 26px rgba(192,38,211,.6),inset 0 1px 0 rgba(255,255,255,.5),0 0 0 2px #ffd54a}
 .mockhero .pl{flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
   font-size:1.05rem;color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4)}
@@ -301,7 +301,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   box-shadow:0 5px 16px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.6)}
 /* いちばん上のモード切替(1対1 / 模擬戦)はこのツールの主役なので、大きく立体的に見せる */
 .rkmoderow{margin-bottom:2px}
-.rkmode{gap:8px}
+.rkmode{gap:8px;flex-wrap:wrap}
 .rkmode button{flex:1;padding:12px 6px;font-size:.95rem;font-weight:800;letter-spacing:.03em;
   color:var(--sub);background:var(--tab);
   border:1px solid var(--line);border-radius:12px;cursor:pointer;
@@ -312,9 +312,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rocket .rkmode button[data-v="0"][aria-pressed="true"]{
   color:#03212c;background:linear-gradient(160deg,#8df3ff 0%,#43e0ff 45%,#1b9fd0 100%);border-color:#9df5ff;
   box-shadow:0 6px 18px rgba(67,224,255,.4),inset 0 1px 0 rgba(255,255,255,.65);transform:translateY(-1px)}
-.rocket .rkmode button[data-v="1"][aria-pressed="true"]{
-  color:#1c0a33;background:linear-gradient(160deg,#e3b6ff 0%,#b06cff 45%,#7d3fd6 100%);border-color:#e3b6ff;
-  box-shadow:0 6px 18px rgba(176,108,255,.4),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px)}
+/* 模擬戦モードはGBLと同じ主役ボタン(.mockhero・2026-08-23タダシさん指示)。点灯は金のリング */
 /* あいての種別はロケット団らしく赤系。したっぱ→サカキで赤が濃くなる */
 .rkkind{gap:6px}
 .rkkind button{flex:1;padding:9px 4px;font-size:.86rem;font-weight:800;color:var(--rc);
