@@ -31,14 +31,14 @@ document.getElementById('app').innerHTML = `
   <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモン（対策）を環境上位から総当たりで探す">対策さがし</button>
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
   <div class="modegrp">実戦を戦う</div>
-  <button class="mockhero" data-m="mock" aria-pressed="false" title="じぶん3匹×あいて3匹の対人戦を通しでシミュレート。SPアタック・シールド・交代を、決断の場面ごとに自分で選べます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦</b><span class="t2">3対3を実戦そのままに戦う</span></span></button>
+  <button class="mockhero" data-m="mock" aria-pressed="false" title="じぶん3匹×あいて3匹の対人戦を通しでシミュレート。SPアタック・シールド・交代を、決断の場面ごとに自分で選べます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦</b><span class="t2">実戦形式で3対3をためす</span></span></button>
   <button data-m="rocket" aria-pressed="false" title="GOロケット団(したっぱ/リーダー/サカキ)との戦いを再現する。相手はSPアタックのあと動けなくなる(硬直)">ロケット団戦</button>
 </div>
 
 <div class="rocket" id="rocket" style="display:none">
   <div class="rkrow rkmoderow">
     <div class="opts rkmode" id="rkmode">
-      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1モード</button><button class="mockhero" data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで戦います。SPアタックを撃つ・温存する・シールドを使う・交代するを、決断の場面ごとに自分で選べます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦モード</b><span class="t2">3匹の通しを実戦そのままに戦う</span></span></button>
+      <button data-v="0" aria-pressed="true" title="1匹どうしの対面だけを計算します">1対1モード</button><button class="mockhero" data-v="1" aria-pressed="false" title="じぶんの3匹とあいての手持ちを、倒れたら次…と通しで戦います。SPアタックを撃つ・温存する・シールドを使う・交代するを、決断の場面ごとに自分で選べます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦モード</b><span class="t2">実戦形式で3匹の通しをためす</span></span></button>
     </div>
   </div>
   <div class="rkrow">
