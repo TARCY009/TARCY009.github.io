@@ -1572,26 +1572,11 @@ $('helptab').onclick = () => {
   $('helptab').setAttribute('aria-expanded', open);
 };
 
-// ---- 共有URL ----
+// ---- URL ----
+// 入口(GBL・個体値チェッカー・共有リンク)のパラメータは読み込み時に使うだけ。
+// 画面の状態はURLに書き戻さない(書くと読み込み直したときに前の入力が蘇って、新しく調べるたびに消す手間になる)
 function updateUrl() {
-  const q = new URLSearchParams();
-  if (LG !== '0') q.set('lg', LG);
-  if (DIR === 'take') q.set('dir', 'take');
-  if (LG !== '0' && FRNG !== 100) q.set('fr', FRNG);
-  if (ME.key) {
-    q.set('me', ME.key);
-    if (ME.shadow) q.set('msh', '1');
-    if (ME.edited) { q.set('miv', ME.ivs.join('.')); q.set('mpl', ME.level); }
-    if (ME.fast) q.set('mv', ME.fast);
-  }
-  if (PIN) {
-    q.set('foe', PIN.key);
-    if (PIN.shadow) q.set('fsh', '1');
-    if (PIN.rawSt) q.set('fst', PIN.rawSt);
-    if (PIN.fast) q.set('fmv', PIN.fast);
-  }
-  const s = q.toString();
-  history.replaceState(null, '', s ? '?' + s : location.pathname);
+  if (location.search) history.replaceState(null, '', location.pathname);
 }
 function loadUrl() {
   const q = new URLSearchParams(location.search);
