@@ -1088,9 +1088,9 @@ function ivSumCapHtml() {
   const seg = `<div class="foerng"><span class="ax foe">あいて</span><span class="rl">の順位</span><span class="seg">${FOE_RNG.map(n =>
     `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}のときでもブレイクする個体を探します。範囲を広げるほど条件は厳しくなります">${rngLbl(n)}</button>`).join('')}</span></div>`;
   const hardNote = FRNG > 1 ? `範囲の中でいちばん${dir === 'give' ? '硬い' : '攻撃が高い'}個体が相手でも届く個体` : '1位の個体より1段' + (dir === 'give' ? '上' : '下') + 'に届く個体';
-  return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">${hardNote}を、じぶんの順位（SCP順・個体値チェッカーと同じ）で分けています</span></div>
+  return `<div class="ivsum cp"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds expl">${hardNote}を、じぶんの順位（SCP順・個体値チェッカーと同じ）で分けています</span></div>
     ${seg}
-    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd">ブレイクする個体のうち、いちばん順位が高いものがどこにあるか</span></div>
+    <div class="myrng"><span class="ax me">じぶん</span><span class="rl">の順位</span><span class="rd expl">ブレイクする個体のうち、いちばん順位が高いものがどこにあるか</span></div>
     <div class="barrow"><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 const unitName = dir => dir === 'give' ? 'ダメージ' : '被ダメージ';
