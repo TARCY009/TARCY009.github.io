@@ -1796,6 +1796,17 @@ function runMulti() {
     box.innerHTML = '<div class="mtnote">左の<b>じぶん</b>を選ぶと、環境上位' + (list.length || 50) + '匹と一括対戦します</div>';
     return;
   }
+  // わざを選ぶまで結果を出さない(2026-08-27タダシさん指示。1対1と同じルール:
+  // じぶんで選んだ構成の結果を見る画面にする。SPアタックを覚えないポケモンはSP無しでOK。
+  // これでマスをタップして開く1対1も同じ構成のまま=結果が食い違わない)
+  if (!S[0].fast || (!S[0].c1 && movePool(S[0].key).chargeds.length)) {
+    const mb = S[0].ivMode === 'manual' && S[0].mIvs
+      ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap }
+      : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+    fillMoves(0, mb);
+    box.innerHTML = '<div class="mtnote">じぶんの<b>わざ</b>(ノーマルアタック・SPアタック)を選ぶと、環境上位' + (list.length || 50) + '匹と一括対戦します</div>';
+    return;
+  }
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
   const MV = VIEWS.multi;
   MV.results = [];
