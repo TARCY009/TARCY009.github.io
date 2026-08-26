@@ -129,6 +129,29 @@ tbody tr:hover{background:var(--mebg)}
 .mvwin .r span{color:var(--sub)}
 .mvwin .r b{font-variant-numeric:tabular-nums}
 .mvwin .note{margin-top:10px;font-size:.78rem;color:var(--sub);line-height:1.7}
+/* 絞り込み(タイプ・地方) */
+.filttab{margin-top:10px;background:none;border:none;color:var(--sub);font-size:.8rem;font-weight:700;cursor:pointer;padding:2px 0}
+.filttab[aria-expanded="true"]{color:var(--cy)}
+.filtbody{display:none;margin-top:8px}
+.filtbody.open{display:block}
+.flbl{font-size:.72rem;color:var(--sub);font-weight:800;letter-spacing:.05em;margin:8px 0 6px}
+.ftypes{display:flex;flex-wrap:wrap;gap:6px}
+.ftypes button{background:none;border:2px solid transparent;border-radius:50%;padding:2px;cursor:pointer;line-height:0;opacity:.55;transition:.15s}
+.ftypes button:hover{opacity:.9}
+.ftypes button[aria-pressed="true"]{opacity:1;border-color:var(--cy);box-shadow:0 0 10px rgba(67,224,255,.5)}
+.fregs{display:flex;flex-wrap:wrap;gap:6px}
+.fregs button{padding:6px 12px;border:1px solid var(--line2);border-radius:999px;background:var(--tab);color:var(--sub);font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.fregs button[aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;border-color:transparent;box-shadow:0 4px 12px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.fclear{margin-left:auto;background:none;border:none;color:var(--sub);font-size:.74rem;cursor:pointer;text-decoration:underline}
+.filthead{display:flex;align-items:center}
+.flcnt{font-size:.76rem;color:var(--sub);margin:10px 0 6px}
+.flist{border:1px solid var(--line);border-radius:12px;overflow:hidden;max-height:420px;overflow-y:auto;margin-top:4px}
+.flist .fr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line);cursor:pointer;font-size:.88rem}
+.flist .fr:first-child{border-top:none}
+.flist .fr:nth-child(even){background:var(--zebra)}
+.flist .fr:hover{background:var(--mebg)}
+.flist .fr b{font-weight:700}
+.flist .fr .cpv{margin-left:auto;color:var(--gold);font-weight:800;font-size:.82rem;font-variant-numeric:tabular-nums}
 /* 使い方タブ */
 .helptab{width:100%;margin-top:14px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--tab);color:var(--sub);font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
 .helpbody{display:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:8px;font-size:.76rem;line-height:1.9;color:var(--ink)}
@@ -162,6 +185,20 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <input id="q" type="text" placeholder="名前で検索(例: フシギバナ)" autocomplete="off">
     <button id="qclr" class="clrbtn" type="button" aria-label="入力を消す" title="入力を消します">✕</button>
     <div id="sugg"></div>
+  </div>
+  <div class="filthead">
+    <button class="filttab" id="filttab" aria-expanded="false" title="タイプや地方でポケモンを絞り込めます">▸ タイプ・地方で絞り込む</button>
+    <button class="fclear" id="fclear" style="display:none" title="絞り込みをすべて外します">絞り込みを外す</button>
+  </div>
+  <div class="filtbody" id="filtbody">
+    <div class="flbl">タイプ<span class="expl">（2つ選ぶと複合タイプで絞り込みます）</span></div>
+    <div class="ftypes" id="ftypes"></div>
+    <div class="flbl">地方<span class="expl">（全国図鑑の番号で分けています）</span></div>
+    <div class="fregs" id="fregs"></div>
+  </div>
+  <div id="flwrap" style="display:none">
+    <div class="flcnt" id="flcnt"></div>
+    <div class="flist" id="flist"></div>
   </div>
 </div>
 
@@ -198,6 +235,8 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
   </ul>
   <h4>特別わざ(*)</h4>
   <p>わざ名の後ろの<b style="color:var(--gold)">*</b>は、レガシーわざ・特別なわざ(コミュニティデイ限定など)の目印です。通常のわざマシンでは覚えられず、イベント期間かすごいわざマシンが必要です。</p>
+  <h4>タイプ・地方の絞り込み</h4>
+  <p>検索欄の下の「タイプ・地方で絞り込む」から使えます。タイプは<b>2つまで</b>選べて、2つ選ぶと複合タイプ(両方を持つポケモン)に絞れます。地方は<b>全国図鑑の番号</b>で分けているので、アローラ・ガラルなどの地方フォルムは元のポケモンの地方に入ります。</p>
   <h4>のせていないわざ</h4>
   <p>やつあたり・おんがえし(シャドウ/ライトポケモン専用)は一覧にのせていません。</p>
 </div>
@@ -212,7 +251,19 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 'use strict';
 // ---- データ読み込み(入口は別・データは共通: godata.json=ジム・レイド / pvp_data.json=トレーナーバトル) ----
 let GO=null, PVP=null;
-const state={ key:null, tab:'pve' };   // key=図鑑の主キー(名前) / tab=pve|pvp
+const state={ key:null, tab:'pve', ftypes:new Set(), freg:null };   // key=図鑑の主キー(名前) / tab=pve|pvp / ftypes・freg=絞り込み
+// 地方は全国図鑑の番号で分ける(地方フォルムは元のポケモンの番号=元の地方に入る)
+const REGIONS=[
+  {id:'kanto',label:'カントー',lo:1,hi:151},{id:'johto',label:'ジョウト',lo:152,hi:251},
+  {id:'hoenn',label:'ホウエン',lo:252,hi:386},{id:'sinnoh',label:'シンオウ',lo:387,hi:493},
+  {id:'unova',label:'イッシュ',lo:494,hi:649},{id:'kalos',label:'カロス',lo:650,hi:721},
+  {id:'alola',label:'アローラ',lo:722,hi:809},{id:'galar',label:'ガラル',lo:810,hi:898},
+  {id:'hisui',label:'ヒスイ',lo:899,hi:905},{id:'paldea',label:'パルデア',lo:906,hi:1025},
+];
+// PvE側にしかないフォルムは図鑑番号を持っていないので、ここで補う(地方絞り込みが効くように)
+const EXTRA_DEX={'イエッサン':876,'ウーラオス':892,'オドリドリ':741,'ギルガルド':681,'シャリタツ':978,
+  'チェリム':421,'バケッチャ':710,'パンプジン':711,'ピカチュウ':25,'ミノマダム':413,'ミノムッチ':412,
+  'ゲッコウガ':658,'ブリガロン':652,'マフォクシー':655,'メテノ':774,'メロエッタ':648,'モルペコ':877,'ルガルガン':745};
 const BAD=new Set(['RETURN','FRUSTRATION']);   // おんがえし・やつあたりは載せない(タダシさん指示)
 const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
 
@@ -235,6 +286,9 @@ function buildDex(){
     if(e){ e.go=k; }
     else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999});
   }
+  for(const e of m.values()){
+    if(e.dex===9999){ for(const [nm,dx] of Object.entries(EXTRA_DEX)) if(e.name.includes(nm)){ e.dex=dx; break; } }
+  }
   DEX=[...m.values()].sort((x,y)=>x.dex-y.dex||x.name.localeCompare(y.name,'ja'));
   for(const e of DEX){ MAXA=Math.max(MAXA,e.a); MAXD=Math.max(MAXD,e.df); MAXH=Math.max(MAXH,e.h); }
 }
@@ -242,14 +296,65 @@ function buildDex(){
 // ---- 検索 ----
 const q=document.getElementById('q'), sugg=document.getElementById('sugg'), qclr=document.getElementById('qclr');
 function syncClr(){ qclr.style.display=q.value?'block':'none'; }
+function passFilter(e){
+  for(const t of state.ftypes) if(!e.ty.includes(t)) return false;
+  if(state.freg){ const r=REGIONS.find(x=>x.id===state.freg); if(!(e.dex>=r.lo&&e.dex<=r.hi)) return false; }
+  return true;
+}
 function search(word){
   const hit=[],sub=[];
   for(const e of DEX){
+    if(!passFilter(e))continue;
     const i=e.name.indexOf(word);
     if(i===0)hit.push(e); else if(i>0)sub.push(e);
     if(hit.length+sub.length>=100)break;
   }
   return hit.concat(sub).slice(0,100);
+}
+// ---- 絞り込みUI(タイプ・地方) ----
+function buildFilters(){
+  const ft=document.getElementById('ftypes');
+  ft.innerHTML=GO.types.map(t=>`<button data-t="${t}" aria-pressed="false" title="${GO.typeJa[t]}タイプで絞り込む">${typePairHTML([GO.typeJa[t]],26)}</button>`).join('');
+  ft.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const t=b.dataset.t;
+    if(state.ftypes.has(t))state.ftypes.delete(t);
+    else{ state.ftypes.add(t); if(state.ftypes.size>2){ const first=state.ftypes.values().next().value; state.ftypes.delete(first); } }
+    syncFilters();
+  });
+  const fr=document.getElementById('fregs');
+  fr.innerHTML=REGIONS.map(r=>`<button data-r="${r.id}" aria-pressed="false" title="${r.label}地方(全国図鑑${r.lo}〜${r.hi})のポケモンに絞り込む">${r.label}</button>`).join('');
+  fr.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    state.freg=state.freg===b.dataset.r?null:b.dataset.r;
+    syncFilters();
+  });
+  document.getElementById('filttab').onclick=function(){
+    const body=document.getElementById('filtbody');
+    const open=!body.classList.contains('open');
+    body.classList.toggle('open',open);
+    this.setAttribute('aria-expanded',open);
+    this.textContent=(open?'▾':'▸')+' タイプ・地方で絞り込む';
+  };
+  document.getElementById('fclear').onclick=()=>{ state.ftypes.clear(); state.freg=null; syncFilters(); };
+}
+function syncFilters(){
+  document.querySelectorAll('#ftypes button').forEach(b=>b.setAttribute('aria-pressed',state.ftypes.has(b.dataset.t)));
+  document.querySelectorAll('#fregs button').forEach(b=>b.setAttribute('aria-pressed',state.freg===b.dataset.r));
+  const on=state.ftypes.size>0||!!state.freg;
+  document.getElementById('fclear').style.display=on?'block':'none';
+  const wrap=document.getElementById('flwrap');
+  if(!on){ wrap.style.display='none'; return; }
+  // 当てはまるポケモンを図鑑番号順に全部出す(黙って切らない)
+  const list=DEX.filter(passFilter);
+  const parts=[];
+  if(state.ftypes.size)parts.push([...state.ftypes].map(t=>GO.typeJa[t]).join('×'));
+  if(state.freg)parts.push(REGIONS.find(r=>r.id===state.freg).label);
+  document.getElementById('flcnt').textContent=`${parts.join('・')} — ${list.length}匹`;
+  document.getElementById('flist').innerHTML=list.map(e=>
+    `<div class="fr" data-n="${e.name}"><b>${e.name}</b>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}<span class="cpv" title="最大CP(PL50・個体値15)">CP${maxCp(e)}</span></div>`).join('');
+  document.getElementById('flist').querySelectorAll('.fr').forEach(d=>d.onclick=()=>{
+    q.value=d.dataset.n; syncClr(); pick(d.dataset.n);
+  });
+  wrap.style.display='block';
 }
 q.addEventListener('compositionend',()=>{ const v=toKata(q.value); if(v!==q.value)q.value=v; q.dispatchEvent(new Event('input')); });
 q.addEventListener('input',e=>{
@@ -478,6 +583,7 @@ document.getElementById('helptab').onclick=function(){
 function updateUrl(){ try{ history.replaceState(null,'',location.pathname); }catch(e){} }
 function init(){
   buildDex();
+  buildFilters();
   const sp=new URLSearchParams(location.search);
   const want=sp.get('p');
   if(want){
