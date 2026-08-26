@@ -152,6 +152,14 @@ tbody tr:hover{background:var(--mebg)}
 .flist .fr:hover{background:var(--mebg)}
 .flist .fr b{font-weight:700}
 .flist .fr .cpv{margin-left:auto;color:var(--gold);font-weight:800;font-size:.82rem;font-variant-numeric:tabular-nums}
+.fweak button[aria-pressed="true"]{border-color:#ff6b81;box-shadow:0 0 10px rgba(255,107,129,.55)}
+.flist .fr .sv{margin-left:auto;font-weight:800;font-size:.84rem;font-variant-numeric:tabular-nums}
+.flist .fr .sv small{color:var(--sub);font-weight:700;font-size:.68rem;margin-right:3px}
+.flist .fr .cpv2{color:var(--sub);font-weight:700;font-size:.74rem;font-variant-numeric:tabular-nums;margin-left:8px}
+.flist .fr .st{color:var(--gold);font-weight:800}
+#sugg .mvtag{font-size:.66rem;font-weight:800;color:#042330;background:linear-gradient(160deg,#ffe08a,#ffb84d);border-radius:6px;padding:1px 6px;margin-left:6px}
+#sugg .sep{padding:5px 12px;font-size:.68rem;color:var(--sub);background:var(--zebra);cursor:default}
+#sugg .sep:hover{background:var(--zebra)}
 /* 使い方タブ */
 .helptab{width:100%;margin-top:14px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--tab);color:var(--sub);font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
 .helpbody{display:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:8px;font-size:.76rem;line-height:1.9;color:var(--ink)}
@@ -193,8 +201,23 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
   <div class="filtbody" id="filtbody">
     <div class="flbl">タイプ<span class="expl">（2つ選ぶと複合タイプで絞り込みます）</span></div>
     <div class="ftypes" id="ftypes"></div>
+    <div class="flbl">弱点<span class="expl">（選んだタイプの攻撃が弱点(×1.6以上)のポケモンに絞り込みます）</span></div>
+    <div class="ftypes fweak" id="fweak"></div>
     <div class="flbl">地方<span class="expl">（全国図鑑の番号で分けています）</span></div>
     <div class="fregs" id="fregs"></div>
+    <div class="flbl">しぼる</div>
+    <div class="fregs" id="fflags">
+      <button data-f="lg" aria-pressed="false" title="伝説・幻のポケモンだけに絞り込みます">伝説・幻</button>
+      <button data-f="fe" aria-pressed="false" title="最終進化(これ以上進化しない)のポケモンだけに絞り込みます">最終進化</button>
+    </div>
+    <div class="flbl">並べ替え</div>
+    <div class="fregs" id="fsorts">
+      <button data-s="dex" aria-pressed="true" title="全国図鑑の番号順に並べます">図鑑番号</button>
+      <button data-s="cp" aria-pressed="false" title="最大CP(PL50・個体値15)が高い順に並べます">最大CP</button>
+      <button data-s="a" aria-pressed="false" title="攻撃種族値が高い順に並べます">攻撃</button>
+      <button data-s="df" aria-pressed="false" title="防御種族値が高い順に並べます">防御</button>
+      <button data-s="h" aria-pressed="false" title="HP種族値が高い順に並べます">HP</button>
+    </div>
   </div>
   <div id="flwrap" style="display:none">
     <div class="flcnt" id="flcnt"></div>
@@ -235,8 +258,17 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
   </ul>
   <h4>特別わざ(*)</h4>
   <p>わざ名の後ろの<b style="color:var(--gold)">*</b>は、レガシーわざ・特別なわざ(コミュニティデイ限定など)の目印です。通常のわざマシンでは覚えられず、イベント期間かすごいわざマシンが必要です。</p>
-  <h4>タイプ・地方の絞り込み</h4>
-  <p>検索欄の下の「タイプ・地方で絞り込む」から使えます。タイプは<b>2つまで</b>選べて、2つ選ぶと複合タイプ(両方を持つポケモン)に絞れます。地方は<b>全国図鑑の番号</b>で分けているので、アローラ・ガラルなどの地方フォルムは元のポケモンの地方に入ります。</p>
+  <h4>絞り込みと並べ替え</h4>
+  <p>検索欄の下の「タイプ・地方で絞り込む」から使えます。</p>
+  <ul>
+    <li><b>タイプ</b> … 2つまで選べて、2つ選ぶと複合タイプ(両方を持つポケモン)に絞れます</li>
+    <li><b>弱点</b> … 選んだタイプの攻撃が<b>弱点(×1.6以上)</b>のポケモンに絞れます(例: でんきを選ぶと、でんきわざで攻撃したいポケモンの一覧)</li>
+    <li><b>地方</b> … 全国図鑑の番号で分けています。アローラ・ガラルなどの地方フォルムは元のポケモンの地方に入ります</li>
+    <li><b>しぼる</b> … 伝説・幻／最終進化だけに絞れます</li>
+    <li><b>並べ替え</b> … 一覧を最大CP・攻撃・防御・HPの高い順に並べ替えられます</li>
+  </ul>
+  <h4>わざから探す</h4>
+  <p>検索欄に<b>わざの名前</b>を入れると候補に「わざ」が出て、選ぶと<b>そのわざを覚えるポケモンの一覧</b>に切り替わります。名前の後ろの<b style="color:var(--gold)">*</b>は、そのポケモンにとって特別なわざ(レガシー)である印です。タイプなどの絞り込み・並べ替えとも組み合わせられます。</p>
   <h4>のせていないわざ</h4>
   <p>やつあたり・おんがえし(シャドウ/ライトポケモン専用)は一覧にのせていません。</p>
 </div>
@@ -251,7 +283,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 'use strict';
 // ---- データ読み込み(入口は別・データは共通: godata.json=ジム・レイド / pvp_data.json=トレーナーバトル) ----
 let GO=null, PVP=null;
-const state={ key:null, tab:'pve', ftypes:new Set(), freg:null };   // key=図鑑の主キー(名前) / tab=pve|pvp / ftypes・freg=絞り込み
+const state={ key:null, tab:'pve', ftypes:new Set(), fweak:new Set(), freg:null, flg:false, ffe:false, fsort:'dex', fmove:null };   // 絞り込み: タイプ/弱点/地方/伝説/最終進化/並べ替え/わざ逆引き
 // 地方は全国図鑑の番号で分ける(地方フォルムは元のポケモンの番号=元の地方に入る)
 const REGIONS=[
   {id:'kanto',label:'カントー',lo:1,hi:151},{id:'johto',label:'ジョウト',lo:152,hi:251},
@@ -279,18 +311,52 @@ function buildDex(){
   const m=new Map();
   for(const [k,v] of Object.entries(PVP.pokemon)){
     if(!v.r) continue;
-    m.set(v.n,{name:v.n,go:null,pvp:k,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:v.dex||9999});
+    m.set(v.n,{name:v.n,go:null,pvp:k,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:v.dex||9999,fe:null,lg:null});
   }
   for(const [k,v] of Object.entries(GO.pokemon)){
     const e=m.get(v.n);
-    if(e){ e.go=k; }
-    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999});
+    if(e){ e.go=k; e.fe=v.fe?1:0; e.lg=v.lg?1:0; }
+    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999,fe:v.fe?1:0,lg:v.lg?1:0});
   }
+  // PvP側にしかないフォルムは、括弧を除いたベース名でPvE側から最終進化・伝説の印を借りる
+  const goByName=new Map(Object.values(GO.pokemon).map(v=>[v.n,v]));
   for(const e of m.values()){
     if(e.dex===9999){ for(const [nm,dx] of Object.entries(EXTRA_DEX)) if(e.name.includes(nm)){ e.dex=dx; break; } }
+    if(e.fe==null){ const gv=goByName.get(e.name.replace(/（[^）]*）/g,'')); if(gv){ e.fe=gv.fe?1:0; e.lg=gv.lg?1:0; } }
   }
   DEX=[...m.values()].sort((x,y)=>x.dex-y.dex||x.name.localeCompare(y.name,'ja'));
   for(const e of DEX){ MAXA=Math.max(MAXA,e.a); MAXD=Math.max(MAXD,e.df); MAXH=Math.max(MAXH,e.h); }
+}
+
+// ---- わざ逆引きの索引(わざ名 → 覚えるポケモン。GO/PvPどちらかで覚えれば載せる・eq/ecなら特別わざ*) ----
+let MOVE_INDEX=new Map(), MOVE_NAMES=[];
+function buildMoveIndex(){
+  const add=(mvName,pkName,legacy)=>{
+    let m=MOVE_INDEX.get(mvName);
+    if(!m){ m=new Map(); MOVE_INDEX.set(mvName,m); }
+    m.set(pkName,(m.get(pkName)||false)||legacy);
+  };
+  for(const e of DEX){
+    if(e.go){ const p=GO.pokemon[e.go];
+      for(const id of [...(p.q||[]),...(p.c||[])]) if(GO.moves[id]&&!BAD.has(id)) add(GO.moves[id].n,e.name,false);
+      for(const id of [...(p.eq||[]),...(p.ec||[])]) if(GO.moves[id]&&!BAD.has(id)) add(GO.moves[id].n,e.name,true);
+    }
+    if(e.pvp){ const p=PVP.pokemon[e.pvp];
+      for(const id of [...(p.q||[]),...(p.c||[])]) if(PVP.moves[id]&&!BAD.has(id)) add(PVP.moves[id].n,e.name,false);
+      for(const id of [...(p.eq||[]),...(p.ec||[])]) if(PVP.moves[id]&&!BAD.has(id)) add(PVP.moves[id].n,e.name,true);
+    }
+  }
+  MOVE_NAMES=[...MOVE_INDEX.keys()].sort((a,b)=>a.localeCompare(b,'ja'));
+}
+// 弱点(×1.6以上で受けるタイプ)のキャッシュ(弱点からの逆引きに使う)
+const WEAK_CACHE=new Map();
+function weakSetOf(e){
+  let w=WEAK_CACHE.get(e.name);
+  if(w)return w;
+  const gs=effGroups(e.ty);
+  w=new Set([...gs.w1,...gs.w2]);
+  WEAK_CACHE.set(e.name,w);
+  return w;
 }
 
 // ---- 検索 ----
@@ -298,7 +364,11 @@ const q=document.getElementById('q'), sugg=document.getElementById('sugg'), qclr
 function syncClr(){ qclr.style.display=q.value?'block':'none'; }
 function passFilter(e){
   for(const t of state.ftypes) if(!e.ty.includes(t)) return false;
+  for(const t of state.fweak) if(!weakSetOf(e).has(t)) return false;
   if(state.freg){ const r=REGIONS.find(x=>x.id===state.freg); if(!(e.dex>=r.lo&&e.dex<=r.hi)) return false; }
+  if(state.flg&&!e.lg) return false;
+  if(state.ffe&&!e.fe) return false;
+  if(state.fmove){ const m=MOVE_INDEX.get(state.fmove); if(!m||!m.has(e.name)) return false; }
   return true;
 }
 function search(word){
@@ -327,6 +397,22 @@ function buildFilters(){
     state.freg=state.freg===b.dataset.r?null:b.dataset.r;
     syncFilters();
   });
+  const fw=document.getElementById('fweak');
+  fw.innerHTML=GO.types.map(t=>`<button data-t="${t}" aria-pressed="false" title="${GO.typeJa[t]}の攻撃が弱点のポケモンに絞り込む">${typePairHTML([GO.typeJa[t]],26)}</button>`).join('');
+  fw.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const t=b.dataset.t;
+    if(state.fweak.has(t))state.fweak.delete(t);
+    else{ state.fweak.add(t); if(state.fweak.size>2){ const first=state.fweak.values().next().value; state.fweak.delete(first); } }
+    syncFilters();
+  });
+  document.querySelectorAll('#fflags button').forEach(b=>b.onclick=()=>{
+    if(b.dataset.f==='lg')state.flg=!state.flg; else state.ffe=!state.ffe;
+    syncFilters();
+  });
+  document.querySelectorAll('#fsorts button').forEach(b=>b.onclick=()=>{
+    state.fsort=b.dataset.s;
+    syncFilters();
+  });
   document.getElementById('filttab').onclick=function(){
     const body=document.getElementById('filtbody');
     const open=!body.classList.contains('open');
@@ -334,23 +420,48 @@ function buildFilters(){
     this.setAttribute('aria-expanded',open);
     this.textContent=(open?'▾':'▸')+' タイプ・地方で絞り込む';
   };
-  document.getElementById('fclear').onclick=()=>{ state.ftypes.clear(); state.freg=null; syncFilters(); };
+  document.getElementById('fclear').onclick=()=>{
+    state.ftypes.clear(); state.fweak.clear(); state.freg=null;
+    state.flg=state.ffe=false; state.fsort='dex'; state.fmove=null;
+    syncFilters();
+  };
 }
 function syncFilters(){
   document.querySelectorAll('#ftypes button').forEach(b=>b.setAttribute('aria-pressed',state.ftypes.has(b.dataset.t)));
+  document.querySelectorAll('#fweak button').forEach(b=>b.setAttribute('aria-pressed',state.fweak.has(b.dataset.t)));
   document.querySelectorAll('#fregs button').forEach(b=>b.setAttribute('aria-pressed',state.freg===b.dataset.r));
-  const on=state.ftypes.size>0||!!state.freg;
+  document.querySelectorAll('#fflags button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f==='lg'?state.flg:state.ffe));
+  document.querySelectorAll('#fsorts button').forEach(b=>b.setAttribute('aria-pressed',state.fsort===b.dataset.s));
+  const on=state.ftypes.size>0||state.fweak.size>0||!!state.freg||state.flg||state.ffe||!!state.fmove;
   document.getElementById('fclear').style.display=on?'block':'none';
   const wrap=document.getElementById('flwrap');
   if(!on){ wrap.style.display='none'; return; }
-  // 当てはまるポケモンを図鑑番号順に全部出す(黙って切らない)
+  // 当てはまるポケモンを全部出す(黙って切らない)。並びは選んだ基準(既定は図鑑番号順)
   const list=DEX.filter(passFilter);
+  const sk=state.fsort;
+  if(sk==='cp')list.sort((x,y)=>maxCp(y)-maxCp(x));
+  else if(sk==='a')list.sort((x,y)=>y.a-x.a);
+  else if(sk==='df')list.sort((x,y)=>y.df-x.df);
+  else if(sk==='h')list.sort((x,y)=>y.h-x.h);
   const parts=[];
+  if(state.fmove)parts.push(`「${state.fmove}」を覚える`);
   if(state.ftypes.size)parts.push([...state.ftypes].map(t=>GO.typeJa[t]).join('×'));
+  if(state.fweak.size)parts.push([...state.fweak].map(t=>GO.typeJa[t]).join('×')+'が弱点');
   if(state.freg)parts.push(REGIONS.find(r=>r.id===state.freg).label);
+  if(state.flg)parts.push('伝説・幻');
+  if(state.ffe)parts.push('最終進化');
   document.getElementById('flcnt').textContent=`${parts.join('・')} — ${list.length}匹`;
+  const mvIdx=state.fmove?MOVE_INDEX.get(state.fmove):null;
+  const SLBL={a:'攻撃',df:'防御',h:'HP'};
+  const right=e=>{
+    if(sk==='a'||sk==='df'||sk==='h'){
+      const v=sk==='a'?e.a:sk==='df'?e.df:e.h;
+      return `<span class="sv" title="${SLBL[sk]}の種族値"><small>${SLBL[sk]}</small>${v}</span><span class="cpv2" title="最大CP(PL50・個体値15)">CP${maxCp(e)}</span>`;
+    }
+    return `<span class="cpv" title="最大CP(PL50・個体値15)">CP${maxCp(e)}</span>`;
+  };
   document.getElementById('flist').innerHTML=list.map(e=>
-    `<div class="fr" data-n="${e.name}"><b>${e.name}</b>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}<span class="cpv" title="最大CP(PL50・個体値15)">CP${maxCp(e)}</span></div>`).join('');
+    `<div class="fr" data-n="${e.name}"><b>${e.name}${mvIdx&&mvIdx.get(e.name)?'<span class="st" title="このポケモンにとって特別なわざ(レガシー)です">*</span>':''}</b>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}${right(e)}</div>`).join('');
   document.getElementById('flist').querySelectorAll('.fr').forEach(d=>d.onclick=()=>{
     q.value=d.dataset.n; syncClr(); pick(d.dataset.n);
   });
@@ -364,13 +475,23 @@ q.addEventListener('input',e=>{
   const w=toKata(q.value.trim());
   if(!w){ sugg.style.display='none'; return; }
   const hits=search(w);
-  if(!hits.length){ sugg.style.display='none'; return; }
-  sugg.innerHTML=hits.map(e=>`<div data-n="${e.name}"><span>${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}</div>`).join('');
+  // わざ名でも探せる(前方一致・上限20)。選ぶと「そのわざを覚えるポケモン一覧」に切り替わる
+  const mvHits=MOVE_NAMES.filter(n=>n.startsWith(w)).slice(0,20);
+  if(!hits.length&&!mvHits.length){ sugg.style.display='none'; return; }
+  sugg.innerHTML=hits.map(e=>`<div data-n="${e.name}"><span>${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}</div>`).join('')
+    +(mvHits.length?`<div class="sep">わざから探す(覚えるポケモンの一覧が出ます)</div>`+mvHits.map(n=>`<div data-mv="${n}"><span>${n}<span class="mvtag">わざ</span></span></div>`).join(''):'');
   sugg.style.display='block';
   sugg.querySelectorAll('div[data-n]').forEach(d=>d.onclick=()=>{
     sugg.style.display='none';
     q.value=d.dataset.n; syncClr();
     pick(d.dataset.n);
+  });
+  sugg.querySelectorAll('div[data-mv]').forEach(d=>d.onclick=()=>{
+    sugg.style.display='none';
+    state.fmove=d.dataset.mv;
+    q.value=''; syncClr();
+    syncFilters();
+    document.getElementById('flwrap').scrollIntoView({behavior:'smooth',block:'start'});
   });
 });
 document.addEventListener('click',e=>{ if(!e.target.closest('.searchbox'))sugg.style.display='none'; });
@@ -583,6 +704,7 @@ document.getElementById('helptab').onclick=function(){
 function updateUrl(){ try{ history.replaceState(null,'',location.pathname); }catch(e){} }
 function init(){
   buildDex();
+  buildMoveIndex();
   buildFilters();
   const sp=new URLSearchParams(location.search);
   const want=sp.get('p');
