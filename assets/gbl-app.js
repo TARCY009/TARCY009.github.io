@@ -3872,8 +3872,9 @@ function rbPoints(turns, ctx, dec) {
     if (armed && !over) {
       // 「あとN発攻撃してから」を選んでいれば、そのぶん後ろにずれたところが判断の場面
       // (撃つと決めた発は、そのとき決めた待ち発数の位置に判断の場面が残る＝キーが変わらない)
-      const dw = spIdx < dec.shots.length ? dec.shots[spIdx].wait : dec.wait;
-      const w = typeof dw === 'number' ? dw : 0;
+      const sht = spIdx < dec.shots.length ? dec.shots[spIdx] : null;
+      const dw = sht ? sht.wait : dec.wait;
+      const w = typeof dw === 'number' ? dw : (sht && sht.after) || 0;
       // en = この時点のゲージ。選択ウィンドウで「ゲージが足りないわざはあと何発で発動か」を出すのに使う
       if (normals >= w) { pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn, en: t.state[0].en }); armed = false; asked = true; }
     }
@@ -3960,9 +3961,9 @@ function rbChoices(p, ctx) {
 function rbApply(dec, p, ans) {
   if (p.kind === 'sp') {
     // おまかせ＝エンジンの最適タイミング判断にゆだねる(従来の自動とまったく同じ動き)
-    if (ans.a === 'auto') { dec.shots[p.seq] = { wait: 'opt', mv: null }; dec.wait = 0; }
+    if (ans.a === 'auto') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: null }; dec.wait = 0; }
     // 最適(わざ指定・2026-08-20): このわざを、エンジンの最適タイミングで撃つ
-    else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', mv: ans.mv }; dec.wait = 0; }
+    else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait, mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'wait') dec.wait += ans.n;
     else dec.hold = true;
@@ -4079,7 +4080,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     for (let guard = 0; guard < 60; guard++) {
       // charged は必ず入れる(SPが1本の構成だと、わざ未指定のときエンジンが選べないため)
       const L = { ...picks[mi].base, ...pol, charged: spList.slice(), shields: myShLeft, bluff: true,
-        timing: 'shots', shotPlan: dec.shots.map(s => ({ mode: s.wait, move: s.mv })), shotRest: null,
+        timing: 'shots', shotPlan: dec.shots.map(s => ({ mode: s.wait, move: s.mv, after: s.after })), shotRest: null,
         shieldPlan: dec.shieldAt.slice(), shieldRest: false };
       if (st[mi].resume) L.resume = { ...st[mi].resume, stall: Math.max(st[mi].resume.stall || 0, myEntry) };
       else if (myEntry) L.stallStart = myEntry;
@@ -4106,12 +4107,12 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       };
       const w0 = simWorst(L);
       res = w0.res; foeMv = w0.mv;
-      const withShots = shots => ({ ...L, shotPlan: shots.map(x => ({ mode: x.wait, move: x.mv })) });
+      const withShots = shots => ({ ...L, shotPlan: shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after })) });
       // 「⭐最適」ボタン用: この発を最適タイミング(mvId指定)にしたとき、あと何発ノーマルアタックを
       // はさんでから撃つことになるか(GBL模擬戦と同じ・2026-08-23にロケット団へ反映)
       const optNOf = (p, mvId) => {
         if (p.kind !== 'sp') return null;
-        const shots = dec.shots.slice(); shots[p.seq] = { wait: 'opt', mv: mvId || null };
+        const shots = dec.shots.slice(); shots[p.seq] = { wait: 'opt', after: dec.wait, mv: mvId || null };
         const r = simWorst(withShots(shots)).res;
         let spCnt = 0, fasts = 0;
         for (const t of rbTurns(r)) for (const e of t.ev[0]) {
@@ -5198,8 +5199,9 @@ function gbPoints(turns, ctx, dec) {
       const over = t.state[0].hp <= 0 || t.state[1].hp <= 0;
       if (!armed && !asked && !over && !d.hold && d.swapTo == null && cost && t.state[s].en >= cost) { armed = true; normals = 0; }
       if (armed && !over) {
-        const dw = spIdx < d.shots.length ? d.shots[spIdx].wait : d.wait;
-        const w = typeof dw === 'number' ? dw : 0;
+        const sht = spIdx < d.shots.length ? d.shots[spIdx] : null;
+        const dw = sht ? sht.wait : d.wait;
+        const w = typeof dw === 'number' ? dw : (sht && sht.after) || 0;
         if (normals >= w) {
           pts.push({ side: s, kind: 'sp', seq: spIdx, w, tn: t.tn, en: t.state[s].en, ...(snap[t.tn] || {}) });
           armed = false; asked = true;
@@ -6116,7 +6118,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
         bluff: s === 1 ? ai.bluff : false, timing: 'shots',
-        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv })), shotRest: null,
+        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after })), shotRest: null,
         shieldPlan: d.shieldAt.slice(), shieldRest: false };
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
       return c;
@@ -6128,7 +6130,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     const optNOf = (p, mvId) => {
       if (p.kind !== 'sp') return null;
       const s = p.side, d = dec[s], len = d.shots.length, save = d.shots[p.seq];
-      d.shots[p.seq] = { wait: 'opt', mv: mvId || null };
+      d.shots[p.seq] = { wait: 'opt', after: d.wait, mv: mvId || null };
       const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
       const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
         { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });

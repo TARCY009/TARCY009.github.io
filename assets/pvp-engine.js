@@ -363,6 +363,10 @@
                 // +N発: ゲージが貯まってから通常技を余分にN発打ってから発動
                 if ((s.shotWait || 0) >= sh.mode) fire = true;
                 else s.shotWait = (s.shotWait || 0) + 1;
+              } else if (sh.after && (s.shotWait || 0) < sh.after) {
+                // ＋Nで待ってから「最適」を選んだ発: 先に通常技をN発打ってから最適タイミングを探す
+                // (afterが無ければ従来どおり。+Nの待ちが「最適」で無言で捨てられるバグの修正・2026-08-26)
+                s.shotWait = (s.shotWait || 0) + 1;
               } else {
                 // 最適: 通常タイミングAIと同じ判断
                 fire = optWindow(s, o, mv);
