@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケモンGO ステータス図鑑｜種族値・最大CP・弱点・わざ性能</title>
+<meta name="description" content="ポケモンGOの全ポケモンの種族値・最大CP・弱点/耐性・わざ性能(ジム・レイド/トレーナーバトル)をまとめて確認できるステータス図鑑">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/pokedex/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/pokedex/apple-touch-icon.png">
+<link rel="manifest" href="/pokedex/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="ステータス図鑑">
+<meta name="theme-color" content="#0b1326" id="themecolor">
+<link rel="stylesheet" href="/assets/theme.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<link rel="stylesheet" href="/assets/explain.css">
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<style>
+/* 色はすべてこの2ブロックで決まる(右上でダーク⇄ライト切替・既定はダーク) */
+:root{
+  --bg:#0b1326; --panel:rgba(22,31,58,.94); --panel2:#101a36; --line:#27335e; --line2:#3a4a85;
+  --ink:#edf1fc; --sub:#8d97c2; --cy:#43e0ff; --gl:#4d8dff; --gold:#ffd54a; --stab:#ff6b81;
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
+  --zebra:rgba(77,141,255,.05); --thbg:linear-gradient(90deg,rgba(45,90,200,.42),rgba(120,80,220,.42),rgba(8,180,201,.42));
+  --barA:linear-gradient(90deg,#ff8a5c,#ff5a7a); --barD:linear-gradient(90deg,#4d8dff,#43e0ff); --barH:linear-gradient(90deg,#3ddc84,#a8e063);
+  --mebg:rgba(67,224,255,.08); --cardsh:none; --ongold:#3a2c00;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(77,141,255,.16), transparent 62%),
+    radial-gradient(820px 540px at 112% 4%, rgba(255,213,74,.10), transparent 60%),
+    radial-gradient(950px 620px at 50% 115%, rgba(67,224,255,.12), transparent 62%),
+    linear-gradient(168deg,#0b1326 0%,#101331 55%,#0b1a2e 100%);
+  --tcolor:#0b1326;
+}
+:root.light{
+  --bg:#eef2fb; --panel:rgba(255,255,255,.9); --panel2:#f4f7ff; --line:#dfe6f5; --line2:#b9c6e4;
+  --ink:#212743; --sub:#5f6a92; --cy:#0b8fa8; --gl:#2f5fd0; --gold:#a8760a; --stab:#d63a52;
+  --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
+  --zebra:rgba(47,95,208,.05); --thbg:linear-gradient(90deg,rgba(45,90,200,.65),rgba(120,80,220,.65),rgba(8,180,201,.65));
+  --mebg:rgba(11,143,168,.07); --cardsh:0 14px 30px -18px rgba(59,110,240,.32),0 1px 0 rgba(255,255,255,.8) inset; --ongold:#3a2c00;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(59,110,240,.15), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(255,190,60,.14), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(8,180,201,.13), transparent 62%),
+    linear-gradient(165deg,#e9f1ff 0%,#f4edff 50%,#e6f6fb 100%);
+  --tcolor:#eef2fb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bgimg);background-attachment:fixed;min-height:100vh;color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.6;padding-bottom:70px}
+.wrap{max-width:760px;margin:0 auto;padding:14px}
+header{display:flex;align-items:center;gap:10px;padding:16px 0 8px;flex-wrap:nowrap}
+h1{font-size:1.32rem;letter-spacing:.02em;min-width:0}
+h1 span{white-space:nowrap;color:var(--sub);font-size:.85em;font-weight:700;display:block;line-height:1.2}
+h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ffd54a);-webkit-background-clip:text;background-clip:text;color:transparent}
+#themesw{margin-left:auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--cardsh)}
+/* 検索 */
+.searchbox{position:relative}
+.searchbox input{width:100%;padding:11px 40px 11px 12px;font-size:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--ink);outline:none}
+.searchbox input:focus{border-color:var(--gl)}
+.clrbtn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:1px solid var(--line);border-radius:50%;background:var(--panel2);color:var(--sub);cursor:pointer;display:none;line-height:1}
+#sugg{position:absolute;z-index:60;left:0;right:0;top:calc(100% + 5px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;max-height:290px;overflow:auto;display:none;box-shadow:0 16px 34px rgba(0,0,0,.5)}
+#sugg div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-size:.9rem}
+#sugg div:hover{background:var(--zebra)}
+/* ヒーロー(名前+CP) */
+.hero{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hero .nm{font-size:1.5rem;font-weight:800;display:flex;align-items:center;gap:8px;min-width:0}
+.hero .cp{margin-left:auto;text-align:right}
+.hero .cp small{display:block;color:var(--sub);font-size:.7rem;letter-spacing:.05em}
+.hero .cp b{font-size:1.6rem;background:linear-gradient(92deg,#ffd54a,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* 種族値メーター */
+.stats{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.strow{display:grid;grid-template-columns:56px 44px 1fr;align-items:center;gap:10px}
+.strow .lb{color:var(--sub);font-size:.78rem;font-weight:700}
+.strow .v{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+.strow .bar{height:10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
+.strow .bar i{display:block;height:100%;border-radius:999px}
+.strow.a .bar i{background:var(--barA)}
+.strow.d .bar i{background:var(--barD)}
+.strow.h .bar i{background:var(--barH)}
+/* 相性 */
+.sec{font-size:.82rem;font-weight:800;color:var(--sub);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.effrow{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-top:1px dashed var(--line)}
+.effrow:first-of-type{border-top:none}
+.effrow .mult{flex:0 0 62px;text-align:center;font-weight:800;font-size:.84rem;border-radius:8px;padding:3px 0;margin-top:2px}
+.effrow.w2 .mult{background:rgba(255,90,95,.2);color:#ff8a8f;border:1px solid rgba(255,90,95,.45)}
+.effrow.w1 .mult{background:rgba(255,159,67,.16);color:#ffb26b;border:1px solid rgba(255,159,67,.4)}
+.effrow.r1 .mult{background:rgba(61,220,132,.14);color:#5fe0a0;border:1px solid rgba(61,220,132,.38)}
+.effrow.r2 .mult,.effrow.r3 .mult{background:rgba(67,224,255,.13);color:#6be2ff;border:1px solid rgba(67,224,255,.38)}
+:root.light .effrow.w2 .mult{color:#c62838}:root.light .effrow.w1 .mult{color:#b06a10}
+:root.light .effrow.r1 .mult{color:#1f9d55}:root.light .effrow.r2 .mult,:root.light .effrow.r3 .mult{color:#0b8fa8}
+.effrow .tps{display:flex;flex-wrap:wrap;gap:5px;flex:1}
+.effnone{color:var(--sub);font-size:.8rem;padding:2px 0 0}
+/* わざのタブ */
+.mtabs{display:flex;margin:2px 0 12px}
+.mtabs button{flex:1;padding:10px 8px;border:1px solid var(--line2);background:var(--tab);color:var(--sub);font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.mtabs button:first-child{border-radius:12px 0 0 12px}
+.mtabs button:last-child{border-radius:0 12px 12px 0;border-left:none}
+.mtabs button[aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;box-shadow:0 5px 16px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+/* わざ表 */
+.mvsec{margin-top:12px}
+.tblwrap{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+thead tr{background:var(--thbg)}
+th{padding:8px 6px;font-size:.72rem;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);font-weight:700;white-space:nowrap}
+td{padding:9px 6px;text-align:center;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+tbody tr:nth-child(even){background:var(--zebra)}
+td.mv{text-align:left;padding-left:10px;cursor:pointer}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--mebg)}
+.mvnm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:.88rem}
+.mvnm .st{color:var(--gold);font-weight:800}
+.gbar{display:flex;gap:3px;margin-top:4px;max-width:130px}
+.gbar i{height:5px;flex:1;border-radius:3px;opacity:.9}
+.stab{color:var(--stab);font-weight:800}
+.dim{color:var(--sub)}
+/* わざ詳細モーダル */
+.mvov{position:fixed;inset:0;background:rgba(5,8,20,.62);z-index:220;display:flex;align-items:flex-start;justify-content:center;padding:9vh 14px 14px;overflow:auto}
+.mvwin{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:16px;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+:root.light .mvwin{box-shadow:0 24px 60px rgba(30,40,90,.35)}
+.mvwin .hd{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.mvwin .hd b{font-size:1.1rem}
+.mvwin .x{margin-left:auto;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:var(--panel2);color:var(--sub);cursor:pointer;line-height:1}
+.mvwin .lg{font-size:.74rem;color:var(--gold);font-weight:800;margin-bottom:8px}
+.mvwin .grp{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mvwin .gttl{background:var(--thbg);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);font-size:.76rem;font-weight:800;padding:6px 10px}
+.mvwin .rows{padding:4px 12px 8px}
+.mvwin .r{display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed var(--line);font-size:.86rem}
+.mvwin .r:first-child{border-top:none}
+.mvwin .r span{color:var(--sub)}
+.mvwin .r b{font-variant-numeric:tabular-nums}
+.mvwin .note{margin-top:10px;font-size:.78rem;color:var(--sub);line-height:1.7}
+/* 使い方タブ */
+.helptab{width:100%;margin-top:14px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--tab);color:var(--sub);font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
+.helpbody{display:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:8px;font-size:.76rem;line-height:1.9;color:var(--ink)}
+.helpbody h4{margin:26px 0 6px;padding-top:14px;border-top:1px solid var(--line);font-size:.8rem}
+.helpbody h4:first-child{margin-top:0;padding-top:0;border-top:none}
+.helpbody p{margin-bottom:12px}
+.helpbody li{margin:0 0 9px 1.2em}
+footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-height:1.8}
+.mtnote{color:var(--sub);font-size:.84rem;text-align:center;padding:16px 0}
+.expl{display:none}
+.explain .expl{display:revert}
+.enote{color:var(--sub);font-size:.74rem;line-height:1.7;margin:6px 0 0}
+@media (max-width:560px){
+  h1{font-size:1.1rem}
+  td{padding:8px 3px;font-size:.8rem}
+  th{padding:7px 3px;font-size:.66rem}
+  .mvnm{font-size:.82rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1><span>ポケモンGO</span><b>ステータス図鑑</b></h1>
+  <div id="themesw"></div>
+</header>
+
+<div class="card">
+  <div class="sec">ポケモン</div>
+  <div class="searchbox">
+    <input id="q" type="text" placeholder="名前で検索(例: フシギバナ)" autocomplete="off">
+    <button id="qclr" class="clrbtn" type="button" aria-label="入力を消す" title="入力を消します">✕</button>
+    <div id="sugg"></div>
+  </div>
+</div>
+
+<div id="result" style="display:none">
+  <div class="card" id="herocard"></div>
+  <div class="card" id="effcard"></div>
+  <div class="card" id="mvcard"></div>
+</div>
+<div class="card" id="emptycard"><div class="mtnote">ポケモンを選ぶと、種族値・最大CP・弱点・わざ性能が出ます</div></div>
+
+<button class="helptab" id="helptab" aria-expanded="false">？ 使い方・計算の前提</button>
+<div class="helpbody" id="helpbody">
+  <h4>この図鑑でわかること</h4>
+  <p>ポケモンを選ぶと、<b>種族値・最大CP・弱点/耐性・わざ性能</b>が1画面で確認できます。わざの行をタップすると、発生時間や能力変化まで含めた詳細ウィンドウが開きます。</p>
+  <h4>最大CP</h4>
+  <p><b>PL50・個体値15/15/15</b>のCPです(相棒ブーストのPL51は含みません)。</p>
+  <h4>弱点・耐性</h4>
+  <p>受けるダメージの倍率でまとめています。<b>×2.56=二重弱点 / ×1.6=弱点 / ×0.63=耐性 / ×0.39=二重耐性 / ×0.24=三重耐性相当</b>。ポケモンGOには「効果なし(無効)」が無く、原作の無効は×0.39として扱われます。</p>
+  <h4>ジム・レイドのわざ性能</h4>
+  <ul>
+    <li><b>威力</b> … タイプ一致(1.2倍)込みの値を<b class="stab">赤字</b>で示します(不一致は素の威力)</li>
+    <li><b>時間</b> … わざ全体の秒数</li>
+    <li><b>EPS</b> … 1秒あたりのゲージ増加(ノーマルアタック)</li>
+    <li><b>DPS</b> … 1秒あたりのダメージ(威力÷時間)</li>
+    <li>SPアタックのわざ名の下のバーは<b>ゲージの本数</b>(1〜3本)です</li>
+    <li>ダメージ発生までの時間は、わざをタップした詳細ウィンドウで確認できます</li>
+  </ul>
+  <h4>トレーナーバトルのわざ性能</h4>
+  <ul>
+    <li><b>ゲージ</b> … 1発で増えるゲージ量(ノーマルアタック) ／ <b>消費</b> … 撃つのに使うゲージ量(SPアタック)</li>
+    <li><b>ターン</b> … 1ターン=0.5秒</li>
+    <li><b>EPT/DPT</b> … 1ターンあたりのゲージ増加/ダメージ</li>
+    <li><b>DPE</b> … 消費ゲージ1あたりのダメージ(高いほど効率がよい)</li>
+  </ul>
+  <h4>特別わざ(*)</h4>
+  <p>わざ名の後ろの<b style="color:var(--gold)">*</b>は、レガシーわざ・特別なわざ(コミュニティデイ限定など)の目印です。通常のわざマシンでは覚えられず、イベント期間かすごいわざマシンが必要です。</p>
+  <h4>のせていないわざ</h4>
+  <p>やつあたり・おんがえし(シャドウ/ライトポケモン専用)は一覧にのせていません。</p>
+</div>
+
+<footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。<br>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
+</div>
+
+<script src="/assets/type-icons.js"></script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+<script>
+'use strict';
+// ---- データ読み込み(入口は別・データは共通: godata.json=ジム・レイド / pvp_data.json=トレーナーバトル) ----
+let GO=null, PVP=null;
+const state={ key:null, tab:'pve' };   // key=図鑑の主キー(名前) / tab=pve|pvp
+const BAD=new Set(['RETURN','FRUSTRATION']);   // おんがえし・やつあたりは載せない(タダシさん指示)
+const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+
+Promise.all([
+  fetch('/godata.json').then(r=>r.json()),
+  fetch('/pvp_data.json').then(r=>r.json()),
+]).then(([g,p])=>{ GO=g; PVP=p; init(); });
+
+// 名前で両データを対応付ける(キー体系が違うため。PvE側だけ/PvP側だけのフォルムもそのまま載せる)
+let DEX=[];         // {name, go:キー|null, pvp:キー|null, ty, a, df, h, dex}
+let MAXA=1,MAXD=1,MAXH=1;
+function buildDex(){
+  const m=new Map();
+  for(const [k,v] of Object.entries(PVP.pokemon)){
+    if(!v.r) continue;
+    m.set(v.n,{name:v.n,go:null,pvp:k,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:v.dex||9999});
+  }
+  for(const [k,v] of Object.entries(GO.pokemon)){
+    const e=m.get(v.n);
+    if(e){ e.go=k; }
+    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999});
+  }
+  DEX=[...m.values()].sort((x,y)=>x.dex-y.dex||x.name.localeCompare(y.name,'ja'));
+  for(const e of DEX){ MAXA=Math.max(MAXA,e.a); MAXD=Math.max(MAXD,e.df); MAXH=Math.max(MAXH,e.h); }
+}
+
+// ---- 検索 ----
+const q=document.getElementById('q'), sugg=document.getElementById('sugg'), qclr=document.getElementById('qclr');
+function syncClr(){ qclr.style.display=q.value?'block':'none'; }
+function search(word){
+  const hit=[],sub=[];
+  for(const e of DEX){
+    const i=e.name.indexOf(word);
+    if(i===0)hit.push(e); else if(i>0)sub.push(e);
+    if(hit.length+sub.length>=100)break;
+  }
+  return hit.concat(sub).slice(0,100);
+}
+q.addEventListener('compositionend',()=>{ const v=toKata(q.value); if(v!==q.value)q.value=v; q.dispatchEvent(new Event('input')); });
+q.addEventListener('input',e=>{
+  if(e&&e.isComposing)return;
+  const v=toKata(q.value); if(v!==q.value)q.value=v;
+  syncClr();
+  const w=toKata(q.value.trim());
+  if(!w){ sugg.style.display='none'; return; }
+  const hits=search(w);
+  if(!hits.length){ sugg.style.display='none'; return; }
+  sugg.innerHTML=hits.map(e=>`<div data-n="${e.name}"><span>${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}</div>`).join('');
+  sugg.style.display='block';
+  sugg.querySelectorAll('div[data-n]').forEach(d=>d.onclick=()=>{
+    sugg.style.display='none';
+    q.value=d.dataset.n; syncClr();
+    pick(d.dataset.n);
+  });
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('.searchbox'))sugg.style.display='none'; });
+qclr.onclick=()=>{ q.value=''; sugg.style.display='none'; syncClr(); q.focus(); };
+
+// ---- 選択と描画 ----
+function pick(name){
+  state.key=name;
+  render();
+  document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function entryOf(name){ return DEX.find(e=>e.name===name); }
+
+function maxCp(e){
+  const c=GO.cpm['50'];
+  return Math.max(10,Math.floor((e.a+15)*Math.sqrt(e.df+15)*Math.sqrt(e.h+15)*c*c/10));
+}
+// 受けるダメージ倍率(攻撃タイプごと)→ 倍率グループにまとめる
+function effGroups(ty){
+  const idx=Object.fromEntries(GO.types.map((t,i)=>[t,i]));
+  const gs={w2:[],w1:[],r1:[],r2:[],r3:[]};
+  for(const atk of GO.types){
+    let m=1;
+    for(const d of ty)m*=GO.chart[atk][idx[d]];
+    const r=Math.round(m*1000)/1000;
+    if(r>=2.5)gs.w2.push(atk); else if(r>=1.6)gs.w1.push(atk);
+    else if(r<=0.25)gs.r3.push(atk); else if(r<=0.4)gs.r2.push(atk); else if(r<=0.63)gs.r1.push(atk);
+  }
+  return gs;
+}
+const tchips=(list,size)=>list.map(t=>typePairHTML([GO.typeJa[t]],size||20)).join('');
+const num=(v,d)=>{ const n=+v.toFixed(d==null?1:d); return String(n); };
+
+function render(){
+  const e=entryOf(state.key);
+  if(!e)return;
+  document.getElementById('emptycard').style.display='none';
+  document.getElementById('result').style.display='block';
+  // ヒーロー
+  document.getElementById('herocard').innerHTML=`
+    <div class="hero">
+      <div class="nm">${e.name}${typePairHTML(e.ty.map(t=>GO.typeJa[t]),22)}</div>
+      <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b></div>
+    </div>
+    <div class="stats">
+      ${['a','d','h'].map(k=>{
+        const v=k==='a'?e.a:k==='d'?e.df:e.h, mx=k==='a'?MAXA:k==='d'?MAXD:MAXH;
+        const lb=k==='a'?'攻撃':k==='d'?'防御':'HP';
+        return `<div class="strow ${k}" title="${lb}の種族値です(個体値・PLを除いた素の強さ)"><span class="lb">${lb}</span><span class="v">${v}</span><span class="bar"><i style="width:${Math.round(v/mx*100)}%"></i></span></div>`;
+      }).join('')}
+    </div>`;
+  // 相性
+  const gs=effGroups(e.ty);
+  const row=(cls,mult,list,tip)=>list.length?`<div class="effrow ${cls}" title="${tip}"><span class="mult">${mult}</span><span class="tps">${tchips(list)}</span></div>`:'';
+  const wHtml=row('w2','×2.56',gs.w2,'二重弱点。受けるダメージが約2.56倍になります')+row('w1','×1.6',gs.w1,'弱点。受けるダメージが1.6倍になります');
+  const rHtml=row('r1','×0.63',gs.r1,'耐性。受けるダメージが約0.63倍になります')+row('r2','×0.39',gs.r2,'二重耐性(原作の無効を含む)。受けるダメージが約0.39倍になります')+row('r3','×0.24',gs.r3,'三重耐性相当。受けるダメージが約0.24倍になります');
+  document.getElementById('effcard').innerHTML=`
+    <div class="sec">🛡 タイプ相性(受けるダメージ)</div>
+    ${wHtml||'<div class="effnone">弱点はありません</div>'}
+    <div style="height:6px"></div>
+    ${rHtml||'<div class="effnone">耐性はありません</div>'}`;
+  renderMoves();
+  updateUrl();
+}
+
+// ---- わざ表 ----
+const stabOf=(e,t)=>e.ty.includes(t);
+// わざは「強い順」(タイプ一致込みのDPS/DPT/DPE降順)に並べる
+function pveMoves(e){
+  if(!e.go)return null;
+  const p=GO.pokemon[e.go];
+  const legacy=new Set([...(p.eq||[]),...(p.ec||[])]);
+  const dps=id=>{const m=GO.moves[id];return m.p*(stabOf(e,m.t)?1.2:1)/m.d;};
+  const fasts=[...new Set([...(p.q||[]),...(p.eq||[])])].filter(m=>GO.moves[m]).sort((x,y)=>dps(y)-dps(x));
+  const sps=[...new Set([...(p.c||[]),...(p.ec||[])])].filter(m=>GO.moves[m]&&!BAD.has(m)).sort((x,y)=>dps(y)-dps(x));
+  return {fasts,sps,legacy};
+}
+function pvpMoves(e){
+  if(!e.pvp)return null;
+  const p=PVP.pokemon[e.pvp];
+  const legacy=new Set([...(p.eq||[]),...(p.ec||[])]);
+  const dpt=id=>{const m=PVP.moves[id];return m.p*(stabOf(e,m.t)?1.2:1)/(m.tn||1);};
+  const dpe=id=>{const m=PVP.moves[id];return m.p*(stabOf(e,m.t)?1.2:1)/(m.e||1);};
+  const fasts=[...new Set([...(p.q||[]),...(p.eq||[])])].filter(m=>PVP.moves[m]).sort((x,y)=>dpt(y)-dpt(x));
+  const sps=[...new Set([...(p.c||[]),...(p.ec||[])])].filter(m=>PVP.moves[m]&&!BAD.has(m)).sort((x,y)=>dpe(y)-dpe(x));
+  return {fasts,sps,legacy};
+}
+const TYPE_COLORS={NORMAL:'#9fa19f',FIGHTING:'#ff8000',FLYING:'#81b9ef',POISON:'#9141cb',GROUND:'#915121',ROCK:'#afa981',BUG:'#91a119',GHOST:'#704170',STEEL:'#60a1b8',FIRE:'#e62829',WATER:'#2980ef',GRASS:'#3fa129',ELECTRIC:'#fac000',PSYCHIC:'#ef4179',ICE:'#3fd8ff',DRAGON:'#5060e1',DARK:'#50413f',FAIRY:'#ef70ef'};
+const gaugeBar=m=>{ const n=m.e>=-34?3:m.e>=-51?2:1;
+  return `<span class="gbar">${Array.from({length:n},()=>`<i style="background:${TYPE_COLORS[m.t]||'#888'}"></i>`).join('')}</span>`; };
+const mvName=(nm,t,lg)=>`<span class="mvnm">${typePairHTML([GO.typeJa[t]],16)}<span>${nm}${lg?'<b class="st" title="特別なわざ(レガシー)。通常のわざマシンでは覚えられません">*</b>':''}</span></span>`;
+
+function renderMoves(){
+  const e=entryOf(state.key);
+  const box=document.getElementById('mvcard');
+  const tabs=`<div class="mtabs">
+    <button data-t="pve" aria-pressed="${state.tab==='pve'}" title="ジム・レイド(PvE)でのわざ性能を表示します">ジム・レイド</button>
+    <button data-t="pvp" aria-pressed="${state.tab==='pvp'}" title="トレーナーバトル(GBL・対人戦)でのわざ性能を表示します">トレーナーバトル</button></div>`;
+  let body='';
+  if(state.tab==='pve'){
+    const mv=pveMoves(e);
+    if(!mv) body='<div class="mtnote">このフォルムはジム・レイドのデータがありません</div>';
+    else{
+      const frow=id=>{ const m=GO.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
+        return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}</td>
+          <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td>${num(m.e/m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
+      const srow=id=>{ const m=GO.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
+        return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}${gaugeBar(m)}</td>
+          <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
+      body=`
+      <div class="mvsec"><div class="sec">ノーマルアタック</div>
+        <div class="enote expl">威力・DPSはタイプ一致(1.2倍)込みの値を赤字で示します。EPS=1秒あたりのゲージ増加。ダメージ発生までの時間は、わざをタップすると出ます。</div>
+        <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>時間</th><th>EPS</th><th>DPS</th></tr></thead>
+        <tbody>${mv.fasts.map(frow).join('')}</tbody></table></div></div>
+      <div class="mvsec"><div class="sec">SPアタック</div>
+        <div class="enote expl">わざ名の下のバーはゲージの本数(1〜3本)。本数が多いほど小刻みに撃てます。</div>
+        <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>時間</th><th>DPS</th></tr></thead>
+        <tbody>${mv.sps.map(srow).join('')}</tbody></table></div></div>`;
+    }
+  }else{
+    const mv=pvpMoves(e);
+    if(!mv) body='<div class="mtnote">このフォルムはトレーナーバトルのデータがありません</div>';
+    else{
+      const frow=id=>{ const m=PVP.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1); const tn=m.tn||1;
+        return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}</td>
+          <td class="${st?'stab':''}">${num(pw)}</td><td>${m.eg||0}</td><td>${tn}</td><td>${num((m.eg||0)/tn)}</td><td class="${st?'stab':''}">${num(pw/tn)}</td></tr>`; };
+      const srow=id=>{ const m=PVP.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
+        return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}</td>
+          <td class="${st?'stab':''}">${num(pw)}</td><td>${m.e}</td><td class="${st?'stab':''}">${num(pw/m.e,2)}</td></tr>`; };
+      body=`
+      <div class="mvsec"><div class="sec">ノーマルアタック</div>
+        <div class="enote expl">威力・DPT・DPEはタイプ一致(1.2倍)込みの値を赤字で示します。1ターン=0.5秒。EPT/DPT=1ターンあたりのゲージ増加/ダメージ。</div>
+        <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>ゲージ</th><th>ターン</th><th>EPT</th><th>DPT</th></tr></thead>
+        <tbody>${mv.fasts.map(frow).join('')}</tbody></table></div></div>
+      <div class="mvsec"><div class="sec">SPアタック</div>
+        <div class="enote expl">消費=撃つのに使うゲージ量。DPE=消費1あたりのダメージ(高いほど効率がよい)。</div>
+        <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>消費</th><th>DPE</th></tr></thead>
+        <tbody>${mv.sps.map(srow).join('')}</tbody></table></div></div>`;
+    }
+  }
+  box.innerHTML=tabs+body;
+  box.querySelectorAll('.mtabs button').forEach(b=>b.onclick=()=>{ state.tab=b.dataset.t; renderMoves(); });
+  box.querySelectorAll('tr[data-mv]').forEach(tr=>tr.onclick=()=>openMove(tr.dataset.mv));
+}
+
+// ---- わざ詳細ウィンドウ(タップで開く) ----
+const BUFF_JA={atk:'攻撃',def:'防御'};
+function buffText(m){
+  if(!m||!m.bf)return null;
+  const tgt=m.bt==='opponent'?'相手':'自分';
+  const parts=[];
+  if(m.bf[0])parts.push(`攻撃${m.bf[0]>0?'+':''}${m.bf[0]}`);
+  if(m.bf[1])parts.push(`防御${m.bf[1]>0?'+':''}${m.bf[1]}`);
+  const pc=m.bc!=null&&m.bc<1?`${Math.round(m.bc*100)}%の確率で`:'確定で';
+  return `${pc}${tgt}の${parts.join('・')}`;
+}
+function openMove(id){
+  const e=entryOf(state.key);
+  const gm=GO.moves[id], pm=PVP.moves[id];
+  const base=gm||pm;
+  const st=stabOf(e,base.t);
+  const legacy=(pveMoves(e)&&pveMoves(e).legacy.has(id))||(pvpMoves(e)&&pvpMoves(e).legacy.has(id));
+  const r=(k,v)=>`<div class="r"><span>${k}</span><b>${v}</b></div>`;
+  let pve='';
+  if(gm){
+    const pw=gm.p*(st?1.2:1);
+    const isFast=gm.e>0;
+    pve=`<div class="grp"><div class="gttl">ジム・レイド</div><div class="rows">
+      ${r('威力',st?`${num(gm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(gm.p))}
+      ${r('わざ全体の時間',num(gm.d)+'秒')}
+      ${r('ダメージ発生',num(gm.w,2)+'秒')}
+      ${isFast?r('ゲージ増加',gm.e+'(EPS '+num(gm.e/gm.d)+')'):r('ゲージ',(gm.e>=-34?3:gm.e>=-51?2:1)+'本(1本'+Math.round(-gm.e)+')')}
+      ${r('DPS',`<span class="${st?'stab':''}">${num(pw/gm.d)}</span>`)}
+    </div></div>`;
+  }
+  let pvp='';
+  if(pm){
+    const pw=pm.p*(st?1.2:1);
+    const isFast=pm.tn!=null;
+    const bt=buffText(pm);
+    pvp=`<div class="grp"><div class="gttl">トレーナーバトル</div><div class="rows">
+      ${r('威力',st?`${num(pm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(pm.p))}
+      ${isFast?r('ターン',pm.tn+'('+(pm.tn*0.5)+'秒)')+r('ゲージ増加',(pm.eg||0)+'(EPT '+num((pm.eg||0)/pm.tn)+')')+r('DPT',`<span class="${st?'stab':''}">${num(pw/pm.tn)}</span>`)
+        :r('消費ゲージ',pm.e)+r('DPE',`<span class="${st?'stab':''}">${num(pw/pm.e,2)}</span>`)}
+      ${bt?r('能力変化',bt):''}
+    </div></div>`;
+  }
+  const ov=document.createElement('div');
+  ov.className='mvov';
+  ov.innerHTML=`<div class="mvwin" role="dialog">
+    <div class="hd">${typePairHTML([GO.typeJa[base.t]],20)}<b>${base.n}</b><button class="x" title="閉じる">✕</button></div>
+    ${legacy?'<div class="lg">＊ 特別なわざ(レガシー) — 通常のわざマシンでは覚えられません</div>':''}
+    ${pve}${pvp}
+    ${!gm?'<div class="note">ジム・レイドではこのわざのデータがありません</div>':''}
+    ${!pm?'<div class="note">トレーナーバトルではこのわざのデータがありません</div>':''}
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',ev=>{ if(ev.target===ov)ov.remove(); });
+  ov.querySelector('.x').onclick=()=>ov.remove();
+}
+
+// ---- 使い方タブ・URL ----
+document.getElementById('helptab').onclick=function(){
+  const b=document.getElementById('helpbody');
+  const open=b.style.display!=='block';
+  b.style.display=open?'block':'none';
+  this.setAttribute('aria-expanded',open);
+};
+// 入口のURLパラメータは読み込み時に使うだけで、書き戻さない(毎回まっさらが正・個体値チェッカーと同じ方針)
+function updateUrl(){ try{ history.replaceState(null,'',location.pathname); }catch(e){} }
+function init(){
+  buildDex();
+  const sp=new URLSearchParams(location.search);
+  const want=sp.get('p');
+  if(want){
+    const e=DEX.find(x=>x.name===want)||DEX.find(x=>x.pvp===want||x.go===want);
+    if(e){ q.value=e.name; syncClr(); pick(e.name); }
+  }
+}
+</script>
+</body>
+</html>
