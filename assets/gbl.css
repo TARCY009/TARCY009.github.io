@@ -1257,3 +1257,20 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   box-shadow:0 5px 16px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
 .easygo:hover{transform:translateY(-1px)}
 .easywin .sugg input{font-size:16px}
+
+/* ---- ふきだしツアー(かんたん案内の続き。次に見るものへ目線を誘導する) ---- */
+.gtip{position:absolute;z-index:220;background:var(--panel);border:2px solid var(--cy);border-radius:12px;
+  padding:10px 12px;box-shadow:0 12px 32px rgba(0,0,0,.5);font-size:.84rem;line-height:1.75}
+:root.light .gtip{box-shadow:0 12px 32px rgba(30,40,90,.3)}
+.gtip::before{content:"";position:absolute;top:-8px;left:var(--ax,24px);width:13px;height:13px;
+  background:var(--panel);border-left:2px solid var(--cy);border-top:2px solid var(--cy);transform:rotate(45deg)}
+.gtip.noarrow::before{display:none}
+.gtip .nav{display:flex;align-items:center;gap:8px;margin-top:8px}
+.gtip .n{color:var(--sub);font-size:.74rem}
+.gtip .tnext{margin-left:auto;padding:6px 14px;border:none;border-radius:999px;font-weight:800;font-size:.8rem;
+  cursor:pointer;background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;
+  box-shadow:0 3px 10px rgba(8,180,201,.4)}
+.gtip .tnext:hover{transform:translateY(-1px)}
+.gtip .tskip{background:none;border:1px solid var(--line);border-radius:50%;width:26px;height:26px;
+  color:var(--sub);cursor:pointer;line-height:1}
+.gtip-hi{box-shadow:0 0 0 3px var(--cy),0 0 22px rgba(67,224,255,.55)!important;border-radius:10px}

@@ -7669,16 +7669,16 @@ const EASY = { step: null, who: null, act: null };
 const EASY_GBL = [
   { ic: '🆚', t: 'この相手に勝ちたい', d: '相手の名前を入れると、勝てるポケモンが強い順に出ます',
     search: 'あいてのポケモンの名前は？',
-    go(key) { easyMode('counter'); pick(1, key); sideEl[1].querySelector('input').value = D.pokemon[key].n; } },
+    go(key) { easyMode('counter'); pick(1, key); sideEl[1].querySelector('input').value = D.pokemon[key].n; tourStart('counter'); } },
   { ic: '🔍', t: '自分のポケモンで誰に勝てるか知りたい', d: '名前を入れると、環境上位50匹との勝ち負けが一覧で出ます',
     search: 'じぶんのポケモンの名前は？',
-    go(key) { easyMode('multi'); pick(0, key); sideEl[0].querySelector('input').value = D.pokemon[key].n; } },
+    go(key) { easyMode('multi'); pick(0, key); sideEl[0].querySelector('input').value = D.pokemon[key].n; tourStart('multi'); } },
   { ic: '🩺', t: 'パーティの弱点を調べたい', d: '3匹を入れると、3匹とも勝てない相手(穴)が分かります',
     note: 'パーティ診断を開きます。3つの枠にじぶんのポケモンを入れると、環境上位50匹への勝ち負けと、3匹とも勝てない相手(穴)が出ます。',
-    go() { easyMode('party'); } },
+    go() { easyMode('party'); tourStart('party'); } },
   { ic: '▶', t: '実戦の練習がしたい', d: '3対3の対人戦を、SPアタック・シールド・交代を選びながら戦えます',
     note: '模擬戦を開きます。じぶん3匹とあいて3匹を入れて「▶ バトルスタート！」を押すと、決断の場面ごとに自分で選びながら戦えます。',
-    go() { easyMode('mock'); } },
+    go() { easyMode('mock'); tourStart('mock'); } },
 ];
 // ロケット団: 誰と戦うか → どうするか、の2段。適用は最後にまとめて行う
 // (モードを先に切り替えてから手持ちを呼び出すと、rkPutAll がそのモードに合わせて枠を埋める)
@@ -7776,7 +7776,7 @@ function easyRender() {
         if (mb) mb.click();
         easyRkApply();
         if (EASY_RK_WHO[EASY.who].v === 'grunt') { EASY.step = 'gfoe'; easyRender(); easyFocus(); }
-        else easyClose();
+        else { easyClose(); tourStart('rkrank'); }
       } else {
         EASY.step = 'rknote'; easyRender();
       }
@@ -7790,6 +7790,7 @@ function easyRender() {
       const mb = document.querySelector('#rkmode button[data-v="1"]');
       if (mb) mb.click();
       easyRkApply();
+      easyClose(); tourStart('rkteam'); return;
     }
     easyClose();
   };
@@ -7815,8 +7816,8 @@ function easyRender() {
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         const key = d.dataset.k;
-        if (EASY.step === 'gfoe') { pick(1, key); sideEl[1].querySelector('input').value = D.pokemon[key].n; }
-        else EASY_GBL[EASY.goal].go(key);
+        if (EASY.step === 'gfoe') { pick(1, key); sideEl[1].querySelector('input').value = D.pokemon[key].n; easyClose(); tourStart('rkrank'); return; }
+        EASY_GBL[EASY.goal].go(key);
         easyClose();
       });
     });
@@ -7826,6 +7827,95 @@ function easyFocus() {
   const inp = document.querySelector('#easyov .sugg input');
   if (inp) inp.focus();
 }
+
+// ---- ふきだしツアー(かんたん案内の続き・2026-08-26タダシさん指示) ----
+// 案内で移動した先で放置しないための「次に何を見るか」の目線誘導。
+// 対象を水色に光らせて、そばにふきだしを1つずつ出す。✕でいつでも抜けられる。
+// 対象が無い/隠れているステップは自動で飛ばす(一覧の表は40ms区切りの非同期描画なのでリトライで待つ)
+const TOUR = { steps: null, i: 0, retry: 0 };
+// 最後は必ず💡説明モードへの誘導(案内が終わったあとも自力で調べられる出口)
+const TOUR_LAST = { sel: '#themesw .explainsw',
+  tx: 'わからない言葉や数字が出てきたら、この💡をONにして<b>長押し</b>すると説明が出ます' };
+const TOUR_DEFS = {
+  counter: [
+    { sel: '#counter .mttbl', tx: '<b>勝てるポケモンが強い順</b>に並んでいます。🛡の列はシールドの枚数ごとの勝敗で、行をタップすると対面の詳しい流れが開きます' },
+    { sel: '#counter .mtrange', tx: '範囲を<b>「全ポケモン」</b>にすると、あまり使われていないポケモンからも対策を探せます' },
+  ],
+  multi: [
+    { sel: '#multi .mtscore', tx: '<b>環境スコア</b>＝環境の相手と2回対面して、少なくとも1回勝てる確率です。高いほど活躍できます' },
+    { sel: '#multi .mttbl', tx: '環境上位50匹との<b>勝敗の一覧</b>です。マスをタップすると、その対面の詳しい流れが開きます' },
+  ],
+  party: [
+    { sel: '#party .pslots', tx: 'この<b>3つの枠</b>にパーティを入れると、下に診断の結果が出ます。★からは登録した個体も呼べます' },
+    { sel: '#party .ptauto', tx: 'わざは自分で選べます。<b>「オート」</b>にすると実戦の定番構成を自動でセットします' },
+  ],
+  mock: [
+    { sel: '#mock .rkteams', tx: '<b>じぶん3匹とあいて3匹</b>を入れて「▶ バトルスタート！」を押します。決断の場面で止まるので、選びながら進めます' },
+    { sel: '#mock .gbaibar', tx: 'あいての強さは3段階です。慣れるまでは<b>EASY</b>がおすすめです' },
+  ],
+  rkrank: [
+    { sel: '#rkrank .mttbl, #rkrank .rklist, #rkrank', tx: '<b>ノーマルアタックの火力が高い順</b>です。ロケット団戦は速く倒すのがいちばん大事です。行をタップするとシミュレートが開きます' },
+    { sel: '#rkviewbtns', tx: '<b>「高火力＋安定」</b>にすると、あいてのどのわざでも先に倒されないポケモンだけに絞れます' },
+    { sel: '#rkmytab', tx: 'CPと個体値を入れると、<b>自分の個体の順位</b>が分かります' },
+  ],
+  rkteam: [
+    { sel: '#rkteam .rkteams', tx: '<b>じぶんの3枠</b>に手持ちを入れて「▶ バトルスタート！」を押します。決断の場面で止まるので、選びながら進めます' },
+  ],
+};
+function tourEnd() {
+  TOUR.steps = null;
+  document.querySelectorAll('.gtip').forEach(e => e.remove());
+  document.querySelectorAll('.gtip-hi').forEach(e => e.classList.remove('gtip-hi'));
+}
+function tourStart(name) {
+  tourEnd();
+  TOUR.steps = (TOUR_DEFS[name] || []).concat([TOUR_LAST]);
+  TOUR.i = 0; TOUR.retry = 8;
+  setTimeout(tourShow, 250);   // 移動先の描画(非同期)を少し待つ
+}
+function tourShow() {
+  document.querySelectorAll('.gtip').forEach(e => e.remove());
+  document.querySelectorAll('.gtip-hi').forEach(e => e.classList.remove('gtip-hi'));
+  const st = TOUR.steps;
+  if (!st || TOUR.i >= st.length) { tourEnd(); return; }
+  const cur = st[TOUR.i];
+  const el = document.querySelector(cur.sel);
+  if (!el || el.offsetParent === null) {
+    // まだ描画されていない可能性 → 少し待って再挑戦。それでも無ければこのステップは飛ばす
+    if (--TOUR.retry > 0) { setTimeout(tourShow, 300); return; }
+    TOUR.i++; TOUR.retry = 3; tourShow(); return;
+  }
+  TOUR.retry = 3;
+  el.classList.add('gtip-hi');
+  // 背の高い対象(表など)は中央合わせだと上端＝ふきだしの位置が画面外に出るので、上端を見える位置へ
+  const tall = el.getBoundingClientRect().height > 260;
+  el.scrollIntoView({ block: tall ? 'start' : 'center' });
+  if (tall) window.scrollBy(0, -70);
+  const r = el.getBoundingClientRect();
+  const tip = document.createElement('div');
+  const last = TOUR.i === st.length - 1;
+  tip.className = 'gtip';
+  tip.innerHTML = `<div class="tx">${cur.tx}</div>
+    <div class="nav"><span class="n">${TOUR.i + 1}/${st.length}</span>
+    <button class="tnext">${last ? 'おわり' : '次へ ▸'}</button>
+    <button class="tskip" title="案内をとじる">✕</button></div>`;
+  document.body.appendChild(tip);
+  const w = Math.min(300, innerWidth - 28);
+  tip.style.width = w + 'px';
+  const left = Math.max(14, Math.min(innerWidth - w - 14, r.left + r.width / 2 - w / 2));
+  // 背の高い対象は上端の少し下にふきだしを重ねる(下端はスクロールしないと見えないため)。矢印は消す
+  tip.style.left = left + 'px';
+  tip.style.top = ((tall ? r.top + 46 : r.bottom + 10) + scrollY) + 'px';
+  if (tall) tip.classList.add('noarrow');
+  else tip.style.setProperty('--ax', Math.max(14, Math.min(w - 28, r.left + r.width / 2 - left - 7)) + 'px');
+  tip.querySelector('.tnext').onclick = () => { TOUR.i++; tourShow(); };
+  tip.querySelector('.tskip').onclick = tourEnd;
+}
+// 画面の向き・幅が変わったら位置を測り直す。モードを自分で切り替えたら案内は役目を終える
+window.addEventListener('resize', () => { if (TOUR.steps) tourShow(); });
+document.addEventListener('click', e => {
+  if (TOUR.steps && e.target.closest('#modes, #rkmode, #rkkind')) tourEnd();
+}, true);
 
 (function init() {
   const q = new URLSearchParams(location.search);
