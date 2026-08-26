@@ -67,6 +67,8 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .hero .cp{margin-left:auto;text-align:right}
 .hero .cp small{display:block;color:var(--sub);font-size:.7rem;letter-spacing:.05em}
 .hero .cp b{font-size:1.6rem;background:linear-gradient(92deg,#ffd54a,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .cp .mega4{display:block;font-size:.72rem;color:var(--sub);font-weight:700;margin-top:1px}
+.hero .cp .mega4 i{font-style:normal;font-weight:800;font-size:.9rem;background:linear-gradient(92deg,#f58fc2,#b06cff);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* 種族値メーター */
 .stats{display:flex;flex-direction:column;gap:9px;margin-top:12px}
 .strow{display:grid;grid-template-columns:56px 44px 1fr;align-items:center;gap:10px}
@@ -237,7 +239,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
   <h4>この図鑑でわかること</h4>
   <p>ポケモンを選ぶと、<b>種族値・最大CP・弱点/耐性・わざ性能</b>が1画面で確認できます。わざの行をタップすると、発生時間や能力変化まで含めた詳細ウィンドウが開きます。</p>
   <h4>最大CP</h4>
-  <p><b>PL50・個体値15/15/15</b>のCPです(相棒ブーストのPL51は含みません)。</p>
+  <p><b>PL50・個体値15/15/15</b>のCPです(相棒ブーストのPL51は含みません)。メガシンカ・ゲンシカイキのポケモンには、<b>メガLv4</b>(メガレベル最大でPL上限+2＝PL52)のCPも並べて出します。</p>
   <h4>弱点・耐性</h4>
   <p>受けるダメージの倍率でまとめています。<b>×2.56=二重弱点 / ×1.6=弱点 / ×0.63=耐性 / ×0.39=二重耐性 / ×0.24=三重耐性相当</b>。ポケモンGOには「効果なし(無効)」が無く、原作の無効は×0.39として扱われます。</p>
   <h4>ジム・レイドのわざ性能</h4>
@@ -269,8 +271,8 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
   </ul>
   <h4>わざから探す</h4>
   <p>検索欄に<b>わざの名前</b>を入れると候補に「わざ」が出て、選ぶと<b>そのわざを覚えるポケモンの一覧</b>に切り替わります。名前の後ろの<b style="color:var(--gold)">*</b>は、そのポケモンにとって特別なわざ(レガシー)である印です。タイプなどの絞り込み・並べ替えとも組み合わせられます。</p>
-  <h4>のせていないわざ</h4>
-  <p>やつあたり・おんがえし(シャドウ/ライトポケモン専用)は一覧にのせていません。</p>
+  <h4>のせていないわざ・わるあがき</h4>
+  <p>やつあたり・おんがえし(シャドウ/ライトポケモン専用)は一覧にのせていません。SPアタックを覚えないポケモン(コイキングなど)は、実戦で自動発動する<b>わるあがき</b>(ジム・レイド=3ゲージ／トレーナーバトル=消費100)を載せています。</p>
 </div>
 
 <footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。<br>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</footer>
@@ -297,12 +299,20 @@ const EXTRA_DEX={'イエッサン':876,'ウーラオス':892,'オドリドリ':7
   'チェリム':421,'バケッチャ':710,'パンプジン':711,'ピカチュウ':25,'ミノマダム':413,'ミノムッチ':412,
   'ゲッコウガ':658,'ブリガロン':652,'マフォクシー':655,'メテノ':774,'メロエッタ':648,'モルペコ':877,'ルガルガン':745};
 const BAD=new Set(['RETURN','FRUSTRATION']);   // おんがえし・やつあたりは載せない(タダシさん指示)
+// わるあがき(SPを覚えないポケモンの自動発動わざ)はゲーム内データにゲージ量が無い(e=0)。
+// 実際は3ゲージ(1本33)・トレーナーバトルは消費100なので、図鑑ローカルで補って表示する(2026-08-28タダシさん指示)。
+// godata/pvp_data本体は書き換えない(シミュ側の確定数値を動かさないため)
+const STRUGGLE_PVE_E=-33;
+const pveEnergyOf=(id,m)=>(id==='STRUGGLE'&&!m.e)?STRUGGLE_PVE_E:m.e;
 const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
 
 Promise.all([
   fetch('/godata.json').then(r=>r.json()),
   fetch('/pvp_data.json').then(r=>r.json()),
-]).then(([g,p])=>{ GO=g; PVP=p; init(); });
+]).then(([g,p])=>{ GO=g; PVP=p;
+  // トレーナーバトルのわるあがき(シミュ用データは自動発動わざとして除外しているので、図鑑表示用にここで足す)
+  if(!PVP.moves.STRUGGLE) PVP.moves.STRUGGLE={n:'わるあがき',t:'NORMAL',p:35,e:100};
+  init(); });
 
 // 名前で両データを対応付ける(キー体系が違うため。PvE側だけ/PvP側だけのフォルムもそのまま載せる)
 let DEX=[];         // {name, go:キー|null, pvp:キー|null, ty, a, df, h, dex}
@@ -311,12 +321,12 @@ function buildDex(){
   const m=new Map();
   for(const [k,v] of Object.entries(PVP.pokemon)){
     if(!v.r) continue;
-    m.set(v.n,{name:v.n,go:null,pvp:k,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:v.dex||9999,fe:null,lg:null});
+    m.set(v.n,{name:v.n,go:null,pvp:k,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:v.dex||9999,fe:null,lg:null,mega:k.includes('_mega')||k.includes('_primal')});
   }
   for(const [k,v] of Object.entries(GO.pokemon)){
     const e=m.get(v.n);
-    if(e){ e.go=k; e.fe=v.fe?1:0; e.lg=v.lg?1:0; }
-    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999,fe:v.fe?1:0,lg:v.lg?1:0});
+    if(e){ e.go=k; e.fe=v.fe?1:0; e.lg=v.lg?1:0; e.mega=!!v.mega; }
+    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999,fe:v.fe?1:0,lg:v.lg?1:0,mega:!!v.mega});
   }
   // PvP側にしかないフォルムは、括弧を除いたベース名でPvE側から最終進化・伝説の印を借りる
   const goByName=new Map(Object.values(GO.pokemon).map(v=>[v.n,v]));
@@ -505,8 +515,8 @@ function pick(name){
 }
 function entryOf(name){ return DEX.find(e=>e.name===name); }
 
-function maxCp(e){
-  const c=GO.cpm['50'];
+function maxCp(e,lv){
+  const c=GO.cpm[String(lv||50)];
   return Math.max(10,Math.floor((e.a+15)*Math.sqrt(e.df+15)*Math.sqrt(e.h+15)*c*c/10));
 }
 // 受けるダメージ倍率(攻撃タイプごと)→ 倍率グループにまとめる
@@ -534,7 +544,8 @@ function render(){
   document.getElementById('herocard').innerHTML=`
     <div class="hero">
       <div class="nm">${e.name}${typePairHTML(e.ty.map(t=>GO.typeJa[t]),22)}</div>
-      <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b></div>
+      <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
+        e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}</div>
     </div>
     <div class="stats">
       ${['a','d','h'].map(k=>{
@@ -576,11 +587,13 @@ function pvpMoves(e){
   const dpt=id=>{const m=PVP.moves[id];return m.p*(stabOf(e,m.t)?1.2:1)/(m.tn||1);};
   const dpe=id=>{const m=PVP.moves[id];return m.p*(stabOf(e,m.t)?1.2:1)/(m.e||1);};
   const fasts=[...new Set([...(p.q||[]),...(p.eq||[])])].filter(m=>PVP.moves[m]).sort((x,y)=>dpt(y)-dpt(x));
-  const sps=[...new Set([...(p.c||[]),...(p.ec||[])])].filter(m=>PVP.moves[m]&&!BAD.has(m)).sort((x,y)=>dpe(y)-dpe(x));
+  let sps=[...new Set([...(p.c||[]),...(p.ec||[])])].filter(m=>PVP.moves[m]&&!BAD.has(m)).sort((x,y)=>dpe(y)-dpe(x));
+  // SPアタックを覚えないポケモンは、実戦では「わるあがき」が自動発動する(図鑑にもそれを載せる)
+  if(!sps.length&&e.go&&(GO.pokemon[e.go].c||[]).includes('STRUGGLE')) sps=['STRUGGLE'];
   return {fasts,sps,legacy};
 }
 const TYPE_COLORS={NORMAL:'#9fa19f',FIGHTING:'#ff8000',FLYING:'#81b9ef',POISON:'#9141cb',GROUND:'#915121',ROCK:'#afa981',BUG:'#91a119',GHOST:'#704170',STEEL:'#60a1b8',FIRE:'#e62829',WATER:'#2980ef',GRASS:'#3fa129',ELECTRIC:'#fac000',PSYCHIC:'#ef4179',ICE:'#3fd8ff',DRAGON:'#5060e1',DARK:'#50413f',FAIRY:'#ef70ef'};
-const gaugeBar=m=>{ const n=m.e>=-34?3:m.e>=-51?2:1;
+const gaugeBar=(m,id)=>{ const e=pveEnergyOf(id,m); const n=e>=-34?3:e>=-51?2:1;
   return `<span class="gbar">${Array.from({length:n},()=>`<i style="background:${TYPE_COLORS[m.t]||'#888'}"></i>`).join('')}</span>`; };
 const mvName=(nm,t,lg)=>`<span class="mvnm">${typePairHTML([GO.typeJa[t]],16)}<span>${nm}${lg?'<b class="st" title="特別なわざ(レガシー)。通常のわざマシンでは覚えられません">*</b>':''}</span></span>`;
 
@@ -599,7 +612,7 @@ function renderMoves(){
         return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td>${num(m.e/m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
       const srow=id=>{ const m=GO.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
-        return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}${gaugeBar(m)}</td>
+        return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}${gaugeBar(m,id)}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
       body=`
       <div class="mvsec"><div class="sec">ノーマルアタック</div>
@@ -663,7 +676,7 @@ function openMove(id){
       ${r('威力',st?`${num(gm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(gm.p))}
       ${r('わざ全体の時間',num(gm.d)+'秒')}
       ${r('ダメージ発生',num(gm.w,2)+'秒')}
-      ${isFast?r('ゲージ増加',gm.e+'(EPS '+num(gm.e/gm.d)+')'):r('ゲージ',(gm.e>=-34?3:gm.e>=-51?2:1)+'本(1本'+Math.round(-gm.e)+')')}
+      ${isFast?r('ゲージ増加',gm.e+'(EPS '+num(gm.e/gm.d)+')'):(x=>r('ゲージ',(x>=-34?3:x>=-51?2:1)+'本(1本'+Math.round(-x)+')'))(pveEnergyOf(id,gm))}
       ${r('DPS',`<span class="${st?'stab':''}">${num(pw/gm.d)}</span>`)}
     </div></div>`;
   }
