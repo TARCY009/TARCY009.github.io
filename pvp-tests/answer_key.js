@@ -2,6 +2,16 @@
 // 形式: リーグ → "ポケモンキー(|s=シャドウ)" → [ノーマル, SP1, SP2]
 window.ANSWER_KEY = {
  "1500": {
+  "cramorant": [
+   "PECK",
+   "DIVE",
+   "FLY"
+  ],
+  "thievul": [
+   "SUCKER_PUNCH",
+   "NIGHT_SLASH",
+   "ICY_WIND"
+  ],
   "mimikyu": [
    "SHADOW_CLAW",
    "SHADOW_SNEAK",
@@ -504,6 +514,16 @@ window.ANSWER_KEY = {
   ]
  },
  "2500": {
+  "primeape": [
+   "KARATE_CHOP",
+   "RAGE_FIST",
+   "ICE_PUNCH"
+  ],
+  "cramorant": [
+   "PECK",
+   "DIVE",
+   "FLY"
+  ],
   "mimikyu": [
    "SHADOW_CLAW",
    "SHADOW_SNEAK",
