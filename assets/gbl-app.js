@@ -11,6 +11,8 @@ document.getElementById('app').innerHTML = `
   <div id="themesw"></div>
 </header>
 
+<div class="easyrow"><button class="easybtn" id="easybtn" title="はじめての方向けの案内。質問に答えると、目的に合った画面へ設定済みの状態で移動します"><span class="lf">🔰</span>かんたん案内</button></div>
+
 <div class="leagues" id="leagues">
   <button class="lgbtn" data-cap="1500" aria-pressed="true" title="CP1500以下で戦うリーグ">スーパー</button>
   <button class="lgbtn" data-cap="2500" aria-pressed="false" title="CP2500以下で戦うリーグ">ハイパー</button>
@@ -7652,6 +7654,179 @@ document.getElementById('copyUrl').onclick = async () => {
 };
 
 // ---- URLパラメータからの復元 ----
+// ---- かんたん案内(初心者向けの入り口・2026-08-26) ----
+// 質問に答えると、目的に合ったモードへ設定済みの状態で移動する「案内係」。
+// 計算と画面は既存モードをそのまま使う(答えの二重管理をしない)。
+// 初回訪問(共有リンク以外)は自動で開く。一度閉じたら以後は出ない(開き直しは常設の🔰ボタン)
+const EASY_KEY = PAGE_ROCKET ? 'rkt_easy_seen' : 'gbl_easy_seen';
+// 「共有リンクで開いたか」は読み込み時点のURLで判定する(初期化後はツールが状態をURLへ書き戻すため)
+const EASY_HAD_QS = !!location.search;
+const easySeen = () => { try { return localStorage.getItem(EASY_KEY) === '1'; } catch (e) { return true; } };
+const easyMark = () => { try { localStorage.setItem(EASY_KEY, '1'); } catch (e) {} };
+const EASY = { step: null, who: null, act: null };
+
+// GBLの目的4つ。search=検索ステップの質問文(選んだキーを go に渡す) / note=移動前に出す一言
+const EASY_GBL = [
+  { ic: '🆚', t: 'この相手に勝ちたい', d: '相手の名前を入れると、勝てるポケモンが強い順に出ます',
+    search: 'あいてのポケモンの名前は？',
+    go(key) { easyMode('counter'); pick(1, key); sideEl[1].querySelector('input').value = D.pokemon[key].n; } },
+  { ic: '🔍', t: '自分のポケモンで誰に勝てるか知りたい', d: '名前を入れると、環境上位50匹との勝ち負けが一覧で出ます',
+    search: 'じぶんのポケモンの名前は？',
+    go(key) { easyMode('multi'); pick(0, key); sideEl[0].querySelector('input').value = D.pokemon[key].n; } },
+  { ic: '🩺', t: 'パーティの弱点を調べたい', d: '3匹を入れると、3匹とも勝てない相手(穴)が分かります',
+    note: 'パーティ診断を開きます。3つの枠にじぶんのポケモンを入れると、環境上位50匹への勝ち負けと、3匹とも勝てない相手(穴)が出ます。',
+    go() { easyMode('party'); } },
+  { ic: '▶', t: '実戦の練習がしたい', d: '3対3の対人戦を、SPアタック・シールド・交代を選びながら戦えます',
+    note: '模擬戦を開きます。じぶん3匹とあいて3匹を入れて「▶ バトルスタート！」を押すと、決断の場面ごとに自分で選びながら戦えます。',
+    go() { easyMode('mock'); } },
+];
+// ロケット団: 誰と戦うか → どうするか、の2段。適用は最後にまとめて行う
+// (モードを先に切り替えてから手持ちを呼び出すと、rkPutAll がそのモードに合わせて枠を埋める)
+const EASY_RK_WHO = [
+  { v: 'grunt', ic: '😈', t: 'したっぱ', d: 'ムサシ・コジロウもこちら。あいてのポケモンはこの後で入れます' },
+  { v: 'leader', w: 'sierra', ic: '👑', t: 'シエラ', d: 'リーダー。手持ちが自動で入ります' },
+  { v: 'leader', w: 'cliff', ic: '👑', t: 'クリフ', d: 'リーダー。手持ちが自動で入ります' },
+  { v: 'leader', w: 'arlo', ic: '👑', t: 'アルロ', d: 'リーダー。手持ちが自動で入ります' },
+  { v: 'boss', ic: '💀', t: 'サカキ', d: 'ボス。手持ちが自動で入ります' },
+];
+const EASY_RK_ACT = [
+  { v: 'rank', ic: '🗡', t: '誰で攻撃すればいいか見る', d: '勝てるポケモンが火力の高い順に出ます' },
+  { v: 'team', ic: '▶', t: '3匹の通しをためす(模擬戦)', d: '手持ち3匹で最後まで戦えるかを試せます' },
+];
+
+function easyMode(m) {
+  const b = document.querySelector(`#modes button[data-m="${m}"]`);
+  if (b) b.click();
+  window.scrollTo({ top: 0 });
+}
+function easyClose() {
+  easyMark();
+  const ov = document.getElementById('easyov');
+  if (ov) ov.remove();
+}
+// ロケット団: 選んだ「誰と」を画面に適用する(既存ボタンのクリックで=処理を二重に持たない)
+function easyRkApply() {
+  const w = EASY_RK_WHO[EASY.who];
+  const kb = document.querySelector(`#rkkind button[data-v="${w.v}"]`);
+  if (kb) kb.click();
+  if (w.w) { const wb = document.querySelector(`#rkwho button[data-w="${w.w}"]`); if (wb) wb.click(); }
+  window.scrollTo({ top: 0 });
+}
+function easyOpen() {
+  easyClose();   // 二重に開かない(開き直し)
+  EASY.step = PAGE_ROCKET ? 'who' : 'goal'; EASY.who = null; EASY.act = null;
+  const ov = document.createElement('div');
+  ov.id = 'easyov'; ov.className = 'easyov';
+  ov.innerHTML = '<div class="easywin" role="dialog"></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) easyClose(); });
+  easyRender();
+}
+function easyRender() {
+  const win = document.querySelector('#easyov .easywin');
+  if (!win) return;
+  const card = (o, i) => `<button class="easycard" data-i="${i}"><span class="ic">${o.ic}</span><span class="tx"><b>${o.t}</b><small>${o.d}</small></span></button>`;
+  const head = `<div class="easyhd"><span>🔰</span><b>かんたん案内</b><button class="easyx" title="閉じる">✕</button></div>`;
+  let body = '', q = '';
+  if (EASY.step === 'goal') { q = '何をしたいですか？'; body = `<div class="easycards">${EASY_GBL.map(card).join('')}</div>`; }
+  if (EASY.step === 'search') {
+    const g = EASY_GBL[EASY.goal];
+    q = g.search;
+    body = `<div class="sugg"><input type="search" placeholder="ポケモン名(例: マリルリ)" autocomplete="off"><div class="sugg-list"></div></div>
+      <button class="easyback">← もどる</button>`;
+  }
+  if (EASY.step === 'note') {
+    const g = EASY_GBL[EASY.goal];
+    body = `<div class="easynote">${g.note}</div><button class="easygo">開く</button><button class="easyback">← もどる</button>`;
+  }
+  if (EASY.step === 'who') { q = '誰と戦いますか？'; body = `<div class="easycards">${EASY_RK_WHO.map(card).join('')}</div>`; }
+  if (EASY.step === 'act') { q = 'どうしますか？'; body = `<div class="easycards">${EASY_RK_ACT.map(card).join('')}</div><button class="easyback">← もどる</button>`; }
+  if (EASY.step === 'gfoe') {
+    q = 'あいてのポケモンの名前は？(画面に出ている名前)';
+    body = `<div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+      <button class="easyback">← もどる</button>`;
+  }
+  if (EASY.step === 'rknote') {
+    const grunt = EASY_RK_WHO[EASY.who].v === 'grunt';
+    body = `<div class="easynote">模擬戦を開きます。じぶんの3枠に手持ちのポケモンを入れて${grunt ? '、あいての3枠に画面に出ているポケモンを入れて' : ''}「▶ バトルスタート！」を押すと、決断の場面ごとに自分で選びながら戦えます。</div>
+      <button class="easygo">開く</button><button class="easyback">← もどる</button>`;
+  }
+  win.innerHTML = head + (q ? `<div class="easyq">${q}</div>` : '') + body;
+  win.querySelector('.easyx').onclick = easyClose;
+  const back = win.querySelector('.easyback');
+  if (back) back.onclick = () => {
+    EASY.step = PAGE_ROCKET ? (EASY.step === 'act' ? 'who' : 'act') : 'goal';
+    easyRender();
+  };
+  // 選択肢カード
+  win.querySelectorAll('.easycard').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (EASY.step === 'goal') {
+      EASY.goal = i;
+      const g = EASY_GBL[i];
+      if (g.search) { EASY.step = 'search'; easyRender(); easyFocus(); }
+      else { EASY.step = 'note'; easyRender(); }
+      return;
+    }
+    if (EASY.step === 'who') { EASY.who = i; EASY.step = 'act'; easyRender(); return; }
+    if (EASY.step === 'act') {
+      EASY.act = EASY_RK_ACT[i].v;
+      if (EASY.act === 'rank') {
+        const mb = document.querySelector('#rkmode button[data-v="0"]');
+        if (mb) mb.click();
+        easyRkApply();
+        if (EASY_RK_WHO[EASY.who].v === 'grunt') { EASY.step = 'gfoe'; easyRender(); easyFocus(); }
+        else easyClose();
+      } else {
+        EASY.step = 'rknote'; easyRender();
+      }
+    }
+  });
+  // 「開く」(説明を読んでから移動するステップ)
+  const go = win.querySelector('.easygo');
+  if (go) go.onclick = () => {
+    if (EASY.step === 'note') EASY_GBL[EASY.goal].go();
+    else {   // rknote: 模擬戦へ切り替えてから手持ちを適用する
+      const mb = document.querySelector('#rkmode button[data-v="1"]');
+      if (mb) mb.click();
+      easyRkApply();
+    }
+    easyClose();
+  };
+  // 検索ステップ(GBLのあいて/じぶん・ロケット団のしたっぱのあいて)
+  const inp = win.querySelector('.sugg input'), list = win.querySelector('.sugg-list');
+  if (inp) {
+    const filt = EASY.step === 'gfoe' ? (k => rkFoeOk(1, k)) : null;
+    inp.addEventListener('compositionend', () => {
+      const v = toKata(inp.value);
+      if (v !== inp.value) inp.value = v;
+      inp.dispatchEvent(new Event('input'));
+    });
+    inp.addEventListener('input', e => {
+      if (!e.isComposing) {
+        const v = toKata(inp.value);
+        if (v !== inp.value) inp.value = v;
+      }
+      const qq = toKata(inp.value.trim());
+      if (!qq) { list.style.display = 'none'; return; }
+      const hits = searchPk(qq, filt);
+      if (!hits.length) { list.style.display = 'none'; return; }
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.style.display = 'block';
+      list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+        const key = d.dataset.k;
+        if (EASY.step === 'gfoe') { pick(1, key); sideEl[1].querySelector('input').value = D.pokemon[key].n; }
+        else EASY_GBL[EASY.goal].go(key);
+        easyClose();
+      });
+    });
+  }
+}
+function easyFocus() {
+  const inp = document.querySelector('#easyov .sugg input');
+  if (inp) inp.focus();
+}
+
 (function init() {
   const q = new URLSearchParams(location.search);
   if (q.get('lg')) {
@@ -7836,4 +8011,7 @@ document.getElementById('copyUrl').onclick = async () => {
   });
   renderMyPk();
   run();
+  // かんたん案内: 常設ボタン＋初回訪問(共有リンク以外)は自動で開く
+  document.getElementById('easybtn').onclick = easyOpen;
+  if (!EASY_HAD_QS && !easySeen()) easyOpen();
 })();
