@@ -880,6 +880,9 @@ function afterCapChange() {
       sideEl[i].querySelector('.ivL').value = s.mLevel;
     }
   });
+  // パーティ診断の空欄の既定はリーグの確定値に依存する(mockDefaultMoves)ので、
+  // リーグ・カップを替えたらわざ欄を描き直す(描き直さないと表示だけ前のリーグの既定が残る)
+  if (typeof syncPartySlot === 'function') [0, 1, 2].forEach(i => syncPartySlot(i));
   run();
 }
 document.getElementById('leagues').querySelectorAll('.lgbtn[data-cap]').forEach(b => b.onclick = () => {
@@ -2605,7 +2608,8 @@ function syncPartySlot(i) {
       if (isPt) {
         // 選び直したぶんだけ差し替え、空いている欄は今表示している構成で埋める(全部そろって初めて計算できる)
         const now = ptMvOf(i);
-        PT[i].fast = c.fast || now.fast; PT[i].c1 = c.c1 || now.c1; PT[i].c2 = c.c2 || '';
+        PT[i].fast = c.fast || now.fast; PT[i].c1 = c.c1 || now.c1;
+        PT[i].c2 = c.c2 != null ? c.c2 : (now.c2 || '');   // ''=明示的に外した は保つ
         savePt();
       } else if (isGbm) saveGbm(); else saveRbm();
       syncPartySlot(i); run();
@@ -2626,8 +2630,13 @@ function ptMvOf(i) {
   const m = PT[i];
   if (!m) return null;
   if (ptAuto && PTA[i] && PTA[i].key === m.key) return PTA[i];
-  const d = rbmDefault(m.key);
-  return { key: m.key, fast: m.fast || d.fast, c1: m.c1 || d.c1, c2: m.c2 || '' };
+  // マニュアルの空欄の既定は模擬戦と同じ「環境の確定値 → 無ければ効率(SP2本)」(2026-08-27タダシさん指示)。
+  // 以前は効率の叩き台(SP1本・rbmDefault)で、環境300匹の82%が確定値とずれ、
+  // 実戦とかけ離れた勝率が出ていた(ハラバリーが でんじほう1本 になり平均勝率9%と表示された件)。
+  // c2の '' は「×や「ー」で明示的に外した」印なので既定で埋め戻さない(未設定のときだけ既定を使う)
+  const d = mockDefaultMoves(m.key, m.shadow);
+  return { key: m.key, fast: m.fast || d.fast, c1: m.c1 || d.c1,
+    c2: m.c2 != null ? m.c2 : (d.c2 || '') };
 }
 // policies() の1構成 → 画面のわざ欄の形に直す
 const polToMv = (key, pol) => ({ key, fast: pol.fast,
