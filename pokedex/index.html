@@ -361,20 +361,21 @@ function buildMoveIndex(){
   MOVE_NAMES=[...MOVE_INDEX.keys()].sort((a,b)=>a.localeCompare(b,'ja'));
 }
 // ---- 両データのわざの対応付け(キー体系が違う: ジム・レイド側はノーマルアタックに_FASTが付く、
-//      みらいよち=FUTURESIGHT/FUTURE_SIGHT等。同じキー→別名表→名前+タイプの順で相方を探す) ----
+//      みらいよち=FUTURESIGHT/FUTURE_SIGHT等。同じキー→別名表→名前+タイプ→注記抜きの名前+タイプの順で相方を探す) ----
 const MOVE_ALIAS={TECHNO_BLAST_WATER:'TECHNO_BLAST_DOUSE',TECHNO_BLAST_DOUSE:'TECHNO_BLAST_WATER'};
 let GO2PVP=new Map(), PVP2GO=new Map();
 function buildMovePairs(){
-  const nk=m=>m.n+'|'+m.t;
+  const strip=s=>s.replace(/（[^）]*）/g,'');   // 「サイコカッター（独自性能）」→「サイコカッター」
+  const nk=m=>m.n+'|'+m.t, sk=m=>strip(m.n)+'|'+m.t;
   const pvByName=new Map(), goByName=new Map();
   for(const [k,m] of Object.entries(PVP.moves)) if(!pvByName.has(nk(m))) pvByName.set(nk(m),k);
   for(const [k,m] of Object.entries(GO.moves)) if(!goByName.has(nk(m))) goByName.set(nk(m),k);
   for(const [k,m] of Object.entries(GO.moves)){
-    const p=PVP.moves[k]?k:(PVP.moves[MOVE_ALIAS[k]]?MOVE_ALIAS[k]:pvByName.get(nk(m)));
+    const p=PVP.moves[k]?k:(PVP.moves[MOVE_ALIAS[k]]?MOVE_ALIAS[k]:(pvByName.get(nk(m))||pvByName.get(sk(m))));
     if(p)GO2PVP.set(k,p);
   }
   for(const [k,m] of Object.entries(PVP.moves)){
-    const g=GO.moves[k]?k:(GO.moves[MOVE_ALIAS[k]]?MOVE_ALIAS[k]:goByName.get(nk(m)));
+    const g=GO.moves[k]?k:(GO.moves[MOVE_ALIAS[k]]?MOVE_ALIAS[k]:(goByName.get(nk(m))||goByName.get(sk(m))));
     if(g)PVP2GO.set(k,g);
   }
 }
@@ -686,7 +687,7 @@ function openMove(id){
   // どちらのタブから開いても、相方のデータ(キー体系が違う)を対応表で探して両モードまとめて出す
   const gid=GO.moves[id]?id:PVP2GO.get(id), pid=PVP.moves[id]?id:GO2PVP.get(id);
   const gm=gid?GO.moves[gid]:null, pm=pid?PVP.moves[pid]:null;
-  const base=gm||pm;
+  const base=GO.moves[id]||PVP.moves[id];   // 見出しはタップした側の名前(（独自性能）等を消さない)
   const st=stabOf(e,base.t);
   const legacy=(gid&&pveMoves(e)&&pveMoves(e).legacy.has(gid))||(pid&&pvpMoves(e)&&pvpMoves(e).legacy.has(pid));
   const r=(k,v)=>`<div class="r"><span>${k}</span><b>${v}</b></div>`;

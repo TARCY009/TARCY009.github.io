@@ -98,6 +98,13 @@ SUPP_MOVES = {
                  'power': 100.0, 'durationMs': 3500, 'damageWindowStartMs': 2600, 'damageWindowEndMs': 3000, 'energyDelta': -33},  # 威力100・3.5秒・3ゲージ
         'learn': {'INTELEON': 'cinematicMoves'},   # 通常枠(わざマシンで習得可)
     },
+    'DIVE': {           # ダイビング(ウッウ・水フェス2026-08実装)。威力70・3.3秒・3ゲージは攻略サイト4か所一致の確定値
+        'move': {'movementId': 'DIVE', 'pokemonType': 'POKEMON_TYPE_WATER',
+                 'power': 70.0, 'durationMs': 3300, 'damageWindowStartMs': 2100, 'damageWindowEndMs': 2500, 'energyDelta': -33},
+        # ⚠ ダメージ発生(damageWindow)だけはどこにも公開されておらず暫定値(3ゲージわざ82本の中央値=全体の65%から算出)。
+        #   提供元(GM)に正式収録されたら自動でそちらが優先される(apply_gm_suppは既にあれば注入しない)
+        'learn': {'CRAMORANT': 'cinematicMoves'},   # 通常枠
+    },
 }
 
 def apply_gm_supp(data):
@@ -143,7 +150,7 @@ MANUAL_MEGA = {
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
  'MIND_BLOWN':'ビックリヘッド','DRUM_BEATING':'ドラムアタック','PYROBALL':'かえんボール','GIGATON_HAMMER':'デカハンマー',
  'AURA_WHEEL_ELECTRIC':'オーラぐるま（でんき）','AURA_WHEEL_DARK':'オーラぐるま（あく）','DYNAMAX_CANNON':'ダイマックスほう',
- 'PLASMA_FISTS':'プラズマフィスト','GLAIVE_RUSH':'きょけんとつげき','SNIPE_SHOT':'ねらいうち'}
+ 'PLASMA_FISTS':'プラズマフィスト','GLAIVE_RUSH':'きょけんとつげき','SNIPE_SHOT':'ねらいうち','DIVE':'ダイビング'}
 GEN9_JA = {'WALKINGWAKE':'ウネルミナモ','IRONLEAVES':'テツノイサハ','DIPPLIN':'カミッチュ','POLTCHAGEIST':'チャデス',
  'SINISTCHA':'ヤバソチャ','OKIDOGI':'イイネイヌ','MUNKIDORI':'マシマシラ','FEZANDIPITI':'キチキギス','OGERPON':'オーガポン',
  'ARCHALUDON':'ブリジュラス','HYDRAPPLE':'カミツオロチ','GOUGINGFIRE':'ウガツホムラ','RAGINGBOLT':'タケルライコ',
