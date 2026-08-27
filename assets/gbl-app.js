@@ -274,7 +274,7 @@ document.getElementById('app').innerHTML = `
   <div class="blsum"></div>
   <div class="blviews">
     <div class="opts blvtabs">
-      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
+      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="type" aria-pressed="false" title="記録した相手のタイプを自動集計して、タイプごとに弱点をどれくらい突けるか・どれくらい突かれるかをグラフで見ます">⚔ 相性</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
     </div>
     <div class="opts blperiod">
       <button data-v="all" aria-pressed="true" title="このリーグの記録を全部使って集計します">全部</button><button data-v="50" aria-pressed="false" title="新しいほうから50戦だけで集計します(環境の入れ替わりを追いたいとき)">直近50戦</button><button data-v="20" aria-pressed="false" title="新しいほうから20戦だけで集計します">直近20戦</button>
@@ -1072,6 +1072,9 @@ ${PAGE_ROCKET ? '' : `
       見えたぶんだけの記録でかまいません。記録は<b>この端末の中だけ</b>に保存され、リーグごとに別集計です</li>
     <li><b>採用率</b> … 記録した対戦のうち、そのポケモンがパーティに入っていた割合です。
       「勝率」はそのポケモンがいた対戦でのあなたの勝率で、<b>低いほど苦手な相手</b>です。「対策」を押すと対策さがしへ飛びます</li>
+    <li><b>相性(⚔タブ)</b> … 記録した相手のタイプを自動集計して、タイプごとの通りやすさを4つのグラフで出します。
+      <b>攻撃面</b>＝そのタイプのわざで攻撃したとき弱点を突ける相手/耐性で軽減される相手の割合(複合タイプは掛け算)。
+      <b>防御面</b>＝そのタイプのポケモンで受けたとき、相手の<b>タイプ一致わざ</b>に弱点を突かれる/軽減できる割合です</li>
     <li><b>レート</b> … 記録するときに「レート」欄に数字を入れると、📈タブに折れ線グラフが出ます。
       毎戦入れる必要はありません（レートが分かる<b>5戦セットの区切りで入れる形でOK</b>。入れた記録だけが点になります）</li>
     <li><b>削除</b> … 履歴タブで1件ずつ消せます（×→「削除する?」の2タップ）。いちばん下の
@@ -5084,7 +5087,52 @@ function runBlog() {
   if (BLV.view === 'rate') { body.innerHTML = blRateHtml(use); blBindRate(body); }
   else if (BLV.view === 'hist') { body.innerHTML = blHistHtml(recs); blBindHist(body); }
   else if (BLV.view === 'graph') body.innerHTML = blGraphHtml(use);
+  else if (BLV.view === 'type') body.innerHTML = blTypeHtml(use);
   else blHitStart(use, body);
+}
+
+// タイプ相性の自動集計(2026-08-27タダシさん指示)。記録した相手のタイプから、
+// 攻撃面(こちらがそのタイプのわざで攻撃)と防御面(こちらがそのタイプのポケモンで受ける)を
+// 弱点・耐性の4グラフで出す。重みは採用数(よく出る相手ほど大きく数える)
+function blTypeHtml(use) {
+  const a = blAgg(use);
+  if (!a.rows.length) return '<div class="mtnote">この期間の記録がありません</div>';
+  const idx = Object.fromEntries(D.types.map((t, i) => [t, i]));
+  const tot = a.rows.reduce((s, e) => s + e.cnt, 0);
+  const stats = D.types.map(T => ({ t: T, aw: 0, ar: 0, dw: 0, dr: 0 }));
+  for (const e of a.rows) {
+    const ty = D.pokemon[e.k].ty;
+    for (const st of stats) {
+      // 攻撃面: 複合タイプは掛け算(二重弱点・二重耐性込み)
+      const m = ty.reduce((x, t) => x * D.chart[st.t][idx[t]], 1);
+      if (m > 1.01) st.aw += e.cnt;
+      else if (m < 0.99) st.ar += e.cnt;
+      // 防御面: 相手のタイプ一致わざが、タイプ st.t にどう入るか(1本でも該当すれば数える)
+      if (ty.some(s2 => D.chart[s2][idx[st.t]] > 1.01)) st.dw += e.cnt;
+      if (ty.some(s2 => D.chart[s2][idx[st.t]] < 0.99)) st.dr += e.cnt;
+    }
+  }
+  const graph = (key, cls, ttl, sub, tip) => {
+    const rows = stats.slice().sort((x, y) => y[key] - x[key]).map(st => {
+      const pct = Math.round(st[key] / tot * 100);
+      return `<div class="bltyr" title="${D.typeJa[st.t]}: 記録した相手のべ${tot}匹のうち${st[key]}匹(${pct}%)が${tip}">
+        ${typePairHTML([D.typeJa[st.t]], 17)}<span class="bltyb"><i class="${cls}" style="width:${pct}%"></i></span><b>${pct}%</b></div>`;
+    }).join('');
+    return `<div class="bltyg"><div class="bltyt">${ttl}</div><div class="bltys">${sub}</div>${rows}</div>`;
+  };
+  return `<div class="bltype">
+    <div class="enote expl">あなたの記録(採用数の重み付き・のべ${tot}匹)からタイプごとの通りやすさを集計したものです。攻撃面の複合タイプは掛け算(二重弱点・二重耐性込み)、防御面は相手のタイプ一致わざが1本でも当てはまれば数えます。</div>
+    <div class="bltysec">⚔ 攻撃面 <small>こちらがそのタイプのわざで攻撃したとき</small></div>
+    <div class="bltygrid">
+      ${graph('aw', 'good', '弱点を突ける', '高いタイプほど、あなたの環境に刺さります', '弱点(×1.6以上)です')}
+      ${graph('ar', 'bad', '耐性で軽減される', '高いタイプほど、通りが悪い相手が多い', '耐性(×0.63以下)で軽減してきます')}
+    </div>
+    <div class="bltysec">🛡 防御面 <small>こちらがそのタイプのポケモンで受けたとき(相手のタイプ一致わざ基準)</small></div>
+    <div class="bltygrid">
+      ${graph('dw', 'bad', '弱点を突かれる', '高いタイプほど、一致わざで弱点を突かれやすい', 'そのタイプの弱点を突ける一致わざを持ちます')}
+      ${graph('dr', 'good', '一致わざを軽減できる', '高いタイプほど、相手の一致わざを受けやすい', 'そのタイプが軽減できる一致わざを持ちます')}
+    </div>
+  </div>`;
 }
 
 // レートの折れ線グラフ(レートを入れた記録だけが点になる)

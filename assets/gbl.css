@@ -1383,3 +1383,18 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blcno{background:var(--tab);border:1px solid var(--line2);border-radius:10px;color:var(--ink);
   font-size:.8rem;padding:9px 16px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
 @media (max-width:560px){.blrate{width:96px}}
+/* タイプ相性の4グラフ(対戦記録・2026-08-27) */
+.bltysec{font-size:.84rem;font-weight:700;margin:12px 2px 8px}
+.bltysec small{color:var(--sub);font-weight:400;font-size:.7rem;margin-left:6px}
+.bltysec:first-of-type{margin-top:4px}
+.bltygrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bltyg{border:1px solid var(--line);border-radius:12px;padding:9px 10px}
+.bltyt{font-size:.78rem;font-weight:700}
+.bltys{color:var(--sub);font-size:.66rem;margin:1px 0 7px}
+.bltyr{display:grid;grid-template-columns:20px 1fr 38px;align-items:center;gap:7px;padding:2.5px 0}
+.bltyb{height:8px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);overflow:hidden}
+.bltyb i{display:block;height:100%;border-radius:999px}
+.bltyb i.good{background:linear-gradient(90deg,var(--gl),var(--cy))}
+.bltyb i.bad{background:linear-gradient(90deg,#ff9f43,var(--lose))}
+.bltyr b{font-size:.7rem;text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:640px){.bltygrid{grid-template-columns:1fr}}
