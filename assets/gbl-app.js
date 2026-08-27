@@ -1,7 +1,8 @@
 // GBL対面シミュレーター(/gbl/)とロケット団対策(/rocket/)の共通アプリ本体。
 // 2ページは見た目・入口が別のツールだが、計算と画面の中身はこの1ファイルを共有する。
-// ページの違いは PAGE_ROCKET で分岐する(rocket/index.html が読み込み前に window.PAGE_ROCKET = true を立てる)
+// ページの違いは PAGE_ROCKET / PAGE_BLOG で分岐する(各ページの index.html が読み込み前にフラグを立てる)
 const PAGE_ROCKET = !!window.PAGE_ROCKET;
+const PAGE_BLOG = !!window.PAGE_BLOG;   // 対戦記録ページ(/battlelog/)。モードは 'blog' に固定
 
 // ---- 画面の骨組み(両ページ共通。ここで注入して二重管理を防ぐ) ----
 document.getElementById('app').innerHTML = `
@@ -391,10 +392,22 @@ if (PAGE_ROCKET) {
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
   // リンクのぶん幅が足りず、狭い画面では見出しがリンクに重なる。CSSで2段にするための目印
   document.querySelector('header').classList.add('haslink');
+} else if (PAGE_BLOG) {
+  // 対戦記録ページ: モードは 'blog' に固定なのでタブ行ごと隠し、見出しを差し替える(ロケット団と同じ作り)
+  document.querySelector('header h1').innerHTML = '<span>GOバトルリーグ</span> <b>対戦記録</b>';
+  document.getElementById('modes').style.display = 'none';
+  document.getElementById('themesw').insertAdjacentHTML('beforebegin',
+    '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
+  document.querySelector('header').classList.add('haslink');
+  // かんたん案内はGBL/ロケット団のモードを案内するものなので、このページでは出さない
+  const er = document.querySelector('.easyrow');
+  if (er) er.style.display = 'none';
 } else {
-  // GBLページ: ロケット団戦は別ページになったので、タブを同じ位置のリンクに差し替える
+  // GBLページ: ロケット団戦・対戦記録は別ページになったので、タブを同じ位置のリンクに差し替える
   const rb = document.querySelector('#modes button[data-m="rocket"]');
   if (rb) rb.outerHTML = '<a class="modelink" href="/rocket/" title="GOロケット団(したっぱ/リーダー/サカキ)対策の専用ページへ">ロケット団戦 ↗</a>';
+  const bb = document.querySelector('#modes button[data-m="blog"]');
+  if (bb) bb.outerHTML = '<a class="modelink" href="/battlelog/" title="戦った相手を記録して、自分のレート帯の環境(採用率)を分析する専用ページへ">対戦記録 ↗</a>';
 }
 
 // 交代マーク(黄色い循環矢印の画像・assets/gbl.css の .swapmark)。「⇄」の文字の代わりに全箇所で使う
@@ -1469,7 +1482,7 @@ function renderRoster() {
 }
 
 // ---- モード切替(1対1シミュ / 環境一覧) ----
-let mode = PAGE_ROCKET ? 'rocket' : 'duel', multiToken = 0;   // ロケット団対策ページはモード固定
+let mode = PAGE_ROCKET ? 'rocket' : PAGE_BLOG ? 'blog' : 'duel', multiToken = 0;   // ロケット団・対戦記録ページはモード固定
 // 一覧系3モードの「⚙ 詳細」(ブラフ・能力変化わざ)の開閉
 const MDET = { open: false };
 function syncMdet() {
@@ -5085,8 +5098,10 @@ function blRateHtml(use) {
 function blBindRate(body) {
   body.querySelectorAll('.blcnt').forEach(b => b.onclick = () => blToCounter(b.dataset.k, b.dataset.s === '1'));
 }
-// 「対策」→ 対策さがしのあいて欄へ入れてモードを切り替える(applyMetaと同じ手順の縮小版)
+// 「対策」→ 対策さがしのあいて欄へ入れてモードを切り替える(applyMetaと同じ手順の縮小版)。
+// 対戦記録ページ(/battlelog/)からはGBLページへURL引き継ぎで移動する(ロケット団と同じ「入口は別」の作り)
 function blToCounter(k, s) {
+  if (PAGE_BLOG) { location.href = `/gbl/?lg=${cap}&md=counter&r=${k}${s ? '&shr=1' : ''}`; return; }
   S[1].key = k; S[1].shadow = s; S[1].maxLv = 51; syncSmax(1);
   sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', s);
   S[1].fast = null; S[1].c1 = null; S[1].c2 = null;
@@ -5098,6 +5113,7 @@ function blToCounter(k, s) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function blToParty() {
+  if (PAGE_BLOG) { location.href = `/gbl/?lg=${cap}&md=party&cup=my${cap}`; return; }
   selectMyCup(cap);
   document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === 'party'));
   mode = 'party'; applyMode(); run();
@@ -7779,7 +7795,7 @@ function updateUrl() {
     }
   });
   if (cup) qp.cup = cup.slug;
-  if (mode !== 'duel' && !PAGE_ROCKET) qp.md = mode;
+  if (mode !== 'duel' && !PAGE_ROCKET && !PAGE_BLOG) qp.md = mode;   // モード固定ページはmdを書かない
   if (mode === 'mock') {   // GBL模擬戦の設定(じぶんのパーティは端末内保存なのでURLには入れない)
     if (MK.ai !== 'normal') qp.gai = MK.ai;   // 既定(NORMAL)以外のときだけ書く
     if (MK.leadSwap) qp.gls = 1;   // 開幕交代
@@ -8435,9 +8451,9 @@ document.addEventListener('click', e => {
     GBT[i] = { key, shadow: sh === '1',
       fast: D.moves[fast] ? fast : d.fast, c1: D.moves[c1] ? c1 : d.c1, c2: D.moves[c2] ? c2 : (c2 === '' ? '' : d.c2) };
   });
-  if (PAGE_ROCKET) {   // ロケット団対策ページはモード固定(md= は見ない)
+  if (PAGE_ROCKET || PAGE_BLOG) {   // モード固定ページ(md= は見ない)
     applyMode();
-  } else if (['multi', 'counter', 'party', 'mock', 'blog'].includes(q.get('md'))) {   // モードの復元(md=rocket は別ページへ転送済み)
+  } else if (['multi', 'counter', 'party', 'mock'].includes(q.get('md'))) {   // モードの復元(md=rocket/blog は別ページへ転送済み)
     mode = q.get('md');
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
     applyMode();
@@ -8509,5 +8525,5 @@ document.addEventListener('click', e => {
   run();
   // かんたん案内: 常設ボタン＋初回訪問(共有リンク以外)は自動で開く
   document.getElementById('easybtn').onclick = easyOpen;
-  if (!EASY_HAD_QS && !easySeen()) easyOpen();
+  if (!PAGE_BLOG && !EASY_HAD_QS && !easySeen()) easyOpen();   // 対戦記録ページでは案内を出さない
 })();

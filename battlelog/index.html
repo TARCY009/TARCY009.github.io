@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GOバトルリーグ対面シミュレーター</title>
-<meta name="description" content="ポケモンGOのGOバトルリーグ(GBL)対面を1ターン単位で正確にシミュレート。理想個体値・技構成・シールド枚数・発動タイミングを自動最適化。">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/gbl/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/gbl/apple-touch-icon.png">
-<link rel="manifest" href="/gbl/manifest.webmanifest">
+<title>GBL対戦記録｜自分の環境を分析</title>
+<meta name="description" content="ポケモンGOのGBLで戦った相手のパーティを記録して、自分のレート帯の採用率と刺さるポケモンを分析。記録はマイ環境として対面シミュレーターでも使える。">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/battlelog/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/battlelog/apple-touch-icon.png">
+<link rel="manifest" href="/battlelog/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="対戦記録">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/gbl.css">
 <link rel="stylesheet" href="/assets/theme.css">
@@ -16,19 +17,7 @@
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
-<script>
-// ロケット団戦(/rocket/)・対戦記録(/battlelog/)は専用ページへ独立した。
-// 古い共有リンク(md=rocket / md=blog)は設定ごと転送する
-(() => {
-  const q = new URLSearchParams(location.search);
-  const to = { rocket: '/rocket/', blog: '/battlelog/' }[q.get('md')];
-  if (to) {
-    q.delete('md');
-    const qs = q.toString();
-    location.replace(to + (qs ? '?' + qs : ''));
-  }
-})();
-</script>
+<script>window.PAGE_BLOG = true;   // 共通アプリ本体(gbl-app.js)を対戦記録ページとして起動する</script>
 </head>
 <body>
 <div id="app"></div>

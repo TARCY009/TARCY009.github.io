@@ -1,27 +1,27 @@
-// ロケット団対策シミュレーター用のService Worker
-// 目的: 電波の悪い場所でも起動できるようにする(PWAインストール要件も満たす)
-const CACHE = 'rkt-v17';
+// 対戦記録(GBL)用のService Worker
+// 目的: 電波の悪い場所(対戦の合間)でも起動できるようにする(PWAインストール要件も満たす)
+const CACHE = 'blg-v1';
 // 起動に必要な一式。データ本体(pvp_data.js)と共有モジュールはページ外のパスだが、
 // このSWが管理するページからの読み込みは全てfetchイベントを通るのでキャッシュできる
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   '/pvp_data.js',
   '/assets/pvp-engine.js', '/assets/meta_lists.js', '/assets/meta_moves.js',
-'/assets/type-icons.js', '/assets/shadow-icon.css',
+  '/assets/type-icons.js', '/assets/shadow-icon.css',
   '/assets/rocket_roster.js', '/assets/gbl.css', '/assets/gbl-app.js',
   '/assets/theme.css', '/assets/theme.js',
   '/assets/explain.css', '/assets/explain.js',
-  '/assets/icons/rocket/icon-192.png', '/assets/icons/rocket/icon-512.png',
-  '/assets/icons/rocket/favicon-32.png', '/assets/icons/rocket/apple-touch-icon.png',
+  '/assets/icons/battlelog/icon-192.png', '/assets/icons/battlelog/icon-512.png',
+  '/assets/icons/battlelog/favicon-32.png', '/assets/icons/battlelog/apple-touch-icon.png',
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
   self.skipWaiting();
 });
 self.addEventListener('activate', e => {
-  // 自分の古いキャッシュ(rkt-)だけ消す。他ツールのキャッシュは消さない
+  // 自分の古いキャッシュ(blg-)だけ消す。他ツールのキャッシュは消さない
   e.waitUntil(caches.keys().then(ks =>
-    Promise.all(ks.filter(k => k.startsWith('rkt-') && k !== CACHE).map(k => caches.delete(k)))));
+    Promise.all(ks.filter(k => k.startsWith('blg-') && k !== CACHE).map(k => caches.delete(k)))));
   self.clients.claim();
 });
 // ネットワーク優先(更新をすぐ反映)、オフライン時のみキャッシュを使う。
