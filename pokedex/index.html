@@ -121,7 +121,6 @@ tbody tr:hover{background:var(--mebg)}
 :root.light .mvwin{box-shadow:0 24px 60px rgba(30,40,90,.35)}
 .mvwin .hd{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .mvwin .hd b{font-size:1.1rem}
-.mvwin .x{margin-left:auto;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:var(--panel2);color:var(--sub);cursor:pointer;line-height:1}
 .mvwin .lg{font-size:.74rem;color:var(--gold);font-weight:800;margin-bottom:8px}
 .mvwin .grp{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .mvwin .gttl{background:var(--thbg);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);font-size:.76rem;font-weight:800;padding:6px 10px}
@@ -130,6 +129,9 @@ tbody tr:hover{background:var(--mebg)}
 .mvwin .r:first-child{border-top:none}
 .mvwin .r span{color:var(--sub)}
 .mvwin .r b{font-variant-numeric:tabular-nums}
+.mvwin .gv{display:flex;align-items:center;gap:8px}
+.mvwin .gv .gbar{margin-top:0;width:62px}
+.mvwin .gv b{color:var(--ink)}
 .mvwin .note{margin-top:10px;font-size:.78rem;color:var(--sub);line-height:1.7}
 /* 絞り込み(タイプ・地方) */
 .filttab{margin-top:10px;background:none;border:none;color:var(--sub);font-size:.8rem;font-weight:700;cursor:pointer;padding:2px 0}
@@ -357,6 +359,24 @@ function buildMoveIndex(){
     }
   }
   MOVE_NAMES=[...MOVE_INDEX.keys()].sort((a,b)=>a.localeCompare(b,'ja'));
+}
+// ---- 両データのわざの対応付け(キー体系が違う: ジム・レイド側はノーマルアタックに_FASTが付く、
+//      みらいよち=FUTURESIGHT/FUTURE_SIGHT等。同じキー→別名表→名前+タイプの順で相方を探す) ----
+const MOVE_ALIAS={TECHNO_BLAST_WATER:'TECHNO_BLAST_DOUSE',TECHNO_BLAST_DOUSE:'TECHNO_BLAST_WATER'};
+let GO2PVP=new Map(), PVP2GO=new Map();
+function buildMovePairs(){
+  const nk=m=>m.n+'|'+m.t;
+  const pvByName=new Map(), goByName=new Map();
+  for(const [k,m] of Object.entries(PVP.moves)) if(!pvByName.has(nk(m))) pvByName.set(nk(m),k);
+  for(const [k,m] of Object.entries(GO.moves)) if(!goByName.has(nk(m))) goByName.set(nk(m),k);
+  for(const [k,m] of Object.entries(GO.moves)){
+    const p=PVP.moves[k]?k:(PVP.moves[MOVE_ALIAS[k]]?MOVE_ALIAS[k]:pvByName.get(nk(m)));
+    if(p)GO2PVP.set(k,p);
+  }
+  for(const [k,m] of Object.entries(PVP.moves)){
+    const g=GO.moves[k]?k:(GO.moves[MOVE_ALIAS[k]]?MOVE_ALIAS[k]:goByName.get(nk(m)));
+    if(g)PVP2GO.set(k,g);
+  }
 }
 // 弱点(×1.6以上で受けるタイプ)のキャッシュ(弱点からの逆引きに使う)
 const WEAK_CACHE=new Map();
@@ -663,20 +683,25 @@ function buffText(m){
 }
 function openMove(id){
   const e=entryOf(state.key);
-  const gm=GO.moves[id], pm=PVP.moves[id];
+  // どちらのタブから開いても、相方のデータ(キー体系が違う)を対応表で探して両モードまとめて出す
+  const gid=GO.moves[id]?id:PVP2GO.get(id), pid=PVP.moves[id]?id:GO2PVP.get(id);
+  const gm=gid?GO.moves[gid]:null, pm=pid?PVP.moves[pid]:null;
   const base=gm||pm;
   const st=stabOf(e,base.t);
-  const legacy=(pveMoves(e)&&pveMoves(e).legacy.has(id))||(pvpMoves(e)&&pvpMoves(e).legacy.has(id));
+  const legacy=(gid&&pveMoves(e)&&pveMoves(e).legacy.has(gid))||(pid&&pvpMoves(e)&&pvpMoves(e).legacy.has(pid));
   const r=(k,v)=>`<div class="r"><span>${k}</span><b>${v}</b></div>`;
   let pve='';
   if(gm){
     const pw=gm.p*(st?1.2:1);
     const isFast=gm.e>0;
+    // SPのゲージは分割数のメーター+1本あたりの量(分割なし=100/2分割=50/3分割=33)で示す
+    const en=pveEnergyOf(gid,gm);
+    const grow=`<div class="r" title="ゲージの分割数と1本あたりの量です(分割なし=100・2分割=50・3分割=33)"><span>ゲージ</span><span class="gv">${gaugeBar(gm,gid)}<b>${Math.round(-en)}</b></span></div>`;
     pve=`<div class="grp"><div class="gttl">ジム・レイド</div><div class="rows">
       ${r('威力',st?`${num(gm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(gm.p))}
       ${r('わざ全体の時間',num(gm.d)+'秒')}
       ${r('ダメージ発生',num(gm.w,2)+'秒')}
-      ${isFast?r('ゲージ増加',gm.e+'(EPS '+num(gm.e/gm.d)+')'):(x=>r('ゲージ',(x>=-34?3:x>=-51?2:1)+'本(1本'+Math.round(-x)+')'))(pveEnergyOf(id,gm))}
+      ${isFast?r('ゲージ増加',gm.e+'(EPS '+num(gm.e/gm.d)+')'):grow}
       ${r('DPS',`<span class="${st?'stab':''}">${num(pw/gm.d)}</span>`)}
     </div></div>`;
   }
@@ -695,15 +720,14 @@ function openMove(id){
   const ov=document.createElement('div');
   ov.className='mvov';
   ov.innerHTML=`<div class="mvwin" role="dialog">
-    <div class="hd">${typePairHTML([GO.typeJa[base.t]],20)}<b>${base.n}</b><button class="x" title="閉じる">✕</button></div>
+    <div class="hd">${typePairHTML([GO.typeJa[base.t]],20)}<b>${base.n}</b></div>
     ${legacy?'<div class="lg">＊ 特別なわざ(レガシー) — 通常のわざマシンでは覚えられません</div>':''}
     ${pve}${pvp}
-    ${!gm?'<div class="note">ジム・レイドではこのわざのデータがありません</div>':''}
-    ${!pm?'<div class="note">トレーナーバトルではこのわざのデータがありません</div>':''}
+    ${!gm?'<div class="note">このわざはジム・レイドには存在しません</div>':''}
+    ${!pm?'<div class="note">このわざはトレーナーバトルには存在しません</div>':''}
   </div>`;
   document.body.appendChild(ov);
   ov.addEventListener('click',ev=>{ if(ev.target===ov)ov.remove(); });
-  ov.querySelector('.x').onclick=()=>ov.remove();
 }
 
 // ---- 使い方タブ・URL ----
@@ -718,6 +742,7 @@ function updateUrl(){ try{ history.replaceState(null,'',location.pathname); }cat
 function init(){
   buildDex();
   buildMoveIndex();
+  buildMovePairs();
   buildFilters();
   const sp=new URLSearchParams(location.search);
   const want=sp.get('p');
