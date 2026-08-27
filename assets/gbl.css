@@ -1398,3 +1398,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .bltyb i.bad{background:linear-gradient(90deg,#ff9f43,var(--lose))}
 .bltyr b{font-size:.7rem;text-align:right;font-variant-numeric:tabular-nums}
 @media (max-width:640px){.bltygrid{grid-template-columns:1fr}}
+/* 相性グラフの切り替えボタン(1つずつ表示・2026-08-27) */
+.bltysel{margin-bottom:10px;flex-wrap:wrap}
+.bltysel button{font-size:.72rem}
+.bltype .bltyg{max-width:560px}

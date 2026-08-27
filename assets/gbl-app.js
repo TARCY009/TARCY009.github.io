@@ -274,7 +274,7 @@ document.getElementById('app').innerHTML = `
   <div class="blsum"></div>
   <div class="blviews">
     <div class="opts blvtabs">
-      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="type" aria-pressed="false" title="記録した相手のタイプを自動集計して、タイプごとに弱点をどれくらい突けるか・どれくらい突かれるかをグラフで見ます">⚔ 相性</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
+      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="type" aria-pressed="false" title="記録した相手のタイプを自動集計して、タイプごとに弱点をどれくらい突けるか・どれくらい突かれるかをグラフで見ます">⚔️ 相性</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
     </div>
     <div class="opts blperiod">
       <button data-v="all" aria-pressed="true" title="このリーグの記録を全部使って集計します">全部</button><button data-v="50" aria-pressed="false" title="新しいほうから50戦だけで集計します(環境の入れ替わりを追いたいとき)">直近50戦</button><button data-v="20" aria-pressed="false" title="新しいほうから20戦だけで集計します">直近20戦</button>
@@ -1072,7 +1072,7 @@ ${PAGE_ROCKET ? '' : `
       見えたぶんだけの記録でかまいません。記録は<b>この端末の中だけ</b>に保存され、リーグごとに別集計です</li>
     <li><b>採用率</b> … 記録した対戦のうち、そのポケモンがパーティに入っていた割合です。
       「勝率」はそのポケモンがいた対戦でのあなたの勝率で、<b>低いほど苦手な相手</b>です。「対策」を押すと対策さがしへ飛びます</li>
-    <li><b>相性(⚔タブ)</b> … 記録した相手のタイプを自動集計して、タイプごとの通りやすさを4つのグラフで出します。
+    <li><b>相性(⚔️タブ)</b> … 記録した相手のタイプを自動集計して、タイプごとの通りやすさを4つのグラフで出します。
       <b>攻撃面</b>＝そのタイプのわざで攻撃したとき弱点を突ける相手/耐性で軽減される相手の割合(複合タイプは掛け算)。
       <b>防御面</b>＝そのタイプのポケモンで受けたとき、相手の<b>タイプ一致わざ</b>に弱点を突かれる/軽減できる割合です</li>
     <li><b>レート</b> … 記録するときに「レート」欄に数字を入れると、📈タブに折れ線グラフが出ます。
@@ -5087,7 +5087,10 @@ function runBlog() {
   if (BLV.view === 'rate') { body.innerHTML = blRateHtml(use); blBindRate(body); }
   else if (BLV.view === 'hist') { body.innerHTML = blHistHtml(recs); blBindHist(body); }
   else if (BLV.view === 'graph') body.innerHTML = blGraphHtml(use);
-  else if (BLV.view === 'type') body.innerHTML = blTypeHtml(use);
+  else if (BLV.view === 'type') {
+    body.innerHTML = blTypeHtml(use);
+    body.querySelectorAll('.bltysel button').forEach(b => b.onclick = () => { BLV.tsel = b.dataset.t; runBlog(); });
+  }
   else blHitStart(use, body);
 }
 
@@ -5120,18 +5123,21 @@ function blTypeHtml(use) {
     }).join('');
     return `<div class="bltyg"><div class="bltyt">${ttl}</div><div class="bltys">${sub}</div>${rows}</div>`;
   };
+  // 4つを一気に出すと視覚的にうるさいので、ボタンで1つずつ表示する(2026-08-27タダシさん指示)
+  const G = {
+    aw: ['good', '⚔️ 弱点を突ける', '高いタイプほど、そのタイプのわざがあなたの環境に刺さります', '弱点(×1.6以上)です'],
+    ar: ['bad', '⚔️ 耐性で軽減される', '高いタイプほど、通りが悪い相手が多いです', '耐性(×0.63以下)で軽減してきます'],
+    dw: ['bad', '🛡 弱点を突かれる', '高いタイプほど、相手のタイプ一致わざで弱点を突かれやすいです', 'そのタイプの弱点を突ける一致わざを持ちます'],
+    dr: ['good', '🛡 一致わざを軽減できる', '高いタイプほど、相手のタイプ一致わざを受けやすいです', 'そのタイプが軽減できる一致わざを持ちます'],
+  };
+  const sel = G[BLV.tsel] ? BLV.tsel : 'aw';
+  const btn = (k, lbl, tip) => `<button data-t="${k}" aria-pressed="${sel === k}" title="${tip}">${lbl}</button>`;
   return `<div class="bltype">
-    <div class="enote expl">あなたの記録(採用数の重み付き・のべ${tot}匹)からタイプごとの通りやすさを集計したものです。攻撃面の複合タイプは掛け算(二重弱点・二重耐性込み)、防御面は相手のタイプ一致わざが1本でも当てはまれば数えます。</div>
-    <div class="bltysec">⚔ 攻撃面 <small>こちらがそのタイプのわざで攻撃したとき</small></div>
-    <div class="bltygrid">
-      ${graph('aw', 'good', '弱点を突ける', '高いタイプほど、あなたの環境に刺さります', '弱点(×1.6以上)です')}
-      ${graph('ar', 'bad', '耐性で軽減される', '高いタイプほど、通りが悪い相手が多い', '耐性(×0.63以下)で軽減してきます')}
+    <div class="enote expl">あなたの記録(採用数の重み付き・のべ${tot}匹)からタイプごとの通りやすさを集計したものです。攻撃面(⚔️)の複合タイプは掛け算(二重弱点・二重耐性込み)、防御面(🛡)は相手のタイプ一致わざが1本でも当てはまれば数えます。</div>
+    <div class="opts bltysel">
+      ${btn('aw', '⚔️ 弱点を突ける', '攻撃面: そのタイプのわざで攻撃したとき、弱点を突ける相手の割合を出します')}${btn('ar', '⚔️ 耐性で軽減される', '攻撃面: そのタイプのわざで攻撃したとき、耐性で軽減される相手の割合を出します')}${btn('dw', '🛡 弱点を突かれる', '防御面: そのタイプのポケモンで受けたとき、相手のタイプ一致わざで弱点を突かれる割合を出します')}${btn('dr', '🛡 一致わざを軽減できる', '防御面: そのタイプのポケモンで受けたとき、相手のタイプ一致わざを軽減できる割合を出します')}
     </div>
-    <div class="bltysec">🛡 防御面 <small>こちらがそのタイプのポケモンで受けたとき(相手のタイプ一致わざ基準)</small></div>
-    <div class="bltygrid">
-      ${graph('dw', 'bad', '弱点を突かれる', '高いタイプほど、一致わざで弱点を突かれやすい', 'そのタイプの弱点を突ける一致わざを持ちます')}
-      ${graph('dr', 'good', '一致わざを軽減できる', '高いタイプほど、相手の一致わざを受けやすい', 'そのタイプが軽減できる一致わざを持ちます')}
-    </div>
+    ${graph(sel, ...G[sel])}
   </div>`;
 }
 
