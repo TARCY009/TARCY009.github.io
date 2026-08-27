@@ -1353,3 +1353,33 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   .blviews .blperiod{margin-left:0}
 }
 .blslot .bllead{margin-left:5px;color:var(--sub);font-size:.62rem;font-weight:400}
+/* レート入力とグラフ・全削除(2026-08-27) */
+.blrate{width:110px;font-size:16px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+  color:var(--ink);padding:8px 10px;outline:none}
+.blrate:focus{border-color:var(--gl)}
+.blgraph{border:1px solid var(--line);border-radius:12px;padding:10px 8px 4px}
+.blghead{font-size:.82rem;margin:0 4px 6px}
+.blghead b{font-size:1.05rem;color:var(--cy)}
+.blghead span{color:var(--sub);font-size:.74rem}
+.blghead i{font-style:normal;font-weight:700}
+.blghead i.up{color:var(--win)}
+.blghead i.down{color:var(--lose)}
+.blgsvg{width:100%;height:auto;display:block}
+.blggrid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.blgy,.blgx{fill:var(--sub);font-size:11px}
+.blgy{text-anchor:end}
+.blgline{fill:none;stroke:var(--cy);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.blgarea{fill:rgba(67,224,255,.09);stroke:none}
+.blgdot{fill:var(--cy);stroke:var(--bg2);stroke-width:1.5}
+.blgdot.cur{fill:var(--gold)}
+.blreset{display:block;margin:14px auto 4px;background:none;border:1px solid var(--line);border-radius:10px;
+  color:var(--sub);font-size:.74rem;padding:8px 14px;cursor:pointer}
+.blreset:hover{color:var(--lose);border-color:var(--lose)}
+.blconfirm{margin:14px 0 4px;border:1px solid var(--lose);border-radius:12px;padding:12px;
+  font-size:.8rem;line-height:1.8;background:rgba(255,107,129,.07)}
+.blcbtns{display:flex;gap:10px;margin-top:8px}
+.blcyes{background:var(--lose);border:none;border-radius:10px;color:#fff;font-weight:700;
+  font-size:.8rem;padding:9px 16px;cursor:pointer}
+.blcno{background:var(--tab);border:1px solid var(--line2);border-radius:10px;color:var(--ink);
+  font-size:.8rem;padding:9px 16px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
+@media (max-width:560px){.blrate{width:96px}}

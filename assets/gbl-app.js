@@ -265,6 +265,7 @@ document.getElementById('app').innerHTML = `
       <div class="opts blres">
         <button data-v="w" aria-pressed="false" title="この対戦に勝ちました(もう一度押すと取り消し)">勝ち</button><button data-v="l" aria-pressed="false" title="この対戦に負けました(もう一度押すと取り消し)">負け</button>
       </div>
+      <input type="text" class="blrate" inputmode="numeric" placeholder="レート" title="対戦後のレートが分かるときだけ入れてください(任意・5戦セットの区切りで入れる形でOK)。入れた記録だけが📈レートの折れ線グラフの点になります">
       <button class="bladd" title="この対戦を記録します。自分のパーティ(パーティ診断の3枠)も一緒に控えます">＋ 記録する</button>
     </div>
     <div class="blmine"></div>
@@ -273,7 +274,7 @@ document.getElementById('app').innerHTML = `
   <div class="blsum"></div>
   <div class="blviews">
     <div class="opts blvtabs">
-      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
+      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
     </div>
     <div class="opts blperiod">
       <button data-v="all" aria-pressed="true" title="このリーグの記録を全部使って集計します">全部</button><button data-v="50" aria-pressed="false" title="新しいほうから50戦だけで集計します(環境の入れ替わりを追いたいとき)">直近50戦</button><button data-v="20" aria-pressed="false" title="新しいほうから20戦だけで集計します">直近20戦</button>
@@ -1071,6 +1072,10 @@ ${PAGE_ROCKET ? '' : `
       見えたぶんだけの記録でかまいません。記録は<b>この端末の中だけ</b>に保存され、リーグごとに別集計です</li>
     <li><b>採用率</b> … 記録した対戦のうち、そのポケモンがパーティに入っていた割合です。
       「勝率」はそのポケモンがいた対戦でのあなたの勝率で、<b>低いほど苦手な相手</b>です。「対策」を押すと対策さがしへ飛びます</li>
+    <li><b>レート</b> … 記録するときに「レート」欄に数字を入れると、📈タブに折れ線グラフが出ます。
+      毎戦入れる必要はありません（レートが分かる<b>5戦セットの区切りで入れる形でOK</b>。入れた記録だけが点になります）</li>
+    <li><b>削除</b> … 履歴タブで1件ずつ消せます（×→「削除する?」の2タップ）。いちばん下の
+      「🗑 すべて削除」はそのリーグの記録を全部消します（確認ウィンドウが出てから消えるので、押しまちがいでは消えません）</li>
     <li><b>刺さるポケモン</b> … あなたの記録の上位20匹（採用数の重み付き）に、どのポケモンがいちばん勝てるかを
       シミュレートします。前提は環境一覧などと同じ（理想個体値・環境の定番わざ構成・シールド0-0/1-1/2-2の3通り・
       ブラフは画面の設定）です。候補は全体の環境上位100匹＋記録に出てきた相手＋★登録リストです</li>
@@ -5024,12 +5029,17 @@ function blAddRecord() {
   let id = Date.now();
   const last = BLOG[BLOG.length - 1];
   if (last && last.id >= id) id = last.id + 1;   // 連打しても記録のidがかぶらないように
+  // レート(任意)。日本語キーボードの全角数字も受ける(打っている最中は書き換えない・確定時に整える恒久ルール)
+  const rEl = document.querySelector('#blog .blrate');
+  const rv = parseInt((rEl.value || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^\d]/g, ''), 10);
+  const rate = rv >= 0 && rv < 10000 ? rv : null;
   BLOG.push({ id, t: Date.now(), cap,
     foes: BLE.foes.map(f => f ? { ...f } : null),
-    win: BLE.win,
+    win: BLE.win, rate,
     mine: PT.map(p => p ? { k: p.key, s: !!p.shadow } : null) });
   saveBlog();
   BLE.foes = [null, null, null]; BLE.win = null;
+  rEl.value = '';
   [0, 1, 2].forEach(syncBlogSlot);
   document.querySelectorAll('#blog .blres button').forEach(b => b.setAttribute('aria-pressed', false));
   blSetMsg(`記録しました(${BL_LGN[cap] || 'このリーグ'} ${blRecs().length}戦目)`);
@@ -5073,7 +5083,50 @@ function runBlog() {
   if (!recs.length) { body.innerHTML = ''; return; }
   if (BLV.view === 'rate') { body.innerHTML = blRateHtml(use); blBindRate(body); }
   else if (BLV.view === 'hist') { body.innerHTML = blHistHtml(recs); blBindHist(body); }
+  else if (BLV.view === 'graph') body.innerHTML = blGraphHtml(use);
   else blHitStart(use, body);
+}
+
+// レートの折れ線グラフ(レートを入れた記録だけが点になる)
+function blGraphHtml(use) {
+  const pts = [];
+  use.forEach(r => { if (r.rate != null) pts.push({ y: r.rate, t: r.t }); });
+  if (!pts.length) return '<div class="mtnote">記録するときに「レート」欄に数字を入れると、ここに折れ線グラフが出ます(5戦セットの区切りで入れる形でOK)</div>';
+  const last = pts[pts.length - 1].y;
+  if (pts.length === 1) return `<div class="mtnote">レート <b>${last}</b> を記録しました。2つ以上たまると折れ線グラフが出ます</div>`;
+  const hi = Math.max(...pts.map(p => p.y)), lo = Math.min(...pts.map(p => p.y));
+  const diff = last - pts[0].y;
+  const W = 600, H = 250, L = 50, R = 16, T = 16, B = 28;
+  const span = Math.max(hi - lo, 20), pad = span * 0.18;
+  const y0 = lo - pad, y1 = hi + pad;
+  const xs = i => L + (W - L - R) * i / (pts.length - 1);
+  const ys = v => T + (H - T - B) * (1 - (v - y0) / (y1 - y0));
+  // 横のガイド線(4本・きりのいい値)
+  const grid = [];
+  for (let g = 0; g < 4; g++) {
+    const v = Math.round((y0 + (y1 - y0) * (g + 0.5) / 4) / 10) * 10;
+    grid.push(`<line x1="${L}" x2="${W - R}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" class="blggrid"/>
+      <text x="${L - 6}" y="${(ys(v) + 3).toFixed(1)}" class="blgy">${v}</text>`);
+  }
+  const line = pts.map((p, i) => `${xs(i).toFixed(1)},${ys(p.y).toFixed(1)}`).join(' ');
+  const area = `${L},${H - B} ${line} ${(W - R)},${H - B}`;
+  const dots = pts.map((p, i) => {
+    const d = new Date(p.t);
+    return `<circle cx="${xs(i).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="${i === pts.length - 1 ? 5 : 3.5}"
+      class="blgdot${i === pts.length - 1 ? ' cur' : ''}"><title>${d.getMonth() + 1}/${d.getDate()}　レート${p.y}</title></circle>`;
+  }).join('');
+  const dt = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`; };
+  return `<div class="blgraph">
+    <div class="blghead">最新 <b>${last}</b><span> ・ 最高 ${hi} ・ この期間 <i class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : ''}${diff}</i></span></div>
+    <svg viewBox="0 0 ${W} ${H}" class="blgsvg" role="img" aria-label="レートの推移">
+      ${grid.join('')}
+      <polygon points="${area}" class="blgarea"/>
+      <polyline points="${line}" class="blgline"/>
+      ${dots}
+      <text x="${L}" y="${H - 8}" class="blgx">${dt(pts[0].t)}</text>
+      <text x="${W - R}" y="${H - 8}" class="blgx" text-anchor="end">${dt(pts[pts.length - 1].t)}</text>
+    </svg>
+  </div>`;
 }
 
 // 採用率(あなたの土俵のランキング)
@@ -5134,7 +5187,12 @@ function blHistHtml(recs) {
       <button class="bldel${del ? ' arm' : ''}" data-id="${r.id}" title="この記録を消します">${del ? '削除する?' : '×'}</button>
     </div>`;
   }).join('');
-  return `<div class="blhist">${rows}</div>`;
+  // 全削除(リセット)。まちがえて押しても消えないよう、確認ウィンドウを出してから消す(2026-08-27タダシさん指示)
+  const reset = BLV.resetArm
+    ? `<div class="blconfirm"><b>${BL_LGN[cap] || 'このリーグ'}の記録${recs.length}戦をすべて削除します。</b>元に戻せません。よろしいですか?
+        <div class="blcbtns"><button class="blcyes">すべて削除する</button><button class="blcno">やめる</button></div></div>`
+    : `<button class="blreset" title="このリーグの記録を全部消します(確認ウィンドウが出ます)">🗑 ${BL_LGN[cap] || 'このリーグ'}の記録をすべて削除</button>`;
+  return `<div class="blhist">${rows}</div>${reset}`;
 }
 function blBindHist(body) {
   body.querySelectorAll('.bldel').forEach(b => b.onclick = () => {
@@ -5144,6 +5202,17 @@ function blBindHist(body) {
       saveBlog(); BLV.del = null; runBlog();
     } else { BLV.del = id; runBlog(); }
   });
+  const rs = body.querySelector('.blreset');
+  if (rs) rs.onclick = () => { BLV.resetArm = true; runBlog(); };
+  const yes = body.querySelector('.blcyes');
+  if (yes) yes.onclick = () => {
+    BLOG = BLOG.filter(r => r.cap !== cap);   // 消すのはいま見ているリーグのぶんだけ
+    saveBlog(); BLV.resetArm = false; BLV.del = null;
+    blSetMsg('記録を削除しました');
+    runBlog();
+  };
+  const no = body.querySelector('.blcno');
+  if (no) no.onclick = () => { BLV.resetArm = false; runBlog(); };
 }
 
 // 「刺さるポケモン」: あなたの環境(記録の上位・採用数の重み付き)にいちばん勝てる候補をシミュレートする。
@@ -8468,8 +8537,8 @@ document.addEventListener('click', e => {
   });
   const blAdd = document.querySelector('#blog .bladd');
   if (blAdd) blAdd.onclick = blAddRecord;
-  document.querySelectorAll('#blog .blvtabs button').forEach(b => b.onclick = () => { BLV.view = b.dataset.v; runBlog(); });
-  document.querySelectorAll('#blog .blperiod button').forEach(b => b.onclick = () => { BLV.period = b.dataset.v; runBlog(); });
+  document.querySelectorAll('#blog .blvtabs button').forEach(b => b.onclick = () => { BLV.view = b.dataset.v; BLV.resetArm = false; runBlog(); });
+  document.querySelectorAll('#blog .blperiod button').forEach(b => b.onclick = () => { BLV.period = b.dataset.v; BLV.resetArm = false; runBlog(); });
   // パーティ診断の「わざ｜オート」。手動へ切り替えるときは、いま出ている構成を枠に書き込んでから編集させる
   const paBtn = document.querySelector('#party .ptauto');
   if (paBtn) paBtn.onclick = () => {
