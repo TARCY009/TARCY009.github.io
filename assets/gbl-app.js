@@ -32,6 +32,7 @@ document.getElementById('app').innerHTML = `
   <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧</button>
   <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモン（対策）を環境上位から総当たりで探す">対策さがし</button>
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
+  <button data-m="blog" aria-pressed="false" title="GBLで戦った相手のパーティを記録して、自分のレート帯の環境(採用率)と刺さるポケモンを分析する">対戦記録</button>
   <div class="modegrp">実戦を戦う</div>
   <button class="mockhero" data-m="mock" aria-pressed="false" title="じぶん3匹×あいて3匹の対人戦を通しでシミュレート。SPアタック・シールド・交代を、決断の場面ごとに自分で選べます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦</b><span class="t2">実戦形式で3対3をためす</span></span></button>
   <button data-m="rocket" aria-pressed="false" title="GOロケット団(したっぱ/リーダー/サカキ)との戦いを再現する。相手はSPアタックのあと動けなくなる(硬直)">ロケット団戦</button>
@@ -247,6 +248,37 @@ document.getElementById('app').innerHTML = `
     </div>
   </div>
   <div class="pbody"></div>
+</div>
+
+<!-- 対戦記録: 自分が戦った相手を記録して「自分の土俵の環境」を分析する(2026-08-27タダシさん指示)。
+     ツールの環境リストは全体像で、レート帯によって採用率はけっこう違う。記録はこの端末の中だけに保存される -->
+<div class="multi" id="blog" style="display:none">
+  <h3>📒 対戦記録</h3>
+  <div class="enote expl">GBLの環境はレート帯で変わります。戦った相手をここに記録すると、<b>あなたの土俵の採用率</b>と<b>刺さるポケモン</b>が分かります。記録はこの端末の中だけに保存されます(リーグごとに別集計)。</div>
+  <div class="blentry">
+    <div class="blhd"><span class="lbl">あいてのパーティ</span><span class="blhint">1匹目＝初手。見えたぶんだけでOK</span></div>
+    <div class="pslots blslots"></div>
+    <div class="blquick"></div>
+    <div class="blctl">
+      <span class="lbl">勝敗</span>
+      <div class="opts blres">
+        <button data-v="w" aria-pressed="false" title="この対戦に勝ちました(もう一度押すと取り消し)">勝ち</button><button data-v="l" aria-pressed="false" title="この対戦に負けました(もう一度押すと取り消し)">負け</button>
+      </div>
+      <button class="bladd" title="この対戦を記録します。自分のパーティ(パーティ診断の3枠)も一緒に控えます">＋ 記録する</button>
+    </div>
+    <div class="blmine"></div>
+    <div class="blmsg"></div>
+  </div>
+  <div class="blsum"></div>
+  <div class="blviews">
+    <div class="opts blvtabs">
+      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
+    </div>
+    <div class="opts blperiod">
+      <button data-v="all" aria-pressed="true" title="このリーグの記録を全部使って集計します">全部</button><button data-v="50" aria-pressed="false" title="新しいほうから50戦だけで集計します(環境の入れ替わりを追いたいとき)">直近50戦</button><button data-v="20" aria-pressed="false" title="新しいほうから20戦だけで集計します">直近20戦</button>
+    </div>
+  </div>
+  <div class="blbody"></div>
 </div>
 
 <div class="multi" id="rkteam" style="display:none">
@@ -934,7 +966,13 @@ function pastHtml() {
 function renderCups() {
   const box = document.getElementById('cupslots');
   const pbox = document.getElementById('pastslots');
-  box.innerHTML = (window.CUP_LISTS || []).map(cupBtn).join('');
+  // マイ環境(対戦記録から作った自分の土俵の環境)。5戦以上記録したリーグだけ出す
+  const myBtns = [1500, 2500, 0].map(c0 => {
+    const n = BLOG.filter(r => r.cap === c0).length;
+    return n >= 5 ? `<button class="mycup" data-my="${c0}" aria-pressed="${!!(cup && cup.slug === 'my' + c0)}" title="対戦記録から作った、あなたの土俵の環境リストです。環境一覧・対策さがし・パーティ診断がこのリストで動きます">📒 マイ環境(${BL_LGN[c0]})<small>あなたの記録${n}戦から</small></button>` : '';
+  }).join('');
+  box.innerHTML = myBtns + (window.CUP_LISTS || []).map(cupBtn).join('');
+  box.querySelectorAll('button[data-my]').forEach(x => x.onclick = () => selectMyCup(+x.dataset.my));
   document.getElementById('pasttab').setAttribute('aria-expanded', pastOpen);
   pbox.style.display = pastOpen ? 'flex' : 'none';
   if (pastOpen) pbox.innerHTML = pastHtml();
@@ -942,6 +980,9 @@ function renderCups() {
     .forEach(x => x.onclick = () => selectCup(x.dataset.slug)));
 }
 function selectCup(slug) {
+  // マイ環境(対戦記録から作るカップ)はここで分岐(共有URL・リロードの cup=my1500 もここに来る)
+  const my = /^my(1500|2500|0)$/.exec(slug || '');
+  if (my) { selectMyCup(+my[1]); return; }
   const c = (window.CUP_LISTS || []).find(x => x.slug === slug)
     || (pastCups || []).find(x => x.slug === slug);
   if (!c) {
@@ -1008,6 +1049,22 @@ ${PAGE_ROCKET ? '' : `
   <p>平均勝率は環境上位50匹を<b>同じ重さ</b>で数えたものですが、実際は<b>上位の相手ほどよく当たります</b>。
   そこで順位の重みを掛けたものが<b>実戦想定</b>です（環境スコアと同じ重みの付け方）。
   よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
+
+  <h4>対戦記録と「マイ環境」</h4>
+  <p>GBLの環境は<b>レート帯によって採用率がけっこう違います</b>。「対戦記録」モードで戦った相手を
+  記録すると、ツールの環境リスト（全体像）ではなく<b>あなたの土俵の環境</b>で分析できます。</p>
+  <ul>
+    <li><b>記録の中身</b> … あいての3匹（1匹目＝初手）・勝敗・自分のパーティ（パーティ診断の3枠を自動で控えます）。
+      見えたぶんだけの記録でかまいません。記録は<b>この端末の中だけ</b>に保存され、リーグごとに別集計です</li>
+    <li><b>採用率</b> … 記録した対戦のうち、そのポケモンがパーティに入っていた割合です。
+      「勝率」はそのポケモンがいた対戦でのあなたの勝率で、<b>低いほど苦手な相手</b>です。「対策」を押すと対策さがしへ飛びます</li>
+    <li><b>刺さるポケモン</b> … あなたの記録の上位20匹（採用数の重み付き）に、どのポケモンがいちばん勝てるかを
+      シミュレートします。前提は環境一覧などと同じ（理想個体値・環境の定番わざ構成・シールド0-0/1-1/2-2の3通り・
+      ブラフは画面の設定）です。候補は全体の環境上位100匹＋記録に出てきた相手＋★登録リストです</li>
+    <li><b>マイ環境</b> … 5戦以上記録すると、特殊カップの一覧に「📒 マイ環境」が出ます。選ぶと
+      <b>環境一覧・対策さがし・パーティ診断がそのまま、あなたの記録から作った採用率順のリスト（直近100戦・上位50匹）で動きます</b>。
+      わざ構成は環境の確定値（載っていなければ効率順）を使います。記録を足したら選び直すと最新になります</li>
+  </ul>
 
   <h4>パーティ診断の「🎯 穴チェック」</h4>
   <p><b>1マス＝環境の1匹</b>で、色はその相手に<b>勝てるかどうか</b>です。
@@ -1428,7 +1485,7 @@ function applyMode() {
   const rkRankView = rk && RK.play === '1v1' && RKR.view !== 'sim';
   const mock = mode === 'mock';   // GBL模擬戦(3匹×3匹)。専用の枠を使うので左右パネルは隠す
   const duelBox = document.querySelector('.duel');
-  duelBox.style.display = mode === 'party' || mock || rkTeam ? 'none' : '';
+  duelBox.style.display = mode === 'party' || mode === 'blog' || mock || rkTeam ? 'none' : '';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter');   // 片側だけのときは1列で広く使う
   // ロケット団戦はCP制限が無いのでリーグは選ばせない。相手の設定は専用パネルにまとめる
   document.getElementById('leagues').style.display = rk ? 'none' : '';
@@ -1444,6 +1501,7 @@ function applyMode() {
   document.getElementById('counter').style.display = mode === 'counter' ? 'block' : 'none';
   document.getElementById('party').style.display = mode === 'party' ? 'block' : 'none';
   document.getElementById('mock').style.display = mock ? 'block' : 'none';
+  document.getElementById('blog').style.display = mode === 'blog' ? 'block' : 'none';
   document.getElementById('rkteam').style.display = rkTeam ? 'block' : 'none';
   document.getElementById('rkrank').style.display = rkRankView ? 'block' : 'none';
   // 能力変化わざの設定は、どの画面でも「ポケモンの設定の下・結果の上」に置く。
@@ -4857,6 +4915,321 @@ function rbRender(body, bt, picks, foes, extra) {
 }
 
 // ==================================================================
+// ---- 対戦記録(mode 'blog'): 戦った相手を記録して「自分の土俵の環境」を分析する(2026-08-27タダシさん指示) ----
+// ツールの環境リストは全体像で、採用率はレート帯によってけっこう違う。
+// 記録した相手はそのまま「マイ環境」のカップになり、環境一覧・対策さがし・パーティ診断でも使える(答えの二重管理をしない)
+const BLOG_KEY = 'gbl_battlelog';
+let BLOG = [];
+try { const v = JSON.parse(localStorage.getItem(BLOG_KEY)); if (Array.isArray(v)) BLOG = v; } catch (e) {}
+const saveBlog = () => { try { localStorage.setItem(BLOG_KEY, JSON.stringify(BLOG)); } catch (e) {} };
+const BLE = { foes: [null, null, null], win: null };              // 入力中(未保存)の1戦ぶん
+const BLV = { view: 'rate', period: 'all', del: null, token: 0 }; // 表示の状態(端末に保存しない=毎回まっさら)
+const BL_LGN = { 1500: 'スーパー', 2500: 'ハイパー', 0: 'マスター' };
+const blName = f => (f.s ? 'シャドウ' : '') + (D.pokemon[f.k] ? D.pokemon[f.k].n : f.k);
+const blRecs = cap0 => BLOG.filter(r => r.cap === (cap0 != null ? cap0 : cap));
+const blUse = recs => BLV.period === 'all' ? recs : recs.slice(-parseInt(BLV.period));
+
+// そのポケモンの定番わざ構成(環境の確定値 → 載っていなければ効率の叩き台)。
+// マイ環境カップの行と「刺さるポケモン」の両方がこれを使う(前提をそろえる)
+function blMovesOf(k, s, cap0) {
+  const src = ((window.META_LISTS || {})[String(cap0)] || []).concat((window.META_EXT || {})[String(cap0)] || []);
+  const m = src.find(x => x.k === k && !!x.s === !!s) || src.find(x => x.k === k);
+  if (m && m.f && m.c1) return { f: m.f, c1: m.c1, c2: m.c2 };
+  const { fasts, chargeds } = movePool(k);
+  const ty = D.pokemon[k].ty;
+  const dpt = mv => D.moves[mv].p * (ty.includes(D.moves[mv].t) ? 1.2 : 1) / (D.moves[mv].tn || 1);
+  const byDpe = chargeds.slice().sort((a, b) => dpeOf(k, b) - dpeOf(k, a));
+  return { f: fasts.slice().sort((a, b) => dpt(b) - dpt(a))[0] || '', c1: byDpe[0] || '', c2: byDpe[1] };
+}
+
+// 集計: 1匹1行(通常とシャドウは別)。cnt=出現数 / lead=初手(1匹目)の数 / w,l=その相手がいた対戦の自分の勝ち負け
+function blAgg(use) {
+  const map = new Map();
+  for (const r of use) r.foes.forEach((f, idx) => {
+    if (!f || !D.pokemon[f.k]) return;
+    const kk = f.k + (f.s ? '|s' : '');
+    let e = map.get(kk);
+    if (!e) { e = { k: f.k, s: !!f.s, cnt: 0, lead: 0, w: 0, l: 0 }; map.set(kk, e); }
+    e.cnt++;
+    if (idx === 0) e.lead++;
+    if (r.win === 'w') e.w++; else if (r.win === 'l') e.l++;
+  });
+  return { battles: use.length, rows: [...map.values()].sort((a, b) => b.cnt - a.cnt || b.lead - a.lead) };
+}
+
+// 入力の3枠(あいて)。パーティ診断の枠と同じ見た目・同じ検索
+function buildBlogSlots() {
+  const box = document.querySelector('#blog .blslots');
+  if (!box) return;
+  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot fslot blslot" data-i="${i}">
+    <div class="phd"><span class="pnum">${i + 1}匹目${i === 0 ? '<small class="bllead">初手</small>' : ''}</span>
+      <button class="pshadow" aria-label="シャドウ" title="シャドウとして記録する"><i class="shadowmark"></i></button>
+      <button class="pclr" title="この枠を空にする">×</button></div>
+    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+  </div>`).join('');
+  box.querySelectorAll('.blslot').forEach(el => {
+    const i = +el.dataset.i;
+    const inp = el.querySelector('input'), list = el.querySelector('.sugg-list');
+    inp.addEventListener('compositionend', () => {
+      const v = toKata(inp.value);
+      if (v !== inp.value) inp.value = v;
+      inp.dispatchEvent(new Event('input'));
+    });
+    inp.addEventListener('input', e => {
+      if (!e.isComposing) { const v = toKata(inp.value); if (v !== inp.value) inp.value = v; }
+      const q = toKata(inp.value.trim());
+      if (!q) { list.style.display = 'none'; return; }
+      const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
+      if (!hits.length) { list.style.display = 'none'; return; }
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.style.display = 'block';
+      list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+        list.style.display = 'none';
+        BLE.foes[i] = { k: d.dataset.k, s: false };
+        syncBlogSlot(i);
+      });
+    });
+    document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
+    el.querySelector('.pshadow').onclick = () => {
+      if (!BLE.foes[i]) return;
+      BLE.foes[i].s = !BLE.foes[i].s;
+      syncBlogSlot(i);
+    };
+    el.querySelector('.pclr').onclick = () => { BLE.foes[i] = null; syncBlogSlot(i); };
+  });
+}
+function syncBlogSlot(i) {
+  const el = document.querySelector(`.blslot[data-i="${i}"]`);
+  if (!el) return;
+  const f = BLE.foes[i];
+  el.querySelector('input').value = f ? blName(f) : '';
+  el.querySelector('.pshadow').setAttribute('aria-pressed', !!(f && f.s));
+}
+function blSetMsg(t) { const m = document.querySelector('#blog .blmsg'); if (m) m.textContent = t || ''; }
+function blAddRecord() {
+  if (!BLE.foes.some(Boolean)) { blSetMsg('あいてのポケモンを1匹以上えらんでください'); return; }
+  let id = Date.now();
+  const last = BLOG[BLOG.length - 1];
+  if (last && last.id >= id) id = last.id + 1;   // 連打しても記録のidがかぶらないように
+  BLOG.push({ id, t: Date.now(), cap,
+    foes: BLE.foes.map(f => f ? { ...f } : null),
+    win: BLE.win,
+    mine: PT.map(p => p ? { k: p.key, s: !!p.shadow } : null) });
+  saveBlog();
+  BLE.foes = [null, null, null]; BLE.win = null;
+  [0, 1, 2].forEach(syncBlogSlot);
+  document.querySelectorAll('#blog .blres button').forEach(b => b.setAttribute('aria-pressed', false));
+  blSetMsg(`記録しました(${BL_LGN[cap] || 'このリーグ'} ${blRecs().length}戦目)`);
+  runBlog();
+}
+
+function runBlog() {
+  // 自分のパーティの控え(記録と一緒に保存される)
+  const recs = blRecs();
+  const mineEl = document.querySelector('#blog .blmine');
+  const mine = PT.filter(Boolean).map(p => shMark((p.shadow ? 'シャドウ' : '') + D.pokemon[p.key].n)).join('・');
+  mineEl.innerHTML = mine ? `自分のパーティも一緒に控えます: <b>${mine}</b> <small>(パーティ診断の3枠)</small>`
+    : '<small>パーティ診断の3枠に自分のパーティを入れておくと、一緒に記録されます</small>';
+  // よく出る相手のワンタップ入力(このリーグの全記録から)
+  const qbox = document.querySelector('#blog .blquick');
+  const freq = blAgg(recs).rows.slice(0, 12);
+  qbox.innerHTML = freq.length ? '<span class="blqlbl">よく出る:</span>' + freq.map((e, i) =>
+    `<button class="blchip" data-i="${i}" title="タップすると空いている枠に入ります">${shMark(blName(e))}</button>`).join('') : '';
+  qbox.querySelectorAll('.blchip').forEach(b => b.onclick = () => {
+    const e = freq[+b.dataset.i];
+    const slot = BLE.foes.findIndex(x => !x);
+    if (slot < 0) return;
+    BLE.foes[slot] = { k: e.k, s: e.s };
+    syncBlogSlot(slot);
+  });
+  // 集計のあらまし
+  const use = blUse(recs);
+  const w = use.filter(r => r.win === 'w').length, l = use.filter(r => r.win === 'l').length;
+  const sumEl = document.querySelector('#blog .blsum');
+  sumEl.innerHTML = recs.length
+    ? `<b>${BL_LGN[cap] || 'このリーグ'}</b>の記録: <b>${use.length}戦</b>${BLV.period !== 'all' ? '<small>(直近だけで集計中)</small>' : ''}` +
+      (w + l ? ` ・ 勝ち${w}/負け${l}(勝率<b>${Math.round(w / (w + l) * 100)}%</b>)` : '') +
+      (recs.length >= 5 ? `<button class="blusecup" title="記録から作った採用率順のリスト(マイ環境)を相手にして、自分のパーティの穴をチェックします">📒 マイ環境でパーティ診断</button>` : '')
+    : `<b>${BL_LGN[cap] || 'このリーグ'}</b>の記録はまだありません。上の枠に戦った相手を入れて「＋ 記録する」を押してください`;
+  const useBtn = sumEl.querySelector('.blusecup');
+  if (useBtn) useBtn.onclick = blToParty;
+  document.querySelectorAll('#blog .blvtabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === BLV.view));
+  document.querySelectorAll('#blog .blperiod button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === BLV.period));
+  document.querySelector('#blog .blviews').style.display = recs.length ? '' : 'none';
+  const body = document.querySelector('#blog .blbody');
+  if (!recs.length) { body.innerHTML = ''; return; }
+  if (BLV.view === 'rate') { body.innerHTML = blRateHtml(use); blBindRate(body); }
+  else if (BLV.view === 'hist') { body.innerHTML = blHistHtml(recs); blBindHist(body); }
+  else blHitStart(use, body);
+}
+
+// 採用率(あなたの土俵のランキング)
+function blRateHtml(use) {
+  const a = blAgg(use);
+  if (!a.rows.length) return '<div class="mtnote">この期間の記録がありません</div>';
+  const rows = a.rows.map((e, i) => {
+    const pct = Math.round(e.cnt / a.battles * 100);
+    const wl = e.w + e.l;
+    const wr = wl ? Math.round(e.w / wl * 100) : null;
+    return `<div class="bltr">
+      <span class="blrank">${i + 1}</span>
+      <span class="blnm">${shMark(blName(e))}${typeIcons(D.pokemon[e.k], 15)}</span>
+      <span class="blcell" title="この期間の${a.battles}戦のうち、${e.cnt}回パーティに入っていました">${pct}%<small>${e.cnt}回</small></span>
+      <span class="blcell dim" title="初手(1匹目)で出てきた回数です">${e.lead || 'ー'}</span>
+      <span class="blcell ${wr == null ? 'dim' : wr >= 50 ? 'ok' : 'bad'}" title="このポケモンがいた対戦での、あなたの勝率です(勝敗を記録したぶんだけ)。低いほど苦手な相手です">${wr == null ? 'ー' : wr + '%'}</span>
+      <button class="blcnt" data-k="${e.k}" data-s="${e.s ? 1 : 0}" title="このポケモンに勝てるポケモンを対策さがしで調べます">対策</button>
+    </div>`;
+  }).join('');
+  return `<div class="bltbl"><div class="blth"><span></span><span>ポケモン</span><span title="この期間の対戦のうち、パーティに入っていた割合です">採用率</span><span title="初手(1匹目)で出てきた回数です">初手</span><span title="そのポケモンがいた対戦でのあなたの勝率です。低いほど苦手な相手です">勝率</span><span></span></div>${rows}</div>`;
+}
+function blBindRate(body) {
+  body.querySelectorAll('.blcnt').forEach(b => b.onclick = () => blToCounter(b.dataset.k, b.dataset.s === '1'));
+}
+// 「対策」→ 対策さがしのあいて欄へ入れてモードを切り替える(applyMetaと同じ手順の縮小版)
+function blToCounter(k, s) {
+  S[1].key = k; S[1].shadow = s; S[1].maxLv = 51; syncSmax(1);
+  sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', s);
+  S[1].fast = null; S[1].c1 = null; S[1].c2 = null;
+  resetPin(1); resetSpPlan(1);
+  S[1].ivMode = 'auto'; S[1].mIvs = null; S[1].mLevel = null;
+  sideEl[1].querySelector('input').value = (s ? 'シャドウ' : '') + D.pokemon[k].n;
+  document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === 'counter'));
+  mode = 'counter'; applyMode(); run();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function blToParty() {
+  selectMyCup(cap);
+  document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === 'party'));
+  mode = 'party'; applyMode(); run();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 履歴(新しい順)。×→「削除する?」の2タップで消す(押しまちがい防止)
+function blHistHtml(recs) {
+  const rows = recs.slice().reverse().map(r => {
+    const d = new Date(r.t);
+    const foes = r.foes.filter(Boolean).map(f => shMark(blName(f))).join('・') || '(相手の記録なし)';
+    const mine = r.mine && r.mine.some(Boolean) ? r.mine.filter(Boolean).map(f => shMark(blName(f))).join('・') : '';
+    const del = BLV.del === r.id;
+    return `<div class="blhrow">
+      <span class="bldate">${d.getMonth() + 1}/${d.getDate()}</span>
+      <span class="blfoes">${foes}${mine ? `<small class="blvs">自分: ${mine}</small>` : ''}</span>
+      <span class="blwl ${r.win || ''}">${r.win === 'w' ? '勝ち' : r.win === 'l' ? '負け' : 'ー'}</span>
+      <button class="bldel${del ? ' arm' : ''}" data-id="${r.id}" title="この記録を消します">${del ? '削除する?' : '×'}</button>
+    </div>`;
+  }).join('');
+  return `<div class="blhist">${rows}</div>`;
+}
+function blBindHist(body) {
+  body.querySelectorAll('.bldel').forEach(b => b.onclick = () => {
+    const id = +b.dataset.id;
+    if (BLV.del === id) {
+      BLOG = BLOG.filter(r => r.id !== id);
+      saveBlog(); BLV.del = null; runBlog();
+    } else { BLV.del = id; runBlog(); }
+  });
+}
+
+// 「刺さるポケモン」: あなたの環境(記録の上位・採用数の重み付き)にいちばん勝てる候補をシミュレートする。
+// 前提は一覧系3モードとそろえる(理想個体値・定番わざ構成・🛡0-0/1-1/2-2の3通り・ブラフは画面のブラフ設定)
+function blHitStart(use, body) {
+  const agg = blAgg(use);
+  const foesE = agg.rows.slice(0, 20).filter(e => D.pokemon[e.k]);
+  if (!foesE.length) { body.innerHTML = '<div class="mtnote">この期間の記録がありません</div>'; return; }
+  body.innerHTML = `<div class="mtnote">計算中…(あなたの環境上位${foesE.length}匹と総当たり)</div>`;
+  const token = ++BLV.token;
+  const mkCfg = (k, s, sh) => {
+    const mv = blMovesOf(k, s, cap);
+    const r1 = rank1(k, cap);
+    return { key: k, ivs: r1.ivs, level: r1.level, shadow: !!s, timing: 'optimal', cap,
+      bluff: metaBluff, shields: sh, fast: mv.f || movePool(k).fasts[0], charged: [mv.c1, mv.c2].filter(Boolean) };
+  };
+  const foeCfgs = foesE.map(e => [0, 1, 2].map(sh => mkCfg(e.k, e.s, sh)));
+  const wsum = foesE.reduce((s, e) => s + e.cnt, 0);
+  const cands = blCandidates();
+  const out = [];
+  let idx = 0;
+  const step = () => {
+    if (token !== BLV.token || mode !== 'blog') return;
+    const t0 = performance.now();
+    while (idx < cands.length && performance.now() - t0 < 40) {
+      const c = cands[idx++];
+      const cCfgs = [0, 1, 2].map(sh => mkCfg(c.k, c.s, sh));
+      let wp = 0, beat = 0;
+      for (let f = 0; f < foesE.length; f++) {
+        let wins = 0;
+        for (let sh = 0; sh < 3; sh++)
+          if (PvpEngine.simulate(D, cCfgs[sh], foeCfgs[f][sh], SIMOPT).winner === 0) wins++;
+        wp += foesE[f].cnt * (wins / 3);
+        if (wins >= 2) beat++;
+      }
+      out.push({ k: c.k, s: c.s, p: wp / wsum, beat });
+    }
+    if (idx < cands.length) { setTimeout(step, 0); return; }
+    out.sort((a, b) => b.p - a.p || b.beat - a.beat);
+    body.innerHTML = blHitHtml(out.slice(0, 15), foesE.length);
+  };
+  setTimeout(step, 0);
+}
+// 候補 = 全体の環境上位100 + 記録に出てきた相手 + ★登録リスト(メガは除く)
+function blCandidates() {
+  const seen = new Set(), outp = [];
+  const add = (k, s) => {
+    if (!k || !D.pokemon[k] || isMega(k)) return;
+    const kk = k + (s ? '|s' : '');
+    if (seen.has(kk)) return;
+    seen.add(kk); outp.push({ k, s: !!s });
+  };
+  ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || [])
+    .forEach(m => add(m.k, m.s));
+  blRecs().forEach(r => r.foes.forEach(f => f && add(f.k, f.s)));
+  loadMyPk().forEach(m => add(m.key, m.shadow));
+  return outp;
+}
+function blHitHtml(rows, nf) {
+  const items = rows.map((r, i) => `<div class="blhitrow">
+    <span class="blrank">${i + 1}</span>
+    <span class="blnm">${shMark((r.s ? 'シャドウ' : '') + D.pokemon[r.k].n)}${typeIcons(D.pokemon[r.k], 15)}</span>
+    <span class="blbar"><i style="width:${Math.round(r.p * 100)}%"></i></span>
+    <span class="blpct" title="あなたの環境上位${nf}匹に採用数の重みを付けた勝率です(🛡0-0/1-1/2-2の3通りの平均)">${Math.round(r.p * 100)}%</span>
+    <span class="blbeat" title="あなたの環境上位${nf}匹のうち、🛡3通り中2通り以上で勝てる相手の数です">${r.beat}/${nf}</span>
+  </div>`).join('');
+  return `<div class="blhit">
+    <div class="enote expl">あなたの記録の上位${nf}匹(採用数の重み付き)に、どのポケモンがいちばん勝てるかの一覧です。理想個体値・定番わざ構成でシミュレートしています。</div>
+    ${items}</div>`;
+}
+
+// マイ環境をカップとして使う(記録から作った採用率順のリスト。現行カップと同じ形なので全モードがそのまま動く)
+function myCupOf(cap0) {
+  const recs = BLOG.filter(r => r.cap === cap0).slice(-100);   // 直近100戦ぶん
+  const rows = blAgg(recs).rows.filter(e => D.pokemon[e.k]).slice(0, 50);
+  const list = rows.map(e => {
+    const mv = blMovesOf(e.k, e.s, cap0);
+    const m = { k: e.k, n: (e.s ? 'シャドウ' : '') + D.pokemon[e.k].n, f: mv.f, c1: mv.c1 };
+    if (e.s) m.s = 1;
+    if (mv.c2) m.c2 = mv.c2;
+    return m;
+  });
+  return { slug: 'my' + cap0, label: '📒 マイ環境(' + BL_LGN[cap0] + ')', cp: cap0 === 0 ? 10000 : cap0, list, ext: [], my: 1 };
+}
+function selectMyCup(cap0) {
+  // 記録が無い(別の端末で開いた共有URLなど)ときは、ふつうのリーグとして開く
+  if (!BLOG.some(r => r.cap === cap0)) {
+    cup = null; cap = cap0;
+    cupTab.textContent = '特殊カップ';
+    document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', +x.dataset.cap === cap0));
+    afterCapChange();
+    return;
+  }
+  cup = myCupOf(cap0);   // 選ぶたびに最新の記録から作り直す
+  cap = cap0;
+  document.querySelectorAll('.lgbtn').forEach(x => x.setAttribute('aria-pressed', false));
+  cupTab.setAttribute('aria-pressed', true);
+  cupTab.textContent = cup.label;
+  cupwin.style.display = 'none';
+  afterCapChange();
+}
+
 // GBL模擬戦(mode 'mock'): じぶん3匹×あいて3匹の対人戦を決断ごとに進める
 // ロケット団の模擬戦(rbPlay/rbRender)の対人版。GBLのルールに合わせた違い:
 //  - 硬直なし(NPCではないので、SPアタックのあと・交代のあとも両者すぐ動く)
@@ -6926,6 +7299,7 @@ function run() {
   if (mode === 'multi') { runMulti(); return; }
   if (mode === 'counter') { runCounter(); return; }
   if (mode === 'party') { runParty(); return; }
+  if (mode === 'blog') { setProbTab(false); runBlog(); return; }   // 対戦記録(自分の土俵の環境分析)
   if (mode === 'mock') { runMockBuild(); return; }   // GBL模擬戦(3匹×3匹の対人戦)
   // ロケット団戦の1対1は、まず「誰で攻撃すればいいか」のランキングを出す
   if (mode === 'rocket' && RK.play === '1v1' && RKR.view !== 'sim') { setProbTab(false); runRkRank(); return; }
@@ -8063,13 +8437,23 @@ document.addEventListener('click', e => {
   });
   if (PAGE_ROCKET) {   // ロケット団対策ページはモード固定(md= は見ない)
     applyMode();
-  } else if (['multi', 'counter', 'party', 'mock'].includes(q.get('md'))) {   // モードの復元(md=rocket は別ページへ転送済み)
+  } else if (['multi', 'counter', 'party', 'mock', 'blog'].includes(q.get('md'))) {   // モードの復元(md=rocket は別ページへ転送済み)
     mode = q.get('md');
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
     applyMode();
   }
   buildPartySlots(document.querySelector('#party .pslots'), 'pt');
   buildPartySlots(document.querySelector('#rkteam .myslots'), 'rbm');   // 模擬戦でも同じ3枠(PT)を使う
+  // 対戦記録(mode 'blog'): 入力の3枠と勝敗・記録ボタン・表示タブ
+  buildBlogSlots();
+  document.querySelectorAll('#blog .blres button').forEach(b => b.onclick = () => {
+    BLE.win = BLE.win === b.dataset.v ? null : b.dataset.v;
+    document.querySelectorAll('#blog .blres button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === BLE.win));
+  });
+  const blAdd = document.querySelector('#blog .bladd');
+  if (blAdd) blAdd.onclick = blAddRecord;
+  document.querySelectorAll('#blog .blvtabs button').forEach(b => b.onclick = () => { BLV.view = b.dataset.v; runBlog(); });
+  document.querySelectorAll('#blog .blperiod button').forEach(b => b.onclick = () => { BLV.period = b.dataset.v; runBlog(); });
   // パーティ診断の「わざ｜オート」。手動へ切り替えるときは、いま出ている構成を枠に書き込んでから編集させる
   const paBtn = document.querySelector('#party .ptauto');
   if (paBtn) paBtn.onclick = () => {

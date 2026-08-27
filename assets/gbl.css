@@ -1274,3 +1274,82 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .gtip .tskip{background:none;border:1px solid var(--line);border-radius:50%;width:26px;height:26px;
   color:var(--sub);cursor:pointer;line-height:1}
 .gtip-hi{box-shadow:0 0 0 3px var(--cy),0 0 22px rgba(67,224,255,.55)!important;border-radius:10px}
+
+/* ---- 対戦記録(mode 'blog')。自分の土俵の環境を記録・分析する(2026-08-27) ---- */
+#blog h3{margin:2px 0 8px}
+.blentry{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.blhd{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
+.blhd .blhint{color:var(--sub);font-size:.7rem}
+.blquick{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:8px}
+.blquick .blqlbl{color:var(--sub);font-size:.7rem;flex:0 0 auto}
+.blchip{background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--ink);
+  font-size:.72rem;padding:4px 9px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.blchip:hover{transform:translateY(-1px)}
+.blctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.bladd{margin-left:auto;background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);
+  border:none;border-radius:10px;color:#042330;font-weight:700;font-size:.86rem;padding:9px 16px;cursor:pointer;
+  box-shadow:0 5px 16px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.bladd:hover{transform:translateY(-1px)}
+.blmine{color:var(--sub);font-size:.72rem;margin-top:8px;line-height:1.6}
+.blmine b{color:var(--ink);font-weight:600}
+.blmsg{color:var(--cy);font-size:.76rem;margin-top:5px;min-height:1em}
+.blsum{font-size:.82rem;margin:10px 0;line-height:1.9}
+.blsum small{color:var(--sub);margin-left:4px}
+.blusecup{display:block;margin-top:6px;background:var(--tab);border:1px solid var(--goldc);border-radius:10px;
+  color:var(--goldc);font-weight:700;font-size:.78rem;padding:8px 13px;cursor:pointer;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.blusecup:hover{transform:translateY(-1px)}
+.blviews{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.blviews .blperiod{margin-left:auto}
+.blviews .blperiod button{font-size:.7rem}
+/* 採用率の表 */
+.bltbl{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.blth,.bltr{display:grid;grid-template-columns:30px 1fr 74px 40px 48px 52px;align-items:center;gap:4px;padding:6px 8px}
+.blth{background:var(--bg2);color:var(--sub);font-size:.66rem;text-align:center}
+.blth span:nth-child(2){text-align:left}
+.bltr{border-top:1px solid var(--line);font-size:.8rem}
+.bltr:nth-child(even){background:rgba(77,141,255,.05)}
+.blrank{color:var(--sub);font-size:.72rem;text-align:center}
+.bltr:nth-child(2) .blrank,.blhitrow:nth-child(2) .blrank{color:var(--gold);font-weight:800}
+.blnm{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
+.blcell{text-align:center;font-variant-numeric:tabular-nums}
+.blcell small{display:block;color:var(--sub);font-size:.62rem}
+.blcell.ok{color:var(--win)}
+.blcell.bad{color:var(--lose)}
+.blcell.dim{color:var(--sub)}
+.blcnt{background:var(--tab);border:1px solid var(--line2);border-radius:8px;color:var(--cy);
+  font-size:.7rem;font-weight:700;padding:5px 4px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
+.blcnt:hover{transform:translateY(-1px)}
+/* 履歴 */
+.blhist{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.blhrow{display:flex;align-items:center;gap:8px;padding:7px 9px;border-top:1px solid var(--line);font-size:.78rem}
+.blhrow:first-child{border-top:none}
+.blhrow:nth-child(even){background:rgba(77,141,255,.05)}
+.bldate{color:var(--sub);font-size:.68rem;flex:0 0 34px}
+.blfoes{flex:1;min-width:0;line-height:1.5}
+.blfoes .blvs{display:block;color:var(--sub);font-size:.66rem}
+.blwl{flex:0 0 auto;font-size:.72rem;font-weight:700;color:var(--sub)}
+.blwl.w{color:var(--win)}
+.blwl.l{color:var(--lose)}
+.bldel{flex:0 0 auto;background:none;border:1px solid var(--line);border-radius:8px;color:var(--sub);
+  font-size:.7rem;padding:4px 7px;cursor:pointer}
+.bldel.arm{background:var(--lose);border-color:var(--lose);color:#fff;font-weight:700}
+/* 刺さるポケモン */
+.blhit{border:1px solid var(--line);border-radius:12px;padding:6px 8px}
+.blhit .enote{margin:4px 2px 8px}
+.blhitrow{display:grid;grid-template-columns:30px minmax(0,42%) 1fr 44px 54px;align-items:center;gap:6px;
+  padding:6px 2px;border-top:1px dashed var(--line);font-size:.8rem}
+.blhitrow:first-of-type{border-top:none}
+.blbar{height:9px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);overflow:hidden}
+.blbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gl),var(--cy))}
+.blpct{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;color:var(--cy)}
+.blbeat{text-align:right;color:var(--sub);font-size:.7rem;font-variant-numeric:tabular-nums}
+/* カップ一覧のマイ環境ボタン */
+.cupslots .mycup{border-color:var(--goldc)}
+.cupslots .mycup small{color:var(--goldc)}
+@media (max-width:560px){
+  .blth,.bltr{grid-template-columns:24px 1fr 62px 34px 44px 46px;padding:6px 5px}
+  .bltr{font-size:.74rem}
+  .blviews .blperiod{margin-left:0}
+}
+.blslot .bllead{margin-left:5px;color:var(--sub);font-size:.62rem;font-weight:400}
