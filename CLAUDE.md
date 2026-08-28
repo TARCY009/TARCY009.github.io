@@ -1,7 +1,12 @@
 # TARCY009.github.io 開発メモ（Claude Code用）
 
 ポケモンGO攻略ツール集。公開先: https://tarcy009.github.io/
-構成: `/`(火力チェッカー) `/gym-attack/` `/gym-defense/` `/max-battle/` `/iv-checker/` `/gbl/` `/rocket/` `/battlelog/` `/raid/` `/type-dps/` `/breakpoint/` `/pokedex/`
+構成: `/`(レイド火力チェッカー) `/gym-attack/` `/gym-defense/` `/max-battle/` `/iv-checker/` `/gbl/` `/rocket/` `/battlelog/` `/raid/` `/type-dps/` `/breakpoint/` `/pokedex/`
+
+**ルートのツール名は2026-08-28に「火力チェッカー」→「レイド火力チェッカー」へ改名**（タダシさん指示。
+このメモの過去の記述に出てくる「火力チェッカー」はすべて同じツールのこと）。
+変更箇所は title・見出し・manifest（short_nameはホーム画面で切れないよう「レイド火力」）・/raid/ のリンクと使い方。
+アイコン・URL・localStorageキー（`karyoku_theme`等）はそのまま。
 
 ## 確定仕様（ユーザー承認済み・変更禁止）
 
