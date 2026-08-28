@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ポケモンGO レイドシミュレータ｜実戦ベースの最低クリア人数</title>
+<title>ポケモンGO レイドシミュレータ｜実戦ベースの最少討伐人数</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/raid/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/raid/apple-touch-icon.png">
 <link rel="manifest" href="/raid/manifest.webmanifest">
@@ -196,7 +196,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <header>
   <div class="hmain">
     <h1><span class="brand">ポケモンGO</span><span class="tool">レイドシミュレータ</span></h1>
-    <p>倒される時間まで含めた実戦ベースで、レイドの最低クリア人数を出します。</p>
+    <p>倒される時間まで含めた実戦ベースで、レイドの最少討伐人数を出します。</p>
     <a class="pagelink" href="/">レイド火力チェッカー ↗</a>
   </div>
   <div id="themesw"></div>
@@ -701,7 +701,7 @@ if(q.get('b')&&D.pokemon[q.get('b')]){
 const HELP_HTML=`
   <h4>このツールで分かること</h4>
   <ul>
-    <li>レイド火力チェッカーの「最低クリア人数」は<b>倒されない前提の理論値</b>です。こちらは<b>倒される時間・SPアタックの被弾・ゲージのやりとりまで再現した実戦ベース</b>で、何人いれば勝てるかを出します</li>
+    <li>レイド火力チェッカーの「最少討伐人数」は<b>倒されない前提の理論値</b>です。こちらは<b>倒される時間・SPアタックの被弾・ゲージのやりとりまで再現した実戦ベース</b>で、何人いれば勝てるかを出します</li>
     <li>参加者は全員が<b>同じパーティ（PL50・個体値15）</b>で攻撃し続ける想定です。回避・ブーストは設定の行で選べます（既定はすべてオフ）</li>
   </ul>
   <h4>バトルの再現（実測で確認済み）</h4>

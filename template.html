@@ -157,8 +157,22 @@ input:focus,select:focus{outline:none;border-color:var(--focusc,var(--accent));b
    (ライトのときは逆に明るいタイプが溶けるので、上の :root.light の指定で4タイプだけ暗い縁にする) */
 .tbadge{box-shadow:var(--tbadge)}
 .bossinfo{margin-top:12px;font-size:.85rem;color:var(--sub);font-weight:600}
-/* 最低クリア人数(理論値): ランクは排他の選択なのでくっつけたタブ(.seg)。色はボスカードの赤 */
+/* 最少討伐人数(理論値): ランクは排他の選択なのでくっつけたタブ(.seg)。色はボスカードの赤 */
 .tierrow{margin:6px 0 0}
+/* 最少討伐人数の「⚙ 詳細」: 天候・フレンド・ザシアンの前提をたたむ(既定は閉じる)。
+   閉じていても選択中の前提はボタンの中に出す(見えない前提で数字が変わるのを防ぐ) */
+.mpdet{margin-top:8px}
+.mpdet>button{font-size:.72rem;font-weight:700;color:var(--sub);background:var(--tab);border:1px solid var(--line);
+  border-radius:9px;padding:5px 10px;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);cursor:pointer}
+.mpdet>button .gear{font-size:1.25em;vertical-align:-1px}
+.mpdet>button b{color:var(--accent2)}
+#mpDetBody{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:8px;font-size:.78rem}
+#mpDetBody .lbl{color:var(--sub);font-weight:600;margin-right:4px}
+#mpDetBody select{font-size:16px;padding:5px 6px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink)}
+#mpDetBody .optbtn{font-size:.74rem;font-weight:700;color:var(--sub);background:var(--tab);border:1px solid var(--line);
+  border-radius:9px;padding:6px 10px;box-shadow:0 2px 0 var(--tabsh);cursor:pointer}
+#mpDetBody .optbtn[aria-pressed="true"]{background:linear-gradient(160deg,#7fe3ff 0%,#08b4c9 45%,#036e84 100%);color:#042330;border-color:transparent;
+  box-shadow:0 5px 16px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
 /* 「スーパーメガ」は狭い画面で折り返す。語の途中(スーパ|ーメガ)で切れないよう<wbr>の位置だけ許す */
 .tierrow .seg button{--mc:#ff8fa0;--mg:linear-gradient(160deg,#ff9d8a 0%,#ff5470 45%,#b91d3e 100%);--mgl:rgba(255,84,112,.42);word-break:keep-all}
 .tierrow .seg button[aria-pressed="true"]{color:#fff}
@@ -435,13 +449,16 @@ const KEYS = Object.keys(D.pokemon);
 
 function eff(moveType, defTypes){ let m=1; for(const t of defTypes) m*=D.chart[moveType][TI[t]]; return m; }
 function stab(p, mv){ return p.ty.includes(mv.t) ? 1.2 : 1.0; }
-// def省略時はものさし防御(DEF_ENEMY)。最低クリア人数の計算だけ実際のボス防御を渡す
-function dmg(p, mv, atkReal, bossTypes, shadow, def){
-  return Math.floor(0.5*(atkReal/(def||DEF_ENEMY))*mv.p*stab(p,mv)*eff(mv.t,bossTypes)*(shadow?1.2:1)+1);
+// def省略時はものさし防御(DEF_ENEMY)。最少討伐人数の計算だけ実際のボス防御を渡す。
+// mult=天候・フレンド・ザシアンなどのブースト(最少討伐人数の⚙詳細でだけ使う。ランキングは常に1)
+function dmg(p, mv, atkReal, bossTypes, shadow, def, mult){
+  return Math.floor(0.5*(atkReal/(def||DEF_ENEMY))*mv.p*stab(p,mv)*eff(mv.t,bossTypes)*(shadow?1.2:1)*(mult||1)+1);
 }
-function comboDPS(p, m1, m2, atkReal, bossTypes, shadow, def){
+// ex={flat:フレンド×ザシアンの一律倍率, wx:天候で1.2倍になるタイプの配列}(省略時はブーストなし)
+function comboDPS(p, m1, m2, atkReal, bossTypes, shadow, def, ex){
   if(!m1.e || m1.e<=0 || !m2.e) return null;
-  const d1=dmg(p,m1,atkReal,bossTypes,shadow,def), d2=dmg(p,m2,atkReal,bossTypes,shadow,def);
+  const mul=mv=>ex ? ex.flat*(ex.wx.includes(mv.t)?1.2:1) : 1;
+  const d1=dmg(p,m1,atkReal,bossTypes,shadow,def,mul(m1)), d2=dmg(p,m2,atkReal,bossTypes,shadow,def,mul(m2));
   const n2=(m1.e*100)/Math.abs(m2.e);
   const t=(m1.d*100)+(m2.d*n2);
   if(t<=0) return null;
@@ -523,7 +540,7 @@ function levelFromCP(p, cp, iva, ivd, ivh){
 let boss=null, showN=30;
 // ジム挑戦ツールと同じ形式: シャドウ・メガはそれぞれ独立して「含める/含めない」を切り替える。
 // シールド破壊(メガ)だけは別のランキングなので、押している間はその一覧に切り替わる。
-// シールド破壊はスーパーメガレイド専用なので、ONのあいだは最低クリア人数のランクも★7にそろえる
+// シールド破壊はスーパーメガレイド専用なので、ONのあいだは最少討伐人数のランクも★7にそろえる
 // (tierPrev=ONにする前のランク。OFFで★7のままなら戻す。手で選び直していたらその選択を尊重)
 let fShadow=false, fMega=false, shieldMode=false, tierPrev=null;
 const mine=[];
@@ -624,10 +641,33 @@ function renderBoss(){
        <div><div class="bossname">${p.n}${typeIcons(p,24)}</div>
        <div class="catchcp">捕獲100%CP <b>${cp100(cf,20)}</b>（PL20）/ <b>${cp100(cf,25)}</b>（PL25 天候ブースト）${cf!==p?`・<b>${cf.n}</b>のすがたで捕獲`:''}</div></div></div>
      <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>
-     <div class="bossinfo" title="${T_MP}">最低クリア人数：</div>
+     <div class="bossinfo" title="${T_MP}">最少討伐人数：</div>
      <div class="modes tierrow"><span class="seg" id="tierSeg">${RAID_TIERS.map(t=>`<button type="button" data-t="${t.id}" title="${t.help}">${t.label}</button>`).join('')}</span></div>
+     <div class="mpdet">
+       <button type="button" id="mpDetBtn" aria-expanded="${MPB.open}" title="天候ブースト・フレンド・ザシアン効果を前提に入れて計算できます（既定はすべてなし）"><span class="gear">⚙</span> 詳細<span id="mpDetSum">${mpDetSum()}</span></button>
+       <div id="mpDetBody"${MPB.open?'':' hidden'}>
+         <span class="setgrp"><span class="lbl" title="選んだ天候で1.2倍になるタイプのわざが強くなります">天候</span><select id="mpWx">
+           <option value="">なし</option>${Object.keys(MP_WXNAME).map(k=>`<option value="${k}">${MP_WXNAME[k]}</option>`).join('')}
+         </select></span>
+         <span class="setgrp"><span class="lbl" title="フレンドと一緒に参加したときの攻撃ボーナスです">フレンド</span><select id="mpFr">
+           <option value="1">なし</option><option value="1.03">友達 ×1.03</option><option value="1.05">仲良し ×1.05</option><option value="1.07">親友 ×1.07</option><option value="1.10">大親友 ×1.10</option>
+         </select></span>
+         <button type="button" class="optbtn" id="mpZc" aria-pressed="${MPB.zc}" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
+       </div>
+     </div>
      <div class="minppl" id="mpOut"></div>
      ${bossMovesHtml(p)}`;
+  document.getElementById('mpWx').value=MPB.wx;
+  document.getElementById('mpFr').value=MPB.fr;
+  document.getElementById('mpDetBtn').onclick=()=>{
+    MPB.open=!MPB.open;
+    document.getElementById('mpDetBtn').setAttribute('aria-expanded',MPB.open);
+    document.getElementById('mpDetBody').hidden=!MPB.open;
+  };
+  const mpSync=()=>{document.getElementById('mpDetSum').innerHTML=mpDetSum();renderMinPlayers();};
+  document.getElementById('mpWx').onchange=e=>{MPB.wx=e.target.value;mpSync();};
+  document.getElementById('mpFr').onchange=e=>{MPB.fr=e.target.value;mpSync();};
+  document.getElementById('mpZc').onclick=e=>{MPB.zc=!MPB.zc;e.currentTarget.setAttribute('aria-pressed',MPB.zc);mpSync();};
   document.querySelectorAll('#tierSeg button').forEach(b=>b.onclick=()=>{
     raidTier=b.dataset.t;
     // ★7以外を選んだ＝スーパーメガレイドではない → スーパーメガ専用のシールド破壊の一覧は解除する
@@ -637,7 +677,7 @@ function renderBoss(){
   renderMinPlayers();
 }
 
-// ---- 最低クリア人数(理論値) ----
+// ---- 最少討伐人数(理論値) ----
 // ボスのHPを「全員がランキング1位のアタッカー(PL50・個体値15・最適わざ)で制限時間いっぱい
 // 攻撃し続けた」ときに倒しきれる最少の人数。データにレイドのランクは無いので、
 // HP・制限時間・ボスのステータス補正(CPM)はランクのタブで切り替える
@@ -652,6 +692,23 @@ const RAID_TIERS=[
   {id:'t7',label:'スーパー<wbr>メガ',hp:25000,time:300,cpm:0.7903,help:'スーパーメガレイド（HP25000・制限時間300秒）として計算します'},
 ];
 let raidTier='t5';
+// 最少討伐人数の前提ブースト(⚙詳細・既定はすべてなし)。天候の対応表は/raid/と同一
+const MP_WEATHER={sunny:['GRASS','GROUND','FIRE'],partly:['NORMAL','ROCK'],cloudy:['FAIRY','FIGHTING','POISON'],
+  rain:['WATER','ELECTRIC','BUG'],fog:['DARK','GHOST'],snow:['ICE','STEEL'],wind:['DRAGON','FLYING','PSYCHIC']};
+const MP_WXNAME={sunny:'晴れ',partly:'時々曇り',cloudy:'曇り',rain:'雨',fog:'霧',snow:'雪',wind:'強風'};
+const MP_FRNAME={'1.03':'友達','1.05':'仲良し','1.07':'親友','1.10':'大親友'};
+const MPB={wx:'',fr:'1',zc:false,open:false};
+// comboDPSへ渡すブースト。何も選ばれていなければnull(=従来どおり)
+function mpEx(){
+  const flat=(MPB.zc?1.1:1)*(+MPB.fr||1), wx=MP_WEATHER[MPB.wx]||[];
+  return (flat!==1||wx.length)?{flat,wx}:null;
+}
+// 閉じていても選択中の前提が分かるよう、ボタンに選択内容を添える
+function mpDetSum(){
+  const a=[];
+  if(MPB.wx)a.push(MP_WXNAME[MPB.wx]); if(MPB.fr!=='1')a.push(MP_FRNAME[MPB.fr]); if(MPB.zc)a.push('ザシアン');
+  return a.length?`<b>（${a.join('・')}）</b>`:'';
+}
 // ボスからランクの見当を付ける。違うランクのときはタブで替えてもらう:
 //   メガ伝説(メガレックウザ等)・ゲンシ → ★6 ／ ふつうのメガ → ★4 ／ それ以外 → ★5
 // lg は伝説・幻の印(godata.json)。メガ・ゲンシは元のポケモンの分類を引き継いでいる
@@ -681,7 +738,7 @@ function mpTop(){
   return mpTopCache.rows;
 }
 // スーパーメガレイドのシールド(暫定モデル・2026-08-28):
-// 少人数の最低クリアは「シールドを壊さない前提」になる(壊す頭数が無い)ため、
+// 最少人数での討伐は「シールドを壊さない前提」になる(壊す頭数が無い)ため、
 // HP約80%でシールドが張られ、以後ずっとボス防御×SHIELD_DEFのまま削り切る、として計算する。
 // SHIELD_DEF=4は海外攻略情報の値を安全側で暫定採用(実戦ログの逆算では3〜4倍・最有力3.6前後。
 // メガフィナーレイベントで実測予定→確定したらここを直す)。展開タイミング80%も同じく暫定
@@ -690,13 +747,14 @@ function mpCalc(tierId){
   const t=RAID_TIERS.find(x=>x.id===tierId), bp=D.pokemon[boss];
   const def=(bp.df+15)*t.cpm;   // ランク補正込みの実際のボス防御
   let best=null;
+  const ex=mpEx();   // ⚙詳細の天候・フレンド・ザシアン(既定はなし)
   for(const r of mpTop()){
     const atk=(r.p.a+15)*D.cpm['50'];
-    const rn=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def);
+    const rn=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def,ex);
     if(!rn) continue;
     if(t.id==='t7'){
       // 1人で削り切るのに必要な秒数 = シールド前(HPの20%) + シールド中(80%・防御4倍)
-      const rs=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def*SHIELD_DEF);
+      const rs=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def*SHIELD_DEF,ex);
       if(!rs) continue;
       const need=(1-SHIELD_AT)*t.hp/rn.dps + SHIELD_AT*t.hp/rs.dps;
       if(!best||need<best.need) best={...r,dps:rn.dps,sdps:rs.dps,need};
@@ -871,7 +929,7 @@ megaBtn.onclick=()=>{fMega=!fMega;showN=30;syncModes();renderRank();};
 shieldBtn.onclick=()=>{
   shieldMode=!shieldMode; showN=30;
   // シールド破壊はスーパーメガレイド専用 → ONのあいだはランクを★7にそろえる
-  // (最低クリア人数・実戦シミュレータへのリンクと前提を食い違わせないため)
+  // (最少討伐人数・実戦シミュレータへのリンクと前提を食い違わせないため)
   if(shieldMode){tierPrev=raidTier; raidTier='t7';}
   else if(raidTier==='t7'&&tierPrev){raidTier=tierPrev; tierPrev=null;}
   syncModes(); if(boss) renderMinPlayers(); renderRank();
@@ -1130,15 +1188,16 @@ const HELP_HTML = `
     <li><b>火力が同じなら同順位</b>です（攻撃種族値・わざ・タイプ一致が同じだと火力もぴったり同じになります）。同順位が2匹並んだら次は3位、というように<b>重なったぶんの順位は飛ばします</b></li>
   </ul>
 
-  <h4>最低クリア人数（理論値）</h4>
+  <h4>最少討伐人数（理論値）</h4>
   <ul>
     <li>ボスのHPを、<b>全員がランキング1位のアタッカー</b>（PL50・個体値15・最適わざ）で<b>制限時間いっぱい攻撃し続けた</b>ときに倒しきれる、いちばん少ない人数です</li>
     <li>ランクごとの前提: <b>★1</b>＝HP600・180秒 ／ <b>★3</b>＝HP3600・180秒 ／ <b>★4</b>（メガレイド）＝HP9000・300秒 ／ <b>★5</b>＝HP15000・300秒 ／ <b>★6</b>（メガ伝説・ゲンシカイキ）＝HP22500・300秒 ／ <b>スーパーメガ</b>（スーパーメガレイド）＝HP25000・300秒</li>
     <li>スーパーメガレイドはゲーム内では★の数ではなく<b>シールドの枚数</b>でレベルが表示されます（ここでは1ランクとして扱います）</li>
     <li>ランクはボスから見当を付けて自動で選びます（<b>メガ伝説・ゲンシ</b>→★6、ふつうのメガ→★4、それ以外→★5）。違うランクのときはタップで替えてください</li>
     <li>この計算だけは、ものさし防御100ではなく<b>そのボスの実際の防御（ランクごとの補正込み）</b>でダメージを出し直しています</li>
-    <li>倒されて出し直す時間・天候ブースト・フレンドボーナス・メガシンカの応援は入れていません。ブーストがあれば理論値より少なくなることもありますが、<b>実際はこの人数より多めが安全</b>です</li>
-    <li><b>スーパーメガレイドは「シールドを壊さない前提」で計算します</b>——最低クリアの少人数ではシールドを壊す頭数がそろわないため。ボスのHPが約80%になるとシールドが張られ、以後は<b>ボスの防御4倍（暫定値）</b>のまま削り切る想定です。倍率は実測で確定したら更新します</li>
+    <li><b>天候ブースト・フレンド・ザシアン効果は「⚙ 詳細」で前提に入れられます</b>（既定はすべてなし）。閉じていても選択中の前提はボタンに表示されます</li>
+    <li>倒されて出し直す時間・メガシンカの応援は入れていません。<b>実際はこの人数より多めが安全</b>です</li>
+    <li><b>スーパーメガレイドは「シールドを壊さない前提」で計算します</b>——最少人数での討伐ではシールドを壊す頭数がそろわないため。ボスのHPが約80%になるとシールドが張られ、以後は<b>ボスの防御4倍（暫定値）</b>のまま削り切る想定です。倍率は実測で確定したら更新します</li>
   </ul>
 
   <h4>わざの選ばれ方</h4>
@@ -1165,7 +1224,7 @@ const HELP_HTML = `
     <li>ボスがシールドを展開したときにメガを場に出すと<b>最初からゲージが50たまっている</b>ので、分割SPアタック持ちならすぐ撃って壊せます</li>
     <li>この一覧は<b>①ボスのSPアタックをどれを受けても1発で倒れない ②ゲージ2分割・3分割のSPアタックを持つ</b>メガだけを、火力の高い順に並べたものです</li>
     <li>シールド展開中のボスの攻撃は<b>1.8倍</b>として計算しています（実測で確認した値。メガ＝PL50・個体値15、ボス＝PL40想定）</li>
-    <li>このタブを押しているあいだは、そのボスを<b>スーパーメガレイドとして計算</b>します。最低クリア人数のランクも「スーパーメガ」に切り替わり、タブを戻すかほかのランクを選ぶと元に戻ります</li>
+    <li>このタブを押しているあいだは、そのボスを<b>スーパーメガレイドとして計算</b>します。最少討伐人数のランクも「スーパーメガ」に切り替わり、タブを戻すかほかのランクを選ぶと元に戻ります</li>
     <li>攻撃の高いボスほど1発耐えできるメガは少なくなります（例: メガフーディンでは9匹だけ）。スーパーメガレイドの対象ではないボスを選んでいるときは参考値です</li>
     <li>登録した自分のメガもこの一覧に入ります。1発で倒れる場合は<b>どのPLまで上げれば耐えるか</b>と、そのときの火力を出します</li>
   </ul>`;
