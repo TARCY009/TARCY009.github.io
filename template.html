@@ -925,18 +925,20 @@ function badges(shadow, mega, p){
   return (mega?`<span class="${mgCls}">${mgLabel}</span>`:'')+(shadow?'<span class="tag-s2" title="シャドウ"><i class="shadowmark"></i></span>':'');
 }
 // スーパーメガレイドのシールド破壊おすすめメガ:
-// ①ボスの通常枠SPアタック(シールド中の攻撃2倍補正込み)をどれを受けても1発で倒れない(メガ=PL50個体値15、ボス=PL40想定)
+// ①ボスの通常枠SPアタック(シールド中の攻撃1.8倍補正込み)をどれを受けても1発で倒れない(メガ=PL50個体値15、ボス=PL40想定)
 // ②ゲージ2分割or3分割のSPアタックを持つ(シールド破壊が安定)
 // ③その中で対ボスDPSが高い順
-// ボスの通常枠SPアタックによる最大被ダメージ(シールド展開中の攻撃2倍補正込み)
-// 2026-08実測: シールド中のボス攻撃は実効約1.9〜2.2倍→2倍を採用
+// ボスの通常枠SPアタックによる最大被ダメージ(シールド展開中の攻撃1.8倍補正込み)
+// 2026-08-28実測で1.8倍に確定: メガリザードンY 100% PL50(CP5037・HP168)がシールド中メガエアームドの
+// ゴッドバード1発で約61%減=ダメージ100〜105 → 補正1.73〜1.83 → 1.8(天候ブーストなし確認済み)。
+// 旧2倍(2026-08-02のバー実測1.9〜2.2)は個体を特定しない粗い読みだったため置き換え
 function shieldMaxHit(bp, p, def){
   const bossAtk=(bp.a+15)*D.cpm['40'];
   let maxHit=0, maxMove=null;
   for(const id of bp.c){
     const m=D.moves[id];
     if(!m||m.e>=0) continue;
-    const dmg=Math.floor(0.5*m.p*(bossAtk*2/def)*stab(bp,m)*eff(m.t,p.ty))+1;
+    const dmg=Math.floor(0.5*m.p*(bossAtk*1.8/def)*stab(bp,m)*eff(m.t,p.ty))+1;
     if(dmg>maxHit){maxHit=dmg;maxMove=m;}
   }
   return {maxHit,maxMove};
@@ -1056,7 +1058,7 @@ function renderShieldRank(){
     <div class="rank-row${r.rank<=3?' md'+r.rank:''}"><div class="rk" title="${T_RANK}">${r.rank}位</div><div class="rmain">
       <div class="rname">${badges(false,true,r.p)}<span class="nm">${r.p.n}</span>${typeIcons(r.p,16)}</div>
       <div class="rmoves mvline" title="${T_MOVES_SH}"><span class="mv">${moveLabel(r.p,r.f.id,r.f.sp)}</span>＋<span class="mv">${moveLabel(r.p,r.c.id,r.c.sp)}（${barsN}分割）</span></div>
-      <div class="rmoves" title="ボスのいちばん痛いわざ（${r.maxMove.n}）を1発受けたときの最大ダメージです。シールド展開中の2倍補正込みで、HPを下回っていれば1発耐えられます">🛡被弾最大${r.maxHit}／HP${r.hp}<span class="expl">（シールド中2倍補正込み・${r.maxMove.n}）</span></div>
+      <div class="rmoves" title="ボスのいちばん痛いわざ（${r.maxMove.n}）を1発受けたときの最大ダメージです。シールド展開中の1.8倍補正込みで、HPを下回っていれば1発耐えられます">🛡被弾最大${r.maxHit}／HP${r.hp}<span class="expl">（シールド中1.8倍補正込み・${r.maxMove.n}）</span></div>
       <div class="bar"><i style="width:${Math.min(100,r.dps/top*100).toFixed(1)}%"></i></div></div>
       <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
@@ -1146,9 +1148,9 @@ const HELP_HTML = `
     <li>シールドは<b>メガシンカポケモンがSPアタックを撃つと1枚壊せます</b>（1人1枚・タイプ不問）</li>
     <li>ボスがシールドを展開したときにメガを場に出すと<b>最初からゲージが50たまっている</b>ので、分割SPアタック持ちならすぐ撃って壊せます</li>
     <li>この一覧は<b>①ボスのSPアタックをどれを受けても1発で倒れない ②ゲージ2分割・3分割のSPアタックを持つ</b>メガだけを、火力の高い順に並べたものです</li>
-    <li>シールド展開中のボスの攻撃は<b>2倍</b>として計算しています（メガ＝PL50・個体値15、ボス＝PL40想定）</li>
+    <li>シールド展開中のボスの攻撃は<b>1.8倍</b>として計算しています（実測で確認した値。メガ＝PL50・個体値15、ボス＝PL40想定）</li>
     <li>このタブを押しているあいだは、そのボスを<b>スーパーメガレイドとして計算</b>します。最低クリア人数のランクも「スーパーメガ」に切り替わり、タブを戻すかほかのランクを選ぶと元に戻ります</li>
-    <li>攻撃の高いボスほど1発耐えできるメガは少なくなります（例: メガフーディンでは3匹だけ）。スーパーメガレイドの対象ではないボスを選んでいるときは参考値です</li>
+    <li>攻撃の高いボスほど1発耐えできるメガは少なくなります（例: メガフーディンでは9匹だけ）。スーパーメガレイドの対象ではないボスを選んでいるときは参考値です</li>
     <li>登録した自分のメガもこの一覧に入ります。1発で倒れる場合は<b>どのPLまで上げれば耐えるか</b>と、そのときの火力を出します</li>
   </ul>`;
 (() => {
