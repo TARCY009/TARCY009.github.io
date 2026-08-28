@@ -111,7 +111,8 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .seg button{border-radius:5px}
 @media (max-width:560px){.modes button,.seg{flex:1 1 auto}}
 /* ランク=ボスの赤 */
-.tierrow .seg button{--mc:#ff8fa0;--mg:linear-gradient(160deg,#ff9d8a 0%,#ff5470 45%,#b91d3e 100%);--mgl:rgba(255,84,112,.42)}
+/* 「スーパーメガ」は狭い画面で折り返す。語の途中(スーパ|ーメガ)で切れないよう<wbr>の位置だけ許す */
+.tierrow .seg button{--mc:#ff8fa0;--mg:linear-gradient(160deg,#ff9d8a 0%,#ff5470 45%,#b91d3e 100%);--mgl:rgba(255,84,112,.42);word-break:keep-all}
 :root.light .tierrow .seg button{--mc:#c22646}
 /* じぶん側=水色(点灯は濃い文字) ／ シャドウ=紫 */
 .cyanseg button{--mc:#5fd8ea;--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mgl:rgba(8,180,201,.45);--mi:#042330}
@@ -312,7 +313,8 @@ const TIERS=[
   {id:'t4',label:'★4',hp:9000, time:300,cpm:0.7903,help:'メガレイド（HP9000・制限時間300秒）'},
   {id:'t5',label:'★5',hp:15000,time:300,cpm:0.7903,help:'★5伝説レイド（HP15000・制限時間300秒）'},
   {id:'t6',label:'★6',hp:22500,time:300,cpm:0.7903,help:'メガ伝説・ゲンシカイキのレイド（HP22500・制限時間300秒）'},
-  {id:'t7',label:'★7',hp:25000,time:300,cpm:0.7903,help:'スーパーメガレイド（HP25000・制限時間300秒）'},
+  // スーパーメガレイドはゲーム内では★ではなくシールドの枚数でレベルが表示されるため「★7」とは書かない
+  {id:'t7',label:'スーパー<wbr>メガ',hp:25000,time:300,cpm:0.7903,help:'スーパーメガレイド（HP25000・制限時間300秒）'},
 ];
 const tierOf=id=>TIERS.find(t=>t.id===id);
 const guessTier=k=>{const p=D.pokemon[k]; return p.mega?(p.lg?'t6':'t4'):'t5';};
@@ -734,10 +736,11 @@ const HELP_HTML=`
   </ul>
   <h4>ランクごとの前提</h4>
   <ul>
-    <li>★1＝HP600・180秒 ／ ★3＝HP3600・180秒 ／ ★4（メガ）＝HP9000・300秒 ／ ★5＝HP15000・300秒 ／ ★6（メガ伝説・ゲンシ）＝HP22500・300秒 ／ ★7（スーパーメガ）＝HP25000・300秒</li>
+    <li>★1＝HP600・180秒 ／ ★3＝HP3600・180秒 ／ ★4（メガ）＝HP9000・300秒 ／ ★5＝HP15000・300秒 ／ ★6（メガ伝説・ゲンシ）＝HP22500・300秒 ／ スーパーメガ＝HP25000・300秒</li>
+    <li>スーパーメガレイドはゲーム内では★の数ではなく<b>シールドの枚数</b>でレベルが表示されます（ここでは1ランクとして扱います）</li>
     <li>ボスの攻撃・防御は<b>（種族値＋15）×ランクごとの補正</b>、HPは上の固定値です</li>
     <li>ボスのわざは通常枠だけ（特別わざ・レガシーわざは使ってきません）。既定では<b>いちばん痛い組み合わせ</b>を選んでいます</li>
-    <li><b>★7（スーパーメガレイド）のシールドは計算に入れていません</b>（展開の条件や止まる時間の確定した仕様がまだ無いため）。シールドを壊すあいだは攻撃の手が止まるので、実際は余分に時間がかかります</li>
+    <li><b>スーパーメガレイドのシールドは計算に入れていません</b>（展開の条件や止まる時間の確定した仕様がまだ無いため）。シールドを壊すあいだは攻撃の手が止まるので、実際は余分に時間がかかります</li>
   </ul>`;
 (()=>{
   const tab=$('helptab'),body=$('helpbody');
