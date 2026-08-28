@@ -451,9 +451,9 @@ function renderBoss(){
   $('bossName').innerHTML=`${badges(false,bp.mega,bp)}${bp.n}${typeIcons(bp,22)}`;
   $('tierSeg').innerHTML=TIERS.map(t=>`<button type="button" data-t="${t.id}" aria-pressed="${t.id===tier}" title="${t.help}として計算します">${t.label}</button>`).join('');
   $('tierSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{tier=b.dataset.t;topCache.key=null;renderBoss();renderMy();runAll();});
-  // ★7のシールドはまだ再現できていない(展開の条件・止まる時間の確定仕様が無い)ので、正直に断っておく
+  // スーパーメガのシールドは「壊さない前提」の暫定モデルで計算する(レイド火力チェッカーと同じ前提)
   const tn=$('tierNote');
-  tn.textContent='※スーパーメガレイドのシールドは計算に入れていません（シールドを壊すあいだは攻撃の手が止まるため、実際は余分に時間がかかります）';
+  tn.textContent='※シールドを壊さない前提で計算します（HP約80%でシールド展開→以後 ボス防御4倍・攻撃1.8倍。防御4倍は暫定値）';
   tn.style.display=tier==='t7'?'block':'none';
   const fs=bossFastIds(bp), cs=bossChgIds(bp);
   const cur=defaultBossMoves();
@@ -585,6 +585,7 @@ function buildCfg(N,seed,wantLog){
   return {limit:t.time,eff,boss:bossCfg,team:buildTeamCfg(),N,spMode,dodgeSp,
     wxTypes:WEATHER[$('wxSel').value]||[],
     tp:+$('tpSel').value||0,   // チームパワー(わざ1回あたりの上昇P)
+    t7shield:tier==='t7',      // スーパーメガのシールド(壊さない前提の暫定モデル)
     rejoin:Math.max(0,Math.min(60,+$('rejoinSec').value||0)),seed,wantLog};
 }
 const TRIALS=30;
@@ -749,7 +750,7 @@ const HELP_HTML=`
     <li>スーパーメガレイドはゲーム内では★の数ではなく<b>シールドの枚数</b>でレベルが表示されます（ここでは1ランクとして扱います）</li>
     <li>ボスの攻撃・防御は<b>（種族値＋15）×ランクごとの補正</b>、HPは上の固定値です</li>
     <li>ボスのわざは通常枠だけ（特別わざ・レガシーわざは使ってきません）。既定では<b>いちばん痛い組み合わせ</b>を選んでいます</li>
-    <li><b>スーパーメガレイドのシールドは計算に入れていません</b>（展開の条件や止まる時間の確定した仕様がまだ無いため）。シールドを壊すあいだは攻撃の手が止まるので、実際は余分に時間がかかります</li>
+    <li><b>スーパーメガレイドは「シールドを壊さない前提」で計算します</b>。ボスのHPが約80%になるとシールドが張られ、以後は<b>ボスの防御4倍（暫定値）・攻撃1.8倍（実測値）</b>のまま戦う想定です。倍率は実測で確定したら更新します</li>
   </ul>`;
 (()=>{
   const tab=$('helptab'),body=$('helpbody');

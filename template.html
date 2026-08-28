@@ -750,7 +750,8 @@ function mpTop(){
     }
   }
   rows.sort((a,b)=>b.dps-a.dps);
-  mpTopCache={boss,rows:rows.slice(0,8)};
+  // 20件控える: 天候ブーストで神経質に順位が入れ替わっても、本当の1位が候補から漏れないように
+  mpTopCache={boss,rows:rows.slice(0,20)};
   return mpTopCache.rows;
 }
 // スーパーメガレイドのシールド(暫定モデル・2026-08-28):
@@ -763,18 +764,27 @@ function mpCalc(tierId){
   const t=RAID_TIERS.find(x=>x.id===tierId), bp=D.pokemon[boss];
   const def=(bp.df+15)*t.cpm;   // ランク補正込みの実際のボス防御
   let best=null;
-  const ex=mpEx();   // ⚙詳細の天候・フレンド・ザシアン(既定はなし)
+  const ex=mpEx();   // ⚙詳細の天候・フレンド・ザシアン・チームパワー(既定はなし)
+  // ブースト選択中は候補ごとにわざ構成も選び直す(ものさしの構成のままだと、天候やチームパワーで
+  // 最適構成が変わったときに1位を取りこぼす。20候補×全構成でも数ms)。
+  // ブーストなしのときは従来どおりものさしの構成(ドラゴン7%ルール込み)＝既定の数字を動かさない
   for(const r of mpTop()){
     const atk=(r.p.a+15)*D.cpm['50'];
-    const rn=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def,ex);
-    if(!rn) continue;
-    if(t.id==='t7'){
-      // 1人で削り切るのに必要な秒数 = シールド前(HPの20%) + シールド中(80%・防御4倍)
-      const rs=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def*SHIELD_DEF,ex);
-      if(!rs) continue;
-      const need=(1-SHIELD_AT)*t.hp/rn.dps + SHIELD_AT*t.hp/rs.dps;
-      if(!best||need<best.need) best={...r,dps:rn.dps,sdps:rs.dps,need};
-    }else if(!best||rn.dps>best.dps) best={...r,dps:rn.dps};
+    const combos=ex
+      ? fastMoves(r.p).filter(x=>D.moves[x.id].e>0).flatMap(f=>
+          chgMoves(r.p).filter(x=>D.moves[x.id].e<0).map(c=>[D.moves[f.id],D.moves[c.id]]))
+      : [[D.moves[r.f.id],D.moves[r.c.id]]];
+    for(const [m1,m2] of combos){
+      const rn=comboDPS(r.p,m1,m2,atk,bp.ty,r.shadow,def,ex);
+      if(!rn) continue;
+      if(t.id==='t7'){
+        // 1人で削り切るのに必要な秒数 = シールド前(HPの20%) + シールド中(80%・防御4倍)
+        const rs=comboDPS(r.p,m1,m2,atk,bp.ty,r.shadow,def*SHIELD_DEF,ex);
+        if(!rs) continue;
+        const need=(1-SHIELD_AT)*t.hp/rn.dps + SHIELD_AT*t.hp/rs.dps;
+        if(!best||need<best.need) best={...r,dps:rn.dps,sdps:rs.dps,need};
+      }else if(!best||rn.dps>best.dps) best={...r,dps:rn.dps};
+    }
   }
   if(!best) return null;
   const n=t.id==='t7' ? Math.max(1,Math.ceil(best.need/t.time))

@@ -28,6 +28,9 @@
   var DODGE_SEC = 0.5;             // 回避モーション(公開データ dodgeDurationMs=500)
   var DODGE_CUT = 0.25;            // 回避時に受けるダメージの割合(75%カット)
   var TP_MAX = 18;                 // チームパワーのメーター最大(外部攻略情報とカネール氏の検証で一致)
+  // スーパーメガレイドのシールド(cfg.t7shield・壊さない前提の暫定モデル。レイド火力チェッカーと同じ):
+  // ボスのHPが80%を切るとシールドが張られ、以後ずっと ボス防御×4(暫定)・ボス攻撃×1.8(実測確定)
+  var SH_AT = 0.8, SH_DEF = 4, SH_ATK = 1.8;
 
   // 再現できる乱数(同じseedなら同じ結果)。ランダムSPの試行に使う
   function mulberry32(a) {
@@ -53,6 +56,7 @@
      N      … 人数(全員が同じパーティの想定。ボスの被ダメ・ゲージに掛かる)
      spMode … 'asap'(即打ち・既定) | 'alt'(撃てる機会の2回に1回・交互) | 'coin'(撃てるとき1/2)
      tp     … チームパワーのわざ1回あたりの上昇P(0=なし/1=2人/2=3人/3=4人)
+     t7shield … trueならスーパーメガのシールド(HP80%から防御4倍・攻撃1.8倍・壊さない前提の暫定モデル)
      rejoin … 全滅→再突入の秒数
      seed   … 乱数の種(coin用)
      wantLog… タイムラインを返すか */
@@ -68,15 +72,19 @@
     var wx = cfg.wxTypes || [];
     function wxMul(mv) { return wx.indexOf(mv.t) >= 0 ? 1.2 : 1; }
     // 6匹ぶんのダメージを前計算(与ダメ2種・被ダメ2種)
-    var myF = [], myC = [], myC2 = [], bF = [], bC = [];
-    for (var i = 0; i < team.length; i++) {
-      var m = team[i];
-      myF[i] = dmgOf(m.atk, bs.def, m.fast, m, bs, m.mult * wxMul(m.fast));
-      myC[i] = m.chg ? dmgOf(m.atk, bs.def, m.chg, m, bs, m.mult * wxMul(m.chg)) : 0;
-      // チームパワーが乗ったSPアタック(2倍は切り捨ての前に掛ける)
-      myC2[i] = m.chg ? dmgOf(m.atk, bs.def, m.chg, m, bs, m.mult * wxMul(m.chg) * 2) : 0;
-      bF[i] = dmgOf(bs.atk, m.def, bs.fast, bs, m, wxMul(bs.fast));
-      bC[i] = bs.chg ? dmgOf(bs.atk, m.def, bs.chg, bs, m, wxMul(bs.chg)) : 0;
+    // 6匹ぶんのダメージを前計算。[0]=通常 / [1]=シールド中(スーパーメガ・防御4倍/攻撃1.8倍)
+    var myF = [[], []], myC = [[], []], myC2 = [[], []], bF = [[], []], bC = [[], []];
+    for (var s = 0; s < 2; s++) {
+      var bd = s ? bs.def * SH_DEF : bs.def, ba = s ? bs.atk * SH_ATK : bs.atk;
+      for (var i = 0; i < team.length; i++) {
+        var m = team[i];
+        myF[s][i] = dmgOf(m.atk, bd, m.fast, m, bs, m.mult * wxMul(m.fast));
+        myC[s][i] = m.chg ? dmgOf(m.atk, bd, m.chg, m, bs, m.mult * wxMul(m.chg)) : 0;
+        // チームパワーが乗ったSPアタック(2倍は切り捨ての前に掛ける)
+        myC2[s][i] = m.chg ? dmgOf(m.atk, bd, m.chg, m, bs, m.mult * wxMul(m.chg) * 2) : 0;
+        bF[s][i] = dmgOf(ba, m.def, bs.fast, bs, m, wxMul(bs.fast));
+        bC[s][i] = bs.chg ? dmgOf(ba, m.def, bs.chg, bs, m, wxMul(bs.chg)) : 0;
+      }
     }
 
     // イベント処理: 同じ時刻なら pr の小さい順。
@@ -95,6 +103,7 @@
     var t = 0, myGen = 0, mon = 0, faints = 0, wipes = 0;
     var myHP = team[0].hp, myE = 0, bE = 0, total = 0, win = false, endT = null;
     var tp = cfg.tp || 0, tpMeter = 0;   // チームパワー(瀕死交代しても引き継ぐのでポケモンごとに戻さない)
+    var sh = 0;                          // スーパーメガのシールド(0=展開前 1=展開中。ダメージ表の添字)
     var spOpp = 0;        // 'alt'用: SPを撃てた機会の数(2回に1回撃つ)
     var activeFrom = 0;   // この時刻までこちらのポケモンは場にいない(交代・再突入の待ち)
     var pendAct = null;   // 予約中のこちらの行動(回避したらこの開始を0.5秒うしろへずらす)
@@ -121,15 +130,22 @@
           if (useC && tpMeter >= TP_MAX) { tpBoost = true; tpMeter = 0; }
           tpMeter = Math.min(TP_MAX, tpMeter + tp);
         }
-        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, dmg: useC ? (tpBoost ? myC2[mon] : myC[mon]) : myF[mon], sp: useC, tp: tpBoost, mi: mon });
+        // ダメージは当たった瞬間のシールド状態で決める(hit側で表を引く)
+        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, sp: useC, tp: tpBoost, mi: mon });
         pushAct(t + mv.d, myGen);
       } else if (e.k === 'hit') {                // こちらのダメージが入る(ゲージもこの瞬間に入る)
         if (e.g !== myGen) continue;             // 撃っている途中で倒れたぶんは消える
-        total += e.dmg;
+        var md = e.sp ? (e.tp ? myC2[sh][e.mi] : myC[sh][e.mi]) : myF[sh][e.mi];
+        total += md;
         if (!e.sp) myE = Math.min(MAX_ENERGY, myE + e.mv.e);
-        bE = Math.min(MAX_ENERGY, bE + e.dmg * ENERGY_PER_HP * N);   // ボスは全員ぶんでためる
-        L({ t: t, side: 'me', mv: e.mv, dmg: e.dmg, sp: e.sp, tp: e.tp, mi: e.mi });
+        bE = Math.min(MAX_ENERGY, bE + md * ENERGY_PER_HP * N);   // ボスは全員ぶんでためる
+        L({ t: t, side: 'me', mv: e.mv, dmg: md, sp: e.sp, tp: e.tp, mi: e.mi });
         if (total * N >= bs.hp) { win = true; endT = t; break; }
+        // スーパーメガ: HPが80%を切った瞬間にシールド展開(壊さない前提の暫定モデル)
+        if (cfg.t7shield && !sh && total * N >= bs.hp * (1 - SH_AT)) {
+          sh = 1;
+          L({ t: t, side: 'sys', note: 'ボスがシールドを展開（以後 防御4倍・攻撃1.8倍の暫定値・壊さない前提）' });
+        }
       } else if (e.k === 'bact') {               // ボスの行動
         var canC = bs.chg && bE >= Math.abs(bs.chg.e);
         var bUseC = false;
@@ -149,7 +165,7 @@
           L({ t: t, side: 'boss', mv: e.mv, dmg: 0, sp: e.sp, miss: true });
           continue;
         }
-        var d = e.sp ? bC[mon] : bF[mon];
+        var d = e.sp ? bC[sh][mon] : bF[sh][mon];
         var dodged = false;
         if (e.sp && cfg.dodgeSp) {               // SPのみ回避: 75%カット+次の攻撃が0.5秒遅れる
           d = Math.max(1, Math.floor(d * DODGE_CUT));
