@@ -211,6 +211,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <div class="bossname" id="bossName"></div>
     <div class="bossinfo">ランク：</div>
     <div class="modes tierrow"><span class="seg" id="tierSeg"></span></div>
+    <p class="note" id="tierNote" style="display:none;margin-top:4px"></p>
     <div class="grid2" style="margin-top:4px">
       <div><label class="f">ボスのノーマルアタック</label><div class="selrow"><select id="bfSel"></select><span class="seltype" id="bfType"></span></div></div>
       <div><label class="f">ボスのSPアタック</label><div class="selrow"><select id="bcSel"></select><span class="seltype" id="bcType"></span></div></div>
@@ -442,6 +443,10 @@ function renderBoss(){
   $('bossName').innerHTML=`${badges(false,bp.mega,bp)}${bp.n}${typeIcons(bp,22)}`;
   $('tierSeg').innerHTML=TIERS.map(t=>`<button type="button" data-t="${t.id}" aria-pressed="${t.id===tier}" title="${t.help}として計算します">${t.label}</button>`).join('');
   $('tierSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{tier=b.dataset.t;topCache.key=null;renderBoss();renderMy();runAll();});
+  // ★7のシールドはまだ再現できていない(展開の条件・止まる時間の確定仕様が無い)ので、正直に断っておく
+  const tn=$('tierNote');
+  tn.textContent='※スーパーメガレイドのシールドは計算に入れていません（シールドを壊すあいだは攻撃の手が止まるため、実際は余分に時間がかかります）';
+  tn.style.display=tier==='t7'?'block':'none';
   const fs=bossFastIds(bp), cs=bossChgIds(bp);
   const cur=defaultBossMoves();
   fillBossSel($('bfSel'),fs,$('bfSel').dataset.boss===boss?$('bfSel').value:cur.bf);
@@ -732,6 +737,7 @@ const HELP_HTML=`
     <li>★1＝HP600・180秒 ／ ★3＝HP3600・180秒 ／ ★4（メガ）＝HP9000・300秒 ／ ★5＝HP15000・300秒 ／ ★6（メガ伝説・ゲンシ）＝HP22500・300秒 ／ ★7（スーパーメガ）＝HP25000・300秒</li>
     <li>ボスの攻撃・防御は<b>（種族値＋15）×ランクごとの補正</b>、HPは上の固定値です</li>
     <li>ボスのわざは通常枠だけ（特別わざ・レガシーわざは使ってきません）。既定では<b>いちばん痛い組み合わせ</b>を選んでいます</li>
+    <li><b>★7（スーパーメガレイド）のシールドは計算に入れていません</b>（展開の条件や止まる時間の確定した仕様がまだ無いため）。シールドを壊すあいだは攻撃の手が止まるので、実際は余分に時間がかかります</li>
   </ul>`;
 (()=>{
   const tab=$('helptab'),body=$('helpbody');
