@@ -662,16 +662,13 @@ function renderBoss(){
            <option value="1">なし</option><option value="1.03">友達 ×1.03</option><option value="1.05">仲良し ×1.05</option><option value="1.07">親友 ×1.07</option><option value="1.10">大親友 ×1.10</option>
          </select></span>
          <button type="button" class="optbtn" id="mpZc" aria-pressed="${MPB.zc}" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
-         <span class="setgrp"><span class="lbl" title="パーティプレイのチームパワーです。わざを使うたびにメーターがたまり（2人+1P・3人+2P・4人+3P・最大18P）、満タンで次のSPアタックが2倍になります。点灯したら毎回すぐ使う想定です">チームパワー</span><select id="mpTp">
-           <option value="0">なし</option><option value="1">2人</option><option value="2">3人</option><option value="3">4人</option>
-         </select></span>
+         <button type="button" class="optbtn" id="mpTp" aria-pressed="${MPB.tp}" title="パーティプレイのチームパワーです。参加する全員がパーティを組んでいる前提で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P）、満タンで次のSPアタックが2倍になります。1人のときは効果がありません">チームパワー</button>
        </div>
      </div>
      <div class="minppl" id="mpOut"></div>
      ${bossMovesHtml(p)}`;
   document.getElementById('mpWx').value=MPB.wx;
   document.getElementById('mpFr').value=MPB.fr;
-  document.getElementById('mpTp').value=MPB.tp;
   document.getElementById('mpDetBtn').onclick=()=>{
     MPB.open=!MPB.open;
     document.getElementById('mpDetBtn').setAttribute('aria-expanded',MPB.open);
@@ -680,7 +677,7 @@ function renderBoss(){
   const mpSync=()=>{document.getElementById('mpDetSum').innerHTML=mpDetSum();renderMinPlayers();};
   document.getElementById('mpWx').onchange=e=>{MPB.wx=e.target.value;mpSync();};
   document.getElementById('mpFr').onchange=e=>{MPB.fr=e.target.value;mpSync();};
-  document.getElementById('mpTp').onchange=e=>{MPB.tp=e.target.value;mpSync();};
+  document.getElementById('mpTp').onclick=e=>{MPB.tp=!MPB.tp;e.currentTarget.setAttribute('aria-pressed',MPB.tp);mpSync();};
   document.getElementById('mpZc').onclick=e=>{MPB.zc=!MPB.zc;e.currentTarget.setAttribute('aria-pressed',MPB.zc);mpSync();};
   document.querySelectorAll('#tierSeg button').forEach(b=>b.onclick=()=>{
     raidTier=b.dataset.t;
@@ -711,18 +708,19 @@ const MP_WEATHER={sunny:['GRASS','GROUND','FIRE'],partly:['NORMAL','ROCK'],cloud
   rain:['WATER','ELECTRIC','BUG'],fog:['DARK','GHOST'],snow:['ICE','STEEL'],wind:['DRAGON','FLYING','PSYCHIC']};
 const MP_WXNAME={sunny:'晴れ',partly:'時々曇り',cloudy:'曇り',rain:'雨',fog:'霧',snow:'雪',wind:'強風'};
 const MP_FRNAME={'1.03':'友達','1.05':'仲良し','1.07':'親友','1.10':'大親友'};
-const MPB={wx:'',fr:'1',zc:false,tp:'0',open:false};
+const MPB={wx:'',fr:'1',zc:false,tp:false,open:false};
 // comboDPSへ渡すブースト。何も選ばれていなければnull(=従来どおり)
-// tp=チームパワーのわざ1回あたりの上昇P(2人=1/3人=2/4人=3・最大18Pで次のSP2倍)
+// チームパワーは「参加する全員がパーティを組む前提」なので、上昇Pは人数から決める(mpCalc)。
+// ここではONかどうか(tpOn)だけ持ち、tpはmpCalcが人数ごとに差し替える
 function mpEx(){
-  const flat=(MPB.zc?1.1:1)*(+MPB.fr||1), wx=MP_WEATHER[MPB.wx]||[], tp=+MPB.tp||0;
-  return (flat!==1||wx.length||tp)?{flat,wx,tp}:null;
+  const flat=(MPB.zc?1.1:1)*(+MPB.fr||1), wx=MP_WEATHER[MPB.wx]||[];
+  return (flat!==1||wx.length||MPB.tp)?{flat,wx,tp:0,tpOn:MPB.tp}:null;
 }
 // 閉じていても選択中の前提が分かるよう、ボタンに選択内容を添える
 function mpDetSum(){
   const a=[];
   if(MPB.wx)a.push(MP_WXNAME[MPB.wx]); if(MPB.fr!=='1')a.push(MP_FRNAME[MPB.fr]); if(MPB.zc)a.push('ザシアン');
-  if(MPB.tp!=='0')a.push(`チームパワー${{1:'2',2:'3',3:'4'}[MPB.tp]}人`);
+  if(MPB.tp)a.push('チームパワー');
   return a.length?`<b>（${a.join('・')}）</b>`:'';
 }
 // ボスからランクの見当を付ける。違うランクのときはタブで替えてもらう:
@@ -765,30 +763,52 @@ function mpCalc(tierId){
   const def=(bp.df+15)*t.cpm;   // ランク補正込みの実際のボス防御
   let best=null;
   const ex=mpEx();   // ⚙詳細の天候・フレンド・ザシアン・チームパワー(既定はなし)
-  // ブースト選択中は候補ごとにわざ構成も選び直す(ものさしの構成のままだと、天候やチームパワーで
-  // 最適構成が変わったときに1位を取りこぼす。20候補×全構成でも数ms)。
+  // bestFor(P)＝チームパワーの上昇PをPとしたときの最良の1位候補。
+  // need＝1人で削り切るのに必要な秒数(t7はシールド前20%+シールド中80%・防御4倍の2段階)。
+  // ブースト選択中は候補20件×全わざ構成を選び直す(天候やチームパワーで最適構成が変わるため)。
   // ブーストなしのときは従来どおりものさしの構成(ドラゴン7%ルール込み)＝既定の数字を動かさない
-  for(const r of mpTop()){
-    const atk=(r.p.a+15)*D.cpm['50'];
-    const combos=ex
-      ? fastMoves(r.p).filter(x=>D.moves[x.id].e>0).flatMap(f=>
-          chgMoves(r.p).filter(x=>D.moves[x.id].e<0).map(c=>[D.moves[f.id],D.moves[c.id]]))
-      : [[D.moves[r.f.id],D.moves[r.c.id]]];
-    for(const [m1,m2] of combos){
-      const rn=comboDPS(r.p,m1,m2,atk,bp.ty,r.shadow,def,ex);
-      if(!rn) continue;
-      if(t.id==='t7'){
-        // 1人で削り切るのに必要な秒数 = シールド前(HPの20%) + シールド中(80%・防御4倍)
-        const rs=comboDPS(r.p,m1,m2,atk,bp.ty,r.shadow,def*SHIELD_DEF,ex);
-        if(!rs) continue;
-        const need=(1-SHIELD_AT)*t.hp/rn.dps + SHIELD_AT*t.hp/rs.dps;
-        if(!best||need<best.need) best={...r,dps:rn.dps,sdps:rs.dps,need};
-      }else if(!best||rn.dps>best.dps) best={...r,dps:rn.dps};
+  const bestFor=(P)=>{
+    const plain=!ex||(P===0&&ex.flat===1&&!ex.wx.length);
+    const exP=plain?null:{...ex,tp:P};
+    let best=null;
+    for(const r of mpTop()){
+      const atk=(r.p.a+15)*D.cpm['50'];
+      const combos=exP
+        ? fastMoves(r.p).filter(x=>D.moves[x.id].e>0).flatMap(f=>
+            chgMoves(r.p).filter(x=>D.moves[x.id].e<0).map(c=>[D.moves[f.id],D.moves[c.id]]))
+        : [[D.moves[r.f.id],D.moves[r.c.id]]];
+      for(const [m1,m2] of combos){
+        const rn=comboDPS(r.p,m1,m2,atk,bp.ty,r.shadow,def,exP);
+        if(!rn) continue;
+        let need,sdps=null;
+        if(t.id==='t7'){
+          const rs=comboDPS(r.p,m1,m2,atk,bp.ty,r.shadow,def*SHIELD_DEF,exP);
+          if(!rs) continue;
+          need=(1-SHIELD_AT)*t.hp/rn.dps + SHIELD_AT*t.hp/rs.dps;
+          sdps=rs.dps;
+        }else need=t.hp/rn.dps;
+        if(!best||need<best.need) best={...r,dps:rn.dps,sdps,need};
+      }
     }
+    return best;
+  };
+  let n;
+  if(ex&&ex.tpOn){
+    // 全員がパーティを組む前提: 1人=P0(組めない)・2人=+1P・3人=+2P・4人以上=+3P。
+    // それぞれのPで成立する最少人数の候補を出して、いちばん少ないものを採用する
+    const cand=[];
+    const b0=bestFor(0); if(b0&&b0.need<=t.time)   cand.push({n:1,b:b0});
+    const b1=bestFor(1); if(b1&&b1.need<=t.time*2) cand.push({n:2,b:b1});
+    const b2=bestFor(2); if(b2&&b2.need<=t.time*3) cand.push({n:3,b:b2});
+    const b3=bestFor(3); if(b3) cand.push({n:Math.max(4,Math.ceil(b3.need/t.time)),b:b3});
+    if(!cand.length) return null;
+    cand.sort((a,b)=>a.n-b.n);
+    best=cand[0].b; n=cand[0].n;
+  }else{
+    best=bestFor(0);
+    if(!best) return null;
+    n=Math.max(1,Math.ceil(best.need/t.time));
   }
-  if(!best) return null;
-  const n=t.id==='t7' ? Math.max(1,Math.ceil(best.need/t.time))
-                      : Math.max(1,Math.ceil(t.hp/(best.dps*t.time)));
   return {t,best,n};
 }
 function renderMinPlayers(){
@@ -1222,7 +1242,7 @@ const HELP_HTML = `
     <li>ランクはボスから見当を付けて自動で選びます（<b>メガ伝説・ゲンシ</b>→★6、ふつうのメガ→★4、それ以外→★5）。違うランクのときはタップで替えてください</li>
     <li>この計算だけは、ものさし防御100ではなく<b>そのボスの実際の防御（ランクごとの補正込み）</b>でダメージを出し直しています</li>
     <li><b>天候ブースト・フレンド・ザシアン効果・チームパワーは「⚙ 詳細」で前提に入れられます</b>（既定はすべてなし）。閉じていても選択中の前提はボタンに表示されます</li>
-    <li><b>チームパワー</b>＝パーティプレイのボーナス。わざを1回使うごとにメーターがたまり（2人+1P・3人+2P・4人+3P・最大18P・SPアタックでも増える）、満タンで<b>次のSPアタックが2倍</b>になります。点灯したら毎回すぐ使う前提で、SPアタックの何割に2倍が乗るかをわざ構成の充填サイクルから計算しています（外部攻略情報と実測検証で一致した値）</li>
+    <li><b>チームパワー</b>＝パーティプレイのボーナス。ONにすると<b>参加する全員がパーティを組んでいる前提</b>で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P・SPアタックでも増える）、満タンで<b>次のSPアタックが2倍</b>になります。1人のときは効果がありません。人数ごとの上昇量で成立するいちばん少ない人数を答えにし、SPアタックの何割に2倍が乗るかはわざ構成の充填サイクルから計算しています（外部攻略情報と実測検証で一致した値）</li>
     <li>倒されて出し直す時間・メガシンカの応援は入れていません。<b>実際はこの人数より多めが安全</b>です</li>
     <li><b>スーパーメガレイドは「シールドを壊さない前提」で計算します</b>——最少人数での討伐ではシールドを壊す頭数がそろわないため。ボスのHPが約80%になるとシールドが張られ、以後は<b>ボスの防御4倍（暫定値）</b>のまま削り切る想定です。倍率は実測で確定したら更新します</li>
   </ul>
