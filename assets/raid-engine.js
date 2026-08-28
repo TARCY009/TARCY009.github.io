@@ -11,6 +11,10 @@
    ・天候ブースト(cfg.wxTypes=対象タイプの配列): 対象タイプのわざが1.2倍。
      こちらだけでなく「ボスのわざ」にも掛かる(2026-08-20タダシさん確認。例: 曇りのきあいだま)
    ・ひんし→次のポケモンは1秒固定。全滅→再突入は既定10秒(設定で変更可)
+   ・チームパワー(cfg.tp=わざ1回あたりの上昇P。2人=1/3人=2/4人=3・0でオフ):
+     メーター最大18P。自分のわざ1回ごと(ノーマルもSPも)に+tpされ、満タンなら次のSPアタックが
+     2倍になって0Pへ戻る(点灯したら即使う想定)。瀕死交代しても引き継ぐ。
+     2026-08-28に外部攻略情報とカネール氏の検証で数値が一致した仕様(タダシさん確認)
    検証: 外部シミュレータのタイムライン5例(タダシさん提供のスクショ)と完全一致 */
 (function (root) {
   'use strict';
@@ -23,6 +27,7 @@
   var MAX_ENERGY = 100;
   var DODGE_SEC = 0.5;             // 回避モーション(公開データ dodgeDurationMs=500)
   var DODGE_CUT = 0.25;            // 回避時に受けるダメージの割合(75%カット)
+  var TP_MAX = 18;                 // チームパワーのメーター最大(外部攻略情報とカネール氏の検証で一致)
 
   // 再現できる乱数(同じseedなら同じ結果)。ランダムSPの試行に使う
   function mulberry32(a) {
@@ -47,6 +52,7 @@
               mult=シャドウ1.2など攻撃補正。全滅したら同じ6匹で再突入する
      N      … 人数(全員が同じパーティの想定。ボスの被ダメ・ゲージに掛かる)
      spMode … 'asap'(即打ち・既定) | 'alt'(撃てる機会の2回に1回・交互) | 'coin'(撃てるとき1/2)
+     tp     … チームパワーのわざ1回あたりの上昇P(0=なし/1=2人/2=3人/3=4人)
      rejoin … 全滅→再突入の秒数
      seed   … 乱数の種(coin用)
      wantLog… タイムラインを返すか */
@@ -62,11 +68,13 @@
     var wx = cfg.wxTypes || [];
     function wxMul(mv) { return wx.indexOf(mv.t) >= 0 ? 1.2 : 1; }
     // 6匹ぶんのダメージを前計算(与ダメ2種・被ダメ2種)
-    var myF = [], myC = [], bF = [], bC = [];
+    var myF = [], myC = [], myC2 = [], bF = [], bC = [];
     for (var i = 0; i < team.length; i++) {
       var m = team[i];
       myF[i] = dmgOf(m.atk, bs.def, m.fast, m, bs, m.mult * wxMul(m.fast));
       myC[i] = m.chg ? dmgOf(m.atk, bs.def, m.chg, m, bs, m.mult * wxMul(m.chg)) : 0;
+      // チームパワーが乗ったSPアタック(2倍は切り捨ての前に掛ける)
+      myC2[i] = m.chg ? dmgOf(m.atk, bs.def, m.chg, m, bs, m.mult * wxMul(m.chg) * 2) : 0;
       bF[i] = dmgOf(bs.atk, m.def, bs.fast, bs, m, wxMul(bs.fast));
       bC[i] = bs.chg ? dmgOf(bs.atk, m.def, bs.chg, bs, m, wxMul(bs.chg)) : 0;
     }
@@ -86,6 +94,7 @@
 
     var t = 0, myGen = 0, mon = 0, faints = 0, wipes = 0;
     var myHP = team[0].hp, myE = 0, bE = 0, total = 0, win = false, endT = null;
+    var tp = cfg.tp || 0, tpMeter = 0;   // チームパワー(瀕死交代しても引き継ぐのでポケモンごとに戻さない)
     var spOpp = 0;        // 'alt'用: SPを撃てた機会の数(2回に1回撃つ)
     var activeFrom = 0;   // この時刻までこちらのポケモンは場にいない(交代・再突入の待ち)
     var pendAct = null;   // 予約中のこちらの行動(回避したらこの開始を0.5秒うしろへずらす)
@@ -105,14 +114,21 @@
         var useC = cur.chg && myE >= Math.abs(cur.chg.e);
         var mv = useC ? cur.chg : cur.fast;
         if (useC) myE -= Math.abs(cur.chg.e);
-        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, dmg: useC ? myC[mon] : myF[mon], sp: useC, mi: mon });
+        // チームパワー: 満タンならこのSPアタックが2倍(点灯したら即使う想定)。
+        // メーターはノーマルもSPも「使うたび」に+tp(先に2倍の判定をしてから足す)
+        var tpBoost = false;
+        if (tp) {
+          if (useC && tpMeter >= TP_MAX) { tpBoost = true; tpMeter = 0; }
+          tpMeter = Math.min(TP_MAX, tpMeter + tp);
+        }
+        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, dmg: useC ? (tpBoost ? myC2[mon] : myC[mon]) : myF[mon], sp: useC, tp: tpBoost, mi: mon });
         pushAct(t + mv.d, myGen);
       } else if (e.k === 'hit') {                // こちらのダメージが入る(ゲージもこの瞬間に入る)
         if (e.g !== myGen) continue;             // 撃っている途中で倒れたぶんは消える
         total += e.dmg;
         if (!e.sp) myE = Math.min(MAX_ENERGY, myE + e.mv.e);
         bE = Math.min(MAX_ENERGY, bE + e.dmg * ENERGY_PER_HP * N);   // ボスは全員ぶんでためる
-        L({ t: t, side: 'me', mv: e.mv, dmg: e.dmg, sp: e.sp, mi: e.mi });
+        L({ t: t, side: 'me', mv: e.mv, dmg: e.dmg, sp: e.sp, tp: e.tp, mi: e.mi });
         if (total * N >= bs.hp) { win = true; endT = t; break; }
       } else if (e.k === 'bact') {               // ボスの行動
         var canC = bs.chg && bE >= Math.abs(bs.chg.e);

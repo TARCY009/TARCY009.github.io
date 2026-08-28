@@ -282,6 +282,12 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <option value="1.3">同タイプ ×1.3</option>
     </select></span>
     <button type="button" class="optbtn" id="zcBtn" aria-pressed="false" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
+    <span class="setgrp"><span class="lbl" title="パーティプレイのチームパワーです。わざを使うたびにメーターがたまり（2人+1P・3人+2P・4人+3P・最大18P）、満タンで次のSPアタックが2倍になります。点灯したら毎回すぐ使う想定です">チームパワー</span><select id="tpSel" class="setsel">
+      <option value="0" selected>なし</option>
+      <option value="1">2人</option>
+      <option value="2">3人</option>
+      <option value="3">4人</option>
+    </select></span>
   </div>
   <div id="resBody"><div class="empty">ボスを選ぶと結果が出ます</div></div>
 </div>
@@ -578,6 +584,7 @@ function buildCfg(N,seed,wantLog){
     fast:mvObj($('bfSel').value),chg:$('bcSel').value?mvObj($('bcSel').value):null};
   return {limit:t.time,eff,boss:bossCfg,team:buildTeamCfg(),N,spMode,dodgeSp,
     wxTypes:WEATHER[$('wxSel').value]||[],
+    tp:+$('tpSel').value||0,   // チームパワー(わざ1回あたりの上昇P)
     rejoin:Math.max(0,Math.min(60,+$('rejoinSec').value||0)),seed,wantLog};
 }
 const TRIALS=30;
@@ -648,7 +655,7 @@ function timelineHtml(){
     const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
     const cls=x.side==='me'?'me':'boss';
     return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
-      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td></tr>`;
+      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td></tr>`;
   }).join('');
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
   const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で勝ち`:`時間切れ（ボス残りHP${Math.round(r.bossLeft/t.hp*100)}%）`;
@@ -684,6 +691,7 @@ $('zcBtn').onclick=()=>{zcOn=!zcOn;$('zcBtn').setAttribute('aria-pressed',zcOn);
 $('wxSel').addEventListener('change',runAll);
 $('frSel').addEventListener('change',runAll);
 $('mgSel').addEventListener('change',runAll);
+$('tpSel').addEventListener('change',runAll);
 ['bfSel','bcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('bfSel','bfType');syncTypeIcon('bcSel','bcType');runAll();}));
 ['mfSel','mcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('mfSel','mfType');syncTypeIcon('mcSel','mcType');runAll();}));
 $('myShadow').onclick=()=>{myShadow=!myShadow;renderMy();runAll();};
@@ -727,6 +735,7 @@ const HELP_HTML=`
     <li><b>SPのみ回避</b>＝ボスのSPアタックだけ回避します。被ダメージ<b>75%カット</b>（最低1）で、回避に<b>0.5秒</b>かかるぶん次の攻撃が遅れます（ノーマルアタックは受けたまま攻撃し続けます）</li>
     <li><b>天候</b>＝選んだ天候で1.2倍になるタイプのわざが強くなります。<b>自分のわざだけでなくボスのわざにも掛かります</b>（例: 曇りならボスのきあいだまも1.2倍）。対象タイプ: 晴れ＝くさ・じめん・ほのお ／ 時々曇り＝ノーマル・いわ ／ 曇り＝フェアリー・かくとう・どく ／ 雨＝みず・でんき・むし ／ 霧＝あく・ゴースト ／ 雪＝こおり・はがね ／ 強風＝ドラゴン・ひこう・エスパー</li>
     <li><b>フレンド</b>＝友達×1.03〜大親友×1.10 ／ <b>メガ応援</b>＝他の参加者のメガシンカで別タイプ×1.1・同タイプ×1.3 ／ <b>ザシアン効果</b>＝フィールド効果で攻撃1.1倍</li>
+    <li><b>チームパワー</b>＝パーティプレイのボーナス。わざを1回使うごとにメーターがたまり（2人+1P・3人+2P・4人+3P・最大18P・SPアタックでも増える）、満タンで<b>次のSPアタックが2倍</b>になります。点灯したら毎回すぐ使う前提で、瀕死交代してもメーターは引き継ぎます（外部攻略情報と実測検証で一致した値）</li>
     <li>メガ応援は、本当は<b>わざのタイプごと</b>に効きますが、ここでは選んだ倍率が<b>全部のわざに掛かる</b>前提です（ノーマルとSPでタイプがちがう構成では少しだけ強めに出ます）</li>
     <li>ダメージが増えるとボスのゲージも速くたまるので、ブーストを入れるとSPアタックが飛んでくる頻度も上がります（そこまで込みで計算しています）</li>
   </ul>
