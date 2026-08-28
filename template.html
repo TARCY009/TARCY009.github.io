@@ -680,16 +680,32 @@ function mpTop(){
   mpTopCache={boss,rows:rows.slice(0,8)};
   return mpTopCache.rows;
 }
+// スーパーメガレイドのシールド(暫定モデル・2026-08-28):
+// 少人数の最低クリアは「シールドを壊さない前提」になる(壊す頭数が無い)ため、
+// HP約80%でシールドが張られ、以後ずっとボス防御×SHIELD_DEFのまま削り切る、として計算する。
+// SHIELD_DEF=4は海外攻略情報の値を安全側で暫定採用(実戦ログの逆算では3〜4倍・最有力3.6前後。
+// メガフィナーレイベントで実測予定→確定したらここを直す)。展開タイミング80%も同じく暫定
+const SHIELD_DEF=4, SHIELD_AT=0.8;
 function mpCalc(tierId){
   const t=RAID_TIERS.find(x=>x.id===tierId), bp=D.pokemon[boss];
   const def=(bp.df+15)*t.cpm;   // ランク補正込みの実際のボス防御
   let best=null;
   for(const r of mpTop()){
-    const res=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],(r.p.a+15)*D.cpm['50'],bp.ty,r.shadow,def);
-    if(res&&(!best||res.dps>best.dps)) best={...r,dps:res.dps};
+    const atk=(r.p.a+15)*D.cpm['50'];
+    const rn=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def);
+    if(!rn) continue;
+    if(t.id==='t7'){
+      // 1人で削り切るのに必要な秒数 = シールド前(HPの20%) + シールド中(80%・防御4倍)
+      const rs=comboDPS(r.p,D.moves[r.f.id],D.moves[r.c.id],atk,bp.ty,r.shadow,def*SHIELD_DEF);
+      if(!rs) continue;
+      const need=(1-SHIELD_AT)*t.hp/rn.dps + SHIELD_AT*t.hp/rs.dps;
+      if(!best||need<best.need) best={...r,dps:rn.dps,sdps:rs.dps,need};
+    }else if(!best||rn.dps>best.dps) best={...r,dps:rn.dps};
   }
   if(!best) return null;
-  return {t,best,n:Math.max(1,Math.ceil(t.hp/(best.dps*t.time)))};
+  const n=t.id==='t7' ? Math.max(1,Math.ceil(best.need/t.time))
+                      : Math.max(1,Math.ceil(t.hp/(best.dps*t.time)));
+  return {t,best,n};
 }
 function renderMinPlayers(){
   const seg=document.getElementById('tierSeg'), out=document.getElementById('mpOut');
@@ -699,8 +715,8 @@ function renderMinPlayers(){
   if(!r){out.innerHTML='';return;}
   out.innerHTML=`<span title="${T_MP}">理論上 <b class="bignum">${r.n}人</b></span>
     <span class="mp-sub">全員が1位の ${badges(r.best.shadow,!!r.best.p.mega,r.best.p)}${r.best.p.n} で攻撃し続けた場合</span>
-    <small class="mp-sub expl">HP${r.t.hp}・制限時間${r.t.time}秒・対ボス火力${r.best.dps.toFixed(2)}/秒（ランク補正込みのボス防御で計算）</small>
-    ${r.t.id==='t7'?`<small class="mp-sub">※シールドは計算に入れていません<span class="expl">（シールドを壊すあいだは攻撃の手が止まるため、実際はこの人数より余分にかかります）</span></small>`:''}
+    <small class="mp-sub expl">HP${r.t.hp}・制限時間${r.t.time}秒・対ボス火力${r.best.dps.toFixed(2)}/秒${r.best.sdps?`（シールド中 ${r.best.sdps.toFixed(2)}/秒）`:''}（ランク補正込みのボス防御で計算）</small>
+    ${r.t.id==='t7'?`<small class="mp-sub">※シールドを壊さない前提（シールド中はボス防御4倍・暫定値）<span class="expl">。HPが約80%になるとシールドが張られ、以後ずっと防御4倍のまま削り切る想定です。倍率は実測で確定したら更新します</span></small>`:''}
     <a class="raidbtn" href="/raid/?b=${boss}&t=${raidTier}" title="倒される時間・SPアタックの被弾まで再現した実戦ベースのシミュレートを、このボス・このランクのまま開きます">
       <span class="rbi">⚔️</span>
       <span class="rbtx"><span class="rbt">実戦シミュレータ</span><span class="rbs">倒される時間まで含めた実戦ベースの人数がわかります</span></span>
@@ -1122,7 +1138,7 @@ const HELP_HTML = `
     <li>ランクはボスから見当を付けて自動で選びます（<b>メガ伝説・ゲンシ</b>→★6、ふつうのメガ→★4、それ以外→★5）。違うランクのときはタップで替えてください</li>
     <li>この計算だけは、ものさし防御100ではなく<b>そのボスの実際の防御（ランクごとの補正込み）</b>でダメージを出し直しています</li>
     <li>倒されて出し直す時間・天候ブースト・フレンドボーナス・メガシンカの応援は入れていません。ブーストがあれば理論値より少なくなることもありますが、<b>実際はこの人数より多めが安全</b>です</li>
-    <li><b>スーパーメガレイドのシールドは計算に入れていません</b>。シールドを壊すあいだは攻撃の手が止まるので、実際は理論値より余分に時間がかかります</li>
+    <li><b>スーパーメガレイドは「シールドを壊さない前提」で計算します</b>——最低クリアの少人数ではシールドを壊す頭数がそろわないため。ボスのHPが約80%になるとシールドが張られ、以後は<b>ボスの防御4倍（暫定値）</b>のまま削り切る想定です。倍率は実測で確定したら更新します</li>
   </ul>
 
   <h4>わざの選ばれ方</h4>
