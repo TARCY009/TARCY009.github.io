@@ -141,6 +141,9 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .tb1{background:var(--goldgrad);color:var(--ongold);box-shadow:0 2px 6px rgba(255,213,74,.4)}
 /* 与える/受けるの切り替え(一覧の直上) */
 .t-atk{--mc:#ffb08a;--mcl:#b84a1e;--mi:#fff;--mgl:rgba(255,110,60,.45);--mg:linear-gradient(160deg,#ffb27a 0%,#ff6a3d 45%,#c23a1a 100%)}
+/* 与える/受けるのタブ行は点灯時の光彩(ぼかし)を消す(2026-08-30タダシさん指示。
+   動画用スクショにぼかしが写り込むため。立体感は内側のハイライトだけで出す) */
+.gtabs.dirrow button[aria-pressed="true"]{box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .dirrow{margin:2px 2px 10px}
 .dirrow button{flex:1 1 auto}
 /* 1対1シミュへの遷移ボタン */
