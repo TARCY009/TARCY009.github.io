@@ -78,11 +78,15 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .hero{display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative}
 .hero .idn{min-width:0}
 .hero .no{display:block;font-size:.7rem;font-weight:800;color:var(--sub);letter-spacing:.16em;margin-bottom:1px}
-.hero .nm{font-size:1.72rem;line-height:1.3;font-weight:800;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+.hero .nm{font-size:1.72rem;line-height:1.3;font-weight:800;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap;
+  text-shadow:0 1px 0 rgba(6,10,25,.9),0 2px 0 rgba(6,10,25,.55),0 3px 0 rgba(6,10,25,.3),0 5px 10px rgba(0,0,0,.45)}
+:root.light .hero .nm{text-shadow:0 1px 0 #c9d2ea,0 2px 0 #b7c3e2,0 4px 8px rgba(59,110,240,.28)}
 .hero .cp{margin-left:auto;text-align:right;position:relative}
 .hero .cp small{display:block;color:var(--sub);font-size:.7rem;letter-spacing:.05em}
-.hero .cp b{font-size:1.9rem;line-height:1.25;background:linear-gradient(92deg,#ffd54a,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 2px 8px rgba(255,159,67,.28))}
+/* 最大CPは立体文字: グラデーションのまま、金の押し出し影(drop-shadowの重ねがけ)＋落ち影で浮かせる */
+.hero .cp b{font-size:1.9rem;line-height:1.25;background:linear-gradient(180deg,#ffe89a 8%,#ffd54a 45%,#f09a2e 90%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1.5px 0 #9a6a10) drop-shadow(0 1.5px 0 #6e4a08) drop-shadow(0 5px 9px rgba(0,0,0,.42))}
+:root.light .hero .cp b{filter:drop-shadow(0 1.5px 0 #c08a1a) drop-shadow(0 1.5px 0 #8a6208) drop-shadow(0 5px 9px rgba(140,90,0,.3))}
 .hero .cp .mega4{display:block;font-size:.72rem;color:var(--sub);font-weight:700;margin-top:1px}
 .hero .cp .mega4 i{font-style:normal;font-weight:800;font-size:.9rem;background:linear-gradient(92deg,#f58fc2,#b06cff);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* スーパー/ハイパーの最大SCP(最大CPより小さめ)。
@@ -92,6 +96,7 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .hero .cp .lscp .lg{display:inline-block;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 6px;margin-right:4px;vertical-align:1px}
 .hero .cp .lscp.sl .lg{background:linear-gradient(160deg,#6b9aff,#2a52b8);color:#fff}
 .hero .cp .lscp.hl .lg{background:linear-gradient(160deg,#ffd54a,#e0a020);color:#4a3200}
+.hero .cp .lscp.ml .lg{background:linear-gradient(160deg,#c9a7ff,#7a3cc4);color:#fff}
 .hero .cp .lscp i{font-style:normal;font-weight:800;font-size:.9rem;color:var(--ink)}
 /* 種族値メーター: 太いバー＋ステータス色の光彩＋上面の光沢。読み込み時にすっと伸びる(動画映え) */
 .stats{display:flex;flex-direction:column;gap:11px;margin-top:16px;position:relative}
@@ -112,8 +117,6 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .strow.a .bar i{background:var(--barA);box-shadow:0 0 12px rgba(255,90,122,.45)}
 .strow.d .bar i{background:var(--barD);box-shadow:0 0 12px rgba(67,224,255,.4)}
 .strow.h .bar i{background:var(--barH);box-shadow:0 0 12px rgba(61,220,132,.4)}
-.stotal{margin-top:1px;text-align:right;font-size:.72rem;color:var(--sub);font-weight:700}
-.stotal b{font-size:.98rem;color:var(--ink);font-variant-numeric:tabular-nums;margin-left:3px}
 /* 相性 */
 .sec{font-size:.82rem;font-weight:800;color:var(--sub);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 /* 行ごとに色付きの面(弱点=赤系・耐性=緑/水色系)＋グラデーションの倍率バッジ。
@@ -639,7 +642,8 @@ function render(){
       <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
         e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}${
         (v=>`<span class="lscp sl" title="${v?'スーパーリーグ(CP1500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です':'PLや個体値の下限の関係で、CP1500以下に収まる個体が存在しません'}"><b class="lg">スーパー</b>最大SCP <i>${v||'—'}</i></span>`)(maxScp(e,1500))}${
-        (v=>`<span class="lscp hl" title="${v?'ハイパーリーグ(CP2500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です':'PLや個体値の下限の関係で、CP2500以下に収まる個体が存在しません'}"><b class="lg">ハイパー</b>最大SCP <i>${v||'—'}</i></span>`)(maxScp(e,2500))}</div>
+        (v=>`<span class="lscp hl" title="${v?'ハイパーリーグ(CP2500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です':'PLや個体値の下限の関係で、CP2500以下に収まる個体が存在しません'}"><b class="lg">ハイパー</b>最大SCP <i>${v||'—'}</i></span>`)(maxScp(e,2500))}
+        <span class="lscp ml" title="マスターリーグ(CP制限なし)の理想個体(15/15/15・PL50)のSCPです"><b class="lg">マスター</b>最大SCP <i>${maxScp(e,Infinity)}</i></span></div>
     </div>
     <div class="stats">
       ${['a','d','h'].map(k=>{
@@ -647,7 +651,6 @@ function render(){
         const lb=k==='a'?'攻撃':k==='d'?'防御':'HP';
         return `<div class="strow ${k}" title="${lb}の種族値です(個体値・PLを除いた素の強さ)"><span class="lb">${lb}</span><span class="v">${v}</span><span class="bar"><i data-w="${Math.round(v/mx*100)}" style="width:0"></i></span></div>`;
       }).join('')}
-      <div class="stotal" title="攻撃・防御・HPの種族値の合計です">種族値合計<b>${e.a+e.df+e.h}</b></div>
     </div>`;
   // バーは幅0から実際の値まですっと伸ばす(動画映え。reduced-motionでは即座に出る)
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
