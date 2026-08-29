@@ -91,24 +91,25 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 :root.light .hero .cp>b{filter:drop-shadow(0 1.5px 0 #c08a1a) drop-shadow(0 1.5px 0 #8a6208) drop-shadow(0 5px 9px rgba(140,90,0,.3))}
 .hero .cp .mega4{display:block;font-size:.72rem;color:var(--sub);font-weight:700;margin-top:1px}
 .hero .cp .mega4 i{font-style:normal;font-weight:800;font-size:.9rem;background:linear-gradient(92deg,#f58fc2,#b06cff);-webkit-background-clip:text;background-clip:text;color:transparent}
-/* 3リーグの最大SCPは「リーグ名+数字」3セルの横1本の帯にまとめる(縦3行は密集して見える・
-   2026-08-29タダシさん指摘)。個体値チェッカーのリーグ表示と同じ流儀。
+/* 3リーグの最大SCPは、カード下辺の横いっぱいの帯(見出し＋「リーグ名+数字」3セル)。
+   縦3行は密集して見える(2026-08-29タダシさん指摘)→3セルの帯→同日「位置が気になる」で
+   最大CPの下からカード下段へ移動。上段=名前と最大CP/中段=種族値/下段=PvPの総合力、の3層。
    リーグの役割色はリーグ名の文字色で示し、数字は読みやすい色で統一(最大CPの金と被らせない) */
-.hero .cp .scps{display:block;margin-top:7px}
-.hero .cp .scphead{display:block;font-size:.62rem;font-weight:800;color:var(--sub);letter-spacing:.12em;margin-bottom:3px}
-.hero .cp .scpseg{display:inline-flex;gap:2px}
-.hero .cp .scpseg .c{display:block;background:var(--tab);border:1px solid var(--line);padding:3px 11px 4px;text-align:center;border-radius:5px;
+.scps{display:flex;align-items:stretch;gap:2px;margin-top:14px}
+.scphead{flex:none;align-self:center;font-size:.66rem;font-weight:800;color:var(--sub);letter-spacing:.1em;padding-right:9px;line-height:1.35}
+.scpseg{display:flex;flex:1;gap:2px;min-width:0}
+.scpseg .c{flex:1;min-width:0;background:var(--tab);border:1px solid var(--line);padding:4px 4px 5px;text-align:center;border-radius:5px;
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
-.hero .cp .scpseg .c:first-child{border-radius:11px 5px 5px 11px}
-.hero .cp .scpseg .c:last-child{border-radius:5px 11px 11px 5px}
-.hero .cp .scpseg .c small{display:block;font-size:.58rem;font-weight:800;letter-spacing:.04em;line-height:1.4}
-.hero .cp .scpseg .sl small{color:#6b9aff}
-.hero .cp .scpseg .hl small{color:#ffd54a}
-.hero .cp .scpseg .ml small{color:#c9a7ff}
-:root.light .hero .cp .scpseg .sl small{color:#2a52b8}
-:root.light .hero .cp .scpseg .hl small{color:#a8760a}
-:root.light .hero .cp .scpseg .ml small{color:#7a3cc4}
-.hero .cp .scpseg .c b{display:block;font-size:.98rem;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
+.scpseg .c:first-child{border-radius:11px 5px 5px 11px}
+.scpseg .c:last-child{border-radius:5px 11px 11px 5px}
+.scpseg .c small{display:block;font-size:.6rem;font-weight:800;letter-spacing:.04em;line-height:1.4}
+.scpseg .sl small{color:#6b9aff}
+.scpseg .hl small{color:#ffd54a}
+.scpseg .ml small{color:#c9a7ff}
+:root.light .scpseg .sl small{color:#2a52b8}
+:root.light .scpseg .hl small{color:#a8760a}
+:root.light .scpseg .ml small{color:#7a3cc4}
+.scpseg .c b{display:block;font-size:1.06rem;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums;color:var(--ink)}
 /* 種族値メーター: 太いバー＋ステータス色の光彩＋上面の光沢。読み込み時にすっと伸びる(動画映え) */
 .stats{display:flex;flex-direction:column;gap:11px;margin-top:16px;position:relative}
 .strow{display:grid;grid-template-columns:64px 48px 1fr;align-items:center;gap:10px}
@@ -651,13 +652,7 @@ function render(){
     <div class="hero">
       <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm">${e.name}${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}</div></div>
       <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
-        e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}${
-        (()=>{const sl=maxScp(e,1500), hl=maxScp(e,2500), ml=maxScp(e,Infinity);
-          const cell=(cls,nm,v,tip)=>`<span class="c ${cls}" title="${v?tip:'PLや個体値の下限の関係で、このリーグのCP制限に収まる個体が存在しません'}"><small>${nm}</small><b>${v||'—'}</b></span>`;
-          return `<span class="scps"><span class="scphead" title="各リーグのCP制限に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です">最大SCP</span><span class="scpseg">${
-            cell('sl','スーパー',sl,'スーパーリーグ(CP1500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCPです')}${
-            cell('hl','ハイパー',hl,'ハイパーリーグ(CP2500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCPです')}${
-            cell('ml','マスター',ml,'マスターリーグ(CP制限なし)の理想個体(15/15/15・PL50)のSCPです')}</span></span>`;})()}</div>
+        e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}</div>
     </div>
     <div class="stats">
       ${['a','d','h'].map(k=>{
@@ -665,7 +660,13 @@ function render(){
         const lb=k==='a'?'攻撃':k==='d'?'防御':'HP';
         return `<div class="strow ${k}" title="${lb}の種族値です(個体値・PLを除いた素の強さ)"><span class="lb">${lb}</span><span class="v">${v}</span><span class="bar"><i data-w="${Math.round(v/mx*100)}" style="width:0"></i></span></div>`;
       }).join('')}
-    </div>`;
+    </div>
+    ${(()=>{const sl=maxScp(e,1500), hl=maxScp(e,2500), ml=maxScp(e,Infinity);
+      const cell=(cls,nm,v,tip)=>`<span class="c ${cls}" title="${v?tip:'PLや個体値の下限の関係で、このリーグのCP制限に収まる個体が存在しません'}"><small>${nm}</small><b>${v||'—'}</b></span>`;
+      return `<div class="scps"><span class="scphead" title="各リーグのCP制限に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です">最大SCP</span><span class="scpseg">${
+        cell('sl','スーパー',sl,'スーパーリーグ(CP1500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCPです')}${
+        cell('hl','ハイパー',hl,'ハイパーリーグ(CP2500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCPです')}${
+        cell('ml','マスター',ml,'マスターリーグ(CP制限なし)の理想個体(15/15/15・PL50)のSCPです')}</span></div>`;})()}`;
   // バーは幅0から実際の値まですっと伸ばす(動画映え。reduced-motionでは即座に出る)
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.querySelectorAll('#herocard .bar i').forEach(b=>{b.style.width=b.dataset.w+'%';});
