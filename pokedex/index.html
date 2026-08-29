@@ -82,7 +82,8 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
   text-shadow:0 1px 0 rgba(5,9,22,.95),0 2px 0 rgba(5,9,22,.8),0 3px 0 rgba(5,9,22,.55),0 4px 0 rgba(5,9,22,.35),0 6px 12px rgba(0,0,0,.55)}
 :root.light .hero .nm{text-shadow:0 1px 0 #bcc8e6,0 2px 0 #a9b8dd,0 3px 0 #9aabd6,0 5px 10px rgba(59,110,240,.35)}
 .hero .cp{margin-left:auto;text-align:right;position:relative}
-.hero .cp small{display:block;color:var(--sub);font-size:.7rem;letter-spacing:.05em}
+/* 「最大CP」は数字の左・数字の下端(ベースライン)に揃える(2026-08-29タダシさん指示) */
+.hero .cp small{color:var(--sub);font-size:.7rem;font-weight:800;letter-spacing:.05em;margin-right:7px;vertical-align:baseline}
 /* 最大CPは立体文字: グラデーションのまま、金の押し出し影(drop-shadowの重ねがけ)＋落ち影で浮かせる。
    ⚠セレクタは「>」で直下のbに限定する——.lscp内のバッジ(b.lg)まで金の影が付いてしまう(実際に踏んだ) */
 .hero .cp>b{font-size:1.9rem;line-height:1.25;background:linear-gradient(180deg,#ffe89a 8%,#ffd54a 45%,#f09a2e 90%);-webkit-background-clip:text;background-clip:text;color:transparent;
