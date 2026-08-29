@@ -932,7 +932,8 @@ function plCtlHtml(e,i){
   // メガ・ゲンシだけスーパーマックスレベルのタブを出す
   const smax=D.pokemon[e.key].mega?`
     <button class="plbtn smax" data-i="${i}" data-max="52" aria-pressed="${mx===52}" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button>
-    <button class="plbtn smax" data-i="${i}" data-max="53" aria-pressed="${mx===53}" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>`:'';
+    <button class="plbtn smax" data-i="${i}" data-max="53" aria-pressed="${mx===53}" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
+    <button class="plbtn smax" data-i="${i}" data-max="55" aria-pressed="${mx===55}" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CPブースト</button>`:'';
   return `<span class="plctl">
     <button class="plbtn" data-i="${i}" data-d="-0.5" ${e.lv>1?'':'disabled'} title="1回ぶん戻す">−</button>
     <b class="plnow">PL ${e.lv}</b>

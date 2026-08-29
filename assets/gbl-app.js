@@ -88,7 +88,7 @@ document.getElementById('app').innerHTML = `
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <div class="opts smax">
-          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
+          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CPブースト</button>
         </div>
       </div>
       <select class="selFast" title="ノーマルアタック"></select>
@@ -163,7 +163,7 @@ document.getElementById('app').innerHTML = `
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <div class="opts smax">
-          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button>
+          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CPブースト</button>
         </div>
       </div>
       <select class="selFast" title="ノーマルアタック"></select>
@@ -498,7 +498,7 @@ const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOV
 
 // ---- リーグ上限内の理想個体値(SCP最大)を求める ----
 // 通常はPL51(相棒込み)まで。メガのスーパーマックスLvは52、+最高の相棒で53まで
-const LEVELS_ALL = Object.keys(D.cpm).map(Number).filter(l => l <= 53).sort((a, b) => a - b);
+const LEVELS_ALL = Object.keys(D.cpm).map(Number).filter(l => l <= 55).sort((a, b) => a - b);
 const LEVELS = LEVELS_ALL.filter(l => l <= 51);
 const levelsUpTo = maxLv => (maxLv || 51) > 51 ? LEVELS_ALL.filter(l => l <= maxLv) : LEVELS;
 const isMega = key => !!key && (key.includes('_mega') || key.includes('_primal'));

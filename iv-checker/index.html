@@ -445,6 +445,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
       <button class="cap" data-cap="51" title="相棒ブーストでPL51まで上げる前提で順位を出します">51<small>相棒</small></button>
       <button class="cap smaxonly" data-cap="52" style="display:none" title="メガLv4(スーパーマックスレベル)でPL上限+2">52<small>メガLv4</small></button>
       <button class="cap smaxonly" data-cap="53" style="display:none" title="メガLv4+最高の相棒でPL上限53">53<small>メガLv4＋相棒</small></button>
+      <button class="cap smaxonly" data-cap="55" style="display:none" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">55<small>CPブースト</small></button>
     </div>
   </div>
   <div class="enote expl">並び順＝総合はSCP（耐久込みの強さ）、攻撃優先は攻撃の実数値が高い順（マスター向け）。PL上限＝どこまで強化する前提で順位を数えるか。アメXLを使わないなら40か41を選びます。</div>
@@ -636,6 +637,7 @@ function xlFor(lv){
   if(state.cap===41||state.cap===51) powered=lv-1;
   else if(state.cap===52) powered=lv-2;
   else if(state.cap===53) powered=lv-3;
+  else if(state.cap===55) powered=lv-5;   // メガシンカCPブースト(イベント)は+5のブースト前提
   return xlCum(powered);
 }
 
@@ -763,10 +765,11 @@ function render(){
   }
 
   const notes=[];
-  if(me.lv>50) notes.push('PL'+me.lv+'到達には「最高の相棒」ブーストが必要です。');
+  if(me.lv>50&&state.cap<=51) notes.push('PL'+me.lv+'到達には「最高の相棒」ブーストが必要です。');   // メガ系の上限(52/53/55)ではブーストの説明が下の注記と重複・矛盾するので出さない
   if(state.cap===41||state.cap===51) notes.push('アメXL数は相棒ブースト適用前提(実強化レベル=表示PL−1)で計算。');
   if(state.cap===52) notes.push('メガLv4の+2はメガシンカ中のブーストでアメ消費なし(アメXLは実強化レベル=表示PL−2分)。');
   if(state.cap===53) notes.push('メガLv4(+2)+最高の相棒(+1)はブーストでアメ消費なし(アメXLは実強化レベル=表示PL−3分)。');
+  if(state.cap===55) notes.push('メガシンカCPブースト(イベント)の+5はブーストでアメ消費なし(アメXLは実強化レベル=表示PL−5分。最高の相棒でも上限は55)。');
   document.getElementById('lvnote').textContent=notes.join(' ');
 
   // ブレイクポイントページへのリンク(選択中のリーグ・この個体値を引き継ぐ)
@@ -1099,7 +1102,7 @@ sugg.addEventListener('click',e=>{
   document.querySelectorAll('.smaxonly').forEach(x=>x.style.display=mega?'':'none');
   // セグメント右端の角丸を、見えている最後のボタン(51 or 53)に付けるための印
   document.getElementById('capseg').classList.toggle('mega', mega);
-  if(!mega&&(state.cap===52||state.cap===53)){
+  if(!mega&&(state.cap===52||state.cap===53||state.cap===55)){
     state.cap=50;
     document.querySelectorAll('.cap').forEach(x=>x.classList.toggle('act',+x.dataset.cap===50));
   }
