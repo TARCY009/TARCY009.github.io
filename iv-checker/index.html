@@ -113,11 +113,11 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .hasclr #q,.hasclr #cpin{padding-right:42px}
 #sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--line);
   border-radius:10px;max-height:260px;overflow-y:auto;z-index:20;display:none}
-#sugg button{display:flex;justify-content:space-between;width:100%;padding:11px 14px;background:none;border:none;
+#sugg button{display:flex;align-items:center;gap:7px;width:100%;padding:11px 14px;background:none;border:none;
   color:var(--ink);font-size:.95rem;text-align:left;cursor:pointer;border-bottom:1px solid var(--line2)}
 #sugg button:last-child{border-bottom:none}
 #sugg button:active,#sugg button:hover{background:var(--sughover)}
-#sugg .bs{color:var(--sub);font-size:.75rem;font-variant-numeric:tabular-nums}
+#sugg .bs{margin-left:auto;color:var(--sub);font-size:.75rem;font-variant-numeric:tabular-nums}
 #sugg .evtag{display:inline-block;font-size:.6rem;font-weight:700;color:var(--cy);border:1px solid var(--cy);border-radius:4px;padding:1px 4px;margin-right:6px;vertical-align:1px}
 .picked{margin-top:10px;font-size:.85rem;color:var(--sub);display:none}
 .picked b{color:var(--ink)}
@@ -1088,7 +1088,8 @@ q.addEventListener('input',e=>{
     ...hits.map(p=>({p, evo:false})),
     ...evos.slice(0, Math.max(0, 14-hits.length)).map(p=>({p, evo:true}))
   ];
-  sugg.innerHTML=items.map(it=>'<button data-i="'+IDX[it.p.i]+'"><span>'+(it.evo?'<span class="evtag">進化形</span>':'')+it.p.n+'</span><span class="bs">'+it.p.a+'/'+it.p.f+'/'+it.p.h+'</span></button>').join('');
+  // 候補には名前のすぐ横にタイプアイコンを出す(全ツール共通・2026-08-29タダシさん指示)
+  sugg.innerHTML=items.map(it=>'<button data-i="'+IDX[it.p.i]+'"><span>'+(it.evo?'<span class="evtag">進化形</span>':'')+it.p.n+'</span>'+typesHtml(it.p,16)+'<span class="bs">'+it.p.a+'/'+it.p.f+'/'+it.p.h+'</span></button>').join('');
   sugg.style.display='block';
 });
 sugg.addEventListener('click',e=>{

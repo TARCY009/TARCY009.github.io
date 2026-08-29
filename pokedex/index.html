@@ -59,7 +59,7 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .searchbox input:focus{border-color:var(--gl)}
 .clrbtn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:1px solid var(--line);border-radius:50%;background:var(--panel2);color:var(--sub);cursor:pointer;display:none;line-height:1}
 #sugg{position:absolute;z-index:60;left:0;right:0;top:calc(100% + 5px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;max-height:290px;overflow:auto;display:none;box-shadow:0 16px 34px rgba(0,0,0,.5)}
-#sugg div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-size:.9rem}
+#sugg div{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-size:.9rem}
 #sugg div:hover{background:var(--zebra)}
 /* ヒーロー(名前+CP) */
 .hero{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -69,6 +69,13 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .hero .cp b{font-size:1.6rem;background:linear-gradient(92deg,#ffd54a,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero .cp .mega4{display:block;font-size:.72rem;color:var(--sub);font-weight:700;margin-top:1px}
 .hero .cp .mega4 i{font-style:normal;font-weight:800;font-size:.9rem;background:linear-gradient(92deg,#f58fc2,#b06cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* スーパー/ハイパーの最大SCP(最大CPより小さめ・リーグの役割色) */
+.hero .cp .lscp{display:block;font-size:.72rem;color:var(--sub);font-weight:700;margin-top:1px}
+.hero .cp .lscp i{font-style:normal;font-weight:800;font-size:.9rem}
+.hero .cp .lscp.sl i{background:linear-gradient(92deg,#6b9aff,#3b6ef0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .cp .lscp.hl i{background:linear-gradient(92deg,#ffd54a,#e0a020);-webkit-background-clip:text;background-clip:text;color:transparent}
+:root.light .hero .cp .lscp.sl i{background:linear-gradient(92deg,#2a52b8,#3b6ef0);-webkit-background-clip:text;background-clip:text}
+:root.light .hero .cp .lscp.hl i{background:linear-gradient(92deg,#b07a00,#d99000);-webkit-background-clip:text;background-clip:text}
 /* 種族値メーター */
 .stats{display:flex;flex-direction:column;gap:9px;margin-top:12px}
 .strow{display:grid;grid-template-columns:56px 44px 1fr;align-items:center;gap:10px}
@@ -242,6 +249,8 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
   <p>ポケモンを選ぶと、<b>種族値・最大CP・弱点/耐性・わざ性能</b>が1画面で確認できます。わざの行をタップすると、発生時間や能力変化まで含めた詳細ウィンドウが開きます。</p>
   <h4>最大CP</h4>
   <p><b>PL50・個体値15/15/15</b>のCPです(相棒ブーストのPL51は含みません)。メガシンカ・ゲンシカイキのポケモンには、<b>メガLv4</b>(メガレベル最大でPL上限+2＝PL52)のCPも並べて出します。</p>
+  <h4>スーパー/ハイパー最大SCP</h4>
+  <p>そのリーグのCP上限(1500/2500)に収まる<b>個体値・PL(〜50)の全組み合わせのうち、いちばん高いSCP</b>です。SCP＝攻撃・防御・HPを総合したPvP向けの評価値で、個体値チェッカーや対面シミュレーターの理想個体と同じ基準です。交換できないポケモンの個体値下限(10)や、レイド産のPL下限も織り込んでいます(収まる個体がいなければ「—」)。</p>
   <h4>弱点・耐性</h4>
   <p>受けるダメージの倍率でまとめています。<b>×2.56=二重弱点 / ×1.6=弱点 / ×0.63=耐性 / ×0.39=二重耐性 / ×0.24=三重耐性相当</b>。ポケモンGOには「効果なし(無効)」が無く、原作の無効は×0.39として扱われます。</p>
   <h4>ジム・レイドのわざ性能</h4>
@@ -540,6 +549,30 @@ function maxCp(e,lv){
   const c=GO.cpm[String(lv||50)];
   return Math.max(10,Math.floor((e.a+15)*Math.sqrt(e.df+15)*Math.sqrt(e.h+15)*c*c/10));
 }
+// リーグの最大SCP: CP上限に収まる個体値・PL(〜50)の全組み合わせから最大のSCPを探す。
+// 個体値の下限(交換できないポケモンは10)とPLの下限は対戦データのivf/lvfに従う(恒久ルール)。
+// SCPの式は個体値チェッカー・/gbl/と同じ floor((攻×防×HP)^(2/3)÷10)(HPは切り捨て後)
+let SCP_LEVELS=null;   // データ読み込み後に初めて使うので遅延初期化(トップレベルではGOがまだnull)
+function maxScp(e,cap){
+  if(!SCP_LEVELS)SCP_LEVELS=Object.keys(GO.cpm).map(Number).filter(l=>l<=50).sort((a,b)=>a-b);
+  const pv=e.pvp?PVP.pokemon[e.pvp]:null;
+  const ivf=(pv&&pv.ivf)||0, lvf=(pv&&pv.lvf)||1;
+  let best=0;
+  for(let ia=ivf;ia<=15;ia++)for(let id=ivf;id<=15;id++)for(let ih=ivf;ih<=15;ih++){
+    const A=e.a+ia, D=e.df+id, H=e.h+ih, s=A*Math.sqrt(D)*Math.sqrt(H);
+    // CPがcap以下になる最大レベルを二分探索(CPはレベルに対して単調増加)
+    let lo=0,hi=SCP_LEVELS.length-1,fit=-1;
+    while(lo<=hi){
+      const mid=(lo+hi)>>1, c=GO.cpm[String(SCP_LEVELS[mid])];
+      if(Math.max(10,Math.floor(s*c*c/10))<=cap){fit=mid;lo=mid+1;}else hi=mid-1;
+    }
+    if(fit<0||SCP_LEVELS[fit]<lvf)continue;   // 収まらない/PLの下限未満の個体は存在しない
+    const c=GO.cpm[String(SCP_LEVELS[fit])];
+    const scp=Math.floor(Math.pow(A*c*D*c*Math.floor(H*c),2/3)/10);
+    if(scp>best)best=scp;
+  }
+  return best;   // 0なら上限に収まる個体がいない
+}
 // 受けるダメージ倍率(攻撃タイプごと)→ 倍率グループにまとめる
 function effGroups(ty){
   const idx=Object.fromEntries(GO.types.map((t,i)=>[t,i]));
@@ -566,7 +599,9 @@ function render(){
     <div class="hero">
       <div class="nm">${e.name}${typePairHTML(e.ty.map(t=>GO.typeJa[t]),22)}</div>
       <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
-        e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}</div>
+        e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}${
+        (v=>v?`<span class="lscp sl" title="スーパーリーグ(CP1500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です">スーパー最大SCP: <i>${v}</i></span>`:`<span class="lscp sl" title="PLや個体値の下限の関係で、CP1500以下に収まる個体が存在しません">スーパー最大SCP: <i>—</i></span>`)(maxScp(e,1500))}${
+        (v=>v?`<span class="lscp hl" title="ハイパーリーグ(CP2500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です">ハイパー最大SCP: <i>${v}</i></span>`:`<span class="lscp hl" title="PLや個体値の下限の関係で、CP2500以下に収まる個体が存在しません">ハイパー最大SCP: <i>—</i></span>`)(maxScp(e,2500))}</div>
     </div>
     <div class="stats">
       ${['a','d','h'].map(k=>{

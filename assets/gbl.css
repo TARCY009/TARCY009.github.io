@@ -97,7 +97,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .sugg input{width:100%;padding:9px 10px;font-size:.95rem;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);outline:none}
 .sugg input:focus{border-color:var(--gl)}
 .sugg-list{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--line);border-radius:10px;max-height:250px;overflow:auto;display:none;box-shadow:0 14px 30px rgba(0,0,0,.5)}
-.sugg-list div{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px;cursor:pointer;font-size:.86rem}
+.sugg-list div{display:flex;align-items:center;gap:6px;padding:8px 10px;cursor:pointer;font-size:.86rem}
 .sugg-list div:hover{background:#212b52}
 /* 名前・タイプ・SCP・★登録が1行に収まらない狭い画面では折り返す(はみ出し防止) */
 .pkhead{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0;flex-wrap:wrap}
