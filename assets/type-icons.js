@@ -46,12 +46,24 @@
   };
 
   // スタイルを一度だけ注入
+  // エンボス加工(2026-08-30タダシさん指示・全ツール共通): 上に光・下に陰・外に落ち影＋マークにも薄い影。
+  // 各ツールが .tbadge の box-shadow で縁取りを上書きしているため、光と陰は擬似要素(::after)・
+  // 落ち影は filter で作り、box-shadow には一切触らない(縁取りと衝突させない)。
+  // 20px未満の小さいアイコンは .sm=控えめ版(光と影を半分に。小サイズはフルだと輪郭がにじむ)
   const css = `
   .tbadge { display:inline-flex; align-items:center; justify-content:center;
-            border-radius:50%; color:#fff; vertical-align:middle;
-            background:linear-gradient(180deg,var(--t-top),var(--t-bot)); }
+            border-radius:50%; color:#fff; vertical-align:middle; position:relative;
+            background:linear-gradient(180deg,var(--t-top),var(--t-bot));
+            filter:drop-shadow(0 1.5px 2px rgba(0,0,0,.4)); }
+  .tbadge::after { content:""; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+            box-shadow:inset 0 2px 3px rgba(255,255,255,.55), inset 0 -2px 3px rgba(0,0,0,.35); }
+  .tbadge.sm { filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.32)); }
+  .tbadge.sm::after { box-shadow:inset 0 1px 2px rgba(255,255,255,.35), inset 0 -1px 2px rgba(0,0,0,.22); }
+  :root.light .tbadge { filter:drop-shadow(0 1.5px 2px rgba(30,40,90,.28)); }
+  :root.light .tbadge.sm { filter:drop-shadow(0 1px 1.2px rgba(30,40,90,.22)); }
   .tpair  { display:inline-flex; gap:3px; white-space:nowrap; vertical-align:middle; }
-  .tico   { display:block; fill:currentColor; }
+  .tico   { display:block; fill:currentColor; filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.45)); }
+  .tbadge.sm .tico { filter:drop-shadow(0 .7px .8px rgba(0,0,0,.35)); }
   .tico [fill="none"] { fill:none; }`;
   const st = document.createElement('style');
   st.textContent = css;
@@ -63,7 +75,7 @@
     const g = TYPE_ICON[type], c = TYPE_COLOR[type];
     if (!g || !c) return '<span>' + type + '</span>';
     const glyph = Math.round(size * 0.66);
-    return '<span class="tbadge" role="img" title="' + type + '" aria-label="' + type +
+    return '<span class="tbadge' + (size < 20 ? ' sm' : '') + '" role="img" title="' + type + '" aria-label="' + type +
            '" style="--t-top:' + c.top + ';--t-bot:' + c.bot +
            ';width:' + size + 'px;height:' + size + 'px">' +
            '<svg class="tico" viewBox="0 0 24 24" width="' + glyph + '" height="' + glyph +
