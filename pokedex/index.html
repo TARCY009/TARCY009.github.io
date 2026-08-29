@@ -22,6 +22,7 @@
   --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
   --zebra:rgba(77,141,255,.05); --thbg:linear-gradient(90deg,rgba(45,90,200,.42),rgba(120,80,220,.42),rgba(8,180,201,.42));
   --barA:linear-gradient(90deg,#ff8a5c,#ff5a7a); --barD:linear-gradient(90deg,#4d8dff,#43e0ff); --barH:linear-gradient(90deg,#3ddc84,#a8e063);
+  --barbg:#0c1430;
   --mebg:rgba(67,224,255,.08); --cardsh:none; --ongold:#3a2c00;
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(77,141,255,.16), transparent 62%),
@@ -35,6 +36,7 @@
   --ink:#212743; --sub:#5f6a92; --cy:#0b8fa8; --gl:#2f5fd0; --gold:#a8760a; --stab:#d63a52;
   --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
   --zebra:rgba(47,95,208,.05); --thbg:linear-gradient(90deg,rgba(45,90,200,.65),rgba(120,80,220,.65),rgba(8,180,201,.65));
+  --barbg:#e7ecf9;
   --mebg:rgba(11,143,168,.07); --cardsh:0 14px 30px -18px rgba(59,110,240,.32),0 1px 0 rgba(255,255,255,.8) inset; --ongold:#3a2c00;
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(59,110,240,.15), transparent 62%),
@@ -61,12 +63,26 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 #sugg{position:absolute;z-index:60;left:0;right:0;top:calc(100% + 5px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;max-height:290px;overflow:auto;display:none;box-shadow:0 16px 34px rgba(0,0,0,.5)}
 #sugg div{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-size:.9rem}
 #sugg div:hover{background:var(--zebra)}
-/* ヒーロー(名前+CP) */
-.hero{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.hero .nm{font-size:1.5rem;font-weight:800;display:flex;align-items:center;gap:8px;min-width:0}
-.hero .cp{margin-left:auto;text-align:right}
+/* ヒーロー(名前+CP)。動画でそのまま使える主役カードの質感(2026-08-29タダシさん指示):
+   上端に青→水色→金のアクセント線・四隅ににじみ・図鑑No.・大きな名前 */
+#herocard{position:relative;overflow:hidden;padding:18px 16px 16px}
+#herocard::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;
+  background:linear-gradient(90deg,#4d8dff,#43e0ff 45%,#ffd54a);opacity:.95}
+#herocard::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(430px 210px at 6% -12%, rgba(77,141,255,.15), transparent 62%),
+    radial-gradient(430px 230px at 102% -10%, rgba(255,213,74,.12), transparent 60%)}
+:root.light #herocard::after{background:
+    radial-gradient(430px 210px at 6% -12%, rgba(59,110,240,.10), transparent 62%),
+    radial-gradient(430px 230px at 102% -10%, rgba(255,190,60,.13), transparent 60%)}
+.hero{display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative}
+.hero .idn{min-width:0}
+.hero .no{display:block;font-size:.7rem;font-weight:800;color:var(--sub);letter-spacing:.16em;margin-bottom:1px}
+.hero .nm{font-size:1.72rem;line-height:1.3;font-weight:800;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+.hero .cp{margin-left:auto;text-align:right;position:relative}
 .hero .cp small{display:block;color:var(--sub);font-size:.7rem;letter-spacing:.05em}
-.hero .cp b{font-size:1.6rem;background:linear-gradient(92deg,#ffd54a,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .cp b{font-size:1.9rem;line-height:1.25;background:linear-gradient(92deg,#ffd54a,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 8px rgba(255,159,67,.28))}
 .hero .cp .mega4{display:block;font-size:.72rem;color:var(--sub);font-weight:700;margin-top:1px}
 .hero .cp .mega4 i{font-style:normal;font-weight:800;font-size:.9rem;background:linear-gradient(92deg,#f58fc2,#b06cff);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* スーパー/ハイパーの最大SCP(最大CPより小さめ)。
@@ -77,28 +93,49 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .hero .cp .lscp.sl .lg{background:linear-gradient(160deg,#6b9aff,#2a52b8);color:#fff}
 .hero .cp .lscp.hl .lg{background:linear-gradient(160deg,#ffd54a,#e0a020);color:#4a3200}
 .hero .cp .lscp i{font-style:normal;font-weight:800;font-size:.9rem;color:var(--ink)}
-/* 種族値メーター */
-.stats{display:flex;flex-direction:column;gap:9px;margin-top:12px}
-.strow{display:grid;grid-template-columns:56px 44px 1fr;align-items:center;gap:10px}
-.strow .lb{color:var(--sub);font-size:.78rem;font-weight:700}
-.strow .v{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
-.strow .bar{height:10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
-.strow .bar i{display:block;height:100%;border-radius:999px}
-.strow.a .bar i{background:var(--barA)}
-.strow.d .bar i{background:var(--barD)}
-.strow.h .bar i{background:var(--barH)}
+/* 種族値メーター: 太いバー＋ステータス色の光彩＋上面の光沢。読み込み時にすっと伸びる(動画映え) */
+.stats{display:flex;flex-direction:column;gap:11px;margin-top:16px;position:relative}
+.strow{display:grid;grid-template-columns:64px 48px 1fr;align-items:center;gap:10px}
+.strow .lb{display:flex;align-items:center;gap:6px;color:var(--sub);font-size:.78rem;font-weight:800}
+.strow .lb::before{content:"";width:8px;height:8px;border-radius:3px;flex:none}
+.strow.a .lb::before{background:linear-gradient(135deg,#ff8a5c,#ff5a7a);box-shadow:0 0 8px rgba(255,90,122,.55)}
+.strow.d .lb::before{background:linear-gradient(135deg,#4d8dff,#43e0ff);box-shadow:0 0 8px rgba(67,224,255,.5)}
+.strow.h .lb::before{background:linear-gradient(135deg,#3ddc84,#a8e063);box-shadow:0 0 8px rgba(61,220,132,.5)}
+.strow .v{font-weight:800;font-size:1.14rem;line-height:1;font-variant-numeric:tabular-nums;text-align:right}
+.strow .bar{position:relative;height:13px;border-radius:999px;background:var(--barbg);border:1px solid var(--line);overflow:hidden;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.35)}
+:root.light .strow .bar{box-shadow:inset 0 2px 4px rgba(30,40,90,.12)}
+.strow .bar i{display:block;height:100%;border-radius:999px;position:relative;transition:width .7s cubic-bezier(.22,.9,.25,1)}
+@media (prefers-reduced-motion:reduce){.strow .bar i{transition:none}}
+.strow .bar i::after{content:"";position:absolute;left:3px;right:3px;top:1px;height:42%;border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,0))}
+.strow.a .bar i{background:var(--barA);box-shadow:0 0 12px rgba(255,90,122,.45)}
+.strow.d .bar i{background:var(--barD);box-shadow:0 0 12px rgba(67,224,255,.4)}
+.strow.h .bar i{background:var(--barH);box-shadow:0 0 12px rgba(61,220,132,.4)}
+.stotal{margin-top:1px;text-align:right;font-size:.72rem;color:var(--sub);font-weight:700}
+.stotal b{font-size:.98rem;color:var(--ink);font-variant-numeric:tabular-nums;margin-left:3px}
 /* 相性 */
 .sec{font-size:.82rem;font-weight:800;color:var(--sub);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.effrow{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-top:1px dashed var(--line)}
-.effrow:first-of-type{border-top:none}
-.effrow .mult{flex:0 0 62px;text-align:center;font-weight:800;font-size:.84rem;border-radius:8px;padding:3px 0;margin-top:2px}
-.effrow.w2 .mult{background:rgba(255,90,95,.2);color:#ff8a8f;border:1px solid rgba(255,90,95,.45)}
-.effrow.w1 .mult{background:rgba(255,159,67,.16);color:#ffb26b;border:1px solid rgba(255,159,67,.4)}
-.effrow.r1 .mult{background:rgba(61,220,132,.14);color:#5fe0a0;border:1px solid rgba(61,220,132,.38)}
-.effrow.r2 .mult,.effrow.r3 .mult{background:rgba(67,224,255,.13);color:#6be2ff;border:1px solid rgba(67,224,255,.38)}
-:root.light .effrow.w2 .mult{color:#c62838}:root.light .effrow.w1 .mult{color:#b06a10}
-:root.light .effrow.r1 .mult{color:#1f9d55}:root.light .effrow.r2 .mult,:root.light .effrow.r3 .mult{color:#0b8fa8}
-.effrow .tps{display:flex;flex-wrap:wrap;gap:5px;flex:1}
+/* 行ごとに色付きの面(弱点=赤系・耐性=緑/水色系)＋グラデーションの倍率バッジ。
+   点線区切りより「どちらのグループか」が形と色で一目で分かる(2026-08-29タダシさん指示のデザイン強化) */
+.effgrp{display:flex;flex-direction:column;gap:6px}
+.effcap{font-size:.7rem;font-weight:800;letter-spacing:.14em;margin-top:2px}
+.effcap.wk{color:#ff8a8f}.effcap.rs{color:#5bd8ff}
+:root.light .effcap.wk{color:#c62838}:root.light .effcap.rs{color:#0b8fa8}
+.effrow{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px;border:1px solid transparent}
+.effrow.w2{background:rgba(255,90,95,.10);border-color:rgba(255,90,95,.35)}
+.effrow.w1{background:rgba(255,138,74,.08);border-color:rgba(255,150,90,.3)}
+.effrow.r1{background:rgba(61,220,132,.07);border-color:rgba(61,220,132,.28)}
+.effrow.r2{background:rgba(67,224,255,.07);border-color:rgba(67,224,255,.28)}
+.effrow.r3{background:rgba(120,140,255,.09);border-color:rgba(130,150,255,.32)}
+.effrow .mult{flex:0 0 64px;text-align:center;font-weight:800;font-size:.82rem;border-radius:8px;padding:4px 0;
+  box-shadow:0 2px 6px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.4)}
+.effrow.w2 .mult{background:linear-gradient(160deg,#ff9d8a,#e03131 75%);color:#fff}
+.effrow.w1 .mult{background:linear-gradient(160deg,#ffc07a,#e5602a 78%);color:#fff}
+.effrow.r1 .mult{background:linear-gradient(160deg,#8cf0b7,#1fae63 78%);color:#05341c}
+.effrow.r2 .mult{background:linear-gradient(160deg,#7ce7ff,#0a9cc0 78%);color:#042330}
+.effrow.r3 .mult{background:linear-gradient(160deg,#a9bfff,#3b6ef0 78%);color:#fff}
+.effrow .tps{display:flex;flex-wrap:wrap;gap:6px;flex:1}
 .effnone{color:var(--sub);font-size:.8rem;padding:2px 0 0}
 /* わざのタブ */
 .mtabs{display:flex;margin:2px 0 12px}
@@ -598,7 +635,7 @@ function render(){
   // ヒーロー
   document.getElementById('herocard').innerHTML=`
     <div class="hero">
-      <div class="nm">${e.name}${typePairHTML(e.ty.map(t=>GO.typeJa[t]),22)}</div>
+      <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm">${e.name}${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}</div></div>
       <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
         e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}${
         (v=>`<span class="lscp sl" title="${v?'スーパーリーグ(CP1500以下)に収まる個体値・PL(〜50)の組み合わせでいちばん高いSCP(PvP向けの総合力の目安)です':'PLや個体値の下限の関係で、CP1500以下に収まる個体が存在しません'}"><b class="lg">スーパー</b>最大SCP <i>${v||'—'}</i></span>`)(maxScp(e,1500))}${
@@ -608,19 +645,25 @@ function render(){
       ${['a','d','h'].map(k=>{
         const v=k==='a'?e.a:k==='d'?e.df:e.h, mx=k==='a'?MAXA:k==='d'?MAXD:MAXH;
         const lb=k==='a'?'攻撃':k==='d'?'防御':'HP';
-        return `<div class="strow ${k}" title="${lb}の種族値です(個体値・PLを除いた素の強さ)"><span class="lb">${lb}</span><span class="v">${v}</span><span class="bar"><i style="width:${Math.round(v/mx*100)}%"></i></span></div>`;
+        return `<div class="strow ${k}" title="${lb}の種族値です(個体値・PLを除いた素の強さ)"><span class="lb">${lb}</span><span class="v">${v}</span><span class="bar"><i data-w="${Math.round(v/mx*100)}" style="width:0"></i></span></div>`;
       }).join('')}
+      <div class="stotal" title="攻撃・防御・HPの種族値の合計です">種族値合計<b>${e.a+e.df+e.h}</b></div>
     </div>`;
+  // バーは幅0から実際の値まですっと伸ばす(動画映え。reduced-motionでは即座に出る)
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('#herocard .bar i').forEach(b=>{b.style.width=b.dataset.w+'%';});
+  }));
   // 相性
   const gs=effGroups(e.ty);
-  const row=(cls,mult,list,tip)=>list.length?`<div class="effrow ${cls}" title="${tip}"><span class="mult">${mult}</span><span class="tps">${tchips(list)}</span></div>`:'';
+  const row=(cls,mult,list,tip)=>list.length?`<div class="effrow ${cls}" title="${tip}"><span class="mult">${mult}</span><span class="tps">${tchips(list,22)}</span></div>`:'';
   const wHtml=row('w2','×2.56',gs.w2,'二重弱点。受けるダメージが約2.56倍になります')+row('w1','×1.6',gs.w1,'弱点。受けるダメージが1.6倍になります');
   const rHtml=row('r1','×0.63',gs.r1,'耐性。受けるダメージが約0.63倍になります')+row('r2','×0.39',gs.r2,'二重耐性(原作の無効を含む)。受けるダメージが約0.39倍になります')+row('r3','×0.24',gs.r3,'三重耐性相当。受けるダメージが約0.24倍になります');
   document.getElementById('effcard').innerHTML=`
     <div class="sec">🛡 タイプ相性(受けるダメージ)</div>
-    ${wHtml||'<div class="effnone">弱点はありません</div>'}
-    <div style="height:6px"></div>
-    ${rHtml||'<div class="effnone">耐性はありません</div>'}`;
+    <div class="effgrp">
+      ${wHtml?'<div class="effcap wk">弱点</div>'+wHtml:'<div class="effnone">弱点はありません</div>'}
+      ${rHtml?'<div class="effcap rs">耐性</div>'+rHtml:'<div class="effnone">耐性はありません</div>'}
+    </div>`;
   renderMoves();
   updateUrl();
 }
