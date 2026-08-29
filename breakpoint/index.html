@@ -253,8 +253,14 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .plseg button small{font-size:.52rem;font-weight:600}
 .ivsum .plseg button[aria-pressed="true"]{background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330;border-color:transparent}
 .ivsum .barrow{display:flex;gap:6px;align-items:stretch;margin-top:10px}
-/* タブの数字が「個体値」だと分かるラベル(2026-08-30タダシさん指摘: 表記が無くダメージと紛らわしい) */
-.ivsum .ivlbl{flex:none;align-self:center;width:52px;text-align:center;font-size:.62rem;font-weight:800;color:var(--sub);line-height:1.4}
+/* タブの数字が「個体値」だと分かるラベル(2026-08-30タダシさん指摘: 表記が無くダメージと紛らわしい)。
+   1段目の「攻撃/防御」は与える/受けるタブと同じ色(t-atk/t-shadowの未選択文字色) */
+.ivsum .ivlbl{flex:none;align-self:center;width:52px;text-align:center;font-size:.62rem;font-weight:800;color:var(--sub);line-height:1.45}
+.ivsum .ivlbl em{font-style:normal;font-size:.74rem}
+.ivsum .ivlbl.give em{color:#ffb08a}
+.ivsum .ivlbl.take em{color:#c9a7ff}
+:root.light .ivsum .ivlbl.give em{color:#b84a1e}
+:root.light .ivsum .ivlbl.take em{color:#7a3cc4}
 .ivsum .lowbtn{flex:none;min-width:52px;font:inherit;font-size:.6rem;font-weight:800;color:var(--sub);cursor:pointer;padding:0 8px;
   background:none;border:1px dashed var(--line);border-radius:9px;line-height:1.25;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ivsum .lowbtn b{color:var(--gold);font-size:.66rem}
@@ -1054,7 +1060,7 @@ function ivSumHtml() {
   const body = total ? `<div class="grp">${grp || `<div class="none">${statName}${IVSEL}以上でブレイクする相手はいません</div>`}</div>`
                      : `<div class="none">${statName}の個体値では変わりません</div>`;
   return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表は じぶんのPL（縦）×あいてのPL（横）ごとのダメージ（あいては個体値100%${MEGA4 ? '・メガ4はPL53まで' : ''}）</span></div>
-    <div class="barrow"><span class="ivlbl" title="タブの数字は じぶんの${statName}の個体値です。その個体値にするとブレイクする相手が何匹あるかを示します">${statName}の<br>個体値</span><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
+    <div class="barrow"><span class="ivlbl ${dir}" title="タブの数字は じぶんの${statName}個体値です。その個体値にするとブレイクする相手が何匹あるかを示します"><em>${statName}</em><br>個体値</span><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 
 // ---- CP制限リーグ(主役): 「1位の個体より1段上のダメージに届く個体はあるか」を相手ごとに出す ----
