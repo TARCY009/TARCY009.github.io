@@ -88,7 +88,7 @@ document.getElementById('app').innerHTML = `
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <div class="opts smax">
-          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CPブースト</button>
+          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガ<wbr>Lv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4<wbr>＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CP<wbr>ブースト<small>イベント<wbr>ボーナス</small></button>
         </div>
       </div>
       <select class="selFast" title="ノーマルアタック"></select>
@@ -163,7 +163,7 @@ document.getElementById('app').innerHTML = `
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <div class="opts smax">
-          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガLv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CPブースト</button>
+          <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガ<wbr>Lv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4<wbr>＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CP<wbr>ブースト<small>イベント<wbr>ボーナス</small></button>
         </div>
       </div>
       <select class="selFast" title="ノーマルアタック"></select>
