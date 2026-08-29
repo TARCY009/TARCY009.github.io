@@ -130,8 +130,10 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px}
 .tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
 /* 6匹編成: 1匹=1行(検索・わざ2つ・シャドウ)。狭い画面は検索を1行目に全幅で出す */
-.slot{display:grid;gap:6px;align-items:center;margin-top:8px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) 44px}
-@media (max-width:620px){.slot{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px}.slot .sugg{grid-column:1/-1}}
+.slot{display:grid;gap:6px;align-items:center;margin-top:8px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) 44px 34px}
+@media (max-width:620px){.slot{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px 34px}.slot .sugg{grid-column:1/-1}}
+.clrslot{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--tab);color:var(--sub);border-radius:10px;height:40px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
+.clrslot:disabled{opacity:.25;cursor:default}
 .shbtn{font:inherit;border:1px solid var(--line);background:var(--tab);color:#c396ff;border-radius:10px;height:40px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
 :root.light .shbtn{color:#7a3cc4}
 .shbtn[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5)}
@@ -225,7 +227,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div class="modes"><span class="seg cyanseg" id="mySeg">
     <button type="button" data-m="auto" aria-pressed="true" title="そのボスに対して火力が最大のアタッカー(PL50・個体値15)を自動で選び、6匹そろえて出します">1位おまかせ</button>
     <button type="button" data-m="pick" aria-pressed="false" title="使うポケモンとわざを1匹選び、6匹そろえて出します">えらぶ</button>
-    <button type="button" data-m="team" aria-pressed="false" title="好きな6匹のパーティを組んでシミュレートします（上から順に出します）">6匹編成</button>
+    <button type="button" data-m="team" aria-pressed="false" title="好きなパーティを組んでシミュレートします（最大6匹・上から順に出します・入れた枠だけで戦います）">6匹編成</button>
   </span></div>
   <div class="sugg" id="myPickRow" style="display:none;margin-top:8px">
     <input type="text" id="myInput" placeholder="ポケモン名で検索" autocomplete="off">
@@ -254,9 +256,9 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <button type="button" data-m="alt" aria-pressed="false" title="撃てる機会の2回に1回だけ撃ちます（確率どおりの平均的な動き。乱数を使わないので毎回同じ結果になります）">2回に1回</button>
       <button type="button" data-m="coin" aria-pressed="false" title="撃てるとき2分の1の確率で撃ちます（実戦と同じ運まかせ。30回試して勝率で判定します）">ランダム</button>
     </span>
-    <span class="setgrp"><span class="lbl" title="手持ち6匹が全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
+    <span class="setgrp"><span class="lbl" title="手持ちが全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
   </div>
-  <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝6匹が全滅してからバトルに戻るまでの秒数です。</p>
+  <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝手持ちが全滅してからバトルに戻るまでの秒数です。</p>
   <div class="setrow">
     <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SPのみ回避</button>
     <span class="setgrp"><span class="lbl" title="選んだ天候で1.2倍になるタイプのわざが強くなります。自分のわざだけでなく、ボスのわざにも掛かります（例: 曇りならボスのきあいだまも1.2倍）">天候</span><select id="wxSel" class="setsel">
@@ -464,30 +466,29 @@ function fillBossSel(sel,ids,val){
 }
 
 // ---- 6匹編成のUI(起動時に1回だけ組み立て、以後は中身だけ差し替える) ----
-function slotDefault(){
-  const top=topAttacker();
-  return top?{k:top.k,f:top.f,c:top.c,sh:top.shadow}:null;
-}
 function buildTeamUI(){
   const box=$('teamBox');
-  box.innerHTML='<label class="f">パーティ（上から順に出します・PL50・個体値15）</label>'+
+  box.innerHTML='<label class="f">パーティ（上から順に出します・PL50・個体値15・入れた枠だけで戦います）</label>'+
     [0,1,2,3,4,5].map(i=>`<div class="slot">
       <div class="sugg"><input type="text" id="tIn${i}" placeholder="${i+1}匹目のポケモン" autocomplete="off"><div class="sugg-list" id="tSg${i}"></div></div>
       <select id="tF${i}" title="ノーマルアタック"></select>
       <select id="tC${i}" title="SPアタック"></select>
       <button type="button" class="shbtn" id="tSh${i}" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i></button>
+      <button type="button" class="clrslot" id="tX${i}" title="この枠を空にします">✕</button>
     </div>`).join('');
   for(let i=0;i<6;i++){
     attachSugg($('tIn'+i),$('tSg'+i),k=>{TEAM[i]={k,f:null,c:null,sh:false};fillSlot(i,true);saveTeam();runAll();});
     $('tF'+i).addEventListener('change',()=>{if(TEAM[i]){TEAM[i].f=$('tF'+i).value;saveTeam();runAll();}});
     $('tC'+i).addEventListener('change',()=>{if(TEAM[i]){TEAM[i].c=$('tC'+i).value||null;saveTeam();runAll();}});
     $('tSh'+i).onclick=()=>{if(TEAM[i]){TEAM[i].sh=!TEAM[i].sh;fillSlot(i,false);saveTeam();runAll();}};
+    $('tX'+i).onclick=()=>{if(TEAM[i]){TEAM[i]=null;fillSlot(i,false);saveTeam();runAll();}};
   }
 }
 function fillSlot(i,pickBest){
   const s=TEAM[i], p=s&&D.pokemon[s.k];
   const fi=$('tIn'+i), fs=$('tF'+i), cs=$('tC'+i), sb=$('tSh'+i);
-  if(!p){fi.value='';fs.innerHTML='';cs.innerHTML='';sb.disabled=true;sb.setAttribute('aria-pressed','false');return;}
+  if(!p){fi.value='';fs.innerHTML='';cs.innerHTML='';sb.disabled=true;sb.setAttribute('aria-pressed','false');$('tX'+i).disabled=true;return;}
+  $('tX'+i).disabled=false;
   fi.value=p.n;
   const fids=fastIds(p), cids=chgIds(p);
   if(pickBest||!s.f||!fids.includes(s.f)){
@@ -502,13 +503,9 @@ function fillSlot(i,pickBest){
   sb.setAttribute('aria-pressed',String(!!s.sh));
 }
 function renderTeam(){
-  // 空いている枠は1位で埋めて具体的なパーティにする(空欄のまま計算しない)
-  let changed=false;
-  for(let i=0;i<6;i++){
-    if(!TEAM[i]){TEAM[i]=slotDefault();changed=true;}
-    fillSlot(i,false);
-  }
-  if(changed)saveTeam();
+  // 入れた枠だけで戦う(空き枠は1位で埋めない・2026-08-29タダシさん指示)。
+  // 1匹だけ入れると、その1匹が倒れるたびに「全滅→再突入」のロスがかかる
+  for(let i=0;i<6;i++)fillSlot(i,false);
 }
 function renderMy(){
   const team=myMode==='team';
@@ -589,23 +586,27 @@ function buildCfg(N,seed,wantLog){
 const TRIALS=30;
 let rows=[],minN=null,selN=null;
 function runAll(){
-  if(!boss||!$('bfSel').value||!buildTeamCfg()){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
+  if(!boss||!$('bfSel').value){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
+  if(!buildTeamCfg()){
+    $('resBody').innerHTML='<div class="empty">'+(myMode==='team'?'パーティに1匹以上入れると結果が出ます':'ボスを選ぶと結果が出ます')+'</div>';
+    return;
+  }
   rows=[];minN=null;
   for(let n=1;n<=20;n++){
     if(spMode==='coin'){
-      let wins=0,times=[],fs=0,ws=0;
+      let wins=0,times=[],fs=0,ws=0,ds=0;
       for(let s=1;s<=TRIALS;s++){
         const r=RaidEngine.simulate(buildCfg(n,s,false));
         if(r.win){wins++;times.push(r.t);}
-        fs+=r.faints;ws+=r.wipes;
+        fs+=r.faints;ws+=r.wipes;ds+=r.dmg/r.t;
       }
       times.sort((a,b)=>a-b);
       rows.push({n,rate:wins/TRIALS,med:times.length?times[Math.floor(times.length/2)]:null,
-        faints:fs/TRIALS,wipes:ws/TRIALS});
+        faints:fs/TRIALS,wipes:ws/TRIALS,dps:ds/TRIALS});
       if(minN===null&&wins/TRIALS>=0.5)minN=n;
     }else{
       const r=RaidEngine.simulate(buildCfg(n,1,false));
-      rows.push({n,win:r.win,t:r.t,left:r.bossLeft,faints:r.faints,wipes:r.wipes});
+      rows.push({n,win:r.win,t:r.t,left:r.bossLeft,faints:r.faints,wipes:r.wipes,dps:r.dmg/r.t});
       if(minN===null&&r.win)minN=n;
     }
     if(minN!==null&&n>=Math.min(20,minN+2))break;
@@ -630,15 +631,17 @@ function renderResult(){
       return `<tr${sel}${tip} data-n="${r.n}"><td>${r.n}人</td>
         <td>${r.rate>=0.5?`<span class="okw">勝率${Math.round(r.rate*100)}%</span>`:`<span class="ngw">勝率${Math.round(r.rate*100)}%</span>`}</td>
         <td>${r.med!==null?`残り${(t.time-r.med).toFixed(1)}秒`:'—'}</td>
+        <td>${r.dps.toFixed(1)}</td>
         <td>${r.faints.toFixed(1)}回</td><td>${r.wipes.toFixed(1)}回</td>${tlc(on)}</tr>`;
     }
     return `<tr${sel}${tip} data-n="${r.n}"><td>${r.n}人</td>
       <td>${r.win?'<span class="okw">勝ち</span>':`<span class="ngw">時間切れ（残${Math.round(r.left/t.hp*100)}%）</span>`}</td>
       <td>${r.win?`残り${(t.time-r.t).toFixed(1)}秒`:'—'}</td>
+      <td>${r.dps.toFixed(1)}</td>
       <td>${r.faints}回</td><td>${r.wipes}回</td>${tlc(on)}</tr>`;
   }).join('');
   $('resBody').innerHTML=head+
-    `<table class="res"><thead><tr><th>人数</th><th>結果</th><th title="倒しきったときの残り時間です">残り時間</th><th title="1人あたり何匹倒されるか（ひんし→次まで1秒）">ひんし</th><th title="6匹全滅して再突入した回数">全滅</th><th></th></tr></thead><tbody>${trs}</tbody></table>
+    `<table class="res"><thead><tr><th>人数</th><th>結果</th><th title="倒しきったときの残り時間です">残り時間</th><th title="1人あたりの与ダメージ÷経過時間。ひんし・再突入で攻撃できない時間も含んだ実戦の火力です">実戦DPS</th><th title="1人あたり何匹倒されるか（ひんし→次まで1秒）">ひんし</th><th title="手持ちが全滅して再突入した回数">全滅</th><th></th></tr></thead><tbody>${trs}</tbody></table>
     <p class="note expl">行をタップするとその人数のタイムラインが下に出ます${spMode==='coin'?'（ランダムの1例）':''}</p>`+
     timelineHtml();
   $('resBody').querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>{selN=+tr.dataset.n;renderResult();});
@@ -658,7 +661,7 @@ function timelineHtml(){
   }).join('');
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
   const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で勝ち`:`時間切れ（ボス残りHP${Math.round(r.bossLeft/t.hp*100)}%）`;
-  return `<details class="tl" open><summary>タイムライン（${selN}人のとき・${sum}・ひんし${r.faints}回/全滅${r.wipes}回）</summary>
+  return `<details class="tl" open><summary>タイムライン（${selN}人のとき・${sum}・実戦DPS${(r.dmg/r.t).toFixed(1)}・ひんし${r.faints}回/全滅${r.wipes}回）</summary>
     <div class="tlwrap"><table class="tl"><thead><tr><th>ポケモン</th><th>タイム</th><th>わざ</th><th>ダメージ</th></tr></thead><tbody>${rowsH}</tbody></table></div>${more}</details>`;
 }
 
@@ -727,7 +730,7 @@ const HELP_HTML=`
   <h4>じぶんのアタッカー</h4>
   <ul>
     <li><b>1位おまかせ</b>＝そのボスへの火力1位を自動選出して6匹そろえます。<b>えらぶ</b>＝1匹選んで6匹そろえます</li>
-    <li><b>6匹編成</b>＝好きな6匹のパーティを組めます（上から順に出します・PL50・個体値15）。組んだパーティは端末に保存されて次回も残ります</li>
+    <li><b>6匹編成</b>＝好きなパーティを組めます（最大6匹・上から順に出します・PL50・個体値15）。<b>入れた枠だけで戦います</b>——たとえば1匹だけ入れると、その1匹が倒れるたびに「全滅→再突入」のロスがかかります。組んだパーティは端末に保存されて次回も残ります</li>
   </ul>
   <h4>回避とブースト（設定の2行目・既定はすべてオフ）</h4>
   <ul>
@@ -740,7 +743,8 @@ const HELP_HTML=`
   </ul>
   <h4>倒されたとき</h4>
   <ul>
-    <li>ひんし→次のポケモンは<b>1秒</b>（固定）。手持ち6匹が全滅したら<b>再突入</b>の秒数（既定10秒・変更可）だけ攻撃が止まります</li>
+    <li>ひんし→次のポケモンは<b>1秒</b>（固定）。手持ちが全滅したら<b>再突入</b>の秒数（既定10秒・変更可）だけ攻撃が止まります</li>
+    <li><b>実戦DPS</b>＝1人あたりの与ダメージ÷経過時間。ひんし・再突入・回避で攻撃できない時間も含んだ「実際に出せている火力」です</li>
   </ul>
   <h4>ランクごとの前提</h4>
   <ul>
