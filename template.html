@@ -659,7 +659,7 @@ function renderBoss(){
            <option value="">なし</option>${Object.keys(MP_WXNAME).map(k=>`<option value="${k}">${MP_WXNAME[k]}</option>`).join('')}
          </select></span>
          <span class="setgrp"><span class="lbl" title="フレンドと一緒に参加したときの攻撃ボーナスです">フレンド</span><select id="mpFr">
-           <option value="1">なし</option><option value="1.03">友達 ×1.03</option><option value="1.05">仲良し ×1.05</option><option value="1.07">親友 ×1.07</option><option value="1.10">大親友 ×1.10</option>
+           <option value="1">なし</option><option value="1.03">友達 ×1.03</option><option value="1.05">仲良し ×1.05</option><option value="1.07">親友 ×1.07</option><option value="1.10">大親友 ×1.10</option><option value="1.12">大親友＋ ×1.12</option>
          </select></span>
          <button type="button" class="optbtn" id="mpZc" aria-pressed="${MPB.zc}" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
          <button type="button" class="optbtn" id="mpTp" aria-pressed="${MPB.tp}" title="パーティプレイのチームパワーです。参加する全員がパーティを組んでいる前提で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P）、満タンで次のSPアタックが2倍になります。1人のときは効果がありません">チームパワー</button>
@@ -707,7 +707,7 @@ let raidTier='t5';
 const MP_WEATHER={sunny:['GRASS','GROUND','FIRE'],partly:['NORMAL','ROCK'],cloudy:['FAIRY','FIGHTING','POISON'],
   rain:['WATER','ELECTRIC','BUG'],fog:['DARK','GHOST'],snow:['ICE','STEEL'],wind:['DRAGON','FLYING','PSYCHIC']};
 const MP_WXNAME={sunny:'晴れ',partly:'時々曇り',cloudy:'曇り',rain:'雨',fog:'霧',snow:'雪',wind:'強風'};
-const MP_FRNAME={'1.03':'友達','1.05':'仲良し','1.07':'親友','1.10':'大親友'};
+const MP_FRNAME={'1.03':'友達','1.05':'仲良し','1.07':'親友','1.10':'大親友','1.12':'大親友＋'};
 const MPB={wx:'',fr:'1',zc:false,tp:false,open:false};
 // comboDPSへ渡すブースト。何も選ばれていなければnull(=従来どおり)
 // チームパワーは「参加する全員がパーティを組む前提」なので、上昇Pは人数から決める(mpCalc)。
