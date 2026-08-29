@@ -78,9 +78,16 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .hero{display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative}
 .hero .idn{min-width:0}
 .hero .no{display:block;font-size:.7rem;font-weight:800;color:var(--sub);letter-spacing:.16em;margin-bottom:1px}
-.hero .nm{font-size:1.72rem;line-height:1.3;font-weight:900;-webkit-text-stroke:.5px var(--ink);display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap;
-  text-shadow:0 1px 0 rgba(5,9,22,.95),0 2px 0 rgba(5,9,22,.8),0 3px 0 rgba(5,9,22,.55),0 4px 0 rgba(5,9,22,.35),0 6px 12px rgba(0,0,0,.55)}
-:root.light .hero .nm{text-shadow:0 1px 0 #bcc8e6,0 2px 0 #a9b8dd,0 3px 0 #9aabd6,0 5px 10px rgba(59,110,240,.35)}
+.hero .nm{font-size:1.72rem;line-height:1.3;font-weight:900;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+/* 名前は「限りなく白に近いシルバーのグラデーション」＋シルバーの押し出し(最大CPの金と同じ作りの銀版・
+   2026-08-29タダシさん指示)。グラデーション文字にtext-shadowは効かないのでdrop-shadowの重ねがけ。
+   ライトは従来どおり紺の文字＋彫り込み影 */
+.hero .nmt{background:linear-gradient(180deg,#ffffff 10%,#eef3fb 45%,#b9c4d8 92%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:.5px rgba(244,247,255,.85);
+  filter:drop-shadow(0 1.5px 0 #5d6884) drop-shadow(0 1.5px 0 #3a4159) drop-shadow(0 5px 9px rgba(0,0,0,.5))}
+:root.light .hero .nmt{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--ink);
+  -webkit-text-stroke:.5px var(--ink);filter:none;
+  text-shadow:0 1px 0 #bcc8e6,0 2px 0 #a9b8dd,0 3px 0 #9aabd6,0 5px 10px rgba(59,110,240,.35)}
 .hero .cp{margin-left:auto;text-align:right;position:relative}
 /* 「最大CP」は数字の左・数字の下端(ベースライン)に揃える(2026-08-29タダシさん指示) */
 .hero .cp small{color:var(--sub);font-size:.7rem;font-weight:800;letter-spacing:.05em;margin-right:7px;vertical-align:baseline}
@@ -650,7 +657,7 @@ function render(){
   // ヒーロー
   document.getElementById('herocard').innerHTML=`
     <div class="hero">
-      <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm">${e.name}${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}</div></div>
+      <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm"><span class="nmt">${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}</div></div>
       <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
         e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}</div>
     </div>
