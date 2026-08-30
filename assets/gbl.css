@@ -1409,3 +1409,83 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .bltysel{margin-bottom:10px;flex-wrap:wrap}
 .bltysel button{font-size:.72rem}
 .bltype .bltyg{max-width:560px}
+
+/* ---- 模擬戦の演出(FX・2026-08-30タダシさん指示「ゲームっぽく動きのある演出を」) ----
+   くりだした/交代/SP発動/たおれた/フォルムチェンジのカットイン。見た目だけの層(#fxlayer)で、
+   バトルの計算には影響しない。時間は--fxd(再生速度で短縮)で全アニメを同期させる */
+#fxlayer{position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden}
+.fxitem{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+/* SPの着弾でタイムラインとHUDを揺らす */
+.fxquake{animation:fxq .45s ease}
+@keyframes fxq{0%,100%{transform:none}15%{transform:translate(3px,-4px)}30%{transform:translate(-4px,3px)}45%{transform:translate(3px,2px)}60%{transform:translate(-2px,-2px)}75%{transform:translate(1px,1px)}}
+/* 共通: 名前の帯 */
+.fxitem .tx{font-weight:900;font-size:1.02rem;color:#fff;background:rgba(12,17,34,.94);
+  border:1px solid var(--cy);border-radius:99px;padding:8px 18px;white-space:nowrap;
+  box-shadow:0 6px 24px rgba(0,0,0,.5);animation:fxtx var(--fxd) ease both}
+.fxitem.foe .tx{border-color:var(--gold)}
+@keyframes fxtx{0%,30%{opacity:0;transform:translateY(14px)}45%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
+/* VS(バトル開始): 左右から名前が飛び込んでVSがズームイン */
+.fxvs .vswrap{display:flex;align-items:center;gap:14px;font-weight:900;max-width:96vw}
+.fxvs .pn{font-size:1.02rem;color:#fff;background:rgba(12,17,34,.94);border:1px solid var(--gl);
+  border-radius:12px;padding:8px 14px;box-shadow:0 6px 24px rgba(0,0,0,.5);
+  max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fxvs .pn.me{border-color:var(--cy);animation:fxslideL var(--fxd) ease both}
+.fxvs .pn.foe{border-color:var(--gold);animation:fxslideR var(--fxd) ease both}
+.fxvs em{font-style:italic;font-size:2rem;color:var(--gold);text-shadow:0 0 18px rgba(255,213,74,.8);
+  animation:fxzoom var(--fxd) ease both}
+@keyframes fxslideL{0%{opacity:0;transform:translateX(-60vw)}22%{opacity:1;transform:translateX(0)}82%{opacity:1}100%{opacity:0}}
+@keyframes fxslideR{0%{opacity:0;transform:translateX(60vw)}22%{opacity:1;transform:translateX(0)}82%{opacity:1}100%{opacity:0}}
+@keyframes fxzoom{0%{opacity:0;transform:scale(3)}25%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+/* くりだした: モンスターボールが開いて閃光と光の粒→名前の帯 */
+.fxin .inwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px}
+.fxin .fball{width:46px;height:46px;border-radius:50%;position:relative;
+  background:linear-gradient(180deg,#e8404b 0 46%,#16204a 46% 54%,#f5f6fa 54% 100%);
+  box-shadow:0 4px 14px rgba(0,0,0,.5),inset 0 2px 4px rgba(255,255,255,.35);
+  animation:fxballin var(--fxd) ease both}
+.fxin .fball::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;
+  margin:-6px 0 0 -6px;border-radius:50%;background:#fff;border:3px solid #16204a}
+.fxin .burst{position:absolute;top:23px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;
+  animation:fxburst var(--fxd) ease both}
+.fxin .spark{position:absolute;top:23px;left:50%;width:6px;height:6px;border-radius:50%;background:#fff;
+  opacity:0;animation:fxspark var(--fxd) ease both}
+.fxin .s1{--dx:-74px;--dy:-44px}.fxin .s2{--dx:74px;--dy:-40px}.fxin .s3{--dx:-88px;--dy:8px}
+.fxin .s4{--dx:88px;--dy:12px}.fxin .s5{--dx:-40px;--dy:-70px}.fxin .s6{--dx:44px;--dy:-66px}
+@keyframes fxballin{0%{opacity:0;transform:translateY(-42px) scale(.5)}25%{opacity:1;transform:none}45%{transform:scale(1.15)}60%{opacity:0;transform:scale(1.7)}100%{opacity:0}}
+@keyframes fxburst{0%,40%{box-shadow:0 0 0 0 rgba(255,255,255,.95);opacity:0}46%{opacity:1}78%{box-shadow:0 0 0 72px rgba(255,255,255,0);opacity:0}100%{opacity:0}}
+@keyframes fxspark{0%,36%{opacity:0;transform:none}46%{opacity:1}82%{opacity:0;transform:translate(var(--dx),var(--dy))}100%{opacity:0}}
+/* 交代: ⇄が回って名前の帯 */
+.fxswapfx .swwrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.fxswapfx .swspin{font-size:2.2rem;line-height:1;animation:fxspin var(--fxd) ease both}
+@keyframes fxspin{0%{opacity:0;transform:rotate(0) scale(.5)}30%{opacity:1;transform:rotate(360deg) scale(1.2)}78%{opacity:1;transform:rotate(360deg) scale(1)}100%{opacity:0;transform:rotate(360deg) scale(1)}}
+/* SP発動: タイプ色の斜め帯のカットイン＋閃光 */
+.fxsp .band{position:absolute;left:-14%;right:-14%;top:50%;height:82px;margin-top:-41px;
+  display:flex;align-items:center;justify-content:center;--rot:-4deg;
+  background:linear-gradient(100deg,transparent 0%,var(--fc1) 16%,var(--fc2) 50%,var(--fc1) 84%,transparent 100%);
+  box-shadow:0 0 46px var(--fc2);animation:fxband var(--fxd) ease both}
+.fxsp.foe .band{--rot:4deg}
+.fxsp .mvn{font-size:1.5rem;font-weight:900;font-style:italic;color:#fff;letter-spacing:.05em;white-space:nowrap;
+  max-width:92vw;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 2px 12px rgba(0,0,0,.6),0 0 18px rgba(255,255,255,.35);animation:fxmvn var(--fxd) ease both}
+.fxsp .flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.5),transparent 65%);
+  animation:fxflash var(--fxd) ease both}
+@keyframes fxband{0%{opacity:0;transform:rotate(var(--rot)) translateX(-36%)}14%{opacity:1;transform:rotate(var(--rot)) translateX(0)}80%{opacity:1;transform:rotate(var(--rot)) translateX(6%)}100%{opacity:0;transform:rotate(var(--rot)) translateX(26%)}}
+@keyframes fxmvn{0%{opacity:0;transform:translateX(-46px) skewX(-8deg)}18%{opacity:1;transform:skewX(-8deg)}80%{opacity:1;transform:skewX(-8deg)}100%{opacity:0;transform:skewX(-8deg)}}
+@keyframes fxflash{0%{opacity:0}8%{opacity:1}30%{opacity:0}52%{opacity:.7}72%{opacity:0}100%{opacity:0}}
+/* たおれた/たおした */
+.fxko .kowrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.fxko .mk{font-size:2.6rem;font-style:normal;filter:drop-shadow(0 4px 14px rgba(0,0,0,.6));
+  animation:fxkomk var(--fxd) ease both}
+.fxko.lose{background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.45) 100%);animation:fxdim var(--fxd) ease both}
+.fxko.lose .tx{border-color:var(--lose);color:var(--lose)}
+.fxko.win .tx{border-color:var(--win)}
+@keyframes fxkomk{0%{opacity:0;transform:translateY(-46px) scale(1.6)}28%{opacity:1;transform:none}42%{transform:translateY(-8px)}55%{transform:none}85%{opacity:1}100%{opacity:0}}
+@keyframes fxdim{0%{opacity:0}25%{opacity:1}85%{opacity:1}100%{opacity:0}}
+/* フォルムチェンジ: 紫の光の輪＋マーク */
+.fxform .fmwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+.fxform .ring{position:absolute;top:8px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  border:3px solid rgba(176,108,255,.9);opacity:0;animation:fxring var(--fxd) ease both}
+.fxform .mk{font-size:2.2rem;font-style:normal;animation:fxzoom var(--fxd) ease both}
+.fxform .tx{border-color:#b06cff}
+@keyframes fxring{0%{opacity:0;transform:scale(.4)}30%{opacity:1}80%{opacity:0;transform:scale(6)}100%{opacity:0}}
+/* HUDの✨トグル(OFFのときは消灯) */
+.hctl .hfx[aria-pressed="false"]{opacity:.38;filter:grayscale(1)}

@@ -86,6 +86,9 @@
            '" aria-hidden="true" focusable="false">' + g + '</svg></span>';
   };
 
+  /** タイプ色(top/mid/bot)を返す。模擬戦の演出などで使う。未知タイプはnull */
+  window.typeColorOf = function (type) { return TYPE_COLOR[type] || null; };
+
   /** 複合タイプ用: 配列を渡すと2個セット（改行不可）で返す */
   window.typePairHTML = function (types, size) {
     return '<span class="tpair">' +

@@ -4416,6 +4416,101 @@ const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig:
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
 const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, next: '', lead: SWAPMK };
+
+// ---- 模擬戦の演出(FX・2026-08-30タダシさん指示「ゲームっぽく動きのある演出を」) ----
+// くりだした／交代／SP発動／たおれた／フォルムチェンジ の場面で再生を止めてカットインを見せる。
+// **見た目だけ**の追加で、バトルの計算・ターン・⏱秒には一切影響しない(停滞するのは再生だけ)。
+// ×2/×4では時間を短縮。「結果だけ見る」・⏩スキップ・reduced-motion・✨OFFでは出さない。
+// ポケモン本体の絵は著作権の都合で使えないので、光・カットイン・揺れで戦闘の熱を出す方針
+const FX_KEY = 'gbl_fx';
+const FX = { on: (() => { try { return localStorage.getItem(FX_KEY) !== '0'; } catch (e) { return true; } })() };
+const fxSave = () => { try { localStorage.setItem(FX_KEY, FX.on ? '1' : '0'); } catch (e) {} };
+const fxOk = () => FX.on && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const fxLayer = () => {
+  let l = document.getElementById('fxlayer');
+  if (!l) { l = document.createElement('div'); l.id = 'fxlayer'; document.body.appendChild(l); }
+  return l;
+};
+// 1つの演出を出して、時間(再生速度で短縮)を返す
+function fxShow(cls, html, dur) {
+  const d = Math.max(300, Math.round(dur / (RBV.speed || 1)));
+  const el = document.createElement('div');
+  el.className = 'fxitem ' + cls;
+  el.style.setProperty('--fxd', d + 'ms');
+  el.innerHTML = html;
+  fxLayer().appendChild(el);
+  setTimeout(() => el.remove(), d + 80);
+  return d;
+}
+// 画面の揺れ(SPの着弾)。transformはタイムラインとHUDにだけ当てる
+function fxQuake() {
+  document.querySelectorAll('.rbfeed, .rbhud').forEach(e => {
+    e.classList.remove('fxquake'); void e.offsetWidth; e.classList.add('fxquake');
+    setTimeout(() => e.classList.remove('fxquake'), 500);
+  });
+}
+// 1件の演出。f = {k, side, name, mv, mk} 。返り値=かかる時間(ms)
+function fxOne(f) {
+  const sideCls = f.side ? 'foe' : 'me';
+  if (f.k === 'vs') {
+    return fxShow('fxvs', `<div class="vswrap"><span class="pn me">${f.me || ''}</span><em>VS</em><span class="pn foe">${f.foe || ''}</span></div>`, 1000);
+  }
+  if (f.k === 'in') {   // くりだした: ボールが開いて閃光→名前の帯
+    return fxShow('fxin ' + sideCls, `<div class="inwrap"><i class="fball"></i><i class="burst"></i>
+      <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
+      <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span>
+      <div class="tx">${f.name || ''}をくりだした！</div></div>`, 1000);
+  }
+  if (f.k === 'swap') {   // 交代: ⇄が回って名前の帯
+    return fxShow('fxswapfx ' + sideCls, `<div class="swwrap"><i class="swspin">${SWAPMK}</i>
+      <div class="tx">${f.name || ''}に交代した！</div></div>`, 900);
+  }
+  if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
+    const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';
+    const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
+    const d = fxShow('fxsp ' + sideCls, `<div class="band" style="--fc1:${c.top};--fc2:${c.bot}">
+      <span class="mvn">${f.mv || 'SPアタック'}</span></div><i class="flash"></i>`, 1150);
+    setTimeout(fxQuake, Math.min(d * 0.62, 700));
+    return d;
+  }
+  if (f.k === 'ko') {   // たおれた／たおした
+    if (f.win) return fxShow('fxko win', `<div class="kowrap"><i class="mk">💥</i><div class="tx">${f.name || ''} をたおした！</div></div>`, 850);
+    return fxShow('fxko lose', `<div class="kowrap"><i class="mk">💀</i><div class="tx">${f.name || ''} はたおれた…</div></div>`, 850);
+  }
+  if (f.k === 'form') {   // フォルムチェンジ: 光の輪＋マーク
+    return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 750);
+  }
+  return 0;
+}
+// data-fx を持つ要素の演出を順番に再生して、終わったら done()
+function fxRun(list, done) {
+  let i = 0;
+  const step = () => {
+    if (i >= list.length) { done(); return; }
+    let fs = [];
+    try { fs = JSON.parse(list[i].dataset.fx); } catch (e) {}
+    i++;
+    if (!Array.isArray(fs)) fs = fs ? [fs] : [];
+    let dur = 0;
+    fs.forEach(f => { dur = Math.max(dur, fxOne(f)); });
+    setTimeout(step, dur + 60);
+  };
+  step();
+}
+// data-fx属性のHTML(単引用符で囲むのでJSONの単引用符だけ実体参照にする)
+const fxAttr = fx => fx && fx.length ? ` data-fx='${JSON.stringify(fx).replace(/'/g, '&#39;')}'` : '';
+// タイムラインの1行(エンジンのsub行)から、SP発動とフォルムチェンジの演出を拾う
+function fxOfRow(r) {
+  const out = [];
+  [0, 1].forEach(sd => {
+    const e = r.ev[sd];
+    if (!e || e.full === undefined) return;
+    out.push({ k: 'sp', side: sd, mv: e.move });
+    if (e.gulpOn) out.push({ k: 'form', side: sd, mk: GULP_MK[e.gulpOn], name: `${GULP_JA[e.gulpOn]}のすがた` });
+    if (e.gulp) out.push({ k: 'form', side: 1 - sd, mk: GULP_MK[e.gulp.form], name: `${GULP_JA[e.gulp.form]}を吐き出した！` });
+  });
+  return out.length ? out : null;
+}
 // 選び直したら、その決断より後ろの答えは消す(前提が変わるので、そこから先はおまかせに戻る)
 function rbTrim(key) {
   const i = RBUI.order.indexOf(key);
@@ -4563,7 +4658,13 @@ function rbRender(body, bt, picks, foes, extra) {
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
     if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
-    items.push({ gt: base, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
+    // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける
+    const pv = bt.legs[leg.li - 1] || null;
+    const fxv = !pv ? [{ k: 'vs', me: leg.meName, foe: leg.foeName }]
+      : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
+         pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
+         pv.swapped && { k: 'swap', side: 0, name: leg.meName }].filter(Boolean);
+    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
     if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
@@ -4625,7 +4726,7 @@ function rbRender(body, bt, picks, foes, extra) {
         const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []);
         const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []) + (first ? stallMark : '');
         if (!e0 && !e1) continue;
-        items.push({ gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        items.push({ gt, fx: fxOfRow(r), html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
       if (first) items.push({ gt, html: stallMark
@@ -4636,9 +4737,9 @@ function rbRender(body, bt, picks, foes, extra) {
     const endGt = base + res.turns;
     // 決断待ちのあいだは倒れたかどうかもまだ決まっていない(仮の結果)ので出さない
     if (!pend) {
-      if (leg.foeDown) { alive1--; items.push({ gt: endGt,
+      if (leg.foeDown) { alive1--; items.push({ gt: endGt, fx: [{ k: 'ko', win: true, name: leg.foeName }],
         html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
-      if (leg.meDown) { alive0--; items.push({ gt: endGt,
+      if (leg.meDown) { alive0--; items.push({ gt: endGt, fx: [{ k: 'ko', name: leg.meName }],
         html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
       if (leg.meDown || leg.foeDown) {
         const f = frames[endGt] || frames[endGt - 1];
@@ -4685,7 +4786,7 @@ function rbRender(body, bt, picks, foes, extra) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}">${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <div class="rbwinbox"></div>
       <div class="rbhud">
@@ -4695,7 +4796,7 @@ function rbRender(body, bt, picks, foes, extra) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
@@ -4777,10 +4878,12 @@ function rbRender(body, bt, picks, foes, extra) {
     swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
   }
   const revealTo = g => {
+    const out = [];   // 今あらわれた要素(演出の判定に使う)
     while (ptr < els.length && +els[ptr].dataset.gt <= g) {
       els[ptr].classList.remove('future'); els[ptr].classList.add('in');
-      lastEl = els[ptr]; ptr++;
+      lastEl = els[ptr]; out.push(els[ptr]); ptr++;
     }
+    return out;
   };
   const autoScroll = () => {
     if (!lastEl) return;
@@ -4846,9 +4949,22 @@ function rbRender(body, bt, picks, foes, extra) {
   function tick() {
     if (!document.body.contains(feedEl)) { stopTimer(); return; }
     RBV.cur++;
-    revealTo(RBV.cur);
+    const rev = revealTo(RBV.cur);
     updateHud(RBV.cur);
     autoScroll();
+    // 演出(FX): 今あらわれた行にdata-fxがあれば、再生を止めてカットインを見せてから続ける
+    // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
+    const fxEls = fxOk() ? rev.filter(e => e.dataset.fx) : [];
+    if (fxEls.length) {
+      stopTimer();
+      fxRun(fxEls, () => {
+        if (!document.body.contains(feedEl)) return;
+        if (RBV.cur >= stop) atStop();
+        else if (RBV.playing) startTimer();
+        else setPlayBtn();
+      });
+      return;
+    }
     if (RBV.cur >= stop) atStop();
   }
   const startTimer = () => { stopTimer(); RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
@@ -4925,6 +5041,11 @@ function rbRender(body, bt, picks, foes, extra) {
   };
   const hstop = hud.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
+  const hfx = hud.querySelector('.hfx');
+  if (hfx) hfx.onclick = () => {
+    FX.on = !FX.on; fxSave();
+    hfx.setAttribute('aria-pressed', FX.on);
+  };
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
@@ -4939,11 +5060,16 @@ function rbRender(body, bt, picks, foes, extra) {
     setPlayBtn();
     return;
   }
-  revealTo(RBV.cur);
+  const rev0 = revealTo(RBV.cur);
   updateHud(RBV.cur);
   if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
   else if (RBV.cur >= stop) atStop();
-  else if (RB.step && RBV.playing) startTimer();
+  else if (RB.step && RBV.playing) {
+    // バトルスタート直後(0ターン目)は、VS・開幕の演出を見せてから再生を始める
+    const fx0 = RBV.cur === 0 && fxOk() ? rev0.filter(e => e.dataset.fx) : [];
+    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) startTimer(); });
+    else startTimer();
+  }
   setPlayBtn();
 }
 
@@ -7030,7 +7156,14 @@ function gbRender(body, bt, picks, foes) {
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
     (leg.leadPts || []).forEach(p => { if (p) items.push(chipItem(p, base)); });
-    items.push({ gt: base, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
+    // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける
+    const pv = bt.legs[leg.li - 1] || null;
+    const fxv = !pv ? [{ k: 'vs', me: leg.meName, foe: leg.foeName }]
+      : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
+         pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
+         pv.swapped0 && { k: 'swap', side: 0, name: leg.meName },
+         pv.swapped1 && { k: 'swap', side: 1, name: leg.foeName }].filter(Boolean);
+    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
     (leg.leadHits || []).forEach(h => { if (h) {
       const cell = evCell([{ move: h.mv, dmg: h.dmg }]);
@@ -7095,7 +7228,7 @@ function gbRender(body, bt, picks, foes) {
         const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []);
         const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []);
         if (!e0 && !e1) continue;
-        items.push({ gt, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        items.push({ gt, fx: fxOfRow(r), html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
       if (first) items.push({ gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` });
@@ -7103,9 +7236,9 @@ function gbRender(body, bt, picks, foes) {
     });
     const endGt = base + res.turns;
     if (!pend) {
-      if (leg.foeDown) { alive1--; items.push({ gt: endGt,
+      if (leg.foeDown) { alive1--; items.push({ gt: endGt, fx: [{ k: 'ko', win: true, name: leg.foeName }],
         html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
-      if (leg.meDown) { alive0--; items.push({ gt: endGt,
+      if (leg.meDown) { alive0--; items.push({ gt: endGt, fx: [{ k: 'ko', name: leg.meName }],
         html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
       if (leg.meDown || leg.foeDown) {
         const f = frames[endGt] || frames[endGt - 1];
@@ -7147,7 +7280,7 @@ function gbRender(body, bt, picks, foes) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}">${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <div class="rbwinbox"></div>
       <div class="rbhud">
@@ -7157,7 +7290,7 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><i></i></div>
@@ -7241,10 +7374,12 @@ function gbRender(body, bt, picks, foes) {
     fswapEl.innerHTML = fswLeft > 0 ? `<b>${Math.ceil(fswLeft / 2)}</b><small>秒</small>${SWAPMK}` : '';
   }
   const revealTo = g => {
+    const out = [];   // 今あらわれた要素(演出の判定に使う)
     while (ptr < els.length && +els[ptr].dataset.gt <= g) {
       els[ptr].classList.remove('future'); els[ptr].classList.add('in');
-      lastEl = els[ptr]; ptr++;
+      lastEl = els[ptr]; out.push(els[ptr]); ptr++;
     }
+    return out;
   };
   const autoScroll = () => {
     if (!lastEl) return;
@@ -7310,9 +7445,22 @@ function gbRender(body, bt, picks, foes) {
   function tick() {
     if (!document.body.contains(feedEl)) { stopTimer(); return; }
     RBV.cur++;
-    revealTo(RBV.cur);
+    const rev = revealTo(RBV.cur);
     updateHud(RBV.cur);
     autoScroll();
+    // 演出(FX): 今あらわれた行にdata-fxがあれば、再生を止めてカットインを見せてから続ける
+    // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
+    const fxEls = fxOk() ? rev.filter(e => e.dataset.fx) : [];
+    if (fxEls.length) {
+      stopTimer();
+      fxRun(fxEls, () => {
+        if (!document.body.contains(feedEl)) return;
+        if (RBV.cur >= stop) atStop();
+        else if (RBV.playing) startTimer();
+        else setPlayBtn();
+      });
+      return;
+    }
     if (RBV.cur >= stop) atStop();
   }
   const startTimer = () => { stopTimer(); RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
@@ -7382,6 +7530,11 @@ function gbRender(body, bt, picks, foes) {
   };
   const hstop = hud.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
+  const hfx = hud.querySelector('.hfx');
+  if (hfx) hfx.onclick = () => {
+    FX.on = !FX.on; fxSave();
+    hfx.setAttribute('aria-pressed', FX.on);
+  };
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
@@ -7395,11 +7548,16 @@ function gbRender(body, bt, picks, foes) {
     setPlayBtn();
     return;
   }
-  revealTo(RBV.cur);
+  const rev0 = revealTo(RBV.cur);
   updateHud(RBV.cur);
   if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
   else if (RBV.cur >= stop) atStop();
-  else if (RB.step && RBV.playing) startTimer();
+  else if (RB.step && RBV.playing) {
+    // バトルスタート直後(0ターン目)は、VS・開幕の演出を見せてから再生を始める
+    const fx0 = RBV.cur === 0 && fxOk() ? rev0.filter(e => e.dataset.fx) : [];
+    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) startTimer(); });
+    else startTimer();
+  }
   setPlayBtn();
 }
 
