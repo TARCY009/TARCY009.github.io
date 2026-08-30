@@ -369,6 +369,11 @@
               let fire = false;
               if (sh.mode === 'sync') { sync[i] = mv; continue; }   // 同時: 2周目で相手に合わせる
               if (sh.mode === 'min') fire = true;   // 最短: 撃てた瞬間
+              else if (sh.mode === 'en') {
+                // ためてブラフ(2026-08-30): 指定ゲージ(until=重いわざの消費)までためてから、
+                // この(軽い)わざを撃つ。これ以上ためられない(オーバーフロー)ときも撃つ
+                fire = s.en >= Math.min(sh.until || 0, 100) || s.en + (s.fast.eg || 0) > 100;
+              }
               else if (typeof sh.mode === 'number') {
                 // +N発: ゲージが貯まってから通常技を余分にN発打ってから発動
                 if ((s.shotWait || 0) >= sh.mode) fire = true;

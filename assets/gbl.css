@@ -816,6 +816,9 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rwb .mvopt .mb{display:flex;gap:7px}
 .rwb .mvopt .mb button{flex:1;min-width:0}
 .rwb .cost{font-style:normal;font-size:.58rem;font-weight:800;color:#06202b;background:var(--gold);border-radius:99px;padding:1px 6px}
+/* ためてブラフ(2026-08-30タダシさん指示): 2行組み(1行目=名前＋N・2行目=具体のわざ) */
+.rwb button.bluffbtn{flex-direction:column;gap:1px;padding:5px 12px;line-height:1.25}
+.rwb button.bluffbtn small{display:block;font-size:.56rem;font-weight:700;opacity:.8;white-space:nowrap}
 .rwb .need{font-style:normal;font-size:.6rem;font-weight:700;color:var(--sub)}
 .rwb .dmg{color:var(--lose)}
 .rbhud{display:grid;grid-template-columns:1fr 74px 1fr;gap:8px;align-items:start;

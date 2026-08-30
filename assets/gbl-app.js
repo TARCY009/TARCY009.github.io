@@ -3839,18 +3839,20 @@ function rkRankCard(r, i) {
 const RB = { ans: {}, step: true, found: null, goal: null };
 const rbAnsCount = () => Object.keys(RB.ans).length;
 // 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
-const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p' };
+const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p', bluff: 'b' };
 const rbAnsToStr = () => Object.keys(RB.ans).map(k => {
   const a = RB.ans[k], c = RB_CODE[a.a] || 'a';
-  const v = (a.a === 'fire' || a.a === 'opt') ? a.mv : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
+  const v = (a.a === 'fire' || a.a === 'opt') ? a.mv : a.a === 'bluff' ? `${a.mv}~${a.until}`
+    : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
   return `${k.replace(/:/g, '.')}~${c}${v != null ? '~' + v : ''}`;
 }).join(',');
 function rbAnsFromStr(str) {
   str.split(',').forEach(s => {
-    const [k, c, v] = s.split('~');
+    const [k, c, v, v2] = s.split('~');
     if (!k || !c) return;
     const a = c === 'f' ? (D.moves[v] ? { a: 'fire', mv: v } : null)
       : c === 'p' ? (D.moves[v] ? { a: 'opt', mv: v } : null)   // このわざを最適タイミングで(2026-08-20)
+      : c === 'b' ? (D.moves[v] ? { a: 'bluff', mv: v, until: Math.max(0, Math.min(100, +v2 || 0)) } : null)   // ためてブラフ(2026-08-30)
       : c === 'w' ? { a: 'wait', n: Math.max(1, Math.min(9, +v || 1)) }
       : c === 'h' ? { a: 'hold' } : c === 'u' ? { a: 'use' } : c === 'n' ? { a: 'no' }
       : c === 'y' ? { a: 'stay' } : c === 'o' ? { a: 'order' }
@@ -4070,6 +4072,8 @@ function rbApply(dec, p, ans) {
     // 最適(わざ指定・2026-08-20): このわざを、エンジンの最適タイミングで撃つ
     else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait, mv: ans.mv }; dec.wait = 0; }
+    // ためてブラフ(2026-08-30): 重いわざのゲージ(until)までためてから軽いわざ(mv)を撃つ
+    else if (ans.a === 'bluff') { dec.shots[p.seq] = { wait: 'en', until: ans.until, mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'wait') dec.wait += ans.n;
     else dec.hold = true;
   } else if (p.kind === 'sh') {
@@ -4185,7 +4189,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     for (let guard = 0; guard < 60; guard++) {
       // charged は必ず入れる(SPが1本の構成だと、わざ未指定のときエンジンが選べないため)
       const L = { ...picks[mi].base, ...pol, charged: spList.slice(), shields: myShLeft, bluff: true,
-        timing: 'shots', shotPlan: dec.shots.map(s => ({ mode: s.wait, move: s.mv, after: s.after })), shotRest: null,
+        timing: 'shots', shotPlan: dec.shots.map(s => ({ mode: s.wait, move: s.mv, after: s.after, until: s.until })), shotRest: null,
         shieldPlan: dec.shieldAt.slice(), shieldRest: false };
       if (st[mi].resume) L.resume = { ...st[mi].resume, stall: Math.max(st[mi].resume.stall || 0, myEntry) };
       else if (myEntry) L.stallStart = myEntry;
@@ -4212,7 +4216,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       };
       const w0 = simWorst(L);
       res = w0.res; foeMv = w0.mv;
-      const withShots = shots => ({ ...L, shotPlan: shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after })) });
+      const withShots = shots => ({ ...L, shotPlan: shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until })) });
       // 「⭐最適」ボタン用: この発を最適タイミング(mvId指定)にしたとき、あと何発ノーマルアタックを
       // はさんでから撃つことになるか(GBL模擬戦と同じ・2026-08-23にロケット団へ反映)
       const optNOf = (p, mvId) => {
@@ -5830,7 +5834,7 @@ function gbChoices(p, ctx) {
     });
     // 「撃たない」が正解の場面(noSp)は点灯させておすすめ表示(2026-08-20タダシさん指示。
     // ノーマルアタックだけで倒しきれて相手のSPも飛んでこない=撃つのはもったいない)
-    return list.concat([
+    const out = list.concat([
       p.noSp
         ? { a: 'hold', label: '撃たない<i class="rtag">おすすめ</i>', cls: 'hold reco',
             tip: 'ノーマルアタックだけで倒しきれて、相手のSPアタックも飛んできません。撃たずにゲージを次の対面へ持ち越すのがおすすめです' }
@@ -5839,6 +5843,23 @@ function gbChoices(p, ctx) {
       { a: 'wait', n: 2, det: true, label: '＋2', cls: 'wait', tip: 'ノーマルアタックをあと2発打ってから、もう一度ここで選びます' },
       { a: 'wait', n: 3, det: true, label: '＋3', cls: 'wait', tip: 'ノーマルアタックをあと3発打ってから、もう一度ここで選びます' },
     ]);
+    // ためてブラフ(2026-08-30タダシさん指示・基本中の基本のセオリー):
+    // 消費のちがう2本を持っているとき、**重いわざのゲージまでためてから軽いわざを撃つ**。
+    // 相手はどちらが来るか分からないので、軽いわざにシールドを使わせられたらラッキー。
+    // すでに重いわざぶんたまっているなら「即打ち」と同じなので出さない
+    if (!s && fm && fm.eg > 0 && p.en != null && ctx.spList[s].length >= 2) {
+      const mvs = ctx.spList[s].map(id => ({ id, m: D.moves[id] })).filter(x => x.m)
+        .sort((a, b) => a.m.e - b.m.e);
+      const light = mvs[0], heavy = mvs[mvs.length - 1];
+      if (heavy.m.e > light.m.e && p.en < heavy.m.e) {
+        const needN = Math.ceil((heavy.m.e - p.en) / fm.eg);
+        out.push({ a: 'bluff', mv: light.id, until: heavy.m.e, end: true, cls: 'fire bluffbtn',
+          label: `<span>ためてブラフ<i class="need">＋${needN}</i></span><small>${heavy.m.n}分ため→${light.m.n}</small>`,
+          tip: `${heavy.m.n}が撃てるゲージ(${heavy.m.e})までためてから、軽い${light.m.n}を撃ちます。` +
+            `相手はどちらのわざが来るか分からないので、軽いわざにシールドを使わせられたらラッキー、というセオリーの動きです` });
+      }
+    }
+    return out;
   }
   if (p.kind === 'sh') {
     // あいてがSPを2本持っている(またはわざオート)なら、どちらが飛んでくるかを見せない
@@ -5881,6 +5902,7 @@ function gbAnsLabel(p, a) {
     const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
     if (a.a === 'opt') return hide ? '⭐ SPアタック' : `⭐ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'fire') return hide ? '▶ SPアタック' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'bluff') return hide ? '▶ SPアタック' : `ため→${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
   }
@@ -6720,7 +6742,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
         bluff: s === 1 ? ai.bluff : false, timing: 'shots',
-        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after })), shotRest: null,
+        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until })), shotRest: null,
         shieldPlan: d.shieldAt.slice(), shieldRest: false };
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
       return c;
@@ -7255,10 +7277,12 @@ function gbRender(body, bt, picks, foes) {
         g.items.push({ o, i });
       } else rest.push({ o, i });
     });
+    // end付き(ためてブラフ)は「…詳細」の右に置く(2026-08-30タダシさん指示)
     const btns = groups.map(g =>
       `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')
-      + rest.filter(x => det || !x.o.det).map(btn).join('')
+      + rest.filter(x => !x.o.end && (det || !x.o.det)).map(btn).join('')
       + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
+      + rest.filter(x => x.o.end).map(btn).join('')
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin${p.side ? ' foe' : ''}">
       <div class="rwt">${gbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.ck != null ? p.ck : p.gt)}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
