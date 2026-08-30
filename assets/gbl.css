@@ -1462,7 +1462,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   display:flex;align-items:center;justify-content:center;--rot:4deg;
   background:linear-gradient(100deg,transparent 0%,var(--fc1) 16%,var(--fc2) 50%,var(--fc1) 84%,transparent 100%);
   box-shadow:0 0 46px var(--fc2);animation:fxband var(--fxd) ease both}
-.fxsp.foe .band{--rot:-4deg}
+.fxsp.foe .band{--rot:-4deg;animation-name:fxbandR}
+.fxsp.foe .mvn{animation-name:fxmvnR}
+/* あいてのSPカットインは右から入る(2026-08-31タダシさん指示) */
+@keyframes fxbandR{0%{opacity:0;transform:rotate(var(--rot)) translateX(36%)}14%{opacity:1;transform:rotate(var(--rot)) translateX(0)}80%{opacity:1;transform:rotate(var(--rot)) translateX(-6%)}100%{opacity:0;transform:rotate(var(--rot)) translateX(-26%)}}
+@keyframes fxmvnR{0%{opacity:0;transform:translateX(46px) skewX(8deg)}18%{opacity:1;transform:skewX(8deg)}80%{opacity:1;transform:skewX(8deg)}100%{opacity:0;transform:skewX(8deg)}}
 .fxsp .mvn{font-size:1.5rem;font-weight:900;font-style:italic;color:#fff;letter-spacing:.05em;white-space:nowrap;
   max-width:92vw;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 2px 12px rgba(0,0,0,.6),0 0 18px rgba(255,255,255,.35);animation:fxmvn var(--fxd) ease both}

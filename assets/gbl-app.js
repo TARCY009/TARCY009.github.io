@@ -4502,7 +4502,7 @@ function fxOne(f) {
     return fxShow('fxko lose', `<div class="kowrap"><i class="mk">💀</i><div class="tx">${f.name || ''} はたおれた…</div></div>`, 1190);
   }
   if (f.k === 'form') {   // フォルムチェンジ: 光の輪＋マーク
-    return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 1050);
+    return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 1470);
   }
   return 0;
 }
