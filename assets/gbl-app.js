@@ -4454,17 +4454,17 @@ function fxQuake() {
 function fxOne(f) {
   const sideCls = f.side ? 'foe' : 'me';
   if (f.k === 'vs') {
-    return fxShow('fxvs', `<div class="vswrap"><span class="pn me">${f.me || ''}</span><em>VS</em><span class="pn foe">${f.foe || ''}</span></div>`, 1300);
+    return fxShow('fxvs', `<div class="vswrap"><span class="pn me">${f.me || ''}</span><em>VS</em><span class="pn foe">${f.foe || ''}</span></div>`, 1400);
   }
   if (f.k === 'in') {   // くりだした: ボールが開いて閃光→名前の帯
     return fxShow('fxin ' + sideCls, `<div class="inwrap"><i class="fball"></i><i class="burst"></i>
       <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
       <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span>
-      <div class="tx">${f.name || ''}をくりだした！</div></div>`, 1300);
+      <div class="tx">${f.name || ''}をくりだした！</div></div>`, 1400);
   }
   if (f.k === 'swap') {   // 交代: ⇄が回って名前の帯
     return fxShow('fxswapfx ' + sideCls, `<div class="swwrap"><i class="swspin">${SWAPMK}</i>
-      <div class="tx">${f.name || ''}に交代した！</div></div>`, 1170);
+      <div class="tx">${f.name || ''}に交代した！</div></div>`, 1260);
   }
   if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
     const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';
@@ -4498,11 +4498,11 @@ function fxOne(f) {
       <div class="shcap"><div class="tx">🛡 ブロック！</div></div></div>`, 950);
   }
   if (f.k === 'ko') {   // たおれた／たおした
-    if (f.win) return fxShow('fxko win', `<div class="kowrap"><i class="mk">💥</i><div class="tx">${f.name || ''} をたおした！</div></div>`, 1105);
-    return fxShow('fxko lose', `<div class="kowrap"><i class="mk">💀</i><div class="tx">${f.name || ''} はたおれた…</div></div>`, 1105);
+    if (f.win) return fxShow('fxko win', `<div class="kowrap"><i class="mk">💥</i><div class="tx">${f.name || ''} をたおした！</div></div>`, 1190);
+    return fxShow('fxko lose', `<div class="kowrap"><i class="mk">💀</i><div class="tx">${f.name || ''} はたおれた…</div></div>`, 1190);
   }
   if (f.k === 'form') {   // フォルムチェンジ: 光の輪＋マーク
-    return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 975);
+    return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 1050);
   }
   return 0;
 }
