@@ -355,7 +355,17 @@
             const o = sides[1 - i];
             // わざ指定なし(自動)のときは相手の状況に合わせて選ぶ(ブラフ→効率)
             const mv = sh.move ? D.moves[rmv(s, sh.move)] : autoMove(s, o);
-            if (mv && s.en >= mv.e) {
+            // ＋Nで待ってから「最適」を選んだ発(after): 待ちの数え始めは
+            // **いちばん軽いSPが撃てるようになった時点**(=質問が出た位置)。
+            // 選んだわざの充電が終わってから数えると、重いわざでは充電＋待ちの二重数えになり
+            // 「ドラゴンテール+2で溜まるのに最適が+3」とずれる(2026-08-30タダシさん指摘で修正)。
+            // 充電中のノーマルアタックも待ちのぶんとして消化する
+            if (mv && sh.after && (s.shotWait || 0) < sh.after && sh.mode !== 'sync'
+                && sh.mode !== 'min' && typeof sh.mode !== 'number') {
+              const minE = Math.min(...(s.cfg.charged || [])
+                .map(id => { const m = D.moves[rmv(s, id)]; return m ? m.e : Infinity; }));
+              if (s.en >= minE) s.shotWait = (s.shotWait || 0) + 1;
+            } else if (mv && s.en >= mv.e) {
               let fire = false;
               if (sh.mode === 'sync') { sync[i] = mv; continue; }   // 同時: 2周目で相手に合わせる
               if (sh.mode === 'min') fire = true;   // 最短: 撃てた瞬間
@@ -363,10 +373,6 @@
                 // +N発: ゲージが貯まってから通常技を余分にN発打ってから発動
                 if ((s.shotWait || 0) >= sh.mode) fire = true;
                 else s.shotWait = (s.shotWait || 0) + 1;
-              } else if (sh.after && (s.shotWait || 0) < sh.after) {
-                // ＋Nで待ってから「最適」を選んだ発: 先に通常技をN発打ってから最適タイミングを探す
-                // (afterが無ければ従来どおり。+Nの待ちが「最適」で無言で捨てられるバグの修正・2026-08-26)
-                s.shotWait = (s.shotWait || 0) + 1;
               } else {
                 // 最適: 通常タイミングAIと同じ判断
                 fire = optWindow(s, o, mv);
