@@ -1459,10 +1459,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 @keyframes fxspin{0%{opacity:0;transform:rotate(0) scale(.5)}30%{opacity:1;transform:rotate(360deg) scale(1.2)}78%{opacity:1;transform:rotate(360deg) scale(1)}100%{opacity:0;transform:rotate(360deg) scale(1)}}
 /* SP発動: タイプ色の斜め帯のカットイン＋閃光 */
 .fxsp .band{position:absolute;left:-14%;right:-14%;top:50%;height:82px;margin-top:-41px;
-  display:flex;align-items:center;justify-content:center;--rot:-4deg;
+  display:flex;align-items:center;justify-content:center;--rot:4deg;
   background:linear-gradient(100deg,transparent 0%,var(--fc1) 16%,var(--fc2) 50%,var(--fc1) 84%,transparent 100%);
   box-shadow:0 0 46px var(--fc2);animation:fxband var(--fxd) ease both}
-.fxsp.foe .band{--rot:4deg}
+.fxsp.foe .band{--rot:-4deg}
 .fxsp .mvn{font-size:1.5rem;font-weight:900;font-style:italic;color:#fff;letter-spacing:.05em;white-space:nowrap;
   max-width:92vw;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 2px 12px rgba(0,0,0,.6),0 0 18px rgba(255,255,255,.35);animation:fxmvn var(--fxd) ease both}
