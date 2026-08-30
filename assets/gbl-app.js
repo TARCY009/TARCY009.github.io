@@ -4546,7 +4546,7 @@ function fxOfRow(r) {
     if (!e || e.full === undefined) return;
     out.push({ k: 'sp', side: sd, mv: e.move, shd: !!e.shielded });
     if (e.gulpOn) out.push({ k: 'form', side: sd, mk: GULP_MK[e.gulpOn], name: `${GULP_JA[e.gulpOn]}のすがた` });
-    if (e.gulp) out.push({ k: 'form', side: 1 - sd, mk: GULP_MK[e.gulp.form], name: `${GULP_JA[e.gulp.form]}を吐き出した！` });
+    if (e.gulp) out.push({ k: 'form', side: 1 - sd, mk: GULP_MK[e.gulp.form], name: '獲物を吐き出した！' });
   });
   return out.length ? out : null;
 }
