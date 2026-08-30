@@ -4410,7 +4410,8 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 // (ポケモンやわざの入力中に勝手にシミュが動き始めないように)
 const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined };
 const RBUI = { pts: {}, order: [], open: null };
-const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, next: '💀', lead: SWAPMK };
+// next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
+const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, next: '', lead: SWAPMK };
 // 選び直したら、その決断より後ろの答えは消す(前提が変わるので、そこから先はおまかせに戻る)
 function rbTrim(key) {
   const i = RBUI.order.indexOf(key);
@@ -4435,16 +4436,17 @@ function rbAnsLabel(p, a) {
   }
   // チップは種別アイコン(RB_ICON)と並べて出すので、ここでは🛡や⇄を重ねない
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
+  // 「場に出した」と「交代した」を言葉で区別する(2026-08-30タダシさん指示・GBL模擬戦とそろえる)
   if (p.kind === 'swap' || p.kind === 'lead') {
     if (a.a === 'stay') return 'このまま';
     const nm = p.ctx.picks[a.to] ? shMark(p.ctx.picks[a.to].name) : '';
-    if (p.kind === 'lead') return `${nm}に交代`;
-    if (a.a === 'toq') return `${nm}にすぐ交代`;
+    if (p.kind === 'lead') return `${nm}に交代した！`;
+    if (a.a === 'toq') return `${nm}にすぐ交代した！`;
     const fm = p.ctx.fast && D.moves[p.ctx.fast];
     const n = fm ? Math.floor((p.ctx.foeEntry || 0) / (fm.tn || 1)) : 0;
-    return `${fm && n ? `${fm.n}＋${n}のあと` : ''}${nm}に交代`;
+    return `${fm && n ? `${fm.n}＋${n}のあと` : ''}${nm}に交代した！`;
   }
-  return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? shMark(p.ctx.picks[a.to].name) : '');
+  return a.a === 'order' ? '順番どおり' : (p.ctx.picks[a.to] ? `${shMark(p.ctx.picks[a.to].name)}をくりだした！` : '');
 }
 const rbSameAns = (a, o) => !!a && a.a === o.a && a.mv === o.mv && a.n === o.n && a.to === o.to;
 // ウッウのフォルム名。咥えた瞬間と、吐き出した瞬間をタイムラインに出す。
@@ -5884,11 +5886,12 @@ function gbAnsLabel(p, a) {
   }
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
   const ros = p.ctx.ros[p.side || 0];
+  // 「場に出した」と「交代した」を言葉で区別する(2026-08-30タダシさん指示・一瞬で見分けづらかったため)
   if (p.kind === 'swap' || p.kind === 'lead') {
     if (a.a === 'stay') return 'このまま';
-    return `${ros[a.to] ? shMark(ros[a.to].name) : ''}に交代`;
+    return `${ros[a.to] ? shMark(ros[a.to].name) : ''}に交代した！`;
   }
-  return a.a === 'order' ? '順番どおり' : (ros[a.to] ? shMark(ros[a.to].name) : '');
+  return a.a === 'order' ? '順番どおり' : (ros[a.to] ? `${shMark(ros[a.to].name)}をくりだした！` : '');
 }
 
 // ---- 通しの計算 ----
