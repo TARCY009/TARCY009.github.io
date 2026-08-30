@@ -4502,7 +4502,7 @@ function fxOne(f) {
     return fxShow('fxko lose', `<div class="kowrap"><i class="mk">💀</i><div class="tx">${f.name || ''} はたおれた…</div></div>`, 1190);
   }
   if (f.k === 'form') {   // フォルムチェンジ: 光の輪＋マーク
-    return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 1470);
+    return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 1910);
   }
   return 0;
 }
@@ -4596,7 +4596,7 @@ const GULP_MK = { gulping: '🐟', gorging: '⚡' };
 function gulpCell(e) {
   let h = '';
   if (e.gulpOn) h += `<span class="ev gulp">${GULP_MK[e.gulpOn]}${GULP_JA[e.gulpOn]}のすがた</span>`;
-  if (e.gulp) h += `<span class="ev gulp spit">${GULP_MK[e.gulp.form]}${GULP_JA[e.gulp.form]}を吐き出し${
+  if (e.gulp) h += `<span class="ev gulp spit">${GULP_MK[e.gulp.form]}${GULP_JA[e.gulp.form]}：反撃${
     e.gulp.dmg ? `<b class="dmg">-${e.gulp.dmg}</b>` : ''}${buffTag({ ...e.gulp.buff, target: 'self' })}</span>`;
   return h;
 }
@@ -8404,7 +8404,7 @@ function timelineTable(res, tlMode) {
       h = `<span class="evbox">${t}</span>`;
       // ウッウ: 獲物を咥えた／吐き出した(吐き出しの能力ダウンは撃った側が受ける)
       if (e.gulpOn) h += ` <span class="evbox gulp">${GULP_MK[e.gulpOn]}${GULP_JA[e.gulpOn]}のすがた</span>`;
-      if (e.gulp) h += ` <span class="evbox gulp">${GULP_MK[e.gulp.form]}${GULP_JA[e.gulp.form]}を吐き出し${
+      if (e.gulp) h += ` <span class="evbox gulp">${GULP_MK[e.gulp.form]}${GULP_JA[e.gulp.form]}：反撃${
         e.gulp.dmg ? ` <b>-${e.gulp.dmg}</b>` : ''}${buffTxt({ buff: { ...e.gulp.buff, target: 'self' } })}</span>`;
     }
     // シールドは「使った側」に表示する
