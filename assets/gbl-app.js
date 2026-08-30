@@ -5061,8 +5061,16 @@ function rbRender(body, bt, picks, foes, extra) {
     if (RB.goal) { applyGoal(); return; }   // オートバトルを選んでいれば探索してから再生
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';   // 走り出したら上にも「▶ バトルスタート！」(やり直し)を出す
-    if (RBV.cur >= stop) atStop();     // 開幕交代など、最初の決断が0ターン目ならすぐ聞く
-    else startTimer();
+    // スタートの瞬間に、すでに見えている開幕(VS・開幕交代)の演出を見せてから再生を始める
+    // (2026-08-31タダシさん報告: ここで見せないと最初の決断のあとまで遅れて出ていた)
+    RBV.fxDone.clear();
+    const fx0 = fxConsume(els.slice(0, ptr));
+    const go = () => {
+      if (!document.body.contains(feedEl)) return;
+      if (RBV.cur >= stop) atStop();     // 開幕交代など、最初の決断が0ターン目ならすぐ聞く
+      else if (RBV.playing) startTimer();
+    };
+    if (fx0.length) fxRun(fx0, go); else go();
   };
   if (hplay) hplay.onclick = () => {
     if (!RBV.started) { startBattle(); return; }
@@ -7628,8 +7636,15 @@ function gbRender(body, bt, picks, foes) {
     if (RB.goal) { applyGoal(); return; }
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';
-    if (RBV.cur >= stop) atStop();
-    else startTimer();
+    // スタートの瞬間に、すでに見えている開幕(VS・開幕交代)の演出を見せてから再生を始める
+    RBV.fxDone.clear();
+    const fx0 = fxConsume(els.slice(0, ptr));
+    const go = () => {
+      if (!document.body.contains(feedEl)) return;
+      if (RBV.cur >= stop) atStop();
+      else if (RBV.playing) startTimer();
+    };
+    if (fx0.length) fxRun(fx0, go); else go();
   };
   if (hplay) hplay.onclick = () => {
     if (!RBV.started) { startBattle(); return; }
