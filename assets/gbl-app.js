@@ -6352,6 +6352,49 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     return shvCache[ck];
   };
+  // ---- HARD専用: シールドの使い先を総当たりで最後まで読む(2026-08-30タダシさん指示) ----
+  // HARDは「コンピュータができる限りの最適な行動」が前提。いま防ぐか・あとの一撃のために
+  // 取っておくかを、残り枚数の使い先(この先の何発目を防ぐか)の全組み合わせで
+  // 対面の最後までシミュレートして決める。デバフが重なって後の一撃ほど痛くなる相手
+  // (サイコファング連打など)では、個別ルールを書かなくても
+  // 「安い序盤を受けて高い終盤を防ぐ」が自動で正解になる。
+  // 視野はこの先6発(1つの対面でSPが6発を超えることはまず無い)
+  const SH_HORIZON = 6;
+  const shPlansOf = n => {   // 「この先の何発目を防ぐか」の全組み合わせ(要素数はn枚まで)
+    const out = [[]];
+    const rec = (start, acc) => {
+      if (acc.length >= n) return;
+      for (let i = start; i <= SH_HORIZON; i++) { const a = acc.concat(i); out.push(a); rec(i + 1, a); }
+    };
+    rec(1, []);
+    return out;
+  };
+  // その状態から使い先の最良の結末を点数化する。勝ち＝残りHP＋残した枚数の持ち越し価値 ／
+  // 負け＝相手をどれだけ削れたか＋持ち越し価値。持ち越し価値は「1枚＝最大HPの30%ぶんの一撃を
+  // 防げる権利」(GB_SHIELD_BIG)で、バトルがこの対面で終わるなら0
+  const shAllocCache = {};
+  const shAllocScore = (li, ov) => {
+    const ck = li + '#' + ovKey(ov);
+    if (ck in shAllocCache) return shAllocCache[ck];
+    const sh1 = ov && ov.ov1 && ov.ov1._sh != null ? ov.ov1._sh : shLeft[1];
+    let best = -Infinity;
+    for (const plan of shPlansOf(sh1)) {
+      const r = PvpEngine.simulate(D, plainCfg(0, cur[0], ov && ov.ov0),
+        { ...plainCfg(1, cur[1], ov && ov.ov1), shieldPlan: plan }, SIMOPT);
+      const F = r.final;
+      let sc;
+      if (r.winner === 1) {
+        const carry = benches(0).length ? GB_SHIELD_BIG * F[1].hpMax : 0;
+        sc = 1e6 + F[1].hp + carry * F[1].shields;
+      } else {
+        const carry = benches(1).length ? GB_SHIELD_BIG * F[1].hpMax : 0;
+        sc = (F[0].hpMax - F[0].hp) + carry * F[1].shields;
+      }
+      if (sc > best) best = sc;
+    }
+    shAllocCache[ck] = best;
+    return best;
+  };
   // あいてのAIの自動回答(ansに答えがあればそちらが優先される)。
   // **下読みは決断のたびに、その瞬間の状態(p.st0/p.st1)から読み直す**(2026-08-19タダシさん指摘)
   const aiAnswer = (p, ctx) => {
@@ -6474,6 +6517,20 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 不利な初手対面で「残って戦う」と決めた場面では**シールドを使わない**
       // (不利な状況で無理に受けても非効率。2026-08-18タダシさん指示・重要)
       if (ai.sw && aiStayWeak(ctx.li, blockOv)) return { a: 'no' };
+      // ---- HARDは読み切りで決める(2026-08-30タダシさん指示) ----
+      // 「いま防ぐ」と「あとの一撃のために取っておく」を、使い先の全組み合わせで最後まで
+      // シミュレートして良いほうを選ぶ。teamShieldValueの「勝ちを取りにいく」判断も
+      // 読み切りの勝ち優先の点数に含まれるので、HARDではこちらに一本化する
+      if (ai.truth) {
+        // どうせ負けの対面ならシールドは後続へ(温存ルールは読み切りより優先)
+        if (benches(1).length && aiLosing(ctx.li, blockOv)) return { a: 'no' };
+        if (p.hpB && predDmg >= p.hpB) return { a: 'use' };   // 受けたら倒される一撃は防ぐ
+        // 同点なら「いま確実に防ぐ」ほうを取る。この先の読みは、実際のAIの駆け引き
+        // (重いわざぶんためてから撃つ等)と完全には一致しないので、
+        // 同じ結末予測なら確実な現在を優先する(実測: ここを「受ける」にすると
+        // ためのぶん読みとずれて、取れたはずの対面を落とすことがあった)
+        return { a: shAllocScore(ctx.li, blockOv) >= shAllocScore(ctx.li, takeOv) ? 'use' : 'no' };
+      }
       // チーム文脈: いまの対面を確実に取る価値が高い(勝てる控えが1匹だけの相手が戻ってくる)なら、
       // 逃げ回り・温存のAIはためらわずシールドを使って突破する
       if ((ai.sw || ai.save) && teamShieldValue(ctx.li, blockOv, takeOv) === 'use') return { a: 'use' };
