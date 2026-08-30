@@ -4485,9 +4485,10 @@ function fxOne(f) {
       for (let a = 0; a < 6; a++) { const th = Math.PI / 3 * a + Math.PI / 6;
         p.push((cx + r * Math.cos(th)).toFixed(1) + ',' + (cy + r * Math.sin(th)).toFixed(1)); }
       return p.join(' '); };
+    // 最下段の両端は置かない(2026-08-31タダシさん指示・ゲームのドームの丸みを再現)
     const cs = [[160, 84], [260, 84], [360, 84],
       [110, 171], [210, 171], [310, 171], [410, 171],
-      [60, 258], [160, 258], [260, 258], [360, 258], [460, 258]];
+      [160, 258], [260, 258], [360, 258]];
     const polys = cs.map(([x, y], i) => `<polygon points="${hex(x, y, 56)}" style="animation-delay:${i * 22}ms"/>`).join('');
     return fxShow('fxshd ' + sideCls, `<div class="shwrap">
       <svg viewBox="0 0 520 330" aria-hidden="true"><defs>
@@ -5633,7 +5634,7 @@ function gbSpc(res) {
 }
 const gbSpAt = (spc, tn) => spc.length ? spc[Math.max(0, Math.min(tn, spc.length - 1))] : 0;
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
-const GB_KEEP_HP = 0.20;      // 出し勝った初手を温存する残りHPのしきい値(2割以下なら温存する価値が薄い)
+const GB_KEEP_HP = 0.35;      // 出し勝った初手を温存する残りHPの目安(2026-08-31タダシさん指示で35%に)
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
 // 「クールタイム狙い」とみなす相手の交代不能の残り(40ターン=20秒以上)。
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
@@ -6789,7 +6790,16 @@ function gbPlay(picks, foes, ans, stepwise) {
       // これが「有利対面をとっているのにあえて交代する」例外パターンの1つ目
       if (p.seq === 0 && ctx.keepLead && ctx.koIn && ctx.koIn[0]) {
         const hpFrac = p.st1 ? p.st1.hp / ctx.maxHp[1] : 1;
-        if (hpFrac > GB_KEEP_HP) {
+        let go = hpFrac >= GB_KEEP_HP;   // 残り35%以上なら温存の価値あり=すぐ交代
+        if (!go) {
+          // 35%未満は基本そのまま戦う。ただし**SPを1発も撃てずにノーマルアタックだけで
+          // 倒される**(=ユーザーに起点にされてゲージを献上するだけ)ときに限り、それでも逃がす
+          // (2026-08-31タダシさん指示)
+          const r = duelAt(cur[0], cur[1], nowOv && nowOv.ov0, nowOv && nowOv.ov1);
+          if (r.winner === 0 && !rbTurns(r).some(t => t.ev[1].some(e => e.full !== undefined)))
+            go = true;
+        }
+        if (go) {
           const to = aiKeepSwap(nowOv);
           if (to != null) return { a: 'toq', to };
         }
