@@ -6133,6 +6133,14 @@ function gbPlay(picks, foes, ans, stepwise) {
     for (const k of benches(sd)) {
       const r = sd === 1 ? duelAt(cur[0], k, o.ov0, null) : duelAt(k, cur[1], null, o.ov1);
       if (r.winner !== sd) continue;
+      // ---- HARDのカウンター読み(2026-08-30タダシさん指摘) ----
+      // ユーザーの交代が自由なとき(guard)、出した控えに合わせて交代されて不利になるなら、
+      // その交代は無駄打ち(こちらのクールタイムだけ消費して、答えを先に見せることになる)。
+      // HARDは手の内を知っている(omni)ので読める。候補が全部つぶされたら残って倒させ、
+      // 倒れたあとにクールタイムなしで答えを出すほうがいい(実例: ウッウに負けるブルンゲルが
+      // モルペコへ逃げる→ユーザーがGマッギョを合わせて交代の無駄打ちになっていた)
+      if (sd === 1 && o.guard && ai.omni &&
+          benches(0).some(b => duelAt(b, k).winner === 0)) continue;
       // **どちらも倒せるなら、1対1の勝率が高い＝安定して対面させられるほうを出す**
       // (シールドの持ち方を総当たりして数える。AI側だけこの見方をする)
       const own = r.final[sd], opp = r.final[1 - sd];
@@ -6698,7 +6706,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       // それなりに有利ならそのまま戦い、不利かどっちもどっちなら交代でリセット。
       // ただし勝てる控えがいなければ残って戦う
       if (p.w === 1) {
-        const to = aiSwapTo(1, { even: true, ...ov });
+        const lockedW = ctx.swOk[0] - (p.ck != null ? p.ck : ctx.base + p.tn) >= GB_LOCK_MIN;
+        const to = aiSwapTo(1, { even: true, guard: !(lockedW || ctx.swTo[0].length === 0), ...ov });
         return to == null ? { a: 'stay' } : { a: 'toq', to };
       }
       // ---- 答えの温存(2026-08-20タダシさん指示・基本の考え方) ----
@@ -6732,7 +6741,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       // **追っている側は対面を維持したい**(2026-08-19タダシさん指示)。
       // ユーザーが不利で逃げた直後は主導権がこちらにあるので、五分の対面に付き合わず、
       // 安定して突破できる(勝率の高い)控えがいるなら出して対面を取り続ける
-      const to = aiSwapTo(1, { even: noEsc || (p.seq === 0 && ctx.chase), ...ov });
+      const to = aiSwapTo(1, { even: noEsc || (p.seq === 0 && ctx.chase), guard: !noEsc, ...ov });
       if (to == null) {
         // 勝てる控えが無い＝いま下がっても有利にならない。ただし
         // **SPを1発入れてから下がれば裏が勝てる**なら、撃つために残る(2026-08-18タダシさん指示)。
