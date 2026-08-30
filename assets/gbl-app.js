@@ -5583,6 +5583,7 @@ function gbSpc(res) {
 }
 const gbSpAt = (spc, tn) => spc.length ? spc[Math.max(0, Math.min(tn, spc.length - 1))] : 0;
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
+const GB_KEEP_HP = 0.20;      // 出し勝った初手を温存する残りHPのしきい値(2割以下なら温存する価値が薄い)
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
 // 「クールタイム狙い」とみなす相手の交代不能の残り(40ターン=20秒以上)。
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
@@ -6054,6 +6055,11 @@ function gbPlay(picks, foes, ans, stepwise) {
   const cur = [0, 0], shLeft = [2, 2], swOk = [0, 0];
   const newIn = [false, false];   // この対面の頭で「新しく出てきた」側(交代質問のきっかけ)
   const koIn = [false, false];    // そのうち「倒されて出し直した」側(あいての交代判断を1秒遅らせる)
+  // 出し勝った初手の温存(2026-08-30タダシさん指示・上級者の動き):
+  // ユーザーが**交代できたのに**不利な対面から交代せず倒された(=ABAで出し負けた形)。
+  // それは「裏にこのポケモンが苦手なもう1匹がいる」と知らせたのと同じなので、
+  // 勝ったこのポケモンには後で必ず仕事がある＝次のポケモンが出てきたらすぐ交代して温存する
+  let keepLead = false;
   // **AIは場に出ていないユーザーのポケモンを知らない**(2026-08-18タダシさん指示・恒久ルール)。
   // 一度でも場に出たポケモンだけ「見えている」として、AIの下読みに使ってよい
   // (何匹残っているかは分かるが、それが何かは分からない、が実戦の情報量)。
@@ -6150,6 +6156,18 @@ function gbPlay(picks, foes, ans, stepwise) {
       const mg = 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
       const w = sd === 1 ? aiWinRate(k, o.ov0, null) : null;
       const sc = w ? w.rate * 1e4 + w.margin : mg;
+      if (!best || sc > best.sc) best = { k, sc };
+    }
+    return best ? best.k : null;
+  };
+  // 出し勝った初手の温存の交代先: ユーザーの新しいポケモンに勝てる控えを最優先、
+  // いなければ形勢のいちばんマシな控え(それでも温存はする=セオリーの動き)
+  const aiKeepSwap = ov => {
+    let best = null;
+    for (const k of benches(1)) {
+      const r = duelAt(cur[0], k, ov && ov.ov0, null);
+      const sc = (r.winner === 1 ? 1e6 : 0)
+        + 500 * (1 - r.final[0].hp / r.final[0].hpMax) + 500 * (r.final[1].hp / r.final[1].hpMax);
       if (!best || sc > best.sc) best = { k, sc };
     }
     return best ? best.k : null;
@@ -6713,6 +6731,19 @@ function gbPlay(picks, foes, ans, stepwise) {
         const to = aiSwapTo(1, { even: true, guard: !(lockedW || ctx.swTo[0].length === 0), ...ov });
         return to == null ? { a: 'stay' } : { a: 'toq', to };
       }
+      // ---- 出し勝った初手の温存(2026-08-30タダシさん指示・上級者の動き・NORMALから適用) ----
+      // ユーザーは**交代できたのに**不利な対面から交代せず倒された(ABAで出し負けた形)＝
+      // 「裏にこのポケモンが苦手なもう1匹がいる」と知らせたのと同じ。
+      // 勝ったこのポケモンには後で必ず仕事があるので、ユーザーの次のポケモンが出てきたら
+      // **すぐ他へ交代して温存する**。残りHPが2割以下なら温存する価値が薄いのでふつうの判断に戻す。
+      // これが「有利対面をとっているのにあえて交代する」例外パターンの1つ目
+      if (p.seq === 0 && ctx.keepLead && ctx.koIn && ctx.koIn[0]) {
+        const hpFrac = p.st1 ? p.st1.hp / ctx.maxHp[1] : 1;
+        if (hpFrac > GB_KEEP_HP) {
+          const to = aiKeepSwap(nowOv);
+          if (to != null) return { a: 'toq', to };
+        }
+      }
       // ---- 答えの温存(2026-08-20タダシさん指示・基本の考え方) ----
       // 相手が**自分から**交代した場面(開幕交代・手動交代)では、いま場にいるこのポケモンが
       // 「引っ込んだ相手への答え」(=その相手に勝てる)なら、あとで必ず戻ってくるその相手のために温存する。
@@ -6865,7 +6896,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       spList: spL, fast: [P0.pol.fast, P1.pol.fast],
       shLeft: shLeft.slice(), swOk: swOk.slice(),
       maxHp: [PvpEngine.buildStats(D, P0.base).hp, PvpEngine.buildStats(D, P1.base).hp],
-      swTo: [benches(0), benches(1)], newIn: newIn.slice(), koIn: koIn.slice(),
+      swTo: [benches(0), benches(1)], newIn: newIn.slice(), koIn: koIn.slice(), keepLead,
       chase,                      // 追っている側か(ユーザーが自分から交代した直後)
       react: li === 0 ? react : null,   // 開幕に片方だけ交代したとき、もう片方が反応できる場面
       enAt: [enOf(0), enOf(1)],   // 対面開始時のゲージ(「撃ってから交代」の判断に使う)
@@ -6875,6 +6906,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       }),
       foeDump: ai.sw };           // あいてが逃げ回りのAIなら、SPを撃った直後にも交代を検討する
     newIn[0] = newIn[1] = koIn[0] = koIn[1] = false;
+    keepLead = false;
     const dec = [0, 1].map(() => ({ shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 }));
     const legCfg = s => {
       const P = ros[s][cur[s]], d = dec[s];
@@ -7033,6 +7065,12 @@ function gbPlay(picks, foes, ans, stepwise) {
       } else cur[s] = rest[0];
       newIn[s] = true;
       koIn[s] = true;   // 倒されて出し直した＝相手はこれを見てから交代を決める(1秒後)
+      // 出し勝った初手の温存の合図(2026-08-30タダシさん指示): ユーザーは**交代できたのに**
+      // 不利な対面から交代せず倒された(ABAで出し負けた形)＝「裏にこのポケモンが苦手な
+      // もう1匹がいる」と知らせたのと同じ。いま出てきたポケモンの他にまだ控えがいる
+      // (rest>=2＝隠れた1匹が残っている)ときだけ意味を持つ
+      if (s === 0 && !down[1] && !swapped[0] && rest.length >= 2
+          && swOk[0] <= base + GB_SP_TURNS * spTot) keepLead = true;
     }
     if (pending) break;
     // 手動交代の実行(両方同時なら、お互いの打ちかけの1発は無しにする)
