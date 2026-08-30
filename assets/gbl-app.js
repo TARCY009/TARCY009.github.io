@@ -6941,6 +6941,9 @@ function gbPlay(picks, foes, ans, stepwise) {
     const P0 = picks[cur[0]], P1 = foes[cur[1]];
     const spL = [P0, P1].map(P => (P.pol.charged || []).slice());
     const enOf = sd => { const r = st[sd][cur[sd]].resume; return r ? (r.en || 0) : 0; };
+    // この対面の頭の時計(実時間)。初手温存の合図は「対面の頭から交代が自由だったのに残った」
+    // ときだけ有効にする(終わりぎわにロックが切れただけでは合図にならない・2026-08-31タダシさん報告で修正)
+    const legStartCk = base + GB_SP_TURNS * spTot;
     const ctx = { li, base, ros, cur: cur.slice(),
       cost: spL.map(l => l.length ? Math.min(...l.map(id => D.moves[id].e)) : 0),
       spList: spL, fast: [P0.pol.fast, P1.pol.fast],
@@ -7118,9 +7121,11 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 出し勝った初手の温存の合図(2026-08-30タダシさん指示): ユーザーは**交代できたのに**
       // 不利な対面から交代せず倒された(ABAで出し負けた形)＝「裏にこのポケモンが苦手な
       // もう1匹がいる」と知らせたのと同じ。いま出てきたポケモンの他にまだ控えがいる
-      // (rest>=2＝隠れた1匹が残っている)ときだけ意味を持つ
+      // (rest>=2＝隠れた1匹が残っている)ときだけ意味を持つ。
+      // **交代の自由は対面の頭からあったことが条件**(legStartCk・2026-08-31修正):
+      // 開幕交代のロックが対面の終わりぎわに切れただけでは「残る選択をした」ことにならない
       if (s === 0 && !down[1] && !swapped[0] && rest.length >= 2
-          && swOk[0] <= base + GB_SP_TURNS * spTot) keepLead = true;
+          && swOk[0] <= legStartCk) keepLead = true;
     }
     if (pending) break;
     // 手動交代の実行(両方同時なら、お互いの打ちかけの1発は無しにする)
