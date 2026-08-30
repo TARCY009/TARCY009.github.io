@@ -4412,7 +4412,8 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 // HUD = 両者の HP・ゲージ・シールド・能力変化・残り手持ち(モンスターボール)を常に表示
 // started=false のあいだは再生せず「バトルスタート！」ボタンを出す
 // (ポケモンやわざの入力中に勝手にシミュが動き始めないように)
-const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined };
+const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined,
+  fxDone: new Set() };   // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
 const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, next: '', lead: SWAPMK };
@@ -4482,13 +4483,28 @@ function fxOne(f) {
   }
   return 0;
 }
+// 演出の「再生済みキー」。決断(シールドの使う/受ける等)の直後は画面を作り直して
+// 途中まで一気に表示するため、これが無いと質問で隠れていたSPの演出が飛んだり(取りこぼし)、
+// 逆に同じ演出が二重に出たりする(2026-08-30タダシさん報告で追加)
+const fxKey = el => el.dataset.gt + '|' + el.dataset.fx;
+const fxPending = els => els.filter(e => e.dataset.fx && !RBV.fxDone.has(fxKey(e)));
+// 今あらわれた要素の未再生の演出を返す。✨OFF・reduced-motionのときは再生済み扱いにして
+// 空を返す(あとでONに切り替えたとき、たまっていたぶんがまとめて出ないように)
+const fxConsume = els => {
+  const list = fxPending(els);
+  if (fxOk()) return list;
+  list.forEach(e => RBV.fxDone.add(fxKey(e)));
+  return [];
+};
 // data-fx を持つ要素の演出を順番に再生して、終わったら done()
 function fxRun(list, done) {
   let i = 0;
   const step = () => {
     if (i >= list.length) { done(); return; }
+    const el = list[i];
+    RBV.fxDone.add(fxKey(el));
     let fs = [];
-    try { fs = JSON.parse(list[i].dataset.fx); } catch (e) {}
+    try { fs = JSON.parse(el.dataset.fx); } catch (e) {}
     i++;
     if (!Array.isArray(fs)) fs = fs ? [fs] : [];
     let dur = 0;
@@ -4658,12 +4674,15 @@ function rbRender(body, bt, picks, foes, extra) {
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
     if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
-    // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける
+    // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける。
+    // 開幕交代はVSに続けて交代の演出を出す
     const pv = bt.legs[leg.li - 1] || null;
     const fxv = !pv ? [{ k: 'vs', me: leg.meName, foe: leg.foeName }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
          pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
          pv.swapped && { k: 'swap', side: 0, name: leg.meName }].filter(Boolean);
+    if (!pv && leg.leadPt && leg.leadPt.ans && leg.leadPt.ans.a === 'to')
+      fxv.push({ k: 'swap', side: 0, name: leg.meName });
     items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
     if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
@@ -4952,9 +4971,9 @@ function rbRender(body, bt, picks, foes, extra) {
     const rev = revealTo(RBV.cur);
     updateHud(RBV.cur);
     autoScroll();
-    // 演出(FX): 今あらわれた行にdata-fxがあれば、再生を止めてカットインを見せてから続ける
+    // 演出(FX): 今あらわれた行に未再生のdata-fxがあれば、再生を止めてカットインを見せてから続ける
     // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
-    const fxEls = fxOk() ? rev.filter(e => e.dataset.fx) : [];
+    const fxEls = fxConsume(rev);
     if (fxEls.length) {
       stopTimer();
       fxRun(fxEls, () => {
@@ -5036,7 +5055,9 @@ function rbRender(body, bt, picks, foes, extra) {
   };
   if (hskip) hskip.onclick = () => {
     RBV.started = true;
-    RBV.cur = stop; revealTo(stop); updateHud(stop); autoScroll();
+    // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)
+    revealTo(stop).forEach(e => { if (e.dataset.fx) RBV.fxDone.add(fxKey(e)); });
+    RBV.cur = stop; updateHud(stop); autoScroll();
     if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
   };
   const hstop = hud.querySelector('.hstop');
@@ -5060,13 +5081,20 @@ function rbRender(body, bt, picks, foes, extra) {
     setPlayBtn();
     return;
   }
+  if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
   const rev0 = revealTo(RBV.cur);
   updateHud(RBV.cur);
   if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
-  else if (RBV.cur >= stop) atStop();
+  else if (RBV.cur >= stop) {
+    // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
+    const fxS = RB.step ? fxConsume(rev0) : [];
+    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) atStop(); });
+    else atStop();
+  }
   else if (RB.step && RBV.playing) {
-    // バトルスタート直後(0ターン目)は、VS・開幕の演出を見せてから再生を始める
-    const fx0 = RBV.cur === 0 && fxOk() ? rev0.filter(e => e.dataset.fx) : [];
+    // まだ再生していない演出(バトルスタート直後のVS・決断で隠れていたSPや交代など)を
+    // 見せてから再生を始める。fxDoneのおかげで再生済みの演出は二重に出ない
+    const fx0 = fxConsume(rev0);
     if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) startTimer(); });
     else startTimer();
   }
@@ -7206,13 +7234,18 @@ function gbRender(body, bt, picks, foes) {
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
     (leg.leadPts || []).forEach(p => { if (p) items.push(chipItem(p, base)); });
-    // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける
+    // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける。
+    // 開幕交代(どちらの側も)はVSに続けて交代の演出を出す
     const pv = bt.legs[leg.li - 1] || null;
     const fxv = !pv ? [{ k: 'vs', me: leg.meName, foe: leg.foeName }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
          pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
          pv.swapped0 && { k: 'swap', side: 0, name: leg.meName },
          pv.swapped1 && { k: 'swap', side: 1, name: leg.foeName }].filter(Boolean);
+    if (!pv) (leg.leadPts || []).forEach((pt, sd) => {
+      if (pt && pt.ans && pt.ans.a === 'to')
+        fxv.push({ k: 'swap', side: sd, name: sd ? leg.foeName : leg.meName });
+    });
     items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
     (leg.leadHits || []).forEach(h => { if (h) {
@@ -7498,9 +7531,9 @@ function gbRender(body, bt, picks, foes) {
     const rev = revealTo(RBV.cur);
     updateHud(RBV.cur);
     autoScroll();
-    // 演出(FX): 今あらわれた行にdata-fxがあれば、再生を止めてカットインを見せてから続ける
+    // 演出(FX): 今あらわれた行に未再生のdata-fxがあれば、再生を止めてカットインを見せてから続ける
     // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
-    const fxEls = fxOk() ? rev.filter(e => e.dataset.fx) : [];
+    const fxEls = fxConsume(rev);
     if (fxEls.length) {
       stopTimer();
       fxRun(fxEls, () => {
@@ -7575,7 +7608,9 @@ function gbRender(body, bt, picks, foes) {
   };
   if (hskip) hskip.onclick = () => {
     RBV.started = true;
-    RBV.cur = stop; revealTo(stop); updateHud(stop); autoScroll();
+    // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)
+    revealTo(stop).forEach(e => { if (e.dataset.fx) RBV.fxDone.add(fxKey(e)); });
+    RBV.cur = stop; updateHud(stop); autoScroll();
     if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
   };
   const hstop = hud.querySelector('.hstop');
@@ -7598,13 +7633,20 @@ function gbRender(body, bt, picks, foes) {
     setPlayBtn();
     return;
   }
+  if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
   const rev0 = revealTo(RBV.cur);
   updateHud(RBV.cur);
   if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
-  else if (RBV.cur >= stop) atStop();
+  else if (RBV.cur >= stop) {
+    // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
+    const fxS = RB.step ? fxConsume(rev0) : [];
+    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) atStop(); });
+    else atStop();
+  }
   else if (RB.step && RBV.playing) {
-    // バトルスタート直後(0ターン目)は、VS・開幕の演出を見せてから再生を始める
-    const fx0 = RBV.cur === 0 && fxOk() ? rev0.filter(e => e.dataset.fx) : [];
+    // まだ再生していない演出(バトルスタート直後のVS・決断で隠れていたSPや交代など)を
+    // 見せてから再生を始める。fxDoneのおかげで再生済みの演出は二重に出ない
+    const fx0 = fxConsume(rev0);
     if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) startTimer(); });
     else startTimer();
   }
