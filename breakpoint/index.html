@@ -545,7 +545,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li><b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
   </ul>
   <h4>スーパー・ハイパーの見かた</h4>
-  <p>CP制限があるリーグは、個体値3つとPLがセットで決まります。そこで軸は個体値ではなく<b>個体の順位</b>（個体値チェッカーと同じ順位）です。</p>
+  <p>CP制限があるリーグは、個体値3つとPLがセットで決まります。そこで軸は個体値ではなく<b>個体の順位</b>（個体値チェッカーと同じ順位）です。順位は<b>SCPが高い順</b>で決まります。SCP＝<b>攻撃・防御・HPを総合した対戦(PvP)向けの評価値</b>で、届く個体の一覧・おすすめ個体の表もこの並びです。</p>
   <ul>
     <li><b>あいての順位</b>（紫）: 先に相手の前提を選びます（既定は100位以内）。同じポケモンでも順位によって実数値が変わるので、<b>その範囲のどの個体が相手でも届く</b>、じぶんの個体だけを出します。範囲を広げるほど条件はきびしくなり、「合わせるのは現実的でない」相手は消えます</li>
     <li><b>じぶんの順位</b>（水色）: 相手ごとに「届く個体のうちいちばん順位が高いもの」を探し、その順位でグループ分けします。<b>10位以内が既定</b>。50位をタップすると11〜50位の個体で届く相手が追加されます</li>
@@ -1409,7 +1409,7 @@ function ivListHtml(c, rowId, dNow, dir, noBtn) {
     <td>${rankOf(r.ivs)}</td><td>${r.ivs.join('/')}</td><td>${fmtLv(r.level)}</td><td>${r.st.cp}</td><td>${scpOf(r.st)}</td>
     <td>${dNow}→${r.d}</td></tr>`).join('');
   return `${noBtn ? '' : btn}<div class="ivlist"><div class="ivlcap">${cap100}</div>
-    <table><thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th><th>${dir === 'take' ? '被ダメ' : 'ダメ'}</th></tr></thead>
+    <table><thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th title="攻撃・防御・HPを総合した対戦(PvP)向けの評価値です。順位はこの値が高い順です">SCP</th><th>${dir === 'take' ? '被ダメ' : 'ダメ'}</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 

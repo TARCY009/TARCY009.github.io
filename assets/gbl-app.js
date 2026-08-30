@@ -84,7 +84,7 @@ document.getElementById('app').innerHTML = `
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp" title="SCP＝攻撃・防御・HPを総合した対戦(PvP)向けの評価値です。この値が最大になる個体が理想個体です"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <div class="opts smax">
@@ -159,7 +159,7 @@ document.getElementById('app').innerHTML = `
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
-      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
+      <div class="pkhead"><span class="nm"></span><span class="ticons"></span><span class="scp" title="SCP＝攻撃・防御・HPを総合した対戦(PvP)向けの評価値です。この値が最大になる個体が理想個体です"></span><button class="savepk" title="このポケモン(個体値・わざ込み)を登録し、「★登録リスト」タブから1タップで呼び出せます">★登録</button></div>
       <div class="ivline"></div>
       <div class="smaxwrap" style="display:none">
         <div class="opts smax">
@@ -1045,6 +1045,11 @@ const HELP_HTML = `
     <div><i>⏸️</i>硬直（あいてが動けない）</div>
     <div><i><i class="shadowmark"></i></i>シャドウ</div>
   </div>
+
+  <h4>「SCP」とは</h4>
+  <p>ポケモン名の横に出る<b>SCP＝攻撃・防御・HPを総合した対戦(PvP)向けの評価値</b>です。
+  CPは攻撃に寄った計算なので、耐久も効くトレーナーバトルでは<b>SCPのほうが強さの目安</b>になります。
+  「理想(自動)」は<b>SCPが最大になる個体値</b>（CP制限のあるリーグでは上限に収まる中で）を選んでいます。</p>
 
 ${PAGE_ROCKET ? '' : `
   <h4>「ブラフ」の設定</h4>
