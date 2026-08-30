@@ -1471,6 +1471,15 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 @keyframes fxband{0%{opacity:0;transform:rotate(var(--rot)) translateX(-36%)}14%{opacity:1;transform:rotate(var(--rot)) translateX(0)}80%{opacity:1;transform:rotate(var(--rot)) translateX(6%)}100%{opacity:0;transform:rotate(var(--rot)) translateX(26%)}}
 @keyframes fxmvn{0%{opacity:0;transform:translateX(-46px) skewX(-8deg)}18%{opacity:1;transform:skewX(-8deg)}80%{opacity:1;transform:skewX(-8deg)}100%{opacity:0;transform:skewX(-8deg)}}
 @keyframes fxflash{0%{opacity:0}8%{opacity:1}30%{opacity:0}52%{opacity:.7}72%{opacity:0}100%{opacity:0}}
+/* シールドのドーム(ゲームのブロック画面を六角形の光の面で再現・2026-08-31タダシさん指示) */
+.fxshd .shwrap{position:relative;display:flex;align-items:center;justify-content:center}
+.fxshd svg{width:min(520px,92vw);height:auto;
+  filter:drop-shadow(0 0 26px rgba(124,92,255,.75));animation:fxdome var(--fxd) ease both}
+.fxshd polygon{stroke:rgba(255,255,255,.8);stroke-width:2;fill:url(#fxshg);fill-opacity:.5;
+  animation:fxhex var(--fxd) ease both}
+.fxshd .shcap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+@keyframes fxdome{0%{opacity:0;transform:scale(.55) translateY(40px)}28%{opacity:1;transform:none}55%{transform:scale(1.03)}82%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes fxhex{0%{fill-opacity:0}30%{fill-opacity:.62}60%{fill-opacity:.45}82%{fill-opacity:.55}100%{fill-opacity:0}}
 /* たおれた/たおした */
 .fxko .kowrap{display:flex;flex-direction:column;align-items:center;gap:10px}
 .fxko .mk{font-size:2.6rem;font-style:normal;filter:drop-shadow(0 4px 14px rgba(0,0,0,.6));

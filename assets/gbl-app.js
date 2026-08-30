@@ -4471,8 +4471,30 @@ function fxOne(f) {
     const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
     const d = fxShow('fxsp ' + sideCls, `<div class="band" style="--fc1:${c.top};--fc2:${c.bot}">
       <span class="mvn">${f.mv || 'SPアタック'}</span></div><i class="flash"></i>`, 1150);
+    if (f.shd) {
+      // シールドでブロック: カットインに続けて六角形のドームを出す(防いだので着弾の揺れは無し)
+      const delay = Math.min(Math.round(d * 0.55), 620);
+      setTimeout(() => fxOne({ k: 'shd', side: 1 - f.side }), delay);   // ドームは防いだ側
+      return delay + Math.max(300, Math.round(950 / (RBV.speed || 1)));
+    }
     setTimeout(fxQuake, Math.min(d * 0.62, 700));
     return d;
+  }
+  if (f.k === 'shd') {   // シールドのドーム(ゲームのブロック画面を六角形の光の面で再現)
+    const hex = (cx, cy, r) => { const p = [];
+      for (let a = 0; a < 6; a++) { const th = Math.PI / 3 * a + Math.PI / 6;
+        p.push((cx + r * Math.cos(th)).toFixed(1) + ',' + (cy + r * Math.sin(th)).toFixed(1)); }
+      return p.join(' '); };
+    const cs = [[160, 84], [260, 84], [360, 84],
+      [110, 171], [210, 171], [310, 171], [410, 171],
+      [60, 258], [160, 258], [260, 258], [360, 258], [460, 258]];
+    const polys = cs.map(([x, y], i) => `<polygon points="${hex(x, y, 56)}" style="animation-delay:${i * 22}ms"/>`).join('');
+    return fxShow('fxshd ' + sideCls, `<div class="shwrap">
+      <svg viewBox="0 0 520 330" aria-hidden="true"><defs>
+        <linearGradient id="fxshg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#d24bff"/><stop offset=".5" stop-color="#7b5cff"/><stop offset="1" stop-color="#38c7ff"/>
+        </linearGradient></defs>${polys}</svg>
+      <div class="shcap"><div class="tx">🛡 ブロック！</div></div></div>`, 950);
   }
   if (f.k === 'ko') {   // たおれた／たおした
     if (f.win) return fxShow('fxko win', `<div class="kowrap"><i class="mk">💥</i><div class="tx">${f.name || ''} をたおした！</div></div>`, 850);
@@ -4521,7 +4543,7 @@ function fxOfRow(r) {
   [0, 1].forEach(sd => {
     const e = r.ev[sd];
     if (!e || e.full === undefined) return;
-    out.push({ k: 'sp', side: sd, mv: e.move });
+    out.push({ k: 'sp', side: sd, mv: e.move, shd: !!e.shielded });
     if (e.gulpOn) out.push({ k: 'form', side: sd, mk: GULP_MK[e.gulpOn], name: `${GULP_JA[e.gulpOn]}のすがた` });
     if (e.gulp) out.push({ k: 'form', side: 1 - sd, mk: GULP_MK[e.gulp.form], name: `${GULP_JA[e.gulp.form]}を吐き出した！` });
   });
