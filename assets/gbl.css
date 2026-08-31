@@ -887,6 +887,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hswap small{font-size:.62rem;color:var(--sub);font-weight:700}
 .hswap:empty{display:none}
 .hswap.fswap{justify-content:flex-end}
+/* じぶん側の⇄はいつでも押せる交代ボタン(2026-09-01タダシさん指示・実戦の再現)。
+   クールタイム中は残り秒つきで無効・押せるときは金色に点灯してひと呼吸で脈打つ */
+button.hswap{background:none;border:0;box-shadow:none;padding:2px 4px;cursor:default}
+button.hswap.rdy{cursor:pointer;filter:drop-shadow(0 0 8px rgba(255,213,74,.8));
+  animation:hswpulse 1.6s ease infinite}
+button.hswap.rdy .swapmark{width:22px;height:22px}
+@keyframes hswpulse{0%,100%{transform:none}50%{transform:scale(1.12)}}
+@media (prefers-reduced-motion: reduce){button.hswap.rdy{animation:none}}
 /* SPゲージの円とその残量の数字は1つのまとまり(折り返しでばらけさせない) */
 .gqg{display:inline-flex;align-items:center;gap:6px}
 .hs.foe .gqg{flex-direction:row-reverse}

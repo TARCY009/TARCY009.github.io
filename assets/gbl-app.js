@@ -4060,6 +4060,10 @@ function rbChoices(p, ctx) {
     }
     return opts.concat([{ a: 'stay', label: 'このまま', cls: 'hold', tip: '交代せずにこのまま戦います' }]);
   }
+  // 手動交代(HUDの⇄ボタン)の編集: 交代先だけ選び直せる(取り消しは↺)
+  if (p.kind === 'msw') return ctx.swTo.map(k => ({ a: 'toq', to: k, cls: 'fire',
+    label: `${SWAPMK} ${shMark(ctx.picks[k].name)}`,
+    tip: 'このポケモンに交代します(あいては4.5秒動けませんが、じぶんも0.5秒動けません・次の交代は45秒後)' }));
   return ctx.swTo.map(k => ({ a: 'to', to: k, label: shMark(ctx.picks[k].name), cls: 'fire',
     tip: '次にこのポケモンを出します' }));
 }
@@ -4247,7 +4251,21 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
         return true;
       };
       const pts = rbPoints(rbTurns(res), ctx, dec);
+      // 手動交代(HUDの⇄ボタン・kind msw・2026-09-01・GBLと同じ)。検証に通らない古い記録は黙って捨てる
+      const mkey = Object.keys(ans).find(k => k.indexOf(li + ':msw:') === 0 && !handled.has(k));
+      const mtn = mkey ? +mkey.split(':')[2] : -1;
       const p = pts.find(x => !handled.has(rbKey(li, x.kind, x.seq, x.w)));
+      if (mkey && (!p || mtn < p.tn)) {
+        handled.add(mkey);
+        const ma = ans[mkey];
+        if (ma && ma.a === 'toq' && ctx.swTo.includes(ma.to) && dec.swapTo == null
+            && mtn >= 1 && mtn <= res.turns
+            && base + spTot + mtn + rkSpAt(rkSpc(res), mtn) >= swOkAt) {
+          log.push({ kind: 'msw', seq: mtn, w: 0, tn: mtn, key: mkey, gt: base + mtn, ans: ma, auto: false });
+          dec.swapTo = ma.to; dec.swapAt = mtn;
+        }
+        continue;
+      }
       if (!p) break;                              // この対面で決めることはもう無い
       p.key = rbKey(li, p.kind, p.seq, p.w);
       p.gt = base + p.tn;
@@ -4416,7 +4434,7 @@ const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig:
   fxDone: new Set() };   // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
-const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, next: '', lead: SWAPMK };
+const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, msw: SWAPMK, next: '', lead: SWAPMK };
 
 // ---- 模擬戦の演出(FX・2026-08-30タダシさん指示「ゲームっぽく動きのある演出を」) ----
 // くりだした／交代／SP発動／たおれた／フォルムチェンジ の場面で再生を止めてカットインを見せる。
@@ -4620,7 +4638,7 @@ function rbAskTitle(p) {
   if (p.kind === 'lead') return SWAPMK + ' 開幕交代';
   if (p.kind === 'sp') return '⚡ SPアタック';
   if (p.kind === 'sh') return `🛡 ${p.mv || 'SPアタック'}が来る！`;
-  if (p.kind === 'swap') return SWAPMK + ' 交代する？';
+  if (p.kind === 'swap' || p.kind === 'msw') return SWAPMK + ' 交代する？';
   return '💀 次に出すのは？';
 }
 function rbAnsLabel(p, a) {
@@ -4635,10 +4653,10 @@ function rbAnsLabel(p, a) {
   // チップは種別アイコン(RB_ICON)と並べて出すので、ここでは🛡や⇄を重ねない
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
   // 「場に出した」と「交代した」を言葉で区別する(2026-08-30タダシさん指示・GBL模擬戦とそろえる)
-  if (p.kind === 'swap' || p.kind === 'lead') {
+  if (p.kind === 'swap' || p.kind === 'lead' || p.kind === 'msw') {
     if (a.a === 'stay') return 'このまま';
     const nm = p.ctx.picks[a.to] ? shMark(p.ctx.picks[a.to].name) : '';
-    if (p.kind === 'lead') return `${nm}に交代した！`;
+    if (p.kind === 'lead' || p.kind === 'msw') return `${nm}に交代した！`;
     if (a.a === 'toq') return `${nm}にすぐ交代した！`;
     const fm = p.ctx.fast && D.moves[p.ctx.fast];
     const n = fm ? Math.floor((p.ctx.foeEntry || 0) / (fm.tn || 1)) : 0;
@@ -4895,10 +4913,10 @@ function rbRender(body, bt, picks, foes, extra) {
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
-          <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
+          <button class="hswap" disabled title="いつでも交代できるボタンです（数字は次に交代できるまでの残り時間。一度交代すると45秒間は次の交代ができません）"></button>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
@@ -4977,10 +4995,14 @@ function rbRender(body, bt, picks, foes, extra) {
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
     clk.textContent = rbSec(ckOf(gt));   // SPアタックの待ち時間を含む実時間
     trn.textContent = gt + 'T';
-    // 交代のクールタイム(45秒)の残り。0になったら消える＝出ていなければいつでも交代できる。
-    // SPの演出中もタイマーは止まらないので、実時間どうしで引く
+    // ⇄はいつでも押せる交代ボタン(2026-09-01タダシさん指示・実戦の再現)。
+    // クールタイム中は残り秒つきで無効・押せるときは⇄が点灯。SPの演出中もタイマーは進む
     const swLeft = Math.max(0, (f.meta.swOk || 0) - ckOf(gt));
-    swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
+    const canSwap = RB.step && RBV.started && f.alive0 > 1 && swLeft <= 0 && gt < stop;
+    swapEl.disabled = !canSwap;
+    swapEl.classList.toggle('rdy', canSwap);
+    swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>`
+      : (canSwap ? SWAPMK : '');
   }
   const revealTo = g => {
     const out = [];   // 今あらわれた要素(演出の判定に使う)
@@ -5173,6 +5195,46 @@ function rbRender(body, bt, picks, foes, extra) {
     FX.on = !FX.on; fxSave();
     hfx.setAttribute('aria-pressed', FX.on);
   };
+  // ⏭ 1ターン送り(2026-09-01タダシさん指示・GBLと同じ)
+  const hstep = hud.querySelector('.hstep');
+  if (hstep) hstep.onclick = () => {
+    if (!RBV.started || ended()) return;
+    stopTimer(); RBV.playing = false;
+    if (RBV.cur < stop) tick();
+    setPlayBtn();
+  };
+  // HUDの⇄ボタン=いつでも交代(2026-09-01タダシさん指示・GBLと同じ。キーの形だけロケット団版)
+  const manualSwap = () => {
+    if (!RB.step || !RBV.started || ended()) return;
+    const gt = RBV.cur;
+    if (bt.pending && gt >= stop) return;
+    let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
+    if (li < 0) li = bt.legs.length - 1;
+    const leg = bt.legs[li]; if (!leg) return;
+    const dead = new Set(); bt.legs.slice(0, li).forEach(l => { if (l.meDown) dead.add(l.myIdx); });
+    const bench = picks.map((_, k) => k).filter(k => k !== leg.myIdx && !dead.has(k));
+    if (!bench.length) return;
+    const tn = Math.max(1, gt - leg.base);
+    stopTimer(); RBV.playing = false; setPlayBtn();
+    winbox.innerHTML = `<div class="rbwin"><div class="rwt">${SWAPMK} 交代する？<span>${gt}T ⏱${rbSec(ckOf(gt))}</span><button class="wx" title="やめて再生に戻る">✕</button></div>
+      <div class="rwb">${bench.map(k => `<button class="fire" data-to="${k}" title="このポケモンに交代します(あいては4.5秒動けませんが、じぶんも0.5秒動けません・次の交代は45秒後)">${SWAPMK} ${shMark(picks[k].name)}${tyIco(picks[k].name)}</button>`).join('')}
+      <button class="hold mswx">やめる</button></div></div>`;
+    const key = rbKey(li, 'msw', tn, 0);
+    winbox.querySelectorAll('[data-to]').forEach(b => b.onclick = () => {
+      Object.keys(RB.ans).forEach(k2 => {
+        const pt2 = RBUI.pts[k2];
+        if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li) || k2.indexOf(li + ':msw:') === 0)
+          delete RB.ans[k2];
+      });
+      RB.ans[key] = { a: 'toq', to: +b.dataset.to };
+      RBUI.open = null; RBV.playing = true;
+      run();
+    });
+    const cancel = () => { winbox.innerHTML = ''; RBV.playing = true; startTimer(); };
+    winbox.querySelector('.mswx').onclick = cancel;
+    winbox.querySelector('.wx').onclick = cancel;
+  };
+  swapEl.onclick = manualSwap;
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
@@ -6148,6 +6210,10 @@ function gbChoices(p, ctx) {
                   : 'シールドを使わずにダメージを受けます' },
     ];
   }
+  // 手動交代(HUDの⇄ボタン)の編集: 交代先だけ選び直せる(取り消しは↺)
+  if (p.kind === 'msw') return ctx.swTo[0].map(k => ({ a: 'toq', to: k, cls: 'fire',
+    label: `${SWAPMK} ${shMark(ros[0][k].name)}`,
+    tip: 'このポケモンに交代します(相手の打ちかけの1発は交代先に入ります・次の交代は45秒後)' }));
   if (p.kind === 'swap') {
     const opts = ctx.swTo[s].map(k => ({ a: 'toq', to: k, cls: 'fire',
       label: `${SWAPMK} ${shMark(ros[s][k].name)}`,
@@ -6166,7 +6232,7 @@ function gbAskTitle(p) {
     const hide = !p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
     return `${who}🛡 ${hide ? 'SPアタック' : (p.mv || 'SPアタック')}が来る！`;
   }
-  if (p.kind === 'swap') return who + SWAPMK + ' 交代する？';
+  if (p.kind === 'swap' || p.kind === 'msw') return who + SWAPMK + ' 交代する？';
   return who + '💀 次に出すのは？';
 }
 function gbAnsLabel(p, a) {
@@ -6185,7 +6251,7 @@ function gbAnsLabel(p, a) {
   if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
   const ros = p.ctx.ros[p.side || 0];
   // 「場に出した」と「交代した」を言葉で区別する(2026-08-30タダシさん指示・一瞬で見分けづらかったため)
-  if (p.kind === 'swap' || p.kind === 'lead') {
+  if (p.kind === 'swap' || p.kind === 'lead' || p.kind === 'msw') {
     if (a.a === 'stay') return 'このまま';
     return `${ros[a.to] ? shMark(ros[a.to].name) : ''}に交代した！`;
   }
@@ -7159,7 +7225,21 @@ function gbPlay(picks, foes, ans, stepwise) {
       const spc = gbSpc(res);
       ctx.ck = tn => base + tn + GB_SP_TURNS * (spTot + gbSpAt(spc, tn));
       const pts = gbPoints(rbTurns(res), ctx, dec);
+      // 手動交代(HUDの⇄ボタン・kind msw・2026-09-01): 記録があれば時系列の位置で反映する。
+      // クールタイム・控えの生存・先の打ち切りを検証し、通らなければ黙って捨てる(前提が変わった古い記録)
+      const mkey = Object.keys(ans).find(k => k.indexOf(li + ':0:msw:') === 0 && !handled.has(k));
+      const mtn = mkey ? +mkey.split(':')[3] : -1;
       const p = pts.find(x => !handled.has(gbKey(li, x.side, x.kind, x.seq, x.w)));
+      if (mkey && (!p || mtn < p.tn)) {
+        handled.add(mkey);
+        const ma = ans[mkey];
+        if (ma && ma.a === 'toq' && ctx.swTo[0].includes(ma.to) && dec[0].swapTo == null
+            && mtn >= 1 && mtn <= res.turns && ctx.ck(mtn) >= ctx.swOk[0]) {
+          log.push({ side: 0, kind: 'msw', seq: mtn, w: 0, tn: mtn, key: mkey, gt: base + mtn, ans: ma, auto: false });
+          dec[0].swapTo = ma.to; dec[0].swapAt = mtn;
+        }
+        continue;
+      }
       if (!p) break;
       p.key = gbKey(li, p.side, p.kind, p.seq, p.w);
       p.gt = base + p.tn;
@@ -7561,10 +7641,10 @@ function gbRender(body, bt, picks, foes) {
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
-          <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
+          <button class="hswap" disabled title="いつでも交代できるボタンです（数字は次に交代できるまでの残り時間。一度交代すると45秒間は次の交代ができません）"></button>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
@@ -7644,9 +7724,14 @@ function gbRender(body, bt, picks, foes) {
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
     clk.textContent = rbSec(ckOf(gt));   // SPアタックの演出ぶんを含む実時間
     trn.textContent = gt + 'T';
-    // 交代のクールタイム(45秒)の残り。SPの演出中も進むので、時計どうしで引く
+    // ⇄はいつでも押せる交代ボタン(2026-09-01タダシさん指示・実戦の再現)。
+    // クールタイム中は残り秒つきで無効・押せるときは⇄が点灯。SPの演出中もタイマーは進む
     const swLeft = Math.max(0, (f.meta.swOk || 0) - ckOf(gt));
-    swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
+    const canSwap = RB.step && RBV.started && f.alive0 > 1 && swLeft <= 0 && gt < stop;
+    swapEl.disabled = !canSwap;
+    swapEl.classList.toggle('rdy', canSwap);
+    swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>`
+      : (canSwap ? SWAPMK : '');
     const fswLeft = Math.max(0, (f.meta.fswOk || 0) - ckOf(gt));
     fswapEl.innerHTML = fswLeft > 0 ? `<b>${Math.ceil(fswLeft / 2)}</b><small>秒</small>${SWAPMK}` : '';
   }
@@ -7834,6 +7919,50 @@ function gbRender(body, bt, picks, foes) {
     FX.on = !FX.on; fxSave();
     hfx.setAttribute('aria-pressed', FX.on);
   };
+  // ⏭ 1ターン送り(2026-09-01タダシさん指示): ⏸で止めて、相手のわざの周期(CCT)を見ながら
+  // 狙ったターンに正確に止めるためのコマ送り。送った先が決断の場面なら質問が出る
+  const hstep = hud.querySelector('.hstep');
+  if (hstep) hstep.onclick = () => {
+    if (!RBV.started || ended()) return;
+    stopTimer(); RBV.playing = false;
+    if (RBV.cur < stop) tick();
+    setPlayBtn();
+  };
+  // HUDの⇄ボタン=いつでも交代(2026-09-01タダシさん指示・実戦の交代ボタンの再現)。
+  // 押すと再生が止まり控えを選ぶ。選ぶと**いま表示中のターン**で交代する(答えはmswとして記録され、
+  // タイムラインのチップから選び直し・↺で取り消しできる)。前提が変わるのでそれより後ろの答えは消す
+  const manualSwap = () => {
+    if (!RB.step || !RBV.started || ended()) return;
+    const gt = RBV.cur;
+    if (bt.pending && gt >= stop) return;   // 質問の表示中はそちらの選択肢で選ぶ
+    let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
+    if (li < 0) li = bt.legs.length - 1;
+    const leg = bt.legs[li]; if (!leg) return;
+    const dead = new Set(); bt.legs.slice(0, li).forEach(l => { if (l.meDown) dead.add(l.myIdx); });
+    const bench = picks.map((_, k) => k).filter(k => k !== leg.myIdx && !dead.has(k));
+    if (!bench.length) return;
+    const tn = Math.max(1, gt - leg.base);
+    stopTimer(); RBV.playing = false; setPlayBtn();
+    winbox.innerHTML = `<div class="rbwin"><div class="rwt">${SWAPMK} 交代する？<span>${gt}T ⏱${rbSec(ckOf(gt))}</span><button class="wx" title="やめて再生に戻る">✕</button></div>
+      <div class="rwb">${bench.map(k => `<button class="fire" data-to="${k}" title="このポケモンに交代します(相手の打ちかけの1発は交代先に入ります・次の交代は45秒後)">${SWAPMK} ${shMark(picks[k].name)}${tyIco(picks[k].name)}</button>`).join('')}
+      <button class="hold mswx">やめる</button></div></div>`;
+    const key = gbKey(li, 0, 'msw', tn, 0);
+    winbox.querySelectorAll('[data-to]').forEach(b => b.onclick = () => {
+      // 前提が変わるので、この場面より後ろの答えと同じ対面の古い手動交代は消す
+      Object.keys(RB.ans).forEach(k2 => {
+        const pt2 = RBUI.pts[k2];
+        if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li) || k2.indexOf(li + ':0:msw:') === 0)
+          delete RB.ans[k2];
+      });
+      RB.ans[key] = { a: 'toq', to: +b.dataset.to };
+      RBUI.open = null; RBV.playing = true;
+      run();
+    });
+    const cancel = () => { winbox.innerHTML = ''; RBV.playing = true; startTimer(); };
+    winbox.querySelector('.mswx').onclick = cancel;
+    winbox.querySelector('.wx').onclick = cancel;
+  };
+  swapEl.onclick = manualSwap;
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
