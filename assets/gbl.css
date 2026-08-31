@@ -808,13 +808,16 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rwb .rtag{font-style:normal;font-size:.56rem;font-weight:800;padding:1px 6px;border-radius:99px;
   background:var(--win);color:#06341a;margin-left:2px}
 /* わざごとのフレーム(2026-08-20タダシさん指示): 見出し=わざ名＋ゲージ、
-   中に「⭐最適」「即打ち」の2大ボタン(最適が左) */
-.rwb .mvopt{flex:1 1 240px;min-width:0;border:1px solid var(--line2);border-radius:12px;
+   中に「⭐最適」「即打ち」の2大ボタン(最適が左)。
+   SPが2本あるときは実際の戦闘画面と同じ横並び(.mvrow・2026-08-31タダシさん指示・
+   左か右かどっちを撃つかの形)。狭い幅ではフレーム内のボタンが縦に折り返す */
+.rwb .mvrow{flex-basis:100%;display:flex;gap:7px;align-items:stretch}
+.rwb .mvopt{flex:1 1 0;min-width:0;border:1px solid var(--line2);border-radius:12px;
   padding:7px 9px 9px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:7px}
-.rwb .mvopt .mh{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rwb .mvopt .mb{display:flex;gap:7px}
-.rwb .mvopt .mb button{flex:1;min-width:0}
+.rwb .mvopt .mh{display:flex;align-items:center;gap:5px 6px;font-size:.78rem;font-weight:800;
+  flex-wrap:wrap;min-width:0}
+.rwb .mvopt .mb{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto}
+.rwb .mvopt .mb button{flex:1 1 84px;min-width:0}
 .rwb .cost{font-style:normal;font-size:.58rem;font-weight:800;color:#06202b;background:var(--gold);border-radius:99px;padding:1px 6px}
 /* ためてブラフ(2026-08-30タダシさん指示): 2行組み(1行目=名前＋N・2行目=具体のわざ) */
 .rwb button.bluffbtn{flex-direction:column;gap:1px;padding:5px 12px;line-height:1.25}

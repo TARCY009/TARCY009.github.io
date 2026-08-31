@@ -4963,8 +4963,9 @@ function rbRender(body, bt, picks, foes, extra) {
     // ロケット団は「撃たない」が先頭(det無しのrestの先頭に来る)。フレームはそのあと
     const lead = rest.filter(x => !x.o.det && x.o.a === 'hold');
     const tail = rest.filter(x => !(x.o.a === 'hold' && !x.o.det));
+    // SPが2本あるときは実際の戦闘画面と同じ横並び(2026-08-31タダシさん指示・左右どちらを撃つかの形)
     const btns = lead.map(btn).join('')
-      + groups.map(g => `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')
+      + (groups.length ? `<div class="mvrow">${groups.map(g => `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')}</div>` : '')
       + tail.filter(x => det || !x.o.det).map(btn).join('')
       + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
@@ -7550,8 +7551,9 @@ function gbRender(body, bt, picks, foes) {
       } else rest.push({ o, i });
     });
     // end付き(ためてブラフ)は「…詳細」の右に置く(2026-08-30タダシさん指示)
-    const btns = groups.map(g =>
-      `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')
+    // SPが2本あるときは実際の戦闘画面と同じ横並び(2026-08-31タダシさん指示・左右どちらを撃つかの形)
+    const btns = (groups.length ? `<div class="mvrow">${groups.map(g =>
+      `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')}</div>` : '')
       + rest.filter(x => !x.o.end && (det || !x.o.det)).map(btn).join('')
       + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
       + rest.filter(x => x.o.end).map(btn).join('')
