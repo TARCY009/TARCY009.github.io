@@ -5970,7 +5970,12 @@ function gbPoints(turns, ctx, dec) {
           // ついていけない。2026-08-19タダシさん指摘)。被弾するHPだけは当たる前の値に戻す
           const sn = snap[t.tn];
           const hpB = t.state[s].hp + e.full;
+          // so=そのターンの中での解決順(エンジンの行の位置)。同時発動では**先に解決した側の
+          // シールド判断が先**＝先に撃った側は、相手が食らったか防いだかを見てから自分の判断をする
+          // (2026-08-31タダシさん指示・時系列の再現。並べ替えとgbPlayの決断順に効く)
+          const so = t.sub ? t.sub.findIndex(r => r.ev[o] === e) : 0;
           pts.push({ side: s, kind: 'sh', seq: shSeq, w: 0, tn: t.tn, spSeen: shSeq + 1,
+            so: Math.max(0, so),
             mv: e.move, dmg: e.full, ko: t.state[s].hp <= 0,
             hpB, enB: t.state[o].en + (mvA ? mvA.e : 0),
             st0: sn && { ...sn.st0, hp: s === 0 ? hpB : sn.st0.hp },
@@ -6045,7 +6050,11 @@ function gbPoints(turns, ctx, dec) {
   // 「交代した！」チップが先に見えてしまう＝時系列が崩れる。後ろに置けば、シールドの答えを
   // 反映したシミュでAIが交代を判断することにもなり、「その瞬間の状態で読み直す」の確定仕様どおり)
   const ord = p => p.kind !== 'swap' ? 1 : (p.seq > 0 || p.w === 1 ? 2 : 0);
-  pts.sort((a, b) => a.tn - b.tn || ord(a) - ord(b) || a.side - b.side);
+  // 同じターンのシールド質問どうしは**解決順(so)**で並べる(2026-08-31タダシさん指示・同時発動の時系列:
+  // 先に解決したSPへのシールド判断が先。先に撃った側は相手の結果を見てから自分の判断をする)
+  pts.sort((a, b) => a.tn - b.tn || ord(a) - ord(b)
+    || (a.kind === 'sh' && b.kind === 'sh' ? (a.so || 0) - (b.so || 0) : 0)
+    || a.side - b.side);
   pts.forEach(p => { p.ck = ck(p.tn); });   // 決断ごとの時計(表示とAIの交代判断に使う)
   return pts;
 }
@@ -7447,7 +7456,16 @@ function gbRender(body, bt, picks, foes) {
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       } else {
         const pf = frames[gt - 1] || frames[base];
-        frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
+        // 決断待ちのターンでも、**すでに解決した出来事(先に撃った側のSPなど)はHPに反映する**
+        // (2026-08-31タダシさん指示・同時発動の時系列: 先に撃った側は、相手が食らったのか
+        //  シールドで防いだのかを見てから自分のシールドを判断する。HUDのHPと残像もそのとおり動く)
+        let hp0p = pf.hp0, hp1p = pf.hp1;
+        for (const r of subs) for (let i = 0; i < 2; i++) {
+          const e = r.ev[i]; if (!e) continue;
+          const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
+          if (i === 0) hp1p = Math.max(0, hp1p - dm); else hp0p = Math.max(0, hp0p - dm);
+        }
+        frames[gt] = { meta, hp0: hp0p, en0: pf.en0, hp1: hp1p, en1: pf.en1,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
       }
       let first = true;
@@ -7459,18 +7477,21 @@ function gbRender(body, bt, picks, foes) {
         first = false;
       }
       if (first) items.push({ gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` });
-      // 両者の決断が同じターンに並んだらペアのフレームへ(plはソート済み=じぶんが先)
+      // 両者の決断が同じターンに並んだらペアのフレームへ(shは解決順ソートで
+      // あいてが先に来ることもあるので、左右はside基準でそろえる=じぶんが左)
       const firing = x => x.ans && x.ans.a !== 'hold' && x.ans.a !== 'wait';
       const pl = ptAt[t.tn] || [];
       for (let pi = 0; pi < pl.length; pi++) {
         const p = pl[pi], q = pl[pi + 1];
-        if (q && p.kind === q.kind && p.side === 0 && q.side === 1
-            && (p.kind === 'sh'
-              || (p.kind === 'sp' && firing(p) && firing(q)
-                  && spTn[0][p.seq] != null && spTn[0][p.seq] === spTn[1][q.seq]))) {
-          items.push(pairItem(p, q, gt, p.kind === 'sp' ? '同時発動' : ''));
-          pi++;
-          continue;
+        if (q && p.kind === q.kind && p.side !== q.side) {
+          const a0 = p.side ? q : p, b1 = p.side ? p : q;   // a0=じぶん(左)・b1=あいて(右)
+          if (p.kind === 'sh'
+              || (p.kind === 'sp' && firing(a0) && firing(b1)
+                  && spTn[0][a0.seq] != null && spTn[0][a0.seq] === spTn[1][b1.seq])) {
+            items.push(pairItem(a0, b1, gt, p.kind === 'sp' ? '同時発動' : ''));
+            pi++;
+            continue;
+          }
         }
         items.push(chipItem(p, gt));
       }

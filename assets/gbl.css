@@ -821,18 +821,18 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rwb .cost{font-style:normal;font-size:.58rem;font-weight:800;color:#06202b;background:var(--gold);border-radius:99px;padding:1px 6px}
 /* シールドの質問はゲーム画面を再現(2026-08-31タダシさん指示):
    六角形タイルの結晶＋残り枚数(タップ=使う)を中央に、下に「あとで」(=受ける) */
-.rwb .shwin{flex-basis:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0 0}
-.rwb .shwin .shuse{position:relative;background:none;border:0;box-shadow:none;padding:4px 12px;min-height:0}
-.rwb .shwin .shuse .shcry{display:block;width:104px;height:auto;
+.rwb .shwin{flex-basis:100%;display:flex;flex-direction:column;align-items:center;gap:0;padding:0}
+.rwb .shwin .shuse{position:relative;background:none;border:0;box-shadow:none;padding:2px 10px;min-height:0}
+.rwb .shwin .shuse .shcry{display:block;width:84px;height:auto;
   filter:drop-shadow(0 0 20px rgba(176,108,255,.55)) drop-shadow(0 4px 10px rgba(0,0,0,.4));
   transition:transform .12s ease}
 .rwb .shwin .shuse:hover .shcry{transform:scale(1.06)}
 .rwb .shwin .shcry polygon{fill:url(#shcg);stroke:rgba(255,255,255,.55);stroke-width:1.2}
-.rwb .shwin .shx{position:absolute;top:-2px;right:-6px;font-style:normal;font-weight:900;font-size:.84rem;
-  color:#fff;background:rgba(10,14,28,.94);border:1px solid var(--gl);border-radius:99px;padding:2px 10px;
+.rwb .shwin .shx{position:absolute;top:-2px;right:-4px;font-style:normal;font-weight:900;font-size:.78rem;
+  color:#fff;background:rgba(10,14,28,.94);border:1px solid var(--gl);border-radius:99px;padding:1px 8px;
   box-shadow:0 3px 10px rgba(0,0,0,.4)}
 .rwb .shwin .shlater{background:none;border:0;box-shadow:none;color:var(--sub);font-size:.8rem;
-  font-weight:700;padding:7px 22px;min-height:0}
+  font-weight:700;padding:4px 20px;min-height:0}
 .rwb .shwin .shlater:hover{color:var(--ink)}
 /* ためてブラフ(2026-08-30タダシさん指示): 2行組み(1行目=名前＋N・2行目=具体のわざ) */
 .rwb button.bluffbtn{flex-direction:column;gap:1px;padding:5px 12px;line-height:1.25}
