@@ -4452,7 +4452,7 @@ function fxShow(cls, html, dur) {
 function hpGhost(gEl, w) {
   if (!gEl) return;
   const prev = +(gEl.dataset.p || 100);
-  gEl.style.transition = w < prev - 0.5 ? 'width .95s cubic-bezier(.25,.6,.3,1) .3s' : 'none';
+  gEl.style.transition = w < prev - 0.5 ? 'width 1.24s cubic-bezier(.25,.6,.3,1) .39s' : 'none';
   gEl.style.width = w + '%';
   gEl.dataset.p = w;
 }
@@ -4486,11 +4486,12 @@ function fxOne(f) {
   if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
     const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';
     const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
+    // SPカットインだけさらに30%遅く(1150→1495・2026-08-31タダシさん指示)
     const d = fxShow('fxsp ' + sideCls, `<div class="band" style="--fc1:${c.top};--fc2:${c.bot}">
-      <span class="mvn">${f.mv || 'SPアタック'}</span></div><i class="flash"></i>`, 1150);
+      <span class="mvn">${f.mv || 'SPアタック'}</span></div><i class="flash"></i>`, 1495);
     if (f.shd) {
       // シールドでブロック: カットインに続けて六角形のドームを出す(防いだので着弾の揺れは無し)
-      const delay = Math.min(Math.round(d * 0.55), Math.round(620 * FX_SLOW));
+      const delay = Math.min(Math.round(d * 0.55), Math.round(806 * FX_SLOW));
       setTimeout(() => fxOne({ k: 'shd', side: 1 - f.side }), delay);   // ドームは防いだ側
       return delay + Math.max(300, Math.round(950 * FX_SLOW / (RBV.speed || 1)));
     }

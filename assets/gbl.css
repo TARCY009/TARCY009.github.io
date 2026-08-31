@@ -844,7 +844,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hb{height:7px;background:var(--deep);border:1px solid var(--line);border-radius:99px;margin:4px 0 5px;overflow:hidden;position:relative}
 /* HPが減る動き(2026-08-31): 本体はすぐ減り、うしろの白い残像がゆっくり追いかける(hpGhost) */
 .hb em{position:absolute;left:0;top:0;height:100%;width:100%;border-radius:99px;background:rgba(255,255,255,.5)}
-.hb i{display:block;position:relative;height:100%;width:100%;border-radius:99px;transition:width .3s ease}
+.hb i{display:block;position:relative;height:100%;width:100%;border-radius:99px;transition:width .39s ease}
 .hb i.g{background:linear-gradient(90deg,#2bd97c,#7ef0af)}
 .hb i.y{background:linear-gradient(90deg,#e8a93d,#ffd54a)}
 .hb i.r{background:linear-gradient(90deg,#ff6b81,#ff9d9d)}
