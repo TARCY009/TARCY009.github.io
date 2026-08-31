@@ -6715,7 +6715,12 @@ function gbPlay(picks, foes, ans, stepwise) {
       // ためきったら**軽いほう**を撃つ＝防がれてもゲージが残り、重いわざの脅威も消えない。
       // ためない例外: ①余裕がない(この対面が負け読み) ②見せかけの必要がない
       // (軽いわざが弱点を突く／重いわざが等倍未満で本命にならない) ③相手のシールドが無い
-      if (ai.bluff && p.st0 && p.st0.sh > 0 && !aiLosing(ctx.li, nowOv)) {
+      // **ただし軽いわざが相手の耐性で軽減されるときは、負け読みでもためる**
+      // (2026-08-31タダシさん指示。例: ザシアン対メガミュウツーX——かくとう耐性の相手に
+      //  インファイトを即打ちするのはおかしい。きょじゅうざんの脅威を作ってから
+      //  ブラフで軽いわざを撃つ(そして打ち逃げ)が正しい。シールドが無い相手なら下のautoに落ち、
+      //  エンジンの効率判断が等倍の重いわざを選ぶので即打ち事故は起きない)
+      if (ai.bluff && p.st0 && p.st0.sh > 0) {
         const mvs = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] })).filter(x => x.m)
           .sort((a, b) => a.m.e - b.m.e);
         if (mvs.length >= 2 && mvs[mvs.length - 1].m.e > mvs[0].m.e) {
@@ -6723,7 +6728,7 @@ function gbPlay(picks, foes, ans, stepwise) {
           const uTy = D.pokemon[ros[0][cur[0]].m.key].ty;
           const effL = PvpEngine.effectiveness(D, light.m.t, uTy);
           const effH = PvpEngine.effectiveness(D, heavy.m.t, uTy);
-          if (effH >= 1 && effL < 1.6) {
+          if (effH >= 1 && effL < 1.6 && (effL < 1 || !aiLosing(ctx.li, nowOv))) {
             const en = p.en != null ? p.en : 0;
             const fm = D.moves[ctx.fast[p.side]];
             const eg = fm ? (fm.eg || 0) : 0;
@@ -6802,6 +6807,17 @@ function gbPlay(picks, foes, ans, stepwise) {
         const lockedW = ctx.swOk[0] - (p.ck != null ? p.ck : ctx.base + p.tn) >= GB_LOCK_MIN;
         const to = aiSwapTo(1, { even: true, guard: !(lockedW || ctx.swTo[0].length === 0), ...ov });
         return to == null ? { a: 'stay' } : { a: 'toq', to };
+      }
+      // ---- 打ち逃げ(2026-08-31タダシさん指示・恒久ルール) ----
+      // 『交代が可能な場面でデバフ技を打つ時は必ず交代する』。自分の能力が下がるSP
+      // (または逃げ回りの吐き出し)を撃った直後の質問(seq>0)は、デバフを背負ったまま残らず
+      // **必ず交代してリセットする**(この質問は交代できる場面でしか出ない)。
+      // 行き先は勝てる控えを最優先、いなければ形勢のいちばんマシな控え(aiKeepSwap)。
+      // HARDの「自分から逃げ交代しない」ガードより優先する明示的な例外
+      if (p.seq > 0) {
+        const to = aiKeepSwap(nowOv);
+        if (to != null) return { a: 'toq', to };
+        return { a: 'stay' };   // 控えがいない保険(質問の条件上ほぼ通らない)
       }
       // ---- 出し勝った初手の温存(2026-08-30タダシさん指示・上級者の動き・NORMALから適用) ----
       // ユーザーは**交代できたのに**不利な対面から交代せず倒された(ABAで出し負けた形)＝
