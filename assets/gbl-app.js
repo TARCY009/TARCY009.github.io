@@ -3836,7 +3836,10 @@ function rkRankCard(r, i) {
 // ---- ロケット団戦: 模擬戦 ----
 // ans  = 決断への答え（キーは rbKey。決めていない場面は「おまかせ」でAIが判断する）
 // step = 見かた。true=バトル（1ターン=0.5秒で再生し、決断で止まる）／false=結果だけ（一気に出す）
-const RB = { ans: {}, step: true, found: null, goal: null };
+// rseed=バトルごとの乱数の種(2026-09-01タダシさん指示・あいてのブラフ率の癖に使う)。
+// バトル開始ごとに引き直し、バトル中は固定(決断を選び直しても結果が揺れない)。
+// 共有URLには rsd= で載せて、開いた人にも同じ癖が再現されるようにする(rseedLock=URL由来の種を守る印)
+const RB = { ans: {}, step: true, found: null, goal: null, rseed: 0, rseedLock: false };
 const rbAnsCount = () => Object.keys(RB.ans).length;
 // 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
 const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p', bluff: 'b' };
@@ -6896,13 +6899,14 @@ function gbPlay(picks, foes, ans, stepwise) {
             if (en < heavy.m.e && eg > 0)
               return { a: 'wait', n: Math.max(1, Math.ceil((heavy.m.e - en) / eg)) };
             if (en >= heavy.m.e) {
-              // 毎回ブラフだと読まれて単調(2026-09-01タダシさん指示・ランダム性を加える):
-              // **3回に2回は軽いわざのブラフ・3回に1回は本命の重いわざをそのまま撃つ**。
-              // 素の乱数だと決断を選び直すたびに結果が変わるので、場面ハッシュのコイン(gbCoin)で
-              // 「同じ場面なら必ず同じ・場面が変われば変わる」にする(両者同時KOの出し直しと同じ流儀)
-              const roll = gbCoin('bluff:' + ctx.li + ':' + p.seq + ':' + p.tn + ':'
+              // 毎回ブラフだと読まれて単調(2026-09-01タダシさん指示・2段階で確定):
+              // **ブラフ率そのものをバトルごとに抽選する**(人によって撃ち分けの癖が違う実戦の再現)。
+              // heavyN=「3発中なん発を本命の重いわざにする癖か」(0〜3を等確率・バトルの種RB.rseedから)。
+              // 発射ごとの抽選は場面ハッシュ(gbCoin)＝同じ場面なら必ず同じ・決断を選び直しても揺れない
+              const heavyN = gbCoin('brate:' + RB.rseed) % 4;
+              const roll = gbCoin('bluff:' + RB.rseed + ':' + ctx.li + ':' + p.seq + ':' + p.tn + ':'
                 + ros[1][cur[1]].name + ':' + ros[0][cur[0]].name) % 3;
-              return { a: 'fire', mv: roll === 2 ? heavy.id : light.id };
+              return { a: 'fire', mv: roll < heavyN ? heavy.id : light.id };
             }
           }
         }
@@ -7450,6 +7454,9 @@ function runMockBuild() {
   if (RBV.sig !== sig) {
     if (RBV.sig !== undefined) { RB.ans = {}; RBUI.open = null; RB.found = null; }
     RBV.sig = sig; RBV.started = false; RBV.cur = 0; RBV.playing = true;
+    // バトルが仕切り直しになったら乱数の種も引き直す(共有リンク由来の種は初回だけ守る)
+    RB.rseed = RB.rseedLock ? RB.rseed : (Math.random() * 1e9) | 0;
+    RB.rseedLock = false;
   }
   const picks = mineIdx.map(i => {
     const mv = gbmOf(i);
@@ -7934,6 +7941,7 @@ function gbRender(body, bt, picks, foes) {
   };
   const restart = () => {
     RB.ans = {}; RBUI.open = null; RB.found = null;
+    if (mode === 'mock') RB.rseed = (Math.random() * 1e9) | 0;   // ⏹=新しいバトル: あいての癖も引き直す
     RBV.cur = 0; RBV.playing = true;
     if (RB.step) RBV.started = true;
     if (RB.step && RB.goal) { applyGoal(); return; }
@@ -8953,8 +8961,12 @@ document.getElementById('copyUrl').onclick = async () => {
   // 模擬戦は「選んだ手」も含めて共有する。リンクを開いた人にはその手順が再現される
   let url = location.href;
   if ((mode === 'rocket' && RK.team) || mode === 'mock') {
+    const u = new URL(location.href);
     const ansStr = rbAnsToStr();
-    if (ansStr) { const u = new URL(location.href); u.searchParams.set('rb', ansStr); url = u.toString(); }
+    if (ansStr) u.searchParams.set('rb', ansStr);
+    // GBL模擬戦はバトルの乱数の種(あいてのブラフ率の癖)も載せる=開いた人にも同じ癖が再現される
+    if (mode === 'mock') u.searchParams.set('rsd', RB.rseed);
+    if (ansStr || mode === 'mock') url = u.toString();
   }
   await navigator.clipboard.writeText(url);
   document.getElementById('copyUrl').textContent = 'コピーしました ✅';
@@ -9323,6 +9335,8 @@ document.addEventListener('click', e => {
   if (q.get('rbs') === '0') RB.step = false;   // 見かた(結果だけ)の復元(rbs=1は旧リンク・既定と同じ)
   if (q.get('rls') === '1') RK.leadSwap = true;   // 開幕交代の復元
   if (q.get('rb')) rbAnsFromStr(q.get('rb'));   // 決断で選んだ内容の復元
+  // バトルの乱数の種(あいてのブラフ率の癖)の復元。最初のバトルだけ守る(仕切り直したら引き直す)
+  if (q.get('rsd') != null && !isNaN(+q.get('rsd'))) { RB.rseed = +q.get('rsd'); RB.rseedLock = true; }
   if (q.get('rw') && rkWhoList().some(w => w.id === q.get('rw'))) {   // 手持ち(だれと・選んだ並び)の復元
     RK.who = q.get('rw');
     const w = rkWho(), sel = (q.get('rl') || '').split('').map(Number);
