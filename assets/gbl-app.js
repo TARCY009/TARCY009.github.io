@@ -6899,6 +6899,24 @@ function gbPlay(picks, foes, ans, stepwise) {
           }
         }
       }
+      // **相手にシールドが無いなら、耐性のわざを撃ち続けない**(2026-09-01タダシさん指示)。
+      // エンジンは同ターン周期の対面で「いま撃てるわざ」から選ぶ確定仕様(参照実装)なので、
+      // 軽いわざが相手の耐性だと、重い等倍のわざまで一生たまらない
+      // (実例: 両者りゅうのいぶきのメガギャラドスが、水耐性のディアルガにアクアテールを打ち続けた)。
+      // エンジンは変えず、ここ(AI)でわざを名指しして「ためて等倍以上のわざ」を撃たせる
+      if ((ai.sw || ai.farm) && p.st0 && p.st0.sh <= 0) {
+        const fmS = D.moves[ctx.fast[p.side]], fmU = D.moves[ctx.fast[1 - p.side]];
+        if (fmS && fmU && fmS.tn === fmU.tn) {
+          const uTy = D.pokemon[ros[0][cur[0]].m.key].ty;
+          const en2 = p.en != null ? p.en : 0;
+          const mvs2 = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] })).filter(x => x.m);
+          const avail2 = mvs2.filter(x => x.m.e <= en2);
+          const better = mvs2.filter(x => x.m.e > en2 && PvpEngine.effectiveness(D, x.m.t, uTy) >= 1)
+            .sort((a, b) => a.m.e - b.m.e)[0];
+          if (better && avail2.length && avail2.every(x => PvpEngine.effectiveness(D, x.m.t, uTy) < 1))
+            return { a: 'opt', mv: better.id };
+        }
+      }
       return { a: 'auto' };
     }
     if (p.kind === 'sh') {
