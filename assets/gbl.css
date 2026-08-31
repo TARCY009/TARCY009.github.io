@@ -1470,8 +1470,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    じぶんは 戻る=左へ・入る=右から。あいては--ox/--ixの符号だけ反転して鏡写し */
 .fxswapfx .swwrap{display:flex;flex-direction:column;align-items:center;gap:14px}
 .fxswapfx .stage{position:relative;width:230px;height:96px}
-.fxswapfx{--ox:-96px;--ix:100px}
-.fxswapfx.foe{--ox:96px;--ix:-100px}
+/* じぶん=右へ戻して左から入る・あいては鏡写し(2026-08-31タダシさん指示で向きを反転) */
+.fxswapfx{--ox:96px;--ix:-100px}
+.fxswapfx.foe{--ox:-96px;--ix:100px}
 .fxswapfx .fball{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
   background:linear-gradient(180deg,#e8404b 0 46%,#16204a 46% 54%,#f5f6fa 54% 100%);
   box-shadow:0 4px 14px rgba(0,0,0,.5),inset 0 2px 4px rgba(255,255,255,.35)}
