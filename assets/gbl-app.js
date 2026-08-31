@@ -4446,6 +4446,18 @@ function fxShow(cls, html, dur) {
   setTimeout(() => el.remove(), d + 80);
   return d;
 }
+// 名前(シャドウ○○を含む)からタイプアイコンを引く(2026-09-01タダシさん指示・
+// 場に出る演出とVSカードで名前の横に出す=どのポケモンかの判断が速くなる)。結果はキャッシュ
+const TY_BY_NAME = {};
+function tyIco(nm) {
+  if (!nm) return '';
+  const base = nm.replace(/^シャドウ/, '');
+  if (!(base in TY_BY_NAME)) {
+    const p = Object.values(D.pokemon).find(x => x.n === base);
+    TY_BY_NAME[base] = p ? typePairHTML(p.ty.map(t => D.typeJa[t]), 15) : '';
+  }
+  return TY_BY_NAME[base];
+}
 // ゲームのシールド(六角形タイルの結晶)を再現したアイコン(2026-08-31タダシさん指示)。
 // 半径2の六角形クラスタ=19枚のタイルに、ピンク→紫→水色のグラデーションを通しで敷く
 function shieldSvg() {
@@ -4483,13 +4495,13 @@ function fxQuake() {
 function fxOne(f) {
   const sideCls = f.side ? 'foe' : 'me';
   if (f.k === 'vs') {
-    return fxShow('fxvs', `<div class="vswrap"><span class="pn me">${f.me || ''}</span><em>VS</em><span class="pn foe">${f.foe || ''}</span></div>`, 1400);
+    return fxShow('fxvs', `<div class="vswrap"><span class="pn me">${f.me || ''}${tyIco(f.me)}</span><em>VS</em><span class="pn foe">${f.foe || ''}${tyIco(f.foe)}</span></div>`, 1400);
   }
   if (f.k === 'in') {   // くりだした: ボールが開いて閃光→名前の帯
     return fxShow('fxin ' + sideCls, `<div class="inwrap"><i class="fball"></i><i class="burst"></i>
       <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
       <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span>
-      <div class="tx">${f.name || ''}をくりだした！</div></div>`, 1400);
+      <div class="tx">${f.name || ''}${tyIco(f.name)} をくりだした！</div></div>`, 1400);
   }
   if (f.k === 'swap') {   // 交代: ボールに戻して飛び去る→⇄→新しいボールが飛び込んで開く(2段)＋名前の帯
     return fxShow('fxswapfx ' + sideCls, `<div class="swwrap"><div class="stage">
@@ -4497,7 +4509,7 @@ function fxOne(f) {
       <i class="burst"></i>
       <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
       <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span></div>
-      <div class="tx">${f.name || ''}に交代した！</div></div>`, 1700);
+      <div class="tx">${f.name || ''}${tyIco(f.name)} に交代した！</div></div>`, 1700);
   }
   if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
     const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';
@@ -4754,7 +4766,7 @@ function rbRender(body, bt, picks, foes, extra) {
          pv.swapped && { k: 'swap', side: 0, name: leg.meName }].filter(Boolean);
     if (!pv && leg.leadPt && leg.leadPt.ans && leg.leadPt.ans.a === 'to')
       fxv.push({ k: 'swap', side: 0, name: leg.meName });
-    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
+    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
     if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
@@ -4842,7 +4854,7 @@ function rbRender(body, bt, picks, foes, extra) {
   if (!bt.legs.length && bt.pending && foes.length) {
     const F = rktCfg(foes[0]);
     const sA = PvpEngine.buildStats(D, picks[0].base), sF = PvpEngine.buildStats(D, F);
-    items.push({ gt: 0, html: `<div class="flg"><span class="me">${shMark(picks[0].name)}</span><em>VS</em><span class="foe">${shMark(rktName(foes[0]))}</span></div>` });
+    items.push({ gt: 0, html: `<div class="flg"><span class="me">${shMark(picks[0].name)}${tyIco(picks[0].name)}</span><em>VS</em><span class="foe">${shMark(rktName(foes[0]))}${tyIco(rktName(foes[0]))}</span></div>` });
     frames[0] = { meta: { name0: picks[0].name, name1: rktName(foes[0]), cp0: sA.cp, cp1: sF.cp, max0: sA.hp, max1: sF.hp,
       sp0: rbSpList(picks[0].pol).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: F.throw ? [{ n: D.moves[F.throw].n, e: D.moves[F.throw].e }] : [] },
@@ -7394,7 +7406,7 @@ function gbRender(body, bt, picks, foes) {
       if (pt && pt.ans && pt.ans.a === 'to')
         fxv.push({ k: 'swap', side: sd, name: sd ? leg.foeName : leg.meName });
     });
-    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}</span></div>` });
+    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
     (leg.leadHits || []).forEach(h => { if (h) {
       const cell = evCell([{ move: h.mv, dmg: h.dmg }]);
@@ -7513,7 +7525,7 @@ function gbRender(body, bt, picks, foes) {
   // 開幕交代の質問中はまだ対面が無いので、1匹目どうしの初期状態を出しておく
   if (!bt.legs.length && bt.pending && foes.length) {
     const sA = PvpEngine.buildStats(D, picks[0].base), sF = PvpEngine.buildStats(D, foes[0].base);
-    items.push({ gt: 0, html: `<div class="flg"><span class="me">${shMark(picks[0].name)}</span><em>VS</em><span class="foe">${shMark(foes[0].name)}</span></div>` });
+    items.push({ gt: 0, html: `<div class="flg"><span class="me">${shMark(picks[0].name)}${tyIco(picks[0].name)}</span><em>VS</em><span class="foe">${shMark(foes[0].name)}${tyIco(foes[0].name)}</span></div>` });
     frames[0] = { meta: { name0: picks[0].name, name1: foes[0].name, cp0: sA.cp, cp1: sF.cp, max0: sA.hp, max1: sF.hp,
       sp0: (picks[0].pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: (foes[0].pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })) },

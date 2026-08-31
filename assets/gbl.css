@@ -741,6 +741,9 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   border:1px solid var(--line);border-radius:12px;font-weight:800;font-size:.85rem}
 .flg .me{color:var(--cy)}
 .flg .foe{color:var(--gold)}
+/* 名前の横のタイプアイコン(2026-09-01): VSカードと場に出る演出の帯 */
+.flg .tbadge{margin-left:4px;vertical-align:-2px}
+.fxitem .tx .tbadge,.fxvs .pn .tbadge{margin-left:4px;vertical-align:-2px}
 .flg em{font-style:normal;font-size:.6rem;color:var(--sub);letter-spacing:.12em}
 .ft{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:4px;padding:2px 0;min-height:25px}
 .ft.q{min-height:12px;padding:0}
