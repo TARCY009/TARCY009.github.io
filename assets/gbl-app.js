@@ -4462,9 +4462,13 @@ function fxOne(f) {
       <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span>
       <div class="tx">${f.name || ''}をくりだした！</div></div>`, 1400);
   }
-  if (f.k === 'swap') {   // 交代: ⇄が回って名前の帯
-    return fxShow('fxswapfx ' + sideCls, `<div class="swwrap"><i class="swspin">${SWAPMK}</i>
-      <div class="tx">${f.name || ''}に交代した！</div></div>`, 1260);
+  if (f.k === 'swap') {   // 交代: ボールに戻して飛び去る→⇄→新しいボールが飛び込んで開く(2段)＋名前の帯
+    return fxShow('fxswapfx ' + sideCls, `<div class="swwrap"><div class="stage">
+      <i class="fball out"></i><i class="swspin">${SWAPMK}</i><i class="fball in"></i>
+      <i class="burst"></i>
+      <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
+      <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span></div>
+      <div class="tx">${f.name || ''}に交代した！</div></div>`, 1700);
   }
   if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
     const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';

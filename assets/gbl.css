@@ -1453,10 +1453,47 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 @keyframes fxballin{0%{opacity:0;transform:translateY(-42px) scale(.5)}25%{opacity:1;transform:none}45%{transform:scale(1.15)}60%{opacity:0;transform:scale(1.7)}100%{opacity:0}}
 @keyframes fxburst{0%,40%{box-shadow:0 0 0 0 rgba(255,255,255,.95);opacity:0}46%{opacity:1}78%{box-shadow:0 0 0 72px rgba(255,255,255,0);opacity:0}100%{opacity:0}}
 @keyframes fxspark{0%,36%{opacity:0;transform:none}46%{opacity:1}82%{opacity:0;transform:translate(var(--dx),var(--dy))}100%{opacity:0}}
-/* 交代: ⇄が回って名前の帯 */
+/* 交代(2段・2026-08-31タダシさん指示「あっけない」で作り直し):
+   ①いまのポケモンをボールに戻して飛び去る ②⇄が回る ③新しいボールが飛び込んで弾け開く(閃光＋光の粒)。
+   じぶんは 戻る=左へ・入る=右から。あいては--ox/--ixの符号だけ反転して鏡写し */
 .fxswapfx .swwrap{display:flex;flex-direction:column;align-items:center;gap:14px}
-.fxswapfx .swspin{font-size:2.2rem;line-height:1;animation:fxspin var(--fxd) ease both}
-@keyframes fxspin{0%{opacity:0;transform:rotate(0) scale(.5)}30%{opacity:1;transform:rotate(360deg) scale(1.2)}78%{opacity:1;transform:rotate(360deg) scale(1)}100%{opacity:0;transform:rotate(360deg) scale(1)}}
+.fxswapfx .stage{position:relative;width:230px;height:96px}
+.fxswapfx{--ox:-96px;--ix:100px}
+.fxswapfx.foe{--ox:96px;--ix:-100px}
+.fxswapfx .fball{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
+  background:linear-gradient(180deg,#e8404b 0 46%,#16204a 46% 54%,#f5f6fa 54% 100%);
+  box-shadow:0 4px 14px rgba(0,0,0,.5),inset 0 2px 4px rgba(255,255,255,.35)}
+.fxswapfx .fball::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;
+  margin:-6px 0 0 -6px;border-radius:50%;background:#fff;border:3px solid #16204a}
+.fxswapfx .fball.out{animation:fxswout var(--fxd) ease both}
+.fxswapfx .fball.in{opacity:0;animation:fxswin var(--fxd) cubic-bezier(.3,.9,.4,1.15) both}
+.fxswapfx .swspin{position:absolute;left:50%;top:50%;width:44px;margin:-22px 0 0 -22px;font-size:2.2rem;line-height:1;
+  animation:fxswspin var(--fxd) ease both}
+.fxswapfx .burst{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;
+  animation:fxswburst var(--fxd) ease both}
+.fxswapfx .spark{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;
+  background:#fff;opacity:0;animation:fxswspark var(--fxd) ease both}
+.fxswapfx .s1{--dx:-74px;--dy:-44px}.fxswapfx .s2{--dx:74px;--dy:-40px}.fxswapfx .s3{--dx:-88px;--dy:8px}
+.fxswapfx .s4{--dx:88px;--dy:12px}.fxswapfx .s5{--dx:-40px;--dy:-70px}.fxswapfx .s6{--dx:44px;--dy:-66px}
+/* ①戻す: 中央で一瞬ふくらんでから飛び去る(吸い込んだ感) */
+@keyframes fxswout{0%{opacity:0;transform:scale(.7)}8%{opacity:1;transform:none}
+  15%{transform:scale(1.1)}34%,100%{opacity:0;transform:translate(var(--ox),-58px) scale(.3)}}
+/* ②⇄: ボールの入れ替わりに合わせて1回転 */
+@keyframes fxswspin{0%,8%{opacity:0;transform:rotate(0) scale(.5)}
+  20%{opacity:1;transform:rotate(180deg) scale(1.15)}44%{opacity:1;transform:rotate(360deg) scale(1)}
+  56%,100%{opacity:0;transform:rotate(360deg) scale(.7)}}
+/* ③出す: 上から弧を描いて飛び込み、着地でひと弾みして開く */
+@keyframes fxswin{0%,30%{opacity:0;transform:translate(var(--ix),-62px) scale(.4)}
+  40%{opacity:1;transform:translate(calc(var(--ix)*.45),-30px) scale(.7)}
+  56%{opacity:1;transform:none}64%{opacity:1;transform:scale(1.14)}
+  76%,100%{opacity:0;transform:scale(1.7)}}
+@keyframes fxswburst{0%,60%{box-shadow:0 0 0 0 rgba(255,255,255,.95);opacity:0}66%{opacity:1}
+  92%{box-shadow:0 0 0 74px rgba(255,255,255,0);opacity:0}100%{opacity:0}}
+@keyframes fxswspark{0%,58%{opacity:0;transform:none}66%{opacity:1}
+  94%{opacity:0;transform:translate(var(--dx),var(--dy))}100%{opacity:0}}
+/* 名前の帯はボールが開いてから出す */
+.fxswapfx .tx{animation-name:fxswtx}
+@keyframes fxswtx{0%,52%{opacity:0;transform:translateY(14px)}66%{opacity:1;transform:none}90%{opacity:1}100%{opacity:0}}
 /* SP発動: タイプ色の斜め帯のカットイン＋閃光 */
 .fxsp .band{position:absolute;left:-14%;right:-14%;top:50%;height:82px;margin-top:-41px;
   display:flex;align-items:center;justify-content:center;--rot:4deg;
