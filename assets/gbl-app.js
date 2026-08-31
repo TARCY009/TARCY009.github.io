@@ -4446,6 +4446,22 @@ function fxShow(cls, html, dur) {
   setTimeout(() => el.remove(), d + 80);
   return d;
 }
+// ゲームのシールド(六角形タイルの結晶)を再現したアイコン(2026-08-31タダシさん指示)。
+// 半径2の六角形クラスタ=19枚のタイルに、ピンク→紫→水色のグラデーションを通しで敷く
+function shieldSvg() {
+  const s = 15, polys = [];
+  for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) {
+    if (Math.abs(q + r) > 2) continue;
+    const cx = s * Math.sqrt(3) * (q + r / 2), cy = s * 1.5 * r, c = [];
+    for (let i = 0; i < 6; i++) { const th = Math.PI / 180 * (60 * i - 30);
+      c.push((cx + s * 0.9 * Math.cos(th)).toFixed(1) + ',' + (cy + s * 0.9 * Math.sin(th)).toFixed(1)); }
+    polys.push(`<polygon points="${c.join(' ')}"/>`);
+  }
+  return `<svg class="shcry" viewBox="-62 -58 124 116" aria-hidden="true"><defs>
+    <linearGradient id="shcg" gradientUnits="userSpaceOnUse" x1="0" y1="-56" x2="0" y2="56">
+      <stop offset="0" stop-color="#ffb1e8"/><stop offset=".45" stop-color="#c07bff"/><stop offset="1" stop-color="#8fd6ff"/>
+    </linearGradient></defs>${polys.join('')}</svg>`;
+}
 // HPバーの「残像」(2026-08-31タダシさん指示・HPが減る動きの演出):
 // 本体のバーはすぐ減り、うしろの白い残像がひと呼吸おいてゆっくり追いかけて減る。
 // 増えたとき(対面が替わった・巻き戻した)は残像も即座に合わせる(変な逆再生をしない)
@@ -4995,10 +5011,21 @@ function rbRender(body, bt, picks, foes, extra) {
     const lead = rest.filter(x => !x.o.det && x.o.a === 'hold');
     const tail = rest.filter(x => !(x.o.a === 'hold' && !x.o.det));
     // SPが2本あるときは実際の戦闘画面と同じ横並び(2026-08-31タダシさん指示・左右どちらを撃つかの形)
-    const btns = lead.map(btn).join('')
+    // シールドの質問は実際のゲーム画面を再現(2026-08-31タダシさん指示・GBLと同じ形)
+    const shWin = () => {
+      const iUse = p.opts.findIndex(o => o.a === 'use'), iNo = p.opts.findIndex(o => o.a === 'no');
+      const fr = frames[Math.max(0, (p.gt || 1) - 1)] || frames[p.gt] || {};
+      const left = Math.max(1, fr.sh0 || 1);
+      return `<div class="shwin">
+        <button class="shuse" data-i="${iUse}" title="${p.opts[iUse].tip}">${shieldSvg()}<i class="shx">×${left}</i></button>
+        <button class="shlater" data-i="${iNo}" title="${p.opts[iNo].tip}">あとで</button>
+      </div>`;
+    };
+    const btns = (p.kind === 'sh' ? shWin()
+      : lead.map(btn).join('')
       + (groups.length ? `<div class="mvrow">${groups.map(g => `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')}</div>` : '')
       + tail.filter(x => det || !x.o.det).map(btn).join('')
-      + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
+      + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : ''))
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin">
       <div class="rwt">${rbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(ckOf(p.gt))}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
@@ -7631,11 +7658,23 @@ function gbRender(body, bt, picks, foes) {
     });
     // end付き(ためてブラフ)は「…詳細」の右に置く(2026-08-30タダシさん指示)
     // SPが2本あるときは実際の戦闘画面と同じ横並び(2026-08-31タダシさん指示・左右どちらを撃つかの形)
-    const btns = (groups.length ? `<div class="mvrow">${groups.map(g =>
+    // シールドの質問は実際のゲーム画面を再現(2026-08-31タダシさん指示):
+    // シールドの結晶＋残り枚数(タップ=使う)と、下の「あとで」(=受ける)に分ける
+    const shWin = () => {
+      const iUse = p.opts.findIndex(o => o.a === 'use'), iNo = p.opts.findIndex(o => o.a === 'no');
+      const fr = frames[Math.max(0, (p.gt || 1) - 1)] || frames[p.gt] || {};
+      const left = Math.max(1, (p.side ? fr.sh1 : fr.sh0) || 1);
+      return `<div class="shwin">
+        <button class="shuse" data-i="${iUse}" title="${p.opts[iUse].tip}">${shieldSvg()}<i class="shx">×${left}</i></button>
+        <button class="shlater" data-i="${iNo}" title="${p.opts[iNo].tip}">あとで</button>
+      </div>`;
+    };
+    const btns = (p.kind === 'sh' ? shWin()
+      : (groups.length ? `<div class="mvrow">${groups.map(g =>
       `<div class="mvopt"><div class="mh">${g.head}</div><div class="mb">${g.items.map(btn).join('')}</div></div>`).join('')}</div>` : '')
       + rest.filter(x => !x.o.end && (det || !x.o.det)).map(btn).join('')
       + (hasDet && !det ? '<button class="hold wdet" title="ノーマルアタックを＋1〜＋3発はさむ細かい指定を出します">…詳細</button>' : '')
-      + rest.filter(x => x.o.end).map(btn).join('')
+      + rest.filter(x => x.o.end).map(btn).join(''))
       + (editing && p.ans && !p.auto ? `<button class="hold" data-k="${p.key}" data-i="reset" title="この場面をおまかせに戻します">↺</button>` : '');
     winbox.innerHTML = `<div class="rbwin${p.side ? ' foe' : ''}">
       <div class="rwt">${gbAskTitle(p)}<span>${p.gt}T ⏱${rbSec(p.ck != null ? p.ck : p.gt)}</span>${editing ? '<button class="wx" title="閉じる">✕</button>' : ''}</div>
