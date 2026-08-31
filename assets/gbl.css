@@ -887,6 +887,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hswap small{font-size:.62rem;color:var(--sub);font-weight:700}
 .hswap:empty{display:none}
 .hswap.fswap{justify-content:flex-end}
+/* バトル中の全画面ロック(2026-09-01タダシさん指示): ▶を押した瞬間に
+   「タイムライン＋下に固定のHUDだけ」の画面に切り替える(スタート前は通常の流れ=空白を作らない)。
+   HUDはバトル中1pxも動かず、下のURLコピーや上の入力へはスクロールできない。決着で解除 */
+.bfull{position:fixed;inset:0;z-index:320;display:flex;flex-direction:column;
+  padding:10px 10px 8px;background:var(--bg)}
+.bfull .rbctlbar{display:none}
+.bfull .rbfeed{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.bfull .rbdock{position:static;margin-top:6px}
 /* ⇄いつでも交代(2026-09-01): 位置が動かない再生コントロールの並びに置く
    (HUDの左右は数字の更新で常に動くので押せない=タダシさん指摘)。
    デザインはゲームの交代ボタン風の金のピル(同日タダシさん指示・絵文字だけでなくボタンらしく)。

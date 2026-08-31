@@ -4929,14 +4929,10 @@ function rbRender(body, bt, picks, foes, extra) {
   // ---- 再生(1ターン=0.5秒で流す)と HUD の更新 ----
   const feedEl = body.querySelector('.rbfeed');
   const els = [...feedEl.children];
-  // HUDは最初から画面のいちばん下に固定する(2026-09-01タダシさん案)。
-  // HUD(sticky)はタイムラインが画面の高さに満たないあいだ、行が増えるたびに下へ押されて動く=
-  // ⇄や⏸が押せない。フィードに画面ぶんの最低の高さを与えれば、HUDは最初から下に張りつき、
-  // 行は従来どおり上から流れてすき間が埋まっていく(1手ずつの再生モードのときだけ)
-  if (RB.step) {
-    const dockEl = body.querySelector('.rbdock');
-    feedEl.style.minHeight = Math.max(220, innerHeight - (dockEl ? dockEl.offsetHeight : 120) - 24) + 'px';
-  }
+  // バトル中の全画面ロック(2026-09-01タダシさん指示・2度目の調整):
+  // スタート前は通常の流れ(大きな空白を作らない)。▶を押した瞬間に .bfull で
+  // 「タイムライン＋下に固定のHUDだけ」の全画面に切り替え、決着したら解除する。
+  // これでHUDはバトル中1pxも動かず、下のURLコピーや上の入力へもスクロールできない
   const dock = body.querySelector('.rbdock');
   const winbox = dock.querySelector('.rbwinbox');
   const hud = dock.querySelector('.rbhud');
@@ -4954,6 +4950,8 @@ function rbRender(body, bt, picks, foes, extra) {
   const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
   let ptr = 0, lastEl = null, curLegKey = '';
   function updateHud(gt) {
+    // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
+    body.classList.toggle('bfull', RB.step && RBV.started && !ended());
     const f = frames[Math.max(0, Math.min(gt, stop))];
     if (!f) return;
     const legKey = f.meta.name0 + '|' + f.meta.name1;
@@ -5025,6 +5023,13 @@ function rbRender(body, bt, picks, foes, extra) {
     return out;
   };
   const autoScroll = () => {
+    // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
+    if (body.classList.contains('bfull')) {
+      const gap = feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight;
+      if (gap < Math.max(300, feedEl.clientHeight * 1.5))
+        feedEl.scrollTo({ top: feedEl.scrollHeight, behavior: RBV.speed === 1 ? 'smooth' : 'auto' });
+      return;
+    }
     if (!lastEl) return;
     const target = lastEl.getBoundingClientRect().bottom + scrollY - (innerHeight - dock.offsetHeight - 10);
     // 手で上へスクロールして読み返しているときは連れ戻さない
@@ -5167,6 +5172,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
+    body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
     if (RB.goal) { applyGoal(); return; }   // オートバトルを選んでいれば探索してから再生
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';   // 走り出したら上にも「▶ バトルスタート！」(やり直し)を出す
@@ -7681,14 +7687,10 @@ function gbRender(body, bt, picks, foes) {
   // ---- 再生とHUD(ロケット団の模擬戦と同じ作り) ----
   const feedEl = body.querySelector('.rbfeed');
   const els = [...feedEl.children];
-  // HUDは最初から画面のいちばん下に固定する(2026-09-01タダシさん案)。
-  // HUD(sticky)はタイムラインが画面の高さに満たないあいだ、行が増えるたびに下へ押されて動く=
-  // ⇄や⏸が押せない。フィードに画面ぶんの最低の高さを与えれば、HUDは最初から下に張りつき、
-  // 行は従来どおり上から流れてすき間が埋まっていく(1手ずつの再生モードのときだけ)
-  if (RB.step) {
-    const dockEl = body.querySelector('.rbdock');
-    feedEl.style.minHeight = Math.max(220, innerHeight - (dockEl ? dockEl.offsetHeight : 120) - 24) + 'px';
-  }
+  // バトル中の全画面ロック(2026-09-01タダシさん指示・2度目の調整):
+  // スタート前は通常の流れ(大きな空白を作らない)。▶を押した瞬間に .bfull で
+  // 「タイムライン＋下に固定のHUDだけ」の全画面に切り替え、決着したら解除する。
+  // これでHUDはバトル中1pxも動かず、下のURLコピーや上の入力へもスクロールできない
   const dock = body.querySelector('.rbdock');
   const winbox = dock.querySelector('.rbwinbox');
   const hud = dock.querySelector('.rbhud');
@@ -7707,6 +7709,8 @@ function gbRender(body, bt, picks, foes) {
   const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
   let ptr = 0, lastEl = null, curLegKey = '';
   function updateHud(gt) {
+    // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
+    body.classList.toggle('bfull', RB.step && RBV.started && !ended());
     const f = frames[Math.max(0, Math.min(gt, stop))];
     if (!f) return;
     const legKey = f.meta.name0 + '|' + f.meta.name1;
@@ -7792,6 +7796,13 @@ function gbRender(body, bt, picks, foes) {
     return out;
   };
   const autoScroll = () => {
+    // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
+    if (body.classList.contains('bfull')) {
+      const gap = feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight;
+      if (gap < Math.max(300, feedEl.clientHeight * 1.5))
+        feedEl.scrollTo({ top: feedEl.scrollHeight, behavior: RBV.speed === 1 ? 'smooth' : 'auto' });
+      return;
+    }
     if (!lastEl) return;
     const target = lastEl.getBoundingClientRect().bottom + scrollY - (innerHeight - dock.offsetHeight - 10);
     if (target > scrollY && target - scrollY < innerHeight * 1.5)
@@ -7928,6 +7939,7 @@ function gbRender(body, bt, picks, foes) {
   const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
+    body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
     if (RB.goal) { applyGoal(); return; }
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';
