@@ -1534,15 +1534,51 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .fxshd .shcap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
 @keyframes fxdome{0%{opacity:0;transform:scale(.55) translateY(40px)}28%{opacity:1;transform:none}55%{transform:scale(1.03)}82%{opacity:1;transform:none}100%{opacity:0}}
 @keyframes fxhex{0%{fill-opacity:0}30%{fill-opacity:.62}60%{fill-opacity:.45}82%{fill-opacity:.55}100%{fill-opacity:0}}
-/* たおれた/たおした */
-.fxko .kowrap{display:flex;flex-direction:column;align-items:center;gap:10px}
-.fxko .mk{font-size:2.6rem;font-style:normal;filter:drop-shadow(0 4px 14px rgba(0,0,0,.6));
-  animation:fxkomk var(--fxd) ease both}
-.fxko.lose{background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.45) 100%);animation:fxdim var(--fxd) ease both}
+/* たおれた/たおした(2026-08-31タダシさん指示で強化):
+   たおした=白閃光→二重の衝撃波リング→金の破片→💥がズドン(＋画面の揺れはJS側)
+   たおれた=赤い被弾フラッシュ→暗転→💀が傾きながら沈み、足元に土煙 */
+.fxko .kowrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+.fxko .mk{font-size:2.6rem;font-style:normal;filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
+.fxko.win .mk{animation:fxkomkW var(--fxd) ease both}
+.fxko.lose .mk{animation:fxkomkL var(--fxd) ease both}
+.fxko.lose{background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.5) 100%);animation:fxdim var(--fxd) ease both}
+.fxko.lose::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 45%,rgba(255,60,80,.3),transparent 62%);
+  animation:fxkred var(--fxd) ease both}
 .fxko.lose .tx{border-color:var(--lose);color:var(--lose)}
 .fxko.win .tx{border-color:var(--win)}
-@keyframes fxkomk{0%{opacity:0;transform:translateY(-46px) scale(1.6)}28%{opacity:1;transform:none}42%{transform:translateY(-8px)}55%{transform:none}85%{opacity:1}100%{opacity:0}}
+/* 💥はズドンと入る(大→ひと弾み→静止)。💀は傾きながら沈む(崩れ落ちる) */
+@keyframes fxkomkW{0%{opacity:0;transform:scale(2.8) rotate(-14deg)}14%{opacity:1;transform:scale(.92) rotate(3deg)}
+  24%{transform:scale(1.14)}32%{transform:scale(1) rotate(0)}85%{opacity:1}100%{opacity:0}}
+@keyframes fxkomkL{0%{opacity:0;transform:translateY(-34px) scale(1.2)}18%{opacity:1;transform:none}
+  55%{transform:translateY(10px) rotate(12deg)}80%{opacity:.95;transform:translateY(14px) rotate(16deg)}
+  100%{opacity:0;transform:translateY(16px) rotate(16deg)}}
 @keyframes fxdim{0%{opacity:0}25%{opacity:1}85%{opacity:1}100%{opacity:0}}
+@keyframes fxkred{0%{opacity:0}8%{opacity:1}34%{opacity:0}100%{opacity:0}}
+/* たおしたの衝撃波(閃光・リング・破片)。中心は💥マークのあたり(上から30px) */
+.fxko .kflash{position:absolute;top:30px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;
+  animation:fxkfl var(--fxd) ease both}
+@keyframes fxkfl{0%{box-shadow:0 0 0 0 rgba(255,255,255,.95);opacity:0}6%{opacity:1}
+  32%{box-shadow:0 0 0 92px rgba(255,255,255,0);opacity:0}100%{opacity:0}}
+.fxko .kring{position:absolute;top:30px;left:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  border:3px solid rgba(255,213,74,.85);opacity:0;animation:fxkring var(--fxd) ease-out both}
+.fxko .kring.r2{border-color:rgba(255,255,255,.7);animation-delay:calc(var(--fxd)*.07)}
+@keyframes fxkring{0%{opacity:0;transform:scale(.3)}10%{opacity:1}44%{opacity:0;transform:scale(7)}100%{opacity:0}}
+.fxko .kshard{position:absolute;top:30px;left:50%;width:7px;height:7px;margin:-3px 0 0 -3px;border-radius:2px;
+  background:#ffd54a;opacity:0;animation:fxkshard var(--fxd) cubic-bezier(.2,.7,.4,1) both}
+.fxko .kshard:nth-child(2n){background:#fff;width:5px;height:5px}
+.fxko .k1{--dx:-104px;--dy:-56px;--rz:220deg}.fxko .k2{--dx:104px;--dy:-50px;--rz:-200deg}
+.fxko .k3{--dx:-122px;--dy:6px;--rz:160deg}.fxko .k4{--dx:122px;--dy:12px;--rz:-170deg}
+.fxko .k5{--dx:-64px;--dy:-92px;--rz:240deg}.fxko .k6{--dx:66px;--dy:-88px;--rz:-230deg}
+.fxko .k7{--dx:-84px;--dy:52px;--rz:190deg}.fxko .k8{--dx:88px;--dy:46px;--rz:-180deg}
+@keyframes fxkshard{0%,4%{opacity:0;transform:none}12%{opacity:1}
+  58%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rz)) scale(.4)}100%{opacity:0}}
+/* たおれたの土煙(足元で3つ、時間差でふわっと広がる) */
+.fxko .kdust{position:absolute;top:60px;left:50%;width:11px;height:11px;margin-left:-5px;border-radius:50%;
+  background:rgba(200,205,220,.5);opacity:0;filter:blur(1px);animation:fxkdust var(--fxd) ease-out both}
+.fxko .d1{--dx:-28px}.fxko .d2{--dx:0px;animation-delay:calc(var(--fxd)*.05)}.fxko .d3{--dx:28px;animation-delay:calc(var(--fxd)*.09)}
+@keyframes fxkdust{0%,42%{opacity:0;transform:translate(var(--dx),0) scale(.5)}54%{opacity:.8}
+  90%{opacity:0;transform:translate(calc(var(--dx)*1.8),-16px) scale(2)}100%{opacity:0}}
 /* フォルムチェンジ: 紫の光の輪＋マーク */
 .fxform .fmwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
 .fxform .ring{position:absolute;top:8px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;

@@ -4515,9 +4515,23 @@ function fxOne(f) {
         </linearGradient></defs>${polys}</svg>
       <div class="shcap"><div class="tx">🛡 ブロック！</div></div></div>`, 950);
   }
-  if (f.k === 'ko') {   // たおれた／たおした
-    if (f.win) return fxShow('fxko win', `<div class="kowrap"><i class="mk">💥</i><div class="tx">${f.name || ''} をたおした！</div></div>`, 1190);
-    return fxShow('fxko lose', `<div class="kowrap"><i class="mk">💀</i><div class="tx">${f.name || ''} はたおれた…</div></div>`, 1190);
+  if (f.k === 'ko') {   // たおれた／たおした(2026-08-31タダシさん指示で強化)
+    if (f.win) {
+      // たおした: 白い閃光→二重の衝撃波リング→金の破片が飛び散る→💥がズドン＋画面の揺れ
+      const d = fxShow('fxko win', `<div class="kowrap">
+        <i class="kflash"></i><i class="kring r1"></i><i class="kring r2"></i>
+        <span class="kshard k1"></span><span class="kshard k2"></span><span class="kshard k3"></span>
+        <span class="kshard k4"></span><span class="kshard k5"></span><span class="kshard k6"></span>
+        <span class="kshard k7"></span><span class="kshard k8"></span>
+        <i class="mk">💥</i><div class="tx">${f.name || ''} をたおした！</div></div>`, 1550);
+      setTimeout(fxQuake, Math.min(Math.round(d * 0.2), 600));
+      return d;
+    }
+    // たおれた: 赤い被弾フラッシュ→画面が暗転→💀が傾きながら沈み、足元に土煙
+    return fxShow('fxko lose', `<div class="kowrap">
+      <i class="mk">💀</i>
+      <span class="kdust d1"></span><span class="kdust d2"></span><span class="kdust d3"></span>
+      <div class="tx">${f.name || ''} はたおれた…</div></div>`, 1550);
   }
   if (f.k === 'form') {   // フォルムチェンジ: 光の輪＋マーク
     return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 1910);
