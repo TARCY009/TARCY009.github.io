@@ -48,7 +48,7 @@
   --delbg:#231532; --delline:#6b2b3a; --delink:#ff6b81; --delbg2:#301a3c; --delline2:#a13b52;
   --morebg:rgba(26,35,66,.6); --moreline:#4a3a7d; --morebg2:rgba(176,108,255,.12);
   --mainink:#062038; --disbg:#273154; --disink:#6b76a3;
-  --mcS:#c396ff; --mcM:#f58fc2; --mcC:#5fd8ea; --smaxline:#5b3f8f; --smaxink:#c396ff;
+  --mcS:#c396ff; --mcM:#f58fc2; --mcC:#5fd8ea; --mcO:#ffab70; --smaxline:#5b3f8f; --smaxink:#c396ff;
   --helpbody:rgba(26,35,66,.9); --helpline:#4a3a7d;
   --ballsh:0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22);
   --ballbtm:#e9edf8;
@@ -82,7 +82,7 @@
   --delbg:#fff; --delline:#f0b8b8; --delink:#c33; --delbg2:#fff1f1; --delline2:#e08e8e;
   --morebg:#fbfaff; --moreline:#cfc6f0; --morebg2:#f6f2ff;
   --mainink:#fff; --disbg:#b9c6dd; --disink:#fff;
-  --mcS:#7a3cc4; --mcM:#c02c76; --mcC:#0b7f92; --smaxline:#c4b0ea; --smaxink:#6d3fc4;
+  --mcS:#7a3cc4; --mcM:#c02c76; --mcC:#0b7f92; --mcO:#b54a0e; --smaxline:#c4b0ea; --smaxink:#6d3fc4;
   --helpbody:rgba(255,255,255,.92); --helpline:#cfc6f0;
   --ballsh:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55);
   --ballbtm:#ffffff;
@@ -238,6 +238,8 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
   display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 1 auto;padding:8px 18px;font-size:.95rem}
 #fMega{--mc:var(--mcM);--mg:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%);--mgl:rgba(214,51,132,.45)}
 #mShield{--mc:var(--mcC);--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mgl:rgba(8,180,201,.45)}
+/* 極低耐久の除外=⚠️マークと同じオレンジ系(押している間は⚠️付きのポケモンが一覧から消える) */
+#fBulk{--mc:var(--mcO);--mg:linear-gradient(160deg,#ffc48a 0%,#f0762b 45%,#a8430e 100%);--mgl:rgba(240,118,43,.45)}
 /* 水色は明るいので、点灯したときだけ文字を濃くする(紫・マゼンタは白のままで読める) */
 #mShield[aria-pressed="true"],.seg button[aria-pressed="true"]{color:#042330}
 /* 自分のポケモンの計算のしかた。排他の2択(今の状態/フル強化)はくっつけて1つのまとまりに見せ、
@@ -424,6 +426,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <button id="fShadow" type="button" aria-pressed="false" aria-label="シャドウを含める" title="シャドウ個体をランキングに含めます（シャドウポケモンは攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i></button>
     <button id="fMega" type="button" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドでボスのシールドを壊す役向きのランキングに切り替えます（使えるのはメガシンカだけなのでメガのみの一覧になります）">🛡シールド破壊</button>
+    <button id="fBulk" type="button" aria-pressed="false" title="⚠️極低耐久（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）のポケモンを一覧から外します。順位は外したあとの並びで振り直します">⚠️極低耐久を除外</button>
   </div>
   <div id="mineSummary"></div>
   <p class="enote expl">一覧はPL50・個体値15、相手は防御100のものさしで統一した火力（1秒あたりのダメージ）です。選んだボスのタイプ相性は反映されます。シャドウ・メガ・ゲンシはタブで含めるかを選べます。</p>
@@ -552,7 +555,7 @@ let boss=null, showN=30;
 // シールド破壊(メガ)だけは別のランキングなので、押している間はその一覧に切り替わる。
 // シールド破壊はスーパーメガレイド専用なので、ONのあいだは最少討伐人数のランクも★7にそろえる
 // (tierPrev=ONにする前のランク。OFFで★7のままなら戻す。手で選び直していたらその選択を尊重)
-let fShadow=false, fMega=false, shieldMode=false, tierPrev=null;
+let fShadow=false, fMega=false, fBulk=false, shieldMode=false, tierPrev=null;
 const mine=[];
 
 // ---- search suggest ----
@@ -590,7 +593,8 @@ function attachSugg(inputEl, listEl, onPick, filterFn, rowFn){
 function typeIcons(p, size){ return typePairHTML(p.ty.map(t=>D.typeJa[t]), size); }
 // 耐久指数(防御種族値×HP種族値)が16000未満は極低耐久として注意表示
 // シャドウは防御5/6の補正込みで判定(素16000以上でもシャドウで16000未満になる場合がある)
-const lowBulk=(p,shadow)=>(p.df*(shadow?5/6:1)*p.h<16000)?'<span class="lowbulk" title="倒されやすい目安です（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定します）">⚠️極低耐久</span>':'';
+const isLowBulk=(p,shadow)=>p.df*(shadow?5/6:1)*p.h<16000;
+const lowBulk=(p,shadow)=>isLowBulk(p,shadow)?'<span class="lowbulk" title="倒されやすい目安です（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定します）">⚠️極低耐久</span>':'';
 // 長押し説明(💡)の文言。ランキング行の描画で使い回す
 const T_DPS='1秒あたりの与ダメージです。ノーマルアタック100回ぶんのサイクルで計算し、ボスへのタイプ相性も反映しています';
 const T_RANK='火力が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
@@ -651,7 +655,7 @@ function renderBoss(){
        <div><div class="bossname">${p.n}${typeIcons(p,24)}</div>
        <div class="catchcp">捕獲100%CP <b>${cp100(cf,20)}</b>（PL20）/ <b>${cp100(cf,25)}</b>（PL25 天候ブースト）${cf!==p?`・<b>${cf.n}</b>のすがたで捕獲`:''}</div></div></div>
      <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>
-     <div class="bossinfo" title="${T_MP}">最少討伐人数：</div>
+     <details class="bossmoves"><summary title="${T_MP}">最少討伐人数・実戦シミュレータ</summary>
      <div class="modes tierrow"><span class="seg" id="tierSeg">${RAID_TIERS.map(t=>`<button type="button" data-t="${t.id}" title="${t.help}">${t.label}</button>`).join('')}</span></div>
      <div class="mpdet">
        <button type="button" id="mpDetBtn" aria-expanded="${MPB.open}" title="天候ブースト・フレンド・ザシアン効果を前提に入れて計算できます（既定はすべてなし）"><span class="gear">⚙</span> 詳細<span id="mpDetSum">${mpDetSum()}</span></button>
@@ -667,6 +671,7 @@ function renderBoss(){
        </div>
      </div>
      <div class="minppl" id="mpOut"></div>
+     </details>
      ${bossMovesHtml(p)}`;
   document.getElementById('mpWx').value=MPB.wx;
   document.getElementById('mpFr').value=MPB.fr;
@@ -964,16 +969,18 @@ function bindMineCtl(sumEl){
   });
 }
 // ---- ranking ----
-const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield');
+const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield'), bulkBtn=document.getElementById('fBulk');
 function syncModes(){
   shadowBtn.setAttribute('aria-pressed',fShadow);
   megaBtn.setAttribute('aria-pressed',fMega);
   shieldBtn.setAttribute('aria-pressed',shieldMode);
+  bulkBtn.setAttribute('aria-pressed',fBulk);
   // シールド破壊はメガ専用の一覧なので、その間は他の絞り込みを使わない
-  shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode;
+  shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode; bulkBtn.disabled=shieldMode;
 }
 shadowBtn.onclick=()=>{fShadow=!fShadow;showN=30;syncModes();renderRank();};
 megaBtn.onclick=()=>{fMega=!fMega;showN=30;syncModes();renderRank();};
+bulkBtn.onclick=()=>{fBulk=!fBulk;showN=30;syncModes();renderRank();};
 shieldBtn.onclick=()=>{
   shieldMode=!shieldMode; showN=30;
   // シールド破壊はスーパーメガレイド専用 → ONのあいだはランクを★7にそろえる
@@ -1006,9 +1013,12 @@ function buildRanking(){
     const p=D.pokemon[k];
     if(p.mega && !fMega) continue;
     if(!p.mega && !p.fe) continue; // 進化前はランキングに表示しない(ボス選択・自分の登録では選択可)
-    const base=bestCombo(p,bt,false);
-    if(base) rows.push({k,p,shadow:false,...base});
-    if(p.shadow && fShadow){
+    // 極低耐久の除外はシャドウ補正込みで行ごとに判定(素は残ってシャドウだけ消えるポケモンがある)
+    if(!(fBulk&&isLowBulk(p,false))){
+      const base=bestCombo(p,bt,false);
+      if(base) rows.push({k,p,shadow:false,...base});
+    }
+    if(p.shadow && fShadow && !(fBulk&&isLowBulk(p,true))){
       const s=bestCombo(p,bt,true);
       if(s) rows.push({k,p,shadow:true,...s});
     }
@@ -1238,6 +1248,7 @@ const HELP_HTML = `
 
   <h4>最少討伐人数（理論値）</h4>
   <ul>
+    <li>ボスを選んだあと、ボスのカードの<b>「最少討伐人数・実戦シミュレータ」をタップ</b>すると開きます（実戦シミュレータへのボタンもこの中です）</li>
     <li>ボスのHPを、<b>全員がランキング1位のアタッカー</b>（PL50・個体値15・最適わざ）で<b>制限時間いっぱい攻撃し続けた</b>ときに倒しきれる、いちばん少ない人数です</li>
     <li>ランクごとの前提: <b>★1</b>＝HP600・180秒 ／ <b>★3</b>＝HP3600・180秒 ／ <b>★4</b>（メガレイド）＝HP9000・300秒 ／ <b>★5</b>＝HP15000・300秒 ／ <b>★6</b>（メガ伝説・ゲンシカイキ）＝HP22500・300秒 ／ <b>スーパーメガ</b>（スーパーメガレイド）＝HP25000・300秒</li>
     <li>スーパーメガレイドはゲーム内では★の数ではなく<b>シールドの枚数</b>でレベルが表示されます（ここでは1ランクとして扱います）</li>
@@ -1264,7 +1275,7 @@ const HELP_HTML = `
     <li><b>強化 +0.5</b>＝1回の強化ぶんPLが上がります。ゲーム内ではPLが見えないので、<b>強化の回数</b>で数えられるようにしています（<b>−</b>で1回戻す・<b>↩</b>で入力したPLに戻る）</li>
     <li><b>PL50より上</b>は最高の相棒でのみ届きます（PL51まで）</li>
     <li><b>メガLv4</b>／<b>メガLv4＋相棒</b>はメガ・ゲンシだけのブーストで、PLの上限が<b>52・53</b>に広がります。アメを使わないので1タップでそのPLになります（もう一度押すと解除）</li>
-    <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）</li>
+    <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）。「⚠️極低耐久を除外」タブで一覧から外せます（順位は外したあとの並びで振り直します）</li>
   </ul>
 
   <h4>🛡 シールド破壊（スーパーメガレイド用）</h4>
