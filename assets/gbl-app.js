@@ -4432,9 +4432,12 @@ const fxLayer = () => {
   if (!l) { l = document.createElement('div'); l.id = 'fxlayer'; document.body.appendChild(l); }
   return l;
 };
+// 演出全体の速さ(2026-08-31タダシさん指示「全てを50%遅く」＝時間を1.5倍)。
+// 個別の長さ(1400等)はこの係数を掛ける前の値のまま持ち、速さの調整はここ1か所で行う
+const FX_SLOW = 1.5;
 // 1つの演出を出して、時間(再生速度で短縮)を返す
 function fxShow(cls, html, dur) {
-  const d = Math.max(300, Math.round(dur / (RBV.speed || 1)));
+  const d = Math.max(300, Math.round(dur * FX_SLOW / (RBV.speed || 1)));
   const el = document.createElement('div');
   el.className = 'fxitem ' + cls;
   el.style.setProperty('--fxd', d + 'ms');
@@ -4447,7 +4450,7 @@ function fxShow(cls, html, dur) {
 function fxQuake() {
   document.querySelectorAll('.rbfeed, .rbhud').forEach(e => {
     e.classList.remove('fxquake'); void e.offsetWidth; e.classList.add('fxquake');
-    setTimeout(() => e.classList.remove('fxquake'), 500);
+    setTimeout(() => e.classList.remove('fxquake'), 750);
   });
 }
 // 1件の演出。f = {k, side, name, mv, mk} 。返り値=かかる時間(ms)
@@ -4477,11 +4480,11 @@ function fxOne(f) {
       <span class="mvn">${f.mv || 'SPアタック'}</span></div><i class="flash"></i>`, 1150);
     if (f.shd) {
       // シールドでブロック: カットインに続けて六角形のドームを出す(防いだので着弾の揺れは無し)
-      const delay = Math.min(Math.round(d * 0.55), 620);
+      const delay = Math.min(Math.round(d * 0.55), Math.round(620 * FX_SLOW));
       setTimeout(() => fxOne({ k: 'shd', side: 1 - f.side }), delay);   // ドームは防いだ側
-      return delay + Math.max(300, Math.round(950 / (RBV.speed || 1)));
+      return delay + Math.max(300, Math.round(950 * FX_SLOW / (RBV.speed || 1)));
     }
-    setTimeout(fxQuake, Math.min(d * 0.62, 700));
+    setTimeout(fxQuake, Math.min(d * 0.62, Math.round(700 * FX_SLOW)));
     return d;
   }
   if (f.k === 'shd') {   // シールドのドーム(ゲームのブロック画面を六角形の光の面で再現)
@@ -4493,7 +4496,7 @@ function fxOne(f) {
     const cs = [[160, 84], [260, 84], [360, 84],
       [110, 171], [210, 171], [310, 171], [410, 171],
       [160, 258], [260, 258], [360, 258]];
-    const polys = cs.map(([x, y], i) => `<polygon points="${hex(x, y, 56)}" style="animation-delay:${i * 22}ms"/>`).join('');
+    const polys = cs.map(([x, y], i) => `<polygon points="${hex(x, y, 56)}" style="animation-delay:${i * 33}ms"/>`).join('');
     return fxShow('fxshd ' + sideCls, `<div class="shwrap">
       <svg viewBox="0 0 520 330" aria-hidden="true"><defs>
         <linearGradient id="fxshg" x1="0" y1="0" x2="0" y2="1">

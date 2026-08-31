@@ -1419,7 +1419,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 #fxlayer{position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden}
 .fxitem{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
 /* SPの着弾でタイムラインとHUDを揺らす */
-.fxquake{animation:fxq .45s ease}
+.fxquake{animation:fxq .68s ease}
 @keyframes fxq{0%,100%{transform:none}15%{transform:translate(3px,-4px)}30%{transform:translate(-4px,3px)}45%{transform:translate(3px,2px)}60%{transform:translate(-2px,-2px)}75%{transform:translate(1px,1px)}}
 /* 共通: 名前の帯 */
 .fxitem .tx{font-weight:900;font-size:1.02rem;color:#fff;background:rgba(12,17,34,.94);
