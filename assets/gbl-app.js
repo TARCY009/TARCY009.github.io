@@ -4747,6 +4747,7 @@ function rbRender(body, bt, picks, foes, extra) {
   let alive0 = picks.length, alive1 = foes.length;
   let sh0 = RK.sh, sh1 = rkShields();
   const shMax0 = RK.sh, shMax1 = rkShields();
+  let rvArr = [];   // フレームのrv用(GBLの「判明したあいてのSP」と形をそろえる。ロケット団では常に空)
   const evCell = list => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
@@ -4788,7 +4789,7 @@ function rbRender(body, bt, picks, foes, extra) {
     if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
-      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
+      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
     // 決断待ちより先は「まだ起きていない」ので描かない。ただし同じターンの中でも
@@ -4832,12 +4833,12 @@ function rbRender(body, bt, picks, foes, extra) {
       spByGt[gt] = spSeen;
       if (!partial) {
         frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
-          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
       } else {
         // 決断待ちのターンのHUDは、前のターンのHP・ゲージのまま(結果はまだ決まっていない)
         const pf = frames[gt - 1] || frames[base];
         frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
-          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
       }
       // ロケット団: あいてが硬直で1歩も動かないターンは⏸を出す(最初の行の右列)
       let stallMark = t.stalled && !t.ev[1].length ? '<i class="stall">⏸</i>' : '';
@@ -4876,7 +4877,7 @@ function rbRender(body, bt, picks, foes, extra) {
     frames[0] = { meta: { name0: picks[0].name, name1: rktName(foes[0]), cp0: sA.cp, cp1: sF.cp, max0: sA.hp, max1: sF.hp,
       sp0: rbSpList(picks[0].pol).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: F.throw ? [{ n: D.moves[F.throw].n, e: D.moves[F.throw].e }] : [] },
-      hp0: sA.hp, en0: 0, hp1: sF.hp, en1: 0, b0: [0, 0], b1: [0, 0], sh0, sh1, alive0, alive1 };
+      hp0: sA.hp, en0: 0, hp1: sF.hp, en1: 0, b0: [0, 0], b1: [0, 0], sh0, sh1, alive0, alive1, rv: rvArr };
   }
   const stop = bt.pending ? bt.pending.gt : bt.turns;
   for (let g = 1; g <= stop; g++) if (!frames[g]) frames[g] = frames[g - 1];
@@ -7451,6 +7452,11 @@ function gbRender(body, bt, picks, foes) {
   let alive0 = picks.length, alive1 = foes.length;
   let sh0 = 2, sh1 = 2;
   const shMax0 = 2, shMax1 = 2;
+  // わざオート中に**判明したあいてのSP**(2026-09-01タダシさん指示): 一度撃ったわざは正体が分かるので、
+  // その時点から先のHUDのゲージ円は「？」ではなくタイプアイコンで出す。フレームごとに
+  // 「その時点までに判明したわざ」の一覧(rv)を持つ=巻き戻せば未判明に戻り、
+  // 決断待ちで隠れているSP(部分表示で切った行)は判明扱いにならない
+  let rvArr = [];
   const evCell = list => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
@@ -7512,7 +7518,7 @@ function gbRender(body, bt, picks, foes) {
         <div class="c foe">${leg.swapHit.side === 0 ? cell : ''}</div></div>` });
     }
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
-      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
+      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
     // 側ごとのSPが実際に発動したターンの一覧(seq番目のSP→spTn[side][seq])。
@@ -7541,7 +7547,14 @@ function gbRender(body, bt, picks, foes) {
       for (const r of subs) for (let i = 0; i < 2; i++) {
         const e = r.ev[i];
         if (!e) continue;
-        if (e.full !== undefined) spSeen++;   // SPアタック1発ぶん、実時間が余分に進む
+        if (e.full !== undefined) {
+          spSeen++;   // SPアタック1発ぶん、実時間が余分に進む
+          // わざオート中: あいてが撃ったSPはこの時点で正体が判明する(HUDの？→タイプアイコン)
+          if (i === 1 && MK.foeAuto) {
+            const rk = leg.foeName + '|' + e.move;
+            if (!rvArr.includes(rk)) rvArr = rvArr.concat(rk);
+          }
+        }
         if (e.shielded) { if (i === 0) sh1--; else sh0--; }
         if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
           if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
@@ -7556,7 +7569,7 @@ function gbRender(body, bt, picks, foes) {
       spByGt[gt] = spSeen;
       if (!partial) {
         frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
-          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
       } else {
         const pf = frames[gt - 1] || frames[base];
         // 決断待ちのターンでも、**すでに解決した出来事(先に撃った側のSPなど)はHPに反映する**
@@ -7569,7 +7582,7 @@ function gbRender(body, bt, picks, foes) {
           if (i === 0) hp1p = Math.max(0, hp1p - dm); else hp0p = Math.max(0, hp0p - dm);
         }
         frames[gt] = { meta, hp0: hp0p, en0: pf.en0, hp1: hp1p, en1: pf.en1,
-          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
       }
       let first = true;
       for (const r of subs) {
@@ -7620,7 +7633,7 @@ function gbRender(body, bt, picks, foes) {
     frames[0] = { meta: { name0: picks[0].name, name1: foes[0].name, cp0: sA.cp, cp1: sF.cp, max0: sA.hp, max1: sF.hp,
       sp0: (picks[0].pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: (foes[0].pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })) },
-      hp0: sA.hp, en0: 0, hp1: sF.hp, en1: 0, b0: [0, 0], b1: [0, 0], sh0, sh1, alive0, alive1 };
+      hp0: sA.hp, en0: 0, hp1: sF.hp, en1: 0, b0: [0, 0], b1: [0, 0], sh0, sh1, alive0, alive1, rv: rvArr };
   }
   const stop = bt.pending ? bt.pending.gt : bt.turns;
   for (let g = 1; g <= stop; g++) if (!frames[g]) frames[g] = frames[g - 1];
@@ -7703,9 +7716,11 @@ function gbRender(body, bt, picks, foes) {
         Rf.nm.textContent = nm.replace(/^シャドウ/, 'S');   // 下のフレームは幅が狭い(確定仕様の縮め方)
         Rf.nm.title = nm;
         Rf.cp.textContent = 'CP' + cp;
-        // わざオート中は、あいてのゲージ円にわざ名・タイプを出さない(何が飛んでくるか分からない設定)
+        // わざオート中は、あいてのゲージ円にわざ名・タイプを出さない(何が飛んでくるか分からない設定)。
+        // ただし**一度撃って正体が判明したわざ**は、その時点から先はタイプアイコンで出す
+        // (2026-09-01タダシさん指示。下のrv判定が毎フレーム切り替える。data-mvは判定用)
         const hide = isFoe && MK.foeAuto;
-        Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${
+        Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" data-mv="${m.n}" data-hide="${hide ? 1 : 0}" title="${
           hide ? 'あいてのSPアタック(わざオート中はどれか分かりません)' : `${m.n}（ゲージ${m.e}）`}"><i>${
           hide ? '？' : typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
@@ -7742,6 +7757,17 @@ function gbRender(body, bt, picks, foes) {
     set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
+    // わざオート: 撃って判明したあいてのSPは？→タイプアイコンに切り替える(2026-09-01タダシさん指示。
+    // フレームのrv=その時点までに判明したわざ、なので巻き戻せば？に戻る)
+    if (MK.foeAuto) R1.gqs.querySelectorAll('.gq[data-hide="1"]').forEach(g => {
+      const mv = g.dataset.mv;
+      const known = !!(f.rv && f.rv.indexOf(f.meta.name1 + '|' + mv) >= 0);
+      if ((g.dataset.st === 'k') !== known) {
+        g.dataset.st = known ? 'k' : 'q';
+        g.querySelector('i').innerHTML = known ? typeIconHTML(D.typeJa[MOVE_TYPE[mv]] || '', 13) : '？';
+        g.title = known ? `${mv}（ゲージ${g.dataset.e}）` : 'あいてのSPアタック(わざオート中はどれか分かりません)';
+      }
+    });
     clk.textContent = rbSec(ckOf(gt));   // SPアタックの演出ぶんを含む実時間
     trn.textContent = gt + 'T';
     // ⇄いつでも交代は hctl(位置が動かない再生コントロールの並び)のボタンで受ける
