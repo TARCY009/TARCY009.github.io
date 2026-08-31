@@ -6895,7 +6895,15 @@ function gbPlay(picks, foes, ans, stepwise) {
             const eg = fm ? (fm.eg || 0) : 0;
             if (en < heavy.m.e && eg > 0)
               return { a: 'wait', n: Math.max(1, Math.ceil((heavy.m.e - en) / eg)) };
-            if (en >= heavy.m.e) return { a: 'fire', mv: light.id };
+            if (en >= heavy.m.e) {
+              // 毎回ブラフだと読まれて単調(2026-09-01タダシさん指示・ランダム性を加える):
+              // **3回に2回は軽いわざのブラフ・3回に1回は本命の重いわざをそのまま撃つ**。
+              // 素の乱数だと決断を選び直すたびに結果が変わるので、場面ハッシュのコイン(gbCoin)で
+              // 「同じ場面なら必ず同じ・場面が変われば変わる」にする(両者同時KOの出し直しと同じ流儀)
+              const roll = gbCoin('bluff:' + ctx.li + ':' + p.seq + ':' + p.tn + ':'
+                + ros[1][cur[1]].name + ':' + ros[0][cur[0]].name) % 3;
+              return { a: 'fire', mv: roll === 2 ? heavy.id : light.id };
+            }
           }
         }
       }
