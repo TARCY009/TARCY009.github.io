@@ -1024,7 +1024,25 @@ function buildRanking(){
     }
   }
   rows.sort((a,b)=>b.dps-a.dps);
-  return assignRanks(rows);
+  return assignRanks(dedupForms(rows));
+}
+// すがた違い(ゲノセクトのカセット・コスチューム等)が「同じわざ・同じ火力」で並ぶときは1行にまとめる。
+// まとめるのは 括弧を除いた名前・シャドウかどうか・わざ2つ・火力 が全部同じときだけ
+// (デオキシスのフォルム等は種族値が違い火力もずれるので残る)。残すのは すがた無し > （ふつう） > 先頭 の順
+function dedupForms(rows){
+  const baseName=n=>n.replace(/（[^）]*）/g,'');
+  const score=n=>n===baseName(n)?2:(n.includes('（ふつう）')?1:0);
+  const seen=new Map(), out=[];
+  for(const r of rows){
+    const key=baseName(r.p.n)+'|'+(r.shadow?1:0)+'|'+r.f.id+'|'+r.c.id;
+    const prev=seen.get(key);
+    if(prev && sameDps(prev.dps,r.dps)){
+      if(score(r.p.n)>score(prev.p.n)){out[out.indexOf(prev)]=r;seen.set(key,r);}
+      continue;
+    }
+    seen.set(key,r); out.push(r);
+  }
+  return out;
 }
 function mineRows(){
   if(!boss) return [];
@@ -1243,6 +1261,7 @@ const HELP_HTML = `
     <li><b>ノーマルアタック100回ぶんのサイクル</b>で、1秒あたり何ダメージ出せるかです。数字が大きいほど強い</li>
     <li>相手は<b>防御種族値100・個体値15・PL40</b>のものさしで統一しています。選んだボスの<b>タイプ相性</b>は反映されます</li>
     <li>一覧の数字は<b>PL50・個体値15</b>のとき。登録した自分のポケモンだけは、入力したPL・個体値・わざで計算します</li>
+    <li>すがた違い（ゲノセクトのカセット・コスチューム違いなど）で<b>わざも火力も同じ</b>になる行は1行にまとめ、すがた無しの行だけ出します（種族値が違うフォルムはそれぞれ残ります）</li>
     <li><b>火力が同じなら同順位</b>です（攻撃種族値・わざ・タイプ一致が同じだと火力もぴったり同じになります）。同順位が2匹並んだら次は3位、というように<b>重なったぶんの順位は飛ばします</b></li>
   </ul>
 
