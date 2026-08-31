@@ -889,10 +889,20 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hswap.fswap{justify-content:flex-end}
 /* ⇄いつでも交代(2026-09-01): 位置が動かない再生コントロールの並びに置く
    (HUDの左右は数字の更新で常に動くので押せない=タダシさん指摘)。
-   押せるときは金の光で示す(押しやすさ優先で、動くアニメはしない) */
-.hctl .hmsw:disabled{opacity:.35;cursor:default}
-.hctl .hmsw.rdy{border-color:var(--gold);
-  box-shadow:0 0 10px rgba(255,213,74,.7),inset 0 0 6px rgba(255,213,74,.28)}
+   デザインはゲームの交代ボタン風の金のピル(同日タダシさん指示・絵文字だけでなくボタンらしく)。
+   押せるときは共通のタブ言語=金のグラデーションで点灯(位置は動かさない)。
+   マークは点灯の金地で沈まないよう、マスク方式で文字色に追従させる */
+.hctl .hmsw{flex:1 1 100%;height:26px;border-radius:99px;display:flex;align-items:center;justify-content:center;
+  gap:4px;font-size:.66rem;font-weight:900;letter-spacing:.08em;color:var(--sub);
+  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+.hctl .hmsw .swapmark{width:14px;height:14px;background:none;background-color:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23000' stroke-width='15'%3E%3Cpath d='M80.9 41.7 A32 32 0 0 0 22.3 34'/%3E%3Cpath d='M19.1 58.3 A32 32 0 0 0 77.7 66'/%3E%3C/g%3E%3Cg fill='%23000'%3E%3Cpath d='M35.3 41.5 L10.3 54.8 L9.3 26.5 Z'/%3E%3Cpath d='M64.7 58.5 L89.7 45.2 L90.7 73.5 Z'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23000' stroke-width='15'%3E%3Cpath d='M80.9 41.7 A32 32 0 0 0 22.3 34'/%3E%3Cpath d='M19.1 58.3 A32 32 0 0 0 77.7 66'/%3E%3C/g%3E%3Cg fill='%23000'%3E%3Cpath d='M35.3 41.5 L10.3 54.8 L9.3 26.5 Z'/%3E%3Cpath d='M64.7 58.5 L89.7 45.2 L90.7 73.5 Z'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
+.hctl .hmsw:disabled{opacity:.4;cursor:default}
+.hctl .hmsw.rdy{cursor:pointer;color:#4a3200;border-color:transparent;
+  background:linear-gradient(160deg,#ffe08a 0%,#ffd54a 45%,#c9931a 100%);
+  box-shadow:0 0 14px rgba(255,213,74,.55),0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
 /* SPゲージの円とその残量の数字は1つのまとまり(折り返しでばらけさせない) */
 .gqg{display:inline-flex;align-items:center;gap:6px}
 .hs.foe .gqg{flex-direction:row-reverse}

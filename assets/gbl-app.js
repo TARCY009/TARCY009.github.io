@@ -4916,7 +4916,7 @@ function rbRender(body, bt, picks, foes, extra) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}</button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
@@ -4928,6 +4928,14 @@ function rbRender(body, bt, picks, foes, extra) {
   // ---- 再生(1ターン=0.5秒で流す)と HUD の更新 ----
   const feedEl = body.querySelector('.rbfeed');
   const els = [...feedEl.children];
+  // HUDは最初から画面のいちばん下に固定する(2026-09-01タダシさん案)。
+  // HUD(sticky)はタイムラインが画面の高さに満たないあいだ、行が増えるたびに下へ押されて動く=
+  // ⇄や⏸が押せない。フィードに画面ぶんの最低の高さを与えれば、HUDは最初から下に張りつき、
+  // 行は従来どおり上から流れてすき間が埋まっていく(1手ずつの再生モードのときだけ)
+  if (RB.step) {
+    const dockEl = body.querySelector('.rbdock');
+    feedEl.style.minHeight = Math.max(220, innerHeight - (dockEl ? dockEl.offsetHeight : 120) - 24) + 'px';
+  }
   const dock = body.querySelector('.rbdock');
   const winbox = dock.querySelector('.rbwinbox');
   const hud = dock.querySelector('.rbhud');
@@ -7647,7 +7655,7 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}</button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
@@ -7660,6 +7668,14 @@ function gbRender(body, bt, picks, foes) {
   // ---- 再生とHUD(ロケット団の模擬戦と同じ作り) ----
   const feedEl = body.querySelector('.rbfeed');
   const els = [...feedEl.children];
+  // HUDは最初から画面のいちばん下に固定する(2026-09-01タダシさん案)。
+  // HUD(sticky)はタイムラインが画面の高さに満たないあいだ、行が増えるたびに下へ押されて動く=
+  // ⇄や⏸が押せない。フィードに画面ぶんの最低の高さを与えれば、HUDは最初から下に張りつき、
+  // 行は従来どおり上から流れてすき間が埋まっていく(1手ずつの再生モードのときだけ)
+  if (RB.step) {
+    const dockEl = body.querySelector('.rbdock');
+    feedEl.style.minHeight = Math.max(220, innerHeight - (dockEl ? dockEl.offsetHeight : 120) - 24) + 'px';
+  }
   const dock = body.querySelector('.rbdock');
   const winbox = dock.querySelector('.rbwinbox');
   const hud = dock.querySelector('.rbhud');
