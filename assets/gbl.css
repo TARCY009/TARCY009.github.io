@@ -841,8 +841,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hs .hpn.g{color:#7ef0af}
 .hs .hpn.y{color:#ffd54a}
 .hs .hpn.r{color:#ff9d9d}
-.hb{height:7px;background:var(--deep);border:1px solid var(--line);border-radius:99px;margin:4px 0 5px;overflow:hidden}
-.hb i{display:block;height:100%;width:100%;border-radius:99px;transition:width .35s ease}
+.hb{height:7px;background:var(--deep);border:1px solid var(--line);border-radius:99px;margin:4px 0 5px;overflow:hidden;position:relative}
+/* HPが減る動き(2026-08-31): 本体はすぐ減り、うしろの白い残像がゆっくり追いかける(hpGhost) */
+.hb em{position:absolute;left:0;top:0;height:100%;width:100%;border-radius:99px;background:rgba(255,255,255,.5)}
+.hb i{display:block;position:relative;height:100%;width:100%;border-radius:99px;transition:width .3s ease}
 .hb i.g{background:linear-gradient(90deg,#2bd97c,#7ef0af)}
 .hb i.y{background:linear-gradient(90deg,#e8a93d,#ffd54a)}
 .hb i.r{background:linear-gradient(90deg,#ff6b81,#ff9d9d)}
@@ -1220,6 +1222,13 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .rbhud .gqn{font-size:1.06rem;font-weight:900;color:var(--cy);min-width:2ch;text-align:center;line-height:1}
 .rbhud .hs.foe .gqn{color:var(--gold)}
 /* あいての行動のチップ・決断ウィンドウは金色(あいて側の色)で見分ける */
+/* 両者の決断が同じターンに並ぶときの統合フレーム(2026-08-31タダシさん指示):
+   じぶん=左・あいて=右(タイムラインの列と同じ向き)。SPどうしは真ん中に「同時発動」の札 */
+.fc.pair{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.fc.pair .pmid{font-style:normal;font-size:.58rem;font-weight:900;color:var(--gold);letter-spacing:.08em;
+  white-space:nowrap;padding:2px 8px;border:1px solid rgba(255,213,74,.55);border-radius:99px;
+  background:rgba(255,213,74,.12);text-shadow:0 0 10px rgba(255,213,74,.55)}
+.fc.pair .pdiv{width:14px;height:1px;background:var(--line2)}
 .fchip.foe{border-color:rgba(255,213,74,.45)}
 .fchip.foe:hover{border-color:var(--gold)}
 /* チップの「じぶん／あいて」の札。色だけでは伝わらないので必ず文字でも出す */

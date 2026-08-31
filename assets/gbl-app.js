@@ -4446,6 +4446,16 @@ function fxShow(cls, html, dur) {
   setTimeout(() => el.remove(), d + 80);
   return d;
 }
+// HPバーの「残像」(2026-08-31タダシさん指示・HPが減る動きの演出):
+// 本体のバーはすぐ減り、うしろの白い残像がひと呼吸おいてゆっくり追いかけて減る。
+// 増えたとき(対面が替わった・巻き戻した)は残像も即座に合わせる(変な逆再生をしない)
+function hpGhost(gEl, w) {
+  if (!gEl) return;
+  const prev = +(gEl.dataset.p || 100);
+  gEl.style.transition = w < prev - 0.5 ? 'width .95s cubic-bezier(.25,.6,.3,1) .3s' : 'none';
+  gEl.style.width = w + '%';
+  gEl.dataset.p = w;
+}
 // 画面の揺れ(SPの着弾)。transformはタイムラインとHUDにだけ当てる
 function fxQuake() {
   document.querySelectorAll('.rbfeed, .rbhud').forEach(e => {
@@ -4840,7 +4850,7 @@ function rbRender(body, bt, picks, foes, extra) {
       <div class="rbwinbox"></div>
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
-          <div class="hb"><i></i></div>
+          <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
@@ -4848,7 +4858,7 @@ function rbRender(body, bt, picks, foes, extra) {
           <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
-          <div class="hb"><i></i></div>
+          <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
         </div>
       </div>
@@ -4863,6 +4873,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const sideRefs = side => {
     const el = hud.querySelector('.hs.' + side);
     return { nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
+      ghost: el.querySelector('.hb em'),
       hpn: el.querySelector('.hpn'),
       balls: el.querySelector('.balls'), shds: el.querySelector('.shds'),
       gqs: el.querySelector('.gqs'), gqn: el.querySelector('.gqn'), bfs: el.querySelector('.bfs') };
@@ -4888,7 +4899,9 @@ function rbRender(body, bt, picks, foes, extra) {
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
       // HPが1でも残っているうちはバーを空に見せない(残りわずかでも「まだ倒せていない」と分かるように)
-      Rf.bar.style.width = (hp > 0 ? Math.max(pct, 4) : 0) + '%';
+      const w = hp > 0 ? Math.max(pct, 4) : 0;
+      Rf.bar.style.width = w + '%';
+      hpGhost(Rf.ghost, w);   // 白い残像がゆっくり追いかけて「減った量」を見せる
       const cls = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
       Rf.bar.className = cls;
       // バーだけでは残りわずかが読み取れないので、実数値も出す(色はバーと同じ基準)
@@ -7292,8 +7305,14 @@ function gbRender(body, bt, picks, foes) {
   // チップには**どちらの判断か**を必ず書く(2026-08-19タダシさん報告で追加)。
   // 枠の色(金＝あいて)だけでは伝わらず、あいての「撃たない」を自分の判断だと誤解する
   // (実例: オコリザルが起点づくりでSPを温存した場面を、こちらのSP判断だと思われた)
-  const chipItem = (p, gt) => ({ gt, html: `<div class="fc${p.side ? ' foe' : ''}"><button class="fchip${p.auto ? ' auto' : ''}${p.side ? ' foe' : ''}"
-    data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'じぶんの行動です。タップすると、この場面からやり直せます'}"><i class="who">${p.side ? 'あいて' : 'じぶん'}</i>${RB_ICON[p.kind]}<b>${gbAnsLabel(p, p.ans)}</b></button></div>` });
+  const chipBtn = p => `<button class="fchip${p.auto ? ' auto' : ''}${p.side ? ' foe' : ''}"
+    data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'じぶんの行動です。タップすると、この場面からやり直せます'}"><i class="who">${p.side ? 'あいて' : 'じぶん'}</i>${RB_ICON[p.kind]}<b>${gbAnsLabel(p, p.ans)}</b></button>`;
+  const chipItem = (p, gt) => ({ gt, html: `<div class="fc${p.side ? ' foe' : ''}">${chipBtn(p)}</div>` });
+  // 同じターンに両者の決断が並ぶときは1つのフレームに統合する(2026-08-31タダシさん指示・パッと見やすく):
+  // SPどうしで発動も同じターンなら真ん中に「同時発動」の札 ／ シールドの答えは左右に並べる。
+  // じぶん=左・あいて=右(タイムラインの列と同じ向き)
+  const pairItem = (a, b, gt, mid) => ({ gt, html: `<div class="fc pair">${chipBtn(a)}${
+    mid ? `<i class="pmid">${mid}</i>` : '<i class="pdiv"></i>'}${chipBtn(b)}</div>` });
   bt.legs.forEach(leg => {
     const res = leg.res, base = leg.base;
     while (spByGt.length <= base) spByGt.push(spSeen);
@@ -7338,6 +7357,11 @@ function gbRender(body, bt, picks, foes) {
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1 };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
+    // 側ごとのSPが実際に発動したターンの一覧(seq番目のSP→spTn[side][seq])。
+    // 「同時発動」の判定(両者のSPが同じターンに解決)に使う
+    const spTn = [[], []];
+    rbTurns(res).forEach(t => { for (const i of [0, 1])
+      if (t.ev[i].some(e => e.full !== undefined)) spTn[i].push(t.tn); });
     // 決断待ちより先は「まだ起きていない」ので描かない(ロケット団の模擬戦と同じ規則):
     //   sp・swap待ち: 質問ターンの出来事はすべて確定なので全部見せる
     //   sh待ち: 質問対象のあいてのSPから先を隠す
@@ -7389,7 +7413,21 @@ function gbRender(body, bt, picks, foes) {
         first = false;
       }
       if (first) items.push({ gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` });
-      (ptAt[t.tn] || []).forEach(p => items.push(chipItem(p, gt)));
+      // 両者の決断が同じターンに並んだらペアのフレームへ(plはソート済み=じぶんが先)
+      const firing = x => x.ans && x.ans.a !== 'hold' && x.ans.a !== 'wait';
+      const pl = ptAt[t.tn] || [];
+      for (let pi = 0; pi < pl.length; pi++) {
+        const p = pl[pi], q = pl[pi + 1];
+        if (q && p.kind === q.kind && p.side === 0 && q.side === 1
+            && (p.kind === 'sh'
+              || (p.kind === 'sp' && firing(p) && firing(q)
+                  && spTn[0][p.seq] != null && spTn[0][p.seq] === spTn[1][q.seq]))) {
+          items.push(pairItem(p, q, gt, p.kind === 'sp' ? '同時発動' : ''));
+          pi++;
+          continue;
+        }
+        items.push(chipItem(p, gt));
+      }
     });
     const endGt = base + res.turns;
     if (!pend) {
@@ -7442,7 +7480,7 @@ function gbRender(body, bt, picks, foes) {
       <div class="rbwinbox"></div>
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
-          <div class="hb"><i></i></div>
+          <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
@@ -7450,7 +7488,7 @@ function gbRender(body, bt, picks, foes) {
           <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
-          <div class="hb"><i></i></div>
+          <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
@@ -7466,6 +7504,7 @@ function gbRender(body, bt, picks, foes) {
   const sideRefs = side => {
     const el = hud.querySelector('.hs.' + side);
     return { nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
+      ghost: el.querySelector('.hb em'),
       hpn: el.querySelector('.hpn'),
       balls: el.querySelector('.balls'), shds: el.querySelector('.shds'),
       gqs: el.querySelector('.gqs'), gqn: el.querySelector('.gqn'), bfs: el.querySelector('.bfs') };
@@ -7494,7 +7533,9 @@ function gbRender(body, bt, picks, foes) {
     }
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
-      Rf.bar.style.width = (hp > 0 ? Math.max(pct, 4) : 0) + '%';
+      const w = hp > 0 ? Math.max(pct, 4) : 0;
+      Rf.bar.style.width = w + '%';
+      hpGhost(Rf.ghost, w);   // 白い残像がゆっくり追いかけて「減った量」を見せる
       const cls = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
       Rf.bar.className = cls;
       Rf.hpn.textContent = hp + '/' + max;
