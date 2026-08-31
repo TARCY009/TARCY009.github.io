@@ -5962,7 +5962,8 @@ function gbPoints(turns, ctx, dec) {
         const over0 = t.state[0].hp <= 0 || t.state[1].hp <= 0;
         if ((gbSelfDebuff(mv) || (s === 1 && ctx.foeDump)) && !over0 && d.swapTo == null
             && ctx.swTo[s].length && ck(t.tn) >= ctx.swOk[s])
-          pts.push({ side: s, kind: 'swap', seq: spIdx, w: 0, tn: t.tn, ...(snap[t.tn] || {}) });
+          // dbf=撃ったのが自分の能力が下がるわざか(AIの「打ち逃げ必須」はデバフ技のときだけ)
+          pts.push({ side: s, kind: 'swap', seq: spIdx, w: 0, tn: t.tn, dbf: gbSelfDebuff(mv), ...(snap[t.tn] || {}) });
         continue;
       }
       if (armed && t.ev[s].some(e => e.full === undefined)) normals++;
@@ -6837,12 +6838,15 @@ function gbPlay(picks, foes, ans, stepwise) {
         return to == null ? { a: 'stay' } : { a: 'toq', to };
       }
       // ---- 打ち逃げ(2026-08-31タダシさん指示・恒久ルール) ----
-      // 『交代が可能な場面でデバフ技を打つ時は必ず交代する』。自分の能力が下がるSP
-      // (または逃げ回りの吐き出し)を撃った直後の質問(seq>0)は、デバフを背負ったまま残らず
-      // **必ず交代してリセットする**(この質問は交代できる場面でしか出ない)。
-      // 行き先は勝てる控えを最優先、いなければ形勢のいちばんマシな控え(aiKeepSwap)。
-      // HARDの「自分から逃げ交代しない」ガードより優先する明示的な例外
-      if (p.seq > 0) {
+      // 『交代が可能な場面でデバフ技を打つ時は必ず交代する』。**自分の能力が下がるSP**を
+      // 撃った直後の質問(seq>0・dbf)は、デバフを背負ったまま残らず**必ず交代してリセットする**
+      // (この質問は交代できる場面でしか出ない)。行き先は勝てる控えを最優先、
+      // いなければ形勢のいちばんマシな控え(aiKeepSwap)。
+      // HARDの「自分から逃げ交代しない」ガードより優先する明示的な例外。
+      // **デバフ技でないSP(逃げ回りの吐き出し)は対象外**(2026-08-31同日タダシさん指摘で限定:
+      // ミラーのサイコブレイクをシールドで防いで勝ち対面を取ったのに交代してしまった。
+      // こちらは下の従来判断に落ちる=勝っている対面なら残ってそのまま倒す)
+      if (p.seq > 0 && p.dbf) {
         const to = aiKeepSwap(nowOv);
         if (to != null) return { a: 'toq', to };
         return { a: 'stay' };   // 控えがいない保険(質問の条件上ほぼ通らない)
