@@ -9157,29 +9157,97 @@ const TOUR = { steps: null, i: 0, retry: 0 };
 const TOUR_LAST = { sel: '#themesw .explainsw',
   tx: 'わからない言葉や数字が出てきたら、この💡をONにして<b>長押し</b>すると説明が出ます' };
 const TOUR_DEFS = {
+  // 対策さがし: リーグ → あいて → 範囲 → 表の見方 → 絞り込み → 行タップ
   counter: [
-    { sel: '#counter .mttbl', tx: '<b>勝てるポケモンが強い順</b>に並んでいます。🛡の列はシールドの枚数ごとの勝敗で、行をタップすると対面の詳しい流れが開きます' },
-    { sel: '#counter .mtrange', tx: '範囲を<b>「全ポケモン」</b>にすると、あまり使われていないポケモンからも対策を探せます' },
+    { sel: '#leagues',
+      tx: 'まず<b>リーグ</b>を選びます。ここを変えると、探す候補も相手の強さも、そのリーグの前提で計算し直します' },
+    { sel: '#sideR .sugg, #sideR',
+      tx: '<b>あいて</b>はここで変えられます。名前を打つと候補が出るので、調べたい相手を選び直せます' },
+    { sel: '#counter .mtrange, #counter',
+      tx: '探す<b>範囲</b>です。はじめは環境上位50匹から。<b>「全ポケモン」</b>にすると、あまり使われていないポケモンからも対策が見つかります' },
+    { sel: '#counter .mttbl, #counter',
+      tx: 'ここに<b>勝てるポケモンが強い順</b>に並びます。<b>🛡0-0／1-1／2-2</b>は、おたがいのシールドの枚数ごとの勝ち負けです（3つとも勝てるなら安心して出せます）' },
+    { sel: '#counter .mtfilter, #counter .mtctl, #counter',
+      tx: '<b>表示</b>で「3枚とも勝ち」だけに絞ったり、<b>並び</b>を変えたりできます。手持ちにいるポケモンを探すときに便利です' },
+    { sel: '#counter .mttbl, #counter',
+      tx: '行を<b>タップ</b>すると、その対面がターンごとにどう進むかが開きます。使うポケモンを決めたら、そのまま1対1シミュで詰められます' },
   ],
+  // 環境一覧: リーグ → わざ → SP2本目 → 個体値 → 表 → 環境スコア → マスをタップ
   multi: [
-    { sel: '#multi .mtscore', tx: '<b>環境スコア</b>＝環境の相手と2回対面して、少なくとも1回勝てる確率です。高いほど活躍できます' },
-    { sel: '#multi .mttbl', tx: '環境上位50匹との<b>勝敗の一覧</b>です。マスをタップすると、その対面の詳しい流れが開きます' },
+    { sel: '#leagues',
+      tx: 'まず<b>リーグ</b>を選びます。ここを変えると、あいての顔ぶれ（環境上位50匹）も入れかわります' },
+    { sel: '#sideL .selFast, #sideL',
+      tx: '次にじぶんの<b>ノーマルアタック</b>と<b>SPアタック</b>を選びます。<b>選ぶまで結果は出ません</b>（実際に使う構成のまま計算するためです）' },
+    { sel: '#sideL .c2row, #sideL',
+      tx: 'わざ開放でSPアタックを2本持っているなら、<b>2本目</b>もここで選べます。相手に合わせて撃ち分けるので、勝てる相手が増えることがあります' },
+    { sel: '#sideL .ivmode, #sideL',
+      tx: 'はじめは<b>理想の個体値</b>で計算します。手持ちの個体で見たいときは<b>ﾏﾆｭｱﾙ</b>にして、個体値とPLを入れます' },
+    { sel: '#multi .mttbl, #multi',
+      tx: 'ここに<b>環境上位50匹</b>（よく使われている順）との勝ち負けが出ます。<b>🛡0-0／1-1／2-2</b>は、おたがいのシールドの枚数ごとの結果です' },
+    { sel: '#multi .mtscore, #multi',
+      tx: '<b>環境スコア</b>＝環境の相手と2回対面して、少なくとも1回は勝てる確率です。高いほど、そのリーグで活躍できます' },
+    { sel: '#multi .mttbl, #multi',
+      tx: 'マスを<b>タップ</b>すると、その対面がターンごとにどう進むかが開きます。一覧の勝敗と<b>かならず同じ結果</b>になります' },
   ],
+  // パーティ診断: リーグ → 3枠 → わざ → シールド → 3枚のパネル → 入れ替え候補 → 表
   party: [
-    { sel: '#party .pslots', tx: 'この<b>3つの枠</b>にパーティを入れると、下に診断の結果が出ます。★からは登録した個体も呼べます' },
-    { sel: '#party .ptauto', tx: 'わざは自分で選べます。<b>「オート」</b>にすると実戦の定番構成を自動でセットします' },
+    { sel: '#leagues',
+      tx: 'まず<b>リーグ</b>を選びます。ここを変えると、あいての顔ぶれ（環境上位50匹）も入れかわります' },
+    { sel: '#party .pslots',
+      tx: 'この<b>3つの枠</b>にパーティを入れると、下に診断の結果が出ます。★からは登録した個体も呼べます' },
+    { sel: '#party .ptauto',
+      tx: 'わざは自分で選べます。<b>「オート」</b>にすると、実戦の定番構成を自動でセットします' },
+    { sel: '#party .ptsh, #party .pctl',
+      tx: '<b>シールドの枚数</b>を切り替えると、その前提での勝ち負けに変わります。ボタンの「穴◯」は、<b>3匹とも勝てない相手</b>の数です' },
+    { sel: '#party .ptcards, #party .pbody',
+      tx: '結果は<b>3枚のパネル</b>（🎯穴チェック・📋診断・⚔️得意な場面）です。<b>バッジをタップすると開きます</b>' },
+    { sel: '#ptswap, #party .pbody',
+      tx: '<b>🔧 入れ替え候補</b>を押すと、どの枠をどれに替えるといちばん良くなるかが出ます。<b>候補が出なくなるまで繰り返す</b>のがおすすめの使い方です' },
+    { sel: '#party .mttbl, #party .pbody',
+      tx: '表は相手1匹＝1行です。<b>マスをタップ</b>すると、その対面の詳しい流れが開きます' },
   ],
+  // GBL模擬戦: 3枠 → あいてのわざ → 難易度 → スタート → バトル中 → あとから選び直す
   mock: [
-    { sel: '#mock .rkteams', tx: '<b>じぶん3匹とあいて3匹</b>を入れて「▶ バトルスタート！」を押します。決断の場面で止まるので、選びながら進めます' },
-    { sel: '#mock .gbaibar', tx: '<b>難易度に応じてあいての強さが変わります</b>。<b>EASY</b>＝やさしい入門向け／<b>NORMAL</b>＝実戦の基本戦術で戦う標準／<b>HARD</b>＝こちらの手の内を知り尽くした最強。希望の難易度に設定して挑戦してください' },
+    { sel: '#mock .rkteams',
+      tx: '<b>じぶん3匹</b>と<b>あいて3匹</b>を入れます。じぶんの枠はパーティ診断と共通なので、診断したパーティをそのまま試せます' },
+    { sel: '#mock .gfauto, #mock .gfhead',
+      tx: 'あいてのわざを<b>「オート」</b>にすると、わざ欄が隠れて環境の定番構成で戦います。<b>何が飛んでくるか分からない実戦に近い練習</b>ができます' },
+    { sel: '#mock .gbaibar',
+      tx: '<b>難易度に応じてあいての強さが変わります</b>。<b>EASY</b>＝やさしい入門向け／<b>NORMAL</b>＝実戦の基本戦術で戦う標準／<b>HARD</b>＝こちらの手の内を知り尽くした最強。希望の難易度に設定して挑戦してください' },
+    { sel: '#mock .rbstart, #mock .gbbody, #mock',
+      tx: 'そろったら<b>▶ バトルスタート！</b>。1ターン＝0.5秒で流れ、<b>SPアタック・シールド・交代の決断の場面で止まって選択肢が出ます</b>' },
+    { sel: '#mock .gbbody, #mock',
+      tx: 'バトル中は画面のいちばん下に<b>HP・SPゲージ・シールド・残り手持ち</b>がいつも見えています。<b>⏸／×2／⏭</b>で止めたりコマ送りしたり、<b>⇄交代</b>もここからできます' },
+    { sel: '#mock .gbbody, #mock',
+      tx: '決めた場面は<b>チップ</b>で残るので、タップすればそこから選び直せます。<b>🔎 オートバトル「最善」</b>を選んでから始めると、手本の手順を見られます' },
   ],
+  // ロケット団 1対1(対策ランキング): あいて → 表 → 安定 → 絞り込み → 自分の個体 → 行タップ
   rkrank: [
-    { sel: '#rkrank .mttbl, #rkrank .rklist, #rkrank', tx: '<b>ノーマルアタックの火力が高い順</b>です。ロケット団戦は速く倒すのがいちばん大事です。行をタップするとシミュレートが開きます' },
-    { sel: '#rkviewbtns', tx: '<b>「高火力＋安定」</b>にすると、あいてのどのわざでも先に倒されないポケモンだけに絞れます' },
-    { sel: '#rkmytab', tx: 'CPと個体値を入れると、<b>自分の個体の順位</b>が分かります' },
+    { sel: '#rkkind',
+      tx: 'あいての種類です。<b>リーダー・サカキは手持ちが自動で入ります</b>。したっぱは下の「あいて」の欄に自分で入れます' },
+    { sel: '#rkrank .rkrbody, #rkrank',
+      tx: 'ここに<b>ノーマルアタックの火力が高い順</b>で対策が出ます。ロケット団戦は<b>いかに速く倒すか</b>がいちばん大事なので、SPアタックを撃たずに攻撃し切れるポケモンが上に来ます' },
+    { sel: '#rkviewbtns',
+      tx: '<b>「高火力＋安定」</b>にすると、あいてがどのわざを打ってきても先に倒されないポケモンだけに絞れます。⚠️が付いた行は、わざ次第で負ける組み合わせです' },
+    { sel: '#rkfilt',
+      tx: '<b>シャドウ</b>や<b>メガ・ゲンシ</b>を一覧に入れるかを切り替えられます' },
+    { sel: '#rkmytab',
+      tx: 'CPと個体値を入れると、<b>自分の個体の順位</b>が分かります。登録しておけば次からは1タップで呼べます' },
+    { sel: '#rkrank .rkrbody, #rkrank',
+      tx: '行を<b>タップ</b>すると、そのポケモンでの<b>シミュレート</b>に切り替わって、決着までの時間まで見られます' },
   ],
+  // ロケット団 模擬戦: あいて → 3枠 → おすすめ → スタート → オートバトル
   rkteam: [
-    { sel: '#rkteam .rkteams', tx: '<b>じぶんの3枠</b>に手持ちを入れて「▶ バトルスタート！」を押します。決断の場面で止まるので、選びながら進めます' },
+    { sel: '#rkkind',
+      tx: 'あいての種類です。<b>リーダー・サカキは手持ち3匹が自動で入ります</b>' },
+    { sel: '#rkteam .rkteams',
+      tx: '<b>じぶんの3枠</b>に手持ちを入れます。上から順に出て、倒れたら次が出ます（シールドは3匹で2枚を分け合います）' },
+    { sel: '#rksuggbar',
+      tx: '<b>おすすめ</b>を押してから枠の入力欄をタップすると、<b>同じ順番のあいてに強いポケモンのトップ5</b>が出ます。誰を入れるか迷ったらここからどうぞ' },
+    { sel: '#rkteam .rbstart, #rkteam .rkbody, #rkteam',
+      tx: 'そろったら<b>▶ バトルスタート！</b>。<b>決断の場面で止まる</b>ので、選びながら最後まで戦えます' },
+    { sel: '#rkteam .rkbody, #rkteam',
+      tx: '<b>🔎 オートバトル（最速／安定）</b>を選んでから始めると、手本の手順を見られます。決めた場面のチップをタップすれば、そこから選び直せます' },
   ],
 };
 function tourEnd() {
@@ -9199,8 +9267,11 @@ function tourShow() {
   const st = TOUR.steps;
   if (!st || TOUR.i >= st.length) { tourEnd(); return; }
   const cur = st[TOUR.i];
-  const el = document.querySelector(cur.sel);
-  if (!el || el.offsetParent === null) {
+  // セレクタは前から順に試す(例: 表があれば表・まだ無ければ入れ物)。
+  // querySelector にカンマ区切りをそのまま渡すと文書の順で拾ってしまい、優先順位が効かない
+  const el = cur.sel.split(',').map(x => document.querySelector(x.trim()))
+    .find(e => e && e.offsetParent !== null);
+  if (!el) {
     // まだ描画されていない可能性 → 少し待って再挑戦。それでも無ければこのステップは飛ばす
     if (--TOUR.retry > 0) { setTimeout(tourShow, 300); return; }
     TOUR.i++; TOUR.retry = 3; tourShow(); return;
@@ -9217,6 +9288,7 @@ function tourShow() {
   tip.className = 'gtip';
   tip.innerHTML = `<div class="tx">${cur.tx}</div>
     <div class="nav"><span class="n">${TOUR.i + 1}/${st.length}</span>
+    ${TOUR.i ? '<button class="tprev" title="ひとつ前にもどる">◂ もどる</button>' : ''}
     <button class="tnext">${last ? 'おわり' : '次へ ▸'}</button>
     <button class="tskip" title="案内をとじる">✕</button></div>`;
   document.body.appendChild(tip);
@@ -9229,6 +9301,8 @@ function tourShow() {
   if (tall) tip.classList.add('noarrow');
   else tip.style.setProperty('--ax', Math.max(14, Math.min(w - 28, r.left + r.width / 2 - left - 7)) + 'px');
   tip.querySelector('.tnext').onclick = () => { TOUR.i++; tourShow(); };
+  const pv = tip.querySelector('.tprev');
+  if (pv) pv.onclick = () => { TOUR.i--; TOUR.retry = 8; tourShow(); };
   tip.querySelector('.tskip').onclick = tourEnd;
 }
 // 画面の向き・幅が変わったら位置を測り直す。モードを自分で切り替えたら案内は役目を終える

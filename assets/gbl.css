@@ -1327,8 +1327,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   background:var(--panel);border-left:2px solid var(--cy);border-top:2px solid var(--cy);transform:rotate(45deg)}
 .gtip.noarrow::before{display:none}
 .gtip .nav{display:flex;align-items:center;gap:8px;margin-top:8px}
-.gtip .n{color:var(--sub);font-size:.74rem}
-.gtip .tnext{margin-left:auto;padding:6px 14px;border:none;border-radius:999px;font-weight:800;font-size:.8rem;
+.gtip .n{color:var(--sub);font-size:.74rem;margin-right:auto}
+/* ひとつ前のふきだしへ戻る(読み返せるように・2026-09-01) */
+.gtip .tprev{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 11px;
+  color:var(--sub);cursor:pointer;font-size:.76rem;font-weight:700;font-family:inherit}
+.gtip .tprev:hover{color:var(--ink)}
+.gtip .tnext{padding:6px 14px;border:none;border-radius:999px;font-weight:800;font-size:.8rem;
   cursor:pointer;background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;
   box-shadow:0 3px 10px rgba(8,180,201,.4)}
 .gtip .tnext:hover{transform:translateY(-1px)}
