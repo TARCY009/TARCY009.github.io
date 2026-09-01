@@ -42,7 +42,9 @@
       html += '<button type="button" data-lv="' + v + '" aria-pressed="' + (v === lv) +
               '" title="' + HELP + '">' + v + '</button>';
     }
-    el.innerHTML = html + '</span>';
+    // メガLvが効くのは「＋わざ」だけ。これを言っておかないと
+    // 「押しても数字が変わらない＝壊れている」と見えてしまう(タダシさん報告)
+    el.innerHTML = html + '</span><span class="mlvnote">＋わざの威力だけ変わります</span>';
     var bs = el.querySelectorAll('button');
     for (var i = 0; i < bs.length; i++) bs[i].onclick = (function (b) { return function () { set(b.dataset.lv); }; })(bs[i]);
     boxes.push(el); paint();

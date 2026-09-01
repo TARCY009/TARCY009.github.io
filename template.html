@@ -233,6 +233,9 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .modes button[aria-pressed="true"]{color:#fff;border-color:transparent;transform:translateY(-1px);
   background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
 .modes button:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
+/* メガの追加SPアタック「＋わざ」＝メガLvで動く行。どこが変わるかを色で示す */
+.plusmv{color:#f08ccd;font-weight:800}
+:root.light .plusmv{color:#c2247e}
 /* 役割ごとの色: シャドウ=紫 ／ メガ・ゲンシ=マゼンタ(名前横のメガマークと同系) ／ シールド破壊=水色。
    未選択のときの文字色(--mc)は、暗い土台でも読めるよう明るめの同系色にする */
 #fShadow{--mc:var(--mcS);--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45);
@@ -607,6 +610,7 @@ const T_DPS='1秒あたりの与ダメージです。ノーマルアタック100
 const T_RANK='火力が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
 const T_RANKME='登録した自分のポケモンを、この一覧に当てはめたときの順位です';
 const T_MOVES='PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だったわざの組み合わせです';
+const T_PLUSMV='メガシンカ中だけ使える追加のSPアタックです。メガLvで威力が変わるのはこのわざだけなので、メガLvを切り替えるとこの行の数字が動きます';
 const T_MOVES_SH='ゲージ2分割・3分割のSPアタックの中で、いちばん火力が出る組み合わせです';
 const T_PL50='一覧は全ポケモンをPL50・個体値15にそろえて比べています';
 const T_MP='レイドボスのHPを、全員がランキング1位のアタッカー（PL50・個体値15・最適わざ）で制限時間いっぱい攻撃し続けたときに倒しきれる、いちばん少ない人数です。倒されて出し直す時間やブーストは入れていない理論値なので、実際はこの人数より多めが安全です';
@@ -1087,8 +1091,10 @@ function moveLabel(p, id, sp, hpTypes){
     const icons=ts.map(t=>typeIconHTML(D.typeJa[t],14)).join('');
     return icons+(isSp?`<span class="sp">めざめるパワー(特)</span>`:'めざめるパワー');
   }
-  const nm = typeIconHTML(D.typeJa[m.t],14)+(isSp?`<span class="sp">${m.n}(特)</span>`:m.n);
-  return nm;
+  // メガの「＋わざ」はメガLvで威力が動く行なので、名前を色で示す(どこが変わるかが見て分かるように)
+  const body = isSp?`<span class="sp">${m.n}(特)</span>`
+             : (PLUS_IDS.includes(id)?`<span class="plusmv" title="${T_PLUSMV}">${m.n}</span>`:m.n);
+  return typeIconHTML(D.typeJa[m.t],14)+body;
 }
 function badges(shadow, mega, p){
   // ゲンシカイオーガ・ゲンシグラードンはメガシンカではなく「ゲンシ」なのでマークを分ける

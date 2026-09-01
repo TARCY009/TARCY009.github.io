@@ -114,6 +114,9 @@ h1 b{white-space:nowrap}
 .rmoves{font-size:.74rem;color:var(--sub);display:flex;flex-wrap:wrap;align-items:center;column-gap:4px}
 .rmoves .mv{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .rmoves .sp{color:var(--special)}
+/* メガの追加SPアタック「＋わざ」＝メガLvで動く行。どこが変わるかを色で示す */
+.plusmv{color:#f08ccd;font-weight:800}
+:root.light .plusmv{color:#c2247e}
 .bar{height:6px;background:var(--barbg);border-radius:99px;margin-top:4px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--tgrad,linear-gradient(90deg,var(--accent2),var(--accent)));border-radius:99px}
 .rdps{width:64px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0}
@@ -330,9 +333,12 @@ function badges(shadow,mega,p){
 }
 const lowBulk=(p,shadow)=>(p.df*(shadow?5/6:1)*p.h<16000)
   ?'<span class="lowbulk" title="倒されやすい目安です（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定します）">⚠️極低耐久</span>':'';
+const T_PLUSMV='メガシンカ中だけ使える追加のSPアタックです。メガLvで威力が変わるのはこのわざだけなので、メガLvを切り替えるとこの行の数字が動きます';
 const mvName=x=>{
   const m=D.moves[x.id];
   const n=x.id.startsWith('HIDDEN_POWER_')?'めざめるパワー':m.n;
+  // メガの「＋わざ」はメガLvで威力が動く行なので、名前を色で示す
+  if(PLUS_IDS.includes(x.id)) return `<span class="mv plusmv" title="${T_PLUSMV}">${n}</span>`;
   return `<span class="mv${x.sp?' sp':''}"${x.sp?' title="特別わざ・レガシーわざです"':''}>${n}</span>`;
 };
 const T_DPS='1秒あたりの与ダメージです。ノーマルアタック100回ぶんのサイクルで計算しています';
