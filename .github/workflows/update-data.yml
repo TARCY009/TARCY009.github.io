@@ -4,7 +4,7 @@
 #   タダシさん側の操作は不要。読むだけ。
 #
 # 2026-08-09拡張: 火力チェッカーだけでなく全ツールのデータを一括更新する。
-#   build_data.py            → index.html / godata.json（火力チェッカー）
+#   build_data.py            → dps/index.html / godata.json（レイド火力チェッカー）
 #   gym-attack/build_gym.py  → gym_data.json/js（ジム挑戦。godata.jsonから同期）
 #   gym-defense/build_defense.py → defense_data.js/json（ジム防衛）
 #   max-battle/build_max.py  → max_data.js（マックスバトル）
@@ -66,7 +66,7 @@ jobs:
         env:
           HEADLINE: ${{ steps.build.outputs.headline }}
         run: |
-          FILES="index.html godata.json
+          FILES="dps/index.html godata.json
                  gym-attack/data/gym_data.json gym-attack/data/gym_data.js
                  gym-defense/data/defense_data.js gym-defense/data/defense_data.json
                  max-battle/data/max_data.js

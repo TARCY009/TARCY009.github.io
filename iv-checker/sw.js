@@ -2,9 +2,9 @@
 //  - 更新をすぐ届ける: 公開先はHTML等を10分間ブラウザにキャッシュさせるため、
 //    同一サイトのファイルは cache:'reload' でブラウザのキャッシュを使わずに取りに行く
 //  - オフラインでも開ける: 通信できないときだけ保存済みを使う
-const CACHE='ivc-v12';
+const CACHE='ivc-v13';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png',
-  '/assets/theme.css','/assets/theme.js','/assets/explain.css','/assets/explain.js','/assets/tabs.css',
+  '/assets/theme.css','/assets/theme.js','/assets/explain.css','/assets/explain.js','/assets/home.css','/assets/home.js','/assets/tabs.css',
   '/assets/type-icons.js'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{}));

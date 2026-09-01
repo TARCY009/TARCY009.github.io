@@ -4,12 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ポケモンGO レイド火力チェッカー｜自分のポケモンのDPSを計算・比較</title>
+<meta name="description" content="ポケモンGOのレイドボスを選ぶだけで、対ボスの火力(DPS)ランキングを自動生成。自分のポケモンはCPと個体値を入れると今の火力が分かります。最少討伐人数・シールド破壊にも対応。">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/karyoku/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/karyoku/apple-touch-icon.png">
-<link rel="manifest" href="/manifest.webmanifest">
+<link rel="manifest" href="/dps/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="レイド火力">
+<link rel="canonical" href="https://tarcy009.github.io/dps/">
+<!-- SNSに貼ったときの表示(2026-09-01追加。それまで1つも入っていなかった) -->
+<meta property="og:title" content="ポケモンGO レイド火力チェッカー">
+<meta property="og:description" content="レイドボスを選ぶだけで、火力(DPS)ランキングを自動生成。自分のポケモンはCPと個体値を入れると今の火力が分かります。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tarcy009.github.io/dps/">
+<meta property="og:site_name" content="ポケモンGO 攻略ツール">
+<meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/mega-lv.css">
 <meta name="theme-color" content="#0b1023">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
@@ -453,6 +464,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <script src="/assets/type-icons.js"></script>
 <script src="/assets/theme.js"></script>
 <script src="/assets/explain.js"></script>
+<script src="/assets/home.js"></script>
 <script src="/assets/mega-lv.js"></script>
 <script>
 const D = __GODATA__;

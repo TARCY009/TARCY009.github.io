@@ -1,0 +1,29 @@
+/* 「🏠 ツール一覧」ボタン（全ツール共通・2026-09-01）
+   home.js がテーマスイッチ(#themesw)の先頭に差し込むので、ページ側のHTMLに追加する要素は無い。
+   やることは theme・explain と同じ流儀の2行だけ:
+   ・<head> に home.css を読み込む
+   ・explain.js の「直後」に home.js を読み込む
+     （theme.js が #themesw を innerHTML で丸ごと書き換えるので、必ずその後。
+       explain.js より後に読むと、この🏠が並びのいちばん左に来る）
+   トップページ(いちばん短い住所)では出さない（自分自身へのリンクになるため・home.js が判定）。
+
+   見た目は💡説明ボタンと同じピル型にそろえる。押している状態は無い（リンクなので）。
+   セレクタは必ず #themesw 付きにする: ボタンは #themesw の中に入るため、
+   theme.css の「.themesw button」に詳細度で勝つ必要がある（実際に踏んだ落とし穴と同じ） */
+#themesw .homesw{font:inherit;font-size:.92rem;line-height:1;font-weight:800;
+  display:inline-flex;align-items:center;gap:5px;padding:7px 13px;margin-right:9px;
+  cursor:pointer;flex:0 0 auto;border-radius:999px;color:#ffd873;text-decoration:none;
+  border:1px solid #2a3560;background:linear-gradient(180deg,#1e2850,#151d38);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
+#themesw .homesw:hover{transform:translateY(-1px);color:#ffe9a3;
+  box-shadow:0 4px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+#themesw .homesw:focus-visible{outline:2px solid #f0a827;outline-offset:2px}
+#themesw .homesw .hi{font-style:normal;display:inline-block}
+/* ライトテーマ（白い土台でも読める濃さにする） */
+:root.light #themesw .homesw{color:#8a6000;border-color:#dfe6f5;
+  background:linear-gradient(180deg,#fff,#eff3fc);
+  box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+:root.light #themesw .homesw:hover{color:#6b4a00;box-shadow:0 4px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+/* 狭い画面では文字を隠して🏠だけにする（💡説明ボタンと同じ考え方） */
+@media (max-width:430px){#themesw .homesw{padding:6px 10px;font-size:.85rem}#themesw .homesw .ht{display:none}}

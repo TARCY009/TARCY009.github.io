@@ -5,7 +5,7 @@
 - PokeMiners Game Master(最新)から全ポケモン・技データを取得
 - PokeMiners i18n から日本語名を取得
 - PvPoke から実装済みシャドウ一覧を取得
-- template.html に埋め込んで index.html を出力
+- template.html に埋め込んで dps/index.html を出力（レイド火力チェッカー本体）
 
 実行: python3 build_data.py
 必要: requests (pip install requests)
@@ -582,10 +582,10 @@ def main():
 
     open('godata.json','w',encoding='utf-8').write(god)
     tpl = open('template.html', encoding='utf-8').read()
-    open('index.html','w',encoding='utf-8').write(tpl.replace('__GODATA__', god))
+    open('dps/index.html','w',encoding='utf-8').write(tpl.replace('__GODATA__', god))
     dup = [(n,ct) for n,ct in Counter(p['n'] for p in final.values()).items() if ct>1]
     if dup: print('警告: 表示名重複 →', dup)
-    print(f'完了: {len(final)}種 / シャドウ実装 {sum(1 for p in final.values() if p.get("shadow"))}種 / index.html 出力')
+    print(f'完了: {len(final)}種 / シャドウ実装 {sum(1 for p in final.values() if p.get("shadow"))}種 / dps/index.html 出力')
 
 if __name__ == '__main__':
     main()
