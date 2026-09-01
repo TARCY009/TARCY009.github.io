@@ -398,7 +398,9 @@ function bestComboVs(p,bt,bossDef,shadow){
 }
 let topCache={key:null,val:null};
 function topAttacker(){
-  const ck=boss+'|'+tier;
+  // ⚠ キーにメガレベルも入れる。＋わざの威力がレベルで変わるので、
+  //   ボスとランクだけで持つと「レベルを変えても1位の選び直しが起きない」(実際に踏んだ)
+  const ck=boss+'|'+tier+'|'+MegaLv.level();
   if(topCache.key===ck)return topCache.val;
   const bp=D.pokemon[boss], bt=bp.ty, bossDef=(bp.df+15)*tierOf(tier).cpm;
   let best=null;

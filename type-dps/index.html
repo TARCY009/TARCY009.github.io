@@ -348,6 +348,12 @@ function renderTypeGrid(){
 }
 function renderRank(){
   const rows=buildRows().slice(0,showN);
+  // メガLvが効くのは「＋わざ」の行だけ。見えていないときはタブを出さない
+  // (押しても何も変わらず「壊れている」ように見えるため)。
+  // 既定(Lv4)から変えているあいだは常に出す——見えない前提で数字が動かないようにするのと、
+  // レベルを下げて＋わざが選ばれなくなったときにタブごと消えて戻せなくなるのを防ぐため
+  const hasPlus=rows.some(r=>PLUS_IDS.includes(r.c.id));
+  $('megalv').style.display=(hasPlus||!MegaLv.isDefault())?'':'none';
   const c=TC[curT];
   $('curType').innerHTML=`${typeIconHTML(JA[curT],26)}${JA[curT]}タイプ`;
   const list=$('rankList');
@@ -543,8 +549,6 @@ function sync(){
   document.querySelectorAll('.tbtn').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===curT)));
   $('fShadow').setAttribute('aria-pressed',String(fShadow));
   $('fMega').setAttribute('aria-pressed',String(fMega));
-  // メガLvはメガを出しているときだけ見せる。既定(Lv4)から変えているあいだは常に見せる
-  $('megalv').style.display=(fMega||!MegaLv.isDefault())?'':'none';
   document.querySelectorAll('#cntSeg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===showN)));
   renderRank(); renderGraph(); syncUrl();
 }

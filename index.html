@@ -746,9 +746,12 @@ function guessTier(k){
 }
 // 1位アタッカーの候補: ものさし防御の火力順で上位8件だけ控えておき、
 // ランクごとの実際のボス防御で計算し直して1位を選ぶ(防御は全わざ共通の係数なので順位はほぼ動かない)
-let mpTopCache={boss:null,rows:null};
+// ⚠ キャッシュのキーにメガレベルも入れる。＋わざの威力がレベルで変わるので、
+//   ボスだけで持つと「レベルを変えても古い構成のまま」になる(実際に踏んだ)
+let mpTopCache={key:null,rows:null};
 function mpTop(){
-  if(mpTopCache.boss===boss) return mpTopCache.rows;
+  const ck=boss+'|'+MegaLv.level();
+  if(mpTopCache.key===ck) return mpTopCache.rows;
   const bt=D.pokemon[boss].ty, rows=[];
   for(const k of KEYS){
     const p=D.pokemon[k];
@@ -762,7 +765,7 @@ function mpTop(){
   }
   rows.sort((a,b)=>b.dps-a.dps);
   // 20件控える: 天候ブーストで神経質に順位が入れ替わっても、本当の1位が候補から漏れないように
-  mpTopCache={boss,rows:rows.slice(0,20)};
+  mpTopCache={key:ck,rows:rows.slice(0,20)};
   return mpTopCache.rows;
 }
 // スーパーメガレイドのシールド(暫定モデル・2026-08-28):
@@ -979,6 +982,12 @@ function bindMineCtl(sumEl){
 const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield'), bulkBtn=document.getElementById('fBulk');
 const megalvBox=document.getElementById('megalv');
 MegaLv.mount(megalvBox);
+// いま出している一覧に「＋わざ」の行があるか。メガLvが効くのはその行だけなので、
+// 無いときはタブを出さない(押しても何も変わらず「壊れている」ように見えるため)。
+// ただし既定(Lv4)から変えているあいだは常に出す——見えない前提で数字が動かないようにするのと、
+// レベルを下げて＋わざが選ばれなくなったときにタブごと消えて戻せなくなるのを防ぐため
+let rankHasPlus=false;
+function syncMegaLvVis(){ megalvBox.style.display=(rankHasPlus||!MegaLv.isDefault())?'':'none'; }
 MegaLv.onChange(()=>{ MegaLv.apply(D.moves, PLUS_IDS); syncModes(); if(boss) renderMinPlayers(); renderRank(); });
 function syncModes(){
   shadowBtn.setAttribute('aria-pressed',fShadow);
@@ -989,7 +998,7 @@ function syncModes(){
   shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode; bulkBtn.disabled=shieldMode;
   // メガLvはメガを出しているときだけ見せる。ただし既定(Lv4)から変えているあいだは常に見せる
   // (見えない前提で数字が変わらないようにするため)
-  megalvBox.style.display=(fMega||shieldMode||!MegaLv.isDefault())?'':'none';
+  syncMegaLvVis();
 }
 shadowBtn.onclick=()=>{fShadow=!fShadow;showN=30;syncModes();renderRank();};
 megaBtn.onclick=()=>{fMega=!fMega;showN=30;syncModes();renderRank();};
@@ -1230,8 +1239,9 @@ function renderShieldRank(){
 }
 function renderRank(){
   const listEl=document.getElementById('rankList'), sumEl=document.getElementById('mineSummary'), moreBtn=document.getElementById('moreBtn');
-  if(shieldMode){renderShieldRank();return;}   // シールド破壊(メガ)
-  if(!boss){listEl.innerHTML='<div class="empty">ボスを選ぶとランキングが出ます</div>';sumEl.innerHTML='';moreBtn.style.display='none';return;}
+  // シールド破壊は分割SP持ちの一覧なので、1ゲージの＋わざは出てこない
+  if(shieldMode){renderShieldRank();rankHasPlus=false;syncMegaLvVis();return;}   // シールド破壊(メガ)
+  if(!boss){listEl.innerHTML='<div class="empty">ボスを選ぶとランキングが出ます</div>';sumEl.innerHTML='';moreBtn.style.display='none';rankHasPlus=false;syncMegaLvVis();return;}
   const rows=buildRanking();
   const top=rows.length?rows[0].dps:1;
   const my=mineRows();
@@ -1264,6 +1274,8 @@ function renderRank(){
       <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>火力(DPS)</small></div></div>`;
   }).join('');
   moreBtn.style.display=rows.length>showN?'block':'none';
+  rankHasPlus=merged.some(r=>PLUS_IDS.includes(r.mine?r.e.c:r.c.id));
+  syncMegaLvVis();
   bindMineCtl(sumEl);
 }
 // ---- 使い方（ページ最下部のタブ）----
