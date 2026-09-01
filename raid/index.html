@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/mega-lv.css">
 <meta name="theme-color" content="#0b1023">
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
@@ -228,7 +229,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <button type="button" data-m="auto" aria-pressed="true" title="そのボスに対して火力が最大のアタッカー(PL50・個体値15)を自動で選び、6匹そろえて出します">1位おまかせ</button>
     <button type="button" data-m="pick" aria-pressed="false" title="使うポケモンとわざを1匹選び、6匹そろえて出します">えらぶ</button>
     <button type="button" data-m="team" aria-pressed="false" title="好きなパーティを組んでシミュレートします（最大6匹・上から順に出します・入れた枠だけで戦います）">6匹編成</button>
-  </span></div>
+  </span><div id="megalv" style="display:none"></div></div>
   <div class="sugg" id="myPickRow" style="display:none;margin-top:8px">
     <input type="text" id="myInput" placeholder="ポケモン名で検索" autocomplete="off">
     <div class="sugg-list" id="mySugg"></div>
@@ -301,10 +302,14 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <script src="/assets/type-icons.js"></script>
 <script src="/assets/theme.js"></script>
 <script src="/assets/explain.js"></script>
+<script src="/assets/mega-lv.js"></script>
 <script src="/assets/raid-engine.js"></script>
 <script>
 (async()=>{
 const D = await (await fetch('/godata.json')).json();
+// メガの追加SPアタック「＋わざ」は、メガレベルが上がるほど威力が上がる(既定はLv4＝1.3倍)
+const PLUS_IDS=[...new Set(Object.values(D.pokemon).map(p=>p.plus).filter(Boolean))];
+MegaLv.apply(D.moves, PLUS_IDS);
 const TI = {}; D.types.forEach((t,i)=>TI[t]=i);
 const KEYS = Object.keys(D.pokemon);
 const eff=(mt,dts)=>dts.reduce((m,t)=>m*D.chart[mt][TI[t]],1);
@@ -507,6 +512,17 @@ function renderTeam(){
   // 1匹だけ入れると、その1匹が倒れるたびに「全滅→再突入」のロスがかかる
   for(let i=0;i<6;i++)fillSlot(i,false);
 }
+// いま使うアタッカーに「＋わざ」持ちがいるか(メガLvを出すかの判断に使う)
+function usesPlus(){
+  let ks=[];
+  if(myMode==='team') ks=TEAM.filter(Boolean).map(x=>x.k);
+  else { const k=curMyKey(); if(k) ks=[k]; }
+  return ks.some(k=>D.pokemon[k]&&D.pokemon[k].plus);
+}
+function syncMegaLv(){
+  // 既定(Lv4)から変えているあいだは常に見せる(見えない前提で数字が変わらないようにするため)
+  $('megalv').style.display=(usesPlus()||!MegaLv.isDefault())?'':'none';
+}
 function renderMy(){
   const team=myMode==='team';
   $('teamBox').style.display=team&&boss?'block':'none';
@@ -586,6 +602,7 @@ function buildCfg(N,seed,wantLog){
 const TRIALS=30;
 let rows=[],minN=null,selN=null;
 function runAll(){
+  syncMegaLv();
   if(!boss||!$('bfSel').value){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
   if(!buildTeamCfg()){
     $('resBody').innerHTML='<div class="empty">'+(myMode==='team'?'パーティに1匹以上入れると結果が出ます':'ボスを選ぶと結果が出ます')+'</div>';
@@ -676,6 +693,8 @@ attachSugg($('myInput'),$('mySugg'),k=>{
   myKey=k;myShadow=false;
   renderMy();runAll();
 });
+MegaLv.mount($('megalv'));
+MegaLv.onChange(()=>{ MegaLv.apply(D.moves, PLUS_IDS); renderMy(); runAll(); });
 $('mySeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
   myMode=b.dataset.m;
   $('mySeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
@@ -731,6 +750,7 @@ const HELP_HTML=`
   <ul>
     <li><b>1位おまかせ</b>＝そのボスへの火力1位を自動選出して6匹そろえます。<b>えらぶ</b>＝1匹選んで6匹そろえます</li>
     <li><b>6匹編成</b>＝好きなパーティを組めます（最大6匹・上から順に出します・PL50・個体値15）。<b>入れた枠だけで戦います</b>——たとえば1匹だけ入れると、その1匹が倒れるたびに「全滅→再突入」のロスがかかります。組んだパーティは端末に保存されて次回も残ります</li>
+    <li><b>メガLv</b>＝メガシンカの追加SPアタック（わざ名の最後が「+」）は、<b>メガレベルが上がるほど威力が上がります</b>（Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／<b>Lv4（スーパーマックス）＝1.3倍</b>）。<b>既定はLv4</b>で、この設定はサイト内の他のツールにも引き継がれます。追加SPアタックを持つポケモンを出しているときだけタブが現れます</li>
   </ul>
   <h4>回避とブースト（設定の2行目・既定はすべてオフ）</h4>
   <ul>

@@ -107,6 +107,53 @@ SUPP_MOVES = {
     },
 }
 
+# ===== メガシンカの追加SPアタック「＋わざ」(2026-08-31実装) =====
+# メガLv4(スーパーマックスレベル)に到達できる13匹だけが、メガシンカ中に使える3本目のSPアタック。
+# 既存のSP2本とは別枠で、条件を満たせば自動で覚える(わざマシン不要)。
+#   使える  : レイド(メガレイド・スーパーメガレイドを含む) / GOバトルリーグ
+#   使えない: ジムに配置されたポケモンとのジムバトル → gym-attack/build_gym.py 側で除外している
+# 数値はタダシさんが実データと突き合わせて確定させたもの(2026-09-01)。全13本とも1ゲージ(-100)で、
+# 全体の長さ・ダメージ発生は元わざと同じ値。
+# ⚠ メガレベルが上がると威力が上がる(外部情報では Lv1 1.0 / Lv2 1.1 / Lv3 1.2 / Lv4 1.3)が、
+#   ここの値は倍率を掛けていない素の値。倍率をツールに入れるかは未判断(タダシさん確認待ち)。
+# ⚠ みらいよち+ の判定終了(damageWindowEnd)だけは暫定値。元わざがレイドに存在しないため
+#   全体の長さで代用している(この値を使うのはジム防衛のわざ選びだけで、メガは対象外)。
+# 形式: 追加わざID: (覚えるメガのkey, タイプ, 威力, 全体ms, ダメージ発生ms, 判定終了ms)
+MEGA_PLUS_MOVES = {
+    'DYNAMIC_PUNCH_PLUS': ('MEWTWO_MEGA_X',    'FIGHTING', 130.0, 2500, 1000, 2500),  # ばくれつパンチ+
+    'FUTURE_SIGHT_PLUS':  ('MEWTWO_MEGA_Y',    'PSYCHIC',  140.0, 2500, 1200, 2500),  # みらいよち+
+    'VOLT_TACKLE_PLUS':   ('RAICHU_MEGA_X',    'ELECTRIC', 170.0, 3500, 2100, 2600),  # ボルテッカー+
+    'ZAP_CANNON_PLUS':    ('RAICHU_MEGA_Y',    'ELECTRIC', 160.0, 3500, 2800, 3300),  # でんじほう+
+    'ACID_SPRAY_PLUS':    ('VICTREEBEL_MEGA',  'POISON',   160.0, 3000, 2100, 2800),  # アシッドボム+
+    'LIQUIDATION_PLUS':   ('STARMIE_MEGA',     'WATER',    180.0, 3000, 2000, 2700),  # アクアブレイク+
+    'OUTRAGE_PLUS':       ('DRAGONITE_MEGA',   'DRAGON',   185.0, 4000, 2600, 3800),  # げきりん+
+    'DRILL_PECK_PLUS':    ('SKARMORY_MEGA',    'FLYING',   170.0, 2500, 1900, 2300),  # ドリルくちばし+
+    'SEED_BOMB_PLUS':     ('CHESNAUGHT_MEGA',  'GRASS',    150.0, 2000, 1100, 1800),  # タネばくだん+
+    'MYSTICAL_FIRE_PLUS': ('DELPHOX_MEGA',     'FIRE',     140.0, 2000, 1300, 2000),  # マジカルフレイム+
+    'SURF_PLUS':          ('GRENINJA_MEGA',    'WATER',    130.0, 1500, 1200, 1400),  # なみのり+
+    'BRICK_BREAK_PLUS':   ('FALINKS_MEGA',     'FIGHTING', 150.0, 1500,  700, 1300),  # かわらわり+
+    'PSYBEAM_PLUS':       ('MALAMAR_MEGA',     'PSYCHIC',  170.0, 3000, 1100, 2500),  # サイケこうせん+
+}
+MEGA_PLUS_JA = {
+    'DYNAMIC_PUNCH_PLUS':'ばくれつパンチ+', 'FUTURE_SIGHT_PLUS':'みらいよち+',
+    'VOLT_TACKLE_PLUS':'ボルテッカー+',     'ZAP_CANNON_PLUS':'でんじほう+',
+    'ACID_SPRAY_PLUS':'アシッドボム+',      'LIQUIDATION_PLUS':'アクアブレイク+',
+    'OUTRAGE_PLUS':'げきりん+',             'DRILL_PECK_PLUS':'ドリルくちばし+',
+    'SEED_BOMB_PLUS':'タネばくだん+',       'MYSTICAL_FIRE_PLUS':'マジカルフレイム+',
+    'SURF_PLUS':'なみのり+',                'BRICK_BREAK_PLUS':'かわらわり+',
+    'PSYBEAM_PLUS':'サイケこうせん+',
+}
+# わざ定義は SUPP_MOVES と同じ仕組みで注入する(提供元に正式収録されたらそちらが優先される)。
+# 覚えるのはメガ(元ポケモンではない)なので、learn は空にして main() の中で紐付ける
+for _mid, (_mk, _ty, _p, _d, _w, _we) in MEGA_PLUS_MOVES.items():
+    SUPP_MOVES[_mid] = {
+        'move': {'movementId': _mid, 'pokemonType': 'POKEMON_TYPE_' + _ty, 'power': _p,
+                 'durationMs': _d, 'damageWindowStartMs': _w, 'damageWindowEndMs': _we,
+                 'energyDelta': -100},
+        'learn': {},
+    }
+
+
 def apply_gm_supp(data):
     """SUPP_MOVES を Game Master のデータへ注入する(build_max.py からも使う)"""
     have = {e['data']['moveSettings'].get('movementId') for e in data
@@ -151,6 +198,7 @@ JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつ�
  'MIND_BLOWN':'ビックリヘッド','DRUM_BEATING':'ドラムアタック','PYROBALL':'かえんボール','GIGATON_HAMMER':'デカハンマー',
  'AURA_WHEEL_ELECTRIC':'オーラぐるま（でんき）','AURA_WHEEL_DARK':'オーラぐるま（あく）','DYNAMAX_CANNON':'ダイマックスほう',
  'PLASMA_FISTS':'プラズマフィスト','GLAIVE_RUSH':'きょけんとつげき','SNIPE_SHOT':'ねらいうち','DIVE':'ダイビング'}
+JP_MOVE_FIX.update(MEGA_PLUS_JA)   # メガの追加SPアタック「＋わざ」13本
 GEN9_JA = {'WALKINGWAKE':'ウネルミナモ','IRONLEAVES':'テツノイサハ','DIPPLIN':'カミッチュ','POLTCHAGEIST':'チャデス',
  'SINISTCHA':'ヤバソチャ','OKIDOGI':'イイネイヌ','MUNKIDORI':'マシマシラ','FEZANDIPITI':'キチキギス','OGERPON':'オーガポン',
  'ARCHALUDON':'ブリジュラス','HYDRAPPLE':'カミツオロチ','GOUGINGFIRE':'ウガツホムラ','RAGINGBOLT':'タケルライコ',
@@ -419,6 +467,20 @@ def main():
                       'ty':ty or src['ty'],'q':src['q'],'c':src['c'],'eq':src['eq'],'ec':src['ec'],
                       'shadow':False,'mega':True,'fe':1}
         print('PvPokeから新メガ・ゲンシを補完 →', final[key]['n'])
+
+    # ===== メガシンカの追加SPアタック「＋わざ」を紐付け =====
+    # ⚠ メガのわざリストは元ポケモンと同じリスト実体を共有している(final[mega]['c'] is final[base]['c'])。
+    #   直接appendすると元ポケモンにも増えてしまうので、必ずコピーしてから足すこと。
+    #   ここは新メガのフォールバックより後に置く(メガのエントリが全部そろってから紐付けるため)
+    _plus_ok = 0
+    for _mid, (_mk, *_rest) in MEGA_PLUS_MOVES.items():
+        if _mk not in final:
+            print('警告: ＋わざの対象メガが見つかりません →', _mk, _mid); continue
+        if _mid not in final[_mk]['c'] and _mid not in final[_mk]['ec']:
+            final[_mk]['c'] = list(final[_mk]['c']) + [_mid]
+        final[_mk]['plus'] = _mid   # 追加SPアタック(3本目)の印。画面のバッジ表示と、ジム挑戦の除外に使う
+        _plus_ok += 1
+    print(f'メガの追加SPアタック: {_plus_ok}/{len(MEGA_PLUS_MOVES)}匹に紐付け')
 
     # ===== 伝説・幻の印(lg) =====
     # レイドのランク判定に使う(メガ伝説・ゲンシは★6・HP22500、ふつうのメガは★4・HP9000)。

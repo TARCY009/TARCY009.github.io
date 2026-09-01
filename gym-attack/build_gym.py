@@ -90,11 +90,16 @@ def guess_dex(n):
 
 
 # ---- godata から更新・追加 ----
+# メガの追加SPアタック「＋わざ」は、ジムに配置されたポケモンとのジムバトルでは使えない(公式)。
+# godata側は plus フィールドに印を持っているので、それを集めて除外する(自動で追随する)
+PLUS_MOVES = {v['plus'] for v in god['pokemon'].values() if v.get('plus')}
+if PLUS_MOVES:
+    print(f'ジムバトルで使えない＋わざを除外: {len(PLUS_MOVES)}本')
 added, updated = [], []
 for k, v in god['pokemon'].items():
     ty = [ti[t] for t in v['ty']]
     fast = v['q'] + v['eq']
-    charged = v['c'] + v['ec']
+    charged = [m for m in (v['c'] + v['ec']) if m not in PLUS_MOVES]
     if not fast or not charged:
         continue   # 技が欠けるものはジム計算に使えない
     n = norm(v['n'])

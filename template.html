@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/mega-lv.css">
 <meta name="theme-color" content="#0b1023">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -427,6 +428,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <button id="fMega" type="button" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドでボスのシールドを壊す役向きのランキングに切り替えます（使えるのはメガシンカだけなのでメガのみの一覧になります）">🛡シールド破壊</button>
     <button id="fBulk" type="button" aria-pressed="false" title="⚠️極低耐久（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）のポケモンを一覧から外します。順位は外したあとの並びで振り直します">⚠️極低耐久を除外</button>
+    <div id="megalv"></div>
   </div>
   <div id="mineSummary"></div>
   <p class="enote expl">一覧はPL50・個体値15、相手は防御100のものさしで統一した火力（1秒あたりのダメージ）です。選んだボスのタイプ相性は反映されます。シャドウ・メガ・ゲンシはタブで含めるかを選べます。</p>
@@ -445,8 +447,13 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <script src="/assets/type-icons.js"></script>
 <script src="/assets/theme.js"></script>
 <script src="/assets/explain.js"></script>
+<script src="/assets/mega-lv.js"></script>
 <script>
 const D = __GODATA__;
+// メガの追加SPアタック「＋わざ」は、メガレベルが上がるほど威力が上がる(既定はLv4＝1.3倍)。
+// データは倍率を掛けていない素の値なので、読み込んだ直後にいまのレベルの値へ書き換える
+const PLUS_IDS = [...new Set(Object.values(D.pokemon).map(p => p.plus).filter(Boolean))];
+MegaLv.apply(D.moves, PLUS_IDS);
 const TI = {}; D.types.forEach((t,i)=>TI[t]=i);
 const DEF_ENEMY = (100+15)*0.7903;
 const KEYS = Object.keys(D.pokemon);
@@ -970,6 +977,9 @@ function bindMineCtl(sumEl){
 }
 // ---- ranking ----
 const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield'), bulkBtn=document.getElementById('fBulk');
+const megalvBox=document.getElementById('megalv');
+MegaLv.mount(megalvBox);
+MegaLv.onChange(()=>{ MegaLv.apply(D.moves, PLUS_IDS); syncModes(); if(boss) renderMinPlayers(); renderRank(); });
 function syncModes(){
   shadowBtn.setAttribute('aria-pressed',fShadow);
   megaBtn.setAttribute('aria-pressed',fMega);
@@ -977,6 +987,9 @@ function syncModes(){
   bulkBtn.setAttribute('aria-pressed',fBulk);
   // シールド破壊はメガ専用の一覧なので、その間は他の絞り込みを使わない
   shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode; bulkBtn.disabled=shieldMode;
+  // メガLvはメガを出しているときだけ見せる。ただし既定(Lv4)から変えているあいだは常に見せる
+  // (見えない前提で数字が変わらないようにするため)
+  megalvBox.style.display=(fMega||shieldMode||!MegaLv.isDefault())?'':'none';
 }
 shadowBtn.onclick=()=>{fShadow=!fShadow;showN=30;syncModes();renderRank();};
 megaBtn.onclick=()=>{fMega=!fMega;showN=30;syncModes();renderRank();};
@@ -1286,6 +1299,14 @@ const HELP_HTML = `
     <li><b>(特)</b>は特別わざ・レガシーわざ（イベント限定やすごいわざマシンスペシャルなどで習得）。習得済みならそのまま選べます</li>
     <li><b>めざめるパワー</b>はタイプを選べないので、そのボスに刺さるタイプをアイコンで示します</li>
     <li>ボスのわざ一覧に<b>特別わざは出ません</b>（レイドボスは使ってこないため）</li>
+  </ul>
+
+  <h4>メガの「＋」わざ（追加SPアタック）</h4>
+  <ul>
+    <li>わざ名の最後が<b>「+」</b>のSPアタックは、<b>メガシンカ中だけ使える3本目のSPアタック</b>です（2026年8月31日から）。ふつうの2本とは別枠で、<b>条件を満たせば自動で覚えます</b>（わざマシンは要りません）</li>
+    <li>覚えるのは<b>メガLv4（スーパーマックスレベル）に到達できる13匹</b>だけです（メガミュウツーX/Y・メガライチュウX/Y・メガウツボット・メガスターミー・メガカイリュー・メガエアームド・メガブリガロン・メガマフォクシー・メガゲッコウガ・メガカラマネロ・メガタイレーツ）</li>
+    <li><b>レイドとGOバトルリーグで使えます</b>が、<b>ジムに配置されたポケモンとのジムバトルでは使えません</b>。そのため<b>ジム挑戦ツールの一覧には出しません</b></li>
+    <li><b>メガレベルが上がるほど威力が上がります</b>（<b>Lv1＝1.0倍／Lv2（高レベル）＝1.1倍／Lv3（マックス）＝1.2倍／Lv4（スーパーマックス）＝1.3倍</b>）。<b>メガLv</b>のタブで切り替えられます（<b>既定はLv4</b>）。この設定はサイト内の他のツールにも引き継がれます</li>
   </ul>
 
   <h4>自分のポケモンの登録</h4>

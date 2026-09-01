@@ -11,11 +11,28 @@ GOバトルリーグ対面シミュレート用 データ生成スクリプト
 """
 import json, re, math
 from build_data import (SRC, fetch, TYPE_JA, REGION, FORM_JA, OVERRIDE,
-                        DEFAULT_FORM, GEN9_JA, JP_MOVE_FIX)
+                        DEFAULT_FORM, GEN9_JA, JP_MOVE_FIX, MEGA_PLUS_MOVES, MEGA_PLUS_JA)
 
 # PvPoke速度に含まれるが対戦ツールでは扱わない特殊ID
 SKIP_SPECIES_SUFFIX = ('_shadow',)          # シャドウは基本形にフラグで持つ
 SKIP_MOVES = {'STRUGGLE', 'HIDDEN_POWER_NORMAL'}   # わるあがき(自動発動) / タイプ不定めざパ(実在しない)
+# ===== メガシンカの追加SPアタック「＋わざ」(2026-08-31実装) =====
+# メガシンカ中だけ使える3本目のSPアタック。GBLでも使える。
+# ⚠ 通常の moves には入れない(別枠 plusMoves として出す)。/gbl/ のわざ欄は D.moves を全部なめて
+#   「その他のわざ（本来おぼえない）」を作るので、moves に入れると13本がそこに並んでしまう。
+#   GBLシミュレータの3本目対応は未着手なので、その時が来るまで混ぜない。
+#   ポケモン側は cp フィールド(1本)に持つ。既存の c / ec は一切触らない
+SKIP_MOVES |= set(MEGA_PLUS_MOVES)
+# 情報元の数値が変わっていないかの見張り(タダシさんが実データと突き合わせて確定させた値・2026-09-01)
+MEGA_PLUS_PVP_CHECK = {
+    'DYNAMIC_PUNCH_PLUS': (130, -80), 'FUTURE_SIGHT_PLUS':  (130, -80),
+    'VOLT_TACKLE_PLUS':   (65,  -35), 'ZAP_CANNON_PLUS':    (70,  -45),
+    'ACID_SPRAY_PLUS':    (20,  -40), 'LIQUIDATION_PLUS':   (55,  -40),
+    'OUTRAGE_PLUS':       (80,  -50), 'DRILL_PECK_PLUS':    (60,  -35),
+    'SEED_BOMB_PLUS':     (60,  -40), 'MYSTICAL_FIRE_PLUS': (50,  -40),
+    'SURF_PLUS':          (55,  -35), 'BRICK_BREAK_PLUS':   (40,  -35),
+    'PSYBEAM_PLUS':       (60,  -45),
+}
 
 # PvPoke固有ID・i18n未収録の技の日本語名(GM側と表記が違うものはID照合で解決するのでここは最小限)
 JP_MOVE_FIX_PVP = {
@@ -142,6 +159,25 @@ def main():
                 entry[k_dst] = float(v) if k_src == 'buffApplyChance' else v
         moves[mid] = entry
 
+    # ---- メガの追加SPアタック「＋わざ」(別枠) ----
+    # 数値は情報元(対戦データ)にそのまま入っているので、こちらで手打ちせずそのまま採る。
+    # 確定値と食い違ったら警告を出す(情報元が調整されたら気づけるように)
+    plus_moves = {}
+    src_mv = {m['moveId']: m for m in pvp['moves']}
+    for mid in MEGA_PLUS_MOVES:
+        mv = src_mv.get(mid)
+        if not mv:
+            print('警告: 対戦データに＋わざがありません →', mid); continue
+        e = {'n': MEGA_PLUS_JA[mid], 't': mv['type'].upper(), 'p': mv['power'], 'e': mv['energy']}
+        for k_src, k_dst in (('buffs','bf'), ('buffTarget','bt'), ('buffApplyChance','bc')):
+            if k_src in mv:
+                e[k_dst] = float(mv[k_src]) if k_src == 'buffApplyChance' else mv[k_src]
+        want = MEGA_PLUS_PVP_CHECK.get(mid)
+        if want and (mv['power'], -abs(mv['energy'])) != (want[0], want[1]):
+            print(f'警告: ＋わざの対戦数値が確定値と違います → {mid} '
+                  f'情報元{mv["power"]}/{mv["energy"]} 確定値{want[0]}/{want[1]}')
+        plus_moves[mid] = e
+
     # ---- ポケモン: PvPoke(技構成・種族値) + 日本語名 ----
     def jp_name(sid):
         """PvPokeのspeciesIdをGMのフォルムキーに照合して日本語名を得る"""
@@ -190,6 +226,16 @@ def main():
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
             if 'mythical' in p['tags']: pokes[sid]['myth'] = 1
+    # 追加SPアタック(3本目)を持つ13匹に印を付ける。既存の c / ec には足さないので
+    # /gbl/・/rocket/・ブレイクポイント・対戦記録の結果は一切変わらない
+    plus_ok = 0
+    for mid, (mkey, *_rest) in MEGA_PLUS_MOVES.items():
+        sid = mkey.lower()
+        if sid not in pokes:
+            print('警告: ＋わざの対象メガが対戦データにありません →', sid, mid); continue
+        pokes[sid]['cp'] = mid
+        plus_ok += 1
+    print(f'メガの追加SPアタック: {plus_ok}/{len(MEGA_PLUS_MOVES)}匹（対戦用は plusMoves に別枠で収録）')
     for sid in shadow_ok:
         if sid in pokes: pokes[sid]['shadow'] = 1
     # ---- 交換できないポケモンは最低個体値10(個体値10未満の個体はゲーム内に存在しない) ----
@@ -240,7 +286,7 @@ def main():
         'leagues': {'super': 1500, 'hyper': 2500, 'master': 0},
     }
 
-    out = {'pokemon': pokes, 'moves': moves, 'cpm': cpm, 'chart': chart,
+    out = {'pokemon': pokes, 'moves': moves, 'plusMoves': plus_moves, 'cpm': cpm, 'chart': chart,
            'types': list(TYPE_JA.keys()), 'typeJa': TYPE_JA, 'settings': settings}
     js = json.dumps(out, ensure_ascii=False, separators=(',', ':'))
     open('pvp_data.json', 'w', encoding='utf-8').write(js)
