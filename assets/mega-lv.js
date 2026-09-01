@@ -61,7 +61,15 @@
       mv.p = Math.round(mv._p0 * m * 10) / 10;
     }
   }
+  // 指定したメガレベルでの威力を返す（画面側の設定とは別に、個体ごとの計算に使う）。
+  // 元の値は apply() が _p0 に控えているので、そこから掛け直す
+  function powerAt(mv, v) {
+    if (!mv) return 0;
+    var base = mv._p0 != null ? mv._p0 : mv.p;
+    return Math.round(base * (MULT[v] || MULT[DEFAULT]) * 10) / 10;
+  }
   window.MegaLv = {
+    powerAt: powerAt, DEFAULT: DEFAULT,
     mult: function () { return MULT[lv]; },
     level: function () { return lv; },
     isDefault: function () { return lv === DEFAULT; },

@@ -233,6 +233,9 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .modes button[aria-pressed="true"]{color:#fff;border-color:transparent;transform:translateY(-1px);
   background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
 .modes button:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
+/* 自分の登録個体のメガLv(行の中に置くので少し詰める) */
+.mine-sum .minelv{width:auto;gap:5px}
+.mine-sum .minelv .mlvseg button{min-width:26px;padding:4px 6px;font-size:.72rem}
 /* メガの追加SPアタック「＋わざ」＝メガLvで動く行。どこが変わるかを色で示す */
 .plusmv{color:#f08ccd;font-weight:800}
 :root.light .plusmv{color:#c2247e}
@@ -611,6 +614,7 @@ const T_RANK='火力が同じポケモンは同順位です（重なったぶん
 const T_RANKME='登録した自分のポケモンを、この一覧に当てはめたときの順位です';
 const T_MOVES='PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だったわざの組み合わせです';
 const T_PLUSMV='メガシンカ中だけ使える追加のSPアタックです。メガLvで威力が変わるのはこのわざだけなので、メガLvを切り替えるとこの行の数字が動きます';
+const T_MINEMLV='あなたのこの個体のメガレベルです。追加SPアタック（わざ名の最後が「+」）の威力は、メガレベルが上がるほど上がります（Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／Lv4＝1.3倍）。ランキング側のメガLvは全員をそろえた物差しなので、こちらとは別に設定できます';
 const T_MOVES_SH='ゲージ2分割・3分割のSPアタックの中で、いちばん火力が出る組み合わせです';
 const T_PL50='一覧は全ポケモンをPL50・個体値15にそろえて比べています';
 const T_MP='レイドボスのHPを、全員がランキング1位のアタッカー（PL50・個体値15・最適わざ）で制限時間いっぱい攻撃し続けたときに倒しきれる、いちばん少ない人数です。倒されて出し直す時間やブーストは入れていない理論値なので、実際はこの人数より多めが安全です';
@@ -932,7 +936,7 @@ document.getElementById('addBtn').onclick=()=>{
   // 防御・HPの個体値もシールド破壊(メガ)の1発耐え判定で使うので控えておく
   const ivd=isMax?15:+document.getElementById('ivD').value, ivh=isMax?15:+document.getElementById('ivH').value;
   mine.push({key:myKey,f:document.getElementById('fastSel').value,c:document.getElementById('chgSel').value,
-             lv,lv0:lv,iva,ivd,ivh,isMax,shadow:myShadowOn});
+             lv,lv0:lv,iva,ivd,ivh,isMax,shadow:myShadowOn,mlv:MegaLv.level()});
   // メガを登録したらランキング側のメガ・ゲンシも出す(メガ抜きの順位と比べると相当順位がズレるため)
   if(p.mega && !fMega){ fMega=true; syncModes(); }
   renderRank();
@@ -947,6 +951,12 @@ const PL_MAX=51, PL_NORM=50;   // PL50超(50.5・51)は最高の相棒でしか�
 const plMaxOf=e=>e.maxLv||PL_MAX;
 const ivTxt=e=>`個体値${(e.iva===e.ivd&&e.ivd===e.ivh)?e.iva:`${e.iva}/${e.ivd}/${e.ivh}`}`;
 const mineLabel=e=>`PL${e.lv}・${ivTxt(e)}`;
+// 追加SPアタック(＋わざ)を選んでいる個体だけ、その個体のメガレベルを選べるようにする。
+// 「自分のメガのレベルが中途半端」な人が実際の火力を出せるようにするため(2026-09-01タダシさん指示)
+const mineMlv=e=>e.mlv||MegaLv.DEFAULT;
+const mlvCtlHtml=(e,i)=>PLUS_IDS.includes(e.c)?`<span class="megalv minelv"><span class="mlvl" title="${T_MINEMLV}">メガLv</span><span class="mlvseg">${
+  [1,2,3,4].map(v=>`<button class="mlvbtn" data-i="${i}" data-mlv="${v}" aria-pressed="${mineMlv(e)===v}" title="${T_MINEMLV}">${v}</button>`).join('')
+}</span><span class="mlvnote">＋わざの威力</span></span>`:'';
 function plCtlHtml(e,i){
   const mx=plMaxOf(e);
   // メガ・ゲンシだけスーパーマックスレベルのタブを出す
@@ -965,6 +975,13 @@ function plCtlHtml(e,i){
 const plTimes=(from,to)=>Math.round((to-from)/0.5);
 function bindMineCtl(sumEl){
   sumEl.querySelectorAll('.del').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.i,1);renderRank();});
+  sumEl.querySelectorAll('.mlvbtn').forEach(b=>b.onclick=()=>{
+    const e=mine[+b.dataset.i], v=+b.dataset.mlv;
+    e.mlv=v;
+    // Lv3以下ならPL上限のブースト(メガLv4系)は成り立たないので解除する
+    if(v<4&&e.maxLv){ e.maxLv=PL_MAX; e.lv=Math.min(e.lvPre??e.lv,PL_MAX); e.lvPre=null; }
+    renderRank();
+  });
   sumEl.querySelectorAll('.plbtn').forEach(b=>b.onclick=()=>{
     const e=mine[+b.dataset.i];
     if(b.dataset.rst){ e.lv=e.lv0; }
@@ -973,7 +990,9 @@ function bindMineCtl(sumEl){
       // (他ツールと同じ「上限52/53で評価」の状態になる)。再タップで解除し、元のPLへ戻す
       const v=+b.dataset.max;
       if(e.maxLv===v){ e.maxLv=PL_MAX; e.lv=Math.min(e.lvPre??e.lv,PL_MAX); e.lvPre=null; }
-      else{ if(!e.maxLv) e.lvPre=e.lv; e.maxLv=v; e.lv=v; }
+      else{ if(!e.maxLv) e.lvPre=e.lv; e.maxLv=v; e.lv=v; e.mlv=4; }
+      // ⚠ これらはどれも「メガLv4であること」が前提のブーストなので、＋わざの威力もLv4にそろえる。
+      //   そろえないと「PLはLv4なのに＋わざはLv2」という、実際にはありえない状態を作れてしまう
     }else{
       const nx=Math.min(plMaxOf(e),Math.max(1,e.lv+parseFloat(b.dataset.d)));
       if(!D.cpm[String(nx)]) return;
@@ -1076,7 +1095,10 @@ function mineRows(){
   return mine.map((e,i)=>{
     const p=D.pokemon[e.key];
     const atk=(p.a+e.iva)*D.cpm[String(e.lv)];
-    const m1=D.moves[e.f], m2=D.moves[e.c];
+    const m1=D.moves[e.f];
+    // ＋わざはその個体に設定したメガレベルの威力で計算する
+    // (ランキング側のメガLvは全員をそろえた物差しなので、こちらとは別扱い)
+    const m2=PLUS_IDS.includes(e.c)?{...D.moves[e.c],p:MegaLv.powerAt(D.moves[e.c],mineMlv(e))}:D.moves[e.c];
     const r=comboDPS(p,m1,m2,atk,bt,e.shadow);
     return {i,e,p,dps:r?r.dps:0};
   });
@@ -1255,7 +1277,7 @@ function renderRank(){
   sumEl.innerHTML=my.map(m=>{
     const rank=rankIn(rows,m.dps);
     // シャドウ・メガは文字ではなく名前の左のマークで表す(全ツール共通)
-    return `<div class="mine-sum"><span><b>${badges(m.e.shadow,m.p.mega,m.p)}${m.p.n}</b><small class="msiv">${ivTxt(m.e)}</small></span>${plCtlHtml(m.e,m.i)}<span title="${T_RANKME}">火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b></span><button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
+    return `<div class="mine-sum"><span><b>${badges(m.e.shadow,m.p.mega,m.p)}${m.p.n}</b><small class="msiv">${ivTxt(m.e)}</small></span>${mlvCtlHtml(m.e,m.i)}${plCtlHtml(m.e,m.i)}<span title="${T_RANKME}">火力 <b>${m.dps.toFixed(2)}</b> ＝ <b>${rank}位相当</b></span><button class="del" data-i="${m.i}" title="この登録を取り消す">✕</button></div>`;
   }).join('');
   // 一覧（自分のポケモンを該当位置に挿入）
   const merged=[];
@@ -1332,6 +1354,8 @@ const HELP_HTML = `
     <li><b>CPと個体値</b>を入れるとPLを逆算します。メガ・ゲンシは<b>メガシンカ前のCP</b>を入れてください</li>
     <li><b>強化 +0.5</b>＝1回の強化ぶんPLが上がります。ゲーム内ではPLが見えないので、<b>強化の回数</b>で数えられるようにしています（<b>−</b>で1回戻す・<b>↩</b>で入力したPLに戻る）</li>
     <li><b>PL50より上</b>は最高の相棒でのみ届きます（PL51まで）</li>
+    <li><b>メガLv</b>＝「＋」わざを選んで登録すると、その個体のメガレベルを1〜4で選べます。<b>ランキング側のメガLvとは別</b>なので、自分のメガがLv2でもランキングはLv4でそろえたまま比べられます</li>
+    <li>この<b>メガLv</b>と<b>メガLv4</b>／<b>メガLv4＋相棒</b>／<b>CPブースト</b>は連動します（PL上限のブーストはメガLv4が前提のため）。<b>Lv3以下を選ぶとPL上限のブーストは外れます</b></li>
     <li><b>メガLv4</b>／<b>メガLv4＋相棒</b>はメガ・ゲンシだけのブーストで、PLの上限が<b>52・53</b>に広がります。アメを使わないので1タップでそのPLになります（もう一度押すと解除）</li>
     <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）。「⚠️極低耐久を除外」タブで一覧から外せます（順位は外したあとの並びで振り直します）</li>
   </ul>
