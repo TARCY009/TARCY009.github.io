@@ -338,6 +338,10 @@ body.has-sticky{padding-top:52px}
 .tophead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .tophead label.sec{margin-bottom:0}
 .evb{padding:6px 10px;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;flex:none}
+/* 「CP→個体値」の矢印は文字の→だと細くて読み取りにくいので、太い線のSVGで描く */
+#cpmode{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;padding:6px 11px}
+#cpmode .arw{width:17px;height:11px;flex:none;fill:none;stroke:currentColor;
+  stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .evf{flex:1;padding:7px 4px;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer;text-align:center}
 /* 進化前CPの列を足したとき(7列)の幅の配りなおし。6列時と同じ「中央寄せ＋％幅」の考え方 */
 table.evo th:nth-child(1),table.evo td:nth-child(1){width:16%}
@@ -383,7 +387,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 <div class="card">
   <div class="tophead">
     <label class="sec">ポケモン</label>
-    <button id="cpmode" class="evb" type="button" title="CPを入れて、当てはまる個体値の組み合わせをすべて出します。野生で出たポケモンにマスターボールを使うか決めるときに使います">CP→個体値</button>
+    <button id="cpmode" class="evb" type="button" title="CPを入れて、当てはまる個体値の組み合わせをすべて出します。野生で出たポケモンにマスターボールを使うか決めるときに使います">CP<svg class="arw" viewBox="0 0 17 11" aria-hidden="true"><path d="M1.4 5.5h12M9.8 1.8l3.9 3.7-3.9 3.7"/></svg>個体値</button>
   </div>
   <div class="searchbox">
     <input id="q" type="text" placeholder="名前で検索(例: マリルリ)" autocomplete="off">
