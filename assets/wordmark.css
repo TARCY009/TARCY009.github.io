@@ -1,0 +1,45 @@
+/* =========================================================================
+   ツール名・サイト名の見た目（ブルーシルバー）
+   2026-09-03タダシさん指示で全ツールへ展開。トップページの「GOナビ」と同じ色にそろえる。
+
+   theme.css / explain.css と同じ**自己完結**の流儀で作ってあるので、
+   ページ側がやることは2つだけ:
+     1. <head> に <link rel="stylesheet" href="/assets/wordmark.css"> を足す（explain.css の直後）
+     2. ツール名の <h1> に class="wmk" を付ける
+
+   ⚠ 守ること2つ:
+   ・**輪郭は塗りの「下」に回す**（paint-order）。上に重ねると太らせたとき内側が食われて
+     筒のように見える（実際に踏んだ）
+   ・**厚みは text-shadow で作る**（filter は使わない）。filter だと h1 の中の
+     バッジや添え書きにまで影が乗ってしまう
+   ========================================================================= */
+:root{
+  /* 金属のブルーシルバー。真ん中(49〜53%)の急な明暗が「反射の折れ目」で、これが金属らしさの正体 */
+  --wmk-g:linear-gradient(180deg,#ffffff 0%,#dfeaff 30%,#93aede 49%,#eaf3ff 53%,#8ea9dc 76%,#6a86c4 100%);
+  --wmk-sc:#cfe0ff;                       /* 輪郭の色 */
+  --wmk-e1:#4a5f96; --wmk-e2:#33456f;     /* 押し出し（板の厚み） */
+  --wmk-sh:rgba(0,0,0,.55);               /* 落ち影 */
+}
+:root.light{
+  /* ライトは白地なので、同じ金属感を濃い藍で作る（反射の折れ目の位置は同じ）。
+     ⚠ 押し出しは必ず**文字より暗い色**にする。明るい銀にすると文字のまわりが白くにじんで
+        輪郭がぼやけ、白地では読みづらくなる（2026-09-03タダシさん指摘で修正） */
+  --wmk-g:linear-gradient(180deg,#5f7099 0%,#33456f 30%,#16223f 49%,#455888 53%,#1d2b4f 76%,#101a34 100%);
+  --wmk-sc:#16223f;
+  --wmk-e1:#2a3a5e; --wmk-e2:#18243f;
+  --wmk-sh:rgba(25,40,80,.3);
+}
+h1.wmk,.wmk{
+  paint-order:stroke fill;
+  -webkit-text-stroke:.35px var(--wmk-sc);
+  background-image:var(--wmk-g);
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;
+  text-shadow:0 1px 0 var(--wmk-e1), 0 2px 0 var(--wmk-e2), 0 4px 8px var(--wmk-sh);
+}
+/* 添え書き（small）とバッジは本文なので、色も影も元へ戻す */
+h1.wmk small,h1.wmk .badge,.wmk small,.wmk .badge{
+  -webkit-text-fill-color:currentColor;
+  -webkit-text-stroke:0;
+  text-shadow:none;
+}

@@ -18,8 +18,13 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="GOナビ">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- サイト名の書体。取り寄せるのは「GOナビ」の4文字ぶんだけ（text= の指定）なので数KBで済む -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&amp;display=swap&amp;text=GO%E3%83%8A%E3%83%93">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
@@ -41,7 +46,13 @@
   --cy:#43e0ff; --gold:#ffd54a;
   --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff;   /* 3グループの色 */
   --hair:rgba(255,255,255,.14);               /* 罫線。高級感は線の細さで出す */
-  --wm:linear-gradient(180deg,#ffffff 0%,#e6edff 46%,#b9c8ee 100%);  /* サイト名の質感 */
+  /* サイト名の色は wordmark.css（全ツール共通）から借りる。ここでは影だけ持つ */
+  --wm:var(--wmk-g); --wmsc:var(--wmk-sc);
+  /* 影＝板の厚み（押し出しを4段重ねる）＋深い落ち影＋ほのかな青い光 */
+  --wmfx:drop-shadow(0 1px 0 rgba(255,255,255,.55))
+         drop-shadow(0 1px 0 #4a5f96) drop-shadow(0 1px 0 #3d5081)
+         drop-shadow(0 1px 0 #33456f) drop-shadow(0 1px 0 #2a3a5e)
+         drop-shadow(0 12px 22px rgba(0,0,0,.75)) drop-shadow(0 0 18px rgba(110,165,255,.28));
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(67,224,255,.13), transparent 62%),
     radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.15), transparent 62%),
@@ -55,7 +66,11 @@
   --cy:#0b8fa8; --gold:#b07a00;
   --g1:#e05a20; --g2:#0b8fa8; --g3:#7a3cc4;
   --hair:rgba(40,60,120,.16);
-  --wm:linear-gradient(180deg,#2b3556 0%,#28315a 50%,#3b2a6e 100%);
+  /* ⚠ 押し出しは文字より暗い色にする（明るい銀だと白くにじんで輪郭がぼやける） */
+  --wmfx:drop-shadow(0 1px 0 rgba(255,255,255,.45))
+         drop-shadow(0 1px 0 #2a3a5e) drop-shadow(0 1px 0 #22304e)
+         drop-shadow(0 1px 0 #1a2740) drop-shadow(0 1px 0 #141f34)
+         drop-shadow(0 10px 18px rgba(25,40,80,.35)) drop-shadow(0 0 16px rgba(90,130,220,.18));
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(59,110,240,.17), transparent 62%),
     radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.16), transparent 62%),
@@ -76,8 +91,10 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 .wrap{max-width:1000px;margin:0 auto}
-/* 明朝は「サイト名」と「小見出しの和文」だけに使う。混ぜすぎると散らかるので2か所まで */
-.mincho{font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif}
+/* サイト名の書体（2026-09-02タダシさん指示で明朝→極太ゴシック）。
+   ツールの中の文字がほぼゴシック系なので、看板だけ明朝だと浮く。
+   端末に無い環境ではヒラギノ角ゴの太字に落ちる（形は変わるが太さの印象は保てる） */
+.wmf{font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif}
 
 /* ---- 上の細いバー: 左にブランドマーク、右に表示の切り替え ----
    ロゴをサイト名の左から外すための場所。ここなら「GOナビ」と並ばない */
@@ -88,17 +105,25 @@ body{
 .themesw{width:max-content}
 
 /* ---- 看板 ---- */
-.hero{text-align:center;padding:6px 0 40px}
-h1{font-size:2.9rem;font-weight:600;line-height:1.1;letter-spacing:.16em;text-indent:.16em;
+.hero{text-align:center;padding:14px 0 44px}
+h1{font-size:2.75rem;font-weight:900;line-height:1.12;letter-spacing:.1em;text-indent:.1em;
+  /* 輪郭を塗りの「下」に回す。上に重ねると太らせたとき内側が食われて筒に見える(実際に踏んだ) */
+  paint-order:stroke fill;-webkit-text-stroke:.7px var(--wmsc);
   background-image:var(--wm);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 2px 12px rgba(120,160,255,.22))}
+  filter:var(--wmfx)}
+/* 頭の「GO」だけ輪郭を太らせ、横へわずかに伸ばす（ロゴのマークと呼応させる）。
+   ⚠ 変形をかけた部分には親の塗りが届かないので、「GO」自身にも同じ塗りを持たせること
+   （持たせないと輪郭だけ残って筒のように見える。実際に踏んだ） */
+h1 .go{display:inline-block;-webkit-text-stroke-width:2px;
+  transform:scaleX(1.04);transform-origin:center;margin-right:.025em;
+  background-image:var(--wm);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* サイト名の下の細い金の罫線。中央から左右へ消えていく */
 .hrule{width:132px;height:1px;margin:17px auto 0;
   background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.62}
 .btag{margin-top:14px;font-size:.63rem;font-weight:600;letter-spacing:.42em;text-indent:.42em;
   color:var(--sub);text-transform:uppercase}
-.lead{margin-top:16px;font-size:.88rem;letter-spacing:.06em;color:var(--ink);opacity:.92}
-.heronote{margin-top:9px;font-size:.7rem;letter-spacing:.04em;color:var(--sub)}
+/* 更新の頻度はページのいちばん下へ（看板は名前だけにする・2026-09-02タダシさん指示） */
+footer .upd{margin-bottom:9px;letter-spacing:.08em;opacity:.9}
 
 /* ---- グループの小見出し: 英字＋和文＋罫線＋2桁の数 ---- */
 .gsec{display:flex;align-items:center;gap:14px;margin:0 0 15px}
@@ -140,11 +165,10 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 @media (max-width:560px){
   body{padding:12px 16px 52px}
   .topbar{margin-bottom:22px}
-  .hero{padding:2px 0 30px}
-  h1{font-size:2.15rem;letter-spacing:.13em;text-indent:.13em}
+  .hero{padding:8px 0 34px}
+  h1{font-size:2.05rem;letter-spacing:.08em;text-indent:.08em}
   .hrule{width:104px;margin-top:14px}
   .btag{margin-top:11px;font-size:.58rem;letter-spacing:.34em;text-indent:.34em}
-  .lead{margin-top:13px;font-size:.79rem}
   .gsec{gap:10px;margin-bottom:12px}
   .gsec .ja{font-size:.7rem;letter-spacing:.1em}
   .gsec+.cards{margin-bottom:30px}
@@ -166,15 +190,12 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 </div>
 
 <header class="hero">
-  <h1 class="mincho">GOナビ</h1>
+  <h1 class="wmf"><span class="go">GO</span>ナビ</h1>
   <div class="hrule"></div>
   <p class="btag">Pok&eacute;mon GO Tools</p>
-  <p class="lead">レイド、対戦、個体値。12のツールをすべて無料で。</p>
-  <p class="heronote">データは毎日、対戦環境は毎週、自動で更新。</p>
-  <p class="heronote expl">ゲームのデータは毎日、GBLの環境リストは毎週、自動で最新に更新しています。</p>
 </header>
 
-<div class="gsec" style="--gc:var(--g1)"><span class="en">Raid &amp; Gym</span><span class="ja mincho">レイド・ジム</span><span class="rule"></span><span class="no">06</span></div>
+<div class="gsec" style="--gc:var(--g1)"><span class="en">Raid &amp; Gym</span><span class="ja">レイド・ジム</span><span class="rule"></span><span class="no">06</span></div>
 <div class="cards" style="--gc:var(--g1)">
   <a class="card" href="/dps/"><img src="/assets/icons/karyoku/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイド火力チェッカー</b><span class="ds short">ボス別の火力ランキング</span><span class="ds long">レイドボスを選ぶと、火力の高いポケモンが順に並びます</span></span></a>
   <a class="card" href="/raid/"><img src="/assets/icons/raid/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイドシミュレータ</b><span class="ds short">最少討伐人数の算出</span><span class="ds long">倒される時間まで再現して、最少討伐人数を出します</span></span></a>
@@ -184,7 +205,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <a class="card" href="/gym-defense/"><img src="/assets/icons/gym-defense/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム防衛</b><span class="ds short">長く残るポケモンの選定</span><span class="ds long">長く残るポケモンを、耐久・相性・やる気から選びます</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--g2)"><span class="en">Battle League</span><span class="ja mincho">対戦</span><span class="rule"></span><span class="no">04</span></div>
+<div class="gsec" style="--gc:var(--g2)"><span class="en">Battle League</span><span class="ja">対戦</span><span class="rule"></span><span class="no">04</span></div>
 <div class="cards" style="--gc:var(--g2)">
   <a class="card" href="/gbl/"><img src="/assets/icons/gbl/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対面シミュレーター</b><span class="ds short">1対1と3対3の再現</span><span class="ds long">1対1から3対3の模擬戦まで、ターン単位で再現します</span></span></a>
   <a class="card" href="/battlelog/"><img src="/assets/icons/battlelog/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対戦記録</b><span class="ds short">自分の環境の採用率</span><span class="ds long">戦った相手を記録して、自分の環境の採用率を出します</span></span></a>
@@ -192,13 +213,15 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <a class="card" href="/rocket/"><img src="/assets/icons/rocket/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ロケット団対策</b><span class="ds short">短時間で倒す構成</span><span class="ds long">したっぱ・リーダー・サカキを速く倒す方法を探します</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--g3)"><span class="en">Database</span><span class="ja mincho">個体値・図鑑</span><span class="rule"></span><span class="no">02</span></div>
+<div class="gsec" style="--gc:var(--g3)"><span class="en">Database</span><span class="ja">個体値・図鑑</span><span class="rule"></span><span class="no">02</span></div>
 <div class="cards" style="--gc:var(--g3)">
   <a class="card" href="/iv-checker/"><img src="/assets/icons/iv-checker/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">個体値チェッカー</b><span class="ds short">4096通りの中の順位</span><span class="ds long">個体値を入れると、4096通りの中での順位が出ます</span></span></a>
   <a class="card" href="/pokedex/"><img src="/assets/icons/pokedex/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ステータス図鑑</b><span class="ds short">種族値・弱点・わざ</span><span class="ds long">種族値・最大CP・弱点・わざの性能をまとめて見られます</span></span></a>
 </div>
 
 <footer>
+  <p class="upd">データは毎日、対戦環境は毎週、自動で更新。</p>
+  <p class="upd expl">ゲームのデータは毎日、GBLの環境リストは毎週、自動で最新に更新しています。</p>
   <p>非公式ファンメイドツール／Pokémon GO は Niantic, Inc. および株式会社ポケモンの商標です</p>
 </footer>
 </div>
