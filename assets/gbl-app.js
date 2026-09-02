@@ -1331,7 +1331,7 @@ ${PAGE_ROCKET ? '' : `
     <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
-    <li>下のフレームの <b>⏸／×1／⏩</b> で一時停止・倍速（×1×2×4）・次の決断まで飛ばす、ができます。<b>⏹</b>（または上の<b>▶ バトルスタート！</b>）で選んだ手を消して、もう一度はじめからバトルできます。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
+    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>✨ 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
   </ul>
   <h4>わざの決め方</h4>
   <ul>
@@ -4950,13 +4950,20 @@ function rbRender(body, bt, picks, foes, extra) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
         </div>
       </div>
+      ${RB.step ? `<div class="hbtns">
+        <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
+        <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
+        <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
+        <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">✨<b>演出</b></button>
+        <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
+      </div>` : ''}
     </div>`;
 
   // ---- 再生(1ターン=0.5秒で流す)と HUD の更新 ----
@@ -5202,7 +5209,7 @@ function rbRender(body, bt, picks, foes, extra) {
     run();
   });
   // HUDの再生コントロール
-  const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
+  const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = dock.querySelector('.hskip');
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
@@ -5239,15 +5246,25 @@ function rbRender(body, bt, picks, foes, extra) {
     RBV.cur = stop; updateHud(stop); autoScroll();
     if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
   };
-  const hstop = hud.querySelector('.hstop');
+  const hstop = dock.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
-  const hfx = hud.querySelector('.hfx');
+  const hfx = dock.querySelector('.hfx');
   if (hfx) hfx.onclick = () => {
     FX.on = !FX.on; fxSave();
     hfx.setAttribute('aria-pressed', FX.on);
   };
+  // ✕ 終了(2026-09-02タダシさん指示): 途中でやめてポケモンやわざを入れ替えたいとき、
+  // どこで終われるのか分からなかった、という指摘への答え。全画面ロックを解いて入力画面へ戻す
+  // (選んだ手は消さない。編成を変えればバトルの署名が変わって自動で仕切り直しになる)
+  const hend = dock.querySelector('.hend');
+  if (hend) hend.onclick = () => {
+    stopTimer();
+    RBV.started = false; RBV.playing = false; RBV.cur = 0;
+    body.classList.remove('bfull');
+    run();
+  };
   // ⏭ 1ターン送り(2026-09-01タダシさん指示・GBLと同じ)
-  const hstep = hud.querySelector('.hstep');
+  const hstep = dock.querySelector('.hstep');
   if (hstep) hstep.onclick = () => {
     if (!RBV.started || ended()) return;
     stopTimer(); RBV.playing = false;
@@ -7832,7 +7849,7 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ">×${RBV.speed}</button><button class="hstep" title="1ターンだけ進める（⏸で止めて、相手のわざの周期を見ながら交代するときに）">⏭</button><button class="hskip" title="次の決断まで飛ばす">⏩</button><button class="hstop" title="もう一度バトルスタート！（選んだ手は消えます）">⏹</button><button class="hfx" aria-pressed="${FX.on}" title="くりだし・SP発動などの演出のON/OFF（演出のあいだ再生は止まりますが、バトルの結果には影響しません）">✨</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
@@ -7840,6 +7857,13 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
       </div>
+      ${RB.step ? `<div class="hbtns">
+        <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
+        <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
+        <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
+        <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">✨<b>演出</b></button>
+        <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
+      </div>` : ''}
     </div>`;
 
   // ---- 再生とHUD(ロケット団の模擬戦と同じ作り) ----
@@ -8095,7 +8119,7 @@ function gbRender(body, bt, picks, foes) {
     RBUI.open = p.key; RBV.cur = p.gt;
     run();
   });
-  const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = hud.querySelector('.hskip');
+  const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = dock.querySelector('.hskip');
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
@@ -8131,16 +8155,26 @@ function gbRender(body, bt, picks, foes) {
     RBV.cur = stop; updateHud(stop); autoScroll();
     if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
   };
-  const hstop = hud.querySelector('.hstop');
+  const hstop = dock.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
-  const hfx = hud.querySelector('.hfx');
+  const hfx = dock.querySelector('.hfx');
   if (hfx) hfx.onclick = () => {
     FX.on = !FX.on; fxSave();
     hfx.setAttribute('aria-pressed', FX.on);
   };
+  // ✕ 終了(2026-09-02タダシさん指示): 途中でやめてポケモンやわざを入れ替えたいとき、
+  // どこで終われるのか分からなかった、という指摘への答え。全画面ロックを解いて入力画面へ戻す
+  // (選んだ手は消さない。編成を変えればバトルの署名が変わって自動で仕切り直しになる)
+  const hend = dock.querySelector('.hend');
+  if (hend) hend.onclick = () => {
+    stopTimer();
+    RBV.started = false; RBV.playing = false; RBV.cur = 0;
+    body.classList.remove('bfull');
+    run();
+  };
   // ⏭ 1ターン送り(2026-09-01タダシさん指示): ⏸で止めて、相手のわざの周期(CCT)を見ながら
   // 狙ったターンに正確に止めるためのコマ送り。送った先が決断の場面なら質問が出る
-  const hstep = hud.querySelector('.hstep');
+  const hstep = dock.querySelector('.hstep');
   if (hstep) hstep.onclick = () => {
     if (!RBV.started || ended()) return;
     stopTimer(); RBV.playing = false;
@@ -9344,7 +9378,7 @@ const TOUR_DEFS = {
     { sel: '#mock .rbstart, #mock .gbbody, #mock',
       tx: 'そろったら<b>▶ バトルスタート！</b>。1ターン＝0.5秒で流れ、<b>SPアタック・シールド・交代の決断の場面で止まって選択肢が出ます</b>' },
     { sel: '#mock .gbbody, #mock',
-      tx: 'バトル中は画面のいちばん下に<b>HP・SPゲージ・シールド・残り手持ち</b>がいつも見えています。<b>⏸／×2／⏭</b>で止めたりコマ送りしたり、<b>⇄交代</b>もここからできます' },
+      tx: 'バトル中は画面のいちばん下に<b>HP・SPゲージ・シールド・残り手持ち</b>がいつも見えています。<b>⏸</b>で止めて<b>⏭ コマ送り</b>で1ターンずつ進めたり、<b>⇄交代</b>もここからできます。途中でやめたいときは<b>✕ 終了</b>です' },
     { sel: '#mock .gbbody, #mock',
       tx: '決めた場面は<b>チップ</b>で残るので、タップすればそこから選び直せます。<b>🔎 オートバトル「最善」</b>を選んでから始めると、手本の手順を見られます' },
   ],

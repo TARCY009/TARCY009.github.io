@@ -934,6 +934,20 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hm{text-align:center}
 .hm .clk{display:block;font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .hm .trn{display:block;font-style:normal;font-size:.55rem;color:var(--sub);font-variant-numeric:tabular-nums}
+/* たまにしか押さないボタンは、HUDの下に**文字つき**で並べる(2026-09-02タダシさん指摘)。
+   ⏹＝やり直し・✨＝演出・⏭＝コマ送り が、マークだけでは何のボタンか分からなかったため。
+   真ん中の列は幅60〜74pxしかないので文字が入らない。ここは横いっぱい使える */
+.hbtns{display:flex;gap:5px;margin-top:6px}
+.hbtns button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:5px 2px;font-size:.74rem;line-height:1;background:var(--bg2);border:1px solid var(--line);
+  border-radius:8px;color:var(--ink);cursor:pointer;transition:transform .08s}
+.hbtns button b{font-size:.56rem;font-weight:700;color:var(--sub);white-space:nowrap}
+.hbtns button:hover{transform:translateY(-1px)}
+.hbtns button:active{transform:translateY(1px)}
+.hbtns .hend,.hbtns .hend b{color:#ff8f8f}
+:root.light .hbtns .hend,:root.light .hbtns .hend b{color:#c92a2a}
+.hbtns .hfx[aria-pressed="false"]{opacity:.45;filter:grayscale(1)}
+@media (max-width:380px){.hbtns{gap:3px}.hbtns button b{font-size:.52rem}}
 .hctl{display:flex;justify-content:center;gap:4px;margin-top:4px;flex-wrap:wrap;max-width:66px;margin-left:auto;margin-right:auto}
 .hctl button{width:26px;height:22px;font-size:.6rem;background:var(--bg2);border:1px solid var(--line);
   border-radius:7px;color:var(--ink);cursor:pointer;padding:0}
@@ -1648,4 +1662,4 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .fxform .tx{border-color:#b06cff}
 @keyframes fxring{0%{opacity:0;transform:scale(.4)}30%{opacity:1}80%{opacity:0;transform:scale(6)}100%{opacity:0}}
 /* HUDの✨トグル(OFFのときは消灯) */
-.hctl .hfx[aria-pressed="false"]{opacity:.38;filter:grayscale(1)}
+
