@@ -1115,7 +1115,17 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .mttbl td.d{color:var(--gold);font-weight:700}
 .mttbl td small{display:block;font-weight:400;color:var(--sub);font-size:.6rem}
 .mtprog{color:var(--sub);font-size:.74rem;margin-top:8px;line-height:1.9}
+/* 環境勝率(2026-09-02): 満点が実質存在しない(1位でも65%前後)ので、
+   高いか低いかを文字色で示す。低い順に 水色 → 黄 → 赤 → 金 */
 .mtscore{font-size:1.05rem;font-weight:800;color:var(--gold)}
+.mtscore.cy{color:#3fd0e8}
+.mtscore.yel{color:#f0c53a}
+.mtscore.red{color:#ff6b6b}
+.mtscore.gold{color:#ffd54a;text-shadow:0 0 10px rgba(255,213,74,.45)}
+:root.light .mtscore.cy{color:#0a8ea6}
+:root.light .mtscore.yel{color:#a67c00}
+:root.light .mtscore.red{color:#c92a2a}
+:root.light .mtscore.gold{color:#a36f00;text-shadow:none}
 .mtscore small{font-size:.7rem;font-weight:600}
 .mtscorenote{font-size:.66rem;margin-left:6px;color:var(--sub)}
 .shmtx{margin-top:12px}
@@ -1258,7 +1268,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 @media (max-width:560px){.gbai{flex:1 1 100%;display:flex}.gbai button{flex:1;padding:5px 4px}}
 /* 模擬戦のあいて列: 見出しの右に「わざ えらぶ｜オート」(2026-08-20)。
    オート中はわざの選択欄を隠す(環境の定番構成で戦い、何が飛んでくるかは分からない) */
-#mock .gfhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#mock .gfhead{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+#mock .gfhead>span{flex:0 0 auto}
+/* 「🎲 おまかせ3匹」(2026-09-02): 入れ替え候補と同じ金のピル。見出しに収まるよう少し小さく。
+   狭い画面では2つのボタンで1行を分け合う(見出しは上の行に残す) */
+#mock .gfrand{padding:5px 10px;font-size:.7rem;white-space:nowrap;word-break:keep-all}
+@media (max-width:430px){#mock .gfhead>span{flex:1 0 100%}#mock .gfrand{flex:1 1 auto}}
 #mock .gfoeslots.auto .fbody select{display:none}
 /* HUDのゲージ残量の数字(2026-08-20タダシさん指示・ゲージ管理の要なので大きめに) */
 .rbhud .gqn{font-size:1.06rem;font-weight:900;color:var(--cy);min-width:2ch;text-align:center;line-height:1}

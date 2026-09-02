@@ -315,6 +315,7 @@ document.getElementById('app').innerHTML = `
     </div>
     <div class="rkteamcol">
       <div class="rkcolttl foe gfhead"><span title="あいての3匹。わざの既定は環境の定番構成です(選び直せます)">あいて</span>
+        <button class="ptswbtn gfrand" title="環境上位から、たがいの穴（3匹とも勝てない相手）を埋め合う3匹を自動で組みます。でたらめな3匹ではなく、パーティ診断と同じ考え方で選ぶので、そのまま編成の参考にもなります。押すたびに顔ぶれが変わります">🎲 おまかせ3匹</button>
         <button class="ptauto gfauto" aria-pressed="false" title="オートにすると、あいてのわざ欄を隠して環境の定番構成で戦います＝どのわざが飛んでくるかは飛んでくるまで分かりません(実戦と同じ)。えらぶ＝今までどおり自分でわざを選び、構成を見ながら戦えます"><i class="k">わざ</i><span class="v m">えらぶ</span><span class="v a">オート</span></button></div>
       <div class="pslots foeslots gfoeslots"></div>
     </div>
@@ -1066,7 +1067,7 @@ ${PAGE_ROCKET ? '' : `
 
   <h4>パーティ診断の「実戦想定」</h4>
   <p>平均勝率は環境上位50匹を<b>同じ重さ</b>で数えたものですが、実際は<b>上位の相手ほどよく当たります</b>。
-  そこで順位の重みを掛けたものが<b>実戦想定</b>です（環境スコアと同じ重みの付け方）。
+  そこで順位の重みを掛けたものが<b>実戦想定</b>です（環境勝率と同じ重みの付け方）。
   よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
 
   <h4>対戦記録と「マイ環境」</h4>
@@ -1157,7 +1158,7 @@ ${PAGE_ROCKET ? '' : `
   <h4>対策さがしの「範囲」</h4>
   <p>既定は<b>上位50</b>。<b>上位100</b>で51〜100位まで、<b>全ポケモン</b>で順位に関係なく全部（シャドウ込み・約1500匹）から探します。
   あまり使われていないポケモンで刺しにいきたいときは全ポケモンをどうぞ。
-  <b>環境一覧・パーティ診断・環境スコアは上位50のまま</b>なので、点数の基準は変わりません。</p>
+  <b>環境一覧・パーティ診断・環境勝率は上位50のまま</b>なので、点数の基準は変わりません。</p>
   <p>全ポケモンのときは、わざを総当たりすると重すぎるので
   <b>そのあいてにいちばん効くノーマル／SPを1本ずつ</b>計算式で選び、名前の下に出しています。
   もっと詰めたいときは行をタップして1対1シミュでわざを変えてみてください。
@@ -1166,7 +1167,7 @@ ${PAGE_ROCKET ? '' : `
   <h4>特殊カップの「🕘 過去のカップ」</h4>
   <p>特殊カップは開催されていない期間は環境を確かめられませんが、
   <b>そのカップが最後に開催されたときの環境上位100匹</b>を残してあります。
-  選べば通常のリーグと同じように<b>環境一覧・対策さがし・パーティ診断・環境スコア</b>が使えるので、
+  選べば通常のリーグと同じように<b>環境一覧・対策さがし・パーティ診断・環境勝率</b>が使えるので、
   次にそのカップが来たときに向けて、いまの手持ちで戦えるかを先に試せます。</p>
   <p>カップ名の下の<b>年月がそのカップの最後の開催時期</b>です。
   ここに出るのは<b>環境上位の顔ぶれとわざ構成</b>で、週ごとの推移や実際の使用率ではありません。
@@ -1179,6 +1180,11 @@ ${PAGE_ROCKET ? '' : `
   <b>決断が要る場面</b>（SPアタックを撃つ？／シールドを使う？／交代する？）で止まって選択肢が出ます。
   選ぶとそこから先が計算し直されて、バトルが続きます。</p>
   <ul>
+    <li><b>🎲 おまかせ3匹</b>＝あいての3匹を環境から自動で組みます。でたらめに3匹引くのではなく、
+    <b>パーティ診断と同じ考え方</b>で「たがいの穴（3匹とも勝てない相手）を埋め合う組み合わせ」を選ぶので、
+    強い相手と練習できて<b>編成の参考にもなります</b>。1匹目は環境上位から採用率の重みでランダムに引き、
+    2〜3匹目はその穴をいちばん埋められる候補から選ぶため、<b>押すたびに顔ぶれが変わります</b>。
+    わざは環境の定番構成（人が確認した確定値）です</li>
     <li>シールドは<b>両者2枚</b>、交代のクールタイムは<b>両者45秒</b>（GBLの仕様）</li>
     <li><b>SPアタックを撃つと1発につき約10秒かかります</b>（アイコン入力のミニゲームと演出）。
     実際のバトルではそのあいだも<b>タイマーが止まらない</b>ので、下のフレームの時計・タイムラインの
@@ -1950,7 +1956,7 @@ function runMulti() {
         return { w, sc: best.sc, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
       });
       const tds = rowsEl[idx].querySelectorAll('td');
-      const wgt = list.length - idx;   // 採用率順の重み
+      const wgt = metaWgt(idx);
       wSum += wgt;
       cells.forEach((c, j) => {
         if (c.w === 0) { wins[j]++; wScore[j] += wgt; }
@@ -1973,8 +1979,8 @@ function runMulti() {
       const wl = j => `${wins[j]}勝${losses[j]}敗${draws[j] ? draws[j] + '分' : ''}`;
       const score = envScore((wScore[0] + wScore[1] + wScore[2]) / (wSum * 3));
       prog.innerHTML = `🛡0-0 ${wl(0)} / 🛡1-1 ${wl(1)} / 🛡2-2 ${wl(2)}<br>` +
-        `<span class="mtscore" title="環境上位${list.length}匹×シールド0/1/2の勝敗を採用率で加重した点数。勝てない相手が減るほど加速的に上がります（全部に勝っても100にはなりません）">環境スコア ${score.toFixed(1)}<small> /100</small></span>` +
-        `<span class="mtscorenote">※スコアはあくまで参考程度に</span>` +
+        `<span class="mtscore ${envRank(score)}" title="環境上位${list.length}匹×シールド0-0/1-1/2-2の勝敗を、よく当たる相手ほど重く数えた勝率です。50%で環境と互角。文字色は 水色(40%未満)＜黄(40%台)＜赤(50%台)＜金(60%以上)">環境勝率 ${score.toFixed(1)}<small>%</small></span>` +
+        `<span class="mtscorenote">※あくまで参考程度に</span>` +
         '';
       bindCtl(box, 'multi');   // 計算が終わったら絞り込み・並び替えを有効化
       applyView(box, 'multi');
@@ -2026,14 +2032,38 @@ const VIEWS = {
     tailHtml: r => `<td class="pcnt c${r.nWin}">${r.nWin}<small>/${r.cells.length}</small></td>`,
   },
 };
-// 環境スコア: 採用率で加重した勝率 p(0〜1) を 0〜99.9 の点数に直す。
-// 「環境からランダムに2回対面したとき、少なくとも1回は勝てる確率」＝ 1-(1-p)^2 の形。
-// 勝てない相手が減るほど加速的に伸びるので、上位の実力差が点数に出やすい。
-// 99.9倍で頭打ちにしてあるので、全対面に勝っても100点にはならない。
-const envScore = p => 99.9 * (1 - Math.pow(1 - Math.max(0, Math.min(1, p)), 2));
+// 環境上位の重み(2026-09-02タダシさん指示で実データに合わせた)。
+// 旧: 直線(1位=50・50位=1)。これは「順位が下がるほど当たりにくい」を手で置いただけの形だった。
+// 新: **実際の採用率のカーブに合わせる**。外部の対戦記録集計(利用者が投稿した相手のパーティを
+//     数えたもの・約9.6万パーティ)の上位50匹の採用数へ、順位ごとの重み exp(-k×順位) を当てはめた。
+//     当てはまりの確認(重みが再現する割合 / 実際の割合):
+//       スーパー 上位10匹 38.6% / 38.0%   上位25匹 73.6% / 70.9%
+//       ハイパー 上位10匹 47.9% / 47.1%   上位25匹 82.1% / 78.2%
+//       マスター 上位10匹 78.4% / 78.9%   上位25匹 97.9% / 97.3%
+// ⚠ 実際の環境は**直線よりずっと上位に偏っている**(とくにマスターは上位10匹で約8割)。
+//   カップは採用率のデータが無いので、CP上限が同じリーグの値を借りる。
+// ⚠ ここを変えると環境勝率の基準値が全部動く(CLAUDE.mdの記録値も直すこと)
+const META_W_K = { s: 0.041, h: 0.061, m: 0.153 };
+function metaK() {
+  const lim = cup ? cup.cp : (cap || 10000);
+  return lim <= 1500 ? META_W_K.s : lim <= 2500 ? META_W_K.h : META_W_K.m;
+}
+const metaWgt = (idx) => Math.exp(-metaK() * (idx + 1));
+// 環境勝率: 採用率で加重した勝率 p(0〜1) をそのまま % で出す(2026-09-02タダシさん指示)。
+// 旧版は 1-(1-p)^2 の変換を掛けて「2回対面して1回は勝てる確率」としていたが、
+//   ①言葉で説明しても伝わらない(タダシさん本人が「理解できない」と評した)
+//   ②上に行くほど点差が縮む(勝率87.6%と82.9%が98.4と97.0＝1.4しか離れない)
+// の2点で、目的の「その環境でどのくらい活躍できるか」に合っていなかった。
+// 素の勝率なら**「環境の相手に何%勝てるか」で説明が1行で済み、差もそのまま出る**。
+// 変換は単調なので、旧版と**順位はまったく同じ**(変わるのは数字の見え方だけ)。
+const envScore = p => 100 * Math.max(0, Math.min(1, p));
+// 高いか低いかを文字色で示す(2026-09-02タダシさん指示・低い順に 水色→黄→赤→金)。
+// 満点が実質存在しない(1位でも65%前後)ので、数字だけでは高低が読み取れないため。
+// 区切りは**50%＝環境と互角**を中心に上下10ポイント。言葉で言い切れる形にしてある
+const envRank = v => v >= 60 ? 'gold' : v >= 50 ? 'red' : v >= 40 ? 'yel' : 'cy';
 const cellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
   `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
-// カウンター検索だけの「探す範囲」。環境スコアの基準を動かさないよう、
+// カウンター検索だけの「探す範囲」。環境勝率の基準を動かさないよう、
 // 環境一覧・パーティ診断は上位50固定のままにして、逆引きで候補を広げたいときだけ100位まで見る
 let cnTop = 50;
 const CN_RANGES = [
@@ -2050,7 +2080,7 @@ function ctlHtml(vn) {
     <div class="mtctlrow"><span class="lbl">並び</span>${grp('mtsort', V.sorts, V.sort)}</div>
     ${vn === 'counter' ? `<div class="mtctlrow"><span class="lbl">範囲</span>${grp('mtrange', CN_RANGES, String(cnTop))}</div>` : ''}
     <div class="enote expl">${vn === 'multi'
-      ? '相手は環境上位50匹（理想個体値・実戦の定番わざ構成）。🛡の列は「おたがい同じ枚数」で戦った結果です。環境スコア＝環境からランダムに2回対面したとき、少なくとも1回は勝てる確率'
+      ? '相手は環境上位50匹（理想個体値・実戦の定番わざ構成）。🛡の列は「おたがい同じ枚数」で戦った結果です。環境勝率＝この50匹に勝てる割合（よく当たる相手ほど重く数えます）。50%で環境と互角'
       : vn === 'counter'
       ? 'マスの「残◯%」＝勝った側に残るHPの割合。あいてのわざは「候補にいちばんキツい構成」で判定するので、実戦では表より有利になることが多いです'
       : '相手は環境上位50匹（理想個体値・実戦の定番わざ構成）。穴＝3匹とも勝てない相手。🛡は「おたがい同じ枚数」で戦った結果です'}</div>
@@ -2198,7 +2228,7 @@ function cnAllList(foeBase) {
 function runCounter() {
   const box = document.getElementById('counter');
   // 基準の上位50に、「上位100」を選んでいるときだけ51〜100位(META_EXT / cup.ext)を足す。
-  // 環境一覧・パーティ診断・環境スコアは上位50のままなので、そちらの数値は影響を受けない
+  // 環境一覧・パーティ診断・環境勝率は上位50のままなので、そちらの数値は影響を受けない
   const cnBase = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
   const cnExt = cup ? (cup.ext || []) : ((window.META_EXT || {})[String(cap)] || []);
   if (!S[1].key) {
@@ -5954,6 +5984,101 @@ function syncGbFoeSlots() {
   });
 }
 
+// ---- あいての3匹を環境から自動で組む「🎲 おまかせ3匹」(2026-09-02タダシさん指示) ----
+// あいてを毎回3匹えらぶのが手間なので自動化する。ただし**でたらめに3匹引くと弱いパーティ**になり、
+// 練習にも参考にもならない。そこでパーティ診断と同じ考え方――**環境の相手に穴(3匹とも勝てない相手)が
+// 少ない組み合わせ**――で組む。「オートで組んだあいてのパーティ、強いじゃん」と、
+// 練習相手と編成の参考の一石二鳥にするのがねらい。
+//   1匹目 : 環境上位から採用率の重み付きでランダムに引く(押すたびに顔ぶれが変わる)
+//   2〜3匹目: すでに入れた面子が勝てない相手を、いちばん多く埋められる候補から選ぶ。
+//             同じくらい良い候補が並ぶので、その中からランダム＝毎回同じ答えにはならない
+// わざは環境の定番構成(mockDefaultMoves＝人が確認した確定値が最優先)。手で入れたときと同じ形になる。
+const GBAUTO = { sig: null, wins: null, cands: null, busy: false };
+const GBAUTO_FOES = 50;    // 相手として戦わせる環境の数(環境一覧・パーティ診断と同じ上位50)
+const GBAUTO_CANDS = 30;   // 候補にする環境上位の数(「流行り」の範囲。増やすと計算が伸びる)
+const GBAUTO_LABEL = '🎲 おまかせ3匹';
+const gbAutoSig = () => JSON.stringify([cap, cup && cup.slug, metaBluff, SIMOPT.buffMode]);
+// 候補×環境の勝敗表を作る。リーグ・カップ・前提が同じあいだは作り直さない(2回目以降は即座に出る)
+function gbAutoPrepare(onDone, onProg) {
+  if (GBAUTO.sig === gbAutoSig() && GBAUTO.wins) { onDone(true); return; }
+  const list = (cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || [])) || [];
+  if (list.length < 3) { onDone(false); return; }
+  const foes = list.slice(0, GBAUTO_FOES);
+  const cands = list.slice(0, Math.min(GBAUTO_CANDS, list.length));
+  // 相手の前提は環境一覧・パーティ診断とそろえる(理想個体値・定番わざ・ブラフは画面の設定)。
+  // シールドはおたがい1枚(0-0と2-2の真ん中)で1回だけ測る
+  const cfg = m => {
+    const r1 = rank1(m.k, cap), d = mockDefaultMoves(m.k, !!m.s);
+    return { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, cap, timing: 'optimal',
+      bluff: metaBluff, shields: 1, fast: d.fast, charged: [d.c1, d.c2].filter(Boolean) };
+  };
+  const fc = foes.map(cfg), cc = cands.map(cfg);
+  const wins = cands.map(() => new Array(foes.length));
+  let i = 0, j = 0;
+  const step = () => {
+    const t0 = performance.now();
+    while (i < cands.length && performance.now() - t0 < 40) {
+      wins[i][j] = PvpEngine.simulate(D, cc[i], fc[j], SIMOPT).winner === 0;
+      if (++j >= foes.length) { j = 0; i++; if (onProg) onProg(i, cands.length); }
+    }
+    if (i < cands.length) { setTimeout(step, 0); return; }
+    GBAUTO.sig = gbAutoSig(); GBAUTO.wins = wins; GBAUTO.cands = cands;
+    onDone(true);
+  };
+  step();
+}
+// 重み付きの抽選(w(要素, 番号) が大きいほど当たりやすい)
+function gbAutoRnd(arr, w) {
+  let s = arr.reduce((a, x, i) => a + w(x, i), 0) * Math.random();
+  for (let i = 0; i < arr.length; i++) { s -= w(arr[i], i); if (s <= 0) return i; }
+  return arr.length - 1;
+}
+// 勝敗表から3匹を選ぶ。1匹目はランダム、2〜3匹目は「穴をいちばん埋める候補」から
+function gbAutoPick() {
+  const { wins, cands } = GBAUTO;
+  if (!wins || !wins.length) return null;
+  const nF = wins[0].length;
+  const picked = [gbAutoRnd(cands, (c, i) => cands.length - i)];   // 上位ほど当たりやすい
+  const covered = wins[picked[0]].slice();
+  while (picked.length < 3) {
+    // 同じポケモンは2匹入れられない(通常・シャドウの違いも同じポケモン扱い)
+    const rest = cands.map((c, i) => i).filter(i => !picked.some(p => cands[p].k === cands[i].k));
+    if (!rest.length) break;
+    const scored = rest.map(i => {
+      let fill = 0, tot = 0;
+      for (let j = 0; j < nF; j++) if (wins[i][j]) { tot++; if (!covered[j]) fill++; }
+      return { i, sc: fill * 3 + tot };   // 穴を埋める数を重く見つつ、全体への強さも見る
+    }).sort((a, b) => b.sc - a.sc);
+    const top = scored.slice(0, 6);       // 同じくらい良い候補からランダムに引く
+    const pick = top[gbAutoRnd(top, (x, k) => top.length - k)];
+    picked.push(pick.i);
+    for (let j = 0; j < nF; j++) if (wins[pick.i][j]) covered[j] = true;
+  }
+  return picked.map(i => cands[i]);
+}
+// ボタンを押したときの動き(初回だけ勝敗表を作るので、進み具合をボタンに出す)
+function gbAutoFill() {
+  if (GBAUTO.busy) return;
+  const btn = document.querySelector('#mock .gfrand');
+  const say = t => { if (btn) btn.textContent = t; };
+  GBAUTO.busy = true;
+  if (btn) btn.disabled = true;
+  say('組み立て中…');
+  gbAutoPrepare(ok => {
+    GBAUTO.busy = false;
+    if (btn) { btn.disabled = false; }
+    const three = ok && gbAutoPick();
+    if (!three) {   // 環境リストが3匹に満たないカップ。黙って何も起きないと壊れて見える
+      say('環境の顔ぶれが足りません');
+      setTimeout(() => say(GBAUTO_LABEL), 2000);
+      return;
+    }
+    say(GBAUTO_LABEL);
+    three.forEach((m, i) => { GBT[i] = { key: m.k, shadow: !!m.s, ...mockDefaultMoves(m.k, !!m.s) }; });
+    saveGbt(); syncGbFoeSlots(); run();
+  }, (a, b) => say(`組み立て中 ${Math.round(a / b * 100)}%`));
+}
+
 // ---- 決断のキーと選択肢 ----
 // キーは「対面:側:種別:連番:待った発数」(側 0=じぶん 1=あいて)。ロケット団(4要素)と形式が
 // 違うので、同じ rb= コーデックで共有しても混ざらない
@@ -9168,11 +9293,11 @@ const TOUR_DEFS = {
     { sel: '#counter .mttbl, #counter',
       tx: 'ここに<b>勝てるポケモンが強い順</b>に並びます。<b>🛡0-0／1-1／2-2</b>は、おたがいのシールドの枚数ごとの勝ち負けです（3つとも勝てるなら安心して出せます）' },
     { sel: '#counter .mtfilter, #counter .mtctl, #counter',
-      tx: '<b>表示</b>で「3枚とも勝ち」だけに絞ったり、<b>並び</b>を変えたりできます。手持ちにいるポケモンを探すときに便利です' },
+      tx: '<b>表示</b>で「<b>勝ちあり</b>」（🛡0-0／1-1／2-2のどれかで勝てる）や「<b>全勝</b>」（3通りとも勝てる）だけに絞れます。<b>並び</b>も変えられるので、手持ちにいるポケモンを探すときにも便利です' },
     { sel: '#counter .mttbl, #counter',
       tx: '行を<b>タップ</b>すると、その対面がターンごとにどう進むかが開きます。使うポケモンを決めたら、そのまま1対1シミュで詰められます' },
   ],
-  // 環境一覧: リーグ → わざ → SP2本目 → 個体値 → 表 → 環境スコア → マスをタップ
+  // 環境一覧: リーグ → わざ → SP2本目 → 個体値 → 表 → 環境勝率 → マスをタップ
   multi: [
     { sel: '#leagues',
       tx: 'まず<b>リーグ</b>を選びます。ここを変えると、あいての顔ぶれ（環境上位50匹）も入れかわります' },
@@ -9185,7 +9310,7 @@ const TOUR_DEFS = {
     { sel: '#multi .mttbl, #multi',
       tx: 'ここに<b>環境上位50匹</b>（よく使われている順）との勝ち負けが出ます。<b>🛡0-0／1-1／2-2</b>は、おたがいのシールドの枚数ごとの結果です' },
     { sel: '#multi .mtscore, #multi',
-      tx: '<b>環境スコア</b>＝環境の相手と2回対面して、少なくとも1回は勝てる確率です。高いほど、そのリーグで活躍できます' },
+      tx: '<b>環境勝率</b>＝この50匹に勝てる割合です（よく当たる相手ほど重く数えます）。<b>50%で環境と互角</b>。文字色が 水色→黄→赤→<b>金</b>と変わるほど活躍できます' },
     { sel: '#multi .mttbl, #multi',
       tx: 'マスを<b>タップ</b>すると、その対面がターンごとにどう進むかが開きます。一覧の勝敗と<b>かならず同じ結果</b>になります' },
   ],
@@ -9210,6 +9335,8 @@ const TOUR_DEFS = {
   mock: [
     { sel: '#mock .rkteams',
       tx: '<b>じぶん3匹</b>と<b>あいて3匹</b>を入れます。じぶんの枠はパーティ診断と共通なので、診断したパーティをそのまま試せます' },
+    { sel: '#mock .gfrand, #mock .gfhead',
+      tx: 'あいてを選ぶのが手間なときは<b>🎲 おまかせ3匹</b>。環境上位から<b>たがいの穴を埋め合う3匹</b>を自動で組むので、強い相手と練習できて<b>編成の参考にもなります</b>。押すたびに顔ぶれが変わります' },
     { sel: '#mock .gfauto, #mock .gfhead',
       tx: 'あいてのわざを<b>「オート」</b>にすると、わざ欄が隠れて環境の定番構成で戦います。<b>何が飛んでくるか分からない実戦に近い練習</b>ができます' },
     { sel: '#mock .gbaibar',
@@ -9488,6 +9615,9 @@ document.addEventListener('click', e => {
   if (gfAuto) gfAuto.onclick = () => {
     MK.foeAuto = !MK.foeAuto; saveMkFoeAuto(); syncGbFoeSlots(); run();
   };
+  // あいての3匹を環境から自動で組む(2026-09-02)
+  const gfRand = document.querySelector('#mock .gfrand');
+  if (gfRand) gfRand.onclick = gbAutoFill;
   // 模擬戦のおすすめタブ(高火力/高火力＋安定)。同じタブをもう一度押すとオフ
   document.querySelectorAll('#rksuggbar button[data-m]').forEach(b => b.onclick = () => {
     RKS.mode = RKS.mode === b.dataset.m ? null : b.dataset.m;
