@@ -126,6 +126,12 @@ h1 b{white-space:nowrap}
 .tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
 .tag-s2{display:inline-flex;align-items:center;background:#7c3aed;color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;vertical-align:1px}
 .lowbulk{color:#ffd54a;background:#c2410c;border:1px solid #a33409;border-radius:6px;font-size:.62rem;font-weight:700;padding:0 5px;flex-shrink:0}
+/* ランキングの上のタブは点灯時の光彩(ぼかし)を出さない(2026-09-03タダシさん指示。
+   一覧をスクリーンショットしたときにぼやぼやが写り込むため。立体感は内側のハイライトだけで出す) */
+.rhead .gtabs button[aria-pressed="true"],
+.rhead .gtabs button[aria-selected="true"],
+.rhead .gtabs .megalv .mlvseg button[aria-pressed="true"]{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .gtabs .shadowmark{color:var(--shadow)}
 .gtabs button[aria-pressed="true"] .shadowmark{color:#fff}
 .empty{color:var(--sub);font-size:.82rem;text-align:center;padding:18px 0}
