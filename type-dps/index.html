@@ -168,6 +168,8 @@ h1 b{white-space:nowrap}
         title="シャドウ個体をランキングに含めます（攻撃1.2倍で火力が上がります）"><i class="shadowmark"></i></button>
       <button id="fMega" class="t-mega" type="button" aria-pressed="false"
         title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+      <button id="fSplit" class="t-green" type="button" aria-pressed="false"
+        title="1ゲージのSPアタックが1位でも、ゲージ2分割・3分割のSPアタックとの火力差が7%未満ならそちらを優先します（分割ありは早く撃てるので実戦向き）。押していないあいだは、純粋に火力がいちばん高い組み合わせで順位を出します">ゲージ分割考慮</button>
       <div id="megalv"></div>
       <span class="gseg" id="cntSeg">
         <button class="t-cyan" type="button" data-n="20" title="上位20位まで表示します">20位</button>
@@ -198,7 +200,8 @@ h1 b{white-space:nowrap}
     <li>全ポケモンを<b>PL50・個体値15</b>にそろえ、相手は防御種族値100・PL40・個体値15のものさしで比べます</li>
     <li><b>ノーマルアタックとSPアタックが両方そのタイプ</b>の構成だけを対象にします</li>
     <li>火力(DPS)は1秒あたりの与ダメージ。ノーマルアタック100回ぶんのサイクルで計算し、<b>そのタイプが弱点の相手（×1.6）</b>に攻撃したときの値です</li>
-    <li>わざの組み合わせはPL1〜51の全レベルで計算し、いちばん多くのレベルで1位だったもの。1ゲージ技と分割あり技の差が7%未満なら分割ありを優先します</li>
+    <li>わざの組み合わせはPL1〜51の全レベルで計算し、いちばん多くのレベルで1位だったもの。既定は<b>純粋に火力がいちばん高い組み合わせ</b>です</li>
+    <li><b>「ゲージ分割考慮」</b>を押すと、1位が1ゲージ技でも分割あり技（2/3分割）との差が<b>7%未満</b>なら分割ありを優先します（分割ありは早く撃てるので実戦向きです）</li>
     <li>候補は最終進化とメガシンカ・ゲンシカイキ。<b>シャドウ</b>は攻撃1.2倍、<b>オレンジ色のわざ</b>は特別わざ・レガシーわざです</li>
     <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）</li>
     <li><b>メガLv</b>＝メガシンカの追加SPアタック（わざ名の最後が「+」）は、<b>メガレベルが上がるほど威力が上がります</b>（Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／<b>Lv4（スーパーマックス）＝1.3倍</b>）。<b>既定はLv4</b>で、この設定はサイト内の他のツールにも引き継がれます。追加SPアタックを持つポケモンを出しているときだけタブが現れます</li>
@@ -252,7 +255,7 @@ const CPM50=D.cpm['50'];
 const Q=new URLSearchParams(location.search);
 let curT=(TYPES.find(t=>t[0].toLowerCase()===Q.get('t'))||TYPES[0])[0];
 let showN=[20,30,40].includes(+Q.get('n'))?+Q.get('n'):20;
-let fShadow=Q.get('sh')==='1', fMega=Q.get('mg')==='1';
+let fShadow=Q.get('sh')==='1', fMega=Q.get('mg')==='1', fSplit=Q.get('sp')==='1';
 
 // ---- 計算(火力チェッカーと同じサイクルDPS・タイプ内のわざに限定) ----
 function movesOf(p, ids, eids, tEn, fast){
@@ -261,7 +264,8 @@ function movesOf(p, ids, eids, tEn, fast){
   for(const id of eids) if(D.moves[id]&&D.moves[id].t===tEn&&(fast?D.moves[id].e>0:D.moves[id].e<0)) out.push({id,sp:true});
   return out;
 }
-// PL1〜51の多数決で最適構成を決める(1位が1ゲージ技なら、分割あり技との差7%未満で分割あり優先)
+// PL1〜51の多数決で最適構成を決める。既定は「純粋に火力がいちばん高い構成」で、
+// 「ゲージ分割考慮」(fSplit)を押しているあいだだけ、1位が1ゲージ技なら分割あり技との差7%未満で分割あり優先
 function bestOfType(p, tEn, shadow){
   const fs=movesOf(p,p.q,p.eq,tEn,true), cs=movesOf(p,p.c,p.ec,tEn,false);
   if(!fs.length||!cs.length) return null;
@@ -287,7 +291,7 @@ function bestOfType(p, tEn, shadow){
       if(cb.split&&(!bestSplit||v>bestSplit.v)) bestSplit={v,cb};
     }
     let win=best;
-    if(!best.cb.split&&bestSplit&&(best.v-bestSplit.v)/best.v<0.07) win=bestSplit;
+    if(fSplit&&!best.cb.split&&bestSplit&&(best.v-bestSplit.v)/best.v<0.07) win=bestSplit;
     const key=win.cb.f.id+'|'+win.cb.c.id;
     tally.set(key,(tally.get(key)||0)+1);
   }
@@ -305,7 +309,7 @@ function bestOfType(p, tEn, shadow){
 }
 const rankCache=new Map();
 function buildRows(){
-  const key=curT+'|'+fShadow+'|'+fMega+'|'+MegaLv.level();
+  const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+MegaLv.level();
   if(rankCache.has(key)) return rankCache.get(key);
   const rows=[];
   for(const k of KEYS){
@@ -550,6 +554,7 @@ function syncUrl(){
   if(showN!==20) q.set('n',showN);
   if(fShadow) q.set('sh','1');
   if(fMega) q.set('mg','1');
+  if(fSplit) q.set('sp','1');
   const qs=q.toString();
   history.replaceState(null,'',location.pathname+(qs?'?'+qs:''));
 }
@@ -557,11 +562,13 @@ function sync(){
   document.querySelectorAll('.tbtn').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===curT)));
   $('fShadow').setAttribute('aria-pressed',String(fShadow));
   $('fMega').setAttribute('aria-pressed',String(fMega));
+  $('fSplit').setAttribute('aria-pressed',String(fSplit));
   document.querySelectorAll('#cntSeg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===showN)));
   renderRank(); renderGraph(); syncUrl();
 }
 $('fShadow').onclick=()=>{fShadow=!fShadow;sync();};
 $('fMega').onclick=()=>{fMega=!fMega;sync();};
+$('fSplit').onclick=()=>{fSplit=!fSplit;sync();};
 MegaLv.mount($('megalv'));
 MegaLv.onChange(()=>{ MegaLv.apply(D.moves, PLUS_IDS); sync(); });
 document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.dataset.n;sync();});

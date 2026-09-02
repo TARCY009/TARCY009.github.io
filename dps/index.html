@@ -60,7 +60,7 @@
   --delbg:#231532; --delline:#6b2b3a; --delink:#ff6b81; --delbg2:#301a3c; --delline2:#a13b52;
   --morebg:rgba(26,35,66,.6); --moreline:#4a3a7d; --morebg2:rgba(176,108,255,.12);
   --mainink:#062038; --disbg:#273154; --disink:#6b76a3;
-  --mcS:#c396ff; --mcM:#f58fc2; --mcC:#5fd8ea; --mcO:#ffab70; --smaxline:#5b3f8f; --smaxink:#c396ff;
+  --mcS:#c396ff; --mcM:#f58fc2; --mcC:#5fd8ea; --mcO:#ffab70; --mcG:#8ee6a8; --smaxline:#5b3f8f; --smaxink:#c396ff;
   --helpbody:rgba(26,35,66,.9); --helpline:#4a3a7d;
   --ballsh:0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22);
   --ballbtm:#e9edf8;
@@ -94,7 +94,7 @@
   --delbg:#fff; --delline:#f0b8b8; --delink:#c33; --delbg2:#fff1f1; --delline2:#e08e8e;
   --morebg:#fbfaff; --moreline:#cfc6f0; --morebg2:#f6f2ff;
   --mainink:#fff; --disbg:#b9c6dd; --disink:#fff;
-  --mcS:#7a3cc4; --mcM:#c02c76; --mcC:#0b7f92; --mcO:#b54a0e; --smaxline:#c4b0ea; --smaxink:#6d3fc4;
+  --mcS:#7a3cc4; --mcM:#c02c76; --mcC:#0b7f92; --mcO:#b54a0e; --mcG:#0f7a3f; --smaxline:#c4b0ea; --smaxink:#6d3fc4;
   --helpbody:rgba(255,255,255,.92); --helpline:#cfc6f0;
   --ballsh:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55);
   --ballbtm:#ffffff;
@@ -258,6 +258,8 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 #mShield{--mc:var(--mcC);--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mgl:rgba(8,180,201,.45)}
 /* 極低耐久の除外=⚠️マークと同じオレンジ系(押している間は⚠️付きのポケモンが一覧から消える) */
 #fBulk{--mc:var(--mcO);--mg:linear-gradient(160deg,#ffc48a 0%,#f0762b 45%,#a8430e 100%);--mgl:rgba(240,118,43,.45)}
+/* ゲージ分割考慮=緑。押している間だけ「1ゲージ技より分割あり技を優先」の補正がかかる */
+#fSplit{--mc:var(--mcG);--mg:linear-gradient(160deg,#7fe0a0 0%,#17864a 45%,#0b4d2a 100%);--mgl:rgba(23,134,74,.45)}
 /* 水色は明るいので、点灯したときだけ文字を濃くする(紫・マゼンタは白のままで読める) */
 #mShield[aria-pressed="true"],.seg button[aria-pressed="true"]{color:#042330}
 /* 自分のポケモンの計算のしかた。排他の2択(今の状態/フル強化)はくっつけて1つのまとまりに見せ、
@@ -445,6 +447,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <button id="fMega" type="button" aria-pressed="false" title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
     <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドでボスのシールドを壊す役向きのランキングに切り替えます（使えるのはメガシンカだけなのでメガのみの一覧になります）">🛡シールド破壊</button>
     <button id="fBulk" type="button" aria-pressed="false" title="⚠️極低耐久（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）のポケモンを一覧から外します。順位は外したあとの並びで振り直します">⚠️極低耐久を除外</button>
+    <button id="fSplit" type="button" aria-pressed="false" title="1ゲージのSPアタックが1位でも、ゲージ2分割・3分割のSPアタックとの火力差が7%未満ならそちらを優先します（分割ありは早く撃てるので実戦向き）。押していないあいだは、純粋に火力がいちばん高い組み合わせで順位を出します">ゲージ分割考慮</button>
     <div id="megalv"></div>
   </div>
   <div id="mineSummary"></div>
@@ -506,7 +509,8 @@ function fastMoves(p){ return [...p.q.map(m=>({id:m,sp:false})), ...p.eq.map(m=>
 function chgMoves(p){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>({id:m,sp:true}))].filter(x=>D.moves[x.id]); }
 
 // 全レベル(PL1〜51, 0.5刻み)の多数決で最適技構成を決定。
-// 各レベルで1位が「ゲージ分割なし(1ゲージ技)」の場合、分割あり(2/3ゲージ)の最高構成との
+// 既定は「純粋に火力がいちばん高い構成」。「ゲージ分割考慮」(fSplit)を押しているあいだだけ、
+// 各レベルで1位が「ゲージ分割なし(1ゲージ技)」の場合に、分割あり(2/3ゲージ)の最高構成との
 // 火力差が7%未満なら分割ありをそのレベルの勝者とする(ドラゴン7%ルール)。
 const LEVELS=[];
 for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) LEVELS.push(m); }
@@ -539,7 +543,7 @@ function bestCombo(p, bossTypes, shadow){
       if(cb.split&&(!bestSplit||v>bestSplit.v)) bestSplit={v,cb};
     }
     let win=best;
-    if(!best.cb.split && bestSplit && (best.v-bestSplit.v)/best.v<0.07) win=bestSplit;
+    if(fSplit && !best.cb.split && bestSplit && (best.v-bestSplit.v)/best.v<0.07) win=bestSplit;
     const key=win.cb.f.id+'|'+win.cb.c.id;
     tally.set(key,(tally.get(key)||0)+1);
   }
@@ -580,7 +584,7 @@ let boss=null, showN=30;
 // シールド破壊(メガ)だけは別のランキングなので、押している間はその一覧に切り替わる。
 // シールド破壊はスーパーメガレイド専用なので、ONのあいだは最少討伐人数のランクも★7にそろえる
 // (tierPrev=ONにする前のランク。OFFで★7のままなら戻す。手で選び直していたらその選択を尊重)
-let fShadow=false, fMega=false, fBulk=false, shieldMode=false, tierPrev=null;
+let fShadow=false, fMega=false, fBulk=false, fSplit=false, shieldMode=false, tierPrev=null;
 const mine=[];
 
 // ---- search suggest ----
@@ -624,7 +628,7 @@ const lowBulk=(p,shadow)=>isLowBulk(p,shadow)?'<span class="lowbulk" title="倒�
 const T_DPS='1秒あたりの与ダメージです。ノーマルアタック100回ぶんのサイクルで計算し、ボスへのタイプ相性も反映しています';
 const T_RANK='火力が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
 const T_RANKME='登録した自分のポケモンを、この一覧に当てはめたときの順位です';
-const T_MOVES='PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だったわざの組み合わせです';
+const T_MOVES='PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だったわざの組み合わせです。「ゲージ分割考慮」を押すと、1ゲージのSPアタックより分割あり（2/3分割）を優先します（火力差7%未満のとき）';
 const T_PLUSMV='メガシンカ中だけ使える追加のSPアタックです。メガLvで威力が変わるのはこのわざだけなので、メガLvを切り替えるとこの行の数字が動きます';
 const T_MINEMLV='あなたのこの個体のメガレベルです。追加SPアタック（わざ名の最後が「+」）の威力は、メガレベルが上がるほど上がります（Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／Lv4＝1.3倍）。ランキング側のメガLvは全員をそろえた物差しなので、こちらとは別に設定できます';
 const T_MOVES_SH='ゲージ2分割・3分割のSPアタックの中で、いちばん火力が出る組み合わせです';
@@ -767,10 +771,11 @@ function guessTier(k){
 // 1位アタッカーの候補: ものさし防御の火力順で上位8件だけ控えておき、
 // ランクごとの実際のボス防御で計算し直して1位を選ぶ(防御は全わざ共通の係数なので順位はほぼ動かない)
 // ⚠ キャッシュのキーにメガレベルも入れる。＋わざの威力がレベルで変わるので、
-//   ボスだけで持つと「レベルを変えても古い構成のまま」になる(実際に踏んだ)
+//   ボスだけで持つと「レベルを変えても古い構成のまま」になる(実際に踏んだ)。
+//   ゲージ分割考慮(fSplit)もわざ構成を変えるので同じくキーに入れる
 let mpTopCache={key:null,rows:null};
 function mpTop(){
-  const ck=boss+'|'+MegaLv.level();
+  const ck=boss+'|'+MegaLv.level()+'|'+fSplit;
   if(mpTopCache.key===ck) return mpTopCache.rows;
   const bt=D.pokemon[boss].ty, rows=[];
   for(const k of KEYS){
@@ -802,7 +807,7 @@ function mpCalc(tierId){
   // bestFor(P)＝チームパワーの上昇PをPとしたときの最良の1位候補。
   // need＝1人で削り切るのに必要な秒数(t7はシールド前20%+シールド中80%・防御4倍の2段階)。
   // ブースト選択中は候補20件×全わざ構成を選び直す(天候やチームパワーで最適構成が変わるため)。
-  // ブーストなしのときは従来どおりものさしの構成(ドラゴン7%ルール込み)＝既定の数字を動かさない
+  // ブーストなしのときはものさしの構成をそのまま使う(「ゲージ分割考慮」の設定もそのまま反映される)
   const bestFor=(P)=>{
     const plain=!ex||(P===0&&ex.flat===1&&!ex.wx.length);
     const exP=plain?null:{...ex,tp:P};
@@ -1014,7 +1019,7 @@ function bindMineCtl(sumEl){
   });
 }
 // ---- ranking ----
-const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield'), bulkBtn=document.getElementById('fBulk');
+const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield'), bulkBtn=document.getElementById('fBulk'), splitBtn=document.getElementById('fSplit');
 const megalvBox=document.getElementById('megalv');
 MegaLv.mount(megalvBox);
 // いま出している一覧に「＋わざ」の行があるか。メガLvが効くのはその行だけなので、
@@ -1029,8 +1034,10 @@ function syncModes(){
   megaBtn.setAttribute('aria-pressed',fMega);
   shieldBtn.setAttribute('aria-pressed',shieldMode);
   bulkBtn.setAttribute('aria-pressed',fBulk);
+  splitBtn.setAttribute('aria-pressed',fSplit);
   // シールド破壊はメガ専用の一覧なので、その間は他の絞り込みを使わない
-  shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode; bulkBtn.disabled=shieldMode;
+  // (シールド破壊はそもそも分割SP持ちだけの一覧なので、ゲージ分割考慮も効かない)
+  shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode; bulkBtn.disabled=shieldMode; splitBtn.disabled=shieldMode;
   // メガLvはメガを出しているときだけ見せる。ただし既定(Lv4)から変えているあいだは常に見せる
   // (見えない前提で数字が変わらないようにするため)
   syncMegaLvVis();
@@ -1038,6 +1045,8 @@ function syncModes(){
 shadowBtn.onclick=()=>{fShadow=!fShadow;showN=30;syncModes();renderRank();};
 megaBtn.onclick=()=>{fMega=!fMega;showN=30;syncModes();renderRank();};
 bulkBtn.onclick=()=>{fBulk=!fBulk;showN=30;syncModes();renderRank();};
+// わざ構成が変わる＝最少討伐人数の1位アタッカーも変わるので、そちらも出し直す
+splitBtn.onclick=()=>{fSplit=!fSplit;showN=30;syncModes();if(boss)renderMinPlayers();renderRank();};
 shieldBtn.onclick=()=>{
   shieldMode=!shieldMode; showN=30;
   // シールド破壊はスーパーメガレイド専用 → ONのあいだはランクを★7にそろえる
@@ -1347,7 +1356,8 @@ const HELP_HTML = `
   <h4>わざの選ばれ方</h4>
   <ul>
     <li>一覧に出るわざ構成は<b>PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だった組み合わせ</b>です</li>
-    <li>1位が<b>ゲージ分割なし（1ゲージ）</b>のわざでも、分割ありとの差が<b>7%未満</b>なら分割ありを優先します（実戦では撃ちやすいため）</li>
+    <li>既定は<b>純粋に火力がいちばん高い組み合わせ</b>です</li>
+    <li><b>「ゲージ分割考慮」</b>を押すと、1位が<b>ゲージ分割なし（1ゲージ）</b>のわざでも、分割ありとの差が<b>7%未満</b>なら分割ありを優先します（分割ありは早く撃てるので実戦向きです）</li>
     <li><b>(特)</b>は特別わざ・レガシーわざ（イベント限定やすごいわざマシンスペシャルなどで習得）。習得済みならそのまま選べます</li>
     <li><b>めざめるパワー</b>はタイプを選べないので、そのボスに刺さるタイプをアイコンで示します</li>
     <li>ボスのわざ一覧に<b>特別わざは出ません</b>（レイドボスは使ってこないため）</li>
