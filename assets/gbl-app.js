@@ -1331,7 +1331,7 @@ ${PAGE_ROCKET ? '' : `
     <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
-    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>✨ 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
+    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>🎬 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
   </ul>
   <h4>わざの決め方</h4>
   <ul>
@@ -4961,7 +4961,7 @@ function rbRender(body, bt, picks, foes, extra) {
         <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
         <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
-        <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">✨<b>演出</b></button>
+        <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">🎬<b>演出</b></button>
         <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
       </div>` : ''}
     </div>`;
@@ -5213,6 +5213,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
+    feedEl.querySelectorAll('.prehide').forEach(e => e.classList.remove('prehide'));   // スタート前に隠していたぶんを出す
     if (RB.goal) { applyGoal(); return; }   // オートバトルを選んでいれば探索してから再生
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';   // 走り出したら上にも「▶ バトルスタート！」(やり直し)を出す
@@ -5310,7 +5311,13 @@ function rbRender(body, bt, picks, foes, extra) {
   if (RB.step && !RBV.started) {
     // まだスタートしていない: VSカードと両者の状態だけ見せて、スタートボタンを待つ
     RBV.cur = 0;
-    revealTo(0);
+    // ⚠ 0ターン目には**開幕交代のチップ**と、その**打ちかけの1発**も入っている。
+    //   そのまま出すと「押す前にもう交代して攻撃している」画面になる(2026-09-02タダシさん報告)。
+    //   ptrは順番にしか進められないので、いったん出してからVSカード以外を隠す
+    //   (スタート時に .prehide を外せば、正しい順番で出てくる)
+    revealTo(0).forEach(e => {
+      if (!(e.dataset.fx || '').includes('"k":"vs"')) e.classList.add('prehide');
+    });
     updateHud(0);
     winbox.innerHTML = '<button class="rbstart">▶ バトルスタート！</button>';
     winbox.querySelector('.rbstart').onclick = startBattle;
@@ -7861,7 +7868,7 @@ function gbRender(body, bt, picks, foes) {
         <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
         <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
-        <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">✨<b>演出</b></button>
+        <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">🎬<b>演出</b></button>
         <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
       </div>` : ''}
     </div>`;
@@ -8123,6 +8130,7 @@ function gbRender(body, bt, picks, foes) {
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
+    feedEl.querySelectorAll('.prehide').forEach(e => e.classList.remove('prehide'));   // スタート前に隠していたぶんを出す
     if (RB.goal) { applyGoal(); return; }
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';
@@ -8222,7 +8230,13 @@ function gbRender(body, bt, picks, foes) {
   if (!RB.step) RBV.cur = stop;
   if (RB.step && !RBV.started) {
     RBV.cur = 0;
-    revealTo(0);
+    // ⚠ 0ターン目には**開幕交代のチップ**と、その**打ちかけの1発**も入っている。
+    //   そのまま出すと「押す前にもう交代して攻撃している」画面になる(2026-09-02タダシさん報告)。
+    //   ptrは順番にしか進められないので、いったん出してからVSカード以外を隠す
+    //   (スタート時に .prehide を外せば、正しい順番で出てくる)
+    revealTo(0).forEach(e => {
+      if (!(e.dataset.fx || '').includes('"k":"vs"')) e.classList.add('prehide');
+    });
     updateHud(0);
     winbox.innerHTML = '<button class="rbstart">▶ バトルスタート！</button>';
     winbox.querySelector('.rbstart').onclick = startBattle;
