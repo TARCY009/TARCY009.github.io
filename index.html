@@ -18,10 +18,6 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="GOナビ">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- サイト名の書体。取り寄せるのは「GOナビ」の4文字ぶんだけ（text= の指定）なので数KBで済む -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&amp;display=swap&amp;text=GO%E3%83%8A%E3%83%93">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
@@ -46,8 +42,11 @@
   --cy:#43e0ff; --gold:#ffd54a;
   --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff;   /* 3グループの色 */
   --hair:rgba(255,255,255,.14);               /* 罫線。高級感は線の細さで出す */
-  /* サイト名の色は wordmark.css（全ツール共通）から借りる。ここでは影だけ持つ */
-  --wm:var(--wmk-g); --wmsc:var(--wmk-sc);
+  /* 看板は44pxと大きいので、ここだけ**中央に反射の折れ目**を入れた金属のグラデーションを使う。
+     ⚠ この折れ目つきは小さい字に流用しないこと（1px以下の汚い線になる）。
+        ツール名用の素直な銀は wordmark.css が持つ */
+  --wm:linear-gradient(180deg,#ffffff 0%,#dfeaff 30%,#93aede 49%,#eaf3ff 53%,#8ea9dc 76%,#6a86c4 100%);
+  --wmsc:#cfe0ff;
   /* 影＝板の厚み（押し出しを4段重ねる）＋深い落ち影＋ほのかな青い光 */
   --wmfx:drop-shadow(0 1px 0 rgba(255,255,255,.55))
          drop-shadow(0 1px 0 #4a5f96) drop-shadow(0 1px 0 #3d5081)
@@ -66,7 +65,10 @@
   --cy:#0b8fa8; --gold:#b07a00;
   --g1:#e05a20; --g2:#0b8fa8; --g3:#7a3cc4;
   --hair:rgba(40,60,120,.16);
-  /* ⚠ 押し出しは文字より暗い色にする（明るい銀だと白くにじんで輪郭がぼやける） */
+  /* ライトも銀のまま明度を落とす（折れ目の位置は同じ）。
+     ⚠ 押し出しは文字より暗い色にする（明るい銀だと白くにじんで輪郭がぼやける） */
+  --wm:linear-gradient(180deg,#a9bbd8 0%,#5a7099 30%,#243352 49%,#8298bb 53%,#334a6e 76%,#18243d 100%);
+  --wmsc:#243352;
   --wmfx:drop-shadow(0 1px 0 rgba(255,255,255,.45))
          drop-shadow(0 1px 0 #2a3a5e) drop-shadow(0 1px 0 #22304e)
          drop-shadow(0 1px 0 #1a2740) drop-shadow(0 1px 0 #141f34)

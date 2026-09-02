@@ -8,7 +8,7 @@ const PAGE_BLOG = !!window.PAGE_BLOG;   // 対戦記録ページ(/battlelog/)。
 document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
-  <h1 class="wmk"><span>GOバトルリーグ</span> <b>対面シミュレーター</b></h1>
+  <h1><span>GOバトルリーグ</span> <b>対面シミュレーター</b></h1>
   <div id="themesw"></div>
 </header>
 

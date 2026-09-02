@@ -1,45 +1,63 @@
+@import url("https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&display=swap&text=BGLO%E3%82%A4%E3%82%A7%E3%82%AA%E3%82%AB%E3%82%AD%E3%82%AF%E3%82%B0%E3%82%B1%E3%82%B7%E3%82%B8%E3%82%B9%E3%82%BF%E3%83%81%E3%83%83%E3%83%84%E3%83%88%E3%83%8A%E3%83%90%E3%83%93%E3%83%96%E3%83%97%E3%83%9D%E3%83%9E%E3%83%9F%E3%83%A0%E3%83%A1%E3%83%A2%E3%83%A5%E3%83%A9%E3%83%AA%E3%83%AB%E3%83%AC%E3%83%AD%E3%83%B3%E3%83%BC%E4%BD%93%E5%80%8B%E5%80%A4%E5%88%A5%E5%8A%9B%E5%9B%A3%E5%AF%BE%E6%88%A6%E6%8C%91%E7%81%AB%E7%AD%96%E8%A1%9B%E8%A8%98%E9%8C%B2%E9%98%B2%E9%9D%A2");
+
 /* =========================================================================
-   ツール名・サイト名の見た目（ブルーシルバー）
-   2026-09-03タダシさん指示で全ツールへ展開。トップページの「GOナビ」と同じ色にそろえる。
+   ツール名の見た目（ブルーシルバー）
+   2026-09-03タダシさん指示で全ツールへ展開 → 同日、作り直し。
 
-   theme.css / explain.css と同じ**自己完結**の流儀で作ってあるので、
-   ページ側がやることは2つだけ:
-     1. <head> に <link rel="stylesheet" href="/assets/wordmark.css"> を足す（explain.css の直後）
+   ⚠ 最初の版の失敗（必ず読むこと）:
+   **トップページの看板は44px、ツール名は18〜24px**。2.5倍も違うのに、
+   看板用の金属加工（中央の反射の折れ目・4段の押し出し・0.35pxの輪郭）を
+   そのまま小さい文字へ当てたため、
+     ・折れ目が1px以下の**汚い横線**になって文字が濁る
+     ・押し出しが相対的に大きすぎて**にじむ**
+     ・輪郭がアンチエイリアスと干渉して**ぼける**
+   結果「全然トップページと違う」と言われた。**大きい字と小さい字ではレシピを分ける**こと。
+
+   ここで持つのは**小さい字用のレシピ**:
+     ・グラデーションは**折れ目なし**の素直な銀（小さくても濁らない）
+     ・押し出しは**1段だけ**＋ごく浅い落ち影
+     ・**輪郭は使わない**（書体が900なので足す必要がない）
+   看板（トップページ）用の折れ目つき・4段の厚みは index.html 側が持つ。
+
+   書体もそろえる（禅角ゴシック New 900）。取り寄せるのは全ツール名に使う56文字ぶんだけ。
+
+   ページ側がやることは2つ:
+     1. <head> に <link rel="stylesheet" href="/assets/wordmark.css">（explain.css の直後）
      2. ツール名の <h1> に class="wmk" を付ける
-
-   ⚠ 守ること2つ:
-   ・**輪郭は塗りの「下」に回す**（paint-order）。上に重ねると太らせたとき内側が食われて
-     筒のように見える（実際に踏んだ）
-   ・**厚みは text-shadow で作る**（filter は使わない）。filter だと h1 の中の
-     バッジや添え書きにまで影が乗ってしまう
    ========================================================================= */
 :root{
-  /* 金属のブルーシルバー。真ん中(49〜53%)の急な明暗が「反射の折れ目」で、これが金属らしさの正体 */
-  --wmk-g:linear-gradient(180deg,#ffffff 0%,#dfeaff 30%,#93aede 49%,#eaf3ff 53%,#8ea9dc 76%,#6a86c4 100%);
-  --wmk-sc:#cfe0ff;                       /* 輪郭の色 */
-  --wmk-e1:#4a5f96; --wmk-e2:#33456f;     /* 押し出し（板の厚み） */
-  --wmk-sh:rgba(0,0,0,.55);               /* 落ち影 */
+  --wmk-g:linear-gradient(180deg,#ffffff 0%,#eaf1ff 34%,#bccde9 66%,#93a8cf 100%);
+  --wmk-e:#2b3a5e;                 /* 押し出し（板の厚み・1段） */
+  --wmk-sh:rgba(6,12,30,.55);      /* 落ち影 */
 }
 :root.light{
-  /* ライトは白地なので、同じ金属感を濃い藍で作る（反射の折れ目の位置は同じ）。
-     ⚠ 押し出しは必ず**文字より暗い色**にする。明るい銀にすると文字のまわりが白くにじんで
-        輪郭がぼやけ、白地では読みづらくなる（2026-09-03タダシさん指摘で修正） */
-  --wmk-g:linear-gradient(180deg,#5f7099 0%,#33456f 30%,#16223f 49%,#455888 53%,#1d2b4f 76%,#101a34 100%);
-  --wmk-sc:#16223f;
-  --wmk-e1:#2a3a5e; --wmk-e2:#18243f;
-  --wmk-sh:rgba(25,40,80,.3);
+  /* ライトは**背景と同じ系統の濃い色**にする（2026-09-03タダシさんの指示）。
+     うっすらした背景に濃紺を一律で置くと雰囲気を壊すので、ツールごとに
+     `--wmk-base` を1行だけ上書きする（既定は藍紫）。
+     ⚠ 薄すぎると背景に溶け、濃すぎると浮く。ちょうどいい濃さを探すこと。
+     グラデーションと影は base から自動で作るので、ページ側が書くのは base だけでよい */
+  --wmk-base:#3a48a0;
+  /* ⚠ 暗い側を「黒」に寄せると、マゼンタも金茶も深緑も同じ暗い色に潰れて
+        **どのツールも文字色が同じに見える**（2026-09-03に実際に踏んだ）。
+        暗い側は黒ではなく**色味を残した濃さ**にし、混ぜる量も控えめにすること */
+  --wmk-g:linear-gradient(180deg,
+    color-mix(in srgb, var(--wmk-base) 68%, #ffffff) 0%,
+    var(--wmk-base) 46%,
+    color-mix(in srgb, var(--wmk-base) 84%, #141024) 100%);
+  --wmk-e:color-mix(in srgb, var(--wmk-base) 74%, #141024);
+  --wmk-sh:color-mix(in srgb, var(--wmk-base) 24%, transparent);
 }
 h1.wmk,.wmk{
-  paint-order:stroke fill;
-  -webkit-text-stroke:.35px var(--wmk-sc);
+  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
+  font-weight:900;
   background-image:var(--wmk-g);
   -webkit-background-clip:text;background-clip:text;
   color:transparent;
-  text-shadow:0 1px 0 var(--wmk-e1), 0 2px 0 var(--wmk-e2), 0 4px 8px var(--wmk-sh);
+  text-shadow:0 1px 0 var(--wmk-e), 0 2px 5px var(--wmk-sh);
 }
-/* 添え書き（small）とバッジは本文なので、色も影も元へ戻す */
+/* 添え書き（small）とバッジは本文なので、書体も色も影も元へ戻す */
 h1.wmk small,h1.wmk .badge,.wmk small,.wmk .badge{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
   -webkit-text-fill-color:currentColor;
-  -webkit-text-stroke:0;
   text-shadow:none;
 }
