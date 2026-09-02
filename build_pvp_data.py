@@ -306,5 +306,13 @@ def main():
         cp = math.floor(a * math.sqrt(d) * math.sqrt(h) * c * c / 10)
         print(f'検証: マリルリ0/15/15 PL45.5 → CP{cp}', '✅' if cp == 1499 else '❌(1499のはず)')
 
+    # ---- シーズンのわざアップデートの反映状況(3か月ごとの大型調整・season_moves.py) ----
+    # 提供元のデータが追いついたかを毎回突き合わせ、未反映があれば changes.md に出す
+    try:
+        import season_moves
+        season_moves.report(out, json.load(open('godata.json', encoding='utf-8')))
+    except Exception as e:
+        print('警告: シーズンのわざアップデートの突き合わせに失敗 →', e)
+
 if __name__ == '__main__':
     main()
