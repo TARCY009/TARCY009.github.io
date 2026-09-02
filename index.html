@@ -67,9 +67,9 @@ body{
 .themesw{width:max-content;margin:0 0 10px auto}
 
 /* ---- 看板(ヒーロー) ---- */
-.hero{position:relative;overflow:hidden;border-radius:20px;padding:34px 22px 30px;text-align:center;
+.hero{position:relative;overflow:hidden;border-radius:20px;padding:20px 18px 17px;text-align:center;
   background:radial-gradient(120% 120% at 50% -25%, rgba(67,224,255,.18), transparent 60%), var(--herobg);
-  box-shadow:var(--cardsh);margin-bottom:26px}
+  box-shadow:var(--cardsh);margin-bottom:14px}
 /* 1pxのグラデーション枠(マスクで作るので中の面を汚さない) */
 .hero::before{content:"";position:absolute;inset:0;border-radius:20px;padding:1.5px;pointer-events:none;
   background:linear-gradient(120deg,#43e0ff 0%,#b06cff 38%,#ff7a4d 68%,#43e0ff 100%);
@@ -82,46 +82,65 @@ body{
 @keyframes heroshine{0%{left:-60%}60%,100%{left:130%}}
 /* ロゴマーク＋サイト名を横に並べる */
 .brand{display:flex;align-items:center;justify-content:center;gap:14px}
-.bmark{width:66px;height:66px;border-radius:16px;flex:none;
+.bmark{width:54px;height:54px;border-radius:13px;flex:none;
   box-shadow:0 8px 20px -8px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.08) inset}
 /* サイト名の下の一言。何のサイトかは名前では伝わらないので、ここが本体の説明 */
-.btag{margin-top:10px;font-size:.82rem;letter-spacing:.22em;font-weight:800;color:var(--cy)}
-h1{font-size:2.5rem;font-weight:900;line-height:1.15;letter-spacing:.02em;
+.btag{margin-top:6px;font-size:.72rem;letter-spacing:.2em;font-weight:800;color:var(--cy)}
+h1{font-size:2rem;font-weight:900;line-height:1.15;letter-spacing:.02em;
   background-image:linear-gradient(170deg,#ffffff 0%,#cfe3ff 42%,#9fc0ff 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 1px 0 rgba(20,30,70,.8)) drop-shadow(0 3px 10px rgba(67,224,255,.35))}
 :root.light h1{background-image:linear-gradient(170deg,#2b3556 0%,#1d2a5e 55%,#3b2a6e 100%);
   filter:drop-shadow(0 1px 0 rgba(255,255,255,.9))}
-.lead{margin-top:12px;font-size:.9rem;color:var(--sub)}
+.lead{margin-top:8px;font-size:.78rem;color:var(--sub)}
 .lead b{color:var(--ink)}
-.heronote{margin-top:12px;font-size:.72rem;color:var(--sub)}
+.heronote{margin-top:9px;font-size:.7rem;color:var(--sub)}
+/* 「いつも最新」は道具サイトの信用そのものなので、短いバッジにして残す
+   (長い一文は💡説明モードへ回した) */
+.fresh{display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:3px 11px;border-radius:999px;
+  font-size:.65rem;font-weight:700;letter-spacing:.04em;color:var(--cy);
+  border:1px solid color-mix(in srgb, var(--cy) 40%, transparent);
+  background:color-mix(in srgb, var(--cy) 10%, transparent)}
+.explain .fresh{display:none}
 
 /* ---- グループの見出し ---- */
-.gsec{display:inline-flex;align-items:center;gap:7px;margin:26px 0 12px;
+.gsec{display:inline-flex;align-items:center;gap:7px;margin:17px 0 9px;
   font-size:.82rem;font-weight:800;letter-spacing:.1em;padding:6px 15px;border-radius:999px;
   color:var(--gc);border:1px solid color-mix(in srgb, var(--gc) 45%, transparent);
   background:color-mix(in srgb, var(--gc) 12%, transparent)}
 .gsec i{font-style:normal;font-size:1.16rem;line-height:1}
 .gsec small{font-weight:600;letter-spacing:0;opacity:.8;font-size:.72rem}
+/* 件数のバッジ。「12個ある」を数えられる形にする */
+.gsec b{margin-left:1px;font-size:.72rem;font-weight:900;opacity:.9}
 
-/* ---- ツールのカード ---- */
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:12px}
-.card{position:relative;display:flex;align-items:center;gap:13px;overflow:hidden;
-  padding:14px 15px;border-radius:14px;text-decoration:none;color:inherit;
-  background:var(--panel);border:1px solid var(--line);box-shadow:var(--cardsh);
+/* ---- ツールのタイル ----
+   2026-09-02にリスト→タイルへ作り直した(タダシさん指示「トップページを本気で改善」)。
+   1列のリストだと**最初の画面にツールが2個半しか入らず**、12個あることが伝わらなかった
+   (看板275px＋見出しで、最初のカードまで428px＝画面の半分以上を使っていた)。
+   アイコンは13個ぜんぶ作り直した資産なので、**アイコンを主役にする**のが自然な形。 */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+@media(min-width:640px){.cards{grid-template-columns:repeat(3,1fr);gap:11px}}
+@media(min-width:860px){.cards{grid-template-columns:repeat(4,1fr)}}
+.card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;
+  gap:7px;overflow:hidden;padding:14px 9px 12px;border-radius:16px;text-decoration:none;color:inherit;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--gc) 13%, var(--panel)) 0%, var(--panel) 62%);
+  border:1px solid var(--line);box-shadow:var(--cardsh);
   transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease}
-/* 左端の帯でグループの色を示す */
-.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
-  background:linear-gradient(180deg, var(--gc), color-mix(in srgb, var(--gc) 35%, transparent))}
+/* 上端の帯でグループの色を示す */
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gc),transparent)}
 .card:hover{transform:translateY(-2px);border-color:color-mix(in srgb, var(--gc) 55%, var(--line));
   box-shadow:0 16px 30px -18px color-mix(in srgb, var(--gc) 70%, transparent), var(--cardsh)}
-.card img{width:46px;height:46px;border-radius:11px;flex:none;
-  box-shadow:0 4px 12px -4px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.07) inset}
+/* アイコンはグループ色の光をまとわせて主役にする */
+.card img{width:60px;height:60px;border-radius:15px;flex:none;
+  box-shadow:0 6px 18px -6px color-mix(in srgb, var(--gc) 75%, transparent), 0 0 0 1px rgba(255,255,255,.09) inset}
 .card .tx{min-width:0}
-.card .nm{display:block;font-weight:800;font-size:.96rem;letter-spacing:.01em}
-.card .ds{display:block;font-size:.74rem;color:var(--sub);line-height:1.55;margin-top:2px}
-.card .arw{margin-left:auto;flex:none;color:var(--gc);font-size:1.05rem;font-weight:800;opacity:.65}
-.card:hover .arw{opacity:1}
+.card .nm{display:block;font-weight:800;font-size:.83rem;line-height:1.3;letter-spacing:.01em}
+.card .ds{display:block;font-size:.64rem;color:var(--sub);line-height:1.45;margin-top:3px}
+/* 説明は短く言い切る。もとの長い説明は消さずに💡説明モードへ回す(恒久ルール) */
+.card .ds.long{display:none}
+.explain .card .ds.short{display:none}
+.explain .card .ds.long{display:block}
 
 footer{margin-top:34px;text-align:center;font-size:.7rem;color:var(--sub);line-height:1.9}
 footer a{color:var(--cy)}
@@ -131,9 +150,8 @@ footer a{color:var(--cy)}
   .hero{padding:26px 16px 24px;border-radius:16px}
   h1{font-size:2.05rem}
   .bmark{width:56px;height:56px}
-  .cards{grid-template-columns:1fr;gap:10px}
-  .card{padding:12px 13px;gap:11px}
-  .card img{width:42px;height:42px}
+  .card{padding:12px 8px 10px}
+  .card img{width:54px;height:54px}
 }
 @media (prefers-reduced-motion:reduce){ .hero::after{display:none} }
 </style>
@@ -148,32 +166,33 @@ footer a{color:var(--cy)}
     <h1>GOナビ</h1>
   </div>
   <p class="btag">ポケモンGO 攻略ツール</p>
-  <p class="lead">レイドの火力、GOバトルリーグの対面、個体値の順位まで。<b>12個の道具</b>をぜんぶ無料で使えます。</p>
-  <p class="heronote">ゲームのデータは毎日、GBLの環境リストは毎週、自動で最新に更新しています。</p>
+  <p class="lead">レイド・ＧＢＬ・個体値まで <b>12個の道具</b> が無料</p>
+  <p class="fresh">⟳ データは毎日 自動更新</p>
+  <p class="heronote expl">ゲームのデータは毎日、GBLの環境リストは毎週、自動で最新に更新しています。</p>
 </header>
 
-<div class="gsec" style="--gc:var(--g1)"><i>🔥</i>レイド・ジム<small>みんなで戦う</small></div>
+<div class="gsec" style="--gc:var(--g1)"><i>🔥</i>レイド・ジム<small>みんなで戦う</small><b>6</b></div>
 <div class="cards" style="--gc:var(--g1)">
-  <a class="card" href="/dps/"><img src="/assets/icons/karyoku/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">レイド火力チェッカー</b><span class="ds">レイドボスを選ぶと、火力の高いポケモンが順に並びます</span></span><span class="arw">›</span></a>
-  <a class="card" href="/raid/"><img src="/assets/icons/raid/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">レイドシミュレータ</b><span class="ds">倒される時間まで再現して、最少討伐人数を出します</span></span><span class="arw">›</span></a>
-  <a class="card" href="/type-dps/"><img src="/assets/icons/type-dps/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">タイプ別火力ランキング</b><span class="ds">タイプごとの火力トップ10を、画像にして保存できます</span></span><span class="arw">›</span></a>
-  <a class="card" href="/max-battle/"><img src="/assets/icons/max-battle/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">マックスバトル対策</b><span class="ds">ボスに合わせて、アタッカーとタンクのおすすめが出ます</span></span><span class="arw">›</span></a>
-  <a class="card" href="/gym-attack/"><img src="/assets/icons/gym-attack/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">ジム挑戦</b><span class="ds">その防衛ポケモンに強い攻め手が、連戦の効率込みで並びます</span></span><span class="arw">›</span></a>
-  <a class="card" href="/gym-defense/"><img src="/assets/icons/gym-defense/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">ジム防衛</b><span class="ds">長く残るポケモンを、耐久・相性・やる気から選びます</span></span><span class="arw">›</span></a>
+  <a class="card" href="/dps/"><img src="/assets/icons/karyoku/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">レイド火力チェッカー</b><span class="ds short">ボス別の火力ランキング</span><span class="ds long">レイドボスを選ぶと、火力の高いポケモンが順に並びます</span></span></a>
+  <a class="card" href="/raid/"><img src="/assets/icons/raid/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">レイドシミュレータ</b><span class="ds short">最少討伐人数を出す</span><span class="ds long">倒される時間まで再現して、最少討伐人数を出します</span></span></a>
+  <a class="card" href="/type-dps/"><img src="/assets/icons/type-dps/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">タイプ別火力ランキング</b><span class="ds short">タイプごとのトップ10</span><span class="ds long">タイプごとの火力トップ10を、画像にして保存できます</span></span></a>
+  <a class="card" href="/max-battle/"><img src="/assets/icons/max-battle/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">マックスバトル対策</b><span class="ds short">アタッカーとタンク</span><span class="ds long">ボスに合わせて、アタッカーとタンクのおすすめが出ます</span></span></a>
+  <a class="card" href="/gym-attack/"><img src="/assets/icons/gym-attack/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">ジム挑戦</b><span class="ds short">攻め手のランキング</span><span class="ds long">その防衛ポケモンに強い攻め手が、連戦の効率込みで並びます</span></span></a>
+  <a class="card" href="/gym-defense/"><img src="/assets/icons/gym-defense/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">ジム防衛</b><span class="ds short">長く残るポケモン</span><span class="ds long">長く残るポケモンを、耐久・相性・やる気から選びます</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--g2)"><i>⚔️</i>対戦<small>GBL・ロケット団</small></div>
+<div class="gsec" style="--gc:var(--g2)"><i>⚔️</i>対戦<small>GBL・ロケット団</small><b>4</b></div>
 <div class="cards" style="--gc:var(--g2)">
-  <a class="card" href="/gbl/"><img src="/assets/icons/gbl/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">GBL対面シミュレーター</b><span class="ds">1対1から3対3の模擬戦まで、ターン単位で再現します</span></span><span class="arw">›</span></a>
-  <a class="card" href="/battlelog/"><img src="/assets/icons/battlelog/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">GBL対戦記録</b><span class="ds">戦った相手を記録して、自分の環境の採用率を出します</span></span><span class="arw">›</span></a>
-  <a class="card" href="/breakpoint/"><img src="/assets/icons/breakpoint/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">ブレイクポイント</b><span class="ds">あと少し強化するとダメージが上がる境目が分かります</span></span><span class="arw">›</span></a>
-  <a class="card" href="/rocket/"><img src="/assets/icons/rocket/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">ロケット団対策</b><span class="ds">したっぱ・リーダー・サカキを速く倒す方法を探します</span></span><span class="arw">›</span></a>
+  <a class="card" href="/gbl/"><img src="/assets/icons/gbl/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">GBL対面シミュレーター</b><span class="ds short">1対1・3対3の模擬戦</span><span class="ds long">1対1から3対3の模擬戦まで、ターン単位で再現します</span></span></a>
+  <a class="card" href="/battlelog/"><img src="/assets/icons/battlelog/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">GBL対戦記録</b><span class="ds short">自分の環境の採用率</span><span class="ds long">戦った相手を記録して、自分の環境の採用率を出します</span></span></a>
+  <a class="card" href="/breakpoint/"><img src="/assets/icons/breakpoint/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">ブレイクポイント</b><span class="ds short">ダメージが上がる境目</span><span class="ds long">あと少し強化するとダメージが上がる境目が分かります</span></span></a>
+  <a class="card" href="/rocket/"><img src="/assets/icons/rocket/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">ロケット団対策</b><span class="ds short">速く倒す方法を探す</span><span class="ds long">したっぱ・リーダー・サカキを速く倒す方法を探します</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--g3)"><i>🔎</i>調べる<small>個体値・図鑑</small></div>
+<div class="gsec" style="--gc:var(--g3)"><i>🔎</i>調べる<small>個体値・図鑑</small><b>2</b></div>
 <div class="cards" style="--gc:var(--g3)">
-  <a class="card" href="/iv-checker/"><img src="/assets/icons/iv-checker/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">個体値チェッカー</b><span class="ds">個体値を入れると、4096通りの中での順位が出ます</span></span><span class="arw">›</span></a>
-  <a class="card" href="/pokedex/"><img src="/assets/icons/pokedex/icon-192.png" alt="" width="46" height="46" decoding="async"><span class="tx"><b class="nm">ステータス図鑑</b><span class="ds">種族値・最大CP・弱点・わざの性能をまとめて見られます</span></span><span class="arw">›</span></a>
+  <a class="card" href="/iv-checker/"><img src="/assets/icons/iv-checker/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">個体値チェッカー</b><span class="ds short">4096通りの中の順位</span><span class="ds long">個体値を入れると、4096通りの中での順位が出ます</span></span></a>
+  <a class="card" href="/pokedex/"><img src="/assets/icons/pokedex/icon-192.png" alt="" width="60" height="60" decoding="async"><span class="tx"><b class="nm">ステータス図鑑</b><span class="ds short">種族値・弱点・わざ</span><span class="ds long">種族値・最大CP・弱点・わざの性能をまとめて見られます</span></span></a>
 </div>
 
 <footer>

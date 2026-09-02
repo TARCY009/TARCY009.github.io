@@ -4808,7 +4808,6 @@ function rbRender(body, bt, picks, foes, extra) {
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
-    if (leg.leadPt) items.push(chipItem(leg.leadPt, base));
     // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける。
     // 開幕交代はVSに続けて交代の演出を出す
     const pv = bt.legs[leg.li - 1] || null;
@@ -4818,8 +4817,10 @@ function rbRender(body, bt, picks, foes, extra) {
          pv.swapped && { k: 'swap', side: 0, name: leg.meName }].filter(Boolean);
     if (!pv && leg.leadPt && leg.leadPt.ans && leg.leadPt.ans.a === 'to')
       fxv.push({ k: 'swap', side: 0, name: leg.meName });
-    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
-    if (leg.leadHit) items.push({ gt: base, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
+    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
+    // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
+    if (leg.leadPt) items.push({ ...chipItem(leg.leadPt, base), o: IT.lead });
+    if (leg.leadHit) items.push({ gt: base, o: IT.hit, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
@@ -4940,7 +4941,7 @@ function rbRender(body, bt, picks, foes, extra) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <div class="rbwinbox"></div>
       <div class="rbhud">
@@ -6107,6 +6108,24 @@ function gbAutoFill() {
 // キーは「対面:側:種別:連番:待った発数」(側 0=じぶん 1=あいて)。ロケット団(4要素)と形式が
 // 違うので、同じ rb= コーデックで共有しても混ざらない
 const gbKey = (li, side, kind, seq, w) => `${li}:${side}:${kind}:${seq}:${w || 0}`;
+// ---- タイムラインの並び順(2026-09-02タダシさん指示「同じバグが起こらないように徹底した仕組みに」) ----
+// 同じターン(gt)の中で何を先に出すかを**1か所で決める**。押し込む順を間違えても
+// sortTimeline() が必ずこの順に直すので、行と演出の順番が食い違うバグが起きない。
+//   きっかけ: 開幕交代のチップがVSカードの**上**に出ていた
+//   (演出は「VS→交代」の順に出るのに、行だけ「交代→VS」だった)
+const IT = {
+  vs: 0,     // 対面の頭のVSカード(場に出た)
+  lead: 1,   // 開幕交代のチップ
+  hit: 2,    // 開幕交代・手動交代で入る「打ちかけの1発」
+  ev: 3,     // ターンごとの出来事・決断のチップ・KO・次に出すチップ
+};
+// gt(通しターン) → 種別の順 → 押し込んだ順(同点は元の順のまま)で並べ直す
+function sortTimeline(items) {
+  items.forEach((x, i) => { x._i = i; });
+  // ⚠ `a.o || IT.ev` と書くと **0(=VSカード)が falsy で潰れる**ので必ず ?? を使う
+  items.sort((a, b) => a.gt - b.gt || (a.o ?? IT.ev) - (b.o ?? IT.ev) || a._i - b._i);
+  return items;
+}
 // わざ名→わざ本体(自分デバフわざの判定に使う。名前は一意)
 let MOVE_BY_NAME = null;
 function gbMoveByName(name) {
@@ -7678,7 +7697,6 @@ function gbRender(body, bt, picks, foes) {
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
     let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
-    (leg.leadPts || []).forEach(p => { if (p) items.push(chipItem(p, base)); });
     // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける。
     // 開幕交代(どちらの側も)はVSに続けて交代の演出を出す
     const pv = bt.legs[leg.li - 1] || null;
@@ -7691,18 +7709,20 @@ function gbRender(body, bt, picks, foes) {
       if (pt && pt.ans && pt.ans.a === 'to')
         fxv.push({ k: 'swap', side: sd, name: sd ? leg.foeName : leg.meName });
     });
-    items.push({ gt: base, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
+    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
+    // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
+    (leg.leadPts || []).forEach(p => { if (p) items.push({ ...chipItem(p, base), o: IT.lead }); });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
     (leg.leadHits || []).forEach(h => { if (h) {
       const cell = evCell([{ move: h.mv, dmg: h.dmg }]);
-      items.push({ gt: base, html: `<div class="ft"><div class="c me">${h.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
+      items.push({ gt: base, o: IT.hit, html: `<div class="ft"><div class="c me">${h.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
         <div class="c foe">${h.side === 0 ? cell : ''}</div></div>` });
     } });
     // 手動交代で交代先に入った「打ちかけの1発」も同じ形で対面の頭に出す(2026-08-20タダシさん報告。
     // 出さないと、対面の切れ目をまたいだノーマルアタックがタイムラインから消えたように見える)
     if (leg.swapHit) {
       const cell = evCell([{ move: leg.swapHit.mv, dmg: leg.swapHit.dmg }]);
-      items.push({ gt: base, html: `<div class="ft"><div class="c me">${leg.swapHit.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
+      items.push({ gt: base, o: IT.hit, html: `<div class="ft"><div class="c me">${leg.swapHit.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
         <div class="c foe">${leg.swapHit.side === 0 ? cell : ''}</div></div>` });
     }
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
@@ -7846,7 +7866,7 @@ function gbRender(body, bt, picks, foes) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${items.map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <div class="rbwinbox"></div>
       <div class="rbhud">
