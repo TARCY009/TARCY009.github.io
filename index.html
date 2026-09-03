@@ -66,13 +66,16 @@
   --g1:#e05a20; --g2:#0b8fa8; --g3:#7a3cc4;
   --hair:rgba(40,60,120,.16);
   /* ライトも銀のまま明度を落とす（折れ目の位置は同じ）。
-     ⚠ 押し出しは文字より暗い色にする（明るい銀だと白くにじんで輪郭がぼやける） */
-  --wm:linear-gradient(180deg,#a9bbd8 0%,#5a7099 30%,#243352 49%,#8298bb 53%,#334a6e 76%,#18243d 100%);
-  --wmsc:#243352;
-  --wmfx:drop-shadow(0 1px 0 rgba(255,255,255,.45))
-         drop-shadow(0 1px 0 #2a3a5e) drop-shadow(0 1px 0 #22304e)
-         drop-shadow(0 1px 0 #1a2740) drop-shadow(0 1px 0 #141f34)
-         drop-shadow(0 10px 18px rgba(25,40,80,.35)) drop-shadow(0 0 16px rgba(90,130,220,.18));
+     ⚠ 押し出しは文字より暗い色にする（明るい銀だと白くにじんで輪郭がぼやける）。
+     2026-09-04タダシさん指摘で全体を持ち上げた: 背景がかなり明るいライトのぶんに対して
+     下地・押し出しが黒に近い濃紺のままで、看板が「黒々しい」浮き方をしていた。
+     白を混ぜて明るさだけ持ち上げ（色あいは保つ）、影も薄くした */
+  --wm:linear-gradient(180deg,#afc0db 0%,#8c9bb8 30%,#9299a8 49%,#8da1c1 53%,#70809a 76%,#8c929e 100%);
+  --wmsc:#9299a8;
+  --wmfx:drop-shadow(0 1px 0 rgba(255,255,255,.55))
+         drop-shadow(0 1px 0 #6a758e) drop-shadow(0 1px 0 #646e83)
+         drop-shadow(0 1px 0 #8c93a0) drop-shadow(0 1px 0 #8a8f9a)
+         drop-shadow(0 8px 14px rgba(25,40,80,.16)) drop-shadow(0 0 14px rgba(90,130,220,.14));
   --bgimg:
     radial-gradient(900px 520px at -10% -10%, rgba(59,110,240,.17), transparent 62%),
     radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.16), transparent 62%),
