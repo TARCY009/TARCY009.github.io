@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <meta name="theme-color" content="#0b1023">
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -68,8 +69,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-seri
   color:var(--ink);background:var(--bgimg);background-attachment:fixed;min-height:100vh;
   -webkit-text-size-adjust:100%}
 .wrap{max-width:760px;margin:0 auto;padding:14px 12px 40px}
-header{display:flex;align-items:center;gap:10px;margin:4px 2px 14px}
-h1{font-size:1.12rem;margin:0;flex:1;min-width:0;line-height:1.35}
+header{margin:4px 2px 14px}
+h1{font-size:1.12rem;margin:0;line-height:1.35}
 h1 b{white-space:nowrap}
 h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-spacing:.05em}
 .pagelink{font-size:.7rem;font-weight:800;color:#9fc0ff;text-decoration:none;white-space:nowrap;
@@ -458,10 +459,6 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .empty{font-size:.8rem;color:var(--sub);text-align:center;padding:26px 10px;line-height:1.9}
 .expl{display:none}
 .explain .expl{display:revert}
-@media (max-width:560px){
-  header{flex-wrap:wrap}
-  h1{flex:1 1 100%}
-}
 @media (max-width:540px){
   .sugg input,.ivrow input{font-size:16px}
   .bkhead .dm small,.vchip small{display:none}

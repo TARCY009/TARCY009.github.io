@@ -241,20 +241,13 @@ select option[value=""]{color:var(--sub)}
   .mockhero .t1{font-size:.94rem}
   .mockhero .pl{width:34px;height:34px}
 }
-/* 見出しを伸ばして、ダーク⇄ライトの切り替え(と別ページへのリンク)を右端へ寄せる */
-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:nowrap}
-/* 幅が足りないときは「GOバトルリーグ / 対面シミュレーター」の切れ目で折り返す(語の途中で切らない) */
-header h1{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:0 .35em}
+/* 見出しの配置(タイトル→#themeswの順・重ならず折り返る)は共通ファイル
+   assets/pageheader.css が持つ(2026-09-04)。ここではタイトル内部の見た目
+   (「GOバトルリーグ / 対面シミュレーター」の切れ目での折り返し・グラデ)と
+   pagelinkの質感だけを持つ */
+header h1{display:flex;flex-wrap:wrap;gap:0 .35em}
 header h1>span,header h1>b{white-space:nowrap}
-header .themesw{align-self:center}
 header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
-/* ロケット団ページは右に「GBL対面シミュ ↗」がある。狭い画面では見出しの幅が足りず
-   タイトルがリンクに重なるので、見出しを1行使い切ってボタン類を下の段へ送る */
-@media (max-width:560px){
-  header.haslink{flex-wrap:wrap;align-items:center;row-gap:6px}
-  header.haslink h1{flex:1 1 100%}
-  header.haslink .pagelink{margin-left:auto}
-}
 /* パーティ診断 */
 .pslots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
 .pslot{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px;min-width:0}

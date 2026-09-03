@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -90,8 +91,6 @@ body{
 .num{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;letter-spacing:.02em}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:26px 0 6px;text-align:left}
-/* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
-.themesw{width:max-content;margin:0 0 12px auto}
 .eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:var(--dyna);text-transform:uppercase;display:flex;align-items:center;gap:10px}
 .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,61,110,.55),transparent)}
 h1{font-size:1.45rem;font-weight:900;letter-spacing:.03em;margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -258,9 +257,9 @@ footer a{color:var(--spec)}
 <body>
 <div class="wrap">
 <header>
-  <div id="themesw"></div>
   <div class="eyebrow">Pok&eacute;mon GO Max Battle</div>
   <h1 class="wmk" data-tool="max-battle">マックスバトル対策ツール <span class="badge">アタッカー / タンク</span></h1>
+  <div id="themesw"></div>
   <p class="lead expl">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
 </header>
 

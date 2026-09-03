@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -100,8 +101,6 @@ body{
 }
 .wrap{max-width:560px;margin:0 auto}
 header{text-align:center;margin-bottom:22px}
-/* ダーク⇄ライトの切り替えはページの右上。見出しは中央寄せなので、その上の行に右寄せで置く */
-.themesw{width:max-content;margin:0 0 8px auto}
 .eyebrow{font-size:.7rem;letter-spacing:.35em;color:var(--cy);font-weight:700}
 h1{font-size:1.5rem;font-weight:800;margin-top:6px;letter-spacing:.04em}
 h1 small{display:block;font-size:.72rem;color:var(--sub);font-weight:500;margin-top:4px;letter-spacing:.1em}
@@ -456,10 +455,10 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 <body>
 <div id="sticky"><span id="stk-name">—</span><span id="stk-rank"></span></div>
 <div class="wrap">
-<div id="themesw"></div>
 <header>
   <div class="eyebrow">GO BATTLE LEAGUE</div>
   <h1 class="wmk" data-tool="iv-checker">個体値チェッカー<small>4096通り完全計算 — 順位・SCP・必要レベルを一発表示</small></h1>
+  <div id="themesw"></div>
 </header>
 
 <div class="card">

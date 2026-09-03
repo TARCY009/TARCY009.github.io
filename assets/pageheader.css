@@ -1,0 +1,30 @@
+/* 全ツール共通のヘッダー配置(タイトル→#themesw→ページ間リンク)。
+   2026-09-04タダシさん指摘: ページごとにheaderの並び・flex-wrapがバラバラで、
+   タイトルとボタン(🏠ツール一覧/💡説明/🌙☀️)が重なる・画面からはみ出す・
+   出る順番が違う、という3つの不具合があった。
+   原因は2つ:
+     ①headerがflex-wrap:nowrapのまま(または未指定=既定nowrap)のページがあり、
+       タイトルが長いと文字がボタンの下に重なって見えた(/gbl/・タイプ別火力)、
+       またはボタン自体が画面の外へはみ出した(レイドシミュレータ)
+     ②#themeswをheaderの外や、タイトルより前に置いていたページがあり、
+       ボタンがタイトルの上に出ていた(ジム挑戦・ジム防衛・マックスバトル・個体値チェッカー)
+
+   ここに一元化し、全ツールで次の並びに統一する(恒久ルール・新ツールでも同じ):
+     1段目: タイトル(見出し・添え書きも含めて、常に自分の行いっぱいを使う)
+     2段目: #themesw(🏠ツール一覧 → 💡説明 → 🌙☀️テーマ切替。常に右寄せ)
+     3段目相当: .pagelink(他ツールへの短いリンク)があれば#themeswと同じ行を共有し、
+                収まらなければ自分の行に折り返る(順番は 見出し→.pagelink→#themesw)
+
+   ページ側がやること(新ツールでも同じ):
+     1. <head> に <link rel="stylesheet" href="/assets/pageheader.css">(home.cssの直後)
+     2. <header> の子は「見出し」→(あれば.pagelink)→#themesw の順にする。
+        #themeswをheaderの外や先頭に置かない(タイトルより前に出てしまう)
+
+   ⚠ 各ページの<style>にあった従来のheader直下のflex配置(display/flex-wrap/
+     align-items/justify-content/gap)と、#themesw・.themeswの位置指定(width:max-content
+     等)は、この共通ファイルと二重管理・競合しないようすべて削除してある
+     (タイポグラフィ・余白などページ固有の見た目だけ残した)。 */
+header{display:flex;flex-wrap:wrap;align-items:center;row-gap:8px;column-gap:12px}
+header>*{flex:1 1 100%;min-width:0}
+header #themesw{flex:0 0 auto;margin-left:auto}
+header .pagelink{flex:0 0 auto}

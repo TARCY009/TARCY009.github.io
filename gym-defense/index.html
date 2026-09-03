@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -66,8 +67,6 @@
 body{background:var(--bgimg);background-attachment:fixed;color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px;min-height:100vh}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:20px 0 4px}
-/* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
-.themesw{width:max-content;margin:0 0 10px auto}
 h1{font-size:1.35rem;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
 h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
 .lead{color:var(--sub);font-size:.85rem;margin-top:6px}
@@ -143,8 +142,8 @@ footer a{color:var(--accent2)}
 <body>
 <div class="wrap">
 <header>
-  <div id="themesw"></div>
   <h1 class="wmk" data-tool="gym-defense">ジム防衛オススメツール <span class="badge">防衛</span></h1>
+  <div id="themesw"></div>
   <p class="lead expl">耐久・かくとう相性・やる気の下がりにくさから出した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
 </header>
 

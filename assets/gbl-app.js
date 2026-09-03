@@ -392,15 +392,12 @@ if (PAGE_ROCKET) {
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
-  // リンクのぶん幅が足りず、狭い画面では見出しがリンクに重なる。CSSで2段にするための目印
-  document.querySelector('header').classList.add('haslink');
 } else if (PAGE_BLOG) {
   // 対戦記録ページ: モードは 'blog' に固定なのでタブ行ごと隠し、見出しを差し替える(ロケット団と同じ作り)
   document.querySelector('header h1').innerHTML = '<span>GOバトルリーグ</span> <b class="wmk" data-tool="battlelog">対戦記録</b>';
   document.getElementById('modes').style.display = 'none';
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
-  document.querySelector('header').classList.add('haslink');
   // かんたん案内はGBL/ロケット団のモードを案内するものなので、このページでは出さない
   const er = document.querySelector('.easyrow');
   if (er) er.style.display = 'none';

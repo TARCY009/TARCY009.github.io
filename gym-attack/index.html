@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -76,8 +77,6 @@
 body{background:var(--bgimg);background-attachment:fixed;color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px;min-height:100vh}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:20px 0 4px}
-/* ダーク⇄ライトの切り替えはページの右上（見出しの上の行に右寄せ） */
-.themesw{width:max-content;margin:0 0 10px auto}
 h1{font-size:1.35rem;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
 h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
 .lead{color:var(--sub);font-size:.85rem;margin-top:6px}
@@ -180,8 +179,8 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <body>
 <div class="wrap">
 <header>
-  <div id="themesw"></div>
   <h1 class="wmk" data-tool="gym-attack">ジム挑戦オススメツール <span class="badge">連戦効率型</span></h1>
+  <div id="themesw"></div>
   <p class="lead expl">相手の防衛ポケモンを指定すると、ゲージ分割技を優遇した「連戦向き」の攻撃ランキングを表示します。</p>
 </header>
 
