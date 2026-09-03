@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/tabs.css">
@@ -77,6 +78,8 @@
 body{background:var(--bgimg);background-attachment:fixed;color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px;min-height:100vh}
 .wrap{max-width:760px;margin:0 auto;padding:16px}
 header{padding:20px 0 4px}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#ebb000;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(235,176,0,.55),transparent)}
 h1{font-size:1.45rem;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
 @media (max-width:430px){h1{font-size:1.28rem}}
 h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
@@ -180,6 +183,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <body>
 <div class="wrap">
 <header>
+  <div class="eyebrow">Pok&eacute;mon GO Gym Battle Attack</div>
   <h1><span class="ttl"><span class="wmk" data-tool="gym-attack">ジム挑戦</span><span class="wmksuf">オススメツール</span></span> <span class="badge">連戦効率型</span></h1>
   <div id="themesw"></div>
   <p class="lead expl">相手の防衛ポケモンを指定すると、ゲージ分割技を優遇した「連戦向き」の攻撃ランキングを表示します。</p>

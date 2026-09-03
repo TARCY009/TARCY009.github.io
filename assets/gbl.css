@@ -38,6 +38,11 @@
 body{background:var(--bgimg);background-attachment:fixed;min-height:100vh;color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;line-height:1.55;padding-bottom:64px}
 .wrap{max-width:760px;margin:0 auto;padding:14px}
 header{padding:18px 0 6px}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:var(--ebc,#8b96c2);text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--ebc,#8b96c2),transparent);opacity:.55}
+.eb-gbl{--ebc:#2773ff}
+.eb-rocket{--ebc:#ff2424}
+.eb-blog{--ebc:#d99a11}
 h1{font-size:1.45rem;letter-spacing:.03em}
 h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{color:var(--sub);font-size:.8rem;margin-top:4px}

@@ -193,6 +193,40 @@
 - dpsは`template.html`（自動生成の原本）と`dps/index.html`の両方を編集（片方だけだと翌朝の
   自動更新で消える・恒久ルールどおり）
 
+**⚠ eyebrow・タイトル・白の3色構成を全ツールへ展開（2026-09-04追加・タダシさん指示「マックスバトルの例で言ったように」）**:
+マックスバトルの見出し（eyebrow＝**濃いマゼンタ**「POKÉMON GO MAX BATTLE」／「マックスバトル」＝**明るいピンク**／
+「対策ツール」＝白）をタダシさんが「一番きれい」と評価し、**この3色の関係を全ツールの恒久ルールに格上げした**:
+
+> **eyebrow（英字の小見出し）＝そのツールの色を暗くした濃い色／タイトルの固有名部分＝`.wmk`の明るい色（変更なし）／
+> 決まり文句・ブランド接頭辞（`.wmksuf`）＝白**
+
+- **`.wmk`の明るい色（`wordmark.css`の`--wmk-d`）は一切変更していない**——他の場所（GBLのタブ・バッジ等）でも
+  共有される値なので、触るとその変更が波及するリスクがある。**eyebrowの色だけをページのローカルCSSに
+  新しく追加**し、明度を落とした濃い色にした（HLS変換でL値を0.14下げて算出。max-battleの実測値
+  （タイトルL0.73→eyebrowL0.62・彩度は変えず）を参考にした）
+- **対象と適用内容**:
+  - **dps・raid**: 既存のeyebrow（前回追加）が「タイトルと同じ色」になっていたのを修正。
+    あわせて**タイトルを分割していなかった**ので、dps＝「レイド火力」(色)+「チェッカー」(白)、
+    raid＝「レイド」(色)+「シミュレータ」(白)に分割した
+  - **type-dps**: `<small>ポケモンGO</small>`を削除しeyebrow「Pokémon GO Type DPS Ranking」を新設
+  - **gym-attack・gym-defense**: eyebrow「Pokémon GO Gym Battle Attack/Defense」を新設
+    （この2つはOswaldフォントの読み込みも今回はじめて追加）
+  - **gbl・rocket・battlelog・breakpoint**（「バトルリーグ対戦の4ツール」）: それぞれ
+    「Pokémon GO Battle League」「Pokémon GO Team Rocket」「Pokémon GO Battle Log」「Pokémon GO Breakpoint」
+  - **pokedex**: 既存eyebrowの色をタイトルと同じ色→濃い紫（`#914cff`）に修正
+- **⚠ gbl/rocket/battlelogは`assets/gbl-app.js`の1つの`<header>`テンプレートを3ページで使い回す構造**
+  （`#app`へ注入する巨大テンプレート文字列の中に既定でgbl用のeyebrowが書かれており、
+  PAGE_ROCKET/PAGE_BLOGの分岐でh1だけ`innerHTML`で上書きしていた）。
+  **`eyebrow`もh1と同様に「上書き」しないと、rocket/battlelogページでも
+  gbl用の"Pokémon GO Battle League"が残ってしまう**（実装時に一度、
+  `insertAdjacentHTML`で"追加"してしまい2行に重複するミスをした→
+  `document.querySelector('header .eyebrow').outerHTML = ...`で**置き換える**方式に修正）。
+  色分けはCSS変数`--ebc`を使ったページ別クラス（`.eb-gbl`/`.eb-rocket`/`.eb-blog`。
+  `assets/gbl.css`にまとめて定義）で行う（3ページが同じCSSファイルを共有するため）
+- **max-battleは無変更**（この配色ルールの発祥元・基準そのもの）。**iv-checkerも対象外**
+  （既存の「GO BATTLE LEAGUE」という別ブランディングのeyebrowを持っており、今回の指示にも
+  含まれていなかったため据え置き）
+
 **色の出どころは「背景」ではなく「そのツールのアイコンの地の色」**:
 ライトの背景のにじみは**12ツールともほぼ同じ**（どこも紫＋水色が土台）ため、
 背景から素直に取ると全部が青紫に寄る＝色が分かれない。アイコンの地の色は12個ぜんぶ違うので、

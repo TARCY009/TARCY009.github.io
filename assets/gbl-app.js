@@ -8,6 +8,7 @@ const PAGE_BLOG = !!window.PAGE_BLOG;   // 対戦記録ページ(/battlelog/)。
 document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
+  <div class="eyebrow eb-gbl">Pok&eacute;mon GO Battle League</div>
   <h1><b class="wmk" data-tool="gbl">GBL</b> <span class="wmksuf">対面シミュレーター</span></h1>
   <div id="themesw"></div>
 </header>
@@ -388,13 +389,16 @@ document.getElementById('app').innerHTML = `
 if (PAGE_ROCKET) {
   // ロケット団対策ページ: モードは固定なのでタブ行ごと隠し、見出しを差し替える
   document.querySelector('header h1').innerHTML = '<b class="wmk" data-tool="rocket">GOロケット団</b> <span class="wmksuf">対策シミュレーター</span>';
+  document.querySelector('header .eyebrow').outerHTML = '<div class="eyebrow eb-rocket">Pok&eacute;mon GO Team Rocket</div>';
   document.getElementById('modes').style.display = 'none';
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
 } else if (PAGE_BLOG) {
   // 対戦記録ページ: モードは 'blog' に固定なのでタブ行ごと隠し、見出しを差し替える(ロケット団と同じ作り)
-  document.querySelector('header h1').innerHTML = '<span class="wmksuf">GBL</span> <b class="wmk" data-tool="battlelog">対戦記録</b>';
+  const headerEl = document.querySelector('header');
+  headerEl.querySelector('h1').innerHTML = '<span class="wmksuf">GBL</span> <b class="wmk" data-tool="battlelog">対戦記録</b>';
+  headerEl.querySelector('.eyebrow').outerHTML = '<div class="eyebrow eb-blog">Pok\u00e9mon GO Battle Log</div>';
   document.getElementById('modes').style.display = 'none';
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');

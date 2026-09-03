@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/tabs.css">
@@ -70,9 +71,10 @@ body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,
   color:var(--ink);background:var(--bgimg);background-attachment:fixed;min-height:100vh}
 .wrap{max-width:860px;margin:0 auto;padding:14px 12px 40px}
 header{margin:4px 2px 14px}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#6f44ff;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(111,68,255,.55),transparent)}
 h1{font-size:1.45rem;margin:0;line-height:1.35}
 @media (max-width:430px){h1{font-size:1.28rem}}
-h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-spacing:.08em}
 h1 b{white-space:nowrap}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
   box-shadow:var(--panelsh);padding:14px;margin-bottom:14px}
@@ -157,7 +159,8 @@ h1 b{white-space:nowrap}
 <body>
 <div class="wrap">
 <header>
-  <h1><small>ポケモンGO</small><b class="wmk" data-tool="type-dps">タイプ別火力</b><span class="wmksuf">ランキング</span></h1>
+  <div class="eyebrow">Pok&eacute;mon GO Type DPS Ranking</div>
+  <h1><b class="wmk" data-tool="type-dps">タイプ別火力</b><span class="wmksuf">ランキング</span></h1>
   <div id="themesw"></div>
 </header>
 

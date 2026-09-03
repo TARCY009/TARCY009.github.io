@@ -128,8 +128,8 @@ header h1::before{content:'';width:1em;height:1em;border-radius:50%;flex-shrink:
   box-shadow:var(--ballsh)}
 /* 幅が足りないときは「ポケモンGO / レイド火力チェッカー」の切れ目で折り返す(語の途中で切らない) */
 header h1{flex-wrap:wrap}
-header h1 .brand,header h1 .tool{white-space:nowrap}
-.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#ff7a5c;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+header h1 .brand,header h1 .tool,header h1 .wmksuf{white-space:nowrap}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#ff4015;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,122,92,.55),transparent)}
 /* 見出しの色は共通ファイル assets/wordmark.css の .wmk が持つ(ダーク=銀・ライト=ツールの色)。
    2026-09-04タダシさん報告で発覚: ここに残っていた旧グラデーションが .wmk と同じ詳細度で、
@@ -403,7 +403,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <header>
   <div class="hmain">
     <div class="eyebrow">Pok&eacute;mon GO Raid DPS</div>
-    <h1><span class="tool wmk" data-tool="dps">レイド火力チェッカー</span></h1>
+    <h1><span class="tool wmk" data-tool="dps">レイド火力</span><span class="wmksuf">チェッカー</span></h1>
   </div>
   <div id="themesw"></div>
 </header>
