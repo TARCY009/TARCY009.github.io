@@ -155,11 +155,12 @@ footer .upd{margin-bottom:9px;letter-spacing:.08em;opacity:.9}
   box-shadow:0 6px 16px -8px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.08) inset}
 .card .tx{min-width:0}
 .card .nm{display:block;font-weight:700;font-size:.82rem;line-height:1.45;letter-spacing:.05em}
-.card .ds{display:block;font-size:.65rem;color:var(--sub);line-height:1.6;margin-top:5px;letter-spacing:.03em}
-/* 説明は短く言い切る。もとの長い説明は消さずに💡説明モードへ回す(恒久ルール) */
-.card .ds.long{display:none}
-.explain .card .ds.short{display:none}
-.explain .card .ds.long{display:block}
+.card .ds{font-size:.65rem;color:var(--sub);line-height:1.6;margin-top:5px;letter-spacing:.03em}
+/* ⚠ .card .ds は共通の .expl{display:none} に詳細度で勝ってしまうので、出し入れは同じ詳細度で明示する */
+.card .ds.expl{display:none}
+.explain .card .ds.expl{display:block}
+/* 説明はふだん出さない。💡説明モードのときだけ「どんなツールか」を一言で出す
+   (2026-09-03タダシさん指示。ふだんは アイコン＋名前 だけにして12個を見渡しやすくする) */
 
 footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   text-align:center;font-size:.66rem;letter-spacing:.05em;color:var(--sub);line-height:2}
@@ -175,7 +176,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   .gsec .ja{font-size:.7rem;letter-spacing:.1em}
   .gsec+.cards{margin-bottom:30px}
   .cards{gap:10px}
-  .card{padding:18px 8px 15px;gap:9px}
+  .card{padding:18px 8px 16px;gap:9px}
   .card img{width:48px;height:48px}
   .card .nm{font-size:.76rem;letter-spacing:.03em}
 }
@@ -199,26 +200,26 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 
 <div class="gsec" style="--gc:var(--g1)"><span class="en">Raid &amp; Gym</span><span class="ja">レイド・ジム</span><span class="rule"></span><span class="no">06</span></div>
 <div class="cards" style="--gc:var(--g1)">
-  <a class="card" href="/dps/"><img src="/assets/icons/karyoku/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイド火力チェッカー</b><span class="ds short">ボス別の火力ランキング</span><span class="ds long">レイドボスを選ぶと、火力の高いポケモンが順に並びます</span></span></a>
-  <a class="card" href="/raid/"><img src="/assets/icons/raid/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイドシミュレータ</b><span class="ds short">最少討伐人数の算出</span><span class="ds long">倒される時間まで再現して、最少討伐人数を出します</span></span></a>
-  <a class="card" href="/type-dps/"><img src="/assets/icons/type-dps/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">タイプ別火力ランキング</b><span class="ds short">タイプ別の火力トップ10</span><span class="ds long">タイプごとの火力トップ10を、画像にして保存できます</span></span></a>
-  <a class="card" href="/max-battle/"><img src="/assets/icons/max-battle/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">マックスバトル対策</b><span class="ds short">アタッカーとタンクの選定</span><span class="ds long">ボスに合わせて、アタッカーとタンクのおすすめが出ます</span></span></a>
-  <a class="card" href="/gym-attack/"><img src="/assets/icons/gym-attack/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム挑戦</b><span class="ds short">攻め手のランキング</span><span class="ds long">その防衛ポケモンに強い攻め手が、連戦の効率込みで並びます</span></span></a>
-  <a class="card" href="/gym-defense/"><img src="/assets/icons/gym-defense/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム防衛</b><span class="ds short">長く残るポケモンの選定</span><span class="ds long">長く残るポケモンを、耐久・相性・やる気から選びます</span></span></a>
+  <a class="card" href="/dps/"><img src="/assets/icons/karyoku/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイド火力チェッカー</b><span class="ds expl">ボスを選ぶだけで、いちばん速く削れるポケモンが順に並びます</span></span></a>
+  <a class="card" href="/raid/"><img src="/assets/icons/raid/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイドシミュレータ</b><span class="ds expl">何人集まれば倒せるか、実際に戦わせて数えます</span></span></a>
+  <a class="card" href="/type-dps/"><img src="/assets/icons/type-dps/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">タイプ別火力ランキング</b><span class="ds expl">ほのお・みずなど、タイプごとの最強アタッカーが分かります</span></span></a>
+  <a class="card" href="/max-battle/"><img src="/assets/icons/max-battle/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">マックスバトル対策</b><span class="ds expl">攻める役と耐える役、それぞれ誰を出せばいいか決まります</span></span></a>
+  <a class="card" href="/gym-attack/"><img src="/assets/icons/gym-attack/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム挑戦</b><span class="ds expl">相手のジムを、いちばん速く崩せるポケモンを教えます</span></span></a>
+  <a class="card" href="/gym-defense/"><img src="/assets/icons/gym-defense/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム防衛</b><span class="ds expl">ジムに置くと、長く残りやすいポケモンが分かります</span></span></a>
 </div>
 
 <div class="gsec" style="--gc:var(--g2)"><span class="en">Battle League</span><span class="ja">対戦</span><span class="rule"></span><span class="no">04</span></div>
 <div class="cards" style="--gc:var(--g2)">
-  <a class="card" href="/gbl/"><img src="/assets/icons/gbl/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対面シミュレーター</b><span class="ds short">1対1と3対3の再現</span><span class="ds long">1対1から3対3の模擬戦まで、ターン単位で再現します</span></span></a>
-  <a class="card" href="/battlelog/"><img src="/assets/icons/battlelog/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対戦記録</b><span class="ds short">自分の環境の採用率</span><span class="ds long">戦った相手を記録して、自分の環境の採用率を出します</span></span></a>
-  <a class="card" href="/breakpoint/"><img src="/assets/icons/breakpoint/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ブレイクポイント</b><span class="ds short">ダメージが変わる境目</span><span class="ds long">あと少し強化するとダメージが上がる境目が分かります</span></span></a>
-  <a class="card" href="/rocket/"><img src="/assets/icons/rocket/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ロケット団対策</b><span class="ds short">短時間で倒す構成</span><span class="ds long">したっぱ・リーダー・サカキを速く倒す方法を探します</span></span></a>
+  <a class="card" href="/gbl/"><img src="/assets/icons/gbl/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対面シミュレーター</b><span class="ds expl">この2匹が戦うとどうなるか、1ターンずつ再現します</span></span></a>
+  <a class="card" href="/battlelog/"><img src="/assets/icons/battlelog/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対戦記録</b><span class="ds expl">戦った相手を記録すると、自分がよく当たる相手が見えてきます</span></span></a>
+  <a class="card" href="/breakpoint/"><img src="/assets/icons/breakpoint/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ブレイクポイント</b><span class="ds expl">あと少し強化すると、ダメージが1上がる境目が分かります</span></span></a>
+  <a class="card" href="/rocket/"><img src="/assets/icons/rocket/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ロケット団対策</b><span class="ds expl">したっぱやサカキを、短い時間で倒す組み合わせを探します</span></span></a>
 </div>
 
 <div class="gsec" style="--gc:var(--g3)"><span class="en">Database</span><span class="ja">個体値・図鑑</span><span class="rule"></span><span class="no">02</span></div>
 <div class="cards" style="--gc:var(--g3)">
-  <a class="card" href="/iv-checker/"><img src="/assets/icons/iv-checker/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">個体値チェッカー</b><span class="ds short">4096通りの中の順位</span><span class="ds long">個体値を入れると、4096通りの中での順位が出ます</span></span></a>
-  <a class="card" href="/pokedex/"><img src="/assets/icons/pokedex/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ステータス図鑑</b><span class="ds short">種族値・弱点・わざ</span><span class="ds long">種族値・最大CP・弱点・わざの性能をまとめて見られます</span></span></a>
+  <a class="card" href="/iv-checker/"><img src="/assets/icons/iv-checker/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">個体値チェッカー</b><span class="ds expl">その個体が4096通りの中で何位か、すぐ分かります</span></span></a>
+  <a class="card" href="/pokedex/"><img src="/assets/icons/pokedex/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ステータス図鑑</b><span class="ds expl">種族値・弱点・わざの強さを、1画面でまとめて見られます</span></span></a>
 </div>
 
 <footer>
