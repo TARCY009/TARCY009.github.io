@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ポケモンGO レイドシミュレータ｜実戦ベースの最少討伐人数</title>
+<title>ポケモンGO レイドシミュレーター｜実戦ベースの最少討伐人数</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/raid/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/raid/apple-touch-icon.png">
 <link rel="manifest" href="/raid/manifest.webmanifest">
@@ -170,7 +170,7 @@ table.res td.tlc{width:26px;color:var(--sub);font-size:.68rem;padding-left:0;pad
 table.res tr.sel td.tlc{color:var(--accent2);font-weight:800}
 .okw{color:var(--accent2);font-weight:800}
 .ngw{color:var(--ng);font-weight:700}
-/* タイムライン(外部シミュレータと同じ4列) */
+/* タイムライン(外部シミュレーターと同じ4列) */
 details.tl{margin-top:14px}
 details.tl summary{cursor:pointer;color:var(--sub);font-weight:700;font-size:.8rem}
 .tlwrap{overflow-x:auto;margin-top:8px}
@@ -208,7 +208,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <header>
   <div class="hmain">
     <div class="eyebrow">Pok&eacute;mon GO Raid Simulator</div>
-    <h1><span class="tool wmk" data-tool="raid">レイド</span><span class="wmksuf">シミュレータ</span></h1>
+    <h1><span class="tool wmk" data-tool="raid">レイド</span><span class="wmksuf">シミュレーター</span></h1>
     <p>倒される時間まで含めた実戦ベースで、レイドの最少討伐人数を出します。</p>
     <a class="pagelink" href="/dps/">レイド火力チェッカー ↗</a>
   </div>
@@ -753,7 +753,7 @@ const HELP_HTML=`
     <li>こちらの1手目は<b>0.7秒</b>。以後わざの長さの間隔で撃ち続け、ゲージがたまったらSPアタックを撃ちます</li>
     <li>ボスは<b>1.6秒・2.6秒・4.6秒</b>に撃ち始め（開幕3発はわざの性能を無視した固定タイミング）、4発目以降は<b>わざの長さ＋2秒の硬直</b>ごとに撃ちます。ダメージが入るのは撃ち始めから<b>そのわざのダメージ発生時間</b>のあとです</li>
     <li>ゲージは<b>与えたわざのぶん</b>と<b>受けたダメージ×0.5</b>でたまります。ボスは<b>参加者全員の与えたダメージ×0.5</b>でたまるので、人数が多いほどSPアタックが飛んできます</li>
-    <li>この再現は外部シミュレータのタイムライン5例と<b>完全一致</b>することを確認してあります</li>
+    <li>この再現は外部シミュレーターのタイムライン5例と<b>完全一致</b>することを確認してあります</li>
   </ul>
   <h4>ボスのSPアタック</h4>
   <ul>

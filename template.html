@@ -695,7 +695,7 @@ function renderBoss(){
        <div><div class="bossname">${p.n}${typeIcons(p,24)}</div>
        <div class="catchcp">捕獲100%CP <b>${cp100(cf,20)}</b>（PL20）/ <b>${cp100(cf,25)}</b>（PL25 天候ブースト）${cf!==p?`・<b>${cf.n}</b>のすがたで捕獲`:''}</div></div></div>
      <div class="bossinfo">弱点：</div><div>${weak.join('')||'なし'}</div>
-     <details class="bossmoves"><summary title="${T_MP}">最少討伐人数・実戦シミュレータ</summary>
+     <details class="bossmoves"><summary title="${T_MP}">最少討伐人数・実戦シミュレーター</summary>
      <div class="modes tierrow"><span class="seg" id="tierSeg">${RAID_TIERS.map(t=>`<button type="button" data-t="${t.id}" title="${t.help}">${t.label}</button>`).join('')}</span></div>
      <div class="mpdet">
        <button type="button" id="mpDetBtn" aria-expanded="${MPB.open}" title="天候ブースト・フレンド・ザシアン効果を前提に入れて計算できます（既定はすべてなし）"><span class="gear">⚙</span> 詳細<span id="mpDetSum">${mpDetSum()}</span></button>
@@ -873,7 +873,7 @@ function renderMinPlayers(){
     ${r.t.id==='t7'?`<small class="mp-sub">※シールドを壊さない前提（シールド中はボス防御4倍・暫定値）<span class="expl">。HPが約80%になるとシールドが張られ、以後ずっと防御4倍のまま削り切る想定です。倍率は実測で確定したら更新します</span></small>`:''}
     <a class="raidbtn" href="/raid/?b=${boss}&t=${raidTier}" title="倒される時間・SPアタックの被弾まで再現した実戦ベースのシミュレートを、このボス・このランクのまま開きます">
       <span class="rbi">⚔️</span>
-      <span class="rbtx"><span class="rbt">実戦シミュレータ</span><span class="rbs">倒される時間まで含めた実戦ベースの人数がわかります</span></span>
+      <span class="rbtx"><span class="rbt">実戦シミュレーター</span><span class="rbs">倒される時間まで含めた実戦ベースの人数がわかります</span></span>
       <span class="rba">↗</span>
     </a>`;
 }
@@ -1059,7 +1059,7 @@ splitBtn.onclick=()=>{fSplit=!fSplit;showN=30;syncModes();if(boss)renderMinPlaye
 shieldBtn.onclick=()=>{
   shieldMode=!shieldMode; showN=30;
   // シールド破壊はスーパーメガレイド専用 → ONのあいだはランクを★7にそろえる
-  // (最少討伐人数・実戦シミュレータへのリンクと前提を食い違わせないため)
+  // (最少討伐人数・実戦シミュレーターへのリンクと前提を食い違わせないため)
   if(shieldMode){tierPrev=raidTier; raidTier='t7';}
   else if(raidTier==='t7'&&tierPrev){raidTier=tierPrev; tierPrev=null;}
   syncModes(); if(boss) renderMinPlayers(); renderRank();
@@ -1350,7 +1350,7 @@ const HELP_HTML = `
 
   <h4>最少討伐人数（理論値）</h4>
   <ul>
-    <li>ボスを選んだあと、ボスのカードの<b>「最少討伐人数・実戦シミュレータ」をタップ</b>すると開きます（実戦シミュレータへのボタンもこの中です）</li>
+    <li>ボスを選んだあと、ボスのカードの<b>「最少討伐人数・実戦シミュレーター」をタップ</b>すると開きます（実戦シミュレーターへのボタンもこの中です）</li>
     <li>ボスのHPを、<b>全員がランキング1位のアタッカー</b>（PL50・個体値15・最適わざ）で<b>制限時間いっぱい攻撃し続けた</b>ときに倒しきれる、いちばん少ない人数です</li>
     <li>ランクごとの前提: <b>★1</b>＝HP600・180秒 ／ <b>★3</b>＝HP3600・180秒 ／ <b>★4</b>（メガレイド）＝HP9000・300秒 ／ <b>★5</b>＝HP15000・300秒 ／ <b>★6</b>（メガ伝説・ゲンシカイキ）＝HP22500・300秒 ／ <b>スーパーメガ</b>（スーパーメガレイド）＝HP25000・300秒</li>
     <li>スーパーメガレイドはゲーム内では★の数ではなく<b>シールドの枚数</b>でレベルが表示されます（ここでは1ランクとして扱います）</li>

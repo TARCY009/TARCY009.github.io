@@ -404,7 +404,7 @@ Promise.all([
   // トレーナーバトルのわるあがき(シミュ用データは自動発動わざとして除外しているので、図鑑表示用にここで足す)
   if(!PVP.moves.STRUGGLE) PVP.moves.STRUGGLE={n:'わるあがき',t:'NORMAL',p:35,e:100};
   // メガの追加SPアタック「＋わざ」。対戦データでは plusMoves という別枠に入っている
-  // (GBLシミュレータのわざ欄に混ざらないようにするため)。図鑑は表示するのでここで合流させる
+  // (GBLシミュレーターのわざ欄に混ざらないようにするため)。図鑑は表示するのでここで合流させる
   Object.assign(PVP.moves, PVP.plusMoves||{});
   // ＋わざの威力はメガレベルが上がるほど上がる(既定はLv4＝1.3倍)。データは素の値なのでここで合わせる
   PLUS_IDS=[...new Set(Object.values(GO.pokemon).map(p=>p.plus).filter(Boolean))];
