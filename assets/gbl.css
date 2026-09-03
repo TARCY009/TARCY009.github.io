@@ -1667,3 +1667,29 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 @keyframes fxring{0%{opacity:0;transform:scale(.4)}30%{opacity:1}80%{opacity:0;transform:scale(6)}100%{opacity:0}}
 /* HUDの✨トグル(OFFのときは消灯) */
 
+
+/* ── 自由設定のわざ（性能を自分で決める・2026-09-03タダシさん指示） ──
+   わざ欄のいちばん下の「＋ 自由設定」を選ぶと出る入力ウィンドウ。
+   入力欄の文字は16px（iOSが画面を勝手に拡大しないようにする恒久ルール） */
+.custwrap{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;
+  padding:16px;background:rgba(4,8,20,.62);backdrop-filter:blur(2px)}
+.custwin{width:100%;max-width:330px;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:15px 16px 13px;box-shadow:0 22px 50px rgba(0,0,0,.5)}
+.custwin h4{margin:0 0 12px;font-size:.92rem;color:var(--ink)}
+.custwin label{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-size:.74rem;color:var(--sub);margin-bottom:9px}
+.custwin input,.custwin select{flex:0 1 190px;min-width:0;font-size:16px;padding:6px 8px;
+  border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);outline:none}
+.custwin input:focus,.custwin select:focus{border-color:var(--cy)}
+.custbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:13px}
+.custbtns button{font:inherit;font-size:.76rem;font-weight:800;padding:7px 13px;border-radius:999px;
+  cursor:pointer;border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+.custbtns .cok{border-color:transparent;color:#03212c;
+  background:linear-gradient(160deg,#8df3ff 0%,#43e0ff 45%,#1b9fd0 100%)}
+.custbtns .cdel{margin-right:auto;color:var(--lose);border-color:rgba(255,120,120,.4)}
+.custnote{margin:9px 0 0;font-size:.62rem;color:var(--sub);line-height:1.6}
+/* 入れ替え候補の「メガなし」(メガカップのときだけ出す) */
+.ptswnomega{padding:4px 11px;font-size:.68rem;font-weight:800;cursor:pointer;border-radius:999px;
+  color:var(--mcM,#f795c8);background:var(--bg2);border:1px solid var(--line)}
+.ptswnomega[aria-pressed="true"]{color:#fff;border-color:transparent;
+  background:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%)}

@@ -493,6 +493,128 @@ Object.values(D.moves).forEach(m => {
   if (m.e) MOVE_COST[m.n] = m.e;
   (NAME_TYPES[m.n] = NAME_TYPES[m.n] || new Set()).add(m.t);
 });
+// ---- 自由設定のわざ（性能を自分で決める・2026-09-03タダシさん指示） ----
+// 使いどころは「次のシーズンのわざ調整が分かっているのに、まだデータに入っていない」とき。
+// もとのわざを選んで数値だけ書き替えるか、ゼロから作る。端末に保存され、どの画面のわざ欄からも選べる。
+// ⚠ 共有リンクには載せない（相手の端末にはそのわざが無いため）。開いた側は自動選出に落ちる
+const CUST_PREFIX = 'CUSTOM_';
+const CUST_PICK = '__cust';        // 選択肢の「＋ 自由設定」を選んだときの目印
+const isCustomMv = id => typeof id === 'string' && id.startsWith(CUST_PREFIX);
+let CUSTOM = [];
+try { CUSTOM = JSON.parse(localStorage.getItem('gbl_custom_moves') || '[]') || []; } catch (e) {}
+const saveCustom = () => { try { localStorage.setItem('gbl_custom_moves', JSON.stringify(CUSTOM)); } catch (e) {} };
+// D.moves に入れてしまえば、あとは普通のわざとまったく同じ扱いで全画面が動く
+function regCustom(c) {
+  D.moves[c.id] = c.mv;
+  MOVE_TYPE[c.mv.n] = c.mv.t;
+  if (c.mv.e) MOVE_COST[c.mv.n] = c.mv.e;
+  (NAME_TYPES[c.mv.n] = NAME_TYPES[c.mv.n] || new Set()).add(c.mv.t);
+}
+CUSTOM.forEach(regCustom);
+
+// おぼえないわざの一覧（検証・お試し用）。同名・同タイプの別ID（カメックス専用版など）と
+// タイプ不定のめざめるパワー、自由設定のわざ（別の枠で出す）は除く
+const mvSig = m => D.moves[m].n + '|' + D.moves[m].t;
+const mvByName = (a, b) => D.moves[a].n.localeCompare(D.moves[b].n, 'ja');
+function otherMoves(isFast, own) {
+  const ownSig = new Set(own.map(mvSig)), seen = new Set();
+  return Object.keys(D.moves).filter(m => {
+    const mv = D.moves[m];
+    if (isFast ? !mv.eg : !mv.e) return false;
+    if (own.includes(m) || m === 'HIDDEN_POWER_NORMAL' || isCustomMv(m)) return false;
+    const s = mvSig(m);
+    if (ownSig.has(s) || seen.has(s)) return false;
+    seen.add(s);
+    return true;
+  }).sort(mvByName);
+}
+// 自由設定のわざの選択肢（一覧＋いちばん下の「＋ 自由設定」）
+function customOpts(isFast, sel) {
+  const mine = CUSTOM.filter(c => (isFast ? !!c.mv.eg : !!c.mv.e));
+  return (mine.length ? `<optgroup label="自由設定のわざ">${mine.map(c =>
+      `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${c.mv.n}</option>`).join('')}</optgroup>` : '')
+    + `<option value="${CUST_PICK}">＋ 自由設定（性能を決める）…</option>`;
+}
+// わざ欄の選択肢ひとそろい（おぼえるわざ → その他のわざ → 自由設定）
+function mvOptions(own, isFast, sel) {
+  const o = id => `<option value="${id}"${id === sel ? ' selected' : ''}>${D.moves[id] ? D.moves[id].n : ''}</option>`;
+  return `<optgroup label="おぼえるわざ">${own.map(o).join('')}</optgroup>`
+    + `<optgroup label="その他のわざ（本来おぼえない）">${otherMoves(isFast, own).map(o).join('')}</optgroup>`
+    + customOpts(isFast, sel);
+}
+// 端末に無いわざを指したまま残っていたら落とす（自由設定を消したあと・別端末で開いた共有リンク）。
+// 落としたぶんは既定のわざで埋まるので、画面が壊れることはない
+function dropUnknownMoves() {
+  const fix = o => {
+    if (!o || typeof o !== 'object') return;
+    ['fast', 'c1', 'c2'].forEach(k => { if (o[k] && !D.moves[o[k]]) o[k] = null; });
+    if (o.pin) fix(o.pin);
+  };
+  [S, PT, RKT, RBM, GBM, GBT].forEach(store => { try { (store || []).forEach(fix); } catch (e) {} });
+}
+
+// 自由設定の入力ウィンドウ。もとのわざを選べば数値が入るので、直したいところだけ書き替えればよい
+function openCustom(isFast, cur, done) {
+  const ex = isCustomMv(cur) ? CUSTOM.find(c => c.id === cur) : null;
+  const pool = Object.keys(D.moves).filter(m => (isFast ? !!D.moves[m].eg : !!D.moves[m].e) && !isCustomMv(m)).sort(mvByName);
+  const v = ex ? ex.mv : { n: '', t: 'NORMAL', p: 10, tn: 1, eg: 5, e: 50 };
+  const kind = isFast ? 'ノーマルアタック' : 'SPアタック';
+  const wrap = document.createElement('div');
+  wrap.className = 'custwrap';
+  wrap.innerHTML = `<div class="custwin">
+    <h4>${kind}を自由に作る</h4>
+    <label>もとのわざ<select class="cbase"><option value="">（選ばずに作る）</option>${
+      pool.map(m => `<option value="${m}"${ex && ex.base === m ? ' selected' : ''}>${D.moves[m].n}</option>`).join('')}</select></label>
+    <label>名前<input class="cname" type="text" maxlength="14" value="${v.n}"></label>
+    <label>タイプ<select class="ctype">${Object.keys(D.typeJa).map(t =>
+      `<option value="${t}"${t === v.t ? ' selected' : ''}>${D.typeJa[t]}</option>`).join('')}</select></label>
+    <label>威力<input class="cpow" type="number" min="0" max="300" value="${v.p}"></label>
+    ${isFast
+      ? `<label>ためるゲージ<input class="ceg" type="number" min="0" max="60" value="${v.eg || 5}"></label>
+         <label>ターン数<input class="ctn" type="number" min="1" max="8" value="${v.tn || 1}"></label>`
+      : `<label>消費ゲージ<input class="ce" type="number" min="5" max="100" value="${v.e || 50}"></label>`}
+    <div class="custbtns">
+      ${ex ? '<button class="cdel">削除</button>' : ''}
+      <button class="ccancel">やめる</button><button class="cok">この性能で使う</button>
+    </div>
+    <p class="custnote">共有リンクには載りません（相手の端末にはこのわざが無いため）</p>
+  </div>`;
+  document.body.appendChild(wrap);
+  const q = c => wrap.querySelector(c);
+  const close = id => { wrap.remove(); done(id); };
+  // もとのわざを選んだら、その数値を入れる（そこから直す使い方が本命）
+  q('.cbase').onchange = e => {
+    const m = D.moves[e.target.value];
+    if (!m) return;
+    q('.cname').value = m.n + '＋';
+    q('.ctype').value = m.t;
+    q('.cpow').value = m.p;
+    if (isFast) { q('.ceg').value = m.eg; q('.ctn').value = m.tn; } else q('.ce').value = m.e;
+  };
+  q('.ccancel').onclick = () => close(null);
+  wrap.onclick = e => { if (e.target === wrap) close(null); };
+  if (ex) q('.cdel').onclick = () => {
+    CUSTOM = CUSTOM.filter(c => c.id !== ex.id);
+    saveCustom();
+    delete D.moves[ex.id];
+    dropUnknownMoves();   // その わざ を入れていた枠からも外す
+    close('');            // ''＝そのわざは無くなったので選び直してもらう
+  };
+  q('.cok').onclick = () => {
+    const num = (c, d) => Math.max(0, Math.round(+q(c).value || d));
+    const mv = { n: (q('.cname').value || '').trim() || '自由設定のわざ', t: q('.ctype').value, p: num('.cpow', 10) };
+    if (isFast) { mv.eg = num('.ceg', 5); mv.tn = Math.max(1, num('.ctn', 1)); } else mv.e = Math.max(5, num('.ce', 50));
+    const c = ex ? { ...ex, mv, base: q('.cbase').value }
+                 : { id: CUST_PREFIX + Date.now().toString(36), base: q('.cbase').value, mv };
+    if (ex) CUSTOM = CUSTOM.map(x => (x.id === c.id ? c : x)); else CUSTOM.push(c);
+    saveCustom(); regCustom(c);
+    close(c.id);
+  };
+}
+// 「＋ 自由設定」を選んだときの共通処理。決めたら適用、やめたら元の選択へ戻す
+function pickCustom(sel, isFast, prev, apply) {
+  openCustom(isFast, prev, id => { if (id) apply(id); else { sel.value = prev || ''; apply(prev || ''); } });
+}
 // チップ表示ではギルガルド専用わざの「（独自性能）」を「（独自）」に縮める(タイムライン等の省スペース用。
 // タイプアイコンの参照はフルネームで行うので縮めるのは表示文字だけ)
 const mvChip = (name, size) => `<span class="mvname">${typeIconHTML(D.typeJa[MOVE_TYPE[name]] || '', size || 13)}${name.replace('（独自性能）', '（独自）')}</span>`;
@@ -909,9 +1031,15 @@ sideEl.forEach((el, i) => {
     el.querySelectorAll('.cpre button').forEach(x => x.setAttribute('aria-pressed', x === b));
     run();
   });
-  el.querySelector('.selFast').onchange = e => { S[i].fast = e.target.value; run(); };
-  el.querySelector('.selC1').onchange = e => { S[i].c1 = e.target.value; run(); };
-  el.querySelector('.selC2').onchange = e => { S[i].c2 = e.target.value; run(); };
+  // わざ欄。いちばん下の「＋ 自由設定」を選ぶと、性能を自分で決めたわざを作れる
+  const mvPick = (cls, key, isFast) => el.querySelector(cls).onchange = e => {
+    const v = e.target.value;
+    if (v === CUST_PICK) { pickCustom(e.target, isFast, S[i][key], id => { S[i][key] = id; run(); }); return; }
+    S[i][key] = v; run();
+  };
+  mvPick('.selFast', 'fast', true);
+  mvPick('.selC1', 'c1', false);
+  mvPick('.selC2', 'c2', false);
   // SPアタック2の「×」= 2本目を外して1本に戻す(2026-08-13タダシさん指示)。
   // プレースホルダーを選び直しても外せるが気づきにくく、発ごとのSP設定が出っぱなしになる
   el.querySelector('.c2clear').onclick = () => { S[i].c2 = null; resetSpPlan(i); run(); };
@@ -2694,8 +2822,8 @@ function syncPartySlot(i) {
     const cur = isPt ? ptMvOf(i) : isGbm ? gbmOf(i) : rbmOf(i);
     const auto = isPt && ptAuto;   // パーティ診断のオート中はこちらで選ぶので触らせない
     const { fasts, chargeds } = movePool(m.key);
-    const opts = (list, sel) => list.map(id =>
-      `<option value="${id}"${id === sel ? ' selected' : ''}>${D.moves[id].n}</option>`).join('');
+    // おぼえるわざ＋その他のわざ＋自由設定（1対1シミュの欄と同じ並びにそろえる）
+    const opts = (list, sel) => mvOptions(list, list === fasts, sel);
     // ノーマルの「おまかせ」はロケット団の模擬戦だけ(GBL模擬戦は必ず具体的なわざで戦う)
     const rkAuto = !isPt && !isGbm;
     mvbox.innerHTML = `
@@ -2716,7 +2844,19 @@ function syncPartySlot(i) {
     };
     mvbox.querySelectorAll('select').forEach(sel => sel.onchange = () => {
       const c = isPt ? { fast: PT[i].fast, c1: PT[i].c1, c2: PT[i].c2 } : isGbm ? gbmOf(i) : rbmOf(i);
-      if (sel.classList.contains('mvF')) c.fast = sel.value;
+      const isF = sel.classList.contains('mvF');
+      // いちばん下の「＋ 自由設定」= 性能を自分で決めたわざを作る
+      if (sel.value === CUST_PICK) {
+        const prev = isF ? c.fast : sel.classList.contains('mvC1') ? c.c1 : c.c2;
+        pickCustom(sel, isF, prev, id => {
+          if (isF) c.fast = id; else if (sel.classList.contains('mvC1')) c.c1 = id; else c.c2 = id;
+          if (isPt) { PT[i].fast = c.fast; PT[i].c1 = c.c1; PT[i].c2 = c.c2 || ''; savePt(); }
+          else if (isGbm) saveGbm(); else saveRbm();
+          syncPartySlot(i); run();
+        });
+        return;
+      }
+      if (isF) c.fast = sel.value;
       else if (sel.classList.contains('mvC1')) c.c1 = sel.value;
       else c.c2 = sel.value;
       if (c.c2 && c.c2 === c.c1) c.c2 = '';   // 同じわざを2本持っても意味がない
@@ -3015,7 +3155,7 @@ function runParty() {
 // log/start = 入れ替えの記録（はじめの状態からどう良くなったか）。chain = 入れ替えた直後に続けて次の候補を出す
 // want = 優先したい役割('early'=序盤型 / 'late'=終盤型)。pos = 3匹の役割(「3匹の働き」で計算したもの)
 const PTS = { range: 100, rows: null, base: null, busy: false, undo: null, msg: '', scan: null,
-  log: [], start: null, chain: false, sig: '', want: '', pos: null };
+  log: [], start: null, chain: false, sig: '', want: '', pos: null, noMega: false };
 // いまのパーティの穴の数と平均勝率(診断結果から数えるだけ。候補を計算していなくても出せる)
 function ptNowStat() {
   const B = PTS.base, n = B.idxs.length;
@@ -3037,10 +3177,13 @@ const ptRoughN = () => (PTS.range === 'all' ? 120 : 999);
 // 候補の一覧。すでにパーティにいるポケモンは除く
 function ptSwapPool() {
   const used = new Set(PTS.base.idxs.map(i => PT[i].key + (PT[i].shadow ? '|s' : '')));
+  // 「メガなし」を押しているあいだはメガを候補から外す(メガ枠はもう決まっていて、
+  // 残りの2匹をメガ以外から選びたいときのため。2026-09-03タダシさん指示)
+  const noMega = PTS.noMega;
   if (PTS.range !== 'all') {
     const src = cup ? (cup.list || []).concat(cup.ext || [])
       : ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || []);
-    return src.filter(m => !used.has(m.k + (m.s ? '|s' : '')));
+    return src.filter(m => !used.has(m.k + (m.s ? '|s' : '')) && !(noMega && isMega(m.k)));
   }
   // 全ポケモンは構成の総当たりが重すぎるので、わざはダメージ効率で選ぶ
   // (ノーマルは1ターンあたり・SPは効率のよい2本。実戦のわざ開放に合わせてSPは2本持たせる)
@@ -3049,7 +3192,7 @@ function ptSwapPool() {
   (cup ? (cup.list || []).concat(cup.ext || [])
     : ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || []))
     .forEach(m => meta.set(m.k + (m.s ? '|s' : ''), m));
-  const megaOk = !!(cup && cup.slug.startsWith('mega'));
+  const megaOk = !!(cup && cup.slug.startsWith('mega')) && !noMega;
   const out = [];
   for (const key of KEYS) {
     if (isMega(key) && !megaOk) continue;
@@ -3319,6 +3462,10 @@ function renderPtSwap() {
     // どの型を優先して並べているかを出す(タップで解除)。押した覚えのない並び順にならないように
     (PTS.want ? `<button class="ptswwant" style="--rc:${PT_ROLES[PTS.want].c}"` +
       ` title="この型を優先して並べています（タップで解除）">${PT_ROLES[PTS.want].t}を優先 ✕</button>` : '') +
+    // メガカップだけ: メガシンカばかり候補に出てくるのを止める
+    (cup && cup.slug.startsWith('mega')
+      ? `<button class="ptswnomega" aria-pressed="${PTS.noMega}"` +
+        ` title="メガシンカを候補から外します（メガ枠が決まっていて、残りの2匹を選びたいとき）">メガなし</button>` : '') +
     (canUndo ? `<button class="ptswundo" title="入れ替える前のポケモンに戻します">↩ 元に戻す</button>` : '') + '</div>';
   let body = '';
   if (PTS.busy) body = `<div class="ptswmsg">${PTS.msg || '計算中…'}</div>`;
@@ -3364,6 +3511,12 @@ function renderPtSwap() {
   });
   const wt = box.querySelector('.ptswwant');
   if (wt) wt.onclick = () => { PTS.want = ''; runPtSwap(); };
+  const nm = box.querySelector('.ptswnomega');
+  if (nm) nm.onclick = () => {
+    if (PTS.busy) return;
+    PTS.noMega = !PTS.noMega;
+    if (PTS.rows) runPtSwap(); else renderPtSwap();   // 候補を出す前なら押した状態だけ変える
+  };
   const un = box.querySelector('.ptswundo');
   if (un) un.onclick = () => {
     const u = PTS.undo;
@@ -5968,7 +6121,17 @@ function buildGbFoeSlots() {
     el.querySelectorAll('select').forEach(sel => sel.onchange = () => {
       const m = GBT[i];
       if (!m) return;
-      if (sel.classList.contains('selFast')) m.fast = sel.value;
+      const isF = sel.classList.contains('selFast');
+      // いちばん下の「＋ 自由設定」= 性能を自分で決めたわざを作る
+      if (sel.value === CUST_PICK) {
+        const prev = isF ? m.fast : sel.classList.contains('selC1') ? m.c1 : m.c2;
+        pickCustom(sel, isF, prev, id => {
+          if (isF) m.fast = id; else if (sel.classList.contains('selC1')) m.c1 = id; else m.c2 = id;
+          saveGbt(); syncGbFoeSlots(); run();
+        });
+        return;
+      }
+      if (isF) m.fast = sel.value;
       else if (sel.classList.contains('selC1')) m.c1 = sel.value;
       else m.c2 = sel.value;
       if (m.c2 && m.c2 === m.c1) m.c2 = '';   // 同じわざを2本持っても意味がない
@@ -5993,7 +6156,8 @@ function syncGbFoeSlots() {
     fb.style.display = 'block';
     const { fasts, chargeds } = movePool(m.key);
     if (!fasts.includes(m.fast)) m.fast = fasts[0] || '';
-    const opts = (list, sel) => list.map(x => `<option value="${x}"${x === sel ? ' selected' : ''}>${D.moves[x].n}</option>`).join('');
+    // おぼえるわざ＋その他のわざ＋自由設定（じぶんの欄と同じ並びにそろえる）
+    const opts = (list, sel) => mvOptions(list, list === fasts, sel);
     el.querySelector('.selFast').innerHTML = opts(fasts, m.fast);
     el.querySelector('.selC1').innerHTML = chargeds.length ? opts(chargeds, m.c1) : '';
     el.querySelector('.selC2').innerHTML = chargeds.length
@@ -8655,37 +8819,24 @@ function fillMoves(i, cfg) {
   };
   // おぼえないわざも含めて選択可能にする(検証・お試し用)
   // 同名・同タイプの別ID(カメックス専用版など)とタイプ不定のめざめるパワーは除外
-  const byName = (a, b) => D.moves[a].n.localeCompare(D.moves[b].n, 'ja');
-  const sig = m => D.moves[m].n + '|' + D.moves[m].t;
-  const others = (isFast, own) => {
-    const ownSig = new Set(own.map(sig)), seen = new Set();
-    return Object.keys(D.moves).filter(m => {
-      const mv = D.moves[m];
-      if (isFast ? !mv.eg : !mv.e) return false;
-      if (own.includes(m) || m === 'HIDDEN_POWER_NORMAL') return false;
-      const s = sig(m);
-      if (ownSig.has(s) || seen.has(s)) return false;
-      seen.add(s);
-      return true;
-    }).sort(byName);
-  };
-  const otherF = others(true, fasts);
-  const otherC = others(false, chargeds);
+  const otherF = otherMoves(true, fasts);
+  const otherC = otherMoves(false, chargeds);
   // ロケット団のあいては打ってこないわざを選べても意味がないので「その他のわざ」を出さない
-  const grouped = (own, others, sel) => rkFoe
+  const grouped = (own, others, sel, isFast) => rkFoe
     ? own.map(m => opt(m, sel)).join('')
     : `<optgroup label="おぼえるわざ">${own.map(m => opt(m, sel)).join('')}</optgroup>` +
-      `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>`;
+      `<optgroup label="その他のわざ（本来おぼえない）">${others.map(m => opt(m, sel)).join('')}</optgroup>` +
+      customOpts(isFast, sel);
   // わざ欄は「選ぶ前は欄の中に薄くわざの種類を出し、選んだらわざ名に変わる」方式。
   // 自分で選んでいないあいだ(＝自動でいちばん良い構成を使う)は見出しを兼ねたプレースホルダーにする
-  const ph = (sel, key, label, own, others, cur) => {
+  const ph = (sel, key, label, own, others, cur, isFast) => {
     const un = !S[i][key];   // 未選択＝自動。どのわざにも selected を付けず、見出しを選んだ状態にする
-    sel.innerHTML = `<option value=""${un ? ' selected' : ''}>${label}</option>` + grouped(own, others, un ? null : cur);
+    sel.innerHTML = `<option value=""${un ? ' selected' : ''}>${label}</option>` + grouped(own, others, un ? null : cur, isFast);
     sel.classList.toggle('ph', un);
   };
-  ph(el.querySelector('.selFast'), 'fast', 'ノーマルアタック', fasts, otherF, cfg.fast);
-  ph(el.querySelector('.selC1'), 'c1', 'SPアタック', chargeds, otherC, cfg.throw);
-  ph(el.querySelector('.selC2'), 'c2', 'SPアタック2', chargeds, otherC, S[i].c2);
+  ph(el.querySelector('.selFast'), 'fast', 'ノーマルアタック', fasts, otherF, cfg.fast, true);
+  ph(el.querySelector('.selC1'), 'c1', 'SPアタック', chargeds, otherC, cfg.throw, false);
+  ph(el.querySelector('.selC2'), 'c2', 'SPアタック2', chargeds, otherC, S[i].c2, false);
   el.querySelector('.c2clear').style.display = S[i].c2 ? '' : 'none';
   // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す。
   // 一覧系(環境一覧・カウンター検索・パーティ診断)は共通の「ブラフ」枠で両者まとめて決めるので出さない
@@ -9507,6 +9658,7 @@ document.addEventListener('click', e => {
 }, true);
 
 (function init() {
+  dropUnknownMoves();   // 端末に無いわざを指したまま残っていたら落とす
   const q = new URLSearchParams(location.search);
   if (q.get('lg')) {
     cap = +q.get('lg');
