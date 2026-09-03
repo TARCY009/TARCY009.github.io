@@ -122,10 +122,15 @@ h1{font-size:2.75rem;font-weight:900;line-height:1.12;letter-spacing:.1em;text-i
 h1 .go{display:inline-block;-webkit-text-stroke-width:2px;
   transform:scaleX(1.04);transform-origin:center;margin-right:.025em;
   background-image:var(--wm);-webkit-background-clip:text;background-clip:text;color:transparent}
-/* 「ナ」と「ビ」の間だけ詰める（2026-09-04タダシさん指摘）。
+/* 「ナ」と「ビ」の間だけ詰める（2026-09-04タダシさん指摘・実測して2回目で確定）。
    均等なはずのletter-spacingでも、「ナ」の字形は右側に余白が多く、「ビ」は左側の余白が少ないため、
-   ほかの字間より目に見えて広く空いて見えていた。実測して-0.05emがいちばん均等に見える量 */
-h1 .bi{display:inline-block;margin-left:-.05em}
+   ほかの字間より目に見えて広く空いて見えていた。
+   ⚠ 最初は-0.05emで確定したが、公開後に本番で見てもまだ広いと指摘された。
+   Chrome headlessのレイアウト計算(getBoundingClientRect)ではボックス同士がほぼ重なっていたため
+   「直っている」と誤判断したが、**文字の縁取り(text-stroke)とグロー(filter)が実際のインクの外側まで
+   にじんで見えるぶんは、ボックスの位置だけでは分からない**。O→ナの隙間と揃うまで
+   -0.05〜-0.30emを大きく引き伸ばして並べ、画像を直接見比べて-0.20emを採用した */
+h1 .bi{display:inline-block;margin-left:-.20em}
 /* サイト名の下の細い金の罫線。中央から左右へ消えていく */
 .hrule{width:132px;height:1px;margin:17px auto 0;
   background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.62}
