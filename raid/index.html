@@ -267,11 +267,11 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <button type="button" data-m="alt" aria-pressed="false" title="撃てる機会の2回に1回だけ撃ちます（確率どおりの平均的な動き。乱数を使わないので毎回同じ結果になります）">2回に1回</button>
       <button type="button" data-m="coin" aria-pressed="false" title="撃てるとき2分の1の確率で撃ちます（実戦と同じ運まかせ。30回試して勝率で判定します）">ランダム</button>
     </span>
-    <span class="setgrp"><span class="lbl" title="手持ちが全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
+    <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SPのみ回避</button>
   </div>
   <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝手持ちが全滅してからバトルに戻るまでの秒数です。</p>
   <div class="setrow">
-    <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SPのみ回避</button>
+    <span class="setgrp"><span class="lbl" title="手持ちが全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定">再突入</span><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><span class="lbl">秒</span></span>
     <span class="setgrp"><span class="lbl" title="選んだ天候で1.2倍になるタイプのわざが強くなります。自分のわざだけでなく、ボスのわざにも掛かります（例: 曇りならボスのきあいだまも1.2倍）">天候</span><select id="wxSel" class="setsel">
       <option value="" selected>なし</option>
       <option value="sunny">晴れ</option>
@@ -295,6 +295,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <option value="1.1">別タイプ ×1.1</option>
       <option value="1.3">同タイプ ×1.3</option>
     </select></span>
+  </div>
+  <div class="setrow">
     <button type="button" class="optbtn" id="zcBtn" aria-pressed="false" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
     <button type="button" class="optbtn" id="tpBtn" aria-pressed="false" title="パーティプレイのチームパワーです。参加する全員がパーティを組んでいる前提で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P）、満タンで次のSPアタックが2倍になります。1人のときは効果がありません。点灯したら毎回すぐ使う想定です">チームパワー</button>
   </div>
