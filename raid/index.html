@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/mega-lv.css">
@@ -72,6 +73,8 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",syst
 header{margin:6px 0 14px}
 header h1{font-size:1.42rem;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;display:flex;align-items:center;gap:.4em}
 header h1 .brand,header h1 .tool{white-space:nowrap}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#3fe0c4;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(63,224,196,.55),transparent)}
 /* 見出しの色は共通ファイル assets/wordmark.css の .wmk が持つ(ダーク=銀・ライト=ツールの色)。
    2026-09-04タダシさん報告で発覚: ここに残っていた旧グラデーションが .wmk と同じ詳細度で、
    後から読み込まれるぶん勝ってしまい、ダークモードだけ銀色にならなかった(ライトは .wmk 側の
@@ -204,7 +207,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="wrap">
 <header>
   <div class="hmain">
-    <h1><span class="brand">ポケモンGO</span><span class="tool wmk" data-tool="raid">レイドシミュレータ</span></h1>
+    <div class="eyebrow">Pok&eacute;mon GO Raid Simulator</div>
+    <h1><span class="tool wmk" data-tool="raid">レイドシミュレータ</span></h1>
     <p>倒される時間まで含めた実戦ベースで、レイドの最少討伐人数を出します。</p>
     <a class="pagelink" href="/dps/">レイド火力チェッカー ↗</a>
   </div>
