@@ -72,7 +72,10 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",syst
 header{margin:6px 0 14px}
 header h1{font-size:1.42rem;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;display:flex;align-items:center;gap:.4em}
 header h1 .brand,header h1 .tool{white-space:nowrap}
-header h1 .tool{background:linear-gradient(92deg,#ff5470,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+/* 見出しの色は共通ファイル assets/wordmark.css の .wmk が持つ(ダーク=銀・ライト=ツールの色)。
+   2026-09-04タダシさん報告で発覚: ここに残っていた旧グラデーションが .wmk と同じ詳細度で、
+   後から読み込まれるぶん勝ってしまい、ダークモードだけ銀色にならなかった(ライトは .wmk 側の
+   詳細度が高く問題なかったため気づきにくかった)。 */
 header p{font-size:.8rem;color:var(--sub);margin-top:3px}
 .pagelink{display:inline-block;margin-top:6px;font-size:.74rem;font-weight:700;color:var(--accent2);text-decoration:none;
   border:1px solid var(--line);background:var(--tab);border-radius:9px;padding:4px 10px;box-shadow:0 2px 0 var(--tabsh)}

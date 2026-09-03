@@ -128,7 +128,10 @@ header h1::before{content:'';width:1em;height:1em;border-radius:50%;flex-shrink:
 /* 幅が足りないときは「ポケモンGO / レイド火力チェッカー」の切れ目で折り返す(語の途中で切らない) */
 header h1{flex-wrap:wrap}
 header h1 .brand,header h1 .tool{white-space:nowrap}
-header h1 .tool{background:linear-gradient(92deg,var(--accent),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+/* 見出しの色は共通ファイル assets/wordmark.css の .wmk が持つ(ダーク=銀・ライト=ツールの色)。
+   2026-09-04タダシさん報告で発覚: ここに残っていた旧グラデーションが .wmk と同じ詳細度で、
+   後から読み込まれるぶん勝ってしまい、ダークモードだけ銀色にならなかった(ライトは .wmk 側の
+   詳細度が高く問題なかったため気づきにくかった)。 */
 header p{font-size:.8rem;color:var(--sub);margin-top:3px}
 /* overflow:hiddenにすると検索候補リストがカード外に出られず隠れるため使わない */
 .card{position:relative;background:var(--panel);border:1px solid var(--cardline,var(--line));border-radius:16px;padding:20px 16px 16px;margin-bottom:16px;
