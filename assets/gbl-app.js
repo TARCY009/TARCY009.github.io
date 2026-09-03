@@ -8,7 +8,7 @@ const PAGE_BLOG = !!window.PAGE_BLOG;   // 対戦記録ページ(/battlelog/)。
 document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
-  <h1><span>GOバトルリーグ</span> <b class="wmk" data-tool="gbl">対面シミュレーター</b></h1>
+  <h1><b class="wmk" data-tool="gbl">GOバトルリーグ</b> <span class="wmksuf">対面シミュレーター</span></h1>
   <div id="themesw"></div>
 </header>
 
@@ -387,7 +387,7 @@ document.getElementById('app').innerHTML = `
 // ページごとの入口の違いを整える
 if (PAGE_ROCKET) {
   // ロケット団対策ページ: モードは固定なのでタブ行ごと隠し、見出しを差し替える
-  document.querySelector('header h1').innerHTML = '<span>GOロケット団</span> <b class="wmk" data-tool="rocket">対策シミュレーター</b>';
+  document.querySelector('header h1').innerHTML = '<b class="wmk" data-tool="rocket">GOロケット団</b> <span class="wmksuf">対策シミュレーター</span>';
   document.getElementById('modes').style.display = 'none';
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
