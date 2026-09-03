@@ -14,6 +14,7 @@
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
 <link rel="stylesheet" href="/assets/mega-lv.css">
@@ -55,9 +56,10 @@ body{background:var(--bgimg);background-attachment:fixed;min-height:100vh;color:
 .wrap{max-width:760px;margin:0 auto;padding:14px}
 header{padding:16px 0 8px}
 h1{font-size:1.32rem;letter-spacing:.02em}
-h1 span{white-space:nowrap;color:var(--sub);font-size:.85em;font-weight:700;display:block;line-height:1.2}
-h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ffd54a);-webkit-background-clip:text;background-clip:text;color:transparent}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--cardsh)}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#bd93ff;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(189,147,255,.55),transparent)}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--cardsh)}
+.card::before{content:'';position:absolute;left:0;top:0;right:0;height:4px;border-radius:15px 15px 0 0;background:linear-gradient(90deg,#8b6cff,#bd93ff 55%,#43e0ff)}
 /* 検索 */
 .searchbox{position:relative}
 .searchbox input{width:100%;padding:11px 40px 11px 12px;font-size:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--ink);outline:none}
@@ -266,7 +268,8 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 <body>
 <div class="wrap">
 <header>
-  <h1><span>ポケモンGO</span><b class="wmk" data-tool="pokedex">ステータス図鑑</b></h1>
+  <div class="eyebrow">Pok&eacute;mon GO Status Dex</div>
+  <h1><b class="wmk" data-tool="pokedex">ステータス図鑑</b></h1>
   <div id="themesw"></div>
 </header>
 
