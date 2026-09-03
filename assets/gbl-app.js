@@ -8,7 +8,7 @@ const PAGE_BLOG = !!window.PAGE_BLOG;   // 対戦記録ページ(/battlelog/)。
 document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
-  <h1><b class="wmk" data-tool="gbl">GOバトルリーグ</b> <span class="wmksuf">対面シミュレーター</span></h1>
+  <h1><b class="wmk" data-tool="gbl">GBL</b> <span class="wmksuf">対面シミュレーター</span></h1>
   <div id="themesw"></div>
 </header>
 
@@ -394,7 +394,7 @@ if (PAGE_ROCKET) {
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
 } else if (PAGE_BLOG) {
   // 対戦記録ページ: モードは 'blog' に固定なのでタブ行ごと隠し、見出しを差し替える(ロケット団と同じ作り)
-  document.querySelector('header h1').innerHTML = '<span>GOバトルリーグ</span> <b class="wmk" data-tool="battlelog">対戦記録</b>';
+  document.querySelector('header h1').innerHTML = '<span class="wmksuf">GBL</span> <b class="wmk" data-tool="battlelog">対戦記録</b>';
   document.getElementById('modes').style.display = 'none';
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
