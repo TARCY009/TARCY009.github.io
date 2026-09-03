@@ -9,7 +9,7 @@ document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
   <div class="eyebrow eb-gbl">Pok&eacute;mon GO Battle League</div>
-  <h1><b class="wmk" data-tool="gbl">GBL</b> <span class="wmksuf">対面シミュレーター</span></h1>
+  <h1><span class="wmksuf">GBL</span> <b class="wmk" data-tool="gbl">対面シミュレーター</b></h1>
   <div id="themesw"></div>
 </header>
 
@@ -388,7 +388,7 @@ document.getElementById('app').innerHTML = `
 // ページごとの入口の違いを整える
 if (PAGE_ROCKET) {
   // ロケット団対策ページ: モードは固定なのでタブ行ごと隠し、見出しを差し替える
-  document.querySelector('header h1').innerHTML = '<b class="wmk" data-tool="rocket">GOロケット団</b> <span class="wmksuf">対策シミュレーター</span>';
+  document.querySelector('header h1').innerHTML = '<span class="wmksuf">GOロケット団</span> <b class="wmk" data-tool="rocket">対策シミュレーター</b>';
   document.querySelector('header .eyebrow').outerHTML = '<div class="eyebrow eb-rocket">Pok&eacute;mon GO Team Rocket</div>';
   document.getElementById('modes').style.display = 'none';
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
