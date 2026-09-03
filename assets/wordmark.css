@@ -9,39 +9,43 @@
      1. <head> に <link rel="stylesheet" href="/assets/wordmark.css">（explain.css の直後）
      2. ツール名の要素に class="wmk" と data-tool="<ツールのキー>" を付ける
         （GBL・ロケット団・対戦記録の見出しは assets/gbl-app.js が作る）
+     3. 「◯◯オススメツール」のように決まり文句が付くタイトルは、その部分だけ
+        class="wmksuf" の別要素に分けて白のまま残す（build_wordmark.pyのSUFFIXES参照）
 
-   ■ ダーク: トップページの看板と同じ銀（2026-09-03確定・折れ目なしの小さい字用レシピ）。
-     2026-09-04に「白文字より暗い」「もっと目立たせたい」で何度か色を変えたが、
-     どれも「変わった実感がない」となり、**タダシさん指示でこの最初の色に戻した**。
-     ⚠ 次にこの色を触るときは、変更前に必ずタダシさんに意図を確認してから進めること
+   ■ ダーク: **真っ白＋ツールごとの明るい色**（2026-09-04タダシさん指示で確定・金属加工なし）。
+     ⚠ この前に銀のグラデーション（トップページの看板と同じ質感）を小さい字に何度も調整して
+       当てていたが、タダシさんには「変わった実感がない」状態が続き、最終的に
+       **「機能を含めて、この一連の色変更より前の状態に戻して」**と指示された。
+       ここまでの経緯が長く複雑だったため、後戻りのリスクを避けて**ゼロから作り直す**方針にした。
+       グラデーション・押し出し・落ち影は一切使わない。色はライトと同じ色相を、
+       暗い背景で映える彩度・明るさまで単純に引き上げただけの1色（ベタ塗り）。
 
-   ■ ライト: **金属加工はしない。ツールごとのベタ塗り**。
-     ⚠ いちばん大事な学び: 以前はライトでもグラデの下端を暗い紫黒と混ぜ、押し出しと落ち影を敷いていた。
-       22pxの細い字ではその暗い部分が線の大半を占め、**明るさが24〜41まで落ちて
-       12ツールすべてが「黒っぽい同じ色」に見えた**（画素を測って確認済み）。
+   ■ ライト: **金属加工はしない。ツールごとのベタ塗り**（2026-09-03確定・変更なし）。
      色は**そのツールのアイコンの地の色**から起こす（ライトの背景はどのツールも紫＋水色でほぼ同じなので、
      背景から取ると色が分かれない）。
 
    ■ 書体: Noto Sans JP 900。取り寄せる文字はツール名から自動生成（漏れると字体が化ける）。
    ========================================================================= */
-:root{
-  --wmk-g:linear-gradient(180deg,#ffffff 0%,#eaf1ff 34%,#bccde9 66%,#93a8cf 100%);
-  --wmk-e:#2b3a5e;                 /* 押し出し（板の厚み・1段） */
-  --wmk-sh:rgba(6,12,30,.55);      /* 落ち影 */
-}
 .wmk{
   font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
   font-weight:900;
-  background-image:var(--wmk-g);
-  -webkit-background-clip:text;background-clip:text;
-  color:transparent;
-  text-shadow:0 1px 0 var(--wmk-e), 0 2px 5px var(--wmk-sh);
+  color:var(--wmk-d,#ffffff);
 }
-/* ライトは色だけ。塗りも影も持たせない */
+.wmk[data-tool="dps"]{--wmk-d:#ff7a5c}
+.wmk[data-tool="raid"]{--wmk-d:#3fe0c4}
+.wmk[data-tool="type-dps"]{--wmk-d:#a68bff}
+.wmk[data-tool="max-battle"]{--wmk-d:#ff74c4}
+.wmk[data-tool="gym-attack"]{--wmk-d:#ffcc33}
+.wmk[data-tool="gym-defense"]{--wmk-d:#7ee787}
+.wmk[data-tool="gbl"]{--wmk-d:#6ea1ff}
+.wmk[data-tool="battlelog"]{--wmk-d:#f0b942}
+.wmk[data-tool="rocket"]{--wmk-d:#ff6b6b}
+.wmk[data-tool="breakpoint"]{--wmk-d:#8ca3ff}
+.wmk[data-tool="iv-checker"]{--wmk-d:#ff7ec2}
+.wmk[data-tool="pokedex"]{--wmk-d:#bd93ff}
+/* ライトはツールごとのベタ塗り（変更なし） */
 :root.light .wmk{
-  background-image:none;
   color:var(--wmk-c,#3a4a86);
-  text-shadow:none;
 }
 :root.light .wmk[data-tool="dps"]{--wmk-c:#ab4f3b}
 :root.light .wmk[data-tool="raid"]{--wmk-c:#2b736f}
@@ -55,10 +59,16 @@
 :root.light .wmk[data-tool="breakpoint"]{--wmk-c:#5868ac}
 :root.light .wmk[data-tool="iv-checker"]{--wmk-c:#a44b76}
 :root.light .wmk[data-tool="pokedex"]{--wmk-c:#7e60a4}
-/* 添え書き（small）とバッジは本文なので、書体も色も影も元へ戻す */
+/* 「オススメツール」等の決まり文句は常に白（ダーク）／--inkに準じる地色（ライト）のまま */
+.wmksuf{
+  font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
+  font-weight:900;
+  color:#ffffff;
+}
+:root.light .wmksuf{color:inherit}
+/* 添え書き（small）とバッジは本文なので、書体も色も元へ戻す */
 .wmk small,.wmk .badge{
   font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
   font-weight:700;
-  -webkit-text-fill-color:currentColor;
-  text-shadow:none;
+  color:inherit;
 }
