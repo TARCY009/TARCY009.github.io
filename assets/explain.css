@@ -30,7 +30,7 @@
 /* ON: 水色に点灯（明るい点灯色なので文字は濃色にする・全ツール共通ルール） */
 #themesw .explainsw[aria-pressed="true"]{border-color:transparent;transform:translateY(-1px);color:#042330;
   background:linear-gradient(160deg,#8ff0fb 0%,#14b8cf 45%,#0a7f95 100%);
-  box-shadow:0 6px 18px rgba(20,185,210,.45),inset 0 1px 0 rgba(255,255,255,.55)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}
 #themesw .explainsw[aria-pressed="true"] .eb{filter:none;animation:ebpop .3s ease}
 @keyframes ebpop{0%{transform:scale(1)}45%{transform:scale(1.3) rotate(-8deg)}100%{transform:scale(1)}}
 @media (max-width:430px){#themesw .explainsw{padding:6px 10px;font-size:.85rem}#themesw .explainsw .et{display:none}}

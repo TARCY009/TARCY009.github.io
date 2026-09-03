@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <link rel="stylesheet" href="/assets/mega-lv.css">
@@ -82,7 +83,7 @@ h1 b{white-space:nowrap}
   transition:transform .12s,box-shadow .12s;padding:0}
 .tbtn:hover{transform:translateY(-1px)}
 .tbtn[aria-pressed="true"]{transform:translateY(-1px);border-color:var(--tc);
-  box-shadow:0 0 0 2px var(--tc),0 6px 18px var(--tcg),inset 0 1px 0 rgba(255,255,255,.25)}
+  box-shadow:0 0 0 2px var(--tc),inset 0 1px 0 rgba(255,255,255,.25)}
 
 /* ── ランキング ── */
 .rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -103,7 +104,7 @@ h1 b{white-space:nowrap}
   content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mbar)}
 .rk{min-width:42px;text-align:center;font-weight:800;color:var(--sub);font-size:.8rem;line-height:1.3;flex-shrink:0;
   background:var(--rkbg);border-radius:8px;padding:4px 4px}
-.rank-row.md1 .rk,.rank-row.md2 .rk,.rank-row.md3 .rk{box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+.rank-row.md1 .rk,.rank-row.md2 .rk,.rank-row.md3 .rk{box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .rank-row.md1 .rk{background:linear-gradient(160deg,#ffe08a 0%,var(--mgold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
 .rank-row.md2 .rk{background:linear-gradient(160deg,#f2f6fb 0%,var(--msilver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
 .rank-row.md3 .rk{background:linear-gradient(160deg,#e8b489 0%,var(--mbronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
@@ -126,12 +127,6 @@ h1 b{white-space:nowrap}
 .tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
 .tag-s2{display:inline-flex;align-items:center;background:#7c3aed;color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;vertical-align:1px}
 .lowbulk{color:#ffd54a;background:#c2410c;border:1px solid #a33409;border-radius:6px;font-size:.62rem;font-weight:700;padding:0 5px;flex-shrink:0}
-/* ランキングの上のタブは点灯時の光彩(ぼかし)を出さない(2026-09-03タダシさん指示。
-   一覧をスクリーンショットしたときにぼやぼやが写り込むため。立体感は内側のハイライトだけで出す) */
-.rhead .gtabs button[aria-pressed="true"],
-.rhead .gtabs button[aria-selected="true"],
-.rhead .gtabs .megalv .mlvseg button[aria-pressed="true"]{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .gtabs .shadowmark{color:var(--shadow)}
 .gtabs button[aria-pressed="true"] .shadowmark{color:#fff}
 .empty{color:var(--sub);font-size:.82rem;text-align:center;padding:18px 0}
@@ -160,7 +155,7 @@ h1 b{white-space:nowrap}
 <body>
 <div class="wrap">
 <header>
-  <h1><small>ポケモンGO</small><b>タイプ別火力ランキング</b></h1>
+  <h1><small>ポケモンGO</small><b class="wmk" data-tool="type-dps">タイプ別火力ランキング</b></h1>
   <div id="themesw"></div>
 </header>
 

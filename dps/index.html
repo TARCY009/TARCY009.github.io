@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/mega-lv.css">
 <meta name="theme-color" content="#0b1023">
@@ -242,7 +243,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
   transition:transform .12s ease,box-shadow .12s ease,color .12s ease}
 .modes button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .modes button[aria-pressed="true"]{color:#fff;border-color:transparent;transform:translateY(-1px);
-  background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+  background:var(--mg);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .modes button:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
 /* 自分の登録個体のメガLv(行の中に置くので少し詰める) */
 .mine-sum .minelv{width:auto;gap:5px}
@@ -289,7 +290,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 /* メガLv4(スーパーマックスレベル): 名前も挙動も /gbl/・/iv-checker/ と共通。役割の色はメガの紫 */
 .plbtn.smax{border-color:var(--smaxline);color:var(--smaxink);font-size:.74rem;padding:4px 8px}
 .plbtn.smax small{display:block;font-size:.55rem;font-weight:700;line-height:1.2;opacity:.85}
-.plbtn.smax[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);border-color:#6d28d9;color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(-1px)}
+.plbtn.smax[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);border-color:#6d28d9;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(-1px)}
 .plneed{flex-basis:100%;font-size:.78rem;color:var(--gold);font-weight:700}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 7px;border-bottom:1px solid var(--rowline)}
 /* 狭い画面では余白を削ってわざ名の行幅を稼ぐ(1行に収まる行が増えて一覧が見やすくなる) */
@@ -318,7 +319,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rk{min-width:42px;text-align:center;font-weight:800;color:var(--sub);font-size:.8rem;line-height:1.3;flex-shrink:0;
   background:var(--rkbg);border-radius:8px;padding:4px 4px}
 /* 上位3件のメダル。金・銀・銅とも同じ作り(明るい面＋その色の光彩) */
-#rankList .rank-row.md1 .rk,#rankList .rank-row.md2 .rk,#rankList .rank-row.md3 .rk{box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+#rankList .rank-row.md1 .rk,#rankList .rank-row.md2 .rk,#rankList .rank-row.md3 .rk{box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 #rankList .rank-row.md1 .rk{background:linear-gradient(160deg,#ffe08a 0%,var(--mgold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
 #rankList .rank-row.md2 .rk{background:linear-gradient(160deg,#f2f6fb 0%,var(--msilver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
 #rankList .rank-row.md3 .rk{background:linear-gradient(160deg,#e8b489 0%,var(--mbronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
@@ -394,7 +395,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="wrap">
 <header>
   <div class="hmain">
-    <h1><span class="brand">ポケモンGO</span><span class="tool">レイド火力チェッカー</span></h1>
+    <h1><span class="brand">ポケモンGO</span><span class="tool wmk" data-tool="dps">レイド火力チェッカー</span></h1>
   </div>
   <div id="themesw"></div>
 </header>

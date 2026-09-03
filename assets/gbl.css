@@ -65,7 +65,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 :root.light .lgbtn{opacity:.85}
 .lgbtn[aria-pressed="true"]{opacity:1;color:var(--lt);border-color:var(--l1);transform:translateY(-1px);
   background:linear-gradient(160deg,var(--l1) 0%,var(--lc) 45%,var(--l2) 100%);
-  box-shadow:0 6px 18px var(--lg),inset 0 1px 0 rgba(255,255,255,.6)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .cupwin{margin-top:8px}
 .cupslots button{flex:1 0 46%;font-size:.8rem;padding:9px 4px;font-weight:700}
 .cupslots button small{display:block;font-weight:400;font-size:.64rem;color:var(--sub);margin-top:2px}
@@ -77,7 +77,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .pasttab:hover{transform:translateY(-1px)}
 .pasttab[aria-expanded="true"]{background:linear-gradient(160deg,#ffe89a 0%,var(--gold) 45%,#b8860b 100%);
-  border-color:var(--gold);color:#2a1e00;box-shadow:0 5px 16px rgba(255,213,74,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+  border-color:var(--gold);color:#2a1e00;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .pastslots{margin-top:6px;max-height:46vh;overflow-y:auto}
 .pastyear{flex:1 0 100%;font-size:.64rem;font-weight:700;color:var(--sub);margin:6px 0 0;padding-left:2px}
 .pastyear:first-child{margin-top:0}
@@ -90,7 +90,7 @@ h1 b{background:linear-gradient(92deg,var(--gl),var(--ml));-webkit-background-cl
 .side h2{font-size:.78rem;color:var(--sub);letter-spacing:.08em;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
 /* シャドウマークのタブ(文字なし・押すとシャドウ補正ON) */
 .shadowtab{display:inline-flex;align-items:center;justify-content:center;width:38px;height:30px;padding:0;font-size:1rem;background:var(--bg2);border:1px solid var(--line);border-radius:99px;color:#7d5ca8;cursor:pointer;flex-shrink:0}
-.shadowtab[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:#b06cff;color:#fff;box-shadow:0 0 10px rgba(176,108,255,.55)}
+.shadowtab[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:#b06cff;color:#fff}
 .side.mine h2{color:var(--cy)}
 .side.foe h2{color:var(--lose)}
 .sugg{position:relative}
@@ -199,7 +199,7 @@ select option[value=""]{color:var(--sub)}
 .modes button:hover{color:var(--ink);transform:translateY(-1px)}
 .modes button[aria-pressed="true"]{color:#042330;border-color:#d5f2ff;transform:translateY(-1px);
   background:linear-gradient(160deg,#d5f2ff 0%,#8bd8f5 45%,#4fb0dd 100%);
-  box-shadow:0 5px 16px rgba(110,205,240,.38),inset 0 1px 0 rgba(255,255,255,.7)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
 .modes{flex-wrap:wrap}
 .modes button{flex:1 1 auto}
 @media (max-width:520px){.modes{gap:4px}.modes button{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
@@ -302,7 +302,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 #rkviewbtns button[aria-pressed="true"],#rkenter button[aria-pressed="true"]{
   color:#2b2305;border-color:transparent;transform:translateY(-1px);
   background:linear-gradient(160deg,#ffe38f 0%,#ffd54a 45%,#c99b1f 100%);
-  box-shadow:0 5px 16px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 /* いちばん上のモード切替(1対1 / 模擬戦)はこのツールの主役なので、大きく立体的に見せる */
 .rkmoderow{margin-bottom:2px}
 .rkmode{gap:8px;flex-wrap:wrap}
@@ -315,7 +315,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1)}
 .rocket .rkmode button[data-v="0"][aria-pressed="true"]{
   color:#03212c;background:linear-gradient(160deg,#8df3ff 0%,#43e0ff 45%,#1b9fd0 100%);border-color:#9df5ff;
-  box-shadow:0 6px 18px rgba(67,224,255,.4),inset 0 1px 0 rgba(255,255,255,.65);transform:translateY(-1px)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65);transform:translateY(-1px)}
 /* 模擬戦モードはGBLと同じ主役ボタン(.mockhero・2026-08-23タダシさん指示)。点灯は金のリング */
 /* あいての種別はロケット団らしく赤系。したっぱ→サカキで赤が濃くなる */
 .rkkind{gap:6px}
@@ -333,7 +333,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 :root.light .rkkind button[data-v="boss"]{--rc:#8e0000}
 .rocket .rkkind button[aria-pressed="true"]{color:#2c0406;border-color:var(--rc);
   background:linear-gradient(160deg,#ffd0d0 0%,var(--rc) 45%,var(--rd) 100%);
-  box-shadow:0 5px 16px rgba(255,77,77,.38),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px)}
 .rocket input{width:64px;padding:5px 6px;font-size:.78rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);outline:none}
 .rocket input:focus{border-color:var(--gl)}
 /* ロケット団戦: リーダー・サカキの手持ち */
@@ -352,7 +352,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkwho button:hover{transform:translateY(-1px);border-color:#ffd54a}
 .rocket .rkwho button[aria-pressed="true"]{color:#33260a;border-color:#ffe89a;
   background:linear-gradient(160deg,#fff0b8 0%,#ffd54a 45%,#e0a020 100%);
-  box-shadow:0 5px 16px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(-1px)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(-1px)}
 /* 手持ちのポケモンチップ。選ぶと金色に光り、押した感じが出るようにする */
 .rkchip{display:inline-flex;align-items:center;gap:3px;padding:5px 10px;font-size:.72rem;font-weight:700;
   background:var(--tab);border:1px solid var(--line);border-radius:99px;
@@ -362,7 +362,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkchip .shadowmark{color:#b06cff}
 .rkchip.on{color:#33260a;border-color:#ffe89a;
   background:linear-gradient(160deg,#fff0b8 0%,#ffd54a 45%,#e8b32c 100%);
-  box-shadow:0 4px 12px rgba(255,213,74,.35),inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(-1px)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7);transform:translateY(-1px)}
 .rkchip.on .shadowmark{color:#5b21b6}
 .rkchip:disabled{opacity:.4;cursor:default;box-shadow:none;transform:none}
 /* 何匹目かのラベル(📌固定 / 🎲ランダム)を少し読みやすく */
@@ -974,10 +974,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkfrow .rkfilt button[data-f="mega"]{color:var(--mcM)}
 .rkfrow .rkfilt button[aria-pressed="true"]{color:#fff;border-color:transparent;transform:translateY(-1px);
   background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);
-  box-shadow:0 6px 18px rgba(139,92,246,.45),inset 0 1px 0 rgba(255,255,255,.5)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .rkfrow .rkfilt button[data-f="mega"][aria-pressed="true"]{
   background:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%);
-  box-shadow:0 6px 18px rgba(214,51,132,.45),inset 0 1px 0 rgba(255,255,255,.5)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .rkfrow .mdettab{margin-left:auto}
 .rkentbox{margin:0 0 8px;padding:9px 10px;border:1px dashed var(--line);border-radius:10px}
 .rkentbox .opts{flex:1;min-width:160px}
@@ -1274,7 +1274,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 :root.light .gbai button[data-v="hard"]{--dc:#c62b46}
 .gbai button[aria-pressed="true"]{opacity:1;color:var(--dt);border-color:var(--d1);transform:translateY(-1px);
   background:linear-gradient(160deg,var(--d1) 0%,var(--dm) 45%,var(--d2) 100%);
-  box-shadow:0 5px 16px var(--dg),inset 0 1px 0 rgba(255,255,255,.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
   position:relative;overflow:hidden}
 .gbai button[aria-pressed="true"] small{opacity:1}
 /* 選択中は光の帯がひとすじ流れる(派手にしすぎない) */

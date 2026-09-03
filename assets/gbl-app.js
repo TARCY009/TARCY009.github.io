@@ -8,7 +8,7 @@ const PAGE_BLOG = !!window.PAGE_BLOG;   // 対戦記録ページ(/battlelog/)。
 document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
-  <h1><span>GOバトルリーグ</span> <b>対面シミュレーター</b></h1>
+  <h1><span>GOバトルリーグ</span> <b class="wmk" data-tool="gbl">対面シミュレーター</b></h1>
   <div id="themesw"></div>
 </header>
 
@@ -387,7 +387,7 @@ document.getElementById('app').innerHTML = `
 // ページごとの入口の違いを整える
 if (PAGE_ROCKET) {
   // ロケット団対策ページ: モードは固定なのでタブ行ごと隠し、見出しを差し替える
-  document.querySelector('header h1').innerHTML = '<span>GOロケット団</span> <b>対策シミュレーター</b>';
+  document.querySelector('header h1').innerHTML = '<span>GOロケット団</span> <b class="wmk" data-tool="rocket">対策シミュレーター</b>';
   document.getElementById('modes').style.display = 'none';
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
@@ -396,7 +396,7 @@ if (PAGE_ROCKET) {
   document.querySelector('header').classList.add('haslink');
 } else if (PAGE_BLOG) {
   // 対戦記録ページ: モードは 'blog' に固定なのでタブ行ごと隠し、見出しを差し替える(ロケット団と同じ作り)
-  document.querySelector('header h1').innerHTML = '<span>GOバトルリーグ</span> <b>対戦記録</b>';
+  document.querySelector('header h1').innerHTML = '<span>GOバトルリーグ</span> <b class="wmk" data-tool="battlelog">対戦記録</b>';
   document.getElementById('modes').style.display = 'none';
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');

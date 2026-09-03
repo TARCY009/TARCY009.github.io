@@ -8,7 +8,8 @@
 
    色は下の t-* プリセットを付けるだけ。自分で決めたいときは
    --mc(ダークの未選択の文字色) / --mcl(ライトの未選択の文字色) / --mg(点灯のグラデーション) /
-   --mgl(点灯の光彩) / --mi(点灯の文字色・既定は白) を指定する。
+   --mi(点灯の文字色・既定は白) を指定する。
+   --mgl(点灯の光彩)は残してあるが、いまはどこにも掛けていない（下の点灯のルールを参照）。
    ライトの未選択の文字色を分けているのは、ダーク用の明るい色が白い土台でほぼ見えないため。 */
 .gtabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .gtabs button{font:inherit;font-size:.8rem;font-weight:800;line-height:1.5;flex:0 1 auto;cursor:pointer;
@@ -27,9 +28,12 @@
   box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff;color:var(--mcl,var(--mc,#5d6b7a))}
 :root.light .gtabs button:not([aria-pressed="true"]):not([aria-selected="true"]):hover:not(:disabled){
   box-shadow:0 4px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+/* 点灯中は「色つきのにじみ(光彩)」を出さない（2026-09-03タダシさん指示・全ツール共通）。
+   一覧をスクリーンショットしたときにぼやぼやが写り込むため。
+   立体感は 内側のハイライト＋1px持ち上げ＋グラデーションの面 だけで出す。 */
 .gtabs button[aria-pressed="true"],.gtabs button[aria-selected="true"]{
   color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);
-  background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+  background:var(--mg);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 /* 排他の2〜3択はくっつけて1つのまとまりに見せる（外側だけ角丸を大きくする） */
 .gseg{display:flex;gap:2px;flex:0 1 auto;min-width:0}
 .gseg button{flex:1 1 auto;border-radius:5px}

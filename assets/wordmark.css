@@ -1,63 +1,63 @@
-@import url("https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&display=swap&text=BGLO%E3%82%A4%E3%82%A7%E3%82%AA%E3%82%AB%E3%82%AD%E3%82%AF%E3%82%B0%E3%82%B1%E3%82%B7%E3%82%B8%E3%82%B9%E3%82%BF%E3%83%81%E3%83%83%E3%83%84%E3%83%88%E3%83%8A%E3%83%90%E3%83%93%E3%83%96%E3%83%97%E3%83%9D%E3%83%9E%E3%83%9F%E3%83%A0%E3%83%A1%E3%83%A2%E3%83%A5%E3%83%A9%E3%83%AA%E3%83%AB%E3%83%AC%E3%83%AD%E3%83%B3%E3%83%BC%E4%BD%93%E5%80%8B%E5%80%A4%E5%88%A5%E5%8A%9B%E5%9B%A3%E5%AF%BE%E6%88%A6%E6%8C%91%E7%81%AB%E7%AD%96%E8%A1%9B%E8%A8%98%E9%8C%B2%E9%98%B2%E9%9D%A2");
+@import url("https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&display=swap&text=GO%E3%83%8A%E3%83%93");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&display=swap&text=BGL%E3%82%A4%E3%82%A7%E3%82%AA%E3%82%AB%E3%82%AD%E3%82%AF%E3%82%B0%E3%82%B7%E3%82%B8%E3%82%B9%E3%82%BF%E3%83%81%E3%83%83%E3%83%84%E3%83%86%E3%83%88%E3%83%89%E3%83%90%E3%83%96%E3%83%97%E3%83%9D%E3%83%9E%E3%83%9F%E3%83%A0%E3%83%A1%E3%83%A5%E3%83%A9%E3%83%AB%E3%83%AC%E3%83%B3%E3%83%BC%E4%BD%93%E5%80%8B%E5%80%A4%E5%88%A5%E5%8A%9B%E5%9B%B3%E5%AF%BE%E6%88%A6%E6%8C%91%E7%81%AB%E7%AD%96%E8%A1%9B%E8%A8%98%E9%8C%B2%E9%91%91%E9%98%B2%E9%9D%A2");
 
 /* =========================================================================
-   ツール名の見た目（ブルーシルバー）
-   2026-09-03タダシさん指示で全ツールへ展開 → 同日、作り直し。
-
-   ⚠ 最初の版の失敗（必ず読むこと）:
-   **トップページの看板は44px、ツール名は18〜24px**。2.5倍も違うのに、
-   看板用の金属加工（中央の反射の折れ目・4段の押し出し・0.35pxの輪郭）を
-   そのまま小さい文字へ当てたため、
-     ・折れ目が1px以下の**汚い横線**になって文字が濁る
-     ・押し出しが相対的に大きすぎて**にじむ**
-     ・輪郭がアンチエイリアスと干渉して**ぼける**
-   結果「全然トップページと違う」と言われた。**大きい字と小さい字ではレシピを分ける**こと。
-
-   ここで持つのは**小さい字用のレシピ**:
-     ・グラデーションは**折れ目なし**の素直な銀（小さくても濁らない）
-     ・押し出しは**1段だけ**＋ごく浅い落ち影
-     ・**輪郭は使わない**（書体が900なので足す必要がない）
-   看板（トップページ）用の折れ目つき・4段の厚みは index.html 側が持つ。
-
-   書体もそろえる（禅角ゴシック New 900）。取り寄せるのは全ツール名に使う56文字ぶんだけ。
+   ツール名の見た目（全ツール共通）
+   ⚠ このファイルは build_wordmark.py の出力。手で編集しない（色とツール名は向こうを直す）。
 
    ページ側がやることは2つ:
      1. <head> に <link rel="stylesheet" href="/assets/wordmark.css">（explain.css の直後）
-     2. ツール名の <h1> に class="wmk" を付ける
+     2. ツール名の要素に class="wmk" と data-tool="<ツールのキー>" を付ける
+        （GBL・ロケット団・対戦記録の見出しは assets/gbl-app.js が作る）
+
+   ■ ダーク: トップページの看板と同じ銀。ただし**小さい字用のレシピ**
+     （折れ目なしの素直なグラデ・押し出しは1段・輪郭なし）。
+     看板（44px）の金属加工をそのまま小さい字に当てると、折れ目が汚い線になり押し出しがにじむ。
+
+   ■ ライト: **金属加工はしない。ツールごとのベタ塗り**。
+     ⚠ いちばん大事な学び: 以前はライトでもグラデの下端を暗い紫黒と混ぜ、押し出しと落ち影を敷いていた。
+       22pxの細い字ではその暗い部分が線の大半を占め、**明るさが24〜41まで落ちて
+       12ツールすべてが「黒っぽい同じ色」に見えた**（画素を測って確認済み）。
+     色は**そのツールのアイコンの地の色**から起こす（ライトの背景はどのツールも紫＋水色でほぼ同じなので、
+     背景から取ると色が分かれない）。
+
+   ■ 書体: Noto Sans JP 900。取り寄せる文字はツール名から自動生成（漏れると字体が化ける）。
    ========================================================================= */
 :root{
   --wmk-g:linear-gradient(180deg,#ffffff 0%,#eaf1ff 34%,#bccde9 66%,#93a8cf 100%);
   --wmk-e:#2b3a5e;                 /* 押し出し（板の厚み・1段） */
   --wmk-sh:rgba(6,12,30,.55);      /* 落ち影 */
 }
-:root.light{
-  /* ライトは**背景と同じ系統の濃い色**にする（2026-09-03タダシさんの指示）。
-     うっすらした背景に濃紺を一律で置くと雰囲気を壊すので、ツールごとに
-     `--wmk-base` を1行だけ上書きする（既定は藍紫）。
-     ⚠ 薄すぎると背景に溶け、濃すぎると浮く。ちょうどいい濃さを探すこと。
-     グラデーションと影は base から自動で作るので、ページ側が書くのは base だけでよい */
-  --wmk-base:#3a48a0;
-  /* ⚠ 暗い側を「黒」に寄せると、マゼンタも金茶も深緑も同じ暗い色に潰れて
-        **どのツールも文字色が同じに見える**（2026-09-03に実際に踏んだ）。
-        暗い側は黒ではなく**色味を残した濃さ**にし、混ぜる量も控えめにすること */
-  --wmk-g:linear-gradient(180deg,
-    color-mix(in srgb, var(--wmk-base) 68%, #ffffff) 0%,
-    var(--wmk-base) 46%,
-    color-mix(in srgb, var(--wmk-base) 84%, #141024) 100%);
-  --wmk-e:color-mix(in srgb, var(--wmk-base) 74%, #141024);
-  --wmk-sh:color-mix(in srgb, var(--wmk-base) 24%, transparent);
-}
-h1.wmk,.wmk{
-  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
+.wmk{
+  font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
   font-weight:900;
   background-image:var(--wmk-g);
   -webkit-background-clip:text;background-clip:text;
   color:transparent;
   text-shadow:0 1px 0 var(--wmk-e), 0 2px 5px var(--wmk-sh);
 }
+/* ライトは色だけ。塗りも影も持たせない */
+:root.light .wmk{
+  background-image:none;
+  color:var(--wmk-c,#3a4a86);
+  text-shadow:none;
+}
+:root.light .wmk[data-tool="dps"]{--wmk-c:#ab4f3b}
+:root.light .wmk[data-tool="raid"]{--wmk-c:#2b736f}
+:root.light .wmk[data-tool="type-dps"]{--wmk-c:#6863ac}
+:root.light .wmk[data-tool="max-battle"]{--wmk-c:#ab4982}
+:root.light .wmk[data-tool="gym-attack"]{--wmk-c:#91681d}
+:root.light .wmk[data-tool="gym-defense"]{--wmk-c:#397a58}
+:root.light .wmk[data-tool="gbl"]{--wmk-c:#4e67b1}
+:root.light .wmk[data-tool="battlelog"]{--wmk-c:#836625}
+:root.light .wmk[data-tool="rocket"]{--wmk-c:#b14949}
+:root.light .wmk[data-tool="breakpoint"]{--wmk-c:#5868ac}
+:root.light .wmk[data-tool="iv-checker"]{--wmk-c:#a44b76}
+:root.light .wmk[data-tool="pokedex"]{--wmk-c:#7e60a4}
 /* 添え書き（small）とバッジは本文なので、書体も色も影も元へ戻す */
-h1.wmk small,h1.wmk .badge,.wmk small,.wmk .badge{
+.wmk small,.wmk .badge{
   font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
+  font-weight:700;
   -webkit-text-fill-color:currentColor;
   text-shadow:none;
 }

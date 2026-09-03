@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/mega-lv.css">
 <meta name="theme-color" content="#0b1023">
@@ -106,7 +107,7 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .modes button,.seg button,.optbtn{font:inherit;font-size:.8rem;font-weight:800;flex:0 1 auto;border:1px solid var(--line);background:var(--tab);border-radius:11px;padding:8px 12px;cursor:pointer;
   color:var(--mc,var(--sub));box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:transform .12s,box-shadow .12s,color .12s}
 .modes button:hover,.seg button:hover,.optbtn:hover{transform:translateY(-1px)}
-.modes button[aria-pressed="true"],.seg button[aria-pressed="true"],.optbtn[aria-pressed="true"]{color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+.modes button[aria-pressed="true"],.seg button[aria-pressed="true"],.optbtn[aria-pressed="true"]{color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);background:var(--mg);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .seg{display:flex;gap:2px;flex:0 1 auto}
 .seg button:first-child{border-radius:11px 5px 5px 11px}
 .seg button:last-child{border-radius:5px 11px 11px 5px}
@@ -138,7 +139,7 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .clrslot:disabled{opacity:.25;cursor:default}
 .shbtn{font:inherit;border:1px solid var(--line);background:var(--tab);color:#c396ff;border-radius:10px;height:40px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
 :root.light .shbtn{color:#7a3cc4}
-.shbtn[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.5)}
+.shbtn[aria-pressed="true"]{background:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);color:#fff;border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .shbtn:disabled{opacity:.3;cursor:default}
 .setrow{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-top:4px}
 .optbtn{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45)}
@@ -199,7 +200,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="wrap">
 <header>
   <div class="hmain">
-    <h1><span class="brand">ポケモンGO</span><span class="tool">レイドシミュレータ</span></h1>
+    <h1><span class="brand">ポケモンGO</span><span class="tool wmk" data-tool="raid">レイドシミュレータ</span></h1>
     <p>倒される時間まで含めた実戦ベースで、レイドの最少討伐人数を出します。</p>
     <a class="pagelink" href="/dps/">レイド火力チェッカー ↗</a>
   </div>

@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
@@ -121,7 +122,7 @@ details.settings summary{padding:9px 15px;cursor:pointer;color:var(--sub);font-s
 .rank{font-size:.92rem;white-space:nowrap;font-weight:700;text-align:center;color:var(--sub);
   background:var(--panel2);border-radius:8px;padding:4px 0}
 /* 上位3件のメダル。金・銀・銅とも同じ作り（明るい面＋その色の光彩） */
-.rank.r1,.rank.r2,.rank.r3{font-weight:800;box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+.rank.r1,.rank.r2,.rank.r3{font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .rank.r1{background:linear-gradient(160deg,#ffe08a 0%,var(--gold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
 .rank.r2{background:linear-gradient(160deg,#f2f6fb 0%,var(--silver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
 .rank.r3{background:linear-gradient(160deg,#e8b489 0%,var(--bronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
@@ -180,7 +181,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 <div class="wrap">
 <header>
   <div id="themesw"></div>
-  <h1>ジム挑戦オススメツール <span class="badge">連戦効率型</span></h1>
+  <h1 class="wmk" data-tool="gym-attack">ジム挑戦オススメツール <span class="badge">連戦効率型</span></h1>
   <p class="lead expl">相手の防衛ポケモンを指定すると、ゲージ分割技を優遇した「連戦向き」の攻撃ランキングを表示します。</p>
 </header>
 

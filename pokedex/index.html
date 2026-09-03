@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/mega-lv.css">
 <script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
@@ -166,7 +167,7 @@ h1 b{white-space:nowrap;background:linear-gradient(92deg,#4d8dff,#43e0ff 55%,#ff
 .mtabs button{flex:1;padding:10px 8px;border:1px solid var(--line2);background:var(--tab);color:var(--sub);font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .mtabs button:first-child{border-radius:12px 0 0 12px}
 .mtabs button:last-child{border-radius:0 12px 12px 0;border-left:none}
-.mtabs button[aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;box-shadow:0 5px 16px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.mtabs button[aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 /* わざ表 */
 .mvsec{margin-top:12px}
 .tblwrap{border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -220,10 +221,10 @@ tbody tr:hover{background:var(--mebg)}
 .ftypes{display:flex;flex-wrap:wrap;gap:6px}
 .ftypes button{background:none;border:2px solid transparent;border-radius:50%;padding:2px;cursor:pointer;line-height:0;opacity:.55;transition:.15s}
 .ftypes button:hover{opacity:.9}
-.ftypes button[aria-pressed="true"]{opacity:1;border-color:var(--cy);box-shadow:0 0 10px rgba(67,224,255,.5)}
+.ftypes button[aria-pressed="true"]{opacity:1;border-color:var(--cy)}
 .fregs{display:flex;flex-wrap:wrap;gap:6px}
 .fregs button{padding:6px 12px;border:1px solid var(--line2);border-radius:999px;background:var(--tab);color:var(--sub);font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
-.fregs button[aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;border-color:transparent;box-shadow:0 4px 12px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.fregs button[aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .fclear{margin-left:auto;background:none;border:none;color:var(--sub);font-size:.74rem;cursor:pointer;text-decoration:underline}
 .filthead{display:flex;align-items:center}
 .flcnt{font-size:.76rem;color:var(--sub);margin:10px 0 6px}
@@ -234,7 +235,7 @@ tbody tr:hover{background:var(--mebg)}
 .flist .fr:hover{background:var(--mebg)}
 .flist .fr b{font-weight:700}
 .flist .fr .cpv{margin-left:auto;color:var(--gold);font-weight:800;font-size:.82rem;font-variant-numeric:tabular-nums}
-.fweak button[aria-pressed="true"]{border-color:#ff6b81;box-shadow:0 0 10px rgba(255,107,129,.55)}
+.fweak button[aria-pressed="true"]{border-color:#ff6b81}
 .flist .fr .sv{margin-left:auto;font-weight:800;font-size:.84rem;font-variant-numeric:tabular-nums}
 .flist .fr .sv small{color:var(--sub);font-weight:700;font-size:.68rem;margin-right:3px}
 .flist .fr .cpv2{color:var(--sub);font-weight:700;font-size:.74rem;font-variant-numeric:tabular-nums;margin-left:8px}
@@ -265,7 +266,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 <body>
 <div class="wrap">
 <header>
-  <h1><span>ポケモンGO</span><b>ステータス図鑑</b></h1>
+  <h1><span>ポケモンGO</span><b class="wmk" data-tool="pokedex">ステータス図鑑</b></h1>
   <div id="themesw"></div>
 </header>
 

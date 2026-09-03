@@ -9,6 +9,7 @@
 <link rel="manifest" href="/max-battle/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
@@ -170,18 +171,18 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
    タンクは左が1行しかなく、上そろえだと左下に大きな空白ができていた */
 .top{display:flex;align-items:center;gap:12px}
 .rank{min-width:56px;text-align:center;font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1rem;border-radius:10px;padding:6px 0;background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
-.rank.r1{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#3a2500;border-color:transparent;box-shadow:0 0 14px rgba(255,215,106,.35)}
-.rank.r2{background:linear-gradient(135deg,var(--sil1),var(--sil2));color:#20303e;border-color:transparent;box-shadow:0 0 14px rgba(200,214,230,.28)}
+.rank.r1{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#3a2500;border-color:transparent}
+.rank.r2{background:linear-gradient(135deg,var(--sil1),var(--sil2));color:#20303e;border-color:transparent}
 .rank.allr{font-size:.72rem;letter-spacing:0}
-.rank.r3{background:linear-gradient(135deg,var(--brz1),var(--brz2));color:#2e1602;border-color:transparent;box-shadow:0 0 14px rgba(201,141,95,.28)}
+.rank.r3{background:linear-gradient(135deg,var(--brz1),var(--brz2));color:#2e1602;border-color:transparent}
 .namebox{flex:1;min-width:0}
 .pname{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px}
 .nameplate{display:inline-block;padding:7px 13px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(255,61,110,.16) 65%,rgba(255,122,92,.12));border:1px solid rgba(255,255,255,.16);box-shadow:0 3px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10);line-height:1.35}
 .nameplate .nm{font-weight:900;font-size:1.31rem;letter-spacing:.02em;color:var(--nmink);text-shadow:0 1px 10px var(--nmsh);vertical-align:middle}
 .nameplate .tgroup{margin-left:8px;vertical-align:middle}
-.row.no1 .nameplate{background:linear-gradient(135deg,rgba(255,215,106,.30),rgba(255,61,110,.20));border-color:rgba(255,215,106,.45);box-shadow:0 3px 14px rgba(242,193,78,.25), inset 0 1px 0 rgba(255,255,255,.14)}
-.row.no2 .nameplate{background:linear-gradient(135deg,rgba(230,237,247,.24),rgba(139,92,246,.16));border-color:rgba(200,214,230,.40);box-shadow:0 3px 14px rgba(159,176,198,.20), inset 0 1px 0 rgba(255,255,255,.14)}
-.row.no3 .nameplate{background:linear-gradient(135deg,rgba(201,121,58,.30),rgba(122,74,94,.20));border-color:rgba(201,121,58,.45);box-shadow:0 3px 14px rgba(160,90,45,.22), inset 0 1px 0 rgba(255,255,255,.14)}
+.row.no1 .nameplate{background:linear-gradient(135deg,rgba(255,215,106,.30),rgba(255,61,110,.20));border-color:rgba(255,215,106,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.row.no2 .nameplate{background:linear-gradient(135deg,rgba(230,237,247,.24),rgba(139,92,246,.16));border-color:rgba(200,214,230,.40);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.row.no3 .nameplate{background:linear-gradient(135deg,rgba(201,121,58,.30),rgba(122,74,94,.20));border-color:rgba(201,121,58,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
 .cbadge{white-space:nowrap;font-size:.62rem;border-radius:999px;padding:2px 10px;font-weight:800;letter-spacing:.04em}
 .cbadge.G{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;box-shadow:0 0 12px rgba(255,61,110,.35)}
 .cbadge.D{background:linear-gradient(135deg,#7fb0ff,#5f86e8);color:#0a1533}
@@ -205,8 +206,8 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 
 .tabs{display:flex;gap:8px;margin-top:16px}
 .tab{flex:1;padding:12px;border-radius:var(--radius);border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s}
-.tab[aria-selected="true"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512;box-shadow:0 0 18px rgba(255,61,110,.28)}
-.tab.tank[aria-selected="true"]{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d;box-shadow:0 0 18px rgba(74,214,184,.28)}
+.tab[aria-selected="true"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512}
+.tab.tank[aria-selected="true"]{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
 .sppanel{margin-top:12px;border:1px solid var(--line2);border-radius:var(--radius);padding:12px;background:var(--card)}
 .sprow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
 .sprow label{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:.8rem}
@@ -227,7 +228,7 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .spmv:not(.ok) .v{color:var(--faint)}
 .swapmoves{display:none;flex-wrap:wrap;gap:8px;margin-top:12px}
 .swapmoves .mvbtn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--text);font-size:.82rem;cursor:pointer;font-family:inherit}
-.swapmoves .mvbtn[aria-pressed="true"]{border-color:#4ad6b8;background:rgba(74,214,184,.14);box-shadow:0 0 12px rgba(74,214,184,.2)}
+.swapmoves .mvbtn[aria-pressed="true"]{border-color:#4ad6b8;background:rgba(74,214,184,.14)}
 .swapmoves .mvp{color:var(--faint);font-size:.7rem}
 .fastalt{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:700;background:var(--bg2);border:1px solid var(--line2);color:var(--sub)}
 .halfchip{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#cdeeff,#a9dcf6);color:#0c3346}
@@ -259,7 +260,7 @@ footer a{color:var(--spec)}
 <header>
   <div id="themesw"></div>
   <div class="eyebrow">Pok&eacute;mon GO Max Battle</div>
-  <h1>マックスバトル対策ツール <span class="badge">アタッカー / タンク</span></h1>
+  <h1 class="wmk" data-tool="max-battle">マックスバトル対策ツール <span class="badge">アタッカー / タンク</span></h1>
   <p class="lead expl">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
 </header>
 

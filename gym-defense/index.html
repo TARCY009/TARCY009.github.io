@@ -10,6 +10,7 @@
 <link rel="manifest" href="/gym-defense/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
@@ -103,7 +104,7 @@ h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border
 .top{display:flex;align-items:center;gap:10px}
 .rank{min-width:52px;text-align:center;font-weight:700;font-size:.95rem;border-radius:8px;padding:4px 0;background:var(--panel2);color:var(--sub)}
 /* 上位3件のメダル。金・銀・銅とも同じ作り（明るい面＋その色の光彩）で並べて見分けやすくする */
-.rank.r1,.rank.r2,.rank.r3{font-weight:800;box-shadow:0 4px 12px var(--mdsh),inset 0 1px 0 rgba(255,255,255,.5)}
+.rank.r1,.rank.r2,.rank.r3{font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .rank.r1{background:linear-gradient(160deg,#ffe08a 0%,var(--gold) 55%,#c99a14 100%);color:var(--ongold);--mdsh:rgba(242,193,78,.35)}
 .rank.r2{background:linear-gradient(160deg,#f2f6fb 0%,var(--silver) 55%,#8f9dad 100%);color:var(--onsilver);--mdsh:rgba(200,211,222,.3)}
 .rank.r3{background:linear-gradient(160deg,#e8b489 0%,var(--bronze) 55%,#a06437 100%);color:var(--onbronze);--mdsh:rgba(201,141,95,.32)}
@@ -143,7 +144,7 @@ footer a{color:var(--accent2)}
 <div class="wrap">
 <header>
   <div id="themesw"></div>
-  <h1>ジム防衛オススメツール <span class="badge">防衛</span></h1>
+  <h1 class="wmk" data-tool="gym-defense">ジム防衛オススメツール <span class="badge">防衛</span></h1>
   <p class="lead expl">耐久・かくとう相性・やる気の下がりにくさから出した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
 </header>
 

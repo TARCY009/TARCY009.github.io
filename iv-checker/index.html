@@ -21,6 +21,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
@@ -171,7 +172,7 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
   transform:translateY(-1px);box-shadow:0 4px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .tab.act,.src.act,.fl.act,.srt.act,.cap.act,.evb.act,.evf.act,.hdlv.act{
   color:var(--mi,#fff);border-color:transparent;transform:translateY(-1px);
-  background:var(--mg);box-shadow:0 6px 18px var(--mgl),inset 0 1px 0 rgba(255,255,255,.5)}
+  background:var(--mg);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 /* 役割ごとの色: スーパー=濃い青 ／ ハイパー=黄 ／ マスター=紫 ／ そのほかの設定=水色。
    明るい色（黄・水色）で点灯するタブは、文字を白ではなく濃い色にする */
 .tab[data-lg="gl"]{--mc:var(--mcB);--mgl:rgba(59,110,240,.45);
@@ -303,9 +304,9 @@ body.has-sticky{padding-top:52px}
 .lgc .lgc-r .u{font-size:.78rem;color:var(--sub);font-weight:700;margin-left:1px}
 /* 選択中の枠は少しだけ太く見せる(2026-08-16タダシさん指示)。
    borderを太らせると中身がずれるので、枠線の外へ同色のリングを重ねて実質2.5pxにする */
-.lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--gl),0 0 14px rgba(77,141,255,.3),inset 0 1px 0 var(--tabin)}
-.lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 0 1.5px var(--ul),0 0 14px rgba(245,197,66,.26),inset 0 1px 0 var(--tabin)}
-.lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 0 1.5px var(--ml),0 0 14px rgba(176,108,255,.3),inset 0 1px 0 var(--tabin)}
+.lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--gl),inset 0 1px 0 var(--tabin)}
+.lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 0 1.5px var(--ul),inset 0 1px 0 var(--tabin)}
+.lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 0 1.5px var(--ml),inset 0 1px 0 var(--tabin)}
 /* メダル色は上の :root / :root.light が持つ。
    大きい順位はベタ塗りではなくメダルのグラデーションで塗る(タグ・フレームと同じ質感にそろえる)。
    「位」は子要素なので自分の色(--sub)のまま残る。
@@ -458,7 +459,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 <div id="themesw"></div>
 <header>
   <div class="eyebrow">GO BATTLE LEAGUE</div>
-  <h1>個体値チェッカー<small>4096通り完全計算 — 順位・SCP・必要レベルを一発表示</small></h1>
+  <h1 class="wmk" data-tool="iv-checker">個体値チェッカー<small>4096通り完全計算 — 順位・SCP・必要レベルを一発表示</small></h1>
 </header>
 
 <div class="card">
