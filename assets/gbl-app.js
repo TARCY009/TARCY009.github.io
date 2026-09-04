@@ -9054,7 +9054,7 @@ function render(res, L, R, matrix) {
       <div class="vsmark" style="visibility:hidden">VS</div>
       <div class="mvside"><div class="mvhead">${res.final[1].name}の技</div>${mvRows(1)}</div>
     </div>
-    <a class="bplink" href="${bpUrl(L, R)}">🎯 ブレイクポイント<small>ダメージが変わる境目を先回り</small><b>↗</b></a>`;
+    <a class="bplink" href="${bpUrl(L, R)}">🎯 ブレイクポイント<small>この個体でダメージが変わる境目をチェック</small><b>↗</b></a>`;
   // 3×3表のマスをタップ→両者のシールド枚数をその組み合わせに変更
   rEl.querySelectorAll('.shmtx td[data-a]').forEach(td => td.onclick = () => {
     [+td.dataset.a, +td.dataset.b].forEach((v, i) => {
