@@ -334,18 +334,25 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 // キャッシュを使わずに取り直して1回だけ再読み込みする ③それでも直らなければ上に案内を出す(下の timelineHtml も値が無ければ「—」を出す)
 const RAID_ENGINE_VER='2026-09-04.2';
 (function(){
-  const have=window.RaidEngine&&RaidEngine.VERSION;
-  if(have===RAID_ENGINE_VER)return;
-  let tried=false; try{ tried=sessionStorage.getItem('raid_engine_reload')===RAID_ENGINE_VER; }catch(e){}
-  if(!tried){
-    try{ sessionStorage.setItem('raid_engine_reload',RAID_ENGINE_VER); }catch(e){}
-    fetch('/assets/raid-engine.js',{cache:'reload'}).catch(()=>{}).finally(()=>location.reload());
-    return;
-  }
-  const b=document.createElement('div');
-  b.style.cssText='margin:10px auto;max-width:720px;padding:10px 14px;border-radius:10px;background:#ff6b6b;color:#210;font-weight:700;font-size:.85rem';
-  b.textContent='計算エンジンの古いファイルがブラウザに残っています（期待 '+RAID_ENGINE_VER+' / 読み込まれた '+(have||'不明')+'）。ページをキャッシュを消して再読み込みしてください。';
-  document.body.prepend(b);
+  try{
+    const have=window.RaidEngine&&RaidEngine.VERSION;
+    // 読み直しの目印はURL(?_r=版)に付ける。記憶領域(sessionStorage)が使えない端末でも
+    // 2回目は絶対に読み直さない(無限ループを起こさない)
+    const q=new URLSearchParams(location.search);
+    const retried=q.get('_r')===RAID_ENGINE_VER;
+    if(retried){ q.delete('_r'); history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')); }
+    if(have===RAID_ENGINE_VER)return;
+    if(!retried){
+      q.set('_r',RAID_ENGINE_VER);
+      const go=()=>location.replace(location.pathname+'?'+q.toString());
+      try{ fetch('/assets/raid-engine.js',{cache:'reload'}).then(go,go); }catch(e){ go(); }
+      return;
+    }
+    const b=document.createElement('div');
+    b.style.cssText='margin:10px auto;max-width:720px;padding:10px 14px;border-radius:10px;background:#ff6b6b;color:#210;font-weight:700;font-size:.85rem';
+    b.textContent='計算エンジンの古いファイルがブラウザに残っています（期待 '+RAID_ENGINE_VER+' / 読み込まれた '+(have||'不明')+'）。ページをキャッシュを消して再読み込みしてください。';
+    document.body.prepend(b);
+  }catch(e){ console.warn('version check failed', e); }
 })();
 (async()=>{
 const D = await (await fetch('/godata.json')).json();
