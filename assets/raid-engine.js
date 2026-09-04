@@ -210,6 +210,9 @@
     };
   }
 
-  root.RaidEngine = { simulate: simulate, damage: damage,
+  // 版番号: raid/index.html が同じ値を期待し、食い違ったら古いキャッシュとみなして取り直す(2026-09-04)。
+  // ⚠ このファイルを変えたら必ず上げ、raid/index.html の RAID_ENGINE_VER と <script src> の ?v= も同じ値にする
+  var VERSION = '2026-09-04.2';
+  root.RaidEngine = { simulate: simulate, damage: damage, VERSION: VERSION,
     PLAYER_START: PLAYER_START, BOSS_STARTS: BOSS_STARTS, BOSS_GAP: BOSS_GAP };
 })(typeof window !== 'undefined' ? window : globalThis);

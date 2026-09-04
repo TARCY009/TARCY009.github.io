@@ -320,8 +320,28 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <script src="/assets/explain.js"></script>
 <script src="/assets/home.js"></script>
 <script src="/assets/mega-lv.js"></script>
-<script src="/assets/raid-engine.js"></script>
+<script src="/assets/raid-engine.js?v=2026-09-04.2"></script>
 <script>
+// ---- エンジンの版チェック(2026-09-04タダシさん報告で追加) ----
+// 画面だけ新しく、エンジン(raid-engine.js)がブラウザのキャッシュに古いまま残ると、
+// タイムラインが undefined/NaN になったり、メガの再突入ルールが効かなかったりする(実際に本番で起きた)。
+// 対策は3段: ①<script src> に ?v= を付けてキャッシュを避ける ②エンジンの VERSION がこの値と違ったら
+// キャッシュを使わずに取り直して1回だけ再読み込みする ③それでも直らなければ上に案内を出す(下の timelineHtml も値が無ければ「—」を出す)
+const RAID_ENGINE_VER='2026-09-04.2';
+(function(){
+  const have=window.RaidEngine&&RaidEngine.VERSION;
+  if(have===RAID_ENGINE_VER)return;
+  let tried=false; try{ tried=sessionStorage.getItem('raid_engine_reload')===RAID_ENGINE_VER; }catch(e){}
+  if(!tried){
+    try{ sessionStorage.setItem('raid_engine_reload',RAID_ENGINE_VER); }catch(e){}
+    fetch('/assets/raid-engine.js',{cache:'reload'}).catch(()=>{}).finally(()=>location.reload());
+    return;
+  }
+  const b=document.createElement('div');
+  b.style.cssText='margin:10px auto;max-width:720px;padding:10px 14px;border-radius:10px;background:#ff6b6b;color:#210;font-weight:700;font-size:.85rem';
+  b.textContent='計算エンジンの古いファイルがブラウザに残っています（期待 '+RAID_ENGINE_VER+' / 読み込まれた '+(have||'不明')+'）。ページをキャッシュを消して再読み込みしてください。';
+  document.body.prepend(b);
+})();
 (async()=>{
 const D = await (await fetch('/godata.json')).json();
 // メガの追加SPアタック「＋わざ」は、メガレベルが上がるほど威力が上がる(既定はLv4＝1.3倍)
@@ -704,17 +724,23 @@ function timelineHtml(){
   const r=RaidEngine.simulate(cfg);
   const MAXROW=500;
   const bp=D.pokemon[boss];
+  // エンジンの記録(bl/mh)が無い行があれば、こちらで与ダメージを積み上げて補う(undefined/NaN を絶対に出さない)
+  let cum=0, lacked=false;
   const rowsH=r.log.slice(0,MAXROW).map(x=>{
+    if(x.side==='me'&&x.dmg)cum+=x.dmg;
+    const bl=x.bl!=null?x.bl:(lacked=true,Math.max(0,t.hp-cum*selN));
+    const mh=x.mh!=null?x.mh:'—';
     // ボスの残りHP(数値と%)・じぶんのHP。行ごとに出すので「どのくらい削れているか」がタイムラインだけで読める
-    const bpct=Math.max(0,Math.round(x.bl/t.hp*100));
-    const bhp=`<td class="bhp"><b>${x.bl}</b><small>${bpct}%</small><i style="width:${bpct}%"></i></td>`;
-    const mhp=`<td class="mhp">${x.mh}</td>`;
+    const bpct=Math.max(0,Math.min(100,Math.round(bl/t.hp*100)))||0;
+    const bhp=`<td class="bhp"><b>${bl}</b><small>${bpct}%</small><i style="width:${bpct}%"></i></td>`;
+    const mhp=`<td class="mhp">${mh}</td>`;
     if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td>${bhp}${mhp}</tr>`;
     const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
     const cls=x.side==='me'?'me':'boss';
     return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
       <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td>${bhp}${mhp}</tr>`;
   }).join('');
+  if(lacked)console.warn('レイドシミュ: エンジンの記録にHPが無い行があります(エンジンが古い可能性)');
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
   const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で討伐`:`時間切れ・ボスの残りHP ${Math.round(r.bossLeft/t.hp*100)}%`;
   const hasMega=cfg.team.some(m=>m.mega);
