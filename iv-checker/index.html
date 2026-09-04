@@ -33,7 +33,7 @@
 :root{
   --bg:#0c1122; --bg2:#131a33; --panel:#1a2342; --line:#2a3560;
   --ink:#eef1fb; --sub:#8b96c2; --cy:#43e0ff;
-  --gl:#4d8dff; --ul:#f5c542; --ml:#b06cff;
+  --gl:#4d8dff; --ul:#f5c542; --ml:#b06cff; --lc:#5be0b0;
   --good:#3ddc84; --warn:#ff6b81;
   --bgimg:radial-gradient(1000px 500px at 50% -10%, #1d2a55 0%, transparent 60%), #0c1122;
   --sughover:#232e58; --segoff:#25305c;
@@ -61,7 +61,7 @@
 :root.light{
   --bg:#eef2fc; --bg2:#fbfcff; --panel:rgba(255,255,255,.88); --line:#dfe6f5;
   --ink:#20263a; --sub:#6a7391; --cy:#0b8fa8;
-  --gl:#3b6ef0; --ul:#b3820b; --ml:#8b5cf6;
+  --gl:#3b6ef0; --ul:#b3820b; --ml:#8b5cf6; --lc:#158f63;
   --good:#1f9d55; --warn:#d63a52;
   /* 白一色にせず、このツールの色(青・紫・水色)を淡くにじませる */
   --bgimg:
@@ -184,6 +184,9 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .src,.fl,.srt,.cap,.evb,.evf{--mc:var(--mcC);--mi:#042330;--mgl:rgba(8,180,201,.42);
   --mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%)}
 .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+/* リーグは4枚(リトル・スーパー・ハイパー・マスター・2026-09-04)。狭い画面では字間を詰めて4枚を収める */
+#lgtabs{grid-template-columns:repeat(4,1fr);gap:6px}
+@media(max-width:400px){#lgtabs .lgc .lgc-n{letter-spacing:.02em;font-size:.64rem} #lgtabs .lgc .lgc-r{font-size:1.3rem}}
 .tab{padding:11px 4px;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;text-align:center}
 .tab small{display:block;font-size:.65rem;font-weight:500;margin-top:2px;opacity:.8}
 .card.compact{padding:10px 12px;margin-bottom:12px}
@@ -290,6 +293,7 @@ body.has-sticky{padding-top:52px}
   box-shadow:inset 0 1px 0 var(--tabin);transition:transform .12s ease,border-color .12s ease}
 .lgc:hover{transform:translateY(-1px)}
 .lgc .lgc-n{display:block;font-size:.68rem;font-weight:700;letter-spacing:.08em}
+.lgc[data-lg="lc"] .lgc-n{color:var(--lc)}
 .lgc[data-lg="gl"] .lgc-n{color:var(--gl)}
 .lgc[data-lg="ul"] .lgc-n{color:var(--ul)}
 .lgc[data-lg="ml"] .lgc-n{color:var(--ml)}
@@ -304,6 +308,7 @@ body.has-sticky{padding-top:52px}
 .lgc .lgc-r .u{font-size:.78rem;color:var(--sub);font-weight:700;margin-left:1px}
 /* 選択中の枠は少しだけ太く見せる(2026-08-16タダシさん指示)。
    borderを太らせると中身がずれるので、枠線の外へ同色のリングを重ねて実質2.5pxにする */
+.lgc.act[data-lg="lc"]{border-color:var(--lc);box-shadow:0 0 0 1.5px var(--lc),inset 0 1px 0 var(--tabin)}
 .lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--gl),inset 0 1px 0 var(--tabin)}
 .lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 0 1.5px var(--ul),inset 0 1px 0 var(--tabin)}
 .lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 0 1.5px var(--ml),inset 0 1px 0 var(--tabin)}
@@ -312,12 +317,12 @@ body.has-sticky{padding-top:52px}
    「位」は子要素なので自分の色(--sub)のまま残る。
    ※ 色は必ず background-image で指定する。background のショートハンドを使うと
    background-clip:text がリセットされ、文字ではなく帯が塗られてしまう(実際に踏んだ) */
-.lgc-r.r1,.lgc-r.r10,.lgc-r.r100{-webkit-background-clip:text;background-clip:text;color:transparent}
-.lgc-r.r1{background-image:linear-gradient(180deg,#ffeaa8 0%,var(--mgold) 52%,#c08d12 100%);
+.lgc-r.r1,.lgc-r.r10,.lgc-r.r100,.famranks b.r1,.famranks b.r10,.famranks b.r100{-webkit-background-clip:text;background-clip:text;color:transparent}
+.lgc-r.r1,.famranks b.r1{background-image:linear-gradient(180deg,#ffeaa8 0%,var(--mgold) 52%,#c08d12 100%);
   filter:drop-shadow(0 3px 16px rgba(242,193,78,.45))}
-.lgc-r.r10{background-image:linear-gradient(180deg,#ffffff 0%,var(--msilver) 52%,#8f9dad 100%);
+.lgc-r.r10,.famranks b.r10{background-image:linear-gradient(180deg,#ffffff 0%,var(--msilver) 52%,#8f9dad 100%);
   filter:drop-shadow(0 3px 14px rgba(200,211,222,.32))}
-.lgc-r.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%);
+.lgc-r.r100,.famranks b.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%);
   filter:drop-shadow(0 3px 14px rgba(201,141,95,.32))}
 /* CPから: 当てはまる個体値の表(5列)。順位の色は1位=金／10位以内=銀／100位以内=銅のグループ分け */
 #cptbl th:nth-child(1),#cptbl td:nth-child(1){width:13%}
@@ -440,6 +445,22 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   background:rgba(67,224,255,.1);color:var(--cy);font-size:.9rem;font-weight:700;cursor:pointer}
 #copybtn:active{background:rgba(67,224,255,.22)}
 /* ブレイクポイント専用ページ(/breakpoint/)へのリンク(GBLの .bplink と同じ質感) */
+/* 進化系統の順位(2026-09-04): 1匹1枚のカード。上に名前とタイプ、4リーグの順位の札、下に選択中リーグのTOP5 */
+.famcard{margin-top:10px;padding:10px 10px 8px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--bg2),var(--panel))}
+.famhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.famhd b{font-size:.98rem;font-weight:800}
+.famranks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.famranks>span{display:block;text-align:center;padding:5px 2px;border-radius:8px;border:1px solid var(--line);background:var(--panel)}
+.famranks>span i{display:block;font-style:normal;font-size:.6rem;font-weight:700;letter-spacing:.06em}
+.famranks>span[data-lg="lc"] i{color:var(--lc)} .famranks>span[data-lg="gl"] i{color:var(--gl)}
+.famranks>span[data-lg="ul"] i{color:var(--ul)} .famranks>span[data-lg="ml"] i{color:var(--ml)}
+.famranks>span b{display:inline-block;font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2;color:var(--ink)}
+.famranks>span b .u{font-size:.66rem;font-weight:700;margin-left:1px;color:var(--sub);-webkit-text-fill-color:var(--sub)}
+.famranks>span.act{border-color:var(--cy)}
+.famtbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:.76rem}
+.famtbl th{font-size:.62rem;font-weight:700;color:var(--sub);padding:4px 2px;white-space:nowrap}
+.famtbl td{text-align:center;padding:4px 2px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.famtbl tr.me td{background:var(--mebg)}
 .bplink{display:flex;align-items:center;gap:8px;margin-top:10px;padding:11px 14px;border-radius:12px;
   font-size:.82rem;font-weight:800;text-decoration:none;color:#3a2a00;
   background:linear-gradient(160deg,#ffe27a 0%,#f0a827 45%,#c47f10 100%);
@@ -531,11 +552,12 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div id="lgtitle" class="lgtitle" style="display:none"></div>
   <label class="sec" id="lgcardlabel">リーグ</label>
   <div class="tabs" id="lgtabs">
+    <button class="lgc" data-lg="lc" title="CP500以下（リトルカップ）でのこの個体値の順位（全4096通り中）を出します。最近は開催されていませんが、終了の発表が無いので残してあります"><span class="lgc-n">リトル</span><span class="lgc-r" id="lgr-lc">—</span><small class="expl">CP500以下</small></button>
     <button class="lgc act" data-lg="gl" title="CP1500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">スーパー</span><span class="lgc-r" id="lgr-gl">—</span><small class="expl">CP1500以下</small></button>
     <button class="lgc" data-lg="ul" title="CP2500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small class="expl">CP2500以下</small></button>
     <button class="lgc" data-lg="ml" title="CP制限なしでのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small class="expl">制限なし</small></button>
   </div>
-  <div class="iv-hint expl" id="lghint" style="margin-top:8px">3リーグの順位を同時表示。タップで詳細を切替。</div>
+  <div class="iv-hint expl" id="lghint" style="margin-top:8px">4リーグの順位を同時表示。タップで詳細を切替。リトル＝CP500のリトルカップ。</div>
   <div class="capsel" id="sortrow">
     <span>並び順</span>
     <div class="seg">
@@ -629,6 +651,13 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <button id="copybtn">結果をコピー</button>
   <div class="iv-hint" id="copied" style="display:none;text-align:center">コピーしました!</div>
   <a id="bplink" class="bplink" href="/breakpoint/" title="この個体値のまま、環境上位の相手にダメージが変わる境目（ブレイクポイント）を調べる専用ページへ移動します">🎯 ブレイクポイント<small>この個体でダメージが変わる境目をチェック</small><b>↗</b></a>
+  <!-- 進化系統の順位(2026-09-04タダシさん指示): 個体値は進化しても変わらないので、この個体値のまま
+       進化前・進化後・メガにしたときの順位(4リーグ)と、選択中のリーグのTOP5を並べる -->
+  <div id="famwrap" style="display:none;margin-top:16px">
+    <label class="sec">進化系統の順位</label>
+    <div class="iv-hint" id="famnote">個体値は進化しても変わらないので、<b>この個体値のまま</b>進化前・進化後・メガにしたときの順位です。表は選択中のリーグのTOP5。</div>
+    <div id="fambody"></div>
+  </div>
 </div>
 
 <button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
@@ -678,6 +707,12 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <p>探すのは<b>PL1〜35の整数レベル</b>です（野生で出るのは整数レベルなので、強化したあとの半端なPLは対象外）。
     順位は「入手方法」「PL上限」の前提で数えるので、<b>野生の想定なら入手方法は「野生」（最低個体値0）</b>にします
     （「CP→個体値」を押すと自動で野生になり、もう一度押して戻すと元の設定に戻ります）。</p>
+  <h4>リトルカップ（CP500）</h4>
+  <p>リーグの左端の<b>リトル</b>は、CP500以下で戦うリトルカップでの順位です。最近は開催されていませんが、終了の発表が無いため残してあります。進化前のポケモン（デルビルなど）の厳選に使えます。</p>
+  <h4>進化系統の順位</h4>
+  <p>結果のいちばん下に、<b>同じ系統のポケモン（進化前・進化後・メガ）</b>の順位を並べます。個体値は進化しても変わらないので、
+    <b>この個体値のまま進化させたときの順位</b>がそのまま分かります（例: ヘルガーを選ぶとデルビルとメガヘルガー）。
+    札の4つは4リーグの順位、表は選択中のリーグのTOP5です。メガの行はメガLv4などのPL上限をそのまま使い、通常のポケモンには当てません。</p>
   <h4>進化前CP</h4>
   <p>進化形のポケモンでは、一覧の右上の「進化前CP」で<b>進化する前の姿を同じPL・同じ個体値にしたときのCP</b>の列を足せます。
     入手時からPLが高い個体もいますが、ゲーム画面ではPLを確認できません。そのため高順位だと思って進化させたら
@@ -696,7 +731,7 @@ const POKE = [{"i":"bulbasaur","n":"フシギダネ","e":"Bulbasaur","d":1,"a":1
 
 const state = { p:null, mode:'iv', iv:[10,10,10], league:'gl', cap:50, floor:0, sort:'scp',
   evoCol:false, evoFrom:null, evoChain:[], hdLv:null };  // 進化前CP列(トグル・どの姿から・進化前の系列)／100%チェックで選んだPL
-const CAPS = { gl:1500, ul:2500, ml:null };
+const CAPS = { lc:500, gl:1500, ul:2500, ml:null };   // lc=リトルカップ(CP500・2026-09-04追加)
 
 const floor = Math.floor, sqrt = Math.sqrt;
 function cp(a,d,h,m){ return Math.max(10, floor(a*sqrt(d)*sqrt(h)*m*m/10)); }
@@ -790,7 +825,7 @@ function findRank(rows,iv){
 }
 
 function buildShareText(rank,pool,me){
-  const lg={gl:'スーパーリーグ',ul:'ハイパーリーグ',ml:'マスターリーグ'}[state.league];
+  const lg={lc:'リトルカップ',gl:'スーパーリーグ',ul:'ハイパーリーグ',ml:'マスターリーグ'}[state.league];
   const srt=state.sort==='atk'?'・攻撃優先':'';
   return state.p.n+' '+me.ia+'/'+me.id+'/'+me.ih+' '+lg+' '+rank+'位/'+pool+'通り'+srt+'(最低個体値'+state.floor+') CP'+me.cp+' PL'+me.lv;
 }
@@ -808,7 +843,7 @@ function render(){
   const sticky=document.getElementById('sticky');
 
   // --- 3リーグ同時計算 ---
-  const leagues=['gl','ul','ml'];
+  const leagues=['lc','gl','ul','ml'];
   const detail={};
   leagues.forEach(lg=>{
     const rows=assignRanks(sortRows(rankAll(state.p, CAPS[lg], state.cap, state.floor)));
@@ -853,6 +888,7 @@ function render(){
     sticky.style.display='none';
     document.body.classList.remove('has-sticky');
     lastShare='';
+    scheduleFamily();
     return;
   }
 
@@ -892,12 +928,12 @@ function render(){
   document.getElementById('lvnote').textContent=notes.join(' ');
 
   // ブレイクポイントページへのリンク(選択中のリーグ・この個体値を引き継ぐ)
-  const lgv={gl:'1500',ul:'2500',ml:'0'}[state.league];
+  const lgv={lc:'0',gl:'1500',ul:'2500',ml:'0'}[state.league];   // ブレイクポイントにリトルは無いのでリーグ指定なしで渡す
   document.getElementById('bplink').href='/breakpoint/?'+(lgv==='0'?'':'lg='+lgv+'&')+
     'me='+encodeURIComponent(state.p.i)+'&miv='+state.iv.join('.');
 
   // --- スティッキーバー ---
-  const lgName={gl:'スーパー',ul:'ハイパー',ml:'マスター'}[state.league];
+  const lgName={lc:'リトル',gl:'スーパー',ul:'ハイパー',ml:'マスター'}[state.league];
   document.getElementById('stk-name').textContent=state.p.n+' '+ia+'/'+id_+'/'+ih;
   const sr=document.getElementById('stk-rank');
   sr.textContent=lgName+' '+rank+'位';
@@ -906,6 +942,65 @@ function render(){
   document.body.classList.add('has-sticky');
 
   lastShare=buildShareText(rank,pool,me);
+  scheduleFamily();
+}
+
+// ===== 進化系統の順位(2026-09-04タダシさん指示) =====
+// 例: ヘルガーを選ぶと デルビル と メガヘルガー の順位も出す。個体値は進化しても変わらないので、
+// 「この個体値のまま進化させたら何位か」がそのまま分かる。
+// 4096通りの表(rows)は個体値に依らないので famCache に持ち、バーのドラッグ中は findRank だけで済ませる。
+// 計算は少し遅らせて(120ms)まとめる＝ドラッグを重くしない
+const famCache={};
+let famTimer=null;
+function familyOf(p){
+  // メガ・ゲンシは元の姿の系統に含める
+  const baseId=p.i.replace(/_(mega(_[xy])?|primal)$/,'');
+  const base=POKE[IDX[baseId]]||p;
+  const line=[...preChain(base), base, ...descendants(base)];
+  const out=[], seen=new Set();
+  const add=m=>{ if(m && !seen.has(m.i) && m.i!==p.i){ seen.add(m.i); out.push(m); } };
+  line.forEach(add);
+  // 系統の各ポケモンのメガ・ゲンシ(charizard→charizard_mega_x/y のように id の頭が一致するもの)
+  line.forEach(m=>POKE.forEach(x=>{ if(x.i!==m.i && (x.i.indexOf(m.i+'_mega')===0 || x.i.indexOf(m.i+'_primal')===0)) add(x); }));
+  return out;
+}
+function famRows(m,lg){
+  const mega=/_(mega|primal)/.test(m.i);
+  const cap=mega? state.cap : (state.cap>51? 50 : state.cap);   // メガ専用のPL上限(52/53/55)は通常のポケモンには当てない
+  const key=m.i+'|'+lg+'|'+cap+'|'+state.floor+'|'+state.sort;
+  if(!famCache[key]) famCache[key]=assignRanks(sortRows(rankAll(m, CAPS[lg], cap, state.floor)));
+  return famCache[key];
+}
+function scheduleFamily(){
+  clearTimeout(famTimer);
+  famTimer=setTimeout(renderFamily,120);
+}
+function renderFamily(){
+  const wrap=document.getElementById('famwrap'), body=document.getElementById('fambody');
+  if(!state.p||state.mode!=='iv'){ wrap.style.display='none'; return; }
+  const fam=familyOf(state.p);
+  if(!fam.length){ wrap.style.display='none'; return; }
+  const LG=[['lc','リトル'],['gl','スーパー'],['ul','ハイパー'],['ml','マスター']];
+  const belowFloor=Math.min(...state.iv)<state.floor;
+  const rk=r=>r+'<span class="u">位</span>';
+  body.innerHTML=fam.map(m=>{
+    const ranks=LG.map(([lg,nm])=>{
+      const rows=famRows(m,lg);
+      const idx=belowFloor? -1 : findRank(rows,state.iv);
+      const na=(state.sort==='atk' && lg!=='ml');
+      const r=(idx>=0&&!na)? rows[idx].rank : null;
+      return '<span data-lg="'+lg+'"'+(lg===state.league?' class="act"':'')+'><i>'+nm+'</i><b class="'+(r?medalCls(r):'')+'">'+(r? rk(r) : '—')+'</b></span>';
+    }).join('');
+    const rows=famRows(m,state.league);
+    const myIdx=belowFloor? -1 : findRank(rows,state.iv);
+    const top=rows.slice(0,5).map((r,i)=>'<tr'+(i===myIdx?' class="me"':'')+'><td>'+r.rank+'位</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td></tr>').join('');
+    return '<div class="famcard"><div class="famhd"><b>'+m.n+'</b>'+typesHtml(m,16)+'</div>'+
+      '<div class="famranks">'+ranks+'</div>'+
+      (top? '<table class="famtbl"><thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th></tr></thead><tbody>'+top+'</tbody></table>'
+          : '<div class="iv-hint" style="margin-top:6px">このリーグのCP制限に収まる個体がありません</div>')+
+      '</div>';
+  }).join('');
+  wrap.style.display='block';
 }
 
 // ===== 100%チェック(個体値15/15/15のCPを、入手した場面のPLごとに出す) =====
@@ -1339,7 +1434,7 @@ function setLeague(lg){
   document.querySelectorAll('.lgc').forEach(x=>x.classList.toggle('act', x.dataset.lg===lg));
   updateSortAvail();
   // CP制限リーグ(GL/UL)に切替時、伝説・UBなら交換(最低1)をデフォルト適用
-  if((lg==='gl'||lg==='ul') && state.p && state.p.l===1){
+  if((lg==='lc'||lg==='gl'||lg==='ul') && state.p && state.p.l===1){
     applyDefaultFloor(true,false);
   }
   render();
