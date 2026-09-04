@@ -32,6 +32,11 @@ MEGA_PLUS_PVP_CHECK = {
     'SEED_BOMB_PLUS':     (60,  -40), 'MYSTICAL_FIRE_PLUS': (50,  -40),
     'SURF_PLUS':          (55,  -35), 'BRICK_BREAK_PLUS':   (40,  -35),
     'PSYBEAM_PLUS':       (60,  -45),
+    # 2026-09-04追加分(公式発表は威力だけ・消費ゲージは未発表)。ゲージ None＝威力だけ突き合わせる。
+    # ⚠ 対戦データはゲージが分からないうちは手で入れない(威力だけ入れると実在しない性能になる)。
+    #   情報元に入った時点で自動収録され、威力が公式と違えば警告が出る
+    'DARK_PULSE_PLUS':    (60,  None),   # あくのはどう+(メガヘルガー)
+    'FELL_STINGER_PLUS':  (40,  None),   # とどめばり+(メガスピアー・こうげき+1)
 }
 
 # PvPoke固有ID・i18n未収録の技の日本語名(GM側と表記が違うものはID照合で解決するのでここは最小限)
@@ -173,7 +178,7 @@ def main():
             if k_src in mv:
                 e[k_dst] = float(mv[k_src]) if k_src == 'buffApplyChance' else mv[k_src]
         want = MEGA_PLUS_PVP_CHECK.get(mid)
-        if want and (mv['power'], -abs(mv['energy'])) != (want[0], want[1]):
+        if want and (mv['power'] != want[0] or (want[1] is not None and -abs(mv['energy']) != want[1])):
             print(f'警告: ＋わざの対戦数値が確定値と違います → {mid} '
                   f'情報元{mv["power"]}/{mv["energy"]} 確定値{want[0]}/{want[1]}')
         plus_moves[mid] = e
@@ -226,13 +231,17 @@ def main():
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
             if 'mythical' in p['tags']: pokes[sid]['myth'] = 1
-    # 追加SPアタック(3本目)を持つ13匹に印を付ける。既存の c / ec には足さないので
-    # /gbl/・/rocket/・ブレイクポイント・対戦記録の結果は一切変わらない
+    # 追加SPアタック(3本目)を持つメガに印を付ける。既存の c / ec には足さないので
+    # /gbl/・/rocket/・ブレイクポイント・対戦記録の結果は一切変わらない。
+    # 対戦データ側にまだわざ定義が無いもの(plus_moves に入っていない)には印を付けない
+    # (図鑑がトレーナーバトルの表で存在しないわざを引いてしまうため)
     plus_ok = 0
     for mid, (mkey, *_rest) in MEGA_PLUS_MOVES.items():
         sid = mkey.lower()
         if sid not in pokes:
             print('警告: ＋わざの対象メガが対戦データにありません →', sid, mid); continue
+        if mid not in plus_moves:
+            print('対戦側は未収録のため印を付けない →', sid, mid); continue
         pokes[sid]['cp'] = mid
         plus_ok += 1
     print(f'メガの追加SPアタック: {plus_ok}/{len(MEGA_PLUS_MOVES)}匹（対戦用は plusMoves に別枠で収録）')
