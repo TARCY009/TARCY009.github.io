@@ -75,7 +75,7 @@ jobs:
                  gym-defense/data/defense_data.js gym-defense/data/defense_data.json
                  max-battle/data/max_data.js
                  pvp_data.js pvp_data.json assets/meta_moves.js
-                 iv-checker/index.html"
+                 iv-checker/index.html pokedex/unreleased.json"
           if git diff --quiet -- $FILES; then
             echo "データに変化なし。今回は更新しない"
             echo "changed=0" >> "$GITHUB_OUTPUT"
