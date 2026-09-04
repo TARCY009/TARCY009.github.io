@@ -7,7 +7,7 @@
        explain.js より後に読むと、この🏠が並びのいちばん左に来る）
    トップページ(いちばん短い住所)では出さない（自分自身へのリンクになるため・home.js が判定）。
 
-   見た目は💡説明ボタンと同じピル型にそろえる。押している状態は無い（リンクなので）。
+   見た目は📖説明ボタンと同じピル型にそろえる。押している状態は無い（リンクなので）。
    セレクタは必ず #themesw 付きにする: ボタンは #themesw の中に入るため、
    theme.css の「.themesw button」に詳細度で勝つ必要がある（実際に踏んだ落とし穴と同じ） */
 #themesw .homesw{font:inherit;font-size:.92rem;line-height:1;font-weight:800;
@@ -20,10 +20,10 @@
   box-shadow:0 4px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
 #themesw .homesw:focus-visible{outline:2px solid #8b5cf6;outline-offset:2px}
 #themesw .homesw .hi{font-style:normal;display:inline-block}
-/* ライトテーマ（白い土台でも読める濃さにする。💡説明ボタンと同じ色にそろえてある） */
+/* ライトテーマ（白い土台でも読める濃さにする。📖説明ボタンと同じ色にそろえてある） */
 :root.light #themesw .homesw{color:#5b6b96;border-color:#dfe6f5;
   background:linear-gradient(180deg,#fff,#eff3fc);
   box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
 :root.light #themesw .homesw:hover{box-shadow:0 4px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
-/* 狭い画面では文字を隠して🏠だけにする（💡説明ボタンと同じ考え方） */
+/* 狭い画面では文字を隠して🏠だけにする（📖説明ボタンと同じ考え方） */
 @media (max-width:430px){#themesw .homesw{padding:6px 10px;font-size:.85rem}#themesw .homesw .ht{display:none}}

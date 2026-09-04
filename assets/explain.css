@@ -1,5 +1,5 @@
-/* 説明ありモード(💡)の切り替えスイッチ（全ツール共通）
-   explain.js がテーマスイッチ(#themesw)の先頭に💡ボタンを差し込むので、
+/* 説明ありモード(📖)の切り替えスイッチ（全ツール共通）
+   explain.js がテーマスイッチ(#themesw)の先頭に📖ボタンを差し込むので、
    ページ側のHTMLに追加する要素は無い。やることは theme と同じ流儀の3行だけ:
    ・<head> に explain.css を読み込む
    ・テーマの早期適用scriptの「直後」で次を実行する
@@ -35,7 +35,7 @@
 @keyframes ebpop{0%{transform:scale(1)}45%{transform:scale(1.3) rotate(-8deg)}100%{transform:scale(1)}}
 @media (max-width:430px){#themesw .explainsw{padding:6px 10px;font-size:.85rem}#themesw .explainsw .et{display:none}}
 
-/* ---- 長押し照準の説明ウィンドウ（💡ONのあいだだけ） ---- */
+/* ---- 長押し照準の説明ウィンドウ（📖ONのあいだだけ） ---- */
 /* 説明を持つ部品に点線の印を付ける＝どこを長押しできるかを見せる。
    ついでに長押しでOSの文字選択・吹き出しが出ないようにしておく */
 .explain [title],.explain [data-help]{outline:1px dashed rgba(34,201,224,.5);outline-offset:2px;

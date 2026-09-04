@@ -339,7 +339,7 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 .rname .tag-s{color:var(--shadow);font-weight:800}
 /* 幅が足りない時はPL表記から先に縮め、ポケモン名を優先的に残す */
 .rname small{flex:0 999 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--sub);font-weight:400;font-size:.72rem}
-/* 全行共通の「PL50・個体値15」は💡説明モード限定(class="expl"・2026-08-20タダシさん指示)。
+/* 全行共通の「PL50・個体値15」は📖説明モード限定(class="expl"・2026-08-20タダシさん指示)。
    自分のポケモン行は行ごとに異なるPL・個体値を持つため常に出す */
 .rmoves{font-size:.74rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 「PL◯◯で耐える」は結論なので、切らずに折り返して全部見せる */
@@ -633,7 +633,7 @@ function typeIcons(p, size){ return typePairHTML(p.ty.map(t=>D.typeJa[t]), size)
 // シャドウは防御5/6の補正込みで判定(素16000以上でもシャドウで16000未満になる場合がある)
 const isLowBulk=(p,shadow)=>p.df*(shadow?5/6:1)*p.h<16000;
 const lowBulk=(p,shadow)=>isLowBulk(p,shadow)?'<span class="lowbulk" title="倒されやすい目安です（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定します）">⚠️極低耐久</span>':'';
-// 長押し説明(💡)の文言。ランキング行の描画で使い回す
+// 長押し説明(📖)の文言。ランキング行の描画で使い回す
 const T_DPS='1秒あたりの与ダメージです。ノーマルアタック100回ぶんのサイクルで計算し、ボスへのタイプ相性も反映しています';
 const T_RANK='火力が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
 const T_RANKME='登録した自分のポケモンを、この一覧に当てはめたときの順位です';

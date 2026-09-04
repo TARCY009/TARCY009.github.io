@@ -912,7 +912,7 @@ function goalBox(v, dir) {
     note = `メガシンカ中は自動的に＋2＝PL${fmtLv(to)}相当になります` + (base > 50 ? `。PL${fmtLv(base)}には最高の相棒の状態が必要です` : '');
   } else if (to > 50) {
     how = `<b>最高の相棒</b>にして PL<b>${fmtLv(to)}</b> 以上`;
-    // 相棒の説明は知っている前提なので💡説明モードだけ
+    // 相棒の説明は知っている前提なので📖説明モードだけ
     expl = now >= 50 ? 'PL50より上は、最高の相棒にしているあいだだけ＋1されます' : 'PL50までは通常の強化。そこから上は最高の相棒にしているあいだだけ＋1されます';
     if (mega) note = `メガLv4なら PL${fmtLv(to - 2)} でも届きます`;
   } else {
@@ -1184,7 +1184,7 @@ function ivSumCapHtml() {
   const rngLbl = n => n === 1 ? '1位' : n >= 4096 ? '全個体' : `${n}位<small>以内</small>`;
   const seg = `<div class="foerng"><span class="ax foe">あいて</span><span class="rl">の順位</span><span class="seg">${FOE_RNG.map(n =>
     `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}でも届く、じぶんの個体を探します。範囲を広げるほど条件はきびしくなります">${rngLbl(n)}</button>`).join('')}</span></div>`;
-  // 💡説明モードの文。「あいて」の前提 → 「じぶん」のどの個体が届くか、の順で1文ずつ
+  // 📖説明モードの文。「あいて」の前提 → 「じぶん」のどの個体が届くか、の順で1文ずつ
   const hardNote = (FRNG > 1
     ? `あいてが${RNG_LBL(FRNG)}のどの個体でも${dir === 'give' ? 'ダメージが1上がる' : '被ダメージが1下がる'}、じぶんの個体を出します（${dir === 'give' ? 'いちばん硬い' : 'いちばん攻撃が高い'}個体を基準）`
     : `あいてが1位の個体のとき、${dir === 'give' ? 'ダメージが1上がる' : '被ダメージが1下がる'}じぶんの個体を出します`)

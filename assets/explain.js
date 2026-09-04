@@ -1,10 +1,10 @@
-// 説明ありモード(💡)の切り替え＋長押し照準の説明ウィンドウ（全ツール共通）
+// 説明ありモード(📖)の切り替え＋長押し照準の説明ウィンドウ（全ツール共通）
 //
 // 文字数を減らすために画面から外した補足は class="expl" で隠してある（恒久ルール）。
 // このスイッチはルート要素に explain クラスを付け外しして、それを一斉に出し入れする
 // （各ツールのCSSが .expl{display:none} / .explain .expl{display:revert} を持つ）。
 //
-// さらに💡ONのあいだは「長押し照準」が使える:
+// さらに📖ONのあいだは「長押し照準」が使える:
 //   ・説明(title属性 or data-help属性)を持つ部品に点線の印が付く
 //   ・スマホ: 長押し(0.4秒)で照準モードに入り、指の位置の部品が光って説明ウィンドウが出る。
 //     指をスライドすると照準が別の部品へ移り、ウィンドウが差し替わる（照準中はスクロールしない）。
@@ -12,7 +12,7 @@
 //   ・パソコン: マウスを乗せるだけで同じウィンドウが出る
 // 説明文は各ページがもともと持っている title 属性をそのまま使う（新規は data-help でもよい）。
 // title は最初に触れた時点で data-help へ移す（素のツールチップと二重に出さないため）。
-// 💡OFFに戻すと title へ戻す。
+// 📖OFFに戻すと title へ戻す。
 //
 // 使い方は explain.css の冒頭コメントを参照（ページ側の追加は3行だけ）。
 // ボタンはテーマスイッチ(#themesw)の先頭に差し込むので、必ず theme.js の後に読み込むこと。
@@ -173,7 +173,7 @@
     box.insertAdjacentHTML('afterbegin',
       '<button id="explainBtn" class="explainsw" type="button" aria-label="説明ありモード" ' +
       'title="説明ありモード：画面に補足の説明を表示します。点線の印は長押しで説明が出ます">' +
-      '<i class="eb">💡</i><span class="et">説明</span></button>');
+      '<i class="eb">📖</i><span class="et">説明</span></button>');
     document.getElementById('explainBtn').onclick = function () {
       apply(!root.classList.contains('explain'), true);
     };
