@@ -184,6 +184,14 @@ th{padding:8px 6px;font-size:.72rem;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,
 td{padding:9px 6px;text-align:center;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
 tbody tr:nth-child(even){background:var(--zebra)}
 td.mv{text-align:left;padding-left:10px;cursor:pointer}
+/* 「効果」列(能力変化): 1行目=対象と矢印(ほかの数字と同じ大きさ)・2行目=発動確率(小さめ) */
+td.eff{white-space:nowrap;line-height:1.3;padding-left:4px;padding-right:4px}
+td.eff .eg{display:inline-block}
+td.eff .eg+.eg{margin-left:.35em}
+td.eff .ar{display:inline-block;font-style:normal}
+td.eff .ar.m{letter-spacing:-.22em;margin-right:.22em}
+td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;margin-top:1px}
+td.eff .none{color:var(--sub);opacity:.5}
 tbody tr{cursor:pointer}
 tbody tr:hover{background:var(--mebg)}
 .mvnm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:.88rem}
@@ -810,15 +818,15 @@ function renderMoves(){
           <td class="${st?'stab':''}">${num(pw)}</td><td>${m.eg||0}</td><td>${tn}</td><td>${num((m.eg||0)/tn)}</td><td class="${st?'stab':''}">${num(pw/tn)}</td></tr>`; };
       const srow=id=>{ const m=PVP.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
         return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id),id===mv.plus)}</td>
-          <td class="${st?'stab':''}">${num(pw)}</td><td>${m.e}</td><td class="${st?'stab':''}">${num(pw/m.e,2)}</td></tr>`; };
+          <td class="${st?'stab':''}">${num(pw)}</td><td>${m.e}</td><td class="${st?'stab':''}">${num(pw/m.e,2)}</td><td class="eff">${effHtml(m)}</td></tr>`; };
       body=`
       <div class="mvsec"><div class="sec">ノーマルアタック</div>
         <div class="enote expl">威力・DPT・DPEはタイプ一致(1.2倍)込みの値を赤字で示します。1ターン=0.5秒。EPT/DPT=1ターンあたりのゲージ増加/ダメージ。</div>
         <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>ゲージ</th><th>ターン</th><th>EPT</th><th>DPT</th></tr></thead>
         <tbody>${mv.fasts.map(frow).join('')}</tbody></table></div></div>
       <div class="mvsec"><div class="sec">SPアタック</div>
-        <div class="enote expl">消費=撃つのに使うゲージ量。DPE=消費1あたりのダメージ(高いほど効率がよい)。</div>
-        <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>消費</th><th>DPE</th></tr></thead>
+        <div class="enote expl">消費=撃つのに使うゲージ量。DPE=消費1あたりのダメージ(高いほど効率がよい)。効果=能力変化(敵防⬇️=相手の防御ダウン・自攻⬆️=自分の攻撃アップ。矢印の数が段階、下の数字は発動する確率)。</div>
+        <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>消費</th><th>DPE</th><th title="能力変化。敵防⬇️=相手の防御ダウン、自攻⬆️=自分の攻撃アップ。矢印の数が段階、下の数字は発動する確率です">効果</th></tr></thead>
         <tbody>${mv.sps.map(srow).join('')}</tbody></table></div></div>`;
     }
   }
@@ -830,6 +838,20 @@ function renderMoves(){
 
 // ---- わざ詳細ウィンドウ(タップで開く) ----
 const BUFF_JA={atk:'攻撃',def:'防御'};
+// わざ表の「効果」列(2026-09-04タダシさん指示): 敵防⬇️ のように 対象(敵/自)+能力(攻/防)+矢印(段階ぶん)、
+// 改行して小さく発動確率(%)。攻防の両方が動くわざは「自攻⬆️防⬆️」、ブロッキングのように自分と相手の両方なら並べる。
+// 矢印が2本以上のときは字間を詰めて列の幅を広げない
+function effHtml(m){
+  if(!m||!m.bf)return '<span class="none">—</span>';
+  const arrows=n=>{const a=n>0?'⬆️':'⬇️', k=Math.abs(n); return `<span class="ar${k>1?' m':''}">${a.repeat(k)}</span>`;};
+  const part=(who,bf)=>{ let x=''; if(bf[0])x+='攻'+arrows(bf[0]); if(bf[1])x+='防'+arrows(bf[1]); return x?`<span class="eg">${who}${x}</span>`:''; };
+  const main=(m.bt==='both'&&(m.bs||m.bo))
+    ?[part('自',m.bs||[0,0]),part('敵',m.bo||[0,0])].filter(Boolean).join('')
+    :part(m.bt==='opponent'?'敵':'自',m.bf);
+  if(!main)return '<span class="none">—</span>';
+  const pc=m.bc==null?100:Math.round(m.bc*100);
+  return `${main}<small>${pc}%</small>`;
+}
 function buffText(m){
   if(!m||!m.bf)return null;
   const tgt=m.bt==='opponent'?'相手':'自分';
