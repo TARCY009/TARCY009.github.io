@@ -11,6 +11,9 @@
    ・天候ブースト(cfg.wxTypes=対象タイプの配列): 対象タイプのわざが1.2倍。
      こちらだけでなく「ボスのわざ」にも掛かる(2026-08-20タダシさん確認。例: 曇りのきあいだま)
    ・ひんし→次のポケモンは1秒固定。全滅→再突入は既定10秒(設定で変更可)
+   ・メガシンカ・ゲンシカイキ(team[i].mega)はパーティに1匹しか入れられないので、そのポケモンがひんしになったら
+     控えに関係なく「再突入」(rejoin秒)してパーティの先頭からやり直す(2026-09-04タダシさん指示。
+     メガは火力が高いので、メガ1匹で何度も再突入するほうがメガ無しの6匹より速いことがある＝実戦の動き)
    ・チームパワー(cfg.tp=わざ1回あたりの上昇P。2人=1/3人=2/4人=3・0でオフ):
      メーター最大18P。自分のわざ1回ごと(ノーマルもSPも)に+tpされ、満タンなら次のSPアタックが
      2倍になって0Pへ戻る(点灯したら即使う想定)。瀕死交代しても引き継ぐ。
@@ -51,7 +54,7 @@
      limit  … 制限時間(秒)
      eff    … function(わざタイプ, まもり側タイプ[]) → 相性倍率
      boss   … {types, atk, def, hp, fast, chg}   わざ={n,t,p,d,e,w}
-     team   … こちらのパーティ(最大6匹・上から順に出す)。各={types, atk, def, hp, fast, chg, mult}
+     team   … こちらのパーティ(最大6匹・上から順に出す)。各={types, atk, def, hp, fast, chg, mult, mega}
               mult=シャドウ1.2など攻撃補正。全滅したら同じ6匹で再突入する
      N      … 人数(全員が同じパーティの想定。ボスの被ダメ・ゲージに掛かる)
      spMode … 'asap'(即打ち・既定) | 'alt'(撃てる機会の2回に1回・交互) | 'coin'(撃てるとき1/2)
@@ -139,12 +142,13 @@
         total += md;
         if (!e.sp) myE = Math.min(MAX_ENERGY, myE + e.mv.e);
         bE = Math.min(MAX_ENERGY, bE + md * ENERGY_PER_HP * N);   // ボスは全員ぶんでためる
-        L({ t: t, side: 'me', mv: e.mv, dmg: md, sp: e.sp, tp: e.tp, mi: e.mi });
+        L({ t: t, side: 'me', mv: e.mv, dmg: md, sp: e.sp, tp: e.tp, mi: e.mi,
+            bl: Math.max(0, bs.hp - total * N), mh: myHP });
         if (total * N >= bs.hp) { win = true; endT = t; break; }
         // スーパーメガ: HPが80%を切った瞬間にシールド展開(壊さない前提の暫定モデル)
         if (cfg.t7shield && !sh && total * N >= bs.hp * (1 - SH_AT)) {
           sh = 1;
-          L({ t: t, side: 'sys', note: 'ボスがシールドを展開（以後 防御4倍・攻撃1.8倍の暫定値・壊さない前提）' });
+          L({ t: t, side: 'sys', note: 'ボスがシールドを展開（以後 防御4倍・攻撃1.8倍の暫定値・壊さない前提）', bl: Math.max(0, bs.hp - total * N), mh: myHP });
         }
       } else if (e.k === 'bact') {               // ボスの行動
         var canC = bs.chg && bE >= Math.abs(bs.chg.e);
@@ -162,7 +166,7 @@
         ev.push({ t: nt, pr: 0.5, k: 'bact', n: e.n + 1 });
       } else if (e.k === 'bhit') {               // ボスのダメージが入る
         if (t < activeFrom - 1e-9) {             // 交代・再突入の待ちの間は当たらない
-          L({ t: t, side: 'boss', mv: e.mv, dmg: 0, sp: e.sp, miss: true });
+          L({ t: t, side: 'boss', mv: e.mv, dmg: 0, sp: e.sp, miss: true, bl: Math.max(0, bs.hp - total * N), mh: myHP });
           continue;
         }
         var d = e.sp ? bC[sh][mon] : bF[sh][mon];
@@ -175,18 +179,25 @@
         myHP -= d;
         myE = Math.min(MAX_ENERGY, myE + d * ENERGY_PER_HP);
         if (!e.sp) bE = Math.min(MAX_ENERGY, bE + e.mv.e);   // ボスも自分のわざぶんをためる
-        L({ t: t, side: 'boss', mv: e.mv, dmg: d, sp: e.sp, mi: mon, dodged: dodged });
+        L({ t: t, side: 'boss', mv: e.mv, dmg: d, sp: e.sp, mi: mon, dodged: dodged,
+            bl: Math.max(0, bs.hp - total * N), mh: Math.max(0, myHP) });
         if (myHP <= 0) {
           myGen++; faints++;
           myE = 0;
-          if (mon < team.length - 1) {
+          var blNow = Math.max(0, bs.hp - total * N);
+          if (team[mon].mega) {
+            // メガシンカ・ゲンシカイキは1匹だけ → ひんしになったら控えを出さずに再突入してやり直す
+            wipes++; mon = 0;
+            activeFrom = t + cfg.rejoin;
+            L({ t: t, side: 'sys', note: 'メガシンカ・ゲンシカイキがひんし → 再突入(' + cfg.rejoin + '秒・メガは1匹だけなので控えは出さない)', bl: blNow, mh: 0 });
+          } else if (mon < team.length - 1) {
             mon++;
             activeFrom = t + SWAP_SEC;
-            L({ t: t, side: 'sys', note: 'ひんし → 次のポケモン(1秒)' });
+            L({ t: t, side: 'sys', note: 'ひんし → 次のポケモン(1秒)', bl: blNow, mh: 0 });
           } else {
             wipes++; mon = 0;
             activeFrom = t + cfg.rejoin;
-            L({ t: t, side: 'sys', note: '全滅 → 再突入(' + cfg.rejoin + '秒)' });
+            L({ t: t, side: 'sys', note: '全滅 → 再突入(' + cfg.rejoin + '秒)', bl: blNow, mh: 0 });
           }
           myHP = team[mon].hp;
           pushAct(activeFrom, myGen);

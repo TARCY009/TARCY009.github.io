@@ -181,6 +181,10 @@ table.tl tr.me td{background:var(--mero)}
 table.tl tr.boss td{background:var(--bossro)}
 table.tl tr.sys td{color:var(--sub);font-size:.72rem}
 table.tl td.nm{text-align:left;white-space:nowrap}
+table.tl td.bhp{position:relative;white-space:nowrap;min-width:84px;font-variant-numeric:tabular-nums}
+table.tl td.bhp small{margin-left:4px;color:var(--sub);font-size:.68rem}
+table.tl td.bhp i{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,#ff6b6b,#ffb347);opacity:.75;pointer-events:none}
+table.tl td.mhp{font-variant-numeric:tabular-nums;color:var(--sub)}
 .spm{color:var(--ng);font-weight:800}
 .note{font-size:.72rem;color:var(--sub);margin-top:10px}
 .expl{display:none}
@@ -495,7 +499,7 @@ function buildTeamUI(){
       <select id="tC${i}" title="SPアタック"></select>
       <button type="button" class="shbtn" id="tSh${i}" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i></button>
       <button type="button" class="clrslot" id="tX${i}" title="この枠を空にします">✕</button>
-    </div>`).join('');
+    </div>`).join('')+'<p class="note" id="megaNote" style="display:none"></p>';
   for(let i=0;i<6;i++){
     attachSugg($('tIn'+i),$('tSg'+i),k=>{TEAM[i]={k,f:null,c:null,sh:false};fillSlot(i,true);saveTeam();runAll();});
     $('tF'+i).addEventListener('change',()=>{if(TEAM[i]){TEAM[i].f=$('tF'+i).value;saveTeam();runAll();}});
@@ -526,6 +530,19 @@ function renderTeam(){
   // 入れた枠だけで戦う(空き枠は1位で埋めない・2026-08-29タダシさん指示)。
   // 1匹だけ入れると、その1匹が倒れるたびに「全滅→再突入」のロスがかかる
   for(let i=0;i<6;i++)fillSlot(i,false);
+  syncMegaNote();
+}
+// メガシンカ・ゲンシカイキは1匹だけ: 入っていれば「ひんしで再突入」の注記、2匹以上なら最初の1匹だけ使う注記。
+// 枠を選び直すたび(runAll)に同期する
+function syncMegaNote(){
+  const megas=TEAM.filter(s=>s&&D.pokemon[s.k]&&D.pokemon[s.k].mega);
+  const mn=$('megaNote');
+  if(mn){
+    mn.textContent=megas.length>=2
+      ?`⚠ メガシンカ・ゲンシカイキはパーティに1匹だけです。最初の1匹（${D.pokemon[megas[0].k].n}）だけで戦い、ほかのメガは外して計算します`
+      :megas.length===1?`※ ${D.pokemon[megas[0].k].n} がひんしになったら、控えを出さずに再突入（メガは1匹しか使えないため）してやり直します`:'';
+    mn.style.display=(myMode==='team'&&mn.textContent)?'block':'none';
+  }
 }
 // いま使うアタッカーに「＋わざ」持ちがいるか(メガLvを出すかの判断に使う)
 function usesPlus(){
@@ -590,11 +607,13 @@ function monCfg(k,sh,f,c){
   const p=D.pokemon[k];
   return {types:p.ty,atk:(p.a+15)*CPM50,def:(p.df+15)*CPM50*(sh?5/6:1),
     hp:Math.floor((p.h+15)*CPM50),mult:(sh?1.2:1)*boostMult(),
-    fast:mvObj(f),chg:c?mvObj(c):null,name:p.n};
+    fast:mvObj(f),chg:c?mvObj(c):null,name:p.n,mega:!!p.mega};   // mega: ひんしで再突入(1匹だけ使える)
 }
 function buildTeamCfg(){
   if(myMode==='team'){
-    const slots=TEAM.filter(s=>s&&D.pokemon[s.k]&&s.f);
+    // メガシンカ・ゲンシカイキはパーティに1匹まで。2匹目以降は外して戦う(画面に注記を出す)
+    let megaSeen=false;
+    const slots=TEAM.filter(s=>s&&D.pokemon[s.k]&&s.f).filter(s=>{ if(!D.pokemon[s.k].mega)return true; if(megaSeen)return false; megaSeen=true; return true; });
     if(slots.length)return slots.map(s=>monCfg(s.k,!!s.sh,s.f,s.c));
     return null;
   }
@@ -617,7 +636,7 @@ function buildCfg(N,seed,wantLog){
 const TRIALS=30;
 let rows=[],minN=null,selN=null;
 function runAll(){
-  syncMegaLv();
+  syncMegaLv(); syncMegaNote();
   if(!boss||!$('bfSel').value){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
   if(!buildTeamCfg()){
     $('resBody').innerHTML='<div class="empty">'+(myMode==='team'?'パーティに1匹以上入れると結果が出ます':'ボスを選ぶと結果が出ます')+'</div>';
@@ -667,7 +686,7 @@ function renderResult(){
         <td>${r.faints.toFixed(1)}回</td><td>${r.wipes.toFixed(1)}回</td>${tlc(on)}</tr>`;
     }
     return `<tr${sel}${tip} data-n="${r.n}"><td>${r.n}人</td>
-      <td>${r.win?'<span class="okw">勝ち</span>':`<span class="ngw">時間切れ（残${Math.round(r.left/t.hp*100)}%）</span>`}</td>
+      <td>${r.win?'<span class="okw">勝ち</span>':`<span class="ngw">時間切れ（ボス残り${Math.round(r.left/t.hp*100)}%）</span>`}</td>
       <td>${r.win?`残り${(t.time-r.t).toFixed(1)}秒`:'—'}</td>
       <td>${r.dps.toFixed(1)}</td>
       <td>${r.faints}回</td><td>${r.wipes}回</td>${tlc(on)}</tr>`;
@@ -676,7 +695,8 @@ function renderResult(){
     `<table class="res"><thead><tr><th>人数</th><th>結果</th><th title="倒しきったときの残り時間です">残り時間</th><th title="1人あたりの与ダメージ÷経過時間。ひんし・再突入で攻撃できない時間も含んだ実戦の火力です">実戦DPS</th><th title="1人あたり何匹倒されるか（ひんし→次まで1秒）">ひんし</th><th title="手持ちが全滅して再突入した回数">全滅</th><th></th></tr></thead><tbody>${trs}</tbody></table>
     <p class="note expl">行をタップするとその人数のタイムラインが下に出ます${spMode==='coin'?'（ランダムの1例）':''}</p>`+
     timelineHtml();
-  $('resBody').querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>{selN=+tr.dataset.n;renderResult();});
+  // 人数の表の行だけ(タイムラインの表の行を拾うと selN が NaN になり「NaN人」と出ていた・2026-09-04修正)
+  $('resBody').querySelectorAll('table.res tbody tr').forEach(tr=>tr.onclick=()=>{const n=+tr.dataset.n; if(n){selN=n;renderResult();}});
 }
 function timelineHtml(){
   const t=tierOf(tier);
@@ -685,16 +705,21 @@ function timelineHtml(){
   const MAXROW=500;
   const bp=D.pokemon[boss];
   const rowsH=r.log.slice(0,MAXROW).map(x=>{
-    if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td></tr>`;
+    // ボスの残りHP(数値と%)・じぶんのHP。行ごとに出すので「どのくらい削れているか」がタイムラインだけで読める
+    const bpct=Math.max(0,Math.round(x.bl/t.hp*100));
+    const bhp=`<td class="bhp"><b>${x.bl}</b><small>${bpct}%</small><i style="width:${bpct}%"></i></td>`;
+    const mhp=`<td class="mhp">${x.mh}</td>`;
+    if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td>${bhp}${mhp}</tr>`;
     const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
     const cls=x.side==='me'?'me':'boss';
     return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
-      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td></tr>`;
+      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td>${bhp}${mhp}</tr>`;
   }).join('');
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
-  const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で勝ち`:`時間切れ（ボス残りHP${Math.round(r.bossLeft/t.hp*100)}%）`;
-  return `<details class="tl" open><summary>タイムライン（${selN}人のとき・${sum}・実戦DPS${(r.dmg/r.t).toFixed(1)}・ひんし${r.faints}回/全滅${r.wipes}回）</summary>
-    <div class="tlwrap"><table class="tl"><thead><tr><th>ポケモン</th><th>タイム</th><th>わざ</th><th>ダメージ</th></tr></thead><tbody>${rowsH}</tbody></table></div>${more}</details>`;
+  const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で討伐`:`時間切れ・ボスの残りHP ${Math.round(r.bossLeft/t.hp*100)}%`;
+  const hasMega=cfg.team.some(m=>m.mega);
+  return `<details class="tl" open><summary>タイムライン　<b>${selN}人</b>で挑んだとき｜${sum}｜実戦DPS ${(r.dmg/r.t).toFixed(1)}｜ひんし${r.faints}回・${hasMega?'再突入':'全滅'}${r.wipes}回</summary>
+    <div class="tlwrap"><table class="tl"><thead><tr><th>ポケモン</th><th title="残り時間(秒)">タイム</th><th>わざ</th><th>ダメージ</th><th title="この行のあとのボスの残りHP(数値と割合)">ボス残りHP</th><th title="この行のあとのじぶんのポケモンのHP">じぶんHP</th></tr></thead><tbody>${rowsH}</tbody></table></div>${more}</details>`;
 }
 
 // ---- イベント ----
@@ -779,6 +804,8 @@ const HELP_HTML=`
   <h4>倒されたとき</h4>
   <ul>
     <li>ひんし→次のポケモンは<b>1秒</b>（固定）。手持ちが全滅したら<b>再突入</b>の秒数（既定10秒・変更可）だけ攻撃が止まります</li>
+    <li><b>メガシンカ・ゲンシカイキは1匹しか使えない</b>ので、そのポケモンがひんしになったら控えを出さずに<b>再突入</b>してやり直します（メガ1匹で何度も再突入するほうが、メガ無しの6匹より速いことがあります）。6匹編成にメガを2匹以上入れても最初の1匹だけで戦います</li>
+    <li>タイムラインの<b>ボス残りHP</b>はその行のあとのボスのHP（数値と割合）、<b>じぶんHP</b>は場に出ているポケモンのHPです</li>
     <li><b>実戦DPS</b>＝1人あたりの与ダメージ÷経過時間。ひんし・再突入・回避で攻撃できない時間も含んだ「実際に出せている火力」です</li>
   </ul>
   <h4>ランクごとの前提</h4>
