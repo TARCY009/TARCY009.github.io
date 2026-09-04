@@ -183,7 +183,12 @@ table.tl tr.sys td{color:var(--sub);font-size:.72rem}
 table.tl td.nm{text-align:left;white-space:nowrap}
 table.tl td.bhp{position:relative;white-space:nowrap;min-width:84px;font-variant-numeric:tabular-nums}
 table.tl td.bhp small{margin-left:4px;color:var(--sub);font-size:.68rem}
-table.tl td.bhp i{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,#ff6b6b,#ffb347);opacity:.75;pointer-events:none}
+table.tl td.bhp i{position:absolute;left:0;bottom:0;height:3px;opacity:.85;pointer-events:none;border-radius:99px}
+/* 残りHPの色はGBL模擬戦のHPバーと同じ(50%超=緑／20%超=黄／20%以下=赤) */
+table.tl td.bhp.g b{color:#7ef0af} table.tl td.bhp.g i{background:linear-gradient(90deg,#2bd97c,#7ef0af)}
+table.tl td.bhp.y b{color:#ffd54a} table.tl td.bhp.y i{background:linear-gradient(90deg,#e8a93d,#ffd54a)}
+table.tl td.bhp.r b{color:#ff9d9d} table.tl td.bhp.r i{background:linear-gradient(90deg,#ff6b81,#ff9d9d)}
+:root.light table.tl td.bhp.g b{color:#1e8f52} :root.light table.tl td.bhp.y b{color:#a86f00} :root.light table.tl td.bhp.r b{color:#c43a4c}
 table.tl td.mhp{font-variant-numeric:tabular-nums;color:var(--sub)}
 .spm{color:var(--ng);font-weight:800}
 .note{font-size:.72rem;color:var(--sub);margin-top:10px}
@@ -732,7 +737,9 @@ function timelineHtml(){
     const mh=x.mh!=null?x.mh:'—';
     // ボスの残りHP(数値と%)・じぶんのHP。行ごとに出すので「どのくらい削れているか」がタイムラインだけで読める
     const bpct=Math.max(0,Math.min(100,Math.round(bl/t.hp*100)))||0;
-    const bhp=`<td class="bhp"><b>${bl}</b><small>${bpct}%</small><i style="width:${bpct}%"></i></td>`;
+    // 色はGBL模擬戦のHPバーと同じ基準(50%超=緑／20%超=黄／それ以下=赤)
+    const bcls=bpct>50?'g':bpct>20?'y':'r';
+    const bhp=`<td class="bhp ${bcls}"><b>${bl}</b><small>${bpct}%</small><i style="width:${bpct}%"></i></td>`;
     const mhp=`<td class="mhp">${mh}</td>`;
     if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td>${bhp}${mhp}</tr>`;
     const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
