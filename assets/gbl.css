@@ -906,6 +906,15 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .bfull .rbctlbar{display:none}
 .bfull .rbfeed{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .bfull .rbdock{position:static;margin-top:6px}
+/* 読み返し中(自動スクロールを止めている間)だけ出る「⬇ 最新へ」。押すと下端へ戻って追従を再開する */
+.hfollow{display:none;margin:0 auto 6px;padding:5px 16px;border:0;border-radius:999px;cursor:pointer;
+  font:inherit;font-size:.74rem;font-weight:800;color:#042330;
+  background:linear-gradient(160deg,#7de9ff 0%,#08b4c9 45%,#046b7a 100%);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.hfollow.on{display:block}
+/* ばけのかわ(ミミッキュ)は🛡ブロックと同じ形の紫のチップ */
+.ev.shd.dg{border-color:rgba(176,108,255,.55);background:rgba(176,108,255,.1)}
+.ev.shd.dg .blk{color:#d9b3ff}
 /* ⇄いつでも交代(2026-09-01): 位置が動かない再生コントロールの並びに置く
    (HUDの左右は数字の更新で常に動くので押せない=タダシさん指摘)。
    デザインはゲームの交代ボタン風の金のピル(同日タダシさん指示・絵文字だけでなくボタンらしく)。

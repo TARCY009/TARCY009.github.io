@@ -4993,9 +4993,14 @@ function rbRender(body, bt, picks, foes, extra) {
   // 撃った側の列に出すと「どちらが使ったのか」がややこしく、使った側の列に何も出ない)
   const shdCell = oppList => oppList.filter(e => e.shielded)
     .map(e => `<span class="ev shd" title="相手の${e.move}をシールドで防ぎました(ダメージ1)"><i class="blk">🛡ブロック</i></span>`).join('');
+  // ミミッキュ: シールドを使わずにSPアタックを受けたとき、初回だけ ばけのかわ が身代わりになる(ダメージ1)。
+  // 受けた側の列に出す(2026-09-04タダシさん指示「ばけのかわがはがれた！」)
+  const dgCell = oppList => oppList.filter(e => e.disguised)
+    .map(e => `<span class="ev shd dg" title="相手の${e.move}をばけのかわが身代わりになって受けました(ダメージ1・1回だけ)"><i class="blk">👻ばけのかわがはがれた！</i></span>`).join('');
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc"><button class="fchip${p.auto ? ' auto' : ''}"
     data-k="${p.key}" title="タップすると、この場面からやり直せます">${RB_ICON[p.kind]}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
+    const i0 = items.length;   // この対面が押し込む要素の先頭(あとで li を付ける)
     const res = leg.res, base = leg.base;
     while (spByGt.length <= base) spByGt.push(spSeen);
     // あいてのSPは実際に採用されたわざ(自動なら「いちばんキツい」と選ばれたもの)で出す
@@ -5080,8 +5085,8 @@ function rbRender(body, bt, picks, foes, extra) {
       let stallMark = t.stalled && !t.ev[1].length ? '<i class="stall">⏸</i>' : '';
       let first = true;
       for (const r of subs) {
-        const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []);
-        const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []) + (first ? stallMark : '');
+        const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []);
+        const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + (first ? stallMark : '');
         if (!e0 && !e1) continue;
         items.push({ gt, fx: fxOfRow(r), html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
@@ -5104,6 +5109,7 @@ function rbRender(body, bt, picks, foes, extra) {
       }
     }
     if (leg.nextPoint) items.push(chipItem(leg.nextPoint, endGt));
+    tagLeg(items, i0, leg.li);   // KO・次に出すチップも含めて「この対面のもの」にする
   });
   // 開幕交代の質問中はまだ対面が無いので、1匹目とあいて1匹目の初期状態を出しておく
   if (!bt.legs.length && bt.pending && foes.length) {
@@ -5132,6 +5138,7 @@ function rbRender(body, bt, picks, foes, extra) {
   }
 
   // ---- 画面を組む ----
+  { const pf = body.querySelector('.rbfeed'); if (pf) RBV.feedTop = pf.scrollTop; }   // 再描画の前に読み返し位置を控える
   body.innerHTML = `<div class="rbctlbar">
       <div class="rbctl">
         <div class="rbrow1 rbfind"><span class="lbl">🔎 オートバトル</span>
@@ -5145,6 +5152,7 @@ function rbRender(body, bt, picks, foes, extra) {
     </div>
     <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
+      <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
@@ -5172,6 +5180,27 @@ function rbRender(body, bt, picks, foes, extra) {
   // ---- 再生(1ターン=0.5秒で流す)と HUD の更新 ----
   const feedEl = body.querySelector('.rbfeed');
   const els = [...feedEl.children];
+  // ---- 自動スクロールの追従(2026-09-04タダシさん報告「途中で追従しなくなる」を根治) ----
+  // 旧実装は「下端との距離」で読み返し中かを推定していたが、決断のたびに body を再描画すると
+  // フィードの scrollTop が 0 に戻るので、そのたびに「読み返し中」と誤解して追従をやめていた。
+  // いまは追従するかどうかを RBV.follow に**明示的に**持ち、変えるのはユーザーの操作だけ:
+  //   ・ユーザーが上へスクロールした → follow=false ／ 下端まで戻した(または⬇最新へ) → follow=true
+  //   ・こちらからの scrollTo は autoUntil の印を立て、その途中の scroll イベントでは判定しない
+  //   ・再描画の直後(feedFresh)は、follow なら下端へ・そうでなければ控えておいた位置へ戻す
+  //   見分け方は**向き**: こちらからのスクロールは必ず下へ(下端へ・控えた位置へ)しか動かないので、
+  //   scrollTop が前より減ったら「ユーザーが上へ動かした」と断定できる(時間で推定しない)
+  RBV.feedFresh = true;
+  let lastTop = 0;   // このフィード要素で最後に見た scrollTop(再描画で要素が替わったら 0 から)
+  const feedScroll = (top, smooth) => feedEl.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+  const followBtn = body.querySelector('.hfollow');
+  const syncFollowBtn = () => { followBtn.classList.toggle('on', body.classList.contains('bfull') && RBV.follow === false); };
+  feedEl.addEventListener('scroll', () => {
+    const top = feedEl.scrollTop, gap = feedEl.scrollHeight - top - feedEl.clientHeight;
+    if (gap < 24) { if (RBV.follow === false) { RBV.follow = true; syncFollowBtn(); } }   // 下端まで戻した＝追従を再開
+    else if (top < lastTop - 2) { if (RBV.follow !== false) { RBV.follow = false; syncFollowBtn(); } }   // 上へ動かした＝読み返し
+    lastTop = top; RBV.feedTop = top;   // 次の再描画で戻す位置
+  }, { passive: true });
+  followBtn.onclick = () => { RBV.follow = true; syncFollowBtn(); feedScroll(feedEl.scrollHeight, !document.hidden); };
   // バトル中の全画面ロック(2026-09-01タダシさん指示・2度目の調整):
   // スタート前は通常の流れ(大きな空白を作らない)。▶を押した瞬間に .bfull で
   // 「タイムライン＋下に固定のHUDだけ」の全画面に切り替え、決着したら解除する。
@@ -5268,9 +5297,14 @@ function rbRender(body, bt, picks, foes, extra) {
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
-      const gap = feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight;
-      if (gap < Math.max(300, feedEl.clientHeight * 1.5))
-        feedEl.scrollTo({ top: feedEl.scrollHeight, behavior: RBV.speed === 1 ? 'smooth' : 'auto' });
+      syncFollowBtn();
+      if (RBV.follow === false) {
+        // 読み返し中: 再描画で 0 に戻った直後だけ、控えておいた位置へ戻す(以後は触らない)
+        if (RBV.feedFresh) { RBV.feedFresh = false; if (RBV.feedTop) feedEl.scrollTop = RBV.feedTop; }
+        return;
+      }
+      RBV.feedFresh = false;
+      feedScroll(feedEl.scrollHeight, RBV.speed === 1 && !document.hidden);   // 見えていないタブでは滑らかに動かせない(即時にする)
       return;
     }
     if (!lastEl) return;
@@ -5530,6 +5564,7 @@ function rbRender(body, bt, picks, foes, extra) {
   if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
   const rev0 = revealTo(RBV.cur);
   updateHud(RBV.cur);
+  autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
   if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
   else if (RBV.cur >= stop) {
     // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
@@ -6333,6 +6368,10 @@ const gbKey = (li, side, kind, seq, w) => `${li}:${side}:${kind}:${seq}:${w || 0
 // sortTimeline() が必ずこの順に直すので、行と演出の順番が食い違うバグが起きない。
 //   きっかけ: 開幕交代のチップがVSカードの**上**に出ていた
 //   (演出は「VS→交代」の順に出るのに、行だけ「交代→VS」だった)
+// 2026-09-04タダシさん報告で2段目の仕組みを追加: 「○○をたおした！」(対面nの最後)より先に次の対面のVSカードが
+// 出ていた。KOと次の対面の頭は**同じ通しターン**になるので、種別の順(VS=0が先)だけでは前後が逆になる。
+// そこで**対面の番号(li)を gt の次のキー**にした。対面nの行・チップ・KOは、同じターンでも必ず対面n+1より前に並ぶ。
+// li は各レンダラーの対面ループが押し込んだ要素にまとめて付ける(押し込む側が付け忘れても tagLeg が付ける)
 const IT = {
   vs: 0,     // 対面の頭のVSカード(場に出た)
   lead: 1,   // 開幕交代のチップ
@@ -6343,8 +6382,25 @@ const IT = {
 function sortTimeline(items) {
   items.forEach((x, i) => { x._i = i; });
   // ⚠ `a.o || IT.ev` と書くと **0(=VSカード)が falsy で潰れる**ので必ず ?? を使う
-  items.sort((a, b) => a.gt - b.gt || (a.o ?? IT.ev) - (b.o ?? IT.ev) || a._i - b._i);
+  // gt → 対面(li・無いものは最後) → 種別 → 押し込んだ順
+  items.sort((a, b) => a.gt - b.gt || (a.li ?? Infinity) - (b.li ?? Infinity) || (a.o ?? IT.ev) - (b.o ?? IT.ev) || a._i - b._i);
+  checkTimeline(items);
   return items;
+}
+// 対面ループが押し込んだ要素(i0番目以降)にその対面の番号を付ける
+function tagLeg(items, i0, li) { for (let k = i0; k < items.length; k++) if (items[k].li == null) items[k].li = li; }
+// 並びの自己点検(バトルの順番はシビアなので、崩れていたらコンソールに出して気づけるようにする):
+//   KOバナー(.fko)のあとに来る最初のVSカード(.flg)は、必ず同じ対面より後ろの対面のもの
+function checkTimeline(items) {
+  let lastKo = null;
+  for (const x of items) {
+    if (x.html.indexOf('class="fko') >= 0) lastKo = x;
+    else if (lastKo && x.html.indexOf('class="flg"') >= 0) {
+      if (x.li != null && lastKo.li != null && x.li <= lastKo.li)
+        console.warn('タイムラインの順番が崩れています(KOより前に次のVS)', lastKo, x);
+      lastKo = null;
+    }
+  }
 }
 // わざ名→わざ本体(自分デバフわざの判定に使う。名前は一意)
 let MOVE_BY_NAME = null;
@@ -7893,6 +7949,10 @@ function gbRender(body, bt, picks, foes) {
   // 🛡ブロックのマークは**シールドを使った側**の列に出す(2026-08-20タダシさん指示)
   const shdCell = oppList => oppList.filter(e => e.shielded)
     .map(e => `<span class="ev shd" title="相手の${e.move}をシールドで防ぎました(ダメージ1)"><i class="blk">🛡ブロック</i></span>`).join('');
+  // ミミッキュ: シールドを使わずにSPアタックを受けたとき、初回だけ ばけのかわ が身代わりになる(ダメージ1)。
+  // 受けた側の列に出す(2026-09-04タダシさん指示「ばけのかわがはがれた！」)
+  const dgCell = oppList => oppList.filter(e => e.disguised)
+    .map(e => `<span class="ev shd dg" title="相手の${e.move}をばけのかわが身代わりになって受けました(ダメージ1・1回だけ)"><i class="blk">👻ばけのかわがはがれた！</i></span>`).join('');
   // チップには**どちらの判断か**を必ず書く(2026-08-19タダシさん報告で追加)。
   // 枠の色(金＝あいて)だけでは伝わらず、あいての「撃たない」を自分の判断だと誤解する
   // (実例: オコリザルが起点づくりでSPを温存した場面を、こちらのSP判断だと思われた)
@@ -7905,6 +7965,7 @@ function gbRender(body, bt, picks, foes) {
   const pairItem = (a, b, gt, mid) => ({ gt, html: `<div class="fc pair">${chipBtn(a)}${
     mid ? `<i class="pmid">${mid}</i>` : '<i class="pdiv"></i>'}${chipBtn(b)}</div>` });
   bt.legs.forEach(leg => {
+    const i0 = items.length;   // この対面が押し込む要素の先頭(あとで li を付ける)
     const res = leg.res, base = leg.base;
     while (spByGt.length <= base) spByGt.push(spSeen);
     const meta = {
@@ -8014,8 +8075,8 @@ function gbRender(body, bt, picks, foes) {
       }
       let first = true;
       for (const r of subs) {
-        const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []);
-        const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []);
+        const e0 = evCell(r.ev[0] ? [r.ev[0]] : []) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []);
+        const e1 = evCell(r.ev[1] ? [r.ev[1]] : []) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []);
         if (!e0 && !e1) continue;
         items.push({ gt, fx: fxOfRow(r), html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
@@ -8053,6 +8114,7 @@ function gbRender(body, bt, picks, foes) {
     }
     if (leg.nextPoint) items.push(chipItem(leg.nextPoint, endGt));
     if (leg.foeNextPoint) items.push(chipItem(leg.foeNextPoint, endGt));
+    tagLeg(items, i0, leg.li);   // KO・次に出すチップも含めて「この対面のもの」にする
   });
   // 開幕交代の質問中はまだ対面が無いので、1匹目どうしの初期状態を出しておく
   if (!bt.legs.length && bt.pending && foes.length) {
@@ -8075,6 +8137,7 @@ function gbRender(body, bt, picks, foes) {
   }
 
   // ---- 画面を組む ----
+  { const pf = body.querySelector('.rbfeed'); if (pf) RBV.feedTop = pf.scrollTop; }   // 再描画の前に読み返し位置を控える
   body.innerHTML = `<div class="rbctlbar">
       <div class="rbctl">
         <div class="rbrow1 rbfind"><span class="lbl">🔎 オートバトル</span>
@@ -8088,6 +8151,7 @@ function gbRender(body, bt, picks, foes) {
     </div>
     <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
+      <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
       <div class="rbhud">
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
@@ -8116,6 +8180,27 @@ function gbRender(body, bt, picks, foes) {
   // ---- 再生とHUD(ロケット団の模擬戦と同じ作り) ----
   const feedEl = body.querySelector('.rbfeed');
   const els = [...feedEl.children];
+  // ---- 自動スクロールの追従(2026-09-04タダシさん報告「途中で追従しなくなる」を根治) ----
+  // 旧実装は「下端との距離」で読み返し中かを推定していたが、決断のたびに body を再描画すると
+  // フィードの scrollTop が 0 に戻るので、そのたびに「読み返し中」と誤解して追従をやめていた。
+  // いまは追従するかどうかを RBV.follow に**明示的に**持ち、変えるのはユーザーの操作だけ:
+  //   ・ユーザーが上へスクロールした → follow=false ／ 下端まで戻した(または⬇最新へ) → follow=true
+  //   ・こちらからの scrollTo は autoUntil の印を立て、その途中の scroll イベントでは判定しない
+  //   ・再描画の直後(feedFresh)は、follow なら下端へ・そうでなければ控えておいた位置へ戻す
+  //   見分け方は**向き**: こちらからのスクロールは必ず下へ(下端へ・控えた位置へ)しか動かないので、
+  //   scrollTop が前より減ったら「ユーザーが上へ動かした」と断定できる(時間で推定しない)
+  RBV.feedFresh = true;
+  let lastTop = 0;   // このフィード要素で最後に見た scrollTop(再描画で要素が替わったら 0 から)
+  const feedScroll = (top, smooth) => feedEl.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+  const followBtn = body.querySelector('.hfollow');
+  const syncFollowBtn = () => { followBtn.classList.toggle('on', body.classList.contains('bfull') && RBV.follow === false); };
+  feedEl.addEventListener('scroll', () => {
+    const top = feedEl.scrollTop, gap = feedEl.scrollHeight - top - feedEl.clientHeight;
+    if (gap < 24) { if (RBV.follow === false) { RBV.follow = true; syncFollowBtn(); } }   // 下端まで戻した＝追従を再開
+    else if (top < lastTop - 2) { if (RBV.follow !== false) { RBV.follow = false; syncFollowBtn(); } }   // 上へ動かした＝読み返し
+    lastTop = top; RBV.feedTop = top;   // 次の再描画で戻す位置
+  }, { passive: true });
+  followBtn.onclick = () => { RBV.follow = true; syncFollowBtn(); feedScroll(feedEl.scrollHeight, !document.hidden); };
   // バトル中の全画面ロック(2026-09-01タダシさん指示・2度目の調整):
   // スタート前は通常の流れ(大きな空白を作らない)。▶を押した瞬間に .bfull で
   // 「タイムライン＋下に固定のHUDだけ」の全画面に切り替え、決着したら解除する。
@@ -8227,9 +8312,14 @@ function gbRender(body, bt, picks, foes) {
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
-      const gap = feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight;
-      if (gap < Math.max(300, feedEl.clientHeight * 1.5))
-        feedEl.scrollTo({ top: feedEl.scrollHeight, behavior: RBV.speed === 1 ? 'smooth' : 'auto' });
+      syncFollowBtn();
+      if (RBV.follow === false) {
+        // 読み返し中: 再描画で 0 に戻った直後だけ、控えておいた位置へ戻す(以後は触らない)
+        if (RBV.feedFresh) { RBV.feedFresh = false; if (RBV.feedTop) feedEl.scrollTop = RBV.feedTop; }
+        return;
+      }
+      RBV.feedFresh = false;
+      feedScroll(feedEl.scrollHeight, RBV.speed === 1 && !document.hidden);   // 見えていないタブでは滑らかに動かせない(即時にする)
       return;
     }
     if (!lastEl) return;
@@ -8486,6 +8576,7 @@ function gbRender(body, bt, picks, foes) {
   if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
   const rev0 = revealTo(RBV.cur);
   updateHud(RBV.cur);
+  autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
   if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
   else if (RBV.cur >= stop) {
     // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
