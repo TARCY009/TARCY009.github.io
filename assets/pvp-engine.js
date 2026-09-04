@@ -9,6 +9,14 @@
 (function () {
   const BONUS = 1.3;   // トレーナーバトル補正
   const STAB  = 1.2;   // タイプ一致補正
+  // メガの追加SPアタック「＋わざ」(mv.plus)はメガレベルで威力が変わる:
+  //   Lv1(ベース) 1.0 ／ Lv2(高レベル) 1.1 ／ Lv3(マックス) 1.2 ／ Lv4(スーパーマックス) 1.3
+  // トレーナーバトルでも同じ倍率が掛かる(公式「メガレベルが上がるほど威力も上がる」にバトル種別の限定は無く、
+  // 手本の対戦シミュレーターもPvPのダメージ式で同じ倍率を掛けている・2026-09-04調査)。
+  // D.moves 側の p はメガLv4(既定)の値。cfg.megaLv を指定した側だけ、素の威力 p0 に倍率を掛け直す
+  const MEGA_MULT = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3 };
+  const MEGA_LV_DEF = 4;
+  const powerOf = (mv, att) => (mv.plus && mv.p0 != null) ? mv.p0 * (att.megaMult || MEGA_MULT[MEGA_LV_DEF]) : mv.p;
 
   // 能力変化(-4〜+4)の倍率: +n=(4+n)/4, -n=4/(4+n)
   function buffMult(stage) {
@@ -62,7 +70,7 @@
     const stab = att.types.includes(mv.t) ? STAB : 1;
     const a = att.atk * buffMult(att.buffs[0]);
     const d = dfn.def * buffMult(dfn.buffs[1]);
-    return Math.floor(0.5 * mv.p * (a / d) * eff * stab * BONUS) + 1;
+    return Math.floor(0.5 * powerOf(mv, att) * (a / d) * eff * stab * BONUS) + 1;
   }
 
   /* わざの「能力変化ぶんの価値」。ダメージ効率に掛けて使う(1.0で影響なし)。
@@ -173,6 +181,8 @@
         stallSp: cfg.stallSp || 0,
         stall: cfg.stallStart || 0,
         spMult: cfg.spMult || 1,
+        // メガLv(＋わざの威力倍率)。指定が無ければLv4(1.3倍)＝D.moves の値そのまま
+        megaMult: MEGA_MULT[cfg.megaLv] || MEGA_MULT[MEGA_LV_DEF],
       };
       // 連戦(2体目以降)の引き継ぎ: 開始HP割合と開始ゲージを指定できる
       if (cfg.startHpPct != null && cfg.startHpPct < 100)
@@ -594,5 +604,6 @@
     return res;
   }
 
-  window.PvpEngine = { buildStats, damage, effectiveness, buffMult, buffAdj, simulate, chooseThrows, simulateAuto };
+  window.PvpEngine = { buildStats, damage, effectiveness, buffMult, buffAdj, simulate, chooseThrows, simulateAuto,
+                       MEGA_MULT, MEGA_LV_DEF };
 })();

@@ -1,13 +1,13 @@
 // GBL対面シミュレーター用のService Worker
 // 目的: 電波の悪い場所でも起動できるようにする(PWAインストール要件も満たす)
-const CACHE = 'gbl-v63';
+const CACHE = 'gbl-v64';
 // 起動に必要な一式。データ本体(pvp_data.js)と共有モジュールはページ外のパスだが、
 // このSWが管理するページからの読み込みは全てfetchイベントを通るのでキャッシュできる
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   '/pvp_data.js',
   '/assets/pvp-engine.js', '/assets/meta_lists.js', '/assets/meta_moves.js',
-'/assets/type-icons.js', '/assets/shadow-icon.css',
+'/assets/type-icons.js', '/assets/shadow-icon.css', '/assets/mega-lv.css',
   '/assets/rocket_roster.js', '/assets/gbl.css', '/assets/gbl-app.js',
   '/assets/theme.css', '/assets/theme.js',
   '/assets/explain.css', '/assets/wordmark.css', '/assets/explain.js',

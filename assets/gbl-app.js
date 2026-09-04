@@ -92,6 +92,7 @@ document.getElementById('app').innerHTML = `
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガ<wbr>Lv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4<wbr>＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CP<wbr>ブースト<small>イベント<wbr>ボーナス</small></button>
         </div>
       </div>
+      <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
       <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
@@ -167,6 +168,7 @@ document.getElementById('app').innerHTML = `
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガ<wbr>Lv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4<wbr>＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CP<wbr>ブースト<small>イベント<wbr>ボーナス</small></button>
         </div>
       </div>
+      <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
       <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
@@ -417,6 +419,26 @@ if (PAGE_ROCKET) {
 const SWAPMK = '<i class="swapmark"></i>';
 
 const D = window.PVP_DATA;
+// ---- メガの追加SPアタック「＋わざ」(3本目)を D.moves に合流する(2026-09-04タダシさん指示) ----
+// 対戦データでは plusMoves という別枠に入っている。おぼえるメガのSP候補にだけ足し(movePool)、
+// 「その他のわざ」には並べない。威力はメガLv4(既定・1.3倍)の値を p に持ち、素の威力は p0 に控える。
+// メガレベルを下げた側だけ、エンジンが p0×倍率で計算し直す(cfg.megaLv)。
+// エンジンはSP2本前提なので、＋わざはSP1/SP2の欄で「2本のうちの1本」として選ぶ(3本目の枠は作らない)
+const MEGA_MULT = PvpEngine.MEGA_MULT, MEGA_LV_DEF = PvpEngine.MEGA_LV_DEF;
+Object.entries(D.plusMoves || {}).forEach(([id, m]) => {
+  if (D.moves[id]) return;
+  D.moves[id] = { ...m, plus: true, p0: m.p, p: m.p * MEGA_MULT[MEGA_LV_DEF] };
+});
+const isPlusMv = id => !!(id && D.moves[id] && D.moves[id].plus);
+// ＋わざを持つメガか(pvp_data の cp = 追加SPアタックのID。対戦データに未収録のわざは対象外)
+const hasPlus = key => !!(key && D.pokemon[key] && D.pokemon[key].cp && D.moves[D.pokemon[key].cp]);
+const megaLvOf = o => (o && MEGA_MULT[o.megaLv]) ? o.megaLv : MEGA_LV_DEF;
+const MLV_HELP = 'メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。'
+  + 'Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません';
+// 枠の中に置く小さな「メガLv 1|2|3|4」(＋わざを持つメガの枠だけに出す)
+const mlvSegHtml = lv => `<span class="megalv pmlv"><span class="mlvl" title="${MLV_HELP}">メガLv</span><span class="mlvseg">`
+  + [1, 2, 3, 4].map(v => `<button type="button" data-lv="${v}" aria-pressed="${v === lv}" title="${MLV_HELP}">${v}</button>`).join('')
+  + '</span></span>';
 document.getElementById('loading').style.display = 'none';
 
 // ---- 環境リストのわざ構成を、人が確認した確定値(assets/meta_moves.js)で上書きする ----
@@ -522,7 +544,7 @@ function otherMoves(isFast, own) {
   return Object.keys(D.moves).filter(m => {
     const mv = D.moves[m];
     if (isFast ? !mv.eg : !mv.e) return false;
-    if (own.includes(m) || m === 'HIDDEN_POWER_NORMAL' || isCustomMv(m)) return false;
+    if (own.includes(m) || m === 'HIDDEN_POWER_NORMAL' || isCustomMv(m) || isPlusMv(m)) return false;   // ＋わざは持ち主にしか出さない
     const s = mvSig(m);
     if (ownSig.has(s) || seen.has(s)) return false;
     seen.add(s);
@@ -557,7 +579,7 @@ function dropUnknownMoves() {
 // 自由設定の入力ウィンドウ。もとのわざを選べば数値が入るので、直したいところだけ書き替えればよい
 function openCustom(isFast, cur, done) {
   const ex = isCustomMv(cur) ? CUSTOM.find(c => c.id === cur) : null;
-  const pool = Object.keys(D.moves).filter(m => (isFast ? !!D.moves[m].eg : !!D.moves[m].e) && !isCustomMv(m)).sort(mvByName);
+  const pool = Object.keys(D.moves).filter(m => (isFast ? !!D.moves[m].eg : !!D.moves[m].e) && !isCustomMv(m) && !isPlusMv(m)).sort(mvByName);
   const v = ex ? ex.mv : { n: '', t: 'NORMAL', p: 10, tn: 1, eg: 5, e: 50 };
   const kind = isFast ? 'ノーマルアタック' : 'SPアタック';
   const wrap = document.createElement('div');
@@ -679,7 +701,8 @@ function movePool(key) {
   // 通常枠と特別枠の両方に載っているわざがあるため重複除去する
   const p = D.pokemon[key];
   const fasts = [...new Set([...p.q, ...p.eq])].filter(m => D.moves[m]);
-  const chargeds = [...new Set([...p.c, ...p.ec])].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
+  // ＋わざ(メガの3本目)は、おぼえるSPアタックの末尾に足す
+  const chargeds = [...new Set([...p.c, ...p.ec, ...(hasPlus(key) ? [p.cp] : [])])].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
   return { fasts, chargeds };
 }
 // ロケット団のあいてが使ってくるわざ。おぼえるわざの中からランダムに打ってくるが、
@@ -845,7 +868,7 @@ const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
   spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
-  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51, spOpen: false,
+  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51, megaLv: 4, spOpen: false,
   carry: false, cHp: 100, cEn: 0, bluff: false });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
@@ -960,6 +983,10 @@ sideEl.forEach((el, i) => {
     } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, lvFloorOf(S[i].key), S[i].maxLv); inp.value = S[i].mLevel; }
     run();
   });
+  // メガLv(＋わざを持つメガだけ): 追加SPアタックの威力倍率。既定はLv4(1.3倍)
+  el.querySelectorAll('.mlvwrap .mlvseg button').forEach(b => b.onclick = () => {
+    S[i].megaLv = +b.dataset.lv; syncSmax(i); run();
+  });
   // スーパーマックスレベル(メガ専用): PL上限を52/53へ拡張。同じタブ再タップで解除
   el.querySelectorAll('.smax button').forEach(b => b.onclick = () => {
     const lv = +b.dataset.lv;
@@ -987,7 +1014,7 @@ sideEl.forEach((el, i) => {
     if (!S[i].key) return;
     const l = loadMyPk().filter(m => m.key !== S[i].key);
     l.unshift({ key: S[i].key, ivMode: S[i].ivMode, mIvs: S[i].mIvs, mLevel: S[i].mLevel,
-                fast: S[i].fast, c1: S[i].c1, c2: S[i].c2, shadow: S[i].shadow, maxLv: S[i].maxLv });
+                fast: S[i].fast, c1: S[i].c1, c2: S[i].c2, shadow: S[i].shadow, maxLv: S[i].maxLv, megaLv: S[i].megaLv });
     saveMyPkList(l); renderMyPk();
     const b = el.querySelector('.savepk');
     b.textContent = '★登録した！'; setTimeout(() => { b.textContent = '★登録'; }, 1200);
@@ -1188,6 +1215,14 @@ ${PAGE_ROCKET ? '' : `
   既定は<b>しない</b>（運に頼らない見方）。<b>する</b>にするとお互いが駆け引きしてくる見方になります。
   マスターリーグのようにSPを2本持つポケモンが多いほど差が出ます。
   1対1シミュでは、左右のパネルで別々に指定できます。</p>
+
+  <h4>メガの追加SPアタック「＋わざ」とメガLv</h4>
+  <p>スーパーマックスレベルに到達できるメガシンカは、メガシンカ中だけ使える<b>3本目のSPアタック</b>（わざ名の最後が「+」）を持ちます。
+  GOバトルリーグでも使えるので、そのメガのSPアタックの欄に<b>「げきりん+」のように並びます</b>（このシミュレーターはSP2本で戦うので、3本のうち2本を選びます）。</p>
+  <p>＋わざは<b>メガレベルが上がるほど威力が上がります</b>（Lv1=1.0倍／Lv2=1.1倍／Lv3=1.2倍／Lv4＝スーパーマックス=1.3倍）。
+  トレーナーバトルでも同じ倍率がかかるので、＋わざを持つメガを選ぶと<b>「メガLv」</b>の切り替えが出ます。
+  <b>既定はLv4（最大）</b>。環境一覧・対策さがしなど一覧の相手はLv4で計算します。ほかのわざには効きません。</p>
+  <p>対戦データにまだ性能が入っていない＋わざ（消費ゲージが未発表のもの）は出ません。</p>
 
   <h4>パーティ診断の「平均勝率」</h4>
   <p>環境上位の相手<b>1匹あたり</b>、パーティの何匹が勝てるかを割合で出したものです。
@@ -1790,7 +1825,7 @@ function syncRocket() {
   if (S[1].key) el.querySelector('input').value = 'シャドウ' + D.pokemon[S[1].key].n;
   // シールド(種別で決まる)・タイミング(常に撃てしだい)・連戦(登場の設定で扱う)は選ばせない
   // ★登録リストは「自分の個体値で計算する」ための機能。あいてはNPCで倍率が決まっているので出さない
-  ['.ivmode', '.custIv', '.smaxwrap', '.c2row', '.bluffwrap', '.shields', '.custShield',
+  ['.ivmode', '.custIv', '.smaxwrap', '.mlvwrap', '.c2row', '.bluffwrap', '.shields', '.custShield',
    '.timing', '.custSp', '.carry', '.custCarry', '.mypkbar', '.mypklist'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n) n.style.display = 'none';
@@ -2024,8 +2059,8 @@ function runMulti() {
   // これでマスをタップして開く1対1も同じ構成のまま=結果が食い違わない)
   if (!S[0].fast || (!S[0].c1 && movePool(S[0].key).chargeds.length)) {
     const mb = S[0].ivMode === 'manual' && S[0].mIvs
-      ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap }
-      : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+      ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }
+      : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
     fillMoves(0, mb);
     box.innerHTML = '<div class="mtnote">じぶんの<b>わざ</b>(ノーマルアタック・SPアタック)を選ぶと、環境上位' + (list.length || 50) + '匹と一括対戦します</div>';
     return;
@@ -2042,8 +2077,8 @@ function runMulti() {
     applyMeta(list[k]);
   };
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
-    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, ...carryOf(0) }
-    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }
+    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
   // SPアタック2を選んでいれば、2本を相手に合わせて使い分ける前提で計算する(わざ開放した実戦に合わせる)
   const myPols = policies(S[0].key, polOpts(0));
@@ -2300,7 +2335,7 @@ function setBothShields(v) {
 function applyMeta(m, i) {
   i = i === 0 ? 0 : 1;   // 省略時は「あいて」側
   S[i].key = m.k; S[i].shadow = !!m.s;
-  S[i].maxLv = 51; syncSmax(i);
+  S[i].maxLv = 51; S[i].megaLv = MEGA_LV_DEF; syncSmax(i);   // 一覧はメガLv4で計算している(食い違い禁止)
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
   // 環境リストのわざ構成(SP2本)とブラフの前提をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する。
   // ブラフは一覧では両者に同じ前提を使っているので、左右そろえて渡す
@@ -2369,8 +2404,8 @@ function runCounter() {
   CV.results = [];
   // 倒したい相手(あいて)の設定。わざは対面ごとに相手側が最善を選ぶ前提で評価する
   const foeBase = S[1].ivMode === 'manual' && S[1].mIvs
-    ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap, ...carryOf(1) }
-    : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv));
+    ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }
+    : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv));
   // 「全ポケモン」は環境リストの代わりに、全ポケモン(シャドウ込み)から同じ形の候補を作る
   const list = cnTop === 'all' ? cnAllList(foeBase) : cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
   CV.pick = (k, j) => {
@@ -2818,6 +2853,13 @@ function syncPartySlot(i) {
     meta.innerHTML = mvbox
       ? `${typeIcons(p, 15)}${m.ivMode === 'manual' && m.mIvs ? `<span class="pt2">${iv}</span>` : ''}`
       : `${typeIcons(p, 15)}<span class="pt2">${iv}</span><span class="pt2">${mv}</span>`;
+    // ＋わざを持つメガだけ「メガLv」(追加SPアタックの威力倍率・既定Lv4)を出す
+    if (hasPlus(m.key)) {
+      meta.insertAdjacentHTML('beforeend', mlvSegHtml(megaLvOf(m)));
+      meta.querySelectorAll('.mlvseg button').forEach(b => b.onclick = () => {
+        PT[i].megaLv = +b.dataset.lv; savePt(); syncPartySlot(i); run();
+      });
+    }
     if (!mvbox) return;
     const isGbm = el.dataset.mv === 'gbm';   // GBL模擬戦のわざ置き場(GBM)
     const cur = isPt ? ptMvOf(i) : isGbm ? gbmOf(i) : rbmOf(i);
@@ -2942,9 +2984,9 @@ function syncPtAuto() {
 function ptBase(m, capX) {
   const cp = capX != null ? capX : cap;
   if (m.ivMode === 'manual' && m.mIvs)
-    return { key: m.key, ivs: m.mIvs.slice(), level: m.mLevel, shadow: !!m.shadow, cap: cp };
+    return { key: m.key, ivs: m.mIvs.slice(), level: m.mLevel, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
   const r = rank1(m.key, cp, 0, m.maxLv || 51);
-  return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap: cp };
+  return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
 }
 // シールドの枚数ごとの「穴」(3匹とも勝てない相手)の数。
 // わざの構成は選択中の枚数で決まったもの(usedPols)を使い回す＝いま表に出ている3匹の話のまま、
@@ -3765,7 +3807,7 @@ function rkCandidates() {
   loadMyPk().forEach(m => {
     if (!D.pokemon[m.key]) return;
     const b = ptBase(m, 0);
-    out.push({ key: m.key, shadow: !!m.shadow, ivs: b.ivs, level: b.level, mine: true, fixFast: m.fast || null });
+    out.push({ key: m.key, shadow: !!m.shadow, ivs: b.ivs, level: b.level, megaLv: b.megaLv, mine: true, fixFast: m.fast || null });
   });
   return out;
 }
@@ -3779,7 +3821,7 @@ function rkRankFor(foe, respectPicked) {
   const combos = rkSuggCombos(respectPicked ? foe : { key: foe.key });
   const rows = [];
   for (const c of rkCandidates()) {
-    const me = { key: c.key, ivs: c.ivs, level: c.level, shadow: c.shadow, cap: 0 };
+    const me = { key: c.key, ivs: c.ivs, level: c.level, shadow: c.shadow, cap: 0, megaLv: megaLvOf(c) };
     const st = PvpEngine.buildStats(D, me);
     const fasts = c.fixFast && D.moves[c.fixFast] ? [c.fixFast] : movePool(c.key).fasts;
     let best = null;
@@ -5777,7 +5819,7 @@ function blBindRate(body) {
 // 対戦記録ページ(/battlelog/)からはGBLページへURL引き継ぎで移動する(ロケット団と同じ「入口は別」の作り)
 function blToCounter(k, s) {
   if (PAGE_BLOG) { location.href = `/gbl/?lg=${cap}&md=counter&r=${k}${s ? '&shr=1' : ''}`; return; }
-  S[1].key = k; S[1].shadow = s; S[1].maxLv = 51; syncSmax(1);
+  S[1].key = k; S[1].shadow = s; S[1].maxLv = 51; S[1].megaLv = MEGA_LV_DEF; syncSmax(1);
   sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', s);
   S[1].fast = null; S[1].c1 = null; S[1].c2 = null;
   resetPin(1); resetSpPlan(1);
@@ -6069,7 +6111,7 @@ try { const v = JSON.parse(localStorage.getItem(GBT_KEY)); if (Array.isArray(v))
 const saveGbt = () => { try { localStorage.setItem(GBT_KEY, JSON.stringify(GBT)); } catch (e) {} };
 const gbtName = m => m ? (m.shadow ? 'シャドウ' : '') + D.pokemon[m.key].n : '';
 // あいて1匹の計算用設定(理想個体値・リーグ上限)
-const gbtBase = m => ptBase({ key: m.key, shadow: !!m.shadow, ivMode: 'auto', maxLv: 51 });
+const gbtBase = m => ptBase({ key: m.key, shadow: !!m.shadow, ivMode: 'auto', maxLv: 51, megaLv: m.megaLv });
 function buildGbFoeSlots() {
   const box = document.querySelector('#mock .gfoeslots');
   if (!box) return;
@@ -6083,6 +6125,7 @@ function buildGbFoeSlots() {
       <select class="selC1" title="あいてのSPアタック1"></select>
       <select class="selC2" title="あいてのSPアタック2（2本目を開放していないなら「ー」）"></select>
       <div class="fstat"></div>
+      <div class="gmlv"></div>
     </div>
   </div>`).join('');
   box.querySelectorAll('.gfoe').forEach(el => {
@@ -6171,6 +6214,12 @@ function syncGbFoeSlots() {
     const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
     el.querySelector('.fstat').innerHTML =
       `${typeIcons(D.pokemon[m.key], 15)} CP${st.cp}・PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}`;
+    // ＋わざを持つメガだけ「メガLv」(追加SPアタックの威力倍率・既定Lv4)を出す
+    const gm = el.querySelector('.gmlv');
+    gm.innerHTML = hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '';
+    gm.querySelectorAll('.mlvseg button').forEach(b => b.onclick = () => {
+      m.megaLv = +b.dataset.lv; saveGbt(); syncGbFoeSlots(); run();
+    });
   });
 }
 
@@ -8494,6 +8543,7 @@ function applyMyPk(i, m, skipRun) {
   S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
   S[i].shadow = !!m.shadow;
   S[i].maxLv = m.maxLv || 51;
+  S[i].megaLv = megaLvOf(m);
   syncSmax(i);
   const el = sideEl[i];
   el.querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
@@ -8513,6 +8563,10 @@ function syncSmax(i) {
   const el = sideEl[i];
   el.querySelector('.smaxwrap').style.display = (S[i].key && isMega(S[i].key)) ? 'block' : 'none';
   el.querySelectorAll('.smax button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.lv === S[i].maxLv));
+  // メガLv(＋わざの威力倍率)は、＋わざを持つメガのときだけ出す
+  const mw = el.querySelector('.mlvwrap');
+  mw.style.display = hasPlus(S[i].key) ? 'block' : 'none';
+  mw.querySelectorAll('.mlvseg button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.lv === megaLvOf(S[i])));
 }
 
 // 発ごとのSP設定を初期状態(全部おまかせ)へ戻す。ポケモンを切り替えたときに古い指定を残さない
@@ -8529,7 +8583,7 @@ function pick(i, key) {
   resetSpPlan(i);
   S[i].shadow = false;
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', false);
-  S[i].maxLv = 51; syncSmax(i);
+  S[i].maxLv = 51; S[i].megaLv = MEGA_LV_DEF; syncSmax(i);
   S[i].ivMode = 'auto'; S[i].mIvs = null; S[i].mLevel = null;   // 個体値も理想に戻す
   sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
   sideEl[i].querySelector('.custIv').style.display = 'none';
@@ -8589,9 +8643,9 @@ function run() {
   const myStall = rk ? RK_ENTER[RK.enter].me : 0;
   const base = S.map((s, i) => {
     const c = carryOf(i);
-    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, ...c };
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), ...c };
     const r1 = rank1(s.key, capX, 0, s.maxLv);
-    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, ...c };
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), ...c };
   });
   if (myStall) base[0].stallStart = myStall;
   // マニュアル個体値のCPと実数値を表示し、リーグ上限超えは警告する(計算は続行)。
@@ -9032,6 +9086,7 @@ function updateUrl() {
     if (s.ivMode === 'manual' && s.mIvs) qp[i ? 'ir' : 'il'] = s.mIvs.join('.') + '.' + s.mLevel;
     if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
     if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
+    if (hasPlus(s.key) && megaLvOf(s) !== MEGA_LV_DEF) qp[i ? 'mgr' : 'mgl'] = s.megaLv;   // メガLv(＋わざの威力倍率・既定4)
     if (s.carry) qp[i ? 'cyr' : 'cyl'] = s.cHp + '.' + s.cEn;   // 連戦(開始HP%.開始ゲージ)
     if (s.bluff) qp[i ? 'bfr' : 'bfl'] = 1;   // ブラフする設定(既定はしない)
     // わざ構成(ノーマル~SP1~SP2)。手動選択は「!」付き、自動選出の確定値はそのまま書く。
@@ -9697,6 +9752,10 @@ document.addEventListener('click', e => {
   ['mll', 'mlr'].forEach((k, i) => {   // スーパーマックスレベルの復元
     const v = +q.get(k);
     if ((v === 52 || v === 53) && S[i].key) { S[i].maxLv = v; syncSmax(i); }
+  });
+  ['mgl', 'mgr'].forEach((k, i) => {   // メガLv(＋わざの威力倍率)の復元
+    const v = +q.get(k);
+    if (MEGA_MULT[v] && S[i].key) { S[i].megaLv = v; syncSmax(i); }
   });
   ['il', 'ir'].forEach((k, i) => {   // マニュアル個体値(攻.防.HP.PL)の復元
     const v = q.get(k); if (!v) return;
