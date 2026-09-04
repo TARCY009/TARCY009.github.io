@@ -269,9 +269,18 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
     n.classList.add('on');
   }
   place();
-  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(place);
+  // ⚠ 書体(禅角ゴシック)は取り寄せに時間がかかり、届いた瞬間に「O」の位置と大きさが変わる。
+  //   最初の1回だけ計算すると、代替の書体の字形で決めた位置に針が残ってしまう(iPhoneで実際に起きた)。
+  //   書体の読み込み完了・見出しの大きさの変化・画面の回転、どれでも計算し直す
+  if(document.fonts){
+    if(document.fonts.ready)document.fonts.ready.then(place);
+    document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',place);
+  }
   window.addEventListener('load',place);
   window.addEventListener('resize',place);
+  window.addEventListener('pageshow',place);
+  if(window.ResizeObserver){ var ro=new ResizeObserver(place); var h=document.querySelector('.wmbox h1'); if(h)ro.observe(h); }
+  [300,1000,2500,5000].forEach(function(ms){ setTimeout(place,ms); });   // 念のための後追い(いずれも位置を上書きするだけ)
 })();
 </script>
 <script src="/assets/theme.js"></script>
