@@ -123,16 +123,17 @@ h1 .go{display:inline-block;-webkit-text-stroke-width:2px;
   transform:scaleX(1.04);transform-origin:center;margin-right:.025em;
   background-image:var(--wm);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* Oの中の方位磁針の針（サイトアイコンの「GOのOが方位磁針」と同じ図柄・マゼンタの針＋青灰の後ろ半分＋白い中心）。
-   位置は「O」の字形の穴（カウンター）の中心に合わせる。値はブラウザで字形を実測して決めた（下の .ndl の top/left）。
-   ⚠ 「O」は自分の塗りを持たせる（inline-block にすると親の background-clip:text が届かないため） */
-h1 .o{position:relative;display:inline-block;
-  background-image:var(--wm);-webkit-background-clip:text;background-clip:text;color:transparent}
-/* 実測(2026-09-04・禅角ゴシックNew 900): Oの穴は 横0.17〜0.55em(中心0.36em)・縦は基線から0.12〜0.59em(中心0.355em)。
-   箱は幅=字送り0.726em+字間0.1em、高さ=行送り1.12em、基線は上から0.94em → 穴の中心は上から0.585em=50%+0.025em */
-h1 .ndl{position:absolute;left:calc(50% - .05em);top:calc(50% + .025em);width:.46em;height:.46em;
-  transform:translate(-50%,-50%);pointer-events:none}
-h1 .ndl svg{display:block;width:100%;height:100%;overflow:visible;
-  filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
+   ⚠ 針は h1 の「外」に置く（2026-09-04）。最初は O の中に入れたが、h1 には金属加工＝7段の drop-shadow フィルターと
+   background-clip:text がかかっており、その中に SVG を入れると iPhone の Safari で描画に失敗して
+   ページが黒→白（クラッシュ）になった（全ツールの入口が開けなくなる）。
+   いまは h1 を .wmbox で包み、針はその中で絶対配置＝フィルターの影響を受けない。
+   位置は読み込み後に JS が「O」の実際の位置から計算する（下の placeNeedle。字形の実測値: 穴の中心は
+   左から0.36em・基線から0.355em上＝インライン箱の上から0.525em）。JSが動くまでは見えない */
+.wmbox{position:relative;display:inline-block}
+.wmbox .ndl{position:absolute;left:0;top:0;width:1em;height:1em;transform:translate(-50%,-50%);
+  pointer-events:none;opacity:0;transition:opacity .2s}
+.wmbox .ndl.on{opacity:1}
+.wmbox .ndl svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
 /* 「ナ」と「ビ」の間だけ詰める（2026-09-04タダシさん指摘・実測して2回目で確定）。
    均等なはずのletter-spacingでも、「ナ」の字形は右側に余白が多く、「ビ」は左側の余白が少ないため、
    ほかの字間より目に見えて広く空いて見えていた。
@@ -217,7 +218,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 
 <header class="hero">
   <!-- 「GO」のOの中にサイトアイコンと同じ方位磁針の針を入れる（2026-09-04タダシさん指示・アイコンとの関連づけ） -->
-  <h1 class="wmf"><span class="go">G<span class="o">O<i class="ndl" aria-hidden="true"><svg viewBox="0 0 100 100"><g transform="rotate(38 50 50)"><polygon points="50,6 43.5,50 56.5,50" fill="#ff5abe"/><polygon points="50,94 43.5,50 56.5,50" fill="#8c98c6"/><circle cx="50" cy="50" r="5.2" fill="#fff"/></g></svg></i></span></span>ナ<span class="bi">ビ</span></h1>
+  <div class="wmbox"><h1 class="wmf"><span class="go">G<span class="o">O</span></span>ナ<span class="bi">ビ</span></h1><i class="ndl" aria-hidden="true"><svg viewBox="0 0 100 100"><g transform="rotate(38 50 50)"><polygon points="50,6 43.5,50 56.5,50" fill="#ff5abe"/><polygon points="50,94 43.5,50 56.5,50" fill="#8c98c6"/><circle cx="50" cy="50" r="5.2" fill="#fff"/></g></svg></i></div>
   <div class="hrule"></div>
   <p class="btag">Pok&eacute;mon GO Tools</p>
 </header>
@@ -253,6 +254,26 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 </footer>
 </div>
 
+<script>
+// 「GO」のOの穴の中心に針を置く（h1のフィルターの外から重ねる）。字形の実測値: 穴の中心は
+// Oの字送りの左から0.36em（.goは横に1.04倍しているので0.3744em）・インライン箱の上から0.525em
+(function(){
+  function place(){
+    var o=document.querySelector('h1 .o'), n=document.querySelector('.wmbox .ndl'), box=document.querySelector('.wmbox');
+    if(!o||!n||!box)return;
+    var r=o.getBoundingClientRect(), b=box.getBoundingClientRect(), fs=parseFloat(getComputedStyle(o).fontSize);
+    if(!r.width)return;
+    n.style.left=(r.left-b.left+0.36*1.04*fs)+'px';
+    n.style.top=(r.top-b.top+0.525*fs)+'px';
+    n.style.width=n.style.height=(0.46*fs)+'px';
+    n.classList.add('on');
+  }
+  place();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(place);
+  window.addEventListener('load',place);
+  window.addEventListener('resize',place);
+})();
+</script>
 <script src="/assets/theme.js"></script>
 <script src="/assets/explain.js"></script>
 <script>
