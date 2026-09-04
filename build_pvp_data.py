@@ -62,6 +62,8 @@ UNTRADEABLE_EXTRA = {'zygarde'}
 LEVEL_FLOOR_DEFAULT = 15          # 交換不可ポケモンの既定(スペシャルリサーチ産)
 LEVEL_FLOOR = {'zygarde': 20, 'deoxys': 20, 'darkrai': 20}   # レイドでしか手に入らない(ゲノセクトはタスク産があるので15)
 MANUAL_RELEASED = {'cramorant'}   # ウッウ(2026-08-18実装)
+# 未実装(r=0)のポケモンも2026-09-04から検索で選べる(タダシさん指示)。ただし次は「ポケモン」ではないので隠す(h=1)
+HIDDEN_FORMS = {'aegislash_blade', 'mimikyu_busted', 'cramorant_gulping', 'cramorant_gorging', 'morpeko_hangry'}
 
 SPECIES_JA_FIX = {
     'pikachu_5th_anniversary': 'ピカチュウ（5しゅうねん）',
@@ -228,6 +230,9 @@ def main():
                       'eq': [m for m in p.get('eliteMoves', []) if m.endswith('_FAST') or (m in moves and 'eg' in moves[m])],
                       'ec': [m for m in p.get('eliteMoves', []) if m in moves and 'e' in moves[m]],
                       'r': 1 if (p.get('released') or sid in MANUAL_RELEASED) else 0}
+        # hid=検索候補に出さない(hはHP種族値なので別名): バトル中だけの内部フォルム(エンジンが自動で切り替える)と、情報元の重複エントリ。
+        # データ自体は残す(pvp-engine.js が aegislash_blade を参照するため)
+        if sid in HIDDEN_FORMS or 'duplicate' in (p.get('tags') or []): pokes[sid]['hid'] = 1
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
             if 'mythical' in p['tags']: pokes[sid]['myth'] = 1

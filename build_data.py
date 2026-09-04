@@ -407,6 +407,9 @@ def main():
             c.append('_'.join(parts))
         return c
     excluded = []
+    # 除外した未実装ポケモンは捨てずに控えて、図鑑専用の pokedex/unreleased.json へ書き出す
+    # (2026-09-04タダシさん指示「動画で実装直前にめちゃめちゃ使う」)。火力・ジム・マックスの各ツールには入れない
+    unreleased = {}
     for k in list(final):
         rel = None
         for cand in pvp_candidates(k):
@@ -415,7 +418,7 @@ def main():
         if rel is None:  # 最後の手段: アンダースコア無視で照合
             rel = released_nound.get(k.lower().replace('_',''))
         if rel is False and k not in MANUAL_RELEASED:
-            excluded.append(final[k]['n']); del final[k]
+            excluded.append(final[k]['n']); unreleased[k] = final.pop(k)
     print(f'未実装として除外: {len(excluded)}種（例: {"、".join(excluded[:6])} …）')
 
     for k,ms in SUPP_EC.items():
@@ -499,10 +502,11 @@ def main():
         ps = e.get('data', {}).get('pokemonSettings')
         if ps and ps.get('pokemonClass'):
             pclass.setdefault(ps['pokemonId'], ps['pokemonClass'])
-    for k in final:
-        base = re.sub(r'_(MEGA(?:_[XY])?|PRIMAL)$', '', k)
-        if (pclass.get(base) or pclass.get(base.split('_')[0])) in LG_CLASS:
-            final[k]['lg'] = 1
+    for tbl in (final, unreleased):
+        for k in tbl:
+            base = re.sub(r'_(MEGA(?:_[XY])?|PRIMAL)$', '', k)
+            if (pclass.get(base) or pclass.get(base.split('_')[0])) in LG_CLASS:
+                tbl[k]['lg'] = 1
     print(f'伝説・幻: {sum(1 for p in final.values() if p.get("lg"))}種'
           f'（うちメガ・ゲンシ {sum(1 for p in final.values() if p.get("lg") and p.get("mega"))}種）')
 
@@ -516,10 +520,11 @@ def main():
         for t, mid in zip(HP16, hp_ids):
             moves[mid] = {'n': f'めざめるパワー（{TYPE_JA[t]}）', 't': t, 'p': base['p'], 'd': base['d'],
                           'e': base['e'], 'w': base['w'], 'we': base['we']}
-        for k in final:
-            for slot in ('q', 'eq'):
-                if 'HIDDEN_POWER_FAST' in final[k][slot]:
-                    final[k][slot] = [m for m in final[k][slot] if m != 'HIDDEN_POWER_FAST'] + hp_ids
+        for tbl in (final, unreleased):
+            for k in tbl:
+                for slot in ('q', 'eq'):
+                    if 'HIDDEN_POWER_FAST' in tbl[k][slot]:
+                        tbl[k][slot] = [m for m in tbl[k][slot] if m != 'HIDDEN_POWER_FAST'] + hp_ids
 
     cpm = {}
     for e in data:
@@ -589,6 +594,10 @@ def main():
         "（次の更新のときに自動で閉じるので、そのままでも大丈夫です）\n\n" + "\n".join(lines))
 
     open('godata.json','w',encoding='utf-8').write(god)
+    # 図鑑専用: 未実装ポケモンのジム・レイド側の性能(種族値・タイプ・おぼえるわざ)。わざ定義は godata.json の moves を共用する
+    open('pokedex/unreleased.json','w',encoding='utf-8').write(
+        json.dumps({'pokemon': dict(sorted(unreleased.items()))}, ensure_ascii=False, separators=(',',':')))
+    print(f'図鑑専用の未実装ポケモン: {len(unreleased)}種 → pokedex/unreleased.json')
     tpl = open('template.html', encoding='utf-8').read()
     open('dps/index.html','w',encoding='utf-8').write(tpl.replace('__GODATA__', god))
     dup = [(n,ct) for n,ct in Counter(p['n'] for p in final.values()).items() if ct>1]

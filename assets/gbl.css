@@ -139,6 +139,10 @@ select option[value=""]{color:var(--sub)}
 .opts.sh button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy)}
 /* メガLv(＋わざの威力倍率)。見た目は共通部品 mega-lv.css。1対1パネルは1行、3枠の中は小さめ */
 .mlvwrap{margin:6px 0 4px}
+/* 検索候補の「未実装」札(データ元にはあるがゲーム未実装のポケモン) */
+.sugg-list .unrel{font-style:normal;font-size:.58rem;font-weight:800;letter-spacing:.04em;margin-left:6px;padding:1px 5px;border-radius:5px;
+  color:#ffb36b;border:1px solid rgba(255,179,107,.55);vertical-align:1px;white-space:nowrap}
+:root.light .sugg-list .unrel{color:#a85a12;border-color:rgba(168,90,18,.5)}
 .pmeta .megalv,.gmlv .megalv{flex:1 0 100%;margin-top:3px;gap:5px}
 .pmeta .megalv .mlvseg button,.gmlv .megalv .mlvseg button{min-width:26px;padding:4px 6px;font-size:.72rem}
 .gmlv{margin-top:4px}

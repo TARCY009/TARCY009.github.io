@@ -102,6 +102,11 @@ h1{font-size:1.45rem;letter-spacing:.02em}
   filter:drop-shadow(0 1.5px 0 #9a6a10) drop-shadow(0 1.5px 0 #6e4a08) drop-shadow(0 5px 9px rgba(0,0,0,.42))}
 :root.light .hero .cp>b{filter:drop-shadow(0 1.5px 0 #c08a1a) drop-shadow(0 1.5px 0 #8a6208) drop-shadow(0 5px 9px rgba(140,90,0,.3))}
 .hero .cp .mega4{display:block;font-size:.72rem;color:var(--sub);font-weight:700;margin-top:1px}
+/* 「未実装」札(データ元にはあるがゲーム未実装のポケモン) */
+.unrel{font-style:normal;font-size:.58rem;font-weight:800;letter-spacing:.04em;margin-left:6px;padding:1px 5px;border-radius:5px;
+  color:#ffb36b;border:1px solid rgba(255,179,107,.55);vertical-align:2px;white-space:nowrap;line-height:1.4}
+.hero .nm .unrel{font-size:.7rem;align-self:center}
+:root.light .unrel{color:#a85a12;border-color:rgba(168,90,18,.5)}
 .hero .cp .mega4 i{font-style:normal;font-weight:800;font-size:.9rem;background:linear-gradient(92deg,#f58fc2,#b06cff);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* 3リーグの最大SCPは、カード下辺の横いっぱいの帯(見出し＋「リーグ名+数字」3セル)。
    縦3行は密集して見える(2026-08-29タダシさん指摘)→3セルの帯→同日「位置が気になる」で
@@ -400,7 +405,12 @@ const toKata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x
 Promise.all([
   fetch('/godata.json').then(r=>r.json()),
   fetch('/pvp_data.json').then(r=>r.json()),
-]).then(([g,p])=>{ GO=g; PVP=p;
+  // 図鑑専用: 未実装ポケモンのジム・レイド側の性能(火力系ツールには入れないので別ファイル。無くても動く)
+  fetch('/pokedex/unreleased.json').then(r=>r.ok?r.json():{pokemon:{}}).catch(()=>({pokemon:{}})),
+]).then(([g,p,u])=>{ GO=g; PVP=p;
+  // バトル中の内部フォルム(対戦データで hid=1 のもの)は、ジム・レイド側の同名フォルムも載せない
+  const hidNames=new Set(Object.values(PVP.pokemon).filter(v=>v.hid).map(v=>v.n));
+  Object.entries(u.pokemon||{}).forEach(([k,v])=>{ if(!GO.pokemon[k]&&!hidNames.has(v.n)) GO.pokemon[k]={...v,un:1}; });
   // トレーナーバトルのわるあがき(シミュ用データは自動発動わざとして除外しているので、図鑑表示用にここで足す)
   if(!PVP.moves.STRUGGLE) PVP.moves.STRUGGLE={n:'わるあがき',t:'NORMAL',p:35,e:100};
   // メガの追加SPアタック「＋わざ」。対戦データでは plusMoves という別枠に入っている
@@ -414,18 +424,20 @@ Promise.all([
   init(); });
 
 // 名前で両データを対応付ける(キー体系が違うため。PvE側だけ/PvP側だけのフォルムもそのまま載せる)
-let DEX=[];         // {name, go:キー|null, pvp:キー|null, ty, a, df, h, dex}
+let DEX=[];         // {name, go:キー|null, pvp:キー|null, ty, a, df, h, dex, un(未実装)}
+const UNREL_TAG='<i class="unrel" title="ゲームにまだ実装されていないポケモンです。データ元の性能（変わることがあります）を載せています">未実装</i>';
 let MAXA=1,MAXD=1,MAXH=1;
 function buildDex(){
   const m=new Map();
+  // 未実装(r=0)も載せる(2026-09-04タダシさん指示「実装直前の動画で使う」)。バトル中の内部フォルム・重複(hid=1)だけ除く
   for(const [k,v] of Object.entries(PVP.pokemon)){
-    if(!v.r) continue;
-    m.set(v.n,{name:v.n,go:null,pvp:k,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:v.dex||9999,fe:null,lg:null,mega:k.includes('_mega')||k.includes('_primal')});
+    if(v.hid) continue;
+    m.set(v.n,{name:v.n,go:null,pvp:k,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:v.dex||9999,fe:null,lg:null,mega:k.includes('_mega')||k.includes('_primal'),un:v.r?0:1});
   }
   for(const [k,v] of Object.entries(GO.pokemon)){
     const e=m.get(v.n);
-    if(e){ e.go=k; e.fe=v.fe?1:0; e.lg=v.lg?1:0; e.mega=!!v.mega; }
-    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999,fe:v.fe?1:0,lg:v.lg?1:0,mega:!!v.mega});
+    if(e){ e.go=k; e.fe=v.fe?1:0; e.lg=v.lg?1:0; e.mega=!!v.mega; if(v.un) e.un=1; }
+    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999,fe:v.fe?1:0,lg:v.lg?1:0,mega:!!v.mega,un:v.un?1:0});
   }
   // PvP側にしかないフォルムは、括弧を除いたベース名でPvE側から最終進化・伝説の印を借りる
   const goByName=new Map(Object.values(GO.pokemon).map(v=>[v.n,v]));
@@ -590,7 +602,7 @@ function syncFilters(){
     return `<span class="cpv" title="最大CP(PL50・個体値15)">CP${maxCp(e)}</span>`;
   };
   document.getElementById('flist').innerHTML=list.map(e=>
-    `<div class="fr" data-n="${e.name}"><b>${e.name}${mvIdx&&mvIdx.get(e.name)?'<span class="st" title="このポケモンにとって特別なわざ(レガシー)です">*</span>':''}</b>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}${right(e)}</div>`).join('');
+    `<div class="fr" data-n="${e.name}"><b>${e.name}${mvIdx&&mvIdx.get(e.name)?'<span class="st" title="このポケモンにとって特別なわざ(レガシー)です">*</span>':''}${e.un?UNREL_TAG:''}</b>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}${right(e)}</div>`).join('');
   document.getElementById('flist').querySelectorAll('.fr').forEach(d=>d.onclick=()=>{
     q.value=d.dataset.n; syncClr(); pick(d.dataset.n);
   });
@@ -610,7 +622,7 @@ q.addEventListener('input',e=>{
   //   (げきりん・はかいこうせん・なみのり+ 等)が1件も出ない
   const mvHits=MOVE_NAMES.filter(n=>toKata(n).startsWith(w)).slice(0,20);
   if(!hits.length&&!mvHits.length){ sugg.style.display='none'; return; }
-  sugg.innerHTML=hits.map(e=>`<div data-n="${e.name}"><span>${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}</div>`).join('')
+  sugg.innerHTML=hits.map(e=>`<div data-n="${e.name}"><span>${e.name}${e.un?UNREL_TAG:''}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),16)}</div>`).join('')
     +(mvHits.length?`<div class="sep">わざから探す(覚えるポケモンの一覧が出ます)</div>`+mvHits.map(n=>`<div data-mv="${n}"><span>${n}<span class="mvtag">わざ</span></span></div>`).join(''):'');
   sugg.style.display='block';
   sugg.querySelectorAll('div[data-n]').forEach(d=>d.onclick=()=>{
@@ -689,7 +701,7 @@ function render(){
   // ヒーロー
   document.getElementById('herocard').innerHTML=`
     <div class="hero">
-      <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm"><span class="nmt">${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}</div></div>
+      <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm"><span class="nmt">${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}${e.un?UNREL_TAG:''}</div></div>
       <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
         e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}</div>
     </div>

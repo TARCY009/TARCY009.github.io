@@ -471,7 +471,13 @@ document.getElementById('loading').style.display = 'none';
 
 // ---- 検索対象(実装済み・メガ除外) ----
 // 実装済み(r)は全て検索可能にする。メガ・ゲンシもメガバージョン系カップ用に含める
-const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r);
+const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r);   // 実装済み(一覧・ランキングの候補)
+// 検索で選べるのは未実装(r=0)も含めた全ポケモン(2026-09-04タダシさん指示「実装直前の動画で使う」)。
+// バトル中の内部フォルム・重複(hid=1)だけは出さない。環境一覧・対策さがし・ランキングの候補(KEYS)は従来どおり実装済みだけ
+const KEYS_ALL = Object.keys(D.pokemon).filter(k => !D.pokemon[k].hid);
+const isUnreleased = k => !!(D.pokemon[k] && !D.pokemon[k].r);
+const UNREL_TAG = '<i class="unrel" title="ゲームにまだ実装されていないポケモンです。データ元の性能（変わることがあります）で計算します">未実装</i>';
+const pkSuggName = k => D.pokemon[k].n + (isUnreleased(k) ? UNREL_TAG : '');
 const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const typeIcons = (p, size) => typePairHTML(p.ty.map(t => D.typeJa[t]), size || 18);
 // シャドウは「シャドウ○○」の4文字ぶん名前が長くなり、表や枠から見切れてしまう。
@@ -901,7 +907,7 @@ sideEl.forEach((el, i) => {
     const hits = searchPk(q, k => rkFoeOk(i, k));
     if (!hits.length) { list.style.display = 'none'; return; }
     list.innerHTML = hits.map(k =>
-      `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
     list.style.display = 'block';
     list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
       list.style.display = 'none';
@@ -2741,7 +2747,7 @@ const ptName = m => m ? (m.shadow ? 'シャドウ' : '') + D.pokemon[m.key].n : 
 const SEARCH_MAX = 100;
 function searchPk(q, ok) {
   const hit = [], sub = [];
-  for (const k of KEYS) {
+  for (const k of KEYS_ALL) {
     if (ok && !ok(k)) continue;
     const n = D.pokemon[k].n;
     const i = n.indexOf(q);
@@ -2785,7 +2791,7 @@ function buildPartySlots(box, mvStore) {
       if (!q) { list.style.display = 'none'; return; }
       const hits = searchPk(q);
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -3652,7 +3658,7 @@ function buildFoeSlots() {
       // ロケット団はメガ・ゲンシを使ってこないので、あいての候補には出さない
       const hits = searchPk(q, k => !isMega(k));
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -3750,7 +3756,7 @@ function renderRkMy() {
     if (!q) { list.style.display = 'none'; return; }
     const hits = searchPk(q);
     if (!hits.length) { list.style.display = 'none'; return; }
-    list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+    list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
     list.style.display = 'block';
     list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
       RKM.key = d.dataset.k; RKM.shadow = false; renderRkMy();
@@ -5608,7 +5614,7 @@ function buildBlogSlots() {
       if (!q) { list.style.display = 'none'; return; }
       const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -6146,7 +6152,7 @@ function buildGbFoeSlots() {
       // メガはメガカップのときだけ(GBLでは他のリーグで使えない。対策さがしの全ポケモンと同じ基準)
       const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -9532,7 +9538,7 @@ function easyRender() {
       if (!qq) { list.style.display = 'none'; return; }
       const hits = searchPk(qq, filt);
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${D.pokemon[k].n}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         const key = d.dataset.k;
