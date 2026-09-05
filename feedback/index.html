@@ -169,7 +169,7 @@ ol.steps b{color:var(--ink)}
    スプレッドシートを「ファイル → 共有 → ウェブに公開 → 形式=カンマ区切り(.csv)」で
    公開して出てきたURLを入れる。空のままでも「貼り付けで読み込む」で使える。
    ⚠ 公開したCSVはURLを知っていれば誰でも読めるので、URLは人に渡さないこと。 */
-var CSV_URL = '';
+var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTxDS1OR_LwQ2Jq7VU0sGtlfA47HgO7VnLp08eCZ4mRtc21Sc0DbzPCOqXj9Tqs7yubsTBdH0UqlkoQ/pub?gid=0&single=true&output=csv';
 /* ============================================================== */
 
 var DONE_KEY = 'feedback_done';
@@ -228,7 +228,10 @@ function shape(table) {
   });
 
   // 残りの列を中身で見分ける: URLが並ぶ列＝スクショ／いちばん長い文章の列＝本文／短い列＝名前
+  // フォームサービスが付ける通し番号の列は、読むうえで意味がないので最初から外す
+  var isId = function (h) { return /^(submission|respondent|response)\s*id$/.test(h) || h === 'id'; };
   var used = {}; [iTool, iCtx, iWhen].forEach(function (i) { if (i >= 0) used[i] = 1; });
+  for (var k = 0; k < low.length; k++) if (isId(low[k])) used[k] = 1;
   var stat = [];
   for (var c = 0; c < head.length; c++) {
     if (used[c]) continue;
@@ -251,7 +254,8 @@ function shape(table) {
     if (s.avg > 0 && s.avg <= 24 && (!ww || s.avg < ww.avg)) { ww = s; iWho = s.c; }
   });
 
-  var known = {}; [iTool, iCtx, iWhen, iShot, iBody, iWho].forEach(function (i) { if (i >= 0) known[i] = 1; });
+  var known = {};
+  for (var k2 = 0; k2 < low.length; k2++) if (isId(low[k2])) known[k2] = 1; [iTool, iCtx, iWhen, iShot, iBody, iWho].forEach(function (i) { if (i >= 0) known[i] = 1; });
 
   return data.map(function (r, n) {
     var get = function (i) { return i >= 0 ? String(r[i] == null ? '' : r[i]).trim() : ''; };
@@ -373,10 +377,17 @@ $('fUndone').addEventListener('click', function (e) {
 
 /* ---- 読み込み ---- */
 function load(text) {
-  rows = shape(parseTable(text)).reverse();   // 新しい順
+  var table = parseTable(text);
+  rows = shape(table).reverse();   // 新しい順
   $('err').hidden = true;
   render();
-  if (!rows.length) fail('中身を読み取れませんでした。見出しの行を含めてコピーできているか確かめてください。');
+  if (rows.length) return;
+  // 見出しの行だけ読めている＝つながってはいるが、まだ1件も届いていない
+  if (table.length === 1) {
+    $('list').innerHTML = '<div class="fb"><p class="empty">まだフィードバックは届いていません。</p></div>';
+  } else {
+    fail('中身を読み取れませんでした。見出しの行を含めてコピーできているか確かめてください。');
+  }
 }
 function fail(msg) { $('err').hidden = false; $('err').textContent = msg; }
 
