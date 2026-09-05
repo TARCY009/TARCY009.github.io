@@ -13,7 +13,7 @@
 (function () {
   // ============================ 設定 ============================
   // フォームのURL。空のあいだは案内そのものを出さない（入れ忘れても本番が壊れない）
-  var FORM = '';
+  var FORM = 'https://tally.so/r/jaR6DE';
 
   // この日を過ぎたら自動で消える（日本時間・「フィードバックをもらう期間だけ」出すため）
   var UNTIL = '2026-10-31';
@@ -31,11 +31,26 @@
 
   // 案内のURL（?fb=1）で来たら印を付けて、住所からは消す
   // （そのまま残すと、その人が共有したリンクからも案内が広がってしまう）
+  //
+  // ⚠ `location.search` だけを見てはいけない。GBL・ロケット団・対戦記録は
+  //    自分で住所を書き直すツールで、**その処理がこのファイルより先に走る**ため、
+  //    読むころには `fb=1` が消えている（実際に踏んだ）。
+  //    そこで「最初に開いた住所」（performance の記録）も一緒に見る。
+  var FB = /[?&]fb=1(&|$)/;
+  function firstUrl() {
+    try {
+      var e = (performance.getEntriesByType && performance.getEntriesByType('navigation')) || [];
+      if (e[0] && e[0].name) return e[0].name;
+    } catch (x) {}
+    return '';
+  }
   try {
-    if (/[?&]fb=1(&|$)/.test(location.search)) {
+    if (FB.test(location.search) || FB.test(firstUrl())) {
       localStorage.setItem(KEY, '1');
-      var q = location.search.replace(/(^\?|&)fb=1(?=&|$)/, '$1').replace(/^\?$/, '').replace(/^\?&/, '?');
-      history.replaceState(null, '', location.pathname + (q === '?' ? '' : q) + location.hash);
+      if (FB.test(location.search)) {
+        var q = location.search.replace(/(^\?|&)fb=1(?=&|$)/, '$1').replace(/^\?$/, '').replace(/^\?&/, '?');
+        history.replaceState(null, '', location.pathname + (q === '?' ? '' : q) + location.hash);
+      }
     }
   } catch (e) {}
 
