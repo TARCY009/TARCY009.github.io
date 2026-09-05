@@ -1,6 +1,6 @@
 // 対戦記録(GBL)用のService Worker
 // 目的: 電波の悪い場所(対戦の合間)でも起動できるようにする(PWAインストール要件も満たす)
-const CACHE = 'blg-v44';
+const CACHE = 'blg-v45';
 // 起動に必要な一式。データ本体(pvp_data.js)と共有モジュールはページ外のパスだが、
 // このSWが管理するページからの読み込みは全てfetchイベントを通るのでキャッシュできる
 const ASSETS = [
@@ -11,7 +11,7 @@ const ASSETS = [
   '/assets/rocket_roster.js', '/assets/gbl.css', '/assets/gbl-app.js',
   '/assets/theme.css', '/assets/theme.js',
   '/assets/explain.css', '/assets/wordmark.css', '/assets/explain.js',
-  '/assets/home.css', '/assets/home.js', '/assets/pageheader.css',
+  '/assets/home.css', '/assets/home.js', '/assets/feedback.css', '/assets/feedback.js', '/assets/pageheader.css',
   '/assets/icons/battlelog/icon-192.png', '/assets/icons/battlelog/icon-512.png',
   '/assets/icons/battlelog/favicon-32.png', '/assets/icons/battlelog/apple-touch-icon.png',
 ];

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>フィードバック一覧（管理用）</title>
+<!-- 管理用のページなので検索には出さない。トップページのツール一覧にも載せない -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<style>
+/* =========================================================================
+   フィードバック一覧（管理用・2026-09-06）
+   テスターが送ってくれた内容を1画面で読み、**そのまま Claude Code に貼れる形**で
+   コピーするためのページ。読み込み元は2通り:
+     ① スプレッドシートを「ウェブに公開」したCSVのURL（下の CSV_URL に入れる）
+     ② そのCSVが読めないとき用に、シートから選んでコピーした中身を貼る欄
+   列の名前は決め打ちしない（フォームの質問文をあとから変えても壊れないように、
+   中身から役割を見分ける）。
+   ========================================================================= */
+:root{
+  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560; --panel:rgba(26,35,66,.94);
+  --bg2:#151d38; --cy:#43e0ff; --gold:#ffd54a; --ok:#3fe0a0;
+  --cardsh:0 18px 38px -26px rgba(0,0,0,.9);
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,213,74,.10), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.13), transparent 62%),
+    linear-gradient(165deg,#0b1023 0%,#111731 50%,#1a1024 100%);
+  --tcolor:#0b1023;
+}
+:root.light{
+  --ink:#1d2440; --sub:#5b6b96; --line:#dfe6f5; --panel:rgba(255,255,255,.9);
+  --bg2:#eff3fc; --cy:#0b8ea8; --gold:#8a6000; --ok:#0f8a5f;
+  --cardsh:0 14px 30px -24px rgba(30,40,90,.5);
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,213,74,.22), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.16), transparent 62%),
+    linear-gradient(165deg,#eef3ff 0%,#f6f2ff 50%,#fdeee6 100%);
+  --tcolor:#eef3ff;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:16px 14px 60px;color:var(--ink);background:var(--bgimg);
+  background-attachment:fixed;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:15px;line-height:1.7;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto}
+header{margin-bottom:16px}
+h1{margin:0 0 4px;font-size:1.45rem;font-weight:900;letter-spacing:.02em}
+.eyebrow{font-family:Oswald,"Hiragino Sans",sans-serif;font-size:.7rem;font-weight:600;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+h1 small{display:block;font-size:.76rem;font-weight:600;color:var(--sub);margin-top:3px}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:15px;
+  padding:14px;margin-bottom:14px;box-shadow:var(--cardsh)}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;border-radius:15px 15px 0 0;
+  background:linear-gradient(90deg,var(--gold),var(--cy))}
+h2{margin:2px 0 10px;font-size:.94rem;font-weight:800}
+
+/* ---- 読み込みの操作 ---- */
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+button,.btn{font:inherit;font-size:.82rem;font-weight:800;line-height:1;cursor:pointer;
+  padding:9px 14px;border-radius:999px;border:1px solid var(--line);color:var(--ink);
+  background:linear-gradient(180deg,#1e2850,var(--bg2));
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .12s ease,box-shadow .12s ease}
+/* ⚠ ライトの土台は必ず :not([aria-pressed="true"]) で限定する。
+   限定しないと詳細度で下の「点灯」に勝ってしまい、ライトだけ点灯しなくなる（実際に踏んだ） */
+:root.light button:not([aria-pressed="true"]),:root.light .btn{
+  background:linear-gradient(180deg,#fff,#eff3fc);
+  box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+button:hover{transform:translateY(-1px)}
+button:focus-visible{outline:2px solid #8b5cf6;outline-offset:2px}
+button.pri{color:#3a2a00;border:0;
+  background:linear-gradient(160deg,#ffe89a 0%,#ffd54a 55%,#e0a800 100%);
+  box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+button[aria-pressed="true"]{color:#042330;border:0;
+  background:linear-gradient(160deg,#8ff0ff 0%,#43e0ff 55%,#0b8ea8 100%);
+  box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+textarea{width:100%;min-height:110px;font:inherit;font-size:16px;line-height:1.6;
+  padding:10px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--ink);resize:vertical}
+.note{font-size:.76rem;color:var(--sub);line-height:1.8;margin:8px 0 0}
+.note b{color:var(--ink)}
+ol.steps{margin:8px 0 0;padding-left:1.3em;font-size:.78rem;color:var(--sub);line-height:1.9}
+ol.steps b{color:var(--ink)}
+
+/* ---- 1件のフィードバック ---- */
+.fb{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:15px;
+  padding:14px;margin-bottom:12px;box-shadow:var(--cardsh)}
+.fb.done{opacity:.55}
+.fbhead{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:9px}
+.no{font-size:.72rem;font-weight:800;color:var(--sub)}
+.tool{font-size:.74rem;font-weight:800;line-height:1;padding:5px 9px;border-radius:6px;
+  color:#042330;background:linear-gradient(160deg,#8ff0ff 0%,#43e0ff 55%,#0b8ea8 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.who{font-size:.74rem;font-weight:700;color:var(--gold)}
+.when{font-size:.72rem;color:var(--sub);margin-left:auto}
+.body{white-space:pre-wrap;word-break:break-word;font-size:.9rem;line-height:1.85;margin:0 0 10px}
+.meta{font-size:.72rem;color:var(--sub);word-break:break-all;line-height:1.8;margin:0 0 10px}
+.shots{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.shots a{display:block;border:1px solid var(--line);border-radius:9px;overflow:hidden;line-height:0}
+.shots img{width:112px;height:112px;object-fit:cover;display:block;background:var(--bg2)}
+.shots a.nolink{padding:8px 10px;font-size:.72rem;line-height:1.5;color:var(--cy);
+  word-break:break-all;max-width:100%}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.acts .ok{font-size:.74rem;font-weight:800;color:var(--ok)}
+.empty{text-align:center;color:var(--sub);font-size:.84rem;padding:26px 10px}
+.err{color:#ff8a7a;font-size:.78rem;line-height:1.8;margin-top:8px}
+:root.light .err{color:#c02a1a}
+@media (max-width:430px){
+  h1{font-size:1.28rem}
+  .when{margin-left:0;flex:1 1 100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Tester Feedback</div>
+  <h1>フィードバック一覧
+    <small>テスターから届いた内容を読んで、そのまま Claude Code に貼れる形でコピーします</small>
+  </h1>
+  <div id="themesw"></div>
+</header>
+
+<div class="card" id="src">
+  <h2>読み込み</h2>
+  <div class="row">
+    <button type="button" id="reload" class="pri">最新を読み込む</button>
+    <button type="button" id="topaste">貼り付けで読み込む</button>
+  </div>
+  <p class="note" id="srcnote"></p>
+  <div id="pastebox" hidden>
+    <ol class="steps">
+      <li>フォームの回答がたまっている<b>スプレッドシートを開く</b></li>
+      <li>見出しの行を含めて<b>全部を選んでコピー</b>（⌘A → ⌘C）</li>
+      <li>下の欄に<b>貼り付ける</b></li>
+    </ol>
+    <textarea id="paste" placeholder="ここに貼り付けます"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button type="button" id="readpaste" class="pri">読み込む</button>
+      <button type="button" id="clearpaste">消す</button>
+    </div>
+  </div>
+  <p class="err" id="err" hidden></p>
+</div>
+
+<div class="card" id="ctl" hidden>
+  <h2>表示</h2>
+  <div class="row">
+    <button type="button" id="fUndone" aria-pressed="true">まだ見ていないものだけ</button>
+    <button type="button" id="copyAll">まとめてコピー</button>
+    <span class="note" id="count" style="margin:0"></span>
+  </div>
+</div>
+
+<div id="list"></div>
+
+</div>
+
+<script>
+/* ============================ 設定 ============================
+   スプレッドシートを「ファイル → 共有 → ウェブに公開 → 形式=カンマ区切り(.csv)」で
+   公開して出てきたURLを入れる。空のままでも「貼り付けで読み込む」で使える。
+   ⚠ 公開したCSVはURLを知っていれば誰でも読めるので、URLは人に渡さないこと。 */
+var CSV_URL = '';
+/* ============================================================== */
+
+var DONE_KEY = 'feedback_done';
+var rows = [], onlyUndone = true;
+
+var $ = function (id) { return document.getElementById(id); };
+
+/* ---- 保存（対応したものに印を付ける） ---- */
+function doneSet() {
+  try { return JSON.parse(localStorage.getItem(DONE_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function markDone(id, on) {
+  var d = doneSet();
+  if (on) d[id] = 1; else delete d[id];
+  try { localStorage.setItem(DONE_KEY, JSON.stringify(d)); } catch (e) {}
+}
+
+/* ---- CSV / TSV を読む（引用符の中の改行・区切り文字も正しく扱う） ---- */
+function parseTable(text) {
+  text = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // 1行目のタブとカンマを数えて区切り文字を決める（スプレッドシートから貼るとタブ区切り）
+  var head = text.split('\n')[0] || '';
+  var sep = (head.split('\t').length > head.split(',').length) ? '\t' : ',';
+  var out = [], row = [], cell = '', q = false, i = 0;
+  while (i < text.length) {
+    var c = text[i];
+    if (q) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i += 2; continue; }
+        q = false; i++; continue;
+      }
+      cell += c; i++; continue;
+    }
+    if (c === '"') { q = true; i++; continue; }
+    if (c === sep) { row.push(cell); cell = ''; i++; continue; }
+    if (c === '\n') { row.push(cell); out.push(row); row = []; cell = ''; i++; continue; }
+    cell += c; i++;
+  }
+  row.push(cell); out.push(row);
+  return out.filter(function (r) { return r.some(function (v) { return String(v).trim() !== ''; }); });
+}
+
+/* ---- 列の役割を見分ける（見出しの名前を決め打ちしない） ---- */
+function shape(table) {
+  if (table.length < 2) return [];
+  var head = table[0].map(function (h) { return String(h || '').trim(); });
+  var data = table.slice(1);
+  var low = head.map(function (h) { return h.toLowerCase(); });
+
+  var idx = function (test) { for (var i = 0; i < low.length; i++) if (test(low[i], head[i])) return i; return -1; };
+  var iTool = idx(function (h) { return h === 'tool' || h.indexOf('ツール') >= 0; });
+  var iCtx = idx(function (h) { return h === 'ctx' || h.indexOf('端末') >= 0; });
+  var iWhen = idx(function (h) {
+    return /submitted|submission|timestamp|created|date|time/.test(h)
+      || h.indexOf('日時') >= 0 || h.indexOf('タイムスタンプ') >= 0 || h.indexOf('送信') >= 0;
+  });
+
+  // 残りの列を中身で見分ける: URLが並ぶ列＝スクショ／いちばん長い文章の列＝本文／短い列＝名前
+  var used = {}; [iTool, iCtx, iWhen].forEach(function (i) { if (i >= 0) used[i] = 1; });
+  var stat = [];
+  for (var c = 0; c < head.length; c++) {
+    if (used[c]) continue;
+    var len = 0, urls = 0, n = 0;
+    for (var r = 0; r < data.length; r++) {
+      var v = String(data[r][c] == null ? '' : data[r][c]).trim();
+      if (!v) continue;
+      n++; len += v.length;
+      if (/^https?:\/\//.test(v)) urls++;
+    }
+    stat.push({ c: c, avg: n ? len / n : 0, urlRate: n ? urls / n : 0, n: n });
+  }
+  var iShot = -1, best = null;
+  stat.forEach(function (s) { if (s.urlRate >= 0.6 && s.n > 0 && (!best || s.n > best.n)) { best = s; iShot = s.c; } });
+  var iBody = -1, bb = null;
+  stat.forEach(function (s) { if (s.c === iShot) return; if (!bb || s.avg > bb.avg) { bb = s; iBody = s.c; } });
+  var iWho = -1, ww = null;
+  stat.forEach(function (s) {
+    if (s.c === iShot || s.c === iBody) return;
+    if (s.avg > 0 && s.avg <= 24 && (!ww || s.avg < ww.avg)) { ww = s; iWho = s.c; }
+  });
+
+  var known = {}; [iTool, iCtx, iWhen, iShot, iBody, iWho].forEach(function (i) { if (i >= 0) known[i] = 1; });
+
+  return data.map(function (r, n) {
+    var get = function (i) { return i >= 0 ? String(r[i] == null ? '' : r[i]).trim() : ''; };
+    var extra = [];
+    for (var c = 0; c < head.length; c++) {
+      if (known[c]) continue;
+      var v = String(r[c] == null ? '' : r[c]).trim();
+      if (v) extra.push(head[c] + ': ' + v);
+    }
+    var shots = get(iShot).split(/[\s,]+/).filter(function (u) { return /^https?:\/\//.test(u); });
+    var body = get(iBody);
+    var when = get(iWhen);
+    return {
+      id: (when || ('#' + n)) + '|' + body.slice(0, 40),
+      tool: get(iTool), ctx: get(iCtx), when: when, who: get(iWho),
+      body: body, shots: shots, extra: extra
+    };
+  });
+}
+
+/* ---- 画面 ---- */
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+function isImg(u) { return /\.(png|jpe?g|gif|webp|heic|heif)(\?|$)/i.test(u); }
+
+/* Claude Code にそのまま貼れる形にする */
+function promptText(f, n) {
+  var L = [];
+  L.push('【テスターのフィードバック' + (n ? ' ' + n : '') + '】' + (f.tool || ''));
+  if (f.when || f.who) L.push('送信: ' + [f.when, f.who].filter(Boolean).join(' ／ '));
+  if (f.ctx) L.push('環境: ' + f.ctx);
+  f.extra.forEach(function (e) { L.push(e); });
+  if (f.shots.length) L.push('スクリーンショット: ' + f.shots.join(' '));
+  L.push('');
+  L.push('内容:');
+  L.push(f.body);
+  return L.join('\n');
+}
+
+function copy(text, btn) {
+  var done = function () {
+    if (!btn) return;
+    var old = btn.textContent;
+    btn.textContent = 'コピーしました';
+    setTimeout(function () { btn.textContent = old; }, 1400);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+  } else fallback(text, done);
+}
+function fallback(text, done) {
+  var t = document.createElement('textarea');
+  t.value = text; t.style.position = 'fixed'; t.style.opacity = '0';
+  document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); done(); } catch (e) { alert('コピーできませんでした'); }
+  document.body.removeChild(t);
+}
+
+function render() {
+  var d = doneSet();
+  var show = rows.filter(function (f) { return !onlyUndone || !d[f.id]; });
+  $('ctl').hidden = rows.length === 0;
+  $('count').textContent = rows.length
+    ? ('全 ' + rows.length + ' 件／まだ見ていないもの ' + rows.filter(function (f) { return !d[f.id]; }).length + ' 件')
+    : '';
+
+  var box = $('list');
+  if (!rows.length) { box.innerHTML = ''; return; }
+  if (!show.length) { box.innerHTML = '<div class="fb"><p class="empty">すべて確認済みです。</p></div>'; return; }
+
+  box.innerHTML = show.map(function (f) {
+    var i = rows.indexOf(f), isDone = !!d[f.id];
+    var shots = f.shots.map(function (u) {
+      return isImg(u)
+        // 画像が読めなかったとき（消えた・見られない）は、空の箱を残さずURLの文字に切り替える
+        ? '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt="スクリーンショット" loading="lazy"'
+          + ' onerror="this.parentNode.className=\'nolink\';this.parentNode.textContent=this.src"></a>'
+        : '<a class="nolink" href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(u) + '</a>';
+    }).join('');
+    return '<div class="fb' + (isDone ? ' done' : '') + '" data-i="' + i + '">'
+      + '<div class="fbhead">'
+      + '<span class="no">#' + (rows.length - i) + '</span>'
+      + (f.tool ? '<span class="tool">' + esc(f.tool) + '</span>' : '')
+      + (f.who ? '<span class="who">' + esc(f.who) + '</span>' : '')
+      + (f.when ? '<span class="when">' + esc(f.when) + '</span>' : '')
+      + '</div>'
+      + '<p class="body">' + esc(f.body) + '</p>'
+      + (f.ctx || f.extra.length ? '<p class="meta">' + esc([f.ctx].concat(f.extra).filter(Boolean).join(' ／ ')) + '</p>' : '')
+      + (shots ? '<div class="shots">' + shots + '</div>' : '')
+      + '<div class="acts">'
+      + '<button type="button" class="pri act-copy">この1件をコピー</button>'
+      + '<button type="button" class="act-done">' + (isDone ? '確認前に戻す' : '確認した') + '</button>'
+      + (isDone ? '<span class="ok">確認ずみ</span>' : '')
+      + '</div></div>';
+  }).join('');
+}
+
+$('list').addEventListener('click', function (e) {
+  var card = e.target.closest('.fb'); if (!card) return;
+  var f = rows[+card.dataset.i]; if (!f) return;
+  if (e.target.closest('.act-copy')) copy(promptText(f, '#' + (rows.length - rows.indexOf(f))), e.target);
+  else if (e.target.closest('.act-done')) { markDone(f.id, !doneSet()[f.id]); render(); }
+});
+
+$('copyAll').addEventListener('click', function (e) {
+  var d = doneSet();
+  var list = rows.filter(function (f) { return !onlyUndone || !d[f.id]; });
+  if (!list.length) return;
+  copy(list.map(function (f, i) { return promptText(f, '#' + (i + 1)); }).join('\n\n---\n\n'), e.target);
+});
+$('fUndone').addEventListener('click', function (e) {
+  onlyUndone = !onlyUndone;
+  e.target.setAttribute('aria-pressed', onlyUndone ? 'true' : 'false');
+  render();
+});
+
+/* ---- 読み込み ---- */
+function load(text) {
+  rows = shape(parseTable(text)).reverse();   // 新しい順
+  $('err').hidden = true;
+  render();
+  if (!rows.length) fail('中身を読み取れませんでした。見出しの行を含めてコピーできているか確かめてください。');
+}
+function fail(msg) { $('err').hidden = false; $('err').textContent = msg; }
+
+function reload() {
+  if (!CSV_URL) { $('pastebox').hidden = false; $('paste').focus(); return; }
+  $('err').hidden = true;
+  fetch(CSV_URL, { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(load)
+    .catch(function () {
+      fail('自動で読み込めませんでした（公開の設定か、通信の制限）。'
+        + '「貼り付けで読み込む」を使ってください。');
+      $('pastebox').hidden = false;
+    });
+}
+$('reload').addEventListener('click', reload);
+$('topaste').addEventListener('click', function () {
+  $('pastebox').hidden = !$('pastebox').hidden;
+  if (!$('pastebox').hidden) $('paste').focus();
+});
+$('readpaste').addEventListener('click', function () { load($('paste').value); });
+$('clearpaste').addEventListener('click', function () { $('paste').value = ''; });
+
+$('srcnote').innerHTML = CSV_URL
+  ? '公開したスプレッドシートから自動で読み込みます。うまくいかないときは「貼り付けで読み込む」を使ってください。'
+  : '<b>まだ読み込み元を設定していません。</b>スプレッドシートから中身をコピーして「貼り付けで読み込む」に貼ってください。'
+    + '（自動で読み込む形にもできます）';
+
+reload();
+</script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+<script src="/assets/home.js"></script>
+</body>
+</html>

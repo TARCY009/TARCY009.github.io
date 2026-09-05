@@ -1,0 +1,75 @@
+/* 「フィードバックを送る」案内（全ツール共通・2026-09-06・テスト期間だけ出す）
+   feedback.js がページのいちばん上に差し込むので、ページ側のHTMLに追加する要素は無い。
+   やることは theme・explain・home と同じ流儀の2行だけ:
+   ・<head> に feedback.css を読み込む（home.css の直後）
+   ・home.js の「直後」に feedback.js を読み込む
+
+   ⚠ ここは**テスト期間だけの一時的な案内**なので、サイト本来の色（レイド＝赤／対戦＝水色／
+   調べる＝紫）とは別の**金**にして、designの一部に見えないようにしてある。
+   トップページの決めごとに合わせて**絵文字は使わない**（全ページ共通でそろえる）。
+
+   ⚠ 各ツールのCSS変数に依存させない（自己完結）。どのページに置いても同じ見た目になる。 */
+
+.fbbar{box-sizing:border-box;width:100%;max-width:980px;margin:0 auto 14px;padding:0 14px;
+  font:inherit;color:#f0e3bd}
+.fbbar *{box-sizing:border-box}
+.fbbar .fbin{display:flex;align-items:center;gap:10px;
+  border:1px solid rgba(255,213,74,.34);border-radius:12px;
+  background:linear-gradient(180deg,rgba(255,213,74,.12),rgba(255,213,74,.05));
+  box-shadow:0 2px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.07);
+  padding:9px 12px}
+
+/* 「テスト中」の小さな札 */
+.fbbar .fbtag{flex:0 0 auto;font-size:.68rem;font-weight:800;letter-spacing:.04em;line-height:1;
+  padding:5px 8px;border-radius:6px;color:#3a2a00;
+  background:linear-gradient(160deg,#ffe89a 0%,#ffd54a 55%,#e0a800 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.fbbar .fbtx{flex:1 1 auto;font-size:.82rem;font-weight:700;min-width:0}
+
+/* 送るボタン（明るい金なので文字は濃色にする＝全ツール共通の決めごと） */
+.fbbar .fbbtn{flex:0 0 auto;font:inherit;font-size:.82rem;font-weight:800;line-height:1;
+  cursor:pointer;padding:9px 16px;border-radius:999px;border:0;color:#3a2a00;
+  background:linear-gradient(160deg,#ffe89a 0%,#ffd54a 55%,#e0a800 100%);
+  box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .12s ease,box-shadow .12s ease}
+.fbbar .fbbtn:hover{transform:translateY(-1px);
+  box-shadow:0 4px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+.fbbar .fbbtn:active{transform:translateY(1px);
+  box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+.fbbar .fbbtn:focus-visible{outline:2px solid #8b5cf6;outline-offset:2px}
+
+/* トップページは「いちばん上のわかりやすいところ」に大きく出す。
+   トップの語彙にそろえて、英字の小見出し＋和文の見出し＋短い説明の形にする */
+.fbbar.big{margin-top:14px;margin-bottom:20px}
+.fbbar.big .fbin{display:block;padding:16px 18px;border-radius:14px}
+.fbbar.big .fbeb{display:block;font-size:.64rem;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:#d9b64e;margin-bottom:7px}
+.fbbar.big .fbttl{margin:0 0 6px;font-size:1.06rem;font-weight:800;letter-spacing:.02em;color:#ffe89a}
+.fbbar.big .fbsub{margin:0 0 13px;font-size:.78rem;line-height:1.75;color:#cdbf99}
+.fbbar.big .fbbtn{font-size:.9rem;padding:11px 22px}
+
+/* ライトテーマ（白い土台でも読める濃さにする） */
+:root.light .fbbar{color:#5a4600}
+:root.light .fbbar .fbin{border-color:rgba(176,122,0,.3);
+  background:linear-gradient(180deg,rgba(255,213,74,.3),rgba(255,213,74,.14));
+  box-shadow:0 2px 0 rgba(90,70,0,.12),inset 0 1px 0 #fff}
+:root.light .fbbar .fbeb{color:#8a6000}
+:root.light .fbbar .fbttl{color:#5a4600}
+:root.light .fbbar .fbsub{color:#6b5a2a}
+
+/* 狭い画面。文章を折り返さずに1行で読ませるため、**「テスト中」の札は省く**
+   （金の帯そのものが「いつもと違う案内」だと伝えるので、札が無くても意味は通る）。
+   ⚠ 札を残すと、ページ自身の左右余白が広いツール（個体値チェッカーは16px）でだけ
+   文章がはみ出して2段になり、ページごとに高さが揃わなくなる（実際に踏んだ）。
+   ⚠ 逆に自分の左右余白（10px）を外してもいけない——ページ自身に左右余白が無いツール
+   （GBL・図鑑・マックスバトル・ブレイクポイント）で帯が画面の端に貼り付く（これも踏んだ）。
+   それでも足りないほど狭いときは .fbin の flex-wrap が働いて自然に2段になる */
+@media (max-width:430px){
+  .fbbar{padding:0 10px}
+  .fbbar .fbin{flex-wrap:wrap;gap:8px;padding:8px 12px}
+  .fbbar:not(.big) .fbtag{display:none}
+  .fbbar .fbtx{font-size:.78rem}
+  .fbbar .fbbtn{margin-left:auto;padding:8px 15px}
+  .fbbar.big .fbttl{font-size:.98rem}
+  .fbbar.big .fbin{padding:14px}
+}
