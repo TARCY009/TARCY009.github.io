@@ -109,7 +109,7 @@ document.getElementById('app').innerHTML = `
       <div class="popwin custIv" style="display:none">
         <div class="popttl ivpresetttl">入手別の1位個体（タップで反映）</div>
         <div class="slots ivpresets">
-          <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
+          <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド/ふか/リワード</button>
         </div>
         <div class="popttl" style="margin-top:10px">手動入力（PLは自動調整）</div>
         <div class="ivgrid">
@@ -185,7 +185,7 @@ document.getElementById('app').innerHTML = `
       <div class="popwin custIv" style="display:none">
         <div class="popttl ivpresetttl">入手別の1位個体（タップで反映）</div>
         <div class="slots ivpresets">
-          <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド,ふか,リワード</button>
+          <button data-f="5" title="交換入手(個体値の下限5)の中での1位個体">大親友交換</button><button data-f="6" title="シャドウレイド産(下限6)の中での1位個体">シャドウレイド</button><button data-f="10" title="レイド・ふか・リワード産(下限10)の中での1位個体">レイド/ふか/リワード</button>
         </div>
         <div class="popttl" style="margin-top:10px">手動入力（PLは自動調整）</div>
         <div class="ivgrid">
@@ -1255,7 +1255,7 @@ ${PAGE_ROCKET ? '' : `
   よく当たる相手に強いパーティほど、平均勝率より高く出ます。</p>
 
   <h4>対戦記録と「マイ環境」</h4>
-  <p>GBLの環境は<b>レート帯によって採用率がけっこう違います</b>。「対戦記録」モードで戦った相手を
+  <p>GBLの環境は<b>レート帯によって採用率がけっこう違います</b>。「対戦記録」のページで戦った相手を
   記録すると、ツールの環境リスト（全体像）ではなく<b>あなたの土俵の環境</b>で分析できます。</p>
   <ul>
     <li><b>記録の中身</b> … あいての3匹（1匹目＝初手）・勝敗・自分のパーティ（パーティ診断の3枠を自動で控えます）。
@@ -1709,7 +1709,8 @@ function applyMode() {
   // SP発動・くりだし・KOのカットインが全画面で流れ続けていた**(#fxlayer は最前面)
   if (!mock && !rkTeam) {
     clearInterval(RBV.timer); RBV.timer = null;
-    document.body.classList.remove('bfull');   // 全画面ロックも解く
+    // 全画面ロックも解く。.bfull は document.body ではなく描画先(.gbbody)に付く
+    document.querySelectorAll('.bfull').forEach(n => n.classList.remove('bfull'));
   }
   const duelBox = document.querySelector('.duel');
   duelBox.style.display = mode === 'party' || mode === 'blog' || mock || rkTeam ? 'none' : '';
@@ -3075,6 +3076,7 @@ function runParty() {
   const idxs = [0, 1, 2].filter(i => PT[i]);
   if (!idxs.length) {
     body.style.minHeight = '';
+    syncPtShieldBadges(null);   // 前のパーティの「穴◯」バッジを消す(消さないと残る)
     body.innerHTML = '<div class="mtnote">上の枠にポケモンを入れると診断します（1〜3匹）</div>';
     return;
   }
@@ -5585,7 +5587,8 @@ function rbRender(body, bt, picks, foes, extra) {
       RBUI.open = null; RBV.playing = true;
       run();
     });
-    const cancel = () => { winbox.innerHTML = ''; RBV.playing = true; startTimer(); };
+    // ⏸で止めてから⇄を押して「やめる」と、勝手に再生が始まっていた。止めていたなら止めたまま戻す
+    const cancel = () => { winbox.innerHTML = ''; if (RBV.playing) startTimer(); else setPlayBtn(); };
     winbox.querySelector('.mswx').onclick = cancel;
     winbox.querySelector('.wx').onclick = cancel;
   };
@@ -8609,7 +8612,8 @@ function gbRender(body, bt, picks, foes) {
       RBUI.open = null; RBV.playing = true;
       run();
     });
-    const cancel = () => { winbox.innerHTML = ''; RBV.playing = true; startTimer(); };
+    // ⏸で止めてから⇄を押して「やめる」と、勝手に再生が始まっていた。止めていたなら止めたまま戻す
+    const cancel = () => { winbox.innerHTML = ''; if (RBV.playing) startTimer(); else setPlayBtn(); };
     winbox.querySelector('.mswx').onclick = cancel;
     winbox.querySelector('.wx').onclick = cancel;
   };
@@ -8724,6 +8728,10 @@ function syncSmax(i) {
   const mw = el.querySelector('.mlvwrap');
   mw.style.display = hasPlus(S[i].key) ? 'block' : 'none';
   mw.querySelectorAll('.mlvseg button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.lv === megaLvOf(S[i])));
+  // ﾏﾆｭｱﾙ個体値のPL欄の上限も合わせる。max="51" のままだと、メガLv4(52/53)やCPブースト(55)を
+  // 選んでもスピナー(↑)で52以上に上げられない(手で打てばクランプは通る)
+  const lv = el.querySelector('.ivL');
+  if (lv) lv.setAttribute('max', String(S[i].maxLv || 51));
 }
 
 // 発ごとのSP設定を初期状態(全部おまかせ)へ戻す。ポケモンを切り替えたときに古い指定を残さない
