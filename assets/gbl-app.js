@@ -1254,9 +1254,11 @@ function renderCups() {
   const box = document.getElementById('cupslots');
   const pbox = document.getElementById('pastslots');
   // マイ環境(対戦記録から作った自分の土俵の環境)。5戦以上記録したリーグだけ出す
-  const myBtns = [1500, 2500, 0].map(c0 => {
+  // 記録のあるCP上限を全部見る(リトル(500)などのカップで記録した人も出るように・2026-09-05)
+  const myCaps = [...new Set(BLOG.map(r => r.cap))].sort((a, b) => a - b);
+  const myBtns = myCaps.map(c0 => {
     const n = BLOG.filter(r => r.cap === c0).length;
-    return n >= 5 ? `<button class="mycup" data-my="${c0}" aria-pressed="${!!(cup && cup.slug === 'my' + c0)}" title="対戦記録から作った、あなたの土俵の環境リストです。環境一覧・対策さがし・パーティ診断がこのリストで動きます">📒 マイ環境(${BL_LGN[c0]})<small>あなたの記録${n}戦から</small></button>` : '';
+    return n >= 5 ? `<button class="mycup" data-my="${c0}" aria-pressed="${!!(cup && cup.slug === 'my' + c0)}" title="対戦記録から作った、あなたの土俵の環境リストです。環境一覧・対策さがし・パーティ診断がこのリストで動きます">📒 マイ環境(${blLgName(c0)})<small>あなたの記録${n}戦から</small></button>` : '';
   }).join('');
   box.innerHTML = myBtns + (window.CUP_LISTS || []).map(cupBtn).join('');
   box.querySelectorAll('button[data-my]').forEach(x => x.onclick = () => selectMyCup(+x.dataset.my));
@@ -1268,7 +1270,7 @@ function renderCups() {
 }
 function selectCup(slug) {
   // マイ環境(対戦記録から作るカップ)はここで分岐(共有URL・リロードの cup=my1500 もここに来る)
-  const my = /^my(1500|2500|0)$/.exec(slug || '');
+  const my = /^my(\d+)$/.exec(slug || '');   // リトル(500)などCP上限が何であっても受ける
   if (my) { selectMyCup(+my[1]); return; }
   const c = (window.CUP_LISTS || []).find(x => x.slug === slug)
     || (pastCups || []).find(x => x.slug === slug);
@@ -2058,6 +2060,11 @@ function syncSideCtl(i) {
     b.dataset.v === (S[i].shieldMode === 'plan' ? 'plan' : String(S[i].shields))));
   const cs = el.querySelector('.custShield'); if (cs) cs.style.display = S[i].shieldMode ? 'block' : 'none';
   const cc = el.querySelector('.custCarry');  if (cc) cc.style.display = S[i].carry ? 'block' : 'none';
+  // 「何発目で使うか」のボタンもそろえる(共有リンクから戻したときに点灯が合わないため・2026-09-05)
+  el.querySelectorAll('.shslots button').forEach(b => {
+    const k = +b.dataset.slot;
+    b.setAttribute('aria-pressed', k === 6 ? !!S[i].shieldRest : !!S[i].shieldSlots[k - 1]);
+  });
 }
 function syncMultiPanel(on) {
   const el = sideEl[0];
@@ -2123,6 +2130,9 @@ const loadRkGrunt = () => { try { const v = JSON.parse(localStorage.getItem(RKG_
 const saveRkGrunt = () => { try { localStorage.setItem(RKG_KEY, JSON.stringify(RKT)); } catch (e) {} };
 document.querySelectorAll('#rkkind button').forEach(b => b.onclick = () => {
   const v = b.dataset.v;
+  // 選択中の種別をもう一度押しても何もしない(2026-09-05)。
+  // 控えは「したっぱ→他へ移るとき」にしか取らないので、押し直すと**古い内容に巻き戻っていた**
+  if (v === RK.kind) return;
   if (RK.kind === 'grunt' && v !== 'grunt') saveRkGrunt();   // したっぱの枠を控えておく
   if (RK.who) RK.whoBy[RK.kind] = RK.who;   // 種別ごとに「最後に選んだ人」を覚えておく
   RK.kind = v;
@@ -2912,7 +2922,9 @@ function searchPk(q, ok) {
     const i = n.indexOf(q);
     if (i === 0) hit.push(k);
     else if (i > 0) sub.push(k);
-    if (hit.length + sub.length >= SEARCH_MAX) break;
+    // ⚠ 合計で打ち切ると、**図鑑順で後ろの前方一致が拾われない**(実測: 「イ」は27件中8件だった)。
+    // 前方一致だけで上限に達したときに打ち切る(2026-09-05)
+    if (hit.length >= SEARCH_MAX) break;
   }
   return hit.concat(sub).slice(0, SEARCH_MAX);
 }
@@ -3417,7 +3429,9 @@ function ptSwapPool() {
     const { fasts, chargeds } = movePool(key);
     if (!fasts.length) continue;
     const dpt = m => D.moves[m].p * (p.ty.includes(D.moves[m].t) ? 1.2 : 1) / (D.moves[m].tn || 1);
-    const dpe = m => D.moves[m].p / D.moves[m].e;
+    // SPは確定仕様どおり**タイプ一致(1.2倍)と能力変化のぶんを込みで**効率を見る(dpeOf・2026-09-05)。
+    // 素の威力÷ゲージだと、タイプ一致でない大技や、威力に出ない良いわざの扱いがノーマル側とずれる
+    const dpe = m => dpeOf(key, m);
     const f = fasts.slice().sort((a, b) => dpt(b) - dpt(a))[0];
     const cs = chargeds.slice().sort((a, b) => dpe(b) - dpe(a)).slice(0, 2);
     for (const sh of (p.shadow ? [false, true] : [false])) {
@@ -4060,7 +4074,8 @@ function rkSuggCombos(f) {
 }
 // あいて1匹へのランキング(キャッシュ付き。★登録や絞り込みが変わったら作り直す)
 function rkSlotRank(foe) {
-  const sig = JSON.stringify([foe.key, foe.fast, foe.c1, RK.kind, RKR.shadow, RKR.mega, loadMyPk()]);
+  // ⚠ SIMOPT.buffMode(能力変化わざ)を入れないと、⚙詳細で切り替えても前の設定の結果が出る(2026-09-05)
+  const sig = JSON.stringify([foe.key, foe.fast, foe.c1, RK.kind, RKR.shadow, RKR.mega, loadMyPk(), SIMOPT.buffMode]);
   if (!RKS.cache.has(sig)) {
     if (RKS.cache.size > 8) RKS.cache.clear();
     RKS.cache.set(sig, rkRankFor(foe, true));
@@ -4658,6 +4673,11 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
         }
         return true;
       };
+      // その時点の実時間。**この対面で撃たれたSPの待ち時間も足す**(2026-09-05)。
+      // 足さないと交代クールタイムの判定が実際より早く見え、「交代する?」の質問が出ないのに
+      // HUDの⇄からは交代できる食い違いになる(GBL側の gbPlay と同じ数え方にそろえた)
+      const spcNow = rkSpc(res);
+      ctx.ck = tn => base + tn + spTot + rkSpAt(spcNow, tn);
       const pts = rbPoints(rbTurns(res), ctx, dec);
       // 手動交代(HUDの⇄ボタン・kind msw・2026-09-01・GBLと同じ)。検証に通らない古い記録は黙って捨てる
       const mkey = Object.keys(ans).find(k => k.indexOf(li + ':msw:') === 0 && !handled.has(k));
@@ -5771,7 +5791,9 @@ try { const v = JSON.parse(localStorage.getItem(BLOG_KEY)); if (Array.isArray(v)
 const saveBlog = () => { try { localStorage.setItem(BLOG_KEY, JSON.stringify(BLOG)); } catch (e) {} };
 const BLE = { foes: [null, null, null], win: null };              // 入力中(未保存)の1戦ぶん
 const BLV = { view: 'rate', period: 'all', del: null, token: 0 }; // 表示の状態(端末に保存しない=毎回まっさら)
-const BL_LGN = { 1500: 'スーパー', 2500: 'ハイパー', 0: 'マスター' };
+const BL_LGN = { 1500: 'スーパー', 2500: 'ハイパー', 0: 'マスター', 500: 'リトル' };
+// リーグの呼び名(記録は「CP上限」で持つので、表に無いCP上限は「CP◯◯」と書く)
+const blLgName = c => BL_LGN[c] || ('CP' + c);
 const blName = f => (f.s ? 'シャドウ' : '') + (D.pokemon[f.k] ? D.pokemon[f.k].n : f.k);
 const blRecs = cap0 => BLOG.filter(r => r.cap === (cap0 != null ? cap0 : cap));
 const blUse = recs => BLV.period === 'all' ? recs : recs.slice(-parseInt(BLV.period));
@@ -6179,7 +6201,7 @@ function myCupOf(cap0) {
     if (mv.c2) m.c2 = mv.c2;
     return m;
   });
-  return { slug: 'my' + cap0, label: '📒 マイ環境(' + BL_LGN[cap0] + ')', cp: cap0 === 0 ? 10000 : cap0, list, ext: [], my: 1 };
+  return { slug: 'my' + cap0, label: '📒 マイ環境(' + blLgName(cap0) + ')', cp: cap0 === 0 ? 10000 : cap0, list, ext: [], my: 1 };
 }
 function selectMyCup(cap0) {
   // 記録が無い(別の端末で開いた共有URLなど)ときは、ふつうのリーグとして開く
@@ -9985,10 +10007,21 @@ function updateUrl() {
   const qp = PAGE_ROCKET ? {} : { lg: cap };
   if (S[0].key) qp.l = S[0].key;
   if (S[1].key) qp.r = S[1].key;
-  qp.sl = S[0].shieldMode ? 2 : S[0].shields;
-  qp.sr = S[1].shieldMode ? 2 : S[1].shields;
-  qp.tl = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
-  qp.tr = S[1].timing === 'plan' ? 'optimal' : S[1].timing;
+  // シールドは「ﾏﾆｭｱﾙ(何発目のSPアタックを防ぐか)」もそのまま載せる(2026-09-05)。
+  // 落とすと**送り主と受け手で結果が変わる**(実測: 残HP46 → 開いた側は64)。
+  // 形式は p+5枠の0/1(+末尾r=6発目以降も防ぐ)。数字だけの古いリンクは今までどおり読める
+  const shStr = i => S[i].shieldMode === 'plan'
+    ? 'p' + S[i].shieldSlots.map(b => b ? 1 : 0).join('') + (S[i].shieldRest ? 'r' : '')
+    : String(S[i].shields);
+  qp.sl = shStr(0);
+  qp.sr = shStr(1);
+  qp.tl = S[0].timing;   // 'plan'(ﾏﾆｭｱﾙ)もそのまま書く
+  qp.tr = S[1].timing;
+  // 発ごとのSP設定(ﾏﾆｭｱﾙのときだけ)。「1〜5発目＋6発目以降のモード」~「撃つわざ」
+  const spStr = i => S[i].spMode.concat([S[i].spModeRest]).join('-') + '~'
+    + S[i].spMv.concat([S[i].spMvRest]).join('-');
+  if (S[0].timing === 'plan') qp.spl = spStr(0);
+  if (S[1].timing === 'plan') qp.spr = spStr(1);
   // マニュアル個体値は「攻.防.HP.PL」形式でURLに含める
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs) qp[i ? 'ir' : 'il'] = s.mIvs.join('.') + '.' + s.mLevel;
@@ -10679,16 +10712,41 @@ document.addEventListener('click', e => {
       syncSmax(i);   // メガならスーパーマックスタブを表示
     }
   });
-  ['sl', 'sr'].forEach((k, i) => { if (q.get(k) != null) {
-    S[i].shields = +q.get(k);
-    sideEl[i].querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === S[i].shields));
-  }});
+  ['sl', 'sr'].forEach((k, i) => {
+    const v = q.get(k);
+    if (v == null) return;
+    const m = /^p([01]{5})(r?)$/.exec(v);
+    if (m) {   // ﾏﾆｭｱﾙ(何発目のSPアタックを防ぐか)
+      S[i].shieldMode = 'plan'; S[i].shields = 2;
+      S[i].shieldSlots = [0, 1, 2, 3, 4].map(j => m[1][j] === '1');
+      S[i].shieldRest = m[2] === 'r';
+    } else { S[i].shieldMode = null; S[i].shields = Math.max(0, Math.min(2, +v || 0)); }
+  });
   ['tl', 'tr'].forEach((k, i) => { if (['optimal', 'asap', 'sync', 'plan', 'never', 'stock'].includes(q.get(k))) {
     timingFromUrl = true;
     S[i].timing = q.get(k);
-    sideEl[i].querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
     resetSpPlan(i);   // 発ごとのSP設定も復元したタイミングに揃える(SPアタック2を選んだときの表示用)
   }});
+  // 発ごとのSP設定(ﾏﾆｭｱﾙのときだけ書かれる)。**タイミングの復元より後**に読む
+  // (resetSpPlan が全部そろえてしまうため)
+  ['spl', 'spr'].forEach((k, i) => {
+    const v = q.get(k);
+    if (!v) return;
+    const [ms, mvs] = v.split('~');
+    const mode = x => ['opt', 'min', 'sync'].includes(x) ? x : (+x >= 1 && +x <= 9 ? +x : null);
+    const move = x => ['auto', '1', '2'].includes(x) ? x : null;
+    (ms || '').split('-').forEach((x, j) => {
+      const t = mode(x);
+      if (t == null) return;
+      if (j < 5) S[i].spMode[j] = t; else if (j === 5) S[i].spModeRest = t;
+    });
+    (mvs || '').split('-').forEach((x, j) => {
+      const t = move(x);
+      if (!t) return;
+      if (j < 5) S[i].spMv[j] = t; else if (j === 5) S[i].spMvRest = t;
+    });
+  });
+  [0, 1].forEach(i => syncSideCtl(i));   // ボタンの点灯・小窓の開閉をまとめてそろえる
   if (q.get('cn') === '100') cnTop = 100;   // 対策さがしで探す範囲
   else if (q.get('cn') === 'all') cnTop = 'all';
   if (q.get('bf') === '1') { metaBluff = true; syncBluffNote(); }   // 環境リスト側のブラフ
