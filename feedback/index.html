@@ -219,19 +219,27 @@ function shape(table) {
   var data = table.slice(1);
   var low = head.map(function (h) { return h.toLowerCase(); });
 
-  var idx = function (test) { for (var i = 0; i < low.length; i++) if (test(low[i], head[i])) return i; return -1; };
+  // ⚠ 通し番号の列（Submission ID・Respondent ID）は**いちばん先に**除く。
+  //    あとから除くと、日時の列を探すときに「Submission ID」の中の submission を
+  //    掴んでしまい、送信日時のかわりに通し番号が出る（実際に踏んだ）
+  var isId = function (h) { return /\bid$/.test(h) || h === 'id'; };
+  var skip = {};
+  for (var k = 0; k < low.length; k++) if (isId(low[k])) skip[k] = 1;
+
+  var idx = function (test) {
+    for (var i = 0; i < low.length; i++) if (!skip[i] && test(low[i], head[i])) return i;
+    return -1;
+  };
   var iTool = idx(function (h) { return h === 'tool' || h.indexOf('ツール') >= 0; });
   var iCtx = idx(function (h) { return h === 'ctx' || h.indexOf('端末') >= 0; });
   var iWhen = idx(function (h) {
-    return /submitted|submission|timestamp|created|date|time/.test(h)
+    return /submitted|timestamp|created|date|time/.test(h)
       || h.indexOf('日時') >= 0 || h.indexOf('タイムスタンプ') >= 0 || h.indexOf('送信') >= 0;
   });
 
   // 残りの列を中身で見分ける: URLが並ぶ列＝スクショ／いちばん長い文章の列＝本文／短い列＝名前
-  // フォームサービスが付ける通し番号の列は、読むうえで意味がないので最初から外す
-  var isId = function (h) { return /^(submission|respondent|response)\s*id$/.test(h) || h === 'id'; };
   var used = {}; [iTool, iCtx, iWhen].forEach(function (i) { if (i >= 0) used[i] = 1; });
-  for (var k = 0; k < low.length; k++) if (isId(low[k])) used[k] = 1;
+  for (var k3 = 0; k3 < low.length; k3++) if (skip[k3]) used[k3] = 1;
   var stat = [];
   for (var c = 0; c < head.length; c++) {
     if (used[c]) continue;
@@ -255,7 +263,8 @@ function shape(table) {
   });
 
   var known = {};
-  for (var k2 = 0; k2 < low.length; k2++) if (isId(low[k2])) known[k2] = 1; [iTool, iCtx, iWhen, iShot, iBody, iWho].forEach(function (i) { if (i >= 0) known[i] = 1; });
+  for (var k2 = 0; k2 < low.length; k2++) if (skip[k2]) known[k2] = 1;
+  [iTool, iCtx, iWhen, iShot, iBody, iWho].forEach(function (i) { if (i >= 0) known[i] = 1; });
 
   return data.map(function (r, n) {
     var get = function (i) { return i >= 0 ? String(r[i] == null ? '' : r[i]).trim() : ''; };
@@ -267,7 +276,11 @@ function shape(table) {
     }
     var shots = get(iShot).split(/[\s,]+/).filter(function (u) { return /^https?:\/\//.test(u); });
     var body = get(iBody);
-    var when = get(iWhen);
+    // 日時は ctx に入れてある「テスターの端末の時計」を優先する。
+    // フォームサービスの「Submitted at」は世界標準時なので、日本だと9時間ずれて読みづらい
+    var ctxv = get(iCtx);
+    var loc = ctxv.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/);
+    var when = loc ? loc[0] : get(iWhen);
     return {
       id: (when || ('#' + n)) + '|' + body.slice(0, 40),
       tool: get(iTool), ctx: get(iCtx), when: when, who: get(iWho),
