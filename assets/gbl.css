@@ -1711,3 +1711,59 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   color:var(--mcM,#f795c8);background:var(--bg2);border:1px solid var(--line)}
 .ptswnomega[aria-pressed="true"]{color:#fff;border-color:transparent;
   background:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%)}
+
+/* ================= 見せ合いルール(6匹→3匹選出)  2026-09-05 ================= */
+/* ルールの切替。排他の2択なのですき間2pxでくっつけ、外側だけ角丸を大きくする(共通ルール) */
+.sdrulebar{margin:6px 0 2px}
+#sdrule{gap:2px;flex:1 1 auto}
+#sdrule button{line-height:1.15;padding:5px 10px;border-radius:5px}
+#sdrule button:first-child{border-radius:12px 5px 5px 12px}
+#sdrule button:last-child{border-radius:5px 12px 12px 5px}
+#sdrule button b{display:block;font-size:.74rem;white-space:nowrap}
+#sdrule button small{display:block;font-size:.58rem;font-weight:600;opacity:.85;margin-top:1px;word-break:keep-all}
+#sdrule button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
+/* 6匹の入力は畳めるようにする(選出がそろったら自動で閉じる) */
+.sdentry{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);padding:6px 10px}
+.sdentry>summary{cursor:pointer;font-size:.74rem;font-weight:700;color:var(--cy);padding:3px 0;list-style:none}
+.sdentry>summary::-webkit-details-marker{display:none}
+.sdentry>summary::before{content:'▸ ';font-size:.8rem}
+.sdentry[open]>summary::before{content:'▾ '}
+.sdentry .rkteams{margin-top:6px}
+/* 6匹ぶんの行(3枠のときの2〜4行に、5〜7行を足す) */
+.rkteams .pslot[data-i="3"]{grid-row:5}
+.rkteams .pslot[data-i="4"]{grid-row:6}
+.rkteams .pslot[data-i="5"]{grid-row:7}
+.sdteams .sdslots[data-s="my"] .pslot{grid-column:1}
+.sdteams .sdslots[data-s="foe"] .pslot{grid-column:2}
+#mock .sdslots.auto .fbody select{display:none}
+.sdslot.picked{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy)}
+/* 選出パネル */
+.sdpickbox{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;
+  background:linear-gradient(180deg,rgba(26,35,66,.55),rgba(18,24,48,.35))}
+:root.light .sdpickbox{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.35))}
+.sdrow+.sdrow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.sdlbl{font-size:.74rem;font-weight:800;color:var(--cy)}
+.sdlbl.foe{color:var(--gold)}
+.sdlbl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:1px}
+.sdchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.sdchip{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:999px;
+  border:1px solid var(--line);background:var(--bg2);font-size:.72rem;color:var(--ink)}
+.sdchip b{font-weight:700}
+button.sdchip{cursor:pointer;font-family:inherit;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.06)}
+button.sdchip:hover{transform:translateY(-1px)}
+button.sdchip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--tabsh)}
+button.sdchip.on{border-color:transparent;color:#042330;font-weight:800;
+  background:linear-gradient(160deg,#7fe9f7 0%,#22c7e0 45%,#0b8ba3 100%);
+  box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+button.sdchip.on .tbadge{filter:none}
+.sdchip .no{font-style:normal;font-weight:900;font-size:.86rem;margin-right:1px}
+.sdlead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sdreset{padding:4px 12px;font-size:.66rem;font-weight:700;border-radius:999px;cursor:pointer;
+  color:var(--sub);background:var(--bg2);border:1px solid var(--line);font-family:inherit}
+.sdreset:hover{color:var(--ink)}
+@media (max-width:520px){
+  .sdentry{padding:5px 8px}
+  .sdpickbox{padding:9px 9px}
+  .sdchip{font-size:.68rem;padding:5px 8px}
+}

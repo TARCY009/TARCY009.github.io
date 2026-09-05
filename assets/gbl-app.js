@@ -309,9 +309,33 @@ document.getElementById('app').innerHTML = `
 
 <!-- GBL模擬戦(3匹×3匹の対人戦)。じぶん3枠はパーティ診断・ロケット団と共通のPT -->
 <div class="multi" id="mock" style="display:none">
+  <!-- ルール切替(2026-09-05タダシさん指示)。見せ合い＝6匹を見せ合ってから3匹を選出する大会形式 -->
+  <div class="gbaibar sdrulebar"><span class="lbl" title="ふつう＝3匹どうしをそのまま戦わせます ／ 見せ合い＝おたがい6匹を見せ合い、その中から3匹と並び順を選んでから戦う大会の形式です。相手が選んだ3匹は、場に出てくるまで分かりません">ルール</span>
+    <div class="opts seg sdrule" id="sdrule">
+      <button data-v="0" aria-pressed="true" title="いまの3匹どうしをそのまま戦わせます"><b>ふつう</b><small>3対3</small></button>
+      <button data-v="1" aria-pressed="false" title="おたがい6匹を見せ合って、その中から3匹と並び順を選んでから戦います（大会・チャレンジの形式）"><b>見せ合い</b><small>6匹→3匹選出</small></button>
+    </div></div>
   <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の強さ。EASY=軽いSPをすぐ撃ち、シールドもすぐ使う入門向け ／ NORMAL=実戦の基本戦術で戦う標準 ／ HARD=こちらのポケモンとわざを最初から知っていて、ブラフも効かない最強。どの難易度でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいて難易度</span>
     <div class="opts gbai" id="gbai"></div></div>
-  <div class="rkteams">
+  <!-- 見せ合いルールの入力(6枠×2)と選出パネル -->
+  <div id="sdwrap" style="display:none">
+    <details class="sdentry"><summary>6匹を登録する</summary>
+      <div class="rkteams sdteams">
+        <div class="rkteamcol">
+          <div class="rkcolttl" title="見せ合いに出すじぶんの6匹。★で登録した個体も入れられます">じぶんの6匹</div>
+          <div class="pslots sdslots" data-s="my"></div>
+        </div>
+        <div class="rkteamcol">
+          <div class="rkcolttl foe gfhead"><span title="あいての6匹。わざの既定は環境の定番構成です">あいての6匹</span>
+            <button class="ptswbtn sdrand" title="環境上位から、たがいの穴（3匹とも勝てない相手）を埋め合う6匹を自動で組みます。押すたびに顔ぶれが変わります">🎲 おまかせ6匹</button>
+            <button class="ptauto gfauto" aria-pressed="false" title="オートにすると、あいてのわざ欄を隠して環境の定番構成で戦います＝どのわざが飛んでくるかは飛んでくるまで分かりません(実戦と同じ)"><i class="k">わざ</i><span class="v m">えらぶ</span><span class="v a">オート</span></button></div>
+          <div class="pslots foeslots sdslots" data-s="foe"></div>
+        </div>
+      </div>
+    </details>
+    <div class="sdpick"></div>
+  </div>
+  <div class="rkteams" id="mk3">
     <div class="rkteamcol">
       <div class="rkcolttl" title="上から順に出します。パーティ診断・ロケット団と共通の3枠です">じぶん</div>
       <div class="pslots myslots"></div>
@@ -1363,6 +1387,24 @@ ${PAGE_ROCKET ? '' : `
   枠にポケモンを入れて<b>▶ バトルスタート！</b>を押すと、タイムラインが1ターン＝0.5秒で流れ、
   <b>決断が要る場面</b>（SPアタックを撃つ？／シールドを使う？／交代する？）で止まって選択肢が出ます。
   選ぶとそこから先が計算し直されて、バトルが続きます。</p>
+  <p><b>ルール</b>を<b>見せ合い</b>にすると、大会・チャレンジと同じ形式になります。
+  おたがい<b>6匹を登録して見せ合い</b>、その中から<b>3匹と並び順</b>を選んでから戦います。
+  見えるのは<b>ポケモンの種類だけ</b>（わざは見えません）。
+  <b>相手が選んだ3匹は、場に出てくるまで分かりません</b>——なので、あいての6匹を見て
+  「何を出してくるか」を読みながら選ぶのがこのルールの中身です。</p>
+  <ul>
+    <li>じぶんの6匹は<b>押した順が並び順</b>になります（①が初手）。もう一度押すと外れます</li>
+    <li><b>あいても同時に選出します</b>。選び方は難易度で変わります——
+    <b>EASY</b>＝登録順の上から3匹（こちらを見ずに選ぶ）／
+    <b>NORMAL</b>＝<b>あなたの6匹</b>を見て、穴（3匹とも勝てない相手）がいちばん少なくなる3匹／
+    <b>HARD</b>＝<b>あなたが選出した3匹</b>を知ったうえで、それに強い3匹。
+    並び順は「最悪の対面がいちばんマシな1匹」を初手に置きます</li>
+    <li>バトル中も、あいては<b>あなたの6匹を知っている</b>状態で控えを読みます
+    （どの3匹を選んだかまでは分からないので、まだ出ていない候補を等しく警戒します）。
+    HARDだけは従来どおり、こちらの手の内を最初から全部知っています</li>
+    <li>共有リンクに入るのは<b>あいての6匹</b>だけです（じぶんのパーティは端末内に保存していて、
+    ふつうの3対3のときと同じ扱いです）</li>
+  </ul>
   <ul>
     <li><b>🎲 おまかせ3匹</b>＝あいての3匹を環境から自動で組みます。でたらめに3匹引くのではなく、
     <b>パーティ診断と同じ考え方</b>で「たがいの穴（3匹とも勝てない相手）を埋め合う組み合わせ」を選ぶので、
@@ -6282,8 +6324,10 @@ function syncGbFoeSlots() {
   // わざオート(2026-08-20): ONのあいだ、わざの選択欄を隠す(CSSの .gfoeslots.auto)
   const box = document.querySelector('#mock .gfoeslots');
   if (box) box.classList.toggle('auto', MK.foeAuto);
-  const ab = document.querySelector('#mock .gfauto');
-  if (ab) ab.setAttribute('aria-pressed', MK.foeAuto);
+  // わざオートのボタンは3枠側と見せ合い側の2か所にあるので両方そろえる
+  document.querySelectorAll('#mock .gfauto').forEach(ab => ab.setAttribute('aria-pressed', MK.foeAuto));
+  const sb = document.querySelector('#sdwrap .sdslots[data-s="foe"]');
+  if (sb) sb.classList.toggle('auto', MK.foeAuto);
   document.querySelectorAll('#mock .gfoe').forEach(el => {
     // データから消えたポケモンが枠に残っていても、画面ごと落とさずに枠を空にする
     if (GBT[+el.dataset.i] && !D.pokemon[GBT[+el.dataset.i].key]) { GBT[+el.dataset.i] = null; saveGbt(); }
@@ -6416,6 +6460,335 @@ function gbAutoFill() {
     saveGbt(); syncGbFoeSlots(); run();
   }, (a, b) => say(`組み立て中 ${Math.round(a / b * 100)}%`));
 }
+
+// ==================================================================
+// 見せ合いルール(6匹→3匹選出)  2026-09-05 タダシさん指示
+// ==================================================================
+// 大会・チャレンジと同じ形式。おたがい**6匹を見せ合って**から、そこから3匹と並び順を選ぶ。
+// 決めごと(タダシさん確定):
+//  - 見せ合うのは**ポケモンの種類だけ**。わざ構成は見せない(実際の見せ合いと同じ)
+//  - **選出した3匹は伏せる**。相手の6匹は知っているが、どの3匹を選んだかは場に出るまで分からない
+//    → AIの裏読み(aiPredict)の候補が「環境上位40匹」から「相手の6匹のうち、まだ見ていないもの」に絞られる
+//  - この情報の制限は**3段階の難易度すべてに効く**(見せ合ったのだから当然知っている、という整理)。
+//    HARD(omni)だけは従来どおり明示的な例外で、実物の3匹とわざ構成まで知っている
+//  - AIの**選出の賢さ**だけは難易度で差をつける(sdFoePick)
+// じぶん・あいての6枠は PT/GBT とは**別に持つ**(いまの3枠の画面を1行も壊さないため)。
+// 枠の中身は PT と同じ形＋わざ(fast/c1/c2)なので、ptBase/ptName がそのまま使える
+const SD_KEY = 'gbl_showdown';
+const SD = { on: false, my: [null, null, null, null, null, null],
+  foe: [null, null, null, null, null, null], pick: [], edit: true, foeSel: null, foeSig: null };
+try {
+  const v = JSON.parse(localStorage.getItem(SD_KEY));
+  if (v && typeof v === 'object') {
+    SD.on = !!v.on;
+    ['my', 'foe'].forEach(s => { if (Array.isArray(v[s])) v[s].forEach((m, i) => { if (i < 6 && m && m.key) SD[s][i] = m; }); });
+    if (Array.isArray(v.pick)) SD.pick = v.pick.filter(i => Number.isInteger(i) && i >= 0 && i < 6).slice(0, 3);
+    if (v.edit === false) SD.edit = false;
+  }
+} catch (e) {}
+const saveSd = () => { try { localStorage.setItem(SD_KEY,
+  JSON.stringify({ on: SD.on, my: SD.my, foe: SD.foe, pick: SD.pick, edit: SD.edit })); } catch (e) {} };
+// 見せ合いルールが効いているか(gbPlay は模擬戦からしか呼ばれないが、念のためモードも見る)
+const sdOn = () => SD.on && mode === 'mock';
+const sdList = s => [0, 1, 2, 3, 4, 5].filter(i => SD[s][i]);
+// 枠1匹ぶんの中身(PTと同じ形＋わざ)。わざの既定は環境の定番構成(人が確認した確定値が最優先)
+const sdNew = (key, shadow) => ({ key, shadow: !!shadow, ivMode: 'auto', maxLv: 51,
+  ...mockDefaultMoves(key, !!shadow) });
+// 見せ合いでは**わざは見せない**ので、AIは「環境の定番構成だろう」と想定して読む
+const sdAssumed = m => ({ ...m, ...mockDefaultMoves(m.key, !!m.shadow) });
+
+// ---- 選出の下ごしらえ: 候補×相手の勝ち数(シールド0-0/1-1/2-2の3通り中いくつ勝てるか) ----
+// 前提は一覧系とそろえる(理想個体値・SPは最適タイミング・ブラフなし＝運に頼らない既定)。
+// 6×6×3＝108回のシミュレートなので数ミリ秒で終わる
+function sdWinTable(mine, foes) {
+  const cf = (m, sh) => ({ ...ptBase(m), timing: 'optimal', bluff: false, shields: sh,
+    fast: m.fast, charged: [m.c1, m.c2].filter(Boolean) });
+  return mine.map(a => foes.map(b => {
+    let w = 0;
+    for (let sh = 0; sh <= 2; sh++)
+      if (PvpEngine.simulate(D, cf(a, sh), cf(b, sh), SIMOPT).winner === 0) w++;
+    return w;
+  }));
+}
+// 3匹の組み合わせの点数。**穴(3通り中2通り以上で勝てる味方が1匹もいない相手)を減らすのが最優先**で、
+// 同じなら合計の勝ち数が多いほう(パーティ診断の考え方をそのまま選出に当てる)
+function sdComboScore(W, idx) {
+  const nF = W[0] ? W[0].length : 0;
+  let holes = 0, tot = 0;
+  for (let j = 0; j < nF; j++) {
+    let best = 0;
+    for (const i of idx) { tot += W[i][j]; if (W[i][j] > best) best = W[i][j]; }
+    if (best < 2) holes++;
+  }
+  return { holes, tot, sc: -holes * 100 + tot };
+}
+// 並び順: 初手は**最悪の対面がいちばんマシな1匹**(出し負けにくい)。残りは合計の勝ち数が多い順
+function sdOrder(W, idx) {
+  const nF = W[0] ? W[0].length : 0;
+  const worst = i => { let v = 3; for (let j = 0; j < nF; j++) v = Math.min(v, W[i][j]); return nF ? v : 0; };
+  const tot = i => { let v = 0; for (let j = 0; j < nF; j++) v += W[i][j]; return v; };
+  const lead = idx.slice().sort((a, b) => worst(b) - worst(a) || tot(b) - tot(a) || a - b)[0];
+  return [lead, ...idx.filter(i => i !== lead).sort((a, b) => tot(b) - tot(a) || a - b)];
+}
+// 6匹から3匹の組み合わせを全部くらべて、いちばん良いものを並び順まで決めて返す
+function sdBestCombo(W, pool) {
+  let best = null;
+  for (let a = 0; a < pool.length; a++)
+    for (let b = a + 1; b < pool.length; b++)
+      for (let c = b + 1; c < pool.length; c++) {
+        const idx = [pool[a], pool[b], pool[c]];
+        const s = sdComboScore(W, idx);
+        if (!best || s.sc > best.s.sc) best = { idx, s };
+      }
+  return best ? sdOrder(W, best.idx) : pool.slice(0, 3);
+}
+// ---- AIの選出(難易度で賢さが変わる・2026-09-05タダシさん指示) ----
+//  EASY  : 登録順の上から3匹(相手を見て選ばない)
+//  NORMAL: **相手の6匹**(わざは環境の定番構成だと想定)に対して、いちばん穴が少ない3匹
+//  HARD  : **相手が実際に選出した3匹**(わざも実物)に対して、いちばん穴が少ない3匹
+// 決定的(同じ入力なら必ず同じ答え)なので、再生し直しても選出は変わらない
+function sdFoePick() {
+  const ai = GB_AI[MK.ai] || GB_AI.normal;
+  const pool = sdList('foe');
+  if (pool.length <= 3) return pool;
+  if (!ai.sw && !ai.farm) return pool.slice(0, 3);   // EASY
+  const targets = ai.omni
+    ? SD.pick.map(i => SD.my[i]).filter(Boolean)             // HARD: 実際の3匹・実物のわざ
+    : sdList('my').map(i => sdAssumed(SD.my[i]));            // NORMAL: 6匹・定番構成の想定
+  if (!targets.length) return pool.slice(0, 3);
+  const W = sdWinTable(pool.map(i => SD.foe[i]), targets);   // 行はpoolの並び
+  return sdBestCombo(W, pool.map((_, k) => k)).map(k => pool[k]);
+}
+// 選出は「あいての6匹・(HARDなら)じぶんの選出・難易度・リーグ」が同じあいだ作り直さない
+function sdFoePickCached() {
+  const ai = GB_AI[MK.ai] || GB_AI.normal;
+  const sig = JSON.stringify([SD.foe, ai.omni ? SD.pick.map(i => SD.my[i]) : SD.my,
+    MK.ai, cap, cup && cup.slug, SIMOPT.buffMode]);
+  if (SD.foeSig !== sig) { SD.foeSig = sig; SD.foeSel = sdFoePick(); }
+  return SD.foeSel || [];
+}
+
+// ---- 見せ合いの6枠(じぶん・あいて共通の作り。あいての3枠 buildGbFoeSlots と同じ流儀) ----
+function buildSdSlots(side) {
+  const box = document.querySelector('#sdwrap .sdslots[data-s="' + side + '"]');
+  if (!box) return;
+  const A = SD[side];
+  box.innerHTML = [0, 1, 2, 3, 4, 5].map(i => `<div class="pslot fslot sdslot" data-i="${i}">
+    <div class="phd"><span class="pnum">${i + 1}</span>
+      <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）として計算する"><i class="shadowmark"></i></button>
+      ${side === 'my' ? '<button class="pstar" title="★登録リストから選ぶ（自分の個体値で計算できます）">★</button>' : ''}
+      <button class="pclr" title="この枠を空にする">×</button></div>
+    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    ${side === 'my' ? '<div class="popwin pstarwin" style="display:none"></div>' : ''}
+    <div class="fbody" style="display:none">
+      <select class="selFast" title="ノーマルアタック"></select>
+      <select class="selC1" title="SPアタック1"></select>
+      <select class="selC2" title="SPアタック2（2本目を開放していないなら「ー」）"></select>
+      <div class="fstat"></div>
+      <div class="gmlv"></div>
+    </div>
+  </div>`).join('');
+  box.querySelectorAll('.sdslot').forEach(el => {
+    const i = +el.dataset.i;
+    const inp = el.querySelector('input'), list = el.querySelector('.sugg-list');
+    inp.addEventListener('compositionend', () => {
+      const v = toKata(inp.value);
+      if (v !== inp.value) inp.value = v;
+      inp.dispatchEvent(new Event('input'));
+    });
+    inp.addEventListener('input', e => {
+      if (!e.isComposing) {
+        const v = toKata(inp.value);
+        if (v !== inp.value) inp.value = v;
+      }
+      const q = toKata(inp.value.trim());
+      if (!q) { list.style.display = 'none'; return; }
+      // メガはメガカップのときだけ(他のリーグでは使えない。あいての3枠と同じ基準)
+      const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
+      if (!hits.length) { list.style.display = 'none'; return; }
+      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.style.display = 'block';
+      list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+        list.style.display = 'none';
+        A[i] = sdNew(d.dataset.k, false);
+        sdChanged();
+      });
+    });
+    document.addEventListener('click', e => { if (!el.contains(e.target)) list.style.display = 'none'; });
+    el.querySelector('.pshadow').onclick = () => {
+      if (!A[i]) return;
+      A[i].shadow = !A[i].shadow;
+      sdChanged();
+    };
+    el.querySelector('.pclr').onclick = () => {
+      A[i] = null;
+      if (side === 'my') SD.pick = SD.pick.filter(x => x !== i);   // 選出から外す
+      sdChanged();
+    };
+    const star = el.querySelector('.pstar');
+    if (star) star.onclick = () => {
+      const win = el.querySelector('.pstarwin');
+      const open = win.style.display === 'none';
+      const saved = loadMyPk();
+      win.innerHTML = saved.length
+        ? '<div class="popttl">★登録リストから選ぶ</div>' + saved.map((m, k) => {
+            const p = D.pokemon[m.key];
+            if (!p) return '';
+            const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
+            return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span></div>`;
+          }).join('')
+        : '<div class="mypkempty">まだ登録がありません。1対1シミュでポケモンを選び「★登録」を押すとここに追加されます</div>';
+      win.querySelectorAll('.mypkrow').forEach(row => row.onclick = () => {
+        const src = loadMyPk()[+row.dataset.k];
+        const d = mockDefaultMoves(src.key, !!src.shadow);
+        // ★登録の個体はわざも登録されていることがある。無い欄だけ環境の定番構成で埋める
+        A[i] = { ...src, fast: src.fast || d.fast, c1: src.c1 || d.c1, c2: src.c2 || d.c2 };
+        win.style.display = 'none';
+        sdChanged();
+      });
+      win.style.display = open ? 'block' : 'none';
+      star.setAttribute('aria-pressed', open);
+    };
+    el.querySelectorAll('select').forEach(sel => sel.onchange = () => {
+      const m = A[i];
+      if (!m) return;
+      const isF = sel.classList.contains('selFast');
+      if (sel.value === CUST_PICK) {   // ＋ 自由設定(性能を自分で決めたわざ)
+        const prev = isF ? m.fast : sel.classList.contains('selC1') ? m.c1 : m.c2;
+        pickCustom(sel, isF, prev, id => {
+          if (isF) m.fast = id; else if (sel.classList.contains('selC1')) m.c1 = id; else m.c2 = id;
+          sdChanged();
+        });
+        return;
+      }
+      if (isF) m.fast = sel.value;
+      else if (sel.classList.contains('selC1')) m.c1 = sel.value;
+      else m.c2 = sel.value;
+      if (m.c2 && m.c2 === m.c1) m.c2 = '';   // 同じわざを2本持っても意味がない
+      sdChanged();
+    });
+  });
+}
+// 6枠の中身が変わったとき: 保存して選出を作り直し、バトルを仕切り直す
+function sdChanged() { saveSd(); SD.foeSig = null; run(); }
+// 枠の表示(名前・わざの選択肢・実数値)を今の設定に合わせる
+function syncSdSlots() {
+  ['my', 'foe'].forEach(side => {
+    const A = SD[side];
+    document.querySelectorAll('#sdwrap .sdslots[data-s="' + side + '"] .sdslot').forEach(el => {
+      const i = +el.dataset.i;
+      // データから消えたポケモンが枠に残っていても、画面ごと落とさずに枠を空にする
+      if (A[i] && !D.pokemon[A[i].key]) { A[i] = null; saveSd(); }
+      const m = A[i];
+      const fb = el.querySelector('.fbody');
+      el.querySelector('.pshadow').setAttribute('aria-pressed', !!(m && m.shadow));
+      el.querySelector('input').value = m ? ptName(m) : '';
+      el.classList.toggle('picked', side === 'my' && SD.pick.includes(i));
+      if (!m) { fb.style.display = 'none'; return; }
+      fb.style.display = 'block';
+      const { fasts, chargeds } = movePool(m.key);
+      // ⚠「おぼえるわざ」に無いだけで巻き戻してはいけない。直すのは「データから消えたわざ」だけ
+      if (!D.moves[m.fast]) { m.fast = fasts[0] || ''; saveSd(); }
+      const opts = (l, sel) => mvOptions(l, l === fasts, sel);
+      el.querySelector('.selFast').innerHTML = opts(fasts, m.fast);
+      el.querySelector('.selC1').innerHTML = chargeds.length ? opts(chargeds, m.c1) : '';
+      el.querySelector('.selC2').innerHTML = chargeds.length
+        ? `<option value=""${!m.c2 ? ' selected' : ''}>ー</option>` + opts(chargeds, m.c2) : '';
+      el.querySelector('.selC1').style.display = chargeds.length ? '' : 'none';
+      el.querySelector('.selC2').style.display = chargeds.length ? '' : 'none';
+      const base = ptBase(m);
+      const st = PvpEngine.buildStats(D, base);
+      const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+      el.querySelector('.fstat').innerHTML =
+        `${typeIcons(D.pokemon[m.key], 15)} CP${st.cp}・PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}` +
+        overCapTag(base);
+      const gm = el.querySelector('.gmlv');
+      gm.innerHTML = hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '';
+      gm.querySelectorAll('.mlvseg button').forEach(b => b.onclick = () => {
+        m.megaLv = +b.dataset.lv; sdChanged();
+      });
+    });
+  });
+}
+// ---- 選出パネル ----
+function sdPickHtml() {
+  const my = sdList('my'), foe = sdList('foe');
+  if (my.length < 3 || foe.length < 3)
+    return '<div class="mtnote">じぶんとあいてに<b>3匹以上</b>ずつ入れてください（6匹ずつがこのルールの本来の形です）</div>';
+  const NO = ['①', '②', '③'];
+  const chip = m => `<span class="sdchip">${typeIcons(D.pokemon[m.key], 15)}<b>${ptName(m)}</b></span>`;
+  const done = SD.pick.length === 3;
+  return `<div class="sdpickbox">
+    <div class="sdrow"><div class="sdlbl foe">あいての${foe.length}匹<small>この中から3匹が来ます（わざは見えません）</small></div>
+      <div class="sdchips">${foe.map(i => chip(SD.foe[i])).join('')}</div></div>
+    <div class="sdrow"><div class="sdlbl">じぶんの選出<small>${done ? '押した順が並び順です（もう一度押すと外れます）' : `あと${3 - SD.pick.length}匹（押した順が並び順です）`}</small></div>
+      <div class="sdchips">${my.map(i => {
+        const k = SD.pick.indexOf(i);
+        return `<button class="sdchip pk${k >= 0 ? ' on' : ''}" data-i="${i}">${k >= 0 ? `<i class="no">${NO[k]}</i>` : ''}${typeIcons(D.pokemon[SD.my[i].key], 15)}<b>${ptName(SD.my[i])}</b></button>`;
+      }).join('')}</div></div>
+    ${done ? `<div class="sdrow sdlead"><button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に②か③へ交代します（あいての打ちかけの1発は交代先に入ります）。あいても開幕に交代してくることがあります">${SWAPMK}開幕交代</button>
+      <button class="sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button></div>` : ''}
+  </div>`;
+}
+function bindSdPick(box) {
+  box.querySelectorAll('.sdchip.pk').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (SD.pick.includes(i)) SD.pick = SD.pick.filter(x => x !== i);
+    else if (SD.pick.length < 3) SD.pick = SD.pick.concat(i);
+    else return;
+    if (SD.pick.length === 3) SD.edit = false;   // そろったら6匹の入力は畳んで、バトルを見せる
+    saveSd(); run();
+  });
+  const rs = box.querySelector('.sdreset');
+  if (rs) rs.onclick = () => { SD.pick = []; saveSd(); run(); };
+  const pl = box.querySelector('.plead');
+  if (pl) pl.onclick = () => { MK.leadSwap = !MK.leadSwap; run(); };
+}
+// 見せ合いの画面(ルールの切替・6枠・選出パネル)を今の設定に合わせる
+function renderSd() {
+  const wrap = document.getElementById('sdwrap'), three = document.getElementById('mk3');
+  if (!wrap || !three) return;
+  document.querySelectorAll('#sdrule button').forEach(b =>
+    b.setAttribute('aria-pressed', (b.dataset.v === '1') === SD.on));
+  wrap.style.display = SD.on ? '' : 'none';
+  three.style.display = SD.on ? 'none' : '';
+  if (!SD.on) return;
+  // 枠から消えたポケモンを選出に残さない
+  SD.pick = SD.pick.filter(i => SD.my[i]);
+  syncSdSlots();
+  const ent = wrap.querySelector('.sdentry');
+  if (ent) ent.open = SD.edit;
+  const box = wrap.querySelector('.sdpick');
+  if (box) { box.innerHTML = sdPickHtml(); bindSdPick(box); }
+}
+// あいての6匹を環境から自動で組む(「🎲 おまかせ3匹」を2回まわして重複を除く)
+function sdAutoFill() {
+  if (GBAUTO.busy) return;
+  const btn = document.querySelector('#sdwrap .sdrand');
+  const say = t => { if (btn) btn.textContent = t; };
+  GBAUTO.busy = true;
+  if (btn) btn.disabled = true;
+  say('組み立て中…');
+  gbAutoPrepare(ok => {
+    GBAUTO.busy = false;
+    if (btn) btn.disabled = false;
+    const out = [], used = new Set();
+    for (let t = 0; ok && t < 12 && out.length < 6; t++) {
+      const three = gbAutoPick();
+      if (!three) break;
+      three.forEach(m => { if (!used.has(m.k) && out.length < 6) { used.add(m.k); out.push(m); } });
+    }
+    if (!out.length) {   // 環境リストが足りないカップ。黙って何も起きないと壊れて見える
+      say('環境の顔ぶれが足りません');
+      setTimeout(() => say(SD_AUTO_LABEL), 2000);
+      return;
+    }
+    say(SD_AUTO_LABEL);
+    for (let i = 0; i < 6; i++) SD.foe[i] = out[i] ? sdNew(out[i].k, !!out[i].s) : null;
+    sdChanged();
+  }, (a, b) => say(`組み立て中 ${Math.round(a / b * 100)}%`));
+}
+const SD_AUTO_LABEL = '🎲 おまかせ6匹';
 
 // ---- 決断のキーと選択肢 ----
 // キーは「対面:側:種別:連番:待った発数」(側 0=じぶん 1=あいて)。ロケット団(4要素)と形式が
@@ -7099,6 +7472,22 @@ function gbPlay(picks, foes, ans, stepwise) {
         p: 1 / rest.length }));
       return predCache[ck];
     }
+    // 見せ合いルール(2026-09-05): 相手の6匹は知っているので、候補は**その6匹のうち、まだ
+    // 場に出ていないもの**に絞られる。どの3匹を選出したかまでは分からないので確率は等分。
+    // わざは見せ合いでは見えないので、環境の定番構成だと想定して読む
+    if (sdOn()) {
+      const ck2 = 'sd:' + [...seen[0]].sort().join(',');
+      if (!(ck2 in predCache)) {
+        const shown = new Set([...seen[0]].map(i => picks[i].m.key));
+        const rows2 = sdList('my').map(i => SD.my[i]).filter(m => !shown.has(m.key)).map(m => {
+          const d = mockDefaultMoves(m.key, !!m.shadow);
+          return { k: m.key, s: !!m.shadow, f: d.fast, c1: d.c1, c2: d.c2 };
+        });
+        rows2.forEach(r => { r.p = 1 / (rows2.length || 1); });
+        predCache[ck2] = rows2;
+      }
+      return predCache[ck2];
+    }
     const ck = [...seen[0]].sort().join(',');
     if (ck in predCache) return predCache[ck];
     const shownIdx = [...seen[0]];
@@ -7145,7 +7534,8 @@ function gbPlay(picks, foes, ans, stepwise) {
   const predCache2 = {};
   const aiPredScore = k => {
     // omniのときは「見えた順」ではなく控えの実物でキーを作る(倒れて控えが減ったら読み直す)
-    const ck = k + '|' + (ai.omni ? 'omni:' + benches(0).join(',') : [...seen[0]].sort().join(','));
+    const ck = k + '|' + (ai.omni ? 'omni:' + benches(0).join(',')
+      : (sdOn() ? 'sd:' : '') + [...seen[0]].sort().join(','));
     if (ck in predCache2) return predCache2[ck];
     const list = aiPredict();
     const P = ros[1][k];
@@ -7941,18 +8331,52 @@ function gbFind(picks, foes) {
 function runMockBuild() {
   const body = document.querySelector('#mock .gbbody');
   syncGbFoeSlots();   // リーグが変わるとあいての実数値・CPも変わるので毎回そろえる
-  const mineIdx = [0, 1, 2].filter(i => PT[i]);
-  const foesIdx = [0, 1, 2].filter(i => GBT[i]);
+  renderSd();         // 見せ合いルールの入力・選出パネル(OFFのときは切替タブをそろえるだけ)
   updateUrl();
   clearInterval(RBV.timer); RBV.timer = null;
-  if (!mineIdx.length || !foesIdx.length) {
-    body.innerHTML = `<div class="mtnote">${!mineIdx.length ? '<b>じぶん</b>' : ''}${!mineIdx.length && !foesIdx.length ? 'と' : ''}` +
-      `${!foesIdx.length ? '<b>あいて</b>' : ''}のポケモンを枠に入れてください（1匹ずつでもOK）</div>`;
-    return;
+  let picks, foes, sig;
+  // あいて1匹ぶんの計算用の形。わざオート(2026-08-20)なら枠の選択を無視して環境の定番構成で戦う
+  const foeOf = f => {
+    const mv = MK.foeAuto ? mockDefaultMoves(f.key, f.shadow) : f;
+    return { m: f, base: ptBase(f),
+      pol: { fast: mv.fast, charged: [mv.c1, mv.c2].filter(Boolean) }, name: ptName(f) };
+  };
+  if (sdOn()) {
+    // ---- 見せ合いルール: 6匹から選出した3匹どうしで戦う ----
+    const ready = sdList('my').length >= 3 && sdList('foe').length >= 3;
+    const fp = ready ? sdFoePickCached() : [];
+    const mine = SD.pick.map(i => SD.my[i]).filter(Boolean);
+    const ft = fp.map(i => SD.foe[i]).filter(Boolean);
+    if (!ready || mine.length < 3 || !ft.length) {
+      body.innerHTML = ready
+        ? '<div class="mtnote">上の<b>選出</b>で、じぶんの3匹を選んでください</div>'
+        : '<div class="mtnote">じぶんとあいての<b>6匹</b>を入れてから選出します</div>';
+      RBV.sig = undefined; RBV.started = false;
+      return;
+    }
+    picks = mine.map(m => ({ m, base: ptBase(m),
+      pol: { fast: m.fast, charged: [m.c1, m.c2].filter(Boolean) }, name: ptName(m) }));
+    foes = ft.map(foeOf);
+    sig = JSON.stringify(['sd', mine, ft, cap, cup && cup.slug, SIMOPT.buffMode,
+      MK.ai, MK.leadSwap, MK.foeAuto]);
+  } else {
+    const mineIdx = [0, 1, 2].filter(i => PT[i]);
+    const foesIdx = [0, 1, 2].filter(i => GBT[i]);
+    if (!mineIdx.length || !foesIdx.length) {
+      body.innerHTML = `<div class="mtnote">${!mineIdx.length ? '<b>じぶん</b>' : ''}${!mineIdx.length && !foesIdx.length ? 'と' : ''}` +
+        `${!foesIdx.length ? '<b>あいて</b>' : ''}のポケモンを枠に入れてください（1匹ずつでもOK）</div>`;
+      return;
+    }
+    picks = mineIdx.map(i => {
+      const mv = gbmOf(i);
+      return { m: PT[i], base: ptBase(PT[i]),
+        pol: { fast: mv.fast, charged: [mv.c1, mv.c2].filter(Boolean) }, name: ptName(PT[i]) };
+    });
+    foes = foesIdx.map(i => foeOf(GBT[i]));
+    // 入力(ポケモン・わざ・リーグ・AI等)が変わったら、前のバトルの選択と再生位置は仕切り直す
+    sig = JSON.stringify(['mock', PT, GBT, [0, 1, 2].map(i => PT[i] && gbmOf(i)),
+      cap, cup && cup.slug, SIMOPT.buffMode, MK.ai, MK.leadSwap, MK.foeAuto]);
   }
-  // 入力(ポケモン・わざ・リーグ・AI等)が変わったら、前のバトルの選択と再生位置は仕切り直す
-  const sig = JSON.stringify(['mock', PT, GBT, [0, 1, 2].map(i => PT[i] && gbmOf(i)),
-    cap, cup && cup.slug, SIMOPT.buffMode, MK.ai, MK.leadSwap, MK.foeAuto]);
   if (RBV.sig !== sig) {
     if (RBV.sig !== undefined) { RB.ans = {}; RBUI.open = null; RB.found = null; }
     RBV.sig = sig; RBV.started = false; RBV.cur = 0; RBV.playing = true;
@@ -7960,18 +8384,6 @@ function runMockBuild() {
     RB.rseed = RB.rseedLock ? RB.rseed : (Math.random() * 1e9) | 0;
     RB.rseedLock = false;
   }
-  const picks = mineIdx.map(i => {
-    const mv = gbmOf(i);
-    return { m: PT[i], base: ptBase(PT[i]),
-      pol: { fast: mv.fast, charged: [mv.c1, mv.c2].filter(Boolean) }, name: ptName(PT[i]) };
-  });
-  const foes = foesIdx.map(i => {
-    const f = GBT[i];
-    // わざオート(2026-08-20): 枠の選択を無視して環境の定番構成で戦う(選択は消さずに残す)
-    const mv = MK.foeAuto ? mockDefaultMoves(f.key, f.shadow) : f;
-    return { m: f, base: gbtBase(f),
-      pol: { fast: mv.fast, charged: [mv.c1, mv.c2].filter(Boolean) }, name: gbtName(f) };
-  });
   const bt = gbPlay(picks, foes, RB.ans, RB.step);
   gbRender(body, bt, picks, foes);
 }
@@ -9283,9 +9695,17 @@ function updateUrl() {
     if (MK.leadSwap) qp.gls = 1;   // 開幕交代
     if (MK.foeAuto) qp.gfa = 1;    // あいてのわざオート(何が飛んでくるか分からない)
     if (!RB.step) qp.rbs = 0;      // 見かた(結果だけ)。ロケット団の模擬戦と同じパラメータ
-    const t = [0, 1, 2].filter(i => GBT[i]).map(i =>
-      [GBT[i].key, GBT[i].shadow ? 1 : '', GBT[i].fast || '', GBT[i].c1 || '', GBT[i].c2 || ''].join('~'));
-    if (t.length) qp.gt = t.join(',');
+    // あいてのポケモンはURLに書く(じぶんのパーティは端末内保存なので入れない・見せ合いも同じ流儀)
+    const enc = a => a.filter(Boolean).map(m =>
+      [m.key, m.shadow ? 1 : '', m.fast || '', m.c1 || '', m.c2 || ''].join('~')).join(',');
+    if (SD.on) {   // 見せ合いルール: あいての6匹
+      qp.sd = 1;
+      const t6 = enc(SD.foe);
+      if (t6) qp.sdf = t6;
+    } else {
+      const t = enc(GBT);
+      if (t) qp.gt = t;
+    }
     // 決断で選んだ内容(rb=)は普段のURLには書かない(リロードで復元されて場面が素通りするため)。
     // 共有はコピーボタンを押した時だけ付ける(ロケット団の模擬戦と同じ扱い)
   }
@@ -9792,8 +10212,12 @@ const TOUR_DEFS = {
       tx: 'あいてを選ぶのが手間なときは<b>🎲 おまかせ3匹</b>。環境上位から<b>たがいの穴を埋め合う3匹</b>を自動で組むので、強い相手と練習できて<b>編成の参考にもなります</b>。押すたびに顔ぶれが変わります' },
     { sel: '#mock .gfauto, #mock .gfhead',
       tx: 'あいてのわざを<b>「オート」</b>にすると、わざ欄が隠れて環境の定番構成で戦います。<b>何が飛んでくるか分からない実戦に近い練習</b>ができます' },
+    { sel: '#mock .sdrulebar, #sdrule',
+      tx: '<b>見せ合い</b>にすると、おたがい<b>6匹を見せ合ってから3匹と並び順を選ぶ</b>大会の形式になります。見えるのは<b>ポケモンの種類だけ</b>（わざは見えません）で、<b>相手が選んだ3匹は場に出てくるまで分かりません</b>' },
+    { sel: '#sdwrap .sdpick',
+      tx: 'あいての6匹を見て、じぶんの6匹から<b>3匹を押した順に選びます</b>（押した順が並び順）。あいても同時に選びますが、<b>どの3匹を選んだかはバトルが始まるまで分かりません</b>' },
     { sel: '#mock .gbaibar',
-      tx: '<b>難易度に応じてあいての強さが変わります</b>。<b>EASY</b>＝やさしい入門向け／<b>NORMAL</b>＝実戦の基本戦術で戦う標準／<b>HARD</b>＝こちらの手の内を知り尽くした最強。希望の難易度に設定して挑戦してください' },
+      tx: '<b>難易度に応じてあいての強さが変わります</b>。<b>EASY</b>＝やさしい入門向け／<b>NORMAL</b>＝実戦の基本戦術で戦う標準／<b>HARD</b>＝こちらの手の内を知り尽くした最強。希望の難易度に設定して挑戦してください。<b>見せ合いルールでは選出の賢さも変わります</b>（EASY＝上から3匹／NORMAL＝あなたの6匹を見て穴の少ない3匹／HARD＝あなたが選んだ3匹に強い3匹）' },
     { sel: '#mock .rbstart, #mock .gbbody, #mock',
       tx: 'そろったら<b>▶ バトルスタート！</b>。1ターン＝0.5秒で流れ、<b>SPアタック・シールド・交代の決断の場面で止まって選択肢が出ます</b>' },
     { sel: '#mock .gbbody, #mock',
@@ -10013,13 +10437,23 @@ document.addEventListener('click', e => {
   }
   if (q.get('gls') === '1') MK.leadSwap = true;
   if (q.get('gfa') === '1') MK.foeAuto = true;
-  if (q.get('gt')) q.get('gt').split(',').slice(0, 3).forEach((s, i) => {
-    const [key, sh, fast, c1, c2] = s.split('~');
-    if (!D.pokemon[key]) return;
+  // あいての枠の復元(3枠の gt= と、見せ合いの sdf= は同じ形式)
+  const decFoe = (str, n) => (str || '').split(',').slice(0, n).map(t => {
+    const [key, sh, fast, c1, c2] = t.split('~');
+    if (!D.pokemon[key]) return null;
     const d = mockDefaultMoves(key, sh === '1');   // 欠けたわざは既定(確定値/効率)で埋める
-    GBT[i] = { key, shadow: sh === '1',
-      fast: D.moves[fast] ? fast : d.fast, c1: D.moves[c1] ? c1 : d.c1, c2: D.moves[c2] ? c2 : (c2 === '' ? '' : d.c2) };
+    return { key, shadow: sh === '1', ivMode: 'auto', maxLv: 51,
+      fast: D.moves[fast] ? fast : d.fast, c1: D.moves[c1] ? c1 : d.c1,
+      c2: D.moves[c2] ? c2 : (c2 === '' ? '' : d.c2) };
   });
+  if (q.get('gt')) decFoe(q.get('gt'), 3).forEach((m, i) => { if (m) GBT[i] = m; });
+  if (q.get('sd') === '1') SD.on = true;
+  if (q.get('sdf')) {
+    const a = decFoe(q.get('sdf'), 6);
+    for (let i = 0; i < 6; i++) SD.foe[i] = a[i] || null;
+    SD.foeSig = null;
+    saveSd();
+  }
   if (PAGE_ROCKET || PAGE_BLOG) {   // モード固定ページ(md= は見ない)
     applyMode();
   } else if (['multi', 'counter', 'party', 'mock'].includes(q.get('md'))) {   // モードの復元(md=rocket/blog は別ページへ転送済み)
@@ -10069,13 +10503,26 @@ document.addEventListener('click', e => {
     });
   }
   // あいてのわざ「えらぶ｜オート」(2026-08-20)。オート=欄を隠して環境の定番構成で戦う
-  const gfAuto = document.querySelector('#mock .gfauto');
-  if (gfAuto) gfAuto.onclick = () => {
+  // (ボタンは3枠側と見せ合い側の2か所にあるが、設定は共通なのでどちらを押しても同じ)
+  document.querySelectorAll('#mock .gfauto').forEach(b => b.onclick = () => {
     MK.foeAuto = !MK.foeAuto; saveMkFoeAuto(); syncGbFoeSlots(); run();
-  };
+  });
   // あいての3匹を環境から自動で組む(2026-09-02)
   const gfRand = document.querySelector('#mock .gfrand');
   if (gfRand) gfRand.onclick = gbAutoFill;
+  // ---- 見せ合いルール(2026-09-05): ルールの切替・6枠・おまかせ6匹 ----
+  buildSdSlots('my'); buildSdSlots('foe');
+  document.querySelectorAll('#sdrule button').forEach(b => b.onclick = () => {
+    SD.on = b.dataset.v === '1';
+    SD.foeSig = null; saveSd();
+    run();   // バトルの署名が変わるので、スタート待ちから仕切り直しになる
+  });
+  const sdEnt = document.querySelector('#sdwrap .sdentry');
+  if (sdEnt) sdEnt.addEventListener('toggle', () => {
+    if (SD.edit !== sdEnt.open) { SD.edit = sdEnt.open; saveSd(); }
+  });
+  const sdRand = document.querySelector('#sdwrap .sdrand');
+  if (sdRand) sdRand.onclick = sdAutoFill;
   // 模擬戦のおすすめタブ(高火力/高火力＋安定)。同じタブをもう一度押すとオフ
   document.querySelectorAll('#rksuggbar button[data-m]').forEach(b => b.onclick = () => {
     RKS.mode = RKS.mode === b.dataset.m ? null : b.dataset.m;
