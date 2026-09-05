@@ -868,7 +868,10 @@ function renderMinPlayers(){
   const r=mpCalc(raidTier);
   if(!r){out.innerHTML='';return;}
   out.innerHTML=`<span title="${T_MP}">理論上 <b class="bignum">${r.n}人</b></span>
-    <span class="mp-sub">全員が1位の ${badges(r.best.shadow,!!r.best.p.mega,r.best.p)}${r.best.p.n} で攻撃し続けた場合</span>
+    <!-- ⚠ ここは文章の中なので「メガ」のマークは出さない(2026-09-05)。
+         メガの名前は必ず「メガ〜」「ゲンシ〜」で始まるので、マークを付けると
+         「メガメガマフォクシー」と二重に読める(ランキングの行はバッジとして働くので従来どおり) -->
+    <span class="mp-sub">全員が1位の ${badges(r.best.shadow,false,r.best.p)}${r.best.p.n} で攻撃し続けた場合</span>
     <small class="mp-sub expl">HP${r.t.hp}・制限時間${r.t.time}秒・対ボス火力${r.best.dps.toFixed(2)}/秒${r.best.sdps?`（シールド中 ${r.best.sdps.toFixed(2)}/秒）`:''}（ランク補正込みのボス防御で計算）</small>
     ${r.t.id==='t7'?`<small class="mp-sub">※シールドを壊さない前提（シールド中はボス防御4倍・暫定値）<span class="expl">。HPが約80%になるとシールドが張られ、以後ずっと防御4倍のまま削り切る想定です。倍率は実測で確定したら更新します</span></small>`:''}
     <a class="raidbtn" href="/raid/?b=${boss}&t=${raidTier}" title="倒される時間・SPアタックの被弾まで再現した実戦ベースのシミュレートを、このボス・このランクのまま開きます">
