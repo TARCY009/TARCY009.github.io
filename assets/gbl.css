@@ -1778,3 +1778,32 @@ button.sdchip.on .tbadge{filter:none}
 #copyfall .cfnote{font-size:.68rem;color:var(--sub);margin-bottom:5px;line-height:1.6}
 #copyfall .cfurl{width:100%;padding:7px 8px;font-size:16px;border:1px solid var(--line);border-radius:8px;
   background:var(--panel);color:var(--ink);outline:none}
+
+/* 選出の提案(見せ合い) */
+.sdsug .sdlbl{display:flex;flex-direction:column;gap:2px}
+.sdsugtab{align-self:flex-start;padding:0;border:none;background:none;font-family:inherit;cursor:pointer;
+  font-size:.74rem;font-weight:800;color:var(--cy)}
+.sdsugtab::after{content:' ▾';font-size:.7rem}
+.sdsugtab[aria-expanded="false"]::after{content:' ▸'}
+.sdcur{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px;padding:6px 9px;border-radius:9px;
+  background:var(--bg2);border:1px solid var(--line);font-size:.68rem;color:var(--sub)}
+.sdcur .sdcurh{color:var(--ink);font-size:.72rem;font-weight:800}
+.sdcur .sdsgn{flex:1 0 100%}
+.sdbar{display:inline-flex;gap:2px}
+.sdbar i{width:11px;height:11px;border-radius:3px;display:block}
+.sdsgs{display:flex;flex-direction:column;gap:6px;margin-top:7px}
+.sdsg{display:flex;flex-direction:column;gap:5px;padding:8px 9px;border-radius:11px;cursor:pointer;
+  font-family:inherit;text-align:left;color:var(--ink);
+  border:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),var(--panel));
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.06)}
+.sdsg:hover{transform:translateY(-1px);border-color:var(--cy)}
+.sdsg:active{transform:translateY(2px);box-shadow:0 1px 0 var(--tabsh)}
+.sdsgh{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.sdsgl{font-size:.72rem;font-weight:800;color:var(--cy)}
+.sdsgn{font-style:normal;font-size:.64rem;color:var(--sub)}
+.sdsgp{display:flex;flex-wrap:wrap;gap:4px}
+.sdsgp .sdchip{padding:3px 8px;font-size:.68rem}
+@media (max-width:520px){
+  .sdsgn{flex:1 0 100%}
+  .sdsgp .sdchip{font-size:.64rem;padding:3px 6px}
+}

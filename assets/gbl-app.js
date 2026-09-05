@@ -1447,9 +1447,6 @@ ${PAGE_ROCKET ? '' : `
   <b>相手が選んだ3匹は、場に出てくるまで分かりません</b>——なので、あいての6匹を見て
   「何を出してくるか」を読みながら選ぶのがこのルールの中身です。</p>
   <ul>
-    <li><b>同じポケモンは6匹の中に2匹入れられません</b>（ゲーム本編と同じ）。すでに入っているポケモンは
-    検索の候補にグレーで出て押せなくなります。<b>通常とシャドウ、メガ、地方フォルム（アローラ・ガラルなど）も
-    同じポケモン扱い</b>です</li>
     <li>じぶんの6匹は<b>押した順が並び順</b>になります（①が初手）。もう一度押すと外れます</li>
     <li><b>あいても同時に選出します</b>。選び方は難易度で変わります——
     <b>EASY</b>＝登録順の上から3匹（こちらを見ずに選ぶ）／
@@ -1459,6 +1456,12 @@ ${PAGE_ROCKET ? '' : `
     <li>バトル中も、あいては<b>あなたの6匹を知っている</b>状態で控えを読みます
     （どの3匹を選んだかまでは分からないので、まだ出ていない候補を等しく警戒します）。
     HARDだけは従来どおり、こちらの手の内を最初から全部知っています</li>
+    <li><b>💡 こんな選び方もあります</b>＝あいての6匹すべてへの相性で、じぶんの3匹の組み合わせを
+    ぜんぶくらべた候補です。<b>穴（3匹とも勝てない相手）／1匹頼み／2匹勝ち</b>の数はパーティ診断と同じ意味で、
+    帯の色（赤・黄・緑）も同じです。<b>正解を出すものではありません</b>ので、好みで選んでください。
+    押すとその3匹が並び順ごと入ります（提案の数字と、入れたあとの「いまの選出」の数字は必ず一致します）</li>
+    <li><b>同じポケモンは2匹入れられません</b>。<b>メガ・ゲンシもパーティに1匹まで</b>（ゲーム本編と同じ）。
+    入れられないポケモンは検索の候補にグレーで出て、理由が出ます</li>
     <li>共有リンクに入るのは<b>あいての6匹</b>だけです（じぶんのパーティは端末内に保存していて、
     ふつうの3対3のときと同じ扱いです）</li>
   </ul>
@@ -6544,7 +6547,7 @@ function gbAutoFill() {
 // 枠の中身は PT と同じ形＋わざ(fast/c1/c2)なので、ptBase/ptName がそのまま使える
 const SD_KEY = 'gbl_showdown';
 const SD = { on: false, my: [null, null, null, null, null, null],
-  foe: [null, null, null, null, null, null], pick: [], edit: true, foeSel: null, foeSig: null };
+  foe: [null, null, null, null, null, null], pick: [], edit: true, sug: true, foeSel: null, foeSig: null };
 try {
   const v = JSON.parse(localStorage.getItem(SD_KEY));
   if (v && typeof v === 'object') {
@@ -6552,10 +6555,11 @@ try {
     ['my', 'foe'].forEach(s => { if (Array.isArray(v[s])) v[s].forEach((m, i) => { if (i < 6 && m && m.key) SD[s][i] = m; }); });
     if (Array.isArray(v.pick)) SD.pick = v.pick.filter(i => Number.isInteger(i) && i >= 0 && i < 6).slice(0, 3);
     if (v.edit === false) SD.edit = false;
+    if (v.sug === false) SD.sug = false;
   }
 } catch (e) {}
 const saveSd = () => { try { localStorage.setItem(SD_KEY,
-  JSON.stringify({ on: SD.on, my: SD.my, foe: SD.foe, pick: SD.pick, edit: SD.edit })); } catch (e) {} };
+  JSON.stringify({ on: SD.on, my: SD.my, foe: SD.foe, pick: SD.pick, edit: SD.edit, sug: SD.sug })); } catch (e) {} };
 // 見せ合いルールが効いているか(gbPlay は模擬戦からしか呼ばれないが、念のためモードも見る)
 const sdOn = () => SD.on && mode === 'mock';
 const sdList = s => [0, 1, 2, 3, 4, 5].filter(i => SD[s][i]);
@@ -6684,6 +6688,117 @@ function sdFoePickCached() {
     MK.ai, cap, cup && cup.slug, SIMOPT.buffMode]);
   if (SD.foeSig !== sig) { SD.foeSig = sig; SD.foeSel = sdFoePick(); }
   return SD.foeSel || [];
+}
+
+// ==================================================================
+// 選出の提案(2026-09-05タダシさん指示・「あくまでこういうのもいいかもよ？くらいの表現」)
+// ==================================================================
+// **正解を出す機能ではない**。GBLに正解の型は無い(恒久ルール)ので、
+// 「考え方のちがう3つ」を並べて、選ぶのは使う人にまかせる。
+//
+// 見かた: **あいての6匹すべて**に対する相性で、じぶんの3匹の組み合わせ(6匹なら20通り)をくらべる。
+// 相手がどの3匹を出してくるかは分からないので、**6匹のどれが来ても対応できるか**で見るのが素直。
+// 数字と語彙は**パーティ診断とそろえる**(穴／1匹頼み／2匹勝ち・色も同じ)＝画面をまたいで同じ意味で読める。
+// 勝敗の前提もAIの選出(sdWinTable)と同じものを使うので、**提案の数字と、選んだあとの数字は必ず一致する**
+const SDS = { sig: null, data: null };
+function sdSuggest() {
+  const my = sdList('my'), foe = sdList('foe');
+  if (my.length < 3 || foe.length < 3) return null;
+  // ⚠ **キーに選出(SD.pick)を入れない**。入れると1匹タップするたびに
+  // 6×6×3＝108回のシミュレートをやり直して重くなる(実測 約95ms)。
+  // 選出で変わるのは「いまの選出」の数え直しだけなので、そこだけ毎回やる
+  const sig = JSON.stringify([my.map(i => SD.my[i]), foe.map(i => SD.foe[i]),
+    cap, cup && cup.slug, SIMOPT.buffMode]);
+  if (SDS.sig === sig && SDS.data) {
+    const d = SDS.data;
+    d.cur = d.statOf(SD.pick);
+    return d;
+  }
+  // W[じぶん(myの並び)][あいて(foeの並び)] = 🛡0-0/1-1/2-2 の3通り中いくつ勝てるか
+  const W = sdWinTable(my.map(i => SD.my[i]), foe.map(i => SD.foe[i]));
+  const isM = k => isMega(SD.my[my[k]].key);
+  // 1つの組み合わせを、パーティ診断と同じ語彙で数える
+  const stat = idx => {
+    const tier = [];   // あいて1匹ごとに「勝てる味方の数」(0=穴 / 1=1匹頼み / 2以上=2匹勝ち)
+    let tot = 0;
+    for (let j = 0; j < foe.length; j++) {
+      let w = 0;
+      for (const i of idx) { tot += W[i][j]; if (W[i][j] >= 2) w++; }
+      tier.push(w);
+    }
+    return { idx, tier, tot,
+      holes: tier.filter(t => t === 0).length,
+      n1: tier.filter(t => t === 1).length,
+      // 初手の安定度＝「最悪の対面がいちばんマシな1匹」がどれだけマシか(出し負けにくさ)
+      worst: Math.max(...idx.map(i => Math.min(...W[i]))),
+      sc: 0 };
+  };
+  const combos = [];
+  for (let a = 0; a < my.length; a++)
+    for (let b = a + 1; b < my.length; b++)
+      for (let c = b + 1; c < my.length; c++) {
+        const idx = [a, b, c];
+        if (idx.filter(isM).length > 1) continue;   // メガ・ゲンシは1匹まで(ゲームのルール)
+        const st = stat(idx);
+        st.sc = -st.holes * 100 + st.tot;
+        combos.push(st);
+      }
+  if (!combos.length) { SDS.sig = sig; SDS.data = null; return null; }
+  // **見かたのちがう3つ**の「いちばん」を出す。
+  // ⚠ 同じ組み合わせになったときに**別の組み合わせで埋めてはいけない**(実際に踏んだ)——
+  // 「勝てる場面が多い」の札が付いているのに勝ち数が2番目、という**札と中身の食い違い**が起きる。
+  // 重なったら**札をまとめて1行にする**(全部重なれば「どの見かたでもこの3匹」というはっきりした答えになる)
+  const key = c => c.idx.join(',');
+  const best = f => combos.slice().sort(f)[0];
+  const picks = [
+    { label: '穴が少ない', tip: 'あいての6匹のどれが来ても、勝てる1匹がいる組み合わせです',
+      c: best((x, y) => y.sc - x.sc) },
+    { label: '勝てる場面が多い', tip: 'シールドの枚数がどうであれ、勝てるマスがいちばん多い組み合わせです',
+      c: best((x, y) => y.tot - x.tot || y.sc - x.sc) },
+    { label: '出し負けにくい', tip: '最悪の対面がいちばんマシな1匹がいるので、初手で大きく崩れにくい組み合わせです',
+      c: best((x, y) => y.worst - x.worst || y.sc - x.sc) },
+  ];
+  const byKey = new Map();
+  for (const p of picks) {
+    if (!p.c) continue;
+    const k = key(p.c);
+    const e = byKey.get(k) || { c: p.c, labels: [], tips: [] };
+    e.labels.push(p.label); e.tips.push(p.tip);
+    byKey.set(k, e);
+  }
+  const rows = [...byKey.values()].sort((x, y) => y.c.sc - x.c.sc).map(e => ({
+    // 3つの見かたが同じ組み合わせを指したときは、札を並べずに一言でまとめる
+    label: e.labels.length === picks.length ? 'どの見かたでもこれ' : e.labels.join('・'),
+    tip: e.labels.length === picks.length
+      ? '穴の少なさ・勝てる場面の多さ・出し負けにくさ、どの見かたでもこの3匹になりました'
+      : e.tips.join(' ／ '),
+    c: e.c, order: sdOrder(W, e.c.idx).map(k => my[k]) }));   // 枠番号へ戻す
+  // 3つまでは**別の候補も並べる**(「こういうのもいいかもよ」なので、選べるほうがよい)。
+  // 札は「もう一つの候補」＝中身と食い違わない言い方にする
+  const seen = new Set(rows.map(r => key(r.c)));
+  for (const c of combos.slice().sort((x, y) => y.sc - x.sc)) {
+    if (rows.length >= 3) break;
+    if (seen.has(key(c))) continue;
+    seen.add(key(c));
+    rows.push({ label: rows.length >= 2 ? 'さらにもう一つ' : 'もう一つの候補',
+      tip: '次に穴が少ない組み合わせです。好みで選んでください',
+      c, order: sdOrder(W, c.idx).map(k => my[k]) });
+  }
+  // 「いまの選出」を同じ物差しで数える(比べられるように・タップのたびにここだけ走る)
+  const statOf = pick => {
+    const ix = (pick || []).map(i => my.indexOf(i)).filter(k => k >= 0);
+    return ix.length && ix.length === (pick || []).length ? stat(ix) : null;
+  };
+  SDS.sig = sig;
+  SDS.data = { rows, foe, nFoe: foe.length, statOf, cur: statOf(SD.pick) };
+  return SDS.data;
+}
+// あいて1匹＝1マスの帯(パーティ診断の穴チェックと同じ色・同じ語彙)
+function sdTierBar(tier, foe, n) {
+  return `<span class="sdbar">${tier.map((t, j) => {
+    const g = ptTier(t, n);
+    return `<i style="background:${ptTierColor(g)}" title="${ptName(SD.foe[foe[j]])}／${ptTierLabel(g, n)}"></i>`;
+  }).join('')}</span>`;
 }
 
 // ---- 見せ合いの6枠(じぶん・あいて共通の作り。あいての3枠 buildGbFoeSlots と同じ流儀) ----
@@ -6852,6 +6967,26 @@ function sdPickHtml() {
       }).join('')}</div></div>
     ${done ? `<div class="sdrow sdlead"><button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に②か③へ交代します（あいての打ちかけの1発は交代先に入ります）。あいても開幕に交代してくることがあります">${SWAPMK}開幕交代</button>
       <button class="sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button></div>` : ''}
+    ${sdSuggHtml()}
+  </div>`;
+}
+// 選出の提案。**あくまで「こういうのもいいかもよ」**なので、既定で開いてはいるが押せば閉じる
+function sdSuggHtml() {
+  const d = sdSuggest();
+  if (!d || !d.rows.length) return '';
+  const n = 3;
+  const cur = d.cur ? `<div class="sdcur"><b class="sdcurh">いまの選出</b>${sdTierBar(d.cur.tier, d.foe, n)}` +
+    `<i class="sdsgn">穴${d.cur.holes}／1匹頼み${d.cur.n1}／2匹勝ち${d.nFoe - d.cur.holes - d.cur.n1}</i></div>` : '';
+  const rows = d.rows.map((r, i) => `<button class="sdsg" data-i="${i}" title="${r.tip}">
+      <span class="sdsgh"><b class="sdsgl">${r.label}</b>${sdTierBar(r.c.tier, d.foe, n)}
+        <i class="sdsgn">穴${r.c.holes}／1匹頼み${r.c.n1}／2匹勝ち${d.nFoe - r.c.holes - r.c.n1}</i></span>
+      <span class="sdsgp">${r.order.map((k, j) =>
+        `<span class="sdchip"><i class="no">${['①', '②', '③'][j]}</i>${typeIcons(D.pokemon[SD.my[k].key], 15)}<b>${ptName(SD.my[k])}</b></span>`).join('')}</span>
+    </button>`).join('');
+  return `<div class="sdrow sdsug">
+    <div class="sdlbl"><button class="sdsugtab" aria-expanded="${SD.sug}">💡 こんな選び方もあります</button>
+      <small>あいての6匹すべてへの相性で選んだ候補です。<b>正解はありません</b>ので、好みで選んでください（押すとその3匹が入ります）</small></div>
+    ${SD.sug ? cur + '<div class="sdsgs">' + rows + '</div>' : ''}
   </div>`;
 }
 function bindSdPick(box) {
@@ -6861,6 +6996,16 @@ function bindSdPick(box) {
     else if (SD.pick.length < 3) SD.pick = SD.pick.concat(i);
     else return;
     if (SD.pick.length === 3) SD.edit = false;   // そろったら6匹の入力は畳んで、バトルを見せる
+    saveSd(); run();
+  });
+  const tab = box.querySelector('.sdsugtab');
+  if (tab) tab.onclick = () => { SD.sug = !SD.sug; saveSd(); run(); };
+  box.querySelectorAll('.sdsg').forEach(b => b.onclick = () => {
+    const d = sdSuggest();
+    const r = d && d.rows[+b.dataset.i];
+    if (!r) return;
+    SD.pick = r.order.slice();   // 提案の並び順のまま入れる(提案の数字と結果を食い違わせない)
+    SD.edit = false;
     saveSd(); run();
   });
   const rs = box.querySelector('.sdreset');
@@ -10390,6 +10535,8 @@ const TOUR_DEFS = {
       tx: '<b>見せ合い</b>にすると、おたがい<b>6匹を見せ合ってから3匹と並び順を選ぶ</b>大会の形式になります。見えるのは<b>ポケモンの種類だけ</b>（わざは見えません）で、<b>相手が選んだ3匹は場に出てくるまで分かりません</b>' },
     { sel: '#sdwrap .sdpick',
       tx: 'あいての6匹を見て、じぶんの6匹から<b>3匹を押した順に選びます</b>（押した順が並び順）。あいても同時に選びますが、<b>どの3匹を選んだかはバトルが始まるまで分かりません</b>' },
+    { sel: '#sdwrap .sdsug, #sdwrap .sdpick',
+      tx: '迷ったら<b>💡 こんな選び方もあります</b>。あいての6匹への相性で候補を出します。<b>正解ではありません</b>ので、好みで選んでください。押すとその3匹が並び順ごと入ります' },
     { sel: '#mock .gbaibar',
       tx: '<b>難易度に応じてあいての強さが変わります</b>。<b>EASY</b>＝やさしい入門向け／<b>NORMAL</b>＝実戦の基本戦術で戦う標準／<b>HARD</b>＝こちらの手の内を知り尽くした最強。希望の難易度に設定して挑戦してください。<b>見せ合いルールでは選出の賢さも変わります</b>（EASY＝上から3匹／NORMAL＝あなたの6匹を見て穴の少ない3匹／HARD＝あなたが選んだ3匹に強い3匹）' },
     { sel: '#mock .rbstart, #mock .gbbody, #mock',
