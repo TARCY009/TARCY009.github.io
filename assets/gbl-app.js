@@ -627,6 +627,17 @@ function dropUnknownPk() {
     try { (store || []).forEach((m, i) => { if (m && !ok(m)) store[i] = (store === S ? { ...m, key: null } : null); }); }
     catch (e) {}
   });
+  // メガ・ゲンシが2匹以上残っていたら、2匹目から落とす(ルール導入前の保存・共有リンクの掃除)
+  [S, PT, RKT, RBM, GBM, GBT, SD.my, SD.foe, BLE.foes].forEach(store => {
+    try {
+      let seen = false;
+      (store || []).forEach((m, i) => {
+        if (!isMega(pkKeyOf(m))) return;
+        if (seen) store[i] = (store === S ? { ...m, key: null } : null);
+        else seen = true;
+      });
+    } catch (e) {}
+  });
   try { SD.pick = (SD.pick || []).filter(i => SD.my[i]); } catch (e) {}
   // ★登録リストも掃除する(消えたポケモンの行は選んでも枠に入らないので、残しておく意味がない)
   try {
@@ -708,6 +719,19 @@ const LEVELS_ALL = Object.keys(D.cpm).map(Number).filter(l => l <= 55).sort((a, 
 const LEVELS = LEVELS_ALL.filter(l => l <= 51);
 const levelsUpTo = maxLv => (maxLv || 51) > 51 ? LEVELS_ALL.filter(l => l <= maxLv) : LEVELS;
 const isMega = key => !!key && (key.includes('_mega') || key.includes('_primal'));
+// ---- 編成のルール: メガ・ゲンシは**どんな場合でも1匹まで**(2026-09-05タダシさん指示) ----
+// ゲーム本編の揺るぎないルールなので、**枠にポケモンを持つ場所すべて**に効かせる
+// (パーティ診断・模擬戦のじぶん/あいて・見せ合いの6枠・対戦記録の入力・おまかせ・
+//  AIの選出・入れ替え候補)。判定はキーだけでよい(isMega はゲンシも含む)。
+// **新しく編成の枠を作ったら、必ずこのルールを通すこと**
+const pkKeyOf = m => (m && (m.key || m.k)) || null;
+const megaOver = (arr, key, skip) => isMega(key) &&
+  (arr || []).some((m, i) => i !== skip && isMega(pkKeyOf(m)));
+const MEGA_NG = 'メガは1匹まで';
+// 検索候補の1行。入れられないものは**消さずにグレーで理由を出す**
+// (候補ごと消すと「検索しても出てこない＝壊れている」に見えるため)
+const suggRow = (k, ng) => `<div${ng ? ' class="dup"' : ` data-k="${k}"`}>` +
+  `<span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}${ng ? `<i class="dupn">${ng}</i>` : ''}</div>`;
 // ロケット団はメガ・ゲンシを使ってこないので、あいて側(i=1)の候補からは外す。
 // こちらは使えるので、じぶん側(i=0)は今までどおり全部出す
 const rkFoeOk = (i, key) => !(mode === 'rocket' && i === 1 && isMega(key));
@@ -2905,7 +2929,7 @@ function buildPartySlots(box, mvStore) {
       if (!q) { list.style.display = 'none'; return; }
       const hits = searchPk(q);
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => suggRow(k, megaOver(PT, k, i) ? MEGA_NG : '')).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -2940,10 +2964,12 @@ function buildPartySlots(box, mvStore) {
             const p = D.pokemon[m.key];
             if (!p) return '';
             const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
-            return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span></div>`;
+            const ng = megaOver(PT, m.key, i) ? MEGA_NG : '';   // メガ・ゲンシは1匹まで
+            return `<div class="mypkrow${ng ? ' dup' : ''}"${ng ? '' : ` data-k="${k}"`}>` +
+              `<span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span>${ng ? `<i class="dupn">${ng}</i>` : ''}</div>`;
           }).join('')
         : '<div class="mypkempty">まだ登録がありません。1対1シミュでポケモンを選び「★登録」を押すとここに追加されます</div>';
-      win.querySelectorAll('.mypkrow').forEach(row => row.onclick = () => {
+      win.querySelectorAll('.mypkrow[data-k]').forEach(row => row.onclick = () => {
         PT[i] = { ...loadMyPk()[+row.dataset.k] };
         win.style.display = 'none';
         savePt(); syncPartySlot(i); run();
@@ -3578,7 +3604,10 @@ function runPtSwap() {
       // 「①マリルリを替えるなら A / B / C」と枠ごとにまとめる。
       // 総合順に混ぜて並べると、どのポケモンを替える話なのか読み取りづらい
       const bySlot = new Map();
+      // メガ・ゲンシはパーティに1匹まで(ゲームのルール)。他の枠にメガがいる枠へメガは提案しない
+      const megaElse = j => B.idxs.some((pi, k) => k !== j && PT[pi] && isMega(PT[pi].key));
       found.forEach(r => r.gains.forEach(g => {
+        if (isMega(r.c.k) && megaElse(g.j)) return;
         const a = bySlot.get(g.j) || [];
         a.push({ key: r.c.k, name: r.c.n, shadow: !!r.c.s, holes: g.holes, avg: g.avg,
           mv: polToMv(r.c.k, r.pol), role: roles.get(rkey(r.c)) || null });
@@ -5778,7 +5807,7 @@ function buildBlogSlots() {
       if (!q) { list.style.display = 'none'; return; }
       const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => suggRow(k, megaOver(BLE.foes, k, i) ? MEGA_NG : '')).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -6318,7 +6347,7 @@ function buildGbFoeSlots() {
       // メガはメガカップのときだけ(GBLでは他のリーグで使えない。対策さがしの全ポケモンと同じ基準)
       const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      list.innerHTML = hits.map(k => suggRow(k, megaOver(GBT, k, i) ? MEGA_NG : '')).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -6461,7 +6490,9 @@ function gbAutoPick() {
   const covered = wins[picked[0]].slice();
   while (picked.length < 3) {
     // 同じポケモンは2匹入れられない(通常・シャドウの違いも同じポケモン扱い)
-    const rest = cands.map((c, i) => i).filter(i => !picked.some(p => cands[p].k === cands[i].k));
+    // 同じポケモンは2匹入れられない／メガ・ゲンシは1匹まで(ゲームのルール)
+    const rest = cands.map((c, i) => i).filter(i => !picked.some(p => cands[p].k === cands[i].k)
+      && !(isMega(cands[i].k) && picked.some(p => isMega(cands[p].k))));
     if (!rest.length) break;
     const scored = rest.map(i => {
       let fill = 0, tot = 0;
@@ -6543,16 +6574,21 @@ const sdDup = (side, key, skip) => {
   if (dx == null) return false;
   return SD[side].some((m, i) => i !== skip && m && sdDex(m.key) === dx);
 };
-// 重複が残っていたら**あとの枠を空にする**(共有リンク・古い保存・ルール導入前のデータの掃除)
+// 編成のルールに反するものが残っていたら**あとの枠を空にする**
+// (共有リンク・古い保存・ルール導入前のデータの掃除。renderSd が毎回そうじする)
+//  ①同じポケモンは2匹入れられない(判定は図鑑番号) ②メガ・ゲンシは1匹まで
 function sdDedupe() {
   let ch = false;
   ['my', 'foe'].forEach(side => {
     const used = new Set();
+    let mega = false;
     SD[side].forEach((m, i) => {
       if (!m) return;
       const dx = sdDex(m.key);
-      if (dx != null && used.has(dx)) { SD[side][i] = null; ch = true; if (side === 'my') SD.pick = SD.pick.filter(x => x !== i); }
-      else if (dx != null) used.add(dx);
+      const ng = (dx != null && used.has(dx)) || (isMega(m.key) && mega);
+      if (ng) { SD[side][i] = null; ch = true; if (side === 'my') SD.pick = SD.pick.filter(x => x !== i); return; }
+      if (dx != null) used.add(dx);
+      if (isMega(m.key)) mega = true;
     });
   });
   if (ch) saveSd();
@@ -6593,16 +6629,25 @@ function sdOrder(W, idx) {
   return [lead, ...idx.filter(i => i !== lead).sort((a, b) => tot(b) - tot(a) || a - b)];
 }
 // 6匹から3匹の組み合わせを全部くらべて、いちばん良いものを並び順まで決めて返す
-function sdBestCombo(W, pool) {
+function sdBestCombo(W, pool, megaLimit) {
   let best = null;
   for (let a = 0; a < pool.length; a++)
     for (let b = a + 1; b < pool.length; b++)
       for (let c = b + 1; c < pool.length; c++) {
         const idx = [pool[a], pool[b], pool[c]];
+        if (megaLimit && idx.filter(i => megaLimit(i)).length > 1) continue;   // メガ・ゲンシは1匹まで
         const s = sdComboScore(W, idx);
         if (!best || s.sc > best.s.sc) best = { idx, s };
       }
-  return best ? sdOrder(W, best.idx) : pool.slice(0, 3);
+  if (best) return sdOrder(W, best.idx);
+  // 合う組み合わせが1つも無いとき(候補がメガだらけ等)は、上から順にルールを守って3匹取る
+  const out = [];
+  for (const i of pool) {
+    if (out.length >= 3) break;
+    if (megaLimit && megaLimit(i) && out.some(j => megaLimit(j))) continue;
+    out.push(i);
+  }
+  return out;
 }
 // ---- AIの選出(難易度で賢さが変わる・2026-09-05タダシさん指示) ----
 //  EASY  : 登録順の上から3匹(相手を見て選ばない)
@@ -6612,14 +6657,25 @@ function sdBestCombo(W, pool) {
 function sdFoePick() {
   const ai = GB_AI[MK.ai] || GB_AI.normal;
   const pool = sdList('foe');
-  if (pool.length <= 3) return pool;
-  if (!ai.sw && !ai.farm) return pool.slice(0, 3);   // EASY
+  if (pool.length <= 3) return pool;   // 6匹そろっていないときは、あるだけで戦う
+  // EASY: 登録順の上から3匹。ただしメガ・ゲンシが2匹目以降なら飛ばす(ゲームのルール)
+  if (!ai.sw && !ai.farm) {
+    const out = [];
+    for (const i of pool) {
+      if (out.length >= 3) break;
+      if (isMega(SD.foe[i].key) && out.some(j => isMega(SD.foe[j].key))) continue;
+      out.push(i);
+    }
+    return out;
+  }
   const targets = ai.omni
     ? SD.pick.map(i => SD.my[i]).filter(Boolean)             // HARD: 実際の3匹・実物のわざ
     : sdList('my').map(i => sdAssumed(SD.my[i]));            // NORMAL: 6匹・定番構成の想定
   if (!targets.length) return pool.slice(0, 3);
   const W = sdWinTable(pool.map(i => SD.foe[i]), targets);   // 行はpoolの並び
-  return sdBestCombo(W, pool.map((_, k) => k)).map(k => pool[k]);
+  // メガ・ゲンシは1匹まで(ゲームのルール)。行番号kから枠番号へ戻して見る
+  const megaLimit = k => isMega(SD.foe[pool[k]].key);
+  return sdBestCombo(W, pool.map((_, k) => k), megaLimit).map(k => pool[k]);
 }
 // 選出は「あいての6匹・(HARDなら)じぶんの選出・難易度・リーグ」が同じあいだ作り直さない
 function sdFoePickCached() {
@@ -6670,10 +6726,8 @@ function buildSdSlots(side) {
       if (!hits.length) { list.style.display = 'none'; return; }
       // すでに6匹の中に入っているポケモンは**消さずにグレーで出して押せなくする**
       // (候補から丸ごと消すと「検索しても出てこない」＝壊れて見えるため)
-      list.innerHTML = hits.map(k => {
-        const dup = sdDup(side, k, i);
-        return `<div${dup ? ' class="dup"' : ` data-k="${k}"`}><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}${dup ? '<i class="dupn">すでに入っています</i>' : ''}</div>`;
-      }).join('');
+      list.innerHTML = hits.map(k => suggRow(k,
+        sdDup(side, k, i) ? 'すでに入っています' : megaOver(A, k, i) ? MEGA_NG : '')).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -6702,8 +6756,10 @@ function buildSdSlots(side) {
             const p = D.pokemon[m.key];
             if (!p) return '';
             const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
-            const dup = sdDup(side, m.key, i);   // 同じポケモンは6匹に2匹入れられない
-            return `<div class="mypkrow${dup ? ' dup' : ''}"${dup ? '' : ` data-k="${k}"`}><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span>${dup ? '<i class="dupn">すでに入っています</i>' : ''}</div>`;
+            // 同じポケモンは6匹に2匹入れられない／メガ・ゲンシは1匹まで
+            const ng = sdDup(side, m.key, i) ? 'すでに入っています' : megaOver(A, m.key, i) ? MEGA_NG : '';
+            return `<div class="mypkrow${ng ? ' dup' : ''}"${ng ? '' : ` data-k="${k}"`}>` +
+              `<span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span>${ng ? `<i class="dupn">${ng}</i>` : ''}</div>`;
           }).join('')
         : '<div class="mypkempty">まだ登録がありません。1対1シミュでポケモンを選び「★登録」を押すとここに追加されます</div>';
       win.querySelectorAll('.mypkrow[data-k]').forEach(row => row.onclick = () => {
@@ -6845,9 +6901,11 @@ function sdAutoFill() {
     for (let t = 0; ok && t < 12 && out.length < 6; t++) {
       const three = gbAutoPick();
       if (!three) break;
-      three.forEach(m => {   // 同じポケモンは2匹入れない(判定は図鑑番号)
+      three.forEach(m => {   // 同じポケモンは2匹入れない(判定は図鑑番号)／メガ・ゲンシは1匹まで
         const dx = sdDex(m.k);
-        if (dx != null && !used.has(dx) && out.length < 6) { used.add(dx); out.push(m); }
+        if (dx == null || used.has(dx) || out.length >= 6) return;
+        if (isMega(m.k) && out.some(x => isMega(x.k))) return;
+        used.add(dx); out.push(m);
       });
     }
     if (!out.length) {   // 環境リストが足りないカップ。黙って何も起きないと壊れて見える

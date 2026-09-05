@@ -1736,9 +1736,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdteams .sdslots[data-s="my"] .pslot{grid-column:1}
 .sdteams .sdslots[data-s="foe"] .pslot{grid-column:2}
 #mock .sdslots.auto .fbody select{display:none}
-/* すでに6匹に入っているポケモンは、候補に残したまま押せなくする */
-.sdslot .sugg-list .dup,.sdslot .pstarwin .mypkrow.dup{opacity:.45;cursor:default;pointer-events:none}
-.sdslot .dupn{font-style:normal;font-size:.6rem;color:var(--sub);margin-left:auto;padding-left:6px;white-space:nowrap}
+/* 編成のルールで入れられないポケモン(同じポケモン・メガは1匹まで)は、
+   候補に残したままグレーにして押せなくする(消すと「検索しても出てこない」に見えるため) */
+.sugg-list .dup,.pstarwin .mypkrow.dup{opacity:.45;cursor:default;pointer-events:none}
+.sugg-list .dupn,.pstarwin .dupn{font-style:normal;font-size:.6rem;color:var(--sub);margin-left:auto;padding-left:6px;white-space:nowrap}
 .sdslot.picked{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy)}
 /* 選出パネル */
 .sdpickbox{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;
