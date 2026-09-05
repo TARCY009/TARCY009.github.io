@@ -6253,6 +6253,7 @@ const GB_AI = {
   normal: { label: 'NORMAL', jp: '標準', bluff: true, save: true, sw: true, farm: true,
     tip: '実戦の基本戦術で戦う標準の相手(これまでの「実戦」AIと同じ)。かけひき(ブラフ)・シールドの温存・出し負けたらすぐ交代・起点づくりを全部使いますが、こちらのまだ見せていないポケモンは知らない、という実戦と同じ情報量で戦います' },
   hard: { label: 'HARD', jp: '最強', bluff: true, save: true, sw: true, farm: true, omni: true, truth: true,
+    proBluff: true,
     tip: 'こちらの3匹とわざ構成を最初から全部知っている最強の相手。シールドは実際に飛んでくるわざのダメージで判断するのでブラフは効きません。控えの読みも予測ではなく実物で行い、常にこちらの手の内を知った上で最適な行動を取ります' },
 };
 // foeAuto=あいてのわざを「オート」にする(2026-08-20タダシさん指示)。
@@ -6295,6 +6296,19 @@ const gbSpAt = (spc, tn) => spc.length ? spc[Math.max(0, Math.min(tn, spc.length
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
 const GB_KEEP_HP = 0.35;      // 出し勝った初手を温存する残りHPの目安(2026-08-31タダシさん指示で35%に)
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
+// ---- ブラフが割に合う場面のしきい値(2026-09-06タダシさん指示・HARD専用) ----
+// **ブラフのしすぎは負け筋**。1回のバトルでSPアタックが飛んでくる機会は**10回以上が普通**なのに、
+// シールドは**2枚しか使えない**。同じ状況でSPを撃つ機会がその回数あるとすると、
+// 任意の1発が防がれる見込みは 2/10＝**2割ほど**しかない。
+// だから「なんとなく軽いわざ」を撃つブラフは期待値が低く、連発するのは非効率。
+// 強い人は**「ここは8割以上シールドを張る」場面でしかブラフしない**——それは
+// **本命の重いわざが、防がなければ致命的**なとき。基準は**相手の現在HPの7割以上を削る**こと
+// (「受けたら瀕死」ならほぼ確実に防ぐ)。**倒しきれる場面は上の①がすでに拾っている**ので、
+// ここに来るのは「倒しきれないが大きく削る」場面だけ。
+// ⚠ 数値を動かすときは、おまかせユーザー相手の勝ち数だけで判断しないこと——
+// おまかせは**毎バトル必ずシールドを2枚使い切る**(実測: 56戦で防いだ回数がちょうど112＝2×56)ので、
+// **ブラフが常に得になる相手**。人間の強者は致命打にだけ使うので、そこでは逆になる
+const GB_BLUFF_MIN = 0.7;
 // 「クールタイム狙い」とみなす相手の交代不能の残り(40ターン=20秒以上)。
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
 // 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
@@ -7539,7 +7553,9 @@ function gbPlay(picks, foes, ans, stepwise) {
   const plainCfg = (sd, idx, ov) => {
     const P = ros[sd][idx];
     const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(),
-      shields: shAt(sd), timing: 'optimal', bluff: sd === 1 ? ai.bluff : false };
+      // ⚠ HARD(proBluff)はエンジンの**無条件ブラフ**(相手にシールドが残っていれば必ず軽いわざ)を
+      // 切って、効率が高いほう＝本命を撃たせる。ブラフは下の aiAnswer が場面を選んで名指しする
+      shields: shAt(sd), timing: 'optimal', bluff: sd === 1 ? (ai.bluff && !ai.proBluff) : false };
     const rs = ov || st[sd][idx].resume;
     // _sh = その下読みでのシールドの残り枚数(「防いだあと」は1枚減った状態で読む)
     if (rs) { const { _sh, ...r } = rs; c.resume = r; if (_sh != null) c.shields = _sh; }
@@ -8048,6 +8064,34 @@ function gbPlay(picks, foes, ans, stepwise) {
     const nowOv = p.st0 && p.st1 ? {
       ov0: { hp: p.st0.hp, en: p.st0.en, buffs: p.st0.b.slice(), stall: 0, _sh: p.st0.sh },
       ov1: { hp: p.st1.hp, en: p.st1.en, buffs: p.st1.b.slice(), stall: 0, _sh: p.st1.sh } } : null;
+    // ---- **ためる判断は、相手(ユーザー)のHPとゲージを見てから**(2026-09-06タダシさん指示・NORMAL以上で絶対) ----
+    // 相手がSPを撃てる状態なのに悠長にためていると、こちらが一方的に削られる
+    // (実例: ドオーがゲージ90までためて撃たず、そのあいだに相手のイカサマが飛んできた)。
+    // **「ゲージがたまってSPを撃たれる直前」まで含める**(ノーマルアタックあと1発で届くなら、
+    // もう撃たれる直前と見る)。バトルはなるべく効率よく、が基本なので、
+    // ここでためるのは無駄どころか**負け筋**になる
+    const userThreat = () => {
+      if (!p.st0 || !p.st1) return false;
+      const att = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
+      const dfn = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
+      const uf = D.moves[ctx.fast[0]];
+      const en = (p.st0.en || 0) + (uf ? (uf.eg || 0) : 0);   // あと1発ぶん先まで見る
+      const hit = (ctx.spList[0] || []).map(id => D.moves[id])
+        .filter(m => m && m.e <= en).map(m => PvpEngine.damage(D, m, att, dfn));
+      return hit.length ? Math.max(...hit) >= GB_FARM_HURT * p.st1.hp : false;
+    };
+    // **相手がSPを撃てるようになるまで、こちらのノーマルアタック何発ぶんか**(2026-09-06)。
+    // ためる・撃たないの判断は**ここで打ち切る**——タダシさんの言う
+    // 「相手のゲージがたまってSPを撃たれる直前に、こちらのSPでトドメをさす」を式にしたもの。
+    // これが無いと「20発ためる」のような長い待ちを選び、そのあいだに撃たれる(実際に踏んだ)
+    const untilUserSp = () => {
+      const uf = D.moves[ctx.fast[0]], mf = D.moves[ctx.fast[1]];
+      if (!p.st0 || !uf || !mf || !ctx.cost[0]) return Infinity;
+      const need = ctx.cost[0] - (p.st0.en || 0);
+      if (need <= 0) return 0;                                   // もう撃てる
+      const ut = Math.ceil(need / (uf.eg || 1)) * (uf.tn || 1);   // 相手が撃てるまでのターン数
+      return Math.floor(ut / (mf.tn || 1));                      // こちらのノーマル何発ぶんか
+    };
     if (p.kind === 'sp') {
       // EASY(spam): SPアタックは撃てるようになったら**すぐ撃つ**。ただし
       // 2本持っていても**消費の軽いわざしか使わない**(入門向けの相手)。
@@ -8064,7 +8108,28 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 条件は「撃たなくても倒しきれる」＋「相手のSPも飛んでこない」。ゲージは次の対面へ持ち越す。
       // **確定自己バフSPの即打ち(2026-08-19)よりもこちらを優先**する(実例: HPわずかなウッウに
       // モルペコがオーラぐるまを撃っていた。バフ即打ちルールが先に効いていたため)
-      if ((ai.sw || ai.farm) && ctx.finishNoSp && ctx.finishNoSp(p)) return { a: 'hold' };
+      if ((ai.sw || ai.farm) && ctx.finishNoSp && ctx.finishNoSp(p)) {
+        // 「撃たない」と決め切ってよいのは、**相手がこの先SPを撃てないとき**だけ。
+        // 撃てるようになるなら、その**直前まで**引っぱってから撃つ(ゲージを捨てない・撃たれない)
+        const u = untilUserSp();
+        if (u === Infinity) return { a: 'hold' };
+        if (u <= 1) return { a: 'auto' };
+        return { a: 'wait', n: u - 1 };
+      }
+      // ---- **倒しきれるなら、倒しきれる中でいちばん軽いわざ**(2026-09-06タダシさん報告で追加) ----
+      // 「こちらの残りHPが少ないのに大技を撃ってくる」のは実戦ではありえない動き。
+      // 重いわざは決め手が要るときのもので、軽いわざで足りるならそれで倒すのが効率。
+      // 防がれても、軽いわざならゲージの痛手が小さく、シールドを1枚剥がせる。
+      // **ためてブラフのセオリー・確定バフの即打ち・起点づくりより先**に見る(倒せるなら倒すのが最善)
+      if (p.st0 && p.st1) {
+        const att0 = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
+        const dfn0 = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
+        const en0 = p.en != null ? p.en : 0;
+        const kill = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] }))
+          .filter(x => x.m && x.m.e <= en0 && PvpEngine.damage(D, x.m, att0, dfn0) >= p.st0.hp)
+          .sort((a, b) => a.m.e - b.m.e)[0];
+        if (kill) return { a: 'fire', mv: kill.id };
+      }
       // **確定で自分の能力が上がるSPは即打ち**(2026-08-19タダシさん指示)。
       // 上がった能力はその対面のあいだ効き続けるので、早く撃つほど得
       // (例: オコリザルの「ふんどのこぶし」=確定で攻撃+1。ノーマルアタックが2ターンなら
@@ -8082,13 +8147,18 @@ function gbPlay(picks, foes, ans, stepwise) {
       // ただし**ゲージが満タン(100)に近づいたら撃つ**(2026-08-19タダシさん報告で修正)。
       // 「撃たない」と一度答えるとその対面では二度と撃たなくなるので、満タンでも撃たず
       // ゲージを捨てていた。ためる意味があるあいだだけ待って、無駄になる手前で撃つ
-      if (ai.farm && aiFarmWin(ctx.li, nowOv)) {
+      if (ai.farm && !userThreat() && aiFarmWin(ctx.li, nowOv)) {
         const fm = D.moves[ctx.fast[p.side]];
         const eg = fm ? (fm.eg || 0) : 0;
         const en = p.en != null ? p.en : 0;
-        if (eg > 0 && en + eg * 2 <= 100) {
-          // 満タンの一歩手前までノーマルアタックで引っぱる(そこでもう一度考える)
-          return { a: 'wait', n: Math.max(1, Math.floor((100 - en) / eg) - 1) };
+        const cap = untilUserSp();
+        if (cap <= 1) {
+          // 相手がSPを撃てる直前 → ためるのをやめて、ここで撃つ(下の発射へ落ちる)
+        } else if (eg > 0 && en + eg * 2 <= 100) {
+          // 満タンの一歩手前までノーマルアタックで引っぱる(そこでもう一度考える)。
+          // **相手が撃てるようになる直前で打ち切る**(2026-09-06タダシさん指示)
+          const n = Math.max(1, Math.floor((100 - en) / eg) - 1);
+          return { a: 'wait', n: Math.min(n, cap - 1) };
         }
         // これ以上ためても無駄になるので撃つ。**おまかせ(auto)では溜めた意味が消える**
         // (auto は「発ごとの指定」を捨ててエンジンの最適タイミングに任せるので、
@@ -8116,7 +8186,9 @@ function gbPlay(picks, foes, ans, stepwise) {
       //  インファイトを即打ちするのはおかしい。きょじゅうざんの脅威を作ってから
       //  ブラフで軽いわざを撃つ(そして打ち逃げ)が正しい。シールドが無い相手なら下のautoに落ち、
       //  エンジンの効率判断が等倍の重いわざを選ぶので即打ち事故は起きない)
-      if (ai.bluff && p.st0 && p.st0.sh > 0) {
+      // ⚠ このブロックは「重いわざぶんためてから撃つ」＝**脅威を作る**ためのもの。
+      // HARDは、ためきったあとに撃つわざを下の proBluff の判断で決める(ブラフは場面を選ぶ)
+      if (ai.bluff && p.st0 && p.st1 && p.st0.sh > 0) {
         const mvs = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] })).filter(x => x.m)
           .sort((a, b) => a.m.e - b.m.e);
         if (mvs.length >= 2 && mvs[mvs.length - 1].m.e > mvs[0].m.e) {
@@ -8128,10 +8200,22 @@ function gbPlay(picks, foes, ans, stepwise) {
             const en = p.en != null ? p.en : 0;
             const fm = D.moves[ctx.fast[p.side]];
             const eg = fm ? (fm.eg || 0) : 0;
-            if (en < heavy.m.e && eg > 0)
+            // 相手がSPを撃てる直前なら、脅威づくりのために待つのは負け筋(上の userThreat)
+            if (en < heavy.m.e && eg > 0 && !userThreat())
               return { a: 'wait', n: Math.max(1, Math.ceil((heavy.m.e - en) / eg)) };
             if (en >= heavy.m.e) {
-              // 毎回ブラフだと読まれて単調(2026-09-01タダシさん指示・2段階で確定):
+              // ---- HARD: ブラフは「相手がほぼ確実に防ぐ場面」だけ(2026-09-06タダシさん指示) ----
+              // 強い人はブラフを連発しない(GB_BLUFF_MIN の説明を参照)。
+              // **本命の重いわざが、防がなければ致命的**なときだけ軽いわざを撃つ＝
+              // そこは相手が8割以上シールドを張るので、軽いわざで1枚剥がせる見込みが高い。
+              // それ以外は本命を撃つ(ブラフしない)
+              if (ai.proBluff) {
+                const att = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
+                const dfn = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
+                const dh = PvpEngine.damage(D, heavy.m, att, dfn);
+                return { a: 'fire', mv: dh >= GB_BLUFF_MIN * p.st0.hp ? light.id : heavy.id };
+              }
+              // NORMAL: 毎回ブラフだと読まれて単調(2026-09-01タダシさん指示・2段階で確定):
               // **ブラフ率そのものをバトルごとに抽選する**(人によって撃ち分けの癖が違う実戦の再現)。
               // heavyN=「3発中なん発を本命の重いわざにする癖か」(0〜3を等確率・バトルの種RB.rseedから)。
               // 発射ごとの抽選は場面ハッシュ(gbCoin)＝同じ場面なら必ず同じ・決断を選び直しても揺れない
@@ -8437,7 +8521,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     const legCfg = s => {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
-        bluff: s === 1 ? ai.bluff : false, timing: 'shots',
+        bluff: s === 1 ? (ai.bluff && !ai.proBluff) : false, timing: 'shots',
         shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until })), shotRest: null,
         shieldPlan: d.shieldAt.slice(), shieldRest: false };
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
