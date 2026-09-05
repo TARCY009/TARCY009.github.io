@@ -1801,6 +1801,9 @@ button.sdchip.on .tbadge{filter:none}
 .sdsgh{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
 .sdsgl{font-size:.72rem;font-weight:800;color:var(--cy)}
 .sdsgn{font-style:normal;font-size:.64rem;color:var(--sub)}
+.sdsg.on{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy),0 2px 0 var(--tabsh)}
+.sdsgnow{font-style:normal;font-size:.6rem;font-weight:800;color:#042330;background:var(--cy);
+  padding:2px 7px;border-radius:999px;white-space:nowrap}
 .sdsgp{display:flex;flex-wrap:wrap;gap:4px}
 .sdsgp .sdchip{padding:3px 8px;font-size:.68rem}
 @media (max-width:520px){
