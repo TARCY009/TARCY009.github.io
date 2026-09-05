@@ -398,6 +398,7 @@ document.getElementById('app').innerHTML = `
 
 <div class="share" id="share" style="display:none">
   <button id="copyUrl">🔗 URLをコピー</button>
+<div id="copyfall" style="display:none"></div>
 </div>
 
 <div class="loading" id="loading">データ読み込み中…</div>
@@ -554,7 +555,16 @@ const CUST_PREFIX = 'CUSTOM_';
 const CUST_PICK = '__cust';        // 選択肢の「＋ 自由設定」を選んだときの目印
 const isCustomMv = id => typeof id === 'string' && id.startsWith(CUST_PREFIX);
 let CUSTOM = [];
-try { CUSTOM = JSON.parse(localStorage.getItem('gbl_custom_moves') || '[]') || []; } catch (e) {}
+// ⚠ **形の違うものが1件でも混じると、ここで例外が出てツールが起動しなくなる**(2026-09-05に実測で確認)。
+// 保存の形が将来変わったとき・書き込みが途中で切れたときに、画面が出ないのがいちばん困るので、
+// **読めるものだけ通して、壊れているものは黙って捨てる**(捨てたぶんは保存し直す)
+try {
+  const raw = JSON.parse(localStorage.getItem('gbl_custom_moves') || '[]');
+  CUSTOM = (Array.isArray(raw) ? raw : []).filter(c =>
+    c && typeof c === 'object' && typeof c.id === 'string' && c.mv && typeof c.mv === 'object' && c.mv.n && c.mv.t);
+  if (CUSTOM.length !== (Array.isArray(raw) ? raw.length : 0))
+    localStorage.setItem('gbl_custom_moves', JSON.stringify(CUSTOM));
+} catch (e) { CUSTOM = []; }
 const saveCustom = () => { try { localStorage.setItem('gbl_custom_moves', JSON.stringify(CUSTOM)); } catch (e) {} };
 // D.moves に入れてしまえば、あとは普通のわざとまったく同じ扱いで全画面が動く
 function regCustom(c) {
@@ -563,7 +573,7 @@ function regCustom(c) {
   if (c.mv.e) MOVE_COST[c.mv.n] = c.mv.e;
   (NAME_TYPES[c.mv.n] = NAME_TYPES[c.mv.n] || new Set()).add(c.mv.t);
 }
-CUSTOM.forEach(regCustom);
+CUSTOM.forEach(c => { try { regCustom(c); } catch (e) {} });
 
 // おぼえないわざの一覧（検証・お試し用）。同名・同タイプの別ID（カメックス専用版など）と
 // タイプ不定のめざめるパワー、自由設定のわざ（別の枠で出す）は除く
@@ -604,6 +614,26 @@ function dropUnknownMoves() {
     if (o.pin) fix(o.pin);
   };
   [S, PT, RKT, RBM, GBM, GBT].forEach(store => { try { (store || []).forEach(fix); } catch (e) {} });
+}
+// ---- データから消えたポケモンが枠に残っていたら落とす(2026-09-05・恒久ルール) ----
+// 実装終了・フォルムの整理などで、前に選んでいたポケモンがデータから消えることがある。
+// そのキーが枠に残ったまま計算に入ると `D.pokemon[key].q` などで例外が出て、
+// **模擬戦もパーティ診断も結果が出なくなる**(2026-09-05に実測で確認。★登録リストは
+// 黙って行が消えるので「登録が消えた」ようにも見える)。
+// **枠にポケモンを持つ入れ物を増やしたら、必ずここに足すこと**
+function dropUnknownPk() {
+  const ok = m => !m || (m.key && D.pokemon[m.key]);
+  [S, PT, RKT, RBM, GBM, GBT, SD.my, SD.foe].forEach(store => {
+    try { (store || []).forEach((m, i) => { if (m && !ok(m)) store[i] = (store === S ? { ...m, key: null } : null); }); }
+    catch (e) {}
+  });
+  try { SD.pick = (SD.pick || []).filter(i => SD.my[i]); } catch (e) {}
+  // ★登録リストも掃除する(消えたポケモンの行は選んでも枠に入らないので、残しておく意味がない)
+  try {
+    const list = loadMyPk();
+    const keep = list.filter(m => m && m.key && D.pokemon[m.key]);
+    if (keep.length !== list.length) saveMyPkList(keep);
+  } catch (e) {}
 }
 
 // 自由設定の入力ウィンドウ。もとのわざを選べば数値が入るので、直したいところだけ書き替えればよい
@@ -4210,7 +4240,9 @@ function rbmDefault(key) {
 // その枠のわざ指定(ポケモンを入れ替えたら作り直す。v無しは旧形式なので既定を選び直す)
 function rbmOf(i) {
   if (!PT[i]) return null;
-  if (!RBM[i] || RBM[i].key !== PT[i].key || !RBM[i].v) { RBM[i] = rbmDefault(PT[i].key); saveRbm(); }
+  // わざがデータから消えたときも作り直す(GBM と同じ・2026-09-05)
+  if (!RBM[i] || RBM[i].key !== PT[i].key || !RBM[i].v || (RBM[i].fast && !D.moves[RBM[i].fast])) {
+    RBM[i] = rbmDefault(PT[i].key); saveRbm(); }
   return RBM[i];
 }
 const rbMyMoves = () => [0, 1, 2].filter(i => PT[i]).map(i => rbmOf(i));
@@ -6232,7 +6264,9 @@ function mockDefaultMoves(key, shadow) {
 }
 function gbmOf(i) {
   if (!PT[i]) return null;
-  if (!GBM[i] || GBM[i].key !== PT[i].key) {
+  // ⚠ **わざがデータから消えたときも作り直す**(2026-09-05)。dropUnknownMoves が fast を null にしても
+  // キーが同じだと作り直さないので、`fast: null` のまま模擬戦に入って落ちていた
+  if (!GBM[i] || GBM[i].key !== PT[i].key || !D.moves[GBM[i].fast]) {
     // ★登録リストの個体はわざも登録されていることがある。あればそちらを既定にする
     const d = mockDefaultMoves(PT[i].key, PT[i].shadow);
     GBM[i] = { v: 1, key: PT[i].key,
@@ -10020,9 +10054,35 @@ document.getElementById('copyUrl').onclick = async () => {
     if (mode === 'mock') u.searchParams.set('rsd', RB.rseed);
     if (ansStr || mode === 'mock') url = u.toString();
   }
-  await navigator.clipboard.writeText(url);
-  document.getElementById('copyUrl').textContent = 'コピーしました ✅';
-  setTimeout(() => document.getElementById('copyUrl').textContent = '結果のURLをコピー', 1500);
+  // ⚠ クリップボードは**使えないことがある**(権限が無い・安全な接続でない・端末の設定)。
+  // そのまま await すると例外で止まり、**ボタンを押しても何も起きない**ように見えるので、
+  // 古い方式で入れ直し、それも駄目ならURLを画面に出して手でコピーできるようにする
+  const btn = document.getElementById('copyUrl');
+  const back = () => setTimeout(() => { btn.textContent = '結果のURLをコピー'; }, 1500);
+  let ok = false;
+  try { await navigator.clipboard.writeText(url); ok = true; } catch (e) {}
+  if (!ok) try {
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0, url.length);
+    ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (e) {}
+  const box = document.getElementById('copyfall');
+  if (ok) { if (box) box.style.display = 'none'; btn.textContent = 'コピーしました ✅'; back(); return; }
+  btn.textContent = 'コピーできませんでした';
+  back();
+  if (box) {   // 下にURLを出して、長押し・ドラッグで手でコピーできるようにする
+    box.style.display = 'block';
+    box.innerHTML = '<div class="cfnote">自動コピーができませんでした。下のURLを選んでコピーしてください</div>' +
+      '<input class="cfurl" type="text" readonly>';
+    const inp = box.querySelector('.cfurl');
+    inp.value = url;
+    inp.onclick = () => { inp.select(); inp.setSelectionRange(0, url.length); };
+    inp.focus(); inp.select();
+  }
 };
 
 // ---- URLパラメータからの復元 ----
@@ -10050,7 +10110,9 @@ const EASY_GBL = [
     go() { easyMode('party'); tourStart('party'); } },
   { ic: '▶', t: '実戦の練習がしたい', d: '3対3の対人戦を、SPアタック・シールド・交代を選びながら戦えます',
     note: '模擬戦を開きます。じぶん3匹とあいて3匹を入れて「▶ バトルスタート！」を押すと、決断の場面ごとに自分で選びながら戦えます。',
-    go() { easyMode('mock'); tourStart('mock'); } },
+    // 見せ合いルール(6匹→3匹選出)が残っていると、案内文の「3匹ずつ入れて」と画面が食い違うので
+    // 必ず「ふつう」に戻してから開く(見せ合いは慣れてから自分で選ぶもの・2026-09-05)
+    go() { SD.on = false; saveSd(); easyMode('mock'); tourStart('mock'); } },
 ];
 // ロケット団: 誰と戦うか → どうするか、の2段。適用は最後にまとめて行う
 // (モードを先に切り替えてから手持ちを呼び出すと、rkPutAll がそのモードに合わせて枠を埋める)
@@ -10370,6 +10432,7 @@ document.addEventListener('click', e => {
 }, true);
 
 (function init() {
+  dropUnknownPk();      // データから消えたポケモンを指したまま残っていたら落とす
   dropUnknownMoves();   // 端末に無いわざを指したまま残っていたら落とす
   const q = new URLSearchParams(location.search);
   if (q.get('lg')) {
