@@ -193,7 +193,9 @@ select option[value=""]{color:var(--sub)}
 .opts.bluff button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2b2305}
 .carrytag{font-size:.66rem;color:var(--gold);margin-top:2px}
 .ivnote{margin-top:6px;font-size:.72rem;color:var(--sub)}
-.ivnote .over{color:#ff7b8e;font-weight:700}
+/* 「⚠リーグ上限超え」。1対1のパネルだけでなく、パーティ3枠・模擬戦のあいて枠・
+   対策さがしの行にも出すので、場所を限定せずに効かせる(2026-09-05) */
+.over{color:#ff7b8e;font-weight:700;white-space:nowrap}
 /* ブレイクポイント専用ページ(/breakpoint/)へのリンク。旧details版は2026-08-21に専用ページへ移行 */
 .bplink{display:flex;align-items:center;gap:8px;margin-top:12px;padding:11px 14px;border-radius:12px;
   font-size:.82rem;font-weight:800;text-decoration:none;color:var(--ongold,#3a2a00);

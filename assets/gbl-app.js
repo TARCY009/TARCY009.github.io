@@ -700,6 +700,20 @@ const scoreOf = (res, side) => {
   const own = res.final[side], opp = res.final[1 - side];
   return 500 * (1 - opp.hp / opp.hpMax) + 500 * (own.hp / own.hpMax);
 };
+// リーグのCP上限に収まる個体が1つも存在しないポケモン(交換できない幻・ジガルデなど。
+// 最低個体値10・PL下限15〜20の制約で、スーパーでは12種が該当)は、rank1 が理想個体
+// (15/15/15・PL50)を返すので、そのリーグではありえないCP(最大4530)で計算される。
+// **計算はそのまま続けるが、どの画面でも必ず警告を出す**(2026-09-05タダシさん指示)
+function overCapCp(base) {
+  if (!base || !base.cap) return 0;
+  const cp = PvpEngine.buildStats(D, base).cp;
+  return cp > base.cap ? cp : 0;
+}
+const overCapTag = base => overCapCp(base) ? ' <span class="over">⚠リーグ上限超え</span>' : '';
+// 勝者が決まらなかった対面(res.winner)。'draw'=相打ち / null=480ターン(240秒)たっても
+// どちらも倒れなかった。**null のときに res.final[winner] を引くと落ちる**ので、
+// 残HP%を出す前に必ずこれで弾く(SPアタックを覚えないポケモン同士などで実際に起きる)
+const noWin = w => w === 'draw' || w == null;
 // 全モード共通の計算設定。確率で能力が上下するわざの扱い(不発/期待値/必ず発動)
 // ここを1つの設定にまとめて、一覧系と1対1シミュの結果が食い違わないようにする
 const SIMOPT = { buffMode: 'none' };
@@ -1593,6 +1607,9 @@ function rkCfg(c, opt) {
   c.spMult = sp.sp;       // したっぱのSPアタックは威力0.6倍
   c.shadow = true;        // ロケット団のポケモンはシャドウ(補正は倍率とは別にかかる)
   delete c.shotPlan; delete c.shotRest;
+  // 連戦(開始HP・開始ゲージ)はロケット団のあいてには無い設定。パネルの行も隠してあるが、
+  // 他モードで入れた値が run() の carryOf(1) 経由で紛れ込むので、ここで必ず落とす
+  delete c.startHpPct; delete c.startEn;
   if (opt.shields != null) {
     // 連戦の途中: 残っている枚数をそのまま使う(古い順＝先に撃たれたSPから防ぐので指定は不要)
     c.shields = opt.shields;
@@ -1687,6 +1704,13 @@ function applyMode() {
   // 1対1のランキング表示のときは「じぶん」を選ぶ必要がない(あいてだけ決めればよい)
   const rkRankView = rk && RK.play === '1v1' && RKR.view !== 'sim';
   const mock = mode === 'mock';   // GBL模擬戦(3匹×3匹)。専用の枠を使うので左右パネルは隠す
+  // ⚠模擬戦から離れるときは再生を止める。画面は display:none で隠すだけでDOMには残るので、
+  // タイマーの「消えていたら止める」判定が効かず、**切り替えた先の画面の上に
+  // SP発動・くりだし・KOのカットインが全画面で流れ続けていた**(#fxlayer は最前面)
+  if (!mock && !rkTeam) {
+    clearInterval(RBV.timer); RBV.timer = null;
+    document.body.classList.remove('bfull');   // 全画面ロックも解く
+  }
   const duelBox = document.querySelector('.duel');
   duelBox.style.display = mode === 'party' || mode === 'blog' || mock || rkTeam ? 'none' : '';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter');   // 片側だけのときは1列で広く使う
@@ -1697,6 +1721,10 @@ function applyMode() {
   if (rk) syncRocket(); else restoreFoeInputs();
   syncCounterPanel(mode === 'counter');
   syncMultiPanel(mode === 'multi');
+  // 一覧系3モードは表のマスを「最適・連戦なし」で計算するので、見えていない側も含めて
+  // 両側の値を既定へ寄せる(片側だけだと、隠れた設定がタップ後の1対1にだけ効いて食い違う)
+  const listCalc = ['multi', 'counter', 'party'].includes(mode);
+  listDefaults(0, listCalc); listDefaults(1, listCalc);
   sideEl[0].style.display = mode === 'counter' || rkRankView ? 'none' : '';
   sideEl[1].style.display = mode === 'duel' || mode === 'counter' || rk ? '' : 'none';
   duelBox.classList.toggle('solo', mode === 'multi' || mode === 'counter' || rkRankView);
@@ -1877,6 +1905,39 @@ const CN = { prev: null };
 //    (S[0].timing と carryOf(0) が50匹ぶんの計算に渡る)。隠すだけでなく値も既定へ寄せ、
 //    1対1で入れた設定が見えない前提として働かないようにする。抜けるときは元へ戻す
 const MVP = { prev: null };
+// ⚠一覧系3モード(環境一覧・対策さがし・パーティ診断)は、表のマスを必ず
+// 「最適・連戦なし・シールドplan解除」で計算する。ところがパネルを隠しているのは
+// **見えている側だけ**だったので、反対側(環境一覧のあいて・対策さがしのじぶん・診断の両方)は
+// 1対1で入れた設定が見えないまま生き残り、マスをタップして開いた1対1にだけ効いていた。
+// 実測でマリルリ×キュウコンが一覧「負け」→タップすると「勝ち」になった(食い違い禁止ルール違反)。
+// そこで**値の既定化だけは常に両側へ**かける(表示を隠すかどうかとは別の話)。
+// 退避した設定はモードタブで抜けたときだけ戻す(マスをタップした1対1へは戻さない)
+const LIST_PREV = [null, null];
+function listDefaults(i, on) {
+  if (!sideEl[i]) return;
+  if (on) {
+    if (!LIST_PREV[i]) LIST_PREV[i] = { timing: S[i].timing, carry: S[i].carry, shieldMode: S[i].shieldMode };
+    S[i].timing = 'optimal'; S[i].carry = false;
+    if (S[i].shieldMode === 'plan') { S[i].shieldMode = null; S[i].shields = 2; }
+    resetSpPlan(i);
+  } else if (LIST_PREV[i]) {
+    S[i].timing = LIST_PREV[i].timing; S[i].carry = LIST_PREV[i].carry; S[i].shieldMode = LIST_PREV[i].shieldMode;
+    LIST_PREV[i] = null;
+    resetSpPlan(i);
+  } else return;   // 触っていない側は何もしない(点灯を勝手に書き換えない)
+  syncSideCtl(i);
+}
+// ボタンの点灯・入力窓を、いまの値(S[i])に合わせ直す
+function syncSideCtl(i) {
+  const el = sideEl[i];
+  if (!el) return;
+  el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
+  el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === (S[i].carry ? 'on' : 'off')));
+  el.querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed',
+    b.dataset.v === (S[i].shieldMode === 'plan' ? 'plan' : String(S[i].shields))));
+  const cs = el.querySelector('.custShield'); if (cs) cs.style.display = S[i].shieldMode ? 'block' : 'none';
+  const cc = el.querySelector('.custCarry');  if (cc) cc.style.display = S[i].carry ? 'block' : 'none';
+}
 function syncMultiPanel(on) {
   const el = sideEl[0];
   if (!el) return;
@@ -1889,54 +1950,28 @@ function syncMultiPanel(on) {
     const n = el.querySelector(sel);
     if (n && on) n.style.display = 'none';
   });
-  if (on) {
-    if (!MVP.prev) MVP.prev = { timing: S[0].timing, carry: S[0].carry, shieldMode: S[0].shieldMode };
-    S[0].timing = 'optimal'; S[0].carry = false;
-    if (S[0].shieldMode === 'plan') { S[0].shieldMode = null; S[0].shields = 2; }
-    resetSpPlan(0);
-    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'optimal'));
-    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'off'));
-    el.querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === String(S[0].shields)));
-  } else if (MVP.prev) {
-    S[0].timing = MVP.prev.timing; S[0].carry = MVP.prev.carry; S[0].shieldMode = MVP.prev.shieldMode;
-    MVP.prev = null;
-    resetSpPlan(0);
-    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[0].timing));
-    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === (S[0].carry ? 'on' : 'off')));
-  }
-}
+}   // 値の既定化・復元は listDefaults(0, …) が担当する(両側に効かせるため)
 function syncCounterPanel(on) {
   const el = sideEl[1];
   if (!el) return;
   const planBtn = el.querySelector('.shields button[data-v="plan"]');
+  // ⚠ロケット団戦では、あいて(NPC)のシールド・タイミング・連戦は syncRocket が隠している。
+  // applyMode は syncRocket のあとにここを呼ぶので、on=false で素直に表示へ戻すと
+  // 隠したはずの行が復活する(実際に起きていた)。ロケット団のあいては常に隠したままにする
+  const rkHide = mode === 'rocket';
   // シールドは行ごと隠す(2026-08-13タダシさん指示)。表が🛡0-0/1-1/2-2の3列を
   // 常に全部見せているので、パネルの枚数設定は結果に効かず、残すと迷わせるだけ
   ['.timing', '.carry', '.shields'].forEach(sel => {
     const n = el.querySelector(sel);
-    if (n) n.style.display = on ? 'none' : '';
-    hideLabelFor(el, sel, !on);
+    if (n) n.style.display = (on || rkHide) ? 'none' : '';
+    hideLabelFor(el, sel, !on && !rkHide);
   });
   ['.custShield', '.custCarry', '.custSp'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n && on) n.style.display = 'none';
   });
   if (planBtn) planBtn.style.display = on ? 'none' : '';
-  if (on) {
-    if (!CN.prev) CN.prev = { timing: S[1].timing, carry: S[1].carry, shieldMode: S[1].shieldMode };
-    S[1].timing = 'optimal'; S[1].carry = false;
-    if (S[1].shieldMode === 'plan') { S[1].shieldMode = null; S[1].shields = 2; }
-    resetSpPlan(1);
-    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'optimal'));
-    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === 'off'));
-    el.querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === String(S[1].shields)));
-  } else if (CN.prev) {
-    S[1].timing = CN.prev.timing; S[1].carry = CN.prev.carry; S[1].shieldMode = CN.prev.shieldMode;
-    CN.prev = null;
-    resetSpPlan(1);
-    el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[1].timing));
-    el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === (S[1].carry ? 'on' : 'off')));
-  }
-}
+}   // 値の既定化・復元は listDefaults(1, …) が担当する(両側に効かせるため)
 // ロケット団戦から他のモードへ戻したときに、隠した欄を元に戻す
 function restoreFoeInputs() {
   const el = sideEl[1];
@@ -2078,7 +2113,7 @@ function runMulti() {
     // マスをタップして開く1対1は、一覧と同じ前提(最適・連戦なし)のまま渡す。
     // ここで退避した設定を復元すると「最短・連戦あり」が蘇って、マスの勝敗と食い違う
     // (食い違い禁止ルールが優先。モードタブで抜けたときだけ復元する)
-    MVP.prev = null;
+    LIST_PREV[0] = LIST_PREV[1] = null;
     if (j != null) setBothShields(j);
     applyMeta(list[k]);
   };
@@ -2123,16 +2158,16 @@ function runMulti() {
           if (!best || sc > best.sc) best = { sc, res };
         }
         const r = best.res, w = r.winner;
-        return { w, sc: best.sc, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+        return { w, sc: best.sc, pct: noWin(w) ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
       });
       const tds = rowsEl[idx].querySelectorAll('td');
       const wgt = metaWgt(idx);
       wSum += wgt;
       cells.forEach((c, j) => {
         if (c.w === 0) { wins[j]++; wScore[j] += wgt; }
-        else if (c.w === 'draw') { draws[j]++; wScore[j] += wgt * 0.5; }
+        else if (noWin(c.w)) { draws[j]++; wScore[j] += wgt * 0.5; }
         else losses[j]++;
-        tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
+        tds[j + 1].className = noWin(c.w) ? 'd' : c.w === 0 ? 'w' : 'l';
         tds[j + 1].innerHTML = cellHtml(c);
       });
       // 絞り込み・並び替え用に対面の結果を保存(scは0〜1000の対面スコア=与ダメ+残HP)
@@ -2231,8 +2266,8 @@ const envScore = p => 100 * Math.max(0, Math.min(1, p));
 // 満点が実質存在しない(1位でも65%前後)ので、数字だけでは高低が読み取れないため。
 // 区切りは**50%＝環境と互角**を中心に上下10ポイント。言葉で言い切れる形にしてある
 const envRank = v => v >= 60 ? 'gold' : v >= 50 ? 'red' : v >= 40 ? 'yel' : 'cy';
-const cellHtml = c => (c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け') +
-  `<small>${c.w === 'draw' ? '　' : '残' + c.pct + '%'}</small>`;
+const cellHtml = c => (noWin(c.w) ? '分' : c.w === 0 ? '勝ち' : '負け') +
+  `<small>${noWin(c.w) ? '　' : '残' + c.pct + '%'}</small>`;
 // カウンター検索だけの「探す範囲」。環境勝率の基準を動かさないよう、
 // 環境一覧・パーティ診断は上位50固定のままにして、逆引きで候補を広げたいときだけ100位まで見る
 let cnTop = 50;
@@ -2311,7 +2346,7 @@ function applyView(box, vn) {
     (V.tail ? `<th>${V.tail}</th>` : '') + '</tr>';
   tb.innerHTML = head + (rows.length ? rows.map(r =>
     `<tr data-k="${r.idx}"><td class="opname">${r.name}</td>` +
-    r.cells.map((c, j) => `<td data-j="${j}" class="${c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l'}">${cellHtml(c)}</td>`).join('') +
+    r.cells.map((c, j) => `<td data-j="${j}" class="${noWin(c.w) ? 'd' : c.w === 0 ? 'w' : 'l'}">${cellHtml(c)}</td>`).join('') +
     (V.tailHtml ? V.tailHtml(r) : '') + '</tr>').join('')
     : `<tr><td class="mtempty" colspan="${cols.length + 1}">該当するポケモンはいません（この絞り込みでは0件）</td></tr>`);
   // セルをタップしたときは、その列(シールド枚数/パーティのメンバー)も一緒に渡す
@@ -2416,7 +2451,7 @@ function runCounter() {
   const list = cnTop === 'all' ? cnAllList(foeBase) : cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
   CV.pick = (k, j) => {
     // マスをタップして開く1対1は、一覧と同じ前提(最適・連戦なし)のまま渡す(環境一覧と同じ理由)
-    CN.prev = null;
+    LIST_PREV[0] = LIST_PREV[1] = null;
     // マスをタップしたら、そのマスで使った「あいてのいちばんキツいわざ」も引き継ぐ。
     // これが無いと1対1は「わざを選ぶと結果が出ます」で止まり、表の勝敗を確かめられない
     if (j != null) {
@@ -2467,7 +2502,7 @@ function runCounter() {
           if (!worst || sc > worst.sc) worst = { sc, res, pol };
         }
         const r = worst.res, w = r.winner, p = worst.pol;
-        return { w, sc: scoreOf(r, 0), pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100),
+        return { w, sc: scoreOf(r, 0), pct: noWin(w) ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100),
           // タップしたときに1対1へ渡す「あいての構成」
           mv: { fast: p.fast, c1: p.throw || (p.charged && p.charged[0]), c2: (p.charged && p.charged[1]) || null } };
       });
@@ -2475,14 +2510,17 @@ function runCounter() {
       cells.forEach((c, j) => {
         if (c.w === 0) beats[j]++;
         if (!tds) return;
-        tds[j + 1].className = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
+        tds[j + 1].className = noWin(c.w) ? 'd' : c.w === 0 ? 'w' : 'l';
         tds[j + 1].innerHTML = cellHtml(c);
       });
       // 全ポケモンのときは並び順の番号に意味が無いので付けず、代わりに使ったわざを添える
+      // 「全ポケモン」には、そのリーグに収まる個体が存在しないポケモン(交換できない幻など)も
+      // 混ざる。理想個体＝上限超えのCPで計算されるので、行にも必ず警告を出す
+      const cnOver = overCapTag(cdCfg);
       CV.results.push({ idx, m, cells,
         name: all
-          ? `${shMark(m.n)}<small class="cnmv">${D.moves[m.f] ? D.moves[m.f].n : ''}${m.c1 && D.moves[m.c1] ? ' / ' + D.moves[m.c1].n : ''}</small>`
-          : `${idx + 1}. ${shMark(m.n)}`,
+          ? `${shMark(m.n)}${cnOver}<small class="cnmv">${D.moves[m.f] ? D.moves[m.f].n : ''}${m.c1 && D.moves[m.c1] ? ' / ' + D.moves[m.c1].n : ''}</small>`
+          : `${idx + 1}. ${shMark(m.n)}${cnOver}`,
         sc: (cells[0].sc + cells[1].sc + cells[2].sc) / 3,
         nWin: cells.filter(c => c.w === 0).length,
         nLose: cells.filter(c => c.w === 1).length });
@@ -2852,12 +2890,16 @@ function syncPartySlot(i) {
     if (!m) { meta.innerHTML = '<span class="pempty">未選択</span>'; return; }
     const p = D.pokemon[m.key];
     const isPt = el.dataset.mv === 'pt';
-    const iv = m.ivMode === 'manual' && m.mIvs ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
+    // そのリーグに収まる個体が存在しないポケモン(交換できない幻など)は、理想個体でCP上限を超える。
+    // 枠にも必ず警告を出す(この枠はパーティ診断・GBL模擬戦・ロケット団模擬戦で共通)
+    const over = overCapTag(ptBase(m));
+    const iv = (m.ivMode === 'manual' && m.mIvs ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値') + over;
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
     // わざを自分で選べる枠(模擬戦)では、わざは下の欄に出るので文字では書かない。
     // 個体値・PLの文字も出さない(⚙詳細にある。ﾏﾆｭｱﾙ入力中だけ小さく出して分かるようにする)
     meta.innerHTML = mvbox
-      ? `${typeIcons(p, 15)}${m.ivMode === 'manual' && m.mIvs ? `<span class="pt2">${iv}</span>` : ''}`
+      ? `${typeIcons(p, 15)}${m.ivMode === 'manual' && m.mIvs ? `<span class="pt2">${iv}</span>` : ''}` +
+        (m.ivMode === 'manual' && m.mIvs ? '' : (over ? `<span class="pt2">理想個体値${over}</span>` : ''))
       : `${typeIcons(p, 15)}<span class="pt2">${iv}</span><span class="pt2">${mv}</span>`;
     // ＋わざを持つメガだけ「メガLv」(追加SPアタックの威力倍率・既定Lv4)を出す
     if (hasPlus(m.key)) {
@@ -3044,6 +3086,8 @@ function runParty() {
   PV.results = [];
   PV.cols = idxs.map(i => `<span class="pcolnum">${i + 1}</span>${shMark(ptName(PT[i]))}`);
   PV.pick = (k, j) => {   // セルをタップ→そのメンバーと相手を同じシールド枚数で1対1シミュへ
+    // 診断のマスも「最適・連戦なし」で計算しているので、退避した設定は復元しない(食い違い禁止)
+    LIST_PREV[0] = LIST_PREV[1] = null;
     // 表で使ったわざ(オートの選出 or 手動で選んだわざ)をそのまま渡す＝一覧と1対1の結果が食い違わない
     if (j != null && PT[idxs[j]]) { applyMyPk(0, { ...PT[idxs[j]], ...ptMvOf(idxs[j]) }, true); setBothShields(ptShield); }
     applyMeta(list[k], 1);
@@ -3099,7 +3143,7 @@ function runParty() {
         const sc = scoreOf(r, 0), w = r.winner;
         if (w === 0) win[j][pk]++;
         tot[j][pk] += sc;
-        return { w, sc, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+        return { w, sc, pct: noWin(w) ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
       }));
       idx++;
     }
@@ -5379,8 +5423,13 @@ function rbRender(body, bt, picks, foes, extra) {
     else RBV.playing = false;
     setPlayBtn();
   }
+  // いまこの模擬戦の画面が出ているかどうか。display:none で隠れているだけだと
+  // document.body.contains() は真のままなので、これを見ないとモードを切り替えたあとも
+  // タイマーと演出の後始末(startTimer)が動き続け、**切り替えた先の画面の上に
+  // カットインが全画面で流れ続ける**
+  const onScreen = () => document.body.contains(feedEl) && (mode === 'rocket' && RK.team);
   function tick() {
-    if (!document.body.contains(feedEl)) { stopTimer(); return; }
+    if (!onScreen()) { stopTimer(); return; }
     RBV.cur++;
     const rev = revealTo(RBV.cur);
     updateHud(RBV.cur);
@@ -5391,7 +5440,7 @@ function rbRender(body, bt, picks, foes, extra) {
     if (fxEls.length) {
       stopTimer();
       fxRun(fxEls, () => {
-        if (!document.body.contains(feedEl)) return;
+        if (!onScreen()) return;
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
@@ -5400,7 +5449,7 @@ function rbRender(body, bt, picks, foes, extra) {
     }
     if (RBV.cur >= stop) atStop();
   }
-  const startTimer = () => { stopTimer(); RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+  const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
 
   // ---- 操作の配線 ----
   // 「結果だけ見る」: バトルを流さず一気に表示。もう一度押すとバトル表示へ戻る
@@ -6233,6 +6282,8 @@ function syncGbFoeSlots() {
   const ab = document.querySelector('#mock .gfauto');
   if (ab) ab.setAttribute('aria-pressed', MK.foeAuto);
   document.querySelectorAll('#mock .gfoe').forEach(el => {
+    // データから消えたポケモンが枠に残っていても、画面ごと落とさずに枠を空にする
+    if (GBT[+el.dataset.i] && !D.pokemon[GBT[+el.dataset.i].key]) { GBT[+el.dataset.i] = null; saveGbt(); }
     const m = GBT[+el.dataset.i];
     const fb = el.querySelector('.fbody');
     el.querySelector('.pshadow').setAttribute('aria-pressed', !!(m && m.shadow));
@@ -6240,7 +6291,10 @@ function syncGbFoeSlots() {
     if (!m) { fb.style.display = 'none'; return; }
     fb.style.display = 'block';
     const { fasts, chargeds } = movePool(m.key);
-    if (!fasts.includes(m.fast)) m.fast = fasts[0] || '';
+    // ⚠「おぼえるわざ」に無いだけで巻き戻してはいけない。わざ欄には「その他のわざ(本来おぼえない)」と
+    // 「自由設定」も並ぶので、それらを選んだ瞬間に既定へ戻されて**永久に選べなかった**。
+    // 直すのは「データから消えたわざ」だけなので、D.moves にあるかどうかで見る
+    if (!D.moves[m.fast]) { m.fast = fasts[0] || ''; saveGbt(); }
     // おぼえるわざ＋その他のわざ＋自由設定（じぶんの欄と同じ並びにそろえる）
     const opts = (list, sel) => mvOptions(list, list === fasts, sel);
     el.querySelector('.selFast').innerHTML = opts(fasts, m.fast);
@@ -6254,7 +6308,8 @@ function syncGbFoeSlots() {
     const st = PvpEngine.buildStats(D, base);
     const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
     el.querySelector('.fstat').innerHTML =
-      `${typeIcons(D.pokemon[m.key], 15)} CP${st.cp}・PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}`;
+      `${typeIcons(D.pokemon[m.key], 15)} CP${st.cp}・PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}` +
+      overCapTag(base);   // そのリーグに収まる個体が無いポケモンは理想個体で上限を超える
     // ＋わざを持つメガだけ「メガLv」(追加SPアタックの威力倍率・既定Lv4)を出す
     const gm = el.querySelector('.gmlv');
     gm.innerHTML = hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '';
@@ -8395,8 +8450,13 @@ function gbRender(body, bt, picks, foes) {
     else RBV.playing = false;
     setPlayBtn();
   }
+  // いまこの模擬戦の画面が出ているかどうか。display:none で隠れているだけだと
+  // document.body.contains() は真のままなので、これを見ないとモードを切り替えたあとも
+  // タイマーと演出の後始末(startTimer)が動き続け、**切り替えた先の画面の上に
+  // カットインが全画面で流れ続ける**
+  const onScreen = () => document.body.contains(feedEl) && (mode === 'mock');
   function tick() {
-    if (!document.body.contains(feedEl)) { stopTimer(); return; }
+    if (!onScreen()) { stopTimer(); return; }
     RBV.cur++;
     const rev = revealTo(RBV.cur);
     updateHud(RBV.cur);
@@ -8407,7 +8467,7 @@ function gbRender(body, bt, picks, foes) {
     if (fxEls.length) {
       stopTimer();
       fxRun(fxEls, () => {
-        if (!document.body.contains(feedEl)) return;
+        if (!onScreen()) return;
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
@@ -8416,7 +8476,7 @@ function gbRender(body, bt, picks, foes) {
     }
     if (RBV.cur >= stop) atStop();
   }
-  const startTimer = () => { stopTimer(); RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+  const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
 
   // ---- 操作の配線 ----
   const only = body.querySelector('.rbonly');
@@ -8754,6 +8814,12 @@ function run() {
       const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
       note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (capX && st.cp > capX ? ' <span class="over">⚠リーグ上限超え</span>' : '') +
         `<div class="ivstats">攻 <b>${f1(st.atk)}</b>・防 <b>${f1(st.def)}</b>・HP <b>${st.hp}</b></div>`;
+    } else if (overCapCp(base[i])) {
+      // 理想個体(自動)でも、そのリーグに収まる個体が存在しないポケモンは上限を超える。
+      // 黙って強い数字を出すと誤案内になるので、CPと理由を必ず添える
+      const st = PvpEngine.buildStats(D, base[i]);
+      note.innerHTML = `理想個体値のCP: <b>${st.cp}</b> <span class="over">⚠リーグ上限超え</span>` +
+        `<div class="ivstats">このリーグのCP制限に収まる個体が存在しません（最低個体値・最低PLの制約のため）</div>`;
     } else note.textContent = '';
     // CP上限のないリーグ(マスター・ロケット団戦)では入手別の1位個体は意味がないので隠す
     const noCap = !capX;
@@ -8853,7 +8919,7 @@ function run() {
       const p = a === curSh(0) && b === curSh(1) ? plan : opt2(a, b);
       const r = PvpEngine.simulate(D, fin(0, p.left, a, false), fin(1, p.right, b, false), SIMOPT);
       const w = r.winner;
-      row.push({ w, pct: w === 'draw' ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) });
+      row.push({ w, pct: noWin(w) ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) });
     }
     matrix.push(row);
   }
@@ -8997,7 +9063,11 @@ function fillMoves(i, cfg) {
   el.querySelectorAll('.bluff button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S[i].bluff));
   // 発ごとのSP設定窓: ﾏﾆｭｱﾙ時またはSPアタック2選択時に表示(カウンター検索は手順を指定しないので出さない)。
   // 溜め打ちは撃つ発をエンジンが決めるので窓を出さない
-  const showSp = !['never', 'stock'].includes(S[i].timing) && (S[i].timing === 'plan' || !!S[i].c2) && mode !== 'counter';
+  // 「発ごとのSP設定」はSPアタックが決まってから出す。決まる前に出すと中身が空のまま開き、
+  // buildSpConfig が D.moves[null] を引いて落ちる(以後 run() が毎回失敗して画面が反応しなくなる)
+  const spMv1 = S[i].c1 || cfg.throw;
+  const showSp = !!spMv1 && !['never', 'stock'].includes(S[i].timing)
+    && (S[i].timing === 'plan' || !!S[i].c2) && mode !== 'counter';
   const spEl = el.querySelector('.custSp');
   spEl.style.display = showSp ? 'block' : 'none';
   // SPアタック2を選んだだけのときは折りたたむ(出っぱなしだと縦に長くて目のノイズになる)。
@@ -9005,7 +9075,7 @@ function fillMoves(i, cfg) {
   const open = S[i].timing === 'plan' || S[i].spOpen;
   spEl.classList.toggle('fold', !open);
   spEl.querySelector('.popttl').setAttribute('aria-expanded', open);
-  if (showSp) buildSpConfig(i, S[i].c1 || cfg.throw, S[i].c2);
+  if (showSp) buildSpConfig(i, spMv1, S[i].c2);
 }
 
 // 「発ごとのSP設定」小窓(タイミングとわざを1行で選ぶ)
@@ -9055,7 +9125,10 @@ function render(res, L, R, matrix) {
   fillMoves(0, L); fillMoves(1, R);
   const rEl = document.getElementById('result');
   rEl.style.display = 'block';
+  // 決着なし(winner===null)は480ターン(240秒)たっても両者倒れなかった対面。
+  // 相打ち(draw)とは別物なので言葉で分ける
   const badge = i => res.winner === 'draw' ? '<span class="badge draw">DRAW</span>'
+    : res.winner == null ? '<span class="badge draw">決着つかず</span>'
     : res.winner === i ? '<span class="badge win">WIN</span>' : '<span class="badge lose">LOSE</span>';
   const fighter = (i, cfg) => {
     const f = res.final[i];
@@ -9102,10 +9175,10 @@ function render(res, L, R, matrix) {
   const curA = S[0].shieldMode ? -1 : S[0].shields, curB = rkMode ? 0 : (S[1].shieldMode ? -1 : S[1].shields);
   const mtxCell = (a, b) => {
     const c = matrix[a][b];
-    const cls = c.w === 'draw' ? 'd' : c.w === 0 ? 'w' : 'l';
-    const txt = c.w === 'draw' ? '分' : c.w === 0 ? '勝ち' : '負け';
+    const cls = noWin(c.w) ? 'd' : c.w === 0 ? 'w' : 'l';
+    const txt = noWin(c.w) ? '分' : c.w === 0 ? '勝ち' : '負け';
     return `<td class="${cls}${a === curA && b === curB ? ' cur' : ''}" data-a="${a}" data-b="${b}">
-      <b>${txt}</b><small>${c.w === 'draw' ? '両者0' : '残HP' + c.pct + '%'}</small></td>`;
+      <b>${txt}</b><small>${c.w === 'draw' ? '両者0' : c.w == null ? '決着なし' : '残HP' + c.pct + '%'}</small></td>`;
   };
   const mtxHtml = rkMode ? `<div class="shmtx">
     <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
