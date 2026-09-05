@@ -1393,6 +1393,9 @@ ${PAGE_ROCKET ? '' : `
   <b>相手が選んだ3匹は、場に出てくるまで分かりません</b>——なので、あいての6匹を見て
   「何を出してくるか」を読みながら選ぶのがこのルールの中身です。</p>
   <ul>
+    <li><b>同じポケモンは6匹の中に2匹入れられません</b>（ゲーム本編と同じ）。すでに入っているポケモンは
+    検索の候補にグレーで出て押せなくなります。<b>通常とシャドウ、メガ、地方フォルム（アローラ・ガラルなど）も
+    同じポケモン扱い</b>です</li>
     <li>じぶんの6匹は<b>押した順が並び順</b>になります（①が初手）。もう一度押すと外れます</li>
     <li><b>あいても同時に選出します</b>。選び方は難易度で変わります——
     <b>EASY</b>＝登録順の上から3匹（こちらを見ずに選ぶ）／
@@ -6496,6 +6499,31 @@ const sdNew = (key, shadow) => ({ key, shadow: !!shadow, ivMode: 'auto', maxLv: 
   ...mockDefaultMoves(key, !!shadow) });
 // 見せ合いでは**わざは見せない**ので、AIは「環境の定番構成だろう」と想定して読む
 const sdAssumed = m => ({ ...m, ...mockDefaultMoves(m.key, !!m.shadow) });
+// **同じポケモンは6匹の中に2匹入れられない**(2026-09-05タダシさん指示・ゲーム本編と同じ)。
+// 「同じポケモン」の判定は**図鑑番号**なので、通常⇄シャドウだけでなく
+// メガ・ゲンシ・地方フォルム(アローラ/ガラル/ヒスイ/パルデア)も同じポケモン扱いになる
+const sdDex = key => (D.pokemon[key] || {}).dex;
+// その枠(skip)以外に、同じ図鑑番号のポケモンがすでに入っているか
+const sdDup = (side, key, skip) => {
+  const dx = sdDex(key);
+  if (dx == null) return false;
+  return SD[side].some((m, i) => i !== skip && m && sdDex(m.key) === dx);
+};
+// 重複が残っていたら**あとの枠を空にする**(共有リンク・古い保存・ルール導入前のデータの掃除)
+function sdDedupe() {
+  let ch = false;
+  ['my', 'foe'].forEach(side => {
+    const used = new Set();
+    SD[side].forEach((m, i) => {
+      if (!m) return;
+      const dx = sdDex(m.key);
+      if (dx != null && used.has(dx)) { SD[side][i] = null; ch = true; if (side === 'my') SD.pick = SD.pick.filter(x => x !== i); }
+      else if (dx != null) used.add(dx);
+    });
+  });
+  if (ch) saveSd();
+  return ch;
+}
 
 // ---- 選出の下ごしらえ: 候補×相手の勝ち数(シールド0-0/1-1/2-2の3通り中いくつ勝てるか) ----
 // 前提は一覧系とそろえる(理想個体値・SPは最適タイミング・ブラフなし＝運に頼らない既定)。
@@ -6606,7 +6634,12 @@ function buildSdSlots(side) {
       // メガはメガカップのときだけ(他のリーグでは使えない。あいての3枠と同じ基準)
       const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => `<div data-k="${k}"><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}</div>`).join('');
+      // すでに6匹の中に入っているポケモンは**消さずにグレーで出して押せなくする**
+      // (候補から丸ごと消すと「検索しても出てこない」＝壊れて見えるため)
+      list.innerHTML = hits.map(k => {
+        const dup = sdDup(side, k, i);
+        return `<div${dup ? ' class="dup"' : ` data-k="${k}"`}><span>${pkSuggName(k)}</span>${typeIcons(D.pokemon[k], 16)}${dup ? '<i class="dupn">すでに入っています</i>' : ''}</div>`;
+      }).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -6635,10 +6668,11 @@ function buildSdSlots(side) {
             const p = D.pokemon[m.key];
             if (!p) return '';
             const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
-            return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span></div>`;
+            const dup = sdDup(side, m.key, i);   // 同じポケモンは6匹に2匹入れられない
+            return `<div class="mypkrow${dup ? ' dup' : ''}"${dup ? '' : ` data-k="${k}"`}><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span>${dup ? '<i class="dupn">すでに入っています</i>' : ''}</div>`;
           }).join('')
         : '<div class="mypkempty">まだ登録がありません。1対1シミュでポケモンを選び「★登録」を押すとここに追加されます</div>';
-      win.querySelectorAll('.mypkrow').forEach(row => row.onclick = () => {
+      win.querySelectorAll('.mypkrow[data-k]').forEach(row => row.onclick = () => {
         const src = loadMyPk()[+row.dataset.k];
         const d = mockDefaultMoves(src.key, !!src.shadow);
         // ★登録の個体はわざも登録されていることがある。無い欄だけ環境の定番構成で埋める
@@ -6753,6 +6787,7 @@ function renderSd() {
   wrap.style.display = SD.on ? '' : 'none';
   three.style.display = SD.on ? 'none' : '';
   if (!SD.on) return;
+  sdDedupe();   // 共有リンク・古い保存に重複が混じっていたら、あとの枠を空にする
   // 枠から消えたポケモンを選出に残さない
   SD.pick = SD.pick.filter(i => SD.my[i]);
   syncSdSlots();
@@ -6776,7 +6811,10 @@ function sdAutoFill() {
     for (let t = 0; ok && t < 12 && out.length < 6; t++) {
       const three = gbAutoPick();
       if (!three) break;
-      three.forEach(m => { if (!used.has(m.k) && out.length < 6) { used.add(m.k); out.push(m); } });
+      three.forEach(m => {   // 同じポケモンは2匹入れない(判定は図鑑番号)
+        const dx = sdDex(m.k);
+        if (dx != null && !used.has(dx) && out.length < 6) { used.add(dx); out.push(m); }
+      });
     }
     if (!out.length) {   // 環境リストが足りないカップ。黙って何も起きないと壊れて見える
       say('環境の顔ぶれが足りません');
@@ -7164,6 +7202,15 @@ function gbPlay(picks, foes, ans, stepwise) {
   const ros = [picks, foes];
   const st = ros.map(r => r.map(() => ({ alive: true, resume: null })));
   const cur = [0, 0], shLeft = [2, 2], swOk = [0, 0];
+  // ---- シールドの残り枚数は「いま」を見る(2026-09-05修正・確定仕様の取りこぼし) ----
+  // shLeft は**対面(leg)の切れ目でしか更新されない**ので、対面の途中の下読みにそのまま使うと
+  // 「相手はまだ2枚持っている」と誤読する。確定仕様「下読みは決断のたびに、その瞬間の状態で」
+  // (2026-08-19)の `_sh` は**場に出ている側にしか渡っていなかった**ため、
+  // 控えの評価・チーム文脈のシールド判断・「撃ってから交代」が対面開始時の枚数で動いていた。
+  // 決断のたびに aiAnswer が shNow に「その瞬間の枚数」を入れ、下読みは必ず shAt() を見る
+  const shNow = [null, null];
+  const shAt = sd => shNow[sd] != null ? shNow[sd] : shLeft[sd];
+  const shSig = () => shAt(0) + ',' + shAt(1);   // 下読みのキャッシュのキーに必ず混ぜる
   const newIn = [false, false];   // この対面の頭で「新しく出てきた」側(交代質問のきっかけ)
   const koIn = [false, false];    // そのうち「倒されて出し直した」側(あいての交代判断を1秒遅らせる)
   // 出し勝った初手の温存(2026-08-30タダシさん指示・上級者の動き):
@@ -7206,7 +7253,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   const plainCfg = (sd, idx, ov) => {
     const P = ros[sd][idx];
     const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(),
-      shields: shLeft[sd], timing: 'optimal', bluff: sd === 1 ? ai.bluff : false };
+      shields: shAt(sd), timing: 'optimal', bluff: sd === 1 ? ai.bluff : false };
     const rs = ov || st[sd][idx].resume;
     // _sh = その下読みでのシールドの残り枚数(「防いだあと」は1枚減った状態で読む)
     if (rs) { const { _sh, ...r } = rs; c.resume = r; if (_sh != null) c.shields = _sh; }
@@ -7220,10 +7267,10 @@ function gbPlay(picks, foes, ans, stepwise) {
   // そのまま計算に乗る。返すのは 勝率 と、平均の勝ち幅(同率のときの比べ物)
   const wrCache = {};
   const aiWinRate = (k, ov0, ov1) => {
-    const ck = k + '|' + cur[0] + '|' + shLeft.join(',') + '|' + (ov0 ? ov0.hp + ',' + ov0.en : '') + '|' + (ov1 ? ov1.hp + ',' + ov1.en : '');
+    const ck = k + '|' + cur[0] + '|' + shSig() + '|' + (ov0 ? ov0.hp + ',' + ov0.en : '') + '|' + (ov1 ? ov1.hp + ',' + ov1.en : '');
     if (ck in wrCache) return wrCache[ck];
     let win = 0, n = 0, mg = 0;
-    for (let a = 0; a <= shLeft[0]; a++) for (let b = 0; b <= shLeft[1]; b++) {
+    for (let a = 0; a <= shAt(0); a++) for (let b = 0; b <= shAt(1); b++) {
       const r = PvpEngine.simulate(D, { ...plainCfg(0, cur[0], ov0), shields: a },
         { ...plainCfg(1, k, ov1), shields: b }, SIMOPT);
       n++;
@@ -7338,7 +7385,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     o[k].hp = Math.max(1, o[k].hp - dmg);
     // 防ぐならシールドを1枚使う。ここを減らさずに読むと「まだ2枚ある前提」で強気に読んでしまい、
     // 使っては読み直し…を繰り返してシールドを無駄打ちする(実測でAIが弱くなった)
-    if (useSh) o[k]._sh = Math.max(0, (o[k]._sh != null ? o[k]._sh : shLeft[sd]) - 1);
+    if (useSh) o[k]._sh = Math.max(0, (o[k]._sh != null ? o[k]._sh : shAt(sd)) - 1);
     return o;
   };
   const ovKey = ov => {
@@ -7350,7 +7397,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 勝てるならノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ(基本戦術)
   const farmCache = {}, loseCache = {};
   const aiFarmWin = (li, ov) => {
-    const ck = li + '#' + ovKey(ov);
+    const ck = li + '#' + ovKey(ov) + '#' + shSig();
     if (!(ck in farmCache)) {
       const R = { ...plainCfg(1, cur[1], ov && ov.ov1), timing: 'shots', shotPlan: [], shotRest: null };
       farmCache[ck] = PvpEngine.simulate(D, plainCfg(0, cur[0], ov && ov.ov0), R, SIMOPT).winner === 1;
@@ -7359,7 +7406,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   };
   // 後の戦況の下読み: いまの状態から、あいては(SPも使って)おまかせで通して負けるか
   const aiLosing = (li, ov) => {
-    const ck = li + '#' + ovKey(ov);
+    const ck = li + '#' + ovKey(ov) + '#' + shSig();
     if (!(ck in loseCache)) loseCache[ck] = duelAt(cur[0], cur[1], ov && ov.ov0, ov && ov.ov1).winner !== 1;
     return loseCache[ck];
   };
@@ -7401,7 +7448,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   //   「明らかに弱い」＝その控えでも負け、しかもユーザーのポケモンが半分以上HPを残す
   const weakCache = {};
   const aiStayWeak = (li, ov) => {
-    const ck = li + '#' + ovKey(ov);
+    const ck = li + '#' + ovKey(ov) + '#' + shSig();
     if (!(ck in weakCache)) {
       let v = false;
       if (aiLosing(li, ov)) {
@@ -7636,7 +7683,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   };
   const shvCache = {};
   const teamShieldValue = (li, ov, freeOv) => {
-    const ck = li + '#' + ovKey(ov) + '#' + ovKey(freeOv);
+    const ck = li + '#' + ovKey(ov) + '#' + ovKey(freeOv) + '#' + shSig();
     if (!(ck in shvCache)) {
       let v = null;
       // ユーザーの控えは**一度でも場に出たもの**だけ数える(まだ見ていないポケモンは知らない)
@@ -7646,7 +7693,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const fo = freeOv || ov;
       const freeWin = () => PvpEngine.simulate(D, plainCfg(0, cur[0], fo && fo.ov0),
         { ...plainCfg(1, cur[1], fo && fo.ov1), shields: 0 }, SIMOPT).winner === 1;
-      if (myBench.length && userOff.length && shLeft[1] > 0 && !aiLosing(li, ov) && !freeWin()) {
+      if (myBench.length && userOff.length && shAt(1) > 0 && !aiLosing(li, ov) && !freeWin()) {
         for (const u of userOff) {
           let winners = 0;
           for (const k of myBench) if (duelAt(u, k).winner === 1) winners++;
@@ -7679,9 +7726,9 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 防げる権利」(GB_SHIELD_BIG)で、バトルがこの対面で終わるなら0
   const shAllocCache = {};
   const shAllocScore = (li, ov) => {
-    const ck = li + '#' + ovKey(ov);
+    const ck = li + '#' + ovKey(ov) + '#' + shSig();
     if (ck in shAllocCache) return shAllocCache[ck];
-    const sh1 = ov && ov.ov1 && ov.ov1._sh != null ? ov.ov1._sh : shLeft[1];
+    const sh1 = ov && ov.ov1 && ov.ov1._sh != null ? ov.ov1._sh : shAt(1);
     let best = -Infinity;
     for (const plan of shPlansOf(sh1)) {
       const r = PvpEngine.simulate(D, plainCfg(0, cur[0], ov && ov.ov0),
@@ -7702,7 +7749,14 @@ function gbPlay(picks, foes, ans, stepwise) {
   };
   // あいてのAIの自動回答(ansに答えがあればそちらが優先される)。
   // **下読みは決断のたびに、その瞬間の状態(p.st0/p.st1)から読み直す**(2026-08-19タダシさん指摘)
+  // 決断のたびに、**その瞬間のシールドの残り枚数**を控えてから下読みに入る(2026-09-05修正)。
+  // これが無いと、控えの評価だけ「対面開始時の枚数」のままになる
   const aiAnswer = (p, ctx) => {
+    shNow[0] = p.st0 && p.st0.sh != null ? p.st0.sh : null;
+    shNow[1] = p.st1 && p.st1.sh != null ? p.st1.sh : null;
+    try { return aiAnswerAt(p, ctx); } finally { shNow[0] = shNow[1] = null; }
+  };
+  const aiAnswerAt = (p, ctx) => {
     // その瞬間のHP・ゲージ・能力変化・**シールドの残り枚数**。
     // 枚数まで入れないと「相手はまだ2枚持っている」と読んで、AIが弱気になる(実測で判明)
     const nowOv = p.st0 && p.st1 ? {
@@ -7970,7 +8024,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       // ゲージは交代しても残るので、撃つのは「ちゃんと当たって効く」ときだけ:
       //  - 相手にシールドが残っている(防がれる)なら撃たずにすぐ交代
       //  - 当ててもダメージが薄い(相手の現在HPの25%未満)なら撃たずにすぐ交代
-      if (p.seq === 0 && ctx.spList[1].length && ctx.enAt[1] >= ctx.cost[1] && shLeft[0] === 0) {
+      if (p.seq === 0 && ctx.spList[1].length && ctx.enAt[1] >= ctx.cost[1] && shAt(0) === 0) {
         const att = sbuf(1, cur[1]), dfn = sbuf(0, cur[0]);
         const rs0 = st[0][cur[0]].resume;
         const myHp = rs0 ? rs0.hp : ctx.maxHp[0];
