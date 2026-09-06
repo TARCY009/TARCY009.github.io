@@ -1766,6 +1766,20 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    色つきのにじみは使わない(恒久ルール)ので、**黒のぼかし影＋上の光沢＋下端の締め**だけで立体にする。
    空の枠は浮かせない——「まだ入っていない」を沈んだ見た目で示すため */
 /* 暗い背景では黒い影が効きにくいので、影を強めにして**上端の光**も一段上げる */
+/* 入っているカードの地は**青**にする。カードを置いている面(--bg2)と同じ色だと、
+   フレームの中と外が地続きに見えてカードに見えない(2026-09-06タダシさん指摘) */
+.sdslot.filled{background:linear-gradient(180deg,#24396f 0%,#1a2a52 100%);border-color:#3a55a3}
+:root.light .sdslot.filled{background:linear-gradient(180deg,#eaf2ff 0%,#d8e7fd 100%);border-color:#b8d0f2}
+/* 青の地に沈まないよう、うすい文字だけ一段明るくする(実測でコントラスト4.5:1以上) */
+.sdslot.filled .mvsum .mvc{color:#a9b4dc}
+:root.light .sdslot.filled .mvsum .mvc{color:#4d5a85}
+.sdslot.filled .sdmv>summary{color:#b4bee2}
+:root.light .sdslot.filled .sdmv>summary{color:#4d5a85}
+/* 淡い青の地では金と水色が沈むので、ライトだけ濃くする(実測でコントラスト4.5:1以上) */
+:root.light .sdslot.filled .sdcp{color:#8a5b00}
+:root.light .sdslot.filled .sdmv>summary i{color:#0a7186}
+.sdslot.filled .sdops button{background:rgba(10,16,38,.42);border-color:#3b4f92;color:#b9c4e8}
+:root.light .sdslot.filled .sdops button{background:rgba(255,255,255,.75);border-color:#c6d8f4;color:#5f6a92}
 .sdslot.filled{box-shadow:
   0 7px 16px rgba(0,0,0,.46),
   0 2px 0 var(--tabsh),
