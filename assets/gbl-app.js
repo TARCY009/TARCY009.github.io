@@ -585,12 +585,17 @@ CUSTOM.forEach(c => { try { regCustom(c); } catch (e) {} });
 // タイプ不定のめざめるパワー、自由設定のわざ（別の枠で出す）は除く
 const mvSig = m => D.moves[m].n + '|' + D.moves[m].t;
 const mvByName = (a, b) => D.moves[a].n.localeCompare(D.moves[b].n, 'ja');
+// ギルガルドのフォルム専用わざ（「（独自性能）」付き）。**どのポケモンのわざ欄にも出さない**
+// (2026-09-07タダシさん指摘。ギルガルド本人も通常版を選ぶ作りで、独自性能版は
+//  エンジンがフォルムに応じて内部で使うもの。一覧に出しても選べる意味がない)
+const isSoloMv = id => /（独自性能）/.test((D.moves[id] || {}).n || '');
 function otherMoves(isFast, own) {
   const ownSig = new Set(own.map(mvSig)), seen = new Set();
   return Object.keys(D.moves).filter(m => {
     const mv = D.moves[m];
     if (isFast ? !mv.eg : !mv.e) return false;
     if (own.includes(m) || m === 'HIDDEN_POWER_NORMAL' || isCustomMv(m) || isPlusMv(m)) return false;   // ＋わざは持ち主にしか出さない
+    if (isSoloMv(m)) return false;   // ギルガルドのフォルム専用わざは選択肢に出さない
     const s = mvSig(m);
     if (ownSig.has(s) || seen.has(s)) return false;
     seen.add(s);
@@ -2233,22 +2238,41 @@ document.querySelectorAll('#prob button').forEach(b => b.onclick = () => {
 });
 
 // ---- 環境一覧(1対多): 自分1匹×環境上位50匹をシールド0-0/1-1/2-2で一括対戦 ----
+// じぶんが決まっていないあいだの環境一覧。**いまの環境の顔ぶれ**（順位・名前・タイプ・わざ構成）を出す。
+// 行をタップすると、その相手をあいてに入れて1対1シミュへ移る(従来のマスのタップと同じ動き)
+function metaOnlyHtml(list, note) {
+  if (!list.length) return '<div class="mtnote">このカップの環境リストがありません</div>';
+  const mvn = id => (D.moves[id] && D.moves[id].n) || '';
+  return `<h3>環境上位${list.length}匹${cup ? `（${cupTitle(cup)}）` : ''}<small class="cnsub">行をタップ→1対1シミュ</small></h3>
+    <div class="mtnote">${note}</div>
+    <table class="mttbl metaonly"><tbody><tr><th style="text-align:left">相手</th><th style="text-align:left">わざ構成</th></tr>
+    ${list.map((m, k) => {
+      const p = D.pokemon[m.k];
+      const cs = [m.c1, m.c2].filter(Boolean).map(mvn).join('・');
+      return `<tr data-k="${k}"><td class="opname">${k + 1}. ${p ? typeIcons(p, 13) : ''}${shMark(m.n)}</td>` +
+        `<td class="mometa"><b>${mvn(m.f)}</b>${cs ? '<i>' + cs + '</i>' : ''}</td></tr>`;
+    }).join('')}
+    </tbody></table>`;
+}
 function runMulti() {
   const box = document.getElementById('multi');
   const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
-  if (!S[0].key) {
-    box.innerHTML = '<div class="mtnote">左の<b>じぶん</b>を選ぶと、環境上位' + (list.length || 50) + '匹と一括対戦します</div>';
-    return;
-  }
-  // わざを選ぶまで結果を出さない(2026-08-27タダシさん指示。1対1と同じルール:
-  // じぶんで選んだ構成の結果を見る画面にする。SPアタックを覚えないポケモンはSP無しでOK。
-  // これでマスをタップして開く1対1も同じ構成のまま=結果が食い違わない)
-  if (!S[0].fast || (!S[0].c1 && movePool(S[0].key).chargeds.length)) {
-    const mb = S[0].ivMode === 'manual' && S[0].mIvs
-      ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }
-      : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
-    fillMoves(0, mb);
-    box.innerHTML = '<div class="mtnote">じぶんの<b>わざ</b>(ノーマルアタック・SPアタック)を選ぶと、環境上位' + (list.length || 50) + '匹と一括対戦します</div>';
+  // ⚠ じぶんが決まっていなくても**環境の顔ぶれは出す**(2026-09-07タダシさん指示。
+  //   「じぶんが活躍するか」の前に「いまどんな環境なのか」をまず見たいため)。
+  //   勝ち負けのマスだけは、じぶんのわざが決まるまで出さない(食い違い禁止ルールは従来どおり)
+  const needMy = !S[0].key;
+  const needMv = !needMy && (!S[0].fast || (!S[0].c1 && movePool(S[0].key).chargeds.length));
+  if (needMy || needMv) {
+    if (needMv) {   // わざ欄だけは先に埋めて、すぐ選べるようにする
+      const mb = S[0].ivMode === 'manual' && S[0].mIvs
+        ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }
+        : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+      fillMoves(0, mb);
+    }
+    box.innerHTML = metaOnlyHtml(list, needMy
+      ? '左の<b>じぶん</b>を選ぶと、この顔ぶれとの<b>勝ち負け</b>が出ます'
+      : 'じぶんの<b>わざ</b>（ノーマルアタック・SPアタック）を選ぶと、<b>勝ち負け</b>が出ます');
+    box.querySelectorAll('tr[data-k]').forEach(tr => tr.onclick = () => applyMeta(list[+tr.dataset.k]));
     return;
   }
   const token = ++multiToken;   // 設定変更で再実行されたら古い計算は中断
@@ -5514,15 +5538,21 @@ function rbRender(body, bt, picks, foes, extra) {
         if (RBV.feedFresh) { RBV.feedFresh = false; if (RBV.feedTop) feedEl.scrollTop = RBV.feedTop; }
         return;
       }
+      // ⚠ 再描画の直後(fresh)は**即時**で下端へ戻す。smooth にすると
+      //   「0に戻ってから下までゆっくり戻る」動きが見えて、決断のたびに画面が飛んで見える
+      //   (2026-09-07タダシさん報告)
+      const fresh = RBV.feedFresh;
       RBV.feedFresh = false;
-      feedScroll(feedEl.scrollHeight, RBV.speed === 1 && !document.hidden);   // 見えていないタブでは滑らかに動かせない(即時にする)
+      feedScroll(feedEl.scrollHeight, !fresh && RBV.speed === 1 && !document.hidden);   // 見えていないタブでは滑らかに動かせない(即時にする)
       return;
     }
     if (!lastEl) return;
+    const fresh2 = RBV.feedFresh;
+    RBV.feedFresh = false;
     const target = lastEl.getBoundingClientRect().bottom + scrollY - (innerHeight - dock.offsetHeight - 10);
     // 手で上へスクロールして読み返しているときは連れ戻さない
     if (target > scrollY && target - scrollY < innerHeight * 1.5)
-      scrollTo({ top: target, behavior: RBV.speed === 1 ? 'smooth' : 'auto' });
+      scrollTo({ top: target, behavior: !fresh2 && RBV.speed === 1 ? 'smooth' : 'auto' });
   };
   const stopTimer = () => { clearInterval(RBV.timer); RBV.timer = null; };
   const ended = () => RBV.cur >= stop && !bt.pending;
@@ -5581,7 +5611,11 @@ function rbRender(body, bt, picks, foes, extra) {
     });
     const wx = winbox.querySelector('.wx');
     if (wx) wx.onclick = () => { RBUI.open = null; RBV.playing = true; run(); };
-    // ウィンドウが出たぶん画面下が高くなるので、最新のターンが隠れないように追従する
+    // ウィンドウが出たぶん画面下が高くなるので、最新のターンが隠れないように追従する。
+    // ⚠ レイアウトが変わった直後なので**即時**で合わせる(feedFresh を立てる)。
+    //   smooth のままだと、決断のたびに画面が上へ飛んでから戻る動きに見える
+    //   (2026-09-07タダシさん報告)
+    RBV.feedFresh = true;
     autoScroll();
   }
   function atStop() {
@@ -9384,14 +9418,20 @@ function gbRender(body, bt, picks, foes) {
         if (RBV.feedFresh) { RBV.feedFresh = false; if (RBV.feedTop) feedEl.scrollTop = RBV.feedTop; }
         return;
       }
+      // ⚠ 再描画の直後(fresh)は**即時**で下端へ戻す。smooth にすると
+      //   「0に戻ってから下までゆっくり戻る」動きが見えて、決断のたびに画面が飛んで見える
+      //   (2026-09-07タダシさん報告)
+      const fresh = RBV.feedFresh;
       RBV.feedFresh = false;
-      feedScroll(feedEl.scrollHeight, RBV.speed === 1 && !document.hidden);   // 見えていないタブでは滑らかに動かせない(即時にする)
+      feedScroll(feedEl.scrollHeight, !fresh && RBV.speed === 1 && !document.hidden);   // 見えていないタブでは滑らかに動かせない(即時にする)
       return;
     }
     if (!lastEl) return;
+    const fresh2 = RBV.feedFresh;
+    RBV.feedFresh = false;
     const target = lastEl.getBoundingClientRect().bottom + scrollY - (innerHeight - dock.offsetHeight - 10);
     if (target > scrollY && target - scrollY < innerHeight * 1.5)
-      scrollTo({ top: target, behavior: RBV.speed === 1 ? 'smooth' : 'auto' });
+      scrollTo({ top: target, behavior: !fresh2 && RBV.speed === 1 ? 'smooth' : 'auto' });
   };
   const stopTimer = () => { clearInterval(RBV.timer); RBV.timer = null; };
   const ended = () => RBV.cur >= stop && !bt.pending;
@@ -9453,6 +9493,8 @@ function gbRender(body, bt, picks, foes) {
     });
     const wx = winbox.querySelector('.wx');
     if (wx) wx.onclick = () => { RBUI.open = null; RBV.playing = true; run(); };
+    // ウィンドウが出たぶんレイアウトが変わるので、**即時**で最新のターンに合わせる
+    RBV.feedFresh = true;
     autoScroll();
   }
   function atStop() {
