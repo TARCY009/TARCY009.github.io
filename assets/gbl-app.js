@@ -6913,6 +6913,8 @@ function buildSdSlots(side) {
   box.querySelectorAll('.sdslot').forEach(el => {
     const i = +el.dataset.i;
     const inp = el.querySelector('input'), list = el.querySelector('.sugg-list');
+    inp.addEventListener('focus', () => el.classList.add('editing'));
+    inp.addEventListener('blur', () => el.classList.remove('editing'));
     inp.addEventListener('compositionend', () => {
       const v = toKata(inp.value);
       if (v !== inp.value) inp.value = v;
@@ -7013,7 +7015,8 @@ function syncSdSlots() {
       el.querySelector('.pshadow').setAttribute('aria-pressed', !!(m && m.shadow));
       const inp = el.querySelector('input');
       inp.value = m ? (D.pokemon[m.key] ? D.pokemon[m.key].n : '') : '';
-      inp.dataset.len = inp.value.length;   // 長い名前は字を小さくする(CSS側)
+      // 長い名前は字を小さくする(CSS側)。10文字以上は同じ大きさでよいので、そこで頭打ちにする
+      inp.dataset.len = Math.min(inp.value.length, 10);
       const pk = side === 'my' ? SD.pick.indexOf(i) : -1;
       el.classList.toggle('picked', pk >= 0);
       el.classList.toggle('filled', !!m);

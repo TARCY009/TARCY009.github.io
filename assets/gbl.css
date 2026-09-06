@@ -1822,28 +1822,34 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 /* 名前(入力欄そのもの)とCPを同じ行に。埋まっているときは枠を消して**名前の見出しのように**見せる */
 .sdslot .sdname{display:flex;align-items:baseline;gap:3px;min-width:0}
 .sdslot .sdname .sugg{flex:1 1 auto;min-width:0}
-.sdslot .sdcp{flex:0 0 auto;font-size:.74rem;font-weight:900;color:var(--gold);letter-spacing:0;
+.sdslot .sdcp{flex:0 0 auto;font-size:.7rem;font-weight:900;color:var(--gold);letter-spacing:0;
   white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.45)}
 .sdslot .sdcp i{font-style:normal;font-size:.56rem;font-weight:800;margin-right:1px;opacity:.85}
 :root.light .sdslot .sdcp{color:#a06a00;text-shadow:0 1px 0 rgba(255,255,255,.7)}
 /* 名前を打ちかえるときはCPを隠して、入力欄に幅をぜんぶ渡す */
-.sdslot .sdname:focus-within .sdcp{display:none}
+.sdslot.editing .sdname .sdcp,.sdslot .sdname:focus-within .sdcp{display:none}
 .sdslot .sugg input{padding:5px 6px;font-weight:700}
 /* 埋まっているときの入力欄は「名前の見出し」に見せる。
    ⚠ 表示は小さくしてよいが、**フォーカス時は必ず16px**にすること——
    iOSは触れた時点の文字が16px未満だと画面を勝手に拡大して戻らない(恒久ルール) */
 .sdslot.filled .sugg input{background:transparent;border-color:transparent;font-weight:800;
-  padding:3px 1px;font-size:.9rem;letter-spacing:-.02em}
-.sdslot.filled .sugg input[data-len="5"]{font-size:.8rem}
-.sdslot.filled .sugg input[data-len="6"]{font-size:.68rem}
-.sdslot.filled .sugg input[data-len="7"]{font-size:.58rem}
-.sdslot.filled .sugg input[data-len="8"]{font-size:.5rem}
+  padding:3px 1px;font-size:.92rem;letter-spacing:-.02em}
+.sdslot.filled .sugg input[data-len="5"]{font-size:.84rem}
+.sdslot.filled .sugg input[data-len="6"]{font-size:.72rem}
+.sdslot.filled .sugg input[data-len="7"]{font-size:.64rem}
+.sdslot.filled .sugg input[data-len="8"]{font-size:.58rem}
 .sdslot.filled .sugg input[data-len="9"],
-.sdslot.filled .sugg input[data-len="10"],
-.sdslot.filled .sugg input[data-len="11"],
-.sdslot.filled .sugg input[data-len="12"]{font-size:.44rem}
-.sdslot.filled .sugg input:focus{background:var(--panel);border-color:var(--gl);
-  padding:5px 6px;font-size:16px;letter-spacing:0}
+.sdslot.filled .sugg input[data-len="10"]{font-size:.56rem}
+/* 入力中は欄を2列ぶんに広げる。iOSは触れた時点の字が16px未満だと画面を勝手に拡大して
+   戻らないので**16pxは外せない**——そのぶん欄を広げて、長い名前でも読めるようにする */
+.sdslot .sugg{position:relative}
+.sdslot.filled.editing .sugg input,
+.sdslot.filled .sugg input:focus{position:absolute;top:0;left:0;z-index:30;
+  width:calc(200% + 9px);background:var(--panel);border-color:var(--gl);
+  padding:6px 8px;font-size:16px;letter-spacing:0;
+  box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.sdteams .sdslots .sdslot:nth-child(even).editing .sugg input,
+.sdteams .sdslots .sdslot:nth-child(even) .sugg input:focus{left:auto;right:0}
 .sdslot .sugg-list{min-width:215px;font-size:.8rem}
 .sdteams .sdslots .sdslot:nth-child(even) .sugg-list{left:auto;right:0}
 /* 選出済み(じぶん側)は水色のリングと丸数字 */
@@ -1872,15 +1878,13 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   .sdslot .sdcp{font-size:.58rem}
   .sdslot .sdcp i{font-size:.5rem}
   .sdslot .sdname{gap:2px}
-  .sdslot.filled .sugg input{font-size:.76rem}
-  .sdslot.filled .sugg input[data-len="5"]{font-size:.64rem}
-  .sdslot.filled .sugg input[data-len="6"]{font-size:.54rem}
-  .sdslot.filled .sugg input[data-len="7"]{font-size:.46rem}
-  .sdslot.filled .sugg input[data-len="8"],
+  .sdslot.filled .sugg input{font-size:.8rem}
+  .sdslot.filled .sugg input[data-len="5"]{font-size:.68rem}
+  .sdslot.filled .sugg input[data-len="6"]{font-size:.58rem}
+  .sdslot.filled .sugg input[data-len="7"]{font-size:.52rem}
+  .sdslot.filled .sugg input[data-len="8"]{font-size:.48rem}
   .sdslot.filled .sugg input[data-len="9"],
-  .sdslot.filled .sugg input[data-len="10"],
-  .sdslot.filled .sugg input[data-len="11"],
-  .sdslot.filled .sugg input[data-len="12"]{font-size:.42rem}
+  .sdslot.filled .sugg input[data-len="10"]{font-size:.46rem}
 }
 .sdteams .sdslots[data-s="my"] .pslot{grid-column:1}
 .sdteams .sdslots[data-s="foe"] .pslot{grid-column:2}
@@ -1994,8 +1998,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdmh .tbadge{flex:0 0 auto;width:12px;height:12px}
 .sdfh .tbadge{width:12px;height:12px}
 .sdmr:hover .sdmh{border-color:var(--cy)}
-.sdmr.on .sdmh{border-color:transparent;color:#042330;
+.sdmr.on .sdmh{border-color:transparent;color:#0d2547;
   background:linear-gradient(160deg,#7fe9f7 0%,#22c7e0 45%,#0b8ba3 100%)}
+.sdmr.on .sdmh b{font-weight:900;color:#0d2547}
 .sdmr.on .sdmh .no{color:#042330}
 .sdmr.on .sdw{border-color:rgba(34,199,224,.55)}
 .sdmr.dim .sdmh{opacity:.5}
