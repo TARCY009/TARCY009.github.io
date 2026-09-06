@@ -7164,11 +7164,14 @@ function sdSuggHtml() {
   // いま選んでいる3匹と同じ候補には印を付ける(同じものが2つ並んで見えるのを防ぐ)
   const same = r => d.cur && r.order.length === SD.pick.length &&
     r.order.every((k, j) => SD.pick[j] === k);
-  const rows = d.rows.map((r, i) => `<button class="sdsg${same(r) ? ' on' : ''}" data-i="${i}" title="${r.tip}">
-      <span class="sdsgh"><b class="sdsgl">${r.label}</b>${same(r) ? '<i class="sdsgnow">いまこれ</i>' : ''}${sdTierBar(r.c.tier, d.foe, n)}
-        <i class="sdsgn">穴${r.c.holes}／1匹頼み${r.c.n1}／2匹勝ち${d.nFoe - r.c.holes - r.c.n1}</i></span>
+  // 候補の行は「帯 ＋ 3匹を1行3列」だけにする(2026-09-06タダシさん指示)。
+  // 札(どの見かたでもこれ)と数字(穴1／1匹頼み1…)は消し、シャドウはマークで表す(恒久ルール)。
+  // タイプアイコンも出さない——3列に収めると名前が切れるので、**名前を優先**する
+  const rows = d.rows.map((r, i) => `<button class="sdsg${same(r) ? ' on' : ''}" data-i="${i}" ` +
+    `title="${r.label}／${r.tip}（穴${r.c.holes}・1匹頼み${r.c.n1}・2匹勝ち${d.nFoe - r.c.holes - r.c.n1}）">
+      <span class="sdsgh">${sdTierBar(r.c.tier, d.foe, n)}${same(r) ? '<i class="sdsgnow">いまこれ</i>' : ''}</span>
       <span class="sdsgp">${r.order.map((k, j) =>
-        `<span class="sdchip"><i class="no">${j + 1}</i>${typeIcons(D.pokemon[SD.my[k].key], 15)}<b>${ptName(SD.my[k])}</b></span>`).join('')}</span>
+        `<span class="sdchip"><i class="no">${j + 1}</i><b>${shMark(ptName(SD.my[k]))}</b></span>`).join('')}</span>
     </button>`).join('');
   return `<div class="sdrow sdsug">
     <div class="sdlbl"><button class="sdsugtab" aria-expanded="${SD.sug}">🔧 こんな選び方もあります</button>

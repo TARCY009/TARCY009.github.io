@@ -2124,9 +2124,19 @@ button.sdchip.on .tbadge{filter:none}
 .sdsg.on{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy),0 2px 0 var(--tabsh)}
 .sdsgnow{font-style:normal;font-size:.6rem;font-weight:800;color:#042330;background:var(--cy);
   padding:2px 7px;border-radius:999px;white-space:nowrap}
-.sdsgp{display:flex;flex-wrap:wrap;gap:4px}
-.sdsgp .sdchip{padding:3px 8px;font-size:.68rem}
-@media (max-width:520px){
-  .sdsgn{flex:1 0 100%}
-  .sdsgp .sdchip{font-size:.64rem;padding:3px 6px}
+/* 3匹は**1行3列**に並べる(2行に折り返さない)。名前を読ませたいので、
+   タイプアイコンは出さずに幅を名前へ回す */
+.sdsgp{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.sdsgp .sdchip{padding:5px 7px;font-size:.64rem;min-width:0;justify-content:flex-start;gap:4px}
+.sdsgp .sdchip b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sdsgp .sdchip .shadowmark{flex:0 0 auto}
+@media (max-width:400px){
+  .sdsgp{gap:4px}
+  .sdsgp .sdchip{font-size:.58rem;padding:5px 5px;gap:3px}
+  .sdsgp .sdchip .no{flex:0 0 13px;width:13px;height:13px;font-size:.54rem}
+}
+@media (max-width:360px){
+  .sdsgp{gap:3px}
+  .sdsgp .sdchip{font-size:.52rem;padding:5px 3px;gap:2px}
+  .sdsgp .sdchip .no{flex:0 0 12px;width:12px;height:12px;font-size:.5rem}
 }
