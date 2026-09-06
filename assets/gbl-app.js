@@ -9031,6 +9031,9 @@ function gbRender(body, bt, picks, foes) {
   const ckOf = gt => gt + GB_SP_TURNS *
     (spByGt.length ? spByGt[Math.max(0, Math.min(gt, spByGt.length - 1))] : 0);
   let alive0 = picks.length, alive1 = foes.length;
+  // 見せ合い用: **場に出て名前が分かった匹**と**たおれた匹**をビットで持つ(3匹なので0〜7)。
+  // 下のフレームの3匹の枠が、判明するたびに名前を出し、ひんしになったら暗くする
+  let sn0 = 0, sn1 = 0, dd0 = 0, dd1 = 0;
   let sh0 = 2, sh1 = 2;
   const shMax0 = 2, shMax1 = 2;
   // わざオート中に**判明したあいてのSP**(2026-09-01タダシさん指示): 一度撃ったわざは正体が分かるので、
@@ -9078,6 +9081,7 @@ function gbRender(body, bt, picks, foes) {
     let g0 = leg.hud.g0 || null, g1 = leg.hud.g1 || null;   // ウッウのフォルム(咥えているか)
     // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける。
     // 開幕交代(どちらの側も)はVSに続けて交代の演出を出す
+    sn0 |= 1 << leg.myIdx; sn1 |= 1 << leg.foeIdx;   // この対面で場に出た＝名前が分かった
     const pv = bt.legs[leg.li - 1] || null;
     const fxv = !pv ? [{ k: 'vs', me: leg.meName, foe: leg.foeName }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
@@ -9105,7 +9109,7 @@ function gbRender(body, bt, picks, foes) {
         <div class="c foe">${leg.swapHit.side === 0 ? cell : ''}</div></div>` });
     }
     frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
-      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
+      b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
     // 側ごとのSPが実際に発動したターンの一覧(seq番目のSP→spTn[side][seq])。
@@ -9156,7 +9160,7 @@ function gbRender(body, bt, picks, foes) {
       spByGt[gt] = spSeen;
       if (!partial) {
         frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
-          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
       } else {
         const pf = frames[gt - 1] || frames[base];
         // 決断待ちのターンでも、**すでに解決した出来事(先に撃った側のSPなど)はHPに反映する**
@@ -9169,7 +9173,7 @@ function gbRender(body, bt, picks, foes) {
           if (i === 0) hp1p = Math.max(0, hp1p - dm); else hp0p = Math.max(0, hp0p - dm);
         }
         frames[gt] = { meta, hp0: hp0p, en0: pf.en0, hp1: hp1p, en1: pf.en1,
-          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
+          b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
       }
       let first = true;
       for (const r of subs) {
@@ -9201,13 +9205,13 @@ function gbRender(body, bt, picks, foes) {
     });
     const endGt = base + res.turns;
     if (!pend) {
-      if (leg.foeDown) { alive1--; items.push({ gt: endGt, fx: [{ k: 'ko', win: true, name: leg.foeName }],
+      if (leg.foeDown) { alive1--; dd1 |= 1 << leg.foeIdx; items.push({ gt: endGt, fx: [{ k: 'ko', win: true, name: leg.foeName }],
         html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
-      if (leg.meDown) { alive0--; items.push({ gt: endGt, fx: [{ k: 'ko', name: leg.meName }],
+      if (leg.meDown) { alive0--; dd0 |= 1 << leg.myIdx; items.push({ gt: endGt, fx: [{ k: 'ko', name: leg.meName }],
         html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
       if (leg.meDown || leg.foeDown) {
         const f = frames[endGt] || frames[endGt - 1];
-        if (f) frames[endGt] = { ...f, alive0, alive1 };
+        if (f) frames[endGt] = { ...f, alive0, alive1, dd0, dd1 };
       }
     }
     if (leg.nextPoint) items.push(chipItem(leg.nextPoint, endGt));
@@ -9255,6 +9259,7 @@ function gbRender(body, bt, picks, foes) {
         <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
+          ${sdOn() ? '<div class="hteam" title="選んだ3匹。たおれた匹は暗くなります"></div>' : ''}
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
@@ -9263,6 +9268,7 @@ function gbRender(body, bt, picks, foes) {
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
+          ${sdOn() ? '<div class="hteam" title="あいての3匹。場に出て名前が分かった匹だけ出ます（たおれた匹は暗くなります）"></div>' : ''}
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
       </div>
@@ -9308,7 +9314,7 @@ function gbRender(body, bt, picks, foes) {
   const hud = dock.querySelector('.rbhud');
   const sideRefs = side => {
     const el = hud.querySelector('.hs.' + side);
-    return { nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
+    return { team: el.querySelector('.hteam'), nm: el.querySelector('.nm'), cp: el.querySelector('.cp'), bar: el.querySelector('.hb i'),
       ghost: el.querySelector('.hb em'),
       hpn: el.querySelector('.hpn'),
       balls: el.querySelector('.balls'), shds: el.querySelector('.shds'),
@@ -9378,6 +9384,17 @@ function gbRender(body, bt, picks, foes) {
     };
     const GQC_ME = ['#43e0ff', '#ffd54a', '#ff6b81'], GQC_FOE = ['#ffd54a', '#ff6b81', '#b06cff'];
     let cols = GQC_ME;
+    // 見せ合いの3匹の枠。**場に出て名前が分かった匹だけ**名前を出し、たおれた匹は暗くする
+    // (2026-09-07タダシさん指示。じぶん側は最初から全部わかっているのでそのまま出す)
+    const teamHtml = (list, seen, dead, mine) => list.map((m, i) => {
+      const ok = mine || ((seen >> i) & 1), ko = (dead >> i) & 1;
+      // 枠が狭いので括弧の中(フォルム名)は落とす。全部の名前は長押し・マウスで出る
+      return `<span class="hpk${ok ? '' : ' unk'}${ko ? ' ko' : ''}"${ok ? ` title="${m.name}"` : ''}>${
+        ok ? shMark(m.name.replace(/（.*）/, '')) : '？'}</span>`;
+    }).join('');
+    if (R0.team) R0.team.innerHTML = teamHtml(picks, f.sn0 || 0, f.dd0 || 0, true);
+    // スタート前は初手も伏せる(VSカードと同じ＝場に出るまで分からない)
+    if (R1.team) R1.team.innerHTML = teamHtml(foes, mask ? 0 : (f.sn1 || 0), f.dd1 || 0, false);
     set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
     set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);

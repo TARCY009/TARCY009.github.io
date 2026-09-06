@@ -918,6 +918,25 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
    浮いて重なる(2026-09-06タダシさん報告)。スタート前だけ通常の流れに戻して下に置く
    (バトル中は .bfull、決着後は従来どおり sticky のまま) */
 .prestart .rbdock{position:static;margin-top:12px}
+/* 見せ合いのHUDに出す「3匹の枠」。名前が分かった匹だけ出し、たおれた匹は暗くする
+   (未判明は「？」の細い枠にして、分かっている名前に幅を回す) */
+.hteam{display:flex;gap:3px;margin-top:4px;width:100%}
+.hteam .hpk{flex:1 1 0;min-width:0;padding:2px 3px;border-radius:5px;
+  font-size:.56rem;font-weight:800;line-height:1.3;text-align:center;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--ink)}
+.hteam .hpk.unk{flex:0 0 17px;padding:2px 0;color:var(--sub)}
+.hteam .hpk.ko{opacity:.35}
+.hs.me .hteam .hpk{border-color:rgba(67,224,255,.28)}
+.hs.foe .hteam .hpk{border-color:rgba(255,213,74,.28)}
+/* ⚠ 3匹の枠は**鏡写しにしない**。並びに「1匹目→3匹目」の意味があるので、
+   逆順にすると名前を読む向きと食い違う(鏡にするのは要素の並びであって読み順ではない) */
+:root.light .hteam .hpk{background:rgba(40,60,120,.07)}
+@media (max-width:360px){
+  .hteam{gap:2px}
+  .hteam .hpk{font-size:.48rem;padding:2px 1px}
+  .hteam .hpk.unk{flex:0 0 14px}
+}
 /* 見せ合いのスタート前は、VSカードのあいてを伏せる(場に出るまで分からないルール) */
 .sdmask .flg .foe .fnm{display:none}
 .sdmask .flg .foe::after{content:'？？？';font-weight:800;color:var(--sub);letter-spacing:.06em}
