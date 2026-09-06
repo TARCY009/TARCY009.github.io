@@ -1739,7 +1739,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdteams{display:block!important;margin-top:2px}
 .sdteams .rkteamcol{display:block}
 .sdteams .rkteamcol+.rkteamcol{margin-top:15px}
-.sdteams .sdslots{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
+.sdteams .sdslots{display:grid!important;grid-template-columns:1fr 1fr;gap:11px 9px;margin-top:8px}
 .sdteams .sdslot{grid-column:auto!important;grid-row:auto!important}
 .sdteams .rkcolttl{font-size:.78rem;font-weight:800;padding-left:9px;position:relative}
 .sdteams .rkcolttl::before{content:'';position:absolute;left:0;top:3px;height:15px;width:3px;border-radius:2px;
@@ -1762,6 +1762,20 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdslot{position:relative;padding:0;border-radius:14px;min-width:0;
   border:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),var(--panel));
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.05)}
+/* 入っているカードだけ少し浮かせる(2026-09-06タダシさん指示)。
+   色つきのにじみは使わない(恒久ルール)ので、**黒のぼかし影＋上の光沢＋下端の締め**だけで立体にする。
+   空の枠は浮かせない——「まだ入っていない」を沈んだ見た目で示すため */
+/* 暗い背景では黒い影が効きにくいので、影を強めにして**上端の光**も一段上げる */
+.sdslot.filled{box-shadow:
+  0 7px 16px rgba(0,0,0,.46),
+  0 2px 0 var(--tabsh),
+  inset 0 1px 0 rgba(255,255,255,.13),
+  inset 0 -1px 0 rgba(0,0,0,.32)}
+:root.light .sdslot.filled{box-shadow:
+  0 6px 13px rgba(70,80,120,.17),
+  0 2px 0 var(--tabsh),
+  inset 0 1px 0 rgba(255,255,255,.9),
+  inset 0 -1px 0 rgba(70,80,120,.09)}
 .sdslot:not(.filled){border-style:dashed}
 .sdslot .sdbar{display:block;height:4px;border-radius:14px 14px 0 0;background:var(--line)}
 .sdslot.filled .sdbar{background:linear-gradient(90deg,var(--tc1,var(--line)),var(--tc2,var(--line)))}
@@ -1771,7 +1785,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   border-radius:0 0 60% 60%/0 0 18px 18px;
   background:linear-gradient(180deg,rgba(255,255,255,.075),transparent)}
 :root.light .sdslot .sdin::before{background:linear-gradient(180deg,rgba(255,255,255,.5),transparent)}
-.sdslot.filled:active{transform:translateY(1px)}
+.sdslot.filled:active{transform:translateY(2px);box-shadow:
+  0 2px 5px rgba(0,0,0,.3),0 1px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.06)}
+:root.light .sdslot.filled:active{box-shadow:
+  0 2px 5px rgba(70,80,120,.14),0 1px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.8)}
 /* 上段: タイプアイコン(左)と操作ボタン(右) */
 .sdslot .sdtop{display:flex;align-items:center;gap:4px;min-height:20px}
 .sdslot .sdty{display:flex;gap:2px;min-width:0}
@@ -1810,7 +1827,16 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdslot .sugg-list{min-width:215px;font-size:.8rem}
 .sdteams .sdslots .sdslot:nth-child(even) .sugg-list{left:auto;right:0}
 /* 選出済み(じぶん側)は水色のリングと丸数字 */
-.sdslot.picked{border-color:transparent;box-shadow:0 0 0 2px var(--cy),0 2px 0 var(--tabsh)}
+.sdslot.picked{border-color:transparent;box-shadow:
+  0 0 0 2px var(--cy),
+  0 8px 18px rgba(0,0,0,.5),
+  0 2px 0 var(--tabsh),
+  inset 0 1px 0 rgba(255,255,255,.14)}
+:root.light .sdslot.picked{box-shadow:
+  0 0 0 2px var(--cy),
+  0 7px 15px rgba(70,80,120,.2),
+  0 2px 0 var(--tabsh),
+  inset 0 1px 0 rgba(255,255,255,.9)}
 .sdslot.picked::after{content:attr(data-no);position:absolute;top:-8px;left:-6px;z-index:2;
   width:22px;height:22px;display:flex;align-items:center;justify-content:center;
   font-size:.78rem;font-weight:900;color:#042330;border-radius:50%;
