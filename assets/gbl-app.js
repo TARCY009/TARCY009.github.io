@@ -7007,7 +7007,7 @@ function syncSdSlots() {
       const pk = side === 'my' ? SD.pick.indexOf(i) : -1;
       el.classList.toggle('picked', pk >= 0);
       el.classList.toggle('filled', !!m);
-      el.dataset.no = pk >= 0 ? ['①', '②', '③'][pk] : '';
+      el.dataset.no = pk >= 0 ? String(pk + 1) : '';
       if (!m) {
         fb.style.display = 'none';
         ty.innerHTML = '';
@@ -7099,7 +7099,7 @@ function sdGridHtml() {
   const d = sdSuggest();
   if (!d) return '';
   const { my, foe, W, nFoe, cur } = d;
-  const n = 3, NO = ['①', '②', '③'];
+  const n = 3, NO = ['1', '2', '3'];
   const done = SD.pick.length === 3;
   // あいての見出しは**縦書き**。1マス40px前後しか取れないので、横書きだと名前が入らない
   const head = foe.map(i => {
@@ -7114,7 +7114,7 @@ function sdGridHtml() {
       const w = W[k][j];
       return `<td class="sdw w${w}" title="${ptName(m)} 対 ${ptName(SD.foe[fi])}／${SD_MKN[w]}（${SD_MKT[w]}）">${SD_MK[w]}</td>`;
     }).join('');
-    const tip = p >= 0 ? `${NO[p]}番目に出します（もう一度押すと外れます）`
+    const tip = p >= 0 ? `${p + 1}番目に出します（もう一度押すと外れます）`
       : done ? '3匹そろっています（どれかを外すと選び直せます）' : '押すと選出に入ります';
     return `<tr class="sdmr${p >= 0 ? ' on' : ''}${done && p < 0 ? ' dim' : ''}" data-i="${i}" title="${tip}"` +
       ` role="button" tabindex="0" aria-pressed="${p >= 0}">` +
@@ -7136,14 +7136,14 @@ function sdGridHtml() {
   const sum = cur ? `<div class="sdsum ${cur.holes ? 'bad' : 'ok'}"><b>穴${cur.holes}</b>／1匹頼み${cur.n1}／2匹勝ち${nFoe - cur.holes - cur.n1}` +
     `<i>${cur.holes ? '穴＝3匹とも勝てない相手です' : '穴なし＝どの相手にも勝てる1匹がいます'}（いちばん下の数字＝その相手に勝てる味方の数）</i></div>` : '';
   return `<div class="sdgrid">
-    <div class="sdglbl">相性表<small><b>行を押すと選出</b>です（押した順が①②③の並び順）<span class="expl">。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</span></small></div>
+    <div class="sdglbl">相性表<small><b>行を押すと選出</b>です（押した順が並び順）<span class="expl">。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</span></small></div>
     <div class="sdgwrap"><table class="sdtbl">
       <thead><tr class="sdhh"><th class="sdch" rowspan="2">${ixHtml}</th>
       <th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
       <tr>${head}</tr></thead>
       <tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>
     ${sum}
-    <div class="sdleg">${SD_MK.map((mk, w) => `<span class="w${w}"><i>${mk}</i>${SD_MKN[w]}</span>`).join('')}
+    <div class="sdleg expl">${SD_MK.map((mk, w) => `<span class="w${w}"><i>${mk}</i>${SD_MKN[w]}</span>`).join('')}
       <small>🛡0-0／1-1／2-2 の3通りで戦った結果です</small></div>
   </div>`;
 }
@@ -7160,11 +7160,11 @@ function sdSuggHtml() {
       <span class="sdsgh"><b class="sdsgl">${r.label}</b>${same(r) ? '<i class="sdsgnow">いまこれ</i>' : ''}${sdTierBar(r.c.tier, d.foe, n)}
         <i class="sdsgn">穴${r.c.holes}／1匹頼み${r.c.n1}／2匹勝ち${d.nFoe - r.c.holes - r.c.n1}</i></span>
       <span class="sdsgp">${r.order.map((k, j) =>
-        `<span class="sdchip"><i class="no">${['①', '②', '③'][j]}</i>${typeIcons(D.pokemon[SD.my[k].key], 15)}<b>${ptName(SD.my[k])}</b></span>`).join('')}</span>
+        `<span class="sdchip"><i class="no">${j + 1}</i>${typeIcons(D.pokemon[SD.my[k].key], 15)}<b>${ptName(SD.my[k])}</b></span>`).join('')}</span>
     </button>`).join('');
   return `<div class="sdrow sdsug">
     <div class="sdlbl"><button class="sdsugtab" aria-expanded="${SD.sug}">🔧 こんな選び方もあります</button>
-      ${SD.sug ? '<small>あいての6匹すべてへの相性で選んだ候補です。<b>正解はありません</b>ので、好みで選んでください（押すとその3匹が入ります）</small>' : ''}</div>
+      ${SD.sug ? '<small>あいての6匹すべてへの相性で選んだ候補です。<b>正解はありません</b>ので、好みで選んでください<span class="expl">（押すとその3匹が入ります）</span></small>' : ''}</div>
     ${SD.sug ? '<div class="sdsgs">' + rows + '</div>' : ''}
   </div>`;
 }

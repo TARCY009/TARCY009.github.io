@@ -1851,11 +1851,13 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   0 7px 15px rgba(70,80,120,.2),
   0 2px 0 var(--tabsh),
   inset 0 1px 0 rgba(255,255,255,.9)}
-.sdslot.picked::after{content:attr(data-no);position:absolute;top:-8px;left:-6px;z-index:2;
-  width:22px;height:22px;display:flex;align-items:center;justify-content:center;
-  font-size:.78rem;font-weight:900;color:#042330;border-radius:50%;
-  background:linear-gradient(160deg,#7fe9f7 0%,#22c7e0 45%,#0b8ba3 100%);
-  box-shadow:0 1px 3px rgba(0,0,0,.45)}
+.sdslot.picked::after{content:attr(data-no);position:absolute;top:-8px;left:-7px;z-index:2;
+  width:23px;height:23px;display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-weight:900;color:#04222e;border-radius:50%;
+  background:linear-gradient(160deg,#bdf4ff 0%,#4bd9f2 42%,#0e86a0 100%);
+  box-shadow:0 2px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 1px rgba(0,0,0,.25);
+  text-shadow:0 1px 0 rgba(255,255,255,.45)}
 @media (max-width:360px){
   .sdteams .sdslots{gap:6px}
   .sdslot .sdin{padding:5px 6px 7px}
@@ -1959,7 +1961,22 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdmh{text-align:left;background:var(--bg2);border:1px solid var(--line);border-right:none;
   border-radius:9px 0 0 9px;padding:4px 2px 4px 5px!important;font-weight:700}
 .sdmh .in{display:flex;align-items:center;gap:2px;min-width:0}
-.sdmh .no{font-style:normal;font-weight:900;font-size:.82rem;color:var(--cy);flex:0 0 12px}
+/* 並び順(1〜3)のバッジ。真っ白の数字だと素っ気ないので、**水色の球のような立体**にする。
+   選出中の行は名前列が水色に塗られるので、そこでは**濃紺に反転**させて沈まないようにする */
+.sdmh .no,.sdchip .no{display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 17px;width:17px;height:17px;border-radius:50%;font-style:normal;
+  font-size:.64rem;font-weight:900;line-height:1;color:#04222e;
+  background:linear-gradient(160deg,#bdf4ff 0%,#4bd9f2 42%,#0e86a0 100%);
+  box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 1px rgba(0,0,0,.25);
+  text-shadow:0 1px 0 rgba(255,255,255,.45)}
+.sdmh .no:empty{background:none;box-shadow:none}
+/* 選出中の行は名前列が水色に塗られるので、球は**白く**して数字を濃紺で抜く
+   (暗い球にすると数字が沈んで「黒い穴」に見えた) */
+.sdmr.on .sdmh .no{color:#04222e;
+  background:linear-gradient(160deg,#fff 0%,#e4faff 45%,#96dcee 100%);
+  box-shadow:0 1px 3px rgba(0,0,0,.38),inset 0 1px 0 #fff,inset 0 -1px 1px rgba(0,0,0,.18);
+  text-shadow:none}
 .sdmh b{font-weight:700;font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sdmh .tbadge{flex:0 0 auto;width:12px;height:12px}
 .sdfh .tbadge{width:12px;height:12px}
@@ -2005,6 +2022,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdsum i{display:block;font-style:normal;font-size:.62rem;margin-top:2px}
 .sdleg{display:flex;flex-wrap:wrap;align-items:center;gap:3px 9px;margin-top:6px;
   font-size:.6rem;color:var(--sub)}
+/* ⚠ .sdleg の display:flex は .expl{display:none} と詳細度が同じで後勝ちしてしまう。
+   説明モードの出し入れは、この2行で明示する(このサイトで何度も踏んでいる落とし穴) */
+.sdleg.expl{display:none}
+.explain .sdleg.expl{display:flex}
 .sdleg span{display:inline-flex;align-items:center;gap:3px}
 .sdleg i{font-style:normal;font-weight:900;font-size:.74rem}
 .sdleg .w0 i{color:var(--lose)}
@@ -2041,7 +2062,7 @@ button.sdchip.on{border-color:transparent;color:#042330;font-weight:800;
   background:linear-gradient(160deg,#7fe9f7 0%,#22c7e0 45%,#0b8ba3 100%);
   box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
 button.sdchip.on .tbadge{filter:none}
-.sdchip .no{font-style:normal;font-weight:900;font-size:.86rem;margin-right:1px}
+.sdchip .no{margin-right:2px;flex:0 0 15px;width:15px;height:15px;font-size:.58rem}
 .sdlead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .sdreset{padding:4px 12px;font-size:.66rem;font-weight:700;border-radius:999px;cursor:pointer;
   color:var(--sub);background:var(--bg2);border:1px solid var(--line);font-family:inherit}
