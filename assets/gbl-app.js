@@ -6876,21 +6876,27 @@ function buildSdSlots(side) {
   const box = document.querySelector('#sdwrap .sdslots[data-s="' + side + '"]');
   if (!box) return;
   const A = SD[side];
+  // 2列×3行のカード(2026-09-06タダシさん指示)。タイプの色をカードの地に使う＝ゲームらしい見た目にする。
+  // 番号(1〜6)は出さない——見せ合いの登録順に意味は無く(並び順は選出で決める)、場所を取るだけだった
   box.innerHTML = [0, 1, 2, 3, 4, 5].map(i => `<div class="pslot fslot sdslot" data-i="${i}">
-    <div class="phd"><span class="pnum">${i + 1}</span>
-      <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）として計算する"><i class="shadowmark"></i></button>
-      ${side === 'my' ? '<button class="pstar" title="★登録リストから選ぶ（自分の個体値で計算できます）">★</button>' : ''}
-      <button class="pclr" title="この枠を空にする">×</button></div>
-    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
-    ${side === 'my' ? '<div class="popwin pstarwin" style="display:none"></div>' : ''}
-    <div class="fbody" style="display:none">
-      <details class="sdmv"><summary class="mvsum"></summary>
-        <select class="selFast" title="ノーマルアタック"></select>
-        <select class="selC1" title="SPアタック1"></select>
-        <select class="selC2" title="SPアタック2（2本目を開放していないなら「ー」）"></select>
-      </details>
-      <div class="fstat"></div>
-      <div class="gmlv"></div>
+    <i class="sdbar"></i>
+    <div class="sdin">
+      <div class="sdtop"><span class="sdty"></span>
+        <span class="sdops">
+          <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）として計算する"><i class="shadowmark"></i></button>
+          ${side === 'my' ? '<button class="pstar" title="★登録リストから選ぶ（自分の個体値で計算できます）">★</button>' : ''}
+          <button class="pclr" title="この枠を空にする">×</button></span></div>
+      <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+      ${side === 'my' ? '<div class="popwin pstarwin" style="display:none"></div>' : ''}
+      <div class="fbody" style="display:none">
+        <div class="fstat"></div>
+        <details class="sdmv"><summary class="mvsum"></summary>
+          <select class="selFast" title="ノーマルアタック"></select>
+          <select class="selC1" title="SPアタック1"></select>
+          <select class="selC2" title="SPアタック2（2本目を開放していないなら「ー」）"></select>
+        </details>
+        <div class="gmlv"></div>
+      </div>
     </div>
   </div>`).join('');
   box.querySelectorAll('.sdslot').forEach(el => {
@@ -6992,10 +6998,24 @@ function syncSdSlots() {
       if (A[i] && !D.pokemon[A[i].key]) { A[i] = null; saveSd(); }
       const m = A[i];
       const fb = el.querySelector('.fbody');
+      const ty = el.querySelector('.sdty');
       el.querySelector('.pshadow').setAttribute('aria-pressed', !!(m && m.shadow));
-      el.querySelector('input').value = m ? ptName(m) : '';
-      el.classList.toggle('picked', side === 'my' && SD.pick.includes(i));
-      if (!m) { fb.style.display = 'none'; return; }
+      el.querySelector('input').value = m ? (D.pokemon[m.key] ? D.pokemon[m.key].n : '') : '';
+      const pk = side === 'my' ? SD.pick.indexOf(i) : -1;
+      el.classList.toggle('picked', pk >= 0);
+      el.classList.toggle('filled', !!m);
+      el.dataset.no = pk >= 0 ? ['①', '②', '③'][pk] : '';
+      if (!m) {
+        fb.style.display = 'none';
+        ty.innerHTML = '';
+        el.style.removeProperty('--tc1'); el.style.removeProperty('--tc2');
+        return;
+      }
+      // タイプの色をカードの地とふちに使う(ゲームらしい見た目にする)
+      ty.innerHTML = typeIcons(D.pokemon[m.key], 14);
+      const tys = D.pokemon[m.key].ty.map(t => D.typeJa[t]);
+      const c1 = typeColorOf(tys[0]), c2 = typeColorOf(tys[1] || tys[0]) || c1;
+      if (c1) { el.style.setProperty('--tc1', c1.top); el.style.setProperty('--tc2', (c2 || c1).bot); }
       fb.style.display = 'block';
       const { fasts, chargeds } = movePool(m.key);
       // ⚠「おぼえるわざ」に無いだけで巻き戻してはいけない。直すのは「データから消えたわざ」だけ
@@ -7015,7 +7035,7 @@ function syncSdSlots() {
       const st = PvpEngine.buildStats(D, base);
       const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
       el.querySelector('.fstat').innerHTML =
-        `${typeIcons(D.pokemon[m.key], 15)} CP${st.cp}・PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}` +
+        `<b title="PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}">CP${st.cp}</b>` +
         overCapTag(base);
       const gm = el.querySelector('.gmlv');
       gm.innerHTML = hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '';
@@ -7034,6 +7054,10 @@ function syncSdSlots() {
 // **その行を押すことがそのまま選出**になる(押した順が①②③の並び順)。
 // 表のいちばん下に「選んだ3匹で、その相手に勝てる味方の数」を出すので、
 // **どの相手が穴なのかが縦に見える**(パーティ診断の穴チェックと同じ色・同じ語彙)
+// 名前を1文字ずつ縦に積む。**CSSの writing-mode は実機のiPhoneで効かなかった**ので、
+// 縦書きは文字ごとの要素で作る(長音符・波線だけ寝かせて縦書きらしく見せる)
+const V_ROT = new Set(['ー', '−', '-', '―', '〜', '～', '(', ')', '（', '）']);
+const vName = n => [...n].map(c => `<i${V_ROT.has(c) ? ' class="r"' : ''}>${c}</i>`).join('');
 const SD_MK = ['✕', '△', '◯', '◎'];   // 🛡3通り中の勝ち数 0/1/2/3
 const SD_MKN = ['負け', '惜しい', '勝ち', '完勝'];
 const SD_MKT = ['シールドの枚数がどれでも負けます', '3通りのうち1通りだけ勝てます（惜しい）',
@@ -7061,8 +7085,9 @@ function sdGridHtml() {
   // あいての見出しは**縦書き**。1マス40px前後しか取れないので、横書きだと名前が入らない
   const head = foe.map(i => {
     const m = SD.foe[i];
-    return `<th class="sdfh" title="${ptName(m)}"><span class="ic">${typeIcons(D.pokemon[m.key], 12)}</span>` +
-      `<span class="nm">${shMark(ptName(m))}</span></th>`;
+    const nm = ptName(m), sh = nm.startsWith('シャドウ');
+    return `<th class="sdfh" title="${nm}"><span class="ic">${typeIcons(D.pokemon[m.key], 12)}</span>` +
+      `<span class="nm" data-len="${(sh ? nm.length - 4 : nm.length)}">${sh ? SHADOWMK : ''}${vName(sh ? nm.slice(4) : nm)}</span></th>`;
   }).join('');
   const rows = my.map((i, k) => {
     const m = SD.my[i], p = SD.pick.indexOf(i);
