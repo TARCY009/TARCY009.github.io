@@ -908,6 +908,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .bfull .rbctlbar{display:none}
 .bfull .rbfeed{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .bfull .rbdock{position:static;margin-top:6px}
+/* ⚠ ドックは sticky なので、**スタート前**は上にある「オートバトル」「結果だけ見る」の行に
+   浮いて重なる(2026-09-06タダシさん報告)。スタート前だけ通常の流れに戻して下に置く
+   (バトル中は .bfull、決着後は従来どおり sticky のまま) */
+.prestart .rbdock{position:static;margin-top:12px}
+/* スタート前（バトル中でないとき）は固定しない＝上の行に重ならない */
+.gbbody:not(.bfull) .rbdock,.rkbody:not(.bfull) .rbdock{position:static;margin-top:12px}
 /* 読み返し中(自動スクロールを止めている間)だけ出る「⬇ 最新へ」。押すと下端へ戻って追従を再開する */
 .hfollow{display:none;margin:0 auto 6px;padding:5px 16px;border:0;border-radius:999px;cursor:pointer;
   font:inherit;font-size:.74rem;font-weight:800;color:#042330;

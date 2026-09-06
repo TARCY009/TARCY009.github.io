@@ -5431,6 +5431,10 @@ function rbRender(body, bt, picks, foes, extra) {
   function updateHud(gt) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
+    // ⚠ スタート前はドックを画面下に貼り付けない(2026-09-06タダシさん報告)。
+    //   sticky のままだと「▶ バトルスタート！」が、上にある
+    //   「オートバトル」「結果だけ見る」の行に重なって見える
+    body.classList.toggle('prestart', !RBV.started);
     const f = frames[Math.max(0, Math.min(gt, stop))];
     if (!f) return;
     const legKey = f.meta.name0 + '|' + f.meta.name1;
@@ -7141,8 +7145,8 @@ function sdGridHtml() {
   const ixHtml = `<div class="sdix ${ixl.c}" title="じぶんの${my.length}匹とあいての${nFoe}匹が、シールド0-0／1-1／2-2の3通りで戦った${my.length * nFoe * 3}通りのうち、じぶんが勝った数の割合です。50%で互角。選出を決める前の「この6匹どうしの相性」を表します">` +
     `<i>6対6の相性</i><b>${ix}<small>%</small></b><em>${ixl.t}</em>` +
     `<span class="sdixyou">↓ じぶんの${my.length}匹</span></div>`;
-  const sum = cur ? `<div class="sdsum ${cur.holes ? 'bad' : 'ok'}"><b>穴${cur.holes}</b>／1匹頼み${cur.n1}／2匹勝ち${nFoe - cur.holes - cur.n1}` +
-    `<i>${cur.holes ? '穴＝3匹とも勝てない相手です' : '穴なし＝どの相手にも勝てる1匹がいます'}（いちばん下の数字＝その相手に勝てる味方の数）</i></div>` : '';
+  // 「穴◯／1匹頼み◯／2匹勝ち◯」の要約は出さない(2026-09-06タダシさん指示)——
+  // 表のいちばん下の行を見れば分かるので、同じことを文章で繰り返さない
   return `<div class="sdgrid">
     <div class="sdglbl">相性表<small><b>行を押すと選出</b>です（押した順が並び順）<span class="expl">。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</span></small></div>
     <div class="sdgwrap"><table class="sdtbl">
@@ -7150,7 +7154,6 @@ function sdGridHtml() {
       <th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
       <tr>${head}</tr></thead>
       <tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>
-    ${sum}
     <div class="sdleg expl">${SD_MK.map((mk, w) => `<span class="w${w}"><i>${mk}</i>${SD_MKN[w]}</span>`).join('')}
       <small>🛡0-0／1-1／2-2 の3通りで戦った結果です</small></div>
   </div>`;
@@ -9281,6 +9284,10 @@ function gbRender(body, bt, picks, foes) {
   function updateHud(gt) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
+    // ⚠ スタート前はドックを画面下に貼り付けない(2026-09-06タダシさん報告)。
+    //   sticky のままだと「▶ バトルスタート！」が、上にある
+    //   「オートバトル」「結果だけ見る」の行に重なって見える
+    body.classList.toggle('prestart', !RBV.started);
     const f = frames[Math.max(0, Math.min(gt, stop))];
     if (!f) return;
     const legKey = f.meta.name0 + '|' + f.meta.name1;
