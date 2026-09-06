@@ -335,6 +335,11 @@ document.getElementById('app').innerHTML = `
       </div>
     </details>
     <div class="sdpick"></div>
+    <!-- 能力変化わざの設定(#gopt)を入れるウィンドウ。**ここは作り直されない場所に置く**
+         (.sdpick は run() のたびに innerHTML を作り直すので、移動して使い回す #gopt を入れられない)。
+         押したボタンのすぐ下に開くよう、選出パネルと提案パネルのあいだに置く -->
+    <div class="popwin sdoptwin" id="sdoptwin" style="display:none"></div>
+    <div class="sdsugbox"></div>
   </div>
   <div class="rkteams" id="mk3">
     <div class="rkteamcol">
@@ -1899,9 +1904,10 @@ function applyMode() {
     detHome();
     detWrap.style.display = 'none';
     if (mock) {
-      // GBL模擬戦: 能力変化わざの設定は枠の下・バトルの上に置く(設定の下に結果、の共通ルール)
+      // GBL模擬戦: 能力変化わざの設定は枠の下・バトルの上に置く(設定の下に結果、の共通ルール)。
+      // 見せ合いのときは「⚙ 能力変化わざ」ボタンのウィンドウの中(sdMoveGopt が受け持つ)
       const anchor = document.querySelector('#mock .gbbody');
-      if (goptEl.nextElementSibling !== anchor) anchor.parentElement.insertBefore(goptEl, anchor);
+      if (!SD.on && goptEl.nextElementSibling !== anchor) anchor.parentElement.insertBefore(goptEl, anchor);
     } else if (rkTeam) {
       const pr = document.querySelector('#rkdetail .rkdprob');
       if (pr && goptEl.parentElement !== pr) pr.appendChild(goptEl);
@@ -7077,6 +7083,7 @@ const sdIxLabel = p => p >= 62 ? { t: 'じぶんが有利', c: 'good' }
   : p > 46 ? { t: 'ほぼ互角', c: 'even' }
   : p > 38 ? { t: 'やや不利', c: 'bad' }
   : { t: 'あいてが有利', c: 'bad' };
+const PROB_LABEL = { none: '不発', avg: '期待値', always: '必ず発動' };
 const SD_MK = ['✕', '△', '◯', '◎'];   // 🛡3通り中の勝ち数 0/1/2/3
 const SD_MKN = ['負け', '惜しい', '勝ち', '完勝'];
 const SD_MKT = ['シールドの枚数がどれでも負けます', '3通りのうち1通りだけ勝てます（惜しい）',
@@ -7086,12 +7093,12 @@ function sdPickHtml() {
   if (my.length < 3 || foe.length < 3)
     return '<div class="mtnote">じぶんとあいてに<b>3匹以上</b>ずつ入れてください（6匹ずつがこのルールの本来の形です）</div>';
   const done = SD.pick.length === 3;
-  const tail = (done ? `<button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に②か③へ交代します（あいての打ちかけの1発は交代先に入ります）。あいても開幕に交代してくることがあります">${SWAPMK}開幕交代</button>` : '')
-    + (SD.pick.length ? '<button class="sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button>' : '');
+  const tail = (done ? `<button class="sdbtn plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に2番目か3番目へ交代します（あいての打ちかけの1発は交代先に入ります）。あいても開幕に交代してくることがあります">${SWAPMK}開幕交代</button>` : '')
+    + (SD.pick.length ? '<button class="sdbtn sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button>' : '')
+    + `<button class="sdbtn sdopt" aria-expanded="false" title="「ねっとう」「かみくだく」など、決まった確率で能力が上下するわざの計算方法を選びます"><i class="gear">⚙</i>能力変化わざ<em>${PROB_LABEL[SIMOPT.buffMode]}</em></button>`;
   return `<div class="sdpickbox">
     ${sdGridHtml()}
     ${tail ? `<div class="sdrow sdlead">${tail}</div>` : ''}
-    ${sdSuggHtml()}
   </div>`;
 }
 // 相性表。**選出のUIそのもの**なので、行がボタンになっている
@@ -7105,8 +7112,9 @@ function sdGridHtml() {
   const head = foe.map(i => {
     const m = SD.foe[i];
     const nm = ptName(m), sh = nm.startsWith('シャドウ');
-    return `<th class="sdfh" title="${nm}"><span class="ic">${typeIcons(D.pokemon[m.key], 12)}</span>` +
-      `<span class="nm" data-len="${(sh ? nm.length - 4 : nm.length)}">${sh ? SHADOWMK : ''}${vName(sh ? nm.slice(4) : nm)}</span></th>`;
+    return `<th class="sdfh" title="${nm}">` +
+      `<span class="nm" data-len="${(sh ? nm.length - 4 : nm.length)}">${sh ? SHADOWMK : ''}${vName(sh ? nm.slice(4) : nm)}</span>` +
+      `<span class="ic">${typeIcons(D.pokemon[m.key], 12)}</span></th>`;
   }).join('');
   const rows = my.map((i, k) => {
     const m = SD.my[i], p = SD.pick.indexOf(i);
@@ -7195,6 +7203,12 @@ function bindSdPick(box) {
   });
   const rs = box.querySelector('.sdreset');
   if (rs) rs.onclick = () => { SD.pick = []; saveSd(); run(); };
+  const ob = box.querySelector('.sdopt'), ow = document.getElementById('sdoptwin');
+  if (ob && ow) ob.onclick = () => {
+    const open = ow.style.display === 'none';
+    ow.style.display = open ? 'block' : 'none';
+    ob.setAttribute('aria-expanded', open);
+  };
   const pl = box.querySelector('.plead');
   if (pl) pl.onclick = () => { MK.leadSwap = !MK.leadSwap; run(); };
 }
@@ -7206,6 +7220,9 @@ function renderSd() {
     b.setAttribute('aria-pressed', (b.dataset.v === '1') === SD.on));
   wrap.style.display = SD.on ? '' : 'none';
   three.style.display = SD.on ? 'none' : '';
+  // ⚠ 早期リターンの前に置く。ここを通さないと、ふつう(3対3)に戻したときに
+  //    能力変化わざの設定が #sdwrap(display:none) の中に取り残されて画面から消える(実際に踏んだ)
+  sdMoveGopt();
   if (!SD.on) return;
   sdDedupe();   // 共有リンク・古い保存に重複が混じっていたら、あとの枠を空にする
   // 枠から消えたポケモンを選出に残さない
@@ -7213,8 +7230,25 @@ function renderSd() {
   syncSdSlots();
   const ent = wrap.querySelector('.sdentry');
   if (ent) ent.open = SD.edit;
-  const box = wrap.querySelector('.sdpick');
-  if (box) { box.innerHTML = sdPickHtml(); bindSdPick(box); }
+  const box = wrap.querySelector('.sdpick'), sug = wrap.querySelector('.sdsugbox');
+  if (box) box.innerHTML = sdPickHtml();
+  if (sug) sug.innerHTML = sdList('my').length >= 3 && sdList('foe').length >= 3 ? sdSuggHtml() : '';
+  bindSdPick(wrap);
+  sdMoveGopt();
+}
+// 能力変化わざの設定(#gopt)の置き場所。見せ合いでは「⚙ 能力変化わざ」ボタンのウィンドウの中、
+// ふつうの3対3では従来どおり枠の下・バトルの上に置く
+function sdMoveGopt() {
+  if (mode !== 'mock') return;
+  const gopt = document.getElementById('gopt'), win = document.getElementById('sdoptwin');
+  if (!gopt || !win) return;
+  if (SD.on) {
+    if (gopt.parentElement !== win) win.appendChild(gopt);
+  } else {
+    win.style.display = 'none';
+    const anchor = document.querySelector('#mock .gbbody');
+    if (anchor && gopt.nextElementSibling !== anchor) anchor.parentElement.insertBefore(gopt, anchor);
+  }
 }
 // 6匹を環境から自動で組む(「🎲 おまかせ3匹」を2回まわして重複を除く)。
 // じぶん側にも置いてある(はじめて使う人が、登録の前に中身をためせるように)

@@ -1937,6 +1937,13 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdix.even b,.sdix.even em{color:var(--gold)}
 .sdix.bad b,.sdix.bad em{color:var(--lose)}
 /* 列の見出しが「あいての6匹」なので、行の側も対で示す */
+/* 能力変化わざのウィンドウ。中の #gopt は移動して使い回すので、見た目だけここで整える */
+.sdoptwin{margin-top:8px;padding:10px 12px}
+.sdsugbox:empty{display:none}
+/* 提案は選出パネルの外に出したので、区切りの1本線と余白はここで付ける */
+.sdsugbox .sdsug{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.sdoptwin .gopt{margin:0}
+.sdoptwin .gopt .lbl{display:none}
 .sdixyou{display:block;margin-top:9px;text-align:center;font-size:.56rem;font-weight:800;
   color:var(--cy);letter-spacing:.04em}
 .sdyou{display:none}
@@ -1946,7 +1953,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   border-bottom:1px solid rgba(255,216,115,.35);padding-bottom:3px!important}
 .sdfg i{font-style:normal;font-weight:400;font-size:.56rem;color:var(--sub)}
 .sdfh{vertical-align:bottom;padding:4px 1px 3px!important;font-weight:600}
-.sdfh .ic{display:flex;justify-content:center;gap:1px;margin-bottom:3px}
+.sdfh .ic{display:flex;justify-content:center;gap:1px;margin-top:4px}
 .sdfh .nm{display:block;margin:0 auto;font-size:.6rem;font-weight:700;line-height:1.08;
   color:var(--sub);text-align:center}
 .sdfh .nm i{display:block;font-style:normal}
@@ -2063,10 +2070,22 @@ button.sdchip.on{border-color:transparent;color:#042330;font-weight:800;
   box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
 button.sdchip.on .tbadge{filter:none}
 .sdchip .no{margin-right:2px;flex:0 0 15px;width:15px;height:15px;font-size:.58rem}
-.sdlead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.sdreset{padding:4px 12px;font-size:.66rem;font-weight:700;border-radius:999px;cursor:pointer;
-  color:var(--sub);background:var(--bg2);border:1px solid var(--line);font-family:inherit}
-.sdreset:hover{color:var(--ink)}
+.sdlead{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px}
+/* 開幕交代・選び直す・能力変化わざは**同じ大きさ**にそろえる(2026-09-06タダシさん指示) */
+.sdbtn{display:inline-flex;align-items:center;justify-content:center;gap:3px;
+  padding:8px 14px;font-size:.72rem;font-weight:700;line-height:1.2;border-radius:999px;cursor:pointer;
+  font-family:inherit;color:var(--sub);background:linear-gradient(180deg,var(--bg2),var(--panel));
+  border:1px solid var(--line);box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.05)}
+.sdbtn:hover{color:var(--ink);border-color:var(--cy);transform:translateY(-1px)}
+.sdbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--tabsh)}
+.sdbtn .gear{font-size:.86rem;line-height:1}
+.sdbtn em{font-style:normal;font-size:.62rem;font-weight:800;color:var(--cy);margin-left:1px}
+/* 開幕交代は「入」を色で示す(押している状態が分かるように) */
+.sdlead .plead{margin-left:0}
+.sdlead .plead[aria-pressed="true"]{background:linear-gradient(160deg,#ffe9a8 0%,#ffd54a 45%,#c69a12 100%);
+  border-color:transparent;color:#2b2305}
+.sdlead .plead[aria-pressed="true"] .swapmark{background-color:#2b2305}
+.sdopt[aria-expanded="true"]{border-color:var(--cy);color:var(--ink)}
 @media (max-width:520px){
   .sdentry{padding:5px 8px}
   .sdpickbox{padding:9px 9px}
