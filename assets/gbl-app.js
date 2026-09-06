@@ -36,7 +36,7 @@ document.getElementById('app').innerHTML = `
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
   <button data-m="blog" aria-pressed="false" title="GBLで戦った相手のパーティを記録して、自分のレート帯の環境(採用率)と刺さるポケモンを分析する">対戦記録</button>
   <div class="modegrp">実戦を戦う</div>
-  <button class="mockhero" data-m="mock" aria-pressed="false" title="じぶん3匹×あいて3匹の対人戦を通しでシミュレート。SPアタック・シールド・交代を、決断の場面ごとに自分で選べます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦</b><span class="t2">実戦形式で3対3をためす</span></span></button>
+  <button class="mockhero" data-m="mock" aria-pressed="false" title="じぶん3匹×あいて3匹の対人戦を通しでシミュレート。SPアタック・シールド・交代を、決断の場面ごとに自分で選べます。大会・チャレンジと同じ「6匹を見せ合って3匹を選出する」形式でも戦えます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦</b><span class="t2">3対3／6匹→3匹の見せ合い</span></span></button>
   <button data-m="rocket" aria-pressed="false" title="GOロケット団(したっぱ/リーダー/サカキ)との戦いを再現する。相手はSPアタックのあと動けなくなる(硬直)">ロケット団戦</button>
 </div>
 
@@ -322,7 +322,8 @@ document.getElementById('app').innerHTML = `
     <details class="sdentry"><summary>6匹を登録する</summary>
       <div class="rkteams sdteams">
         <div class="rkteamcol">
-          <div class="rkcolttl" title="見せ合いに出すじぶんの6匹。★で登録した個体も入れられます">じぶんの6匹</div>
+          <div class="rkcolttl gfhead"><span title="見せ合いに出すじぶんの6匹。★で登録した個体も入れられます">じぶんの6匹</span>
+            <button class="ptswbtn sdrandmy" title="環境上位から、たがいの穴（3匹とも勝てない相手）を埋め合う6匹を自動で組みます。押すたびに顔ぶれが変わります">🎲 おまかせ6匹</button></div>
           <div class="pslots sdslots" data-s="my"></div>
         </div>
         <div class="rkteamcol">
@@ -1467,7 +1468,13 @@ ${PAGE_ROCKET ? '' : `
   <b>相手が選んだ3匹は、場に出てくるまで分かりません</b>——なので、あいての6匹を見て
   「何を出してくるか」を読みながら選ぶのがこのルールの中身です。</p>
   <ul>
-    <li>じぶんの6匹は<b>押した順が並び順</b>になります（①が初手）。もう一度押すと外れます</li>
+    <li><b>相性表</b>が選出の画面です。じぶんの6匹（行）が、あいての6匹（列）それぞれに
+    どれだけ勝てるかを、シールド<b>0-0／1-1／2-2の3通り</b>で戦わせた結果を並べています——
+    <b>◎</b>＝3通りとも勝ち／<b>◯</b>＝2通りで勝ち／<b>△</b>＝1通りだけ勝ち（惜しい）／<b>✕</b>＝3通りとも負け。
+    <b>行を押すとその1匹が選出に入り、押した順が並び順</b>になります（①が初手・もう一度押すと外れます）</li>
+    <li>表の<b>いちばん下の行</b>は、<b>選んだ3匹のうち、その相手に勝てる味方が何匹いるか</b>です。
+    <b>0＝穴</b>（3匹とも勝てない）で赤、1＝1匹頼みで黄、2匹以上で緑。
+    パーティ診断の穴チェックと同じ色・同じ言葉です</li>
     <li><b>あいても同時に選出します</b>。選び方は難易度で変わります——
     <b>EASY</b>＝登録順の上から3匹（こちらを見ずに選ぶ）／
     <b>NORMAL</b>＝<b>あなたの6匹</b>を見て、穴（3匹とも勝てない相手）がいちばん少なくなる3匹／
@@ -1486,7 +1493,8 @@ ${PAGE_ROCKET ? '' : `
     ふつうの3対3のときと同じ扱いです）</li>
   </ul>
   <ul>
-    <li><b>🎲 おまかせ3匹</b>＝あいての3匹を環境から自動で組みます。でたらめに3匹引くのではなく、
+    <li><b>🎲 おまかせ3匹</b>（見せ合いでは<b>おまかせ6匹</b>・じぶん側とあいて側の両方にあります）＝
+    枠を環境から自動で組みます。でたらめに3匹引くのではなく、
     <b>パーティ診断と同じ考え方</b>で「たがいの穴（3匹とも勝てない相手）を埋め合う組み合わせ」を選ぶので、
     強い相手と練習できて<b>編成の参考にもなります</b>。1匹目は環境上位から採用率の重みでランダムに引き、
     2〜3匹目はその穴をいちばん埋められる候補から選ぶため、<b>押すたびに顔ぶれが変わります</b>。
@@ -6603,7 +6611,7 @@ function gbAutoFill() {
 // 枠の中身は PT と同じ形＋わざ(fast/c1/c2)なので、ptBase/ptName がそのまま使える
 const SD_KEY = 'gbl_showdown';
 const SD = { on: false, my: [null, null, null, null, null, null],
-  foe: [null, null, null, null, null, null], pick: [], edit: true, sug: true, foeSel: null, foeSig: null };
+  foe: [null, null, null, null, null, null], pick: [], edit: true, sug: false, foeSel: null, foeSig: null };
 try {
   const v = JSON.parse(localStorage.getItem(SD_KEY));
   if (v && typeof v === 'object') {
@@ -6850,7 +6858,9 @@ function sdSuggest() {
     return ix.length && ix.length === (pick || []).length ? stat(ix) : null;
   };
   SDS.sig = sig;
-  SDS.data = { rows, foe, nFoe: foe.length, statOf, cur: statOf(SD.pick) };
+  // W(勝敗の表)と my も持たせる。相性表(sdGridHtml)が同じものを描くので、
+  // **表の色と提案の数字は必ず同じ計算から出る**(食い違い禁止)
+  SDS.data = { rows, my, foe, W, nFoe: foe.length, statOf, cur: statOf(SD.pick) };
   return SDS.data;
 }
 // あいて1匹＝1マスの帯(パーティ診断の穴チェックと同じ色・同じ語彙)
@@ -6874,9 +6884,11 @@ function buildSdSlots(side) {
     <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     ${side === 'my' ? '<div class="popwin pstarwin" style="display:none"></div>' : ''}
     <div class="fbody" style="display:none">
-      <select class="selFast" title="ノーマルアタック"></select>
-      <select class="selC1" title="SPアタック1"></select>
-      <select class="selC2" title="SPアタック2（2本目を開放していないなら「ー」）"></select>
+      <details class="sdmv"><summary class="mvsum"></summary>
+        <select class="selFast" title="ノーマルアタック"></select>
+        <select class="selC1" title="SPアタック1"></select>
+        <select class="selC2" title="SPアタック2（2本目を開放していないなら「ー」）"></select>
+      </details>
       <div class="fstat"></div>
       <div class="gmlv"></div>
     </div>
@@ -6995,6 +7007,10 @@ function syncSdSlots() {
         ? `<option value=""${!m.c2 ? ' selected' : ''}>ー</option>` + opts(chargeds, m.c2) : '';
       el.querySelector('.selC1').style.display = chargeds.length ? '' : 'none';
       el.querySelector('.selC2').style.display = chargeds.length ? '' : 'none';
+      // 畳んでいても何を選んでいるか分かるように、見出しにわざ名を出す
+      const mvn = id => (D.moves[id] && D.moves[id].n) || '';
+      el.querySelector('.mvsum').innerHTML = `<i>わざ</i>${mvn(m.fast)}`
+        + (m.c1 ? '／' + mvn(m.c1) : '') + (m.c2 ? '・' + mvn(m.c2) : '');
       const base = ptBase(m);
       const st = PvpEngine.buildStats(D, base);
       const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
@@ -7010,24 +7026,75 @@ function syncSdSlots() {
   });
 }
 // ---- 選出パネル ----
+// **主役は相性表**(2026-09-06タダシさん指示で全面刷新)。
+// 実際の見せ合いで人がやるのは「相手の6匹を見て、じぶんの誰が刺さるかを考える」ことなのに、
+// 旧版は名前のチップが3ブロック並ぶだけで、**肝心の相性がどこにも出ていなかった**
+// (タダシさん評「この状態では使おうとは思わない」)。
+// いまは **じぶん6匹×あいて6匹の勝ち負けのマス目**を画面の中心に置き、
+// **その行を押すことがそのまま選出**になる(押した順が①②③の並び順)。
+// 表のいちばん下に「選んだ3匹で、その相手に勝てる味方の数」を出すので、
+// **どの相手が穴なのかが縦に見える**(パーティ診断の穴チェックと同じ色・同じ語彙)
+const SD_MK = ['✕', '△', '◯', '◎'];   // 🛡3通り中の勝ち数 0/1/2/3
+const SD_MKN = ['負け', '惜しい', '勝ち', '完勝'];
+const SD_MKT = ['シールドの枚数がどれでも負けます', '3通りのうち1通りだけ勝てます（惜しい）',
+  '3通りのうち2通りで勝てます', 'シールドの枚数がどれでも勝てます'];
 function sdPickHtml() {
   const my = sdList('my'), foe = sdList('foe');
   if (my.length < 3 || foe.length < 3)
     return '<div class="mtnote">じぶんとあいてに<b>3匹以上</b>ずつ入れてください（6匹ずつがこのルールの本来の形です）</div>';
-  const NO = ['①', '②', '③'];
-  const chip = m => `<span class="sdchip">${typeIcons(D.pokemon[m.key], 15)}<b>${ptName(m)}</b></span>`;
   const done = SD.pick.length === 3;
+  const tail = (done ? `<button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に②か③へ交代します（あいての打ちかけの1発は交代先に入ります）。あいても開幕に交代してくることがあります">${SWAPMK}開幕交代</button>` : '')
+    + (SD.pick.length ? '<button class="sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button>' : '');
   return `<div class="sdpickbox">
-    <div class="sdrow"><div class="sdlbl foe">あいての${foe.length}匹<small>この中から3匹が来ます（わざは見えません）</small></div>
-      <div class="sdchips">${foe.map(i => chip(SD.foe[i])).join('')}</div></div>
-    <div class="sdrow"><div class="sdlbl">じぶんの選出<small>${done ? '押した順が並び順です（もう一度押すと外れます）' : `あと${3 - SD.pick.length}匹（押した順が並び順です）`}</small></div>
-      <div class="sdchips">${my.map(i => {
-        const k = SD.pick.indexOf(i);
-        return `<button class="sdchip pk${k >= 0 ? ' on' : ''}" data-i="${i}">${k >= 0 ? `<i class="no">${NO[k]}</i>` : ''}${typeIcons(D.pokemon[SD.my[i].key], 15)}<b>${ptName(SD.my[i])}</b></button>`;
-      }).join('')}</div></div>
-    ${done ? `<div class="sdrow sdlead"><button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に②か③へ交代します（あいての打ちかけの1発は交代先に入ります）。あいても開幕に交代してくることがあります">${SWAPMK}開幕交代</button>
-      <button class="sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button></div>` : ''}
+    ${sdGridHtml()}
+    ${tail ? `<div class="sdrow sdlead">${tail}</div>` : ''}
     ${sdSuggHtml()}
+  </div>`;
+}
+// 相性表。**選出のUIそのもの**なので、行がボタンになっている
+function sdGridHtml() {
+  const d = sdSuggest();
+  if (!d) return '';
+  const { my, foe, W, nFoe, cur } = d;
+  const n = 3, NO = ['①', '②', '③'];
+  const done = SD.pick.length === 3;
+  // あいての見出しは**縦書き**。1マス40px前後しか取れないので、横書きだと名前が入らない
+  const head = foe.map(i => {
+    const m = SD.foe[i];
+    return `<th class="sdfh" title="${ptName(m)}"><span class="ic">${typeIcons(D.pokemon[m.key], 12)}</span>` +
+      `<span class="nm">${shMark(ptName(m))}</span></th>`;
+  }).join('');
+  const rows = my.map((i, k) => {
+    const m = SD.my[i], p = SD.pick.indexOf(i);
+    const cells = foe.map((fi, j) => {
+      const w = W[k][j];
+      return `<td class="sdw w${w}" title="${ptName(m)} 対 ${ptName(SD.foe[fi])}／${SD_MKN[w]}（${SD_MKT[w]}）">${SD_MK[w]}</td>`;
+    }).join('');
+    const tip = p >= 0 ? `${NO[p]}番目に出します（もう一度押すと外れます）`
+      : done ? '3匹そろっています（どれかを外すと選び直せます）' : '押すと選出に入ります';
+    return `<tr class="sdmr${p >= 0 ? ' on' : ''}${done && p < 0 ? ' dim' : ''}" data-i="${i}" title="${tip}"` +
+      ` role="button" tabindex="0" aria-pressed="${p >= 0}">` +
+      `<th class="sdmh"><span class="in"><i class="no">${p >= 0 ? NO[p] : ''}</i>` +
+      `${typeIcons(D.pokemon[m.key], 12)}<b>${shMark(ptName(m))}</b></span></th>${cells}</tr>`;
+  }).join('');
+  // いちばん下の行＝選んだ3匹で、その相手に勝てる味方の数(列がそろうので穴が縦に見える)
+  const foot = cur
+    ? `<tr class="sdft"><th class="sdmh sdfl" title="選んだ3匹のうち、その相手に勝てる味方が何匹いるか。0＝穴（3匹とも勝てない）"><span class="in"><b>勝てる数</b></span></th>${cur.tier.map((t, j) => {
+        const g = ptTier(t, n);
+        return `<td class="sdt ${g}" title="${ptName(SD.foe[foe[j]])}／${ptTierLabel(g, n)}（${ptTierDesc(g, n)}）">${t}</td>`;
+      }).join('')}</tr>`
+    : `<tr class="sdft"><th class="sdftn" colspan="${nFoe + 1}">あと${3 - SD.pick.length}匹選ぶと、ここに<b>勝てる味方の数</b>が出ます</th></tr>`;
+  const sum = cur ? `<div class="sdsum ${cur.holes ? 'bad' : 'ok'}"><b>穴${cur.holes}</b>／1匹頼み${cur.n1}／2匹勝ち${nFoe - cur.holes - cur.n1}` +
+    `<i>${cur.holes ? '穴＝3匹とも勝てない相手です' : '穴なし＝どの相手にも勝てる1匹がいます'}（いちばん下の数字＝その相手に勝てる味方の数）</i></div>` : '';
+  return `<div class="sdgrid">
+    <div class="sdglbl">相性表<small><b>行を押すと選出</b>です（押した順が①②③の並び順）<span class="expl">。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</span></small></div>
+    <div class="sdgwrap"><table class="sdtbl">
+      <thead><tr class="sdhh"><th></th><th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
+      <tr><th class="sdch">じぶん ↓</th>${head}</tr></thead>
+      <tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>
+    ${sum}
+    <div class="sdleg">${SD_MK.map((mk, w) => `<span class="w${w}"><i>${mk}</i>${SD_MKN[w]}</span>`).join('')}
+      <small>🛡0-0／1-1／2-2 の3通りで戦った結果です</small></div>
   </div>`;
 }
 // 選出の提案。**あくまで「こういうのもいいかもよ」**なので、既定で開いてはいるが押せば閉じる
@@ -7035,8 +7102,7 @@ function sdSuggHtml() {
   const d = sdSuggest();
   if (!d || !d.rows.length) return '';
   const n = 3;
-  const cur = d.cur ? `<div class="sdcur"><b class="sdcurh">いまの選出</b>${sdTierBar(d.cur.tier, d.foe, n)}` +
-    `<i class="sdsgn">穴${d.cur.holes}／1匹頼み${d.cur.n1}／2匹勝ち${d.nFoe - d.cur.holes - d.cur.n1}</i></div>` : '';
+  // 「いまの選出」の数字は相性表のいちばん下と要約に出ているので、ここには出さない(二重表示をしない)
   // いま選んでいる3匹と同じ候補には印を付ける(同じものが2つ並んで見えるのを防ぐ)
   const same = r => d.cur && r.order.length === SD.pick.length &&
     r.order.every((k, j) => SD.pick[j] === k);
@@ -7048,18 +7114,24 @@ function sdSuggHtml() {
     </button>`).join('');
   return `<div class="sdrow sdsug">
     <div class="sdlbl"><button class="sdsugtab" aria-expanded="${SD.sug}">🔧 こんな選び方もあります</button>
-      <small>あいての6匹すべてへの相性で選んだ候補です。<b>正解はありません</b>ので、好みで選んでください（押すとその3匹が入ります）</small></div>
-    ${SD.sug ? cur + '<div class="sdsgs">' + rows + '</div>' : ''}
+      ${SD.sug ? '<small>あいての6匹すべてへの相性で選んだ候補です。<b>正解はありません</b>ので、好みで選んでください（押すとその3匹が入ります）</small>' : ''}</div>
+    ${SD.sug ? '<div class="sdsgs">' + rows + '</div>' : ''}
   </div>`;
 }
 function bindSdPick(box) {
-  box.querySelectorAll('.sdchip.pk').forEach(b => b.onclick = () => {
-    const i = +b.dataset.i;
-    if (SD.pick.includes(i)) SD.pick = SD.pick.filter(x => x !== i);
-    else if (SD.pick.length < 3) SD.pick = SD.pick.concat(i);
-    else return;
-    if (SD.pick.length === 3) SD.edit = false;   // そろったら6匹の入力は畳んで、バトルを見せる
-    saveSd(); run();
+  box.querySelectorAll('tr.sdmr').forEach(b => {
+    b.onkeydown = e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault(); b.click();
+    };
+    b.onclick = () => {
+      const i = +b.dataset.i;
+      if (SD.pick.includes(i)) SD.pick = SD.pick.filter(x => x !== i);
+      else if (SD.pick.length < 3) SD.pick = SD.pick.concat(i);
+      else return;
+      if (SD.pick.length === 3) SD.edit = false;   // そろったら6匹の入力は畳んで、バトルを見せる
+      saveSd(); run();
+    };
   });
   const tab = box.querySelector('.sdsugtab');
   if (tab) tab.onclick = () => { SD.sug = !SD.sug; saveSd(); run(); };
@@ -7094,10 +7166,12 @@ function renderSd() {
   const box = wrap.querySelector('.sdpick');
   if (box) { box.innerHTML = sdPickHtml(); bindSdPick(box); }
 }
-// あいての6匹を環境から自動で組む(「🎲 おまかせ3匹」を2回まわして重複を除く)
-function sdAutoFill() {
+// 6匹を環境から自動で組む(「🎲 おまかせ3匹」を2回まわして重複を除く)。
+// じぶん側にも置いてある(はじめて使う人が、登録の前に中身をためせるように)
+function sdAutoFill(side) {
+  side = side || 'foe';
   if (GBAUTO.busy) return;
-  const btn = document.querySelector('#sdwrap .sdrand');
+  const btn = document.querySelector('#sdwrap .' + (side === 'my' ? 'sdrandmy' : 'sdrand'));
   const say = t => { if (btn) btn.textContent = t; };
   GBAUTO.busy = true;
   if (btn) btn.disabled = true;
@@ -7122,7 +7196,8 @@ function sdAutoFill() {
       return;
     }
     say(SD_AUTO_LABEL);
-    for (let i = 0; i < 6; i++) SD.foe[i] = out[i] ? sdNew(out[i].k, !!out[i].s) : null;
+    for (let i = 0; i < 6; i++) SD[side][i] = out[i] ? sdNew(out[i].k, !!out[i].s) : null;
+    if (side === 'my') SD.pick = [];   // 顔ぶれが変わったので選出はいったん外す
     sdChanged();
   }, (a, b) => say(`組み立て中 ${Math.round(a / b * 100)}%`));
 }
@@ -11013,7 +11088,9 @@ document.addEventListener('click', e => {
     if (SD.edit !== sdEnt.open) { SD.edit = sdEnt.open; saveSd(); }
   });
   const sdRand = document.querySelector('#sdwrap .sdrand');
-  if (sdRand) sdRand.onclick = sdAutoFill;
+  if (sdRand) sdRand.onclick = () => sdAutoFill('foe');
+  const sdRandMy = document.querySelector('#sdwrap .sdrandmy');
+  if (sdRandMy) sdRandMy.onclick = () => sdAutoFill('my');
   // 模擬戦のおすすめタブ(高火力/高火力＋安定)。同じタブをもう一度押すとオフ
   document.querySelectorAll('#rksuggbar button[data-m]').forEach(b => b.onclick = () => {
     RKS.mode = RKS.mode === b.dataset.m ? null : b.dataset.m;

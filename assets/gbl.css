@@ -1309,7 +1309,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 /* 「🎲 おまかせ3匹」(2026-09-02): 入れ替え候補と同じ金のピル。見出しに収まるよう少し小さく。
    狭い画面では2つのボタンで1行を分け合う(見出しは上の行に残す) */
 #mock .gfrand{padding:5px 10px;font-size:.7rem;white-space:nowrap;word-break:keep-all}
-@media (max-width:430px){#mock .gfhead>span{flex:1 0 100%}#mock .gfrand{flex:1 1 auto}}
+@media (max-width:430px){#mock .gfhead>span{flex:1 0 100%}#mock .gfrand,#mock .sdrand,#mock .sdrandmy{flex:1 1 auto}}
 #mock .gfoeslots.auto .fbody select{display:none}
 /* HUDのゲージ残量の数字(2026-08-20タダシさん指示・ゲージ管理の要なので大きめに) */
 .rbhud .gqn{font-size:1.06rem;font-weight:900;color:var(--cy);min-width:2ch;text-align:center;line-height:1}
@@ -1736,6 +1736,15 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdteams .sdslots[data-s="my"] .pslot{grid-column:1}
 .sdteams .sdslots[data-s="foe"] .pslot{grid-column:2}
 #mock .sdslots.auto .fbody select{display:none}
+/* 12枠が縦に並ぶので、わざの3欄は畳んでおく(見出しに選んでいるわざ名を出す) */
+.sdslot .sdmv>summary{cursor:pointer;list-style:none;font-size:.62rem;color:var(--sub);
+  padding:3px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdslot .sdmv>summary::-webkit-details-marker{display:none}
+.sdslot .sdmv>summary i{font-style:normal;font-weight:800;color:var(--cy);margin-right:4px}
+.sdslot .sdmv>summary::after{content:' ▸';color:var(--cy);font-weight:800}
+.sdslot .sdmv[open]>summary::after{content:' ▾'}
+.sdslot .sdmv>select{margin-top:4px}
+#mock .sdslots.auto .sdmv{display:none}
 /* 編成のルールで入れられないポケモン(同じポケモン・メガは1匹まで)は、
    候補に残したままグレーにして押せなくする(消すと「検索しても出てこない」に見えるため) */
 .sugg-list .dup,.pstarwin .mypkrow.dup{opacity:.45;cursor:default;pointer-events:none}
@@ -1746,6 +1755,104 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   background:linear-gradient(180deg,rgba(26,35,66,.55),rgba(18,24,48,.35))}
 :root.light .sdpickbox{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.35))}
 .sdrow+.sdrow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+/* ---- 相性表(見せ合いの主役・2026-09-06) ----
+   じぶん6匹×あいて6匹のマス目。**行がそのまま選出のボタン**になっていて、
+   いちばん下の行に「選んだ3匹で、その相手に勝てる味方の数」が並ぶ(列がそろうので穴が縦に見える) */
+.sdglbl{font-size:.76rem;font-weight:800;color:var(--cy)}
+.sdglbl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:2px;line-height:1.55}
+.sdgwrap{margin-top:8px}
+/* 広い画面で表を横いっぱいに伸ばしても読みやすさは増えない(マスがスカスカになるだけ)ので上限をつける */
+@media (min-width:520px){
+  .sdtbl{max-width:460px}
+  .sdtbl thead tr.sdhh th:first-child,
+  .sdtbl thead th.sdch{width:160px}
+}
+.sdtbl{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 3px;font-size:.72rem}
+.sdtbl th,.sdtbl td{padding:0}
+.sdtbl thead tr.sdhh th:first-child{width:43%}
+.sdtbl thead th.sdch{width:43%;font-size:.56rem;color:var(--sub);font-weight:600;
+  text-align:right;padding:0 5px 3px 0!important;vertical-align:bottom}
+/* あいての見出しは**縦書き**。1マス40px前後しか取れないので横書きでは名前が入らない */
+.sdhh th{padding:0 0 4px!important}
+.sdfg{text-align:center;font-size:.6rem;font-weight:800;color:var(--gold);
+  border-bottom:1px solid rgba(255,216,115,.35);padding-bottom:3px!important}
+.sdfg i{font-style:normal;font-weight:400;font-size:.56rem;color:var(--sub)}
+.sdfh{vertical-align:bottom;padding:4px 1px 3px!important;font-weight:600}
+.sdfh .ic{display:flex;justify-content:center;gap:1px;margin-bottom:3px}
+.sdfh .nm{display:block;writing-mode:vertical-rl;margin:0 auto;font-size:.58rem;font-weight:700;
+  color:var(--sub);letter-spacing:.03em;max-height:76px;overflow:hidden}
+.sdfh .nm .shadowmark{margin:0 auto 1px;display:block}
+/* じぶんの行(押すと選出) */
+.sdmr{cursor:pointer}
+.sdmr:focus-visible{outline:2px solid #8b5cf6;outline-offset:2px}
+.sdmh{text-align:left;background:var(--bg2);border:1px solid var(--line);border-right:none;
+  border-radius:9px 0 0 9px;padding:4px 2px 4px 5px!important;font-weight:700}
+.sdmh .in{display:flex;align-items:center;gap:3px;min-width:0}
+.sdmh .no{font-style:normal;font-weight:900;font-size:.82rem;color:var(--cy);flex:0 0 13px}
+.sdmh b{font-weight:700;font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdmh .tbadge{flex:0 0 auto;width:12px;height:12px}
+.sdfh .tbadge{width:12px;height:12px}
+.sdmr:hover .sdmh{border-color:var(--cy)}
+.sdmr.on .sdmh{border-color:transparent;color:#042330;
+  background:linear-gradient(160deg,#7fe9f7 0%,#22c7e0 45%,#0b8ba3 100%)}
+.sdmr.on .sdmh .no{color:#042330}
+.sdmr.on .sdw{border-color:rgba(34,199,224,.55)}
+.sdmr.dim .sdmh{opacity:.5}
+/* 勝ち負けのマス。◎◯△✕＋薄い色の面(面だけだと勝ちの程度が読めない) */
+.sdw{text-align:center;font-weight:900;font-size:.9rem;line-height:2;
+  border:1px solid var(--line);border-left:none;background:var(--bg2)}
+.sdtbl tbody tr td:last-child{border-radius:0 9px 9px 0}
+.sdw.w0{color:var(--lose);background:rgba(255,107,129,.22)}
+.sdw.w1{color:var(--gold);background:rgba(255,216,115,.2)}
+.sdw.w2{color:var(--win);background:rgba(61,220,132,.16)}
+.sdw.w3{color:var(--win);background:rgba(61,220,132,.38)}
+:root.light .sdw.w0{background:rgba(214,45,71,.13)}
+:root.light .sdw.w1{background:rgba(176,122,0,.14)}
+:root.light .sdw.w2{background:rgba(14,145,86,.13)}
+:root.light .sdw.w3{background:rgba(14,145,86,.34)}
+/* いちばん下＝選んだ3匹で、その相手に勝てる味方の数(穴チェックと同じ色) */
+.sdft .sdmh{border-radius:9px 0 0 9px;background:none;border-color:transparent}
+.sdft .sdmh b{font-size:.66rem;color:var(--sub);font-weight:800}
+.sdft .sdmh small{font-size:.58rem;color:var(--sub);font-weight:400;margin-left:3px}
+.sdft .sdmh .in{gap:0;justify-content:flex-end;padding-right:5px}
+.sdt{text-align:center;font-weight:900;font-size:.78rem;line-height:1.75;color:#06121f;
+  border-radius:6px;border:1px solid transparent}
+.sdt.hole{background:var(--lose)}
+.sdt.n1{background:var(--gold)}
+.sdt.safe{background:var(--win)}
+.sdftn{text-align:center!important;font-size:.64rem;font-weight:400;color:var(--sub);
+  padding:5px 4px!important;border:1px dashed var(--line);border-radius:9px}
+.sdftn b{color:var(--ink);font-weight:800}
+/* 選んだ3匹の要約と凡例 */
+.sdsum{margin-top:8px;padding:6px 10px;border-radius:10px;font-size:.68rem;color:var(--sub);
+  background:var(--bg2);border:1px solid var(--line)}
+.sdsum b{color:var(--ink);font-size:.76rem;font-weight:800}
+.sdsum.ok b{color:var(--win)}
+.sdsum.bad b{color:var(--lose)}
+.sdsum i{display:block;font-style:normal;font-size:.62rem;margin-top:2px}
+.sdleg{display:flex;flex-wrap:wrap;align-items:center;gap:3px 9px;margin-top:6px;
+  font-size:.6rem;color:var(--sub)}
+.sdleg span{display:inline-flex;align-items:center;gap:3px}
+.sdleg i{font-style:normal;font-weight:900;font-size:.74rem}
+.sdleg .w0 i{color:var(--lose)}
+.sdleg .w1 i{color:var(--gold)}
+.sdleg .w2 i,.sdleg .w3 i{color:var(--win)}
+.sdleg small{flex:1 0 100%;font-size:.58rem;opacity:.85}
+@media (max-width:400px){
+  .sdtbl{font-size:.68rem}
+  .sdtbl thead tr.sdhh th:first-child,
+  .sdtbl thead th.sdch{width:41%}
+  .sdmh b{font-size:.66rem}
+  .sdw{font-size:.82rem}
+}
+/* 320px級では名前が切れる。**タイプより名前を優先**して、行のアイコンだけ落とす
+   (あいての見出しのアイコンは縦書きの上なので幅を食わない＝そのまま残す) */
+@media (max-width:360px){
+  .sdtbl thead tr.sdhh th:first-child,
+  .sdtbl thead th.sdch{width:46%}
+  .sdmh .tbadge,.sdmh .tpair{display:none}
+  .sdmh b{font-size:.68rem}
+}
 .sdlbl{font-size:.74rem;font-weight:800;color:var(--cy)}
 .sdlbl.foe{color:var(--gold)}
 .sdlbl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:1px}
