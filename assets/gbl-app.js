@@ -6884,12 +6884,12 @@ function buildSdSlots(side) {
       <div class="sdtop"><span class="sdty"></span>
         <span class="sdops">
           <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）として計算する"><i class="shadowmark"></i></button>
-          ${side === 'my' ? '<button class="pstar" title="★登録リストから選ぶ（自分の個体値で計算できます）">★</button>' : ''}
+          <button class="pstar" title="★登録リストから選ぶ（登録した個体値・わざで計算できます）">★</button>
           <button class="pclr" title="この枠を空にする">×</button></span></div>
       <div class="sdname">
         <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
         <b class="sdcp"></b></div>
-      ${side === 'my' ? '<div class="popwin pstarwin" style="display:none"></div>' : ''}
+      <div class="popwin pstarwin" style="display:none"></div>
       <div class="fbody" style="display:none">
         <details class="sdmv"><summary class="mvsum"></summary>
           <select class="selFast" title="ノーマルアタック"></select>
@@ -7065,6 +7065,18 @@ function syncSdSlots() {
 // 縦書きは文字ごとの要素で作る(長音符・波線だけ寝かせて縦書きらしく見せる)
 const V_ROT = new Set(['ー', '−', '-', '―', '〜', '～', '(', ')', '（', '）']);
 const vName = n => [...n].map(c => `<i${V_ROT.has(c) ? ' class="r"' : ''}>${c}</i>`).join('');
+// 6対6の相性を1つの数字にする。**選出の前**に「この6匹どうしなら、どちらが有利か」を掴むためのもの。
+// じぶん6匹×あいて6匹×シールド3通り＝108通りの対面のうち、じぶんが勝てる割合(50%で互角)
+const sdIndex = (W, nMy, nFoe) => {
+  let tot = 0;
+  for (let i = 0; i < nMy; i++) for (let j = 0; j < nFoe; j++) tot += W[i][j];
+  return Math.round(tot / (nMy * nFoe * 3) * 100);
+};
+const sdIxLabel = p => p >= 62 ? { t: 'じぶんが有利', c: 'good' }
+  : p >= 54 ? { t: 'やや有利', c: 'good' }
+  : p > 46 ? { t: 'ほぼ互角', c: 'even' }
+  : p > 38 ? { t: 'やや不利', c: 'bad' }
+  : { t: 'あいてが有利', c: 'bad' };
 const SD_MK = ['✕', '△', '◯', '◎'];   // 🛡3通り中の勝ち数 0/1/2/3
 const SD_MKN = ['負け', '惜しい', '勝ち', '完勝'];
 const SD_MKT = ['シールドの枚数がどれでも負けます', '3通りのうち1通りだけ勝てます（惜しい）',
@@ -7116,13 +7128,17 @@ function sdGridHtml() {
         return `<td class="sdt ${g}" title="${ptName(SD.foe[foe[j]])}／${ptTierLabel(g, n)}（${ptTierDesc(g, n)}）">${t}</td>`;
       }).join('')}</tr>`
     : `<tr class="sdft"><th class="sdftn" colspan="${nFoe + 1}">あと${3 - SD.pick.length}匹選ぶと、ここに<b>勝てる味方の数</b>が出ます</th></tr>`;
+  // 表の左上のあき地に「6対6の相性」を出す(選出の前に、この6匹どうしの相性を掴むための数字)
+  const ix = sdIndex(W, my.length, nFoe), ixl = sdIxLabel(ix);
+  const ixHtml = `<div class="sdix ${ixl.c}" title="じぶんの${my.length}匹とあいての${nFoe}匹が、シールド0-0／1-1／2-2の3通りで戦った${my.length * nFoe * 3}通りのうち、じぶんが勝てる割合です。50%で互角。選出を決める前の「この6匹どうしの相性」を表します">` +
+    `<i>6対6の相性</i><b>${ix}<small>%</small></b><em>${ixl.t}</em></div>`;
   const sum = cur ? `<div class="sdsum ${cur.holes ? 'bad' : 'ok'}"><b>穴${cur.holes}</b>／1匹頼み${cur.n1}／2匹勝ち${nFoe - cur.holes - cur.n1}` +
     `<i>${cur.holes ? '穴＝3匹とも勝てない相手です' : '穴なし＝どの相手にも勝てる1匹がいます'}（いちばん下の数字＝その相手に勝てる味方の数）</i></div>` : '';
   return `<div class="sdgrid">
     <div class="sdglbl">相性表<small><b>行を押すと選出</b>です（押した順が①②③の並び順）<span class="expl">。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</span></small></div>
     <div class="sdgwrap"><table class="sdtbl">
       <thead><tr class="sdhh"><th></th><th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
-      <tr><th class="sdch">じぶん ↓</th>${head}</tr></thead>
+      <tr><th class="sdch">${ixHtml}<span class="sdyou">じぶん ↓</span></th>${head}</tr></thead>
       <tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>
     ${sum}
     <div class="sdleg">${SD_MK.map((mk, w) => `<span class="w${w}"><i>${mk}</i>${SD_MKN[w]}</span>`).join('')}

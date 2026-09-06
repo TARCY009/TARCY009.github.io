@@ -1878,8 +1878,21 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdtbl{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 3px;font-size:.72rem}
 .sdtbl th,.sdtbl td{padding:0}
 .sdtbl thead tr.sdhh th:first-child{width:45%}
-.sdtbl thead th.sdch{width:45%;font-size:.56rem;color:var(--sub);font-weight:600;
-  text-align:right;padding:0 5px 3px 0!important;vertical-align:bottom}
+.sdtbl thead th.sdch{width:45%;padding:0 4px 3px 0!important;vertical-align:bottom}
+/* 表の左上のあき地に「6対6の相性」。選出の前に、この6匹どうしの相性を1つの数字で掴むためのもの */
+.sdix{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:2px 2px 3px;
+  border-radius:10px;background:var(--bg2);border:1px solid var(--line)}
+.sdix i{font-style:normal;font-size:.52rem;font-weight:800;color:var(--sub);letter-spacing:.02em}
+.sdix b{font-size:1.42rem;font-weight:900;letter-spacing:-.02em;margin:1px 0}
+.sdix b small{font-size:.58rem;font-weight:800;margin-left:1px}
+.sdix em{font-style:normal;font-size:.58rem;font-weight:800}
+.sdix.good{border-color:rgba(61,220,132,.4)}
+.sdix.good b,.sdix.good em{color:var(--win)}
+.sdix.even{border-color:rgba(255,216,115,.4)}
+.sdix.even b,.sdix.even em{color:var(--gold)}
+.sdix.bad{border-color:rgba(255,107,129,.4)}
+.sdix.bad b,.sdix.bad em{color:var(--lose)}
+.sdyou{display:block;text-align:right;font-size:.56rem;color:var(--sub);font-weight:600;padding:3px 2px 0 0}
 /* あいての見出しは**縦書き**。1マス40px前後しか取れないので横書きでは名前が入らない */
 .sdhh th{padding:0 0 4px!important}
 .sdfg{text-align:center;font-size:.6rem;font-weight:800;color:var(--gold);
