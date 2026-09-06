@@ -1896,19 +1896,14 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sugg-list .dupn,.pstarwin .dupn{font-style:normal;font-size:.6rem;color:var(--sub);margin-left:auto;padding-left:6px;white-space:nowrap}
 .sdslot.picked{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy)}
 /* 選出パネル */
-.sdpickbox{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;
-  background:linear-gradient(180deg,rgba(26,35,66,.55),rgba(18,24,48,.35))}
-:root.light .sdpickbox{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.35))}
+.sdpickbox{margin-top:10px;padding:2px 0 0}
 .sdrow+.sdrow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 /* ---- 相性表(見せ合いの主役・2026-09-06) ----
    じぶん6匹×あいて6匹のマス目。**行がそのまま選出のボタン**になっていて、
    いちばん下の行に「選んだ3匹で、その相手に勝てる味方の数」が並ぶ(列がそろうので穴が縦に見える) */
 .sdglbl{font-size:.76rem;font-weight:800;color:var(--cy)}
 .sdglbl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:2px;line-height:1.55}
-.sdgwrap{margin-top:8px;padding:8px 5px 9px;border-radius:14px;
-  border:1px solid var(--line);background:linear-gradient(180deg,rgba(26,35,66,.5),rgba(18,24,48,.28));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-:root.light .sdgwrap{background:linear-gradient(180deg,rgba(255,255,255,.66),rgba(255,255,255,.3))}
+.sdgwrap{margin-top:8px;padding:0}
 /* 広い画面で表を横いっぱいに伸ばしても読みやすさは増えない(マスがスカスカになるだけ)ので上限をつける */
 @media (min-width:520px){
   .sdtbl{max-width:460px}
@@ -1919,46 +1914,29 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdtbl th,.sdtbl td{padding:0}
 .sdtbl thead tr.sdhh th:first-child{width:45%}
 .sdtbl thead th.sdch{width:45%;padding:0 5px 5px 1px!important;vertical-align:bottom}
-/* ---- 表の左上の「6対6の相性」(2026-09-06にデザインと面積の取り方をやり直し) ----
-   ヘッダー2段ぶんを1つのセルにして、あき地をぜんぶ使う。
-   数字だけでは「50%が互角」が伝わらないので、**互角の位置に印を入れたゲージ**を添える */
-.sdix{display:block;padding:7px 8px 6px;border-radius:12px;position:relative;overflow:hidden;
-  background:linear-gradient(160deg,rgba(35,52,105,.85),rgba(22,33,68,.7));
-  border:1px solid var(--line2);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
-:root.light .sdix{background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(232,240,255,.8));
-  box-shadow:inset 0 1px 0 #fff}
-/* 状態の色は上端の細い帯で示す(面ごと染めると数字が読みにくい) */
-.sdix::before{content:'';position:absolute;left:0;right:0;top:0;height:3px}
-.sdix.good::before{background:linear-gradient(90deg,var(--win),rgba(61,220,132,.25))}
-.sdix.even::before{background:linear-gradient(90deg,var(--gold),rgba(255,216,115,.25))}
-.sdix.bad::before{background:linear-gradient(90deg,var(--lose),rgba(255,107,129,.25))}
+/* ---- 表の左上の「6対6の相性」(2026-09-06タダシさん指示で**枠に入れない**形へ) ----
+   枠を足すと入れ子が増えて野暮ったくなるので、**余白・字の大小・1pxの罫線**だけで見せる。
+   状態(有利/互角/不利)は**数字の色と、その下の罫線の色**で伝える */
+.sdix{display:block;text-align:center;padding:2px 4px 0}
 .sdix i{display:block;font-style:normal;font-size:.54rem;font-weight:800;color:var(--sub);
-  letter-spacing:.04em;text-align:center}
-.sdix b{display:block;text-align:center;font-size:1.75rem;font-weight:900;letter-spacing:-.03em;
-  line-height:1.06;margin:1px 0 0;text-shadow:0 2px 4px rgba(0,0,0,.35)}
+  letter-spacing:.1em;text-indent:.1em}
+.sdix b{display:block;font-size:2.1rem;font-weight:900;letter-spacing:-.04em;line-height:1;
+  margin:3px 0 0;text-shadow:0 2px 6px rgba(0,0,0,.4)}
 :root.light .sdix b{text-shadow:0 1px 0 rgba(255,255,255,.9)}
-.sdix b small{font-size:.62rem;font-weight:800;margin-left:1px;letter-spacing:0}
-.sdix em{display:block;text-align:center;font-style:normal;font-size:.6rem;font-weight:800;margin-top:1px}
+.sdix b small{font-size:.66rem;font-weight:800;margin-left:2px;letter-spacing:0}
+/* 数字の下の1本の罫線。中央が濃く、両端へ消える(状態の色) */
+.sdix b::after{content:'';display:block;height:1px;width:74%;margin:5px auto 0}
+.sdix.good b::after{background:linear-gradient(90deg,transparent,var(--win),transparent)}
+.sdix.even b::after{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.sdix.bad b::after{background:linear-gradient(90deg,transparent,var(--lose),transparent)}
+.sdix em{display:block;font-style:normal;font-size:.62rem;font-weight:800;margin-top:5px;
+  letter-spacing:.02em}
 .sdix.good b,.sdix.good em{color:var(--win)}
 .sdix.even b,.sdix.even em{color:var(--gold)}
 .sdix.bad b,.sdix.bad em{color:var(--lose)}
-/* ゲージ。真ん中の線が「互角(50%)」 */
-.sdixbar{display:block;position:relative;height:6px;margin-top:5px;border-radius:4px;
-  background:rgba(0,0,0,.32);box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
-:root.light .sdixbar{background:rgba(60,72,110,.16);box-shadow:inset 0 1px 2px rgba(60,72,110,.18)}
-.sdixbar u{display:block;height:100%;border-radius:4px;text-decoration:none}
-.sdix.good .sdixbar u{background:linear-gradient(90deg,rgba(61,220,132,.5),var(--win))}
-.sdix.even .sdixbar u{background:linear-gradient(90deg,rgba(255,216,115,.5),var(--gold))}
-.sdix.bad .sdixbar u{background:linear-gradient(90deg,rgba(255,107,129,.5),var(--lose))}
-.sdixbar::after{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;
-  background:rgba(255,255,255,.55)}
-:root.light .sdixbar::after{background:rgba(40,52,90,.45)}
-/* ゲージの下の目盛りの言葉(あいて・互角・じぶん) */
-.sdixft{display:flex;justify-content:space-between;margin-top:2px;
-  font-size:.48rem;font-weight:700;color:var(--sub);letter-spacing:.02em}
 /* 列の見出しが「あいての6匹」なので、行の側も対で示す */
-.sdixyou{display:block;margin-top:5px;padding-top:4px;border-top:1px solid var(--line);
-  text-align:center;font-size:.54rem;font-weight:800;color:var(--cy);letter-spacing:.02em}
+.sdixyou{display:block;margin-top:9px;text-align:center;font-size:.56rem;font-weight:800;
+  color:var(--cy);letter-spacing:.04em}
 .sdyou{display:none}
 /* あいての見出しは**縦書き**。1マス40px前後しか取れないので横書きでは名前が入らない */
 .sdhh th{padding:0 0 4px!important}
@@ -2017,8 +1995,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   padding:5px 4px!important;border:1px dashed var(--line);border-radius:9px}
 .sdftn b{color:var(--ink);font-weight:800}
 /* 選んだ3匹の要約と凡例 */
-.sdsum{margin-top:8px;padding:6px 10px;border-radius:10px;font-size:.68rem;color:var(--sub);
-  background:var(--bg2);border:1px solid var(--line)}
+.sdsum{margin-top:9px;padding:5px 0 5px 10px;font-size:.68rem;color:var(--sub);
+  border:none;border-left:3px solid var(--line2);border-radius:0}
+.sdsum.ok{border-left-color:var(--win)}
+.sdsum.bad{border-left-color:var(--lose)}
 .sdsum b{color:var(--ink);font-size:.76rem;font-weight:800}
 .sdsum.ok b{color:var(--win)}
 .sdsum.bad b{color:var(--lose)}

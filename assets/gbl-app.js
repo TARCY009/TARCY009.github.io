@@ -7132,8 +7132,6 @@ function sdGridHtml() {
   const ix = sdIndex(W, my.length, nFoe), ixl = sdIxLabel(ix);
   const ixHtml = `<div class="sdix ${ixl.c}" title="じぶんの${my.length}匹とあいての${nFoe}匹が、シールド0-0／1-1／2-2の3通りで戦った${my.length * nFoe * 3}通りのうち、じぶんが勝った数の割合です。50%で互角。選出を決める前の「この6匹どうしの相性」を表します">` +
     `<i>6対6の相性</i><b>${ix}<small>%</small></b><em>${ixl.t}</em>` +
-    `<span class="sdixbar"><u style="width:${Math.max(2, Math.min(100, ix))}%"></u></span>` +
-    `<span class="sdixft"><span>あいて</span><span>互角</span><span>じぶん</span></span>` +
     `<span class="sdixyou">↓ じぶんの${my.length}匹</span></div>`;
   const sum = cur ? `<div class="sdsum ${cur.holes ? 'bad' : 'ok'}"><b>穴${cur.holes}</b>／1匹頼み${cur.n1}／2匹勝ち${nFoe - cur.holes - cur.n1}` +
     `<i>${cur.holes ? '穴＝3匹とも勝てない相手です' : '穴なし＝どの相手にも勝てる1匹がいます'}（いちばん下の数字＝その相手に勝てる味方の数）</i></div>` : '';
