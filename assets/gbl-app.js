@@ -6886,10 +6886,11 @@ function buildSdSlots(side) {
           <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）として計算する"><i class="shadowmark"></i></button>
           ${side === 'my' ? '<button class="pstar" title="★登録リストから選ぶ（自分の個体値で計算できます）">★</button>' : ''}
           <button class="pclr" title="この枠を空にする">×</button></span></div>
-      <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+      <div class="sdname">
+        <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+        <b class="sdcp"></b></div>
       ${side === 'my' ? '<div class="popwin pstarwin" style="display:none"></div>' : ''}
       <div class="fbody" style="display:none">
-        <div class="fstat"></div>
         <details class="sdmv"><summary class="mvsum"></summary>
           <select class="selFast" title="ノーマルアタック"></select>
           <select class="selC1" title="SPアタック1"></select>
@@ -7000,7 +7001,9 @@ function syncSdSlots() {
       const fb = el.querySelector('.fbody');
       const ty = el.querySelector('.sdty');
       el.querySelector('.pshadow').setAttribute('aria-pressed', !!(m && m.shadow));
-      el.querySelector('input').value = m ? (D.pokemon[m.key] ? D.pokemon[m.key].n : '') : '';
+      const inp = el.querySelector('input');
+      inp.value = m ? (D.pokemon[m.key] ? D.pokemon[m.key].n : '') : '';
+      inp.dataset.len = inp.value.length;   // 長い名前は字を小さくする(CSS側)
       const pk = side === 'my' ? SD.pick.indexOf(i) : -1;
       el.classList.toggle('picked', pk >= 0);
       el.classList.toggle('filled', !!m);
@@ -7008,10 +7011,12 @@ function syncSdSlots() {
       if (!m) {
         fb.style.display = 'none';
         ty.innerHTML = '';
+        el.querySelector('.sdcp').innerHTML = '';
         el.style.removeProperty('--tc1'); el.style.removeProperty('--tc2');
         return;
       }
-      // タイプの色をカードの地とふちに使う(ゲームらしい見た目にする)
+      // タイプの色は**上のラインだけ**に使う(2026-09-06タダシさん指示。
+      // 地まで染めると6匹がばらばらに見えるので、フレームの色は6匹とも同じにする)
       ty.innerHTML = typeIcons(D.pokemon[m.key], 14);
       const tys = D.pokemon[m.key].ty.map(t => D.typeJa[t]);
       const c1 = typeColorOf(tys[0]), c2 = typeColorOf(tys[1] || tys[0]) || c1;
@@ -7029,13 +7034,15 @@ function syncSdSlots() {
       el.querySelector('.selC2').style.display = chargeds.length ? '' : 'none';
       // 畳んでいても何を選んでいるか分かるように、見出しにわざ名を出す
       const mvn = id => (D.moves[id] && D.moves[id].n) || '';
-      el.querySelector('.mvsum').innerHTML = `<i>わざ</i>${mvn(m.fast)}`
-        + (m.c1 ? '／' + mvn(m.c1) : '') + (m.c2 ? '・' + mvn(m.c2) : '');
+      const cs = [m.c1, m.c2].filter(Boolean).map(mvn).join('・');
+      el.querySelector('.mvsum').innerHTML =
+        `<span class="mvf"><i>わざ</i>${mvn(m.fast)}</span>` +
+        `<span class="mvc">${cs || 'ー'}</span>`;
       const base = ptBase(m);
       const st = PvpEngine.buildStats(D, base);
       const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
-      el.querySelector('.fstat').innerHTML =
-        `<b title="PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}">CP${st.cp}</b>` +
+      el.querySelector('.sdcp').innerHTML =
+        `<span title="PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}"><i>CP</i>${st.cp}</span>` +
         overCapTag(base);
       const gm = el.querySelector('.gmlv');
       gm.innerHTML = hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '';

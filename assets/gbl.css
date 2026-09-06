@@ -1762,16 +1762,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdslot{position:relative;padding:0;border-radius:14px;min-width:0;
   border:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),var(--panel));
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.05)}
-.sdslot::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:linear-gradient(152deg,var(--tc1,transparent) 0%,var(--tc2,transparent) 62%,transparent 100%);
-  opacity:0;transition:opacity .18s}
-.sdslot.filled::before{opacity:.21}
-:root.light .sdslot.filled::before{opacity:.26}
 .sdslot:not(.filled){border-style:dashed}
-.sdslot .sdbar{display:block;height:3px;border-radius:14px 14px 0 0;background:var(--line)}
+.sdslot .sdbar{display:block;height:4px;border-radius:14px 14px 0 0;background:var(--line)}
 .sdslot.filled .sdbar{background:linear-gradient(90deg,var(--tc1,var(--line)),var(--tc2,var(--line)))}
 /* 上部の光沢(ゲームのカードらしい艶) */
-.sdslot .sdin{position:relative;padding:6px 8px 8px}
+.sdslot .sdin{position:relative;padding:6px 5px 7px}
 .sdslot .sdin::before{content:'';position:absolute;left:0;right:0;top:0;height:38%;pointer-events:none;
   border-radius:0 0 60% 60%/0 0 18px 18px;
   background:linear-gradient(180deg,rgba(255,255,255,.075),transparent)}
@@ -1787,24 +1782,33 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdslot .sdops .pshadow[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:transparent;color:#fff}
 .sdslot .sdops .pstar{color:var(--gold)}
 .sdslot .sdops button:hover{border-color:var(--cy);color:var(--ink)}
-/* 名前(入力欄そのもの)。埋まっているときは枠を消して**名前の見出しのように**見せる */
+/* 名前(入力欄そのもの)とCPを同じ行に。埋まっているときは枠を消して**名前の見出しのように**見せる */
+.sdslot .sdname{display:flex;align-items:baseline;gap:3px;min-width:0}
+.sdslot .sdname .sugg{flex:1 1 auto;min-width:0}
+.sdslot .sdcp{flex:0 0 auto;font-size:.74rem;font-weight:900;color:var(--gold);letter-spacing:0;
+  white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.45)}
+.sdslot .sdcp i{font-style:normal;font-size:.56rem;font-weight:800;margin-right:1px;opacity:.85}
+:root.light .sdslot .sdcp{color:#a06a00;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+/* 名前を打ちかえるときはCPを隠して、入力欄に幅をぜんぶ渡す */
+.sdslot .sdname:focus-within .sdcp{display:none}
 .sdslot .sugg input{padding:5px 6px;font-weight:700}
 /* 埋まっているときの入力欄は「名前の見出し」に見せる。
    ⚠ 表示は小さくしてよいが、**フォーカス時は必ず16px**にすること——
    iOSは触れた時点の文字が16px未満だと画面を勝手に拡大して戻らない(恒久ルール) */
 .sdslot.filled .sugg input{background:transparent;border-color:transparent;font-weight:800;
-  padding:3px 2px;font-size:.9rem;letter-spacing:-.01em}
+  padding:3px 1px;font-size:.9rem;letter-spacing:-.02em}
+.sdslot.filled .sugg input[data-len="5"]{font-size:.8rem}
+.sdslot.filled .sugg input[data-len="6"]{font-size:.68rem}
+.sdslot.filled .sugg input[data-len="7"]{font-size:.58rem}
+.sdslot.filled .sugg input[data-len="8"]{font-size:.5rem}
+.sdslot.filled .sugg input[data-len="9"],
+.sdslot.filled .sugg input[data-len="10"],
+.sdslot.filled .sugg input[data-len="11"],
+.sdslot.filled .sugg input[data-len="12"]{font-size:.44rem}
 .sdslot.filled .sugg input:focus{background:var(--panel);border-color:var(--gl);
   padding:5px 6px;font-size:16px;letter-spacing:0}
 .sdslot .sugg-list{min-width:215px;font-size:.8rem}
 .sdteams .sdslots .sdslot:nth-child(even) .sugg-list{left:auto;right:0}
-/* CP(金)とPL */
-.sdslot .fstat{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;margin-top:1px;line-height:1.35}
-.sdslot .fstat b{font-size:.84rem;font-weight:900;color:var(--gold);letter-spacing:.01em;
-  text-shadow:0 1px 0 rgba(0,0,0,.45)}
-:root.light .sdslot .fstat b{text-shadow:0 1px 0 rgba(255,255,255,.7)}
-.sdslot .fstat i{font-style:normal;font-size:.6rem;color:var(--sub)}
-:root.light .sdslot .fstat b{color:#a06a00}
 /* 選出済み(じぶん側)は水色のリングと丸数字 */
 .sdslot.picked{border-color:transparent;box-shadow:0 0 0 2px var(--cy),0 2px 0 var(--tabsh)}
 .sdslot.picked::after{content:attr(data-no);position:absolute;top:-8px;left:-6px;z-index:2;
@@ -1817,19 +1821,33 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   .sdslot .sdin{padding:5px 6px 7px}
   .sdslot .sdops{gap:2px}
   .sdslot .sdops button{width:18px;height:18px;font-size:.6rem}
-  .sdslot.filled .sugg input{font-size:.84rem}
+  .sdslot .sdcp{font-size:.58rem}
+  .sdslot .sdcp i{font-size:.5rem}
+  .sdslot .sdname{gap:2px}
+  .sdslot.filled .sugg input{font-size:.76rem}
+  .sdslot.filled .sugg input[data-len="5"]{font-size:.64rem}
+  .sdslot.filled .sugg input[data-len="6"]{font-size:.54rem}
+  .sdslot.filled .sugg input[data-len="7"]{font-size:.46rem}
+  .sdslot.filled .sugg input[data-len="8"],
+  .sdslot.filled .sugg input[data-len="9"],
+  .sdslot.filled .sugg input[data-len="10"],
+  .sdslot.filled .sugg input[data-len="11"],
+  .sdslot.filled .sugg input[data-len="12"]{font-size:.42rem}
 }
 .sdteams .sdslots[data-s="my"] .pslot{grid-column:1}
 .sdteams .sdslots[data-s="foe"] .pslot{grid-column:2}
 #mock .sdslots.auto .fbody select{display:none}
 /* 12枠が縦に並ぶので、わざの3欄は畳んでおく(見出しに選んでいるわざ名を出す) */
-.sdslot .sdmv{margin-top:3px}
-.sdslot .sdmv>summary{cursor:pointer;list-style:none;font-size:.6rem;color:var(--sub);
-  padding:2px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdslot .sdmv{margin-top:4px}
+.sdslot .sdmv>summary{cursor:pointer;list-style:none;font-size:.62rem;color:var(--sub);
+  padding:2px 13px 2px 1px;position:relative;line-height:1.5}
 .sdslot .sdmv>summary::-webkit-details-marker{display:none}
+.sdslot .mvsum .mvf,.sdslot .mvsum .mvc{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdslot .mvsum .mvc{color:var(--sub);opacity:.9;font-size:.55rem;letter-spacing:-.02em}
 .sdslot .sdmv>summary i{font-style:normal;font-weight:800;color:var(--cy);margin-right:4px}
-.sdslot .sdmv>summary::after{content:' ▸';color:var(--cy);font-weight:800}
-.sdslot .sdmv[open]>summary::after{content:' ▾'}
+.sdslot .sdmv>summary::after{content:'▸';position:absolute;right:0;top:50%;transform:translateY(-50%);
+  color:var(--cy);font-weight:800}
+.sdslot .sdmv[open]>summary::after{content:'▾'}
 .sdslot .sdmv>select{margin-top:4px}
 #mock .sdslots.auto .sdmv{display:none}
 /* 編成のルールで入れられないポケモン(同じポケモン・メガは1匹まで)は、
