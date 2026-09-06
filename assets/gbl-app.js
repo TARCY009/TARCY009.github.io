@@ -7130,15 +7130,19 @@ function sdGridHtml() {
     : `<tr class="sdft"><th class="sdftn" colspan="${nFoe + 1}">あと${3 - SD.pick.length}匹選ぶと、ここに<b>勝てる味方の数</b>が出ます</th></tr>`;
   // 表の左上のあき地に「6対6の相性」を出す(選出の前に、この6匹どうしの相性を掴むための数字)
   const ix = sdIndex(W, my.length, nFoe), ixl = sdIxLabel(ix);
-  const ixHtml = `<div class="sdix ${ixl.c}" title="じぶんの${my.length}匹とあいての${nFoe}匹が、シールド0-0／1-1／2-2の3通りで戦った${my.length * nFoe * 3}通りのうち、じぶんが勝てる割合です。50%で互角。選出を決める前の「この6匹どうしの相性」を表します">` +
-    `<i>6対6の相性</i><b>${ix}<small>%</small></b><em>${ixl.t}</em></div>`;
+  const ixHtml = `<div class="sdix ${ixl.c}" title="じぶんの${my.length}匹とあいての${nFoe}匹が、シールド0-0／1-1／2-2の3通りで戦った${my.length * nFoe * 3}通りのうち、じぶんが勝った数の割合です。50%で互角。選出を決める前の「この6匹どうしの相性」を表します">` +
+    `<i>6対6の相性</i><b>${ix}<small>%</small></b><em>${ixl.t}</em>` +
+    `<span class="sdixbar"><u style="width:${Math.max(2, Math.min(100, ix))}%"></u></span>` +
+    `<span class="sdixft"><span>あいて</span><span>互角</span><span>じぶん</span></span>` +
+    `<span class="sdixyou">↓ じぶんの${my.length}匹</span></div>`;
   const sum = cur ? `<div class="sdsum ${cur.holes ? 'bad' : 'ok'}"><b>穴${cur.holes}</b>／1匹頼み${cur.n1}／2匹勝ち${nFoe - cur.holes - cur.n1}` +
     `<i>${cur.holes ? '穴＝3匹とも勝てない相手です' : '穴なし＝どの相手にも勝てる1匹がいます'}（いちばん下の数字＝その相手に勝てる味方の数）</i></div>` : '';
   return `<div class="sdgrid">
     <div class="sdglbl">相性表<small><b>行を押すと選出</b>です（押した順が①②③の並び順）<span class="expl">。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</span></small></div>
     <div class="sdgwrap"><table class="sdtbl">
-      <thead><tr class="sdhh"><th></th><th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
-      <tr><th class="sdch">${ixHtml}<span class="sdyou">じぶん ↓</span></th>${head}</tr></thead>
+      <thead><tr class="sdhh"><th class="sdch" rowspan="2">${ixHtml}</th>
+      <th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
+      <tr>${head}</tr></thead>
       <tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>
     ${sum}
     <div class="sdleg">${SD_MK.map((mk, w) => `<span class="w${w}"><i>${mk}</i>${SD_MKN[w]}</span>`).join('')}
