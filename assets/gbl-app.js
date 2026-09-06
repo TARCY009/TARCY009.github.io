@@ -7266,6 +7266,8 @@ function renderSd() {
   // ⚠ 早期リターンの前に置く。ここを通さないと、ふつう(3対3)に戻したときに
   //    能力変化わざの設定が #sdwrap(display:none) の中に取り残されて画面から消える(実際に踏んだ)
   sdMoveGopt();
+  // 見せ合いをやめたら、あいての名前の伏せ字も必ず外す(バトルが組めていない間に残らないように)
+  if (!SD.on) document.querySelectorAll('.sdmask').forEach(n => n.classList.remove('sdmask'));
   if (!SD.on) return;
   sdDedupe();   // 共有リンク・古い保存に重複が混じっていたら、あとの枠を空にする
   // 枠から消えたポケモンを選出に残さない
@@ -9086,7 +9088,7 @@ function gbRender(body, bt, picks, foes) {
       if (pt && pt.ans && pt.ans.a === 'to')
         fxv.push({ k: 'swap', side: sd, name: sd ? leg.foeName : leg.meName });
     });
-    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
+    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe"><b class="fnm">${shMark(leg.foeName)}${tyIco(leg.foeName)}</b></span></div>` });
     // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
     (leg.leadPts || []).forEach(p => { if (p) items.push({ ...chipItem(p, base), o: IT.lead }); });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
@@ -9215,7 +9217,7 @@ function gbRender(body, bt, picks, foes) {
   // 開幕交代の質問中はまだ対面が無いので、1匹目どうしの初期状態を出しておく
   if (!bt.legs.length && bt.pending && foes.length) {
     const sA = PvpEngine.buildStats(D, picks[0].base), sF = PvpEngine.buildStats(D, foes[0].base);
-    items.push({ gt: 0, html: `<div class="flg"><span class="me">${shMark(picks[0].name)}${tyIco(picks[0].name)}</span><em>VS</em><span class="foe">${shMark(foes[0].name)}${tyIco(foes[0].name)}</span></div>` });
+    items.push({ gt: 0, html: `<div class="flg"><span class="me">${shMark(picks[0].name)}${tyIco(picks[0].name)}</span><em>VS</em><span class="foe"><b class="fnm">${shMark(foes[0].name)}${tyIco(foes[0].name)}</b></span></div>` });
     frames[0] = { meta: { name0: picks[0].name, name1: foes[0].name, cp0: sA.cp, cp1: sF.cp, max0: sA.hp, max1: sF.hp,
       sp0: (picks[0].pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: (foes[0].pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })) },
@@ -9325,14 +9327,18 @@ function gbRender(body, bt, picks, foes) {
     //   sticky のままだと「▶ バトルスタート！」が、上にある
     //   「オートバトル」「結果だけ見る」の行に重なって見える
     body.classList.toggle('prestart', !RBV.started);
+    // ⚠ 見せ合いは「相手が選んだ3匹は場に出るまで分からない」ルール(確定仕様)。
+    //   スタート前はVSカードとHUDのあいての名前を伏せる(2026-09-07タダシさん指摘)
+    const mask = sdOn() && !RBV.started;
+    body.classList.toggle('sdmask', mask);
     const f = frames[Math.max(0, Math.min(gt, stop))];
     if (!f) return;
-    const legKey = f.meta.name0 + '|' + f.meta.name1;
+    const legKey = f.meta.name0 + '|' + f.meta.name1 + (mask ? '|?' : '');
     if (legKey !== curLegKey) {
       curLegKey = legKey;
       [[R0, f.meta.name0, f.meta.cp0, f.meta.sp0, false], [R1, f.meta.name1, f.meta.cp1, f.meta.sp1, true]].forEach(([Rf, nm, cp, sps, isFoe]) => {
-        Rf.nm.textContent = nm.replace(/^シャドウ/, 'S');   // 下のフレームは幅が狭い(確定仕様の縮め方)
-        Rf.nm.title = nm;
+        Rf.nm.textContent = isFoe && mask ? '？？？' : nm.replace(/^シャドウ/, 'S');   // 下のフレームは幅が狭い(確定仕様の縮め方)
+        Rf.nm.title = isFoe && mask ? 'バトルが始まると分かります（見せ合いルール）' : nm;
         Rf.cp.textContent = 'CP' + cp;
         // わざオート中は、あいてのゲージ円にわざ名・タイプを出さない(何が飛んでくるか分からない設定)。
         // ただし**一度撃って正体が判明したわざ**は、その時点から先はタイプアイコンで出す
@@ -9573,6 +9579,9 @@ function gbRender(body, bt, picks, foes) {
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
+    // 見せ合いの伏せ字はスタートした瞬間に外す(VSの演出と同時に相手が分かる)。
+    // HUDは対面が変わったときだけ書き替える作りなので、curLegKey を空にして描き直させる
+    body.classList.remove('sdmask'); curLegKey = ''; updateHud(RBV.cur);
     feedEl.querySelectorAll('.prehide').forEach(e => e.classList.remove('prehide'));   // スタート前に隠していたぶんを出す
     if (RB.goal) { applyGoal(); return; }
     winbox.innerHTML = '';
