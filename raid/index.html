@@ -169,21 +169,21 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 /* ラベルはボタンの中へ（外に出すと1行に収まらないため）。前置きは小さく薄い字 */
 .pick .face em{font-style:normal;font-size:.84em;font-weight:700;color:var(--sub);margin-right:1px}
 /* 「再突入 10 秒」は1つの枠にまとめる（入力できるのは数字だけ） */
-.numwrap{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--line);background:var(--tab);
-  border-radius:11px;padding:5px 8px;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
-.numwrap em,.numwrap i{font-style:normal;font-size:.66rem;font-weight:700;color:var(--sub)}
-#rejoinSec{width:26px;border:0;background:none;box-shadow:none;padding:0;text-align:center;font-size:16px;
-  color:var(--ink);font-weight:800;-moz-appearance:textfield}
-#rejoinSec:focus{outline:none}
+.numwrap{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);background:var(--tab);
+  border-radius:11px;padding:4px 6px;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);cursor:text}
+.numwrap em,.numwrap i{font-style:normal;font-size:.64rem;font-weight:700;color:var(--sub)}
+/* 数字は「打ち直せる」と分かる見た目にする（枠の中の入力欄）。幅は2桁ぶん＋タップしやすい余白 */
+#rejoinSec{width:28px;border:1px solid var(--line);background:var(--bg2);border-radius:7px;box-shadow:none;
+  padding:2px 2px;text-align:center;font-size:16px;color:var(--ink);font-weight:800;-moz-appearance:textfield}
+#rejoinSec:focus{outline:2px solid #8b5cf6;outline-offset:1px;border-color:transparent}
 #rejoinSec::-webkit-outer-spin-button,#rejoinSec::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 /* 狭い画面は字と余白を詰めて、それぞれ1行に収める */
 @media (max-width:430px){
-  .setrow{gap:6px 4px}
+  .setrow{gap:6px 3px}
   .setrow .optbtn,.setrow .pick .face{font-size:.68rem;padding:5px 5px}
   .pick .face em{font-size:.75em}
-  .numwrap{padding:4px 5px;gap:2px}
+  .numwrap{padding:4px 5px;gap:1px}
   .numwrap em,.numwrap i{font-size:.6rem}
-  #rejoinSec{width:22px}
 }
 /* 結果 */
 .bigppl{margin:14px 0 4px;font-size:1rem;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -310,7 +310,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   </div>
   <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝手持ちが全滅してからバトルに戻るまでの秒数です。</p>
   <div class="setrow">
-    <span class="numwrap" title="手持ちが全滅してからバトルに戻るまでの時間です。ひんし→次のポケモンは1秒固定"><em>再突入</em><input type="number" id="rejoinSec" min="0" max="60" step="1" value="10"><i>秒</i></span>
+    <label class="numwrap" for="rejoinSec" title="手持ちが全滅してからバトルに戻るまでの時間です（0〜60秒・タップで打ち直せます）。ひんし→次のポケモンは1秒固定"><em>再突入</em><input type="number" id="rejoinSec" inputmode="numeric" min="0" max="60" step="1" value="10"><i>秒</i></label>
     <span class="pick" data-pre="天候" title="選んだ天候で1.2倍になるタイプのわざが強くなります。自分のわざだけでなく、ボスのわざにも掛かります（例: 曇りならボスのきあいだまも1.2倍）"><select id="wxSel">
       <option value="" selected>なし</option>
       <option value="sunny">晴れ</option>
