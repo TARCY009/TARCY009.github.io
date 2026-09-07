@@ -4987,7 +4987,7 @@ function fxOne(f) {
     return fxShow('fxin ' + sideCls, `<div class="inwrap"><i class="fball"></i><i class="burst"></i>
       <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
       <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span>
-      <div class="tx">${f.name || ''}${tyIco(f.name)} をくりだした！</div></div>`, 1400);
+      <div class="tx"><b class="wh">${f.side ? 'あいて' : 'じぶん'}</b>は ${f.name || ''}${tyIco(f.name)} をくりだした！</div></div>`, 1400);
   }
   if (f.k === 'swap') {   // 交代: ボールに戻して飛び去る→⇄→新しいボールが飛び込んで開く(2段)＋名前の帯
     return fxShow('fxswapfx ' + sideCls, `<div class="swwrap"><div class="stage">
@@ -4995,7 +4995,7 @@ function fxOne(f) {
       <i class="burst"></i>
       <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
       <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span></div>
-      <div class="tx">${f.name || ''}${tyIco(f.name)} に交代した！</div></div>`, 1700);
+      <div class="tx"><b class="wh">${f.side ? 'あいて' : 'じぶん'}</b>は ${f.name || ''}${tyIco(f.name)} に交代した！</div></div>`, 1700);
   }
   if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
     const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';
@@ -5037,7 +5037,7 @@ function fxOne(f) {
         <span class="kshard k1"></span><span class="kshard k2"></span><span class="kshard k3"></span>
         <span class="kshard k4"></span><span class="kshard k5"></span><span class="kshard k6"></span>
         <span class="kshard k7"></span><span class="kshard k8"></span>
-        <i class="mk">💥</i><div class="tx">${f.name || ''} をたおした！</div></div>`, 1550);
+        <i class="mk">💥</i><div class="tx"><b class="wh">あいて</b>の ${f.name || ''} をたおした！</div></div>`, 1550);
       setTimeout(fxQuake, Math.min(Math.round(d * 0.2), 600));
       return d;
     }
@@ -5045,7 +5045,7 @@ function fxOne(f) {
     return fxShow('fxko lose', `<div class="kowrap">
       <i class="mk">💀</i>
       <span class="kdust d1"></span><span class="kdust d2"></span><span class="kdust d3"></span>
-      <div class="tx">${f.name || ''} はたおれた…</div></div>`, 1550);
+      <div class="tx"><b class="wh">じぶん</b>の ${f.name || ''} はたおれた…</div></div>`, 1550);
   }
   if (f.k === 'form') {   // フォルムチェンジ: 光の輪＋マーク
     return fxShow('fxform', `<div class="fmwrap"><i class="ring"></i><i class="mk">${f.mk || '✨'}</i><div class="tx">${f.name || ''}</div></div>`, 1910);
@@ -5699,6 +5699,9 @@ function rbRender(body, bt, picks, foes, extra) {
     }
     updateHud(RBV.cur);
     if (RBV.cur >= stop) atStop();
+    // ⚠ 演出が無いまま行を出し切ったときは、タイマーが止まっていれば動かし直す
+    //   (スタート直後・決断に答えた直後は advance から入るので、これが無いと再生が始まらない)
+    else if (RBV.playing && !RBV.timer) startTimer();
   }
   function tick() {
     if (!onScreen()) { stopTimer(); return; }
@@ -9715,6 +9718,9 @@ function gbRender(body, bt, picks, foes) {
     }
     updateHud(RBV.cur);
     if (RBV.cur >= stop) atStop();
+    // ⚠ 演出が無いまま行を出し切ったときは、タイマーが止まっていれば動かし直す
+    //   (スタート直後・決断に答えた直後は advance から入るので、これが無いと再生が始まらない)
+    else if (RBV.playing && !RBV.timer) startTimer();
   }
   function tick() {
     if (!onScreen()) { stopTimer(); return; }
