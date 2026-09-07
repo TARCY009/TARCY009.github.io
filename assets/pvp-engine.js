@@ -429,14 +429,15 @@
       }
       // ターン経過 → 完了した通常技の発生
       // 相手がゲージ技のターンに打ち始めた通常技は差し込み(前倒し)扱いなのでここでは進めない
-      const row = { tn: turn, ev: [null, null], stalled };
+      const row = { tn: turn, ev: [null, null], stalled, idle: [false, false] };
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
         if (charging[i] || stalled[i]) continue;
         if (charging[1 - i] && s.startedNow) { s.startedNow = false; continue; }
         s.startedNow = false;
-        // 「0.5秒待つ」ターンは通常技を始めていないので、進行させない(cdは0のまま)
-        if (s.idleNow) { s.idleNow = false; continue; }
+        // 「0.5秒待つ」ターンは通常技を始めていないので、進行させない(cdは0のまま)。
+        // 画面には「1ターン待った」と出す(何も起きない行になって訳が分からなくなるため)
+        if (s.idleNow) { s.idleNow = false; row.idle[i] = true; continue; }
         s.cd--;
         if (s.cd === 0) {
           const dmg = fastDamage(i);

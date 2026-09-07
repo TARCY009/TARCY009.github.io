@@ -5353,6 +5353,11 @@ function rbRender(body, bt, picks, foes, extra) {
   // 受けた側の列に出す(2026-09-04タダシさん指示「ばけのかわがはがれた！」)
   const dgCell = oppList => oppList.filter(e => e.disguised)
     .map(e => `<span class="ev shd dg" title="相手の${e.move}をばけのかわが身代わりになって受けました(ダメージ1・1回だけ)"><i class="blk">👻ばけのかわがはがれた！</i></span>`).join('');
+  // 0.5秒(1ターン)何も打たずに待ったターン(2026-09-08タダシさん指示)。
+  // 何も起きない行になって訳が分からなくなるので、**どちらが待ったのか**を必ず出す
+  const waitCell = (r, sd) => r.idle && r.idle[sd]
+    ? `<span class="ev wt" title="0.5秒（1ターン）何も打たずに待ちました。ノーマルアタックの周期が1ターンずれるので、あいては交代を差し込めません（交代受けを防ぐ動き）"><i class="blk"><b>${sd ? 'あいて' : 'じぶん'}</b> 1ターン待った</i></span>`
+    : '';
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc"><button class="fchip${p.auto ? ' auto' : ''}"
     data-k="${p.key}" title="タップすると、この場面からやり直せます">${chipIcon(p)}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
@@ -5450,8 +5455,8 @@ function rbRender(body, bt, picks, foes, extra) {
       for (const r of subs) {
         // 受ける側のキーを渡して「こうかばつぐん／いまひとつ」を出す
         const kOf = x => x && (x.key || (x.m && x.m.key));
-        const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kOf(foes[leg.foeIdx])) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []);
-        const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kOf(picks[leg.myIdx])) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + (first ? stallMark : '');
+        const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kOf(foes[leg.foeIdx])) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []) + waitCell(r, 0);
+        const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kOf(picks[leg.myIdx])) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + waitCell(r, 1) + (first ? stallMark : '');
         if (!e0 && !e1) continue;
         items.push({ gt, fx: fxOfRow(r), html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
@@ -8597,13 +8602,31 @@ function gbPlay(picks, foes, ans, stepwise) {
     shNow[1] = p.st1 && p.st1.sh != null ? p.st1.sh : null;
     let a;
     try { a = aiAnswerAt(p, ctx); } finally { shNow[0] = shNow[1] = null; }
-    return a;
+    return aiHoldCare(p, ctx, a);
   };
-  // ⚠ 「交代受けを警戒して1発ずらす」(旧 aiPivotCare)は**廃止**(2026-09-07タダシさん指示)。
-  //   交代受けが成立するのは**両者のノーマルアタックのターン数が同じで、周期がそろっているとき**だけ、
-  //   と決めたので、**ノーマルアタックを1発はさんでも周期は同じまま＝ずらせない**（算数の帰結）。
-  //   実戦で外す方法は「1ターン何も打たずに待ってから撃つ」だが、それはエンジンで表せないため
-  //   **HARDならではの強さとして残す**(既存の決めごとどおり)。ユーザー側の「交代受けを防ぐ」ボタンも同じ理由で廃止
+  // ---- 交代受けを警戒して 0.5秒(1ターン)待ってから撃つ(たまに・2026-09-08タダシさん指示) ----
+  // ユーザーは**あいてのSPが発動するターンに交代**すると、その一撃を控えに受けさせられる(交代受け)。
+  // 外す方法は**1ターン何も打たずに待って周期を1つずらす**ことだけ(ノーマルアタックを足しても周期は同じ)。
+  // **でも毎回きっちり外すと「絶対に引っかからないコンピュータ」**になって実戦っぽくないので、
+  // **バトルごとの癖(RB.rseed)で警戒する率を決めて、たまにだけ外す**。
+  // **HARDだけの動き**(NORMAL・EASYは警戒しない＝いつでも引っかかる)
+  const aiHoldCare = (p, ctx, a) => {
+    if (!a || !ai.omni || p.kind !== 'sp' || p.w || !ctx.swTo[0].length || !ctx.spHit) return a;
+    if (a.a !== 'fire' && a.a !== 'opt' && a.a !== 'auto') return a;   // ためてブラフはそのまま
+    if (!ctx.aligned) return a;                  // 周期がずれている＝そもそも交代受けされない
+    const f0 = D.moves[ctx.fast[0]], f1 = D.moves[ctx.fast[1]];
+    const tn0 = f0 && f0.tn ? f0.tn : 1, tn1 = f1 && f1.tn ? f1.tn : 1;
+    if (tn0 !== tn1 || tn0 < 2) return a;         // ターン数がちがう・0.5秒わざどうしは対象外
+    const hit = ctx.spHit(p, a);                  // その答えで撃つと、当たるのは何ターン目か
+    if (hit == null || hit % tn0 !== 0) return a;   // もう切れ目から外れている
+    // 警戒度は0〜3(バトルごとの癖)。**0なら一度も警戒しない**＝そのバトルはよく決まる相手になる
+    const care = gbCoin('pvcare:' + RB.rseed) % 4;
+    const roll = gbCoin('pvhold:' + RB.rseed + ':' + ctx.li + ':' + p.seq + ':' + p.tn) % 4;
+    if (roll >= care) return a;
+    const held = { a: 'hold1', mv: a.mv || null };
+    const h2 = ctx.spHit(p, held);
+    return h2 != null && h2 % tn0 !== 0 ? held : a;   // 待って本当に外れるときだけ
+  };
   // ---- 投げようとしたSPは引っ込められない(2026-09-07タダシさん指摘で追加) ----
   // ユーザーが**自分から交代した直後**(ctx.chase)に、あいてが毎回きっちり合わせ返して交代すると、
   // **交代受け(ユーザーがSPの発動に合わせて交代する)が一度も成立しない**(実測で成功率0%だった)。
@@ -9287,6 +9310,26 @@ function gbPlay(picks, foes, ans, stepwise) {
       return true;
     };
     ctx.finishNoSp = finishNoSp;   // あいてのAI(aiAnswer)からも同じ判断を使う
+    // 交代受けの警戒(aiHoldCare)用: その答えで撃つと**SPが当たるのは何ターン目か**を1回だけシミュして数える
+    ctx.spHit = (p, a) => {
+      const sd = p.side, d = dec[sd], len = d.shots.length, save = d.shots[p.seq], saveW = d.wait;
+      if (a.a === 'opt' || a.a === 'auto') d.shots[p.seq] = { wait: 'opt', after: d.wait, mv: a.mv || null };
+      else if (a.a === 'fire') d.shots[p.seq] = { wait: d.wait + (a.after || 0), mv: a.mv };
+      else if (a.a === 'hold1') d.shots[p.seq] = { wait: 'hold', hold: 1, mv: a.mv || null };
+      else if (a.a === 'bluff') d.shots[p.seq] = { wait: 'en', until: a.until, mv: a.mv };
+      else return null;
+      const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
+      const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
+        { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
+      if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
+      d.wait = saveW;
+      let n = 0, out = null;
+      for (const t of rbTurns(r)) {
+        for (const e of t.ev[sd]) if (e.full !== undefined) { if (n === p.seq) out = t.tn; n++; }
+        if (out != null) break;
+      }
+      return out;
+    };
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す。1回のシミュは0.02ms未満)
     for (let guard = 0; guard < 90; guard++) {
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
@@ -9590,6 +9633,11 @@ function gbRender(body, bt, picks, foes) {
   // 受けた側の列に出す(2026-09-04タダシさん指示「ばけのかわがはがれた！」)
   const dgCell = oppList => oppList.filter(e => e.disguised)
     .map(e => `<span class="ev shd dg" title="相手の${e.move}をばけのかわが身代わりになって受けました(ダメージ1・1回だけ)"><i class="blk">👻ばけのかわがはがれた！</i></span>`).join('');
+  // 0.5秒(1ターン)何も打たずに待ったターン(2026-09-08タダシさん指示)。
+  // 何も起きない行になって訳が分からなくなるので、**どちらが待ったのか**を必ず出す
+  const waitCell = (r, sd) => r.idle && r.idle[sd]
+    ? `<span class="ev wt" title="0.5秒（1ターン）何も打たずに待ちました。ノーマルアタックの周期が1ターンずれるので、あいては交代を差し込めません（交代受けを防ぐ動き）"><i class="blk"><b>${sd ? 'あいて' : 'じぶん'}</b> 1ターン待った</i></span>`
+    : '';
   // チップには**どちらの判断か**を必ず書く(2026-08-19タダシさん報告で追加)。
   // 枠の色(金＝あいて)だけでは伝わらず、あいての「撃たない」を自分の判断だと誤解する
   // (実例: オコリザルが起点づくりでSPを温存した場面を、こちらのSP判断だと思われた)
@@ -9740,8 +9788,8 @@ function gbRender(body, bt, picks, foes) {
       const kOf = x => x && (x.key || (x.m && x.m.key));
       const kFoe = kOf(foes[leg.foeIdx]), kMe = kOf(picks[leg.myIdx]);
       for (const r of subs) {
-        const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kFoe) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []);
-        const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kMe) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []);
+        const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kFoe) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []) + waitCell(r, 0);
+        const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kMe) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + waitCell(r, 1);
         if (!e0 && !e1) continue;
         // 交代受けが決まった瞬間の演出。SPのカットインのあとに短い演出を足す
         let fxr = fxOfRow(r);

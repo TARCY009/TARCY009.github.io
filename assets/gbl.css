@@ -778,6 +778,11 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .ev.sp{border-color:var(--gold);background:rgba(255,213,74,.1);font-weight:700}
 /* 🛡ブロック: シールドを**使った側**の列に出すチップ(2026-08-20タダシさん指示) */
 .ev.shd{border-color:rgba(67,224,255,.55);background:rgba(67,224,255,.1)}
+/* 0.5秒(1ターン)何も打たずに待ったターン(2026-09-08タダシさん指示)。
+   何も起きない行になって訳が分からなくなるので、どちらが待ったのかを必ず出す */
+.ev.wt{border-color:rgba(255,216,115,.5);background:rgba(255,216,115,.09)}
+.ev.wt .blk{color:var(--gold)}
+.ev.wt .blk b{font-weight:900;opacity:.85;margin-right:3px}
 /* ウッウ: 獲物を咥えた／吐き出した(みず色でSPアタックの金と分ける) */
 .ev.gulp{border-color:rgba(67,224,255,.5);background:rgba(67,224,255,.1);color:var(--cy);font-weight:700}
 .ev.gulp.spit{border-color:rgba(255,107,129,.5);background:rgba(255,107,129,.1);color:var(--lose)}
