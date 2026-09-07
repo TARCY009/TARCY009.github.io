@@ -2218,3 +2218,6 @@ button.sdchip.on .tbadge{filter:none}
 .fxitem.fxhold.fxsp.foe .band{transform:rotate(var(--rot)) translateX(-6%) !important}
 .fxitem.fxhold.fxsp .mvn{transform:skewX(-8deg) !important}
 .fxitem.fxhold.fxsp.foe .mvn{transform:skewX(8deg) !important}
+/* 💀(たおれた)は沈みながら傾く動きなので、静止させるときも80%の姿勢に合わせる
+   (何も指定しないと元の位置へ戻ってピクッと動く・2026-09-07タダシさん報告) */
+.fxitem.fxhold.fxko.lose .mk{transform:translateY(14px) rotate(16deg) !important}
