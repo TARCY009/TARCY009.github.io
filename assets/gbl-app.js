@@ -4963,10 +4963,12 @@ function shieldSvg() {
 // HPバーの「残像」(2026-08-31タダシさん指示・HPが減る動きの演出):
 // 本体のバーはすぐ減り、うしろの白い残像がひと呼吸おいてゆっくり追いかけて減る。
 // 増えたとき(対面が替わった・巻き戻した)は残像も即座に合わせる(変な逆再生をしない)
-function hpGhost(gEl, w) {
+function hpGhost(gEl, w, instant) {
   if (!gEl) return;
   const prev = +(gEl.dataset.p || 100);
-  gEl.style.transition = w < prev - 0.5 ? 'width 1.24s cubic-bezier(.25,.6,.3,1) .39s' : 'none';
+  // ⚠ instant = HUDを作り直した直後。DOMが新しいと「前の値」が分からず(CSSの初期値=100%)、
+  //   そのままだと**HPバーが白くなって100%からグイッと縮む**変な動きになる(2026-09-07タダシさん報告)
+  gEl.style.transition = (!instant && w < prev - 0.5) ? 'width 1.24s cubic-bezier(.25,.6,.3,1) .39s' : 'none';
   gEl.style.width = w + '%';
   gEl.dataset.p = w;
 }
@@ -5482,6 +5484,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const swapEl = hud.querySelector('.hs.me .hswap');   // 交代タイマー(じぶん側だけ)
   const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
   let ptr = 0, lastEl = null, curLegKey = '';
+  let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
   function updateHud(gt, li) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
@@ -5506,12 +5509,23 @@ function rbRender(body, bt, picks, foes, extra) {
         Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
+    const fresh = hudFresh; hudFresh = false;   // このHUDへの最初の書き込みか
+    // ⚠ 作り直した直後は**直前に見えていたHP**をそのまま置く(2026-09-07タダシさん報告)。
+    //   これが無いと、作り直した瞬間はCSSの初期値(満タン)で描かれ、演出が終わってから
+    //   実際の値へ動くので「HPが一瞬グレーになって、グイッと動く」ように見える。
+    //   いまのターンの結果は、このあと演出に合わせて反映される
+    const lk = f.meta.name0 + '|' + f.meta.name1;
+    let hp0 = f.hp0, hp1 = f.hp1;
+    if (fresh && RBV.hpSnap && RBV.hpSnap.k === lk) { hp0 = RBV.hpSnap.a; hp1 = RBV.hpSnap.b; }
+    RBV.hpSnap = { k: lk, a: hp0, b: hp1 };
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
       // HPが1でも残っているうちはバーを空に見せない(残りわずかでも「まだ倒せていない」と分かるように)
       const w = hp > 0 ? Math.max(pct, 4) : 0;
-      Rf.bar.style.width = w + '%';
-      hpGhost(Rf.ghost, w);   // 白い残像がゆっくり追いかけて「減った量」を見せる
+      // 作り直した直後(fresh)は、バーも残像もアニメさせずにその値へ置く
+      if (fresh) { Rf.bar.style.transition = 'none'; Rf.bar.style.width = w + '%'; void Rf.bar.offsetWidth; Rf.bar.style.transition = ''; }
+      else Rf.bar.style.width = w + '%';
+      hpGhost(Rf.ghost, w, fresh);   // 白い残像がゆっくり追いかけて「減った量」を見せる
       const cls = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
       Rf.bar.className = cls;
       // バーだけでは残りわずかが読み取れないので、実数値も出す(色はバーと同じ基準)
@@ -5539,9 +5553,9 @@ function rbRender(body, bt, picks, foes, extra) {
     };
     const GQC_ME = ['#43e0ff', '#ffd54a', '#ff6b81'], GQC_FOE = ['#ffd54a', '#ff6b81', '#b06cff'];
     let cols = GQC_ME;
-    set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
+    set(R0, hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
-    set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
+    set(R1, hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
     clk.textContent = rbSec(ckOf(gt));   // SPアタックの待ち時間を含む実時間
     trn.textContent = gt + 'T';
     // ⇄いつでも交代は hctl(位置が動かない再生コントロールの並び)のボタンで受ける
@@ -5877,7 +5891,7 @@ function rbRender(body, bt, picks, foes, extra) {
     setPlayBtn();
     return;
   }
-  if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
+  if (RBV.cur === 0) { RBV.fxDone.clear(); RBV.hpSnap = null; }   // 最初からの再生(スタート・↻)は演出もHPの控えも最初から
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
   //   まとめて出てしまい、そのあとに演出が流れて時系列が崩れる。
@@ -5889,7 +5903,12 @@ function rbRender(body, bt, picks, foes, extra) {
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
   const upd = el => updateHud(RBV.cur, fxLi(el));
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
-  else if (stepping) advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
+  else if (stepping) {
+    // ⚠ 作り直したHUDは**すぐ塗る**(空のままだとCSSの初期値=HPバー100%が見えてしまう)。
+    //   HPだけは「直前に見えていた値」を置くので、満タンに戻ったようには見えない(updateHud の中)
+    updateHud(RBV.cur);
+    advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
+  }
   else { upd(); if (RBV.cur >= stop) atStop(); }
   setPlayBtn();
 }
@@ -9473,6 +9492,7 @@ function gbRender(body, bt, picks, foes) {
   const fswapEl = hud.querySelector('.hs.foe .hswap');
   const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
   let ptr = 0, lastEl = null, curLegKey = '';
+  let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
   function updateHud(gt, li) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
@@ -9506,11 +9526,22 @@ function gbRender(body, bt, picks, foes) {
           hide ? '？' : typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
+    const fresh = hudFresh; hudFresh = false;   // このHUDへの最初の書き込みか
+    // ⚠ 作り直した直後は**直前に見えていたHP**をそのまま置く(2026-09-07タダシさん報告)。
+    //   これが無いと、作り直した瞬間はCSSの初期値(満タン)で描かれ、演出が終わってから
+    //   実際の値へ動くので「HPが一瞬グレーになって、グイッと動く」ように見える。
+    //   いまのターンの結果は、このあと演出に合わせて反映される
+    const lk = f.meta.name0 + '|' + f.meta.name1;
+    let hp0 = f.hp0, hp1 = f.hp1;
+    if (fresh && RBV.hpSnap && RBV.hpSnap.k === lk) { hp0 = RBV.hpSnap.a; hp1 = RBV.hpSnap.b; }
+    RBV.hpSnap = { k: lk, a: hp0, b: hp1 };
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
       const w = hp > 0 ? Math.max(pct, 4) : 0;
-      Rf.bar.style.width = w + '%';
-      hpGhost(Rf.ghost, w);   // 白い残像がゆっくり追いかけて「減った量」を見せる
+      // 作り直した直後(fresh)は、バーも残像もアニメさせずにその値へ置く
+      if (fresh) { Rf.bar.style.transition = 'none'; Rf.bar.style.width = w + '%'; void Rf.bar.offsetWidth; Rf.bar.style.transition = ''; }
+      else Rf.bar.style.width = w + '%';
+      hpGhost(Rf.ghost, w, fresh);   // 白い残像がゆっくり追いかけて「減った量」を見せる
       const cls = pct > 50 ? 'g' : pct > 20 ? 'y' : 'r';
       Rf.bar.className = cls;
       Rf.hpn.textContent = hp + '/' + max;
@@ -9546,9 +9577,9 @@ function gbRender(body, bt, picks, foes) {
     if (R0.team) R0.team.innerHTML = teamHtml(picks, f.sn0 || 0, f.dd0 || 0, true);
     // スタート前は初手も伏せる(VSカードと同じ＝場に出るまで分からない)
     if (R1.team) R1.team.innerHTML = teamHtml(foes, mask ? 0 : (f.sn1 || 0), f.dd1 || 0, false);
-    set(R0, f.hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
+    set(R0, hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
     cols = GQC_FOE;
-    set(R1, f.hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
+    set(R1, hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
     // わざオート: 撃って判明したあいてのSPは？→タイプアイコンに切り替える(2026-09-01タダシさん指示。
     // フレームのrv=その時点までに判明したわざ、なので巻き戻せば？に戻る)
     if (MK.foeAuto) R1.gqs.querySelectorAll('.gq[data-hide="1"]').forEach(g => {
@@ -9895,7 +9926,7 @@ function gbRender(body, bt, picks, foes) {
     setPlayBtn();
     return;
   }
-  if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
+  if (RBV.cur === 0) { RBV.fxDone.clear(); RBV.hpSnap = null; }   // 最初からの再生(スタート・↻)は演出もHPの控えも最初から
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
   //   まとめて出てしまい、そのあとに演出が流れて時系列が崩れる。
@@ -9907,7 +9938,12 @@ function gbRender(body, bt, picks, foes) {
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
   const upd = el => updateHud(RBV.cur, fxLi(el));
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
-  else if (stepping) advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
+  else if (stepping) {
+    // ⚠ 作り直したHUDは**すぐ塗る**(空のままだとCSSの初期値=HPバー100%が見えてしまう)。
+    //   HPだけは「直前に見えていた値」を置くので、満タンに戻ったようには見えない(updateHud の中)
+    updateHud(RBV.cur);
+    advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
+  }
   else { upd(); if (RBV.cur >= stop) atStop(); }
   setPlayBtn();
 }
