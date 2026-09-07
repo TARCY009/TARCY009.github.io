@@ -3008,8 +3008,7 @@ function buildPartySlots(box, mvStore) {
   const withMoves = !!mvStore, isRk = mvStore === 'rbm', isMock = mvStore === 'gbm';
   box.innerHTML = [0, 1, 2].map(i => `<div class="pslot mine${withMoves ? ' hasmv' : ''}" data-i="${i}" data-mv="${mvStore || ''}">
     <div class="phd"><span class="pnum">${i + 1}匹目</span>${isRk && i === 0
-      ? `<button class="plead" aria-pressed="${RK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいては4.5秒硬直・打ちかけの1発は交代先に入ります)">${SWAPMK}開幕交代</button>` : ''}${isMock && i === 0
-      ? `<button class="plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいての打ちかけの1発は交代先に入ります)。あいても開幕に交代してくることがあり、そのときは1秒後にこちらも交代するか選べます">${SWAPMK}開幕交代</button>` : ''}
+      ? `<button class="plead" aria-pressed="${RK.leadSwap}" title="バトル開始と同時に2匹目か3匹目へ交代します(あいては4.5秒硬直・打ちかけの1発は交代先に入ります)">${SWAPMK}開幕交代</button>` : ''}
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
       <button class="pclr" title="この枠を空にする">×</button></div>
@@ -4937,7 +4936,8 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 // (ポケモンやわざの入力中に勝手にシミュが動き始めないように)
 const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined,
   hold: 0,               // 決断に答えた直後に置く「間」(ms)。交代受けの構えを取る時間(2026-09-07)
-  fxDone: new Set() };   // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
+  fxDone: new Set(),     // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
+  pvDone: new Set() };   // 交代受けの演出を出したターン(シールドの質問と同時に出すので、行では二度出さない)
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
 const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, msw: SWAPMK, next: '', lead: SWAPMK };
@@ -5930,7 +5930,7 @@ function rbRender(body, bt, picks, foes, extra) {
     if (clr) clr.style.display = '';   // 走り出したら上にも「▶ バトルスタート！」(やり直し)を出す
     // スタートの瞬間に、すでに見えている開幕(VSカード)の演出を見せてから続きを出す
     // (2026-08-31タダシさん報告: ここで見せないと最初の決断のあとまで遅れて出ていた)
-    RBV.fxDone.clear();
+    RBV.fxDone.clear(); RBV.pvDone.clear();
     const fx0 = fxConsume(els.slice(0, ptr));
     const go = () => {
       if (!document.body.contains(feedEl)) return;
@@ -6039,7 +6039,7 @@ function rbRender(body, bt, picks, foes, extra) {
   // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
   //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
   //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
-  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.hpSnap = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
   RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
@@ -6545,6 +6545,9 @@ const GB_AI = {
 // foeAuto=あいてのわざを「オート」にする(2026-08-20タダシさん指示)。
 // ONのあいだ、あいてのわざ欄を隠して環境の定番構成(mockDefaultMoves)で戦う＝
 // どのわざが飛んでくるか、飛んでくるまで分からない(実戦と同じ情報量)。既定はOFF(今までどおり選べる)
+// ⚠ leadSwap(じぶんの開幕交代)は2026-09-07に廃止＝常にfalse。
+//   HUDの下の⇄交代ボタンでいつでも交代できるので、開幕専用のボタンは要らない(タダシさん指示)。
+//   **あいて(AI)の開幕交代はそのまま**なので、gbPlay 側の lead の仕組みは残してある
 const MK = { ai: 'normal', leadSwap: false, foeAuto: false };
 try { if (localStorage.getItem('gbl_mock_foeauto') === '1') MK.foeAuto = true; } catch (e) {}
 const saveMkFoeAuto = () => { try { localStorage.setItem('gbl_mock_foeauto', MK.foeAuto ? '1' : '0'); } catch (e) {} };
@@ -7383,8 +7386,9 @@ function sdPickHtml() {
   if (my.length < 3 || foe.length < 3)
     return '<div class="mtnote">じぶんとあいてに<b>3匹以上</b>ずつ入れてください（6匹ずつがこのルールの本来の形です）</div>';
   const done = SD.pick.length === 3;
-  const tail = (done ? `<button class="sdbtn plead" aria-pressed="${MK.leadSwap}" title="バトル開始と同時に2番目か3番目へ交代します（あいての打ちかけの1発は交代先に入ります）。あいても開幕に交代してくることがあります">${SWAPMK}開幕交代</button>` : '')
-    + (SD.pick.length ? '<button class="sdbtn sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button>' : '')
+  // ⚠ 開幕交代のボタンは廃止(2026-09-07タダシさん指示)。HUDの下の⇄交代ボタンでいつでも交代できるので、
+  //    開幕だけの専用ボタンは要らない。**あいて(AI)の開幕交代はそのまま**
+  const tail = (SD.pick.length ? '<button class="sdbtn sdreset" title="選出をぜんぶ外してもう一度選び直します">選び直す</button>' : '')
     + `<button class="sdbtn sdopt" aria-expanded="false" title="「ねっとう」「かみくだく」など、決まった確率で能力が上下するわざの計算方法を選びます"><i class="gear">⚙</i>能力変化わざ<em>${PROB_LABEL[SIMOPT.buffMode]}</em></button>`;
   return `<div class="sdpickbox">
     ${sdGridHtml()}
@@ -7856,7 +7860,7 @@ function gbChoices(p, ctx) {
         label: '即打ち',
         tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打って、たまり次第すぐ${m.n}を撃ちます`
                   : `タイミングを待たず、ここですぐ${m.n}を撃ちます` });
-      // 「読まれない」(2026-09-07タダシさん指示・HARDのときだけ・そのわざ専用):
+      // 「交代受けを防ぐ」(2026-09-07タダシさん指示・HARDのときだけ・そのわざ専用):
       // HARDは**SPが発動するターンが自分のノーマルアタックの切れ目なら交代受けを差し込む**ので、
       // **切れ目から外したターンに当てる**。＋N＝そのためにはさむノーマルアタックの数。
       // 外しようがない組み合わせ(相手が0.5秒わざ・同じターン数など)では出さない
@@ -7864,7 +7868,7 @@ function gbChoices(p, ctx) {
       if (pvN) {
         const ff = D.moves[ctx.fast[1]];
         list.push({ a: 'fire', mv: id, after: pvN, grp: id, cls: 'safe',
-          label: `読まれない<i class="need">＋${pvN}</i>`,
+          label: `交代受けを防ぐ<i class="need">＋${pvN}</i>`,
           tip: `${ff ? ff.n : '相手のノーマルアタック'}が動いている最中に${m.n}が当たるように、` +
             `ノーマルアタックをあと${pvN}発はさんでから撃ちます（交代受けを防げます）` });
       }
@@ -7942,7 +7946,7 @@ function gbAnsLabel(p, a) {
     // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
     const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
     if (a.a === 'opt') return hide ? '▶ SPアタック' : `${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
-    // 「読まれない」(after付き)は、はさんだ発数もチップに出す(あとから見て何をしたか分かるように)
+    // 「交代受けを防ぐ」(after付き)は、はさんだ発数もチップに出す(あとから見て何をしたか分かるように)
     if (a.a === 'fire') return hide ? '▶ SPアタック'
       : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${a.after ? `＋${a.after}` : ''}`;
     if (a.a === 'bluff') return hide ? '▶ SPアタック' : `ため→${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
@@ -9229,7 +9233,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       (ctx.spList[0] || []).forEach(id => { m[id] = optNOf(p, id); });
       return m;
     };
-    // 「読まれない」ボタン用(HARDだけ・2026-09-07タダシさん指示):
+    // 「交代受けを防ぐ」ボタン用(HARDだけ・2026-09-07タダシさん指示):
     // HARDは**SPが発動するターンが自分のノーマルアタックの切れ目なら交代受けを差し込んでくる**。
     // それを外すには、あと何発ノーマルアタックをはさんで撃てばよいかを、わざごとに数える。
     // **相手のノーマルアタックが自分のわざのターン数を割り切るときは、どうやっても外せない**
@@ -9325,7 +9329,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       // ---- 交代受けの「読み」が外れたら、AIは押していない＝交代しない(2026-09-07) ----
       // 交代受けはボタンを**そのターンに押す**技なので、ユーザーがSPをずらしたら空振りになる。
       // 決めた時点の読み(pivotX)と、いまの読みが食い違ったら交代そのものを取り消す。
-      // これがあるので、ユーザーの「読まれない」が本当に効く
+      // これがあるので、ユーザーの「交代受けを防ぐ」が本当に効く
       if (dec[1].pivotX != null) {
         const t2 = ctx.tlPred.find(t => t.tn >= dec[1].swapAt && t.ev[0].some(e => e.full !== undefined));
         if (!t2 || t2.tn !== dec[1].pivotX) {
@@ -9571,6 +9575,8 @@ function runMockBuild() {
 function gbRender(body, bt, picks, foes) {
   setProbTab(anyProbMove(picks.concat(foes).map(p => ({ fast: p.pol.fast, charged: p.pol.charged }))));
   RBUI.pts = {}; RBUI.order = [];
+  // シールドの質問と同時に出す「交代受け成功！」(atStop が質問を出す直前に流す)
+  let pivotWin = null;
   const regPt = p => { if (p) { RBUI.pts[p.key] = p; RBUI.order.push(p.key); } };
   bt.legs.forEach(leg => { (leg.leadPts || []).forEach(regPt); (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.foeNextPoint); regPt(leg.pending); });
 
@@ -9689,6 +9695,15 @@ function gbRender(body, bt, picks, foes) {
     // じぶん側は「交代したら受けた」という結果で出す(自分で狙って押すものなので)。
     // あいて側は**交代受けを狙った交代のときだけ**(ただ交代しただけで出すとうるさい)
     let pvSide = pv ? (pv.swapped0 ? 0 : pv.pivot1 ? 1 : null) : null;
+    // ⚠ **シールドを選ぶのと同時に「交代受け成功！」を出す**(2026-09-07タダシさん指示)。
+    //   質問が出ているあいだ、そのSPの行はまだタイムラインに出ないので、
+    //   行に付ける演出のままだと**シールドを選んだあと**に出てしまい、決まった瞬間とズレる。
+    //   ここで取り分けておいて、質問を出す直前(atStop)に流す
+    if (pvSide != null && pend && pend.kind === 'sh' && pend.side === pvSide
+        && pend.tn <= GB_PIVOT_SHOW && !RBV.pvDone.has(base + pend.tn)) {
+      pivotWin = { gt: base + pend.tn,
+        fx: { k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName } };
+    }
     rbTurns(res).forEach(t => {
       if (pend && t.tn > pend.tn) return;
       const gt = base + t.tn;
@@ -9753,7 +9768,7 @@ function gbRender(body, bt, picks, foes) {
         if (!e0 && !e1) continue;
         // 交代受けが決まった瞬間の演出。SPのカットインのあとに短い演出を足す
         let fxr = fxOfRow(r);
-        if (fxr && pvSide != null && t.tn <= GB_PIVOT_SHOW
+        if (fxr && pvSide != null && t.tn <= GB_PIVOT_SHOW && !RBV.pvDone.has(gt)
             && fxr.some(x => x.k === 'sp' && x.side === 1 - pvSide && !x.shd)) {
           fxr = fxr.concat([{ k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName }]);
           pvSide = null;
@@ -10201,8 +10216,22 @@ function gbRender(body, bt, picks, foes) {
   }
   function atStop() {
     stopTimer();
-    if (bt.pending) showWin(bt.pending, false);
-    else {
+    if (bt.pending) {
+      // ⚠ 交代受けが決まったときは、**シールドを選ぶ画面より先に**「交代受け成功！」を出す
+      //   (2026-09-07タダシさん指示。答えたあとに出ると、決まった瞬間とズレて見える)
+      if (pivotWin && !RBV.pvDone.has(pivotWin.gt) && fxOk() && bt.pending.gt === pivotWin.gt) {
+        RBV.pvDone.add(pivotWin.gt);
+        const p0 = bt.pending, fx0 = pivotWin.fx;
+        setTimeout(() => {
+          if (!onScreen()) return;
+          const d = fxOne(fx0);
+          setTimeout(() => { if (onScreen()) { fxClear(); showWin(p0, false); setPlayBtn(); } }, d + FX_POST);
+        }, FX_PRE);
+        setPlayBtn();
+        return;
+      }
+      showWin(bt.pending, false);
+    } else {
       RBV.playing = false;
       // 決着のバナー(2026-09-07タダシさん指示・締めくくりの演出)。1回のバトルで1度だけ
       if (fxOk() && RBV.endFx !== RBV.sig) {
@@ -10327,7 +10356,7 @@ function gbRender(body, bt, picks, foes) {
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';
     // スタートの瞬間に、すでに見えている開幕(VSカード)の演出を見せてから続きを出す
-    RBV.fxDone.clear();
+    RBV.fxDone.clear(); RBV.pvDone.clear();
     const fx0 = fxConsume(els.slice(0, ptr));
     const go = () => {
       if (!document.body.contains(feedEl)) return;
@@ -10436,7 +10465,7 @@ function gbRender(body, bt, picks, foes) {
   // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
   //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
   //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
-  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.hpSnap = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
   RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
@@ -11096,7 +11125,6 @@ function updateUrl() {
   if (mode !== 'duel' && !PAGE_ROCKET && !PAGE_BLOG) qp.md = mode;   // モード固定ページはmdを書かない
   if (mode === 'mock') {   // GBL模擬戦の設定(じぶんのパーティは端末内保存なのでURLには入れない)
     if (MK.ai !== 'normal') qp.gai = MK.ai;   // 既定(NORMAL)以外のときだけ書く
-    if (MK.leadSwap) qp.gls = 1;   // 開幕交代
     if (MK.foeAuto) qp.gfa = 1;    // あいてのわざオート(何が飛んでくるか分からない)
     if (!RB.step) qp.rbs = 0;      // 見かた(結果だけ)。ロケット団の模擬戦と同じパラメータ
     // あいてのポケモンはURLに書く(じぶんのパーティは端末内保存なので入れない・見せ合いも同じ流儀)
@@ -11895,7 +11923,6 @@ document.addEventListener('click', e => {
     const gv = GB_AI_OLD[q.get('gai')] || q.get('gai');
     if (GB_AI[gv]) MK.ai = gv;
   }
-  if (q.get('gls') === '1') MK.leadSwap = true;
   if (q.get('gfa') === '1') MK.foeAuto = true;
   // あいての枠の復元(3枠の gt= と、見せ合いの sdf= は同じ形式)
   const decFoe = (str, n) => (str || '').split(',').slice(0, n).map(t => {
