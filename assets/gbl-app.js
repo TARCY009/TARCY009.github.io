@@ -5563,6 +5563,21 @@ function rbRender(body, bt, picks, foes, extra) {
     }
     return out;
   };
+  // ⚠ 再生中は**演出のある行までで止める**(2026-09-07タダシさん指示)。
+  //   ターンの行をまとめて出すと、SPのカットインを見ているあいだに
+  //   「たおした」や「次のポケモン」の行までタイムラインに出てしまい、時系列が崩れて見える。
+  //   演出を1つ見終わってから、その先の行を出す(advance が繰り返し呼ぶ)
+  const revealStep = g => {
+    const out = [];
+    while (ptr < els.length && +els[ptr].dataset.gt <= g) {
+      const el = els[ptr];
+      el.classList.remove('future'); el.classList.add('in');
+      lastEl = el; out.push(el); ptr++;
+      if (el.dataset.fx && fxOk() && fxPending([el]).length) break;
+    }
+    return out;
+  };
+  const moreThisTurn = () => ptr < els.length && +els[ptr].dataset.gt <= RBV.cur;
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
@@ -5663,13 +5678,11 @@ function rbRender(body, bt, picks, foes, extra) {
   // タイマーと演出の後始末(startTimer)が動き続け、**切り替えた先の画面の上に
   // カットインが全画面で流れ続ける**
   const onScreen = () => document.body.contains(feedEl) && (mode === 'rocket' && RK.team);
-  function tick() {
-    if (!onScreen()) { stopTimer(); return; }
-    RBV.cur++;
-    const rev = revealTo(RBV.cur);
+  // そのターンの行を「演出で区切りながら」順に出す。演出を1つ見終わってから次の行へ進む
+  // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
+  function advance() {
+    const rev = revealStep(RBV.cur);
     autoScroll();
-    // 演出(FX): 今あらわれた行に未再生のdata-fxがあれば、再生を止めてカットインを見せてから続ける
-    // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
     const fxEls = fxConsume(rev);
     if (fxEls.length) {
       stopTimer();
@@ -5677,6 +5690,7 @@ function rbRender(body, bt, picks, foes, extra) {
       fxRun(fxEls, () => {
         if (!onScreen()) return;
         updateHud(RBV.cur);
+        if (moreThisTurn()) { advance(); return; }   // 同じターンの残りの行を続ける
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
@@ -5685,6 +5699,11 @@ function rbRender(body, bt, picks, foes, extra) {
     }
     updateHud(RBV.cur);
     if (RBV.cur >= stop) atStop();
+  }
+  function tick() {
+    if (!onScreen()) { stopTimer(); return; }
+    RBV.cur++;
+    advance();
   }
   const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
 
@@ -5736,20 +5755,27 @@ function rbRender(body, bt, picks, foes, extra) {
   const startBattle = () => {
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
-    feedEl.querySelectorAll('.prehide').forEach(e => e.classList.remove('prehide'));   // スタート前に隠していたぶんを出す
+    // ⚠ スタート前に隠していた行(開幕交代のチップ・打ちかけの1発)は、一度に出さずに
+    //   **まだ出していない状態へ戻す**(2026-09-07タダシさん指示)。VSの演出を見せたあと、
+    //   advance() が「行 → 演出 → 行」の順で出し直す
+    const hid = [...feedEl.querySelectorAll('.prehide')];
+    if (hid.length) {
+      hid.forEach(e => { e.classList.add('future'); e.classList.remove('prehide', 'in'); });
+      const i0 = els.indexOf(hid[0]);
+      if (i0 >= 0) ptr = i0;
+    }
     if (RB.goal) { applyGoal(); return; }   // オートバトルを選んでいれば探索してから再生
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';   // 走り出したら上にも「▶ バトルスタート！」(やり直し)を出す
-    // スタートの瞬間に、すでに見えている開幕(VS・開幕交代)の演出を見せてから再生を始める
+    // スタートの瞬間に、すでに見えている開幕(VSカード)の演出を見せてから続きを出す
     // (2026-08-31タダシさん報告: ここで見せないと最初の決断のあとまで遅れて出ていた)
     RBV.fxDone.clear();
     const fx0 = fxConsume(els.slice(0, ptr));
     const go = () => {
       if (!document.body.contains(feedEl)) return;
-      if (RBV.cur >= stop) atStop();     // 開幕交代など、最初の決断が0ターン目ならすぐ聞く
-      else if (RBV.playing) startTimer();
+      advance();   // 開幕交代などの残りの行を、演出で区切りながら出す(出し切ったら再生へ)
     };
-    if (fx0.length) fxRun(fx0, go); else go();
+    if (fx0.length) fxRun(fx0, go, el => updateHud(RBV.cur, fxLi(el))); else go();
   };
   if (hplay) hplay.onclick = () => {
     if (!RBV.started) { startBattle(); return; }
@@ -5849,26 +5875,19 @@ function rbRender(body, bt, picks, foes, extra) {
     return;
   }
   if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
-  const rev0 = revealTo(RBV.cur);
+  // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
+  //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
+  //   まとめて出てしまい、そのあとに演出が流れて時系列が崩れる。
+  //   巻き戻し(チップをタップ)と「結果だけ見る」は、過去の再現なので一度に出してよい
+  const stepping = RB.step && !(RBUI.open && RBUI.pts[RBUI.open]);
+  const rev0 = stepping ? [] : revealTo(RBV.cur);
   autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
   const upd = el => updateHud(RBV.cur, fxLi(el));
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
-  else if (RBV.cur >= stop) {
-    // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
-    const fxS = RB.step ? fxConsume(rev0) : [];
-    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) { upd(); atStop(); } }, upd);
-    else { upd(); atStop(); }
-  }
-  else if (RB.step && RBV.playing) {
-    // まだ再生していない演出(バトルスタート直後のVS・決断で隠れていたSPや交代など)を
-    // 見せてから再生を始める。fxDoneのおかげで再生済みの演出は二重に出ない
-    const fx0 = fxConsume(rev0);
-    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) { upd(); startTimer(); } }, upd);
-    else { upd(); startTimer(); }
-  }
-  else upd();
+  else if (stepping) advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
+  else { upd(); if (RBV.cur >= stop) atStop(); }
   setPlayBtn();
 }
 
@@ -9561,6 +9580,21 @@ function gbRender(body, bt, picks, foes) {
     }
     return out;
   };
+  // ⚠ 再生中は**演出のある行までで止める**(2026-09-07タダシさん指示)。
+  //   ターンの行をまとめて出すと、SPのカットインを見ているあいだに
+  //   「たおした」や「次のポケモン」の行までタイムラインに出てしまい、時系列が崩れて見える。
+  //   演出を1つ見終わってから、その先の行を出す(advance が繰り返し呼ぶ)
+  const revealStep = g => {
+    const out = [];
+    while (ptr < els.length && +els[ptr].dataset.gt <= g) {
+      const el = els[ptr];
+      el.classList.remove('future'); el.classList.add('in');
+      lastEl = el; out.push(el); ptr++;
+      if (el.dataset.fx && fxOk() && fxPending([el]).length) break;
+    }
+    return out;
+  };
+  const moreThisTurn = () => ptr < els.length && +els[ptr].dataset.gt <= RBV.cur;
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
@@ -9660,13 +9694,11 @@ function gbRender(body, bt, picks, foes) {
   // タイマーと演出の後始末(startTimer)が動き続け、**切り替えた先の画面の上に
   // カットインが全画面で流れ続ける**
   const onScreen = () => document.body.contains(feedEl) && (mode === 'mock');
-  function tick() {
-    if (!onScreen()) { stopTimer(); return; }
-    RBV.cur++;
-    const rev = revealTo(RBV.cur);
+  // そのターンの行を「演出で区切りながら」順に出す。演出を1つ見終わってから次の行へ進む
+  // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
+  function advance() {
+    const rev = revealStep(RBV.cur);
     autoScroll();
-    // 演出(FX): 今あらわれた行に未再生のdata-fxがあれば、再生を止めてカットインを見せてから続ける
-    // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
     const fxEls = fxConsume(rev);
     if (fxEls.length) {
       stopTimer();
@@ -9674,6 +9706,7 @@ function gbRender(body, bt, picks, foes) {
       fxRun(fxEls, () => {
         if (!onScreen()) return;
         updateHud(RBV.cur);
+        if (moreThisTurn()) { advance(); return; }   // 同じターンの残りの行を続ける
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
@@ -9682,6 +9715,11 @@ function gbRender(body, bt, picks, foes) {
     }
     updateHud(RBV.cur);
     if (RBV.cur >= stop) atStop();
+  }
+  function tick() {
+    if (!onScreen()) { stopTimer(); return; }
+    RBV.cur++;
+    advance();
   }
   const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
 
@@ -9730,19 +9768,26 @@ function gbRender(body, bt, picks, foes) {
     // 見せ合いの伏せ字はスタートした瞬間に外す(VSの演出と同時に相手が分かる)。
     // HUDは対面が変わったときだけ書き替える作りなので、curLegKey を空にして描き直させる
     body.classList.remove('sdmask'); curLegKey = ''; updateHud(RBV.cur);
-    feedEl.querySelectorAll('.prehide').forEach(e => e.classList.remove('prehide'));   // スタート前に隠していたぶんを出す
+    // ⚠ スタート前に隠していた行(開幕交代のチップ・打ちかけの1発)は、
+    //   一度に出さずに**まだ出していない状態へ戻す**(2026-09-07タダシさん指示)。
+    //   VSの演出を見せたあと、advance() が「行 → 演出 → 行」の順で出し直す
+    const hid = [...feedEl.querySelectorAll('.prehide')];
+    if (hid.length) {
+      hid.forEach(e => { e.classList.add('future'); e.classList.remove('prehide', 'in'); });
+      const i0 = els.indexOf(hid[0]);
+      if (i0 >= 0) ptr = i0;
+    }
     if (RB.goal) { applyGoal(); return; }
     winbox.innerHTML = '';
     if (clr) clr.style.display = '';
-    // スタートの瞬間に、すでに見えている開幕(VS・開幕交代)の演出を見せてから再生を始める
+    // スタートの瞬間に、すでに見えている開幕(VSカード)の演出を見せてから続きを出す
     RBV.fxDone.clear();
     const fx0 = fxConsume(els.slice(0, ptr));
     const go = () => {
       if (!document.body.contains(feedEl)) return;
-      if (RBV.cur >= stop) atStop();
-      else if (RBV.playing) startTimer();
+      advance();   // 開幕交代などの残りの行を、演出で区切りながら出す(出し切ったら再生へ)
     };
-    if (fx0.length) fxRun(fx0, go); else go();
+    if (fx0.length) fxRun(fx0, go, el => updateHud(RBV.cur, fxLi(el))); else go();
   };
   if (hplay) hplay.onclick = () => {
     if (!RBV.started) { startBattle(); return; }
@@ -9845,26 +9890,19 @@ function gbRender(body, bt, picks, foes) {
     return;
   }
   if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
-  const rev0 = revealTo(RBV.cur);
+  // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
+  //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
+  //   まとめて出てしまい、そのあとに演出が流れて時系列が崩れる。
+  //   巻き戻し(チップをタップ)と「結果だけ見る」は、過去の再現なので一度に出してよい
+  const stepping = RB.step && !(RBUI.open && RBUI.pts[RBUI.open]);
+  const rev0 = stepping ? [] : revealTo(RBV.cur);
   autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
   const upd = el => updateHud(RBV.cur, fxLi(el));
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
-  else if (RBV.cur >= stop) {
-    // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
-    const fxS = RB.step ? fxConsume(rev0) : [];
-    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) { upd(); atStop(); } }, upd);
-    else { upd(); atStop(); }
-  }
-  else if (RB.step && RBV.playing) {
-    // まだ再生していない演出(バトルスタート直後のVS・決断で隠れていたSPや交代など)を
-    // 見せてから再生を始める。fxDoneのおかげで再生済みの演出は二重に出ない
-    const fx0 = fxConsume(rev0);
-    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) { upd(); startTimer(); } }, upd);
-    else { upd(); startTimer(); }
-  }
-  else upd();
+  else if (stepping) advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
+  else { upd(); if (RBV.cur >= stop) atStop(); }
   setPlayBtn();
 }
 
