@@ -11,7 +11,7 @@
    セレクタは必ず #themesw 付きにする: ボタンは #themesw の中に入るため、
    theme.css の「.themesw button」「:root.light .themesw button」に詳細度で勝つ必要がある
    （素の .explainsw だとライトで点灯しなくなる。実際に踏んだ）。 */
-#themesw .explainsw{font:inherit;font-size:.92rem;line-height:1;font-weight:800;
+#themesw .explainsw{font:inherit;font-size:.74rem;line-height:1;font-weight:800;
   display:inline-flex;align-items:center;gap:5px;padding:7px 13px;margin-right:9px;
   cursor:pointer;flex:0 0 auto;border-radius:999px;color:#9fb0e0;
   border:1px solid #2a3560;background:linear-gradient(180deg,#1e2850,#151d38);
@@ -33,7 +33,7 @@
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}
 #themesw .explainsw[aria-pressed="true"] .eb{filter:none;animation:ebpop .3s ease}
 @keyframes ebpop{0%{transform:scale(1)}45%{transform:scale(1.3) rotate(-8deg)}100%{transform:scale(1)}}
-@media (max-width:430px){#themesw .explainsw{padding:6px 10px;font-size:.85rem}#themesw .explainsw .et{display:none}}
+@media (max-width:430px){#themesw .explainsw{padding:6px 10px;font-size:.68rem}#themesw .explainsw .et{display:none}}
 
 /* ---- 長押し照準の説明ウィンドウ（📖ONのあいだだけ） ---- */
 /* 説明を持つ部品に点線の印を付ける＝どこを長押しできるかを見せる。
