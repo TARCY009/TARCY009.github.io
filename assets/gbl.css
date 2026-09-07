@@ -2221,3 +2221,41 @@ button.sdchip.on .tbadge{filter:none}
 /* 💀(たおれた)は沈みながら傾く動きなので、静止させるときも80%の姿勢に合わせる
    (何も指定しないと元の位置へ戻ってピクッと動く・2026-09-07タダシさん報告) */
 .fxitem.fxhold.fxko.lose .mk{transform:translateY(14px) rotate(16deg) !important}
+
+/* ---- ①「こうかばつぐん／いまひとつ」(2026-09-07タダシさん指示・実ゲームで必ず出る表示) ---- */
+.ev + .eff,.eff{display:inline-block;font-style:normal;font-size:.62rem;font-weight:800;
+  letter-spacing:.02em;padding:1px 6px;border-radius:999px;margin-left:4px;vertical-align:1px;white-space:nowrap}
+.eff.sup{color:#ffd0a8;background:rgba(255,122,60,.18);border:1px solid rgba(255,122,60,.5)}
+.eff.res{color:#a8d8ff;background:rgba(80,160,255,.15);border:1px solid rgba(80,160,255,.42)}
+:root.light .eff.sup{color:#a8380c;background:rgba(255,122,60,.16);border-color:rgba(200,80,20,.45)}
+:root.light .eff.res{color:#154a86;background:rgba(80,160,255,.14);border-color:rgba(60,120,200,.4)}
+
+/* ---- ② HPが残りわずかのときの鼓動(2026-09-07タダシさん指示) ---- */
+.hb i.r{animation:hplow 1.15s ease-in-out infinite}
+@keyframes hplow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5) saturate(1.2)}}
+.hpn.r{animation:hplown 1.15s ease-in-out infinite}
+@keyframes hplown{0%,100%{opacity:1}50%{opacity:.62}}
+@media (prefers-reduced-motion: reduce){.hb i.r,.hpn.r{animation:none}}
+
+/* ---- ③ 決着のバナー(2026-09-07タダシさん指示) ---- */
+.fxend{--ec1:#ffd54a;--ec2:#ff9750}
+.fxend.lose{--ec1:#8b9ac4;--ec2:#4a5680}
+.fxend .endwrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.fxend .eflash{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.9),rgba(255,255,255,0) 62%);
+  opacity:0;animation:fxefl calc(var(--fxd)) ease-out forwards}
+.fxend.lose .eflash{background:radial-gradient(circle at 50% 50%,rgba(10,14,28,.92),rgba(10,14,28,.4) 70%)}
+@keyframes fxefl{0%{opacity:0}10%{opacity:1}42%{opacity:.25}100%{opacity:0}}
+.fxend .ering{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;
+  border:3px solid var(--ec1);opacity:0;animation:fxering calc(var(--fxd)) cubic-bezier(.2,.7,.3,1) forwards}
+.fxend .ering.e2{border-color:var(--ec2);animation-delay:calc(var(--fxd) * .12)}
+@keyframes fxering{0%{opacity:0;transform:scale(1)}12%{opacity:.95}70%{opacity:0;transform:scale(34)}100%{opacity:0;transform:scale(34)}}
+.fxend .ebig{position:relative;font-size:3.6rem;font-weight:900;letter-spacing:.14em;line-height:1;
+  background:linear-gradient(180deg,#fff,var(--ec1) 46%,var(--ec2));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 rgba(0,0,0,.5)) drop-shadow(0 0 22px rgba(255,213,74,.5));
+  opacity:0;animation:fxebig calc(var(--fxd)) cubic-bezier(.2,.8,.25,1) forwards}
+.fxend.lose .ebig{filter:drop-shadow(0 3px 0 rgba(0,0,0,.6))}
+@keyframes fxebig{0%{opacity:0;transform:scale(2.4)}14%{opacity:1;transform:scale(.94)}22%{transform:scale(1.04)}30%{transform:scale(1)}
+  84%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+/* 静止表示のときは大きな文字だけ残す */
+.fxitem.fxhold.fxend .ering,.fxitem.fxhold.fxend .eflash{opacity:0 !important}
+.fxitem.fxhold.fxend .ebig{opacity:1 !important;transform:scale(1) !important}
