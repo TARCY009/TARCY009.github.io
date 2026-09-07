@@ -6532,6 +6532,8 @@ const GB_BENCH_HP = 0.6;
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
 // 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
 const GB_LOCK_MIN = 40;
+// 交代受け(HARDだけ)で、交代を待ってよいターン数の上限。読みが外れたときに待ち続けないための保険
+const GB_PIVOT_WAIT = 8;
 // 「起点にできる」とみなすSPアタックの痛さの上限(候補の残りHPの40%未満なら痛手にならない。
 // 2026-08-18タダシさん指示で30%→40%)
 const GB_FARM_HURT = 0.40;
@@ -7802,6 +7804,18 @@ function gbChoices(p, ctx) {
             `相手はどちらのわざが来るか分からないので、軽いわざにシールドを使わせられたらラッキー、というセオリーの動きです` });
       }
     }
+    // 交代受けさせない(2026-09-07タダシさん指示・HARDのときだけ):
+    // HARDは**SPアタックの発動に合わせて交代し、控えにその一撃を受けさせる**(交代受け)。
+    // これを防ぐには**相手のノーマルアタックが動いている最中に当てる**——切れ目でないと
+    // 相手は交代を差し込めない。＋N＝それまでにはさむノーマルアタックの数
+    if (!s && p.pivotN) {
+      const ff = D.moves[ctx.fast[1]];
+      out.push({ a: 'wait', n: p.pivotN, end: true, cls: 'fire bluffbtn',
+        label: `<span>交代受けさせない<i class="need">＋${p.pivotN}</i></span><small>${ff ? ff.n : 'ノーマルアタック'}の発動中に当てる</small>`,
+        tip: `ノーマルアタックをあと${p.pivotN}発はさんでから、もう一度ここで選びます。` +
+          `そうすると${ff ? ff.n : '相手のノーマルアタック'}が動いている最中にSPアタックが当たるので、` +
+          `相手は交代を差し込めません(交代受けを防げます)` });
+    }
     return out;
   }
   if (p.kind === 'sh') {
@@ -8008,6 +8022,39 @@ function gbPlay(picks, foes, ans, stepwise) {
   const aiFarmed = ov => {
     const r = duelAt(cur[0], cur[1], ov && ov.ov0, ov && ov.ov1);
     return r.winner === 0 && !rbTurns(r).some(t => t.ev[1].some(e => e.full !== undefined));
+  };
+  // ---- 交代受け(2026-09-07タダシさん指示・HARDだけ) ----
+  // **ユーザーのSPアタックが発動するのに合わせて交代し、その一撃を控えに受けさせる**技。
+  // 実戦は先行入力が効くので、入力は発動の0.5秒前＝**1ターン前**。うちのエンジンは
+  // 「交代したターンで対面を切って次の対面へ持ち越す」作りなので、
+  // **発動の1つ前のターンで切れば、相手はゲージを持ったまま交代先に撃つ**＝同じ形になる。
+  // **主な使いどころは奇襲ではなく「どうせ交代するなら、そのタイミングを合わせる」**(タダシさん)。
+  // したがってこれは**交代先が決まったあとのタイミング調整**で、交代の動機そのものは増やさない。
+  const aiPivotAt = (p, ctx, to, ov) => {
+    if (!ai.omni || to == null) return null;   // 交代受けはHARDだけ
+    const tl = ctx.tlPred || ctx.tl;
+    if (!tl) return null;
+    const fm = D.moves[ctx.fast[1]];
+    const tnMe = fm && fm.tn ? fm.tn : 1;
+    // ユーザーのSPがこの先いつ発動するか(まだ答えていない決断は「おまかせ」で回した予測)
+    const hit = tl.find(t => t.tn > p.tn && t.ev[0].some(e => e.full !== undefined));
+    if (!hit) return null;
+    const at = hit.tn - 1;                       // 先行入力＝発動の1ターン前
+    if (at < p.tn || at - p.tn > GB_PIVOT_WAIT) return null;   // 待ちすぎるなら普通に交代する
+    // **わざ1の切れ目でないと交代を差し込めない**(相手のノーマルアタックの発動中は間に合わない)。
+    // 対面は必ずノーマルアタックの打ち始めから始まる(cdは引き継がない)ので、切れ目は tnMe の倍数
+    if (at % tnMe !== 0) return null;
+    if (ctx.ck(at) < ctx.swOk[1]) return null;   // 交代のクールタイムが明けていない
+    const f = tl.find(t => t.tn === at);         // 待っているあいだに倒れないか
+    if (!f || !f.state || f.state[1].hp <= 0) return null;
+    // 受け先の条件: ①そのSPに耐性がある ②または「この先どの対面でも勝てない」控え＝捨て駒受け
+    const ev = hit.ev[0].find(e => e.full !== undefined);
+    const ty = ev && ev.move ? MOVE_TYPE[ev.move] : null;
+    const pk = ros[1][to].m && D.pokemon[ros[1][to].m.key];
+    if (ty && pk && PvpEngine.effectiveness(D, ty, pk.ty) < 1) return at;
+    // 捨て駒受け: ユーザーの生き残り全員に負ける控えなら、もう働き場所が無いので受けに出してよい
+    const spent = picks.every((_, u) => !st[0][u].alive || duelAt(u, to, null, null).winner === 0);
+    return spent ? at : null;
   };
   // sd側が交代したとき、相手の打ちかけのノーマルアタック1発が交代先に入る(ダメージと相手のゲージ)
   const swapHit = (sd, to) => {
@@ -8758,7 +8805,9 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (p.w === 1) {
         const lockedW = ctx.swOk[0] - (p.ck != null ? p.ck : ctx.base + p.tn) >= GB_LOCK_MIN;
         const to = aiSwapTo(1, { even: true, guard: !(lockedW || ctx.swTo[0].length === 0), ...ov });
-        return to == null ? { a: 'stay' } : { a: 'toq', to };
+        if (to == null) return { a: 'stay' };
+        const at = aiPivotAt(p, ctx, to, nowOv);     // 交代受けに合わせられるなら待つ(HARDだけ)
+        return at != null ? { a: 'toq', to, at } : { a: 'toq', to };
       }
       // ---- 打ち逃げ(2026-08-31タダシさん指示・恒久ルール) ----
       // 『交代が可能な場面でデバフ技を打つ時は必ず交代する』。**自分の能力が下がるSP**を
@@ -8825,7 +8874,10 @@ function gbPlay(picks, foes, ans, stepwise) {
         // ①どっちもどっちの対面で、控えの2匹がどちらもユーザーの初手に強いなら、
         //   対応力の高いほうへ即座に交代する
         const ev = aiEvenSwitch(ctx.li, nowOv);
-        if (ev != null) return { a: 'toq', to: ev };
+        if (ev != null) {
+          const at = aiPivotAt(p, ctx, ev, nowOv);   // 交代受けに合わせられるなら待つ(HARDだけ)
+          return at != null ? { a: 'toq', to: ev, at } : { a: 'toq', to: ev };
+        }
       }
       // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り20秒以上)は、
       // どっちもどっちの対面でも有利な控えを差し込む(相手は逃げられない)。相手が自由なら負けのときだけ
@@ -8842,6 +8894,16 @@ function gbPlay(picks, foes, ans, stepwise) {
         // **SPを1発入れてから下がれば裏が勝てる**なら、撃つために残る(2026-08-18タダシさん指示)。
         // 撃った直後にまた交代の質問が出るので、そこで実際に下がる
         if (p.seq === 0 && aiSpThenSwap(ctx, p)) return { a: 'stay' };
+        // ---- 終盤で「動かなければ負けが確定する」ときだけ、交代受けを仕掛ける ----
+        // (2026-09-07タダシさん指示)。ふだんは交代のタイミング調整にとどめるが、
+        // 控えを温存する先がもう無い終盤で、このまま戦うと負けるなら、
+        // HARDの「自分から逃げ交代しない」ガードより優先して交代受けを狙う
+        if (ai.omni && benches(1).length <= 1 && aiLosing(ctx.li, nowOv)) {
+          for (const k of benches(1)) {
+            const at = aiPivotAt(p, ctx, k, nowOv);
+            if (at != null) return { a: 'toq', to: k, at };
+          }
+        }
         return { a: 'stay' };   // 勝てる対面(または打つ手が無い)なら残る
       }
       // 不利対面: 「撃ってから交代」は状況判断(2026-08-18タダシさん指示)。
@@ -8856,7 +8918,10 @@ function gbPlay(picks, foes, ans, stepwise) {
           .filter(m => m && m.e <= ctx.enAt[1]).map(m => PvpEngine.damage(D, m, att, dfn)));
         if (best >= myHp || best >= GB_DUMP_WORTH * myHp) return { a: 'stay' };
       }
-      return { a: 'toq', to };
+      // **交代すると決まったので、そのタイミングをユーザーのSPに合わせる**(交代受け・HARDだけ)。
+      // 合わせられないときは at が付かず、従来どおりこのターンで交代する
+      const at = aiPivotAt(p, ctx, to, nowOv);
+      return at != null ? { a: 'toq', to, at } : { a: 'toq', to };
     }
     if (p.kind === 'next') {
       // 倒されたあと、次に出すポケモンを選ぶ。逃げ回りのAIだけ(それ以外は次の枠の順)。
@@ -9011,6 +9076,33 @@ function gbPlay(picks, foes, ans, stepwise) {
       (ctx.spList[0] || []).forEach(id => { m[id] = optNOf(p, id); });
       return m;
     };
+    // 「交代受けさせない」ボタン用(HARDだけ・2026-09-07タダシさん指示):
+    // いま撃つとHARDに交代受けを差し込まれる場面で、**相手のノーマルアタックの発動中に
+    // SPが当たる**ようにするには、あと何発ノーマルアタックをはさめばよいかを数える。
+    // 相手のノーマルアタックが1ターン(0.5秒)だと切れ目しか無い＝隙が作れないので出さない
+    const pivotSafeN = p => {
+      if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard') return null;
+      const ffm = D.moves[ctx.fast[1]];
+      const tnFoe = ffm && ffm.tn ? ffm.tn : 1;
+      if (tnFoe < 2 || !ctx.swTo[1].length) return null;   // 控えがいなければ交代受けも来ない
+      const d = dec[0], len = d.shots.length, save = d.shots[p.seq];
+      const hitTn = n => {
+        d.shots[p.seq] = { wait: d.wait + n, mv: null };
+        const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
+        const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
+          { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
+        const t = rbTurns(r).find(x => x.tn >= p.tn && x.ev[0].some(e => e.full !== undefined));
+        return t ? t.tn : null;
+      };
+      let out = null;
+      for (let n = 0; n <= 4; n++) {
+        const x = hitTn(n);
+        if (x == null) break;
+        if ((x - 1) % tnFoe !== 0) { out = n || null; break; }   // n=0で安全ならボタンは要らない
+      }
+      if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
+      return out;
+    };
     // 「撃たない」が正解の場面か(2026-08-20タダシさん指示):
     // この発から先SPを撃たなくても**ノーマルアタックだけで倒しきれて**、相手のSPアタックも
     // **飛んでこない**なら、撃つのはもったいない(ふつうはやらない)。ゲージは次の対面へ持ち越す。
@@ -9044,7 +9136,13 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 撃ったSPアタックぶんだけ実時間が進む。交代のクールタイムの判定にも使う
       const spc = gbSpc(res);
       ctx.ck = tn => base + tn + GB_SP_TURNS * (spTot + gbSpAt(spc, tn));
-      const pts = gbPoints(rbTurns(res), ctx, dec);
+      ctx.tl = rbTurns(res);
+      // 交代受け(aiPivotAt)の読み用: **ユーザーはこの先もふつうにSPを撃ってくる前提**で1回だけ回す。
+      // res のほうは timing:'shots' で、まだ答えていない発が空プラン＝「撃たない」になるので、
+      // そのまま読むと「SPは飛んでこない」と誤読する(finishNoSp と同じ落とし穴)
+      ctx.tlPred = rbTurns(PvpEngine.simulate(D,
+        { ...legCfg(0), shotRest: { mode: 'opt' } }, legCfg(1), sopt));
+      const pts = gbPoints(ctx.tl, ctx, dec);
       // 手動交代(HUDの⇄ボタン・kind msw・2026-09-01): 記録があれば時系列の位置で反映する。
       // クールタイム・控えの生存・先の打ち切りを検証し、通らなければ黙って捨てる(前提が変わった古い記録)
       const mkey = Object.keys(ans).find(k => k.indexOf(li + ':0:msw:') === 0 && !handled.has(k));
@@ -9065,7 +9163,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       p.gt = base + p.tn;
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
-        pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p), ctx };
+        pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p),
+          pivotN: pivotSafeN(p), ctx };
         pending.opts = gbChoices(pending, ctx);
         break;
       }
@@ -9073,8 +9172,12 @@ function gbPlay(picks, foes, ans, stepwise) {
       log.push({ ...p, ans: a, auto: !ans[p.key] });
       if (p.kind === 'swap') {
         if (a.a === 'stay') continue;
+        // a.at = 交代受け(HARD)でタイミングを合わせたターン。無ければ従来どおり質問のターンで交代する。
+        // **チップも実際に交代したターンへ動かす**(時系列の順番を崩さないため)
+        const at = a.at != null ? Math.max(p.tn, Math.min(a.at, res.turns)) : p.tn;
         dec[p.side].swapTo = a.to;
-        dec[p.side].swapAt = Math.max(1, p.tn);
+        dec[p.side].swapAt = Math.max(1, at);
+        if (at !== p.tn) log[log.length - 1].tn = at;
         continue;
       }
       rbApply(dec[p.side], p, a);   // sp / sh の反映はロケット団と同じ
@@ -9088,7 +9191,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
     const points = log.map(p => {
       const q = { ...p, gt: base + p.tn, optNs: optNsOf(p),
-        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), ctx };
+        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), pivotN: pivotSafeN(p), ctx };
       q.opts = gbChoices(q, ctx);
       return q;
     });
@@ -9991,8 +10094,23 @@ function gbRender(body, bt, picks, foes) {
     if (!bench.length) return;
     const tn = Math.max(1, gt - leg.base);
     stopTimer(); RBV.playing = false; setPlayBtn();
+    // 交代受け(相手のSPアタックの発動に合わせて交代し、控えに受けさせる)を狙えるように、
+    // **あいてのSPまであとノーマルアタック何発か**を出す(2026-09-07タダシさん指示)。
+    // ゲージは**ノーマルアタックを数えれば人間にも分かる情報**なので、
+    // 「AIはずるをしない／人間も数えられる」の線引きと同じ扱い。合わせるかどうかは使う人が決める
+    const fr = frames[Math.max(0, Math.min(gt, stop))] || {};
+    const foePol = foes[leg.foeIdx] && foes[leg.foeIdx].pol;
+    const foeFm = foePol && D.moves[foePol.fast];
+    const foeCost = foePol && (foePol.charged || []).length
+      ? Math.min(...foePol.charged.map(id => D.moves[id] && D.moves[id].e).filter(v => v != null)) : null;
+    let spNote = '';
+    if (foeCost != null && fr.en1 != null && foeFm && foeFm.eg > 0) {
+      const need = Math.max(0, Math.ceil((foeCost - fr.en1) / foeFm.eg));
+      spNote = `<div class="mswnote" title="あいてのゲージ(${fr.en1})と、いちばん軽いSPアタックの消費(${foeCost})から数えた発数です。相手のSPアタックが発動するのに合わせて交代すると、その一撃を交代先に受けさせられます（交代受け）">` +
+        `あいてのSPまで ${need ? `<b>あと${foeFm.n}${need}発</b>` : '<b>いつでも撃てる</b>'}</div>`;
+    }
     winbox.innerHTML = `<div class="rbwin"><div class="rwt">${SWAPMK} 交代する？<span>${gt}T ⏱${rbSec(ckOf(gt))}</span><button class="wx" title="やめて再生に戻る">✕</button></div>
-      <div class="rwb">${bench.map(k => `<button class="fire" data-to="${k}" title="このポケモンに交代します(相手の打ちかけの1発は交代先に入ります・次の交代は45秒後)">${SWAPMK} ${shMark(picks[k].name)}${tyIco(picks[k].name)}</button>`).join('')}
+      <div class="rwb">${spNote}${bench.map(k => `<button class="fire" data-to="${k}" title="このポケモンに交代します(相手の打ちかけの1発は交代先に入ります・次の交代は45秒後)">${SWAPMK} ${shMark(picks[k].name)}${tyIco(picks[k].name)}</button>`).join('')}
       <button class="hold mswx">やめる</button></div></div>`;
     const key = gbKey(li, 0, 'msw', tn, 0);
     winbox.querySelectorAll('[data-to]').forEach(b => b.onclick = () => {
