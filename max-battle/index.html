@@ -31,7 +31,7 @@
   --card:#171128; --card2:#1e1633; --line:#2d2347; --line2:#3d3060;
   --text:#f3eefb; --sub:#9d92b8; --faint:#6f6590;
   --dyna:#ff3d6e; --dyna2:#ff7a5c; --violet:#8b5cf6;
-  --dmax:#6fa0ff; --spec:#b76bff; --warn:#ffb35c;
+  --dmax:#6fa0ff; --spec:#b76bff; --warn:#ffb35c; --special:#ff9750;
   --gold1:#ffd76a; --gold2:#e8a23d;
   --bosscard:linear-gradient(160deg,#221231,#170f26);
   --no1bg:linear-gradient(160deg,#2a142c,#1a0f24);
@@ -60,7 +60,7 @@
   --bg:#f3f0fb; --bg2:#ffffff;
   --card:rgba(255,255,255,.90); --card2:rgba(252,250,255,.90); --line:#e6e0f5; --line2:#d6ccee;
   --text:#241c38; --sub:#645a80; --faint:#8d84a6;
-  --warn:#c9761a;
+  --warn:#c9761a; --special:#d1490a;
   --bosscard:linear-gradient(160deg,#fdeef5,#f5f0fd);
   --no1bg:linear-gradient(160deg,#fff1f6,#fbf5ff);
   --no2bg:linear-gradient(160deg,#f4f7fc,#faf8ff);
@@ -189,7 +189,8 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .cbadge.S{background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
 .moves{color:var(--sub);font-size:.78rem;margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .moves b{color:var(--text);font-weight:700}
-.legacy{font-size:.6rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 6px}
+/* 特別わざ・レガシーわざ＝わざ名をオレンジにして、うしろに「*」（全ツール共通・2026-09-07） */
+.sp{color:var(--special)}
 .pts{text-align:right;min-width:88px}
 .pts b{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1.55rem;background:var(--ptsgrad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .row.no1 .pts b{background:var(--no1pts);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -340,7 +341,7 @@ footer a{color:var(--spec)}
   <h4>絞り込み</h4>
   <ul>
     <li><b>SP判定</b> ＝ SPアタックを撃つべきかを判定して、最適なわざを選び直します</li>
-    <li><b>特別技も</b> ＝ 特別なわざ（覚えさせるのに条件が要るもの）を含めます</li>
+    <li><b>特別技も</b> ＝ 特別なわざ（覚えさせるのに条件が要るもの）を含めます。一覧では<b class="sp">わざ名がオレンジ色＋うしろに「*」</b>で出ます</li>
     <li><b>0.5秒技だけ</b> ＝ 発生の速いノーマルアタックを持つポケモンだけに絞ります</li>
     <li><b>交代受け</b> ＝ ボスの攻撃を受け止める役として評価します</li>
   </ul>
@@ -607,13 +608,11 @@ footer a{color:var(--spec)}
   fLegacy.addEventListener('click', () => {
     includeLegacy = !includeLegacy;
     fLegacy.setAttribute('aria-pressed', String(includeLegacy));
-    fLegacy.textContent = includeLegacy ? 'レガシー・特別技を含める' : 'レガシー・特別技を除外中';
     compute();
   });
   fHalf.addEventListener('click', () => {
     halfOnly = !halfOnly;
     fHalf.setAttribute('aria-pressed', String(halfOnly));
-    fHalf.textContent = halfOnly ? '0.5秒技持ちのみ' : '全ポケモン表示中';
     shown = 30;
     compute();
   });
@@ -963,7 +962,7 @@ footer a{color:var(--spec)}
     const b = spBestOf(p, pr, atkOverride);
     if(!b) return '';
     const elite = (p.ce||[]).includes(b.mi);
-    return `<span>SPアタック: <b>${b.m.jp}</b>${elite ? ' <span class="legacy">特別/レガシー</span>' : ''}</span>`;
+    return `<span>SPアタック: <b${elite?' class="sp" title="特別わざ・レガシーわざです（イベント限定やすごいわざマシンスペシャルなどで習得）"':''}>${b.m.jp}${elite?'*':''}</b></span>`;
   }
   function renderAtk(){
     paint(r => {
@@ -972,12 +971,12 @@ footer a{color:var(--spec)}
         const halfTag = r.fast.q
           ? ' <span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒</span>'
           : ' <span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>';
-        fastInfo = `<span>ノーマルアタック: <b>${r.fast.jp}</b>${r.fast.e ? ' <span class="legacy">特別/レガシー</span>' : ''}${halfTag}</span>`;
+        fastInfo = `<span>ノーマルアタック: <b${r.fast.e?' class="sp" title="特別わざ・レガシーわざです（イベント限定やすごいわざマシンスペシャルなどで習得）"':''}>${r.fast.jp}${r.fast.e?'*':''}</b>${halfTag}</span>`;
       }else if(r.rec){ // キョダイ・特別枠: 推奨ノーマルアタック(0.5秒技を最優先)
         const halfTag = r.rec.q
           ? ' <span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒</span>'
           : ' <span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>';
-        fastInfo = `<span>ノーマルアタック: <b>${r.rec.jp}</b>${r.rec.e ? ' <span class="legacy">特別/レガシー</span>' : ''}${halfTag}</span>`;
+        fastInfo = `<span>ノーマルアタック: <b${r.rec.e?' class="sp" title="特別わざ・レガシーわざです（イベント限定やすごいわざマシンスペシャルなどで習得）"':''}>${r.rec.jp}${r.rec.e?'*':''}</b>${halfTag}</span>`;
       }
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank <= 3 ? ' no' + r.rank : ''}">
         <div class="prow">
@@ -1006,7 +1005,7 @@ footer a{color:var(--spec)}
   function renderTank(){
     paint(r => {
       const halfChip = r.half
-        ? `<span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒技 ${r.half.jp}${r.half.e ? '(特別/レガシー)' : ''}</span>`
+        ? `<span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒技 <span${r.half.e?' class="sp"':''}>${r.half.jp}${r.half.e?'*':''}</span></span>`
         : `<span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>${r.bf ? ` <span class="fastalt">最速わざ ${r.bf.jp}(${(r.bf.d/1000).toFixed(1).replace(/\.0$/,'')}秒)</span>` : ''}`;
       const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank <= 3 && !r._all ? ' no' + r.rank : ''}">

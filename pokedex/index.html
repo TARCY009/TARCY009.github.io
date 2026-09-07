@@ -24,7 +24,7 @@
 /* 色はすべてこの2ブロックで決まる(右上でダーク⇄ライト切替・既定はダーク) */
 :root{
   --bg:#0b1326; --panel:rgba(22,31,58,.94); --panel2:#101a36; --line:#27335e; --line2:#3a4a85;
-  --ink:#edf1fc; --sub:#8d97c2; --cy:#43e0ff; --gl:#4d8dff; --gold:#ffd54a; --stab:#ff6b81;
+  --ink:#edf1fc; --sub:#8d97c2; --cy:#43e0ff; --gl:#4d8dff; --gold:#ffd54a; --stab:#ff6b81; --special:#ff9750;
   --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
   --zebra:rgba(77,141,255,.05); --thbg:linear-gradient(90deg,rgba(45,90,200,.42),rgba(120,80,220,.42),rgba(8,180,201,.42));
   --barA:linear-gradient(90deg,#ff8a5c,#ff5a7a); --barD:linear-gradient(90deg,#4d8dff,#43e0ff); --barH:linear-gradient(90deg,#3ddc84,#a8e063);
@@ -39,7 +39,7 @@
 }
 :root.light{
   --bg:#eef2fb; --panel:rgba(255,255,255,.9); --panel2:#f4f7ff; --line:#dfe6f5; --line2:#b9c6e4;
-  --ink:#212743; --sub:#5f6a92; --cy:#0b8fa8; --gl:#2f5fd0; --gold:#a8760a; --stab:#d63a52;
+  --ink:#212743; --sub:#5f6a92; --cy:#0b8fa8; --gl:#2f5fd0; --gold:#a8760a; --stab:#d63a52; --special:#d1490a;
   --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
   --zebra:rgba(47,95,208,.05); --thbg:linear-gradient(90deg,rgba(45,90,200,.65),rgba(120,80,220,.65),rgba(8,180,201,.65));
   --barbg:#e7ecf9;
@@ -199,7 +199,8 @@ tbody tr:hover{background:var(--mebg)}
 .mtrow{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
 .mtrow .mtabs{flex:1;min-width:0;margin:0}
 @media (max-width:560px){ .mtrow{flex-wrap:wrap} .mtrow #megalv{width:100%} }
-.mvnm .st{color:var(--gold);font-weight:800}
+.mvnm .st{color:var(--special);font-weight:800}
+.mvnm .sp{color:var(--special)}
 /* メガの追加SPアタック(3本目)の印 */
 .mvwin .lg.pl{color:#e0b6ff}
 .mvwin .lg.pl::first-letter{font-weight:900}
@@ -216,7 +217,7 @@ tbody tr:hover{background:var(--mebg)}
 :root.light .mvwin{box-shadow:0 24px 60px rgba(30,40,90,.35)}
 .mvwin .hd{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .mvwin .hd b{font-size:1.1rem}
-.mvwin .lg{font-size:.74rem;color:var(--gold);font-weight:800;margin-bottom:8px}
+.mvwin .lg{font-size:.74rem;color:var(--special);font-weight:800;margin-bottom:8px}
 .mvwin .grp{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .mvwin .gttl{background:var(--thbg);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);font-size:.76rem;font-weight:800;padding:6px 10px}
 .mvwin .rows{padding:4px 12px 8px}
@@ -255,7 +256,7 @@ tbody tr:hover{background:var(--mebg)}
 .flist .fr .sv{margin-left:auto;font-weight:800;font-size:.84rem;font-variant-numeric:tabular-nums}
 .flist .fr .sv small{color:var(--sub);font-weight:700;font-size:.68rem;margin-right:3px}
 .flist .fr .cpv2{color:var(--sub);font-weight:700;font-size:.74rem;font-variant-numeric:tabular-nums;margin-left:8px}
-.flist .fr .st{color:var(--gold);font-weight:800}
+.flist .fr .st{color:var(--special);font-weight:800}
 #sugg .mvtag{font-size:.66rem;font-weight:800;color:#042330;background:linear-gradient(160deg,#ffe08a,#ffb84d);border-radius:6px;padding:1px 6px;margin-left:6px}
 #sugg .sep{padding:5px 12px;font-size:.68rem;color:var(--sub);background:var(--zebra);cursor:default}
 #sugg .sep:hover{background:var(--zebra)}
@@ -359,7 +360,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <li><b>DPE</b> … 消費ゲージ1あたりのダメージ(高いほど効率がよい)</li>
   </ul>
   <h4>特別わざ(*)</h4>
-  <p>わざ名の後ろの<b style="color:var(--gold)">*</b>は、レガシーわざ・特別なわざ(コミュニティデイ限定など)の目印です。通常のわざマシンでは覚えられず、イベント期間かすごいわざマシンが必要です。</p>
+  <p>わざ名が<b style="color:var(--special)">オレンジ色＋うしろに「*」</b>のものは、レガシーわざ・特別なわざ(コミュニティデイ限定など)の目印です。通常のわざマシンでは覚えられず、イベント期間かすごいわざマシンが必要です。</p>
   <h4>メガの「＋」わざ（追加SPアタック）</h4>
   <p>わざ名の最後が<b>「+」</b>で<b style="color:#e0b6ff">追加</b>の印が付くものは、<b>メガシンカ中だけ使える3本目のSPアタック</b>です（2026年8月31日から）。ふつうの2本とは別枠なので、強さ順には混ぜず表の先頭に置いています。<b>条件を満たせば自動で覚えます</b>（わざマシン不要）。覚えるのは<b>メガLv4（スーパーマックスレベル）に到達できる13匹</b>だけです。<b>レイドとGOバトルリーグで使えます</b>が、ジムに配置されたポケモンとの<b>ジムバトルでは使えません</b>。<b>メガレベルが上がるほど威力が上がります</b>（<b>Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／Lv4（スーパーマックス）＝1.3倍</b>）。表の上の<b>メガLv</b>で切り替えられます（<b>既定はLv4</b>・サイト内の他のツールにも引き継がれます）。</p>
 
@@ -373,7 +374,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <li><b>並べ替え</b> … 一覧を最大CP・攻撃・防御・HPの高い順に並べ替えられます</li>
   </ul>
   <h4>わざから探す</h4>
-  <p>検索欄に<b>わざの名前</b>を入れると候補に「わざ」が出て、選ぶと<b>そのわざを覚えるポケモンの一覧</b>に切り替わります。名前の後ろの<b style="color:var(--gold)">*</b>は、そのポケモンにとって特別なわざ(レガシー)である印です。タイプなどの絞り込み・並べ替えとも組み合わせられます。</p>
+  <p>検索欄に<b>わざの名前</b>を入れると候補に「わざ」が出て、選ぶと<b>そのわざを覚えるポケモンの一覧</b>に切り替わります。名前の後ろの<b style="color:var(--special)">*</b>は、そのポケモンにとって特別なわざ(レガシー)である印です。タイプなどの絞り込み・並べ替えとも組み合わせられます。</p>
   <h4>のせていないわざ・わるあがき</h4>
   <p>やつあたり・おんがえし(シャドウ/ライトポケモン専用)は一覧にのせていません。SPアタックを覚えないポケモン(コイキングなど)は、実戦で自動発動する<b>わるあがき</b>(ジム・レイド=3ゲージ／トレーナーバトル=消費100)を載せています。</p>
 </div>
@@ -779,7 +780,7 @@ const TYPE_COLORS={NORMAL:'#9fa19f',FIGHTING:'#ff8000',FLYING:'#81b9ef',POISON:'
 const gaugeBar=(m,id)=>{ const e=pveEnergyOf(id,m); const n=e>=-34?3:e>=-51?2:1;
   return `<span class="gbar">${Array.from({length:n},()=>`<i style="background:${TYPE_COLORS[m.t]||'#888'}"></i>`).join('')}</span>`; };
 const PLUS_HELP='メガシンカ中だけ使える追加のSPアタック。既存の2本とは別枠で、条件を満たせば自動で覚えます（わざマシン不要）。レイドとGOバトルリーグで使えますが、ジムに配置されたポケモンとのジムバトルでは使えません。メガレベルが上がるほど威力が上がります（表の値は倍率を掛けていない素の値）。';
-const mvName=(nm,t,lg,pl)=>`<span class="mvnm">${typePairHTML([GO.typeJa[t]],16)}<span>${nm}${lg?'<b class="st" title="特別なわざ(レガシー)。通常のわざマシンでは覚えられません">*</b>':''}</span>${pl?`<b class="plus" title="${PLUS_HELP}">追加</b>`:''}</span>`;
+const mvName=(nm,t,lg,pl)=>`<span class="mvnm">${typePairHTML([GO.typeJa[t]],16)}<span${lg?' class="sp"':''}>${nm}${lg?'<b class="st" title="特別なわざ(レガシー)。通常のわざマシンでは覚えられません">*</b>':''}</span>${pl?`<b class="plus" title="${PLUS_HELP}">追加</b>`:''}</span>`;
 
 function renderMoves(){
   const e=entryOf(state.key);

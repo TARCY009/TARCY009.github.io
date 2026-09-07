@@ -900,8 +900,8 @@ function syncMoveTypeIcons(){
 function buildMyForm(){
   const p=D.pokemon[myKey];
   const f=fastMoves(p), c=chgMoves(p);
-  document.getElementById('fastSel').innerHTML=f.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}</option>`).join('');
-  document.getElementById('chgSel').innerHTML=c.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?' (特)':''}</option>`).join('');
+  document.getElementById('fastSel').innerHTML=f.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?'*':''}</option>`).join('');
+  document.getElementById('chgSel').innerHTML=c.map(x=>`<option value="${x.id}">${D.moves[x.id].n}${x.sp?'*':''}</option>`).join('');
   // ボス設定済みなら、そのボスに対する最適わざ構成を初期選択にする
   if(boss){
     const bc=bestCombo(p, D.pokemon[boss].ty, false);
@@ -1146,10 +1146,10 @@ function moveLabel(p, id, sp, hpTypes){
   if(id.startsWith('HIDDEN_POWER_')){
     const ts=(hpTypes&&hpTypes.length?hpTypes:[m.t]);
     const icons=ts.map(t=>typeIconHTML(D.typeJa[t],14)).join('');
-    return icons+(isSp?`<span class="sp">めざめるパワー(特)</span>`:'めざめるパワー');
+    return icons+(isSp?`<span class="sp">めざめるパワー*</span>`:'めざめるパワー');
   }
   // メガの「＋わざ」はメガLvで威力が動く行なので、名前を色で示す(どこが変わるかが見て分かるように)
-  const body = isSp?`<span class="sp">${m.n}(特)</span>`
+  const body = isSp?`<span class="sp">${m.n}*</span>`
              : (PLUS_IDS.includes(id)?`<span class="plusmv" title="${T_PLUSMV}">${m.n}</span>`:m.n);
   return typeIconHTML(D.typeJa[m.t],14)+body;
 }
@@ -1372,7 +1372,7 @@ const HELP_HTML = `
     <li>一覧に出るわざ構成は<b>PL1〜51の全レベルで計算して、いちばん多くのレベルで1位だった組み合わせ</b>です</li>
     <li>既定は<b>純粋に火力がいちばん高い組み合わせ</b>です</li>
     <li><b>「ゲージ分割考慮」</b>を押すと、1位が<b>ゲージ分割なし（1ゲージ）</b>のわざでも、分割ありとの差が<b>7%未満</b>なら分割ありを優先します（分割ありは早く撃てるので実戦向きです）</li>
-    <li><b>(特)</b>は特別わざ・レガシーわざ（イベント限定やすごいわざマシンスペシャルなどで習得）。習得済みならそのまま選べます</li>
+    <li>わざ名が<b class="sp">オレンジ色＋うしろに「*」</b>のものは特別わざ・レガシーわざ（イベント限定やすごいわざマシンスペシャルなどで習得）。習得済みならそのまま選べます</li>
     <li><b>めざめるパワー</b>はタイプを選べないので、そのボスに刺さるタイプをアイコンで示します</li>
     <li>ボスのわざ一覧に<b>特別わざは出ません</b>（レイドボスは使ってこないため）</li>
   </ul>
