@@ -4332,11 +4332,11 @@ function rkRankCard(r, i) {
 const RB = { ans: {}, step: true, found: null, goal: null, rseed: 0, rseedLock: false };
 const rbAnsCount = () => Object.keys(RB.ans).length;
 // 共有URL用: 決断の答えを短い文字列にする(キーの : は . に置き換える)
-const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p', bluff: 'b' };
+const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p', bluff: 'b', hold1: 'g' };
 const rbAnsToStr = () => Object.keys(RB.ans).map(k => {
   const a = RB.ans[k], c = RB_CODE[a.a] || 'a';
   const v = a.a === 'fire' ? (a.after ? `${a.mv}~${a.after}` : a.mv)
-    : a.a === 'opt' ? a.mv : a.a === 'bluff' ? `${a.mv}~${a.until}`
+    : a.a === 'opt' || a.a === 'hold1' ? a.mv : a.a === 'bluff' ? `${a.mv}~${a.until}`
     : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
   return `${k.replace(/:/g, '.')}~${c}${v != null ? '~' + v : ''}`;
 }).join(',');
@@ -4346,6 +4346,7 @@ function rbAnsFromStr(str) {
     if (!k || !c) return;
     const a = c === 'f' ? (D.moves[v] ? { a: 'fire', mv: v, ...(+v2 ? { after: Math.max(1, Math.min(9, +v2)) } : {}) } : null)
       : c === 'p' ? (D.moves[v] ? { a: 'opt', mv: v } : null)   // このわざを最適タイミングで(2026-08-20)
+      : c === 'g' ? (D.moves[v] ? { a: 'hold1', mv: v } : null)   // 0.5秒待ってから撃つ=交代受けを防ぐ(2026-09-08)
       : c === 'b' ? (D.moves[v] ? { a: 'bluff', mv: v, until: Math.max(0, Math.min(100, +v2 || 0)) } : null)   // ためてブラフ(2026-08-30)
       : c === 'w' ? { a: 'wait', n: Math.max(1, Math.min(9, +v || 1)) }
       : c === 'h' ? { a: 'hold' } : c === 'u' ? { a: 'use' } : c === 'n' ? { a: 'no' }
@@ -4571,7 +4572,9 @@ function rbApply(dec, p, ans) {
     if (ans.a === 'auto') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: null }; dec.wait = 0; }
     // 最適(わざ指定・2026-08-20): このわざを、エンジンの最適タイミングで撃つ
     else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: ans.mv }; dec.wait = 0; }
-    // after = 「読まれない」で足す待ち発数(2026-09-07)。指定が無ければ従来どおり
+    // 交代受けを防ぐ(2026-09-08): **0.5秒(1ターン)何も打たずに待ってから**そのわざを撃つ。
+    // 自分のノーマルアタックの周期が1ターンずれるので、あいての交代の切れ目から外れる
+    else if (ans.a === 'hold1') { dec.shots[p.seq] = { wait: 'hold', hold: 1, mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait + (ans.after || 0), mv: ans.mv }; dec.wait = 0; }
     // ためてブラフ(2026-08-30): 重いわざのゲージ(until)までためてから軽いわざ(mv)を撃つ
     else if (ans.a === 'bluff') { dec.shots[p.seq] = { wait: 'en', until: ans.until, mv: ans.mv }; dec.wait = 0; }
@@ -4691,7 +4694,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     for (let guard = 0; guard < 60; guard++) {
       // charged は必ず入れる(SPが1本の構成だと、わざ未指定のときエンジンが選べないため)
       const L = { ...picks[mi].base, ...pol, charged: spList.slice(), shields: myShLeft, bluff: true,
-        timing: 'shots', shotPlan: dec.shots.map(s => ({ mode: s.wait, move: s.mv, after: s.after, until: s.until })), shotRest: null,
+        timing: 'shots', shotPlan: dec.shots.map(s => ({ mode: s.wait, move: s.mv, after: s.after, until: s.until, hold: s.hold })), shotRest: null,
         shieldPlan: dec.shieldAt.slice(), shieldRest: false };
       if (st[mi].resume) L.resume = { ...st[mi].resume, stall: Math.max(st[mi].resume.stall || 0, myEntry) };
       else if (myEntry) L.stallStart = myEntry;
@@ -4718,7 +4721,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       };
       const w0 = simWorst(L);
       res = w0.res; foeMv = w0.mv;
-      const withShots = shots => ({ ...L, shotPlan: shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until })) });
+      const withShots = shots => ({ ...L, shotPlan: shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until, hold: x.hold })) });
       // 「⭐最適」ボタン用: この発を最適タイミング(mvId指定)にしたとき、あと何発ノーマルアタックを
       // はさんでから撃つことになるか(GBL模擬戦と同じ・2026-08-23にロケット団へ反映)
       const optNOf = (p, mvId) => {
@@ -7860,10 +7863,17 @@ function gbChoices(p, ctx) {
         label: '即打ち',
         tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打って、たまり次第すぐ${m.n}を撃ちます`
                   : `タイミングを待たず、ここですぐ${m.n}を撃ちます` });
-      // ⚠ 「交代受けを防ぐ ＋N」ボタンは**廃止**(2026-09-07タダシさん指示)。
-      //   交代受けが成立するのは**両者のノーマルアタックのターン数が同じで周期がそろっているとき**だけ、
-      //   と決めたので、**ノーマルアタックを1発はさんでも周期は同じまま＝ずらせない**。
-      //   実戦の防ぎ方は「1ターン何も打たずに待ってから撃つ」だが、それはエンジンで表せない
+      // 「交代受けを防ぐ」(2026-09-08タダシさん指示・HARDのときだけ・そのわざ専用):
+      // **0.5秒(1ターン)何も打たずに待ってから撃つ**＝自分のノーマルアタックの周期が1ターンずれて、
+      // あいてが交代を差し込める切れ目から外れる(実戦の上級テクの再現)。
+      // **ノーマルアタックを足す形では周期が変わらないので防げない**——待つのが正解。
+      // 必要のない場面(重なっていない・待っても外れない・0.5秒わざどうし・周期がずれている)では出さない
+      if (p.holds && p.holds[id]) {
+        list.push({ a: 'hold1', mv: id, grp: id, cls: 'safe',
+          label: '交代受けを防ぐ<i class="need">0.5秒待つ</i>',
+          tip: `0.5秒（1ターン）何も打たずに待ってから${m.n}を撃ちます。` +
+            `ノーマルアタックの周期が1ターンずれるので、あいては交代を差し込めません（交代受けを防げます）` });
+      }
     });
     // 「撃たない」が正解の場面(noSp)は点灯させておすすめ表示(2026-08-20タダシさん指示。
     // ノーマルアタックだけで倒しきれて相手のSPも飛んでこない=撃つのはもったいない)
@@ -7938,6 +7948,8 @@ function gbAnsLabel(p, a) {
     // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
     const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
     if (a.a === 'opt') return hide ? '▶ SPアタック' : `${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    // 0.5秒待ってから撃った(交代受けを防ぐ)。あいて側は従来どおり名前を隠す
+    if (a.a === 'hold1') return hide ? '▶ SPアタック' : `⏸ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     // 「交代受けを防ぐ」(after付き)は、はさんだ発数もチップに出す(あとから見て何をしたか分かるように)
     if (a.a === 'fire') return hide ? '▶ SPアタック'
       : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${a.after ? `＋${a.after}` : ''}`;
@@ -9187,7 +9199,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
         bluff: s === 1 ? (ai.bluff && !ai.proBluff) : false, timing: 'shots',
-        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until })), shotRest: null,
+        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until, hold: x.hold })), shotRest: null,
         shieldPlan: d.shieldAt.slice(), shieldRest: false };
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
       return c;
@@ -9218,6 +9230,36 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (p.kind !== 'sp' || p.side !== 0) return null;
       const m = {};
       (ctx.spList[0] || []).forEach(id => { m[id] = optNOf(p, id); });
+      return m;
+    };
+    // 「交代受けを防ぐ」ボタン用(HARDだけ・2026-09-08タダシさん指示):
+    // 交代受けが成立するのは**両者のノーマルアタックのターン数が同じで周期がそろっている**ときだけ。
+    // **0.5秒わざどうしは実質防ぎようがない**ので2ターン以上のときだけ。
+    // そのわざを最適タイミングで撃つと**あいての交代の切れ目に重なる**、かつ
+    // **0.5秒(1ターン)何もせず待てば外れる**ときだけボタンを出す(必要のない場面では出さない)
+    const holdNeedOf = (p, mvId) => {
+      if (!ctx.swTo[1].length || !ctx.aligned) return false;
+      const f0 = D.moves[ctx.fast[0]], f1 = D.moves[ctx.fast[1]];
+      const tn0 = f0 && f0.tn ? f0.tn : 1, tn1 = f1 && f1.tn ? f1.tn : 1;
+      if (tn0 !== tn1 || tn0 < 2) return false;
+      const d = dec[0], len = d.shots.length, save = d.shots[p.seq];
+      const hitOf = plan => {
+        d.shots[p.seq] = plan;
+        const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
+        const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
+          { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
+        const t = rbTurns(r).find(x => x.tn >= p.tn && x.ev[0].some(e => e.full !== undefined));
+        return t ? t.tn : null;
+      };
+      const now = hitOf({ wait: 'opt', after: d.wait, mv: mvId || null });
+      const held = hitOf({ wait: 'hold', hold: 1, mv: mvId || null });
+      if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
+      return now != null && now % tn1 === 0 && held != null && held % tn1 !== 0;
+    };
+    const holdsOf = p => {
+      if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard') return null;
+      const m = {};
+      (ctx.spList[0] || []).forEach(id => { m[id] = holdNeedOf(p, id); });
       return m;
     };
     // 「撃たない」が正解の場面か(2026-08-20タダシさん指示):
@@ -9295,7 +9337,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
         pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p),
-          ctx };
+          holds: holdsOf(p), ctx };
         pending.opts = gbChoices(pending, ctx);
         break;
       }
@@ -9323,7 +9365,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
     const points = log.map(p => {
       const q = { ...p, gt: base + p.tn, optNs: optNsOf(p),
-        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), ctx };
+        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), holds: holdsOf(p), ctx };
       q.opts = gbChoices(q, ctx);
       return q;
     });

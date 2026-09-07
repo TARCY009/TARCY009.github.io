@@ -384,6 +384,17 @@
                 // この(軽い)わざを撃つ。これ以上ためられない(オーバーフロー)ときも撃つ
                 fire = s.en >= Math.min(sh.until || 0, 100) || s.en + (s.fast.eg || 0) > 100;
               }
+              else if (sh.mode === 'hold') {
+                // 0.5秒(1ターン)何も打たずに待ってから撃つ(2026-09-08タダシさん指示)。
+                // 通常技を**開始しない**ので自分の周期が1ターンずれる＝交代受けの切れ目から外せる。
+                // 実戦の「1ターン何も打たずに様子を見てから撃つ」上級テクの再現
+                if ((s.shotHold || 0) < (sh.hold || 1)) {
+                  s.shotHold = (s.shotHold || 0) + 1;
+                  s.idleNow = true;   // このターンは通常技を始めない(下の進行でcdを減らさない)
+                  continue;
+                }
+                fire = true;
+              }
               else if (typeof sh.mode === 'number') {
                 // +N発: ゲージが貯まってから通常技を余分にN発打ってから発動
                 if ((s.shotWait || 0) >= sh.mode) fire = true;
@@ -392,7 +403,7 @@
                 // 最適: 通常タイミングAIと同じ判断
                 fire = optWindow(s, o, mv);
               }
-              if (fire) { s.waitCnt = 0; s.shotWait = 0; charging[i] = mv; continue; }
+              if (fire) { s.waitCnt = 0; s.shotWait = 0; s.shotHold = 0; charging[i] = mv; continue; }
             }
           }
         } else {
@@ -424,6 +435,8 @@
         if (charging[i] || stalled[i]) continue;
         if (charging[1 - i] && s.startedNow) { s.startedNow = false; continue; }
         s.startedNow = false;
+        // 「0.5秒待つ」ターンは通常技を始めていないので、進行させない(cdは0のまま)
+        if (s.idleNow) { s.idleNow = false; continue; }
         s.cd--;
         if (s.cd === 0) {
           const dmg = fastDamage(i);
