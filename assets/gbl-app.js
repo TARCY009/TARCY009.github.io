@@ -5876,6 +5876,7 @@ function rbRender(body, bt, picks, foes, extra) {
       });
       RB.ans[key] = { a: 'toq', to: +b.dataset.to };
       RBUI.open = null; RBV.playing = true;
+      RBV.keepFx = true;   // 途中の操作なので、0ターン目でも演出はやり直さない
       run();
     });
     // ⏸で止めてから⇄を押して「やめる」と、勝手に再生が始まっていた。止めていたなら止めたまま戻す
@@ -5904,7 +5905,11 @@ function rbRender(body, bt, picks, foes, extra) {
     setPlayBtn();
     return;
   }
-  if (RBV.cur === 0) { RBV.fxDone.clear(); RBV.hpSnap = null; }   // 最初からの再生(スタート・↻)は演出もHPの控えも最初から
+  // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
+  //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
+  //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.hpSnap = null; }   // 最初からの再生(スタート・↻)だけ
+  RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
   //   まとめて出てしまい、そのあとに演出が流れて時系列が崩れる。
@@ -9917,6 +9922,7 @@ function gbRender(body, bt, picks, foes) {
       });
       RB.ans[key] = { a: 'toq', to: +b.dataset.to };
       RBUI.open = null; RBV.playing = true;
+      RBV.keepFx = true;   // 途中の操作なので、0ターン目でも演出はやり直さない
       run();
     });
     // ⏸で止めてから⇄を押して「やめる」と、勝手に再生が始まっていた。止めていたなら止めたまま戻す
@@ -9944,7 +9950,11 @@ function gbRender(body, bt, picks, foes) {
     setPlayBtn();
     return;
   }
-  if (RBV.cur === 0) { RBV.fxDone.clear(); RBV.hpSnap = null; }   // 最初からの再生(スタート・↻)は演出もHPの控えも最初から
+  // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
+  //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
+  //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.hpSnap = null; }   // 最初からの再生(スタート・↻)だけ
+  RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
   //   まとめて出てしまい、そのあとに演出が流れて時系列が崩れる。
