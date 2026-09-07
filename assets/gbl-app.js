@@ -5064,10 +5064,17 @@ const fxConsume = els => {
   return [];
 };
 // data-fx を持つ要素の演出を順番に再生して、終わったら done()
-function fxRun(list, done) {
-  let i = 0;
+// 演出の前後の「一呼吸」(2026-09-07タダシさん指示・進みが早すぎる感を無くす)。
+// 速さの設定(×2/×4)で割るので、急ぎたい人は従来どおり速く見られる
+const FX_PRE = 260, FX_POST = 420;
+// list=演出の並び ／ done=すべて終わったあと ／ onHit=最初の演出の後半で1回だけ呼ぶ
+// (⚠ HUDの更新はここで行う。先に更新すると、カットインを見ているあいだにHPバーが
+//   減り終わってしまい「HPが減る演出が無い」ように見える・2026-09-07タダシさん報告)
+function fxRun(list, done, onHit) {
+  let i = 0, hit = false;
+  const sp = () => Math.max(1, RBV.speed || 1);
   const step = () => {
-    if (i >= list.length) { done(); return; }
+    if (i >= list.length) { setTimeout(done, FX_POST / sp()); return; }
     const el = list[i];
     RBV.fxDone.add(fxKey(el));
     let fs = [];
@@ -5076,9 +5083,11 @@ function fxRun(list, done) {
     if (!Array.isArray(fs)) fs = fs ? [fs] : [];
     let dur = 0;
     fs.forEach(f => { dur = Math.max(dur, fxOne(f)); });
+    // 着弾(SPの揺れ)と同じタイミングでHUDを更新する＝カットインのあとにHPがガクッと減って見える
+    if (!hit && onHit) { hit = true; setTimeout(onHit, Math.min(Math.round(dur * 0.62), Math.round(700 * FX_SLOW / sp()))); }
     setTimeout(step, dur + 60);
   };
-  step();
+  setTimeout(step, FX_PRE / sp());
 }
 // data-fx属性のHTML(単引用符で囲むのでJSONの単引用符だけ実体参照にする)
 const fxAttr = fx => fx && fx.length ? ` data-fx='${JSON.stringify(fx).replace(/'/g, '&#39;')}'` : '';
@@ -5633,21 +5642,23 @@ function rbRender(body, bt, picks, foes, extra) {
     if (!onScreen()) { stopTimer(); return; }
     RBV.cur++;
     const rev = revealTo(RBV.cur);
-    updateHud(RBV.cur);
     autoScroll();
     // 演出(FX): 今あらわれた行に未再生のdata-fxがあれば、再生を止めてカットインを見せてから続ける
     // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
     const fxEls = fxConsume(rev);
     if (fxEls.length) {
       stopTimer();
+      // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
       fxRun(fxEls, () => {
         if (!onScreen()) return;
+        updateHud(RBV.cur);
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
-      });
+      }, () => updateHud(RBV.cur));
       return;
     }
+    updateHud(RBV.cur);
     if (RBV.cur >= stop) atStop();
   }
   const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
@@ -5814,22 +5825,25 @@ function rbRender(body, bt, picks, foes, extra) {
   }
   if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
   const rev0 = revealTo(RBV.cur);
-  updateHud(RBV.cur);
   autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
-  if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
+  // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
+  //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
+  const upd = () => updateHud(RBV.cur);
+  if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
   else if (RBV.cur >= stop) {
     // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
     const fxS = RB.step ? fxConsume(rev0) : [];
-    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) atStop(); });
-    else atStop();
+    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) { upd(); atStop(); } }, upd);
+    else { upd(); atStop(); }
   }
   else if (RB.step && RBV.playing) {
     // まだ再生していない演出(バトルスタート直後のVS・決断で隠れていたSPや交代など)を
     // 見せてから再生を始める。fxDoneのおかげで再生済みの演出は二重に出ない
     const fx0 = fxConsume(rev0);
-    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) startTimer(); });
-    else startTimer();
+    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) { upd(); startTimer(); } }, upd);
+    else { upd(); startTimer(); }
   }
+  else upd();
   setPlayBtn();
 }
 
@@ -9535,21 +9549,23 @@ function gbRender(body, bt, picks, foes) {
     if (!onScreen()) { stopTimer(); return; }
     RBV.cur++;
     const rev = revealTo(RBV.cur);
-    updateHud(RBV.cur);
     autoScroll();
     // 演出(FX): 今あらわれた行に未再生のdata-fxがあれば、再生を止めてカットインを見せてから続ける
     // (停滞するのは見せる側だけで、バトルのターン・⏱には影響しない)
     const fxEls = fxConsume(rev);
     if (fxEls.length) {
       stopTimer();
+      // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
       fxRun(fxEls, () => {
         if (!onScreen()) return;
+        updateHud(RBV.cur);
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
-      });
+      }, () => updateHud(RBV.cur));
       return;
     }
+    updateHud(RBV.cur);
     if (RBV.cur >= stop) atStop();
   }
   const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
@@ -9715,22 +9731,25 @@ function gbRender(body, bt, picks, foes) {
   }
   if (RBV.cur === 0) RBV.fxDone.clear();   // 最初からの再生(スタート・↻)は演出も最初から
   const rev0 = revealTo(RBV.cur);
-  updateHud(RBV.cur);
   autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
-  if (RBUI.open && RBUI.pts[RBUI.open]) showWin(RBUI.pts[RBUI.open], true);
+  // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
+  //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
+  const upd = () => updateHud(RBV.cur);
+  if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
   else if (RBV.cur >= stop) {
     // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
     const fxS = RB.step ? fxConsume(rev0) : [];
-    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) atStop(); });
-    else atStop();
+    if (fxS.length) fxRun(fxS, () => { if (document.body.contains(feedEl)) { upd(); atStop(); } }, upd);
+    else { upd(); atStop(); }
   }
   else if (RB.step && RBV.playing) {
     // まだ再生していない演出(バトルスタート直後のVS・決断で隠れていたSPや交代など)を
     // 見せてから再生を始める。fxDoneのおかげで再生済みの演出は二重に出ない
     const fx0 = fxConsume(rev0);
-    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) startTimer(); });
-    else startTimer();
+    if (fx0.length) fxRun(fx0, () => { if (document.body.contains(feedEl) && RBV.playing) { upd(); startTimer(); } }, upd);
+    else { upd(); startTimer(); }
   }
+  else upd();
   setPlayBtn();
 }
 
