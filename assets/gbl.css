@@ -2259,3 +2259,14 @@ button.sdchip.on .tbadge{filter:none}
 /* 静止表示のときは大きな文字だけ残す */
 .fxitem.fxhold.fxend .ering,.fxitem.fxhold.fxend .eflash{opacity:0 !important}
 .fxitem.fxhold.fxend .ebig{opacity:1 !important;transform:scale(1) !important}
+
+/* パーティの「型」(ABC/ABB/ABA・2026-09-07。タダシさん提供の考え方を診断に出したもの) */
+.ptform{display:flex;align-items:center;gap:9px;margin:2px 0 8px;padding:8px 10px;border-radius:11px;
+  background:linear-gradient(180deg,rgba(90,120,220,.17),rgba(90,120,220,.06));border:1px solid rgba(120,150,240,.3)}
+.ptform b{flex:0 0 auto;font-size:1rem;font-weight:900;letter-spacing:.1em;color:#c6d8ff;
+  padding:3px 10px;border-radius:8px;background:rgba(120,150,240,.24);border:1px solid rgba(150,180,255,.42)}
+.ptform span{font-size:.72rem;color:var(--sub);line-height:1.6}
+.ptform span b{all:unset;font-weight:800;color:var(--ink)}
+.ptformx{font-size:.7rem;color:var(--sub);line-height:1.85;margin:0 0 9px}
+:root.light .ptform{background:linear-gradient(180deg,rgba(90,120,220,.12),rgba(90,120,220,.05));border-color:rgba(90,120,200,.3)}
+:root.light .ptform b{color:#2b3f8a;background:rgba(120,150,240,.18);border-color:rgba(90,120,200,.35)}

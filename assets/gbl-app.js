@@ -2799,6 +2799,25 @@ const ptRoleOf = (w2, w0, n) => {
   const half = n / 2;
   return w2 >= half ? (w0 >= half ? 'all' : 'early') : (w0 >= half ? 'late' : 'weak');
 };
+// ---- パーティの「型」(2026-09-07実装・2026-08-18にタダシさんが伝えてくれた考え方) ----
+// 3匹の役割の並びを A・B・C で見る。**どの型が正解ということはない**(恒久ルール:
+// 分析は「こうすべき」ではなく「いまこうなっている」を出す)。狙って組めているかの目安
+const PT_FORMS = {
+  ABC: { d: '3匹とも役割がちがう<b>バランス型</b>' },
+  ABB: { d: '<b>裏の2匹の役割がそろう</b>形。初手で場を作り、裏の2匹で押し切る' },
+  ABA: { d: '<b>初手と3匹目の役割が同じ</b>形。同じ役割を2回通す' },
+  AAB: { d: '<b>初手と2匹目の役割が同じ</b>形' },
+  AAA: { d: '<b>3匹とも同じ役割</b>。得意な場面がそろう' },
+};
+function ptFormOf(pos) {
+  if (!pos || pos.length < 3 || pos.some(p => !p)) return null;
+  const [a, b, c] = pos.map(p => p.r);
+  if (a === b && b === c) return 'AAA';
+  if (b === c) return 'ABB';
+  if (a === c) return 'ABA';
+  if (a === b) return 'AAB';
+  return 'ABC';
+}
 const ptRoleChip = r => `<span class="ptwrole r-${r}" style="--rc:${PT_ROLES[r].c}">${PT_ROLES[r].t}</span>`;
 const ptDistOk = () => !!PTR.ops && PTR.sig === ptrSig();
 // 入れ替え候補1匹の役割(相手セットができていないときは null)
@@ -2927,6 +2946,11 @@ function ptWorkHtml(res, names, pos) {
     `<span class="ptwsub">抜くと</span></div>`;
   return `<div class="ptcard" data-sec="work" aria-expanded="${!!PTSEC.work}">` +
     ptSecHead('work', '⚔️', '得意な場面') + `<div class="ptcbody">` +
+    (ptFormOf(pos) ? `<div class="ptform"><b>${ptFormOf(pos)}</b><span>${PT_FORMS[ptFormOf(pos)].d}</span></div>
+      <p class="ptformx expl">3匹の<b>役割の並び</b>を見たものです。たとえば<b>ABB</b>は
+      「トリデプス＋ウツボット＋くさ枠」のように、初手で場を作って交代し、裏の2匹で押し切る形。
+      相手はくさに強い駒を先に使わされるので、最後まで押し切れることがあります。
+      <b>どの型が正解ということはありません</b>——狙ったとおりに組めているかの目安です。</p>` : '') +
     `<div class="ptgsub"><b class="e">シールドが残っている序盤</b>と<b class="l">切れた終盤</b>で` +
     // 枚数は列見出しの「🛡2-2 / 🛡0-0」が示すので、ここには**役割の基準**を書く
     // (2026-08-13タダシさん指示。何勝以上でどの型になるかが分かれば、あとは表を読むだけで済む)
