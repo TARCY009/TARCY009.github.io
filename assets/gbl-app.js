@@ -7875,7 +7875,7 @@ function gbChoices(p, ctx) {
       // 必要のない場面(重なっていない・待っても外れない・0.5秒わざどうし・周期がずれている)では出さない
       if (p.holds && p.holds[id]) {
         list.push({ a: 'hold1', mv: id, grp: id, cls: 'safe',
-          label: '交代受けを防ぐ<i class="need">0.5秒待つ</i>',
+          label: '交代受け防ぐ<i class="need">（1ターン待つ）</i>',
           tip: `0.5秒（1ターン）何も打たずに待ってから${m.n}を撃ちます。` +
             `ノーマルアタックの周期が1ターンずれるので、あいては交代を差し込めません（交代受けを防げます）` });
       }
@@ -8144,13 +8144,12 @@ function gbPlay(picks, foes, ans, stepwise) {
     // ユーザーのSPがこの先いつ発動するか(まだ答えていない決断は「おまかせ」で回した予測)
     const hit = tl.find(t => t.tn > p.tn && t.ev[0].some(e => e.full !== undefined));
     if (!hit) return null;
-    // **SPが発動するターンが、自分のノーマルアタックの切れ目でなければ差し込めない**
-    // (発動中は手がふさがっていて、入力が通るのは切れ目のあと＝間に合わない)。
-    // 対面はノーマルアタックの打ち始めから始まる(cdは引き継がない)ので、切れ目は tnMe の倍数。
-    // ここが交代受けの成立条件そのもの:
-    //   相手のノーマルが**自分と同じか、自分の倍数**のときは毎回ぴたりと合う＝**防ぎようがない**
-    //   (0.5秒わざはどのターンも切れ目なので、いちばん防ぎにくい＝GBLの基本)
-    if (hit.tn % tnMe !== 0) return null;
+    // **交代を入力できるのは自分のノーマルアタックの切れ目(＝tnMeの倍数のターンの終わり)だけ**。
+    // そこで交代すると、交代先が場に出るのは**その次のターン**なので、
+    // **SPが発動するターンの1つ前が切れ目**でなければ間に合わない。
+    // ⚠ ここは長らく `hit.tn % tnMe === 0` と1ターンずれていた(2026-09-08タダシさん報告で修正)。
+    //   そのせいで**本当に受けられる場面(mod 1)を弾き、受けられない場面(mod 0)だけ狙っていた**
+    if ((hit.tn - 1) % tnMe !== 0) return null;
     const at = hit.tn - 1;                       // 実戦の先行入力＝発動の0.5秒(1ターン)前
     if (at < p.tn || at - p.tn > GB_PIVOT_WAIT) return null;   // 待ちすぎるなら普通に交代する
     const ok = { at, x: hit.tn };                // x=そのターンにSPが来るという読み(外れたら取り消す)
@@ -8618,14 +8617,15 @@ function gbPlay(picks, foes, ans, stepwise) {
     const tn0 = f0 && f0.tn ? f0.tn : 1, tn1 = f1 && f1.tn ? f1.tn : 1;
     if (tn0 !== tn1 || tn0 < 2) return a;         // ターン数がちがう・0.5秒わざどうしは対象外
     const hit = ctx.spHit(p, a);                  // その答えで撃つと、当たるのは何ターン目か
-    if (hit == null || hit % tn0 !== 0) return a;   // もう切れ目から外れている
+    // 受けられるのは「発動ターンの1つ前がユーザーの切れ目」のとき
+    if (hit == null || (hit - 1) % tn0 !== 0) return a;   // もう切れ目から外れている
     // 警戒度は0〜3(バトルごとの癖)。**0なら一度も警戒しない**＝そのバトルはよく決まる相手になる
     const care = gbCoin('pvcare:' + RB.rseed) % 4;
     const roll = gbCoin('pvhold:' + RB.rseed + ':' + ctx.li + ':' + p.seq + ':' + p.tn) % 4;
     if (roll >= care) return a;
     const held = { a: 'hold1', mv: a.mv || null };
     const h2 = ctx.spHit(p, held);
-    return h2 != null && h2 % tn0 !== 0 ? held : a;   // 待って本当に外れるときだけ
+    return h2 != null && (h2 - 1) % tn0 !== 0 ? held : a;   // 待って本当に外れるときだけ
   };
   // ---- 投げようとしたSPは引っ込められない(2026-09-07タダシさん指摘で追加) ----
   // ユーザーが**自分から交代した直後**(ctx.chase)に、あいてが毎回きっちり合わせ返して交代すると、
@@ -9277,7 +9277,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       const now = hitOf({ wait: 'opt', after: d.wait, mv: mvId || null });
       const held = hitOf({ wait: 'hold', hold: 1, mv: mvId || null });
       if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
-      return now != null && now % tn1 === 0 && held != null && held % tn1 !== 0;
+      // 受けられるのは「発動ターンの1つ前があいての切れ目」のとき(= (発動ターン-1) が tn1 の倍数)
+      return now != null && (now - 1) % tn1 === 0 && held != null && (held - 1) % tn1 !== 0;
     };
     const holdsOf = p => {
       if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard') return null;
