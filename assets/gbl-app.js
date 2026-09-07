@@ -5153,15 +5153,25 @@ const FX_PRE = 420, FX_POST = 700, FX_GAP = 260;
 const fxClear = () => { const l = document.getElementById('fxlayer'); if (l) l.textContent = ''; };
 // 演出の要素から「その演出が属する対面(leg)の番号」を取り出す(HUDをその時点の状態にするため)
 const fxLi = el => { const v = el && el.dataset ? el.dataset.li : null; return v == null || v === '' ? undefined : +v; };
+// その行の演出が**再生を止めない演出**（HUDの⇄ボタンで交代したときのカットイン）かどうか。
+// 実戦の交代はリアルタイムなので、演出のあいだもタイムラインを流し続ける(2026-09-07タダシさん指示)
+const fxLive = el => {
+  try { const a = JSON.parse(el.dataset.fx); return Array.isArray(a) && a.length > 0 && a.every(x => x && x.live); }
+  catch (e) { return false; }
+};
+// 演出の世代。あとから始まった演出が優先＝止めない演出の途中で次の演出が来たら、そちらへ譲る
+let FX_GEN = 0;
 // list=演出の並び ／ done=すべて終わったあと ／ onHit=最初の演出の後半で1回だけ呼ぶ
 // (⚠ HUDの更新はここで行う。先に更新すると、カットインを見ているあいだにHPバーが
 //   減り終わってしまい「HPが減る演出が無い」ように見える・2026-09-07タダシさん報告)
 function fxRun(list, done, onHit) {
   let i = 0;
+  const gen = ++FX_GEN;                       // 途中で新しい演出が始まったら、この回は静かに降りる
   const sp = () => Math.max(1, RBV.speed || 1);
   const step = () => {
+    if (gen !== FX_GEN) return;
     // ⚠ 最後の演出も「一呼吸のあいだ出したまま」にして、done の直前に片づける
-    if (i >= list.length) { setTimeout(() => { fxClear(); done(); }, FX_POST / sp()); return; }
+    if (i >= list.length) { setTimeout(() => { if (gen !== FX_GEN) return; fxClear(); done(); }, FX_POST / sp()); return; }
     fxClear();   // 前の行の演出を片づけてから次へ
     const el = list[i];
     RBV.fxDone.add(fxKey(el));
@@ -5174,6 +5184,7 @@ function fxRun(list, done, onHit) {
     //   どちらが先に起きたのか分からなくなる
     let first = true;
     const seq = k => {
+      if (gen !== FX_GEN) return;
       if (k >= fs.length) { setTimeout(step, FX_GAP / sp()); return; }
       if (k > 0) fxClear();   // 同じ行の次の演出へ移るときも、直前に片づける
       const d = fxOne(fs[k]);
@@ -5363,10 +5374,12 @@ function rbRender(body, bt, picks, foes, extra) {
     // 開幕交代をした側は、VSカードには**交代する前の初手**を出す(2026-09-07タダシさん指示。
     // 交代後の名前を出すと、直後の「◯◯に交代した！」と食い違って分からなくなる)
     const vsMe = leg.leadFrom0 || leg.meName;
+    // HUDの⇄ボタン(msw)で交代した対面は**リアルタイム**＝演出でタイムラインを止めない
+    const pvMsw = !!(pv && (pv.points || []).some(x => x.kind === 'msw'));
     const fxv = !pv ? [{ k: 'vs', me: vsMe, foe: leg.foeName }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
          pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
-         pv.swapped && { k: 'swap', side: 0, name: leg.meName }].filter(Boolean);
+         pv.swapped && { k: 'swap', side: 0, name: leg.meName, live: pvMsw || undefined }].filter(Boolean);
     if (!pv && leg.leadPt && leg.leadPt.ans && leg.leadPt.ans.a === 'to')
       fxv.push({ k: 'swap', side: 0, name: leg.meName });
     items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
@@ -5809,6 +5822,16 @@ function rbRender(body, bt, picks, foes, extra) {
     const rev = revealStep(RBV.cur);
     autoScroll();
     const fxEls = fxConsume(rev);
+    // ⚠ HUDの⇄ボタンで交代したときのカットインは**再生を止めない**(2026-09-07タダシさん指示)。
+    //   実戦の交代はリアルタイムなので、演出は流しっぱなしで行も進め続ける
+    if (fxEls.length && fxEls.every(fxLive)) {
+      fxRun(fxEls, () => {});          // HUDは下の通常の流れで更新する(onHitは渡さない)
+      updateHud(RBV.cur, curLi());
+      if (moreThisTurn()) { advance(); return; }
+      if (RBV.cur >= stop) atStop();
+      else if (RBV.playing && !RBV.timer) startTimer();
+      return;
+    }
     if (fxEls.length) {
       stopTimer();
       // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
@@ -9618,10 +9641,12 @@ function gbRender(body, bt, picks, foes) {
     // 開幕交代があった側は、VSカードには**交代する前の初手**を出す(タダシさん指示)
     const lf = leg.leadFrom || [];
     const vsMe = lf[0] || leg.meName, vsFoe = lf[1] || leg.foeName;
+    // HUDの⇄ボタン(msw)で交代した対面は**リアルタイム**＝演出でタイムラインを止めない
+    const pvMsw = !!(pv && (pv.points || []).some(x => x.kind === 'msw'));
     const fxv = !pv ? [{ k: 'vs', me: vsMe, foe: vsFoe }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
          pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
-         pv.swapped0 && { k: 'swap', side: 0, name: leg.meName },
+         pv.swapped0 && { k: 'swap', side: 0, name: leg.meName, live: pvMsw || undefined },
          pv.swapped1 && { k: 'swap', side: 1, name: leg.foeName }].filter(Boolean);
     if (!pv) (leg.leadPts || []).forEach((pt, sd) => {
       if (pt && pt.ans && pt.ans.a === 'to')
@@ -10180,6 +10205,16 @@ function gbRender(body, bt, picks, foes) {
     const rev = revealStep(RBV.cur);
     autoScroll();
     const fxEls = fxConsume(rev);
+    // ⚠ HUDの⇄ボタンで交代したときのカットインは**再生を止めない**(2026-09-07タダシさん指示)。
+    //   実戦の交代はリアルタイムなので、演出は流しっぱなしで行も進め続ける
+    if (fxEls.length && fxEls.every(fxLive)) {
+      fxRun(fxEls, () => {});          // HUDは下の通常の流れで更新する(onHitは渡さない)
+      updateHud(RBV.cur, curLi());
+      if (moreThisTurn()) { advance(); return; }
+      if (RBV.cur >= stop) atStop();
+      else if (RBV.playing && !RBV.timer) startTimer();
+      return;
+    }
     if (fxEls.length) {
       stopTimer();
       // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
