@@ -6391,6 +6391,9 @@ const GB_BLUFF_MIN = 0.7;
 // そのぶん存分にゲージをためられて起点にされる(例: バルジーナ(あく/ひこう)にナマズンのどろばくだん)。
 // 単なる耐性(0.625)は従来どおり使ってよい(確定仕様: ザシアンのインファイト対メガミュウツーX)
 const GB_BLUFF_EFF = 0.5;
+// 「通らないわざを撃たずに、後続のノーマルアタックで倒してもらう」と判断してよい残HPの下限
+// (2026-09-07タダシさん指示。後続が余裕をもって倒し切れるときだけ＝60%以上残ること)
+const GB_BENCH_HP = 0.6;
 // 「クールタイム狙い」とみなす相手の交代不能の残り(40ターン=20秒以上)。
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
 // 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
@@ -7932,6 +7935,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 起点づくり(farm)の下読み: いまの対面、あいてはSPを1発も撃たなくても勝てるか。
   // 勝てるならノーマルアタックだけで倒してゲージをため、次の相手にSPを撃つ(基本戦術)
   const farmCache = {}, loseCache = {};
+  const bfkCache = {};
   const aiFarmWin = (li, ov) => {
     const ck = li + '#' + ovKey(ov) + '#' + shSig();
     if (!(ck in farmCache)) {
@@ -8339,6 +8343,25 @@ function gbPlay(picks, foes, ans, stepwise) {
       const sp = (ctx.spList[0] || []).map(id => D.moves[id]).filter(m => m && m.e <= (p.st0.en || 0));
       return sp.length ? Math.max(...sp.map(m => PvpEngine.damage(D, m, att, dfn))) >= p.st1.hp : false;
     };
+    // ユーザーがまだ交代できない(クールタイムが20秒以上残っている)か。
+    // 交代の判断で使っているものと同じ式(GB_LOCK_MIN)
+    const userLocked = () => ctx.swOk[0] - (p.ck != null ? p.ck : ctx.base + p.tn) >= GB_LOCK_MIN;
+    // **控えが「ノーマルアタックだけで、いまのユーザーのポケモンを倒し切れて、
+    //   しかも自分のHPを60%以上残せる」か**(2026-09-07タダシさん指示)。
+    // これが成り立つなら、通らないわざをここで撃つより、倒されてから後続でゲージをためたほうが得
+    const benchFarmKill = () => {
+      const ck = 'bfk#' + cur[0] + '#' + ovKey(nowOv) + '#' + shSig();
+      if (!(ck in bfkCache)) {
+        let ok = false;
+        for (const idx of benches(1)) {
+          const R = { ...plainCfg(1, idx), timing: 'shots', shotPlan: [], shotRest: null };
+          const r = PvpEngine.simulate(D, plainCfg(0, cur[0], nowOv && nowOv.ov0), R, SIMOPT);
+          if (r.winner === 1 && r.final[1].hp >= GB_BENCH_HP * r.final[1].hpMax) { ok = true; break; }
+        }
+        bfkCache[ck] = ok;
+      }
+      return bfkCache[ck];
+    };
     if (p.kind === 'sp') {
       // EASY(spam): SPアタックは撃てるようになったら**すぐ撃つ**。ただし
       // 2本持っていても**消費の軽いわざしか使わない**(入門向けの相手)。
@@ -8391,7 +8414,17 @@ function gbPlay(picks, foes, ans, stepwise) {
           .filter(x => x.m && x.m.e <= enD)
           .map(x => ({ ...x, d: PvpEngine.damage(D, x.m, attD, dfnD) }))
           .sort((a, b) => b.d - a.d || a.m.e - b.m.e)[0];
-        if (best) return { a: 'fire', mv: best.id };
+        if (best) {
+          // **撃てるのが「通らないわざ」だけのときは、後続に任せたほうが効率がいい場合がある**
+          // (2026-09-07タダシさん指示): ユーザーがまだ交代できず、こちらの控えが
+          // **ノーマルアタックだけでいまの相手を倒し切れて、しかもHPを60%以上残せる**なら、
+          // ここで通らないわざを撃つより、倒されてから後続でゲージをためたほうが得。
+          // 逆に**それ以外＝ほかに選択肢が無いなら、通らないわざでも撃つ**(撃たずにやられるよりマシ)
+          const uTy = D.pokemon[ros[0][cur[0]].m.key].ty;
+          if (PvpEngine.effectiveness(D, best.m.t, uTy) < GB_BLUFF_EFF && userLocked() && benchFarmKill())
+            return { a: 'hold' };
+          return { a: 'fire', mv: best.id };
+        }
       }
       // **確定で自分の能力が上がるSPは即打ち**(2026-08-19タダシさん指示)。
       // 上がった能力はその対面のあいだ効き続けるので、早く撃つほど得
@@ -8506,7 +8539,14 @@ function gbPlay(picks, foes, ans, stepwise) {
           const avail2 = mvs2.filter(x => x.m.e <= en2);
           const better = mvs2.filter(x => x.m.e > en2 && PvpEngine.effectiveness(D, x.m.t, uTy) >= 1)
             .sort((a, b) => a.m.e - b.m.e)[0];
-          if (better && avail2.length && avail2.every(x => PvpEngine.effectiveness(D, x.m.t, uTy) < 1))
+          // ⚠ **ためきる前に倒されるなら、ためても意味がない**(2026-09-07タダシさん指示)。
+          //    そのときは下の判断に落として、通らないわざでも撃つ(撃たずにやられるよりマシ)
+          const needT = Math.ceil(Math.max(0, better ? better.m.e - en2 : 0) / (fmS.eg || 1)) * (fmS.tn || 1);
+          const attU = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
+          const dfnU = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
+          const uHit = PvpEngine.damage(D, fmU, attU, dfnU) * Math.ceil(needT / (fmU.tn || 1));
+          if (better && avail2.length && uHit < p.st1.hp
+              && avail2.every(x => PvpEngine.effectiveness(D, x.m.t, uTy) < 1))
             return { a: 'opt', mv: better.id };
         }
       }
