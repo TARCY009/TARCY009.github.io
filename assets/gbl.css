@@ -2207,5 +2207,14 @@ button.sdchip.on .tbadge{filter:none}
 .fxitem.fxhold .dome,.fxitem.fxhold .hex{opacity:0 !important}
 /* 主役(名前の帯・VSカードの中身・SPの帯・💥💀のマーク)は出したまま */
 .fxitem.fxhold .tx,.fxitem.fxhold .tx *,
-.fxitem.fxhold .vswrap > *,.fxitem.fxhold .band,.fxitem.fxhold .band *,
-.fxitem.fxhold .mk{opacity:1 !important;transform:none !important}
+.fxitem.fxhold .vswrap > *,.fxitem.fxhold .band,.fxitem.fxhold .band *{opacity:1 !important;transform:none !important}
+/* 💥💀のマークは傾いたり沈んだりする動きなので、姿勢は戻さず表示だけ保つ */
+.fxitem.fxhold .mk{opacity:1 !important}
+
+/* ⚠ 静止表示にするとき、**姿勢(傾き・位置)は保つ**(2026-09-07タダシさん報告)。
+   SPのカットインは斜めに流れる演出で、transform:none にすると水平に戻って「カクッと動く」。
+   キーフレームの80%(=静止に切り替える位置)と同じ姿勢に固定する */
+.fxitem.fxhold.fxsp .band{transform:rotate(var(--rot)) translateX(6%) !important}
+.fxitem.fxhold.fxsp.foe .band{transform:rotate(var(--rot)) translateX(-6%) !important}
+.fxitem.fxhold.fxsp .mvn{transform:skewX(-8deg) !important}
+.fxitem.fxhold.fxsp.foe .mvn{transform:skewX(8deg) !important}
