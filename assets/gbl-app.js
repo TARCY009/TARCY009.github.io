@@ -8549,9 +8549,11 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 差し込めるのは**ユーザーのノーマルアタックの切れ目**だけなので、あいてが1発ずらせば外せる。
   // **でも毎回きっちり外すと「絶対に引っかからないコンピュータ」**になって実戦っぽくないので、
   // **バトルごとの癖(RB.rseed)で警戒する率を決めて、たまにだけ外す**。
-  // EASYは警戒しない(いつでも引っかかる)。すでに待っている場面(p.w>0)では考えない(堂々巡り防止)
+  // **HARDだけの動き**(NORMAL・EASYは警戒しない＝いつでも引っかかる)。
+  // すでに待っている場面(p.w>0)では考えない(堂々巡り防止)
   const aiPivotCare = (p, ctx, a) => {
-    if (!a || p.kind !== 'sp' || ai.spam || p.w || !ctx.swTo[0].length || !ctx.spHit) return a;
+    // **HARDだけ**(2026-09-07タダシさん指示)。NORMAL以下は警戒しない＝いつでも引っかかる
+    if (!a || !ai.omni || p.kind !== 'sp' || p.w || !ctx.swTo[0].length || !ctx.spHit) return a;
     if (a.a !== 'fire' && a.a !== 'opt' && a.a !== 'auto' && a.a !== 'bluff') return a;
     const fm0 = D.moves[ctx.fast[0]], fm1 = D.moves[ctx.fast[1]];
     const tn0 = fm0 && fm0.tn ? fm0.tn : 1, tn1 = fm1 && fm1.tn ? fm1.tn : 1;
@@ -8559,11 +8561,10 @@ function gbPlay(picks, foes, ans, stepwise) {
     const hit = ctx.spHit(p, a);                 // その答えで撃つと、当たるのは何ターン目か
     if (hit == null || hit % tn0 !== 0) return a;   // もう切れ目から外れている
     if ((hit + tn1) % tn0 === 0) return a;       // 1発ずらしても外せない組み合わせ
-    // 警戒度は0〜3(バトルごと)。HARDほど高く、NORMALは控えめ。0なら一度も警戒しない
+    // 警戒度は0〜3(バトルごとの癖)。**0なら一度も警戒しない**＝そのバトルはよく決まる相手になる
     const care = gbCoin('pvcare:' + RB.rseed) % 4;
-    const lv = ai.omni ? care : Math.max(0, care - 1);
     const roll = gbCoin('pvdodge:' + RB.rseed + ':' + ctx.li + ':' + p.seq + ':' + p.tn) % 4;
-    return roll < lv ? { a: 'wait', n: 1 } : a;
+    return roll < care ? { a: 'wait', n: 1 } : a;
   };
   const aiAnswerAt = (p, ctx) => {
     // その瞬間のHP・ゲージ・能力変化・**シールドの残り枚数**。
@@ -10280,7 +10281,16 @@ function gbRender(body, bt, picks, foes) {
     let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
     if (li < 0) li = bt.legs.length - 1;
     const leg = bt.legs[li]; if (!leg || to == null || to === leg.myIdx) return;
-    const tn = Math.max(1, gt - leg.base);
+    // ---- 先行入力(2026-09-07タダシさん指示) ----
+    // 交代ボタンは**いつ押してもよい**が、実際に交代が起きるのは
+    // **自分のノーマルアタックが終わったあと**。3ターンわざの1ターン目に押したら4ターン目に交代する。
+    // 対面はノーマルアタックの打ち始めから始まる(cdは引き継がない)ので、切れ目は そのターン数の倍数。
+    // ここは「切れ目のターンまで進めてから交代する」＝swapAt を次の切れ目に丸める
+    const myFm = D.moves[picks[leg.myIdx] && picks[leg.myIdx].pol.fast];
+    const tnMe = myFm && myFm.tn ? myFm.tn : 1;
+    const pressed = Math.max(1, gt - leg.base);
+    const tn = Math.ceil(pressed / tnMe) * tnMe;
+    if (tn > leg.res.turns) return;   // この対面のうちに入力が通らない(押しても間に合わない)
     const key = gbKey(li, 0, 'msw', tn, 0);
     // 前提が変わるので、この場面より後ろの答えと同じ対面の古い手動交代は消す
     Object.keys(RB.ans).forEach(k2 => {
