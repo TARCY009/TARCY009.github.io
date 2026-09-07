@@ -4929,10 +4929,12 @@ function fxShow(cls, html, dur) {
   el.style.setProperty('--fxd', d + 'ms');
   el.innerHTML = html;
   fxLayer().appendChild(el);
-  // ⚠ 消すのは fxRun が「次の演出を出す直前」と「done の直前」に行う(2026-09-07タダシさん指示)。
-  //   一呼吸のあいだ何も出ていないと、画面が固まったように見えてフリーズと勘違いされる。
-  //   これは取りこぼしの保険(fxRun を通らない呼び出しでも必ず消える)
-  setTimeout(() => el.remove(), d + 80 + Math.round(FX_POST / (RBV.speed || 1)));
+  // ⚠ 演出のアニメが終わったら **.fxhold** を付けて「名前の帯」だけを残す(2026-09-07タダシさん指示)。
+  //   キーフレームはどれも最後に opacity:0 で消えるので、要素を残すだけでは画面が空になり、
+  //   一呼吸のあいだ固まったように見える(「交代した！」の表示は硬直のあいだ出したままにする)
+  setTimeout(() => el.classList.add('fxhold'), d);
+  // 片づけは fxRun が「次の演出を出す直前」と「done の直前」に行う。これは取りこぼしの保険
+  setTimeout(() => el.remove(), d + 80 + Math.round((FX_POST + FX_GAP) / (RBV.speed || 1)));
   return d;
 }
 // 名前(シャドウ○○を含む)からタイプアイコンを引く(2026-09-01タダシさん指示・

@@ -2187,3 +2187,21 @@ button.sdchip.on .tbadge{filter:none}
   background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28)}
 .fxitem.foe .tx .wh,.fxitem.fxko.win .tx .wh{background:rgba(255,213,74,.2);border-color:rgba(255,213,74,.45);color:#ffe6a3}
 .fxitem.me .tx .wh,.fxitem.fxko.lose .tx .wh{background:rgba(67,224,255,.18);border-color:rgba(67,224,255,.42);color:#bdf0ff}
+
+/* 演出のアニメが終わったあと、片づけられるまで「主役の文字」を出したままにする
+   (2026-09-07タダシさん指示。キーフレームはどれも最後に opacity:0 で消えるので、
+    そのままだと一呼吸のあいだ画面が空になり「フリーズ?」と思われる) */
+.fxitem.fxhold,.fxitem.fxhold *{animation:none !important;transition:none !important}
+.fxitem.fxhold{opacity:1 !important}
+.fxitem.fxhold .inwrap,.fxitem.fxhold .swwrap,.fxitem.fxhold .kowrap,
+.fxitem.fxhold .fmwrap,.fxitem.fxhold .vswrap{opacity:1 !important;transform:none !important}
+/* 飾り(ボール・閃光・破片・煙・ドーム)は消して、文字だけ残す */
+.fxitem.fxhold .fball,.fxitem.fxhold .burst,.fxitem.fxhold .spark,
+.fxitem.fxhold .stage,.fxitem.fxhold .kflash,.fxitem.fxhold .kring,
+.fxitem.fxhold .kshard,.fxitem.fxhold .kdust,.fxitem.fxhold .ring,
+.fxitem.fxhold .flash,.fxitem.fxhold .dim,.fxitem.fxhold .kred,
+.fxitem.fxhold .dome,.fxitem.fxhold .hex{opacity:0 !important}
+/* 主役(名前の帯・VSカードの中身・SPの帯・💥💀のマーク)は出したまま */
+.fxitem.fxhold .tx,.fxitem.fxhold .tx *,
+.fxitem.fxhold .vswrap > *,.fxitem.fxhold .band,.fxitem.fxhold .band *,
+.fxitem.fxhold .mk{opacity:1 !important;transform:none !important}
