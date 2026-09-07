@@ -8607,18 +8607,16 @@ function gbPlay(picks, foes, ans, stepwise) {
   // ユーザーが**自分から交代した直後**(ctx.chase)に、あいてが毎回きっちり合わせ返して交代すると、
   // **交代受け(ユーザーがSPの発動に合わせて交代する)が一度も成立しない**(実測で成功率0%だった)。
   // 実戦では、ゲージがたまっている側は**もう撃つ入力をしている**ので、合わせ返しより発射を選ぶ。
-  // 抽選の確率は**(100＋いま撃てるいちばん重いわざの消費)÷2**と**いまのゲージ量**の大きいほう。
+  // 確率は**60 ＋ いまのゲージ×0.4**（ゲージが撃てる量に届いているときだけ）。
   // タダシさんの説明どおり **消費の重いわざほど発射寸前のゲージが100に近い＝撃ちにいく確率も高い**
-  // ので、重いわざを構えている相手ほど交代受けが決まりやすい(デカハンマー60なら8割)。
-  // ゲージが満タンに近いときは、軽いわざでも**もうためられない＝撃つ**ので確率が上がる。
+  // ので、重いわざを構えている相手ほど交代受けが決まる(デカハンマー60なら84%以上・満タンで100%)。
+  // ⚠ 「ゲージがたまっているのに、その場では撃つ気が無かった」ぶんだけ外す＝**たまに外れる**
+  //   （あいてが絶対に引っかからないのは実戦っぽくない・タダシさん指示）。
   // キーに対面(li)だけを使うので、**交代の判断とSPの判断で必ず同じ答え**になる
   const aiThrown = (ctx, en) => {
     if (!ctx.chase || en == null) return false;
     if (!ctx.spList[1].length || en < ctx.cost[1]) return false;
-    const cost = Math.max(...ctx.spList[1].map(id => D.moves[id])
-      .filter(m => m && m.e <= en).map(m => m.e));
-    const p = Math.max(en, (100 + cost) / 2);
-    return gbCoin('thrown:' + RB.rseed + ':' + ctx.li) % 100 < Math.min(100, p);
+    return gbCoin('thrown:' + RB.rseed + ':' + ctx.li) % 100 < Math.min(100, 60 + en * 0.4);
   };
   const aiAnswerAt = (p, ctx) => {
     // その瞬間のHP・ゲージ・能力変化・**シールドの残り枚数**。
@@ -9630,6 +9628,7 @@ function gbRender(body, bt, picks, foes) {
       max0: res.final[0].hpMax, max1: res.final[1].hpMax,
       sp0: (leg.pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: (leg.foePol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
+      fast1: leg.foePol.fast,   // 「あいてのSPまで あと◯発」を出すのに使う
       swOk: leg.swOk || 0, fswOk: leg.fswOk || 0,
     };
     let b0 = leg.hud.b0.slice(), b1 = leg.hud.b1.slice();
@@ -9851,7 +9850,8 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
       </div>
-      ${RB.step ? `<div class="hswaprow two">
+      ${RB.step ? `<div class="mswtip" title="あいてのゲージと、いちばん軽いSPアタックの消費から数えた発数です。あいてが撃てるようになったタイミングで交代すると、その一撃を交代先に受けさせられます（交代受け）"></div>
+      <div class="hswaprow two">
         <button class="hmsw" data-slot="0" disabled></button>
         <button class="hmsw" data-slot="1" disabled></button>
       </div>
@@ -9920,6 +9920,7 @@ function gbRender(body, bt, picks, foes) {
     return picks.map((_, k) => k).filter(k => !leg || k !== leg.myIdx)
       .map(k => ({ k, dead: dead.has(k) }));
   };
+  const mswTip = dock.querySelector('.mswtip');   // 「あいてのSPまで あと◯発」
   let ptr = 0, lastEl = null, curLegKey = '';
   let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
   function updateHud(gt, li) {
@@ -10038,6 +10039,23 @@ function gbRender(body, bt, picks, foes) {
     // じぶん側のここは従来どおり残り時間の表示だけ
     const swLeft = Math.max(0, (f.meta.swOk || 0) - ckOf(gt));
     swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
+    // ⚠ **あいてのSPまで あと◯発**（2026-09-07タダシさん報告「交代受けに引っかからない」で追加）。
+    //   交代受けは**あいてが撃てるようになった瞬間に交代する**技なので、
+    //   その目安が画面に無いと狙いようがない（⇄が2ボタンの即時交代になったとき、
+    //   旧ウィンドウにあったこの案内が消えていた）。
+    //   ゲージは**ノーマルアタックを数えれば人間にも分かる情報**なので、既存の線引きと同じ扱い
+    if (mswTip) {
+      const fm1 = D.moves[f.meta.fast1];
+      const cost1 = (f.meta.sp1 || []).length ? Math.min(...f.meta.sp1.map(x => x.e)) : null;
+      const show = RB.step && RBV.started && gt < stop && cost1 != null && fm1 && fm1.eg > 0 && f.alive1;
+      if (!show) mswTip.textContent = '';
+      else {
+        const need = Math.max(0, Math.ceil((cost1 - (f.en1 || 0)) / fm1.eg));
+        mswTip.innerHTML = need
+          ? `あいてのSPまで <b>あと${fm1.n}${need}発</b>`
+          : '<b class="rdy">あいてはいつでもSPを撃てる</b>';
+      }
+    }
     // ⇄交代は控え2匹ぶんのボタン。倒れている枠は暗くして押せなくする(2026-09-07タダシさん指示)
     if (mswBtns.length) {
       const bench = benchAt(gt);

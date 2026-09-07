@@ -822,6 +822,13 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
    数える手間を省くだけで、合わせるかどうかは使う人が決める */
 .mswnote{flex:1 1 100%;font-size:.68rem;color:var(--sub);line-height:1.5;margin:-1px 0 1px}
 .mswnote b{color:var(--gold);font-weight:800}
+/* HUDの⇄交代ボタンの上に出す「あいてのSPまで あと◯発」(2026-09-07タダシさん報告で追加)。
+   交代受けは**あいてが撃てるようになった瞬間に交代する**技なので、その目安を常に見せる */
+.mswtip{font-size:.7rem;color:var(--sub);text-align:center;line-height:1.4;margin:2px 0 -2px;min-height:1em}
+.mswtip:empty{display:none}
+.mswtip b{color:var(--gold);font-weight:800}
+.mswtip b.rdy{color:#ff9f5a}
+:root.light .mswtip b.rdy{color:#c1490a}   /* 明るい地では濃いオレンジにする(白の上で読める濃さ) */
 .rwb button{min-height:38px;padding:6px 13px;font-size:.78rem;font-weight:800;background:var(--panel);
   border:1px solid var(--gl);border-radius:11px;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .rwb button.fire{border-color:var(--cy);box-shadow:inset 0 0 12px rgba(67,224,255,.08)}
