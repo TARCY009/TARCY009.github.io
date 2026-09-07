@@ -6533,7 +6533,7 @@ const GB_BENCH_HP = 0.6;
 // 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
 const GB_LOCK_MIN = 40;
 // 交代受け(HARDだけ)で、交代を待ってよいターン数の上限。読みが外れたときに待ち続けないための保険
-const GB_PIVOT_WAIT = 8;
+const GB_PIVOT_WAIT = 12;
 // 「起点にできる」とみなすSPアタックの痛さの上限(候補の残りHPの40%未満なら痛手にならない。
 // 2026-08-18タダシさん指示で30%→40%)
 const GB_FARM_HURT = 0.40;
@@ -7813,8 +7813,7 @@ function gbChoices(p, ctx) {
       out.push({ a: 'wait', n: p.pivotN, end: true, cls: 'fire bluffbtn',
         label: `<span>交代受けさせない<i class="need">＋${p.pivotN}</i></span><small>${ff ? ff.n : 'ノーマルアタック'}の発動中に当てる</small>`,
         tip: `ノーマルアタックをあと${p.pivotN}発はさんでから、もう一度ここで選びます。` +
-          `そうすると${ff ? ff.n : '相手のノーマルアタック'}が動いている最中にSPアタックが当たるので、` +
-          `相手は交代を差し込めません(交代受けを防げます)` });
+          `${ff ? ff.n : '相手のノーマルアタック'}が動いている最中にSPアタックが当たるので、交代受けを防げます` });
     }
     return out;
   }
@@ -8030,7 +8029,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // **発動の1つ前のターンで切れば、相手はゲージを持ったまま交代先に撃つ**＝同じ形になる。
   // **主な使いどころは奇襲ではなく「どうせ交代するなら、そのタイミングを合わせる」**(タダシさん)。
   // したがってこれは**交代先が決まったあとのタイミング調整**で、交代の動機そのものは増やさない。
-  const aiPivotAt = (p, ctx, to, ov) => {
+  const aiPivotAt = (p, ctx, to, ov, strict) => {
     if (!ai.omni || to == null) return null;   // 交代受けはHARDだけ
     const tl = ctx.tlPred || ctx.tl;
     if (!tl) return null;
@@ -8039,22 +8038,32 @@ function gbPlay(picks, foes, ans, stepwise) {
     // ユーザーのSPがこの先いつ発動するか(まだ答えていない決断は「おまかせ」で回した予測)
     const hit = tl.find(t => t.tn > p.tn && t.ev[0].some(e => e.full !== undefined));
     if (!hit) return null;
-    const at = hit.tn - 1;                       // 先行入力＝発動の1ターン前
+    // **わざ1の切れ目でしか交代を差し込めない**(発動中に押しても、入力が通るのは切れ目のあと)。
+    // 対面はノーマルアタックの打ち始めから始まる(cdは引き継がない)ので、切れ目は tnMe の倍数。
+    // 発動の1ターン前(=先行入力)ちょうどが切れ目でなければ、**その手前のいちばん近い切れ目**で交代する
+    // ——実戦でも「切れ目でしか押せないので、SPが来る前の最後の切れ目で下がる」動きになる
+    const at = Math.floor((hit.tn - 1) / tnMe) * tnMe;
     if (at < p.tn || at - p.tn > GB_PIVOT_WAIT) return null;   // 待ちすぎるなら普通に交代する
-    // **わざ1の切れ目でないと交代を差し込めない**(相手のノーマルアタックの発動中は間に合わない)。
-    // 対面は必ずノーマルアタックの打ち始めから始まる(cdは引き継がない)ので、切れ目は tnMe の倍数
-    if (at % tnMe !== 0) return null;
     if (ctx.ck(at) < ctx.swOk[1]) return null;   // 交代のクールタイムが明けていない
     const f = tl.find(t => t.tn === at);         // 待っているあいだに倒れないか
     if (!f || !f.state || f.state[1].hp <= 0) return null;
-    // 受け先の条件: ①そのSPに耐性がある ②または「この先どの対面でも勝てない」控え＝捨て駒受け
     const ev = hit.ev[0].find(e => e.full !== undefined);
     const ty = ev && ev.move ? MOVE_TYPE[ev.move] : null;
     const pk = ros[1][to].m && D.pokemon[ros[1][to].m.key];
+    // ①そのSPに耐性がある控えなら、いちばん狙いどおりの交代受け
     if (ty && pk && PvpEngine.effectiveness(D, ty, pk.ty) < 1) return at;
-    // 捨て駒受け: ユーザーの生き残り全員に負ける控えなら、もう働き場所が無いので受けに出してよい
-    const spent = picks.every((_, u) => !st[0][u].alive || duelAt(u, to, null, null).winner === 0);
-    return spent ? at : null;
+    // ②捨て駒受け: ユーザーの生き残り全員に負ける控えなら、もう働き場所が無いので受けに出してよい
+    if (picks.every((_, u) => !st[0][u].alive || duelAt(u, to, null, null).winner === 0)) return at;
+    // ③**どうせ交代する場面**(strictでない)なら、耐性が無くても
+    //   「その一撃で交代先が倒れない」ならタイミングを合わせるほうが得(タダシさんの主用途)。
+    //   終盤の奇襲(strict)だけは、①②のどちらかを満たすときに限る
+    if (strict) return null;
+    const mv = ev && D.moves[ev.move];
+    if (!mv) return null;
+    const dRs = st[1][to].resume, dSt = PvpEngine.buildStats(D, ros[1][to].base);
+    const dfn = { ...dSt, buffs: dRs && dRs.buffs ? dRs.buffs.slice() : [0, 0] };
+    const hpTo = dRs ? dRs.hp : dSt.hp;
+    return PvpEngine.damage(D, mv, sbuf(0, cur[0]), dfn) < hpTo ? at : null;
   };
   // sd側が交代したとき、相手の打ちかけのノーマルアタック1発が交代先に入る(ダメージと相手のゲージ)
   const swapHit = (sd, to) => {
@@ -8894,13 +8903,16 @@ function gbPlay(picks, foes, ans, stepwise) {
         // **SPを1発入れてから下がれば裏が勝てる**なら、撃つために残る(2026-08-18タダシさん指示)。
         // 撃った直後にまた交代の質問が出るので、そこで実際に下がる
         if (p.seq === 0 && aiSpThenSwap(ctx, p)) return { a: 'stay' };
-        // ---- 終盤で「動かなければ負けが確定する」ときだけ、交代受けを仕掛ける ----
-        // (2026-09-07タダシさん指示)。ふだんは交代のタイミング調整にとどめるが、
-        // 控えを温存する先がもう無い終盤で、このまま戦うと負けるなら、
-        // HARDの「自分から逃げ交代しない」ガードより優先して交代受けを狙う
-        if (ai.omni && benches(1).length <= 1 && aiLosing(ctx.li, nowOv)) {
-          for (const k of benches(1)) {
-            const at = aiPivotAt(p, ctx, k, nowOv);
+        // ---- 負け対面では、交代受けが成立するなら仕掛ける(2026-09-07タダシさん指示) ----
+        // HARDの「自分から逃げ交代しない」ガードは**適当なタイミングの逃げ交代**を止めるためのもの。
+        // 交代受けは**相手のSPを控えで吸う見返りがある**ので、無駄打ちにならない＝明示的な例外。
+        // ここは「交代する」と決まっていない場面なので、受け先は**耐性がある控えか捨て駒**に限る
+        // (strict=true)。それでこそ「わざわざ動く価値がある」交代になる
+        if (ai.omni && aiLosing(ctx.li, nowOv)) {
+          const pref = aiSwapTo(1, { even: true, guard: false, ...ov });
+          const cands = pref != null ? [pref, ...benches(1).filter(k => k !== pref)] : benches(1);
+          for (const k of cands) {
+            const at = aiPivotAt(p, ctx, k, nowOv, true);
             if (at != null) return { a: 'toq', to: k, at };
           }
         }
