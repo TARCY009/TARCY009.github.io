@@ -6375,6 +6375,11 @@ const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメー�
 // おまかせは**毎バトル必ずシールドを2枚使い切る**(実測: 56戦で防いだ回数がちょうど112＝2×56)ので、
 // **ブラフが常に得になる相手**。人間の強者は致命打にだけ使うので、そこでは逆になる
 const GB_BLUFF_MIN = 0.7;
+// ブラフに使ってよい軽いわざの下限(2026-09-07タダシさん指示)。
+// **二重耐性(0.390625)のわざはブラフにならない**——ほとんど削れないので相手はシールドを使わず、
+// そのぶん存分にゲージをためられて起点にされる(例: バルジーナ(あく/ひこう)にナマズンのどろばくだん)。
+// 単なる耐性(0.625)は従来どおり使ってよい(確定仕様: ザシアンのインファイト対メガミュウツーX)
+const GB_BLUFF_EFF = 0.5;
 // 「クールタイム狙い」とみなす相手の交代不能の残り(40ターン=20秒以上)。
 // 10秒では相手にSPを撃たれて時間を稼がれるとすぐ逃げられてしまう。20秒なら、SPを撃たれても
 // 約10秒の有利時間が残り、AI側もSPを撃てる(2026-08-18タダシさん指示で10秒→20秒へ)
@@ -8310,6 +8315,19 @@ function gbPlay(picks, foes, ans, stepwise) {
       const ut = Math.ceil(need / (uf.eg || 1)) * (uf.tn || 1);   // 相手が撃てるまでのターン数
       return Math.floor(ut / (mf.tn || 1));                      // こちらのノーマル何発ぶんか
     };
+    // **もう倒されてもおかしくないか**(2026-09-07タダシさん指示)。
+    // 「相手がいま撃てるSPを受けたら倒れる」「相手のノーマルアタック3発で倒れる」のどちらかなら true。
+    // この状況では**ためる・脅威づくり(ためてブラフ)より、撃てるうちに撃つのが正しい**
+    // ——撃たないまま倒されたら、ためたゲージごと無駄になる
+    const aboutToDie = () => {
+      if (!p.st0 || !p.st1) return false;
+      const att = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
+      const dfn = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
+      const uf = D.moves[ctx.fast[0]];
+      if (uf && PvpEngine.damage(D, uf, att, dfn) * 3 >= p.st1.hp) return true;
+      const sp = (ctx.spList[0] || []).map(id => D.moves[id]).filter(m => m && m.e <= (p.st0.en || 0));
+      return sp.length ? Math.max(...sp.map(m => PvpEngine.damage(D, m, att, dfn))) >= p.st1.hp : false;
+    };
     if (p.kind === 'sp') {
       // EASY(spam): SPアタックは撃てるようになったら**すぐ撃つ**。ただし
       // 2本持っていても**消費の軽いわざしか使わない**(入門向けの相手)。
@@ -8347,6 +8365,22 @@ function gbPlay(picks, foes, ans, stepwise) {
           .filter(x => x.m && x.m.e <= en0 && PvpEngine.damage(D, x.m, att0, dfn0) >= p.st0.hp)
           .sort((a, b) => a.m.e - b.m.e)[0];
         if (kill) return { a: 'fire', mv: kill.id };
+      }
+      // ---- **もう倒されてもおかしくない場面では、ためずにすぐ撃つ**(2026-09-07タダシさん指示) ----
+      // 効率のよい撃ち方(CCT)は大事だが、いつ倒されてもおかしくないときは「撃てるうちに撃つ」が優先。
+      // **撃つわざは「相手にいちばん効くもの」**(実ダメージが最大・同じなら軽いほう)——
+      // 軽さや効率で選ぶと、耐性で通らないわざを撃ってしまい**相手の起点にされる**
+      // (タダシさんの例: バルジーナ(あく/ひこう)にナマズンが「どろばくだん」を撃つのは論外。
+      //  じめんはひこうに通らず、高耐久のバルジーナに存分にゲージをためられる。ふぶき一択)
+      if ((ai.sw || ai.farm) && p.st0 && p.st1 && aboutToDie()) {
+        const attD = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
+        const dfnD = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
+        const enD = p.en != null ? p.en : 0;
+        const best = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] }))
+          .filter(x => x.m && x.m.e <= enD)
+          .map(x => ({ ...x, d: PvpEngine.damage(D, x.m, attD, dfnD) }))
+          .sort((a, b) => b.d - a.d || a.m.e - b.m.e)[0];
+        if (best) return { a: 'fire', mv: best.id };
       }
       // **確定で自分の能力が上がるSPは即打ち**(2026-08-19タダシさん指示)。
       // 上がった能力はその対面のあいだ効き続けるので、早く撃つほど得
@@ -8431,7 +8465,8 @@ function gbPlay(picks, foes, ans, stepwise) {
                 const att = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
                 const dfn = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
                 const dh = PvpEngine.damage(D, heavy.m, att, dfn);
-                return { a: 'fire', mv: dh >= GB_BLUFF_MIN * p.st0.hp ? light.id : heavy.id };
+                // ⚠ 軽いわざが二重耐性で通らないならブラフに使わない＝起点にされる
+                return { a: 'fire', mv: (effL >= GB_BLUFF_EFF && dh >= GB_BLUFF_MIN * p.st0.hp) ? light.id : heavy.id };
               }
               // NORMAL: 毎回ブラフだと読まれて単調(2026-09-01タダシさん指示・2段階で確定):
               // **ブラフ率そのものをバトルごとに抽選する**(人によって撃ち分けの癖が違う実戦の再現)。
@@ -8440,7 +8475,8 @@ function gbPlay(picks, foes, ans, stepwise) {
               const heavyN = gbCoin('brate:' + RB.rseed) % 4;
               const roll = gbCoin('bluff:' + RB.rseed + ':' + ctx.li + ':' + p.seq + ':' + p.tn + ':'
                 + ros[1][cur[1]].name + ':' + ros[0][cur[0]].name) % 3;
-              return { a: 'fire', mv: roll < heavyN ? heavy.id : light.id };
+              // ⚠ 軽いわざが二重耐性のときは抽選せず本命(heavy)を撃つ＝通らないわざで起点にされない
+              return { a: 'fire', mv: (effL < GB_BLUFF_EFF || roll < heavyN) ? heavy.id : light.id };
             }
           }
         }
