@@ -4932,7 +4932,10 @@ function fxShow(cls, html, dur) {
   // ⚠ 演出のアニメが終わったら **.fxhold** を付けて「名前の帯」だけを残す(2026-09-07タダシさん指示)。
   //   キーフレームはどれも最後に opacity:0 で消えるので、要素を残すだけでは画面が空になり、
   //   一呼吸のあいだ固まったように見える(「交代した！」の表示は硬直のあいだ出したままにする)
-  setTimeout(() => el.classList.add('fxhold'), d);
+  // ⚠ 付けるのは**アニメが終わる少し前(82%)**(2026-09-07タダシさん報告)。
+  //   ちょうど終わりに付けると、キーフレームの最後(opacity:0)を通ってから静止表示に変わるので
+  //   「一瞬消えて、また出る」ちらつきになる。82%はどの演出もまだ opacity:1 の位置
+  setTimeout(() => el.classList.add('fxhold'), Math.round(d * 0.82));
   // 片づけは fxRun が「次の演出を出す直前」と「done の直前」に行う。これは取りこぼしの保険
   setTimeout(() => el.remove(), d + 80 + Math.round((FX_POST + FX_GAP) / (RBV.speed || 1)));
   return d;
