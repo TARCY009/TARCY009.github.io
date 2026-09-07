@@ -4324,7 +4324,8 @@ const rbAnsCount = () => Object.keys(RB.ans).length;
 const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p', bluff: 'b' };
 const rbAnsToStr = () => Object.keys(RB.ans).map(k => {
   const a = RB.ans[k], c = RB_CODE[a.a] || 'a';
-  const v = (a.a === 'fire' || a.a === 'opt') ? a.mv : a.a === 'bluff' ? `${a.mv}~${a.until}`
+  const v = a.a === 'fire' ? (a.after ? `${a.mv}~${a.after}` : a.mv)
+    : a.a === 'opt' ? a.mv : a.a === 'bluff' ? `${a.mv}~${a.until}`
     : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
   return `${k.replace(/:/g, '.')}~${c}${v != null ? '~' + v : ''}`;
 }).join(',');
@@ -4332,7 +4333,7 @@ function rbAnsFromStr(str) {
   str.split(',').forEach(s => {
     const [k, c, v, v2] = s.split('~');
     if (!k || !c) return;
-    const a = c === 'f' ? (D.moves[v] ? { a: 'fire', mv: v } : null)
+    const a = c === 'f' ? (D.moves[v] ? { a: 'fire', mv: v, ...(+v2 ? { after: Math.max(1, Math.min(9, +v2)) } : {}) } : null)
       : c === 'p' ? (D.moves[v] ? { a: 'opt', mv: v } : null)   // このわざを最適タイミングで(2026-08-20)
       : c === 'b' ? (D.moves[v] ? { a: 'bluff', mv: v, until: Math.max(0, Math.min(100, +v2 || 0)) } : null)   // ためてブラフ(2026-08-30)
       : c === 'w' ? { a: 'wait', n: Math.max(1, Math.min(9, +v || 1)) }
@@ -4559,7 +4560,8 @@ function rbApply(dec, p, ans) {
     if (ans.a === 'auto') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: null }; dec.wait = 0; }
     // 最適(わざ指定・2026-08-20): このわざを、エンジンの最適タイミングで撃つ
     else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: ans.mv }; dec.wait = 0; }
-    else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait, mv: ans.mv }; dec.wait = 0; }
+    // after = 「読まれない」で足す待ち発数(2026-09-07)。指定が無ければ従来どおり
+    else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait + (ans.after || 0), mv: ans.mv }; dec.wait = 0; }
     // ためてブラフ(2026-08-30): 重いわざのゲージ(until)までためてから軽いわざ(mv)を撃つ
     else if (ans.a === 'bluff') { dec.shots[p.seq] = { wait: 'en', until: ans.until, mv: ans.mv }; dec.wait = 0; }
     else if (ans.a === 'wait') dec.wait += ans.n;
@@ -5486,14 +5488,17 @@ function rbRender(body, bt, picks, foes, extra) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
         </div>
       </div>
-      ${RB.step ? `<div class="hbtns">
+      ${RB.step ? `<div class="hswaprow">
+        <button class="hmsw" disabled title="いつでも交代できます（押すと控えを選べます・一度交代すると45秒間は次の交代ができません）。⏭コマ送りで1ターンずつ進めながら、あいてのSPアタックが飛んでくるターンに合わせて押すと、その一撃を交代先に受けさせられます（交代受け）">${SWAPMK}<b>交代</b></button>
+      </div>
+      <div class="hbtns">
         <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
         <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
@@ -5544,7 +5549,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const R0 = sideRefs('me'), R1 = sideRefs('foe');
   const clk = hud.querySelector('.clk'), trn = hud.querySelector('.trn');
   const swapEl = hud.querySelector('.hs.me .hswap');   // 交代タイマー(じぶん側だけ)
-  const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
+  const mswBtn = dock.querySelector('.hmsw');          // ⇄いつでも交代(rbhudの外＝独立した大きな行)
   let ptr = 0, lastEl = null, curLegKey = '';
   let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
   function updateHud(gt, li) {
@@ -7776,6 +7781,18 @@ function gbChoices(p, ctx) {
         label: '即打ち',
         tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打って、たまり次第すぐ${m.n}を撃ちます`
                   : `タイミングを待たず、ここですぐ${m.n}を撃ちます` });
+      // 「読まれない」(2026-09-07タダシさん指示・HARDのときだけ・そのわざ専用):
+      // HARDは**SPが発動するターンが自分のノーマルアタックの切れ目なら交代受けを差し込む**ので、
+      // **切れ目から外したターンに当てる**。＋N＝そのためにはさむノーマルアタックの数。
+      // 外しようがない組み合わせ(相手が0.5秒わざ・同じターン数など)では出さない
+      const pvN = p.pivotNs ? p.pivotNs[id] : null;
+      if (pvN) {
+        const ff = D.moves[ctx.fast[1]];
+        list.push({ a: 'fire', mv: id, after: pvN, grp: id, cls: 'safe',
+          label: `読まれない<i class="need">＋${pvN}</i>`,
+          tip: `${ff ? ff.n : '相手のノーマルアタック'}が動いている最中に${m.n}が当たるように、` +
+            `ノーマルアタックをあと${pvN}発はさんでから撃ちます（交代受けを防げます）` });
+      }
     });
     // 「撃たない」が正解の場面(noSp)は点灯させておすすめ表示(2026-08-20タダシさん指示。
     // ノーマルアタックだけで倒しきれて相手のSPも飛んでこない=撃つのはもったいない)
@@ -7803,17 +7820,6 @@ function gbChoices(p, ctx) {
           tip: `${heavy.m.n}が撃てるゲージ(${heavy.m.e})までためてから、軽い${light.m.n}を撃ちます。` +
             `相手はどちらのわざが来るか分からないので、軽いわざにシールドを使わせられたらラッキー、というセオリーの動きです` });
       }
-    }
-    // 交代受けさせない(2026-09-07タダシさん指示・HARDのときだけ):
-    // HARDは**SPアタックの発動に合わせて交代し、控えにその一撃を受けさせる**(交代受け)。
-    // これを防ぐには**相手のノーマルアタックが動いている最中に当てる**——切れ目でないと
-    // 相手は交代を差し込めない。＋N＝それまでにはさむノーマルアタックの数
-    if (!s && p.pivotN) {
-      const ff = D.moves[ctx.fast[1]];
-      out.push({ a: 'wait', n: p.pivotN, end: true, cls: 'fire bluffbtn',
-        label: `<span>交代受けさせない<i class="need">＋${p.pivotN}</i></span><small>${ff ? ff.n : 'ノーマルアタック'}の発動中に当てる</small>`,
-        tip: `ノーマルアタックをあと${p.pivotN}発はさんでから、もう一度ここで選びます。` +
-          `${ff ? ff.n : '相手のノーマルアタック'}が動いている最中にSPアタックが当たるので、交代受けを防げます` });
     }
     return out;
   }
@@ -7861,7 +7867,9 @@ function gbAnsLabel(p, a) {
     // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
     const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
     if (a.a === 'opt') return hide ? '▶ SPアタック' : `${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
-    if (a.a === 'fire') return hide ? '▶ SPアタック' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    // 「読まれない」(after付き)は、はさんだ発数もチップに出す(あとから見て何をしたか分かるように)
+    if (a.a === 'fire') return hide ? '▶ SPアタック'
+      : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${a.after ? `＋${a.after}` : ''}`;
     if (a.a === 'bluff') return hide ? '▶ SPアタック' : `ため→${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
@@ -8038,12 +8046,16 @@ function gbPlay(picks, foes, ans, stepwise) {
     // ユーザーのSPがこの先いつ発動するか(まだ答えていない決断は「おまかせ」で回した予測)
     const hit = tl.find(t => t.tn > p.tn && t.ev[0].some(e => e.full !== undefined));
     if (!hit) return null;
-    // **わざ1の切れ目でしか交代を差し込めない**(発動中に押しても、入力が通るのは切れ目のあと)。
+    // **SPが発動するターンが、自分のノーマルアタックの切れ目でなければ差し込めない**
+    // (発動中は手がふさがっていて、入力が通るのは切れ目のあと＝間に合わない)。
     // 対面はノーマルアタックの打ち始めから始まる(cdは引き継がない)ので、切れ目は tnMe の倍数。
-    // 発動の1ターン前(=先行入力)ちょうどが切れ目でなければ、**その手前のいちばん近い切れ目**で交代する
-    // ——実戦でも「切れ目でしか押せないので、SPが来る前の最後の切れ目で下がる」動きになる
-    const at = Math.floor((hit.tn - 1) / tnMe) * tnMe;
+    // ここが交代受けの成立条件そのもの:
+    //   相手のノーマルが**自分と同じか、自分の倍数**のときは毎回ぴたりと合う＝**防ぎようがない**
+    //   (0.5秒わざはどのターンも切れ目なので、いちばん防ぎにくい＝GBLの基本)
+    if (hit.tn % tnMe !== 0) return null;
+    const at = hit.tn - 1;                       // 実戦の先行入力＝発動の0.5秒(1ターン)前
     if (at < p.tn || at - p.tn > GB_PIVOT_WAIT) return null;   // 待ちすぎるなら普通に交代する
+    const ok = { at, x: hit.tn };                // x=そのターンにSPが来るという読み(外れたら取り消す)
     if (ctx.ck(at) < ctx.swOk[1]) return null;   // 交代のクールタイムが明けていない
     const f = tl.find(t => t.tn === at);         // 待っているあいだに倒れないか
     if (!f || !f.state || f.state[1].hp <= 0) return null;
@@ -8051,9 +8063,9 @@ function gbPlay(picks, foes, ans, stepwise) {
     const ty = ev && ev.move ? MOVE_TYPE[ev.move] : null;
     const pk = ros[1][to].m && D.pokemon[ros[1][to].m.key];
     // ①そのSPに耐性がある控えなら、いちばん狙いどおりの交代受け
-    if (ty && pk && PvpEngine.effectiveness(D, ty, pk.ty) < 1) return at;
+    if (ty && pk && PvpEngine.effectiveness(D, ty, pk.ty) < 1) return ok;
     // ②捨て駒受け: ユーザーの生き残り全員に負ける控えなら、もう働き場所が無いので受けに出してよい
-    if (picks.every((_, u) => !st[0][u].alive || duelAt(u, to, null, null).winner === 0)) return at;
+    if (picks.every((_, u) => !st[0][u].alive || duelAt(u, to, null, null).winner === 0)) return ok;
     // ③**どうせ交代する場面**(strictでない)なら、耐性が無くても
     //   「その一撃で交代先が倒れない」ならタイミングを合わせるほうが得(タダシさんの主用途)。
     //   終盤の奇襲(strict)だけは、①②のどちらかを満たすときに限る
@@ -8063,7 +8075,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     const dRs = st[1][to].resume, dSt = PvpEngine.buildStats(D, ros[1][to].base);
     const dfn = { ...dSt, buffs: dRs && dRs.buffs ? dRs.buffs.slice() : [0, 0] };
     const hpTo = dRs ? dRs.hp : dSt.hp;
-    return PvpEngine.damage(D, mv, sbuf(0, cur[0]), dfn) < hpTo ? at : null;
+    return PvpEngine.damage(D, mv, sbuf(0, cur[0]), dfn) < hpTo ? ok : null;
   };
   // sd側が交代したとき、相手の打ちかけのノーマルアタック1発が交代先に入る(ダメージと相手のゲージ)
   const swapHit = (sd, to) => {
@@ -8815,8 +8827,8 @@ function gbPlay(picks, foes, ans, stepwise) {
         const lockedW = ctx.swOk[0] - (p.ck != null ? p.ck : ctx.base + p.tn) >= GB_LOCK_MIN;
         const to = aiSwapTo(1, { even: true, guard: !(lockedW || ctx.swTo[0].length === 0), ...ov });
         if (to == null) return { a: 'stay' };
-        const at = aiPivotAt(p, ctx, to, nowOv);     // 交代受けに合わせられるなら待つ(HARDだけ)
-        return at != null ? { a: 'toq', to, at } : { a: 'toq', to };
+        const pv = aiPivotAt(p, ctx, to, nowOv);     // 交代受けに合わせられるなら待つ(HARDだけ)
+        return pv ? { a: 'toq', to, at: pv.at, x: pv.x } : { a: 'toq', to };
       }
       // ---- 打ち逃げ(2026-08-31タダシさん指示・恒久ルール) ----
       // 『交代が可能な場面でデバフ技を打つ時は必ず交代する』。**自分の能力が下がるSP**を
@@ -8884,8 +8896,8 @@ function gbPlay(picks, foes, ans, stepwise) {
         //   対応力の高いほうへ即座に交代する
         const ev = aiEvenSwitch(ctx.li, nowOv);
         if (ev != null) {
-          const at = aiPivotAt(p, ctx, ev, nowOv);   // 交代受けに合わせられるなら待つ(HARDだけ)
-          return at != null ? { a: 'toq', to: ev, at } : { a: 'toq', to: ev };
+          const pv = aiPivotAt(p, ctx, ev, nowOv);   // 交代受けに合わせられるなら待つ(HARDだけ)
+          return pv ? { a: 'toq', to: ev, at: pv.at, x: pv.x } : { a: 'toq', to: ev };
         }
       }
       // クールタイム狙い(2026-08-18タダシさん承認): 相手が交代できないあいだ(残り20秒以上)は、
@@ -8912,8 +8924,8 @@ function gbPlay(picks, foes, ans, stepwise) {
           const pref = aiSwapTo(1, { even: true, guard: false, ...ov });
           const cands = pref != null ? [pref, ...benches(1).filter(k => k !== pref)] : benches(1);
           for (const k of cands) {
-            const at = aiPivotAt(p, ctx, k, nowOv, true);
-            if (at != null) return { a: 'toq', to: k, at };
+            const pv = aiPivotAt(p, ctx, k, nowOv, true);
+            if (pv) return { a: 'toq', to: k, at: pv.at, x: pv.x };
           }
         }
         return { a: 'stay' };   // 勝てる対面(または打つ手が無い)なら残る
@@ -8932,8 +8944,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       }
       // **交代すると決まったので、そのタイミングをユーザーのSPに合わせる**(交代受け・HARDだけ)。
       // 合わせられないときは at が付かず、従来どおりこのターンで交代する
-      const at = aiPivotAt(p, ctx, to, nowOv);
-      return at != null ? { a: 'toq', to, at } : { a: 'toq', to };
+      const pv = aiPivotAt(p, ctx, to, nowOv);
+      return pv ? { a: 'toq', to, at: pv.at, x: pv.x } : { a: 'toq', to };
     }
     if (p.kind === 'next') {
       // 倒されたあと、次に出すポケモンを選ぶ。逃げ回りのAIだけ(それ以外は次の枠の順)。
@@ -9088,18 +9100,19 @@ function gbPlay(picks, foes, ans, stepwise) {
       (ctx.spList[0] || []).forEach(id => { m[id] = optNOf(p, id); });
       return m;
     };
-    // 「交代受けさせない」ボタン用(HARDだけ・2026-09-07タダシさん指示):
-    // いま撃つとHARDに交代受けを差し込まれる場面で、**相手のノーマルアタックの発動中に
-    // SPが当たる**ようにするには、あと何発ノーマルアタックをはさめばよいかを数える。
-    // 相手のノーマルアタックが1ターン(0.5秒)だと切れ目しか無い＝隙が作れないので出さない
-    const pivotSafeN = p => {
-      if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard') return null;
+    // 「読まれない」ボタン用(HARDだけ・2026-09-07タダシさん指示):
+    // HARDは**SPが発動するターンが自分のノーマルアタックの切れ目なら交代受けを差し込んでくる**。
+    // それを外すには、あと何発ノーマルアタックをはさんで撃てばよいかを、わざごとに数える。
+    // **相手のノーマルアタックが自分のわざのターン数を割り切るときは、どうやっても外せない**
+    // (0.5秒わざ・同じターン数などが典型)。そのときは null＝ボタンを出さない
+    const pivotNOf = (p, mvId) => {
+      if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard' || !ctx.swTo[1].length) return null;
       const ffm = D.moves[ctx.fast[1]];
       const tnFoe = ffm && ffm.tn ? ffm.tn : 1;
-      if (tnFoe < 2 || !ctx.swTo[1].length) return null;   // 控えがいなければ交代受けも来ない
+      if (tnFoe < 2) return null;   // 0.5秒わざはどのターンも切れ目＝外しようがない
       const d = dec[0], len = d.shots.length, save = d.shots[p.seq];
       const hitTn = n => {
-        d.shots[p.seq] = { wait: d.wait + n, mv: null };
+        d.shots[p.seq] = { wait: d.wait + n, mv: mvId || null };
         const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
         const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
           { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
@@ -9110,10 +9123,16 @@ function gbPlay(picks, foes, ans, stepwise) {
       for (let n = 0; n <= 4; n++) {
         const x = hitTn(n);
         if (x == null) break;
-        if ((x - 1) % tnFoe !== 0) { out = n || null; break; }   // n=0で安全ならボタンは要らない
+        if (x % tnFoe !== 0) { out = n || null; break; }   // n=0で外せているならボタンは要らない
       }
       if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
       return out;
+    };
+    const pivotNsOf = p => {
+      if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard') return null;
+      const m = {};
+      (ctx.spList[0] || []).forEach(id => { m[id] = pivotNOf(p, id); });
+      return m;
     };
     // 「撃たない」が正解の場面か(2026-08-20タダシさん指示):
     // この発から先SPを撃たなくても**ノーマルアタックだけで倒しきれて**、相手のSPアタックも
@@ -9153,7 +9172,21 @@ function gbPlay(picks, foes, ans, stepwise) {
       // res のほうは timing:'shots' で、まだ答えていない発が空プラン＝「撃たない」になるので、
       // そのまま読むと「SPは飛んでこない」と誤読する(finishNoSp と同じ落とし穴)
       ctx.tlPred = rbTurns(PvpEngine.simulate(D,
-        { ...legCfg(0), shotRest: { mode: 'opt' } }, legCfg(1), sopt));
+        { ...legCfg(0), shotRest: { mode: 'opt' } }, legCfg(1),
+        { ...SIMOPT, stopAt: dec[0].swapTo != null ? dec[0].swapAt : 0 }));
+      // ---- 交代受けの「読み」が外れたら、AIは押していない＝交代しない(2026-09-07) ----
+      // 交代受けはボタンを**そのターンに押す**技なので、ユーザーがSPをずらしたら空振りになる。
+      // 決めた時点の読み(pivotX)と、いまの読みが食い違ったら交代そのものを取り消す。
+      // これがあるので、ユーザーの「読まれない」が本当に効く
+      if (dec[1].pivotX != null) {
+        const t2 = ctx.tlPred.find(t => t.tn >= dec[1].swapAt && t.ev[0].some(e => e.full !== undefined));
+        if (!t2 || t2.tn !== dec[1].pivotX) {
+          const lg = log.find(x => x.key === dec[1].pivotKey);
+          if (lg) { lg.ans = { a: 'stay' }; lg.tn = lg.tn0 != null ? lg.tn0 : lg.tn; }
+          dec[1].swapTo = null; dec[1].swapAt = 0; dec[1].pivotX = null; dec[1].pivotKey = null;
+          continue;   // 前提が変わったのでもう一度回し直す
+        }
+      }
       const pts = gbPoints(ctx.tl, ctx, dec);
       // 手動交代(HUDの⇄ボタン・kind msw・2026-09-01): 記録があれば時系列の位置で反映する。
       // クールタイム・控えの生存・先の打ち切りを検証し、通らなければ黙って捨てる(前提が変わった古い記録)
@@ -9176,7 +9209,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
         pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p),
-          pivotN: pivotSafeN(p), ctx };
+          pivotNs: pivotNsOf(p), ctx };
         pending.opts = gbChoices(pending, ctx);
         break;
       }
@@ -9189,7 +9222,8 @@ function gbPlay(picks, foes, ans, stepwise) {
         const at = a.at != null ? Math.max(p.tn, Math.min(a.at, res.turns)) : p.tn;
         dec[p.side].swapTo = a.to;
         dec[p.side].swapAt = Math.max(1, at);
-        if (at !== p.tn) log[log.length - 1].tn = at;
+        if (a.at != null && a.x != null) { dec[p.side].pivotX = a.x; dec[p.side].pivotKey = p.key; }
+        if (at !== p.tn) { log[log.length - 1].tn0 = p.tn; log[log.length - 1].tn = at; }
         continue;
       }
       rbApply(dec[p.side], p, a);   // sp / sh の反映はロケット団と同じ
@@ -9203,7 +9237,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
     const points = log.map(p => {
       const q = { ...p, gt: base + p.tn, optNs: optNsOf(p),
-        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), pivotN: pivotSafeN(p), ctx };
+        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), pivotNs: pivotNsOf(p), ctx };
       q.opts = gbChoices(q, ctx);
       return q;
     });
@@ -9642,7 +9676,7 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hmsw" disabled title="いつでも交代できるボタンです（押すと控えを選べます。一度交代すると45秒間は次の交代ができません）">${SWAPMK}<b>交代</b></button><button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
+          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
@@ -9651,7 +9685,10 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap fswap" title="あいてが次に交代できるまでの残り時間"></div>
         </div>
       </div>
-      ${RB.step ? `<div class="hbtns">
+      ${RB.step ? `<div class="hswaprow">
+        <button class="hmsw" disabled title="いつでも交代できます（押すと控えを選べます・一度交代すると45秒間は次の交代ができません）。⏭コマ送りで1ターンずつ進めながら、あいてのSPアタックが飛んでくるターンに合わせて押すと、その一撃を交代先に受けさせられます（交代受け）">${SWAPMK}<b>交代</b></button>
+      </div>
+      <div class="hbtns">
         <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
         <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
@@ -9703,7 +9740,7 @@ function gbRender(body, bt, picks, foes) {
   const clk = hud.querySelector('.clk'), trn = hud.querySelector('.trn');
   const swapEl = hud.querySelector('.hs.me .hswap');
   const fswapEl = hud.querySelector('.hs.foe .hswap');
-  const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
+  const mswBtn = dock.querySelector('.hmsw');          // ⇄いつでも交代(rbhudの外＝独立した大きな行)
   let ptr = 0, lastEl = null, curLegKey = '';
   let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
   function updateHud(gt, li) {
