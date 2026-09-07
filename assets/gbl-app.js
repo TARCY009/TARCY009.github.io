@@ -8003,6 +8003,12 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     return best ? best.k : null;
   };
+  // このまま居残ると「SPを1発も撃てないまま、ノーマルアタックだけで倒される」か
+  // (=ユーザーに起点にされてゲージを献上するだけの対面。2026-08-31/09-07タダシさん指示)
+  const aiFarmed = ov => {
+    const r = duelAt(cur[0], cur[1], ov && ov.ov0, ov && ov.ov1);
+    return r.winner === 0 && !rbTurns(r).some(t => t.ev[1].some(e => e.full !== undefined));
+  };
   // sd側が交代したとき、相手の打ちかけのノーマルアタック1発が交代先に入る(ダメージと相手のゲージ)
   const swapHit = (sd, to) => {
     const od = 1 - sd;
@@ -8768,6 +8774,17 @@ function gbPlay(picks, foes, ans, stepwise) {
         if (to != null) return { a: 'toq', to };
         return { a: 'stay' };   // 控えがいない保険(質問の条件上ほぼ通らない)
       }
+      // ---- 起点にされるなら撃った直後に下がる(2026-09-07タダシさん指示・恒久ルール) ----
+      // SPを撃ったあと、このまま居残っても**SPをもう1発も撃てずノーマルアタックだけで倒される**なら、
+      // 残るのはユーザーにゲージを献上する(起点にされる)だけ＝初心者がやりがちな動き。
+      // 交代できる場面なのだから**撃ったらすぐ下がる**のが効率のよい動き。
+      // 打ち逃げと同じく、HARDの「自分から逃げ交代しない」ガードより優先する明示的な例外。
+      // **勝っている対面・SPをまだ撃てる対面は対象外**なので、
+      // 「シールドで防いで勝ち対面を取ったのに交代する」不自然な動きにはならない
+      if (p.seq > 0 && aiFarmed(nowOv)) {
+        const to = aiKeepSwap(nowOv);
+        if (to != null) return { a: 'toq', to };
+      }
       // ---- 出し勝った初手の温存(2026-08-30タダシさん指示・上級者の動き・NORMALから適用) ----
       // ユーザーは**交代できたのに**不利な対面から交代せず倒された(ABAで出し負けた形)＝
       // 「裏にこのポケモンが苦手なもう1匹がいる」と知らせたのと同じ。
@@ -8781,9 +8798,7 @@ function gbPlay(picks, foes, ans, stepwise) {
           // 35%未満は基本そのまま戦う。ただし**SPを1発も撃てずにノーマルアタックだけで
           // 倒される**(=ユーザーに起点にされてゲージを献上するだけ)ときに限り、それでも逃がす
           // (2026-08-31タダシさん指示)
-          const r = duelAt(cur[0], cur[1], nowOv && nowOv.ov0, nowOv && nowOv.ov1);
-          if (r.winner === 0 && !rbTurns(r).some(t => t.ev[1].some(e => e.full !== undefined)))
-            go = true;
+          if (aiFarmed(nowOv)) go = true;
         }
         if (go) {
           const to = aiKeepSwap(nowOv);
