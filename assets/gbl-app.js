@@ -7847,7 +7847,7 @@ function gbAnsLabel(p, a) {
     // あいてのSPが2本(またはわざオート)なら、チップにもわざ名を出さない(2026-08-20タダシさん指示。
     // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
     const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
-    if (a.a === 'opt') return hide ? '⭐ SPアタック' : `⭐ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'opt') return hide ? '▶ SPアタック' : `${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'fire') return hide ? '▶ SPアタック' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'bluff') return hide ? '▶ SPアタック' : `ため→${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'wait') return `＋${a.n}`;
