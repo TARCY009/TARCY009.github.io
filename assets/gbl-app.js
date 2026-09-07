@@ -545,13 +545,25 @@ function bindPtSec(root) {
     card.setAttribute('aria-expanded', PTSEC[k]);
   });
 }
+// ---- 同じ名前でタイプがちがうわざは、表示名にタイプを添えて一意にする(2026-09-07タダシさん指示) ----
+// 対象は**ウェザーボール(5タイプ)とテクノバスター(4タイプ)**。理由は2つ:
+//   ①わざ選択の一覧に同じ名前が並ぶと、どれがどのタイプか分からない
+//   ②**タイプアイコンはわざ「名」で引く**作りなので、名前がかぶっていると
+//     戦闘中のアイコンが別タイプで出る(カバルドンのウェザーボール(いわ)が「みず」で出ていた)
+// **表示名を直す**とどちらも一度に解決する(共有リンクや保存はわざIDなので影響なし)
 const MOVE_TYPE = {};
 const MOVE_COST = {};
 const NAME_TYPES = {};
 Object.values(D.moves).forEach(m => {
+  (NAME_TYPES[m.n] = NAME_TYPES[m.n] || new Set()).add(m.t);
+});
+Object.values(D.moves).forEach(m => {
+  const set = NAME_TYPES[m.n];
+  if (set && set.size > 1) m.n = `${m.n}（${D.typeJa[m.t] || m.t}）`;
+});
+Object.values(D.moves).forEach(m => {
   MOVE_TYPE[m.n] = m.t;
   if (m.e) MOVE_COST[m.n] = m.e;
-  (NAME_TYPES[m.n] = NAME_TYPES[m.n] || new Set()).add(m.t);
 });
 // ---- 自由設定のわざ（性能を自分で決める・2026-09-03タダシさん指示） ----
 // 使いどころは「次のシーズンのわざ調整が分かっているのに、まだデータに入っていない」とき。
@@ -5563,7 +5575,18 @@ function rbRender(body, bt, picks, foes, extra) {
   let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
   function updateHud(gt, li) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
+    // ⚠ ロックを解いた瞬間、フィードは自前のスクロールを失って**ページの一番上**へ飛ぶ
+    //   (2026-09-07タダシさん報告「勝利したとき勝手に一番上までスクロールする」)。
+    //   解いた直後に、いちばん新しい行が見えるところまでページを送って位置を保つ
+    const wasLock = body.classList.contains('bfull');
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
+    if (wasLock && !body.classList.contains('bfull') && lastEl) {
+      const el = lastEl;
+      requestAnimationFrame(() => {
+        const y = el.getBoundingClientRect().bottom + scrollY - (innerHeight - dock.offsetHeight - 10);
+        if (y > 0) scrollTo({ top: y, behavior: 'auto' });
+      });
+    }
     // ⚠ スタート前はドックを画面下に貼り付けない(2026-09-06タダシさん報告)。
     //   sticky のままだと「▶ バトルスタート！」が、上にある
     //   「オートバトル」「結果だけ見る」の行に重なって見える
@@ -9774,7 +9797,18 @@ function gbRender(body, bt, picks, foes) {
   let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
   function updateHud(gt, li) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
+    // ⚠ ロックを解いた瞬間、フィードは自前のスクロールを失って**ページの一番上**へ飛ぶ
+    //   (2026-09-07タダシさん報告「勝利したとき勝手に一番上までスクロールする」)。
+    //   解いた直後に、いちばん新しい行が見えるところまでページを送って位置を保つ
+    const wasLock = body.classList.contains('bfull');
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
+    if (wasLock && !body.classList.contains('bfull') && lastEl) {
+      const el = lastEl;
+      requestAnimationFrame(() => {
+        const y = el.getBoundingClientRect().bottom + scrollY - (innerHeight - dock.offsetHeight - 10);
+        if (y > 0) scrollTo({ top: y, behavior: 'auto' });
+      });
+    }
     // ⚠ スタート前はドックを画面下に貼り付けない(2026-09-06タダシさん報告)。
     //   sticky のままだと「▶ バトルスタート！」が、上にある
     //   「オートバトル」「結果だけ見る」の行に重なって見える
@@ -10642,11 +10676,10 @@ function fillMoves(i, cfg) {
   el.querySelector('.ivline').textContent = cfg.statMult
     ? `CP${st.cp}／攻${st.baseAtk.toFixed(2)}・防${st.baseDef.toFixed(2)}・HP${st.hp}`
     : `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
-  // タイプは同名で複数タイプがあるわざ(ウェザーボール等)だけ表記する
+  // タイプが同名でかぶるわざ(ウェザーボール等)は、読み込み時に名前へタイプを入れてある
   const opt = (m, sel) => {
     const mv = D.moves[m];
-    const suf = NAME_TYPES[mv.n].size > 1 ? `（${D.typeJa[mv.t]}）` : '';
-    return `<option value="${m}"${m === sel ? ' selected' : ''}>${mv.n}${suf}</option>`;
+    return `<option value="${m}"${m === sel ? ' selected' : ''}>${mv ? mv.n : ''}</option>`;
   };
   // おぼえないわざも含めて選択可能にする(検証・お試し用)
   // 同名・同タイプの別ID(カメックス専用版など)とタイプ不定のめざめるパワーは除外
