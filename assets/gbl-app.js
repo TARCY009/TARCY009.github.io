@@ -4903,6 +4903,9 @@ const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig:
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
 const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, msw: SWAPMK, next: '', lead: SWAPMK };
+// 決断チップのマーク。⚠ シールドを**使わなかった**ときは盾を出さない
+// (2026-09-07タダシさん指示: 盾があると「シールドを使った」と錯覚する)
+const chipIcon = p => (p.kind === 'sh' && p.ans && p.ans.a === 'no') ? '' : RB_ICON[p.kind];
 
 // ---- 模擬戦の演出(FX・2026-08-30タダシさん指示「ゲームっぽく動きのある演出を」) ----
 // くりだした／交代／SP発動／たおれた／フォルムチェンジ の場面で再生を止めてカットインを見せる。
@@ -5152,14 +5155,14 @@ function rbAskTitle(p) {
 function rbAnsLabel(p, a) {
   if (!a) return '？';
   if (p.kind === 'sp') {
-    if (a.a === 'auto') return '⭐ おまかせ';
-    if (a.a === 'opt') return `⭐ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'auto') return 'おまかせ';
+    if (a.a === 'opt') return `${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'fire') return `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
   }
   // チップは種別アイコン(RB_ICON)と並べて出すので、ここでは🛡や⇄を重ねない
-  if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
+  if (p.kind === 'sh') return a.a === 'no' ? '受けた' : '使う';
   // 「場に出した」と「交代した」を言葉で区別する(2026-08-30タダシさん指示・GBL模擬戦とそろえる)
   if (p.kind === 'swap' || p.kind === 'lead' || p.kind === 'msw') {
     if (a.a === 'stay') return 'このまま';
@@ -5271,7 +5274,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const dgCell = oppList => oppList.filter(e => e.disguised)
     .map(e => `<span class="ev shd dg" title="相手の${e.move}をばけのかわが身代わりになって受けました(ダメージ1・1回だけ)"><i class="blk">👻ばけのかわがはがれた！</i></span>`).join('');
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc"><button class="fchip${p.auto ? ' auto' : ''}"
-    data-k="${p.key}" title="タップすると、この場面からやり直せます">${RB_ICON[p.kind]}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
+    data-k="${p.key}" title="タップすると、この場面からやり直せます">${chipIcon(p)}<b>${rbAnsLabel(p, p.ans)}</b></button></div>` });
   bt.legs.forEach(leg => {
     const i0 = items.length;   // この対面が押し込む要素の先頭(あとで li を付ける)
     const res = leg.res, base = leg.base;
@@ -7789,7 +7792,7 @@ function gbAskTitle(p) {
 function gbAnsLabel(p, a) {
   if (!a) return '？';
   if (p.kind === 'sp') {
-    if (a.a === 'auto') return '⭐ おまかせ';
+    if (a.a === 'auto') return 'おまかせ';
     // あいてのSPが2本(またはわざオート)なら、チップにもわざ名を出さない(2026-08-20タダシさん指示。
     // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
     const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
@@ -7799,7 +7802,7 @@ function gbAnsLabel(p, a) {
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
   }
-  if (p.kind === 'sh') return a.a === 'no' ? '受ける' : '使う';
+  if (p.kind === 'sh') return a.a === 'no' ? '受けた' : '使う';
   const ros = p.ctx.ros[p.side || 0];
   // 「場に出した」と「交代した」を言葉で区別する(2026-08-30タダシさん指示・一瞬で見分けづらかったため)
   if (p.kind === 'swap' || p.kind === 'lead' || p.kind === 'msw') {
@@ -9242,7 +9245,7 @@ function gbRender(body, bt, picks, foes) {
   // 枠の色(金＝あいて)だけでは伝わらず、あいての「撃たない」を自分の判断だと誤解する
   // (実例: オコリザルが起点づくりでSPを温存した場面を、こちらのSP判断だと思われた)
   const chipBtn = p => `<button class="fchip${p.auto ? ' auto' : ''}${p.side ? ' foe' : ''}"
-    data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'じぶんの行動です。タップすると、この場面からやり直せます'}"><i class="who">${p.side ? 'あいて' : 'じぶん'}</i>${RB_ICON[p.kind]}<b>${gbAnsLabel(p, p.ans)}</b></button>`;
+    data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'じぶんの行動です。タップすると、この場面からやり直せます'}"><i class="who">${p.side ? 'あいて' : 'じぶん'}</i>${chipIcon(p)}<b>${gbAnsLabel(p, p.ans)}</b></button>`;
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc${p.side ? ' foe' : ''}">${chipBtn(p)}</div>` });
   // 同じターンに両者の決断が並ぶときは1つのフレームに統合する(2026-08-31タダシさん指示・パッと見やすく):
   // SPどうしで発動も同じターンなら真ん中に「同時発動」の札 ／ シールドの答えは左右に並べる。
