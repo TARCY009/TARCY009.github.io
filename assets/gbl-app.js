@@ -5066,12 +5066,14 @@ const fxConsume = els => {
 // data-fx を持つ要素の演出を順番に再生して、終わったら done()
 // 演出の前後の「一呼吸」(2026-09-07タダシさん指示・進みが早すぎる感を無くす)。
 // 速さの設定(×2/×4)で割るので、急ぎたい人は従来どおり速く見られる
-const FX_PRE = 260, FX_POST = 420;
+const FX_PRE = 420, FX_POST = 700, FX_GAP = 260;
+// 演出の要素から「その演出が属する対面(leg)の番号」を取り出す(HUDをその時点の状態にするため)
+const fxLi = el => { const v = el && el.dataset ? el.dataset.li : null; return v == null || v === '' ? undefined : +v; };
 // list=演出の並び ／ done=すべて終わったあと ／ onHit=最初の演出の後半で1回だけ呼ぶ
 // (⚠ HUDの更新はここで行う。先に更新すると、カットインを見ているあいだにHPバーが
 //   減り終わってしまい「HPが減る演出が無い」ように見える・2026-09-07タダシさん報告)
 function fxRun(list, done, onHit) {
-  let i = 0, hit = false;
+  let i = 0;
   const sp = () => Math.max(1, RBV.speed || 1);
   const step = () => {
     if (i >= list.length) { setTimeout(done, FX_POST / sp()); return; }
@@ -5083,9 +5085,12 @@ function fxRun(list, done, onHit) {
     if (!Array.isArray(fs)) fs = fs ? [fs] : [];
     let dur = 0;
     fs.forEach(f => { dur = Math.max(dur, fxOne(f)); });
-    // 着弾(SPの揺れ)と同じタイミングでHUDを更新する＝カットインのあとにHPがガクッと減って見える
-    if (!hit && onHit) { hit = true; setTimeout(onHit, Math.min(Math.round(dur * 0.62), Math.round(700 * FX_SLOW / sp()))); }
-    setTimeout(step, dur + 60);
+    // 着弾(SPの揺れ)と同じタイミングでHUDを更新する＝カットインのあとにHPがガクッと減って見える。
+    // ⚠ **演出ごとに呼ぶ**(2026-09-07タダシさん報告)。まとめて1回にすると、たとえば
+    //    「SPを撃った→そのまま交代」のように**同じターンに演出が2つ**あるとき、
+    //    SPのカットインの最中にもう交代後のポケモンがHUDに出て、頭がぐちゃぐちゃになる
+    if (onHit) setTimeout(() => onHit(el), Math.min(Math.round(dur * 0.62), Math.round(700 * FX_SLOW / sp())));
+    setTimeout(step, dur + FX_GAP / sp());
   };
   setTimeout(step, FX_PRE / sp());
 }
@@ -5212,7 +5217,7 @@ function rbRender(body, bt, picks, foes, extra) {
 
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
   // items は時系列どおりに積む(gt=通しターン。表示はそこまで「再生」が進んだら出す)
-  const items = [], frames = [];
+  const items = [], frames = [], legEnd = [];
   // 通しターンごとの「それまでのSPアタックの待ち時間」(RK_SP_TURNSの項)。
   // 経過時間の表示と交代クールタイムの残りは、この実時間で出す
   const spByGt = [];
@@ -5269,7 +5274,9 @@ function rbRender(body, bt, picks, foes, extra) {
     if (leg.leadPt) items.push({ ...chipItem(leg.leadPt, base), o: IT.lead });
     if (leg.leadHit) items.push({ gt: base, o: IT.hit, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
-    frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
+    // ⚠ 対面の切れ目は同じ通しターンを共有するので、上書きの前に退避する(GBL模擬戦と同じ理由)
+    if (leg.li > 0 && frames[base]) legEnd[leg.li - 1] = frames[base];
+    frames[base] = { meta, li: leg.li, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
@@ -5313,12 +5320,12 @@ function rbRender(body, bt, picks, foes, extra) {
       while (spByGt.length <= gt) spByGt.push(spSeen);
       spByGt[gt] = spSeen;
       if (!partial) {
-        frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
+        frames[gt] = { meta, li: leg.li, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
       } else {
         // 決断待ちのターンのHUDは、前のターンのHP・ゲージのまま(結果はまだ決まっていない)
         const pf = frames[gt - 1] || frames[base];
-        frames[gt] = { meta, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
+        frames[gt] = { meta, li: leg.li, hp0: pf.hp0, en0: pf.en0, hp1: pf.hp1, en1: pf.en1,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
       }
       // ロケット団: あいてが硬直で1歩も動かないターンは⏸を出す(最初の行の右列)
@@ -5390,7 +5397,7 @@ function rbRender(body, bt, picks, foes, extra) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
@@ -5461,14 +5468,18 @@ function rbRender(body, bt, picks, foes, extra) {
   const swapEl = hud.querySelector('.hs.me .hswap');   // 交代タイマー(じぶん側だけ)
   const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
   let ptr = 0, lastEl = null, curLegKey = '';
-  function updateHud(gt) {
+  function updateHud(gt, li) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
     // ⚠ スタート前はドックを画面下に貼り付けない(2026-09-06タダシさん報告)。
     //   sticky のままだと「▶ バトルスタート！」が、上にある
     //   「オートバトル」「結果だけ見る」の行に重なって見える
     body.classList.toggle('prestart', !RBV.started);
-    const f = frames[Math.max(0, Math.min(gt, stop))];
+    let f = frames[Math.max(0, Math.min(gt, stop))];
+    // ⚠ 演出は**その演出が属する対面**の状態で出す(2026-09-07タダシさん報告)。
+    //   対面の切れ目は同じ通しターンを共有するので、これが無いと
+    //   「前の対面の最後のSPのカットイン中に、もう交代後のポケモンがHUDに出る」ことになる
+    if (li != null && f && f.li != null && li < f.li && legEnd[li]) f = legEnd[li];
     if (!f) return;
     const legKey = f.meta.name0 + '|' + f.meta.name1;
     if (legKey !== curLegKey) {   // 対面が変わったときだけ名前・CP・ゲージの器を作り直す
@@ -5655,7 +5666,7 @@ function rbRender(body, bt, picks, foes, extra) {
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
-      }, () => updateHud(RBV.cur));
+      }, el => updateHud(RBV.cur, fxLi(el)));
       return;
     }
     updateHud(RBV.cur);
@@ -5828,7 +5839,7 @@ function rbRender(body, bt, picks, foes, extra) {
   autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
-  const upd = () => updateHud(RBV.cur);
+  const upd = el => updateHud(RBV.cur, fxLi(el));
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
   else if (RBV.cur >= stop) {
     // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
@@ -9073,7 +9084,7 @@ function gbRender(body, bt, picks, foes) {
   bt.legs.forEach(leg => { (leg.leadPts || []).forEach(regPt); (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.foeNextPoint); regPt(leg.pending); });
 
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
-  const items = [], frames = [];
+  const items = [], frames = [], legEnd = [];
   // 通しターンごとの「それまでに撃たれたSPアタックの数」。実時間はSPの演出ぶんだけ余分に進む
   // (GB_SP_TURNSの項)。経過時間の表示と交代のクールタイムの残りはこの時計で出す
   const spByGt = [];
@@ -9158,7 +9169,11 @@ function gbRender(body, bt, picks, foes) {
       items.push({ gt: base, o: IT.hit, html: `<div class="ft"><div class="c me">${leg.swapHit.side === 1 ? cell : ''}</div><i class="tn">${base}</i>
         <div class="c foe">${leg.swapHit.side === 0 ? cell : ''}</div></div>` });
     }
-    frames[base] = { meta, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
+    // ⚠ 対面の切れ目は**同じ通しターンを共有する**(base += res.turns)。ここで上書きすると
+    //   「前の対面の最後のターン」の状態が消えるので、先に退避しておく
+    //   (演出はその対面のものを出す＝SPのカットイン中に交代後のHUDが出ない・2026-09-07)
+    if (leg.li > 0 && frames[base]) legEnd[leg.li - 1] = frames[base];
+    frames[base] = { meta, li: leg.li, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
     const ptAt = {};
     (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
@@ -9209,7 +9224,7 @@ function gbRender(body, bt, picks, foes) {
       while (spByGt.length <= gt) spByGt.push(spSeen);
       spByGt[gt] = spSeen;
       if (!partial) {
-        frames[gt] = { meta, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
+        frames[gt] = { meta, li: leg.li, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
       } else {
         const pf = frames[gt - 1] || frames[base];
@@ -9222,7 +9237,7 @@ function gbRender(body, bt, picks, foes) {
           const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
           if (i === 0) hp1p = Math.max(0, hp1p - dm); else hp0p = Math.max(0, hp0p - dm);
         }
-        frames[gt] = { meta, hp0: hp0p, en0: pf.en0, hp1: hp1p, en1: pf.en1,
+        frames[gt] = { meta, li: leg.li, hp0: hp0p, en0: pf.en0, hp1: hp1p, en1: pf.en1,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
       }
       let first = true;
@@ -9301,7 +9316,7 @@ function gbRender(body, bt, picks, foes) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
@@ -9376,7 +9391,7 @@ function gbRender(body, bt, picks, foes) {
   const fswapEl = hud.querySelector('.hs.foe .hswap');
   const mswBtn = hud.querySelector('.hmsw');           // ⇄いつでも交代(再生コントロールの並び)
   let ptr = 0, lastEl = null, curLegKey = '';
-  function updateHud(gt) {
+  function updateHud(gt, li) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
     // ⚠ スタート前はドックを画面下に貼り付けない(2026-09-06タダシさん報告)。
@@ -9387,7 +9402,11 @@ function gbRender(body, bt, picks, foes) {
     //   スタート前はVSカードとHUDのあいての名前を伏せる(2026-09-07タダシさん指摘)
     const mask = sdOn() && !RBV.started;
     body.classList.toggle('sdmask', mask);
-    const f = frames[Math.max(0, Math.min(gt, stop))];
+    let f = frames[Math.max(0, Math.min(gt, stop))];
+    // ⚠ 演出は**その演出が属する対面**の状態で出す(2026-09-07タダシさん報告)。
+    //   対面の切れ目は同じ通しターンを共有するので、これが無いと
+    //   「前の対面の最後のSPのカットイン中に、もう交代後のポケモンがHUDに出る」ことになる
+    if (li != null && f && f.li != null && li < f.li && legEnd[li]) f = legEnd[li];
     if (!f) return;
     const legKey = f.meta.name0 + '|' + f.meta.name1 + (mask ? '|?' : '');
     if (legKey !== curLegKey) {
@@ -9598,7 +9617,7 @@ function gbRender(body, bt, picks, foes) {
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
-      }, () => updateHud(RBV.cur));
+      }, el => updateHud(RBV.cur, fxLi(el)));
       return;
     }
     updateHud(RBV.cur);
@@ -9770,7 +9789,7 @@ function gbRender(body, bt, picks, foes) {
   autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
-  const upd = () => updateHud(RBV.cur);
+  const upd = el => updateHud(RBV.cur, fxLi(el));
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
   else if (RBV.cur >= stop) {
     // 同じターンに次の質問が続く場合も、隠れていた演出を見せてから止まる
