@@ -4605,13 +4605,14 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       const maxB = PvpEngine.buildStats(D, picks[to].base).hp;
       const maxF = PvpEngine.buildStats(D, R0).hp;
       gulpOff(st[mi].resume);   // ウッウ: 場を離れると通常の姿に戻る
+      const fromIdx = mi;   // VSカードには交代する前の初手を出す(タダシさん指示)
       mi = to;
       st[to].resume = { hp: Math.max(0, maxB - hit.dmg), en: 0, buffs: [0, 0], stall: 0 };
       foeResume = { hp: maxF, en: Math.min(100, hit.eg), buffs: [0, 0], stall: 0 };
       myEntry = RK_ENTER.swap.me;
       foeEntry = RK_ENTER.swap.foe;
       swOkAt = RK.swapCd;
-      lead = { hit: { mv: hit.mv, dmg: hit.dmg },
+      lead = { from: picks[fromIdx].name, hit: { mv: hit.mv, dmg: hit.dmg },
         pt: { kind: 'lead', seq: 0, w: 0, key, tn: 0, gt: 0, ctx: lctx, opts, ans: a, auto: !ans[key] } };
     }
   }
@@ -4759,6 +4760,7 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       swOk: swOkAt,   // この対面中に交代が解禁される通しターン(HUDの交代タイマー用)
       meDown, foeDown, swapped, swapTo: swapped ? dec.swapTo : null, pol, li, points, foeMv,
       leadHit: li === 0 && lead ? lead.hit : null, leadPt: li === 0 && lead ? lead.pt : null,
+      leadFrom0: li === 0 && lead ? lead.from : null,
       // hud = この対面が始まった時点の両者の状態(下の常駐フレームの表示に使う)
       hud: { hp0: st[mi].resume ? Math.max(0, st[mi].resume.hp) : res.final[0].hpMax,
              en0: st[mi].resume ? st[mi].resume.en : 0,
@@ -5083,14 +5085,23 @@ function fxRun(list, done, onHit) {
     try { fs = JSON.parse(el.dataset.fx); } catch (e) {}
     i++;
     if (!Array.isArray(fs)) fs = fs ? [fs] : [];
-    let dur = 0;
-    fs.forEach(f => { dur = Math.max(dur, fxOne(f)); });
-    // 着弾(SPの揺れ)と同じタイミングでHUDを更新する＝カットインのあとにHPがガクッと減って見える。
-    // ⚠ **演出ごとに呼ぶ**(2026-09-07タダシさん報告)。まとめて1回にすると、たとえば
-    //    「SPを撃った→そのまま交代」のように**同じターンに演出が2つ**あるとき、
-    //    SPのカットインの最中にもう交代後のポケモンがHUDに出て、頭がぐちゃぐちゃになる
-    if (onHit) setTimeout(() => onHit(el), Math.min(Math.round(dur * 0.62), Math.round(700 * FX_SLOW / sp())));
-    setTimeout(step, dur + FX_GAP / sp());
+    // ⚠ 同じ行に演出が複数あるときは**順番に**流す(2026-09-07タダシさん指示)。
+    //   まとめて同時に出すと、たとえば「VSカード」と「開幕交代」が重なって、
+    //   どちらが先に起きたのか分からなくなる
+    let first = true;
+    const seq = k => {
+      if (k >= fs.length) { setTimeout(step, FX_GAP / sp()); return; }
+      const d = fxOne(fs[k]);
+      // 着弾(SPの揺れ)と同じタイミングでHUDを更新する＝カットインのあとにHPがガクッと減って見える。
+      // ⚠ **演出ごとに呼ぶ**(まとめて1回にすると、SPのカットインの最中に
+      //   もう交代後のポケモンがHUDに出て、頭がぐちゃぐちゃになる)
+      if (first) {
+        first = false;
+        if (onHit) setTimeout(() => onHit(el), Math.min(Math.round(d * 0.62), Math.round(700 * FX_SLOW / sp())));
+      }
+      setTimeout(() => seq(k + 1), d + FX_GAP / sp());
+    };
+    seq(0);
   };
   setTimeout(step, FX_PRE / sp());
 }
@@ -5263,13 +5274,16 @@ function rbRender(body, bt, picks, foes, extra) {
     // 演出(FX): 対面の頭に「バトル開始のVS」または「くりだした／交代した」を付ける。
     // 開幕交代はVSに続けて交代の演出を出す
     const pv = bt.legs[leg.li - 1] || null;
-    const fxv = !pv ? [{ k: 'vs', me: leg.meName, foe: leg.foeName }]
+    // 開幕交代をした側は、VSカードには**交代する前の初手**を出す(2026-09-07タダシさん指示。
+    // 交代後の名前を出すと、直後の「◯◯に交代した！」と食い違って分からなくなる)
+    const vsMe = leg.leadFrom0 || leg.meName;
+    const fxv = !pv ? [{ k: 'vs', me: vsMe, foe: leg.foeName }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
          pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
          pv.swapped && { k: 'swap', side: 0, name: leg.meName }].filter(Boolean);
     if (!pv && leg.leadPt && leg.leadPt.ans && leg.leadPt.ans.a === 'to')
       fxv.push({ k: 'swap', side: 0, name: leg.meName });
-    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
+    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
     // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
     if (leg.leadPt) items.push({ ...chipItem(leg.leadPt, base), o: IT.lead });
     if (leg.leadHit) items.push({ gt: base, o: IT.hit, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
@@ -7765,7 +7779,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     : benches(0).filter(k => seen[0].has(k));   // 見えているユーザーの控え
   let base = 0, spTot = 0, pending = null;
   // 開幕交代(0秒)。両者が同時に決めるので、おたがい相手の選択は見えない
-  const leadPts = [null, null], leadHits = [null, null];
+  const leadPts = [null, null], leadHits = [null, null], leadFrom = [null, null];
   let react = null;   // 片方だけが開幕交代したとき、もう片方が反応できる場面 {side, tn}
   // **追っている側かどうか**(2026-08-19タダシさん指示)。ユーザーが自分から交代した＝不利だから
   // 逃げた、ということなので、そのあとAIは「追っている側」になる。
@@ -8784,7 +8798,9 @@ function gbPlay(picks, foes, ans, stepwise) {
   }
   if (!pending && (leadTo[0] != null || leadTo[1] != null)) {
     const bothLead = leadTo[0] != null && leadTo[1] != null;
-    [0, 1].forEach(sd => { if (leadTo[sd] != null) doLead(sd, leadTo[sd], !bothLead); });
+    // VSカード(対戦最初のタイトル)には**初手同士**を出すので、交代する前の名前を控えておく
+    // (2026-09-07タダシさん指示。交代後の名前を出すと、直後の「◯◯に交代した！」と食い違う)
+    [0, 1].forEach(sd => { if (leadTo[sd] != null) { leadFrom[sd] = ros[sd][cur[sd]].name; doLead(sd, leadTo[sd], !bothLead); } });
     chase = leadTo[0] != null && leadTo[1] == null;   // ユーザーだけが逃げた＝AIは追っている側
     if (!bothLead) {
       // 交代しなかった側は、**1秒たってから**「交代する？」を選べる(打ちかけのわざが終わり次第)
@@ -8949,6 +8965,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       swapTo0: swapped[0] ? dec[0].swapTo : null, swapTo1: swapped[1] ? dec[1].swapTo : null,
       pol: P0.pol, foePol: P1.pol, li, points,
       leadPts: li === 0 ? leadPts : [null, null],
+      leadFrom: li === 0 ? leadFrom : [null, null],
       leadHits: li === 0 ? leadHits : [null, null],
       swapHit: legSwapHit,   // 交代で交代先に入った打ちかけの1発(対面の頭に表示)
       hud: { hp0: rs0 ? Math.max(0, rs0.hp) : res.final[0].hpMax, en0: rs0 ? rs0.en : 0,
@@ -9184,7 +9201,10 @@ function gbRender(body, bt, picks, foes) {
     // 開幕交代(どちらの側も)はVSに続けて交代の演出を出す
     sn0 |= 1 << leg.myIdx; sn1 |= 1 << leg.foeIdx;   // この対面で場に出た＝名前が分かった
     const pv = bt.legs[leg.li - 1] || null;
-    const fxv = !pv ? [{ k: 'vs', me: leg.meName, foe: leg.foeName }]
+    // 開幕交代があった側は、VSカードには**交代する前の初手**を出す(タダシさん指示)
+    const lf = leg.leadFrom || [];
+    const vsMe = lf[0] || leg.meName, vsFoe = lf[1] || leg.foeName;
+    const fxv = !pv ? [{ k: 'vs', me: vsMe, foe: vsFoe }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
          pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
          pv.swapped0 && { k: 'swap', side: 0, name: leg.meName },
@@ -9193,7 +9213,7 @@ function gbRender(body, bt, picks, foes) {
       if (pt && pt.ans && pt.ans.a === 'to')
         fxv.push({ k: 'swap', side: sd, name: sd ? leg.foeName : leg.meName });
     });
-    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(leg.meName)}${tyIco(leg.meName)}</span><em>VS</em><span class="foe"><b class="fnm">${shMark(leg.foeName)}${tyIco(leg.foeName)}</b></span></div>` });
+    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}</span><em>VS</em><span class="foe"><b class="fnm">${shMark(vsFoe)}${tyIco(vsFoe)}</b></span></div>` });
     // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
     (leg.leadPts || []).forEach(p => { if (p) items.push({ ...chipItem(p, base), o: IT.lead }); });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
