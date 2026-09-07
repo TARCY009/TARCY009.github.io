@@ -4929,7 +4929,10 @@ function fxShow(cls, html, dur) {
   el.style.setProperty('--fxd', d + 'ms');
   el.innerHTML = html;
   fxLayer().appendChild(el);
-  setTimeout(() => el.remove(), d + 80);
+  // ⚠ 消すのは fxRun が「次の演出を出す直前」と「done の直前」に行う(2026-09-07タダシさん指示)。
+  //   一呼吸のあいだ何も出ていないと、画面が固まったように見えてフリーズと勘違いされる。
+  //   これは取りこぼしの保険(fxRun を通らない呼び出しでも必ず消える)
+  setTimeout(() => el.remove(), d + 80 + Math.round(FX_POST / (RBV.speed || 1)));
   return d;
 }
 // 名前(シャドウ○○を含む)からタイプアイコンを引く(2026-09-01タダシさん指示・
@@ -5071,6 +5074,8 @@ const fxConsume = els => {
 // 演出の前後の「一呼吸」(2026-09-07タダシさん指示・進みが早すぎる感を無くす)。
 // 速さの設定(×2/×4)で割るので、急ぎたい人は従来どおり速く見られる
 const FX_PRE = 420, FX_POST = 700, FX_GAP = 260;
+// 演出のフレームを片づける。一呼吸のあいだは出したままにして、次を出す直前に消す
+const fxClear = () => { const l = document.getElementById('fxlayer'); if (l) l.textContent = ''; };
 // 演出の要素から「その演出が属する対面(leg)の番号」を取り出す(HUDをその時点の状態にするため)
 const fxLi = el => { const v = el && el.dataset ? el.dataset.li : null; return v == null || v === '' ? undefined : +v; };
 // list=演出の並び ／ done=すべて終わったあと ／ onHit=最初の演出の後半で1回だけ呼ぶ
@@ -5080,7 +5085,9 @@ function fxRun(list, done, onHit) {
   let i = 0;
   const sp = () => Math.max(1, RBV.speed || 1);
   const step = () => {
-    if (i >= list.length) { setTimeout(done, FX_POST / sp()); return; }
+    // ⚠ 最後の演出も「一呼吸のあいだ出したまま」にして、done の直前に片づける
+    if (i >= list.length) { setTimeout(() => { fxClear(); done(); }, FX_POST / sp()); return; }
+    fxClear();   // 前の行の演出を片づけてから次へ
     const el = list[i];
     RBV.fxDone.add(fxKey(el));
     let fs = [];
@@ -5093,6 +5100,7 @@ function fxRun(list, done, onHit) {
     let first = true;
     const seq = k => {
       if (k >= fs.length) { setTimeout(step, FX_GAP / sp()); return; }
+      if (k > 0) fxClear();   // 同じ行の次の演出へ移るときも、直前に片づける
       const d = fxOne(fs[k]);
       // 着弾(SPの揺れ)と同じタイミングでHUDを更新する＝カットインのあとにHPがガクッと減って見える。
       // ⚠ **演出ごとに呼ぶ**(まとめて1回にすると、SPのカットインの最中に
@@ -5898,7 +5906,12 @@ function rbRender(body, bt, picks, foes, extra) {
   //   巻き戻し(チップをタップ)と「結果だけ見る」は、過去の再現なので一度に出してよい
   const stepping = RB.step && !(RBUI.open && RBUI.pts[RBUI.open]);
   const rev0 = stepping ? [] : revealTo(RBV.cur);
-  autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
+  // ⚠ **行を出す前に autoScroll を呼ばない**(2026-09-07タダシさん報告・再発防止)。
+  //   ここで呼ぶと「再描画の直後」の印(RBV.feedFresh)を、まだ行が1つも出ていない状態で
+  //   使い切ってしまい、そのあと advance() が出した行への追従が smooth になる。
+  //   scrollTop は再描画で 0 に戻っているので、**上へ飛んでから下へ流れる**動きに見える。
+  //   段階的に出すとき(stepping)は advance() の中の autoScroll に任せる
+  if (!stepping) autoScroll();
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
   const upd = el => updateHud(RBV.cur, fxLi(el));
@@ -9933,7 +9946,12 @@ function gbRender(body, bt, picks, foes) {
   //   巻き戻し(チップをタップ)と「結果だけ見る」は、過去の再現なので一度に出してよい
   const stepping = RB.step && !(RBUI.open && RBUI.pts[RBUI.open]);
   const rev0 = stepping ? [] : revealTo(RBV.cur);
-  autoScroll();   // 再描画のあと: 追従中なら下端へ、読み返し中なら前の位置へ戻す
+  // ⚠ **行を出す前に autoScroll を呼ばない**(2026-09-07タダシさん報告・再発防止)。
+  //   ここで呼ぶと「再描画の直後」の印(RBV.feedFresh)を、まだ行が1つも出ていない状態で
+  //   使い切ってしまい、そのあと advance() が出した行への追従が smooth になる。
+  //   scrollTop は再描画で 0 に戻っているので、**上へ飛んでから下へ流れる**動きに見える。
+  //   段階的に出すとき(stepping)は advance() の中の autoScroll に任せる
+  if (!stepping) autoScroll();
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
   const upd = el => updateHud(RBV.cur, fxLi(el));
