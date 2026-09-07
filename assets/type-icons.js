@@ -65,7 +65,7 @@
   .tbadge.sm::after { box-shadow:inset 0 1px 2px rgba(255,255,255,.35), inset 0 -1px 2px rgba(0,0,0,.22); }
   :root.light .tbadge { filter:drop-shadow(0 1.5px 2px rgba(30,40,90,.28)); }
   :root.light .tbadge.sm { filter:drop-shadow(0 1px 1.2px rgba(30,40,90,.22)); }
-  .tpair  { display:inline-flex; gap:1px; white-space:nowrap; vertical-align:middle; }
+  .tpair  { display:inline-flex; gap:0; white-space:nowrap; vertical-align:middle; }
   .tico   { display:block; fill:currentColor; filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.45)); }
   .tbadge.sm .tico { filter:drop-shadow(0 .7px .8px rgba(0,0,0,.35)); }
   .tico [fill="none"] { fill:none; }`;

@@ -757,8 +757,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .flg .me{color:var(--cy)}
 .flg .foe{color:var(--gold)}
 /* 名前の横のタイプアイコン(2026-09-01): VSカードと場に出る演出の帯 */
+/* ⚠ 名前との間隔は「タイプの組(.tpair)」に付ける。1つ1つの .tbadge に付けると
+   **アイコン同士まで離れる**(2026-09-07タダシさん指摘)。組の中は .tpair の gap だけで詰める */
 .flg .tbadge{margin-left:4px;vertical-align:-2px}
 .fxitem .tx .tbadge,.fxvs .pn .tbadge{margin-left:4px;vertical-align:-2px}
+.flg .tpair .tbadge,.fxitem .tx .tpair .tbadge,.fxvs .pn .tpair .tbadge{margin-left:0}
+.flg .tpair,.fxitem .tx .tpair,.fxvs .pn .tpair{margin-left:4px}
 .flg em{font-style:normal;font-size:.6rem;color:var(--sub);letter-spacing:.12em}
 .ft{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:4px;padding:2px 0;min-height:25px}
 .ft.q{min-height:12px;padding:0}
