@@ -2683,6 +2683,22 @@ AIはそれを**確認してから**交代を決めるので、**開幕交代の
   「エスパー→かくとうが1.6」と取り違えて、最初は 0.625 のわざまでブラフから外そうとした。
   必ず **`PvpEngine.effectiveness(D, タイプ, 相手のタイプ配列)`** を実行して確かめること
 
+### GBL用語: 日本の「CCT」は海外では Fast Move Alignment（2026-09-08・調べた記録）
+
+タダシさんの質問で調べたもの。**英語圏に「CCT」という略語は無い**。
+
+- **わざの周期を合わせて撃つ技術** ＝ **"fast move alignment"** ／ **"charge move timing"**。
+  動詞的に **"throwing on alignment"**・**"moves are aligned"**（同ターン数どうしは "aligned"）と使う。
+  **"FMA" のような略語も使われていない**（毎回そのまま書く）
+- 海外の基本の言い方: **"Throw your Charged Move on the last turn of your opponent's Fast Move"**
+  ＝そうすると **"free turns"**（無駄ターン）がゼロになる
+- **ブラフ ＝ "baiting"**。**交代受けは決まった呼び名が見つからず**、
+  "the incoming Pokémon becomes the target of that Charged Attack" と説明されるか
+  "catching Charged Attacks" と書かれる
+- 略語で定着しているのは**数値の指標だけ**: **DPT / EPT / DPE**、
+  それと **CMP**（Charge Move Priority＝同時発動で攻撃実数値の高い側が先。アラインメントとは別物）
+- **⚠ 画面の文言は従来どおり日本語のまま**（この節は調べものの記録で、表記を変える話ではない）
+
 ### /gbl/ 交代受け（HARDだけ・2026-09-07実装・タダシさん指示）
 
 **ユーザーのSPアタックが発動するのに合わせて交代し、その一撃を控えに受けさせる**技。
