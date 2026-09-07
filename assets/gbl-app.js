@@ -4936,6 +4936,7 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 // started=false のあいだは再生せず「バトルスタート！」ボタンを出す
 // (ポケモンやわざの入力中に勝手にシミュが動き始めないように)
 const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined,
+  hold: 0,               // 決断に答えた直後に置く「間」(ms)。交代受けの構えを取る時間(2026-09-07)
   fxDone: new Set() };   // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
@@ -5720,7 +5721,7 @@ function rbRender(body, bt, picks, foes, extra) {
     if (target > scrollY && target - scrollY < innerHeight * 1.5)
       scrollTo({ top: target, behavior: !fresh2 && RBV.speed === 1 ? 'smooth' : 'auto' });
   };
-  const stopTimer = () => { clearInterval(RBV.timer); RBV.timer = null; };
+  const stopTimer = () => { clearInterval(RBV.timer); clearTimeout(RBV.timer); RBV.timer = null; };
   const ended = () => RBV.cur >= stop && !bt.pending;
   const setPlayBtn = () => {
     const b = hud.querySelector('.hplay');
@@ -5832,7 +5833,17 @@ function rbRender(body, bt, picks, foes, extra) {
     RBV.cur++;
     advance();
   }
-  const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+  // ⚠ 決断に答えた直後は**少し間を置いてから**進める(2026-09-07タダシさん指示)。
+  // すぐ動き出すと、あいてのSPに合わせて交代する(交代受け)構えが取れない。
+  // 速さの設定(×2/×4)で割るので、急ぎたい人は従来どおり速く見られる
+  const startTimer = () => {
+    stopTimer(); if (!onScreen()) return;
+    const wait = RBV.hold ? Math.round(RBV.hold / (RBV.speed || 1)) : 0;
+    RBV.hold = 0;
+    const go = () => { if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+    if (wait) { setPlayBtn(); RBV.timer = setTimeout(() => { RBV.timer = null; go(); }, wait); }
+    else go();
+  };
 
   // ---- 操作の配線 ----
   // 「結果だけ見る」: バトルを流さず一気に表示。もう一度押すとバトル表示へ戻る
@@ -6532,6 +6543,9 @@ const GB_SWAP_CD = 90;        // 交代のクールタイム45秒(90ターン)
 // 演出まで含めた1発ぶんとして、外部シミュレーターと同じ10秒を採る(タダシさん選択)。
 // **ロケット団戦には適用しない**(今年のアプデでSPの発動がGBLより速くなったため。実測待ち)
 const GB_SP_TURNS = 20;
+// 決断に答えたあとに置く「間」(ms・2026-09-07タダシさん指示)。
+// すぐ動き出すと、あいてのSPに合わせて交代する(交代受け)構えが取れない。速さの設定で割る
+const GB_ANS_HOLD = 900;
 // この対面の「ターンごとの累計SP発動数」(両者ぶん)。時計 = ターン + GB_SP_TURNS×累計
 function gbSpc(res) {
   const a = [];
@@ -8566,6 +8580,23 @@ function gbPlay(picks, foes, ans, stepwise) {
     const roll = gbCoin('pvdodge:' + RB.rseed + ':' + ctx.li + ':' + p.seq + ':' + p.tn) % 4;
     return roll < care ? { a: 'wait', n: 1 } : a;
   };
+  // ---- 投げようとしたSPは引っ込められない(2026-09-07タダシさん指摘で追加) ----
+  // ユーザーが**自分から交代した直後**(ctx.chase)に、あいてが毎回きっちり合わせ返して交代すると、
+  // **交代受け(ユーザーがSPの発動に合わせて交代する)が一度も成立しない**(実測で成功率0%だった)。
+  // 実戦では、ゲージがたまっている側は**もう撃つ入力をしている**ので、合わせ返しより発射を選ぶ。
+  // 抽選の確率は**(100＋いま撃てるいちばん重いわざの消費)÷2**と**いまのゲージ量**の大きいほう。
+  // タダシさんの説明どおり **消費の重いわざほど発射寸前のゲージが100に近い＝撃ちにいく確率も高い**
+  // ので、重いわざを構えている相手ほど交代受けが決まりやすい(デカハンマー60なら8割)。
+  // ゲージが満タンに近いときは、軽いわざでも**もうためられない＝撃つ**ので確率が上がる。
+  // キーに対面(li)だけを使うので、**交代の判断とSPの判断で必ず同じ答え**になる
+  const aiThrown = (ctx, en) => {
+    if (!ctx.chase || en == null) return false;
+    if (!ctx.spList[1].length || en < ctx.cost[1]) return false;
+    const cost = Math.max(...ctx.spList[1].map(id => D.moves[id])
+      .filter(m => m && m.e <= en).map(m => m.e));
+    const p = Math.max(en, (100 + cost) / 2);
+    return gbCoin('thrown:' + RB.rseed + ':' + ctx.li) % 100 < Math.min(100, p);
+  };
   const aiAnswerAt = (p, ctx) => {
     // その瞬間のHP・ゲージ・能力変化・**シールドの残り枚数**。
     // 枚数まで入れないと「相手はまだ2枚持っている」と読んで、AIが弱気になる(実測で判明)
@@ -8633,6 +8664,18 @@ function gbPlay(picks, foes, ans, stepwise) {
       return bfkCache[ck];
     };
     if (p.kind === 'sp') {
+      // ---- 交代受け: **投げたSPは引っ込められない**(2026-09-07タダシさん指摘で追加) ----
+      // ユーザーが交代した直後の対面で、あいてのゲージがたまっているなら、
+      // あいては**もう撃つ入力をしていた**とみなして、そのまま撃つ。
+      // 確率は**ゲージが100に近いほど高い**——タダシさんの説明どおり、
+      // **消費の重いわざほどゲージは100の近くに居座るので、交代受けが決まりやすい**。
+      // ⚠ これが無いと、あいてが交代を見てから撃つのをやめられるので
+      //   **交代受けが一度も決まらない**(実測で0%だった)
+      if (p.seq === 0 && p.tn <= 2 && p.en != null && aiThrown(ctx, ctx.enAt[1])) {
+        const av = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] }))
+          .filter(x => x.m && x.m.e <= p.en).sort((x, y) => y.m.e - x.m.e)[0];
+        if (av) return { a: 'fire', mv: av.id };
+      }
       // EASY(spam): SPアタックは撃てるようになったら**すぐ撃つ**。ただし
       // 2本持っていても**消費の軽いわざしか使わない**(入門向けの相手)。
       // 「反応がノーマルアタック1発ぶんおくれる」案は不採用(2026-08-20タダシさん指示。
@@ -8882,6 +8925,9 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 対面の途中の質問(SPを撃った直後・デバフを受けた直後)は、その瞬間の状態で下読みする。
       // これがあるので「SPで削ってから交代すれば裏が勝てる」という判断が成り立つ
       const ov = nowOv || {};
+      // **投げようとしたSPは引っ込められない**: ユーザーの交代に合わせ返さず、残って撃つ。
+      // これが無いと、ユーザーが交代した瞬間にあいてが必ず逃げるので交代受けが成立しない
+      if (p.seq === 0 && !p.w && aiThrown(ctx, p.st1 ? p.st1.en : ctx.enAt[1])) return { a: 'stay' };
       // 受けたデバフの下げ消し交代(w=1・2026-08-18タダシさん指示):
       // それなりに有利ならそのまま戦い、不利かどっちもどっちなら交代でリセット。
       // ただし勝てる控えがいなければ残って戦う
@@ -10045,7 +10091,7 @@ function gbRender(body, bt, picks, foes) {
     if (target > scrollY && target - scrollY < innerHeight * 1.5)
       scrollTo({ top: target, behavior: !fresh2 && RBV.speed === 1 ? 'smooth' : 'auto' });
   };
-  const stopTimer = () => { clearInterval(RBV.timer); RBV.timer = null; };
+  const stopTimer = () => { clearInterval(RBV.timer); clearTimeout(RBV.timer); RBV.timer = null; };
   const ended = () => RBV.cur >= stop && !bt.pending;
   const setPlayBtn = () => {
     const b = hud.querySelector('.hplay');
@@ -10100,6 +10146,7 @@ function gbRender(body, bt, picks, foes) {
         if (b.dataset.i === 'reset') delete RB.ans[p.key];
         else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
         RBUI.open = null; RBV.playing = true;
+        RBV.hold = GB_ANS_HOLD;   // 答えた直後は少し間を置く(交代受けの構えを取る時間)
         run();
       };
     });
@@ -10157,7 +10204,17 @@ function gbRender(body, bt, picks, foes) {
     RBV.cur++;
     advance();
   }
-  const startTimer = () => { stopTimer(); if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+  // ⚠ 決断に答えた直後は**少し間を置いてから**進める(2026-09-07タダシさん指示)。
+  // すぐ動き出すと、あいてのSPに合わせて交代する(交代受け)構えが取れない。
+  // 速さの設定(×2/×4)で割るので、急ぎたい人は従来どおり速く見られる
+  const startTimer = () => {
+    stopTimer(); if (!onScreen()) return;
+    const wait = RBV.hold ? Math.round(RBV.hold / (RBV.speed || 1)) : 0;
+    RBV.hold = 0;
+    const go = () => { if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+    if (wait) { setPlayBtn(); RBV.timer = setTimeout(() => { RBV.timer = null; go(); }, wait); }
+    else go();
+  };
 
   // ---- 操作の配線 ----
   const only = body.querySelector('.rbonly');
