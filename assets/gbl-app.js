@@ -7860,18 +7860,10 @@ function gbChoices(p, ctx) {
         label: '即打ち',
         tip: need ? `ゲージが足りないので、${fm.n}をあと${need}発打って、たまり次第すぐ${m.n}を撃ちます`
                   : `タイミングを待たず、ここですぐ${m.n}を撃ちます` });
-      // 「交代受けを防ぐ」(2026-09-07タダシさん指示・HARDのときだけ・そのわざ専用):
-      // HARDは**SPが発動するターンが自分のノーマルアタックの切れ目なら交代受けを差し込む**ので、
-      // **切れ目から外したターンに当てる**。＋N＝そのためにはさむノーマルアタックの数。
-      // 外しようがない組み合わせ(相手が0.5秒わざ・同じターン数など)では出さない
-      const pvN = p.pivotNs ? p.pivotNs[id] : null;
-      if (pvN) {
-        const ff = D.moves[ctx.fast[1]];
-        list.push({ a: 'fire', mv: id, after: pvN, grp: id, cls: 'safe',
-          label: `交代受けを防ぐ<i class="need">＋${pvN}</i>`,
-          tip: `${ff ? ff.n : '相手のノーマルアタック'}が動いている最中に${m.n}が当たるように、` +
-            `ノーマルアタックをあと${pvN}発はさんでから撃ちます（交代受けを防げます）` });
-      }
+      // ⚠ 「交代受けを防ぐ ＋N」ボタンは**廃止**(2026-09-07タダシさん指示)。
+      //   交代受けが成立するのは**両者のノーマルアタックのターン数が同じで周期がそろっているとき**だけ、
+      //   と決めたので、**ノーマルアタックを1発はさんでも周期は同じまま＝ずらせない**。
+      //   実戦の防ぎ方は「1ターン何も打たずに待ってから撃つ」だが、それはエンジンで表せない
     });
     // 「撃たない」が正解の場面(noSp)は点灯させておすすめ表示(2026-08-20タダシさん指示。
     // ノーマルアタックだけで倒しきれて相手のSPも飛んでこない=撃つのはもったいない)
@@ -8006,6 +7998,11 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 追っている側の基本は**対面を維持したい**なので、五分の対面でも安定して突破できる控えがいるなら
   // 出していく(勝ち負けがはっきりしない対面に付き合って主導権を手放さない)
   let chase = false;
+  // ⚠ 両者のノーマルアタックの**周期がそろっているか**(2026-09-07タダシさん指示)。
+  //   交代受けが成立するのは「同じターン数のわざどうし」かつ「周期がそろっている」ときだけ。
+  //   **手動交代(クイックスワップ)は0.5秒(1ターン)のラグが出るのでズレる**（片方だけ交代したとき）。
+  //   開幕と、倒されて出し直した対面は、両者が打ち始めからそろう
+  let aligned = true;
   // **直前に自分から引っ込んだユーザーのポケモン**(2026-08-20タダシさん指示・「答えの温存」に使う)。
   // 交代で下がった=倒されていない=あとで必ず戻ってくる相手
   let went0 = null;
@@ -8120,8 +8117,13 @@ function gbPlay(picks, foes, ans, stepwise) {
     if (!ai.omni || to == null) return null;   // 交代受けはHARDだけ
     const tl = ctx.tlPred || ctx.tl;
     if (!tl) return null;
-    const fm = D.moves[ctx.fast[1]];
-    const tnMe = fm && fm.tn ? fm.tn : 1;
+    const fm = D.moves[ctx.fast[1]], fm0 = D.moves[ctx.fast[0]];
+    const tnMe = fm && fm.tn ? fm.tn : 1, tnYou = fm0 && fm0.tn ? fm0.tn : 1;
+    // ⚠ 交代受けを狙えるのは**両者のノーマルアタックのターン数が同じ**で、
+    //   かつ**周期がそろっている**ときだけ(2026-09-07タダシさん指示)。
+    //   ターン数が違ったり、手動交代の0.5秒のラグでズレていると、
+    //   相手がいつ撃つのかを読み切れない＝狙って合わせられない
+    if (tnMe !== tnYou || !ctx.aligned) return null;
     // ユーザーのSPがこの先いつ発動するか(まだ答えていない決断は「おまかせ」で回した予測)
     const hit = tl.find(t => t.tn > p.tn && t.ev[0].some(e => e.full !== undefined));
     if (!hit) return null;
@@ -8583,30 +8585,13 @@ function gbPlay(picks, foes, ans, stepwise) {
     shNow[1] = p.st1 && p.st1.sh != null ? p.st1.sh : null;
     let a;
     try { a = aiAnswerAt(p, ctx); } finally { shNow[0] = shNow[1] = null; }
-    return aiPivotCare(p, ctx, a);
+    return a;
   };
-  // ---- 交代受けを警戒して、撃つタイミングを1発ずらす(たまに・2026-09-07タダシさん指示) ----
-  // ユーザーは**あいてのSPが発動するターンに交代**すると、その一撃を控えに受けさせられる(交代受け)。
-  // 差し込めるのは**ユーザーのノーマルアタックの切れ目**だけなので、あいてが1発ずらせば外せる。
-  // **でも毎回きっちり外すと「絶対に引っかからないコンピュータ」**になって実戦っぽくないので、
-  // **バトルごとの癖(RB.rseed)で警戒する率を決めて、たまにだけ外す**。
-  // **HARDだけの動き**(NORMAL・EASYは警戒しない＝いつでも引っかかる)。
-  // すでに待っている場面(p.w>0)では考えない(堂々巡り防止)
-  const aiPivotCare = (p, ctx, a) => {
-    // **HARDだけ**(2026-09-07タダシさん指示)。NORMAL以下は警戒しない＝いつでも引っかかる
-    if (!a || !ai.omni || p.kind !== 'sp' || p.w || !ctx.swTo[0].length || !ctx.spHit) return a;
-    if (a.a !== 'fire' && a.a !== 'opt' && a.a !== 'auto' && a.a !== 'bluff') return a;
-    const fm0 = D.moves[ctx.fast[0]], fm1 = D.moves[ctx.fast[1]];
-    const tn0 = fm0 && fm0.tn ? fm0.tn : 1, tn1 = fm1 && fm1.tn ? fm1.tn : 1;
-    if (tn0 < 2) return a;                       // ユーザーが0.5秒わざ＝どのターンも切れ目＝外せない
-    const hit = ctx.spHit(p, a);                 // その答えで撃つと、当たるのは何ターン目か
-    if (hit == null || hit % tn0 !== 0) return a;   // もう切れ目から外れている
-    if ((hit + tn1) % tn0 === 0) return a;       // 1発ずらしても外せない組み合わせ
-    // 警戒度は0〜3(バトルごとの癖)。**0なら一度も警戒しない**＝そのバトルはよく決まる相手になる
-    const care = gbCoin('pvcare:' + RB.rseed) % 4;
-    const roll = gbCoin('pvdodge:' + RB.rseed + ':' + ctx.li + ':' + p.seq + ':' + p.tn) % 4;
-    return roll < care ? { a: 'wait', n: 1 } : a;
-  };
+  // ⚠ 「交代受けを警戒して1発ずらす」(旧 aiPivotCare)は**廃止**(2026-09-07タダシさん指示)。
+  //   交代受けが成立するのは**両者のノーマルアタックのターン数が同じで、周期がそろっているとき**だけ、
+  //   と決めたので、**ノーマルアタックを1発はさんでも周期は同じまま＝ずらせない**（算数の帰結）。
+  //   実戦で外す方法は「1ターン何も打たずに待ってから撃つ」だが、それはエンジンで表せないため
+  //   **HARDならではの強さとして残す**(既存の決めごとどおり)。ユーザー側の「交代受けを防ぐ」ボタンも同じ理由で廃止
   // ---- 投げようとしたSPは引っ込められない(2026-09-07タダシさん指摘で追加) ----
   // ユーザーが**自分から交代した直後**(ctx.chase)に、あいてが毎回きっちり合わせ返して交代すると、
   // **交代受け(ユーザーがSPの発動に合わせて交代する)が一度も成立しない**(実測で成功率0%だった)。
@@ -9159,6 +9144,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     // (2026-09-07タダシさん指示。交代後の名前を出すと、直後の「◯◯に交代した！」と食い違う)
     [0, 1].forEach(sd => { if (leadTo[sd] != null) { leadFrom[sd] = ros[sd][cur[sd]].name; doLead(sd, leadTo[sd], !bothLead); } });
     chase = leadTo[0] != null && leadTo[1] == null;   // ユーザーだけが逃げた＝AIは追っている側
+    aligned = bothLead;   // 片方だけ開幕交代したらノーマルアタックの周期がズレる
     if (!bothLead) {
       // 交代しなかった側は、**1秒たってから**「交代する？」を選べる(打ちかけのわざが終わり次第)
       const rs = leadTo[0] != null ? 1 : 0;
@@ -9186,6 +9172,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       maxHp: [PvpEngine.buildStats(D, P0.base).hp, PvpEngine.buildStats(D, P1.base).hp],
       swTo: [benches(0), benches(1)], newIn: newIn.slice(), koIn: koIn.slice(), keepLead,
       chase,                      // 追っている側か(ユーザーが自分から交代した直後)
+      aligned,                    // 両者のノーマルアタックの周期がそろっているか(交代受けの成立条件)
       react: li === 0 ? react : null,   // 開幕に片方だけ交代したとき、もう片方が反応できる場面
       enAt: [enOf(0), enOf(1)],   // 対面開始時のゲージ(「撃ってから交代」の判断に使う)
       bAt: [0, 1].map(sd => {     // 対面開始時の能力変化(受けたデバフの追跡の起点)
@@ -9233,40 +9220,6 @@ function gbPlay(picks, foes, ans, stepwise) {
       (ctx.spList[0] || []).forEach(id => { m[id] = optNOf(p, id); });
       return m;
     };
-    // 「交代受けを防ぐ」ボタン用(HARDだけ・2026-09-07タダシさん指示):
-    // HARDは**SPが発動するターンが自分のノーマルアタックの切れ目なら交代受けを差し込んでくる**。
-    // それを外すには、あと何発ノーマルアタックをはさんで撃てばよいかを、わざごとに数える。
-    // **相手のノーマルアタックが自分のわざのターン数を割り切るときは、どうやっても外せない**
-    // (0.5秒わざ・同じターン数などが典型)。そのときは null＝ボタンを出さない
-    const pivotNOf = (p, mvId) => {
-      if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard' || !ctx.swTo[1].length) return null;
-      const ffm = D.moves[ctx.fast[1]];
-      const tnFoe = ffm && ffm.tn ? ffm.tn : 1;
-      if (tnFoe < 2) return null;   // 0.5秒わざはどのターンも切れ目＝外しようがない
-      const d = dec[0], len = d.shots.length, save = d.shots[p.seq];
-      const hitTn = n => {
-        d.shots[p.seq] = { wait: d.wait + n, mv: mvId || null };
-        const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
-        const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
-          { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
-        const t = rbTurns(r).find(x => x.tn >= p.tn && x.ev[0].some(e => e.full !== undefined));
-        return t ? t.tn : null;
-      };
-      let out = null;
-      for (let n = 0; n <= 4; n++) {
-        const x = hitTn(n);
-        if (x == null) break;
-        if (x % tnFoe !== 0) { out = n || null; break; }   // n=0で外せているならボタンは要らない
-      }
-      if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
-      return out;
-    };
-    const pivotNsOf = p => {
-      if (p.kind !== 'sp' || p.side !== 0 || MK.ai !== 'hard') return null;
-      const m = {};
-      (ctx.spList[0] || []).forEach(id => { m[id] = pivotNOf(p, id); });
-      return m;
-    };
     // 「撃たない」が正解の場面か(2026-08-20タダシさん指示):
     // この発から先SPを撃たなくても**ノーマルアタックだけで倒しきれて**、相手のSPアタックも
     // **飛んでこない**なら、撃つのはもったいない(ふつうはやらない)。ゲージは次の対面へ持ち越す。
@@ -9292,25 +9245,6 @@ function gbPlay(picks, foes, ans, stepwise) {
       return true;
     };
     ctx.finishNoSp = finishNoSp;   // あいてのAI(aiAnswer)からも同じ判断を使う
-    // 交代受けの警戒(aiPivotCare)用: その答えで撃つと**SPが当たるのは何ターン目か**を1回だけシミュして数える
-    ctx.spHit = (p, a) => {
-      const sd = p.side, d = dec[sd], len = d.shots.length, save = d.shots[p.seq], saveW = d.wait;
-      if (a.a === 'opt' || a.a === 'auto') d.shots[p.seq] = { wait: 'opt', after: d.wait, mv: a.mv || null };
-      else if (a.a === 'fire') d.shots[p.seq] = { wait: d.wait + (a.after || 0), mv: a.mv };
-      else if (a.a === 'bluff') d.shots[p.seq] = { wait: 'en', until: a.until, mv: a.mv };
-      else return null;
-      const cutA = [0, 1].filter(x => dec[x].swapTo != null).map(x => dec[x].swapAt);
-      const r = PvpEngine.simulate(D, legCfg(0), legCfg(1),
-        { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 });
-      if (save !== undefined) d.shots[p.seq] = save; else d.shots.length = len;
-      d.wait = saveW;
-      let n = 0, out = null;
-      for (const t of rbTurns(r)) {
-        for (const e of t.ev[sd]) if (e.full !== undefined) { if (n === p.seq) out = t.tn; n++; }
-        if (out != null) break;
-      }
-      return out;
-    };
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す。1回のシミュは0.02ms未満)
     for (let guard = 0; guard < 90; guard++) {
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
@@ -9361,7 +9295,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
         pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p),
-          pivotNs: pivotNsOf(p), ctx };
+          ctx };
         pending.opts = gbChoices(pending, ctx);
         break;
       }
@@ -9389,7 +9323,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
     const points = log.map(p => {
       const q = { ...p, gt: base + p.tn, optNs: optNsOf(p),
-        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), pivotNs: pivotNsOf(p), ctx };
+        noSp: p.kind === 'sp' && p.side === 0 && finishNoSp(p), ctx };
       q.opts = gbChoices(q, ctx);
       return q;
     });
@@ -9461,6 +9395,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     if (pending) break;
     // 手動交代の実行(両方同時なら、お互いの打ちかけの1発は無しにする)
     chase = swapped[0] && !swapped[1];   // ユーザーだけが逃げた → AIは追っている側
+    aligned = swapped[0] === swapped[1];   // 片方だけ交代した対面はズレる(両方・どちらもなしならそろう)
     const both = swapped[0] && swapped[1];
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
