@@ -2948,8 +2948,7 @@ function ptWorkHtml(res, names, pos) {
     ptSecHead('work', '⚔️', '得意な場面') + `<div class="ptcbody">` +
     (ptFormOf(pos) ? `<div class="ptform"><b>${ptFormOf(pos)}</b><span>${PT_FORMS[ptFormOf(pos)].d}</span></div>
       <p class="ptformx expl">3匹の<b>役割の並び</b>を見たものです。たとえば<b>ABB</b>は
-      「トリデプス＋ウツボット＋くさ枠」のように、初手で場を作って交代し、裏の2匹で押し切る形。
-      相手はくさに強い駒を先に使わされるので、最後まで押し切れることがあります。
+      初手で場を作って交代し、役割のそろった裏の2匹で押し切る形。
       <b>どの型が正解ということはありません</b>——狙ったとおりに組めているかの目安です。</p>` : '') +
     `<div class="ptgsub"><b class="e">シールドが残っている序盤</b>と<b class="l">切れた終盤</b>で` +
     // 枚数は列見出しの「🛡2-2 / 🛡0-0」が示すので、ここには**役割の基準**を書く
