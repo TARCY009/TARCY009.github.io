@@ -5048,6 +5048,15 @@ function fxOne(f) {
       <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span></div>
       <div class="tx"><b class="wh">${f.side ? 'あいて' : 'じぶん'}</b>は ${f.name || ''}${tyIco(f.name)} に交代した！</div></div>`, 1700);
   }
+  // 交代受けが決まった瞬間(2026-09-07タダシさん指示)。SPほど長くない**短い一撃の演出**で、
+  // 「よし決まった！」「うわ、決められた！」の気持ちが出るようにする。
+  // side = 交代受けを決めた側(じぶん=水色・あいて=金)
+  if (f.k === 'pivot') {
+    return fxShow('fxpivot ' + sideCls, `<div class="pvwrap">
+      <i class="ring"></i><i class="pvspin">${SWAPMK}</i>
+      <div class="tx">${f.side ? '交代受けされた！' : '交代受け成功！'}${
+        f.name ? `<span class="who">${f.name}${tyIco(f.name)} が受けた</span>` : ''}</div></div>`, 900);
+  }
   if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
     const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';
     const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
@@ -5659,6 +5668,10 @@ function rbRender(body, bt, picks, foes, extra) {
     return out;
   };
   const moreThisTurn = () => ptr < els.length && +els[ptr].dataset.gt <= RBV.cur;
+  // HUDは**いま出したいちばん新しい行の対面(li)**に合わせる。対面の切れ目は同じ通しターンを
+  // 共有するので、li を渡さないと「SPが当たった行を出しているのに、HUDだけ次の対面」になり、
+  // **HPが減る演出が飛ぶ**(2026-09-07タダシさん報告)
+  const curLi = () => fxLi(lastEl);
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
@@ -5777,7 +5790,7 @@ function rbRender(body, bt, picks, foes, extra) {
       // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
       fxRun(fxEls, () => {
         if (!onScreen()) return;
-        updateHud(RBV.cur);
+        updateHud(RBV.cur, curLi());
         if (moreThisTurn()) { advance(); return; }   // 同じターンの残りの行を続ける
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
@@ -5785,7 +5798,7 @@ function rbRender(body, bt, picks, foes, extra) {
       }, el => updateHud(RBV.cur, fxLi(el)));
       return;
     }
-    updateHud(RBV.cur);
+    updateHud(RBV.cur, curLi());
     if (RBV.cur >= stop) atStop();
     // ⚠ 演出が無いまま行を出し切ったときは、タイマーが止まっていれば動かし直す
     //   (スタート直後・決断に答えた直後は advance から入るので、これが無いと再生が始まらない)
@@ -5985,7 +5998,7 @@ function rbRender(body, bt, picks, foes, extra) {
   if (!stepping) autoScroll();
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
-  const upd = el => updateHud(RBV.cur, fxLi(el));
+  const upd = el => updateHud(RBV.cur, el ? fxLi(el) : curLi());
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
   else if (stepping) {
     // ⚠ 作り直したHUDは**すぐ塗る**(空のままだとCSSの初期値=HPバー100%が見えてしまう)。
@@ -6539,6 +6552,8 @@ const GB_BENCH_HP = 0.6;
 const GB_LOCK_MIN = 40;
 // 交代受け(HARDだけ)で、交代を待ってよいターン数の上限。読みが外れたときに待ち続けないための保険
 const GB_PIVOT_WAIT = 12;
+// 交代したあと、この何ターン以内にSPを受けたら「交代受けが決まった」として演出を出すか
+const GB_PIVOT_SHOW = 6;
 // 「起点にできる」とみなすSPアタックの痛さの上限(候補の残りHPの40%未満なら痛手にならない。
 // 2026-08-18タダシさん指示で30%→40%)
 const GB_FARM_HURT = 0.40;
@@ -9246,6 +9261,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       swOk: swOk[0], fswOk: swOk[1],   // 交代解禁の通しターン(HUDの交代タイマー用・両側)
       meDown: down[0], foeDown: down[1],
       swapped0: swapped[0], swapped1: swapped[1],
+      // あいての交代が**交代受けを狙ったもの**か(演出はこれを狙ったときだけ出す)
+      pivot1: !!(swapped[1] && dec[1].pivotX != null),
       swapTo0: swapped[0] ? dec[0].swapTo : null, swapTo1: swapped[1] ? dec[1].swapTo : null,
       pol: P0.pol, foePol: P1.pol, li, points,
       leadPts: li === 0 ? leadPts : [null, null],
@@ -9531,6 +9548,11 @@ function gbRender(body, bt, picks, foes) {
     //   sp・swap待ち: 質問ターンの出来事はすべて確定なので全部見せる
     //   sh待ち: 質問対象のあいてのSPから先を隠す
     const pend = leg.pending && leg.pending.kind !== 'next' ? leg.pending : null;
+    // 交代受けが決まったか(2026-09-07タダシさん指示): 直前の対面を**手動交代**で終えた側は、
+    // この対面の頭で相手のSPを控えで受けたら「交代受け成立」。pvSide = 決めた側(null=なし)
+    // じぶん側は「交代したら受けた」という結果で出す(自分で狙って押すものなので)。
+    // あいて側は**交代受けを狙った交代のときだけ**(ただ交代しただけで出すとうるさい)
+    let pvSide = pv ? (pv.swapped0 ? 0 : pv.pivot1 ? 1 : null) : null;
     rbTurns(res).forEach(t => {
       if (pend && t.tn > pend.tn) return;
       const gt = base + t.tn;
@@ -9593,7 +9615,14 @@ function gbRender(body, bt, picks, foes) {
         const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kFoe) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []);
         const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kMe) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []);
         if (!e0 && !e1) continue;
-        items.push({ gt, fx: fxOfRow(r), html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        // 交代受けが決まった瞬間の演出。SPのカットインのあとに短い演出を足す
+        let fxr = fxOfRow(r);
+        if (fxr && pvSide != null && t.tn <= GB_PIVOT_SHOW
+            && fxr.some(x => x.k === 'sp' && x.side === 1 - pvSide && !x.shd)) {
+          fxr = fxr.concat([{ k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName }]);
+          pvSide = null;
+        }
+        items.push({ gt, fx: fxr, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
       if (first) items.push({ gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` });
@@ -9879,6 +9908,10 @@ function gbRender(body, bt, picks, foes) {
     return out;
   };
   const moreThisTurn = () => ptr < els.length && +els[ptr].dataset.gt <= RBV.cur;
+  // HUDは**いま出したいちばん新しい行の対面(li)**に合わせる。対面の切れ目は同じ通しターンを
+  // 共有するので、li を渡さないと「SPが当たった行を出しているのに、HUDだけ次の対面」になり、
+  // **HPが減る演出が飛ぶ**(2026-09-07タダシさん報告)
+  const curLi = () => fxLi(lastEl);
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
@@ -9996,7 +10029,7 @@ function gbRender(body, bt, picks, foes) {
       // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
       fxRun(fxEls, () => {
         if (!onScreen()) return;
-        updateHud(RBV.cur);
+        updateHud(RBV.cur, curLi());
         if (moreThisTurn()) { advance(); return; }   // 同じターンの残りの行を続ける
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
@@ -10004,7 +10037,7 @@ function gbRender(body, bt, picks, foes) {
       }, el => updateHud(RBV.cur, fxLi(el)));
       return;
     }
-    updateHud(RBV.cur);
+    updateHud(RBV.cur, curLi());
     if (RBV.cur >= stop) atStop();
     // ⚠ 演出が無いまま行を出し切ったときは、タイマーが止まっていれば動かし直す
     //   (スタート直後・決断に答えた直後は advance から入るので、これが無いと再生が始まらない)
@@ -10218,7 +10251,7 @@ function gbRender(body, bt, picks, foes) {
   if (!stepping) autoScroll();
   // ⚠ HUDの更新は「隠れていた演出」のあとに回す（決断に答えた直後にHPだけ先に減ると、
   //    そのあとに流れるカットインと順番が逆になる・2026-09-07タダシさん報告）
-  const upd = el => updateHud(RBV.cur, fxLi(el));
+  const upd = el => updateHud(RBV.cur, el ? fxLi(el) : curLi());
   if (RBUI.open && RBUI.pts[RBUI.open]) { upd(); showWin(RBUI.pts[RBUI.open], true); }
   else if (stepping) {
     // ⚠ 作り直したHUDは**すぐ塗る**(空のままだとCSSの初期値=HPバー100%が見えてしまう)。
