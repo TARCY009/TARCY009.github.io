@@ -7970,6 +7970,7 @@ function gbAnsLabel(p, a) {
   // 「場に出した」と「交代した」を言葉で区別する(2026-08-30タダシさん指示・一瞬で見分けづらかったため)
   if (p.kind === 'swap' || p.kind === 'lead' || p.kind === 'msw') {
     if (a.a === 'stay') return 'このまま';
+    if (a.a === 'late') return '交代が間に合わなかった';   // SP発動のあとの入力は反映されない(実戦と同じ)
     return `${ros[a.to] ? shMark(ros[a.to].name) : ''}に交代した！`;
   }
   return a.a === 'order' ? '順番どおり' : (ros[a.to] ? `${shMark(ros[a.to].name)}をくりだした！` : '');
@@ -9368,19 +9369,36 @@ function gbPlay(picks, foes, ans, stepwise) {
       const mkey = Object.keys(ans).find(k => k.indexOf(li + ':0:msw:') === 0 && !handled.has(k));
       const mtn = mkey ? +mkey.split(':')[3] : -1;
       const p = pts.find(x => !handled.has(gbKey(li, x.side, x.kind, x.seq, x.w)));
-      if (mkey && (!p || mtn < p.tn)) {
+      // 同じターンの質問より先に交代を反映する(交代したターンのSPの質問を出さないため)
+      if (mkey && (!p || mtn <= p.tn)) {
         handled.add(mkey);
         const ma = ans[mkey];
         if (ma && ma.a === 'toq' && ctx.swTo[0].includes(ma.to) && dec[0].swapTo == null
             && mtn >= 1 && mtn <= res.turns && ctx.ck(mtn) >= ctx.swOk[0]) {
+          // ---- 遅い交代受けは通らない(2026-09-08タダシさん指示・実戦の再現) ----
+          // 押してから実際に交代が起きる(切れ目の)ターンまでの間に、あいてのSPアタックが発動してしまったら、
+          // 実戦ではその交代入力は反映されず、SPのあとはそのまま場に残ってノーマルアタックを打ち直す。
+          // 従来は「SPを受けてから交代」になっていた(失敗した交代受けが、ただの交代として通っていた)
+          const fm0 = D.moves[P0.pol.fast], tnMe0 = fm0 && fm0.tn ? fm0.tn : 1;
+          const win0 = ma.p != null ? Math.max(1, ma.p) : Math.max(1, mtn - tnMe0 + 1);
+          const late = ctx.tl.some(t => t.tn >= win0 && t.tn <= mtn && t.ev[1].some(e => e.full !== undefined));
+          if (late) {
+            log.push({ side: 0, kind: 'msw', seq: mtn, w: 0, tn: mtn, key: mkey, gt: base + mtn,
+              ans: { a: 'late', to: ma.to }, auto: false, late: true });
+            continue;   // 交代は起きない(クールタイムも消費しない)
+          }
           log.push({ side: 0, kind: 'msw', seq: mtn, w: 0, tn: mtn, key: mkey, gt: base + mtn, ans: ma, auto: false });
-          dec[0].swapTo = ma.to; dec[0].swapAt = mtn;
+          dec[0].swapTo = ma.to; dec[0].swapAt = mtn; dec[0].mswP = win0;
         }
         continue;
       }
       if (!p) break;
       p.key = gbKey(li, p.side, p.kind, p.seq, p.w);
       p.gt = base + p.tn;
+      // 交代を押したあと(押した瞬間〜実際に交代するターン)のじぶんのSPの質問は出さない(2026-09-08タダシさん指示)。
+      // 実戦では交代を押したらSPは撃てない。従来は同じターンにSPの選択もできてしまい、
+      // 交代受けを狙いながらSPも撃てる(ありえない)状態になっていた
+      if (p.side === 0 && p.kind === 'sp' && dec[0].mswP != null && p.tn >= dec[0].mswP) { handled.add(p.key); continue; }
       const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
         pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p),
@@ -9676,7 +9694,7 @@ function gbRender(body, bt, picks, foes) {
     const lf = leg.leadFrom || [];
     const vsMe = lf[0] || leg.meName, vsFoe = lf[1] || leg.foeName;
     // HUDの⇄ボタン(msw)で交代した対面は**リアルタイム**＝演出でタイムラインを止めない
-    const pvMsw = !!(pv && (pv.points || []).some(x => x.kind === 'msw'));
+    const pvMsw = !!(pv && (pv.points || []).some(x => x.kind === 'msw' && !x.late));
     const fxv = !pv ? [{ k: 'vs', me: vsMe, foe: vsFoe }]
       : [pv.meDown && { k: 'in', side: 0, name: leg.meName },
          pv.foeDown && { k: 'in', side: 1, name: leg.foeName },
@@ -10466,7 +10484,8 @@ function gbRender(body, bt, picks, foes) {
       if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li) || k2.indexOf(li + ':0:msw:') === 0)
         delete RB.ans[k2];
     });
-    RB.ans[key] = { a: 'toq', to };
+    // p=押した瞬間のターン(遅い交代受けの判定に使う。共有URLには載らないので無ければ切れ目から逆算する)
+    RB.ans[key] = { a: 'toq', to, p: pressed };
     RBUI.open = null;
     RBV.keepFx = true;   // 途中の操作なので、0ターン目でも演出はやり直さない
     run();               // 再生の状態(RBV.playing)はそのまま＝止めずに続く
