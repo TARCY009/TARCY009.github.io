@@ -1590,28 +1590,68 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .bltysel button{font-size:.72rem}
 .bltype .bltyg{max-width:560px}
 
-/* 交代受けが決まった瞬間(2026-09-07タダシさん指示)。SPほど長くない**短い一撃**の演出。
-   輪の色で じぶんが決めた=水色／あいてに決められた=金 を出し分ける
-   (⇄マーク自体は確定仕様の金の画像なので色を変えない) */
-.fxitem.fxpivot{--pc:#43e0ff}
-.fxitem.fxpivot.foe{--pc:#ffd54a}
-.fxpivot .pvwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px}
-.fxpivot .ring{position:absolute;top:28px;left:50%;width:78px;height:78px;margin:-39px 0 0 -39px;
-  border-radius:50%;border:3px solid var(--pc);opacity:0;animation:fxpvring var(--fxd) ease-out both}
-.fxpivot .pvspin{display:block;font-size:3.1rem;line-height:1;
+/* 交代受けが決まった瞬間(2026-09-07タダシさん指示・2026-09-08「もう少し大きく、見栄えよく」で作り直し)。
+   SPのカットインと同じ「横いっぱいの帯」に、回る⇄(輪と光の粒つき)＋大きな見出しを横に並べる。
+   色は じぶんが決めた=水色／あいてに決められた=金。⇄マーク自体は確定仕様の金の画像なので変えない。
+   ⚠ 見出しの塗り(background-clip:text)と filter は文字だけの .ttl に限定する(中に要素を入れない・iPhone対策の恒久ルール) */
+.fxitem.fxpivot{--pc:#43e0ff;--pc2:#0f8fb8;--pcd:rgba(67,224,255,.6)}
+.fxitem.fxpivot.foe{--pc:#ffd54a;--pc2:#c98a12;--pcd:rgba(255,213,74,.6)}
+.fxpivot .pvband{position:absolute;left:-12%;right:-12%;top:50%;height:156px;margin-top:-78px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:22px;
+  background:linear-gradient(100deg,transparent 0%,rgba(8,12,30,.9) 12%,rgba(10,16,38,.97) 50%,rgba(8,12,30,.9) 88%,transparent 100%);
+  box-shadow:0 0 40px rgba(0,0,0,.5);animation:fxpvband var(--fxd) ease both}
+.fxpivot.foe .pvband{animation-name:fxpvbandR}
+/* 上下の光る細い線 */
+.fxpivot .pvband::before,.fxpivot .pvband::after{content:'';position:absolute;left:8%;right:8%;height:3px;
+  background:linear-gradient(90deg,transparent,var(--pc) 22%,#fff 50%,var(--pc) 78%,transparent);
+  box-shadow:0 0 16px var(--pcd)}
+.fxpivot .pvband::before{top:0}.fxpivot .pvband::after{bottom:0}
+/* 帯を横切る光のすじ */
+.fxpivot .pvshine{position:absolute;top:0;bottom:0;left:-30%;width:26%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.26),transparent);animation:fxpvshine var(--fxd) ease-out both}
+/* 回る⇄と、広がる輪・光の粒 */
+.fxpivot .pvmk{position:relative;flex:0 0 auto;width:96px;height:96px;display:flex;align-items:center;justify-content:center}
+.fxpivot .pvspin{display:block;font-size:4.2rem;line-height:1;
+  filter:drop-shadow(0 0 14px var(--pcd)) drop-shadow(0 3px 3px rgba(0,0,0,.6));
   animation:fxpvspin var(--fxd) cubic-bezier(.2,.9,.25,1) both}
-.fxpivot .pvspin .swapmark{width:1em;height:1em}
-.fxpivot .tx{font-size:1.06rem;font-weight:900;color:#fff;letter-spacing:.04em;text-align:center;
-  text-shadow:0 2px 10px rgba(0,0,0,.75);animation:fxpvtx var(--fxd) ease-out both}
-.fxpivot .tx .wh{display:inline-block;margin-right:5px;padding:2px 7px;border-radius:6px;
-  font-size:.66rem;font-weight:900;color:#0d1730;background:var(--pc);vertical-align:2px}
-.fxpivot .tx .swapmark{width:.82em;height:.82em;vertical-align:-.1em}
-.fxpivot .tx .who{display:block;margin-top:4px;font-size:.74rem;font-weight:800;color:#dbe6ff}
-@keyframes fxpvring{0%{opacity:0;transform:scale(.3)}25%{opacity:.95}100%{opacity:0;transform:scale(2)}}
-@keyframes fxpvspin{0%{opacity:0;transform:scale(.4) rotate(-170deg)}
-  32%{opacity:1;transform:scale(1.16) rotate(0deg)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
-@keyframes fxpvtx{0%{opacity:0;transform:translateY(12px) scale(.88)}
-  30%{opacity:1;transform:translateY(0) scale(1.05)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.fxpivot .pvspin .swapmark{width:1em;height:1em;vertical-align:0}
+.fxpivot .ring{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;
+  border-radius:50%;border:3px solid var(--pc);opacity:0;animation:fxpvring var(--fxd) ease-out both}
+.fxpivot .ring.r2{border-width:2px;border-color:#fff;animation-delay:calc(var(--fxd)*.07)}
+.fxpivot .spark{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
+  background:#fff;box-shadow:0 0 10px var(--pc);opacity:0;animation:fxpvspark var(--fxd) ease-out both}
+.fxpivot .s1{--dx:-64px;--dy:-50px}.fxpivot .s2{--dx:66px;--dy:-44px}.fxpivot .s3{--dx:-78px;--dy:10px}
+.fxpivot .s4{--dx:78px;--dy:16px}.fxpivot .s5{--dx:-36px;--dy:64px}.fxpivot .s6{--dx:40px;--dy:62px}
+/* 見出し: 上が白・下がその側の色のグラデーション文字＋押し出し。下に「◯◯ が受けた」 */
+/* ⚠ 汎用の .fxitem .tx(丸いピル・後ろで定義)に詳細度で勝つため .fxitem.fxpivot で限定する */
+.fxitem.fxpivot .tx{background:none;border:0;box-shadow:none;padding:0;border-radius:0;white-space:nowrap;text-align:left;
+  animation:fxpvtx var(--fxd) cubic-bezier(.2,.9,.25,1) both}
+.fxpivot .tx .ttl{display:block;font-size:2.1rem;font-weight:900;font-style:italic;letter-spacing:.06em;line-height:1.1;
+  padding-right:.06em;
+  background-image:linear-gradient(180deg,#fff 0%,#fff 44%,var(--pc) 58%,var(--pc2) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.55)) drop-shadow(0 0 18px var(--pcd))}
+.fxpivot .tx .who{display:block;margin-top:7px;font-size:.86rem;font-weight:800;color:#e4ecff;letter-spacing:.03em;
+  text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.fxpivot .flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,var(--pcd),transparent 62%);
+  animation:fxpvflash var(--fxd) ease both}
+@keyframes fxpvband{0%{opacity:0;transform:translateX(-40%)}12%{opacity:1;transform:translateX(0)}80%{opacity:1;transform:translateX(2%)}100%{opacity:0;transform:translateX(16%)}}
+@keyframes fxpvbandR{0%{opacity:0;transform:translateX(40%)}12%{opacity:1;transform:translateX(0)}80%{opacity:1;transform:translateX(-2%)}100%{opacity:0;transform:translateX(-16%)}}
+@keyframes fxpvshine{0%,18%{left:-30%}62%,100%{left:110%}}
+@keyframes fxpvring{0%,10%{opacity:0;transform:scale(.3)}28%{opacity:.95}100%{opacity:0;transform:scale(2.3)}}
+@keyframes fxpvspin{0%{opacity:0;transform:scale(.3) rotate(-200deg)}
+  34%{opacity:1;transform:scale(1.18) rotate(0deg)}50%{transform:scale(1) rotate(0deg)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
+@keyframes fxpvspark{0%,20%{opacity:0;transform:none}30%{opacity:1}78%{opacity:0;transform:translate(var(--dx),var(--dy))}100%{opacity:0}}
+@keyframes fxpvtx{0%,8%{opacity:0;transform:translateX(-28px) scale(.86)}30%{opacity:1;transform:translateX(0) scale(1.08)}44%{transform:scale(1)}100%{opacity:1;transform:none}}
+@keyframes fxpvflash{0%{opacity:0}14%{opacity:.9}40%{opacity:0}100%{opacity:0}}
+@media (max-width:540px){
+  .fxpivot .pvband{height:124px;margin-top:-62px;gap:12px}
+  .fxpivot .pvmk{width:70px;height:70px}
+  .fxpivot .pvspin{font-size:2.9rem}
+  .fxpivot .ring{width:70px;height:70px;margin:-35px 0 0 -35px}
+  .fxpivot .tx .ttl{font-size:1.55rem;letter-spacing:.04em}
+  .fxpivot .tx .who{font-size:.78rem}
+}
 
 /* ---- 模擬戦の演出(FX・2026-08-30タダシさん指示「ゲームっぽく動きのある演出を」) ----
    くりだした/交代/SP発動/たおれた/フォルムチェンジのカットイン。見た目だけの層(#fxlayer)で、
@@ -2270,6 +2310,11 @@ button.sdchip.on .tbadge{filter:none}
 /* ⚠ 静止表示にするとき、**姿勢(傾き・位置)は保つ**(2026-09-07タダシさん報告)。
    SPのカットインは斜めに流れる演出で、transform:none にすると水平に戻って「カクッと動く」。
    キーフレームの80%(=静止に切り替える位置)と同じ姿勢に固定する */
+/* 交代受けの帯: 帯・⇄・見出しは出したまま(80%の姿勢)、輪・粒・光のすじは消す */
+.fxitem.fxhold .pvshine{opacity:0 !important}
+.fxitem.fxhold .pvband,.fxitem.fxhold .pvmk,.fxitem.fxhold .pvspin{opacity:1 !important;transform:none !important}
+.fxitem.fxhold.fxpivot .pvband{transform:translateX(2%) !important}
+.fxitem.fxhold.fxpivot.foe .pvband{transform:translateX(-2%) !important}
 .fxitem.fxhold.fxsp .band{transform:rotate(var(--rot)) translateX(6%) !important}
 .fxitem.fxhold.fxsp.foe .band{transform:rotate(var(--rot)) translateX(-6%) !important}
 .fxitem.fxhold.fxsp .mvn{transform:skewX(-8deg) !important}

@@ -5067,11 +5067,14 @@ function fxOne(f) {
   // 交代受けが決まった瞬間(2026-09-07タダシさん指示)。SPほど長くない**短い一撃の演出**で、
   // 「よし決まった！」「うわ、決められた！」の気持ちが出るようにする。
   // side = 交代受けを決めた側(じぶん=水色・あいて=金)
+  // 2026-09-08タダシさん指示「もう少し大きく、見栄えよく」→ SPと同じ横いっぱいの帯に、回る⇄＋大きな見出し
   if (f.k === 'pivot') {
-    return fxShow('fxpivot ' + sideCls, `<div class="pvwrap">
-      <i class="ring"></i><i class="pvspin">${SWAPMK}</i>
-      <div class="tx">${f.side ? '交代受けされた！' : '交代受け成功！'}${
-        f.name ? `<span class="who">${f.name}${tyIco(f.name)} が受けた</span>` : ''}</div></div>`, 900);
+    return fxShow('fxpivot ' + sideCls, `<div class="pvband"><i class="pvshine"></i>
+      <div class="pvmk"><i class="ring"></i><i class="ring r2"></i><i class="pvspin">${SWAPMK}</i>
+        <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
+        <span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span></div>
+      <div class="tx"><b class="ttl">${f.side ? '交代受けされた！' : '交代受け成功！'}</b>${
+        f.name ? `<span class="who">${f.name}${tyIco(f.name)} が受けた</span>` : ''}</div></div><i class="flash"></i>`, 1150);
   }
   if (f.k === 'sp') {   // SP発動: タイプ色の斜め帯のカットイン＋着弾の揺れ
     const ja = D.typeJa[MOVE_TYPE[f.mv]] || '';
