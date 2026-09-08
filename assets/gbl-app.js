@@ -9713,6 +9713,11 @@ function runMockBuild() {
   const body = document.querySelector('#mock .gbbody');
   syncGbFoeSlots();   // リーグが変わるとあいての実数値・CPも変わるので毎回そろえる
   renderSd();         // 見せ合いルールの入力・選出パネル(OFFのときは切替タブをそろえるだけ)
+  // 操作(選択式／リアルタイム)の点灯は**枠が空でも**そろえる(2026-09-08タダシさん報告「リアルタイムが押せない」:
+  // 枠が空だと下の早期リターンで描き直しが終わり、押しても点灯が変わらなかった)。
+  // リアルタイムはバトルが流れている中で押す形なので、「結果だけ見る」「オートバトル」「速さ」は使えない
+  if (rtOn()) { RB.step = true; RB.goal = null; RBV.speed = 1; }
+  document.querySelectorAll('#gbrt button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!MK.rt));
   updateUrl();
   clearInterval(RBV.timer); RBV.timer = null;
   let picks, foes, sig;
@@ -9765,9 +9770,6 @@ function runMockBuild() {
     RB.rseed = RB.rseedLock ? RB.rseed : (Math.random() * 1e9) | 0;
     RB.rseedLock = false;
   }
-  // リアルタイム操作はバトルが流れている中で押す形なので、「結果だけ見る」「オートバトル」「速さ」は使えない
-  if (rtOn()) { RB.step = true; RB.goal = null; RBV.speed = 1; }
-  document.querySelectorAll('#gbrt button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!MK.rt));
   const bt = gbPlay(picks, foes, RB.ans, RB.step);
   gbRender(body, bt, picks, foes);
 }
