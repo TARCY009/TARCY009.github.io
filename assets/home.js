@@ -77,6 +77,13 @@
       h.addEventListener('pointermove', function (e) { moved(e.clientX, e.clientY); });
       ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { h.addEventListener(ev, clear); });
     }
+    // 長押しが効かない端末向け: **素早く7回タップ**でも切り替える(タップならコピーの吹き出しは出ない・2026-09-08)
+    var taps = 0, tapAt = 0;
+    h.addEventListener('click', function () {
+      var now = Date.now();
+      taps = (now - tapAt < 700) ? taps + 1 : 1; tapAt = now;
+      if (taps >= 7) { taps = 0; setDev(!dev); }
+    });
     h.addEventListener('selectstart', function (e) { e.preventDefault(); });   // 長押しで文字を選択させない
     h.addEventListener('contextmenu', function (e) { e.preventDefault(); });   // 長押しのメニュー(コピー)を出さない
   }

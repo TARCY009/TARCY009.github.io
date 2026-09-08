@@ -531,6 +531,9 @@ GO＋ナビのまとまりを縦の中央に置く。実行: `python3 scratchpad
 （同日タダシさん報告「そのURLで開いても出てこない」）。**アプリの中でページのタイトル(h1)を1.5秒長押し**すると
 開発者モードがON/OFFになり、画面下に「開発者モード ON」の知らせが出る（`home.js` の `armLongPress`／`setDev`・
 h1は `user-select:none`＋`touch-callout:none` で長押しの選択メニューを出さない）。
+**⚠ トップページ(`index.html`)には home.js／home.css が読み込まれていなかった**（2026-09-08タダシさんのスクショで発覚: タイトルの長押しが
+「コピー」になるだけ）。🏠は出さないが、開発者モードと↻のために両方読み込む（explain の直後・feedback の前）。
+**素早く7回タップ**でも切り替えられる（タップならコピーの吹き出しが出ないので、長押しが効かない端末の保険）。
 **⚠ iPhoneでは長押しが「コピー」の吹き出しになって計測が途中で切れた**（同日タダシさん報告）: 計測は `touchstart/touchmove/touchend` で持ち
 （`pointercancel` では切らない）、`selectstart`／`contextmenu` を preventDefault、CSSは h1 の**子要素まで** `user-select:none !important`。`?dev=1` の合図も残してある（Android・PC用）。
 **⚠ `dev=1` は `location.search` だけで見ない**（feedback.js の `?fb=1` と同じ落とし穴: GBL系が先に住所を書き直す）。
