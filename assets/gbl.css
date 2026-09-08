@@ -1632,7 +1632,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    ⚠ 見出しの塗り(background-clip:text)と filter は文字だけの .ttl に限定する(中に要素を入れない・iPhone対策の恒久ルール) */
 .fxitem.fxpivot{--pc:#43e0ff;--pc2:#0f8fb8;--pcd:rgba(67,224,255,.6)}
 .fxitem.fxpivot.foe{--pc:#ffd54a;--pc2:#c98a12;--pcd:rgba(255,213,74,.6)}
-.fxpivot .pvband{position:absolute;left:-12%;right:-12%;top:50%;height:156px;margin-top:-78px;overflow:hidden;
+.fxpivot .pvband{position:absolute;left:-12%;right:-12%;top:calc(50% - var(--fxup));height:156px;margin-top:-78px;overflow:hidden;
   display:flex;align-items:center;justify-content:center;gap:22px;
   background:linear-gradient(100deg,transparent 0%,rgba(8,12,30,.9) 12%,rgba(10,16,38,.97) 50%,rgba(8,12,30,.9) 88%,transparent 100%);
   box-shadow:0 0 40px rgba(0,0,0,.5);animation:fxpvband var(--fxd) ease both}
@@ -1698,7 +1698,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    くりだした/交代/SP発動/たおれた/フォルムチェンジのカットイン。見た目だけの層(#fxlayer)で、
    バトルの計算には影響しない。時間は--fxd(再生速度で短縮)で全アニメを同期させる */
 #fxlayer{position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden}
-.fxitem{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+/* ⚠ 演出は画面の中央より**上**に出す(2026-09-08タダシさん指示)。中央だとHUDのすぐ上＝最新のタイムラインに
+   重なって、いま何が起きているかが読めなくなる。--fxup のぶん上へ寄せる(下に余白を取って中央を上げる) */
+.fxitem{--fxup:17vh;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:calc(var(--fxup) * 2)}
 /* SPの着弾でタイムラインとHUDを揺らす */
 .fxquake{animation:fxq .68s ease}
 @keyframes fxq{0%,100%{transform:none}15%{transform:translate(3px,-4px)}30%{transform:translate(-4px,3px)}45%{transform:translate(3px,2px)}60%{transform:translate(-2px,-2px)}75%{transform:translate(1px,1px)}}
@@ -1780,7 +1782,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .fxswapfx .tx{animation-name:fxswtx}
 @keyframes fxswtx{0%,52%{opacity:0;transform:translateY(14px)}66%{opacity:1;transform:none}90%{opacity:1}100%{opacity:0}}
 /* SP発動: タイプ色の斜め帯のカットイン＋閃光 */
-.fxsp .band{position:absolute;left:-14%;right:-14%;top:50%;height:82px;margin-top:-41px;
+.fxsp .band{position:absolute;left:-14%;right:-14%;top:calc(50% - var(--fxup));height:82px;margin-top:-41px;
   display:flex;align-items:center;justify-content:center;--rot:4deg;
   background:linear-gradient(100deg,transparent 0%,var(--fc1) 16%,var(--fc2) 50%,var(--fc1) 84%,transparent 100%);
   box-shadow:0 0 46px var(--fc2);animation:fxband var(--fxd) ease both}

@@ -6583,6 +6583,22 @@ try { if (localStorage.getItem('gbl_mock_rt') === '1') MK.rt = true; } catch (e)
 const saveMkRt = () => { try { localStorage.setItem('gbl_mock_rt', MK.rt ? '1' : '0'); } catch (e) {} };
 const rtOn = () => !!MK.rt && mode === 'mock';
 const GB_RT_WAIT = 10000;   // リアルタイムのシールドの猶予(ミリ秒・タダシさん指定10秒)
+// ---- 連打で画面が拡大しない(2026-09-08タダシさん報告・2段構え) ----
+// CSSの touch-action:manipulation だけでは iPhone で「2回タップ＝拡大」が残った。
+// バトル中の全画面(.bfull)では、**前のタップから350ms以内の2回目のタップ**を JS で打ち消す
+// (拡大の判定は2回目のタップで起きる)。ボタンの上なら押した扱いは残す(click を自分で起こす)
+(function () {
+  let last = 0;
+  document.addEventListener('touchend', e => {
+    if (!document.querySelector('.bfull')) return;
+    const now = Date.now(), dbl = now - last <= 350;
+    last = now;
+    if (!dbl || !e.cancelable) return;
+    e.preventDefault();
+    const b = e.target && e.target.closest ? e.target.closest('button') : null;
+    if (b && !b.disabled) b.click();
+  }, { passive: false });
+})();
 // 倒れたあと次のポケモンを選ぶ猶予＝実戦と同じ12秒(ゲーム内公開データ changePokemonDurationSeconds=12・2026-09-08タダシさん指示)
 const GB_NEXT_WAIT = 12000;
 // バトルの制限時間(2026-09-08タダシさん指示「4分半も裏でカウント」)。ゲーム内公開データ COMBAT_SETTINGS の
@@ -9499,7 +9515,8 @@ function gbPlay(picks, foes, ans, stepwise) {
         break;
       }
       handled.add(p.key);
-      log.push({ ...p, ans: a, auto: !ans[p.key], locked: !!forced });
+      // 投げ済みSPで固定した「このまま」はチップに出さない(2026-09-08タダシさん指示・情報として意味が無い)
+      if (!(forced && p.kind === 'swap')) log.push({ ...p, ans: a, auto: !ans[p.key], locked: !!forced });
       if (p.kind === 'swap') {
         if (a.a === 'stay') continue;
         // a.at = 交代受け(HARD)でタイミングを合わせたターン。無ければ従来どおり質問のターンで交代する。
