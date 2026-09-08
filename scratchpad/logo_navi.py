@@ -1,10 +1,14 @@
 # GOナビのアイコン: 元の画素の「GO＋針」を切り出して上へずらし、下に「ナビ」を足す
 import sys
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageChops
-SRC='/Users/t.t/Desktop/TARCY009.github.io/assets/icons/home/icon-512.png'
+import os
+# ⚠ 取り出し元は「ナビ」を足す前のアイコン(コミット a3e662e)。いまのファイルを読むと「ナビ」が二重になる
+SRC=os.environ.get('LOGO_SRC') or '/Users/t.t/Desktop/TARCY009.github.io/assets/icons/home/icon-512.png'
 SP='/private/tmp/claude-501/-Users-t-t-Desktop-TARCY009-github-io/b9e4d1c5-3c2b-46bc-932d-bc6ad5914309/scratchpad'
 GAP=int(sys.argv[1]) if len(sys.argv)>1 else 18      # GOとナビの間
 NH=int(sys.argv[2]) if len(sys.argv)>2 else 88       # ナビの字の高さ
+GOSCALE=float(sys.argv[5]) if len(sys.argv)>5 else 1.0   # GOの大きさ(2026-09-08: 僅かに小さく)
+YOFF=int(sys.argv[6]) if len(sys.argv)>6 else 0            # GO＋ナビ全体を下へずらす量(px)
 FILL=(166,210,255); OUT=(28,43,94); FONTP='/System/Library/Fonts/ヒラギノ角ゴシック W8.ttc'; FONTI=int(sys.argv[4]) if len(sys.argv)>4 else 0; OUTW=int(sys.argv[3]) if len(sys.argv)>3 else 7
 
 im=Image.open(SRC).convert('RGBA'); W,H=im.size
@@ -60,8 +64,16 @@ for y in range(H):
 # 文字の縦の範囲
 ys=[y for y in range(H) if any(white.getpixel((x,y)) for x in range(0,W,2))]
 top,bot=min(ys),max(ys); GH=bot-top+1
-# 4) 配置: GO + GAP + ナビ を縦中央へ
-total=GH+GAP+NH; newtop=(H-total)//2; dy=newtop-top
+# 3.5) GOを僅かに小さくする(字形はそのまま縮小・中心は変えない)
+if GOSCALE!=1.0:
+    cx=W/2; cy=(top+bot)/2
+    nw=int(round(W*GOSCALE)); nh=int(round(H*GOSCALE))
+    small=fg.resize((nw,nh),Image.LANCZOS)
+    fg2=Image.new('RGBA',(W,H)); fg2.alpha_composite(small,(int(round(cx-cx*GOSCALE)),int(round(cy-cy*GOSCALE))))
+    fg=fg2
+    top=int(round(cy-(cy-top)*GOSCALE)); bot=int(round(cy+(bot-cy)*GOSCALE)); GH=bot-top+1
+# 4) 配置: GO + GAP + ナビ を縦中央へ(＋YOFFだけ下へ)
+total=GH+GAP+NH; newtop=(H-total)//2+YOFF; dy=newtop-top
 out=Image.new('RGBA',(W,H)); out.paste(bg.convert('RGBA'))
 out.alpha_composite(fg,(0,dy) if dy>=0 else (0,0), (0,0) if dy>=0 else (0,-dy))
 out.putalpha(A)

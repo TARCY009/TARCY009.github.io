@@ -401,7 +401,10 @@ breakpoint（GBL=白／ブレイクポイント=色）はすでにこの並び�
 色は見本から読み取った **中=(166,210,255)・輪郭=(28,43,94)**。大きさは字の高さ117px・輪郭9px（512px基準・
 最初の見本比率から2回「大きく」の指示で確定）。**「ナビ」の上端はGOの下端に少しかぶせる**（gap -8）。
 GO＋ナビのまとまりを縦の中央に置く。実行: `python3 scratchpad/logo_navi.py -8 117 9 3`（gap・字の高さ・輪郭・書体index）。
-⚠ 取り出し元は差し替え前のアイコン（`git show a3e662e:assets/icons/home/icon-512.png`）。いまのファイルを元に再実行すると「ナビ」が二重になる。
+⚠ 取り出し元は差し替え前のアイコン（`git show a3e662e:assets/icons/home/icon-512.png`・環境変数 `LOGO_SRC` で渡す）。
+いまのファイルを元に再実行すると「ナビ」が二重になる。
+**2026-09-08同日の微調整（タダシさん指示）: GOを95%に僅かに小さくし、GO＋ナビ全体を10px下へ**
+（引数5=GOの倍率・引数6=下げる量。実行: `LOGO_SRC=<元の512> python3 scratchpad/logo_navi.py -8 117 9 3 0.95 10`）。
 **Gと輪の太さが揃っていないと文字と輪が別物に見える**ので、太さは必ず比率で決めること。
 
 ### 全ツールのアイコン刷新（2026-09-01〜02・タダシさん指示）
@@ -524,6 +527,10 @@ GO＋ナビのまとまりを縦の中央に置く。実行: `python3 scratchpad
 模擬戦の途中で押すとバトルが消える害のほうが大きい）。**一度 `?dev=1` を開いた端末に印 `site_dev`** を残し
 （`?dev=0` で解除・印は住所からすぐ消す）、その端末で standalone のときだけ
 `#themesw` の末尾に丸い「↻」（`.reloadsw`・見た目は🏠と同じ・`home.css`）を出す。
+**⚠ iPhoneではホーム画面のアプリとSafariの保存領域が別**なので、Safariで `?dev=1` を開いても印はアプリに届かない
+（同日タダシさん報告「そのURLで開いても出てこない」）。**アプリの中でページのタイトル(h1)を1.5秒長押し**すると
+開発者モードがON/OFFになり、画面下に「開発者モード ON」の知らせが出る（`home.js` の `armLongPress`／`setDev`・
+h1は `user-select:none`＋`touch-callout:none` で長押しの選択メニューを出さない）。`?dev=1` の合図も残してある（Android・PC用）。
 **⚠ `dev=1` は `location.search` だけで見ない**（feedback.js の `?fb=1` と同じ落とし穴: GBL系が先に住所を書き直す）。
 `performance.getEntriesByType('navigation')[0].name`（最初に開いた住所）も見る。
 押すと Service Worker の更新を頼んでから `location.reload()`（2.5秒待っても終わらなければそのまま読み直す）。

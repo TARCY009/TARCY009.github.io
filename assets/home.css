@@ -42,3 +42,8 @@
 @keyframes reloadspin{to{transform:rotate(360deg)}}
 :root.light #themesw .reloadsw{color:#5b6b96;border-color:#dfe6f5;background:linear-gradient(180deg,#fff,#eff3fc);
   box-shadow:0 2px 0 rgba(30,40,90,.13),inset 0 1px 0 #fff}
+/* 開発者モードON/OFFの知らせ(タイトルの長押し・2026-09-08) */
+.devtoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;max-width:92vw;
+  font-size:.78rem;font-weight:800;color:#fff;background:rgba(12,17,34,.96);border:1px solid #43e0ff;border-radius:999px;
+  padding:9px 16px;box-shadow:0 6px 24px rgba(0,0,0,.5);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header h1{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}

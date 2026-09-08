@@ -36,7 +36,37 @@
         return window.matchMedia('(display-mode: ' + m + ')').matches; }));
   } catch (e) {}
 
+  // ⚠ iPhoneではホーム画面のアプリとSafariの保存領域が別なので、Safariで ?dev=1 を開いても印はアプリに届かない
+  //   (2026-09-08タダシさん報告「そのURLで開いても出てこない」)。アプリの中から印を付けられるよう、
+  //   **ページのタイトル(h1)を1.5秒長押し**で開発者モードをON/OFFする(小さな知らせを出す)
+  function toast(msg) {
+    var t = document.createElement('div'); t.className = 'devtoast'; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(function () { t.remove(); }, 1800);
+  }
+  function setDev(on) {
+    dev = !!on;
+    try { if (dev) localStorage.setItem('site_dev', '1'); else localStorage.removeItem('site_dev'); } catch (e) {}
+    var b = document.getElementById('reloadBtn');
+    if (!dev && b) b.remove();
+    if (dev) build();
+    toast(dev ? '開発者モード ON（ホーム画面から開くと ↻ が出ます）' : '開発者モード OFF');
+  }
+  function armLongPress() {
+    var h = document.querySelector('header h1') || document.querySelector('h1');
+    if (!h || h.dataset.devlp) return;
+    h.dataset.devlp = '1';
+    var timer = null, sx = 0, sy = 0;
+    var clear = function () { if (timer) { clearTimeout(timer); timer = null; } };
+    h.addEventListener('pointerdown', function (e) {
+      sx = e.clientX; sy = e.clientY; clear();
+      timer = setTimeout(function () { timer = null; setDev(!dev); }, 1500);
+    });
+    h.addEventListener('pointermove', function (e) { if (Math.abs(e.clientX - sx) > 12 || Math.abs(e.clientY - sy) > 12) clear(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { h.addEventListener(ev, clear); });
+    h.addEventListener('contextmenu', function (e) { if (timer || dev) e.preventDefault(); });   // 長押しのメニューを出さない
+  }
   function build() {
+    armLongPress();
     var box = document.getElementById('themesw');
     if (!box) return;
     if (dev && standalone && !document.getElementById('reloadBtn')) {
