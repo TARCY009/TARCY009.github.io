@@ -1029,6 +1029,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 @keyframes hspglow{from{box-shadow:0 3px 0 rgba(0,0,0,.35),0 0 8px var(--tc),inset 0 1px 0 rgba(255,255,255,.45)}to{box-shadow:0 3px 0 rgba(0,0,0,.35),0 0 20px var(--tc),inset 0 1px 0 rgba(255,255,255,.45)}}
 @media (prefers-reduced-motion:reduce){.hsprow .hsp.rdy{animation:none}}
 @media (max-width:400px){.hsprow .hsp{font-size:.74rem;gap:4px;padding:0 5px}}
+/* 制限時間(4:30)の残り。1分を切ったら赤 */
+.rbhud .hm .clk.low{color:#ff6b6b}
+/* タイムアップの行と決着の添え書き */
+.fko.tup{background:linear-gradient(90deg,rgba(255,213,74,.16),rgba(255,213,74,.04));border:1px solid rgba(255,213,74,.5);color:#ffe08a}
+.rkverdict .tup{display:block;font-size:.72rem;font-weight:800;color:#ffe08a;margin-top:2px;letter-spacing:.04em}
+.fxend .ebig small{display:block;font-size:.42em;letter-spacing:.3em;margin-top:.15em;opacity:.9}
 /* リアルタイムの猶予(10秒)の残り。シールド・次のポケモン選びの見出しの右 */
 .rwcd{margin-left:auto;min-width:44px;text-align:center;font-size:.86rem;font-weight:900;font-variant-numeric:tabular-nums;
   color:#0d1730;background:linear-gradient(160deg,#ffe08a,#ffd54a 45%,#c9931a);border-radius:999px;padding:2px 9px;

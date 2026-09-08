@@ -5140,7 +5140,8 @@ function fxOne(f) {
   }
   if (f.k === 'end') {   // 決着: WIN=金の閃光とリング ／ LOSE=暗転
     const win = !!f.win;
-    const ttl = win ? 'WIN' : (f.outcome === 'timeout' ? 'TIME UP' : f.outcome === 'draw' ? 'DRAW' : 'LOSE');
+    const ttl = f.timeUp ? `TIME UP<small>${win ? 'WIN' : f.outcome === 'draw' ? 'DRAW' : 'LOSE'}</small>`
+      : win ? 'WIN' : (f.outcome === 'timeout' ? 'TIME UP' : f.outcome === 'draw' ? 'DRAW' : 'LOSE');
     return fxShow('fxend ' + (win ? 'win' : 'lose'), `<div class="endwrap">
       <i class="ering e1"></i><i class="ering e2"></i><i class="eflash"></i>
       <div class="ebig">${ttl}</div></div>`, 2100);
@@ -6582,6 +6583,10 @@ try { if (localStorage.getItem('gbl_mock_rt') === '1') MK.rt = true; } catch (e)
 const saveMkRt = () => { try { localStorage.setItem('gbl_mock_rt', MK.rt ? '1' : '0'); } catch (e) {} };
 const rtOn = () => !!MK.rt && mode === 'mock';
 const GB_RT_WAIT = 10000;   // リアルタイムのシールド・次のポケモン選びの猶予(ミリ秒・タダシさん指定10秒)
+// バトルの制限時間(2026-09-08タダシさん指示「4分半も裏でカウント」)。ゲーム内公開データ COMBAT_SETTINGS の
+// roundDurationSeconds=270 と日本語の解説が一致(英語圏の「4分」は古い情報)。ターン換算(0.5秒=1ターン)
+const GB_ROUND_TURNS = 540;
+const rbClock = t => { const sec = Math.max(0, Math.round(t / 2)); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; };
 const saveMkFoeAuto = () => { try { localStorage.setItem('gbl_mock_foeauto', MK.foeAuto ? '1' : '0'); } catch (e) {} };
 // 旧「あいてのAIの性格」(basic/bluff/save/switch/pro)の保存値・共有リンクは難易度へ読み替える
 // (きほん→EASY・それ以外→NORMAL。かけひき/温存/スイッチはNORMALの部分集合なのでNORMALへ寄せる)
@@ -8059,6 +8064,10 @@ function gbPlay(picks, foes, ans, stepwise) {
   // (2026-08-20タダシさん報告: 表示しないと、対面の切れ目をまたいだノーマルアタックが
   //  タイムラインから消えたように見える。HPは正しく減っていた=表示だけの問題)
   let swapHitEv = null;
+  // 倒れたあと次のポケモンを選ぶのにかかった時間(ターン換算・累計)。時計＝ターン＋SPの演出＋これ
+  // (2026-09-08タダシさん指示「すべての時間経過を交代可能時間に反映」)。あいて(AI)は即答＝0
+  let extraTot = 0;
+  let timeUpAll = false;   // 制限時間(4分30秒)に達した
   // 交代前に投げられたSP(2026-09-08タダシさん指示): 対面が切れた次のターンに着弾するはずだったSPは
   // 「投げ済み」として持ち越し、新しい対面の頭でそのわざを即打ちする(交代先を見て選び直さない)。両側とも同じ扱い
   let inflight = [null, null];
@@ -9244,7 +9253,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     const enOf = sd => { const r = st[sd][cur[sd]].resume; return r ? (r.en || 0) : 0; };
     // この対面の頭の時計(実時間)。初手温存の合図は「対面の頭から交代が自由だったのに残った」
     // ときだけ有効にする(終わりぎわにロックが切れただけでは合図にならない・2026-08-31タダシさん報告で修正)
-    const legStartCk = base + GB_SP_TURNS * spTot;
+    const legStartCk = base + GB_SP_TURNS * spTot + extraTot;
     const ctx = { li, base, ros, cur: cur.slice(),
       cost: spL.map(l => l.length ? Math.min(...l.map(id => D.moves[id].e)) : 0),
       spList: spL, fast: [P0.pol.fast, P1.pol.fast],
@@ -9288,6 +9297,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     };
     const handled = new Set(), log = [];
     let res = null;
+    let timeCut = 0;   // 制限時間に達するターン(この対面の中で)
     // 「⭐最適」ボタン用: この発を最適タイミング(mvId指定)にしたとき、あと何発
     // ノーマルアタックをはさんでから撃つことになるかを、1回だけシミュして数える(ラベルに出す)
     const optNOf = (p, mvId) => {
@@ -9393,11 +9403,21 @@ function gbPlay(picks, foes, ans, stepwise) {
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す。1回のシミュは0.02ms未満)
     for (let guard = 0; guard < 90; guard++) {
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
+      if (timeCut) cutA.push(timeCut);
       const sopt = { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 };
       res = PvpEngine.simulate(D, legCfg(0), legCfg(1), sopt);
       // 撃ったSPアタックぶんだけ実時間が進む。交代のクールタイムの判定にも使う
       const spc = gbSpc(res);
-      ctx.ck = tn => base + tn + GB_SP_TURNS * (spTot + gbSpAt(spc, tn));
+      ctx.ck = tn => base + tn + GB_SP_TURNS * (spTot + gbSpAt(spc, tn)) + extraTot;
+      // ---- 制限時間(4分30秒)に達したらそこで打ち切る(2026-09-08タダシさん指示) ----
+      // 時計はSPの演出と次のポケモン選びの時間も含むので、達するターンはシミュのたびに求め直す
+      // ⚠ 毎回求め直す(決断が増えるとSPの演出ぶんで達するターンが**手前に動く**。最初の1回だけだと、
+      //   古い位置より前にあいての交代が入って打ち切れず、制限時間を大きく超えてしまった・実際に踏んだ)
+      {
+        let tLim = 0;
+        for (let tn = 1; tn <= res.turns; tn++) if (ctx.ck(tn) >= GB_ROUND_TURNS) { tLim = tn; break; }
+        if (tLim !== timeCut) { timeCut = tLim; continue; }
+      }
       ctx.tl = rbTurns(res);
       // 交代受け(aiPivotAt)の読み用: **ユーザーはこの先もふつうにSPを撃ってくる前提**で1回だけ回す。
       // res のほうは timing:'shots' で、まだ答えていない発が空プラン＝「撃たない」になるので、
@@ -9504,8 +9524,10 @@ function gbPlay(picks, foes, ans, stepwise) {
       }
     }
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
+    // 制限時間で打ち切られた対面(倒れてもいない・交代でもない)
+    const timeUp = !!(timeCut && res.stopped && res.turns === timeCut && !down[0] && !down[1]);
     const swapped = [0, 1].map(s =>
-      !!(res.stopped && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
+      !!(res.stopped && !timeUp && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
     // ---- 交代前に投げられたSPは、交代先にそのまま当たる(2026-09-08タダシさん指示) ----
     // 従来は対面が切れると新しい対面の頭でSPを選び直していたので、あいてが**交代先を見てから**
     // 効くわざを撃っているように見えた(交代受けの意味が薄れる)。切れ目の次のターンに着弾する
@@ -9544,6 +9566,8 @@ function gbPlay(picks, foes, ans, stepwise) {
       leadFrom: li === 0 ? leadFrom : [null, null],
       leadHits: li === 0 ? leadHits : [null, null],
       swapHit: legSwapHit,   // 交代で交代先に入った打ちかけの1発(対面の頭に表示)
+      extra: extraTot,   // この対面の頭までの「次のポケモン選び」の累計(ターン換算・時計に足す)
+      timeUp,            // この対面の最後で制限時間に達した
       hud: { hp0: rs0 ? Math.max(0, rs0.hp) : res.final[0].hpMax, en0: rs0 ? rs0.en : 0,
              b0: ((rs0 && rs0.buffs) || [0, 0]).slice(),
              hp1: rs1 ? Math.max(0, rs1.hp) : res.final[1].hpMax, en1: rs1 ? rs1.en : 0,
@@ -9555,6 +9579,11 @@ function gbPlay(picks, foes, ans, stepwise) {
     spTot += gbSpAt(gbSpc(res), res.turns);   // この対面で撃たれたSPアタックの数(両者ぶん)
     shLeft[0] = res.final[0].shields;
     shLeft[1] = res.final[1].shields;
+    if (timeUp) {   // 制限時間: 残りHPだけ持ち越して終わり(倒れてもいない・交代もしない)
+      [0, 1].forEach(s => { st[s][cur[s]].resume = res.final[s].resume; });
+      timeUpAll = true;
+      break;
+    }
     [0, 1].forEach(s => {
       st[s][cur[s]].alive = !down[s];
       st[s][cur[s]].resume = down[s] ? null : res.final[s].resume;
@@ -9584,6 +9613,8 @@ function gbPlay(picks, foes, ans, stepwise) {
         if (s === 0) legs[legs.length - 1].nextPoint = pt;
         else legs[legs.length - 1].foeNextPoint = pt;
         cur[s] = a.a === 'to' && ros[s][a.to] ? a.to : nextAlive(s, cur[s]);
+        // 選ぶのにかかった時間(秒・答えに t で入る)は時計に足す＝交代のクールタイムと制限時間に効く
+        if (s === 0 && a.t) extraTot += Math.round(Math.min(GB_RT_WAIT / 1000, Math.max(0, +a.t)) * 2);
       } else cur[s] = rest[0];
       newIn[s] = true;
       koIn[s] = true;   // 倒されて出し直した＝相手はこれを見てから交代を決める(1秒後)
@@ -9603,20 +9634,28 @@ function gbPlay(picks, foes, ans, stepwise) {
     const both = swapped[0] && swapped[1];
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
-      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot, !both);   // 交代解禁は時計で持つ
+      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot, !both);   // 交代解禁は時計で持つ
     }
   }
   const meLeft = st[0].filter(x => x.alive).length;
   const foeLeft = st[1].filter(x => x.alive).length;
-  const outcome = pending ? 'playing'
-    : foeLeft === 0 ? (meLeft > 0 ? 'win' : 'draw') : (meLeft === 0 ? 'lose' : 'timeout');
-  const hpLeft = st[0].reduce((sum, x, i) => {
+  const hpSum = (side, ros2) => st[side].reduce((sum, x, i) => {
     if (!x.alive) return sum;
-    const max = PvpEngine.buildStats(D, picks[i].base).hp;
+    const max = PvpEngine.buildStats(D, ros2[i].base).hp;
     return sum + (x.resume ? Math.max(0, x.resume.hp) / max : 1);
   }, 0);
-  return { legs, picks, foes, st, outcome, meLeft, foeLeft, pending, turns: base, hpLeft,
-    clock: base + GB_SP_TURNS * spTot,   // 実時間(ターン換算)。SPアタックの演出ぶんを含む
+  const hpLeft = hpSum(0, picks), foeHpLeft = hpSum(1, foes);
+  // タイムアップの勝敗(2026-09-08): 残りの匹数 → 残りのシールド → 残りHP(割合の合計)の順で比べる
+  let outcome, tieBy = null;
+  if (pending) outcome = 'playing';
+  else if (timeUpAll) {
+    const cmp = [[meLeft, foeLeft, 'count'], [shLeft[0], shLeft[1], 'shield'], [hpLeft, foeHpLeft, 'hp']];
+    outcome = 'draw';
+    for (const [a, b, k] of cmp) { if (Math.abs(a - b) > 1e-9) { outcome = a > b ? 'win' : 'lose'; tieBy = k; break; } }
+  } else outcome = foeLeft === 0 ? (meLeft > 0 ? 'win' : 'draw') : (meLeft === 0 ? 'lose' : 'timeout');
+  return { legs, picks, foes, st, outcome, meLeft, foeLeft, pending, turns: base, hpLeft, foeHpLeft,
+    timeUp: timeUpAll, tieBy,
+    clock: base + GB_SP_TURNS * spTot + extraTot,   // 実時間(ターン換算)。SPの演出と次のポケモン選びの時間を含む
     myShLeft: shLeft[0], foeShLeft: shLeft[1], nMe: picks.length, nFoe: foes.length };
 }
 
@@ -9726,10 +9765,11 @@ function gbRender(body, bt, picks, foes) {
   const items = [], frames = [], legEnd = [];
   // 通しターンごとの「それまでに撃たれたSPアタックの数」。実時間はSPの演出ぶんだけ余分に進む
   // (GB_SP_TURNSの項)。経過時間の表示と交代のクールタイムの残りはこの時計で出す
-  const spByGt = [];
-  let spSeen = 0;
-  const ckOf = gt => gt + GB_SP_TURNS *
-    (spByGt.length ? spByGt[Math.max(0, Math.min(gt, spByGt.length - 1))] : 0);
+  const spByGt = [], exByGt = [];
+  let spSeen = 0, exSeen = 0;
+  const at = (arr, gt) => arr.length ? arr[Math.max(0, Math.min(gt, arr.length - 1))] : 0;
+  // 時計＝ターン＋SPの演出(10秒/発)＋次のポケモン選びの時間(対面ごとの累計 leg.extra)
+  const ckOf = gt => gt + GB_SP_TURNS * at(spByGt, gt) + at(exByGt, gt);
   let alive0 = picks.length, alive1 = foes.length;
   // 見せ合い用: **場に出て名前が分かった匹**と**たおれた匹**をビットで持つ(3匹なので0〜7)。
   // 下のフレームの3匹の枠が、判明するたびに名前を出し、ひんしになったら暗くする
@@ -9775,6 +9815,9 @@ function gbRender(body, bt, picks, foes) {
     const i0 = items.length;   // この対面が押し込む要素の先頭(あとで li を付ける)
     const res = leg.res, base = leg.base;
     while (spByGt.length <= base) spByGt.push(spSeen);
+    exSeen = leg.extra || 0;
+    while (exByGt.length <= base) exByGt.push(exSeen);
+    exByGt[base] = exSeen;
     const meta = {
       name0: leg.meName, name1: leg.foeName,
       cp0: res.final[0].cp, cp1: res.final[1].cp,
@@ -9889,6 +9932,8 @@ function gbRender(body, bt, picks, foes) {
       }
       while (spByGt.length <= gt) spByGt.push(spSeen);
       spByGt[gt] = spSeen;
+      while (exByGt.length <= gt) exByGt.push(exSeen);
+      exByGt[gt] = exSeen;
       if (!partial) {
         frames[gt] = { meta, li: leg.li, hp0: t.state[0].hp, en0: t.state[0].en, hp1: t.state[1].hp, en1: t.state[1].en,
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
@@ -9975,8 +10020,11 @@ function gbRender(body, bt, picks, foes) {
   // 決着のまとめ(再生が最後まで来たら出る)
   if (!bt.pending) {
     const o = RK_OUTCOME[bt.outcome];
+    // タイムアップ(4分30秒): 何で決まったかを添える(残りの匹数 → シールド → 残りHP)
+    const tie = bt.timeUp ? `<span class="tup">⏱ タイムアップ${bt.tieBy === 'count' ? '・残りの匹数で' : bt.tieBy === 'shield' ? '・残りのシールドで' : bt.tieBy === 'hp' ? '・残りHPで' : '・すべて同じ＝'}${bt.outcome === 'win' ? '勝ち' : bt.outcome === 'lose' ? '負け' : '引き分け'}</span>` : '';
+    if (bt.timeUp) items.push({ gt: stop, html: `<div class="fko tup">⏱ タイムアップ！ 4:30</div>` });
     items.push({ gt: stop, html: `<div class="rbfin">
-      <div class="rkverdict ${o.cls}">${o.mark} ${o.txt}
+      <div class="rkverdict ${o.cls}">${o.mark} ${o.txt}${tie}
         <small>じぶん ${bt.meLeft}/${bt.nMe} ／ あいて ${bt.foeLeft}/${bt.nFoe} ・ ⏱<b>${rbSec(bt.clock != null ? bt.clock : bt.turns)}</b>秒 ・ 🛡${bt.myShLeft}／${bt.foeShLeft}</small></div>
     </div>` });
   }
@@ -10199,7 +10247,9 @@ function gbRender(body, bt, picks, foes) {
         g.title = known ? `${mv}（ゲージ${g.dataset.e}）` : 'あいてのSPアタック(わざオート中はどれか分かりません)';
       }
     });
-    clk.textContent = rbSec(ckOf(gt));   // SPアタックの演出ぶんを含む実時間
+    // 実戦と同じく**残り時間**(4:30から減る)。SPの演出と次のポケモン選びの時間も減る
+    clk.textContent = rbClock(GB_ROUND_TURNS - ckOf(gt));
+    clk.classList.toggle('low', GB_ROUND_TURNS - ckOf(gt) <= 60);
     trn.textContent = gt + 'T';
     // ⇄いつでも交代は hctl(位置が動かない再生コントロールの並び)のボタンで受ける
     // (2026-09-01タダシさん指摘: HUDの左右は数字の更新で常に動くので押せない)。
@@ -10333,6 +10383,9 @@ function gbRender(body, bt, picks, foes) {
     RBV.playing = !editing && RBV.playing;
     stopTimer(); setPlayBtn();
     clearInterval(RBV.cdTimer); RBV.cdTimer = null;
+    const tOpen = performance.now();   // 次のポケモン選びにかかった時間を時計に足すため
+    const withT = o => (p.kind === 'next' && !p.side && !editing)
+      ? { ...o, t: Math.round(Math.min(GB_RT_WAIT / 1000, (performance.now() - tOpen) / 1000) * 10) / 10 } : { ...o };
     // det=trueで「…詳細」(＋1〜＋3の細かい待ち指定)を開く。閉じているあいだは det付きの選択肢を隠す
     const hasDet = p.opts.some(o => o.det);
     const btn = ({ o, i }) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
@@ -10378,7 +10431,7 @@ function gbRender(body, bt, picks, foes) {
         clearInterval(RBV.cdTimer); RBV.cdTimer = null;
         rbTrim(p.key);
         if (b.dataset.i === 'reset') delete RB.ans[p.key];
-        else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
+        else RB.ans[p.key] = withT(p.opts[+b.dataset.i]);
         RBUI.open = null; RBV.playing = true;
         RBV.hold = GB_ANS_HOLD;   // 答えた直後は少し間を置く(交代受けの構えを取る時間)
         run();
@@ -10399,7 +10452,7 @@ function gbRender(body, bt, picks, foes) {
         if (!onScreen() || bt.pending !== p) return;
         const i = p.opts.findIndex(o => o.a === (p.kind === 'sh' ? 'no' : 'order'));
         if (i < 0) return;
-        rbTrim(p.key); RB.ans[p.key] = { ...p.opts[i] };
+        rbTrim(p.key); RB.ans[p.key] = withT(p.opts[i]);   // 猶予いっぱい＝10秒ぶん時計が進む
         RBUI.open = null; RBV.playing = true; RBV.hold = GB_ANS_HOLD;
         run();
       };
@@ -10434,7 +10487,7 @@ function gbRender(body, bt, picks, foes) {
       // 決着のバナー(2026-09-07タダシさん指示・締めくくりの演出)。1回のバトルで1度だけ
       if (fxOk() && RBV.endFx !== RBV.sig) {
         RBV.endFx = RBV.sig;
-        setTimeout(() => { if (onScreen()) fxOne({ k: 'end', win: bt.outcome === 'win', outcome: bt.outcome }); }, 260);
+        setTimeout(() => { if (onScreen()) fxOne({ k: 'end', win: bt.outcome === 'win', outcome: bt.outcome, timeUp: bt.timeUp }); }, 260);
       }
     }
     setPlayBtn();
