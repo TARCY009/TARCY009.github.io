@@ -6600,6 +6600,10 @@ function gbSpc(res) {
 const gbSpAt = (spc, tn) => spc.length ? spc[Math.max(0, Math.min(tn, spc.length - 1))] : 0;
 const GB_SHIELD_BIG = 0.30;   // 「温存」がシールドを使うダメージのしきい値(最大HPの30%)
 const GB_KEEP_HP = 0.35;      // 出し勝った初手を温存する残りHPの目安(2026-08-31タダシさん指示で35%に)
+// 「辛勝」の目安(2026-09-08タダシさん指示): いまの対面に勝てても残りHPがこれ以下なら、
+// 余裕で勝てる控え(残りHPが GB_COMFORT_WIN 以上)がいるときはそちらに替える
+const GB_NARROW_WIN = 0.2;
+const GB_COMFORT_WIN = 0.45;
 const GB_DUMP_WORTH = 0.25;   // 「撃ってから交代」を選ぶダメージのしきい値(相手の現在HPの25%)
 // ---- ブラフが割に合う場面のしきい値(2026-09-06タダシさん指示・HARD専用) ----
 // **ブラフのしすぎは負け筋**。1回のバトルでSPアタックが飛んでくる機会は**10回以上が普通**なのに、
@@ -8079,12 +8083,20 @@ function gbPlay(picks, foes, ans, stepwise) {
   //  opt.ov0/ov1  … 対面の途中の状態から下読みする(受けたデバフの下げ消し交代で使う)
   const aiSwapTo = (sd, opt) => {
     const o = opt || {};
+    let narrow = false;
     // force=true は「答えの温存」用: いまの対面に勝てるかどうかを見ずに、
     // 新しく出てきた相手に勝てる控えを探す(2026-08-20タダシさん指示)
     if (!o.force) {
       const now = duelAt(cur[0], cur[1], o.ov0, o.ov1);
-      if (now.winner === sd) return null;                     // 勝てる対面なら残る
-      if (now.winner !== (1 - sd) && !o.even) return null;    // どっちもどっちは指定があるときだけ動く
+      if (now.winner === sd) {
+        // ---- 辛勝なら、余裕で勝てる控えに替える(2026-09-08タダシさん指示) ----
+        // 実例: エンペルトに交代受けされたウッウが、シールドの枚数差で「残りHP9で辛勝」と読んで残った。
+        // 裏のナマズンは残りHP142で圧勝できるのに、「勝てる対面なら残る」の1点で止まっていた。
+        // 勝てても残りHPが GB_NARROW_WIN 以下なら、GB_COMFORT_WIN 以上残して勝てる控えを探す
+        const own = now.final[sd];
+        if (own.hp / own.hpMax > GB_NARROW_WIN) return null;   // ふつうに勝てる対面なら残る
+        narrow = true;
+      } else if (now.winner !== (1 - sd) && !o.even) return null;   // どっちもどっちは指定があるときだけ動く
     }
     // ---- HARDは「自分からの逃げ交代」をしない(2026-08-30タダシさん指示・核心ルール) ----
     // GBLの核心は**「いかに有利対面を取り続けるか」**。負け対面でも、ユーザーの交代が自由な
@@ -8096,11 +8108,13 @@ function gbPlay(picks, foes, ans, stepwise) {
     // (そのときは guard=false で来る)。実例: ウッウに負けるブルンゲルがモルペコへ逃げる→
     // Gマッギョを合わせられて交代の無駄打ち、が正しく「倒させてからモルペコ」になる。
     // ※「有利対面をとっているのにあえて交代する」例外パターンは今後タダシさんが指示予定
-    if (sd === 1 && o.guard && ai.omni && !o.force) return null;
+    // 辛勝から余裕の控えへ替えるのは「逃げ交代」ではない(勝ち対面を維持したまま強い答えに替える)ので、ガードの対象外
+    if (sd === 1 && o.guard && ai.omni && !o.force && !narrow) return null;
     let best = null;
     for (const k of benches(sd)) {
       const r = sd === 1 ? duelAt(cur[0], k, o.ov0, null) : duelAt(k, cur[1], null, o.ov1);
       if (r.winner !== sd) continue;
+      if (narrow && r.final[sd].hp / r.final[sd].hpMax < GB_COMFORT_WIN) continue;   // 辛勝を辛勝に替えても意味がない
       // **どちらも倒せるなら、1対1の勝率が高い＝安定して対面させられるほうを出す**
       // (シールドの持ち方を総当たりして数える。AI側だけこの見方をする)
       const own = r.final[sd], opp = r.final[1 - sd];
@@ -9356,9 +9370,15 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 交代受けはボタンを**そのターンに押す**技なので、ユーザーがSPをずらしたら空振りになる。
       // 決めた時点の読み(pivotX)と、いまの読みが食い違ったら交代そのものを取り消す。
       // これがあるので、ユーザーの「交代受けを防ぐ」が本当に効く
+      // ⚠ 取り消すのは**ユーザーが0.5秒待った(hold)とき**だけ(2026-09-08タダシさん指示)。
+      //   ＋Nでノーマルアタックを足しただけなら、実戦では相手はその切れ目で交代ボタンを押しているので
+      //   交代はそのまま起きる(押した交代は引っ込められない)。ユーザーのSPの選択は対面が切れて
+      //   新しい対面で聞き直される＝「相手が交代してきたのを見て選び直す余地」になる。
+      //   従来は＋1を選ぶだけで読みが外れて交代が消えていた(＝あいてが交代してこないように見えた)
       if (dec[1].pivotX != null) {
         const t2 = ctx.tlPred.find(t => t.tn >= dec[1].swapAt && t.ev[0].some(e => e.full !== undefined));
-        if (!t2 || t2.tn !== dec[1].pivotX) {
+        const held = (dec[0].shots || []).some(x => x && x.hold);
+        if (held && (!t2 || t2.tn !== dec[1].pivotX)) {
           const lg = log.find(x => x.key === dec[1].pivotKey);
           if (lg) { lg.ans = { a: 'stay' }; lg.tn = lg.tn0 != null ? lg.tn0 : lg.tn; }
           dec[1].swapTo = null; dec[1].swapAt = 0; dec[1].pivotX = null; dec[1].pivotKey = null;
