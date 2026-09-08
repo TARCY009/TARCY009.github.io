@@ -5197,7 +5197,9 @@ function fxRun(list, done, onHit) {
       // 着弾(SPの揺れ)と同じタイミングでHUDを更新する＝カットインのあとにHPがガクッと減って見える。
       // ⚠ **演出ごとに呼ぶ**(まとめて1回にすると、SPのカットインの最中に
       //   もう交代後のポケモンがHUDに出て、頭がぐちゃぐちゃになる)
-      if (first) {
+      // ⚠ 「交代受け成功！」はSPの前に出すので、HUDの更新(HPが減る)はその**後ろのSPの着弾**に合わせる
+      //   (2026-09-08タダシさん指示。成功！の最中にHPが減ると順番が逆に見える)
+      if (first && (fs[k].k !== 'pivot' || k === fs.length - 1)) {
         first = false;
         if (onHit) setTimeout(() => onHit(el), Math.min(Math.round(d * 0.62), Math.round(700 * FX_SLOW / sp())));
       }
@@ -9813,11 +9815,13 @@ function gbRender(body, bt, picks, foes) {
         const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kFoe) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []) + waitCell(r, 0);
         const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kMe) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + waitCell(r, 1);
         if (!e0 && !e1) continue;
-        // 交代受けが決まった瞬間の演出。SPのカットインのあとに短い演出を足す
+        // 交代受けが決まった瞬間の演出。**SPのカットインより先に**出す(2026-09-08タダシさん指示)。
+        // 順番は「交代受け成功！ → SPのカットイン → 着弾でHPが減る」。
+        // 後ろに付けると「HPが減ってから成功！」になって、決まった瞬間と食い違って見えた
         let fxr = fxOfRow(r);
         if (fxr && pvSide != null && t.tn <= GB_PIVOT_SHOW && !RBV.pvDone.has(gt)
             && fxr.some(x => x.k === 'sp' && x.side === 1 - pvSide && !x.shd)) {
-          fxr = fxr.concat([{ k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName }]);
+          fxr = [{ k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName }].concat(fxr);
           pvSide = null;
         }
         items.push({ gt, fx: fxr, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
