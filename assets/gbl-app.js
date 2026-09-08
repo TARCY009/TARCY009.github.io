@@ -315,6 +315,12 @@ document.getElementById('app').innerHTML = `
       <button data-v="0" aria-pressed="true" title="いまの3匹どうしをそのまま戦わせます"><b>ふつう</b><small>3対3</small></button>
       <button data-v="1" aria-pressed="false" title="おたがい6匹を見せ合って、その中から3匹と並び順を選んでから戦います（大会・チャレンジの形式）"><b>見せ合い</b><small>6匹→3匹選出</small></button>
     </div></div>
+  <!-- 操作の切替(2026-09-08タダシさん指示)。リアルタイム＝実戦どおり、流れている最中にSP・交代のボタンを押す -->
+  <div class="gbaibar rtbar"><span class="lbl" title="選択式＝SPアタックや交代の場面で止まり、ウィンドウからゆっくり選べます ／ リアルタイム＝実戦どおり止まりません。ゲージがたまったらHUDの下のSPボタン、交代したいときは⇄ボタンを、流れている最中に押します。シールドと次のポケモン選びだけは実戦と同じく10秒の猶予があります">操作</span>
+    <div class="opts seg sdrule" id="gbrt">
+      <button data-v="0" aria-pressed="true" title="SPアタック・シールド・交代の場面で止まり、ウィンドウからゆっくり選べます。あとからチップで選び直すこともできます"><b>選択式</b><small>止まって選ぶ</small></button>
+      <button data-v="1" aria-pressed="false" title="実戦どおり止まりません。ゲージがたまったらSPボタン、交代したいときは⇄を押します（ノーマルアタックは自動）。シールドと次のポケモン選びは10秒の猶予つき。選び直しはできず、やり直しだけできます"><b>リアルタイム</b><small>実戦どおり</small></button>
+    </div></div>
   <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の強さ。EASY=軽いSPをすぐ撃ち、シールドもすぐ使う入門向け ／ NORMAL=実戦の基本戦術で戦う標準 ／ HARD=こちらのポケモンとわざを最初から知っていて、ブラフも効かない最強。どの難易度でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいて難易度</span>
     <div class="opts gbai" id="gbai"></div></div>
   <!-- 見せ合いルールの入力(6枠×2)と選出パネル -->
@@ -1484,6 +1490,12 @@ ${PAGE_ROCKET ? '' : `
   枠にポケモンを入れて<b>▶ バトルスタート！</b>を押すと、タイムラインが1ターン＝0.5秒で流れ、
   <b>決断が要る場面</b>（SPアタックを撃つ？／シールドを使う？／交代する？）で止まって選択肢が出ます。
   選ぶとそこから先が計算し直されて、バトルが続きます。</p>
+  <p><b>操作</b>を<b>リアルタイム</b>にすると、実戦どおり<b>止まらずに流れます</b>（既定は止まって選ぶ<b>選択式</b>）。
+  ゲージがたまるとHUDの下の<b>SPボタン</b>が点灯するので、実戦と同じタイミングで押します——
+  押すと、いま打っているノーマルアタックが終わった切れ目で発動します（2ターンわざの1ターン目に押しても通ります）。
+  交代は<b>⇄ボタン</b>。<b>シールド</b>と<b>次のポケモン</b>だけは実戦と同じく画面が出て、<b>10秒</b>の猶予があります
+  （過ぎると「受ける」「順番どおり」）。リアルタイムでは選び直しはできず、<b>↺やり直し</b>だけできます。
+  ノーマルアタックは自動です（連打は要りません）。</p>
   <p><b>ルール</b>を<b>見せ合い</b>にすると、大会・チャレンジと同じ形式になります。
   おたがい<b>6匹を登録して見せ合い</b>、その中から<b>3匹と並び順</b>を選んでから戦います。
   見えるのは<b>ポケモンの種類だけ</b>（わざは見えません）。
@@ -4943,7 +4955,7 @@ const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig:
   pvDone: new Set() };   // 交代受けの演出を出したターン(シールドの質問と同時に出すので、行では二度出さない)
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
-const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, msw: SWAPMK, next: '', lead: SWAPMK };
+const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, msw: SWAPMK, next: '', lead: SWAPMK, msp: '⚡' };
 // 決断チップのマーク。⚠ シールドを**使わなかった**ときは盾を出さない
 // (2026-09-07タダシさん指示: 盾があると「シールドを使った」と錯覚する)
 // わざのタイプと受ける側のタイプから「こうかばつぐん／いまひとつ」を出す
@@ -6561,8 +6573,15 @@ const GB_AI = {
 // ⚠ leadSwap(じぶんの開幕交代)は2026-09-07に廃止＝常にfalse。
 //   HUDの下の⇄交代ボタンでいつでも交代できるので、開幕専用のボタンは要らない(タダシさん指示)。
 //   **あいて(AI)の開幕交代はそのまま**なので、gbPlay 側の lead の仕組みは残してある
-const MK = { ai: 'normal', leadSwap: false, foeAuto: false };
+const MK = { ai: 'normal', leadSwap: false, foeAuto: false, rt: false };
 try { if (localStorage.getItem('gbl_mock_foeauto') === '1') MK.foeAuto = true; } catch (e) {}
+// 操作: 選択式(止まって選ぶ・既定)／リアルタイム(実戦どおり・2026-09-08タダシさん指示)。
+// リアルタイムでは、ノーマルアタック以外の操作＝SP・交代は**流れている最中にボタンを押す**。
+// シールドと次のポケモンだけは実戦にも選ぶ画面があるので、10秒の猶予つきの選択にする
+try { if (localStorage.getItem('gbl_mock_rt') === '1') MK.rt = true; } catch (e) {}
+const saveMkRt = () => { try { localStorage.setItem('gbl_mock_rt', MK.rt ? '1' : '0'); } catch (e) {} };
+const rtOn = () => !!MK.rt && mode === 'mock';
+const GB_RT_WAIT = 10000;   // リアルタイムのシールド・次のポケモン選びの猶予(ミリ秒・タダシさん指定10秒)
 const saveMkFoeAuto = () => { try { localStorage.setItem('gbl_mock_foeauto', MK.foeAuto ? '1' : '0'); } catch (e) {} };
 // 旧「あいてのAIの性格」(basic/bluff/save/switch/pro)の保存値・共有リンクは難易度へ読み替える
 // (きほん→EASY・それ以外→NORMAL。かけひき/温存/スイッチはNORMALの部分集合なのでNORMALへ寄せる)
@@ -7846,6 +7865,7 @@ function gbPoints(turns, ctx, dec) {
 function gbChoices(p, ctx) {
   const s = p.side || 0;
   const ros = ctx.ros;
+  if (p.kind === 'msp') return [];   // リアルタイムで押したSP(選び直しは無い)
   if (p.kind === 'lead') {
     const list = ctx.swTo[s].map(k => ({ a: 'to', to: k, cls: 'fire',
       label: `${SWAPMK} ${shMark(ros[s][k].name)}`,
@@ -7952,10 +7972,12 @@ function gbAskTitle(p) {
     return `${who}🛡 ${hide ? 'SPアタック' : (p.mv || 'SPアタック')}が来る！`;
   }
   if (p.kind === 'swap' || p.kind === 'msw') return who + SWAPMK + ' 交代する？';
+  if (p.kind === 'msp') return who + '⚡ SPアタック';
   return who + '💀 次に出すのは？';
 }
 function gbAnsLabel(p, a) {
   if (!a) return '？';
+  if (p.kind === 'msp') return `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;   // リアルタイムで押したSP
   if (p.kind === 'sp') {
     if (a.a === 'auto') return 'おまかせ';
     // あいてのSPが2本(またはわざオート)なら、チップにもわざ名を出さない(2026-08-20タダシさん指示。
@@ -9238,12 +9260,21 @@ function gbPlay(picks, foes, ans, stepwise) {
     newIn[0] = newIn[1] = koIn[0] = koIn[1] = false;
     keepLead = false;
     const dec = [0, 1].map(() => ({ shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 }));
+    // ---- リアルタイム操作(2026-09-08タダシさん指示): こちらのSPは「押した切れ目」で撃つ ----
+    // HUDのSPボタンを押すと msp(li:0:msp:発動ターン:0)が記録される。エンジンの台本モード(plan)＝
+    // 「指定ターン以降の最初の切れ目で撃つ」をそのまま使う。押していなければ一度も撃たない(実戦と同じ)
+    const rt = rtOn();
+    const mspPlan = !rt ? [] : Object.keys(ans).filter(k => k.indexOf(li + ':0:msp:') === 0)
+      .map(k => ({ on: +k.split(':')[3], move: ans[k] && ans[k].mv, key: k }))
+      .filter(x => x.on >= 1 && x.move && (P0.pol.charged || []).includes(x.move))
+      .sort((a, b) => a.on - b.on);
     const legCfg = s => {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
         bluff: s === 1 ? (ai.bluff && !ai.proBluff) : false, timing: 'shots',
         shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until, hold: x.hold })), shotRest: null,
         shieldPlan: d.shieldAt.slice(), shieldRest: false };
+      if (rt && s === 0) { c.timing = 'plan'; c.plan = mspPlan.map(x => ({ on: x.on, move: x.move })); delete c.shotPlan; }
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
       return c;
     };
@@ -9363,8 +9394,10 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 交代受け(aiPivotAt)の読み用: **ユーザーはこの先もふつうにSPを撃ってくる前提**で1回だけ回す。
       // res のほうは timing:'shots' で、まだ答えていない発が空プラン＝「撃たない」になるので、
       // そのまま読むと「SPは飛んでこない」と誤読する(finishNoSp と同じ落とし穴)
+      // リアルタイムでまだ押していないなら「最適で撃ってくる」前提で読む(台本が空だと「撃ってこない」と誤読する)
       ctx.tlPred = rbTurns(PvpEngine.simulate(D,
-        { ...legCfg(0), shotRest: { mode: 'opt' } }, legCfg(1),
+        rt ? (mspPlan.length ? legCfg(0) : { ...legCfg(0), timing: 'optimal', plan: undefined })
+           : { ...legCfg(0), shotRest: { mode: 'opt' } }, legCfg(1),
         { ...SIMOPT, stopAt: dec[0].swapTo != null ? dec[0].swapAt : 0 }));
       // ---- 交代受けの「読み」が外れたら、AIは押していない＝交代しない(2026-09-07) ----
       // 交代受けはボタンを**そのターンに押す**技なので、ユーザーがSPをずらしたら空振りになる。
@@ -9386,6 +9419,8 @@ function gbPlay(picks, foes, ans, stepwise) {
         }
       }
       const pts = gbPoints(ctx.tl, ctx, dec);
+      // リアルタイム: こちらのSPと交代は質問しない(ボタンで押す)。答えも記録しない＝チップは msp/msw だけ
+      if (rt) pts.forEach(x => { if (x.side === 0 && (x.kind === 'sp' || x.kind === 'swap')) handled.add(gbKey(li, x.side, x.kind, x.seq, x.w)); });
       // 手動交代(HUDの⇄ボタン・kind msw・2026-09-01): 記録があれば時系列の位置で反映する。
       // クールタイム・控えの生存・先の打ち切りを検証し、通らなければ黙って捨てる(前提が変わった古い記録)
       const mkey = Object.keys(ans).find(k => k.indexOf(li + ':0:msw:') === 0 && !handled.has(k));
@@ -9445,6 +9480,16 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     res.final[0].name = P0.name;
     res.final[1].name = P1.name;
+    // リアルタイムで押したSP: 実際に発動したターンにチップを置く(押しても撃てなかったぶんは出さない)
+    if (rt && mspPlan.length) {
+      const tlF = rbTurns(res); const used = new Set();
+      for (const x of mspPlan) {
+        const ft = tlF.find(t => t.tn >= x.on && !used.has(t.tn) && (t.ev[0] || []).some(e => e && e.full !== undefined));
+        if (!ft) continue;
+        used.add(ft.tn);
+        log.push({ side: 0, kind: 'msp', seq: x.on, w: 0, tn: ft.tn, key: x.key, gt: base + ft.tn, ans: { a: 'fire', mv: x.move }, auto: false });
+      }
+    }
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
     const swapped = [0, 1].map(s =>
       !!(res.stopped && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
@@ -9606,7 +9651,7 @@ function runMockBuild() {
       pol: { fast: m.fast, charged: [m.c1, m.c2].filter(Boolean) }, name: ptName(m) }));
     foes = ft.map(foeOf);
     sig = JSON.stringify(['sd', mine, ft, cap, cup && cup.slug, SIMOPT.buffMode,
-      MK.ai, MK.leadSwap, MK.foeAuto]);
+      MK.ai, MK.leadSwap, MK.foeAuto, MK.rt]);
   } else {
     const mineIdx = [0, 1, 2].filter(i => PT[i]);
     const foesIdx = [0, 1, 2].filter(i => GBT[i]);
@@ -9623,7 +9668,7 @@ function runMockBuild() {
     foes = foesIdx.map(i => foeOf(GBT[i]));
     // 入力(ポケモン・わざ・リーグ・AI等)が変わったら、前のバトルの選択と再生位置は仕切り直す
     sig = JSON.stringify(['mock', PT, GBT, [0, 1, 2].map(i => PT[i] && gbmOf(i)),
-      cap, cup && cup.slug, SIMOPT.buffMode, MK.ai, MK.leadSwap, MK.foeAuto]);
+      cap, cup && cup.slug, SIMOPT.buffMode, MK.ai, MK.leadSwap, MK.foeAuto, MK.rt]);
   }
   if (RBV.sig !== sig) {
     if (RBV.sig !== undefined) { RB.ans = {}; RBUI.open = null; RB.found = null; }
@@ -9632,6 +9677,9 @@ function runMockBuild() {
     RB.rseed = RB.rseedLock ? RB.rseed : (Math.random() * 1e9) | 0;
     RB.rseedLock = false;
   }
+  // リアルタイム操作はバトルが流れている中で押す形なので、「結果だけ見る」「オートバトル」「速さ」は使えない
+  if (rtOn()) { RB.step = true; RB.goal = null; RBV.speed = 1; }
+  document.querySelectorAll('#gbrt button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!MK.rt));
   const bt = gbPlay(picks, foes, RB.ans, RB.step);
   gbRender(body, bt, picks, foes);
 }
@@ -9703,6 +9751,7 @@ function gbRender(body, bt, picks, foes) {
       max0: res.final[0].hpMax, max1: res.final[1].hpMax,
       sp0: (leg.pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: (leg.foePol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
+      sp0id: (leg.pol.charged || []).slice(),   // リアルタイムのSPボタン用(わざID)
       fast1: leg.foePol.fast,   // 「あいてのSPまで あと◯発」を出すのに使う
       swOk: leg.swOk || 0, fswOk: leg.fswOk || 0,
     };
@@ -9906,14 +9955,14 @@ function gbRender(body, bt, picks, foes) {
   { const pf = body.querySelector('.rbfeed'); if (pf) RBV.feedTop = pf.scrollTop; }   // 再描画の前に読み返し位置を控える
   body.innerHTML = `<div class="rbctlbar">
       <div class="rbctl">
-        <div class="rbrow1 rbfind"><span class="lbl">🔎 オートバトル</span>
+        <div class="rbrow1 rbfind"${rtOn() ? ' style="display:none"' : ''}><span class="lbl">🔎 オートバトル</span>
           <button class="rbgo" data-g="best" aria-pressed="${RB.goal === 'best'}" title="勝ちと手持ちの残りがいちばん良くなる手順をさがします（押して選んでから ▶ バトルスタート！で開始）">最善</button>
           ${RB.step ? `<button class="rbclear" style="display:${RBV.started || rbAnsCount() ? '' : 'none'}" title="選んだ手を消して、もう一度はじめからバトルします">▶ バトルスタート！</button>`
             : (rbAnsCount() ? '<button class="rbclear" title="選んだ手をすべて消して、全部おまかせに戻します">選び直す</button>' : '')}
         </div>
         ${RB.found ? `<div class="rbfound">${RB.found}</div>` : ''}
       </div>
-      <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
+      ${rtOn() ? '' : `<button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>`}
     </div>
     <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
@@ -9927,7 +9976,7 @@ function gbRender(body, bt, picks, foes) {
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
         </div>
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
-          <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
+          <div class="hctl">${RB.step && !rtOn() ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
         </div>
         <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
@@ -9937,13 +9986,14 @@ function gbRender(body, bt, picks, foes) {
         </div>
       </div>
       ${RB.step ? `<div class="mswtip" title="あいてのゲージと、いちばん軽いSPアタックの消費から数えた発数です。あいてが撃てるようになったタイミングで交代すると、その一撃を交代先に受けさせられます（交代受け）"></div>
+      ${rtOn() ? `<div class="hsprow" title="SPアタック。ゲージがたまると点灯します。押すと、いま打っているノーマルアタックが終わった切れ目で発動します（実戦と同じ）"></div>` : ''}
       <div class="hswaprow two">
         <button class="hmsw" data-slot="0" disabled></button>
         <button class="hmsw" data-slot="1" disabled></button>
       </div>
       <div class="hbtns">
-        <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
-        <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
+        ${rtOn() ? '' : `<button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
+        <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>`}
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
         <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">🎬<b>演出</b></button>
         <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
@@ -9996,6 +10046,7 @@ function gbRender(body, bt, picks, foes) {
   // ⇄いつでも交代(rbhudの外＝独立した大きな行)。**控え2匹ぶんのボタン**を常時出し、
   // 押した瞬間に交代する(再生は止めない)＝実戦さながらに交代受けを狙う練習ができる
   const mswBtns = [...dock.querySelectorAll('.hmsw')];
+  const spRow = dock.querySelector('.hsprow');   // リアルタイムのSPボタンの行(選択式では無い)
   // その通しターンで場に出ていない味方2匹(倒れているかどうかも返す)
   const benchAt = gt => {
     let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
@@ -10143,6 +10194,28 @@ function gbRender(body, bt, picks, foes) {
       }
     }
     // ⇄交代は控え2匹ぶんのボタン。倒れている枠は暗くして押せなくする(2026-09-07タダシさん指示)
+    // ---- リアルタイムのSPボタン(2026-09-08タダシさん指示) ----
+    // 点灯＝いま打っているノーマルアタックの切れ目でゲージが足りる(実戦は打ち始めの時点で数えるのと同じ)。
+    // 押すと manualSp が msp を記録し、その切れ目で発動する
+    if (spRow) {
+      if (spRow.dataset.li !== String(li)) {
+        spRow.dataset.li = String(li);
+        spRow.innerHTML = (f.meta.sp0id || []).map(id => {
+          const m = D.moves[id]; if (!m) return '';
+          const ja = D.typeJa[MOVE_TYPE[m.n]] || D.typeJa[m.t] || '';
+          const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
+          return `<button class="hsp" data-mv="${id}" style="--tc:${c.mid};--tc2:${c.bot}" disabled title="${m.n}（ゲージ${m.e}）">
+            <span class="tico">${typeIconHTML(ja, 16)}</span><b>${m.n}</b><small>${m.e}</small></button>`;
+        }).join('');
+        spRow.querySelectorAll('.hsp').forEach(b => { b.onclick = () => manualSp(b.dataset.mv); });
+      }
+      const r = RBV.started && !ended() && !(bt.pending && gt >= stop) ? spReadyAt(li, gt) : null;
+      spRow.querySelectorAll('.hsp').forEach(b => {
+        const m = D.moves[b.dataset.mv];
+        const ok = !!(r && m && r.en >= m.e && (r.E + 1) <= (bt.legs[li] ? bt.legs[li].res.turns : 0));
+        b.disabled = !ok; b.classList.toggle('rdy', ok);
+      });
+    }
     if (mswBtns.length) {
       const bench = benchAt(gt);
       // 質問の表示中は押せない(そちらの選択肢で選ぶ場面なので)
@@ -10229,6 +10302,7 @@ function gbRender(body, bt, picks, foes) {
   function showWin(p, editing, det) {
     RBV.playing = !editing && RBV.playing;
     stopTimer(); setPlayBtn();
+    clearInterval(RBV.cdTimer); RBV.cdTimer = null;
     // det=trueで「…詳細」(＋1〜＋3の細かい待ち指定)を開く。閉じているあいだは det付きの選択肢を隠す
     const hasDet = p.opts.some(o => o.det);
     const btn = ({ o, i }) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
@@ -10271,6 +10345,7 @@ function gbRender(body, bt, picks, foes) {
     winbox.querySelectorAll('.rwb button').forEach(b => {
       if (b.classList.contains('wdet')) { b.onclick = () => showWin(p, editing, true); return; }
       b.onclick = () => {
+        clearInterval(RBV.cdTimer); RBV.cdTimer = null;
         rbTrim(p.key);
         if (b.dataset.i === 'reset') delete RB.ans[p.key];
         else RB.ans[p.key] = { ...p.opts[+b.dataset.i] };
@@ -10279,6 +10354,28 @@ function gbRender(body, bt, picks, foes) {
         run();
       };
     });
+    // ---- リアルタイム: シールドと次のポケモンは10秒の猶予(2026-09-08タダシさん指示) ----
+    // 過ぎたら実戦と同じく「受ける」「順番どおり」になる
+    if (rtOn() && !editing && (p.kind === 'sh' || p.kind === 'next')) {
+      const cd = document.createElement('i'); cd.className = 'rwcd';
+      const t0 = performance.now();
+      const tt = winbox.querySelector('.rwt'); if (tt) tt.appendChild(cd);
+      const tickCd = () => {
+        const left = Math.max(0, GB_RT_WAIT - (performance.now() - t0));
+        cd.textContent = (left / 1000).toFixed(1);
+        cd.classList.toggle('low', left <= 3000);
+        if (left > 0) return;
+        clearInterval(RBV.cdTimer); RBV.cdTimer = null;
+        if (!onScreen() || bt.pending !== p) return;
+        const i = p.opts.findIndex(o => o.a === (p.kind === 'sh' ? 'no' : 'order'));
+        if (i < 0) return;
+        rbTrim(p.key); RB.ans[p.key] = { ...p.opts[i] };
+        RBUI.open = null; RBV.playing = true; RBV.hold = GB_ANS_HOLD;
+        run();
+      };
+      tickCd();
+      RBV.cdTimer = setInterval(tickCd, 100);
+    }
     const wx = winbox.querySelector('.wx');
     if (wx) wx.onclick = () => { RBUI.open = null; RBV.playing = true; run(); };
     // ウィンドウが出たぶんレイアウトが変わるので、**即時**で最新のターンに合わせる
@@ -10402,6 +10499,7 @@ function gbRender(body, bt, picks, foes) {
     run();
   };
   feedEl.querySelectorAll('.fchip').forEach(b => b.onclick = () => {
+    if (rtOn()) return;   // リアルタイムは実戦と同じく選び直しなし(やり直しだけ)
     const p = RBUI.pts[b.dataset.k];
     if (!p) return;
     RBUI.open = p.key; RBV.cur = p.gt;
@@ -10515,6 +10613,43 @@ function gbRender(body, bt, picks, foes) {
     run();               // 再生の状態(RBV.playing)はそのまま＝止めずに続く
   };
   mswBtns.forEach(b => { b.onclick = () => manualSwap(+b.dataset.to); });
+  // ---- リアルタイムのSP(2026-09-08タダシさん指示) ----
+  // 押した瞬間からのSPの発動位置: いま打っているノーマルアタックの着弾ターン E と、その時点のゲージ。
+  // 実戦はノーマルアタックの打ち始めでゲージを数えるので、2ターンわざの1ターン目に押しても通る。
+  // 発動はその切れ目(E+1)＝エンジンの台本モード(plan)の on に渡す
+  function spReadyAt(li, gt) {
+    const leg = bt.legs[li]; if (!leg) return null;
+    const tl = leg._tl || (leg._tl = rbTurns(leg.res));
+    const pressed = Math.max(1, gt - leg.base);
+    const row = tl.find(t => t.tn >= pressed && (t.ev[0] || []).some(e => e && e.full === undefined && e.dmg != null));
+    if (!row) return null;
+    return { E: row.tn, en: row.state[0].en };
+  }
+  const manualSp = mv => {
+    if (!rtOn() || !RBV.started || ended()) return;
+    const gt = RBV.cur;
+    if (bt.pending && gt >= stop) return;   // シールド・次のポケモンを選んでいる最中は押せない
+    let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
+    if (li < 0) li = bt.legs.length - 1;
+    const leg = bt.legs[li]; const m = D.moves[mv];
+    if (!leg || !m || !(leg.pol.charged || []).includes(mv)) return;
+    const r = spReadyAt(li, gt);
+    if (!r || r.en < m.e) return;          // ゲージが足りない＝押しても何も起きない(実戦と同じ)
+    const on = r.E + 1;
+    if (on > leg.res.turns) return;        // この対面のうちに撃てない
+    const key = gbKey(li, 0, 'msp', on, 0);
+    if (RB.ans[key]) return;               // 同じ切れ目に何度押しても1発
+    // この場面より後ろの答えは消す(前提が変わるため)
+    Object.keys(RB.ans).forEach(k2 => {
+      const pt2 = RBUI.pts[k2];
+      if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li)
+          || (!pt2 && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] > on)) delete RB.ans[k2];
+    });
+    RB.ans[key] = { a: 'fire', mv, p: gt - leg.base };
+    RBUI.open = null;
+    RBV.keepFx = true;
+    run();
+  };
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
@@ -12075,6 +12210,10 @@ document.addEventListener('click', e => {
     SD.on = b.dataset.v === '1';
     SD.foeSig = null; saveSd();
     run();   // バトルの署名が変わるので、スタート待ちから仕切り直しになる
+  });
+  document.querySelectorAll('#gbrt button').forEach(b => b.onclick = () => {
+    MK.rt = b.dataset.v === '1'; saveMkRt();
+    run();   // 署名が変わるので仕切り直し(リアルタイムは常に流れるバトル表示)
   });
   const sdEnt = document.querySelector('#sdwrap .sdentry');
   if (sdEnt) sdEnt.addEventListener('toggle', () => {

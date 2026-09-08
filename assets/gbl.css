@@ -1004,6 +1004,30 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:linear-gradient(160deg,#ffe08a 0%,#ffd54a 45%,#c9931a 100%);
   box-shadow:0 3px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
 .hswaprow .hmsw.rdy:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+/* リアルタイム操作のSPボタン(2026-09-08タダシさん指示)。実戦のSPボタンと同じく2つ横並び。
+   ゲージがたまると そのわざのタイプ色で点灯する */
+.hsprow{display:flex;gap:6px;margin-top:6px}
+.hsprow .hsp{flex:1 1 0;min-width:0;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:0 8px;font-size:.84rem;font-weight:900;letter-spacing:.02em;color:var(--sub);
+  background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);opacity:.42;cursor:default}
+.hsprow .hsp b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hsprow .hsp small{flex:0 0 auto;font-size:.66rem;font-weight:800;opacity:.8;padding:1px 5px;border-radius:999px;border:1px solid currentColor}
+.hsprow .hsp .tico{flex:0 0 auto;display:inline-flex}
+.hsprow .hsp.rdy{opacity:1;cursor:pointer;color:#fff;border-color:transparent;
+  background:linear-gradient(160deg,var(--tc) 0%,var(--tc2) 100%);
+  box-shadow:0 3px 0 rgba(0,0,0,.35),0 0 16px var(--tc),inset 0 1px 0 rgba(255,255,255,.45);
+  animation:hspglow 1.1s ease-in-out infinite alternate}
+.hsprow .hsp.rdy small{border-color:rgba(255,255,255,.7)}
+.hsprow .hsp.rdy:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.45)}
+@keyframes hspglow{from{box-shadow:0 3px 0 rgba(0,0,0,.35),0 0 8px var(--tc),inset 0 1px 0 rgba(255,255,255,.45)}to{box-shadow:0 3px 0 rgba(0,0,0,.35),0 0 20px var(--tc),inset 0 1px 0 rgba(255,255,255,.45)}}
+@media (prefers-reduced-motion:reduce){.hsprow .hsp.rdy{animation:none}}
+@media (max-width:400px){.hsprow .hsp{font-size:.74rem;gap:4px;padding:0 5px}}
+/* リアルタイムの猶予(10秒)の残り。シールド・次のポケモン選びの見出しの右 */
+.rwcd{margin-left:auto;min-width:44px;text-align:center;font-size:.86rem;font-weight:900;font-variant-numeric:tabular-nums;
+  color:#0d1730;background:linear-gradient(160deg,#ffe08a,#ffd54a 45%,#c9931a);border-radius:999px;padding:2px 9px;
+  box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+.rwcd.low{background:linear-gradient(160deg,#ff9a8a,#ff5a5a 45%,#b52020);color:#fff}
 /* SPゲージの円とその残量の数字は1つのまとまり(折り返しでばらけさせない) */
 .gqg{display:inline-flex;align-items:center;gap:6px}
 .hs.foe .gqg{flex-direction:row-reverse}
