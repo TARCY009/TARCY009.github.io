@@ -62,13 +62,23 @@
     h.dataset.devlp = '1';
     var timer = null, sx = 0, sy = 0;
     var clear = function () { if (timer) { clearTimeout(timer); timer = null; } };
-    h.addEventListener('pointerdown', function (e) {
-      sx = e.clientX; sy = e.clientY; clear();
-      timer = setTimeout(function () { timer = null; setDev(!dev); }, 1500);
-    });
-    h.addEventListener('pointermove', function (e) { if (Math.abs(e.clientX - sx) > 12 || Math.abs(e.clientY - sy) > 12) clear(); });
-    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { h.addEventListener(ev, clear); });
-    h.addEventListener('contextmenu', function (e) { if (timer || dev) e.preventDefault(); });   // 長押しのメニューを出さない
+    var start = function (x, y) { sx = x; sy = y; clear(); timer = setTimeout(function () { timer = null; setDev(!dev); }, 1500); };
+    var moved = function (x, y) { if (Math.abs(x - sx) > 12 || Math.abs(y - sy) > 12) clear(); };
+    // ⚠ iPhoneでは長押しが「コピー」の吹き出し(文字の選択)になって、pointercancel で計測が途中で切れていた
+    //   (2026-09-08タダシさん報告)。選択と吹き出しを止め(selectstart/contextmenu・CSSのuser-select:none)、
+    //   計測は touch イベントで持つ(pointercancel では切らない)
+    var touch = ('ontouchstart' in window);
+    if (touch) {
+      h.addEventListener('touchstart', function (e) { var t = e.touches[0]; if (t) start(t.clientX, t.clientY); }, { passive: true });
+      h.addEventListener('touchmove', function (e) { var t = e.touches[0]; if (t) moved(t.clientX, t.clientY); }, { passive: true });
+      ['touchend', 'touchcancel'].forEach(function (ev) { h.addEventListener(ev, clear); });
+    } else {
+      h.addEventListener('pointerdown', function (e) { start(e.clientX, e.clientY); });
+      h.addEventListener('pointermove', function (e) { moved(e.clientX, e.clientY); });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { h.addEventListener(ev, clear); });
+    }
+    h.addEventListener('selectstart', function (e) { e.preventDefault(); });   // 長押しで文字を選択させない
+    h.addEventListener('contextmenu', function (e) { e.preventDefault(); });   // 長押しのメニュー(コピー)を出さない
   }
   function build() {
     armLongPress();

@@ -530,7 +530,9 @@ GO＋ナビのまとまりを縦の中央に置く。実行: `python3 scratchpad
 **⚠ iPhoneではホーム画面のアプリとSafariの保存領域が別**なので、Safariで `?dev=1` を開いても印はアプリに届かない
 （同日タダシさん報告「そのURLで開いても出てこない」）。**アプリの中でページのタイトル(h1)を1.5秒長押し**すると
 開発者モードがON/OFFになり、画面下に「開発者モード ON」の知らせが出る（`home.js` の `armLongPress`／`setDev`・
-h1は `user-select:none`＋`touch-callout:none` で長押しの選択メニューを出さない）。`?dev=1` の合図も残してある（Android・PC用）。
+h1は `user-select:none`＋`touch-callout:none` で長押しの選択メニューを出さない）。
+**⚠ iPhoneでは長押しが「コピー」の吹き出しになって計測が途中で切れた**（同日タダシさん報告）: 計測は `touchstart/touchmove/touchend` で持ち
+（`pointercancel` では切らない）、`selectstart`／`contextmenu` を preventDefault、CSSは h1 の**子要素まで** `user-select:none !important`。`?dev=1` の合図も残してある（Android・PC用）。
 **⚠ `dev=1` は `location.search` だけで見ない**（feedback.js の `?fb=1` と同じ落とし穴: GBL系が先に住所を書き直す）。
 `performance.getEntriesByType('navigation')[0].name`（最初に開いた住所）も見る。
 押すと Service Worker の更新を頼んでから `location.reload()`（2.5秒待っても終わらなければそのまま読み直す）。

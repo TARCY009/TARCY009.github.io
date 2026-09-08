@@ -49,4 +49,5 @@
 .devtoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;max-width:92vw;
   font-size:.78rem;font-weight:800;color:#fff;background:rgba(12,17,34,.96);border:1px solid #43e0ff;border-radius:999px;
   padding:9px 16px;box-shadow:0 6px 24px rgba(0,0,0,.5);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-header h1{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* タイトルは長押しで開発者モードを切り替えるので、文字の選択と「コピー」の吹き出しを出さない(子要素まで) */
+header h1,header h1 *{-webkit-user-select:none !important;user-select:none !important;-webkit-touch-callout:none !important;-webkit-tap-highlight-color:transparent}
