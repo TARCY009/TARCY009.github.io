@@ -49,7 +49,12 @@
     var b = document.getElementById('reloadBtn');
     if (!dev && b) b.remove();
     if (dev) build();
-    toast(dev ? '開発者モード ON（ホーム画面から開くと ↻ が出ます）' : '開発者モード OFF');
+    b = document.getElementById('reloadBtn');
+    // 出た場所が分かるように、右上のボタンを数秒光らせる(2026-09-08タダシさん報告「画面下にボタンが出た」＝この知らせを
+    // ボタンだと思った。本物は右上)
+    if (dev && b) { b.classList.add('hey'); setTimeout(function () { b.classList.remove('hey'); }, 4000); }
+    toast(dev ? (b ? '開発者モード ON：右上に「↻ 更新」ボタンを出しました' : '開発者モード ON：ホーム画面のアプリで開くと右上に「↻ 更新」が出ます')
+              : '開発者モード OFF');
   }
   function armLongPress() {
     var h = document.querySelector('header h1') || document.querySelector('h1');
@@ -73,7 +78,7 @@
       box.insertAdjacentHTML('beforeend',
         '<button id="reloadBtn" class="reloadsw" type="button" ' +
         'title="最新の内容に更新します（ホーム画面から開いたときだけ出ます。更新が反映されるまで1〜2分かかることがあります）">' +
-        '<i class="hi">↻</i></button>');
+        '<i class="hi">↻</i><span class="ht">更新</span></button>');
       document.getElementById('reloadBtn').onclick = function () {
         var b = this; b.disabled = true; b.classList.add('busy');
         var go = function () { location.reload(); };
