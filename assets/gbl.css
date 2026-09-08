@@ -1004,6 +1004,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:linear-gradient(160deg,#ffe08a 0%,#ffd54a 45%,#c9931a 100%);
   box-shadow:0 3px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
 .hswaprow .hmsw.rdy:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6)}
+/* ⚠ 模擬戦のボタンは連打しても拡大しない(2026-09-08タダシさん報告: 実戦の癖で2〜3回連打すると
+   スマホの「2回タップ＝拡大」が働いてしまう)。touch-action:manipulation で2回タップの拡大だけを切る
+   (ピンチの拡大は残る)。バトル中の全画面(.bfull)とHUD・質問ウィンドウ・SP/交代ボタンに付ける。
+   連打で文字が選択されるのも防ぐ(user-select:none) */
+.bfull,.rbdock,.rbdock *,.rbwinbox,.rbwinbox *,.rbctlbar button{touch-action:manipulation}
+.rbdock button,.rbwinbox button,.rbctlbar button{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 /* リアルタイム操作のSPボタン(2026-09-08タダシさん指示)。実戦のSPボタンと同じく2つ横並び。
    ゲージがたまると そのわざのタイプ色で点灯する */
 .hsprow{display:flex;gap:6px;margin-top:6px}
