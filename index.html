@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>GOナビ｜ポケモンGO 攻略ツール（レイド火力・GBL対面・個体値）</title>
-<meta name="description" content="GOナビはポケモンGOの攻略ツール集です。レイドの火力ランキング、GOバトルリーグの対面シミュレート、個体値の順位、ジムの攻め・守り、マックスバトル対策まで12個の道具を無料で使えます。">
+<meta name="description" content="GOナビはポケモンGOの攻略ツール集です。レイドの火力ランキング、トレーナーバトルの対面シミュレート、個体値の順位、ジムの攻め・守り、マックスバトル対策まで12個の道具を無料で使えます。">
 <meta name="theme-color" content="#0b1023">
 <link rel="canonical" href="https://tarcy009.github.io/">
 <meta property="og:title" content="GOナビ｜ポケモンGO 攻略ツール">
@@ -134,6 +134,8 @@ h1 .go{display:inline-block;-webkit-text-stroke-width:2px;
 .wmbox .ndl{position:absolute;left:0;top:0;width:1em;height:1em;transform:translate(-50%,-50%);
   pointer-events:none;opacity:0;transition:opacity .2s}
 .wmbox .ndl.on{opacity:1}
+/* 基線の位置を測るための高さ0の印（Oの直後・見た目には出ない） */
+h1 .bp{display:inline-block;width:0;height:0;vertical-align:baseline}
 .wmbox .ndl svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
 /* 「ナ」と「ビ」の間だけ詰める（2026-09-04タダシさん指摘・実測して2回目で確定）。
    均等なはずのletter-spacingでも、「ナ」の字形は右側に余白が多く、「ビ」は左側の余白が少ないため、
@@ -219,7 +221,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 
 <header class="hero">
   <!-- 「GO」のOの中にサイトアイコンと同じ方位磁針の針を入れる（2026-09-04タダシさん指示・アイコンとの関連づけ） -->
-  <div class="wmbox"><h1 class="wmf"><span class="go">G<span class="o">O</span></span>ナ<span class="bi">ビ</span></h1><i class="ndl" aria-hidden="true"><svg viewBox="0 0 100 100"><g transform="rotate(38 50 50)"><polygon points="50,6 43.5,50 56.5,50" fill="#ff5abe"/><polygon points="50,94 43.5,50 56.5,50" fill="#8c98c6"/><circle cx="50" cy="50" r="5.2" fill="#fff"/></g></svg></i></div>
+  <div class="wmbox"><h1 class="wmf"><span class="go">G<span class="o">O<i class="bp"></i></span></span>ナ<span class="bi">ビ</span></h1><i class="ndl" aria-hidden="true"><svg viewBox="0 0 100 100"><g transform="rotate(38 50 50)"><polygon points="50,6 43.5,50 56.5,50" fill="#ff5abe"/><polygon points="50,94 43.5,50 56.5,50" fill="#8c98c6"/><circle cx="50" cy="50" r="5.2" fill="#fff"/></g></svg></i></div>
   <div class="hrule"></div>
   <p class="btag">Pok&eacute;mon GO Tools</p>
 </header>
@@ -234,7 +236,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <a class="card" href="/gym-defense/"><img src="/assets/icons/gym-defense/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム防衛</b><span class="ds expl">ジムに置くと、長く残りやすいポケモンが分かります</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--g2)"><span class="en">Battle League</span><span class="ja">対戦</span><span class="rule"></span><span class="no">04</span></div>
+<div class="gsec" style="--gc:var(--g2)"><span class="en">Trainer Battle</span><span class="ja">トレーナーバトル</span><span class="rule"></span><span class="no">04</span></div>
 <div class="cards" style="--gc:var(--g2)">
   <a class="card" href="/gbl/"><img src="/assets/icons/gbl/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対面シミュレーター</b><span class="ds expl">この2匹が戦うとどうなるか、1ターンずつ再現します</span></span></a>
   <a class="card" href="/battlelog/"><img src="/assets/icons/battlelog/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">GBL対戦記録</b><span class="ds expl">戦った相手を記録すると、自分がよく当たる相手が見えてきます</span></span></a>
@@ -256,23 +258,47 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 </div>
 
 <script>
-// 「GO」のOの穴の中心に針を置く（h1のフィルターの外から重ねる）。字形の実測値: 穴の中心は
-// Oの字送りの左から0.36em（.goは横に1.04倍しているので0.3744em）・インライン箱の上から0.525em
+// 「GO」のOの穴の中心に針を置く（h1のフィルターの外から重ねる）。
+// ⚠ 穴の位置は書体ごとに違う（禅角ゴシックNew: 左0.36em・基線から0.355em上 ／ ヒラギノ: 左0.45em・0.39em上）。
+//   決め打ちの数字だと、書体が届いていない・取り寄せに失敗した端末（iPhoneで実際に起きた）では
+//   代替書体の「O」に禅角ゴシックの位置で針が置かれ、穴の左上の縁に付いて見える。
+//   いまは「いま画面に出ている書体」の O を canvas に描いて穴の範囲を走査し、その中心に置く。
+//   基線の位置は O の直後に置いた高さ0の印（.bp）の座標から取る（書体の数値を推測しない）
 (function(){
+  var FALLBACK={dx:0.36,dy:0.355};   // 走査できない環境用（禅角ゴシックNewの実測値）
+  function holeOf(font){
+    try{
+      var S=120, W=200, H=160, c=document.createElement('canvas'); c.width=W; c.height=H;
+      var x=c.getContext('2d'); if(!x)return null;
+      x.font=font; x.textBaseline='alphabetic'; x.fillStyle='#000'; x.fillText('O',30,130);
+      var d=x.getImageData(0,0,W,H).data, L=W,R=-1,T=H,B=-1, X,Y;
+      function on(X,Y){return d[(Y*W+X)*4+3]>128;}
+      for(Y=0;Y<H;Y++)for(X=0;X<W;X++)if(on(X,Y)){if(X<L)L=X;if(X>R)R=X;if(Y<T)T=Y;if(Y>B)B=Y;}
+      if(R<0)return null;
+      var cx=(L+R)>>1, cy=(T+B)>>1; if(on(cx,cy))return null;   // 中心が塗られている＝穴が無い
+      var hl=cx,hr=cx,ht=cy,hb=cy;
+      while(hl>L&&!on(hl-1,cy))hl--; while(hr<R&&!on(hr+1,cy))hr++;
+      while(ht>T&&!on(cx,ht-1))ht--; while(hb<B&&!on(cx,hb+1))hb++;
+      if(hr-hl<S*0.1||hb-ht<S*0.1)return null;
+      return {dx:((hl+hr)/2-30)/S, dy:(130-(ht+hb)/2)/S};
+    }catch(e){return null;}
+  }
   function place(){
-    var o=document.querySelector('h1 .o'), n=document.querySelector('.wmbox .ndl'), box=document.querySelector('.wmbox');
+    var o=document.querySelector('h1 .o'), n=document.querySelector('.wmbox .ndl'), box=document.querySelector('.wmbox'), go=document.querySelector('h1 .go'), bp=document.querySelector('h1 .bp');
     if(!o||!n||!box)return;
-    var r=o.getBoundingClientRect(), b=box.getBoundingClientRect(), fs=parseFloat(getComputedStyle(o).fontSize);
-    if(!r.width)return;
-    n.style.left=(r.left-b.left+0.36*1.04*fs)+'px';
-    n.style.top=(r.top-b.top+0.525*fs)+'px';
+    var r=o.getBoundingClientRect(), b=box.getBoundingClientRect(), cs=getComputedStyle(o), fs=parseFloat(cs.fontSize);
+    if(!r.width||!fs)return;
+    var h=holeOf(cs.fontWeight+' 120px '+cs.fontFamily)||FALLBACK;
+    var sx=1; try{ if(go&&window.DOMMatrix){ var m=new DOMMatrix(getComputedStyle(go).transform); if(m.a>0)sx=m.a; } }catch(e){}
+    var base=bp?bp.getBoundingClientRect().top:(r.top+0.88*fs);   // 基線のy（印が無ければ内容領域の上端+0.88emで近似）
+    n.style.left=(r.left-b.left+h.dx*fs*sx)+'px';
+    n.style.top=(base-b.top-h.dy*fs)+'px';
     n.style.width=n.style.height=(0.46*fs)+'px';
     n.classList.add('on');
   }
   place();
-  // ⚠ 書体(禅角ゴシック)は取り寄せに時間がかかり、届いた瞬間に「O」の位置と大きさが変わる。
-  //   最初の1回だけ計算すると、代替の書体の字形で決めた位置に針が残ってしまう(iPhoneで実際に起きた)。
-  //   書体の読み込み完了・見出しの大きさの変化・画面の回転、どれでも計算し直す
+  // ⚠ 書体(禅角ゴシック)は取り寄せに時間がかかり、届いた瞬間に「O」の形と大きさが変わる。
+  //   書体の読み込み完了・見出しの大きさの変化・画面の回転、どれでも計算し直す（毎回その時点の字形を測り直す）
   if(document.fonts){
     if(document.fonts.ready)document.fonts.ready.then(place);
     document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',place);
@@ -280,7 +306,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   window.addEventListener('load',place);
   window.addEventListener('resize',place);
   window.addEventListener('pageshow',place);
-  if(window.ResizeObserver){ var ro=new ResizeObserver(place); var h=document.querySelector('.wmbox h1'); if(h)ro.observe(h); }
+  if(window.ResizeObserver){ var ro=new ResizeObserver(place); var hh=document.querySelector('.wmbox h1'); if(hh)ro.observe(hh); }
   [300,1000,2500,5000].forEach(function(ms){ setTimeout(place,ms); });   // 念のための後追い(いずれも位置を上書きするだけ)
 })();
 </script>
