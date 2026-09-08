@@ -311,15 +311,15 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="mock" style="display:none">
   <!-- ルール切替(2026-09-05タダシさん指示)。見せ合い＝6匹を見せ合ってから3匹を選出する大会形式 -->
   <div class="gbaibar sdrulebar"><span class="lbl" title="ふつう＝3匹どうしをそのまま戦わせます ／ 見せ合い＝おたがい6匹を見せ合い、その中から3匹と並び順を選んでから戦う大会の形式です。相手が選んだ3匹は、場に出てくるまで分かりません">ルール</span>
-    <div class="opts seg sdrule" id="sdrule">
-      <button data-v="0" aria-pressed="true" title="いまの3匹どうしをそのまま戦わせます"><b>ふつう</b><small>3対3</small></button>
-      <button data-v="1" aria-pressed="false" title="おたがい6匹を見せ合って、その中から3匹と並び順を選んでから戦います（大会・チャレンジの形式）"><b>見せ合い</b><small>6匹→3匹選出</small></button>
+    <div class="opts mkseg" id="sdrule" style="--f1:#43e0ff;--f2:#b57bff">
+      <button data-v="0" data-c="cyan" aria-pressed="true" title="いまの3匹どうしをそのまま戦わせます"><b>ふつう</b><small>3対3</small></button>
+      <button data-v="1" data-c="violet" aria-pressed="false" title="おたがい6匹を見せ合って、その中から3匹と並び順を選んでから戦います（大会・チャレンジの形式）"><b>見せ合い</b><small>6匹→3匹選出</small></button>
     </div></div>
   <!-- 操作の切替(2026-09-08タダシさん指示)。リアルタイム＝実戦どおり、流れている最中にSP・交代のボタンを押す -->
   <div class="gbaibar rtbar"><span class="lbl" title="選択式＝SPアタックや交代の場面で止まり、ウィンドウからゆっくり選べます ／ リアルタイム＝実戦どおり止まりません。ゲージがたまったらHUDの下のSPボタン、交代したいときは⇄ボタンを、流れている最中に押します。シールドと次のポケモン選びだけは実戦と同じく10秒の猶予があります">操作</span>
-    <div class="opts seg sdrule" id="gbrt">
-      <button data-v="0" aria-pressed="true" title="SPアタック・シールド・交代の場面で止まり、ウィンドウからゆっくり選べます。あとからチップで選び直すこともできます"><b>選択式</b><small>止まって選ぶ</small></button>
-      <button data-v="1" aria-pressed="false" title="実戦どおり止まりません。ゲージがたまったらSPボタン、交代したいときは⇄を押します（ノーマルアタックは自動）。シールドと次のポケモン選びは10秒の猶予つき。選び直しはできず、やり直しだけできます"><b>リアルタイム</b><small>実戦どおり</small></button>
+    <div class="opts mkseg" id="gbrt" style="--f1:#43e0ff;--f2:#ff5abe">
+      <button data-v="0" data-c="cyan" aria-pressed="true" title="SPアタック・シールド・交代の場面で止まり、ウィンドウからゆっくり選べます。あとからチップで選び直すこともできます"><b>選択式</b><small>止まって選ぶ</small></button>
+      <button data-v="1" data-c="magenta" aria-pressed="false" title="実戦どおり止まりません。ゲージがたまったらSPボタン、交代したいときは⇄を押します（ノーマルアタックは自動）。シールドと次のポケモン選びは10秒の猶予つき。選び直しはできず、やり直しだけできます"><b>リアルタイム</b><small>実戦どおり</small></button>
     </div></div>
   <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の強さ。EASY=軽いSPをすぐ撃ち、シールドもすぐ使う入門向け ／ NORMAL=実戦の基本戦術で戦う標準 ／ HARD=こちらのポケモンとわざを最初から知っていて、ブラフも効かない最強。どの難易度でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいて難易度</span>
     <div class="opts gbai" id="gbai"></div></div>

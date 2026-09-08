@@ -1876,15 +1876,39 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   background:linear-gradient(160deg,#f795c8 0%,#d63384 45%,#9c1a5e 100%)}
 
 /* ================= 見せ合いルール(6匹→3匹選出)  2026-09-05 ================= */
-/* ルールの切替。排他の2択なのですき間2pxでくっつけ、外側だけ角丸を大きくする(共通ルール) */
+/* ルール(ふつう／見せ合い)と操作(選択式／リアルタイム)の切替(2026-09-08タダシさん指示「模擬戦や難易度ボタンのように綺麗に」)。
+   難易度タブ(.gbai)と同じ作り: 2色のグラデーションの縁取りで1つのまとまりに見せ、2行の札(大＋小)、
+   選択中はその選択肢の色で点灯して光の帯が流れる。色は縁取り --f1/--f2(段ごと)と、ボタンの data-c で決める */
 .sdrulebar{margin:6px 0 2px}
-#sdrule{gap:2px;flex:1 1 auto}
-#sdrule button{line-height:1.15;padding:5px 10px;border-radius:5px}
-#sdrule button:first-child{border-radius:12px 5px 5px 12px}
-#sdrule button:last-child{border-radius:5px 12px 12px 5px}
-#sdrule button b{display:block;font-size:.74rem;white-space:nowrap}
-#sdrule button small{display:block;font-size:.58rem;font-weight:600;opacity:.85;margin-top:1px;word-break:keep-all}
-#sdrule button[aria-pressed="true"]{background:var(--cy);border-color:var(--cy);color:#06202b}
+.gbaibar .mkseg{flex:1 1 auto;min-width:0;display:flex;gap:4px;padding:4px;border-radius:14px;
+  border:1px solid transparent;
+  background:linear-gradient(var(--bg2),var(--bg2)) padding-box,
+    linear-gradient(120deg,var(--f1) 0%,var(--f2) 100%) border-box;
+  box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.gbaibar .mkseg button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:0;
+  padding:5px 8px 6px;border-radius:10px;color:var(--dc);opacity:.8;line-height:1.2;
+  background:var(--tab);border:1px solid var(--line);
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);
+  transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
+.gbaibar .mkseg button b{display:block;font-size:.76rem;font-weight:900;letter-spacing:.08em;line-height:1.25;white-space:nowrap}
+.gbaibar .mkseg button small{display:block;font-size:.55rem;font-weight:700;letter-spacing:.04em;opacity:.8;line-height:1.2;white-space:nowrap}
+.gbaibar .mkseg button:hover{opacity:1;transform:translateY(-1px)}
+.gbaibar .mkseg button[data-c="cyan"]{--dc:#7fd7ff;--d1:#c9f4ff;--dm:#17b0dd;--d2:#0a6c94;--dt:#042330}
+.gbaibar .mkseg button[data-c="violet"]{--dc:#cdb0ff;--d1:#e9dcff;--dm:#9b5cff;--d2:#4b1f9a;--dt:#fff}
+.gbaibar .mkseg button[data-c="magenta"]{--dc:#ff9ad8;--d1:#ffd3ee;--dm:#ff4fb0;--d2:#8a1a6a;--dt:#fff}
+:root.light .gbaibar .mkseg button[data-c="cyan"]{--dc:#0b7fa0}
+:root.light .gbaibar .mkseg button[data-c="violet"]{--dc:#6a34c9}
+:root.light .gbaibar .mkseg button[data-c="magenta"]{--dc:#c0227e}
+.gbaibar .mkseg button[aria-pressed="true"]{opacity:1;color:var(--dt);border-color:var(--d1);transform:translateY(-1px);
+  background:linear-gradient(160deg,var(--d1) 0%,var(--dm) 45%,var(--d2) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);position:relative;overflow:hidden}
+.gbaibar .mkseg button[aria-pressed="true"] small{opacity:1}
+.gbaibar .mkseg button[aria-pressed="true"]::after{content:"";position:absolute;top:0;bottom:0;left:-70%;width:45%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-18deg);animation:gdshine 3.4s ease-in-out infinite;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.gbaibar .mkseg button[aria-pressed="true"]::after{animation:none;display:none}}
+/* ラベル(ルール／操作／あいて難易度)の幅をそろえて、右の枠の左端が縦に並ぶようにする */
+#mock .gbaibar .lbl{flex:0 0 auto;min-width:4.2em}
 /* 6匹の入力は畳めるようにする(選出がそろったら自動で閉じる) */
 .sdentry{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);padding:6px 10px}
 .sdentry>summary{cursor:pointer;font-size:.74rem;font-weight:700;color:var(--cy);padding:3px 0;list-style:none}
