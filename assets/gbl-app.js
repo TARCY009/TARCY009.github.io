@@ -8059,6 +8059,9 @@ function gbPlay(picks, foes, ans, stepwise) {
   // (2026-08-20タダシさん報告: 表示しないと、対面の切れ目をまたいだノーマルアタックが
   //  タイムラインから消えたように見える。HPは正しく減っていた=表示だけの問題)
   let swapHitEv = null;
+  // 交代前に投げられたSP(2026-09-08タダシさん指示): 対面が切れた次のターンに着弾するはずだったSPは
+  // 「投げ済み」として持ち越し、新しい対面の頭でそのわざを即打ちする(交代先を見て選び直さない)。両側とも同じ扱い
+  let inflight = [null, null];
   const legs = [];
   const nextAlive = (sd, from) => {
     for (let i = 0; i < st[sd].length; i++) { const k = (from + i) % st[sd].length; if (st[sd][k].alive) return k; }
@@ -9268,6 +9271,11 @@ function gbPlay(picks, foes, ans, stepwise) {
       .map(k => ({ on: +k.split(':')[3], move: ans[k] && ans[k].mv, key: k }))
       .filter(x => x.on >= 1 && x.move && (P0.pol.charged || []).includes(x.move))
       .sort((a, b) => a.on - b.on);
+    // 交代前に押していたSP(投げ済み)は、この対面の頭で撃つ(あいてが交代受けをしても押したぶんは消えない)
+    if (rt && inflight[0] && (P0.pol.charged || []).includes(inflight[0])) {
+      const k1 = gbKey(li, 0, 'msp', 1, 0);
+      if (!mspPlan.some(x => x.key === k1)) mspPlan.unshift({ on: 1, move: inflight[0], key: k1 });
+    }
     const legCfg = s => {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
@@ -9456,7 +9464,12 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 実戦では交代を押したらSPは撃てない。従来は同じターンにSPの選択もできてしまい、
       // 交代受けを狙いながらSPも撃てる(ありえない)状態になっていた
       if (p.side === 0 && p.kind === 'sp' && dec[0].mswP != null && p.tn >= dec[0].mswP) { handled.add(p.key); continue; }
-      const a = ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
+      // 投げ済みのSP: 対面の頭の最初のSPは、交代前に投げたわざをそのまま即打ち(交代先を見て選び直さない)。
+      // 投げている最中は交代もできない(あいての対面の頭の「交代する？」は残る)
+      let forced = null;
+      if (p.kind === 'sp' && p.seq === 0 && inflight[p.side]) forced = { a: 'fire', mv: inflight[p.side] };
+      else if (p.kind === 'swap' && p.seq === 0 && p.side === 1 && inflight[1]) forced = { a: 'stay' };
+      const a = forced || ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
       if (!a) {
         pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p),
           holds: holdsOf(p), ctx };
@@ -9464,7 +9477,7 @@ function gbPlay(picks, foes, ans, stepwise) {
         break;
       }
       handled.add(p.key);
-      log.push({ ...p, ans: a, auto: !ans[p.key] });
+      log.push({ ...p, ans: a, auto: !ans[p.key], locked: !!forced });
       if (p.kind === 'swap') {
         if (a.a === 'stay') continue;
         // a.at = 交代受け(HARD)でタイミングを合わせたターン。無ければ従来どおり質問のターンで交代する。
@@ -9493,6 +9506,23 @@ function gbPlay(picks, foes, ans, stepwise) {
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
     const swapped = [0, 1].map(s =>
       !!(res.stopped && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
+    // ---- 交代前に投げられたSPは、交代先にそのまま当たる(2026-09-08タダシさん指示) ----
+    // 従来は対面が切れると新しい対面の頭でSPを選び直していたので、あいてが**交代先を見てから**
+    // 効くわざを撃っているように見えた(交代受けの意味が薄れる)。切れ目の次のターンに着弾する
+    // SPがあれば、その側の「投げ済み」として持ち越す(交代した側のSPは投げていないので対象外)
+    inflight = [null, null];
+    if (res.stopped && (swapped[0] || swapped[1])) {
+      const S = res.turns;
+      const t2 = rbTurns(PvpEngine.simulate(D, legCfg(0), legCfg(1), { ...SIMOPT, stopAt: S + 1 })).find(t => t.tn === S + 1);
+      for (const s of [0, 1]) {
+        if (swapped[s] || !t2) continue;
+        const e = (t2.ev[s] || []).find(x => x && x.full !== undefined);
+        if (!e) continue;
+        const P = s ? P1 : P0;
+        const id = (P.pol.charged || []).find(k => D.moves[k] && D.moves[k].n === e.move);
+        if (id) inflight[s] = id;
+      }
+    }
     // optNs・noSpはじぶん側のSPだけ計算する(あいて側の編集ウィンドウでは表示に出ないだけ。
     // オートバトルの探索がgbPlayを何百回も呼ぶので、余計なシミュを増やさない)
     const points = log.map(p => {
@@ -10501,7 +10531,7 @@ function gbRender(body, bt, picks, foes) {
   feedEl.querySelectorAll('.fchip').forEach(b => b.onclick = () => {
     if (rtOn()) return;   // リアルタイムは実戦と同じく選び直しなし(やり直しだけ)
     const p = RBUI.pts[b.dataset.k];
-    if (!p) return;
+    if (!p || p.locked) return;   // 投げ済みのSP(交代前に投げたわざ)は選び直せない
     RBUI.open = p.key; RBV.cur = p.gt;
     run();
   });
@@ -10636,7 +10666,8 @@ function gbRender(body, bt, picks, foes) {
     const r = spReadyAt(li, gt);
     if (!r || r.en < m.e) return;          // ゲージが足りない＝押しても何も起きない(実戦と同じ)
     const on = r.E + 1;
-    if (on > leg.res.turns) return;        // この対面のうちに撃てない
+    // 切れ目の次のターンが対面の外(＝あいてがそこで交代受けをした)でも受ける: 投げ済みとして交代先に当たる
+    if (on > leg.res.turns + 1) return;
     const key = gbKey(li, 0, 'msp', on, 0);
     if (RB.ans[key]) return;               // 同じ切れ目に何度押しても1発
     // この場面より後ろの答えは消す(前提が変わるため)
