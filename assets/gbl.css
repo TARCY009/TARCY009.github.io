@@ -1617,7 +1617,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .fxpivot .pvspin .swapmark{width:1em;height:1em;vertical-align:0}
 .fxpivot .ring{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;
   border-radius:50%;border:3px solid var(--pc);opacity:0;animation:fxpvring var(--fxd) ease-out both}
-.fxpivot .ring.r2{border-width:2px;border-color:#fff;animation-delay:calc(var(--fxd)*.07)}
+.fxpivot .ring.r2{border-width:2px;border-color:#fff;animation-delay:calc(var(--fxd)*.05)}
 .fxpivot .spark{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
   background:#fff;box-shadow:0 0 10px var(--pc);opacity:0;animation:fxpvspark var(--fxd) ease-out both}
 .fxpivot .s1{--dx:-64px;--dy:-50px}.fxpivot .s2{--dx:66px;--dy:-44px}.fxpivot .s3{--dx:-78px;--dy:10px}
@@ -1637,13 +1637,18 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   animation:fxpvflash var(--fxd) ease both}
 @keyframes fxpvband{0%{opacity:0;transform:translateX(-40%)}12%{opacity:1;transform:translateX(0)}80%{opacity:1;transform:translateX(2%)}100%{opacity:0;transform:translateX(16%)}}
 @keyframes fxpvbandR{0%{opacity:0;transform:translateX(40%)}12%{opacity:1;transform:translateX(0)}80%{opacity:1;transform:translateX(-2%)}100%{opacity:0;transform:translateX(-16%)}}
-@keyframes fxpvshine{0%,18%{left:-30%}62%,100%{left:110%}}
-@keyframes fxpvring{0%,10%{opacity:0;transform:scale(.3)}28%{opacity:.95}100%{opacity:0;transform:scale(2.3)}}
-@keyframes fxpvspin{0%{opacity:0;transform:scale(.3) rotate(-200deg)}
-  34%{opacity:1;transform:scale(1.18) rotate(0deg)}50%{transform:scale(1) rotate(0deg)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
-@keyframes fxpvspark{0%,20%{opacity:0;transform:none}30%{opacity:1}78%{opacity:0;transform:translate(var(--dx),var(--dy))}100%{opacity:0}}
-@keyframes fxpvtx{0%,8%{opacity:0;transform:translateX(-28px) scale(.86)}30%{opacity:1;transform:translateX(0) scale(1.08)}44%{transform:scale(1)}100%{opacity:1;transform:none}}
-@keyframes fxpvflash{0%{opacity:0}14%{opacity:.9}40%{opacity:0}100%{opacity:0}}
+@keyframes fxpvshine{0%,50%{left:-30%}84%,100%{left:110%}}
+/* ⇄は3回転しながら減速して「カチッ」と止まる(2026-09-08タダシさん指示)。止まった瞬間(約55%)に
+   輪と光の粒がはじけ、閃光が走り、見出しが出る。80%(静止に切り替える位置)までに姿勢を rotate(0) scale(1) へ戻す */
+@keyframes fxpvspin{0%{opacity:0;transform:scale(.45) rotate(-1080deg);animation-timing-function:cubic-bezier(.15,.6,.25,1)}
+  8%{opacity:1}
+  54%{transform:scale(1.14) rotate(14deg);animation-timing-function:ease-out}
+  63%{transform:scale(.98) rotate(-5deg);animation-timing-function:ease-out}
+  71%{transform:scale(1) rotate(0deg)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
+@keyframes fxpvring{0%,52%{opacity:0;transform:scale(.3)}60%{opacity:.95}80%,100%{opacity:0;transform:scale(2.3)}}
+@keyframes fxpvspark{0%,53%{opacity:0;transform:none}60%{opacity:1}80%,100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+@keyframes fxpvtx{0%,50%{opacity:0;transform:translateX(-28px) scale(.86)}62%{opacity:1;transform:translateX(0) scale(1.08)}72%{transform:scale(1)}100%{opacity:1;transform:none}}
+@keyframes fxpvflash{0%,50%{opacity:0}57%{opacity:.7}76%{opacity:0}100%{opacity:0}}
 @media (max-width:540px){
   .fxpivot .pvband{height:124px;margin-top:-62px;gap:12px}
   .fxpivot .pvmk{width:70px;height:70px}
