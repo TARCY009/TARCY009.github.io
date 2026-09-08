@@ -190,6 +190,15 @@ FORM_MOVE_FIX = {
 # 対戦データ側がまだ「未実装(released=false)」のままだが、ゲームには実装済みのポケモン。
 # ここに入れると未実装除外の対象から外れる。提供元が追いついたら消してよい
 MANUAL_RELEASED = {'CRAMORANT'}   # ウッウ(2026-08-18実装)
+# 情報元がシャドウ実装に追随していないぶんを手動で補う(タダシさん指示で先行反映)。
+# 提供元(対戦データ)に `<key>_shadow` が入れば自動でも拾われるので、重複しても害はない(集合に足すだけ)。
+# build_pvp_data.py の MANUAL_SHADOW と必ず同じ顔ぶれにする
+MANUAL_SHADOW = {   # 2026-09-08 実装確定
+    'ZEKROM',
+    'FOMANTIS', 'LURANTIS',      # カリキリ・ラランテス
+    'SANDYGAST', 'PALOSSAND',    # スナバァ・シロデスナ
+    'WIMPOD', 'GOLISOPOD',       # コソクムシ・グソクムシャ
+}
 # Game Master未収録のメガ等を手動登録: key: (名前, 攻, 防, HP, [タイプ], 元ポケモンkey)
 MANUAL_MEGA = {
     'MEWTWO_MEGA_X': ('メガミュウツーX', 399, 215, 228, ['PSYCHIC','FIGHTING'], 'MEWTWO'),
@@ -258,7 +267,7 @@ def main():
     ja = fetch(SRC['ja'])['data']
     ja_map = {ja[i]: ja[i+1] for i in range(0, len(ja)-1, 2)}
     pvp = fetch(SRC['pvp'])['pokemon']
-    shadow_ids = {p['speciesId'][:-7].upper().replace('_ALOLAN','_ALOLA') for p in pvp if p['speciesId'].endswith('_shadow')}
+    shadow_ids = {p['speciesId'][:-7].upper().replace('_ALOLAN','_ALOLA') for p in pvp if p['speciesId'].endswith('_shadow')} | MANUAL_SHADOW
     print('実装済みシャドウ:', len(shadow_ids))
     released_map = {p['speciesId']: bool(p.get('released')) for p in pvp}
 

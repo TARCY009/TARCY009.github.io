@@ -62,6 +62,14 @@ UNTRADEABLE_EXTRA = {'zygarde'}
 LEVEL_FLOOR_DEFAULT = 15          # 交換不可ポケモンの既定(スペシャルリサーチ産)
 LEVEL_FLOOR = {'zygarde': 20, 'deoxys': 20, 'darkrai': 20}   # レイドでしか手に入らない(ゲノセクトはタスク産があるので15)
 MANUAL_RELEASED = {'cramorant'}   # ウッウ(2026-08-18実装)
+# 情報元がシャドウ実装に追随していないぶんを手動で補う(タダシさん指示で先行反映)。
+# 提供元に `<key>_shadow` が入れば自動でも拾われるので、重複しても害はない(集合に足すだけ)
+MANUAL_SHADOW = {   # 2026-09-08 実装確定
+    'zekrom',
+    'fomantis', 'lurantis',      # カリキリ・ラランテス
+    'sandygast', 'palossand',    # スナバァ・シロデスナ
+    'wimpod', 'golisopod',       # コソクムシ・グソクムシャ
+}
 # 未実装(r=0)のポケモンも2026-09-04から検索で選べる(タダシさん指示)。ただし次は「ポケモン」ではないので隠す(h=1)
 HIDDEN_FORMS = {'aegislash_blade', 'mimikyu_busted', 'cramorant_gulping', 'cramorant_gorging', 'morpeko_hangry'}
 
@@ -213,7 +221,7 @@ def main():
             return mega[0] + nm + mega[1] if mega else nm
         return None
 
-    pokes, shadow_ok, warn_pk = {}, set(), []
+    pokes, shadow_ok, warn_pk = {}, set(MANUAL_SHADOW), []
     for p in pvp['pokemon']:
         sid = p['speciesId']
         if sid.endswith(SKIP_SPECIES_SUFFIX):
