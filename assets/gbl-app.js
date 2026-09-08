@@ -316,10 +316,10 @@ document.getElementById('app').innerHTML = `
       <button data-v="1" data-c="violet" aria-pressed="false" title="おたがい6匹を見せ合って、その中から3匹と並び順を選んでから戦います（大会・チャレンジの形式）"><b>見せ合い</b><small>6匹→3匹選出</small></button>
     </div></div>
   <!-- 操作の切替(2026-09-08タダシさん指示)。リアルタイム＝実戦どおり、流れている最中にSP・交代のボタンを押す -->
-  <div class="gbaibar rtbar"><span class="lbl" title="選択式＝SPアタックや交代の場面で止まり、ウィンドウからゆっくり選べます ／ リアルタイム＝実戦どおり止まりません。ゲージがたまったらHUDの下のSPボタン、交代したいときは⇄ボタンを、流れている最中に押します。シールドと次のポケモン選びだけは実戦と同じく10秒の猶予があります">操作</span>
+  <div class="gbaibar rtbar"><span class="lbl" title="選択式＝SPアタックや交代の場面で止まり、ウィンドウからゆっくり選べます ／ リアルタイム＝実戦どおり止まりません。ゲージがたまったらHUDの下のSPボタン、交代したいときは⇄ボタンを、流れている最中に押します。シールド（10秒）と次のポケモン選び（12秒）だけは実戦と同じく猶予つきの選択です">操作</span>
     <div class="opts mkseg" id="gbrt" style="--f1:#43e0ff;--f2:#ff5abe">
       <button data-v="0" data-c="cyan" aria-pressed="true" title="SPアタック・シールド・交代の場面で止まり、ウィンドウからゆっくり選べます。あとからチップで選び直すこともできます"><b>選択式</b><small>止まって選ぶ</small></button>
-      <button data-v="1" data-c="magenta" aria-pressed="false" title="実戦どおり止まりません。ゲージがたまったらSPボタン、交代したいときは⇄を押します（ノーマルアタックは自動）。シールドと次のポケモン選びは10秒の猶予つき。選び直しはできず、やり直しだけできます"><b>リアルタイム</b><small>実戦どおり</small></button>
+      <button data-v="1" data-c="magenta" aria-pressed="false" title="実戦どおり止まりません。ゲージがたまったらSPボタン、交代したいときは⇄を押します（ノーマルアタックは自動）。シールド（10秒）と次のポケモン選び（12秒）は猶予つき。選び直しはできず、やり直しだけできます"><b>リアルタイム</b><small>実戦どおり</small></button>
     </div></div>
   <div class="gbaibar"><span class="lbl" title="あいて(対戦相手)の強さ。EASY=軽いSPをすぐ撃ち、シールドもすぐ使う入門向け ／ NORMAL=実戦の基本戦術で戦う標準 ／ HARD=こちらのポケモンとわざを最初から知っていて、ブラフも効かない最強。どの難易度でも、バトル後にあいての行動のチップをタップすれば選び直せます">あいて難易度</span>
     <div class="opts gbai" id="gbai"></div></div>
@@ -1493,8 +1493,8 @@ ${PAGE_ROCKET ? '' : `
   <p><b>操作</b>を<b>リアルタイム</b>にすると、実戦どおり<b>止まらずに流れます</b>（既定は止まって選ぶ<b>選択式</b>）。
   ゲージがたまるとHUDの下の<b>SPボタン</b>が点灯するので、実戦と同じタイミングで押します——
   押すと、いま打っているノーマルアタックが終わった切れ目で発動します（2ターンわざの1ターン目に押しても通ります）。
-  交代は<b>⇄ボタン</b>。<b>シールド</b>と<b>次のポケモン</b>だけは実戦と同じく画面が出て、<b>10秒</b>の猶予があります
-  （過ぎると「受ける」「順番どおり」）。リアルタイムでは選び直しはできず、<b>↺やり直し</b>だけできます。
+  交代は<b>⇄ボタン</b>。<b>シールド</b>と<b>次のポケモン</b>だけは実戦と同じく画面が出て、シールドは<b>10秒</b>・次のポケモンは<b>12秒</b>の猶予があります
+  （過ぎると「受ける」「順番どおり」。選ぶのにかかった時間はバトルの時計に足されます）。リアルタイムでは選び直しはできず、<b>↺やり直し</b>だけできます。
   ノーマルアタックは自動です（連打は要りません）。</p>
   <p><b>ルール</b>を<b>見せ合い</b>にすると、大会・チャレンジと同じ形式になります。
   おたがい<b>6匹を登録して見せ合い</b>、その中から<b>3匹と並び順</b>を選んでから戦います。
@@ -6582,7 +6582,9 @@ try { if (localStorage.getItem('gbl_mock_foeauto') === '1') MK.foeAuto = true; }
 try { if (localStorage.getItem('gbl_mock_rt') === '1') MK.rt = true; } catch (e) {}
 const saveMkRt = () => { try { localStorage.setItem('gbl_mock_rt', MK.rt ? '1' : '0'); } catch (e) {} };
 const rtOn = () => !!MK.rt && mode === 'mock';
-const GB_RT_WAIT = 10000;   // リアルタイムのシールド・次のポケモン選びの猶予(ミリ秒・タダシさん指定10秒)
+const GB_RT_WAIT = 10000;   // リアルタイムのシールドの猶予(ミリ秒・タダシさん指定10秒)
+// 倒れたあと次のポケモンを選ぶ猶予＝実戦と同じ12秒(ゲーム内公開データ changePokemonDurationSeconds=12・2026-09-08タダシさん指示)
+const GB_NEXT_WAIT = 12000;
 // バトルの制限時間(2026-09-08タダシさん指示「4分半も裏でカウント」)。ゲーム内公開データ COMBAT_SETTINGS の
 // roundDurationSeconds=270 と日本語の解説が一致(英語圏の「4分」は古い情報)。ターン換算(0.5秒=1ターン)
 const GB_ROUND_TURNS = 540;
@@ -9614,7 +9616,7 @@ function gbPlay(picks, foes, ans, stepwise) {
         else legs[legs.length - 1].foeNextPoint = pt;
         cur[s] = a.a === 'to' && ros[s][a.to] ? a.to : nextAlive(s, cur[s]);
         // 選ぶのにかかった時間(秒・答えに t で入る)は時計に足す＝交代のクールタイムと制限時間に効く
-        if (s === 0 && a.t) extraTot += Math.round(Math.min(GB_RT_WAIT / 1000, Math.max(0, +a.t)) * 2);
+        if (s === 0 && a.t) extraTot += Math.round(Math.min(GB_NEXT_WAIT / 1000, Math.max(0, +a.t)) * 2);
       } else cur[s] = rest[0];
       newIn[s] = true;
       koIn[s] = true;   // 倒されて出し直した＝相手はこれを見てから交代を決める(1秒後)
@@ -10385,7 +10387,7 @@ function gbRender(body, bt, picks, foes) {
     clearInterval(RBV.cdTimer); RBV.cdTimer = null;
     const tOpen = performance.now();   // 次のポケモン選びにかかった時間を時計に足すため
     const withT = o => (p.kind === 'next' && !p.side && !editing)
-      ? { ...o, t: Math.round(Math.min(GB_RT_WAIT / 1000, (performance.now() - tOpen) / 1000) * 10) / 10 } : { ...o };
+      ? { ...o, t: Math.round(Math.min(GB_NEXT_WAIT / 1000, (performance.now() - tOpen) / 1000) * 10) / 10 } : { ...o };
     // det=trueで「…詳細」(＋1〜＋3の細かい待ち指定)を開く。閉じているあいだは det付きの選択肢を隠す
     const hasDet = p.opts.some(o => o.det);
     const btn = ({ o, i }) => `<button class="${o.cls || ''}${rbSameAns(p.ans, o) ? ' on' : ''}"
@@ -10444,7 +10446,7 @@ function gbRender(body, bt, picks, foes) {
       const t0 = performance.now();
       const tt = winbox.querySelector('.rwt'); if (tt) tt.appendChild(cd);
       const tickCd = () => {
-        const left = Math.max(0, GB_RT_WAIT - (performance.now() - t0));
+        const left = Math.max(0, (p.kind === 'next' ? GB_NEXT_WAIT : GB_RT_WAIT) - (performance.now() - t0));
         cd.textContent = (left / 1000).toFixed(1);
         cd.classList.toggle('low', left <= 3000);
         if (left > 0) return;
