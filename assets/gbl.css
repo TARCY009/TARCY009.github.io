@@ -766,7 +766,13 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .flg em{font-style:normal;font-size:.6rem;color:var(--sub);letter-spacing:.12em}
 .ft{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:4px;padding:2px 0;min-height:25px}
 .ft.q{min-height:12px;padding:0}
-.ft .tn{grid-column:2;text-align:center;font-size:.55rem;color:#3d4a78;font-variant-numeric:tabular-nums}
+.ft .tn{grid-column:2;text-align:center;font-size:.55rem;color:#5a6a9c;font-variant-numeric:tabular-nums}
+/* ターンごとの2色の縞(2026-09-09タダシさん指示「控えめに」): 奇数ターンの行(.ft)だけにごく薄い帯。
+   同じターンの続きの行(SP解決の行など)も同じ色になるので、1ターンが1つの帯として読める。
+   VSカード・決断のチップ・KOのバナーには付けない(行の種別が違うことが分かるように) */
+.fi.g1>.ft{background:rgba(255,255,255,.035);border-radius:7px}
+:root.light .fi.g1>.ft{background:rgba(20,40,90,.05)}
+:root.light .ft .tn{color:#7a86ad}
 .ft .c{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
 .ft .c.me{grid-column:1}
 .ft .c.foe{grid-column:3;justify-content:flex-end}

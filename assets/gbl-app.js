@@ -5538,7 +5538,7 @@ function rbRender(body, bt, picks, foes, extra) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
@@ -10069,7 +10069,7 @@ function gbRender(body, bt, picks, foes) {
       </div>
       ${rtOn() ? '' : `<button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>`}
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
