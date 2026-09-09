@@ -8006,7 +8006,7 @@ function gbAskTitle(p) {
 }
 function gbAnsLabel(p, a) {
   if (!a) return '？';
-  if (p.kind === 'msp') return `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;   // リアルタイムで押したSP
+  if (p.kind === 'msp') return a.a === 'late' ? 'SPの入力が間に合わなかった' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;   // リアルタイムで押したSP
   if (p.kind === 'sp') {
     if (a.a === 'auto') return 'おまかせ';
     // あいてのSPが2本(またはわざオート)なら、チップにもわざ名を出さない(2026-08-20タダシさん指示。
@@ -9443,6 +9443,31 @@ function gbPlay(picks, foes, ans, stepwise) {
         if (tLim !== timeCut) { timeCut = tLim; continue; }
       }
       ctx.tl = rbTurns(res);
+      // ---- 遅いSP入力は通らない(2026-09-09タダシさん指摘・実戦の再現) ----
+      // 押してから発動する切れ目の前に、あいてのSPアタックが解決してしまったら、実戦ではその入力は
+      // 演出のあいだに消えて反映されない(押し直しが要る)。同じターンに間に合っていれば同時発動＝CMP順。
+      // 従来は台本モードがそのまま「あいてのSPのあと」に発動させていた(ルナアーラのシャドーボールが
+      // ゼルネアスのムーンフォースの後に勝手に発動した・タダシさん報告)
+      if (rt && mspPlan.length) {
+        const fm0 = D.moves[P0.pol.fast], tnMe0 = fm0 && fm0.tn ? fm0.tn : 1;
+        const gone = mspPlan.filter(x => {
+          if (x.on <= 1) return false;   // 交代前に投げ済みのぶんは対象外
+          const a = ans[x.key], p0 = a && a.p != null ? Math.max(1, a.p) : Math.max(1, x.on - tnMe0);
+          // 押した瞬間のターン(p0)は「その行まで見えている」ので対象外。その後〜発動の前(on-1)まで
+          return ctx.tl.some(t => t.tn > p0 && t.tn < x.on && t.ev[1].some(e => e.full !== undefined));
+        });
+        if (gone.length) {
+          for (const x of gone) {
+            const a = ans[x.key], p0 = a && a.p != null ? Math.max(1, a.p) : Math.max(1, x.on - tnMe0);
+            const st0 = ctx.tl.find(t => t.tn > p0 && t.tn < x.on && t.ev[1].some(e => e.full !== undefined)).tn;
+            if (a) a.late = true;   // 押し直せるように印を残す(manualSp が見る)
+            log.push({ side: 0, kind: 'msp', seq: x.on, w: 0, tn: st0, key: x.key, gt: base + st0,
+              ans: { a: 'late', mv: x.move }, auto: false, late: true });
+            mspPlan.splice(mspPlan.indexOf(x), 1);
+          }
+          continue;   // 台本が変わったので回し直す
+        }
+      }
       // 交代受け(aiPivotAt)の読み用: **ユーザーはこの先もふつうにSPを撃ってくる前提**で1回だけ回す。
       // res のほうは timing:'shots' で、まだ答えていない発が空プラン＝「撃たない」になるので、
       // そのまま読むと「SPは飛んでこない」と誤読する(finishNoSp と同じ落とし穴)
@@ -10750,7 +10775,7 @@ function gbRender(body, bt, picks, foes) {
     // 切れ目の次のターンが対面の外(＝あいてがそこで交代受けをした)でも受ける: 投げ済みとして交代先に当たる
     if (on > leg.res.turns + 1) return;
     const key = gbKey(li, 0, 'msp', on, 0);
-    if (RB.ans[key]) return;               // 同じ切れ目に何度押しても1発
+    if (RB.ans[key] && !RB.ans[key].late) return;   // 同じ切れ目に何度押しても1発(間に合わなかった入力は押し直せる)
     // この場面より後ろの答えは消す(前提が変わるため)
     Object.keys(RB.ans).forEach(k2 => {
       const pt2 = RBUI.pts[k2];
