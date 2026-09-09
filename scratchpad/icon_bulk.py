@@ -24,28 +24,47 @@ gd.ellipse([-W*0.35,-W*0.45,W*0.75,W*0.55],fill=(60,120,190)); gd.ellipse([W*0.4
 glow=glow.filter(ImageFilter.GaussianBlur(W*0.18))
 bg=Image.blend(bg,Image.composite(glow,bg,Image.new('L',(W,W),int(255*0.55))),0.45)
 out=bg.convert('RGBA')
-# ---- 盾
-def shield(cx,cy,w,h):
-    r=w*0.12
-    # 角は5つ(上2・両側1・下の先端)。側面の角を減らすと、遠目でも丸く見えず盾らしい輪郭になる(2026-09-09タダシさん指示)
-    return [(cx-w/2+r,cy-h/2),(cx+w/2-r,cy-h/2),(cx+w/2,cy-h/2+r),(cx+w/2,cy+h*0.10),
-            (cx,cy+h/2),(cx-w/2,cy+h*0.10),(cx-w/2,cy-h/2+r)]
-cx,cy=W/2,W*0.615; ow,oh=W*0.58,W*0.55
+# ---- 盾(2026-09-09タダシさんの見本: 上の縁が真ん中でとがり、両側がなめらかに湾曲して下の先端へ。
+#      外枠と中身のあいだに隙間のある二重の輪郭)
+def bez(p0,p1,p2,p3,n=40):
+    return [(( (1-t)**3*p0[0]+3*(1-t)**2*t*p1[0]+3*(1-t)*t**2*p2[0]+t**3*p3[0]),
+             ( (1-t)**3*p0[1]+3*(1-t)**2*t*p1[1]+3*(1-t)*t**2*p2[1]+t**3*p3[1])) for i in range(n+1) for t in [i/n]]
+def shield(cx,cy,w,h,k=1.0):
+    """cx,cy=中心・w,h=外形・k=中心に対する縮尺"""
+    w,h=w*k,h*k; top=cy-h/2; L,R=cx-w/2,cx+w/2; dip=h*0.09; side=top+h*0.40
+    pts=[(L,top+dip),(cx,top),(R,top+dip),(R,side)]
+    pts+=bez((R,side),(R,top+h*0.72),(cx+w*0.30,top+h*0.93),(cx,top+h))[1:]
+    pts+=bez((cx,top+h),(cx-w*0.30,top+h*0.93),(L,top+h*0.72),(L,side))[1:]
+    return pts
+cx,cy=W/2,W*0.60; ow,oh=W*0.60,W*0.60
+sky_top,sky_bot=(168,224,255),(40,124,205)
 out=Image.alpha_composite(out,shadow(lambda d,a:d.polygon(shield(cx,cy,ow,oh),fill=(0,0,0,a)),150,W*0.035,-W*0.03))
-out=Image.alpha_composite(out,masked(vgrad((160,220,255),(46,132,210),cy-oh/2,cy+oh/2),lambda d:d.polygon(shield(cx,cy,ow,oh),fill=255)))
-iw,ih=ow*0.82,oh*0.82
-out=Image.alpha_composite(out,masked(vgrad((22,48,84),(10,22,44),cy-ih/2,cy+ih/2),lambda d:d.polygon(shield(cx,cy+W*0.004,iw,ih),fill=255)))
-# 内側の盾の光沢(上半分に白の斜めの帯)
-gl=Image.new('RGBA',(W,W),(0,0,0,0)); gm=Image.new('L',(W,W),0); ImageDraw.Draw(gm).polygon(shield(cx,cy+W*0.004,iw,ih),fill=255)
-gg=Image.new('L',(W,W),0); ImageDraw.Draw(gg).polygon([(cx-iw/2,cy-ih/2),(cx+iw/2,cy-ih/2),(cx+iw/2,cy-ih*0.05),(cx-iw/2,cy+ih*0.18)],fill=48)
-gg=gg.filter(ImageFilter.GaussianBlur(W*0.012))
+# 外枠(輪)＝外形から少し小さい形をくり抜く
+ring=Image.new('L',(W,W),0); rd=ImageDraw.Draw(ring)
+rd.polygon(shield(cx,cy,ow,oh),fill=255); rd.polygon(shield(cx,cy,ow,oh,0.86),fill=0)
+out=Image.alpha_composite(out,Image.composite(vgrad(sky_top,sky_bot,cy-oh/2,cy+oh/2),Image.new('RGBA',(W,W),(0,0,0,0)),ring))
+# 外枠の内側の縁を少し暗くして厚みを見せる
+rim2=Image.new('L',(W,W),0); r2=ImageDraw.Draw(rim2)
+r2.polygon(shield(cx,cy,ow,oh,0.90),fill=255); r2.polygon(shield(cx,cy,ow,oh,0.86),fill=0)
+out=Image.alpha_composite(out,Image.composite(Image.new('RGBA',(W,W),(20,70,130,110)),Image.new('RGBA',(W,W),(0,0,0,0)),rim2))
+# 中身の盾＝空色→青のグラデーション(見本の金属質感を空色で)
+k_in=0.74
+out=Image.alpha_composite(out,shadow(lambda d,a:d.polygon(shield(cx,cy,ow,oh,k_in),fill=(0,0,0,a)),120,W*0.02,-W*0.015))
+out=Image.alpha_composite(out,masked(vgrad((150,214,255),(34,112,196),cy-oh*k_in/2,cy+oh*k_in/2),lambda d:d.polygon(shield(cx,cy,ow,oh,k_in),fill=255)))
+# 斜めの光沢(左上半分を明るく・見本の反射の折れ目)
+gl=Image.new('RGBA',(W,W),(0,0,0,0)); gm=Image.new('L',(W,W),0); ImageDraw.Draw(gm).polygon(shield(cx,cy,ow,oh,k_in),fill=255)
+gg=Image.new('L',(W,W),0); ImageDraw.Draw(gg).polygon([(cx-ow,cy-oh),(cx+ow*0.55,cy-oh),(cx-ow*0.05,cy+oh*0.05),(cx-ow,cy+oh*0.35)],fill=95)
+gg=gg.filter(ImageFilter.GaussianBlur(W*0.004))
 gl.paste((255,255,255,255),(0,0,W,W)); gl.putalpha(Image.composite(gg,Image.new('L',(W,W),0),gm))
 out=Image.alpha_composite(out,gl)
-# 内側の盾の中に細い空色の線(一段の縁)
-ln=Image.new('RGBA',(W,W),(0,0,0,0)); ImageDraw.Draw(ln).polygon(shield(cx,cy+W*0.004,iw*0.90,ih*0.90),outline=(120,190,255,110),width=int(W*0.008))
-out=Image.alpha_composite(out,ln)
+# 右下は少し暗く沈める(金属の陰)
+dk=Image.new('RGBA',(W,W),(0,0,0,0)); dm=Image.new('L',(W,W),0)
+ImageDraw.Draw(dm).polygon([(cx+ow*0.55,cy-oh),(cx+ow,cy-oh),(cx+ow,cy+oh),(cx-ow*0.3,cy+oh),(cx-ow*0.05,cy+oh*0.05)],fill=55)
+dm=dm.filter(ImageFilter.GaussianBlur(W*0.004))
+dk.paste((0,20,60,255),(0,0,W,W)); dk.putalpha(Image.composite(dm,Image.new('L',(W,W),0),gm))
+out=Image.alpha_composite(out,dk)
 # ---- 王冠(盾の上に載せる・少し重ねる)
-cw,ch=W*0.44,W*0.21; kx,ky=W/2,cy-oh/2+W*0.045   # ky=王冠の底
+cw,ch=W*0.42,W*0.20; kx,ky=W/2,cy-oh/2+W*0.055   # ky=王冠の底
 def crown():
     l,r=kx-cw/2,kx+cw/2; base=ky; band=ch*0.30
     return [(l,base),(l,base-band),(l,base-ch),(kx-cw*0.25,base-band-ch*0.18),(kx,base-ch*1.15),(kx+cw*0.25,base-band-ch*0.18),(r,base-ch),(r,base-band),(r,base)]
