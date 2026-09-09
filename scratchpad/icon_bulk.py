@@ -27,8 +27,9 @@ out=bg.convert('RGBA')
 # ---- 盾
 def shield(cx,cy,w,h):
     r=w*0.12
-    return [(cx-w/2+r,cy-h/2),(cx+w/2-r,cy-h/2),(cx+w/2,cy-h/2+r),(cx+w/2,cy+h*0.06),
-            (cx+w/2*0.60,cy+h*0.36),(cx,cy+h/2),(cx-w/2*0.60,cy+h*0.36),(cx-w/2,cy+h*0.06),(cx-w/2,cy-h/2+r)]
+    # 角は5つ(上2・両側1・下の先端)。側面の角を減らすと、遠目でも丸く見えず盾らしい輪郭になる(2026-09-09タダシさん指示)
+    return [(cx-w/2+r,cy-h/2),(cx+w/2-r,cy-h/2),(cx+w/2,cy-h/2+r),(cx+w/2,cy+h*0.10),
+            (cx,cy+h/2),(cx-w/2,cy+h*0.10),(cx-w/2,cy-h/2+r)]
 cx,cy=W/2,W*0.615; ow,oh=W*0.58,W*0.55
 out=Image.alpha_composite(out,shadow(lambda d,a:d.polygon(shield(cx,cy,ow,oh),fill=(0,0,0,a)),150,W*0.035,-W*0.03))
 out=Image.alpha_composite(out,masked(vgrad((160,220,255),(46,132,210),cy-oh/2,cy+oh/2),lambda d:d.polygon(shield(cx,cy,ow,oh),fill=255)))
