@@ -89,6 +89,8 @@ h1 b{white-space:nowrap}
   border:1px solid var(--line);background:var(--field);color:var(--ink);outline:none}
 .searchbox input:focus{border-color:var(--steel);box-shadow:0 0 0 2px rgba(142,201,255,.25)}
 .searchbox input::placeholder{color:var(--sub)}
+/* ブラウザが自動で付ける消しボタンは出さない(こちらの✕と二重になる・2026-09-09タダシさん報告) */
+.searchbox input::-webkit-search-cancel-button,.searchbox input::-webkit-search-decoration{-webkit-appearance:none;display:none}
 .searchbox .clr{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;
   color:var(--sub);font:inherit;font-size:1rem;cursor:pointer;padding:2px 6px;display:none}
 .searchbox.has .clr{display:block}
@@ -170,7 +172,7 @@ h1 b{white-space:nowrap}
       </span>
     </div>
     <div class="searchbox" id="sbox">
-      <input id="q" type="search" placeholder="ポケモン名で探す" autocomplete="off" title="名前の一部を入れると、そのポケモンの順位だけを出します">
+      <input id="q" type="text" inputmode="search" enterkeyhint="search" placeholder="ポケモン名で探す" autocomplete="off" title="名前の一部を入れると、そのポケモンの順位だけを出します">
       <button class="clr" type="button" aria-label="消す">✕</button>
     </div>
   </div>
