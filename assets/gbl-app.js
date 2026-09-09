@@ -5637,6 +5637,7 @@ function rbRender(body, bt, picks, foes, extra) {
     //   「前の対面の最後のSPのカットイン中に、もう交代後のポケモンがHUDに出る」ことになる
     if (li != null && f && f.li != null && li < f.li && legEnd[li]) f = legEnd[li];
     if (!f) return;
+    RBV.hudLi = f.li;   // いま表示している対面。再描画の直後の塗りに使う(下の run() 参照)
     const legKey = f.meta.name0 + '|' + f.meta.name1;
     if (legKey !== curLegKey) {   // 対面が変わったときだけ名前・CP・ゲージの器を作り直す
       curLegKey = legKey;
@@ -6065,7 +6066,7 @@ function rbRender(body, bt, picks, foes, extra) {
   // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
   //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
   //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
-  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
   RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
@@ -6086,7 +6087,12 @@ function rbRender(body, bt, picks, foes, extra) {
   else if (stepping) {
     // ⚠ 作り直したHUDは**すぐ塗る**(空のままだとCSSの初期値=HPバー100%が見えてしまう)。
     //   HPだけは「直前に見えていた値」を置くので、満タンに戻ったようには見えない(updateHud の中)
-    updateHud(RBV.cur);
+    // ⚠ 塗る対面は**直前に表示していた対面**(RBV.hudLi)にする(2026-09-09タダシさん報告)。
+    //   交代受けのように対面の切れ目が同じ通しターンのとき、frames[cur] はもう次の対面
+    //   (交代後のポケモン・満タン)に書き替わっているので、そのまま塗ると
+    //   「あいてのSPが飛んできた瞬間に、交代後のポケモンのHPが一瞬出る」。
+    //   このあと advance() が演出の着弾に合わせて正しい順で更新する
+    updateHud(RBV.cur, RBV.hudLi);
     advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
   }
   else { upd(); if (RBV.cur >= stop) atStop(); }
@@ -10187,6 +10193,7 @@ function gbRender(body, bt, picks, foes) {
     //   「前の対面の最後のSPのカットイン中に、もう交代後のポケモンがHUDに出る」ことになる
     if (li != null && f && f.li != null && li < f.li && legEnd[li]) f = legEnd[li];
     if (!f) return;
+    RBV.hudLi = f.li;   // いま表示している対面。再描画の直後の塗りに使う(下の run() 参照)
     const legKey = f.meta.name0 + '|' + f.meta.name1 + (mask ? '|?' : '');
     if (legKey !== curLegKey) {
       curLegKey = legKey;
@@ -10777,7 +10784,7 @@ function gbRender(body, bt, picks, foes) {
   // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
   //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
   //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
-  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
   RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
@@ -10798,7 +10805,12 @@ function gbRender(body, bt, picks, foes) {
   else if (stepping) {
     // ⚠ 作り直したHUDは**すぐ塗る**(空のままだとCSSの初期値=HPバー100%が見えてしまう)。
     //   HPだけは「直前に見えていた値」を置くので、満タンに戻ったようには見えない(updateHud の中)
-    updateHud(RBV.cur);
+    // ⚠ 塗る対面は**直前に表示していた対面**(RBV.hudLi)にする(2026-09-09タダシさん報告)。
+    //   交代受けのように対面の切れ目が同じ通しターンのとき、frames[cur] はもう次の対面
+    //   (交代後のポケモン・満タン)に書き替わっているので、そのまま塗ると
+    //   「あいてのSPが飛んできた瞬間に、交代後のポケモンのHPが一瞬出る」。
+    //   このあと advance() が演出の着弾に合わせて正しい順で更新する
+    updateHud(RBV.cur, RBV.hudLi);
     advance();   // 行と演出を順に出し、出し切ったら atStop / startTimer
   }
   else { upd(); if (RBV.cur >= stop) atStop(); }
