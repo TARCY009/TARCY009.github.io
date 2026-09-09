@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケモンGO 耐久指数ランキング</title>
+<meta name="description" content="ポケモンGOの全ポケモンを倒されにくい順に並べた耐久指数（防御種族値×HP種族値）のランキング。シャドウ・メガ・ゲンシの切り替えと伝説系の除外つき。">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/bulk/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/bulk/apple-touch-icon.png">
+<link rel="manifest" href="/bulk/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="耐久指数">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/feedback.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/tabs.css">
+<meta name="theme-color" content="#0b1023">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<style>
+/* 色は :root(ダーク=既定) と :root.light の2ブロックだけで決める(全ツール共通ルール)。
+   このツールの役割色は「鋼のような青灰」(アイコンの地の色から起こした。倒されにくさ＝盾のイメージ) */
+:root{
+  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560;
+  --accent:#5b8cff; --accent2:#43e0ff; --violet:#b06cff;
+  --gold:#ffd54a; --shadow:#b06cff; --steel:#8ec9ff; --steel2:#3fd6c1;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(78,150,220,.16), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(63,214,193,.12), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(94,143,210,.15), transparent 62%),
+    linear-gradient(165deg,#0b1023 0%,#0f1b30 48%,#0f1a2a 100%);
+  --panel:linear-gradient(180deg,rgba(26,35,66,.94),rgba(19,26,51,.94));
+  --panelsh:0 18px 34px -20px rgba(91,140,255,.5), 0 1px 0 rgba(255,255,255,.06) inset;
+  --chip:#1a2342; --rkbg:#1a2342; --barbg:#121a38; --rowline:#232c4f; --field:#0f1630;
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
+  --mgold:#f2c14e; --msilver:#c8d3de; --mbronze:#c98d5f;
+  --m1line:#8a6c1e; --m2line:#5a6b7d; --m3line:#7a5231;
+  --ongold:#4a3200; --onsilver:#26313c; --onbronze:#3c2413;
+  --helpline:#4a3a7d;
+  --tbadge:inset 0 0 0 1px rgba(255,255,255,.16);
+  --tcolor:#0b1023;
+}
+:root.light{
+  --ink:#20263a; --sub:#6a7391; --line:#dfe6f5;
+  --accent:#3b6ef0; --accent2:#08b4c9; --violet:#8b5cf6;
+  --gold:#b07a00; --shadow:#7a3cc4; --steel:#3a7fb8; --steel2:#159e8c;
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(78,150,220,.18), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(63,214,193,.15), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(94,143,210,.18), transparent 62%),
+    linear-gradient(165deg,#e9f1ff 0%,#edf3fa 48%,#e7f1f5 100%);
+  --panel:rgba(255,255,255,.9);
+  --panelsh:0 14px 30px -16px rgba(59,110,240,.3), 0 1px 0 rgba(255,255,255,.8) inset;
+  --chip:#fff; --rkbg:#edf1f9; --barbg:#e8edf8; --rowline:#eceffa; --field:#fff;
+  --tab:linear-gradient(180deg,#fff,#eff3fc); --tabsh:rgba(30,40,90,.13); --tabin:#fff;
+  --mgold:#f2c14e; --msilver:#b9c6d4; --mbronze:#c98d5f;
+  --m1line:#e0b53a; --m2line:#9fb0c1; --m3line:#bd8557;
+  --helpline:#cfc6f0;
+  --tbadge:none;
+  --tcolor:#e9f1ff;
+}
+:root.light .tbadge[title="でんき"],:root.light .tbadge[title="こおり"],
+:root.light .tbadge[title="いわ"],:root.light .tbadge[title="じめん"]{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.tbadge{box-shadow:var(--tbadge)}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;
+  color:var(--ink);background:var(--bgimg);background-attachment:fixed;min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:14px 12px 40px}
+header{margin:4px 2px 14px}
+/* eyebrow＝そのツールの色を暗くした濃い色(全ツール共通の3色構成) */
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#3a8fd9;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(58,143,217,.6),transparent)}
+h1{font-size:1.45rem;margin:0;line-height:1.35}
+@media (max-width:430px){h1{font-size:1.28rem}}
+h1 b{white-space:nowrap}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--panelsh);padding:14px;margin-bottom:14px}
+
+/* ── 絞り込み ── */
+.rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.rhead .gtabs{margin:0}
+.searchbox{position:relative;flex:1 1 180px;min-width:150px}
+.searchbox input{width:100%;font:inherit;font-size:.9rem;padding:8px 32px 8px 12px;border-radius:11px;
+  border:1px solid var(--line);background:var(--field);color:var(--ink);outline:none}
+.searchbox input:focus{border-color:var(--steel);box-shadow:0 0 0 2px rgba(142,201,255,.25)}
+.searchbox input::placeholder{color:var(--sub)}
+.searchbox .clr{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;
+  color:var(--sub);font:inherit;font-size:1rem;cursor:pointer;padding:2px 6px;display:none}
+.searchbox.has .clr{display:block}
+/* スマホの入力欄は16px以上(iOSの自動拡大を防ぐ恒久ルール) */
+@media (max-width:540px){.searchbox input{font-size:16px}}
+.cond{font-size:.72rem;color:var(--sub);margin:0 0 10px}
+.cnt{font-size:.72rem;color:var(--sub);margin:0 0 8px}
+.expl{display:none}
+.explain .expl{display:revert}
+
+/* ── ランキングの行(火力チェッカー・タイプ別火力と同じ形) ── */
+.rank-row{display:flex;align-items:center;gap:10px;padding:7px 6px;border-bottom:1px solid var(--rowline);position:relative}
+.rank-row:last-child{border-bottom:none}
+/* 上位3件: くっきりした枠線＋左端4pxの帯(光彩は付けない・全ツール共通) */
+.rank-row.md1,.rank-row.md2,.rank-row.md3{border-radius:12px;margin:3px 0;overflow:hidden;padding-left:12px;border-bottom:none}
+.rank-row.md1{border:1px solid var(--m1line);--mbar:linear-gradient(180deg,#ffe08a,var(--mgold) 55%,#c99a14)}
+.rank-row.md2{border:1px solid var(--m2line);--mbar:linear-gradient(180deg,#f2f6fb,var(--msilver) 55%,#8f9dad)}
+.rank-row.md3{border:1px solid var(--m3line);--mbar:linear-gradient(180deg,#e8b489,var(--mbronze) 55%,#a06437)}
+.rank-row.md1::before,.rank-row.md2::before,.rank-row.md3::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mbar)}
+.rk{min-width:42px;text-align:center;font-weight:800;color:var(--sub);font-size:.8rem;line-height:1.3;flex-shrink:0;
+  background:var(--rkbg);border-radius:8px;padding:4px 4px}
+.rank-row.md1 .rk,.rank-row.md2 .rk,.rank-row.md3 .rk{box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.rank-row.md1 .rk{background:linear-gradient(160deg,#ffe08a 0%,var(--mgold) 55%,#c99a14 100%);color:var(--ongold)}
+.rank-row.md2 .rk{background:linear-gradient(160deg,#f2f6fb 0%,var(--msilver) 55%,#8f9dad 100%);color:var(--onsilver)}
+.rank-row.md3 .rk{background:linear-gradient(160deg,#e8b489 0%,var(--mbronze) 55%,#a06437 100%);color:var(--onbronze)}
+.rmain{flex:1;min-width:0}
+.rname{display:flex;align-items:center;gap:5px;font-size:.88rem;font-weight:700;white-space:nowrap;min-width:0}
+.rname>*{flex-shrink:0}
+.rname .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rname .ty{display:inline-flex;gap:2px;margin-left:2px}
+.rsub{font-size:.72rem;color:var(--sub);display:flex;flex-wrap:wrap;column-gap:8px;margin-top:1px}
+.rsub b{color:var(--ink);font-weight:700}
+.bar{height:6px;background:var(--barbg);border-radius:99px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--steel2),var(--steel));border-radius:99px}
+.rval{width:74px;text-align:right;font-weight:800;font-size:1rem;flex-shrink:0;font-variant-numeric:tabular-nums}
+.rval small{display:block;font-weight:400;font-size:.58rem;color:var(--sub)}
+.tag-m2{display:inline-block;background:linear-gradient(90deg,#d63384,#7a3cc4);color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;vertical-align:1px}
+.tag-p2{background:linear-gradient(90deg,#e8452f,#1e6fd9)}
+.tag-s2{display:inline-flex;align-items:center;background:#7c3aed;color:#fff;font-size:.62rem;font-weight:800;border-radius:5px;padding:1px 5px;vertical-align:1px}
+.tag-lg{display:inline-block;color:var(--gold);border:1px solid currentColor;font-size:.58rem;font-weight:800;border-radius:5px;padding:0 4px;opacity:.85}
+.gtabs .shadowmark{color:var(--shadow)}
+.gtabs button[aria-pressed="true"] .shadowmark{color:#fff}
+.empty{color:var(--sub);font-size:.82rem;text-align:center;padding:18px 0}
+.more{display:block;width:100%;margin-top:8px;font:inherit;font-size:.8rem;font-weight:700;color:var(--sub);
+  background:var(--tab);border:1px solid var(--line);border-radius:11px;padding:9px;cursor:pointer;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+
+@media (max-width:560px){
+  .gtabs button{flex:1 1 auto}
+  .rval{width:66px;font-size:.92rem}
+  .rname .ty{display:none}   /* 狭い画面はタイプより名前を優先(名前が切れるほうが致命的) */
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Pok&eacute;mon GO Bulk Ranking</div>
+  <h1><b class="wmk" data-tool="bulk">耐久指数</b><span class="wmksuf">ランキング</span></h1>
+  <div id="themesw"></div>
+</header>
+
+<section class="panel">
+  <div class="rhead">
+    <div class="gtabs">
+      <button id="fShadow" class="t-shadow" type="button" aria-pressed="false" aria-label="シャドウを含める"
+        title="シャドウ個体をランキングに含めます（防御が5/6になるぶん、耐久指数は低くなります）"><i class="shadowmark"></i></button>
+      <button id="fMega" class="t-mega" type="button" aria-pressed="false"
+        title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+      <button id="fNoLg" class="t-gold" type="button" aria-pressed="false"
+        title="伝説・幻・ウルトラビーストをランキングから外します（手に入りやすいポケモンだけで見たいときに）">伝説系除く</button>
+      <button id="fPre" class="t-green" type="button" aria-pressed="false"
+        title="進化前のポケモンもランキングに含めます（ふだんは最終進化だけ）">進化前も</button>
+      <span class="gseg" id="cntSeg">
+        <button class="t-cyan" type="button" data-n="30" title="上位30位まで表示します">30位</button>
+        <button class="t-cyan" type="button" data-n="50" title="上位50位まで表示します">50位</button>
+        <button class="t-cyan" type="button" data-n="100" title="上位100位まで表示します">100位</button>
+      </span>
+    </div>
+    <div class="searchbox" id="sbox">
+      <input id="q" type="search" placeholder="ポケモン名で探す" autocomplete="off" title="名前の一部を入れると、そのポケモンの順位だけを出します">
+      <button class="clr" type="button" aria-label="消す">✕</button>
+    </div>
+  </div>
+  <p class="cond expl">耐久指数＝<b>防御種族値×HP種族値</b>。個体値やPLに関係なく、ポケモンの種類ごとの倒されにくさの目安です。シャドウは防御が5/6になるぶん低くなります。</p>
+  <p class="cnt" id="cnt"></p>
+  <div id="rankList"></div>
+</section>
+
+<button class="helptab" id="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
+<div class="helpbody" id="helpbody" hidden>
+  <h4>このツールでわかること</h4>
+  <p>全ポケモンを<b>倒されにくい順</b>に並べたランキングです。ジムに置く・レイドで耐える・GBLで受ける、どの場面でも土台になる「硬さ」を種類ごとに比べられます。</p>
+  <h4>耐久指数とは</h4>
+  <ul>
+    <li><b>耐久指数＝防御種族値×HP種族値</b>。個体値やPLに関係なく、そのポケモンの種類が持つ硬さの目安です</li>
+    <li>他のツールで出てくる<b>⚠️極低耐久</b>（16000未満）と同じ計算です。数字が大きいほど倒されにくく、ハピナスがおよそ84000、いちばん低いポケモンで10000前後です</li>
+    <li><b>シャドウ</b>は防御が5/6になるので、同じポケモンでも耐久指数は約17%低くなります（そのぶん攻撃が1.2倍）</li>
+    <li>同じ耐久指数のポケモンは同順位です（重なったぶんの順位は飛ばします）</li>
+  </ul>
+  <h4>絞り込み</h4>
+  <ul>
+    <li><b>シャドウ</b>（炎のマーク）＝シャドウ個体も並べます。<b>メガ・ゲンシ</b>＝メガシンカ・ゲンシカイキも並べます</li>
+    <li><b>伝説系除く</b>＝伝説・幻・ウルトラビーストを外します。手に入りやすいポケモンだけで見たいときに</li>
+    <li><b>進化前も</b>＝ふだんは最終進化だけですが、押すと進化前のポケモン（ラッキーなど）も並べます</li>
+    <li><b>名前で探す</b>＝名前の一部を入れると、そのポケモンの順位だけを出します。順位は絞り込み全体の中での順位です</li>
+  </ul>
+  <h4>データの更新</h4>
+  <p>ポケモンのデータは毎朝自動で更新されます。</p>
+</div>
+</div>
+
+<script src="/assets/type-icons.js"></script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+<script src="/assets/home.js"></script>
+<script src="/assets/feedback.js"></script>
+<script type="module">
+const D = await (await fetch('/godata.json')).json();
+const TYPE_JA={NORMAL:'ノーマル',FIRE:'ほのお',WATER:'みず',GRASS:'くさ',ELECTRIC:'でんき',ICE:'こおり',FIGHTING:'かくとう',
+  POISON:'どく',GROUND:'じめん',FLYING:'ひこう',PSYCHIC:'エスパー',BUG:'むし',ROCK:'いわ',GHOST:'ゴースト',DRAGON:'ドラゴン',
+  DARK:'あく',STEEL:'はがね',FAIRY:'フェアリー'};
+const KEYS=Object.keys(D.pokemon);
+const $=id=>document.getElementById(id);
+
+// ---- 状態(共有URL: sh=1 シャドウ / mg=1 メガ・ゲンシ / nl=1 伝説系除く / pre=1 進化前も / n=件数) ----
+const Q=new URLSearchParams(location.search);
+let fShadow=Q.get('sh')==='1', fMega=Q.get('mg')==='1', fNoLg=Q.get('nl')==='1', fPre=Q.get('pre')==='1';
+let showN=[30,50,100].includes(+Q.get('n'))?+Q.get('n'):30;
+let query='', extra=0;   // extra=「もっと見る」で足した件数
+
+// ---- 計算: 耐久指数＝防御種族値×HP種族値(シャドウは防御5/6込み)。⚠️極低耐久の判定と同じ式 ----
+const bulkOf=(p,shadow)=>p.df*(shadow?5/6:1)*p.h;
+const cache=new Map();
+function buildRows(){
+  const key=[fShadow,fMega,fNoLg,fPre].join('|');
+  if(cache.has(key)) return cache.get(key);
+  const rows=[];
+  for(const k of KEYS){
+    const p=D.pokemon[k];
+    if(p.mega&&!fMega) continue;
+    if(!p.mega&&!p.fe&&!fPre) continue;
+    if(fNoLg&&p.lg) continue;
+    rows.push({p,shadow:false,v:bulkOf(p,false)});
+    if(fShadow&&p.shadow) rows.push({p,shadow:true,v:bulkOf(p,true)});
+  }
+  rows.sort((a,b)=>b.v-a.v||a.p.n.localeCompare(b.p.n,'ja'));
+  let rank=0, prev=null;
+  rows.forEach((r,i)=>{ const v=Math.floor(r.v); if(v!==prev){rank=i+1;prev=v;} r.rank=rank; });
+  cache.set(key,rows);
+  return rows;
+}
+
+// ---- 表示 ----
+function badges(r){
+  const p=r.p, gen=/^ゲンシ/.test(p.n);
+  return (p.mega?`<span class="tag-m2${gen?' tag-p2':''}">${gen?'ゲンシ':'メガ'}</span>`:'')+
+         (r.shadow?'<span class="tag-s2" title="シャドウ（防御5/6で計算）"><i class="shadowmark"></i></span>':'');
+}
+const T_RANK='耐久指数が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
+const T_VAL='耐久指数＝防御種族値×HP種族値。大きいほど倒されにくい目安です';
+const fmt=v=>Math.floor(v).toLocaleString('ja-JP');
+function renderRank(){
+  const all=buildRows();
+  const max=all.length?all[0].v:1;
+  const q=query.trim();
+  let rows, note;
+  if(q){
+    rows=all.filter(r=>r.p.n.includes(q)).slice(0,100);
+    note=rows.length?`「${q}」に当てはまる ${rows.length}件（順位は${all.length}件の中での順位）`:`「${q}」に当てはまるポケモンがいません`;
+  }else{
+    rows=all.slice(0,showN+extra);
+    note=`${all.length}件のうち上位${Math.min(all.length,showN+extra)}件を表示中`;
+  }
+  $('cnt').textContent=note;
+  const list=$('rankList');
+  if(!rows.length){ list.innerHTML='<div class="empty">当てはまるポケモンがいません</div>'; return; }
+  list.innerHTML=rows.map(r=>`
+    <div class="rank-row${r.rank<=3?' md'+r.rank:''}">
+      <div class="rk" title="${T_RANK}">${r.rank}位</div>
+      <div class="rmain">
+        <div class="rname">${badges(r)}<span class="nm">${r.p.n}</span><span class="ty">${typePairHTML(r.p.ty.map(t=>TYPE_JA[t]||t),16)}</span>${r.p.lg?'<span class="tag-lg" title="伝説・幻・ウルトラビースト">伝説</span>':''}</div>
+        <div class="rsub"><span>防御 <b>${r.shadow?Math.round(r.p.df*5/6*10)/10:r.p.df}</b>${r.shadow?'<small>（5/6）</small>':''}</span><span>HP <b>${r.p.h}</b></span></div>
+        <div class="bar"><i style="width:${(r.v/max*100).toFixed(1)}%"></i></div>
+      </div>
+      <div class="rval" title="${T_VAL}">${fmt(r.v)}<small>耐久指数</small></div>
+    </div>`).join('')
+    +(!q&&all.length>showN+extra?`<button class="more" type="button" id="moreBtn">さらに${Math.min(50,all.length-showN-extra)}件見る</button>`:'');
+  const mb=$('moreBtn'); if(mb) mb.onclick=()=>{extra+=50;renderRank();};
+}
+
+// ---- 操作 ----
+function syncUrl(){
+  const q=new URLSearchParams();
+  if(fShadow) q.set('sh','1');
+  if(fMega) q.set('mg','1');
+  if(fNoLg) q.set('nl','1');
+  if(fPre) q.set('pre','1');
+  if(showN!==30) q.set('n',showN);
+  const qs=q.toString();
+  history.replaceState(null,'',location.pathname+(qs?'?'+qs:''));
+}
+function sync(){
+  $('fShadow').setAttribute('aria-pressed',String(fShadow));
+  $('fMega').setAttribute('aria-pressed',String(fMega));
+  $('fNoLg').setAttribute('aria-pressed',String(fNoLg));
+  $('fPre').setAttribute('aria-pressed',String(fPre));
+  document.querySelectorAll('#cntSeg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===showN)));
+  renderRank(); syncUrl();
+}
+$('fShadow').onclick=()=>{fShadow=!fShadow;extra=0;sync();};
+$('fMega').onclick=()=>{fMega=!fMega;extra=0;sync();};
+$('fNoLg').onclick=()=>{fNoLg=!fNoLg;extra=0;sync();};
+$('fPre').onclick=()=>{fPre=!fPre;extra=0;sync();};
+document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.dataset.n;extra=0;sync();});
+{
+  // 入力中(変換中)は書き換えない(恒久ルール)。全角の文字はそのまま名前と照合できる
+  const inp=$('q'), box=$('sbox');
+  const apply=()=>{ query=inp.value; box.classList.toggle('has',!!inp.value); renderRank(); };
+  inp.addEventListener('input',e=>{ if(e.isComposing) return; apply(); });
+  inp.addEventListener('compositionend',apply);
+  box.querySelector('.clr').onclick=()=>{ inp.value=''; apply(); inp.focus(); };
+}
+{
+  const tab=$('helptab'),body=$('helpbody');
+  tab.onclick=()=>{const o=body.hidden;body.hidden=!o;tab.setAttribute('aria-expanded',String(o));};
+}
+sync();
+</script>
+</body>
+</html>

@@ -74,7 +74,8 @@
     '/breakpoint/': 'ブレイクポイント',
     '/rocket/': 'ロケット団対策',
     '/iv-checker/': '個体値チェッカー',
-    '/pokedex/': 'ステータス図鑑'
+    '/pokedex/': 'ステータス図鑑',
+    '/bulk/': '耐久指数ランキング'
   };
   var path = location.pathname.replace(/index\.html$/, '');
   if (path.charAt(path.length - 1) !== '/') path += '/';

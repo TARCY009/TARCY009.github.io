@@ -1,0 +1,15 @@
+{
+  "name": "ポケモンGO 耐久指数ランキング",
+  "short_name": "耐久指数",
+  "description": "全ポケモンを倒されにくい順に並べた耐久指数（防御種族値×HP種族値）のランキング。シャドウ・メガ・ゲンシの切り替えと伝説系の除外つき。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1023",
+  "theme_color": "#0b1023",
+  "lang": "ja",
+  "icons": [
+    { "src": "/assets/icons/bulk/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/bulk/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
