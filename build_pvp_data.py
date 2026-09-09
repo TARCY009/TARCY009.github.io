@@ -71,6 +71,12 @@ MANUAL_SHADOW = {   # 2026-09-08 実装確定
     'wimpod', 'golisopod',       # コソクムシ・グソクムシャ
 }
 # 未実装(r=0)のポケモンも2026-09-04から検索で選べる(タダシさん指示)。ただし次は「ポケモン」ではないので隠す(h=1)
+# 情報元が本体キー(toxtricity)にしか新わざを足さなかったフォルム違いへ、通常枠のわざを手で補う。
+# 2026-09シーズン: ストリンダー(ハイ/ロー)のスピードスター(公式は両フォルムとも習得)。情報元が足したら重複しない
+MANUAL_LEARN = {
+    'toxtricity_amped':   {'c': ['SWIFT']},
+    'toxtricity_low_key': {'c': ['SWIFT']},
+}
 HIDDEN_FORMS = {'aegislash_blade', 'mimikyu_busted', 'cramorant_gulping', 'cramorant_gorging', 'morpeko_hangry'}
 
 SPECIES_JA_FIX = {
@@ -241,6 +247,8 @@ def main():
         # hid=検索候補に出さない(hはHP種族値なので別名): バトル中だけの内部フォルム(エンジンが自動で切り替える)と、情報元の重複エントリ。
         # データ自体は残す(pvp-engine.js が aegislash_blade を参照するため)
         if sid in HIDDEN_FORMS or 'duplicate' in (p.get('tags') or []): pokes[sid]['hid'] = 1
+        for slot, ms in (MANUAL_LEARN.get(sid) or {}).items():
+            pokes[sid][slot] = list(pokes[sid][slot]) + [m for m in ms if m in moves and m not in pokes[sid][slot]]
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
             if 'mythical' in p['tags']: pokes[sid]['myth'] = 1

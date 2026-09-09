@@ -27,7 +27,7 @@ import sys
 
 SEASON = {
     'name':  '黄昏の旅路',
-    'start': '2026-09-08',   # 日本時間10:00から。それまでは全項目が「未反映」で正しい
+    'start': '2026-09-09',   # わざの変更は日本時間9/9 05:00から(ゲームのシーズン開始9/8 10:00とは別)。それまでは全項目が「未反映」で正しい
 }
 
 # ===== わざの性能変更 =====
@@ -36,6 +36,7 @@ SEASON = {
 # kind   : 'fast'（ノーマルアタック） / 'charged'（SPアタック）
 # pvp    : トレーナーバトルの (旧威力, 新威力)。変更が無ければ None
 # raid   : ジム・レイドの (旧威力, 新威力)。変更が無ければ None
+# raid_e : ジム・レイドのゲージ (旧, 新)。2本=-50・3本=-33 のように離散なので公式の「本数」から確定できる
 # meter  : 'easy'（チャージされやすくなる）/ 'hard'（されにくくなる）/ None
 #          ⚠ 公式は数値を出さないので向きだけ持つ。合否の判定には使わない
 # buff   : 能力変化の新しい値 (段階[攻,防], 対象, 発動確率)。数値が公式に書かれているものだけ
@@ -85,7 +86,7 @@ MOVE_CHANGES = [
     {'ja': 'ふんどのこぶし', 'id': 'RAGE_FIST', 'pve': 'RAGE_FIST', 'kind': 'charged',
      'pvp': (50, 55), 'meter': 'hard'},
     {'ja': 'サイコブースト', 'id': 'PSYCHO_BOOST', 'pve': 'PSYCHO_BOOST', 'kind': 'charged',
-     'pvp': (70, 85), 'raid': (70, 130), 'meter_raid': 'easy',
+     'pvp': (70, 85), 'raid': (70, 130), 'raid_e': (-50, -33), 'meter_raid': 'easy',
      'note': 'ジム・レイドのメーターだけがチャージされやすくなる（トレーナーバトルは据え置き）'},
     {'ja': 'チャージビーム', 'id': 'CHARGE_BEAM', 'pve': 'CHARGE_BEAM_FAST', 'kind': 'fast',
      'pvp': (5, 6)},
@@ -145,8 +146,9 @@ NEW_LEARNS = [
     ('ミルタンク',            'miltank',            'MILTANK',          'HIGH_HORSEPOWER','HIGH_HORSEPOWER'),
     ('ニドキング',            'nidoking',           'NIDOKING',         'AVALANCHE',      'AVALANCHE'),
     ('ヒスイゾロアーク',      'zoroark_hisuian',    'ZOROARK_HISUIAN',  'SWIFT',          'SWIFT'),
-    ('ストリンダー（ロー）',  'toxtricity_low_key', 'TOXTRICITY',       'SWIFT',          'SWIFT'),
-    ('ストリンダー（ハイ）',  'toxtricity_amped',   'TOXTRICITY',       'SWIFT',          'SWIFT'),
+    # ⚠ 対戦データは本体キー(toxtricity・実装済み扱い)にしか足さない。フォルム違い(amped/low_key・未実装扱い)は
+    #   build_pvp_data.py の MANUAL_LEARN で補っている。ジム・レイド側はフォルムを分けていない
+    ('ストリンダー（ハイ・ロー）', 'toxtricity',      'TOXTRICITY',       'SWIFT',          'SWIFT'),
     ('アーボック',            'arbok',              'ARBOK',            'WRAP',           'WRAP'),
     ('アローラベトベトン',    'muk_alolan',         'MUK_ALOLA',        'ICE_PUNCH',      'ICE_PUNCH'),
 ]
@@ -189,6 +191,12 @@ def check(pvp_data, go_data):
             st = _power_state(None if g is None else g.get('p'), float(o), float(n))
             marks.append(st)
             detail.append(f'ジム・レイドの威力 {o}→{n}' + ('' if st == 'done' else f'（いま{g and g.get("p")}）'))
+        if c.get('raid_e'):
+            o, n = c['raid_e']
+            g = gm.get(c['pve'])
+            st = _power_state(None if g is None else g.get('e'), o, n)
+            marks.append(st)
+            detail.append(f'ジム・レイドのゲージ {o}→{n}' + ('' if st == 'done' else f'（いま{g and g.get("e")}）'))
         if c.get('buff'):
             bf, bt, bc = c['buff']
             now = (m.get('bf'), m.get('bt'), m.get('bc')) if m else None

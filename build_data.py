@@ -79,6 +79,66 @@ SUPP_Q = {  # ノーマルアタック(通常枠)へ追加
     'GIGALITH':       ['LOCK_ON_FAST'],        # ギガイアス: ロックオン
     'LEDIAN':         ['ROLLOUT_FAST'],        # レディアン: ころがる
 }
+# 2026-09シーズン「黄昏の旅路」の新規習得技(通常入手枠・2026-09-09 05:00適用)。GM未反映のため手動補完。
+# 出典: 公式ニュース(GOバトルリーグ: 黄昏の旅路)。対戦データ側は提供元が反映済み(season_moves.py で突き合わせ済み)
+# 提供元に正式収録されたら重複して足さない(既にあれば追加しない)ので、消さずに残してよい
+SUPP_C_2609 = {  # ゲージ技(通常枠)
+    'VOLBEAT':        ['LUNGE'],                          # バルビート: とびかかる
+    'ARBOK':          ['BRUTAL_SWING', 'WRAP'],           # アーボック: ぶんまわす・まきつく
+    'AERODACTYL':     ['BRUTAL_SWING'],                   # プテラ: ぶんまわす(メガはリスト共有で自動反映)
+    'MUK_ALOLA':      ['BRUTAL_SWING', 'ICE_PUNCH'],      # アローラベトベトン: ぶんまわす・れいとうパンチ
+    'GRENINJA':       ['BRUTAL_SWING'],                   # ゲッコウガ: ぶんまわす
+    'ARIADOS':        ['FOUL_PLAY'],                      # アリアドス: イカサマ
+    'DARKRAI':        ['FOUL_PLAY'],                      # ダークライ: イカサマ
+    'GRAFAIAI':       ['FOUL_PLAY'],                      # タギングル: イカサマ
+    'RAICHU':         ['VOLT_TACKLE'],                    # ライチュウ: ボルテッカー
+    'RAICHU_ALOLA':   ['VOLT_TACKLE'],                    # アローラライチュウ: ボルテッカー
+    'GRIMMSNARL':     ['DRAINING_KISS'],                  # オーロンゲ: ドレインキッス
+    'AGGRON':         ['BRICK_BREAK'],                    # ボスゴドラ: かわらわり
+    'ZERAORA':        ['DYNAMIC_PUNCH'],                  # ゼラオラ: ばくれつパンチ
+    'GALLADE':        ['SACRED_SWORD'],                   # エルレイド: せいなるつるぎ
+    'MISMAGIUS':      ['MYSTICAL_FIRE'],                  # ムウマージ: マジカルフレイム
+    'ILLUMISE':       ['SHADOW_BALL'],                    # イルミーゼ: シャドーボール
+    'COFAGRIGUS':     ['ENERGY_BALL'],                    # デスカーン: エナジーボール
+    'HOUNDOOM':       ['TRAILBLAZE'],                     # ヘルガー: くさわけ
+    'SKARMORY':       ['DRILL_RUN'],                      # エアームド: ドリルライナー
+    'BOMBIRDIER':     ['DRILL_RUN'],                      # オトシドリ: ドリルライナー
+    'LUGIA':          ['EARTH_POWER'],                    # ルギア: だいちのちから
+    'MILTANK':        ['HIGH_HORSEPOWER'],                # ミルタンク: １０まんばりき
+    'NIDOKING':       ['AVALANCHE'],                      # ニドキング: ゆきなだれ
+    'ZOROARK_HISUIAN':['SWIFT'],                          # ヒスイゾロアーク: スピードスター
+    'TOXTRICITY':     ['SWIFT'],                          # ストリンダー(ハイ・ロー共通): スピードスター
+    # マフィティフ・オラチフ(2026-09-08実装): ゲーム内公開データ(8/29で停止中)は「しっぺがえし」だが、
+    # 実際に覚えるのは「サイコファング」(対戦データ・攻略サイト2か所で一致)。しっぺがえしは FORM_MOVE_FIX で外す
+    'MABOSSTIFF':     ['PSYCHIC_FANGS'],
+    'MASCHIFF':       ['PSYCHIC_FANGS'],
+}
+SUPP_Q_2609 = {  # ノーマルアタック(通常枠)
+    'VOLBEAT':        ['INFESTATION_FAST'],   # バルビート: まとわりつく
+    'ILLUMISE':       ['INFESTATION_FAST'],   # イルミーゼ: まとわりつく
+    'VICTREEBEL':     ['SUCKER_PUNCH_FAST'],  # ウツボット: ふいうち
+    'DARKRAI':        ['SUCKER_PUNCH_FAST'],  # ダークライ: ふいうち
+    'AUDINO':         ['CHARGE_BEAM_FAST'],   # タブンネ: チャージビーム
+    'CROBAT':         ['GUST_FAST'],          # クロバット: かぜおこし
+    'FLAMIGO':        ['PECK_FAST'],          # カラミンゴ: つつく
+    'CHANDELURE':     ['ASTONISH_FAST'],      # シャンデラ: おどろかす
+    'URSALUNA':       ['SCRATCH_FAST'],       # ガチグマ: ひっかく
+    'GRAFAIAI':       ['SCRATCH_FAST'],       # タギングル: ひっかく
+    'DEOXYS_DEFENSE': ['LOW_KICK_FAST'],      # デオキシス(ディフェンス): けたぐり
+    'KINGAMBIT':      ['LOW_KICK_FAST'],      # ドドゲザン: けたぐり
+    'HOUNDOOM':       ['INCINERATE_FAST'],    # ヘルガー: やきつくす
+    'SNORLAX':        ['PSYWAVE_FAST'],       # カビゴン: サイコウェーブ
+}
+for _t, _src in ((SUPP_C, SUPP_C_2609), (SUPP_Q, SUPP_Q_2609)):
+    for _k, _ms in _src.items():
+        _t.setdefault(_k, []).extend(m for m in _ms if m not in _t[_k])
+# 既存のわざ定義の性能変更(シーズンのわざアップデート)。提供元が追いつくまでのつなぎ。
+# `when` の値がいまの取得値と全部一致するときだけ `set` を上書きする＝提供元が新しい値に更新したら自動で効かなくなる
+# (更新後の値が when と違うため)。反映されたかは season_moves.py が突き合わせる
+MOVE_FIX = {
+    # サイコブースト: ジム・レイドの威力70→130・ゲージ2本→3本(-50→-33)。2026-09-09 05:00適用(公式ニュース)
+    'PSYCHO_BOOST': {'when': {'power': 70.0, 'energyDelta': -50}, 'set': {'power': 130.0, 'energyDelta': -33}},
+}
 # Game Masterにわざ定義(moveSettings)自体が無い技の手動補完。
 # データ提供元の更新が止まっている間のつなぎで、GM側に正式収録されたら自動取得値を優先(既にあれば注入しない)。
 # 値は外部攻略情報の複数サイト突き合わせで確定(表示値はタイプ一致1.2倍込みのことがあるので素の値に戻すこと)
@@ -166,6 +226,13 @@ def apply_gm_supp(data):
     """SUPP_MOVES を Game Master のデータへ注入する(build_max.py からも使う)"""
     have = {e['data']['moveSettings'].get('movementId') for e in data
             if 'moveSettings' in e.get('data', {})}
+    for e in data:
+        ms = e.get('data', {}).get('moveSettings')
+        if not ms: continue
+        fix = MOVE_FIX.get(ms.get('movementId'))
+        if fix and all(ms.get(k) == v for k, v in fix['when'].items()):
+            ms.update(fix['set'])
+            print('提供元が古いわざ性能を手動で上書き →', ms['movementId'], fix['set'])
     for mid, sup in SUPP_MOVES.items():
         if mid not in have:
             data.append({'templateId': f'SUPP_MOVE_{mid}', 'data': {'moveSettings': dict(sup['move'])}})
@@ -186,6 +253,9 @@ FORM_MOVE_FIX = {
     # ウッウ: 実装時のわざはハイドロポンプ/なみのり/そらをとぶ/ダイビングの4つ。
     # ゲーム内公開データ(更新停止中)に残っているドリルくちばしは覚えないので外す
     'CRAMORANT': {'remove': ['DRILL_PECK']},
+    # マフィティフ・オラチフ(2026-09-08実装): 提供元(8/29で停止中)のしっぺがえしは実際には覚えない(サイコファングが正・SUPP_C_2609)
+    'MABOSSTIFF': {'remove': ['PAYBACK']},
+    'MASCHIFF':   {'remove': ['PAYBACK']},
 }
 # 対戦データ側がまだ「未実装(released=false)」のままだが、ゲームには実装済みのポケモン。
 # ここに入れると未実装除外の対象から外れる。提供元が追いついたら消してよい
