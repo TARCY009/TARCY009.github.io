@@ -31,24 +31,24 @@ def bez(p0,p1,p2,p3,n=40):
              ( (1-t)**3*p0[1]+3*(1-t)**2*t*p1[1]+3*(1-t)*t**2*p2[1]+t**3*p3[1])) for i in range(n+1) for t in [i/n]]
 def shield(cx,cy,w,h,k=1.0):
     """cx,cy=中心・w,h=外形・k=中心に対する縮尺"""
-    w,h=w*k,h*k; top=cy-h/2; L,R=cx-w/2,cx+w/2; dip=h*0.09; side=top+h*0.40
+    w,h=w*k,h*k; top=cy-h/2; L,R=cx-w/2,cx+w/2; dip=h*0.16; side=top+h*0.36
     pts=[(L,top+dip),(cx,top),(R,top+dip),(R,side)]
     pts+=bez((R,side),(R,top+h*0.72),(cx+w*0.30,top+h*0.93),(cx,top+h))[1:]
     pts+=bez((cx,top+h),(cx-w*0.30,top+h*0.93),(L,top+h*0.72),(L,side))[1:]
     return pts
-cx,cy=W/2,W*0.60; ow,oh=W*0.60,W*0.60
+cx,cy=W/2,W*0.615; ow,oh=W*0.56,W*0.66
 sky_top,sky_bot=(168,224,255),(40,124,205)
 out=Image.alpha_composite(out,shadow(lambda d,a:d.polygon(shield(cx,cy,ow,oh),fill=(0,0,0,a)),150,W*0.035,-W*0.03))
 # 外枠(輪)＝外形から少し小さい形をくり抜く
 ring=Image.new('L',(W,W),0); rd=ImageDraw.Draw(ring)
-rd.polygon(shield(cx,cy,ow,oh),fill=255); rd.polygon(shield(cx,cy,ow,oh,0.86),fill=0)
+rd.polygon(shield(cx,cy,ow,oh),fill=255); rd.polygon(shield(cx,cy,ow,oh,0.84),fill=0)
 out=Image.alpha_composite(out,Image.composite(vgrad(sky_top,sky_bot,cy-oh/2,cy+oh/2),Image.new('RGBA',(W,W),(0,0,0,0)),ring))
 # 外枠の内側の縁を少し暗くして厚みを見せる
 rim2=Image.new('L',(W,W),0); r2=ImageDraw.Draw(rim2)
-r2.polygon(shield(cx,cy,ow,oh,0.90),fill=255); r2.polygon(shield(cx,cy,ow,oh,0.86),fill=0)
+r2.polygon(shield(cx,cy,ow,oh,0.88),fill=255); r2.polygon(shield(cx,cy,ow,oh,0.84),fill=0)
 out=Image.alpha_composite(out,Image.composite(Image.new('RGBA',(W,W),(20,70,130,110)),Image.new('RGBA',(W,W),(0,0,0,0)),rim2))
 # 中身の盾＝空色→青のグラデーション(見本の金属質感を空色で)
-k_in=0.74
+k_in=0.72
 out=Image.alpha_composite(out,shadow(lambda d,a:d.polygon(shield(cx,cy,ow,oh,k_in),fill=(0,0,0,a)),120,W*0.02,-W*0.015))
 out=Image.alpha_composite(out,masked(vgrad((150,214,255),(34,112,196),cy-oh*k_in/2,cy+oh*k_in/2),lambda d:d.polygon(shield(cx,cy,ow,oh,k_in),fill=255)))
 # 斜めの光沢(左上半分を明るく・見本の反射の折れ目)
@@ -64,7 +64,7 @@ dm=dm.filter(ImageFilter.GaussianBlur(W*0.004))
 dk.paste((0,20,60,255),(0,0,W,W)); dk.putalpha(Image.composite(dm,Image.new('L',(W,W),0),gm))
 out=Image.alpha_composite(out,dk)
 # ---- 王冠(盾の上に載せる・少し重ねる)
-cw,ch=W*0.42,W*0.20; kx,ky=W/2,cy-oh/2+W*0.055   # ky=王冠の底
+cw,ch=W*0.40,W*0.20; kx,ky=W/2,cy-oh/2+W*0.03   # ky=王冠の底
 def crown():
     l,r=kx-cw/2,kx+cw/2; base=ky; band=ch*0.30
     return [(l,base),(l,base-band),(l,base-ch),(kx-cw*0.25,base-band-ch*0.18),(kx,base-ch*1.15),(kx+cw*0.25,base-band-ch*0.18),(r,base-ch),(r,base-band),(r,base)]
@@ -99,7 +99,7 @@ hl.paste((255,255,255,255),(0,0,W,W)); hl.putalpha(Image.composite(hg,Image.new(
 out=Image.alpha_composite(out,hl)
 # きらめき(王冠の右上に小さな十字の光)
 sp=Image.new('RGBA',(W,W),(0,0,0,0)); sd=ImageDraw.Draw(sp)
-for (sx,sy,sz) in [(kx+cw*0.42,ky-ch*1.32,W*0.030),(kx-cw*0.52,ky-ch*0.55,W*0.018)]:
+for (sx,sy,sz) in [(kx+cw*0.40,ky-ch*1.05,W*0.030),(kx-cw*0.52,ky-ch*0.55,W*0.018)]:
     sd.polygon([(sx,sy-sz),(sx+sz*0.22,sy-sz*0.22),(sx+sz,sy),(sx+sz*0.22,sy+sz*0.22),(sx,sy+sz),(sx-sz*0.22,sy+sz*0.22),(sx-sz,sy),(sx-sz*0.22,sy-sz*0.22)],fill=(255,255,255,235))
 out=Image.alpha_composite(out,sp)
 # ---- 四隅を落とす(他のアイコンと同じ半径102px)
