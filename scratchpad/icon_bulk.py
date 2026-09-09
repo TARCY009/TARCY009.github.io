@@ -78,11 +78,12 @@ def hgrad(stops,x0,x1):
         else: col=stops[-1][1]
         for y in range(W): p[x,y]=col
     return g.convert('RGBA')
-cw,ch=W*0.42,W*0.21; kx,ky=W/2,cy-oh/2+W*0.085   # ky=帯の底。盾の上縁にしっかり重ねる
+cw,ch=W*0.42,W*0.21; kx,ky=W/2,cy-oh/2+W*0.062   # ky=帯の底。盾の上縁にしっかり重ねる
 l,r=kx-cw/2,kx+cw/2; band=ch*0.30
 def crown():
     return [(l,ky),(l,ky-band),(l,ky-ch),(kx-cw*0.25,ky-band-ch*0.18),(kx,ky-ch*1.15),(kx+cw*0.25,ky-band-ch*0.18),(r,ky-ch),(r,ky-band),(r,ky)]
-out=Image.alpha_composite(out,shadow(lambda d,a:d.polygon([(l,ky),(l,ky-ch*1.15),(r,ky-ch*1.15),(r,ky)],fill=(0,0,0,a)),150,W*0.022,-W*0.02))
+# 影は帯から下(盾に落ちるぶん)だけ。とがりの上まで影を出すと王冠のまわりが暗く縁取られる(2026-09-09タダシさん指摘)
+out=Image.alpha_composite(out,shadow(lambda d,a:d.rounded_rectangle([l+W*0.01,ky-band*0.6,r-W*0.01,ky+ch*0.16],radius=W*0.014,fill=(0,0,0,a)),140,W*0.018,-W*0.022))
 # 帯の下の厚み(手前に回り込む縁・暗い金)
 th=Image.new('RGBA',(W,W),(0,0,0,0)); ImageDraw.Draw(th).rounded_rectangle([l,ky-band*0.5,r,ky+ch*0.16],radius=W*0.014,fill=(128,84,10,255))
 out=Image.alpha_composite(out,th)
