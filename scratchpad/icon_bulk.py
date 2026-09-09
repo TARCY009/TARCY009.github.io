@@ -31,12 +31,15 @@ def bez(p0,p1,p2,p3,n=40):
              ( (1-t)**3*p0[1]+3*(1-t)**2*t*p1[1]+3*(1-t)*t**2*p2[1]+t**3*p3[1])) for i in range(n+1) for t in [i/n]]
 def shield(cx,cy,w,h,k=1.0):
     """cx,cy=中心・w,h=外形・k=中心に対する縮尺"""
-    w,h=w*k,h*k; top=cy-h/2; L,R=cx-w/2,cx+w/2; dip=h*0.16; side=top+h*0.36
-    pts=[(L,top+dip),(cx,top),(R,top+dip),(R,side)]
+    w,h=w*k,h*k; top=cy-h/2; L,R=cx-w/2,cx+w/2; dip=h*0.17; side=top+h*0.36
+    # 上の縁は両側とも内側(下)へ湾曲させて真ん中の山へ(2026-09-09タダシさんの見本の拡大より)
+    pts=bez((L,top+dip),(cx-w*0.24,top+dip*1.08),(cx-w*0.09,top+dip*0.50),(cx,top))
+    pts+=bez((cx,top),(cx+w*0.09,top+dip*0.50),(cx+w*0.24,top+dip*1.08),(R,top+dip))[1:]
+    pts+=[(R,side)]
     pts+=bez((R,side),(R,top+h*0.72),(cx+w*0.30,top+h*0.93),(cx,top+h))[1:]
     pts+=bez((cx,top+h),(cx-w*0.30,top+h*0.93),(L,top+h*0.72),(L,side))[1:]
     return pts
-cx,cy=W/2,W*0.615; ow,oh=W*0.56,W*0.66
+cx,cy=W/2,W*0.60; ow,oh=W*0.60,W*0.70
 sky_top,sky_bot=(168,224,255),(40,124,205)
 out=Image.alpha_composite(out,shadow(lambda d,a:d.polygon(shield(cx,cy,ow,oh),fill=(0,0,0,a)),150,W*0.035,-W*0.03))
 # 外枠(輪)＝外形から少し小さい形をくり抜く
@@ -64,7 +67,7 @@ dm=dm.filter(ImageFilter.GaussianBlur(W*0.004))
 dk.paste((0,20,60,255),(0,0,W,W)); dk.putalpha(Image.composite(dm,Image.new('L',(W,W),0),gm))
 out=Image.alpha_composite(out,dk)
 # ---- 王冠(盾の上に載せる・少し重ねる)
-cw,ch=W*0.40,W*0.20; kx,ky=W/2,cy-oh/2+W*0.03   # ky=王冠の底
+cw,ch=W*0.42,W*0.21; kx,ky=W/2,cy-oh/2+W*0.03   # ky=王冠の底
 def crown():
     l,r=kx-cw/2,kx+cw/2; base=ky; band=ch*0.30
     return [(l,base),(l,base-band),(l,base-ch),(kx-cw*0.25,base-band-ch*0.18),(kx,base-ch*1.15),(kx+cw*0.25,base-band-ch*0.18),(r,base-ch),(r,base-band),(r,base)]
