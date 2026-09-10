@@ -8092,7 +8092,8 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 決断のたびに aiAnswer が shNow に「その瞬間の枚数」を入れ、下読みは必ず shAt() を見る
   const shNow = [null, null];
   const shAt = sd => shNow[sd] != null ? shNow[sd] : shLeft[sd];
-  const shSig = () => shAt(0) + ',' + shAt(1);   // 下読みのキャッシュのキーに必ず混ぜる
+  // 下読みのキャッシュのキーに必ず混ぜる。あいてAIに見えているじぶんのSP(aiPlanSig)も混ぜる＝見え方が違う読みを使い回さない
+  const shSig = () => shAt(0) + ',' + shAt(1) + (aiPlanSig ? '#' + aiPlanSig : '');
   const newIn = [false, false];   // この対面の頭で「新しく出てきた」側(交代質問のきっかけ)
   const koIn = [false, false];    // そのうち「倒されて出し直した」側(あいての交代判断を1秒遅らせる)
   // 出し勝った初手の温存(2026-08-30タダシさん指示・上級者の動き):
@@ -8137,6 +8138,12 @@ function gbPlay(picks, foes, ans, stepwise) {
   // 「投げ済み」として持ち越し、新しい対面の頭でそのわざを即打ちする(交代先を見て選び直さない)。両側とも同じ扱い
   let inflight = [null, null];
   let carryMsw = null;   // 押したまま起きなかった交代を次の対面へ持ち越す(2026-09-10)
+  // ---- あいてAIは「判断した時点より前に押されたSP」しか知らない(2026-09-10・リアルタイム) ----
+  // じぶんが押したSPは台本(mspPlan)としてエンジンに渡すが、全部をそのまま渡すと、**押す前のターンにしたAIの判断まで
+  // あとから押したSPを知った状態で計算し直され、すでに表示した過去のあいての行動が変わっていた**
+  // (＝時系列の守りが入力を断る原因・「SPが打てなくなる」の正体。あいてが先の入力を読むずるにもなる)。
+  // aiSee＝いまAIが判断しているターン。legCfg(0) はその時点より前に押されたSPだけを台本に入れる
+  let aiSee = null, aiPlanSig = '';
   const legs = [];
   const nextAlive = (sd, from) => {
     for (let i = 0; i < st[sd].length; i++) { const k = (from + i) % st[sd].length; if (st[sd][k].alive) return k; }
@@ -9364,13 +9371,18 @@ function gbPlay(picks, foes, ans, stepwise) {
       const k1 = gbKey(li, 0, 'msp', 1, 0);
       if (!mspPlan.some(x => x.key === k1)) mspPlan.unshift({ on: 1, move: inflight[0], key: k1 });
     }
+    // 押した瞬間のターン(対面の中の何ターン目)。交代前に投げたSP(inflight)は対面の頭より前＝0
+    const mspPressOf = x => { const a = ans[x.key]; return a && a.p != null ? a.p : 0; };
     const legCfg = s => {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
         bluff: s === 1 ? (ai.bluff && !ai.proBluff) : false, timing: 'shots',
         shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until, hold: x.hold })), shotRest: null,
         shieldPlan: d.shieldAt.slice(), shieldRest: false };
-      if (rt && s === 0) { c.timing = 'plan'; c.plan = mspPlan.map(x => ({ on: x.on, move: x.move })); delete c.shotPlan; }
+      if (rt && s === 0) {
+        const vis = aiSee == null ? mspPlan : mspPlan.filter(x => mspPressOf(x) < aiSee);
+        c.timing = 'plan'; c.plan = vis.map(x => ({ on: x.on, move: x.move })); delete c.shotPlan;
+      }
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
       return c;
     };
@@ -9612,7 +9624,21 @@ function gbPlay(picks, foes, ans, stepwise) {
       let forced = null;
       if (p.kind === 'sp' && p.seq === 0 && inflight[p.side]) forced = { a: 'fire', mv: inflight[p.side] };
       else if (p.kind === 'swap' && p.seq === 0 && p.side === 1 && inflight[1]) forced = { a: 'stay' };
-      const a = forced || ans[p.key] || (p.side === 1 ? aiAnswer(p, ctx) : (stepwise ? null : RB_AUTO[p.kind]));
+      let a = forced || ans[p.key];
+      if (!a && p.side === 1) {
+        // あいてAIの判断: その時点より前に押されたじぶんのSPだけを見せる(交代受けの読み tlPred も同じ範囲で作り直す)
+        const savePred = ctx.tlPred;
+        if (rt) {
+          aiSee = p.tn;
+          const vis = mspPlan.filter(x => mspPressOf(x) < aiSee);
+          aiPlanSig = vis.map(x => x.on + ':' + x.move).join(',') || '-';
+          ctx.tlPred = rbTurns(PvpEngine.simulate(D,
+            vis.length ? legCfg(0) : { ...legCfg(0), timing: 'optimal', plan: undefined }, legCfg(1),
+            { ...SIMOPT, stopAt: dec[0].swapTo != null ? dec[0].swapAt : 0 }));
+        }
+        try { a = aiAnswer(p, ctx); } finally { aiSee = null; aiPlanSig = ''; ctx.tlPred = savePred; }
+      }
+      if (!a && p.side !== 1) a = stepwise ? null : RB_AUTO[p.kind];
       if (!a) {
         pending = { ...p, optNs: optNsOf(p), noSp: p.side === 0 && finishNoSp(p),
           holds: holdsOf(p), ctx };
@@ -10927,30 +10953,45 @@ function gbRender(body, bt, picks, foes) {
   //   **新しい対面の1ターン目**に撃つ(2026-09-10タダシさん報告)。交代受けの演出を見ながら押したSPが、
   //   新しい対面でノーマルアタックを1周打ち直してからの発動(＝2発入ってからSP)になっていた。
   //   交代の瞬間はじぶんのノーマルアタックの切れ目なので、実戦でもそのまま次のターンに撃てる
-  function spTarget(gt, m) {
+  // why を渡すと、撃てない理由を積む(確認用。画面の動きは変えない)
+  function spTarget(gt, m, why) {
+    const no = r => { if (why) why.push(r); return null; };
     let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
     if (li < 0) li = bt.legs.length - 1;
     const leg = bt.legs[li];
-    if (!leg || !m || !(leg.pol.charged || []).includes(m.id || '') && !(leg.pol.charged || []).some(id => D.moves[id] === m)) return null;
-    if (mswPending(li, gt)) return null;   // 交代を押したあと(切れ目まで)はSPを撃てない(実戦と同じ)
+    if (!leg || !m) return no('対面なし');
+    if (!(leg.pol.charged || []).some(id => D.moves[id] === m)) return no('このポケモンのわざではない');
+    if (mswPending(li, gt)) return no('交代を押したあと');   // 交代を押したあと(切れ目まで)はSPを撃てない(実戦と同じ)
     const prev = li > 0 ? bt.legs[li - 1] : null;
     if (prev && gt === leg.base && prev.swapped1 && !prev.swapped0 && leg.hud && leg.hud.en0 >= m.e)
       return { li, on: 1, p: 0 };
     const r = spReadyAt(li, gt);
-    if (!r || r.en < m.e) return null;     // ゲージが足りない＝押しても何も起きない(実戦と同じ)
+    if (!r) return no('この対面のうちに切れ目が来ない');
+    if (r.en < m.e) return no('ゲージ不足(' + r.en + '<' + m.e + ')');   // 押しても何も起きない(実戦と同じ)
     const on = r.E + 1;
     // 切れ目の次のターンが対面の外(＝あいてがそこで交代受けをした)でも受ける: 投げ済みとして交代先に当たる
-    if (on > leg.res.turns + 1) return null;
+    if (on > leg.res.turns + 1) return no('撃つ前に対面が終わる');
     return { li, on, p: gt - leg.base };
   }
+  // 確認用の口(開発者向け・画面の動きは変えない): RBV.spProbe(通しターン, わざID) → 'ok' か撃てない理由
+  RBV.spProbe = (gt, id) => { const w = []; return spTarget(gt, D.moves[id], w) ? 'ok' : (w.join(',') || '不明'); };
   // ---- 時系列の守り(2026-09-10タダシさん指示「時系列の乱れだけは絶対になくして」) ----
   // リアルタイムの入力(SP・交代)は「押した瞬間から先」だけを変えるはず。**すでに表示した行が1つでも変わるなら、
   // その入力は受け付けない**(元の答えに戻す)。計算は押した瞬間に同期で終わるので、そのあいだタイムラインは進まない
-  const pastSig = (b, cur) => b.legs.map(l => {
-    if (l.base > cur) return '';
-    return l.meName + '|' + l.foeName + ':' + rbTurns(l.res).filter(t => l.base + t.tn <= cur)
-      .map(t => JSON.stringify(t.ev.map(a => (a || []).map(e => e && [e.move, e.dmg, e.full, e.shielded])))).join(';');
-  }).join('#');
+  // ⚠ 比べるのは**画面に出ているターン(通しターンが表示中以下)の出来事だけ**。
+  //   先の対面の数や名前を比べると、押したSPで先の展開が変わった(その先であいてを倒して対面が増えた等)だけで
+  //   「過去が変わった」と誤判定して、**正しい入力の半分以上を断っていた**(2026-09-10タダシさん報告「SPが打てなくなる」。
+  //   6戦の総当たりで 受け付け25回・誤って断った30回)。行の無い対面は何も足さない
+  const pastSig = (b, cur) => {
+    const out = [];
+    b.legs.forEach(l => rbTurns(l.res).forEach(t => {
+      const gt = l.base + t.tn;
+      if (gt > cur) return;
+      out.push(gt + '|' + l.meName + '|' + l.foeName + '|'
+        + JSON.stringify(t.ev.map(a => (a || []).map(e => e && [e.move, e.dmg, e.full, e.shielded]))));
+    }));
+    return out.join(';');
+  };
   function commitAns(apply) {
     const saved = JSON.parse(JSON.stringify(RB.ans));
     const before = pastSig(bt, RBV.cur);
@@ -10958,8 +10999,14 @@ function gbRender(body, bt, picks, foes) {
     let ok;
     try { ok = pastSig(gbPlay(picks, foes, RB.ans, RB.step), RBV.cur) === before; } catch (e) { ok = false; }
     if (!ok) {
+      let diff = '';
+      try {
+        const a1 = before.split(';'), b1 = pastSig(gbPlay(picks, foes, RB.ans, RB.step), RBV.cur).split(';');
+        const k = a1.findIndex((x, i) => x !== b1[i]);
+        diff = ' / 最初に変わった行: ' + (a1[k] || '(なし)') + ' → ' + (b1[k] || '(なし)');
+      } catch (e) {}
       RB.ans = saved;
-      console.warn('[模擬戦] この入力ですでに表示した行が変わるため、受け付けませんでした');
+      console.warn('[模擬戦] この入力ですでに表示した行が変わるため、受け付けませんでした' + diff);
     }
     return ok;
   }
