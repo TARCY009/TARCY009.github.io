@@ -1,0 +1,65 @@
+/* =========================================================================
+   運営者情報・プライバシーポリシー・お問い合わせ の3ページ共通（2026-09-10）
+   公開（広告の審査）に向けて必要な案内ページ。見た目はサイトの土台（濃紺のグラデーション・
+   半透明のカード・1pxの罫線）にそろえ、読みものとして落ち着いた字組みにする。
+   トップページの決めごと（絵文字を使わない・動く飾りを足さない）にも合わせる。
+   ========================================================================= */
+:root{
+  --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560; --panel:rgba(26,35,66,.94);
+  --acc:#43e0ff; --gold:#e8c46a; --hair:rgba(160,180,240,.18);
+  --cardsh:0 18px 38px -26px rgba(0,0,0,.9);
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(67,224,255,.10), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.13), transparent 62%),
+    linear-gradient(165deg,#0b1023 0%,#111731 50%,#1a1024 100%);
+  --tcolor:#0b1023;
+}
+:root.light{
+  --ink:#1d2440; --sub:#5b6b96; --line:#dfe6f5; --panel:rgba(255,255,255,.9);
+  --acc:#0b7f99; --gold:#8a6000; --hair:rgba(40,60,120,.14);
+  --cardsh:0 14px 30px -24px rgba(30,40,90,.5);
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(67,224,255,.16), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(176,108,255,.14), transparent 62%),
+    linear-gradient(165deg,#eef3ff 0%,#f6f2ff 50%,#fdeee6 100%);
+  --tcolor:#eef3ff;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:16px 14px 64px;color:var(--ink);background:var(--bgimg);background-attachment:fixed;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:15px;line-height:1.85;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto}
+header{margin-bottom:18px}
+.eyebrow{font-family:Oswald,"Hiragino Sans",sans-serif;font-size:.68rem;font-weight:600;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--acc);margin-bottom:4px}
+h1{margin:0;font-size:1.45rem;font-weight:900;letter-spacing:.04em}
+.lead{margin:8px 0 0;color:var(--sub);font-size:.84rem}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;
+  padding:18px 18px 8px;margin-bottom:14px;box-shadow:var(--cardsh)}
+h2{margin:0 0 10px;font-size:1rem;font-weight:900;letter-spacing:.04em;
+  display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--hair)}
+h3{margin:14px 0 4px;font-size:.88rem;font-weight:800}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:1.3em}
+li{margin-bottom:6px}
+a{color:var(--acc)}
+dl.facts{display:grid;grid-template-columns:8.5em 1fr;gap:0;margin:0 0 12px}
+dl.facts dt,dl.facts dd{margin:0;padding:9px 0;border-bottom:1px solid var(--hair)}
+dl.facts dt{color:var(--sub);font-size:.82rem;font-weight:700}
+dl.facts dd{font-size:.9rem}
+dl.facts>*:nth-last-child(-n+2){border-bottom:0}
+.note{font-size:.8rem;color:var(--sub)}
+.date{margin-top:6px;font-size:.78rem;color:var(--sub);text-align:right}
+/* お問い合わせの大きなボタン（サイトの立体ボタンと同じ質感。光彩は付けない＝全ツール共通ルール） */
+.cbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:240px;
+  padding:13px 26px;margin:6px 0 14px;border-radius:999px;border:0;cursor:pointer;
+  font:inherit;font-size:.95rem;font-weight:900;letter-spacing:.06em;color:#042330;text-decoration:none;
+  background:linear-gradient(160deg,#9af0ff 0%,#43e0ff 45%,#1aa9c8 100%);
+  box-shadow:0 3px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);transition:transform .12s ease}
+.cbtn:hover{transform:translateY(-1px)}
+.cbtn:focus-visible{outline:2px solid #8b5cf6;outline-offset:3px}
+:root.light .cbtn{color:#fff;background:linear-gradient(160deg,#3fc6e0 0%,#0b8ea8 50%,#086a7d 100%)}
+.center{text-align:center}
+@media (max-width:430px){body{padding:12px 11px 56px}.card{padding:15px 14px 6px}
+  dl.facts{grid-template-columns:6.8em 1fr}h1{font-size:1.28rem}}

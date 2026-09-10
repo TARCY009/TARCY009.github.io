@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>お問い合わせ｜GOナビ</title>
+<meta name="description" content="ポケモンGO攻略ツール集「GOナビ」へのお問い合わせ・不具合の報告・ご意見はこちらから。">
+<meta name="theme-color" content="#0b1023">
+<link rel="canonical" href="https://tarcy009.github.io/contact/">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">Contact</div><h1>お問い合わせ</h1>
+  <p class="lead">不具合の報告・数字がおかしい点・ご意見・ご質問を受け付けています。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<section class="card center">
+  <h2>フォームから送る</h2>
+  <p>下のボタンから専用のフォームが開きます。スクリーンショットも付けられます。</p>
+  <a class="cbtn" id="cform" href="#" rel="noopener" target="_blank">お問い合わせフォームを開く</a>
+</section>
+
+<section class="card">
+  <h2>送る前に</h2>
+  <ul>
+    <li>不具合のときは、<b>どのツールで・何をしたら・どうなったか</b>を書いていただけると早く直せます。画面のスクリーンショットがあると確実です。</li>
+    <li>ツールの画面から送る場合、共有用のURL（「結果のURLをコピー」など）を貼っていただくと、同じ状態を再現できます。</li>
+    <li>お名前の入力は任意です。氏名・住所・電話番号などの個人を特定する情報は書かないでください。</li>
+    <li>いただいた内容はすべて目を通していますが、個別のお返事はできない場合があります。</li>
+  </ul>
+  <p class="note">送っていただいた内容の扱いは<a href="/privacy/">プライバシーポリシー</a>をご覧ください。</p>
+</section>
+</div>
+<script>
+// お問い合わせはテスター用と同じフォームを使う(送り先は assets/feedback.js の FORM と同じ)。
+// 隠し項目 tool に「お問い合わせ」、ctx に端末のあらまし(不具合の再現用)を入れて開く
+(function(){
+  var FORM = 'https://tally.so/r/jaR6DE';
+  function ctx(){
+    var u = navigator.userAgent;
+    var dev = /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows':'その他';
+    var d = new Date(), p = function(n){return (n<10?'0':'')+n;};
+    return [dev, '画面 '+innerWidth+'×'+innerHeight,
+      document.documentElement.classList.contains('light')?'ライト':'ダーク',
+      d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()),
+      document.referrer || location.href].join('｜');
+  }
+  var a = document.getElementById('cform');
+  var set = function(){ a.href = FORM + '?tool=' + encodeURIComponent('お問い合わせ') + '&ctx=' + encodeURIComponent(ctx()); };
+  set(); a.addEventListener('pointerdown', set); a.addEventListener('focus', set);
+})();
+</script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+</body>
+</html>

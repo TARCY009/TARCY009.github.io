@@ -87,7 +87,18 @@
     h.addEventListener('selectstart', function (e) { e.preventDefault(); });   // 長押しで文字を選択させない
     h.addEventListener('contextmenu', function (e) { e.preventDefault(); });   // 長押しのメニュー(コピー)を出さない
   }
+  // ---- ページのいちばん下の案内リンク(2026-09-10・公開に向けて) ----
+  // 運営者情報・プライバシーポリシー・お問い合わせの3つを、すべてのツールの最下部に出す。
+  // トップページは自前のフッターに同じリンクを持つので出さない。管理用の /feedback/ にも出さない
+  function footLinks() {
+    if (isTop || /^\/feedback\//.test(path) || document.getElementById('sitefoot')) return;
+    var n = document.createElement('nav');
+    n.id = 'sitefoot'; n.className = 'sitefoot'; n.setAttribute('aria-label', 'サイトの案内');
+    n.innerHTML = '<a href="/about/">運営者情報</a><a href="/privacy/">プライバシーポリシー</a><a href="/contact/">お問い合わせ</a>';
+    document.body.appendChild(n);
+  }
   function build() {
+    footLinks();
     armLongPress();
     var box = document.getElementById('themesw');
     if (!box) return;

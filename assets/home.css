@@ -51,3 +51,14 @@
   padding:9px 16px;box-shadow:0 6px 24px rgba(0,0,0,.5);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* タイトルは長押しで開発者モードを切り替えるので、文字の選択と「コピー」の吹き出しを出さない(子要素まで) */
 header h1,header h1 *{-webkit-user-select:none !important;user-select:none !important;-webkit-touch-callout:none !important;-webkit-tap-highlight-color:transparent}
+
+/* ページのいちばん下の案内リンク（運営者情報・プライバシーポリシー・お問い合わせ・2026-09-10）。
+   home.js が body の最後に差し込む。ツールの中身のじゃまをしないよう小さく控えめに */
+.sitefoot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;
+  margin:28px auto 18px;padding:14px 12px 0;max-width:760px;border-top:1px solid rgba(160,180,240,.16);
+  font-size:.72rem;line-height:1.6}
+.sitefoot a{color:#8b96c2;text-decoration:none;white-space:nowrap}
+.sitefoot a:hover{color:#c6d0f0;text-decoration:underline}
+:root.light .sitefoot{border-top-color:rgba(40,60,120,.14)}
+:root.light .sitefoot a{color:#5b6b96}
+:root.light .sitefoot a:hover{color:#1d2440}
