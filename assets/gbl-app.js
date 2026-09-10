@@ -5676,8 +5676,15 @@ function rbRender(body, bt, picks, foes, extra) {
     //   いまのターンの結果は、このあと演出に合わせて反映される
     const lk = f.meta.name0 + '|' + f.meta.name1;
     let hp0 = f.hp0, hp1 = f.hp1;
-    if (fresh && RBV.hpSnap && RBV.hpSnap.k === lk) { hp0 = RBV.hpSnap.a; hp1 = RBV.hpSnap.b; }
-    RBV.hpSnap = { k: lk, a: hp0, b: hp1 };
+    // 🛡の枚数・ゲージ・能力変化も同じく「直前に見えていた値」を置く(2026-09-10タダシさん指示)。
+    // HPだけ控えていると、決断に答えた瞬間に🛡とゲージだけが演出より先に変わって見えた
+    let hen0 = f.en0, hen1 = f.en1, hsh0 = f.sh0, hsh1 = f.sh1, hb0 = f.b0, hb1 = f.b1;
+    const SN = RBV.hpSnap;
+    if (fresh && SN && SN.k === lk) {
+      hp0 = SN.a; hp1 = SN.b;
+      if (SN.e0 != null) { hen0 = SN.e0; hen1 = SN.e1; hsh0 = SN.s0; hsh1 = SN.s1; hb0 = SN.b0; hb1 = SN.b1; }
+    }
+    RBV.hpSnap = { k: lk, a: hp0, b: hp1, e0: hen0, e1: hen1, s0: hsh0, s1: hsh1, b0: hb0, b1: hb1 };
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
       // HPが1でも残っているうちはバーを空に見せない(残りわずかでも「まだ倒せていない」と分かるように)
@@ -5713,9 +5720,9 @@ function rbRender(body, bt, picks, foes, extra) {
     };
     const GQC_ME = ['#43e0ff', '#ffd54a', '#ff6b81'], GQC_FOE = ['#ffd54a', '#ff6b81', '#b06cff'];
     let cols = GQC_ME;
-    set(R0, hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
+    set(R0, hp0, f.meta.max0, hen0, hsh0, shMax0, f.alive0, picks.length, hb0, f.g0);
     cols = GQC_FOE;
-    set(R1, hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
+    set(R1, hp1, f.meta.max1, hen1, hsh1, shMax1, f.alive1, foes.length, hb1, f.g1);
     clk.textContent = rbSec(ckOf(gt));   // SPアタックの待ち時間を含む実時間
     trn.textContent = gt + 'T';
     // ⇄いつでも交代は hctl(位置が動かない再生コントロールの並び)のボタンで受ける
@@ -10322,8 +10329,15 @@ function gbRender(body, bt, picks, foes) {
     //   いまのターンの結果は、このあと演出に合わせて反映される
     const lk = f.meta.name0 + '|' + f.meta.name1;
     let hp0 = f.hp0, hp1 = f.hp1;
-    if (fresh && RBV.hpSnap && RBV.hpSnap.k === lk) { hp0 = RBV.hpSnap.a; hp1 = RBV.hpSnap.b; }
-    RBV.hpSnap = { k: lk, a: hp0, b: hp1 };
+    // 🛡の枚数・ゲージ・能力変化も同じく「直前に見えていた値」を置く(2026-09-10タダシさん指示)。
+    // HPだけ控えていると、決断に答えた瞬間に🛡とゲージだけが演出より先に変わって見えた
+    let hen0 = f.en0, hen1 = f.en1, hsh0 = f.sh0, hsh1 = f.sh1, hb0 = f.b0, hb1 = f.b1;
+    const SN = RBV.hpSnap;
+    if (fresh && SN && SN.k === lk) {
+      hp0 = SN.a; hp1 = SN.b;
+      if (SN.e0 != null) { hen0 = SN.e0; hen1 = SN.e1; hsh0 = SN.s0; hsh1 = SN.s1; hb0 = SN.b0; hb1 = SN.b1; }
+    }
+    RBV.hpSnap = { k: lk, a: hp0, b: hp1, e0: hen0, e1: hen1, s0: hsh0, s1: hsh1, b0: hb0, b1: hb1 };
     const set = (Rf, hp, max, en, sh, shMax, alive, total, b, g) => {
       const pct = Math.max(0, Math.min(100, hp / max * 100));
       const w = hp > 0 ? Math.max(pct, 4) : 0;
@@ -10366,9 +10380,9 @@ function gbRender(body, bt, picks, foes) {
     if (R0.team) R0.team.innerHTML = teamHtml(picks, f.sn0 || 0, f.dd0 || 0, true);
     // スタート前は初手も伏せる(VSカードと同じ＝場に出るまで分からない)
     if (R1.team) R1.team.innerHTML = teamHtml(foes, mask ? 0 : (f.sn1 || 0), f.dd1 || 0, false);
-    set(R0, hp0, f.meta.max0, f.en0, f.sh0, shMax0, f.alive0, picks.length, f.b0, f.g0);
+    set(R0, hp0, f.meta.max0, hen0, hsh0, shMax0, f.alive0, picks.length, hb0, f.g0);
     cols = GQC_FOE;
-    set(R1, hp1, f.meta.max1, f.en1, f.sh1, shMax1, f.alive1, foes.length, f.b1, f.g1);
+    set(R1, hp1, f.meta.max1, hen1, hsh1, shMax1, f.alive1, foes.length, hb1, f.g1);
     // わざオート: 撃って判明したあいてのSPは？→タイプアイコンに切り替える(2026-09-01タダシさん指示。
     // フレームのrv=その時点までに判明したわざ、なので巻き戻せば？に戻る)
     if (MK.foeAuto) R1.gqs.querySelectorAll('.gq[data-hide="1"]').forEach(g => {
