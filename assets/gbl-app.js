@@ -7315,6 +7315,7 @@ function buildSdSlots(side) {
         //   外れないと .editing(入力中は欄を2列ぶんに広げる)が残り、確定後も欄が拡大したままになる
         //   (2026-09-10タダシさん報告)。選んだら必ず入力を終える
         inp.blur(); el.classList.remove('editing');
+        inp.value = D.pokemon[d.dataset.k].n;   // 描き直しを待たずに、入力欄の文字も選んだ名前にそろえる
         A[i] = sdNew(d.dataset.k, false);
         sdChanged();
       });

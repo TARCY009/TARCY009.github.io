@@ -131,4 +131,93 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
   else build();
+
+  // ==== 名前の検索欄の守り（全ツール共通・2026-09-10タダシさん報告で新設） ====
+  // 候補をタップせずにキーボードの「✓」や「完了」で入力を終えると、入力欄には打った名前が残るのに
+  // 枠の中身は前のポケモンのまま・候補の一覧も開いたまま、になっていた（iPhoneで実際に起きた。
+  // 模擬戦でヘルガーと打ったのにキュウコンのわざのまま＝「新わざが反映されていない」と誤解された）。
+  // 各ツールがそれぞれ持っている検索欄を1か所で守る。ページ側の追加は要らない（home.js を読むだけ）:
+  //   ・候補を選ばずに入力を終えたら、名前が完全に一致する候補（無ければ候補が1つだけのとき）を選んだことにする
+  //   ・どれとも決まらなければ、入力欄を入力前の名前に戻して候補を閉じる（入力欄と中身を食い違わせない）
+  //   ・キーボードの改行キーでも候補を選べる（一致する候補、無ければいちばん上）
+  //   ・パソコンで候補を押したとき入力欄のフォーカスを外さない（押した瞬間に一覧が消えるのを防ぐ）
+  // 対象は「.sugg または .searchbox の中にある入力欄」と、その中の候補一覧（.sugg-list／#sugg／#suggest）。
+  // ⚠ 新しく名前の検索欄を作るときも、この形（入れ物 .sugg・一覧 .sugg-list・候補は一覧の直下の要素で、
+  //   選べないものは class="dup" か disabled）にそろえること。そろえれば自動でこの守りが効く
+  (function suggGuard() {
+    var BOX = '.sugg,.searchbox', LIST = '.sugg-list,#sugg,#suggest';
+    // 一覧の直下の要素(＝候補1つ)。⚠ LIST + ' > *' と書くと最後の #suggest にしか効かない(カンマ区切りのため)。
+    //   その書き方だと候補を押しても「選んだ」と分からず、入力欄を離れた瞬間に元の名前へ戻してしまう(実際に踏んだ)
+    var ITEM = LIST.split(',').map(function (x) { return x + ' > *'; }).join(',');
+    var cur = null;   // いま入力中の検索欄
+    function boxOf(el) { return el && el.closest ? el.closest(BOX) : null; }
+    function listOf(inp) { var b = boxOf(inp); return b ? b.querySelector(LIST) : null; }
+    function isSearch(el) {
+      return !!(el && el.tagName === 'INPUT' && /^(search|text)$/.test(el.type || 'text') && listOf(el));
+    }
+    function shown(l) { return !!(l && l.children.length && getComputedStyle(l).display !== 'none'); }
+    function items(l) {
+      return [].filter.call(l.children, function (c) {
+        return !c.classList.contains('dup') && !c.classList.contains('sep') && !c.disabled;
+      });
+    }
+    function kata(s) { return (s || '').replace(/[ぁ-ゖ]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) + 0x60); }).replace(/\s+/g, ''); }
+    function nameOf(c) {
+      var n = c.querySelector('.srow') || c.firstElementChild || c;
+      var x = n.cloneNode(true);
+      [].forEach.call(x.querySelectorAll('i,small,.evtag,.unrel,.mvtag,.dupn,.bs'), function (e) { e.remove(); });
+      return kata(x.textContent);
+    }
+    function match(inp, l, orFirst) {
+      var it = items(l); if (!it.length) return null;
+      var v = kata(inp.value).replace(/^シャドウ/, '');
+      for (var i = 0; i < it.length; i++) if (nameOf(it[i]) === v) return it[i];
+      return (orFirst || it.length === 1) ? it[0] : null;
+    }
+    // 入力を始めたときの状態を控える。**毎回取り直す**（同じ欄で続けて入力したとき、前回の「選んだ」を引きずらない）。
+    // ただし抜けた直後(0.25秒以内)に戻ってきたとき(✕で消して打ち直す等)は、同じ入力の続きとして扱う
+    document.addEventListener('focusin', function (e) {
+      var inp = e.target; if (!isSearch(inp)) return;
+      if (cur === inp && inp._sgOutAt && Date.now() - inp._sgOutAt < 250) return;
+      cur = inp; inp._sgBefore = inp.value; inp._sgPicked = false; inp._sgShown = shown(listOf(inp)); inp._sgOutAt = 0;
+    });
+    // 打つたびに「候補が出たか」を控える（候補が一度も出ない欄＝CPの数字欄などは守りの対象にしない）
+    document.addEventListener('input', function (e) {
+      var inp = e.target; if (!isSearch(inp)) return;
+      setTimeout(function () { if (shown(listOf(inp))) inp._sgShown = true; }, 0);
+    });
+    // 候補を押した＝選んだ（一覧の直下の、選べる候補だけ）
+    document.addEventListener('click', function (e) {
+      var l = e.target.closest && e.target.closest(LIST); if (!l) return;
+      var c = e.target.closest(ITEM);
+      var b = boxOf(l), inp = b && b.querySelector('input');
+      if (inp && c && items(l).indexOf(c) >= 0) inp._sgPicked = true;
+    }, true);
+    // パソコン: 候補を押した瞬間に入力欄のフォーカスが外れて一覧が消えるのを防ぐ（スクロールは妨げない）
+    document.addEventListener('mousedown', function (e) {
+      if (e.target.closest && e.target.closest(LIST)) e.preventDefault();
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      var inp = e.target; if (!isSearch(inp)) return;
+      if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;   // 日本語の変換の確定は除く
+      var l = listOf(inp); if (!shown(l)) return;
+      var c = match(inp, l, true); if (!c) return;
+      e.preventDefault(); c.click(); inp._sgPicked = true; cur = null; inp.blur();
+    });
+    document.addEventListener('focusout', function (e) {
+      var inp = e.target; if (!isSearch(inp)) return;
+      inp._sgOutAt = Date.now();
+      setTimeout(function () {
+        if (!inp.isConnected || document.activeElement === inp) return;   // 戻ってきた(✕で消して打ち直す等)
+        if (cur === inp) cur = null;
+        if (inp._sgPicked || !inp._sgShown) return;
+        var l = listOf(inp);
+        var c = shown(l) ? match(inp, l, false) : null;
+        if (c) { c.click(); return; }
+        // 決まらなかった: 入力前の名前に戻して閉じる（空にしたときは、ページ側の「消す」操作を尊重してそのまま）
+        if (inp.value && inp.value !== inp._sgBefore) inp.value = inp._sgBefore || '';
+        if (l) l.style.display = 'none';
+      }, 200);
+    });
+  })();
 })();
