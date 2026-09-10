@@ -10962,19 +10962,38 @@ function gbRender(body, bt, picks, foes) {
     if (!leg || !m) return no('対面なし');
     if (!(leg.pol.charged || []).some(id => D.moves[id] === m)) return no('このポケモンのわざではない');
     if (mswPending(li, gt)) return no('交代を押したあと');   // 交代を押したあと(切れ目まで)はSPを撃てない(実戦と同じ)
-    const prev = li > 0 ? bt.legs[li - 1] : null;
-    if (prev && gt === leg.base && prev.swapped1 && !prev.swapped0 && leg.hud && leg.hud.en0 >= m.e)
-      return { li, on: 1, p: 0 };
-    const r = spReadyAt(li, gt);
-    if (!r) return no('この対面のうちに切れ目が来ない');
-    if (r.en < m.e) return no('ゲージ不足(' + r.en + '<' + m.e + ')');   // 押しても何も起きない(実戦と同じ)
-    const on = r.E + 1;
+    // ---- 押せるタイミング(2026-09-10タダシさん指示「硬直が解ける0.4秒前から押せるように」) ----
+    // 表示中のターン gt の次のターン(pr+1)が「いま進んでいるターン」。実戦は硬直が解ける少し前(約0.4秒前)から
+    // SPボタンを受け付けるので、**ゲージを満たすノーマルアタックが当たるターン(E)の途中＝表示中が E-1 のとき**から押せる。
+    //   1ターンわざ: 最後の1発を打ち始めたところ(打ってから0.1秒後) ／ 2ターンわざ: 最後の1発の2ターン目(0.6秒後)
+    //   3ターン以上のわざも同じく当たるターンの途中から(最後の1発を打ち始めた瞬間からではない)
+    // 押したSPはその1発が当たった直後に撃つ＝ノーマルアタックを余分に打たない。
+    // ⚠ 従来は「当たったあと(硬直が解けてから)」しか押せない場面があり(1ターンわざ)、受付が遅れて1発余分に打っていた
+    const tl = leg._tl || (leg._tl = rbTurns(leg.res));
+    const pr = gt - leg.base;                    // 0＝対面の頭
+    const rowNow = pr >= 1 ? tl.find(t => t.tn === pr) : null;
+    const enNow = rowNow ? rowNow.state[0].en : (leg.hud ? leg.hud.en0 : 0);   // いまのゲージ
+    const bound = pr <= 0 || cutAt(rowNow, 0);   // いまちょうど切れ目(当たった・SPを撃った・待った・対面の頭)
+    const next = tl.find(t => t.tn >= pr + 1 && (t.ev[0] || []).some(e => e && e.full === undefined && e.dmg != null));
+    let on;
+    if (enNow >= m.e) {
+      // もうゲージが足りている: いつでも押せる。切れ目にいれば次のターンに、打っている途中ならその1発が当たった直後に撃つ
+      if (bound) on = pr + 1;
+      else if (next) on = next.tn + 1;
+      else return no('この対面のうちに切れ目が来ない');
+    } else {
+      // この1発でゲージが足りる: 当たるターンが「いま進んでいるターン」のときだけ(硬直が解ける少し前)
+      if (!next) return no('この対面のうちに切れ目が来ない');
+      if (next.state[0].en < m.e) return no('ゲージ不足(' + next.state[0].en + '<' + m.e + ')');
+      if (next.tn !== pr + 1) return no('まだ早い(当たるのは' + (next.tn - pr) + 'ターン先)');
+      on = next.tn + 1;
+    }
     // 切れ目の次のターンが対面の外(＝あいてがそこで交代受けをした)でも受ける: 投げ済みとして交代先に当たる
     if (on > leg.res.turns + 1) return no('撃つ前に対面が終わる');
-    return { li, on, p: gt - leg.base };
+    return { li, on, p: Math.max(0, pr) };
   }
   // 確認用の口(開発者向け・画面の動きは変えない): RBV.spProbe(通しターン, わざID) → 'ok' か撃てない理由
-  RBV.spProbe = (gt, id) => { const w = []; return spTarget(gt, D.moves[id], w) ? 'ok' : (w.join(',') || '不明'); };
+  RBV.spProbe = (gt, id) => { const w = []; const r = spTarget(gt, D.moves[id], w); return r ? 'ok:' + r.on : (w.join(',') || '不明'); };
   // ---- 時系列の守り(2026-09-10タダシさん指示「時系列の乱れだけは絶対になくして」) ----
   // リアルタイムの入力(SP・交代)は「押した瞬間から先」だけを変えるはず。**すでに表示した行が1つでも変わるなら、
   // その入力は受け付けない**(元の答えに戻す)。計算は押した瞬間に同期で終わるので、そのあいだタイムラインは進まない
