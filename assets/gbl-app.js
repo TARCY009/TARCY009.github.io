@@ -9764,9 +9764,13 @@ function gbPlay(picks, foes, ans, stepwise) {
     chase = swapped[0] && !swapped[1];   // ユーザーだけが逃げた → AIは追っている側
     aligned = swapped[0] === swapped[1];   // 片方だけ交代した対面はズレる(両方・どちらもなしならそろう)
     const both = swapped[0] && swapped[1];
+    // ⚠ 交代先に入る「打ちかけの1発」は、交代した瞬間に相手のノーマルアタックが**本当に途中だった**ときだけ(2026-09-10)。
+    //   交代受けは切れ目がそろったときに起きるので、相手のノーマルアタックはちょうど当たり終わっている(打ちかけは無い)。
+    //   それでも1発足していたため、交代先に「足した1発＋打ち直した1発」の2発が入ってから SP が出ていた(タダシさん報告)
+    const rowS = rbTurns(res).find(t => t.tn === res.turns);
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
-      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot, !both);   // 交代解禁は時計で持つ
+      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot, !both && !cutAt(rowS, 1 - s));   // 交代解禁は時計で持つ
     }
   }
   const meLeft = st[0].filter(x => x.alive).length;
@@ -10448,15 +10452,11 @@ function gbRender(body, bt, picks, foes) {
         }).join('');
         spRow.querySelectorAll('.hsp').forEach(b => { b.onclick = () => manualSp(b.dataset.mv); });
       }
-      const r = RBV.started && !ended() && !(bt.pending && gt >= stop) ? spReadyAt(li, gt) : null;
-      // 押せる条件は manualSp とそろえる(2026-09-10): 切れ目の次が対面の外でも、あいてがそこで
-      // 交代受けをしただけなら押せる(投げ済みとして交代先に当たる)。交代を押したあとは押せない
-      const lg = bt.legs[li], tnL = lg ? lg.res.turns : 0;
-      const pend = r && mswPending(li, gt);
+      // 押せる条件は manualSp と同じ判定(spTarget)をそのまま使う(2026-09-10・食い違わせない)
+      const live = RBV.started && !ended() && !(bt.pending && gt >= stop);
       spRow.querySelectorAll('.hsp').forEach(b => {
         const m = D.moves[b.dataset.mv];
-        const ok = !!(r && m && !pend && r.en >= m.e
-          && ((r.E + 1) <= tnL || (r.E === tnL && lg && lg.swapped1 && !lg.swapped0)));
+        const ok = !!(live && m && spTarget(gt, m));
         b.disabled = !ok; b.classList.toggle('rdy', ok);
       });
     }
@@ -10854,14 +10854,17 @@ function gbRender(body, bt, picks, foes) {
     if (!cutRow) return;   // この対面のうちに入力が通らない(押しても間に合わない)
     const tn = cutRow.tn;
     const key = gbKey(li, 0, 'msw', tn, 0);
-    // 前提が変わるので、この場面より後ろの答えと同じ対面の古い手動交代は消す
-    Object.keys(RB.ans).forEach(k2 => {
-      const pt2 = RBUI.pts[k2];
-      if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li) || k2.indexOf(li + ':0:msw:') === 0)
-        delete RB.ans[k2];
+    const ok = commitAns(() => {
+      // 前提が変わるので、この場面より後ろの答えと同じ対面の古い手動交代は消す
+      Object.keys(RB.ans).forEach(k2 => {
+        const pt2 = RBUI.pts[k2];
+        if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li) || k2.indexOf(li + ':0:msw:') === 0)
+          delete RB.ans[k2];
+      });
+      // p=押した瞬間のターン(遅い交代受けの判定に使う。共有URLには載らないので無ければ切れ目から逆算する)
+      RB.ans[key] = { a: 'toq', to, p: pressed };
     });
-    // p=押した瞬間のターン(遅い交代受けの判定に使う。共有URLには載らないので無ければ切れ目から逆算する)
-    RB.ans[key] = { a: 'toq', to, p: pressed };
+    if (!ok) return;
     RBUI.open = null;
     RBV.keepFx = true;   // 途中の操作なので、0ターン目でも演出はやり直さない
     run();               // 再生の状態(RBV.playing)はそのまま＝止めずに続く
@@ -10885,29 +10888,67 @@ function gbRender(body, bt, picks, foes) {
     if (!row) return null;
     return { E: row.tn, en: row.state[0].en };
   }
+  // 押した瞬間(表示中のターン gt)のSPが、どの対面の何ターン目に撃たれるか。撃てないなら null。
+  // ⚠ **あいてが交代した直後の頭のターン**(前の対面の最後と同じ通しターン)に押したSPは、
+  //   **新しい対面の1ターン目**に撃つ(2026-09-10タダシさん報告)。交代受けの演出を見ながら押したSPが、
+  //   新しい対面でノーマルアタックを1周打ち直してからの発動(＝2発入ってからSP)になっていた。
+  //   交代の瞬間はじぶんのノーマルアタックの切れ目なので、実戦でもそのまま次のターンに撃てる
+  function spTarget(gt, m) {
+    let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
+    if (li < 0) li = bt.legs.length - 1;
+    const leg = bt.legs[li];
+    if (!leg || !m || !(leg.pol.charged || []).includes(m.id || '') && !(leg.pol.charged || []).some(id => D.moves[id] === m)) return null;
+    if (mswPending(li, gt)) return null;   // 交代を押したあと(切れ目まで)はSPを撃てない(実戦と同じ)
+    const prev = li > 0 ? bt.legs[li - 1] : null;
+    if (prev && gt === leg.base && prev.swapped1 && !prev.swapped0 && leg.hud && leg.hud.en0 >= m.e)
+      return { li, on: 1, p: 0 };
+    const r = spReadyAt(li, gt);
+    if (!r || r.en < m.e) return null;     // ゲージが足りない＝押しても何も起きない(実戦と同じ)
+    const on = r.E + 1;
+    // 切れ目の次のターンが対面の外(＝あいてがそこで交代受けをした)でも受ける: 投げ済みとして交代先に当たる
+    if (on > leg.res.turns + 1) return null;
+    return { li, on, p: gt - leg.base };
+  }
+  // ---- 時系列の守り(2026-09-10タダシさん指示「時系列の乱れだけは絶対になくして」) ----
+  // リアルタイムの入力(SP・交代)は「押した瞬間から先」だけを変えるはず。**すでに表示した行が1つでも変わるなら、
+  // その入力は受け付けない**(元の答えに戻す)。計算は押した瞬間に同期で終わるので、そのあいだタイムラインは進まない
+  const pastSig = (b, cur) => b.legs.map(l => {
+    if (l.base > cur) return '';
+    return l.meName + '|' + l.foeName + ':' + rbTurns(l.res).filter(t => l.base + t.tn <= cur)
+      .map(t => JSON.stringify(t.ev.map(a => (a || []).map(e => e && [e.move, e.dmg, e.full, e.shielded])))).join(';');
+  }).join('#');
+  function commitAns(apply) {
+    const saved = JSON.parse(JSON.stringify(RB.ans));
+    const before = pastSig(bt, RBV.cur);
+    apply();
+    let ok;
+    try { ok = pastSig(gbPlay(picks, foes, RB.ans, RB.step), RBV.cur) === before; } catch (e) { ok = false; }
+    if (!ok) {
+      RB.ans = saved;
+      console.warn('[模擬戦] この入力ですでに表示した行が変わるため、受け付けませんでした');
+    }
+    return ok;
+  }
   const manualSp = mv => {
     if (!rtOn() || !RBV.started || ended()) return;
     const gt = RBV.cur;
     if (bt.pending && gt >= stop) return;   // シールド・次のポケモンを選んでいる最中は押せない
-    let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
-    if (li < 0) li = bt.legs.length - 1;
-    const leg = bt.legs[li]; const m = D.moves[mv];
-    if (!leg || !m || !(leg.pol.charged || []).includes(mv)) return;
-    const r = spReadyAt(li, gt);
-    if (!r || r.en < m.e) return;          // ゲージが足りない＝押しても何も起きない(実戦と同じ)
-    if (mswPending(li, gt)) return;        // 交代を押したあと(切れ目まで)はSPを撃てない(実戦と同じ)
-    const on = r.E + 1;
-    // 切れ目の次のターンが対面の外(＝あいてがそこで交代受けをした)でも受ける: 投げ済みとして交代先に当たる
-    if (on > leg.res.turns + 1) return;
+    const m = D.moves[mv];
+    const t = spTarget(gt, m);
+    if (!t) return;
+    const { li, on } = t;
     const key = gbKey(li, 0, 'msp', on, 0);
     if (RB.ans[key] && !RB.ans[key].late) return;   // 同じ切れ目に何度押しても1発(間に合わなかった入力は押し直せる)
-    // この場面より後ろの答えは消す(前提が変わるため)
-    Object.keys(RB.ans).forEach(k2 => {
-      const pt2 = RBUI.pts[k2];
-      if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li)
-          || (!pt2 && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] > on)) delete RB.ans[k2];
+    const ok = commitAns(() => {
+      // この場面より後ろの答えは消す(前提が変わるため)
+      Object.keys(RB.ans).forEach(k2 => {
+        const pt2 = RBUI.pts[k2];
+        if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li)
+            || (!pt2 && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] > on)) delete RB.ans[k2];
+      });
+      RB.ans[key] = { a: 'fire', mv, p: t.p };
     });
-    RB.ans[key] = { a: 'fire', mv, p: gt - leg.base };
+    if (!ok) return;
     RBUI.open = null;
     RBV.keepFx = true;
     run();
