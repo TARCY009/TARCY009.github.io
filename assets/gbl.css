@@ -1431,7 +1431,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 /* 両者の決断が同じターンに並ぶときの統合フレーム(2026-08-31タダシさん指示):
    じぶん=左・あいて=右(タイムラインの列と同じ向き)。SPどうしは真ん中に「同時発動」の札 */
 .fc.pair{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
-.fc.pair .pmid{font-style:normal;font-size:.58rem;font-weight:900;color:var(--gold);letter-spacing:.08em;
+.ft.simul{display:grid;grid-template-columns:1fr 38px 1fr;min-height:16px;padding:1px 0}
+.ft.simul .pmid{grid-column:1/4;justify-self:center}
+.ft.simul .tn{grid-column:2;grid-row:1}
+.fc.pair .pmid,.ft.simul .pmid{font-style:normal;font-size:.58rem;font-weight:900;color:var(--gold);letter-spacing:.08em;
   white-space:nowrap;padding:2px 8px;border:1px solid rgba(255,213,74,.55);border-radius:99px;
   background:rgba(255,213,74,.12);text-shadow:0 0 10px rgba(255,213,74,.55)}
 .fc.pair .pdiv{width:14px;height:1px;background:var(--line2)}
@@ -2396,13 +2399,6 @@ button.sdchip.on .tbadge{filter:none}
    (何も指定しないと元の位置へ戻ってピクッと動く・2026-09-07タダシさん報告) */
 .fxitem.fxhold.fxko.lose .mk{transform:translateY(14px) rotate(16deg) !important}
 
-/* ---- ①「こうかばつぐん／いまひとつ」(2026-09-07タダシさん指示・実ゲームで必ず出る表示) ---- */
-.ev + .eff,.eff{display:inline-block;font-style:normal;font-size:.62rem;font-weight:800;
-  letter-spacing:.02em;padding:1px 6px;border-radius:999px;margin-left:4px;vertical-align:1px;white-space:nowrap}
-.eff.sup{color:#ffd0a8;background:rgba(255,122,60,.18);border:1px solid rgba(255,122,60,.5)}
-.eff.res{color:#a8d8ff;background:rgba(80,160,255,.15);border:1px solid rgba(80,160,255,.42)}
-:root.light .eff.sup{color:#a8380c;background:rgba(255,122,60,.16);border-color:rgba(200,80,20,.45)}
-:root.light .eff.res{color:#154a86;background:rgba(80,160,255,.14);border-color:rgba(60,120,200,.4)}
 
 /* ---- ② HPが残りわずかのときの鼓動(2026-09-07タダシさん指示) ---- */
 .hb i.r{animation:hplow 1.15s ease-in-out infinite}

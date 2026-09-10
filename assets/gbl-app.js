@@ -4964,18 +4964,10 @@ const RBUI = { pts: {}, order: [], open: null };
 const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, msw: SWAPMK, next: '', lead: SWAPMK, msp: '⚡' };
 // 決断チップのマーク。⚠ シールドを**使わなかった**ときは盾を出さない
 // (2026-09-07タダシさん指示: 盾があると「シールドを使った」と錯覚する)
-// わざのタイプと受ける側のタイプから「こうかばつぐん／いまひとつ」を出す
-// (2026-09-07タダシさん指示。実ゲームで必ず出る表示で、通っているかが一目で分かる)
-function effTag(e, defKey) {
-  if (!e || !e.move || e.dmg == null || e.shielded || e.disguised) return '';
-  const t = MOVE_TYPE[e.move], p = defKey && D.pokemon[defKey];
-  if (!t || !p) return '';
-  const x = PvpEngine.effectiveness(D, t, p.ty);
-  if (x >= 1.6) return '<i class="eff sup" title="こうかばつぐん（弱点を突いています）">こうかばつぐん</i>';
-  if (x <= 0.63) return '<i class="eff res" title="こうかいまひとつ（耐性で軽くなっています）">いまひとつ</i>';
-  return '';
-}
-const chipIcon = p => (p.kind === 'sh' && p.ans && p.ans.a === 'no') ? '' : RB_ICON[p.kind];
+// ⚡=SPアタックの判断。**「＋N」(ノーマルアタックを余分に打ってから選び直す)は👊**にして区別する
+// (2026-09-10タダシさん指示: ⚡にすると、ノーマルアタックのマークなのかSPのマークなのか分からなくなる)
+const chipIcon = p => (p.kind === 'sh' && p.ans && p.ans.a === 'no') ? ''
+  : (p.kind === 'sp' && p.ans && p.ans.a === 'wait') ? '👊' : RB_ICON[p.kind];
 
 // ---- 模擬戦の演出(FX・2026-08-30タダシさん指示「ゲームっぽく動きのある演出を」) ----
 // くりだした／交代／SP発動／たおれた／フォルムチェンジ の場面で再生を止めてカットインを見せる。
@@ -5371,10 +5363,10 @@ function rbRender(body, bt, picks, foes, extra) {
   let rvArr = [];   // フレームのrv用(GBLの「判明したあいてのSP」と形をそろえる。ロケット団では常に空)
   const evCell = (list, defKey) => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
-    const ef = effTag(e, defKey);   // こうかばつぐん／いまひとつ
+    // 「こうかばつぐん／いまひとつ」の札は2026-09-10タダシさん指示で廃止(行がうるさくて見づらい)
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
-      e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${ef}${gulpCell(e)}`;
-    return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>${ef}`;
+      e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
+    return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
   // 🛡ブロックのマークは**シールドを使った側**の列に出す(2026-08-20タダシさん指示。
   // 撃った側の列に出すと「どちらが使ったのか」がややこしく、使った側の列に何も出ない)
@@ -9920,10 +9912,10 @@ function gbRender(body, bt, picks, foes) {
   let rvArr = [];
   const evCell = (list, defKey) => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
-    const ef = effTag(e, defKey);   // こうかばつぐん／いまひとつ
+    // 「こうかばつぐん／いまひとつ」の札は2026-09-10タダシさん指示で廃止(行がうるさくて見づらい)
     if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
-      e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${ef}${gulpCell(e)}`;
-    return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>${ef}`;
+      e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
+    return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
   // 🛡ブロックのマークは**シールドを使った側**の列に出す(2026-08-20タダシさん指示)
   const shdCell = oppList => oppList.filter(e => e.shielded)
@@ -10089,10 +10081,16 @@ function gbRender(body, bt, picks, foes) {
           b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
       }
       let first = true;
-      // 「こうかばつぐん／いまひとつ」を出すため、受ける側のポケモンのキーを渡す
       const kOf = x => x && (x.key || (x.m && x.m.key));
       const kFoe = kOf(foes[leg.foeIdx]), kMe = kOf(picks[leg.myIdx]);
+      // 両者のSPが同じターンに解決した(同時発動・CMPで先後が決まる)ら、最初のSPの行の前に札を出す。
+      // 決断待ちで片方の行を隠しているあいだは出さない(答えたあとに両方の行と一緒に出る)
+      let simul = !partial && subs.some(r => r.ev[0] && r.ev[0].full !== undefined) && subs.some(r => r.ev[1] && r.ev[1].full !== undefined);
       for (const r of subs) {
+        if (simul && ((r.ev[0] && r.ev[0].full !== undefined) || (r.ev[1] && r.ev[1].full !== undefined))) {
+          items.push({ gt, html: `<div class="ft simul"><i class="tn">${first ? gt : ''}</i><i class="pmid">同時発動</i></div>` });
+          first = false; simul = false;
+        }
         const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kFoe) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []) + waitCell(r, 0);
         const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kMe) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + waitCell(r, 1);
         if (!e0 && !e1) continue;
@@ -10114,15 +10112,20 @@ function gbRender(body, bt, picks, foes) {
       const firing = x => x.ans && x.ans.a !== 'hold' && x.ans.a !== 'wait';
       // sh待ちで隠しているあいてのSPの**結果**であるチップ(「交代が間に合わなかった」等)は、
       // そのSPの行より先に見えてしまうので出さない(答えたあとに行と一緒に出る・2026-09-10)
-      const pl = (ptAt[t.tn] || []).filter(x => !(partial && x.late));
+      // あいての🛡の答えも同じ(2026-09-10タダシさん指示: 答えたあとの「じぶん🛡─あいて🛡」の1枚の形で出す。
+      // 答える前は「🛡ブロック」の行そのものが、あいてが使ったことを示している)
+      const pl = (ptAt[t.tn] || []).filter(x => !(partial && (x.late || (x.side === 1 && x.kind === 'sh'))));
       for (let pi = 0; pi < pl.length; pi++) {
         const p = pl[pi], q = pl[pi + 1];
         if (q && p.kind === q.kind && p.side !== q.side) {
           const a0 = p.side ? q : p, b1 = p.side ? p : q;   // a0=じぶん(左)・b1=あいて(右)
+          // ⚠ 「同時発動」の札はここ(決断のチップ)には付けない(2026-09-10タダシさん指摘)。
+          //   チップは**決めたターン**に置くので、実際に撃つターンとずれると「26Tで同時発動なのに29Tでも」と読めた。
+          //   札は下の行の描画で、**両者のSPが同じターンに解決した行**に出す
           if (p.kind === 'sh'
               || (p.kind === 'sp' && firing(a0) && firing(b1)
                   && spTn[0][a0.seq] != null && spTn[0][a0.seq] === spTn[1][b1.seq])) {
-            items.push(pairItem(a0, b1, gt, p.kind === 'sp' ? '同時発動' : ''));
+            items.push(pairItem(a0, b1, gt, ''));
             pi++;
             continue;
           }
