@@ -254,6 +254,45 @@ def check(pvp_data, go_data):
     return lines, todo, odd, skip
 
 
+def review_confirmed(pvp_data):
+    """人が確定したわざ構成(pvp-tests/answer_key.js)のうち、今シーズンの影響を受ける行を返す。
+    ①そのポケモンが今シーズン新しくわざを覚えた ②確定構成が性能の変わったわざを使っている。
+    データを直しても**確定構成は自動では変わらない**ので、毎シーズン必ずこの一覧を人に見せる
+    (2026-09-10タダシさん指示「新シーズンのわざアプデの反映漏れは絶対にないように」)"""
+    import re
+    try:
+        src = open('pvp-tests/answer_key.js', encoding='utf-8').read()
+        ans = json.loads(src[src.index('{'):src.rindex('}') + 1])
+    except Exception:
+        return []
+    mv = pvp_data.get('moves') or {}
+    pk = pvp_data.get('pokemon') or {}
+    name = lambda i: (mv.get(i) or {}).get('n', i)
+    chg = {c['id'] for c in MOVE_CHANGES if c.get('id')}
+    learn = {}
+    for t in NEW_LEARNS:
+        learn.setdefault(t[1], []).append(t[3])
+    lg_ja = {'1500': 'スーパー', '2500': 'ハイパー', '0': 'マスター'}
+    out = []
+    for lg, rows in ans.items():
+        for mid, mvs in rows.items():
+            k = mid[:-2] if mid.endswith('|s') else mid
+            if k not in pk:
+                continue
+            news = [m for m in learn.get(k, []) if m not in mvs]
+            used = [m for m in mvs if m in chg]
+            if not news and not used:
+                continue
+            nm = ('シャドウ' if mid.endswith('|s') else '') + pk[k]['n']
+            line = f'- {lg_ja.get(lg, lg)} {nm}: いま {" / ".join(name(m) for m in mvs)}'
+            if news:
+                line += f'｜新しく覚えた {"・".join(name(m) for m in news)}'
+            if used:
+                line += f'｜性能が変わった {"・".join(name(m) for m in used)}'
+            out.append(line)
+    return out
+
+
 def report(pvp_data, go_data, write_changes=True):
     """突き合わせの結果を表示し、未反映があれば changes.md にも追記する"""
     lines, todo, odd, skip = check(pvp_data, go_data)
@@ -276,6 +315,20 @@ def report(pvp_data, go_data, write_changes=True):
                         '提供元のデータがまだ追いついていません（`python3 season_moves.py` で内訳を見られます）。\n')
         except Exception:
             pass
+    # 人が確定したわざ構成の見直し候補(データを直しても確定構成は変わらないので、毎シーズン必ず見せる)
+    rv = review_confirmed(pvp_data)
+    if rv:
+        print(f'\n確定わざ構成の見直し候補（{len(rv)}件）')
+        print('\n'.join(rv))
+        if write_changes:
+            try:
+                with open('changes.md', 'a', encoding='utf-8') as f:
+                    f.write(f'\n\n### 🔁 確定わざ構成の見直し候補（シーズン「{SEASON["name"]}」・{len(rv)}件）\n\n'
+                            '人が確定した環境上位のわざ構成は、わざのデータが変わっても自動では変わりません。\n'
+                            '新しく覚えたわざ・性能が変わったわざがある行を見直してください（answer_key.js）。\n\n'
+                            + '\n'.join(rv) + '\n')
+            except Exception:
+                pass
     return todo, odd
 
 

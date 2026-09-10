@@ -1026,6 +1026,11 @@ window.ANSWER_KEY = {
   ]
  },
  "0": {
+  "mewtwo_mega_y": [
+   "PSYCHO_CUT",
+   "PSYSTRIKE",
+   "SHADOW_BALL"
+  ],
   "reshiram": [
    "DRAGON_BREATH",
    "FUSION_FLARE",

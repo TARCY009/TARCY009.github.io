@@ -142,6 +142,17 @@ for lg in ('1500', '2500', '0'):
         mv, src = pick(m, a)
         d[mid], og[mid] = mv, src
         cnt[src] += 1
+    # 環境リストに載っていない確定値(特殊カップにだけ出るポケモン・例: メガバージョンのメガミュウツーY)も書き出す。
+    # アプリはカップにも「CP上限が同じリーグの確定値」を当てるので、ここに無いと人が確定した構成が効かない(2026-09-10)
+    for mid, mv0 in a.items():
+        if mid in d:
+            continue
+        k = mid[:-2] if mid.endswith('|s') else mid
+        if k not in POKE:
+            continue
+        mv = pick({'k': k, 's': mid.endswith('|s'), 'n': POKE[k]['n']}, a)[0]
+        if mv:
+            d[mid], og[mid] = mv, 'ans'
     # 通常版とシャドウ版で構成が食い違っていないか（順番の違いは無視）
     for k in d:
         if k.endswith('|s'):

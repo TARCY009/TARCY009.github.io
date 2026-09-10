@@ -1,6 +1,6 @@
 {
-  "name": "GBL対面シミュレーター",
-  "short_name": "GBL対面シミュ",
+  "name": "GBLシミュレーター",
+  "short_name": "GBLシミュレーター",
   "description": "ポケモンGOのGBL対面を1ターン単位で正確にシミュレート。理想個体値・技構成・シールド・タイミング自動最適化、環境一覧つき。",
   "start_url": "./",
   "scope": "./",
@@ -9,7 +9,16 @@
   "theme_color": "#0c1122",
   "lang": "ja",
   "icons": [
-    { "src": "/assets/icons/gbl/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/assets/icons/gbl/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/assets/icons/gbl/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/gbl/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

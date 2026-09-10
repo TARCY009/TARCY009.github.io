@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/breakpoint/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/breakpoint/apple-touch-icon.png">
 <link rel="manifest" href="/breakpoint/manifest.webmanifest">
-<meta name="apple-mobile-web-app-title" content="ブレイクポイント">
+<meta name="apple-mobile-web-app-title" content="GBLブレイクポイント">
 <link rel="stylesheet" href="/assets/shadow-icon.css">
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
@@ -475,7 +475,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 <header>
   <div class="eyebrow">Pok&eacute;mon GO Breakpoint</div>
   <h1><span style="white-space:nowrap"><span class="wmksuf">🎯 GBL</span><b class="wmk" data-tool="breakpoint">ブレイクポイント</b></span><small>ダメージが変わる境目をチェック</small></h1>
-  <a class="pagelink" href="/gbl/">GBL対面シミュ ↗</a>
+  <a class="pagelink" href="/gbl/">GBLシミュレーター ↗</a>
   <div id="themesw"></div>
 </header>
 
@@ -494,7 +494,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
       <div class="sugg-list" id="melist"></div>
     </div>
     <div class="gtabs">
-      <button class="t-gold" id="mestar" aria-pressed="false" title="★登録リストに入れてある自分のポケモンから選びます（GBL対面シミュと同じリスト）">★ 登録リスト</button>
+      <button class="t-gold" id="mestar" aria-pressed="false" title="★登録リストに入れてある自分のポケモンから選びます（GBLシミュレーターと同じリスト）">★ 登録リスト</button>
       <button class="t-shadow" id="meshadow" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i> シャドウ</button>
     </div>
   </div>
@@ -556,15 +556,15 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   </ul>
   <h4>自分の個体で確かめる</h4>
   <p>上の機能は「これからどの個体を選ぶか」のためのものです。<b>手持ちの個体がどうなのか</b>を見たいときは、<b>▸ 自分の個体で確かめる</b>を開いて個体値とPLを入れてください。環境100匹それぞれへのいまのダメージが並び、行をタップすると詳細（ブレイク条件・届く個体の例・1対1シミュへのボタン）が出ます。</p>
-  <p>GBL対面シミュの1対1の結果や、個体値チェッカーの結果からもこのページへ飛べます。対面や個体値は引き継がれます。GBLから来たときは、その画面のあいてが一覧のいちばん上に🔎付きで固定されます。</p>
+  <p>GBLシミュレーターの1対1の結果や、個体値チェッカーの結果からもこのページへ飛べます。対面や個体値は引き継がれます。GBLから来たときは、その画面のあいてが一覧のいちばん上に🔎付きで固定されます。</p>
   <h4>計算の前提</h4>
   <ul>
-    <li>ダメージ式・実数値はGBL対面シミュのエンジンと同じです。<b>同じ条件なら結果は必ず一致します</b></li>
+    <li>ダメージ式・実数値はGBLシミュレーターのエンジンと同じです。<b>同じ条件なら結果は必ず一致します</b></li>
     <li>能力変化（バフ・デバフ）が無い、バトル開始時点で計算します</li>
     <li>環境上位100匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成です</li>
     <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4（メガシンカ中に自動で＋2相当）＋相棒で53まで</li>
     <li><b>SPアタックは対象外</b>です。SPのダメージ+1はバトル全体で1〜2回しか起きず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
-    <li>勝ち数のシミュレート: あいては理想個体値・定番わざ構成、じぶんは画面で選んだノーマルアタック＋定番のSPアタック。ブラフなし・確率わざ不発・最適タイミング（GBL対面シミュの一覧系と同じ前提）</li>
+    <li>勝ち数のシミュレート: あいては理想個体値・定番わざ構成、じぶんは画面で選んだノーマルアタック＋定番のSPアタック。ブラフなし・確率わざ不発・最適タイミング（GBLシミュレーターの一覧系と同じ前提）</li>
   </ul>
 </div>
 </div>
@@ -1709,7 +1709,7 @@ $('mestar').onclick = () => {
   let listData = [];
   try { listData = JSON.parse(localStorage.getItem('gbl_mypoke')) || []; } catch (e) {}
   if (!listData.length) {
-    win.innerHTML = '<div class="mypkempty">まだ登録がありません。GBL対面シミュで「★登録」したポケモンがここに並びます</div>';
+    win.innerHTML = '<div class="mypkempty">まだ登録がありません。GBLシミュレーターで「★登録」したポケモンがここに並びます</div>';
     return;
   }
   win.innerHTML = listData.map((m, i) => {

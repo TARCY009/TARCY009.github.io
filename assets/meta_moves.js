@@ -103,7 +103,9 @@ window.META_MOVES = {
   "crustle": ["FURY_CUTTER", "X_SCISSOR", "ROCK_WRECKER"],
   "dusknoir": ["HEX", "SHADOW_PUNCH", "DYNAMIC_PUNCH"],
   "gourgeist_small": ["INCINERATE", "SEED_BOMB", "SHADOW_BALL"],
-  "castform_sunny": ["EMBER", "SOLAR_BEAM", "WEATHER_BALL_FIRE"]
+  "castform_sunny": ["EMBER", "SOLAR_BEAM", "WEATHER_BALL_FIRE"],
+  "spidops": ["SHADOW_CLAW", "LUNGE", "ROCK_TOMB"],
+  "toxapex": ["POISON_JAB", "BRINE", "SLUDGE_WAVE"]
  },
  "2500": {
   "mimikyu": ["SHADOW_CLAW", "SHADOW_SNEAK", "PLAY_ROUGH"],
@@ -205,7 +207,9 @@ window.META_MOVES = {
   "crustle": ["FURY_CUTTER", "X_SCISSOR", "ROCK_WRECKER"],
   "drapion": ["POISON_STING", "CRUNCH", "AQUA_TAIL"],
   "skeledirge": ["INCINERATE", "TORCH_SONG", "SHADOW_BALL"],
-  "swampert|s": ["MUD_SHOT", "HYDRO_CANNON", "SLUDGE"]
+  "swampert|s": ["MUD_SHOT", "HYDRO_CANNON", "SLUDGE"],
+  "cofagrigus": ["SHADOW_CLAW", "SHADOW_BALL", "PSYCHIC"],
+  "samurott|s": ["FURY_CUTTER", "HYDRO_CANNON", "MEGAHORN"]
  },
  "0": {
   "zacian_crowned_sword": ["METAL_CLAW", "CLOSE_COMBAT", "BEHEMOTH_BLADE"],
@@ -307,6 +311,7 @@ window.META_MOVES = {
   "kommo_o": ["DRAGON_TAIL", "CLANGING_SCALES", "UPPER_HAND"],
   "landorus_incarnate": ["MUD_SHOT", "EARTH_POWER", "ROCK_SLIDE"],
   "genesect_chill": ["FURY_CUTTER", "MAGNET_BOMB", "TECHNO_BLAST_CHILL"],
-  "avalugg_hisuian": ["POWDER_SNOW", "ROCK_SLIDE", "ICY_WIND"]
+  "avalugg_hisuian": ["POWDER_SNOW", "ROCK_SLIDE", "ICY_WIND"],
+  "mewtwo_mega_y": ["PSYCHO_CUT", "PSYSTRIKE", "SHADOW_BALL"]
  }
 };

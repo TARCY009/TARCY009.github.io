@@ -69,7 +69,7 @@
     '/max-battle/': 'マックスバトル対策',
     '/gym-attack/': 'ジム挑戦',
     '/gym-defense/': 'ジム防衛',
-    '/gbl/': 'GBL対面シミュレーター',
+    '/gbl/': 'GBLシミュレーター',
     '/battlelog/': 'GBL対戦記録',
     '/breakpoint/': 'ブレイクポイント',
     '/rocket/': 'ロケット団対策',

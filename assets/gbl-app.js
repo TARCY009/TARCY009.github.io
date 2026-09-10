@@ -1,4 +1,4 @@
-// GBL対面シミュレーター(/gbl/)とロケット団対策(/rocket/)の共通アプリ本体。
+// GBLシミュレーター(/gbl/)とロケット団対策(/rocket/)の共通アプリ本体。
 // 2ページは見た目・入口が別のツールだが、計算と画面の中身はこの1ファイルを共有する。
 // ページの違いは PAGE_ROCKET / PAGE_BLOG で分岐する(各ページの index.html が読み込み前にフラグを立てる)
 const PAGE_ROCKET = !!window.PAGE_ROCKET;
@@ -9,7 +9,7 @@ document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
   <div class="eyebrow eb-gbl">Pok&eacute;mon GO Battle League</div>
-  <h1><span class="wmksuf">GBL</span> <b class="wmk" data-tool="gbl">対面シミュレーター</b></h1>
+  <h1><span class="wmksuf">GBL</span> <b class="wmk" data-tool="gbl">シミュレーター</b></h1>
   <div id="themesw"></div>
 </header>
 
@@ -432,7 +432,7 @@ if (PAGE_ROCKET) {
   document.getElementById('modes').style.display = 'none';
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
-    '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
+    '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)のGBLシミュレーターへ">GBLシミュレーター ↗</a>');
 } else if (PAGE_BLOG) {
   // 対戦記録ページ: モードは 'blog' に固定なのでタブ行ごと隠し、見出しを差し替える(ロケット団と同じ作り)
   const headerEl = document.querySelector('header');
@@ -440,7 +440,7 @@ if (PAGE_ROCKET) {
   headerEl.querySelector('.eyebrow').outerHTML = '<div class="eyebrow eb-blog">Pok\u00e9mon GO Battle Log</div>';
   document.getElementById('modes').style.display = 'none';
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
-    '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)の対面シミュレーターへ">GBL対面シミュ ↗</a>');
+    '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)のGBLシミュレーターへ">GBLシミュレーター ↗</a>');
   // かんたん案内はGBL/ロケット団のモードを案内するものなので、このページでは出さない
   const er = document.querySelector('.easyrow');
   if (er) er.style.display = 'none';
@@ -7311,6 +7311,10 @@ function buildSdSlots(side) {
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
+        // ⚠ 候補(div)をタップしても入力欄のフォーカスが外れない端末がある(iPhone)。
+        //   外れないと .editing(入力中は欄を2列ぶんに広げる)が残り、確定後も欄が拡大したままになる
+        //   (2026-09-10タダシさん報告)。選んだら必ず入力を終える
+        inp.blur(); el.classList.remove('editing');
         A[i] = sdNew(d.dataset.k, false);
         sdChanged();
       });
