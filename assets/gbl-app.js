@@ -9935,6 +9935,10 @@ function gbRender(body, bt, picks, foes) {
   const chipBtn = p => `<button class="fchip${p.auto ? ' auto' : ''}${p.side ? ' foe' : ''}"
     data-k="${p.key}" title="${p.side ? 'あいての行動です。タップすると、この場面から選び直せます' : 'じぶんの行動です。タップすると、この場面からやり直せます'}"><i class="who">${p.side ? 'あいて' : 'じぶん'}</i>${chipIcon(p)}<b>${gbAnsLabel(p, p.ans)}</b></button>`;
   const chipItem = (p, gt) => ({ gt, html: `<div class="fc${p.side ? ' foe' : ''}">${chipBtn(p)}</div>` });
+  // リアルタイム操作では**あいての判断のチップを出さない**(2026-09-10タダシさん指示・実戦に近づける)。
+  // 実戦では相手の「もう1発打ってから撃とう」「シールドを使おう」という考えは見えず、
+  // 起きたこと(SPの行・🛡ブロックの行・交代のVSカードと演出)だけが見える。選択式は従来どおり出す
+  const hideFoeChips = rtOn();
   // 同じターンに両者の決断が並ぶときは1つのフレームに統合する(2026-08-31タダシさん指示・パッと見やすく):
   // SPどうしで発動も同じターンなら真ん中に「同時発動」の札 ／ シールドの答えは左右に並べる。
   // じぶん=左・あいて=右(タイムラインの列と同じ向き)
@@ -9979,7 +9983,7 @@ function gbRender(body, bt, picks, foes) {
     });
     items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}</span><em>VS</em><span class="foe"><b class="fnm">${shMark(vsFoe)}${tyIco(vsFoe)}</b></span></div>` });
     // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
-    (leg.leadPts || []).forEach(p => { if (p) items.push({ ...chipItem(p, base), o: IT.lead }); });
+    (leg.leadPts || []).forEach(p => { if (p && !(hideFoeChips && p.side)) items.push({ ...chipItem(p, base), o: IT.lead }); });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
     (leg.leadHits || []).forEach(h => { if (h) {
       const cell = evCell([{ move: h.mv, dmg: h.dmg }]);
@@ -10000,7 +10004,7 @@ function gbRender(body, bt, picks, foes) {
     frames[base] = { meta, li: leg.li, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
     const ptAt = {};
-    (leg.points || []).forEach(p => (ptAt[p.tn] = ptAt[p.tn] || []).push(p));
+    (leg.points || []).forEach(p => { if (hideFoeChips && p.side) return; (ptAt[p.tn] = ptAt[p.tn] || []).push(p); });
     // 側ごとのSPが実際に発動したターンの一覧(seq番目のSP→spTn[side][seq])。
     // 「同時発動」の判定(両者のSPが同じターンに解決)に使う
     const spTn = [[], []];
@@ -10145,7 +10149,7 @@ function gbRender(body, bt, picks, foes) {
       }
     }
     if (leg.nextPoint) items.push(chipItem(leg.nextPoint, endGt));
-    if (leg.foeNextPoint) items.push(chipItem(leg.foeNextPoint, endGt));
+    if (leg.foeNextPoint && !hideFoeChips) items.push(chipItem(leg.foeNextPoint, endGt));
     tagLeg(items, i0, leg.li);   // KO・次に出すチップも含めて「この対面のもの」にする
   });
   // 開幕交代の質問中はまだ対面が無いので、1匹目どうしの初期状態を出しておく
