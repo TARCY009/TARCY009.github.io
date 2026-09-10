@@ -2445,8 +2445,12 @@ button.sdchip.on .tbadge{filter:none}
    2ターン以上のわざだけ、打ち始めのターンに、その側の列の外側へ小さな点を置く(色はわざのタイプ色)。
    1ターンわざには出さない(打ち始めと当たるのが同じターンで、毎行に並んでうるさくなるため)。
    印は gbRender が行に付ける fs0/fs1(じぶん/あいて)と --flc0/--flc1(色) */
-.ft{position:relative}
+/* ⚠ 点は**行の内側の左右の端**に置く(行の左右に12pxの余白を取り、そこへ置く)。
+   行の外(left:-9px)に置くと、バトル中の全画面表示(.bfull)ではタイムラインがはみ出しを切る作り(overflow:auto)で
+   余白も0なので、**点が切り取られて見えなかった**(2026-09-10タダシさん報告「点が反映されていない」)。
+   見比べのスクショは「結果だけ見る」画面(はみ出しを切らない)で撮っていたため気づけなかった */
+.rbfeed .ft{position:relative;padding-left:12px;padding-right:12px}
 .ft.fs0::before,.ft.fs1::after{content:"";position:absolute;top:50%;width:7px;height:7px;
-  border-radius:50%;transform:translateY(-50%);opacity:.75;pointer-events:none}
-.ft.fs0::before{left:-9px;background:var(--flc0)}
-.ft.fs1::after{right:-9px;background:var(--flc1)}
+  border-radius:50%;transform:translateY(-50%);opacity:.8;pointer-events:none}
+.ft.fs0::before{left:2px;background:var(--flc0)}
+.ft.fs1::after{right:2px;background:var(--flc1)}
