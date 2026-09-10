@@ -10037,6 +10037,28 @@ function gbRender(body, bt, picks, foes) {
       pivotWin = { gt: base + pend.tn,
         fx: { k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName } };
     }
+    // ---- ノーマルアタックの打ち始めの点(2026-09-10タダシさん選択) ----
+    // 2ターン以上のわざだけ。打ち始め＝その側の前の切れ目の次のターン(cutAt)。1ターンわざは印を出さない。
+    // 見た目は gbl.css(fs0/fs1＝打ち始め・--flc0/--flc1＝色)。fl・fe(当たるまで・当たったターン)は線の案の名残で、今は使っていない
+    const flOf = {};
+    [0, 1].forEach(sd => {
+      const fm = D.moves[(sd ? leg.foePol : leg.pol).fast];
+      if (!fm || (fm.tn || 1) < 2) return;
+      const ja = D.typeJa[MOVE_TYPE[fm.n]] || D.typeJa[fm.t] || '';
+      const col = (window.typeColorOf && typeColorOf(ja)) ? typeColorOf(ja).mid : '#8b96c2';
+      let last = 0;
+      rbTurns(res).forEach(t => {
+        const hit = (t.ev[sd] || []).some(e => e && e.full === undefined && e.dmg != null);
+        if (hit) for (let k = last + 1; k <= t.tn; k++) {
+          const o = flOf[k] || (flOf[k] = { c: [], v: [] });
+          o.c.push('fl' + sd); if (k === last + 1) o.c.push('fs' + sd); if (k === t.tn) o.c.push('fe' + sd);
+          o.v.push('--flc' + sd + ':' + col);
+        }
+        if (cutAt(t, sd)) last = t.tn;
+      });
+    });
+    const flCls = tn => flOf[tn] ? ' ' + flOf[tn].c.join(' ') : '';
+    const flSty = tn => flOf[tn] ? ` style="${flOf[tn].v.join(';')}"` : '';
     rbTurns(res).forEach(t => {
       if (pend && t.tn > pend.tn) return;
       const gt = base + t.tn;
@@ -10116,10 +10138,10 @@ function gbRender(body, bt, picks, foes) {
           fxr = [{ k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName }].concat(fxr);
           pvSide = null;
         }
-        items.push({ gt, fx: fxr, html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        items.push({ gt, fx: fxr, html: `<div class="ft${flCls(t.tn)}"${flSty(t.tn)}><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
-      if (first) items.push({ gt, html: `<div class="ft q"><i class="tn">${gt}</i></div>` });
+      if (first) items.push({ gt, html: `<div class="ft q${flCls(t.tn)}"${flSty(t.tn)}><i class="tn">${gt}</i></div>` });
       // 両者の決断が同じターンに並んだらペアのフレームへ(shは解決順ソートで
       // あいてが先に来ることもあるので、左右はside基準でそろえる=じぶんが左)
       const firing = x => x.ans && x.ans.a !== 'hold' && x.ans.a !== 'wait';

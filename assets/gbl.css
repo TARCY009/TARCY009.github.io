@@ -2440,3 +2440,13 @@ button.sdchip.on .tbadge{filter:none}
 .ptformx{font-size:.7rem;color:var(--sub);line-height:1.85;margin:0 0 9px}
 :root.light .ptform{background:linear-gradient(180deg,rgba(90,120,220,.12),rgba(90,120,220,.05));border-color:rgba(90,120,200,.3)}
 :root.light .ptform b{color:#2b3f8a;background:rgba(120,150,240,.18);border-color:rgba(90,120,200,.35)}
+
+/* ---- ノーマルアタックの打ち始めの点(2026-09-10タダシさん選択・線と点の2案を見比べて点に決定) ----
+   2ターン以上のわざだけ、打ち始めのターンに、その側の列の外側へ小さな点を置く(色はわざのタイプ色)。
+   1ターンわざには出さない(打ち始めと当たるのが同じターンで、毎行に並んでうるさくなるため)。
+   印は gbRender が行に付ける fs0/fs1(じぶん/あいて)と --flc0/--flc1(色) */
+.ft{position:relative}
+.ft.fs0::before,.ft.fs1::after{content:"";position:absolute;top:50%;width:7px;height:7px;
+  border-radius:50%;transform:translateY(-50%);opacity:.75;pointer-events:none}
+.ft.fs0::before{left:-9px;background:var(--flc0)}
+.ft.fs1::after{right:-9px;background:var(--flc1)}
