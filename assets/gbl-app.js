@@ -7076,12 +7076,16 @@ function sdComboScore(W, idx) {
   }
   return { holes, tot, sc: -holes * 100 + tot };
 }
-// 並び順: 初手は**最悪の対面がいちばんマシな1匹**(出し負けにくい)。残りは合計の勝ち数が多い順
-function sdOrder(W, idx) {
+// 並び順: 初手は**最悪の対面がいちばんマシな1匹**(出し負けにくい)。残りは合計の勝ち数が多い順。
+// leadBonus(i)=初手の加点(0か1)。**選出の提案だけ**が渡す(あいてAIの選出は従来どおり)。
+// 1なら「最悪の対面」を1段ぶん底上げして比べ、同じ段なら加点のあるほうを初手にする＝少し強めに初手に寄せる
+function sdOrder(W, idx, leadBonus) {
   const nF = W[0] ? W[0].length : 0;
   const worst = i => { let v = 3; for (let j = 0; j < nF; j++) v = Math.min(v, W[i][j]); return nF ? v : 0; };
   const tot = i => { let v = 0; for (let j = 0; j < nF; j++) v += W[i][j]; return v; };
-  const lead = idx.slice().sort((a, b) => worst(b) - worst(a) || tot(b) - tot(a) || a - b)[0];
+  const bn = i => (leadBonus ? leadBonus(i) : 0);
+  const lead = idx.slice().sort((a, b) => (worst(b) + bn(b)) - (worst(a) + bn(a)) || bn(b) - bn(a)
+    || tot(b) - tot(a) || a - b)[0];
   return [lead, ...idx.filter(i => i !== lead).sort((a, b) => tot(b) - tot(a) || a - b)];
 }
 // 6匹から3匹の組み合わせを全部くらべて、いちばん良いものを並び順まで決めて返す
@@ -7153,6 +7157,13 @@ function sdFoePickCached() {
 // 数字と語彙は**パーティ診断とそろえる**(穴／1匹頼み／2匹勝ち・色も同じ)＝画面をまたいで同じ意味で読める。
 // 勝敗の前提もAIの選出(sdWinTable)と同じものを使うので、**提案の数字と、選んだあとの数字は必ず一致する**
 const SDS = { sig: null, data: null };
+// **自分の能力が確定で下がる強いSPを持っているか**(2026-09-10タダシさん指示)。
+// 例: デオキシスのサイコブースト・ライチュウのボルテッカー。撃ったあとは交代してデバフを消す(打ち逃げ)のが定石なので、
+// **交代の自由がいちばん利く初手**に置くと強い。選出の提案では、こういうポケモンを少し強めに初手へ寄せる
+const sdSelfDebuffSp = m => !!m && [m.c1, m.c2].some(id => {
+  const mv = id && D.moves[id];
+  return !!(mv && mv.bt === 'self' && (mv.bc == null || mv.bc >= 1) && (mv.bf || []).some(x => x < 0));
+});
 function sdSuggest() {
   const my = sdList('my'), foe = sdList('foe');
   if (my.length < 3 || foe.length < 3) return null;
@@ -7169,6 +7180,7 @@ function sdSuggest() {
   // W[じぶん(myの並び)][あいて(foeの並び)] = 🛡0-0/1-1/2-2 の3通り中いくつ勝てるか
   const W = sdWinTable(my.map(i => SD.my[i]), foe.map(i => sdFoeMv(SD.foe[i])));
   const isM = k => isMega(SD.my[my[k]].key);
+  const leadDbf = k => sdSelfDebuffSp(SD.my[my[k]]) ? 1 : 0;   // 初手の加点(自分デバフの強いSP持ち)
   // 1つの組み合わせを、パーティ診断と同じ語彙で数える
   const stat = idx => {
     const tier = [];   // あいて1匹ごとに「勝てる味方の数」(0=穴 / 1=1匹頼み / 2以上=2匹勝ち)
@@ -7224,7 +7236,7 @@ function sdSuggest() {
     tip: e.labels.length === picks.length
       ? '穴の少なさ・勝てる場面の多さ・出し負けにくさ、どの見かたでもこの3匹になりました'
       : e.tips.join(' ／ '),
-    c: e.c, order: sdOrder(W, e.c.idx).map(k => my[k]) }));   // 枠番号へ戻す
+    c: e.c, order: sdOrder(W, e.c.idx, leadDbf).map(k => my[k]) }));   // 枠番号へ戻す
   // 3つまでは**別の候補も並べる**(「こういうのもいいかもよ」なので、選べるほうがよい)。
   // 札は「もう一つの候補」＝中身と食い違わない言い方にする
   const seen = new Set(rows.map(r => key(r.c)));
@@ -7234,7 +7246,7 @@ function sdSuggest() {
     seen.add(key(c));
     rows.push({ label: rows.length >= 2 ? 'さらにもう一つ' : 'もう一つの候補',
       tip: '次に穴が少ない組み合わせです。好みで選んでください',
-      c, order: sdOrder(W, c.idx).map(k => my[k]) });
+      c, order: sdOrder(W, c.idx, leadDbf).map(k => my[k]) });
   }
   // 「いまの選出」を同じ物差しで数える(比べられるように・タップのたびにここだけ走る)
   const statOf = pick => {
