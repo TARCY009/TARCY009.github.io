@@ -1963,6 +1963,30 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdteams .gfhead>span{flex:0 1 auto!important}
 .sdteams .sdrand,.sdteams .sdrandmy{flex:0 0 auto!important;margin-left:auto;white-space:nowrap}
 .sdteams .gfauto{flex:0 0 auto}
+/* 6匹まるごとの保存と呼び出し(2026-09-11)。枠は増やさず、罫線と余白だけでまとめる */
+.sdsave{margin-top:9px}
+.sdsvtab{padding:5px 12px;font-size:.72rem;font-weight:700;color:var(--ink);background:var(--tab);
+  border:1px solid var(--line2);border-radius:999px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
+.sdsvtab b{color:var(--gold);margin-left:2px}
+.sdsvtab[aria-expanded="true"]{border-color:var(--cy)}
+.sdsvbody{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.sdsvsave{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.sdsvsave input{flex:1 1 auto;min-width:0;font-size:16px;padding:6px 10px;border-radius:9px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+.sdsvsave .ptswbtn{flex:0 0 auto;white-space:nowrap}
+.sdsvrow{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line)}
+.sdsvrow:last-child{border-bottom:0}
+.sdsvrow .nm{flex:1 1 auto;min-width:0}
+.sdsvrow .nm b{display:block;font-size:.78rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sdsvrow .nm b i{font-style:normal;font-size:.62rem;font-weight:700;color:var(--sub);margin-left:6px}
+.sdsvrow .nm small{display:block;font-size:.66rem;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sdsvld{flex:0 0 auto;padding:5px 11px;font-size:.72rem;font-weight:800;color:var(--ink);background:var(--tab);
+  border:1px solid var(--cy);border-radius:999px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
+.sdsvdl{flex:0 0 auto;min-width:26px;padding:5px 8px;font-size:.72rem;color:var(--sub);background:none;
+  border:1px solid var(--line);border-radius:999px;cursor:pointer}
+.sdsvdl.arm{color:#fff;background:var(--lose);border-color:var(--lose);font-weight:700}
+.sdsvempty{font-size:.72rem;color:var(--sub);padding:6px 0}
+.sdsvmsg{font-size:.72rem;color:var(--cy);margin-top:5px}
 @media (max-width:430px){
   .sdteams .gfhead{flex-wrap:wrap}
   .sdteams .gfauto{margin-left:auto}

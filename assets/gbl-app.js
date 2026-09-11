@@ -331,12 +331,14 @@ document.getElementById('app').innerHTML = `
           <div class="rkcolttl gfhead"><span title="見せ合いに出すじぶんの6匹。★で登録した個体も入れられます">じぶんの6匹</span>
             <button class="ptswbtn sdrandmy" title="環境上位から、たがいの穴（3匹とも勝てない相手）を埋め合う6匹を自動で組みます。押すたびに顔ぶれが変わります">🎲 おまかせ6匹</button></div>
           <div class="pslots sdslots" data-s="my"></div>
+          <div class="sdsave" data-s="my"></div>
         </div>
         <div class="rkteamcol">
           <div class="rkcolttl foe gfhead"><span title="あいての6匹。わざの既定は環境の定番構成です">あいての6匹</span>
             <button class="ptswbtn sdrand" title="環境上位から、たがいの穴（3匹とも勝てない相手）を埋め合う6匹を自動で組みます。押すたびに顔ぶれが変わります">🎲 おまかせ6匹</button>
             <button class="ptauto gfauto" aria-pressed="false" title="オートにすると、あいてのわざ欄を隠して環境の定番構成で戦います＝どのわざが飛んでくるかは飛んでくるまで分かりません(実戦と同じ)"><i class="k">わざ</i><span class="v m">えらぶ</span><span class="v a">オート</span></button></div>
           <div class="pslots foeslots sdslots" data-s="foe"></div>
+          <div class="sdsave" data-s="foe"></div>
         </div>
       </div>
     </details>
@@ -1527,6 +1529,7 @@ ${PAGE_ROCKET ? '' : `
     ふつうの3対3のときと同じ扱いです）</li>
   </ul>
   <ul>
+    <li><b>📋 保存した6匹</b>（見せ合いの6枠の下）＝いま入っている6匹を、わざ構成ごと名前を付けて保存し、あとで「入れる」でまとめて呼び出せます。じぶん側・あいて側で別々に保存できます</li>
     <li><b>🎲 おまかせ3匹</b>（見せ合いでは<b>おまかせ6匹</b>・じぶん側とあいて側の両方にあります）＝
     枠を環境から自動で組みます。でたらめに3匹引くのではなく、
     <b>パーティ診断と同じ考え方</b>で「たがいの穴（3匹とも勝てない相手）を埋め合う組み合わせ」を選ぶので、
@@ -7633,6 +7636,7 @@ function renderSd() {
   // 枠から消えたポケモンを選出に残さない
   SD.pick = SD.pick.filter(i => SD.my[i]);
   syncSdSlots();
+  renderSdSave();
   const ent = wrap.querySelector('.sdentry');
   if (ent) ent.open = SD.edit;
   const box = wrap.querySelector('.sdpick'), sug = wrap.querySelector('.sdsugbox');
@@ -7691,6 +7695,74 @@ function sdAutoFill(side) {
   }, (a, b) => say(`組み立て中 ${Math.round(a / b * 100)}%`));
 }
 const SD_AUTO_LABEL = '🎲 おまかせ6匹';
+
+// ---- 6匹まるごとの保存と呼び出し(2026-09-11・公開前の作業B2) ----
+// ★登録は1匹ずつなので、大会などで何度も当たる6匹の顔ぶれを、わざ構成ごと名前を付けて取っておく。
+// じぶん側・あいて側で別々の一覧を持つ。保存先は gbl_ で始まるので「データの引っ越し」にも自動で含まれる
+const SDT_KEY = 'gbl_sd_teams', SDT_MAX = 30;
+const SDT = { list: [], open: { my: false, foe: false }, del: null, msg: { my: '', foe: '' } };
+try { const v = JSON.parse(localStorage.getItem(SDT_KEY));
+  if (Array.isArray(v)) SDT.list = v.filter(e => e && (e.side === 'my' || e.side === 'foe') && Array.isArray(e.mons)); } catch (e) {}
+const saveSdt = () => { try { localStorage.setItem(SDT_KEY, JSON.stringify(SDT.list)); } catch (e) {} };
+const escH = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// 1匹ぶんを枠へ戻す。データから消えたポケモン・戦えないポケモンは空に、消えたわざは定番構成で埋める
+function sdtRestore(m) {
+  if (!m || !D.pokemon[m.key] || !canFight(m.key)) return null;
+  const o = JSON.parse(JSON.stringify(m)), d = mockDefaultMoves(o.key, !!o.shadow);
+  ['fast', 'c1', 'c2'].forEach(f => { if (o[f] && !D.moves[o[f]]) o[f] = d[f] || null; });
+  return o;
+}
+function sdtFlash(side, t) {
+  SDT.msg[side] = t; renderSdSave();
+  setTimeout(() => { if (SDT.msg[side] === t) { SDT.msg[side] = ''; renderSdSave(); } }, 2600);
+}
+function renderSdSave() {
+  document.querySelectorAll('#sdwrap .sdsave').forEach(box => {
+    const side = box.dataset.s, mine = SDT.list.filter(e => e.side === side);
+    const open = SDT.open[side], has = SD[side].some(Boolean);
+    const d = new Date();
+    const ph = `${blLgName(cap)} ${d.getMonth() + 1}/${d.getDate()}`;
+    const rows = mine.map(e => {
+      const nms = e.mons.filter(Boolean).map(m => D.pokemon[m.key] ? (m.shadow ? SHADOWMK : '') + D.pokemon[m.key].n : '？').join('・');
+      const arm = SDT.del === e.id;
+      return `<div class="sdsvrow"><span class="nm"><b>${escH(e.name)}<i>${blLgName(e.cap)}</i></b><small>${nms}</small></span>
+        <button class="sdsvld" data-id="${e.id}" title="この6匹をわざ構成ごと枠に入れます(いまの6匹は置き換わります)">入れる</button>
+        <button class="sdsvdl${arm ? ' arm' : ''}" data-id="${e.id}" title="この保存を消します">${arm ? '削除する?' : '×'}</button></div>`;
+    }).join('');
+    box.innerHTML = `<button class="sdsvtab" aria-expanded="${open}" title="${side === 'my' ? 'じぶん' : 'あいて'}の6匹を、わざ構成ごと名前を付けて保存・呼び出しできます">📋 保存した6匹${mine.length ? ` <b>${mine.length}</b>` : ''}</button>` +
+      (open ? `<div class="sdsvbody">
+        <div class="sdsvsave"><input type="text" maxlength="24" placeholder="${escH(ph)}" aria-label="保存する名前">
+          <button class="ptswbtn sdsvadd"${has ? '' : ' disabled'} title="いま枠に入っている6匹を、わざ構成ごと保存します">いまの6匹を保存</button></div>
+        ${rows || '<div class="sdsvempty">まだ保存がありません。6匹を入れて「いまの6匹を保存」を押すと、ここに並びます</div>'}
+      </div>` : '') +
+      (SDT.msg[side] ? `<div class="sdsvmsg">${escH(SDT.msg[side])}</div>` : '');
+    box.querySelector('.sdsvtab').onclick = () => { SDT.open[side] = !open; SDT.del = null; renderSdSave(); };
+    const add = box.querySelector('.sdsvadd');
+    if (add) add.onclick = () => {
+      if (mine.length >= SDT_MAX) { sdtFlash(side, `保存は${SDT_MAX}件までです。いらないものを消してから保存してください`); return; }
+      const inp = box.querySelector('.sdsvsave input');
+      const name = (inp.value || '').trim() || ph;
+      SDT.list.unshift({ id: Date.now(), side, cap, name, t: Date.now(), mons: JSON.parse(JSON.stringify(SD[side])) });
+      saveSdt(); sdtFlash(side, `「${name}」を保存しました`);
+    };
+    box.querySelectorAll('.sdsvld').forEach(b => b.onclick = () => {
+      const e = SDT.list.find(x => x.id === +b.dataset.id);
+      if (!e) return;
+      for (let i = 0; i < 6; i++) SD[side][i] = sdtRestore(e.mons[i]);
+      if (side === 'my') SD.pick = [];   // 顔ぶれが変わったので選出はいったん外す
+      SDT.del = null; SDT.open[side] = false;
+      SDT.msg[side] = `「${e.name}」を入れました`;
+      setTimeout(() => { if (SDT.msg[side] === `「${e.name}」を入れました`) { SDT.msg[side] = ''; renderSdSave(); } }, 2600);
+      sdChanged();
+    });
+    box.querySelectorAll('.sdsvdl').forEach(b => b.onclick = () => {
+      const id = +b.dataset.id;
+      if (SDT.del === id) { SDT.list = SDT.list.filter(x => x.id !== id); SDT.del = null; saveSdt(); }
+      else SDT.del = id;
+      renderSdSave();
+    });
+  });
+}
 
 // ---- 決断のキーと選択肢 ----
 // キーは「対面:側:種別:連番:待った発数」(側 0=じぶん 1=あいて)。ロケット団(4要素)と形式が

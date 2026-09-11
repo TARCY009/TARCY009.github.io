@@ -138,6 +138,8 @@ h3.sub{margin:2px 0 8px}
     var mf = parse(data.gbl_mock_foes, null);
     var mfN = cnt(mf && (mf.slots || mf));
     rows.push(['模擬戦のあいて', mfN ? '<b>' + mfN + '匹</b>' : none]);
+    var st = parse(data.gbl_sd_teams, []);
+    rows.push(['保存した6匹', Array.isArray(st) && st.length ? '<b>' + st.length + '件</b>' : none]);
     var rp = parse(data.raid_party, null);
     var rpN = rp ? cnt(rp.slots) : 0;
     rows.push(['レイドの6匹編成', rpN ? '<b>' + rpN + '匹</b>' : none]);
