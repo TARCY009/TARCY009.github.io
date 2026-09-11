@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /feedback/
+Disallow: /scratchpad/
+Disallow: /pvp-tests/
+Disallow: /iconlab/
+
+Sitemap: https://gonavi.jp/sitemap.xml
