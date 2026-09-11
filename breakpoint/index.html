@@ -505,7 +505,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
   <button class="t-atk" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックのダメージが1上がる境目を見ます">🗡️ 与える</button>
   <button class="t-shadow" data-dir="take" aria-pressed="false" title="あいてのノーマルアタックから受けるダメージが1下がる境目を見ます">🛡 受ける</button>
-</div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="4096通りの個体値をぜんぶ試して、環境100匹との勝ち数が多い順に並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button></div>
+</div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="4096通りの個体値をぜんぶ試して、環境100匹との勝ち数が多い順に並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button><button class="t-mega mega4" id="cpb" aria-pressed="false" style="display:none" title="メガシンカCPブースト（イベントボーナス）を計算に入れます。メガLv4のPL+2がPL+5になるので、メガの行・列にPL55を足します（最高の相棒を足しても55まで）">CPブースト</button></div>
 <div id="reco"></div>
 <div id="ivsum"></div>
 <!-- 自分の個体の入力は環境100匹の一覧の直上に置く(2026-08-23タダシさん指示: まとめ・おすすめ個体には効かないので、入力→関係ない表→一覧と跨がせない) -->
@@ -517,7 +517,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <label>攻撃<input type="number" id="ivA" min="0" max="15" inputmode="numeric"></label>
     <label>防御<input type="number" id="ivD" min="0" max="15" inputmode="numeric"></label>
     <label>HP<input type="number" id="ivH" min="0" max="15" inputmode="numeric"></label>
-    <label>PL<input type="number" id="ivL" min="1" max="53" step="0.5" inputmode="decimal"></label>
+    <label>PL<input type="number" id="ivL" min="1" max="55" step="0.5" inputmode="decimal"></label>
     <div class="gtabs one"><button class="t-cyan" id="ideal" title="このリーグで1位の個体値・PLに戻します">理想に戻す</button></div>
     <div class="cpv" id="cpv"></div>
   </div>
@@ -545,6 +545,8 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li>上のタブは個体値です。<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます。点灯中のタブをもう一度タップすると、そのグループだけ隠れます</li>
     <li>相手ごとのチップの中の表は、<b>じぶんのPL（縦）×あいてのPL（横）</b>ごとのダメージです。そのグループの個体値でちょうど段が上がる組み合わせだけ金色になります</li>
     <li><b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
+    <li><b>CPブースト</b>（メガ4がONのときだけ出ます）＝イベントボーナスのメガシンカCPブーストを入れます。メガLv4のPL+2がPL+5になるので、メガの行・列に<b>PL55</b>を足します（最高の相棒を足しても55まで）</li>
+    <li>メガシンカの追加SPアタック（わざ名の最後が「+」）は、勝ち数の計算とGBLシミュレーターへのリンクでSPアタックの候補に入ります（威力はメガLv4＝1.3倍）。ブレイクポイント自体はノーマルアタックの話なので、境目は変わりません</li>
   </ul>
   <h4>スーパー・ハイパーの見かた</h4>
   <p>CP制限があるリーグは、個体値3つとPLがセットで決まります。そこで軸は個体値ではなく<b>個体の順位</b>（個体値チェッカーと同じ順位）です。順位は<b>SCPが高い順</b>で決まります。SCP＝<b>攻撃・防御・HPを総合した対戦(PvP)向けの評価値</b>で、届く個体の一覧・おすすめ個体の表もこの並びです。</p>
@@ -562,7 +564,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li>ダメージ式・実数値はGBLシミュレーターのエンジンと同じです。<b>同じ条件なら結果は必ず一致します</b></li>
     <li>能力変化（バフ・デバフ）が無い、バトル開始時点で計算します</li>
     <li>環境上位100匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成です</li>
-    <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4（メガシンカ中に自動で＋2相当）＋相棒で53まで</li>
+    <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4（メガシンカ中に自動で＋2相当）＋相棒で53まで（CPブーストをONにすると55まで）</li>
     <li><b>SPアタックは対象外</b>です。SPのダメージ+1はバトル全体で1〜2回しか起きず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
     <li>勝ち数のシミュレート: あいては理想個体値・定番わざ構成、じぶんは画面で選んだノーマルアタック＋定番のSPアタック。ブラフなし・確率わざ不発・最適タイミング（GBLシミュレーターの一覧系と同じ前提）</li>
   </ul>
@@ -578,7 +580,15 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 'use strict';
 const D = window.PVP_DATA, E = window.PvpEngine;
 const $ = id => document.getElementById(id);
-const LEVELS_ALL = Object.keys(D.cpm).map(Number).filter(l => l <= 53).sort((a, b) => a - b);
+// メガの追加SPアタック「＋わざ」(2026-09-11・公開前の作業B4)。GBLと同じく plusMoves を D.moves へ合流させ、
+// 威力はメガLv4(1.3倍)の値を p・素の威力を p0 に持つ(エンジンは既定でLv4として計算する)。
+// ブレイクポイント自体はノーマルアタックの話なので、効くのは勝敗シミュ(勝ち数・おすすめ個体)のSP候補と1対1へのリンクだけ
+Object.entries(D.plusMoves || {}).forEach(([id, m]) => {
+  if (D.moves[id]) return;
+  D.moves[id] = { ...m, plus: true, p0: m.p, p: m.p * E.MEGA_MULT[E.MEGA_LV_DEF] };
+});
+// PL55はメガシンカCPブースト(イベントボーナス・メガLv4のPL+2がPL+5になる・相棒込みでも55まで)。「CPブースト」をONにしたときだけ使う
+const LEVELS_ALL = Object.keys(D.cpm).map(Number).filter(l => l <= 55).sort((a, b) => a - b);
 const levelsUpTo = m => LEVELS_ALL.filter(l => l <= (m || 51));
 const isMega = k => !!k && (k.includes('_mega') || k.includes('_primal'));
 const KEYS = Object.keys(D.pokemon).sort((a, b) => D.pokemon[a].dex - D.pokemon[b].dex);
@@ -618,7 +628,11 @@ let IVOPEN = false;  // 「自分の個体で確かめる」(個体値・PLの�
 let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
 let DTAB = {};    // 行ごとの 与える/受ける タブ状態
 const capV = () => +LG || 0;
-const maxLvOf = () => isMega(ME.key) ? 53 : 51;
+let CPB = false;   // メガシンカCPブースト(PL55)を入れるか。メガ4がONのときだけ選べる(2026-09-11・公開前の作業B4)
+const megaTop = () => CPB ? 55 : 53;
+const megaPls = () => [50, 51, 52, 53].concat(CPB ? [55] : []);
+const plTag = l => l >= 55 ? '<small>CPブースト</small>' : l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : '';
+const maxLvOf = () => isMega(ME.key) ? megaTop() : 51;
 // 交換できないポケモン(幻・ジガルデ等。pvp_data の ivf)は最低個体値10。10未満の個体はゲーム内に存在しない(恒久ルール)
 const ivFloorOf = key => (D.pokemon[key] && D.pokemon[key].ivf) || 0;
 // PLの下限(ジガルデはPL20未満の個体が存在しない)。CP制限でこのPLに収まらない個体は「存在しない」として除く
@@ -738,8 +752,11 @@ function chargedOf(key, shadow) {
   const row = mm[key + (shadow ? '|s' : '')] || mm[key];
   if (row) return [row[1], row[2]].filter(id => id && D.moves[id]);
   const p = D.pokemon[key];
-  const pool = [...new Set([...(p.c || []), ...(p.ec || [])])].filter(id => D.moves[id]);
-  const dpe = id => { const m = D.moves[id]; return m.p * (p.ty.includes(m.t) ? 1.2 : 1) / m.eg; };
+  // ＋わざを持つメガは、それもSP候補に入れる(GBLの movePool と同じ。確定値がある行はそちらが優先)
+  const pool = [...new Set([...(p.c || []), ...(p.ec || []), ...(p.cp ? [p.cp] : [])])].filter(id => D.moves[id]);
+  // ⚠ SPアタックの消費ゲージは e(eg はノーマルアタックのゲージ増)。以前は m.eg で割っていて全部 NaN になり、
+  //   並べ替えが効かずデータ順の先頭2本を使っていた(2026-09-11に＋わざ対応の確認中に発見)
+  const dpe = id => { const m = D.moves[id]; return m.p * (p.ty.includes(m.t) ? 1.2 : 1) / m.e; };
   return pool.sort((x, y) => dpe(y) - dpe(x)).slice(0, 2);
 }
 
@@ -943,11 +960,11 @@ const heroHTML = (v, unit, cond, altNext) => `<div class="dhero">${nowLine(v, un
 function plMatrix(foe, mv, dir) {
   if (capV() || !foe.key || foe.rawSt) return '';
   const now = ME.level;
-  const foeLv = isMega(foe.key) ? [50, 51, 52, 53] : [50, 51];
+  const foeLv = isMega(foe.key) ? megaPls() : [50, 51];
   const foeSt = foeLv.map(l => statsOf(foe.key, [15, 15, 15], l, foe.shadow));
   const dmg = (mySt, fSt) => dir === 'give' ? dmgOf(mv, mySt, fSt) : dmgOf(mv, fSt, mySt);
   // じぶんのPL候補: いま・50/51(メガは52/53も)。PL50.5のような半端は実戦では使わないので出さない
-  const set = new Set([now, 50, 51].concat(isMega(ME.key) ? [52, 53] : []));
+  const set = new Set([now, 50, 51].concat(isMega(ME.key) ? megaPls().slice(2) : []));
   const myLv = [...set].filter(l => l >= now && l <= maxLvOf()).sort((a, b) => a - b);
   const base = dmg(statsOf(ME.key, ME.ivs, now, ME.shadow), foeSt[0]);
   const better = d => dir === 'give' ? d > base : d < base;
@@ -961,11 +978,11 @@ function plMatrix(foe, mv, dir) {
     }).join('');
     // 左端: 行全体にまたがる縦の「じぶん」チップ(最初の行だけ rowspan で置く)
     const axc = ri === 0 ? `<th class="axc" rowspan="${myLv.length}"><span class="ax me">じぶん</span></th>` : '';
-    return `<tr>${axc}<th>PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>${cells}</tr>`;
+    return `<tr>${axc}<th>PL${fmtLv(l)}${plTag(l)}</th>${cells}</tr>`;
   }).join('');
   const allSame = !rows.includes('class="up') && !rows.includes('class="dn');
   if (allSame) return '';
-  const head = foeLv.map(l => `<th>PL${fmtLv(l)}${l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : ''}</th>`).join('');
+  const head = foeLv.map(l => `<th>PL${fmtLv(l)}${plTag(l)}</th>`).join('');
   return `<div class="dpan plmx"><div class="dt">じぶん＆あいてのPL表<span class="ds">あいて個体値100%</span></div>
     <table><thead><tr><th></th><th></th><th colspan="${foeLv.length}"><span class="ax foe">あいて</span></th></tr>
     <tr><th></th><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -977,7 +994,7 @@ function plMatrix(foe, mv, dir) {
 // 「最大(与える)/最小(受ける)のダメージに届く最小の個体値」と、そのときのダメージ変化を出す
 // 戻り値: null(どの組み合わせでも個体値で変わらない) /
 //   {x(いちばん厳しい値), from, to, mv, mePls, foePls, grid:{'50/50':{x,from,to}|{d}}}
-const plsOf = key => MEGA4 && isMega(key) ? [50, 51, 52, 53] : [50, 51];
+const plsOf = key => MEGA4 && isMega(key) ? megaPls() : [50, 51];
 function ivNeedOf(foe, dir) {
   const mv = dir === 'give' ? D.moves[ME.fast] : D.moves[foe.fast || fastMoves(foe.key)[0]];
   if (!mv || foe.rawSt) return null;
@@ -1064,7 +1081,7 @@ function ivSumHtml() {
   const total = byIv.reduce((n, a) => n + a.length, 0);
   const body = total ? `<div class="grp">${grp || `<div class="none">${statName}${IVSEL}以上でブレイクする相手はいません</div>`}</div>`
                      : `<div class="none">${statName}の個体値では変わりません</div>`;
-  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表は じぶんのPL（縦）×あいてのPL（横）ごとのダメージ（あいては個体値100%${MEGA4 ? '・メガ4はPL53まで' : ''}）</span></div>
+  return `<div class="ivsum"><div class="dt">${dir === 'give' ? '🗡️ 攻撃のブレイクポイント' : '🛡 防御のブレイクポイント'}<span class="ds">表は じぶんのPL（縦）×あいてのPL（横）ごとのダメージ（あいては個体値100%${MEGA4 ? `・メガ4はPL${megaTop()}まで` : ''}）</span></div>
     <div class="barrow"><span class="ivlbl ${dir}" title="タブの数字は じぶんの${statName}個体値です。その個体値にするとブレイクする相手が何匹あるかを示します"><em>${statName}</em><br>個体値</span><div class="cells">${cells}</div>${lowBtn}</div>${lowRow}${body}</div>`;
 }
 
@@ -1518,6 +1535,7 @@ function render() {
   // 一覧(環境100匹の行)は「自分の個体で確かめる」を開いたときだけ(上のまとめと情報が二重になるため)
   $('listwrap').style.display = IVOPEN ? '' : 'none';
   $('mega4').style.display = capped ? 'none' : '';
+  $('cpb').style.display = capped || !MEGA4 ? 'none' : '';   // CPブーストはメガ4の上に乗るボーナスなので、メガ4がONのときだけ
   $('ivsum').querySelectorAll('[data-rlow]').forEach(b => b.onclick = () => { RLOW = !RLOW; if (!RLOW && RSEL >= RANK_GRP.length) RSEL = RANK_GRP.length - 1; render(); });
   $('ivsum').querySelectorAll('[data-rsel]').forEach(c => c.onclick = () => {
     const i = +c.dataset.rsel;
@@ -1773,7 +1791,14 @@ const blurInputs = () => ['ivA', 'ivD', 'ivH', 'ivL'].forEach(id => {
 $('ideal').onclick = () => { blurInputs(); setIdeal(); render(); };
 $('ivtog').onclick = () => { IVOPEN = !IVOPEN; render(); };
 $('recobtn').onclick = () => { RECO = !RECO; render(); if (RECO) $('reco').scrollIntoView({ block: 'start', behavior: 'smooth' }); };
-$('mega4').onclick = () => { MEGA4 = !MEGA4; $('mega4').setAttribute('aria-pressed', MEGA4); render(); };
+// PL上限が下がったときは、入力中のPLもその上限へ戻す(PL55のまま残ると表と計算が食い違う)
+const clampMeLv = () => { if (ME.key && ME.level > maxLvOf()) ME.level = maxLvOf(); };
+$('mega4').onclick = () => {
+  MEGA4 = !MEGA4; $('mega4').setAttribute('aria-pressed', MEGA4);
+  if (!MEGA4 && CPB) { CPB = false; $('cpb').setAttribute('aria-pressed', 'false'); clampMeLv(); }
+  render();
+};
+$('cpb').onclick = () => { CPB = !CPB; $('cpb').setAttribute('aria-pressed', CPB); clampMeLv(); render(); };
 document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => {
   if (DIR === b.dataset.dir) return;
   DIR = b.dataset.dir;
