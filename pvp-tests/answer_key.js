@@ -104,8 +104,8 @@ window.ANSWER_KEY = {
   ],
   "corviknight": [
    "SAND_ATTACK",
-   "PAYBACK",
-   "AIR_CUTTER"
+   "AIR_CUTTER",
+   "IRON_HEAD"
   ],
   "fearow": [
    "PECK",
@@ -139,8 +139,8 @@ window.ANSWER_KEY = {
   ],
   "corviknight|s": [
    "SAND_ATTACK",
-   "PAYBACK",
-   "AIR_CUTTER"
+   "AIR_CUTTER",
+   "IRON_HEAD"
   ],
   "furret": [
    "SUCKER_PUNCH",
@@ -188,14 +188,14 @@ window.ANSWER_KEY = {
    "WRAP"
   ],
   "oinkologne_female": [
-   "MUD_SLAP",
+   "TAKE_DOWN",
    "BODY_SLAM",
    "TRAILBLAZE"
   ],
   "sliggoo": [
    "DRAGON_BREATH",
    "BODY_SLAM",
-   "SLUDGE_WAVE"
+   "DRAGON_PULSE"
   ],
   "sealeo": [
    "POWDER_SNOW",
@@ -203,7 +203,7 @@ window.ANSWER_KEY = {
    "SURF"
   ],
   "greedent": [
-   "MUD_SHOT",
+   "BITE",
    "BODY_SLAM",
    "TRAILBLAZE"
   ],
@@ -228,9 +228,9 @@ window.ANSWER_KEY = {
    "DYNAMIC_PUNCH"
   ],
   "cradily": [
-   "BULLET_SEED",
-   "BULLDOZE",
-   "ROCK_TOMB"
+   "ACID",
+   "ROCK_TOMB",
+   "GRASS_KNOT"
   ],
   "florges": [
    "FAIRY_WIND",
@@ -295,7 +295,7 @@ window.ANSWER_KEY = {
   "gastrodon": [
    "MUD_SLAP",
    "BODY_SLAM",
-   "WATER_PULSE"
+   "EARTH_POWER"
   ],
   "malamar": [
    "PSYWAVE",
@@ -508,7 +508,7 @@ window.ANSWER_KEY = {
    "ROCK_TOMB"
   ],
   "toxapex": [
-   "POISON_JAB",
+   "BITE",
    "BRINE",
    "SLUDGE_WAVE"
   ]
@@ -517,7 +517,7 @@ window.ANSWER_KEY = {
   "primeape": [
    "KARATE_CHOP",
    "RAGE_FIST",
-   "ICE_PUNCH"
+   "CLOSE_COMBAT"
   ],
   "cramorant": [
    "PECK",
@@ -621,7 +621,7 @@ window.ANSWER_KEY = {
   ],
   "raikou|s": [
    "THUNDER_SHOCK",
-   "SHADOW_BALL",
+   "WILD_CHARGE",
    "AURA_SPHERE"
   ],
   "togekiss": [
@@ -657,7 +657,7 @@ window.ANSWER_KEY = {
   "gastrodon": [
    "MUD_SLAP",
    "BODY_SLAM",
-   "WATER_PULSE"
+   "EARTH_POWER"
   ],
   "sandslash_alolan": [
    "SHADOW_CLAW",
@@ -672,7 +672,7 @@ window.ANSWER_KEY = {
   "cofagrigus": [
    "SHADOW_CLAW",
    "SHADOW_BALL",
-   "PSYCHIC"
+   "ENERGY_BALL"
   ],
   "blastoise": [
    "ROLLOUT",
@@ -687,7 +687,7 @@ window.ANSWER_KEY = {
   "corviknight": [
    "SAND_ATTACK",
    "AIR_CUTTER",
-   "PAYBACK"
+   "IRON_HEAD"
   ],
   "tinkaton": [
    "FAIRY_WIND",
@@ -936,13 +936,13 @@ window.ANSWER_KEY = {
   ],
   "sylveon": [
    "FAIRY_WIND",
-   "MOONBLAST",
+   "DRAINING_KISS",
    "SHADOW_BALL"
   ],
   "dudunsparce": [
-   "ROLLOUT",
-   "BODY_SLAM",
-   "DRILL_RUN"
+   "ASTONISH",
+   "DRILL_RUN",
+   "ROCK_SLIDE"
   ],
   "gyarados|s": [
    "DRAGON_BREATH",
@@ -980,7 +980,7 @@ window.ANSWER_KEY = {
    "POWER_WHIP"
   ],
   "oinkologne_female": [
-   "MUD_SLAP",
+   "TAKE_DOWN",
    "BODY_SLAM",
    "TRAILBLAZE"
   ],
@@ -1043,7 +1043,7 @@ window.ANSWER_KEY = {
   ],
   "necrozma_dawn_wings": [
    "SHADOW_CLAW",
-   "IRON_HEAD",
+   "DARK_PULSE",
    "MOONGEIST_BEAM"
   ],
   "yveltal": [
@@ -1078,13 +1078,13 @@ window.ANSWER_KEY = {
   ],
   "necrozma_dusk_mane": [
    "SHADOW_CLAW",
-   "OUTRAGE",
-   "IRON_HEAD"
+   "DARK_PULSE",
+   "SUNSTEEL_STRIKE"
   ],
   "gholdengo": [
    "HEX",
    "SHADOW_BALL",
-   "DAZZLING_GLEAM"
+   "FOCUS_BLAST"
   ],
   "melmetal": [
    "THUNDER_SHOCK",
@@ -1122,8 +1122,8 @@ window.ANSWER_KEY = {
    "STONE_EDGE"
   ],
   "raikou|s": [
-   "VOLT_SWITCH",
-   "SHADOW_BALL",
+   "THUNDER_SHOCK",
+   "WILD_CHARGE",
    "AURA_SPHERE"
   ],
   "rhyperior": [
@@ -1132,9 +1132,9 @@ window.ANSWER_KEY = {
    "ROCK_WRECKER"
   ],
   "giratina_origin": [
-   "SHADOW_CLAW",
+   "DRAGON_TAIL",
    "SHADOW_BALL",
-   "DRAGON_PULSE"
+   "OMINOUS_WIND"
   ],
   "urshifu_rapid_strike": [
    "COUNTER",
@@ -1147,9 +1147,9 @@ window.ANSWER_KEY = {
    "SHADOW_SNEAK"
   ],
   "raikou": [
-   "VOLT_SWITCH",
+   "THUNDER_SHOCK",
    "AURA_SPHERE",
-   "SHADOW_BALL"
+   "WILD_CHARGE"
   ],
   "heatran": [
    "FIRE_SPIN",
@@ -1167,9 +1167,9 @@ window.ANSWER_KEY = {
    "ANCIENT_POWER"
   ],
   "zamazenta_hero": [
-   "QUICK_ATTACK",
+   "ICE_FANG",
    "CLOSE_COMBAT",
-   "MOONBLAST"
+   "CRUNCH"
   ],
   "kyogre": [
    "WATERFALL",
@@ -1239,7 +1239,7 @@ window.ANSWER_KEY = {
   "lugia": [
    "DRAGON_TAIL",
    "AEROBLAST",
-   "FLY"
+   "EARTH_POWER"
   ],
   "metagross|s": [
    "SHADOW_CLAW",
@@ -1249,7 +1249,7 @@ window.ANSWER_KEY = {
   "lugia|s": [
    "DRAGON_TAIL",
    "AEROBLAST",
-   "FLY"
+   "EARTH_POWER"
   ],
   "garchomp|s": [
    "DRAGON_TAIL",
@@ -1373,7 +1373,7 @@ window.ANSWER_KEY = {
   ],
   "sylveon": [
    "FAIRY_WIND",
-   "MOONBLAST",
+   "DRAINING_KISS",
    "SHADOW_BALL"
   ],
   "landorus_therian": [
