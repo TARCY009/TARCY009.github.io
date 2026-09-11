@@ -98,6 +98,7 @@ document.getElementById('app').innerHTML = `
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
       <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
+      <div class="plusbox"></div>
       <div class="bluffwrap" style="display:none">
         <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
@@ -174,6 +175,7 @@ document.getElementById('app').innerHTML = `
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
       <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
+      <div class="plusbox"></div>
       <div class="bluffwrap" style="display:none">
         <label class="f" title="消費ゲージの少ないSPアタックを撃って、相手にシールドを使わせる駆け引き">ブラフ</label>
         <div class="opts bluff">
@@ -474,6 +476,31 @@ const isPlusMv = id => !!(id && D.moves[id] && D.moves[id].plus);
 // ＋わざを持つメガか(pvp_data の cp = 追加SPアタックのID。対戦データに未収録のわざは対象外)
 const hasPlus = key => !!(key && D.pokemon[key] && D.pokemon[key].cp && D.moves[D.pokemon[key].cp]);
 const megaLvOf = o => (o && MEGA_MULT[o.megaLv]) ? o.megaLv : MEGA_LV_DEF;
+// ---- ＋わざは「3本目のSPアタック」として自動で持つ(2026-09-11・公開前の作業B5・タダシさん指示) ----
+// ゲームと同じく、＋わざを持つメガはSP1/SP2とは別枠で＋わざも覚えている(選ばなくても常に3本目)。
+// 足す場所を1か所にするため、エンジンの入口(PvpEngine.simulate)を包む＝1対1・環境一覧・対策さがし・パーティ診断・
+// 模擬戦のどこから呼んでも同じ3本で戦う(食い違い禁止)。模擬戦は決断ボタン・ゲージもわざの一覧から作るので spOf でも足す。
+// ロケット団戦では＋わざは使えない(公式: レイドとGOバトルリーグのみ)ので足さない
+const plusOn = () => !PAGE_ROCKET && mode !== 'rocket';
+const plusIdOf = key => (plusOn() && hasPlus(key)) ? D.pokemon[key].cp : null;
+const spOf = (key, arr) => {
+  const a = (arr || []).filter(Boolean), cp = plusIdOf(key);
+  return (cp && a.length && !a.includes(cp)) ? [...a, cp] : a;
+};
+const withPlus = cfg => {
+  if (!cfg || !cfg.key || !Array.isArray(cfg.charged) || !cfg.charged.length) return cfg;
+  const cp = plusIdOf(cfg.key);
+  return (cp && !cfg.charged.includes(cp)) ? { ...cfg, charged: [...cfg.charged, cp] } : cfg;
+};
+['simulate', 'simulateAuto'].forEach(fn => {
+  const raw = PvpEngine[fn];
+  if (typeof raw === 'function') PvpEngine[fn] = (D0, L, R, opt) => raw(D0, withPlus(L), withPlus(R), opt);
+});
+// 枠・パネルに出す「＋わざ（自動）」の1行
+const plusNoteHtml = key => {
+  const cp = plusIdOf(key);
+  return cp ? `<div class="plusnote" title="メガシンカの追加SPアタック。SPアタック1・2とは別に、3本目として自動で持ちます（威力はメガLvで変わります）"><b>＋わざ</b>${D.moves[cp].n}<small>（3本目・自動）</small></div>` : '';
+};
 const MLV_HELP = 'メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。'
   + 'Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません';
 // 枠の中に置く小さな「メガLv 1|2|3|4」(＋わざを持つメガの枠だけに出す)
@@ -851,8 +878,8 @@ function movePool(key) {
   // 通常枠と特別枠の両方に載っているわざがあるため重複除去する
   const p = D.pokemon[key];
   const fasts = [...new Set([...p.q, ...p.eq])].filter(m => D.moves[m]);
-  // ＋わざ(メガの3本目)は、おぼえるSPアタックの末尾に足す
-  const chargeds = [...new Set([...p.c, ...p.ec, ...(hasPlus(key) ? [p.cp] : [])])].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
+  // ＋わざ(メガの3本目)はSP1/SP2の候補には入れない。3本目として自動で持つ(spOf/withPlus・2026-09-11 B5)
+  const chargeds = [...new Set([...p.c, ...p.ec])].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION');
   return { fasts, chargeds };
 }
 // ロケット団のあいてが使ってくるわざ。おぼえるわざの中からランダムに打ってくるが、
@@ -3147,7 +3174,7 @@ function syncPartySlot(i) {
       ${chargeds.length ? `<select class="mvC1"${auto ? ' disabled' : ''} title="SPアタック1">${opts(chargeds, cur.c1)}</select>
       <div class="c2row"><select class="mvC2"${auto ? ' disabled' : ''} title="SPアタック2（2本目を開放していないなら「ー」）">
         <option value=""${!cur.c2 ? ' selected' : ''}>ー</option>${opts(chargeds, cur.c2)}</select>${
-        cur.c2 && !auto ? '<button class="c2clear" title="SPアタック2を外す（1本に戻す）">×</button>' : ''}</div>`
+        cur.c2 && !auto ? '<button class="c2clear" title="SPアタック2を外す（1本に戻す）">×</button>' : ''}</div>${plusNoteHtml(m.key)}`
         : '<span class="pt2">SPアタックなし</span>'}`;
     // ×でSPアタック2を外す(1対1シミュと同じ操作を全画面にそろえる・2026-08-13タダシさん指示)
     const c2x = mvbox.querySelector('.c2clear');
@@ -9956,7 +9983,7 @@ function runMockBuild() {
   const foeOf = f => {
     const mv = MK.foeAuto ? mockDefaultMoves(f.key, f.shadow) : f;
     return { m: f, base: ptBase(f),
-      pol: { fast: mv.fast, charged: [mv.c1, mv.c2].filter(Boolean) }, name: ptName(f) };
+      pol: { fast: mv.fast, charged: spOf(f.key, [mv.c1, mv.c2]) }, name: ptName(f) };
   };
   if (sdOn()) {
     // ---- 見せ合いルール: 6匹から選出した3匹どうしで戦う ----
@@ -9972,7 +9999,7 @@ function runMockBuild() {
       return;
     }
     picks = mine.map(m => ({ m, base: ptBase(m),
-      pol: { fast: m.fast, charged: [m.c1, m.c2].filter(Boolean) }, name: ptName(m) }));
+      pol: { fast: m.fast, charged: spOf(m.key, [m.c1, m.c2]) }, name: ptName(m) }));
     foes = ft.map(foeOf);
     sig = JSON.stringify(['sd', mine, ft, cap, cup && cup.slug, SIMOPT.buffMode,
       MK.ai, MK.leadSwap, MK.foeAuto, MK.rt]);
@@ -9987,7 +10014,7 @@ function runMockBuild() {
     picks = mineIdx.map(i => {
       const mv = gbmOf(i);
       return { m: PT[i], base: ptBase(PT[i]),
-        pol: { fast: mv.fast, charged: [mv.c1, mv.c2].filter(Boolean) }, name: ptName(PT[i]) };
+        pol: { fast: mv.fast, charged: spOf(PT[i].key, [mv.c1, mv.c2]) }, name: ptName(PT[i]) };
     });
     foes = foesIdx.map(i => foeOf(GBT[i]));
     // 入力(ポケモン・わざ・リーグ・AI等)が変わったら、前のバトルの選択と再生位置は仕切り直す
@@ -11593,6 +11620,9 @@ function fillMoves(i, cfg) {
   ph(el.querySelector('.selC1'), 'c1', 'SPアタック', chargeds, otherC, cfg.throw, false);
   ph(el.querySelector('.selC2'), 'c2', 'SPアタック2', chargeds, otherC, S[i].c2, false);
   el.querySelector('.c2clear').style.display = S[i].c2 ? '' : 'none';
+  // メガの＋わざ(3本目・自動)。ロケット団のあいて(NPC)とロケット団戦では出さない(plusNoteHtml が判定)
+  const pbox = el.querySelector('.plusbox');
+  if (pbox) pbox.innerHTML = rkFoe ? '' : plusNoteHtml(cfg.key);
   // ブラフ設定はSPアタックを2本持たせたときだけ意味があるので、そのときだけ出す。
   // 一覧系(環境一覧・カウンター検索・パーティ診断)は共通の「ブラフ」枠で両者まとめて決めるので出さない
   el.querySelector('.bluffwrap').style.display =

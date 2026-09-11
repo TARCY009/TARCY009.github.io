@@ -224,6 +224,11 @@ select option[value=""]{color:var(--sub)}
   color:var(--rklink);background:var(--rklinkbg);border:1px solid rgba(255,107,129,.3);border-radius:11px;
   box-shadow:0 2px 0 var(--tabsh);transition:transform .12s ease,border-color .12s ease}
 .modes a.modelink:hover{transform:translateY(-1px);border-color:#ff6b6b}
+/* メガの＋わざ(3本目・自動で持つ)の1行。SP欄のすぐ下に、選べない情報として控えめに出す(2026-09-11 B5) */
+.plusnote{margin-top:5px;font-size:.72rem;color:var(--sub);line-height:1.5;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px}
+.plusnote b{font-size:.66rem;font-weight:900;color:#fff;background:linear-gradient(160deg,#ff8fd6,#d63aa0);padding:1px 7px;border-radius:999px}
+.plusnote small{font-size:.64rem;opacity:.85}
+:root.light .plusnote b{background:linear-gradient(160deg,#e2559f,#b3237d)}
 @media (max-width:520px){.modes a.modelink{font-size:.76rem;padding:8px 2px;flex:1 1 45%}}
 
 /* モードの並び(2026-09-11タダシさん選択・D案): 1行目=分析4つ／2行目=模擬戦(横長)＋対戦記録・ロケット団戦の小さな四角いリンク。
