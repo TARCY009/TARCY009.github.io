@@ -28,16 +28,18 @@ document.getElementById('app').innerHTML = `
   <div class="slots cupslots pastslots" id="pastslots" style="display:none"></div>
 </div>
 
+<!-- 2026-09-11タダシさん選択(D案): 1行目=分析4つ／2行目=模擬戦(横長)＋対戦記録・ロケット団戦(小さな四角いリンク)。
+     「じっくり分析する」「実戦を戦う」の見出しは廃止 -->
 <div class="modes" id="modes">
-  <div class="modegrp">じっくり分析する</div>
   <button data-m="duel" aria-pressed="true" title="1匹どうしの対面を、わざ・個体値・シールドまで指定して詳しくシミュレートする">1対1シミュ</button>
   <button data-m="multi" aria-pressed="false" title="じぶんのポケモンを環境上位50匹と一括対戦">環境一覧</button>
   <button data-m="counter" aria-pressed="false" title="あいてに勝てるポケモン（対策）を環境上位から総当たりで探す">対策さがし</button>
   <button data-m="party" aria-pressed="false" title="パーティ3匹で環境上位に何匹勝てるかを調べ、穴(3匹とも負ける相手)を洗い出す">パーティ診断</button>
-  <button data-m="blog" aria-pressed="false" title="GBLで戦った相手のパーティを記録して、自分のレート帯の環境(採用率)と刺さるポケモンを分析する">対戦記録</button>
-  <div class="modegrp">実戦を戦う</div>
-  <button class="mockhero" data-m="mock" aria-pressed="false" title="じぶん3匹×あいて3匹の対人戦を通しでシミュレート。SPアタック・シールド・交代を、決断の場面ごとに自分で選べます。大会・チャレンジと同じ「6匹を見せ合って3匹を選出する」形式でも戦えます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦</b><span class="t2">3対3／6匹→3匹の見せ合い</span></span></button>
-  <button data-m="rocket" aria-pressed="false" title="GOロケット団(したっぱ/リーダー/サカキ)との戦いを再現する。相手はSPアタックのあと動けなくなる(硬直)">ロケット団戦</button>
+  <div class="mrow2">
+    <button class="mockhero" data-m="mock" aria-pressed="false" title="じぶん3匹×あいて3匹の対人戦を通しでシミュレート。SPアタック・シールド・交代を、決断の場面ごとに自分で選べます。大会・チャレンジと同じ「6匹を見せ合って3匹を選出する」形式でも戦えます"><span class="pl">▶</span><span class="tx"><b class="t1">模擬戦</b><span class="t2">3対3／6匹→3匹</span></span></button>
+    <button data-m="blog" aria-pressed="false" title="GBLで戦った相手のパーティを記録して、自分のレート帯の環境(採用率)と刺さるポケモンを分析する">対戦記録</button>
+    <button data-m="rocket" aria-pressed="false" title="GOロケット団(したっぱ/リーダー/サカキ)との戦いを再現する。相手はSPアタックのあと動けなくなる(硬直)">ロケット団戦</button>
+  </div>
 </div>
 
 <div class="rocket" id="rocket" style="display:none">
@@ -449,9 +451,9 @@ if (PAGE_ROCKET) {
 } else {
   // GBLページ: ロケット団戦・対戦記録は別ページになったので、タブを同じ位置のリンクに差し替える
   const rb = document.querySelector('#modes button[data-m="rocket"]');
-  if (rb) rb.outerHTML = '<a class="modelink" href="/rocket/" title="GOロケット団(したっぱ/リーダー/サカキ)対策の専用ページへ">ロケット団戦 ↗</a>';
+  if (rb) rb.outerHTML = '<a class="modelink" href="/rocket/" title="GOロケット団(したっぱ/リーダー/サカキ)対策の専用ページへ"><i class="mk rkr">R</i>ロケット団 ↗</a>';
   const bb = document.querySelector('#modes button[data-m="blog"]');
-  if (bb) bb.outerHTML = '<a class="modelink" href="/battlelog/" title="戦った相手を記録して、自分のレート帯の環境(採用率)を分析する専用ページへ">対戦記録 ↗</a>';
+  if (bb) bb.outerHTML = '<a class="modelink" href="/battlelog/" title="戦った相手を記録して、自分のレート帯の環境(採用率)を分析する専用ページへ"><i class="mk">📒</i>対戦記録 ↗</a>';
 }
 
 // 交代マーク(黄色い循環矢印の画像・assets/gbl.css の .swapmark)。「⇄」の文字の代わりに全箇所で使う
