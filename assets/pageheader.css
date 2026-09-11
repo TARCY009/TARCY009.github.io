@@ -24,7 +24,11 @@
      align-items/justify-content/gap)と、#themesw・.themeswの位置指定(width:max-content
      等)は、この共通ファイルと二重管理・競合しないようすべて削除してある
      (タイポグラフィ・余白などページ固有の見た目だけ残した)。 */
+/* ⚠ 2026-09-11タダシさん指示で並びを変更: **ページ間リンクと #themesw の1行は、ヘッダーのいちばん上(英字の小見出しより上)**。
+   タイトルの下に置くと、どのページでも主役のボタン(モードのタブ等)の直前に割り込んで邪魔に見えたため。
+   トップページの「上の細いバーの右端にテーマ・説明」と同じ考え方にそろえた。
+   HTMLの順番は変えず、order で見た目の並びだけ入れ替える(1段目: .pagelink(左)・#themesw(右) → 2段目以降: 小見出し・タイトル) */
 header{display:flex;flex-wrap:wrap;align-items:center;row-gap:8px;column-gap:12px}
 header>*{flex:1 1 100%;min-width:0}
-header #themesw{flex:0 0 auto;margin-left:auto}
-header .pagelink{flex:0 0 auto}
+header #themesw{flex:0 0 auto;margin-left:auto;order:-1}
+header .pagelink{flex:0 0 auto;order:-2}
