@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>データの引っ越し｜GOナビ</title>
+<meta name="description" content="ポケモンGO攻略ツール集「GOナビ」に保存した対戦記録・★登録・パーティなどを書き出して、別の端末やブラウザへ移せます。">
+<meta name="theme-color" content="#0b1023">
+<link rel="canonical" href="https://tarcy009.github.io/backup/">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<style>
+/* データの引っ越し（2026-09-11）。見た目は案内ページ3枚と同じ土台（infopage.css）に乗せる */
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 12px}
+.btns .cbtn{margin:0;min-width:0;flex:1 1 200px}
+.sbtn{display:inline-flex;align-items:center;justify-content:center;flex:1 1 150px;padding:12px 18px;border-radius:999px;
+  border:1px solid var(--line);background:linear-gradient(180deg,#1e2850,#151d38);color:var(--ink);cursor:pointer;
+  font:inherit;font-size:.9rem;font-weight:800;letter-spacing:.04em;
+  box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .12s ease}
+.sbtn:hover{transform:translateY(-1px)}
+.sbtn:focus-visible{outline:2px solid #8b5cf6;outline-offset:3px}
+:root.light .sbtn{background:linear-gradient(180deg,#fff,#eef2fb);box-shadow:0 2px 0 rgba(30,40,90,.14)}
+.sbtn[disabled],.cbtn[disabled]{opacity:.45;cursor:default;transform:none}
+.cbtn.warn{color:#fff;background:linear-gradient(160deg,#ff9aa8 0%,#ff5d73 45%,#c8324a 100%)}
+:root.light .cbtn.warn{background:linear-gradient(160deg,#f07a8b 0%,#d8364f 50%,#a8233a 100%)}
+dl.facts dd b{color:var(--gold);font-weight:900}
+dl.facts dd .none{color:var(--sub)}
+textarea{width:100%;min-height:92px;margin:0 0 10px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(0,0,0,.18);color:var(--ink);font:inherit;font-size:16px;line-height:1.5;resize:vertical}
+:root.light textarea{background:#fff}
+input[type=file]{display:none}
+.msg{margin:0 0 12px;padding:10px 12px;border-radius:10px;font-size:.86rem;border:1px solid var(--line)}
+.msg.ok{border-color:rgba(80,220,150,.5);background:rgba(80,220,150,.08)}
+.msg.ng{border-color:rgba(255,107,129,.55);background:rgba(255,107,129,.08)}
+.confirm{margin:0 0 12px;padding:12px;border-radius:12px;border:1px solid rgba(255,107,129,.55);
+  background:rgba(255,107,129,.07);font-size:.86rem}
+.confirm .btns{margin:10px 0 0}
+.or{display:flex;align-items:center;gap:10px;margin:4px 0 10px;color:var(--sub);font-size:.78rem}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--hair)}
+h3.sub{margin:2px 0 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">Backup</div><h1>データの引っ越し</h1>
+  <p class="lead">対戦記録・★登録・パーティなど、この端末に保存した内容を書き出して、別の端末やブラウザへ移せます。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<section class="card">
+  <h2>この端末のデータ</h2>
+  <dl class="facts" id="now"></dl>
+  <p class="note">iPhone では、ホーム画面に追加したアプリと Safari は保存場所が別です。行き来するときもこのページで移せます。</p>
+</section>
+
+<section class="card">
+  <h2>書き出す</h2>
+  <div class="btns">
+    <button class="cbtn" id="save" type="button">ファイルに保存</button>
+    <button class="sbtn" id="copy" type="button">文字でコピー</button>
+  </div>
+  <div id="outmsg"></div>
+  <textarea id="outtxt" readonly hidden aria-label="書き出した内容"></textarea>
+  <p class="note">書き出したファイル・文字は、お使いの端末の中にだけ作られます。運営者へ送られることはありません。</p>
+</section>
+
+<section class="card">
+  <h2>読み込む</h2>
+  <div class="btns">
+    <label class="cbtn" for="file" role="button" tabindex="0">ファイルを選ぶ</label>
+    <input type="file" id="file" accept=".json,application/json,text/plain">
+  </div>
+  <div class="or">または</div>
+  <textarea id="intxt" placeholder="「文字でコピー」した内容を貼り付け" aria-label="書き出した内容を貼り付け"></textarea>
+  <div class="btns"><button class="sbtn" id="check" type="button">貼り付けた内容を読む</button></div>
+  <div id="inbox" hidden>
+    <h3 class="sub">読み込むデータ<span class="note" id="indate"></span></h3>
+    <dl class="facts" id="inlist"></dl>
+    <div class="btns">
+      <button class="cbtn" id="merge" type="button">足し合わせる</button>
+      <button class="sbtn" id="replace" type="button">まるごと置き換える</button>
+    </div>
+    <p class="note">足し合わせる＝対戦記録・★登録・自由設定わざはこの端末のぶんと合わせ、そのほか（パーティ・設定など）はこの端末に無いものだけ入れます。<br>まるごと置き換える＝この端末のデータを消して、読み込むデータにそろえます。</p>
+    <div id="confirm"></div>
+  </div>
+  <div id="inmsg"></div>
+</section>
+</div>
+<script>
+(function(){
+  'use strict';
+  // このサイトが端末に保存しているものだけを対象にする（同じオリジンに別の用途のキーが混ざっても触らない）
+  var KEYRE = /^(gbl_|rkt_|raid_|site_|karyoku_)/;
+  var SKIP = { site_dev: 1 };            // 開発者モードの印は引っ越さない
+  var APP = 'gonavi', VER = 1;
+  var LG = { 1500: 'スーパー', 2500: 'ハイパー', 0: 'マスター', 500: 'リトル' };
+  var $ = function(id){ return document.getElementById(id); };
+  var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var okKey = function(k){ return KEYRE.test(k) && !SKIP[k]; };
+  var parse = function(s, d){ try { var v = JSON.parse(s); return v == null ? d : v; } catch (e) { return d; } };
+
+  function readLocal(){
+    var data = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (okKey(k)) data[k] = localStorage.getItem(k);
+      }
+    } catch (e) {}
+    return data;
+  }
+
+  // 保存データの中身を人の言葉にまとめる（件数だけ。個体の中身までは並べない）
+  function summary(data){
+    var rows = [];
+    var none = '<span class="none">なし</span>';
+    var blog = parse(data.gbl_battlelog, []);
+    if (!Array.isArray(blog)) blog = [];
+    var by = {};
+    blog.forEach(function(r){ if (r && r.cap != null) by[r.cap] = (by[r.cap] || 0) + 1; });
+    var caps = Object.keys(by).sort(function(a, b){ return (+a || 1e9) - (+b || 1e9); });
+    rows.push(['対戦記録', blog.length ? '<b>' + blog.length + '戦</b>（' + caps.map(function(c){ return (LG[c] || 'CP' + c) + ' ' + by[c]; }).join('・') + '）' : none]);
+    var my = parse(data.gbl_mypoke, []);
+    rows.push(['★登録', Array.isArray(my) && my.length ? '<b>' + my.length + '匹</b>' : none]);
+    var cnt = function(a){ return Array.isArray(a) ? a.filter(function(x){ return x && (x.key || x.k); }).length : 0; };
+    var pt = parse(data.gbl_party, null);
+    var ptN = cnt(pt && (pt.slots || pt));
+    rows.push(['パーティ（3匹）', ptN ? '<b>' + ptN + '匹</b>' : none]);
+    var sd = parse(data.gbl_showdown, null);
+    var sdMy = sd ? cnt(sd.my) : 0, sdFoe = sd ? cnt(sd.foe) : 0;
+    rows.push(['見せ合いの6匹', sdMy || sdFoe ? 'じぶん <b>' + sdMy + '</b>・あいて <b>' + sdFoe + '</b>' : none]);
+    var mf = parse(data.gbl_mock_foes, null);
+    var mfN = cnt(mf && (mf.slots || mf));
+    rows.push(['模擬戦のあいて', mfN ? '<b>' + mfN + '匹</b>' : none]);
+    var rp = parse(data.raid_party, null);
+    var rpN = rp ? cnt(rp.slots) : 0;
+    rows.push(['レイドの6匹編成', rpN ? '<b>' + rpN + '匹</b>' : none]);
+    var cm = parse(data.gbl_custom_moves, []);
+    rows.push(['自由設定わざ', Array.isArray(cm) && cm.length ? '<b>' + cm.length + '本</b>' : none]);
+    var rest = Object.keys(data).filter(function(k){
+      return !/^(gbl_battlelog|gbl_mypoke|gbl_party|gbl_showdown|gbl_mock_foes|raid_party|gbl_custom_moves)$/.test(k);
+    }).length;
+    rows.push(['表示・操作の設定', rest ? '<b>' + rest + '件</b>' : none]);
+    return rows.map(function(r){ return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('');
+  }
+
+  function renderNow(){ $('now').innerHTML = summary(readLocal()); }
+
+  // ---- 書き出す ----
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function makeBackup(){
+    var d = new Date();
+    return { json: JSON.stringify({ app: APP, v: VER, t: d.toISOString(), data: readLocal() }),
+      name: 'gonavi-backup-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.json' };
+  }
+  function setMsg(id, cls, html){ $(id).innerHTML = html ? '<p class="msg ' + cls + '">' + html + '</p>' : ''; }
+  function download(b){
+    var blob = new Blob([b.json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = b.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    setMsg('outmsg', 'ok', '「' + esc(b.name) + '」を保存しました。');
+  }
+  $('save').onclick = function(){
+    var b = makeBackup();
+    // スマホ（とくにホーム画面のアプリ）はダウンロードが効かないことがあるので、共有メニューで「ファイルに保存」へ渡す
+    var coarse = window.matchMedia && matchMedia('(pointer:coarse)').matches;
+    try {
+      var f = new File([b.json], b.name, { type: 'application/json' });
+      if (coarse && navigator.canShare && navigator.canShare({ files: [f] })) {
+        navigator.share({ files: [f] }).then(function(){
+          setMsg('outmsg', 'ok', '書き出しました。「ファイルに保存」を選ぶと、あとで読み込めます。');
+        }, function(e){ if (!e || e.name !== 'AbortError') download(b); });
+        return;
+      }
+    } catch (e) {}
+    download(b);
+  };
+  $('copy').onclick = function(){
+    var b = makeBackup(), ta = $('outtxt');
+    var shown = function(){
+      ta.hidden = false; ta.value = b.json; ta.focus(); ta.select();
+      setMsg('outmsg', 'ok', '下の文字をすべて選んでコピーしてください。');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(b.json).then(function(){
+        ta.hidden = true;
+        setMsg('outmsg', 'ok', 'コピーしました。移したい端末でこのページを開き、「読み込む」に貼り付けてください。');
+      }, shown);
+    } else shown();
+  };
+
+  // ---- 読み込む ----
+  var pending = null;
+  function load(text){
+    pending = null; $('inbox').hidden = true; $('confirm').innerHTML = '';
+    var o = parse(String(text || '').trim(), null);
+    if (!o || o.app !== APP || !o.data || typeof o.data !== 'object') {
+      setMsg('inmsg', 'ng', 'このページで書き出したデータとして読めませんでした。ファイルか貼り付けた文字を確かめてください。');
+      return;
+    }
+    var data = {};
+    Object.keys(o.data).forEach(function(k){ if (okKey(k) && typeof o.data[k] === 'string') data[k] = o.data[k]; });
+    if (!Object.keys(data).length) { setMsg('inmsg', 'ng', '読み込めるデータが入っていませんでした。'); return; }
+    pending = data;
+    var d = new Date(o.t);
+    $('indate').textContent = isNaN(d) ? '' : '　' + d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' に書き出し';
+    $('inlist').innerHTML = summary(data);
+    $('inbox').hidden = false;
+    setMsg('inmsg', '', '');
+    $('inbox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  $('file').onchange = function(){
+    var f = this.files && this.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function(){ load(r.result); };
+    r.onerror = function(){ setMsg('inmsg', 'ng', 'ファイルを読めませんでした。'); };
+    r.readAsText(f);
+    this.value = '';
+  };
+  document.querySelector('label[for="file"]').onkeydown = function(e){
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); }
+  };
+  $('check').onclick = function(){ load($('intxt').value); };
+
+  // 配列を「同じものは1つ」にして合わせる（この端末のぶんを先に残す）
+  function unionBy(cur, add, keyOf){
+    var a = parse(cur, []), b = parse(add, []);
+    if (!Array.isArray(a)) a = []; if (!Array.isArray(b)) b = [];
+    var seen = {}, out = [];
+    a.concat(b).forEach(function(x){
+      if (!x) return;
+      var k = keyOf(x); if (seen[k]) return; seen[k] = 1; out.push(x);
+    });
+    return out;
+  }
+  function mergeData(data){
+    var cur = readLocal(), put = {};
+    Object.keys(data).forEach(function(k){
+      if (k === 'gbl_battlelog') {
+        var l = unionBy(cur[k], data[k], function(r){ return r.id != null ? 'i' + r.id : JSON.stringify(r); });
+        l.sort(function(x, y){ return (x.t || 0) - (y.t || 0); });
+        put[k] = JSON.stringify(l);
+      } else if (k === 'gbl_mypoke') {
+        put[k] = JSON.stringify(unionBy(cur[k], data[k], function(m){ return JSON.stringify(m); }).slice(0, 30));
+      } else if (k === 'gbl_custom_moves') {
+        put[k] = JSON.stringify(unionBy(cur[k], data[k], function(c){ return c.id || JSON.stringify(c); }));
+      } else if (cur[k] == null) put[k] = data[k];
+    });
+    return put;
+  }
+  function write(put, clear){
+    try {
+      if (clear) Object.keys(readLocal()).forEach(function(k){ if (!(k in put)) localStorage.removeItem(k); });
+      Object.keys(put).forEach(function(k){ localStorage.setItem(k, put[k]); });
+    } catch (e) {
+      setMsg('inmsg', 'ng', '保存できませんでした（端末の空き容量やブラウザの設定を確かめてください）。');
+      return false;
+    }
+    return true;
+  }
+  function done(txt){
+    pending = null; $('inbox').hidden = true; $('confirm').innerHTML = ''; $('intxt').value = '';
+    renderNow();
+    setMsg('inmsg', 'ok', txt + 'ツールを開き直すと反映されます。');
+  }
+  $('merge').onclick = function(){
+    if (!pending) return;
+    if (write(mergeData(pending), false)) done('足し合わせました。');
+  };
+  $('replace').onclick = function(){
+    if (!pending) return;
+    $('confirm').innerHTML = '<div class="confirm"><b>この端末のデータを消して、読み込むデータにそろえます。</b>元に戻せません。よろしいですか?' +
+      '<div class="btns"><button class="cbtn warn" id="rpyes" type="button">置き換える</button><button class="sbtn" id="rpno" type="button">やめる</button></div></div>';
+    $('rpyes').onclick = function(){ if (pending && write(pending, true)) done('置き換えました。'); };
+    $('rpno').onclick = function(){ $('confirm').innerHTML = ''; };
+  };
+
+  renderNow();
+})();
+</script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+</body>
+</html>

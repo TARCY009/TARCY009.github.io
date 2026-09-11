@@ -1607,6 +1607,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blreset{display:block;margin:14px auto 4px;background:none;border:1px solid var(--line);border-radius:10px;
   color:var(--sub);font-size:.74rem;padding:8px 14px;cursor:pointer}
 .blreset:hover{color:var(--lose);border-color:var(--lose)}
+.blbackup{display:block;width:max-content;margin:16px auto 0;border:1px solid var(--line2);border-radius:10px;
+  background:var(--tab);color:var(--ink);font-size:.78rem;font-weight:700;padding:8px 16px;text-decoration:none;
+  box-shadow:0 2px 0 var(--tabsh)}
+.blbackup:hover{transform:translateY(-1px)}
 .blconfirm{margin:14px 0 4px;border:1px solid var(--lose);border-radius:12px;padding:12px;
   font-size:.8rem;line-height:1.8;background:rgba(255,107,129,.07)}
 .blcbtns{display:flex;gap:10px;margin-top:8px}

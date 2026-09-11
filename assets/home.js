@@ -94,7 +94,7 @@
     if (isTop || /^\/feedback\//.test(path) || document.getElementById('sitefoot')) return;
     var n = document.createElement('nav');
     n.id = 'sitefoot'; n.className = 'sitefoot'; n.setAttribute('aria-label', 'サイトの案内');
-    n.innerHTML = '<a href="/about/">運営者情報</a><a href="/privacy/">プライバシーポリシー</a><a href="/contact/">お問い合わせ</a>';
+    n.innerHTML = '<a href="/about/">運営者情報</a><a href="/privacy/">プライバシーポリシー</a><a href="/contact/">お問い合わせ</a><a href="/backup/">データの引っ越し</a>';
     document.body.appendChild(n);
   }
   function build() {

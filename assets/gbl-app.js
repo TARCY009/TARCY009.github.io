@@ -6439,7 +6439,9 @@ function blHistHtml(recs) {
     ? `<div class="blconfirm"><b>${BL_LGN[cap] || 'このリーグ'}の記録${recs.length}戦をすべて削除します。</b>元に戻せません。よろしいですか?
         <div class="blcbtns"><button class="blcyes">すべて削除する</button><button class="blcno">やめる</button></div></div>`
     : `<button class="blreset" title="このリーグの記録を全部消します(確認ウィンドウが出ます)">🗑 ${BL_LGN[cap] || 'このリーグ'}の記録をすべて削除</button>`;
-  return `<div class="blhist">${rows}</div>${reset}`;
+  // 記録は端末の中にしか無いので、機種変更・アプリとSafariの行き来に備えて書き出せるようにする(2026-09-11)
+  const bk = `<a class="blbackup" href="/backup/" title="対戦記録・★登録・パーティなどをファイルに書き出して、別の端末へ移せます">💾 記録を書き出す・読み込む</a>`;
+  return `<div class="blhist">${rows}</div>${bk}${reset}`;
 }
 function blBindHist(body) {
   body.querySelectorAll('.bldel').forEach(b => b.onclick = () => {
