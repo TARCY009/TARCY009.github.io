@@ -621,8 +621,9 @@ function syncFilters(){
 }
 q.addEventListener('compositionend',()=>{ const v=toKata(q.value); if(v!==q.value)q.value=v; q.dispatchEvent(new Event('input')); });
 q.addEventListener('input',e=>{
-  if(e&&e.isComposing)return;
-  const v=toKata(q.value); if(v!==q.value)q.value=v;
+  // 変換中(iPhoneの日本語入力は「確定」を押すまでずっと変換中)も候補は出す。欄の文字を書き換えるのは変換していないときだけ
+  // (変換中に書き換えると変換が壊れる)。以前は変換中は何もせず、確定するまで候補が出なかった(2026-09-11タダシさん報告)
+  if(!(e&&e.isComposing)){ const v=toKata(q.value); if(v!==q.value)q.value=v; }
   syncClr();
   const w=toKata(q.value.trim());
   if(!w){ sugg.style.display='none'; return; }

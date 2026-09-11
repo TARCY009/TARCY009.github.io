@@ -153,7 +153,9 @@
     function boxOf(el) { return el && el.closest ? el.closest(BOX) : null; }
     function listOf(inp) { var b = boxOf(inp); return b ? b.querySelector(LIST) : null; }
     function isSearch(el) {
-      return !!(el && el.tagName === 'INPUT' && /^(search|text)$/.test(el.type || 'text') && listOf(el));
+      // 数字の欄(CP・個体値など inputmode が numeric/decimal)は名前の欄ではないので守りの対象にしない
+      return !!(el && el.tagName === 'INPUT' && /^(search|text)$/.test(el.type || 'text') &&
+        !/^(numeric|decimal)$/.test(el.getAttribute('inputmode') || '') && listOf(el));
     }
     function shown(l) { return !!(l && l.children.length && getComputedStyle(l).display !== 'none'); }
     function items(l) {
@@ -176,8 +178,31 @@
     }
     // 入力を始めたときの状態を控える。**毎回取り直す**（同じ欄で続けて入力したとき、前回の「選んだ」を引きずらない）。
     // ただし抜けた直後(0.25秒以内)に戻ってきたとき(✕で消して打ち直す等)は、同じ入力の続きとして扱う
+    // iPhoneの入力補助を止める(2026-09-11タダシさん報告「連絡先を自動入力」のバーが出る・変換や大文字化が勝手に入る)。
+    // ページごとに書き忘れても効くよう、ここで全部の名前検索欄にそろえて付ける
+    function quiet(inp) {
+      if (inp._sgQuiet) return; inp._sgQuiet = true;
+      inp.setAttribute('autocomplete', 'off'); inp.setAttribute('autocorrect', 'off');
+      inp.setAttribute('autocapitalize', 'off'); inp.setAttribute('spellcheck', 'false');
+      if (!inp.getAttribute('enterkeyhint')) inp.setAttribute('enterkeyhint', 'done');
+      // iPhoneは入力欄の説明文に「名前」があると、人の名前の欄だと判断して連絡先の自動入力を出す。ポケモンの欄だと分かる言い方にする
+      if (/名前/.test(inp.placeholder || '')) inp.placeholder = inp.placeholder.replace(/名前/g, 'ポケモン');
+    }
+    // ⚠ 付けるのは「入力欄にふれる前」。ふれた瞬間(focus)に付けても、iPhoneはその時点でキーボードの設定を決めてしまう。
+    //   読み込み時と、あとから作られる欄(GBLの枠など)の両方にかける
+    function quietAll(root) {
+      [].forEach.call((root || document).querySelectorAll('input'), function (i) { if (isSearch(i)) quiet(i); });
+    }
+    quietAll();
+    var qt = 0;
+    new MutationObserver(function () {
+      if (qt) return;
+      qt = requestAnimationFrame(function () { qt = 0; quietAll(); });
+    }).observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('pointerdown', function (e) { if (isSearch(e.target)) quiet(e.target); }, true);
     document.addEventListener('focusin', function (e) {
       var inp = e.target; if (!isSearch(inp)) return;
+      quiet(inp);
       if (cur === inp && inp._sgOutAt && Date.now() - inp._sgOutAt < 250) return;
       cur = inp; inp._sgBefore = inp.value; inp._sgPicked = false; inp._sgShown = shown(listOf(inp)); inp._sgOutAt = 0;
     });
@@ -191,7 +216,12 @@
       var l = e.target.closest && e.target.closest(LIST); if (!l) return;
       var c = e.target.closest(ITEM);
       var b = boxOf(l), inp = b && b.querySelector('input');
-      if (inp && c && items(l).indexOf(c) >= 0) inp._sgPicked = true;
+      if (inp && c && items(l).indexOf(c) >= 0) {
+        inp._sgPicked = true;
+        // 選んだら入力は終わり＝キーボードを閉じる(iPhoneは候補を押しても入力欄から離れず、キーボードが残っていた・2026-09-11)。
+        // ページ側の「選んだ」処理が先に走るよう、少し後で外す
+        setTimeout(function () { if (document.activeElement === inp) inp.blur(); }, 0);
+      }
     }, true);
     // パソコン: 候補を押した瞬間に入力欄のフォーカスが外れて一覧が消えるのを防ぐ（スクロールは妨げない）
     document.addEventListener('mousedown', function (e) {
@@ -200,9 +230,12 @@
     document.addEventListener('keydown', function (e) {
       var inp = e.target; if (!isSearch(inp)) return;
       if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;   // 日本語の変換の確定は除く
-      var l = listOf(inp); if (!shown(l)) return;
-      var c = match(inp, l, true); if (!c) return;
-      e.preventDefault(); c.click(); inp._sgPicked = true; cur = null; inp.blur();
+      var l = listOf(inp);
+      var c = shown(l) ? match(inp, l, true) : null;
+      e.preventDefault();
+      if (c) { c.click(); inp._sgPicked = true; cur = null; }
+      // 候補が無くても「完了/改行」で入力を終える＝キーボードを閉じる(残ったままになっていた・2026-09-11)
+      inp.blur();
     });
     document.addEventListener('focusout', function (e) {
       var inp = e.target; if (!isSearch(inp)) return;
@@ -210,7 +243,9 @@
       setTimeout(function () {
         if (!inp.isConnected || document.activeElement === inp) return;   // 戻ってきた(✕で消して打ち直す等)
         if (cur === inp) cur = null;
-        if (inp._sgPicked || !inp._sgShown) return;
+        // ⚠ 以前は「候補が一度も出なかった入力」を守らなかったため、どれにも当たらない文字(例「アアア」)を打って離れると
+        //   入力欄は「アアア」なのに中身は前のポケモン、という食い違いが残った(2026-09-11に発見)。数字の欄は isSearch で除いたので、名前の欄は常に守る
+        if (inp._sgPicked) return;
         var l = listOf(inp);
         var c = shown(l) ? match(inp, l, false) : null;
         if (c) { c.click(); return; }

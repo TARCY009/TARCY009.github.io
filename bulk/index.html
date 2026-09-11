@@ -257,7 +257,8 @@ const fmt=v=>Math.floor(v).toLocaleString('ja-JP');
 function renderRank(){
   const all=buildRows();
   const max=all.length?all[0].v:1;
-  const q=query.trim();
+  // ひらがなで打ってもカタカナの名前に当たるように(入力欄の文字は書き換えない＝変換を壊さない・2026-09-11)
+  const q=query.trim().replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
   let rows, note;
   if(q){
     rows=all.filter(r=>r.p.n.includes(q)).slice(0,100);
@@ -311,7 +312,8 @@ document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.d
   // 入力中(変換中)は書き換えない(恒久ルール)。全角の文字はそのまま名前と照合できる
   const inp=$('q'), box=$('sbox');
   const apply=()=>{ query=inp.value; box.classList.toggle('has',!!inp.value); renderRank(); };
-  inp.addEventListener('input',e=>{ if(e.isComposing) return; apply(); });
+  // 変換中も絞り込む(iPhoneは「確定」まで変換中なので、止めると確定するまで一覧が変わらなかった)
+  inp.addEventListener('input',()=>apply());
   inp.addEventListener('compositionend',apply);
   box.querySelector('.clr').onclick=()=>{ inp.value=''; apply(); inp.focus(); };
 }

@@ -1688,9 +1688,11 @@ function setupSearch(inpId, listId, clrId, onPick, onClear) {
     inp.dispatchEvent(new Event('input'));
   });
   inp.addEventListener('input', e => {
-    if (e.isComposing) return;
-    const v = toKata(inp.value);
-    if (v !== inp.value) inp.value = v;
+    // 変換中も候補は出す(iPhoneは「確定」まで変換中なので、止めると確定するまで候補が出ない)。書き換えは変換していないときだけ
+    if (!e.isComposing) {
+      const v = toKata(inp.value);
+      if (v !== inp.value) inp.value = v;
+    }
     sync();
     const q = toKata(inp.value.trim());
     if (!q) { list.style.display = 'none'; return; }
