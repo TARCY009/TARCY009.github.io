@@ -26,7 +26,9 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NO_REPORT = '--no-report' in sys.argv
-LG_NAME = {'1500': 'スーパー', '2500': 'ハイパー', '0': 'マスター'}
+LG_NAME = {'1500': 'スーパー', '2500': 'ハイパー', '0': 'マスター', '500': 'リトル'}
+# 確定値を書き出すCP上限。'500' はリトルカップ(リーグの環境リストは無く、カップにだけ出る・2026-09-11追加)
+OUT_LGS = ('1500', '2500', '0', '500')
 CAP_LIST = 30   # 報告に並べる上限（超えたら「…他◯件」）
 
 
@@ -133,7 +135,7 @@ def pick(m, a):
 # ---- 生成 ----
 out, origin, rows_of = {}, {}, {}
 stats, mismatch = [], []
-for lg in ('1500', '2500', '0'):
+for lg in OUT_LGS:
     rows = (META.get(lg) or []) + (EXT.get(lg) or [])
     a = ANS.get(lg) or {}
     d, og, cnt = {}, {}, {'ans': 0, 'twin': 0, 'base': 0}
@@ -168,13 +170,13 @@ lines = ['// 環境上位のわざ構成（人が確認した確定値）。pvp-
          '// 形式: リーグ(1500/2500/0) → "ポケモンキー(|s=シャドウ)" → [ノーマル, SP1, SP2]',
          '// ここに載っているポケモンは、環境一覧・パーティ診断・対策さがしをこの構成で計算する',
          'window.META_MOVES = {']
-for i, lg in enumerate(('1500', '2500', '0')):
+for i, lg in enumerate(OUT_LGS):
     lines.append(f' "{lg}": {{')
     items = list(out[lg].items())
     for j, (k, v) in enumerate(items):
         tail = ',' if j < len(items) - 1 else ''
         lines.append(f'  "{k}": {json.dumps(v)}{tail}')
-    lines.append(' }' + (',' if i < 2 else ''))
+    lines.append(' }' + (',' if i < len(OUT_LGS) - 1 else ''))
 lines.append('};')
 
 old_moves_src = read_head('assets/meta_moves.js')

@@ -511,6 +511,661 @@ window.ANSWER_KEY = {
    "BITE",
    "BRINE",
    "SLUDGE_WAVE"
+  ],
+  "sableye_mega": [
+   "SHADOW_CLAW",
+   "FOUL_PLAY",
+   "POWER_GEM"
+  ],
+  "malamar_mega": [
+   "PSYWAVE",
+   "FOUL_PLAY",
+   "SUPER_POWER"
+  ],
+  "aromatisse": [
+   "FAIRY_WIND",
+   "PSYSHOCK",
+   "MOONBLAST"
+  ],
+  "carbink": [
+   "ROCK_THROW",
+   "ROCK_SLIDE",
+   "MOONBLAST"
+  ],
+  "araquanid": [
+   "INFESTATION",
+   "MIRROR_COAT",
+   "WATER_PULSE"
+  ],
+  "araquanid|s": [
+   "INFESTATION",
+   "MIRROR_COAT",
+   "WATER_PULSE"
+  ],
+  "grumpig|s": [
+   "PSYWAVE",
+   "DYNAMIC_PUNCH",
+   "SHADOW_BALL"
+  ],
+  "zweilous": [
+   "DRAGON_BREATH",
+   "BODY_SLAM",
+   "DARK_PULSE"
+  ],
+  "zweilous|s": [
+   "DRAGON_BREATH",
+   "BODY_SLAM",
+   "DARK_PULSE"
+  ],
+  "pangoro": [
+   "KARATE_CHOP",
+   "CLOSE_COMBAT",
+   "NIGHT_SLASH"
+  ],
+  "gligar": [
+   "FURY_CUTTER",
+   "NIGHT_SLASH",
+   "DIG"
+  ],
+  "gligar|s": [
+   "FURY_CUTTER",
+   "NIGHT_SLASH",
+   "DIG"
+  ],
+  "machoke|s": [
+   "KARATE_CHOP",
+   "CROSS_CHOP",
+   "DYNAMIC_PUNCH"
+  ],
+  "lickitung": [
+   "LICK",
+   "BODY_SLAM",
+   "POWER_WHIP"
+  ],
+  "regidrago": [
+   "DRAGON_BREATH",
+   "DRAGON_ENERGY",
+   "VICE_GRIP"
+  ],
+  "drampa": [
+   "DRAGON_BREATH",
+   "SWIFT",
+   "FLY"
+  ],
+  "togedemaru": [
+   "THUNDER_SHOCK",
+   "FELL_STINGER",
+   "WILD_CHARGE"
+  ],
+  "primeape": [
+   "KARATE_CHOP",
+   "RAGE_FIST",
+   "ICE_PUNCH"
+  ],
+  "primeape|s": [
+   "KARATE_CHOP",
+   "RAGE_FIST",
+   "ICE_PUNCH"
+  ],
+  "goodra": [
+   "DRAGON_BREATH",
+   "AQUA_TAIL",
+   "THUNDER_PUNCH"
+  ],
+  "annihilape|s": [
+   "LOW_KICK",
+   "RAGE_FIST",
+   "ICE_PUNCH"
+  ],
+  "annihilape": [
+   "LOW_KICK",
+   "RAGE_FIST",
+   "ICE_PUNCH"
+  ],
+  "miltank": [
+   "ROLLOUT",
+   "BODY_SLAM",
+   "HIGH_HORSEPOWER"
+  ],
+  "bellibolt": [
+   "SUCKER_PUNCH",
+   "ZAP_CANNON",
+   "PARABOLIC_CHARGE"
+  ],
+  "emolga": [
+   "THUNDER_SHOCK",
+   "ACROBATICS",
+   "DISCHARGE"
+  ],
+  "golisopod": [
+   "SHADOW_CLAW",
+   "X_SCISSOR",
+   "AQUA_JET"
+  ],
+  "toucannon|s": [
+   "PECK",
+   "BEAK_BLAST",
+   "DRILL_PECK"
+  ],
+  "toucannon": [
+   "PECK",
+   "BEAK_BLAST",
+   "DRILL_PECK"
+  ],
+  "walrein": [
+   "POWDER_SNOW",
+   "ICICLE_SPEAR",
+   "WATER_PULSE"
+  ],
+  "walrein|s": [
+   "POWDER_SNOW",
+   "ICICLE_SPEAR",
+   "WATER_PULSE"
+  ],
+  "weezing_galarian|s": [
+   "FAIRY_WIND",
+   "SLUDGE",
+   "OVERHEAT"
+  ],
+  "weezing_galarian": [
+   "FAIRY_WIND",
+   "SLUDGE",
+   "OVERHEAT"
+  ],
+  "diggersby|s": [
+   "QUICK_ATTACK",
+   "SCORCHING_SANDS",
+   "FIRE_PUNCH"
+  ],
+  "kommo_o": [
+   "DRAGON_TAIL",
+   "CLANGING_SCALES",
+   "UPPER_HAND"
+  ],
+  "raikou": [
+   "THUNDER_SHOCK",
+   "WILD_CHARGE",
+   "AURA_SPHERE"
+  ],
+  "raikou|s": [
+   "THUNDER_SHOCK",
+   "WILD_CHARGE",
+   "AURA_SPHERE"
+  ],
+  "cradily|s": [
+   "ACID",
+   "ROCK_TOMB",
+   "GRASS_KNOT"
+  ],
+  "metang": [
+   "FURY_CUTTER",
+   "PSYSHOCK",
+   "GYRO_BALL"
+  ],
+  "metang|s": [
+   "FURY_CUTTER",
+   "PSYSHOCK",
+   "GYRO_BALL"
+  ],
+  "lileep": [
+   "ACID",
+   "ANCIENT_POWER",
+   "GRASS_KNOT"
+  ],
+  "lileep|s": [
+   "ACID",
+   "ANCIENT_POWER",
+   "GRASS_KNOT"
+  ],
+  "pachirisu": [
+   "VOLT_SWITCH",
+   "HYPER_FANG",
+   "THUNDER_PUNCH"
+  ],
+  "dubwool": [
+   "TAKE_DOWN",
+   "BODY_SLAM",
+   "WILD_CHARGE"
+  ],
+  "aurorus": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "METEOR_BEAM"
+  ],
+  "aurorus|s": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "METEOR_BEAM"
+  ],
+  "machamp|s": [
+   "KARATE_CHOP",
+   "CROSS_CHOP",
+   "ROCK_SLIDE"
+  ],
+  "machamp": [
+   "KARATE_CHOP",
+   "CROSS_CHOP",
+   "ROCK_SLIDE"
+  ],
+  "charjabug|s": [
+   "VOLT_SWITCH",
+   "X_SCISSOR",
+   "DISCHARGE"
+  ],
+  "venusaur": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "SLUDGE"
+  ],
+  "venusaur|s": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "SLUDGE"
+  ],
+  "marowak": [
+   "MUD_SLAP",
+   "BONE_CLUB",
+   "ROCK_SLIDE"
+  ],
+  "giratina_altered|s": [
+   "DRAGON_BREATH",
+   "SHADOW_FORCE",
+   "ANCIENT_POWER"
+  ],
+  "dudunsparce": [
+   "ROLLOUT",
+   "BODY_SLAM",
+   "DRILL_RUN"
+  ],
+  "hakamo_o": [
+   "DRAGON_TAIL",
+   "BRICK_BREAK",
+   "ROCK_TOMB"
+  ],
+  "spiritomb": [
+   "SUCKER_PUNCH",
+   "ROCK_TOMB",
+   "SHADOW_BALL"
+  ],
+  "crustle|s": [
+   "FURY_CUTTER",
+   "X_SCISSOR",
+   "ROCK_WRECKER"
+  ],
+  "togetic": [
+   "FAIRY_WIND",
+   "HEAT_WAVE",
+   "DRAINING_KISS"
+  ],
+  "runerigus": [
+   "SHADOW_CLAW",
+   "ROCK_TOMB",
+   "BRUTAL_SWING"
+  ],
+  "steelix": [
+   "DRAGON_TAIL",
+   "PSYCHIC_FANGS",
+   "EARTHQUAKE"
+  ],
+  "claydol": [
+   "CONFUSION",
+   "ROCK_TOMB",
+   "EARTH_POWER"
+  ],
+  "golurk": [
+   "ASTONISH",
+   "SHADOW_PUNCH",
+   "DYNAMIC_PUNCH"
+  ],
+  "golurk|s": [
+   "ASTONISH",
+   "SHADOW_PUNCH",
+   "DYNAMIC_PUNCH"
+  ],
+  "tentacruel": [
+   "ACID",
+   "SCALD",
+   "PAYBACK"
+  ],
+  "kecleon": [
+   "SUCKER_PUNCH",
+   "THUNDER_PUNCH",
+   "DYNAMIC_PUNCH"
+  ],
+  "magnezone": [
+   "VOLT_SWITCH",
+   "WILD_CHARGE",
+   "MIRROR_SHOT"
+  ],
+  "gyarados|s": [
+   "DRAGON_BREATH",
+   "AQUA_TAIL",
+   "TWISTER"
+  ],
+  "gyarados": [
+   "DRAGON_BREATH",
+   "AQUA_TAIL",
+   "TWISTER"
+  ],
+  "greninja": [
+   "WATER_SHURIKEN",
+   "HYDRO_CANNON",
+   "BRUTAL_SWING"
+  ],
+  "toedscruel": [
+   "MUD_SHOT",
+   "SEED_BOMB",
+   "EARTH_POWER"
+  ],
+  "dartrix": [
+   "PECK",
+   "BRAVE_BIRD",
+   "ENERGY_BALL"
+  ],
+  "noctowl": [
+   "WING_ATTACK",
+   "SHADOW_BALL",
+   "SKY_ATTACK"
+  ],
+  "electrode_hisuian": [
+   "THUNDER_SHOCK",
+   "WILD_CHARGE",
+   "SWIFT"
+  ],
+  "pidgeot": [
+   "GUST",
+   "FEATHER_DANCE",
+   "HEAT_WAVE"
+  ],
+  "victreebel|s": [
+   "SUCKER_PUNCH",
+   "LEAF_BLADE",
+   "ACID_SPRAY"
+  ],
+  "victreebel": [
+   "SUCKER_PUNCH",
+   "LEAF_BLADE",
+   "ACID_SPRAY"
+  ],
+  "serperior": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "AERIAL_ACE"
+  ],
+  "blaziken|s": [
+   "EMBER",
+   "AURA_SPHERE",
+   "BLAZE_KICK"
+  ],
+  "blaziken": [
+   "EMBER",
+   "AURA_SPHERE",
+   "BLAZE_KICK"
+  ],
+  "electivire|s": [
+   "THUNDER_SHOCK",
+   "ICE_PUNCH",
+   "WILD_CHARGE"
+  ],
+  "electivire": [
+   "THUNDER_SHOCK",
+   "ICE_PUNCH",
+   "WILD_CHARGE"
+  ],
+  "tinkatuff": [
+   "FAIRY_WIND",
+   "PLAY_ROUGH",
+   "FLASH_CANNON"
+  ],
+  "arctibax": [
+   "DRAGON_BREATH",
+   "AVALANCHE",
+   "DRAGON_CLAW"
+  ],
+  "drifblim": [
+   "HEX",
+   "ICY_WIND",
+   "SHADOW_BALL"
+  ],
+  "drifblim|s": [
+   "HEX",
+   "ICY_WIND",
+   "SHADOW_BALL"
+  ],
+  "castform": [
+   "HEX",
+   "WEATHER_BALL_ROCK",
+   "ENERGY_BALL"
+  ],
+  "ursaring|s": [
+   "SHADOW_CLAW",
+   "SWIFT",
+   "CLOSE_COMBAT"
+  ],
+  "ursaring": [
+   "SHADOW_CLAW",
+   "SWIFT",
+   "CLOSE_COMBAT"
+  ],
+  "bombirdier": [
+   "SUCKER_PUNCH",
+   "FLY",
+   "DRILL_RUN"
+  ],
+  "dodrio": [
+   "PECK",
+   "DRILL_PECK",
+   "TRAILBLAZE"
+  ],
+  "sandslash_alolan": [
+   "SHADOW_CLAW",
+   "ICE_PUNCH",
+   "DRILL_RUN"
+  ],
+  "sandslash_alolan|s": [
+   "SHADOW_CLAW",
+   "ICE_PUNCH",
+   "DRILL_RUN"
+  ],
+  "samurott|s": [
+   "FURY_CUTTER",
+   "HYDRO_CANNON",
+   "MEGAHORN"
+  ],
+  "marowak_alolan": [
+   "HEX",
+   "BONE_CLUB",
+   "SHADOW_BONE"
+  ],
+  "dewott": [
+   "FURY_CUTTER",
+   "AQUA_TAIL",
+   "X_SCISSOR"
+  ],
+  "dewott|s": [
+   "FURY_CUTTER",
+   "AQUA_TAIL",
+   "X_SCISSOR"
+  ],
+  "qwilfish_hisuian": [
+   "POISON_STING",
+   "AQUA_TAIL",
+   "SHADOW_BALL"
+  ],
+  "armarouge": [
+   "INCINERATE",
+   "PSYSHOCK",
+   "HEAT_WAVE"
+  ],
+  "blastoise|s": [
+   "ROLLOUT",
+   "HYDRO_CANNON",
+   "ICE_BEAM"
+  ],
+  "klefki": [
+   "ASTONISH",
+   "FOUL_PLAY",
+   "DRAINING_KISS"
+  ],
+  "swalot": [
+   "MUD_SHOT",
+   "SLUDGE",
+   "ICE_BEAM"
+  ],
+  "lanturn": [
+   "SPARK",
+   "SURF",
+   "THUNDERBOLT"
+  ],
+  "ampharos": [
+   "VOLT_SWITCH",
+   "BRUTAL_SWING",
+   "TRAILBLAZE"
+  ],
+  "gliscor|s": [
+   "FURY_CUTTER",
+   "ACROBATICS",
+   "SAND_TOMB"
+  ],
+  "gliscor": [
+   "FURY_CUTTER",
+   "ACROBATICS",
+   "SAND_TOMB"
+  ],
+  "qwilfish|s": [
+   "POISON_STING",
+   "AQUA_TAIL",
+   "SHADOW_BALL"
+  ],
+  "qwilfish": [
+   "POISON_STING",
+   "AQUA_TAIL",
+   "SHADOW_BALL"
+  ],
+  "mightyena|s": [
+   "SUCKER_PUNCH",
+   "CRUNCH",
+   "POISON_FANG"
+  ],
+  "vespiquen": [
+   "FURY_CUTTER",
+   "X_SCISSOR",
+   "POWER_GEM"
+  ],
+  "decidueye_hisuian": [
+   "PSYCHO_CUT",
+   "ENERGY_BALL",
+   "AURA_SPHERE"
+  ],
+  "murkrow|s": [
+   "PECK",
+   "DRILL_PECK",
+   "FOUL_PLAY"
+  ],
+  "whiscash|s": [
+   "MUD_SHOT",
+   "MUD_BOMB",
+   "SCALD"
+  ],
+  "barbaracle": [
+   "FURY_CUTTER",
+   "CROSS_CHOP",
+   "STONE_EDGE"
+  ],
+  "nidoqueen": [
+   "MUD_SLAP",
+   "POISON_FANG",
+   "STONE_EDGE"
+  ],
+  "lumineon": [
+   "GUST",
+   "AQUA_TAIL",
+   "SILVER_WIND"
+  ],
+  "palkia|s": [
+   "DRAGON_BREATH",
+   "AQUA_TAIL",
+   "DRACO_METEOR"
+  ],
+  "lokix": [
+   "SUCKER_PUNCH",
+   "X_SCISSOR",
+   "TRAILBLAZE"
+  ],
+  "poliwrath": [
+   "MUD_SHOT",
+   "ICY_WIND",
+   "DYNAMIC_PUNCH"
+  ],
+  "urshifu_single_strike": [
+   "SUCKER_PUNCH",
+   "PAYBACK",
+   "DYNAMIC_PUNCH"
+  ],
+  "amoonguss": [
+   "ASTONISH",
+   "GRASS_KNOT",
+   "FOUL_PLAY"
+  ],
+  "raichu": [
+   "THUNDER_SHOCK",
+   "VOLT_TACKLE",
+   "TRAILBLAZE"
+  ],
+  "dragonite": [
+   "DRAGON_BREATH",
+   "THUNDER_PUNCH",
+   "SUPER_POWER"
+  ],
+  "quaquaval": [
+   "LOW_KICK",
+   "CLOSE_COMBAT",
+   "HYDRO_CANNON"
+  ],
+  "wormadam_trash": [
+   "SUCKER_PUNCH",
+   "BUG_BUZZ",
+   "IRON_HEAD"
+  ],
+  "leavanny": [
+   "SHADOW_CLAW",
+   "LEAF_BLADE",
+   "X_SCISSOR"
+  ],
+  "linoone": [
+   "SHADOW_CLAW",
+   "SWIFT",
+   "GRASS_KNOT"
+  ],
+  "donphan|s": [
+   "MUD_SLAP",
+   "BODY_SLAM",
+   "TRAILBLAZE"
+  ],
+  "whimsicott": [
+   "FAIRY_WIND",
+   "SEED_BOMB",
+   "MOONBLAST"
+  ],
+  "abomasnow": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "ENERGY_BALL"
+  ],
+  "ledian": [
+   "ROLLOUT",
+   "DYNAMIC_PUNCH",
+   "ACROBATICS"
+  ],
+  "dragalge": [
+   "DRAGON_TAIL",
+   "AQUA_TAIL",
+   "SLUDGE_BOMB"
+  ],
+  "hippowdon": [
+   "SAND_ATTACK",
+   "WEATHER_BALL_ROCK",
+   "SCORCHING_SANDS"
   ]
  },
  "2500": {
@@ -1023,6 +1678,171 @@ window.ANSWER_KEY = {
    "FURY_CUTTER",
    "HYDRO_CANNON",
    "MEGAHORN"
+  ],
+  "malamar_mega": [
+   "PSYWAVE",
+   "FOUL_PLAY",
+   "SUPER_POWER"
+  ],
+  "drapion|s": [
+   "POISON_STING",
+   "AQUA_TAIL",
+   "CRUNCH"
+  ],
+  "raichu_mega_x": [
+   "VOLT_SWITCH",
+   "BRICK_BREAK",
+   "TRAILBLAZE"
+  ],
+  "grumpig": [
+   "PSYWAVE",
+   "DYNAMIC_PUNCH",
+   "SHADOW_BALL"
+  ],
+  "grumpig|s": [
+   "PSYWAVE",
+   "DYNAMIC_PUNCH",
+   "SHADOW_BALL"
+  ],
+  "miltank": [
+   "ROLLOUT",
+   "BODY_SLAM",
+   "HIGH_HORSEPOWER"
+  ],
+  "venusaur": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "SLUDGE"
+  ],
+  "spiritomb": [
+   "SUCKER_PUNCH",
+   "ROCK_TOMB",
+   "SHADOW_BALL"
+  ],
+  "crustle|s": [
+   "FURY_CUTTER",
+   "X_SCISSOR",
+   "ROCK_WRECKER"
+  ],
+  "magnezone": [
+   "VOLT_SWITCH",
+   "WILD_CHARGE",
+   "MIRROR_SHOT"
+  ],
+  "greninja|s": [
+   "WATER_SHURIKEN",
+   "HYDRO_CANNON",
+   "BRUTAL_SWING"
+  ],
+  "toedscruel": [
+   "MUD_SHOT",
+   "SEED_BOMB",
+   "EARTH_POWER"
+  ],
+  "bombirdier": [
+   "SUCKER_PUNCH",
+   "FLY",
+   "DRILL_RUN"
+  ],
+  "nidoqueen": [
+   "MUD_SLAP",
+   "POISON_FANG",
+   "STONE_EDGE"
+  ],
+  "amoonguss|s": [
+   "ASTONISH",
+   "GRASS_KNOT",
+   "FOUL_PLAY"
+  ],
+  "amoonguss": [
+   "ASTONISH",
+   "GRASS_KNOT",
+   "FOUL_PLAY"
+  ],
+  "abomasnow|s": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "ENERGY_BALL"
+  ],
+  "mandibuzz": [
+   "SNARL",
+   "FOUL_PLAY",
+   "SHADOW_BALL"
+  ],
+  "roserade": [
+   "POISON_STING",
+   "WEATHER_BALL_FIRE",
+   "GRASS_KNOT"
+  ],
+  "scizor": [
+   "BULLET_PUNCH",
+   "NIGHT_SLASH",
+   "TRAILBLAZE"
+  ],
+  "hydreigon": [
+   "DRAGON_BREATH",
+   "BRUTAL_SWING",
+   "FLY"
+  ],
+  "trevenant|s": [
+   "SHADOW_CLAW",
+   "SHADOW_BALL",
+   "SEED_BOMB"
+  ],
+  "trevenant": [
+   "SHADOW_CLAW",
+   "SHADOW_BALL",
+   "SEED_BOMB"
+  ],
+  "ferrothorn": [
+   "BULLET_SEED",
+   "POWER_WHIP",
+   "THUNDER"
+  ],
+  "umbreon": [
+   "SNARL",
+   "FOUL_PLAY",
+   "LAST_RESORT"
+  ],
+  "gogoat": [
+   "VINE_WHIP",
+   "LEAF_BLADE",
+   "ROCK_SLIDE"
+  ],
+  "doublade": [
+   "SHADOW_CLAW",
+   "SACRED_SWORD",
+   "IRON_HEAD"
+  ],
+  "grimmsnarl": [
+   "SUCKER_PUNCH",
+   "FOUL_PLAY",
+   "DRAINING_KISS"
+  ],
+  "gourgeist_super": [
+   "INCINERATE",
+   "SHADOW_BALL",
+   "SEED_BOMB"
+  ],
+  "pawmot": [
+   "THUNDER_SHOCK",
+   "BRICK_BREAK",
+   "WILD_CHARGE"
+  ],
+  "gourgeist_large": [
+   "INCINERATE",
+   "SHADOW_BALL",
+   "SEED_BOMB"
+  ],
+  "gourgeist_average": [
+   "INCINERATE",
+   "SHADOW_BALL",
+   "SEED_BOMB"
+  ],
+  "meganium": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "EARTHQUAKE"
   ]
  },
  "0": {
@@ -1530,6 +2350,1197 @@ window.ANSWER_KEY = {
    "POWDER_SNOW",
    "ROCK_SLIDE",
    "ICY_WIND"
+  ],
+  "raichu_mega_x": [
+   "VOLT_SWITCH",
+   "BRICK_BREAK",
+   "TRAILBLAZE"
+  ],
+  "kyogre_primal": [
+   "WATERFALL",
+   "AVALANCHE",
+   "THUNDER"
+  ],
+  "mewtwo_mega_x": [
+   "COUNTER",
+   "PSYSTRIKE",
+   "SHADOW_BALL"
+  ],
+  "dragonite_mega": [
+   "DRAGON_BREATH",
+   "THUNDER_PUNCH",
+   "SUPER_POWER"
+  ],
+  "gyarados_mega": [
+   "DRAGON_BREATH",
+   "AQUA_TAIL",
+   "TWISTER"
+  ],
+  "rayquaza_mega": [
+   "DRAGON_TAIL",
+   "BREAKING_SWIPE",
+   "DRAGON_ASCENT"
+  ],
+  "garchomp_mega": [
+   "DRAGON_TAIL",
+   "EARTH_POWER",
+   "TWISTER"
+  ],
+  "groudon_primal": [
+   "DRAGON_TAIL",
+   "PRECIPICE_BLADES",
+   "FIRE_PUNCH"
+  ],
+  "tyranitar_mega": [
+   "DRAGON_BREATH",
+   "BRUTAL_SWING",
+   "STONE_EDGE"
+  ],
+  "metagross_mega": [
+   "SHADOW_CLAW",
+   "METEOR_MASH",
+   "EARTHQUAKE"
+  ],
+  "latias_mega": [
+   "DRAGON_BREATH",
+   "AURA_SPHERE",
+   "MIST_BALL"
+  ],
+  "latios_mega": [
+   "DRAGON_BREATH",
+   "AURA_SPHERE",
+   "LUSTER_PURGE"
+  ],
+  "heracross_mega": [
+   "FURY_CUTTER",
+   "ROCK_TOMB",
+   "UPPER_HAND"
+  ],
+  "salamence_mega": [
+   "DRAGON_TAIL",
+   "FLY",
+   "BRUTAL_SWING"
+  ],
+  "swampert_mega": [
+   "MUD_SHOT",
+   "HYDRO_CANNON",
+   "EARTHQUAKE"
+  ],
+  "chesnaught_mega": [
+   "LOW_KICK",
+   "THUNDER_PUNCH",
+   "SUPER_POWER"
+  ],
+  "kingambit": [
+   "METAL_SOUND",
+   "FOUL_PLAY",
+   "IRON_HEAD"
+  ],
+  "scizor_mega": [
+   "FURY_CUTTER",
+   "NIGHT_SLASH",
+   "TRAILBLAZE"
+  ],
+  "gengar_mega": [
+   "SHADOW_CLAW",
+   "SHADOW_PUNCH",
+   "SHADOW_BALL"
+  ],
+  "charizard_mega_y": [
+   "DRAGON_BREATH",
+   "BLAST_BURN",
+   "AIR_CUTTER"
+  ],
+  "aggron_mega": [
+   "DRAGON_TAIL",
+   "METEOR_BEAM",
+   "BRICK_BREAK"
+  ],
+  "gallade_mega": [
+   "PSYCHO_CUT",
+   "SACRED_SWORD",
+   "LEAF_BLADE"
+  ],
+  "delphox_mega": [
+   "SCRATCH",
+   "BLAST_BURN",
+   "PSYSHOCK"
+  ],
+  "ampharos_mega": [
+   "VOLT_SWITCH",
+   "BRUTAL_SWING",
+   "TRAILBLAZE"
+  ],
+  "gardevoir_mega": [
+   "CONFUSION",
+   "TRIPLE_AXEL",
+   "SHADOW_BALL"
+  ],
+  "starmie_mega": [
+   "PSYWAVE",
+   "ICE_BEAM",
+   "POWER_GEM"
+  ],
+  "aerodactyl_mega": [
+   "DRAGON_BREATH",
+   "ROCK_SLIDE",
+   "EARTH_POWER"
+  ],
+  "lucario_mega": [
+   "FORCE_PALM",
+   "METEOR_MASH",
+   "AURA_SPHERE"
+  ],
+  "blastoise_mega": [
+   "ROLLOUT",
+   "HYDRO_CANNON",
+   "ICE_BEAM"
+  ],
+  "greninja_mega": [
+   "WATER_SHURIKEN",
+   "BRUTAL_SWING",
+   "AERIAL_ACE"
+  ],
+  "pinsir_mega": [
+   "FURY_CUTTER",
+   "CLOSE_COMBAT",
+   "X_SCISSOR"
+  ],
+  "slowbro_mega": [
+   "CONFUSION",
+   "SURF",
+   "DRAIN_PUNCH"
+  ],
+  "raichu_mega_y": [
+   "VOLT_SWITCH",
+   "BRICK_BREAK",
+   "TRAILBLAZE"
+  ],
+  "sceptile_mega": [
+   "FURY_CUTTER",
+   "LEAF_BLADE",
+   "DRAGON_CLAW"
+  ],
+  "abomasnow_mega": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "ENERGY_BALL"
+  ],
+  "blaziken_mega": [
+   "EMBER",
+   "BLAZE_KICK",
+   "AURA_SPHERE"
+  ],
+  "charizard_mega_x": [
+   "DRAGON_BREATH",
+   "BLAST_BURN",
+   "AIR_CUTTER"
+  ],
+  "alakazam_mega": [
+   "PSYCHO_CUT",
+   "SHADOW_BALL",
+   "FIRE_PUNCH"
+  ],
+  "enamorus_incarnate": [
+   "FAIRY_WIND",
+   "FLY",
+   "DAZZLING_GLEAM"
+  ],
+  "walrein": [
+   "POWDER_SNOW",
+   "ICICLE_SPEAR",
+   "WATER_PULSE"
+  ],
+  "walrein|s": [
+   "POWDER_SNOW",
+   "ICICLE_SPEAR",
+   "WATER_PULSE"
+  ],
+  "aurorus|s": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "METEOR_BEAM"
+  ],
+  "machamp|s": [
+   "KARATE_CHOP",
+   "CROSS_CHOP",
+   "ROCK_SLIDE"
+  ],
+  "machamp": [
+   "KARATE_CHOP",
+   "CROSS_CHOP",
+   "ROCK_SLIDE"
+  ],
+  "venusaur": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "SLUDGE"
+  ],
+  "venusaur|s": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "SLUDGE"
+  ],
+  "dudunsparce": [
+   "ROLLOUT",
+   "BODY_SLAM",
+   "DRILL_RUN"
+  ],
+  "magnezone|s": [
+   "VOLT_SWITCH",
+   "WILD_CHARGE",
+   "MIRROR_SHOT"
+  ],
+  "magnezone": [
+   "VOLT_SWITCH",
+   "WILD_CHARGE",
+   "MIRROR_SHOT"
+  ],
+  "electivire": [
+   "THUNDER_SHOCK",
+   "ICE_PUNCH",
+   "WILD_CHARGE"
+  ],
+  "electivire|s": [
+   "THUNDER_SHOCK",
+   "ICE_PUNCH",
+   "WILD_CHARGE"
+  ],
+  "samurott": [
+   "FURY_CUTTER",
+   "HYDRO_CANNON",
+   "MEGAHORN"
+  ],
+  "armarouge": [
+   "INCINERATE",
+   "PSYSHOCK",
+   "HEAT_WAVE"
+  ],
+  "ampharos": [
+   "VOLT_SWITCH",
+   "BRUTAL_SWING",
+   "TRAILBLAZE"
+  ],
+  "ampharos|s": [
+   "VOLT_SWITCH",
+   "BRUTAL_SWING",
+   "TRAILBLAZE"
+  ],
+  "decidueye_hisuian": [
+   "PSYCHO_CUT",
+   "ENERGY_BALL",
+   "AURA_SPHERE"
+  ],
+  "donphan": [
+   "MUD_SLAP",
+   "BODY_SLAM",
+   "TRAILBLAZE"
+  ],
+  "roserade": [
+   "POISON_STING",
+   "WEATHER_BALL_FIRE",
+   "GRASS_KNOT"
+  ],
+  "scizor|s": [
+   "BULLET_PUNCH",
+   "NIGHT_SLASH",
+   "TRAILBLAZE"
+  ],
+  "scizor": [
+   "BULLET_PUNCH",
+   "NIGHT_SLASH",
+   "TRAILBLAZE"
+  ],
+  "gogoat": [
+   "VINE_WHIP",
+   "LEAF_BLADE",
+   "ROCK_SLIDE"
+  ],
+  "gourgeist_super": [
+   "INCINERATE",
+   "SHADOW_BALL",
+   "SEED_BOMB"
+  ],
+  "gourgeist_large": [
+   "INCINERATE",
+   "SHADOW_BALL",
+   "SEED_BOMB"
+  ],
+  "feraligatr": [
+   "SHADOW_CLAW",
+   "HYDRO_CANNON",
+   "ICE_BEAM"
+  ],
+  "feraligatr|s": [
+   "SHADOW_CLAW",
+   "HYDRO_CANNON",
+   "ICE_BEAM"
+  ],
+  "milotic|s": [
+   "DRAGON_TAIL",
+   "AQUA_TAIL",
+   "BLIZZARD"
+  ],
+  "milotic": [
+   "DRAGON_TAIL",
+   "AQUA_TAIL",
+   "BLIZZARD"
+  ],
+  "empoleon|s": [
+   "METAL_SOUND",
+   "HYDRO_CANNON",
+   "DRILL_PECK"
+  ],
+  "empoleon": [
+   "METAL_SOUND",
+   "HYDRO_CANNON",
+   "DRILL_PECK"
+  ],
+  "cetitan": [
+   "POWDER_SNOW",
+   "ICICLE_SPEAR",
+   "SUPER_POWER"
+  ],
+  "zarude": [
+   "VINE_WHIP",
+   "DARK_PULSE",
+   "ENERGY_BALL"
+  ],
+  "snorlax|s": [
+   "PSYWAVE",
+   "BODY_SLAM",
+   "SUPER_POWER"
+  ],
+  "snorlax": [
+   "PSYWAVE",
+   "BODY_SLAM",
+   "SUPER_POWER"
+  ],
+  "salamence": [
+   "DRAGON_TAIL",
+   "BRUTAL_SWING",
+   "FLY"
+  ],
+  "lapras|s": [
+   "PSYWAVE",
+   "SPARKLING_ARIA",
+   "ICE_BEAM"
+  ],
+  "lapras": [
+   "PSYWAVE",
+   "SPARKLING_ARIA",
+   "ICE_BEAM"
+  ],
+  "buzzwole": [
+   "COUNTER",
+   "SUPER_POWER",
+   "LUNGE"
+  ],
+  "swampert": [
+   "MUD_SHOT",
+   "HYDRO_CANNON",
+   "EARTHQUAKE"
+  ],
+  "swampert|s": [
+   "MUD_SHOT",
+   "HYDRO_CANNON",
+   "EARTHQUAKE"
+  ],
+  "ursaluna|s": [
+   "SCRATCH",
+   "SWIFT",
+   "HIGH_HORSEPOWER"
+  ],
+  "ursaluna": [
+   "SCRATCH",
+   "SWIFT",
+   "HIGH_HORSEPOWER"
+  ],
+  "mamoswine|s": [
+   "POWDER_SNOW",
+   "ICICLE_SPEAR",
+   "HIGH_HORSEPOWER"
+  ],
+  "mamoswine": [
+   "POWDER_SNOW",
+   "ICICLE_SPEAR",
+   "HIGH_HORSEPOWER"
+  ],
+  "avalugg": [
+   "BITE",
+   "AVALANCHE",
+   "EARTHQUAKE"
+  ],
+  "genesect_douse": [
+   "FURY_CUTTER",
+   "TECHNO_BLAST_DOUSE",
+   "MAGNET_BOMB"
+  ],
+  "genesect_burn": [
+   "FURY_CUTTER",
+   "TECHNO_BLAST_BURN",
+   "MAGNET_BOMB"
+  ],
+  "genesect_shock": [
+   "FURY_CUTTER",
+   "MAGNET_BOMB",
+   "TECHNO_BLAST_SHOCK"
+  ],
+  "zapdos_galarian": [
+   "LOW_KICK",
+   "FLY",
+   "CLOSE_COMBAT"
+  ],
+  "vaporeon": [
+   "WATER_GUN",
+   "AQUA_TAIL",
+   "LAST_RESORT"
+  ],
+  "torterra": [
+   "BITE",
+   "FRENZY_PLANT",
+   "STONE_EDGE"
+  ],
+  "torterra|s": [
+   "BITE",
+   "FRENZY_PLANT",
+   "STONE_EDGE"
+  ],
+  "regirock": [
+   "LOCK_ON",
+   "STONE_EDGE",
+   "FOCUS_BLAST"
+  ],
+  "mew": [
+   "SHADOW_CLAW",
+   "SURF",
+   "WILD_CHARGE"
+  ],
+  "virizion": [
+   "DOUBLE_KICK",
+   "LEAF_BLADE",
+   "SACRED_SWORD"
+  ],
+  "tangrowth": [
+   "VINE_WHIP",
+   "POWER_WHIP",
+   "ROCK_SLIDE"
+  ],
+  "tangrowth|s": [
+   "VINE_WHIP",
+   "POWER_WHIP",
+   "ROCK_SLIDE"
+  ],
+  "cobalion": [
+   "DOUBLE_KICK",
+   "SACRED_SWORD",
+   "STONE_EDGE"
+  ],
+  "rillaboom": [
+   "SCRATCH",
+   "DRUM_BEATING",
+   "EARTH_POWER"
+  ],
+  "excadrill": [
+   "MUD_SHOT",
+   "DRILL_RUN",
+   "ROCK_SLIDE"
+  ],
+  "excadrill|s": [
+   "MUD_SHOT",
+   "DRILL_RUN",
+   "ROCK_SLIDE"
+  ],
+  "skeledirge": [
+   "INCINERATE",
+   "SHADOW_BALL",
+   "DISARMING_VOICE"
+  ],
+  "genesect": [
+   "FURY_CUTTER",
+   "MAGNET_BOMB",
+   "TECHNO_BLAST_NORMAL"
+  ],
+  "terrakion": [
+   "DOUBLE_KICK",
+   "SACRED_SWORD",
+   "ROCK_SLIDE"
+  ],
+  "articuno": [
+   "POWDER_SNOW",
+   "ICY_WIND",
+   "HURRICANE"
+  ],
+  "articuno|s": [
+   "POWDER_SNOW",
+   "ICY_WIND",
+   "HURRICANE"
+  ],
+  "nihilego": [
+   "ACID",
+   "ROCK_SLIDE",
+   "SLUDGE_BOMB"
+  ],
+  "chesnaught": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "SUPER_POWER"
+  ],
+  "chesnaught|s": [
+   "VINE_WHIP",
+   "FRENZY_PLANT",
+   "SUPER_POWER"
+  ],
+  "gallade|s": [
+   "PSYCHO_CUT",
+   "LEAF_BLADE",
+   "SACRED_SWORD"
+  ],
+  "gallade": [
+   "PSYCHO_CUT",
+   "LEAF_BLADE",
+   "SACRED_SWORD"
+  ],
+  "darkrai": [
+   "SUCKER_PUNCH",
+   "FOUL_PLAY",
+   "SLUDGE_BOMB"
+  ],
+  "dhelmise": [
+   "SHADOW_CLAW",
+   "BRUTAL_SWING",
+   "POWER_WHIP"
+  ],
+  "registeel": [
+   "LOCK_ON",
+   "FOCUS_BLAST",
+   "ZAP_CANNON"
+  ],
+  "sinistcha": [
+   "ASTONISH",
+   "SHADOW_BALL",
+   "ENERGY_BALL"
+  ],
+  "gardevoir|s": [
+   "CONFUSION",
+   "TRIPLE_AXEL",
+   "SHADOW_BALL"
+  ],
+  "dragapult": [
+   "DRAGON_TAIL",
+   "SHADOW_BALL",
+   "BREAKING_SWIPE"
+  ],
+  "sneasler": [
+   "SHADOW_CLAW",
+   "CLOSE_COMBAT",
+   "X_SCISSOR"
+  ],
+  "decidueye": [
+   "ASTONISH",
+   "FRENZY_PLANT",
+   "SPIRIT_SHACKLE"
+  ],
+  "moltres": [
+   "WING_ATTACK",
+   "FLY",
+   "HEAT_WAVE"
+  ],
+  "moltres|s": [
+   "WING_ATTACK",
+   "FLY",
+   "HEAT_WAVE"
+  ],
+  "gigalith": [
+   "LOCK_ON",
+   "SUPER_POWER",
+   "METEOR_BEAM"
+  ],
+  "hydrapple": [
+   "DRAGON_TAIL",
+   "SEED_BOMB",
+   "OUTRAGE"
+  ],
+  "escavalier": [
+   "COUNTER",
+   "DRILL_RUN",
+   "MEGAHORN"
+  ],
+  "vikavolt|s": [
+   "VOLT_SWITCH",
+   "X_SCISSOR",
+   "FLY"
+  ],
+  "vikavolt": [
+   "VOLT_SWITCH",
+   "X_SCISSOR",
+   "FLY"
+  ],
+  "weavile|s": [
+   "SNARL",
+   "AVALANCHE",
+   "FOUL_PLAY"
+  ],
+  "weavile": [
+   "SNARL",
+   "AVALANCHE",
+   "FOUL_PLAY"
+  ],
+  "ceruledge": [
+   "INCINERATE",
+   "SHADOW_BALL",
+   "HEAT_WAVE"
+  ],
+  "haxorus|s": [
+   "DRAGON_TAIL",
+   "SURF",
+   "NIGHT_SLASH"
+  ],
+  "haxorus": [
+   "DRAGON_TAIL",
+   "SURF",
+   "NIGHT_SLASH"
+  ],
+  "overqwil": [
+   "POISON_STING",
+   "AQUA_TAIL",
+   "SHADOW_BALL"
+  ],
+  "krookodile": [
+   "SNARL",
+   "CRUNCH",
+   "EARTHQUAKE"
+  ],
+  "heracross": [
+   "FURY_CUTTER",
+   "UPPER_HAND",
+   "ROCK_TOMB"
+  ],
+  "cresselia": [
+   "CONFUSION",
+   "GRASS_KNOT",
+   "MOONBLAST"
+  ],
+  "beartic": [
+   "POWDER_SNOW",
+   "ICE_PUNCH",
+   "SURF"
+  ],
+  "entei": [
+   "FIRE_SPIN",
+   "FLAME_CHARGE",
+   "SCORCHING_SANDS"
+  ],
+  "entei|s": [
+   "FIRE_SPIN",
+   "FLAME_CHARGE",
+   "SCORCHING_SANDS"
+  ],
+  "bewear": [
+   "SHADOW_CLAW",
+   "SUPER_POWER",
+   "PAYBACK"
+  ]
+ },
+ "500": {
+  "gligar": [
+   "FURY_CUTTER",
+   "NIGHT_SLASH",
+   "DIG"
+  ],
+  "gligar|s": [
+   "FURY_CUTTER",
+   "NIGHT_SLASH",
+   "DIG"
+  ],
+  "lickitung": [
+   "LICK",
+   "BODY_SLAM",
+   "POWER_WHIP"
+  ],
+  "lileep": [
+   "ACID",
+   "ANCIENT_POWER",
+   "GRASS_KNOT"
+  ],
+  "qwilfish_hisuian": [
+   "POISON_STING",
+   "AQUA_TAIL",
+   "SHADOW_BALL"
+  ],
+  "bronzor": [
+   "CONFUSION",
+   "PSYSHOCK",
+   "PAYBACK"
+  ],
+  "wynaut": [
+   "COUNTER",
+   "MIRROR_COAT"
+  ],
+  "seel": [
+   "LICK",
+   "AQUA_TAIL",
+   "ICY_WIND"
+  ],
+  "zigzagoon_galarian": [
+   "TAKE_DOWN",
+   "SWIFT",
+   "DIG"
+  ],
+  "vullaby": [
+   "FEINT_ATTACK",
+   "BRAVE_BIRD",
+   "FOUL_PLAY"
+  ],
+  "ducklett": [
+   "WING_ATTACK",
+   "BUBBLE_BEAM",
+   "BRAVE_BIRD"
+  ],
+  "ducklett|s": [
+   "WING_ATTACK",
+   "BUBBLE_BEAM",
+   "BRAVE_BIRD"
+  ],
+  "deino": [
+   "DRAGON_BREATH",
+   "BODY_SLAM",
+   "CRUNCH"
+  ],
+  "wooper|s": [
+   "MUD_SHOT",
+   "BODY_SLAM",
+   "MUD_BOMB"
+  ],
+  "wooper": [
+   "MUD_SHOT",
+   "BODY_SLAM",
+   "MUD_BOMB"
+  ],
+  "barboach|s": [
+   "MUD_SHOT",
+   "MUD_BOMB",
+   "AQUA_TAIL"
+  ],
+  "barboach": [
+   "MUD_SHOT",
+   "MUD_BOMB",
+   "AQUA_TAIL"
+  ],
+  "stunky|s": [
+   "BITE",
+   "TRAILBLAZE",
+   "SLUDGE_BOMB"
+  ],
+  "stunky": [
+   "BITE",
+   "TRAILBLAZE",
+   "SLUDGE_BOMB"
+  ],
+  "vulpix_alolan": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "DARK_PULSE"
+  ],
+  "vulpix_alolan|s": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "DARK_PULSE"
+  ],
+  "cubone|s": [
+   "MUD_SLAP",
+   "BONE_CLUB",
+   "DIG"
+  ],
+  "cubone": [
+   "MUD_SLAP",
+   "BONE_CLUB",
+   "DIG"
+  ],
+  "pawniard": [
+   "FURY_CUTTER",
+   "NIGHT_SLASH",
+   "IRON_HEAD"
+  ],
+  "eevee": [
+   "QUICK_ATTACK",
+   "BODY_SLAM",
+   "DIG"
+  ],
+  "wooper_paldean": [
+   "POISON_JAB",
+   "BODY_SLAM",
+   "DIG"
+  ],
+  "ledyba|s": [
+   "BUG_BITE",
+   "SWIFT",
+   "SILVER_WIND"
+  ],
+  "ledyba": [
+   "BUG_BITE",
+   "SWIFT",
+   "SILVER_WIND"
+  ],
+  "wailmer": [
+   "ROLLOUT",
+   "BODY_SLAM",
+   "SCALD"
+  ],
+  "wailmer|s": [
+   "ROLLOUT",
+   "BODY_SLAM",
+   "SCALD"
+  ],
+  "purrloin|s": [
+   "SUCKER_PUNCH",
+   "NIGHT_SLASH",
+   "PLAY_ROUGH"
+  ],
+  "purrloin": [
+   "SUCKER_PUNCH",
+   "NIGHT_SLASH",
+   "PLAY_ROUGH"
+  ],
+  "dratini|s": [
+   "DRAGON_BREATH",
+   "AQUA_TAIL",
+   "TWISTER"
+  ],
+  "dratini": [
+   "DRAGON_BREATH",
+   "AQUA_TAIL",
+   "TWISTER"
+  ],
+  "golett|s": [
+   "MUD_SLAP",
+   "SHADOW_PUNCH",
+   "BRICK_BREAK"
+  ],
+  "golett": [
+   "MUD_SLAP",
+   "SHADOW_PUNCH",
+   "BRICK_BREAK"
+  ],
+  "greavard": [
+   "BITE",
+   "PSYCHIC_FANGS",
+   "SHADOW_BALL"
+  ],
+  "drifloon|s": [
+   "HEX",
+   "ICY_WIND",
+   "SHADOW_BALL"
+  ],
+  "drifloon": [
+   "HEX",
+   "ICY_WIND",
+   "SHADOW_BALL"
+  ],
+  "riolu": [
+   "COUNTER",
+   "THUNDER_PUNCH",
+   "BLAZE_KICK"
+  ],
+  "shelmet": [
+   "INFESTATION",
+   "BODY_SLAM",
+   "BUG_BUZZ"
+  ],
+  "igglybuff": [
+   "FEINT_ATTACK",
+   "BODY_SLAM",
+   "SHADOW_BALL"
+  ],
+  "amaura": [
+   "POWDER_SNOW",
+   "WEATHER_BALL_ICE",
+   "ANCIENT_POWER"
+  ],
+  "frigibax": [
+   "DRAGON_BREATH",
+   "AVALANCHE",
+   "DRAGON_CLAW"
+  ],
+  "fletchling": [
+   "QUICK_ATTACK",
+   "FLY",
+   "HEAT_WAVE"
+  ],
+  "vulpix|s": [
+   "QUICK_ATTACK",
+   "WEATHER_BALL_FIRE",
+   "BODY_SLAM"
+  ],
+  "vulpix": [
+   "QUICK_ATTACK",
+   "WEATHER_BALL_FIRE",
+   "BODY_SLAM"
+  ],
+  "rattata|s": [
+   "QUICK_ATTACK",
+   "BODY_SLAM",
+   "DIG"
+  ],
+  "rattata": [
+   "QUICK_ATTACK",
+   "BODY_SLAM",
+   "DIG"
+  ],
+  "onix|s": [
+   "ROCK_THROW",
+   "ROCK_SLIDE",
+   "SAND_TOMB"
+  ],
+  "onix": [
+   "ROCK_THROW",
+   "ROCK_SLIDE",
+   "SAND_TOMB"
+  ],
+  "chikorita": [
+   "VINE_WHIP",
+   "BODY_SLAM",
+   "ENERGY_BALL"
+  ],
+  "chikorita|s": [
+   "VINE_WHIP",
+   "BODY_SLAM",
+   "ENERGY_BALL"
+  ],
+  "lechonk": [
+   "TAKE_DOWN",
+   "BODY_SLAM",
+   "DIG"
+  ],
+  "mareep|s": [
+   "THUNDER_SHOCK",
+   "BODY_SLAM",
+   "DISCHARGE"
+  ],
+  "mareep": [
+   "THUNDER_SHOCK",
+   "BODY_SLAM",
+   "DISCHARGE"
+  ],
+  "rhyhorn|s": [
+   "MUD_SLAP",
+   "HORN_ATTACK",
+   "BULLDOZE"
+  ],
+  "tirtouga": [
+   "BITE",
+   "SURF",
+   "BODY_SLAM"
+  ],
+  "tepig": [
+   "EMBER",
+   "BODY_SLAM",
+   "FLAME_CHARGE"
+  ],
+  "skorupi|s": [
+   "POISON_STING",
+   "CROSS_POISON",
+   "AQUA_TAIL"
+  ],
+  "skorupi": [
+   "POISON_STING",
+   "CROSS_POISON",
+   "AQUA_TAIL"
+  ],
+  "fuecoco": [
+   "INCINERATE",
+   "CRUNCH",
+   "DISARMING_VOICE"
+  ],
+  "jangmo_o": [
+   "DRAGON_TAIL",
+   "DRAGON_CLAW",
+   "BRICK_BREAK"
+  ],
+  "spheal": [
+   "WATER_GUN",
+   "BODY_SLAM",
+   "AURORA_BEAM"
+  ],
+  "spheal|s": [
+   "WATER_GUN",
+   "BODY_SLAM",
+   "AURORA_BEAM"
+  ],
+  "gastly|s": [
+   "ASTONISH",
+   "SLUDGE_BOMB",
+   "DARK_PULSE"
+  ],
+  "growlithe|s": [
+   "EMBER",
+   "BODY_SLAM",
+   "FLAMETHROWER"
+  ],
+  "growlithe": [
+   "EMBER",
+   "BODY_SLAM",
+   "FLAMETHROWER"
+  ],
+  "cottonee": [
+   "CHARM",
+   "ENERGY_BALL",
+   "SEED_BOMB"
+  ],
+  "snorunt|s": [
+   "POWDER_SNOW",
+   "AVALANCHE",
+   "SHADOW_BALL"
+  ],
+  "snorunt": [
+   "POWDER_SNOW",
+   "AVALANCHE",
+   "SHADOW_BALL"
+  ],
+  "litwick|s": [
+   "ASTONISH",
+   "FLAME_CHARGE",
+   "MYSTICAL_FIRE"
+  ],
+  "litwick": [
+   "ASTONISH",
+   "FLAME_CHARGE",
+   "MYSTICAL_FIRE"
+  ],
+  "pidove": [
+   "QUICK_ATTACK",
+   "AERIAL_ACE",
+   "HEAT_WAVE"
+  ],
+  "sandshrew_alolan|s": [
+   "POWDER_SNOW",
+   "NIGHT_SLASH",
+   "BLIZZARD"
+  ],
+  "sandshrew_alolan": [
+   "POWDER_SNOW",
+   "NIGHT_SLASH",
+   "BLIZZARD"
+  ],
+  "swinub": [
+   "POWDER_SNOW",
+   "ICY_WIND",
+   "BODY_SLAM"
+  ],
+  "swinub|s": [
+   "POWDER_SNOW",
+   "ICY_WIND",
+   "BODY_SLAM"
+  ],
+  "pidgey": [
+   "QUICK_ATTACK",
+   "AERIAL_ACE",
+   "TWISTER"
+  ],
+  "zigzagoon": [
+   "SAND_ATTACK",
+   "DIG",
+   "GRASS_KNOT"
+  ],
+  "tyrunt": [
+   "DRAGON_TAIL",
+   "DRAGON_CLAW",
+   "ROCK_TOMB"
+  ],
+  "munchlax": [
+   "TACKLE",
+   "BODY_SLAM",
+   "BULLDOZE"
+  ],
+  "carvanha|s": [
+   "BITE",
+   "AQUA_JET",
+   "POISON_FANG"
+  ],
+  "wooloo": [
+   "TAKE_DOWN",
+   "WILD_CHARGE",
+   "STOMP"
+  ],
+  "cetoddle": [
+   "POWDER_SNOW",
+   "AVALANCHE",
+   "BODY_SLAM"
+  ],
+  "litleo": [
+   "INCINERATE",
+   "FLAME_CHARGE",
+   "CRUNCH"
+  ],
+  "mantyke": [
+   "BUBBLE",
+   "AERIAL_ACE",
+   "ICE_BEAM"
+  ],
+  "oshawott": [
+   "WATER_GUN",
+   "AQUA_TAIL",
+   "NIGHT_SLASH"
+  ],
+  "dwebble|s": [
+   "SMACK_DOWN",
+   "X_SCISSOR",
+   "ROCK_TOMB"
+  ],
+  "bonsly": [
+   "COUNTER",
+   "ROCK_SLIDE",
+   "EARTHQUAKE"
+  ],
+  "binacle": [
+   "SCRATCH",
+   "CROSS_CHOP",
+   "DIG"
+  ],
+  "gible|s": [
+   "MUD_SHOT",
+   "BODY_SLAM",
+   "TWISTER"
+  ],
+  "swablu": [
+   "ASTONISH",
+   "AERIAL_ACE",
+   "DISARMING_VOICE"
+  ],
+  "glameow": [
+   "QUICK_ATTACK",
+   "AERIAL_ACE",
+   "THUNDERBOLT"
+  ],
+  "nosepass|s": [
+   "ROCK_THROW",
+   "ROCK_SLIDE",
+   "THUNDERBOLT"
+  ],
+  "oddish|s": [
+   "ACID",
+   "SEED_BOMB",
+   "MOONBLAST"
+  ],
+  "skrelp": [
+   "ACID",
+   "AQUA_TAIL",
+   "TWISTER"
+  ],
+  "azurill": [
+   "BUBBLE",
+   "BODY_SLAM",
+   "ICE_BEAM"
+  ],
+  "diglett_alolan|s": [
+   "SAND_ATTACK",
+   "MUD_BOMB",
+   "ROCK_TOMB"
+  ],
+  "grimer_alolan": [
+   "BITE",
+   "CRUNCH",
+   "SLUDGE_BOMB"
   ]
  }
 };
