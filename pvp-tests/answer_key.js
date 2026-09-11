@@ -697,7 +697,7 @@ window.ANSWER_KEY = {
   "corviknight|s": [
    "SAND_ATTACK",
    "AIR_CUTTER",
-   "PAYBACK"
+   "IRON_HEAD"
   ],
   "florges": [
    "FAIRY_WIND",

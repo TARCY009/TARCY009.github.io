@@ -112,7 +112,7 @@ window.META_MOVES = {
   "lickilicky": ["ROLLOUT", "BODY_SLAM", "SHADOW_BALL"],
   "corviknight": ["SAND_ATTACK", "AIR_CUTTER", "IRON_HEAD"],
   "tinkaton": ["FAIRY_WIND", "GIGATON_HAMMER", "BULLDOZE"],
-  "corviknight|s": ["SAND_ATTACK", "AIR_CUTTER", "PAYBACK"],
+  "corviknight|s": ["SAND_ATTACK", "AIR_CUTTER", "IRON_HEAD"],
   "florges": ["FAIRY_WIND", "CHILLING_WATER", "DISARMING_VOICE"],
   "virizion": ["DOUBLE_KICK", "LEAF_BLADE", "SACRED_SWORD"],
   "empoleon|s": ["METAL_SOUND", "HYDRO_CANNON", "DRILL_PECK"],
