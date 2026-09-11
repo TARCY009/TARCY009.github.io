@@ -1,6 +1,19 @@
 # TARCY009.github.io 開発メモ（Claude Code用）
 
-ポケモンGO攻略ツール集。公開先: https://tarcy009.github.io/
+ポケモンGO攻略ツール集。公開先: https://gonavi.jp/（2026-09-12に独自ドメインへ移行。旧 https://tarcy009.github.io/ は自動で転送される）
+
+### 独自ドメイン gonavi.jp（2026-09-12取得・タダシさん）
+
+- **お名前.comで取得**（1年目0円・翌年から年3,124円・クレジットカードの自動更新ON・期限2027/09/30・Whois情報公開代行つき）。
+  ドメインプロテクション等の有料オプションは付けていない
+- **ネームサーバーはお名前.comのもの（01〜04.dnsv.jp）**。DNSレコードは5行:
+  A `gonavi.jp` → 185.199.108.153／109.153／110.153／111.153（GitHub Pagesの住所）・CNAME `www.gonavi.jp` → `tarcy009.github.io`
+- **リポジトリ直下の `CNAME` ファイル（中身 `gonavi.jp`）で独自ドメインを指定**している（ブランチ公開なのでこれで効く）。
+  **⚠ このファイルを消すと、サイトが旧アドレスに戻り、gonavi.jp で開けなくなる**
+- ページ内の絶対アドレス（canonical・og:url・og:image・運営者情報のURL）は `https://gonavi.jp/` に書き換え済み。
+  **新しいページでも絶対アドレスは gonavi.jp で書く**
+- **端末に保存したデータ（localStorage）はアドレスごとに別**なので、旧アドレスで使っていた人の記録は gonavi.jp へ自動では移らない
+  （公開前の移行なので影響なし。必要なら「データの引っ越し」ページで移せる）
 構成: **`/`(トップページ＝ツール一覧)** `/dps/`(レイド火力チェッカー) `/raid/` `/type-dps/` `/max-battle/` `/gym-attack/` `/gym-defense/` `/gbl/` `/rocket/` `/battlelog/` `/breakpoint/` `/iv-checker/` `/pokedex/` `/bulk/`(耐久指数ランキング)
 
 ### トップページと引っ越し（2026-09-01確定・タダシさん指示）
@@ -525,7 +538,7 @@ GO＋ナビのまとまりを縦の中央に置く。実行: `python3 scratchpad
 3. （特設ページを使うなら）連携でGoogleスプレッドシートをONにし、そのシートを
    「ファイル → 共有 → ウェブに公開 → カンマ区切り(.csv)」で公開して、URLを `/feedback/` の `CSV_URL` に入れる。
    **⚠ 公開したCSVはURLを知っていれば誰でも読めるので、URLは人に渡さない**
-4. DMに貼るURLは **`https://tarcy009.github.io/?fb=1`**
+4. DMに貼るURLは **`https://gonavi.jp/?fb=1`**（2026-09-12に独自ドメインへ移行。旧 `tarcy009.github.io` のURLも転送される）
 
 ### 「↻ 更新」ボタン（2026-09-08・ホーム画面から開いたときだけ・共通ファイル）
 
