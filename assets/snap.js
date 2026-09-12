@@ -815,12 +815,16 @@
   }
   function findFrames() {
     var out = [], minW = Math.min(280, document.documentElement.clientWidth * 0.5);
+    // ランキングの一覧（一般向けの保存ボタンを付けている一覧）は、一覧全体を1つの枠にする。
+    // 一覧を包む枠が無いページ（ジム防衛・ジム挑戦・マックスバトル）で、1行ずつにボタンが50個並んだため（2026-09-12）
+    var pubT = PUB[PATH] ? document.querySelector(PUB[PATH].target) : null;
     (function walk(n) {
       for (var c = n.firstElementChild; c; c = c.nextElementSibling) {
         if (c.id === 'snapdevlayer' || isUI(c) || /^(SCRIPT|STYLE|HEADER|NAV|NOSCRIPT|TEMPLATE|svg)$/.test(c.tagName)) continue;
         var cs = getComputedStyle(c);
         if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed') continue;
         var r = c.getBoundingClientRect();
+        if (c === pubT) { if (r.height >= 40 && c.children.length) out.push(c); continue; }
         if (r.width < minW || r.height < 40) continue;
         if (r.height >= 70 && isFrame(cs)) { out.push(c); continue; }
         walk(c);
