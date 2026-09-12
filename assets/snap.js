@@ -234,7 +234,7 @@
         dCv[i].replaceWith(im);
       } catch (e) {}
     }
-    c.querySelectorAll('script,.snapbar,[data-snap-skip],#snapui').forEach(function (x) { x.remove(); });
+    c.querySelectorAll('script,.snapbar,[data-snap-skip],#snapui,.snapui').forEach(function (x) { x.remove(); });
     if (o.drop) c.querySelectorAll(o.drop).forEach(function (x) { x.remove(); });
     if (o.rows && o.limit) {
       // from＝何件目から残すか（1920×1440で「1〜5位｜6〜10位」の2列に分けるため）
@@ -794,24 +794,96 @@
     }
     if (a === 'down' && pick.stack.length) { pick.el = pick.stack.pop(); pick.locked = true; }
     if ((a === 'save' || a === 's1920') && pick.el) {
-      var el = pick.el, big = a === 's1920';
       hi.style.display = 'none'; bar.style.visibility = 'hidden';
-      busy(true);
-      try {
-        var r = el.getBoundingClientRect();
-        // 1920×1440は拡大して置くので、ぼやけないよう細かく描いておく。背景はあとで全面に敷くので、ここでは透明で描く
-        var scl = big ? Math.min(4, Math.max(2, Math.ceil(Math.min(1800 / (r.width + 20), 1320 / (r.height + 20))))) : 2;
-        var res = await renderEl(el, { width: r.width, mode: 'window', rootCls: document.documentElement.className,
-                                       bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : pick.bg === 'page',
-                                       pad: !big && pick.bg === 'page' ? 16 : 10, scale: scl });
-        var outCv = big ? await fit1920(res, pick.bg === 'page') : res.canvas;
-        busy(false);
-        var h1 = txt('header h1') || document.title.split('｜')[0];
-        await preview(outCv, h1.replace(/\s+/g, '') + '_' + stamp() + (big ? '_1920x1440' : '') + '.png');
-      } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした'); }
+      await devSave(pick.el, a === 's1920');
       if (bar) bar.style.visibility = '';
     }
     drawHi(); syncTool();
+  }
+
+  // ---------------------------------------------------------------- 開発者: 枠ごとの保存ボタン（2026-09-12タダシさん指示「図鑑とか、あらゆる所に」）
+  // 撮影モード(📷→タップ)とは別に、画面の主な枠の右上に「📷 画像を保存」「1920×1440」を直接出す。
+  // ページごとにクラス名がばらばらなので名前で指定せず、「角が丸く、枠線・影・背景のどれかがあり、画面幅の半分以上ある、
+  // いちばん外側の箱」を枠とみなす（一覧の1行1行のように枠の中にある箱には付けない）。
+  // ボタンは枠の中に入れず、枠の上辺にまたがる位置に浮かせる（中身に重ねない・overflow:hidden の枠でも切れない）
+  var devLayer = null, devMap = [];
+  function isFrame(cs) {
+    if ((parseFloat(cs.borderTopLeftRadius) || 0) < 8) return false;
+    var bw = parseFloat(cs.borderTopWidth) || 0;
+    return (bw > 0 && cs.borderTopStyle !== 'none') || cs.boxShadow !== 'none' || cs.backgroundImage !== 'none' ||
+      !/rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
+  }
+  function findFrames() {
+    var out = [], minW = Math.min(280, document.documentElement.clientWidth * 0.5);
+    (function walk(n) {
+      for (var c = n.firstElementChild; c; c = c.nextElementSibling) {
+        if (c.id === 'snapdevlayer' || isUI(c) || /^(SCRIPT|STYLE|HEADER|NAV|NOSCRIPT|TEMPLATE|svg)$/.test(c.tagName)) continue;
+        var cs = getComputedStyle(c);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed') continue;
+        var r = c.getBoundingClientRect();
+        if (r.width < minW || r.height < 40) continue;
+        if (r.height >= 70 && isFrame(cs)) { out.push(c); continue; }
+        walk(c);
+      }
+    })(document.body);
+    return out;
+  }
+  function renderDev() {
+    if (!isDev() || pick.on || document.querySelector('.bfull') || document.querySelector('.snapov')) {
+      if (devLayer) devLayer.hidden = true;
+      return;
+    }
+    if (!devLayer) {
+      devLayer = document.createElement('div'); devLayer.id = 'snapdevlayer'; devLayer.className = 'snapui';
+      devLayer.addEventListener('click', onDevBtn);
+      document.body.appendChild(devLayer);
+    }
+    devLayer.hidden = false;
+    var fr = findFrames();
+    while (devLayer.children.length < fr.length) {
+      var g = document.createElement('div'); g.className = 'snapdev';
+      g.innerHTML = '<button type="button" data-k="n" title="この枠を画像にして保存（ロゴなし）">📷 画像を保存</button>' +
+        '<button type="button" data-k="b" title="この枠を1920×1440の中央に大きく置いて保存">1920×1440</button>';
+      devLayer.appendChild(g);
+    }
+    while (devLayer.children.length > fr.length) devLayer.lastChild.remove();
+    devMap = fr;
+    var sx = window.scrollX, sy = window.scrollY;
+    fr.forEach(function (el, i) {
+      var g = devLayer.children[i], r = el.getBoundingClientRect();
+      g.setAttribute('data-i', i);
+      g.style.left = Math.max(4, r.right + sx - g.offsetWidth - 14) + 'px';
+      g.style.top = Math.max(0, r.top + sy - 13) + 'px';
+    });
+  }
+  async function onDevBtn(e) {
+    var b = e.target.closest('button'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var el = devMap[+b.parentNode.getAttribute('data-i')];
+    // ⚠ ボタンが古い枠を指したままのことがある（図鑑はポケモンを選ぶ前の案内の枠が同じ場所にあり、選ぶと消える）。
+    //   押した瞬間にまだ画面にあるかを確かめ、消えていたら置き直すだけにする（間違った枠を撮らない・2026-09-12実際に踏んだ）
+    var r0 = el && el.isConnected ? el.getBoundingClientRect() : null;
+    if (!r0 || r0.width < 1 || r0.height < 1) { renderDev(); return; }
+    if (b.disabled) return;
+    devLayer.hidden = true;
+    await devSave(el, b.getAttribute('data-k') === 'b');
+    renderDev();
+  }
+  // 開発者の保存（枠のボタン・撮影モード共通）。画面の見た目どおり・ロゴなし
+  async function devSave(el, big) {
+    busy(true);
+    try {
+      var r = el.getBoundingClientRect();
+      // 1920×1440は拡大して置くので、ぼやけないよう細かく描いておく。背景はあとで全面に敷くので、ここでは透明で描く
+      var scl = big ? Math.min(4, Math.max(2, Math.ceil(Math.min(1800 / (r.width + 20), 1320 / (r.height + 20))))) : 2;
+      var res = await renderEl(el, { width: r.width, mode: 'window', rootCls: document.documentElement.className,
+                                     bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : pick.bg === 'page',
+                                     pad: !big && pick.bg === 'page' ? 16 : 10, scale: scl });
+      var outCv = big ? await fit1920(res, pick.bg === 'page') : res.canvas;
+      busy(false);
+      var h1 = txt('header h1') || document.title.split('｜')[0];
+      await preview(outCv, h1.replace(/\s+/g, '') + '_' + stamp() + (big ? '_1920x1440' : '') + '.png');
+    } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした'); }
   }
 
   // ---------------------------------------------------------------- 見た目
@@ -848,7 +920,14 @@
     '.snapdesc{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#9fb2e6;margin-right:4px}' +
     '.snaptool button{font:800 12px/1 ' + JP + ';border:0;border-radius:999px;padding:8px 12px;cursor:pointer;color:#e6ecff;background:#26304f}' +
     '.snaptool button.go{color:#241800;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200)}' +
-    '.snaptool button:disabled{opacity:.45;cursor:default}';
+    '.snaptool button:disabled{opacity:.45;cursor:default}' +
+    '#snapdevlayer{position:absolute;left:0;top:0;width:0;height:0;z-index:2147483200}' +
+    '#snapdevlayer[hidden]{display:none!important}' +
+    '.snapdev{position:absolute;display:flex;gap:4px;white-space:nowrap}' +
+    '.snapdev button{font:800 11px/1 ' + JP + ';border:0;border-radius:999px;padding:6px 10px;cursor:pointer;' +
+      'box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 8px rgba(0,0,0,.45)}' +
+    '.snapdev button[data-k="n"]{color:#241800;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200)}' +
+    '.snapdev button[data-k="b"]{color:#e8eeff;background:linear-gradient(160deg,#5566a3,#34427a 55%,#232d57)}';
   document.head.appendChild(css);
 
   function boot() {
@@ -856,6 +935,21 @@
     var sync = function () { if (isDev()) ui(); else if (fab) { if (pick.on) stopPick(); fab.remove(); fab = null; } };
     sync();
     setInterval(sync, 2000);
+    // 枠ごとの保存ボタンは、画面が描き変わるたびに置き直す（図鑑はポケモンを選んでから枠ができるため）
+    renderDev();
+    setInterval(renderDev, 1000);
+    window.addEventListener('resize', renderDev);
+    // 画面の中身が変わったら少し待って置き直す（1秒ごとの見直しだけだと、消えた枠を指したままの時間ができる）
+    var devTimer = null;
+    new MutationObserver(function (ms) {
+      if (!isDev() || devTimer) return;
+      for (var i = 0; i < ms.length; i++) {
+        var t = ms[i].target, e = t.nodeType === 1 ? t : t.parentElement;
+        if (e && (e.id === 'snapdevlayer' || isUI(e))) continue;
+        devTimer = setTimeout(function () { devTimer = null; renderDev(); }, 150);
+        return;
+      }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
