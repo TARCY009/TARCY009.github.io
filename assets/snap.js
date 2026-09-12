@@ -415,6 +415,10 @@
       var t = (b.innerText || b.textContent || '').replace(/\s+/g, ' ').trim();
       if (!t) t = (b.getAttribute('aria-label') || '').trim();
       if (!t && b.querySelector('.shadowmark')) t = 'シャドウ';
+      // 画像のピルの表記(2026-09-12タダシさん指示): シャドウ含む／メガ・ゲンシ含む／メガLv4
+      if (/^シャドウ/.test(t)) t = 'シャドウ含む';
+      else if (t === 'メガ・ゲンシ') t = 'メガ・ゲンシ含む';
+      else if (/^[1-4]$/.test(t) && b.closest('.megalv,.mlvseg')) t = 'メガLv' + t;
       if (t && t.length <= 16 && out.indexOf(t) < 0) out.push(t);
     });
     return out;
@@ -734,7 +738,7 @@
     var tags = tagLabels(cfg.tags);
     cx.font = '800 31px ' + JP;
     var pills = tags.map(function (t) {
-      var fl = t === 'シャドウ';
+      var fl = /^シャドウ/.test(t);
       return { t: t, flame: fl, mega: /メガ|ゲンシ/.test(t), w: cx.measureText(t).width + (fl ? 58 : 24) + 24 };
     });
     var totalPW = pills.reduce(function (a, p) { return a + p.w + 16; }, 0);
