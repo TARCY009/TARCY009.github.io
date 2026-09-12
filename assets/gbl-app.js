@@ -697,6 +697,9 @@ function dropUnknownPk() {
       });
     } catch (e) {}
   });
+  // 手入力の個体値が「3つの数の一覧＋PL」でなければ理想個体値に戻す(2026-09-12)。
+  // 壊れていると枠の描画の mIvs.join / mIvs.slice で落ち、その段の部品が全部動かなくなるため
+  [PT, RKT, RBM, GBM, GBT, SD.my, SD.foe].forEach(store => { try { (store || []).forEach(fixIvOf); } catch (e) {} });
   // メガ・ゲンシが2匹以上残っていたら、2匹目から落とす(ルール導入前の保存・共有リンクの掃除)
   [PT, RKT, RBM, GBM, GBT, SD.my, SD.foe, BLE.foes].forEach(store => {
     try {
@@ -713,8 +716,18 @@ function dropUnknownPk() {
   try {
     const list = loadMyPk();
     const keep = list.filter(m => m && m.key && D.pokemon[m.key]);
-    if (keep.length !== list.length) saveMyPkList(keep);
+    let fixed = false;
+    keep.forEach(m => { if (fixIvOf(m)) fixed = true; });
+    if (fixed || keep.length !== list.length) saveMyPkList(keep);
   } catch (e) {}
+}
+// 手入力の個体値が正しい形か(攻・防・HPの3つの数とPL)。壊れていたら理想個体値に戻して true を返す
+function fixIvOf(m) {
+  if (!m || typeof m !== 'object' || (m.mIvs == null && m.ivMode !== 'manual')) return false;
+  const num = n => typeof n === 'number' && isFinite(n);
+  if (Array.isArray(m.mIvs) && m.mIvs.length === 3 && m.mIvs.every(num) && num(m.mLevel)) return false;
+  m.ivMode = 'auto'; m.mIvs = null; m.mLevel = null;
+  return true;
 }
 
 // 自由設定の入力ウィンドウ。もとのわざを選べば数値が入るので、直したいところだけ書き替えればよい
@@ -3112,7 +3125,7 @@ function buildPartySlots(box, mvStore) {
         ? '<div class="popttl">★登録リストから選ぶ</div>' + saved.map((m, k) => {
             const p = D.pokemon[m.key];
             if (!p) return '';
-            const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
+            const iv = m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
             const ng = ngOf(m.key, megaOver(PT, m.key, i) ? MEGA_NG : '');
             return `<div class="mypkrow${ng ? ' dup' : ''}"${ng ? '' : ` data-k="${k}"`}>` +
               `<span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span>${ng ? `<i class="dupn">${ng}</i>` : ''}</div>`;
@@ -3144,7 +3157,7 @@ function syncPartySlot(i) {
     // そのリーグに収まる個体が存在しないポケモン(交換できない幻など)は、理想個体でCP上限を超える。
     // 枠にも必ず警告を出す(この枠はパーティ診断・GBL模擬戦・ロケット団模擬戦で共通)
     const over = overCapTag(ptBase(m));
-    const iv = (m.ivMode === 'manual' && m.mIvs ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値') + over;
+    const iv = (m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値') + over;
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
     // わざを自分で選べる枠(模擬戦)では、わざは下の欄に出るので文字では書かない。
     // 個体値・PLの文字も出さない(⚙詳細にある。ﾏﾆｭｱﾙ入力中だけ小さく出して分かるようにする)
@@ -4044,7 +4057,7 @@ function renderRkMy() {
     ${saved.length ? `<div class="rkmylist">${saved.map((m, k) => {
       const q = D.pokemon[m.key];
       if (!q) return '';
-      const iv = m.ivMode === 'manual' && m.mIvs ? `${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
+      const iv = m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値';
       return `<div class="rkmyrowsaved"><span>★${m.shadow ? SHADOWMK : ''}${q.n}<i>${iv}</i></span>
         <b class="rkmydel" data-del="${k}" title="消す">×</b></div>`;
     }).join('')}</div>` : ''}`;
@@ -7386,7 +7399,7 @@ function buildSdSlots(side) {
         ? '<div class="popttl">★登録リストから選ぶ</div>' + saved.map((m, k) => {
             const p = D.pokemon[m.key];
             if (!p) return '';
-            const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
+            const iv = m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
             // 同じポケモンは6匹に2匹入れられない／メガ・ゲンシは1匹まで
             const ng = ngOf(m.key, sdDup(side, m.key, i) ? 'すでに入っています' : megaOver(A, m.key, i) ? MEGA_NG : '');
             return `<div class="mypkrow${ng ? ' dup' : ''}"${ng ? '' : ` data-k="${k}"`}>` +
@@ -11225,7 +11238,15 @@ const RK_OUTCOME = {
 };
 // ---- ★登録リスト(端末内保存・両側の欄から呼び出せる) ----
 const MYPK_KEY = 'gbl_mypoke';
-const loadMyPk = () => { try { return JSON.parse(localStorage.getItem(MYPK_KEY)) || []; } catch (e) { return []; } };
+// ⚠ **一覧(配列)で、中身がポケモンの形のものだけ通す**(2026-09-12タダシさん報告「GBLのボタンが全部押せない」)。
+// 以前は「JSON として読めれば何でも返す」だったので、保存データが文字列・オブジェクトになっていると
+// 起動の終わり(renderMyPk)で list.map が例外になり、以後どのボタンを押しても同じ描画で落ちて何も起きなくなった
+const loadMyPk = () => {
+  try {
+    const v = JSON.parse(localStorage.getItem(MYPK_KEY));
+    return Array.isArray(v) ? v.filter(m => m && typeof m === 'object' && typeof m.key === 'string') : [];
+  } catch (e) { return []; }
+};
 const saveMyPkList = list => { try { localStorage.setItem(MYPK_KEY, JSON.stringify(list.slice(0, 30))); } catch (e) {} };
 function renderMyPk() {
   const list = loadMyPk();
@@ -11238,7 +11259,7 @@ function renderMyPk() {
     box.innerHTML = list.map((m, k) => {
       const p = D.pokemon[m.key];
       if (!p || !rkFoeOk(i, m.key)) return '';   // あいて側はメガ・ゲンシを出さない
-      const iv = m.ivMode === 'manual' && m.mIvs ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
+      const iv = m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
       return `<div class="mypkrow" data-k="${k}"><span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span><b class="del" data-del="${k}">×</b></div>`;
     }).join('');
     box.querySelectorAll('.mypkrow').forEach(row => row.onclick = e => {
@@ -12502,10 +12523,32 @@ document.addEventListener('click', e => {
   if (TOUR.steps && e.target.closest('#modes, #rkmode, #rkkind')) tourEnd();
 }, true);
 
+// ⚠ **起動の途中で1か所でも例外が出ると、その後の部品(ボタンの受け付け・描画)が全部止まり、
+// 「画面は出ているのに全部のボタンが押せない」になる**(2026-09-12タダシさん報告で実際に起きた・原因は壊れた★登録リスト)。
+// 起動の各段を bootStep で包み、どこかで失敗してもほかの段は続ける。失敗は画面の上に小さな帯で出す(原因をすぐ追えるように)。
+// **新しく起動時の処理を足すときも、必ずどれかの bootStep の中に入れる**
+function bootErr(name, e) {
+  try { console.error('GBL起動: ' + name + ' で失敗', e); } catch (x) {}
+  try {
+    let bar = document.getElementById('booterr');
+    if (!bar) {
+      bar = document.createElement('div'); bar.id = 'booterr';
+      bar.style.cssText = 'margin:8px 0;padding:8px 12px;border:1px solid #ff6b6b;border-radius:10px;' +
+        'background:rgba(255,80,80,.12);color:inherit;font-size:.78rem;line-height:1.6';
+      (document.getElementById('app') || document.body).prepend(bar);
+    }
+    bar.textContent = '⚠ 一部の読み込みに失敗しました（' + name + '：' + ((e && e.message) || e) + '）。ほかの機能はそのまま使えます。';
+  } catch (x) {}
+}
+const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } };
+
 (function init() {
+  bootStep('保存データの点検', () => {
   dropUnknownPk();      // データから消えたポケモンを指したまま残っていたら落とす
   dropUnknownMoves();   // 端末に無いわざを指したまま残っていたら落とす
+  });
   const q = new URLSearchParams(location.search);
+  bootStep('共有リンクの復元', () => {
   if (q.get('lg')) {
     cap = +q.get('lg');
     document.querySelectorAll('.lgbtn').forEach(b => b.setAttribute('aria-pressed', +b.dataset.cap === cap));
@@ -12666,6 +12709,8 @@ document.addEventListener('click', e => {
     SD.foeSig = null;
     saveSd();
   }
+  });
+  bootStep('モード', () => {
   if (PAGE_ROCKET || PAGE_BLOG) {   // モード固定ページ(md= は見ない)
     applyMode();
   } else if (['multi', 'counter', 'party', 'mock'].includes(q.get('md'))) {   // モードの復元(md=rocket/blog は別ページへ転送済み)
@@ -12673,9 +12718,13 @@ document.addEventListener('click', e => {
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
     applyMode();
   }
+  });
+  bootStep('パーティの枠', () => {
   buildPartySlots(document.querySelector('#party .pslots'), 'pt');
   buildPartySlots(document.querySelector('#rkteam .myslots'), 'rbm');   // 模擬戦でも同じ3枠(PT)を使う
+  });
   // 対戦記録(mode 'blog'): 入力の3枠と勝敗・記録ボタン・表示タブ
+  bootStep('対戦記録', () => {
   buildBlogSlots();
   document.querySelectorAll('#blog .blres button').forEach(b => b.onclick = () => {
     BLE.win = BLE.win === b.dataset.v ? null : b.dataset.v;
@@ -12685,7 +12734,9 @@ document.addEventListener('click', e => {
   if (blAdd) blAdd.onclick = blAddRecord;
   document.querySelectorAll('#blog .blvtabs button').forEach(b => b.onclick = () => { BLV.view = b.dataset.v; BLV.resetArm = false; runBlog(); });
   document.querySelectorAll('#blog .blperiod button').forEach(b => b.onclick = () => { BLV.period = b.dataset.v; BLV.resetArm = false; runBlog(); });
+  });
   // パーティ診断の「わざ｜オート」。手動へ切り替えるときは、いま出ている構成を枠に書き込んでから編集させる
+  bootStep('パーティ診断', () => {
   const paBtn = document.querySelector('#party .ptauto');
   if (paBtn) paBtn.onclick = () => {
     // 空いている欄だけオートの選出で埋める(★登録リストの個体や、前に自分で選んだわざは上書きしない)
@@ -12700,6 +12751,8 @@ document.addEventListener('click', e => {
     run();
   };
   syncPtAuto();
+  });
+  bootStep('模擬戦の枠', () => {
   buildFoeSlots();
   // GBL模擬戦: じぶん3枠(PT共有・わざはGBM)とあいて3枠(GBT)・あいて難易度タブ
   buildPartySlots(document.querySelector('#mock .myslots'), 'gbm');
@@ -12722,7 +12775,9 @@ document.addEventListener('click', e => {
   // あいての3匹を環境から自動で組む(2026-09-02)
   const gfRand = document.querySelector('#mock .gfrand');
   if (gfRand) gfRand.onclick = gbAutoFill;
+  });
   // ---- 見せ合いルール(2026-09-05): ルールの切替・6枠・おまかせ6匹 ----
+  bootStep('見せ合い', () => {
   buildSdSlots('my'); buildSdSlots('foe');
   document.querySelectorAll('#sdrule button').forEach(b => b.onclick = () => {
     SD.on = b.dataset.v === '1';
@@ -12741,6 +12796,8 @@ document.addEventListener('click', e => {
   if (sdRand) sdRand.onclick = () => sdAutoFill('foe');
   const sdRandMy = document.querySelector('#sdwrap .sdrandmy');
   if (sdRandMy) sdRandMy.onclick = () => sdAutoFill('my');
+  });
+  bootStep('ほかのボタン', () => {
   // 模擬戦のおすすめタブ(高火力/高火力＋安定)。同じタブをもう一度押すとオフ
   document.querySelectorAll('#rksuggbar button[data-m]').forEach(b => b.onclick = () => {
     RKS.mode = RKS.mode === b.dataset.m ? null : b.dataset.m;
@@ -12758,9 +12815,12 @@ document.addEventListener('click', e => {
     ptShield = +b.dataset.v;
     run();
   });
-  renderMyPk();
-  run();
+  });
+  bootStep('★登録リスト', renderMyPk);
+  bootStep('計算と表示', run);
   // かんたん案内: 常設ボタン＋初回訪問(共有リンク以外)は自動で開く
+  bootStep('かんたん案内', () => {
   document.getElementById('easybtn').onclick = easyOpen;
   if (!PAGE_BLOG && !EASY_HAD_QS && !easySeen()) easyOpen();   // 対戦記録ページでは案内を出さない
+  });
 })();

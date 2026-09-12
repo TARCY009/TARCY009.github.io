@@ -1743,7 +1743,11 @@ $('mestar').onclick = () => {
   win.style.display = open ? 'block' : 'none';
   if (!open) return;
   let listData = [];
-  try { listData = JSON.parse(localStorage.getItem('gbl_mypoke')) || []; } catch (e) {}
+  // 一覧(配列)で、中身がポケモンの形のものだけ通す(壊れた保存データで落ちないように・2026-09-12)
+  try {
+    const v = JSON.parse(localStorage.getItem('gbl_mypoke'));
+    listData = Array.isArray(v) ? v.filter(m => m && typeof m === 'object' && typeof m.key === 'string') : [];
+  } catch (e) {}
   if (!listData.length) {
     win.innerHTML = '<div class="mypkempty">まだ登録がありません。GBLシミュレーターで「★登録」したポケモンがここに並びます</div>';
     return;
