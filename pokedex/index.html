@@ -97,6 +97,8 @@ h1{font-size:1.45rem;letter-spacing:.02em}
     radial-gradient(430px 210px at 6% -12%, rgba(59,110,240,.10), transparent 62%),
     radial-gradient(430px 230px at 102% -10%, rgba(255,190,60,.13), transparent 60%)}
 .hero{display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative}
+/* 種族値の枠の下段のタイプ相性(2026-09-12に別の枠から統合)。細い罫線で区切るだけで、枠は増やさない */
+.effin{position:relative;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .hero .idn{min-width:0}
 .hero .no{display:block;font-size:.7rem;font-weight:800;color:var(--sub);letter-spacing:.16em;margin-bottom:1px}
 .hero .nm{font-size:1.72rem;line-height:1.3;font-weight:900;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
@@ -343,7 +345,6 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 
 <div id="result" style="display:none">
   <div class="card" id="herocard"></div>
-  <div class="card" id="effcard"></div>
   <div class="card" id="mvcard"></div>
 </div>
 <div class="card" id="emptycard"><div class="mtnote">ポケモンを選ぶと、種族値・最大CP・弱点・わざ性能が出ます</div></div>
@@ -754,12 +755,15 @@ function render(){
   const row=(cls,mult,list,tip)=>list.length?`<div class="effrow ${cls}" title="${tip}"><span class="mult">${mult}</span><span class="tps">${tchips(list,22)}</span></div>`:'';
   const wHtml=row('w2','×2.56',gs.w2,'二重弱点。受けるダメージが約2.56倍になります')+row('w1','×1.6',gs.w1,'弱点。受けるダメージが1.6倍になります');
   const rHtml=row('r1','×0.63',gs.r1,'耐性。受けるダメージが約0.63倍になります')+row('r2','×0.39',gs.r2,'二重耐性(原作の無効を含む)。受けるダメージが約0.39倍になります')+row('r3','×0.24',gs.r3,'三重耐性相当。受けるダメージが約0.24倍になります');
-  document.getElementById('effcard').innerHTML=`
+  // タイプ相性は種族値の枠の下段に続けて入れる(2026-09-12タダシさん指示「1つの枠にして保存できるように」)。
+  // 名前・種族値・最大SCP・タイプ相性が1枚の枠に収まるので、画像にするときも1回で撮れる
+  document.getElementById('herocard').insertAdjacentHTML('beforeend',`
+    <div class="effin">
     <div class="sec">🛡 タイプ相性(受けるダメージ)</div>
     <div class="effgrp">
       ${wHtml?'<div class="effcap wk">弱点</div>'+wHtml:'<div class="effnone">弱点はありません</div>'}
       ${rHtml?'<div class="effcap rs">耐性</div>'+rHtml:'<div class="effnone">耐性はありません</div>'}
-    </div>`;
+    </div></div>`);
   renderMoves();
   updateUrl();
 }
