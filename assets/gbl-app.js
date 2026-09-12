@@ -1750,6 +1750,10 @@ ${PAGE_ROCKET ? '' : `
   </ul>`;
 (() => {
   const tab = document.getElementById('helptab'), body = document.getElementById('helpbody');
+  // ページ本体に写してある文章(build_help.py が HELP_HTML から作る)を使い方の箱へ移す。
+  // 検索エンジンが読めるように最初からページにある。無ければタップ時に HELP_HTML を流し込む
+  const src = document.getElementById('helpsrc');
+  if (src) { body.innerHTML = src.innerHTML; src.remove(); }
   tab.onclick = () => {
     const open = body.style.display === 'none';
     if (open && !body.innerHTML) body.innerHTML = HELP_HTML;
