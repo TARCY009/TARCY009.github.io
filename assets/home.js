@@ -43,9 +43,43 @@
     var t = document.createElement('div'); t.className = 'devtoast'; t.textContent = msg;
     document.body.appendChild(t); setTimeout(function () { t.remove(); }, 1800);
   }
+  // 開発者の端末ではタブのアイコンに赤い丸を付ける(2026-09-12タダシさん指示「タブの一覧で開発者用か見分けたい」)。
+  // もとのアイコンを canvas に描いて右下に白ふちの赤い丸を重ね、link の href を差し替える(OFFでもとに戻す)
+  var iconOrig = null;
+  function devIcon() {
+    try {
+      var links = [].slice.call(document.querySelectorAll('link[rel~="icon"]'));
+      if (!links.length) return;
+      if (!iconOrig) iconOrig = links.map(function (l) { return { href: l.href, type: l.getAttribute('type') }; });
+      var restore = function () {
+        links.forEach(function (l, i) {
+          l.href = iconOrig[i].href;
+          if (iconOrig[i].type) l.setAttribute('type', iconOrig[i].type); else l.removeAttribute('type');
+        });
+      };
+      if (!dev) { restore(); return; }
+      var img = new Image();
+      img.onload = function () {
+        if (!dev) return;
+        var S = 64, c = document.createElement('canvas'); c.width = c.height = S;
+        var x = c.getContext('2d'); x.drawImage(img, 0, 0, S, S);
+        x.beginPath(); x.arc(S - 15, S - 15, 13, 0, Math.PI * 2);
+        x.fillStyle = '#ff2d2d'; x.fill(); x.lineWidth = 4; x.strokeStyle = '#ffffff'; x.stroke();
+        var url = c.toDataURL('image/png');
+        links.forEach(function (l) { l.setAttribute('type', 'image/png'); l.href = url; });
+      };
+      img.src = iconOrig[0].href;
+    } catch (e) {}
+  }
+  devIcon();
+  // 別のタブで開発者モードを入れた・切ったときも、このタブのアイコンをすぐそろえる
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'site_dev') { dev = e.newValue === '1'; devIcon(); }
+  });
   function setDev(on) {
     dev = !!on;
     try { if (dev) localStorage.setItem('site_dev', '1'); else localStorage.removeItem('site_dev'); } catch (e) {}
+    devIcon();
     var b = document.getElementById('reloadBtn');
     if (!dev && b) b.remove();
     if (dev) build();
