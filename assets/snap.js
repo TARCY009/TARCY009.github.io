@@ -237,7 +237,9 @@
     c.querySelectorAll('script,.snapbar,[data-snap-skip],#snapui').forEach(function (x) { x.remove(); });
     if (o.drop) c.querySelectorAll(o.drop).forEach(function (x) { x.remove(); });
     if (o.rows && o.limit) {
-      Array.prototype.slice.call(c.querySelectorAll(o.rows), o.limit).forEach(function (x) { x.remove(); });
+      // from＝何件目から残すか（1920×1440で「1〜5位｜6〜10位」の2列に分けるため）
+      var from = o.from || 0;
+      Array.prototype.forEach.call(c.querySelectorAll(o.rows), function (x, i) { if (i < from || i >= from + o.limit) x.remove(); });
     }
     // 画像を data: に
     var imgs = c.querySelectorAll('img');
@@ -287,7 +289,7 @@
     var W = Math.max(40, Math.round(o.width));
     var P = o.pad || 0;
     var css = await collectCSS(o.mode);
-    var clone = await prepClone(el, { width: W, drop: o.drop, rows: o.rows, limit: o.limit });
+    var clone = await prepClone(el, { width: W, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from });
     var chain = wrapChain(el, clone);
     var bcs = getComputedStyle(document.body);
     var bodyStyle = 'margin:0!important;padding:' + P + 'px!important;min-height:0!important;height:auto!important;' +
@@ -491,6 +493,122 @@
     }
     return cv;
   }
+  // ---------------------------------------------------------------- 1920×1440（動画用・2026-09-12タダシさん指示）
+  // 見出しと下のロゴを k 倍の大きさで描く（1920×1440用）
+  function drawHead(cx, cfg, x, y, maxW, k, col) {
+    var eyebrow = txt('header .eyebrow').toUpperCase();
+    var ctxs = (cfg.ctx || []).map(txt).filter(Boolean);
+    var tags = tagLabels(cfg.tags);
+    cx.textBaseline = 'alphabetic';
+    if (eyebrow) {
+      cx.font = '600 ' + (13 * k) + 'px Oswald,"Avenir Next","Helvetica Neue",Arial,sans-serif';
+      cx.fillStyle = col;
+      var ex = x; for (var ch of eyebrow) { cx.fillText(ch, ex, y + 13 * k); ex += cx.measureText(ch).width + 2.2 * k; }
+      y += 22 * k;
+    }
+    cx.font = '900 ' + (28 * k) + 'px ' + JP; cx.fillStyle = '#ffffff';
+    cx.fillText(cfg.title, x, y + 29 * k); y += 38 * k;
+    if (ctxs.length) {
+      cx.font = '700 ' + (17 * k) + 'px ' + JP; cx.fillStyle = '#c4d0f0';
+      y += 10 * k;
+      wrapText(cx, ctxs.join('　／　'), maxW).forEach(function (ln) { cx.fillText(ln, x, y + 18 * k); y += 26 * k; });
+    }
+    if (tags.length) {
+      y += 14 * k; cx.font = '800 ' + (13 * k) + 'px ' + JP;
+      var tx = x;
+      tags.forEach(function (t) {
+        var tw = cx.measureText(t).width + 22 * k;
+        if (tx + tw > x + maxW) return;
+        rrect(cx, tx, y, tw, 26 * k, 13 * k); cx.fillStyle = hexA(col, 0.22); cx.fill();
+        cx.strokeStyle = hexA(col, 0.55); cx.lineWidth = k; cx.stroke();
+        cx.fillStyle = '#ffffff'; cx.fillText(t, tx + 11 * k, y + 18 * k); tx += tw + 8 * k;
+      });
+      y += 30 * k;
+    }
+    return y;
+  }
+  async function drawFoot(cx, x, y, maxW, k) {
+    cx.fillStyle = 'rgba(140,170,255,.18)'; cx.fillRect(x, y - 16 * k, maxW, Math.max(1, k * 0.8));
+    var logo = await loadLogo(), lx = x, L = 32 * k;
+    if (logo) { rrect(cx, lx, y, L, L, 8 * k); cx.save(); cx.clip(); cx.drawImage(logo, lx, y, L, L); cx.restore(); lx += L + 10 * k; }
+    cx.font = '900 ' + (19 * k) + 'px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', lx, y + 23 * k);
+    var bw = cx.measureText('GOナビ').width;
+    cx.font = '600 ' + (14 * k) + 'px ' + JP; cx.fillStyle = '#93a3cf'; cx.fillText('gonavi.jp', lx + bw + 10 * k, y + 22 * k);
+    var dt = new Date(), ds = dt.getFullYear() + '.' + (dt.getMonth() + 1) + '.' + dt.getDate();
+    cx.textAlign = 'right'; cx.fillStyle = '#7c8ab4'; cx.fillText(ds, x + maxW, y + 22 * k); cx.textAlign = 'left';
+  }
+  // ランキングを1920×1440いっぱいに収める。縦に長い一覧は「1〜5位｜6〜10位」の2列にしたほうが大きく入るので、
+  // 1列と2列のうち大きく描けるほうを選ぶ（角丸なし＝動画の画面にそのまま置く）
+  async function publicImage1920(cfg) {
+    var el = document.querySelector(cfg.target);
+    if (!el) throw new Error('target');
+    var dev = isDev(), CW = 720, W = 1920, H = 1440, P = 84, K = 1.8;
+    var col = toolColor();
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var cx = cv.getContext('2d');
+    var g = cx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#131c3a'); g.addColorStop(1, '#0a0f22');
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    var rg = cx.createRadialGradient(W * 0.06, 0, 0, W * 0.06, 0, W * 0.8);
+    rg.addColorStop(0, hexA(col, 0.18)); rg.addColorStop(1, hexA(col, 0));
+    cx.fillStyle = rg; cx.fillRect(0, 0, W, H);
+    var bar = cx.createLinearGradient(0, 0, W * 0.85, 0); bar.addColorStop(0, col); bar.addColorStop(1, hexA(col, 0));
+    cx.fillStyle = bar; cx.fillRect(0, 0, W, 8);
+    var top = drawHead(cx, cfg, P, 60, W - P * 2, K, col) + 34;
+    var footY = H - 56 - 32 * K;
+    var bottom = dev ? H - 60 : footY - 16 * K - 30;
+    if (!dev) await drawFoot(cx, P, footY, W - P * 2, K);
+    var areaW = W - P * 2, areaH = bottom - top, gap = 56;
+    var base = { width: CW, mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0, rows: cfg.rows, drop: cfg.drop, scale: 3 };
+    var total = cfg.rows ? Math.min(LIMIT, el.querySelectorAll(cfg.rows).length) : LIMIT;
+    var one = await renderEl(el, Object.assign({}, base, { from: 0, limit: LIMIT }));
+    var colW = (areaW - gap) / 2;
+    var f1 = Math.min(areaW / one.w, areaH / one.h);
+    var f2 = Math.min(colW / one.w, areaH / (one.h / 2));
+    if (cfg.rows && total > 5 && f2 > f1 * 1.08) {
+      var half = Math.ceil(total / 2);
+      var a = await renderEl(el, Object.assign({}, base, { from: 0, limit: half }));
+      var b = await renderEl(el, Object.assign({}, base, { from: half, limit: total - half }));
+      var f = Math.min(colW / a.w, areaH / Math.max(a.h, b.h));
+      var dw = a.w * f, x0 = P + (areaW - (dw * 2 + gap)) / 2;
+      var y0 = top + Math.max(0, (areaH - Math.max(a.h, b.h) * f) / 2);
+      cx.drawImage(a.canvas, x0, y0, dw, a.h * f);
+      cx.drawImage(b.canvas, x0 + dw + gap, y0, b.w * f, b.h * f);
+    } else {
+      var dw1 = one.w * f1, dh1 = one.h * f1;
+      cx.drawImage(one.canvas, P + (areaW - dw1) / 2, top + Math.max(0, (areaH - dh1) / 2), dw1, dh1);
+    }
+    return cv;
+  }
+  // ページの背景だけを W×H で描く（撮影モードの1920×1440で、選んだ部分の後ろに敷く）
+  async function pageBg(W, H) {
+    var css = await collectCSS('window');
+    var esc = function (s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    var rootCls = 'snaproot ' + document.documentElement.className;
+    var bodyCls = 'snapbody ' + document.body.className.replace(/\bbfull\b/, '');
+    var xml = '<div xmlns="http://www.w3.org/1999/xhtml" class="' + esc(rootCls) + '" style="width:' + W + 'px;height:' + H + 'px">' +
+      '<style>' + esc(css + EXTRA) + '</style>' +
+      '<div class="' + esc(bodyCls) + '" style="margin:0!important;padding:0!important;width:' + W + 'px!important;height:' + H +
+      'px!important;min-height:0!important;background-attachment:scroll!important;overflow:hidden!important"></div></div>';
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '"><foreignObject x="0" y="0" width="100%" height="100%">' + xml + '</foreignObject></svg>';
+    var img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    await new Promise(function (res, rej) { img.onload = res; img.onerror = function () { rej(new Error('bg')); }; });
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    cv.getContext('2d').drawImage(img, 0, 0, W, H);
+    return cv;
+  }
+  // 撮影モードの1920×1440: 選んだ部分を中央に大きく置く（背景ありならページの背景を全面に敷く）
+  async function fit1920(res, withBg) {
+    var W = 1920, H = 1440, M = 60;
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var cx = cv.getContext('2d');
+    if (withBg) { try { cx.drawImage(await pageBg(W, H), 0, 0); } catch (e) {} }
+    var f = Math.min((W - M * 2) / res.w, (H - M * 2) / res.h);
+    var dw = res.w * f, dh = res.h * f;
+    cx.drawImage(res.canvas, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    return cv;
+  }
+
   function hexA(hex, a) {
     var h = hex.replace('#', ''); if (h.length === 3) h = h.replace(/./g, '$&$&');
     var n = parseInt(h, 16); if (isNaN(n)) return 'rgba(127,180,255,' + a + ')';
@@ -546,9 +664,11 @@
       if (document.querySelector('.snapbar')) return;
       var bar = document.createElement(cfg.barIn ? 'span' : 'div');
       bar.className = 'snapbar' + (cfg.barIn ? ' inl' : '');
-      bar.innerHTML = '<button type="button" class="snapbtn">📷 画像を保存</button>';
+      // ボタンは2つ: ふつうの保存（幅720の縦長）と、動画用の1920×1440（2026-09-12タダシさん指示）
+      bar.innerHTML = '<button type="button" class="snapbtn">📷 画像を保存</button>' +
+        '<button type="button" class="snapbtn alt" title="動画でそのまま使える1920×1440の画像にします">1920×1440サイズ</button>';
       if (holder) holder.appendChild(bar); else target.parentNode.insertBefore(bar, target);
-      var btn = bar.querySelector('button');
+      var btns = bar.querySelectorAll('button'), btn = btns[0], btn2 = btns[1];
       var sync = function () {
         var n = cfg.rows ? target.querySelectorAll(cfg.rows).length : target.children.length;
         bar.hidden = !n || target.offsetParent === null;
@@ -557,16 +677,18 @@
       sync();
       new MutationObserver(sync).observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
       setInterval(sync, 1500);
-      btn.onclick = async function () {
+      var run = async function (big) {
         if (btn.disabled) return;
-        btn.disabled = true; busy(true);
+        btn.disabled = btn2.disabled = true; busy(true);
         try {
-          var cv = await publicImage(cfg);
+          var cv = big ? await publicImage1920(cfg) : await publicImage(cfg);
           busy(false);
-          await preview(cv, 'GOナビ_' + cfg.title.replace(/\s+/g, '') + '_' + stamp().slice(0, 8) + '.png');
+          await preview(cv, 'GOナビ_' + cfg.title.replace(/\s+/g, '') + '_' + stamp().slice(0, 8) + (big ? '_1920x1440' : '') + '.png');
         } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした。このブラウザでは対応していない可能性があります'); }
-        btn.disabled = false;
+        btn.disabled = btn2.disabled = false;
       };
+      btn.onclick = function () { run(false); };
+      btn2.onclick = function () { run(true); };
     })();
   }
 
@@ -590,6 +712,7 @@
       '<button type="button" data-a="down" title="ひと回り内側">▼内側</button>' +
       '<button type="button" data-a="bg">背景あり</button>' +
       '<button type="button" data-a="save" class="go">保存</button>' +
+      '<button type="button" data-a="s1920" class="go" title="選んだ部分を1920×1440の中央に大きく置いて保存">1920×1440</button>' +
       '<button type="button" data-a="x">✕</button>';
     document.body.appendChild(bar);
     bar.addEventListener('click', onTool);
@@ -639,6 +762,7 @@
     } else d.textContent = '撮りたい所をタップ';
     bar.querySelector('[data-a="bg"]').textContent = pick.bg === 'page' ? '背景あり' : '背景透明';
     bar.querySelector('[data-a="save"]').disabled = !pick.el;
+    bar.querySelector('[data-a="s1920"]').disabled = !pick.el;
   }
   function onMove(e) {
     if (pick.locked || isUI(e.target)) return;
@@ -669,18 +793,21 @@
       if (p && p !== document.body && p !== document.documentElement) { pick.stack.push(pick.el); pick.el = p; pick.locked = true; }
     }
     if (a === 'down' && pick.stack.length) { pick.el = pick.stack.pop(); pick.locked = true; }
-    if (a === 'save' && pick.el) {
-      var el = pick.el;
+    if ((a === 'save' || a === 's1920') && pick.el) {
+      var el = pick.el, big = a === 's1920';
       hi.style.display = 'none'; bar.style.visibility = 'hidden';
       busy(true);
       try {
         var r = el.getBoundingClientRect();
+        // 1920×1440は拡大して置くので、ぼやけないよう細かく描いておく。背景はあとで全面に敷くので、ここでは透明で描く
+        var scl = big ? Math.min(4, Math.max(2, Math.ceil(Math.min(1800 / (r.width + 20), 1320 / (r.height + 20))))) : 2;
         var res = await renderEl(el, { width: r.width, mode: 'window', rootCls: document.documentElement.className,
-                                       bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: pick.bg === 'page',
-                                       pad: pick.bg === 'page' ? 16 : 10, scale: 2 });
+                                       bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : pick.bg === 'page',
+                                       pad: !big && pick.bg === 'page' ? 16 : 10, scale: scl });
+        var outCv = big ? await fit1920(res, pick.bg === 'page') : res.canvas;
         busy(false);
         var h1 = txt('header h1') || document.title.split('｜')[0];
-        await preview(res.canvas, h1.replace(/\s+/g, '') + '_' + stamp() + '.png');
+        await preview(outCv, h1.replace(/\s+/g, '') + '_' + stamp() + (big ? '_1920x1440' : '') + '.png');
       } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした'); }
       if (bar) bar.style.visibility = '';
     }
@@ -690,7 +817,9 @@
   // ---------------------------------------------------------------- 見た目
   var css = document.createElement('style'); css.id = 'snapui-css';
   css.textContent =
-    '.snapbar{display:flex;justify-content:flex-end;margin:6px 0 8px}' +
+    '.snapbar{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:6px 0 8px}' +
+    '.snapbtn.alt{color:#e8eeff;background:linear-gradient(160deg,#5566a3 0%,#34427a 55%,#232d57 100%);' +
+      'box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.35)}' +
     '.snapbar.inl{display:inline-flex;margin:0 0 0 auto}' +
     '.snapbar[hidden]{display:none!important}' +
     '.snapbtn{font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;border:0;border-radius:999px;padding:6px 14px;' +
@@ -730,5 +859,5 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
-  window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage };
+  window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, fit1920: fit1920 };
 })();

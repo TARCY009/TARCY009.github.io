@@ -162,6 +162,11 @@ h1 b{white-space:nowrap}
   box-shadow:0 4px 14px rgba(242,193,78,.35),inset 0 1px 0 rgba(255,255,255,.5);
   transition:transform .12s,box-shadow .12s;white-space:nowrap}
 #saveBtn:hover{transform:translateY(-1px)}
+/* 動画用の1920×1440（2026-09-12タダシさん指示）。ふつうの保存(1980×1440)の横に並べる */
+#saveBtn2{margin-left:6px;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;border:0;border-radius:999px;padding:7px 14px;
+  color:#e8eeff;background:linear-gradient(160deg,#5566a3 0%,#34427a 55%,#232d57 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.35);transition:transform .15s}
+#saveBtn2:hover{transform:translateY(-1px)}
 #gwrap{border-radius:12px;overflow:hidden;line-height:0}
 #gwrap svg{width:100%;height:auto;display:block}
 
@@ -210,6 +215,7 @@ h1 b{white-space:nowrap}
     <span class="gttl">グラフ<small style="color:var(--sub);font-weight:700"> TOP10</small></span>
     <span class="gsub expl">グラフは上位10位まで。保存すると1980×1440の画像になります</span>
     <button id="saveBtn" type="button" title="いま表示しているグラフを1980×1440のPNG画像として保存します">📷 画像を保存</button>
+    <button id="saveBtn2" type="button" title="いま表示しているグラフを動画用の1920×1440のPNG画像として保存します">1920×1440サイズ</button>
   </div>
   <div id="gwrap"></div>
 </section>
@@ -230,7 +236,7 @@ h1 b{white-space:nowrap}
     <li><b>メガLv</b>＝メガシンカの追加SPアタック（わざ名の最後が「+」）は、<b>メガレベルが上がるほど威力が上がります</b>（Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／<b>Lv4（スーパーマックス）＝1.3倍</b>）。<b>既定はLv4</b>で、この設定はサイト内の他のツールにも引き継がれます。追加SPアタックを持つポケモンを出しているときだけタブが現れます</li>
   </ul>
   <h4>グラフの保存</h4>
-  <p>グラフは<b>上位10位まで</b>を表示します（一覧の20位・30位・40位の切り替えとは独立）。「📷 画像を保存」で<b>1980×1440のPNG画像</b>として保存でき、動画や共有にそのまま使えます。</p>
+  <p>グラフは<b>上位10位まで</b>を表示します（一覧の20位・30位・40位の切り替えとは独立）。「📷 画像を保存」で<b>1980×1440のPNG画像</b>、「1920×1440サイズ」で<b>1920×1440のPNG画像</b>として保存でき、動画や共有にそのまま使えます。</p>
   <h4>データの更新</h4>
   <p>ポケモン・わざのデータは毎朝自動で更新されます。</p>
 </div>
@@ -452,17 +458,18 @@ const shade=(hex,f)=>{
 // デザインはエクセル再現をやめてサイトの言語(立体・光彩・役割色のピル)に寄せた同日2回目の指示:
 //   棒は細く＋光彩とハイライトで立体に／順位は棒の中／
 //   タイトルはタイプ名だけグラデーション文字＋TOP10チップ／【シャドウ含む】はマーク入りピル
-function graphSVG(forSave){
+function graphSVG(forSave,Wopt){
   const rows=buildRows().slice(0,10);
   const [c1,c2]=TC[curT], ja=JA[curT];
-  const W=1980,H=1440;
+  // 幅はふつう1980。動画用の1920×1440で保存するときだけ1920(2026-09-12タダシさん指示)。右側の位置は幅から決める
+  const W=Wopt||1980,H=1440;
   const n=rows.length||1;
   // 目盛り: 下限=最下位の3%下を刻みで切り下げ・上限=1位の少し上(差がはっきり見える)
   const dmax=rows.length?rows[0].dps:10, dmin=rows.length?rows[rows.length-1].dps:0;
   const step=(dmax-dmin)<6?1:(dmax-dmin)<14?2:5;
   const v0=Math.max(0,Math.floor(dmin*0.97/step)*step);
   const v1=Math.ceil(dmax*1.02/step)*step;
-  const L=118,R=1928,T=252;
+  const L=118,R=W-52,T=252;
   const colW=(R-L)/n, barW=Math.min(colW*0.42,96); // 細めの棒
   const vfs=34, nfs=26;
   // 名前の行組みを先に決める。折り返しの行数で下の余白が変わるので、
@@ -520,7 +527,7 @@ function graphSVG(forSave){
   const pills=[];
   if(fShadow) pills.push({t:'シャドウ',fill:'#7c3aed',flame:true});
   if(fMega) pills.push({t:'メガ・ゲンシ',fill:'url(#gmega)'});
-  let px=1910;
+  let px=W-70;
   for(const p2 of [...pills].reverse()){
     const pfs=31, ph=60, py=92, padL=p2.flame?58:24;
     const pw=tw(p2.t,pfs)+padL+24;
@@ -581,26 +588,28 @@ function renderGraph(){
 
 // PNG保存(1980×1440固定。動画にそのまま使えるサイズ)。
 // 保存用は graphSVG(true) で作り直す＝四隅の丸みと青系のグラデーション枠が付く(画面には出さない)
-$('saveBtn').onclick=()=>{
-  const xml=graphSVG(true);
+function saveGraph(W){
+  const xml=graphSVG(true,W);
   const url=URL.createObjectURL(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}));
   const img=new Image();
   img.onload=()=>{
     const cv=document.createElement('canvas');
-    cv.width=1980; cv.height=1440;
+    cv.width=W; cv.height=1440;
     const ctx=cv.getContext('2d');
-    ctx.drawImage(img,0,0,1980,1440);
+    ctx.drawImage(img,0,0,W,1440);
     URL.revokeObjectURL(url);
     cv.toBlob(b=>{
       const a=document.createElement('a');
       a.href=URL.createObjectURL(b);
-      a.download=`タイプ別火力ランキング_${JA[curT]}_TOP10.png`;
+      a.download=`タイプ別火力ランキング_${JA[curT]}_TOP10${W===1920?'_1920x1440':''}.png`;
       a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     },'image/png');
   };
   img.src=url;
-};
+}
+$('saveBtn').onclick=()=>saveGraph(1980);
+$('saveBtn2').onclick=()=>saveGraph(1920);
 
 // ---- 操作 ----
 function syncUrl(){
