@@ -20,24 +20,32 @@
   if (/^\/(battlelog|feedback)\//.test(PATH)) return;
 
   function isDev() { try { return localStorage.getItem('site_dev') === '1'; } catch (e) { return false; } }
-  var LIMIT = 10;
+  // 一覧の画像は上位5件（2026-09-12タダシさん指示「10位までだと小さくなるので5位までにしてサイズにピッタリ」）。
+  // 10位までは「📊 グラフ画像」（棒グラフ・GRAPH_N）で見せる
+  var LIMIT = 5, GRAPH_N = 10;
 
   // ---------------------------------------------------------------- 一般向けボタンの設定
   // target=画像にする要素 / rows=1行の要素(上位LIMIT件だけ残す) / drop=画像から外す要素 /
   // ctx=見出しの下に出す条件の文字 / tags=点灯中の絞り込みボタン(ピルで出す) / barIn=ボタンを置く場所(無ければtargetの直前)
+  // graph＝「📊 グラフ画像」用に、1行の中の名前(name)・数値(val)・シャドウの印(shadow)の場所と、数値の単位(unit)
   var PUB = {
     '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', ctx: ['#bossView .bossname'],
-               tags: '.c-rank .modes [aria-pressed="true"]', title: 'レイド火力ランキング' },
+               tags: '.c-rank .modes [aria-pressed="true"]', title: 'レイド火力ランキング',
+               graph: { name: '.rname .nm', val: '.rdps', shadow: '.rname .shadowmark,.rname .sh', unit: 'DPS', head: '#bossView .bossname' } },
     '/bulk/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn',
-                tags: '.rhead [aria-pressed="true"]:not(#cntSeg *)', title: '耐久指数ランキング' },
+                tags: '.rhead [aria-pressed="true"]:not(#cntSeg *)', title: '耐久指数ランキング',
+                graph: { name: '.rname .nm', val: '.rval', shadow: '.rname .shadowmark', unit: '耐久指数' } },
     '/gym-attack/': { target: '#ranklist', rows: '.card', ctx: ['#defender .dname'],
-                      tags: '.gtabs [aria-pressed="true"]', title: 'ジム挑戦オススメ' },
-    '/gym-defense/': { target: '#list', rows: '.row', tags: '.gtabs [aria-pressed="true"]', title: 'ジム防衛オススメ' },
+                      tags: '.gtabs [aria-pressed="true"]', title: 'ジム挑戦オススメ',
+                      graph: { name: '.pname .nm', val: '.score', shadow: '.pname .shadowmark', unit: 'ポイント', head: '#defender .dname' } },
+    '/gym-defense/': { target: '#list', rows: '.row', tags: '.gtabs [aria-pressed="true"]', title: 'ジム防衛オススメ',
+                       graph: { name: '.pname', val: '.pts b', unit: 'ポイント' } },
     '/max-battle/': { target: '#list', rows: '.row', ctx: ['#bname'],
-                      tags: '#tabs [aria-selected="true"],#filters [aria-pressed="true"]', title: 'マックスバトル対策' },
+                      tags: '#tabs [aria-selected="true"],#filters [aria-pressed="true"]', title: 'マックスバトル対策',
+                      graph: { name: '.nm', val: '.pts b', unit: 'ポイント', head: '#bname' } },
     '/iv-checker/': { target: '#result .tblwrap', rows: 'tbody tr',
                       ctx: ['#lgtitle > span:first-child', '#lgtabs .lgc.act .lgc-n', '#lgtabs .lgc.act .lgc-r', '#lgtstats'],
-                      barIn: '#result .tophead', title: '個体値チェッカー TOP10' }
+                      barIn: '#result .tophead', title: '個体値チェッカー TOP5' }
   };
 
   // ---------------------------------------------------------------- ファイルを data: にする
@@ -557,28 +565,206 @@
     var footY = H - 56 - 32 * K;
     var bottom = dev ? H - 60 : footY - 16 * K - 30;
     if (!dev) await drawFoot(cx, P, footY, W - P * 2, K);
-    var areaW = W - P * 2, areaH = bottom - top, gap = 56;
-    var base = { width: CW, mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0, rows: cfg.rows, drop: cfg.drop, scale: 3 };
-    var total = cfg.rows ? Math.min(LIMIT, el.querySelectorAll(cfg.rows).length) : LIMIT;
-    var one = await renderEl(el, Object.assign({}, base, { from: 0, limit: LIMIT }));
-    var colW = (areaW - gap) / 2;
-    var f1 = Math.min(areaW / one.w, areaH / one.h);
-    var f2 = Math.min(colW / one.w, areaH / (one.h / 2));
-    if (cfg.rows && total > 5 && f2 > f1 * 1.08) {
-      var half = Math.ceil(total / 2);
-      var a = await renderEl(el, Object.assign({}, base, { from: 0, limit: half }));
-      var b = await renderEl(el, Object.assign({}, base, { from: half, limit: total - half }));
-      var f = Math.min(colW / a.w, areaH / Math.max(a.h, b.h));
-      var dw = a.w * f, x0 = P + (areaW - (dw * 2 + gap)) / 2;
-      var y0 = top + Math.max(0, (areaH - Math.max(a.h, b.h) * f) / 2);
-      cx.drawImage(a.canvas, x0, y0, dw, a.h * f);
-      cx.drawImage(b.canvas, x0 + dw + gap, y0, b.w * f, b.h * f);
-    } else {
-      var dw1 = one.w * f1, dh1 = one.h * f1;
-      cx.drawImage(one.canvas, P + (areaW - dw1) / 2, top + Math.max(0, (areaH - dh1) / 2), dw1, dh1);
+    var areaW = W - P * 2, areaH = bottom - top;
+    // 上位5件を1列で。横長の枠に縦長の一覧を入れると左右が空くので、枠の形に合う幅で描き直してからぴったり収める
+    var base = { mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0, rows: cfg.rows, drop: cfg.drop, scale: 3, from: 0, limit: LIMIT };
+    var one = await renderEl(el, Object.assign({}, base, { width: CW }));
+    var ideal = Math.round(Math.max(560, Math.min(1100, one.h * areaW / areaH)));
+    if (Math.abs(ideal - CW) > 40) one = await renderEl(el, Object.assign({}, base, { width: ideal }));
+    var f = Math.min(areaW / one.w, areaH / one.h);
+    var dw = one.w * f, dh = one.h * f;
+    cx.drawImage(one.canvas, P + (areaW - dw) / 2, top + Math.max(0, (areaH - dh) / 2), dw, dh);
+    return cv;
+  }
+  // ---------------------------------------------------------------- 📊 グラフ画像（2026-09-12タダシさん指示）
+  // 上位10件を縦棒グラフにした1920×1440。タイプ別火力ランキングのグラフと同じ作り（細めの棒・光彩と上端の光・棒の中に順位・
+  // 上に値・下に名前・シャドウは炎マーク・右上にGOナビ・真ん中に淡いロゴ）で、棒の色だけツールの色にする。
+  // 名前と値は画面の一覧から読む（PUB の graph に場所を書く）＝画面の順位・数値と必ず同じになる
+  var FLAME = 'M348 8C362 130 400 232 452 330C512 442 566 536 572 640C575 700 560 742 540 772C566 700 566 620 552 556C596 596 640 660 656 726C672 668 682 610 676 548C724 610 768 686 782 772C800 884 700 1010 470 1018C250 1026 30 962 14 812C2 700 60 596 132 520C124 590 138 650 168 700C168 620 196 540 244 486C244 546 258 596 282 634C300 566 292 486 268 410C238 314 262 150 348 8Z';
+  var flameP = null;
+  function firstText(e) {
+    for (var n = e.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && n.nodeValue.trim()) return n.nodeValue.trim();
+    return (e.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+  function shadeRGB(hex, f) {
+    var h = hex.replace('#', ''); if (h.length === 3) h = h.replace(/./g, '$&$&');
+    var n = parseInt(h, 16), r = n >> 16, g = n >> 8 & 255, b = n & 255, t = f > 0 ? 255 : 0, a = Math.abs(f);
+    var c = function (v) { return Math.round(v + (t - v) * a); };
+    return 'rgb(' + c(r) + ',' + c(g) + ',' + c(b) + ')';
+  }
+  function niceStep(range) {
+    var raw = Math.max(range, 1e-9) / 6, mag = Math.pow(10, Math.floor(Math.log10(raw))), ms = [1, 2, 5, 10];
+    for (var i = 0; i < ms.length; i++) if (raw <= ms[i] * mag) return ms[i] * mag;
+    return 10 * mag;
+  }
+  function fmtTick(v, step) {
+    var d = step >= 1 ? 0 : Math.min(3, Math.ceil(-Math.log10(step) - 1e-9));
+    var x = Number(v.toFixed(d));
+    return x >= 10000 ? x.toLocaleString() : x.toFixed(d);
+  }
+  async function publicGraph(cfg) {
+    var el = document.querySelector(cfg.target);
+    if (!el) throw new Error('target');
+    var G = cfg.graph, dev = isDev(), W = 1920, H = 1440;
+    var rows = Array.prototype.slice.call(el.querySelectorAll(cfg.rows), 0, GRAPH_N).map(function (r, i) {
+      var ne = r.querySelector(G.name), ve = r.querySelector(G.val), rk = r.querySelector('.rk,.rank');
+      var vt = ve ? firstText(ve) : '', rn = rk ? parseInt(rk.textContent, 10) : NaN;
+      return { name: ne ? firstText(ne) : '', vt: vt, v: parseFloat(vt.replace(/,/g, '')), rank: isFinite(rn) ? rn : i + 1,
+               shadow: !!(G.shadow && r.querySelector(G.shadow)) };
+    }).filter(function (x) { return x.name && isFinite(x.v); });
+    if (!rows.length) throw new Error('rows');
+    var col = toolColor(), c2 = shadeRGB(col, 0.35);
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var cx = cv.getContext('2d');
+    // 地（角丸・青系のグラデーションの細い枠＝タイプ別火力のグラフと同じ）
+    var M = 2.8, RX = 34;
+    rrect(cx, M, M, W - M * 2, H - M * 2, RX); cx.save(); cx.clip();
+    var g = cx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#111a35'); g.addColorStop(1, '#0b1023');
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    var rg = cx.createRadialGradient(W * 0.12, 0, 0, W * 0.12, 0, W);
+    rg.addColorStop(0, hexA(col, 0.16)); rg.addColorStop(0.55, hexA(col, 0));
+    cx.fillStyle = rg; cx.fillRect(0, 0, W, H);
+    cx.restore();
+    var eg = cx.createLinearGradient(0, 0, W, H);
+    eg.addColorStop(0, '#5ee7ff'); eg.addColorStop(0.5, '#4f8dff'); eg.addColorStop(1, '#8a7bff');
+    rrect(cx, M, M, W - M * 2, H - M * 2, RX); cx.lineWidth = M * 2; cx.strokeStyle = eg; cx.stroke();
+    // 名前の行組み（最大3行。1文字だけ残らないよう行数を決めてから均等に割る）→ 名前の高さから棒の底(B)を決める
+    var n = rows.length, L = 118, R = W - 52, T = 252, PAD = 52;
+    var colW = (R - L) / n, barW = Math.min(colW * 0.42, 96);
+    var names = rows.map(function (r) {
+      var fs = 26, chars = Array.from(r.name), maxC = Math.max(3, Math.floor((colW - 6) / fs));
+      while (chars.length > maxC * 3 && fs > 11) { fs -= 2; maxC = Math.max(3, Math.floor((colW - 6) / fs)); }
+      // 括弧のある名前（ルガルガン（たそがれ）など）は括弧の前で折る（「ルガルガン（」「たそがれ）」と途中で折れたため）
+      var pi = r.name.search(/[（(]/);
+      if (pi > 0 && chars.length > maxC) {
+        var a = Array.from(r.name.slice(0, pi)), b = Array.from(r.name.slice(pi));
+        while ((a.length > maxC || b.length > maxC) && fs > 11) { fs -= 2; maxC = Math.max(3, Math.floor((colW - 6) / fs)); }
+        if (a.length <= maxC && b.length <= maxC) return { fs: fs, lines: [a.join(''), b.join('')] };
+      }
+      var nl = Math.min(3, Math.ceil(chars.length / maxC)), per = Math.ceil(chars.length / nl), lines = [];
+      for (var p = 0; p < chars.length; p += per) lines.push(chars.slice(p, p + per).join(''));
+      return { fs: fs, lines: lines.slice(0, 3) };
+    });
+    var nameH = Math.max.apply(null, names.map(function (x) {
+      return 34 + x.fs * 0.9 + (x.lines.length - 1) * x.fs * 1.2 + x.fs * 0.3;
+    }).concat([40]));
+    var B = Math.round(H - PAD - nameH);
+    var vals = rows.map(function (r) { return r.v; });
+    var dmax = Math.max.apply(null, vals), dmin = Math.min.apply(null, vals);
+    var step = niceStep((dmax - dmin) || dmax * 0.2 || 1);
+    var v0 = Math.max(0, Math.floor(dmin * 0.97 / step) * step), v1 = Math.ceil(dmax * 1.02 / step) * step;
+    if (v1 <= v0) v1 = v0 + step;
+    var yv = function (v) { return B - (v - v0) / (v1 - v0) * (B - T); };
+    var logo = dev ? null : await loadLogo();
+    // 真ん中の淡いロゴ（切り取られても残る透かし・開発者の端末では出さない）
+    if (logo) {
+      var cs = Math.min(R - L, B - T) * 0.62;
+      cx.globalAlpha = 0.07; cx.drawImage(logo, (L + R) / 2 - cs / 2, (T + B) / 2 - cs / 2, cs, cs); cx.globalAlpha = 1;
+    }
+    // 目盛り（点線）と単位
+    cx.textBaseline = 'alphabetic';
+    cx.textAlign = 'right';
+    cx.font = '700 22px ' + JP; cx.fillStyle = '#6b76a3'; cx.fillText(G.unit, L - 14, T - 20);
+    cx.font = '23px ' + JP;
+    for (var v = v0; v <= v1 + step * 1e-6; v += step) {
+      var gy = yv(v);
+      cx.strokeStyle = '#232c4f'; cx.lineWidth = v === v0 ? 2 : 1.2; cx.setLineDash(v === v0 ? [] : [3, 9]);
+      cx.beginPath(); cx.moveTo(L, gy); cx.lineTo(R, gy); cx.stroke();
+      cx.fillStyle = '#6b76a3'; cx.fillText(fmtTick(v, step), L - 14, gy + 8);
+    }
+    cx.setLineDash([]);
+    // 棒
+    var MD = { 1: '#ffd873', 2: '#dfe8f2', 3: '#e8a06a' };
+    if (!flameP) flameP = new Path2D(FLAME);
+    rows.forEach(function (r, i) {
+      var cxm = L + colW * i + colW / 2, by = yv(r.v), bh = B - by, bx = cxm - barW / 2, rr = Math.min(12, barW / 2);
+      var path = function () {
+        cx.beginPath(); cx.moveTo(bx, B); cx.lineTo(bx, by + rr); cx.quadraticCurveTo(bx, by, bx + rr, by);
+        cx.lineTo(bx + barW - rr, by); cx.quadraticCurveTo(bx + barW, by, bx + barW, by + rr); cx.lineTo(bx + barW, B); cx.closePath();
+      };
+      cx.save(); cx.shadowColor = hexA(col, 0.55); cx.shadowBlur = 26; path(); cx.fillStyle = hexA(col, 0.5); cx.fill(); cx.restore();
+      var bg2 = cx.createLinearGradient(0, by, 0, B);
+      bg2.addColorStop(0, c2); bg2.addColorStop(0.45, col); bg2.addColorStop(1, shadeRGB(col, -0.38));
+      path(); cx.fillStyle = bg2; cx.fill();
+      var hh = Math.min(bh * 0.45, 150);
+      if (hh > 8) {
+        var hl = cx.createLinearGradient(0, by, 0, by + hh);
+        hl.addColorStop(0, 'rgba(255,255,255,.55)'); hl.addColorStop(0.25, 'rgba(255,255,255,.12)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
+        rrect(cx, bx + 3, by + 3, barW - 6, hh, Math.max(2, rr - 3)); cx.fillStyle = hl; cx.fill();
+      }
+      cx.textAlign = 'center';
+      if (bh > 52) {
+        cx.font = '800 27px ' + JP; cx.globalAlpha = MD[r.rank] ? 0.95 : 0.5; cx.fillStyle = MD[r.rank] || '#ffffff';
+        cx.fillText(String(r.rank), cxm, B - 16); cx.globalAlpha = 1;
+      }
+      cx.font = '800 34px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText(r.vt, cxm, by - 16);
+      var nm = names[i];
+      nm.lines.forEach(function (ln, li) {
+        var ly = B + 34 + nm.fs * 0.9 + li * nm.fs * 1.2;
+        cx.font = '700 ' + nm.fs + 'px ' + JP; cx.fillStyle = '#cfe3ff';
+        if (li === 0 && r.shadow) {
+          var w3 = cx.measureText(ln).width, sc = nm.fs / 1024 * 1.1, fw = 800 * sc, sx = cxm - (w3 + fw + 4) / 2;
+          cx.save(); cx.translate(sx, ly - nm.fs * 0.88); cx.scale(sc, sc); cx.fillStyle = '#b06cff'; cx.fill(flameP); cx.restore();
+          cx.textAlign = 'left'; cx.fillStyle = '#cfe3ff'; cx.fillText(ln, sx + fw + 4, ly); cx.textAlign = 'center';
+        } else cx.fillText(ln, cxm, ly);
+      });
+    });
+    cx.textAlign = 'left';
+    // 見出し: 小さな前書き → （ボス名など）＋ツール名 ＋ TOPnのチップ → 下線
+    var pre = txt('header .eyebrow') || ('ポケモンGO ' + cfg.title);
+    cx.font = '700 26px ' + JP; cx.fillStyle = '#8b96c2';
+    var px0 = 72; for (var ch of pre) { cx.fillText(ch, px0, 74); px0 += cx.measureText(ch).width + 4; }
+    var head = G.head ? txt(G.head).replace(/^[^:：]{1,6}[:：]\s*/, '') : '';
+    cx.font = '800 62px ' + JP;
+    var x = 72;
+    if (head) {
+      var hw = cx.measureText(head).width, hg = cx.createLinearGradient(x, 0, x + hw, 0);
+      hg.addColorStop(0, c2); hg.addColorStop(1, col); cx.fillStyle = hg; cx.fillText(head, x, 152); x += hw + 22;
+    }
+    cx.fillStyle = '#ffffff'; cx.fillText(cfg.title, x, 152); x += cx.measureText(cfg.title).width + 30;
+    rrect(cx, x, 104, 150, 56, 13);
+    var chg = cx.createLinearGradient(x, 104, x + 150, 160); chg.addColorStop(0, c2); chg.addColorStop(1, col);
+    cx.fillStyle = chg; cx.fill();
+    cx.font = '800 32px ' + JP; cx.fillStyle = '#0b1023'; cx.textAlign = 'center'; cx.fillText('TOP' + n, x + 75, 144); cx.textAlign = 'left';
+    var chipEnd = x + 150;
+    rrect(cx, 72, 176, 640, 5, 2.5);
+    var ul = cx.createLinearGradient(72, 0, 712, 0); ul.addColorStop(0, col); ul.addColorStop(1, hexA(col, 0));
+    cx.fillStyle = ul; cx.fill();
+    // 条件のピル（右寄せ。シャドウは紫＋炎、メガ・ゲンシはマゼンタ、ほかはツールの色）。見出しとぶつかるなら下の段へ
+    var tags = tagLabels(cfg.tags);
+    cx.font = '800 31px ' + JP;
+    var pills = tags.map(function (t) {
+      var fl = t === 'シャドウ';
+      return { t: t, flame: fl, mega: /メガ|ゲンシ/.test(t), w: cx.measureText(t).width + (fl ? 58 : 24) + 24 };
+    });
+    var totalPW = pills.reduce(function (a, p) { return a + p.w + 16; }, 0);
+    var py = chipEnd + 30 > W - 70 - totalPW ? 196 : 92, pxr = W - 70;
+    for (var k = pills.length - 1; k >= 0; k--) {
+      var p = pills[k]; pxr -= p.w;
+      rrect(cx, pxr, py, p.w, 60, 30);
+      if (p.mega) { var mg = cx.createLinearGradient(pxr, 0, pxr + p.w, 0); mg.addColorStop(0, '#d63384'); mg.addColorStop(1, '#7a3cc4'); cx.fillStyle = mg; }
+      else cx.fillStyle = p.flame ? '#7c3aed' : hexA(col, 0.5);
+      cx.fill();
+      rrect(cx, pxr, py, p.w, 30, 15); cx.fillStyle = 'rgba(255,255,255,.14)'; cx.fill();
+      if (p.flame) { var s2 = 40 / 1024; cx.save(); cx.translate(pxr + 16, py + 9); cx.scale(s2, s2); cx.fillStyle = '#ffffff'; cx.fill(flameP); cx.restore(); }
+      cx.fillStyle = '#ffffff'; cx.fillText(p.t, pxr + (p.flame ? 58 : 24), py + 41);
+      pxr -= 16;
+    }
+    // 右上: GOナビ（開発者の端末では出さない）
+    if (logo) {
+      var lg = 58, x2 = W - 72, y0 = 22;
+      cx.font = '800 30px ' + JP; var tw1 = cx.measureText('GOナビ').width * 1.05;
+      cx.font = '700 21px ' + JP; var tw2 = cx.measureText('gonavi.jp').width;
+      var tx = x2 - Math.max(tw1, tw2), lx = tx - lg - 12;
+      cx.globalAlpha = 0.92;
+      rrect(cx, lx, y0, lg, lg, 12); cx.save(); cx.clip(); cx.drawImage(logo, lx, y0, lg, lg); cx.restore();
+      cx.font = '800 30px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', tx, y0 + 28);
+      cx.font = '700 21px ' + JP; cx.fillStyle = '#8b96c2'; cx.fillText('gonavi.jp', tx, y0 + 54);
+      cx.globalAlpha = 1;
     }
     return cv;
   }
+
   // ページの背景だけを W×H で描く（撮影モードの1920×1440で、選んだ部分の後ろに敷く）
   async function pageBg(W, H) {
     var css = await collectCSS('window');
@@ -666,9 +852,10 @@
       bar.className = 'snapbar' + (cfg.barIn ? ' inl' : '');
       // ボタンは2つ: ふつうの保存（幅720の縦長）と、動画用の1920×1440（2026-09-12タダシさん指示）
       bar.innerHTML = '<button type="button" class="snapbtn">📷 画像を保存</button>' +
-        '<button type="button" class="snapbtn alt" title="動画でそのまま使える1920×1440の画像にします">1920×1440サイズ</button>';
+        '<button type="button" class="snapbtn alt" title="動画でそのまま使える1920×1440の画像にします（上位5件）">1920×1440サイズ</button>' +
+        (cfg.graph ? '<button type="button" class="snapbtn gr" title="上位10件を棒グラフにした1920×1440の画像にします">📊 グラフ画像</button>' : '');
       if (holder) holder.appendChild(bar); else target.parentNode.insertBefore(bar, target);
-      var btns = bar.querySelectorAll('button'), btn = btns[0], btn2 = btns[1];
+      var btns = bar.querySelectorAll('button'), btn = btns[0], btn2 = btns[1], btn3 = btns[2] || null;
       var sync = function () {
         var n = cfg.rows ? target.querySelectorAll(cfg.rows).length : target.children.length;
         bar.hidden = !n || target.offsetParent === null;
@@ -677,18 +864,21 @@
       sync();
       new MutationObserver(sync).observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
       setInterval(sync, 1500);
-      var run = async function (big) {
+      // kind: 'n'＝ふつう(上位5件) / 'b'＝1920×1440(上位5件) / 'g'＝棒グラフ(上位10件・1920×1440)
+      var run = async function (kind) {
         if (btn.disabled) return;
-        btn.disabled = btn2.disabled = true; busy(true);
+        btns.forEach(function (x) { x.disabled = true; }); busy(true);
         try {
-          var cv = big ? await publicImage1920(cfg) : await publicImage(cfg);
+          var cv = kind === 'g' ? await publicGraph(cfg) : kind === 'b' ? await publicImage1920(cfg) : await publicImage(cfg);
           busy(false);
-          await preview(cv, 'GOナビ_' + cfg.title.replace(/\s+/g, '') + '_' + stamp().slice(0, 8) + (big ? '_1920x1440' : '') + '.png');
+          var tail = kind === 'g' ? '_グラフ_1920x1440' : kind === 'b' ? '_1920x1440' : '';
+          await preview(cv, 'GOナビ_' + cfg.title.replace(/\s+/g, '') + '_' + stamp().slice(0, 8) + tail + '.png');
         } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした。このブラウザでは対応していない可能性があります'); }
-        btn.disabled = btn2.disabled = false;
+        btns.forEach(function (x) { x.disabled = false; });
       };
-      btn.onclick = function () { run(false); };
-      btn2.onclick = function () { run(true); };
+      btn.onclick = function () { run('n'); };
+      btn2.onclick = function () { run('b'); };
+      if (btn3) btn3.onclick = function () { run('g'); };
     })();
   }
 
@@ -896,6 +1086,8 @@
     '.snapbar{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:6px 0 8px}' +
     '.snapbtn.alt{color:#e8eeff;background:linear-gradient(160deg,#5566a3 0%,#34427a 55%,#232d57 100%);' +
       'box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.35)}' +
+    '.snapbtn.gr{color:#04232b;background:linear-gradient(160deg,#b9f6ff 0%,#43e0ff 55%,#0fa8c4 100%);' +
+      'box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 rgba(0,0,0,.35)}' +
     '.snapbar.inl{display:inline-flex;margin:0 0 0 auto}' +
     '.snapbar[hidden]{display:none!important}' +
     '.snapbtn{font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;border:0;border-radius:999px;padding:6px 14px;' +
@@ -957,5 +1149,6 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
-  window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, fit1920: fit1920 };
+  window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, publicGraph: publicGraph,
+                        fit1920: fit1920, PUB: PUB };
 })();
