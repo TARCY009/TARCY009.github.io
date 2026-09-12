@@ -12183,10 +12183,8 @@ document.getElementById('copyUrl').onclick = async () => {
 // ---- かんたん案内(初心者向けの入り口・2026-08-26) ----
 // 質問に答えると、目的に合ったモードへ設定済みの状態で移動する「案内係」。
 // 計算と画面は既存モードをそのまま使う(答えの二重管理をしない)。
-// 初回訪問(共有リンク以外)は自動で開く。一度閉じたら以後は出ない(開き直しは常設の🔰ボタン)
+// 開くのは常設の🔰ボタンだけ(2026-09-12から初回訪問でも自動では開かない)
 const EASY_KEY = PAGE_ROCKET ? 'rkt_easy_seen' : 'gbl_easy_seen';
-// 「共有リンクで開いたか」は読み込み時点のURLで判定する(初期化後はツールが状態をURLへ書き戻すため)
-const EASY_HAD_QS = !!location.search;
 const easySeen = () => { try { return localStorage.getItem(EASY_KEY) === '1'; } catch (e) { return true; } };
 const easyMark = () => { try { localStorage.setItem(EASY_KEY, '1'); } catch (e) {} };
 const EASY = { step: null, who: null, act: null };
@@ -12822,9 +12820,9 @@ const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } }
   });
   bootStep('★登録リスト', renderMyPk);
   bootStep('計算と表示', run);
-  // かんたん案内: 常設ボタン＋初回訪問(共有リンク以外)は自動で開く
+  // かんたん案内: 常設の🔰ボタンで開く。初回訪問でも自動では開かない
+  // (開いた瞬間に本文を覆う小窓はスマホ検索の順位を下げうるため・2026-09-12タダシさん指示)
   bootStep('かんたん案内', () => {
   document.getElementById('easybtn').onclick = easyOpen;
-  if (!PAGE_BLOG && !EASY_HAD_QS && !easySeen()) easyOpen();   // 対戦記録ページでは案内を出さない
   });
 })();
