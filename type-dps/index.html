@@ -417,6 +417,31 @@ const tw=(str,fs)=>[...String(str)].reduce((a,ch)=>a+(ch.charCodeAt(0)>255?fs:fs
 // グラフのポケモン名は「かなり薄い水色」(2026-08-20タダシさん指示)。白だと値の数字と同じ強さになる。
 // 緑が混じらないよう青を強くする(前の #bfe6f5 は青緑に見えるとの指摘で変更)
 const GNAME='#cfe3ff';
+// GOナビのロゴの透かし(2026-09-12タダシさん指示「共有されたときにうちのサイトのだと分かるように」)。
+// 画面のグラフにも保存する画像にも入れる。**開発者の端末だけ入れない**(動画編集で使うため・home.js の site_dev。
+// 一度 https://gonavi.jp/type-dps/?dev=1 を開いた端末＝ ?dev=0 で解除)。
+// ⚠ SVGを画像にして保存するとき、SVGの中から外部の画像は読まれないので、ロゴは data: の形で埋め込む
+let LOGO_URI='';
+const devClean=()=>{ try{ return localStorage.getItem('site_dev')==='1'; }catch(e){ return false; } };
+fetch('/assets/icons/home/icon-192.png').then(r=>r.blob()).then(b=>new Promise(res=>{
+  const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b);
+})).then(u=>{ LOGO_URI=u; if($('gwrap').innerHTML) renderGraph(); }).catch(()=>{});
+// 透かしの中身: 右上の角に「ロゴ＋GOナビ gonavi.jp」、グラフの真ん中にごく淡い大きなロゴ(切り取られても残るように)
+function watermarkSVG(W,H,L,R,T,B){
+  if(devClean()) return '';
+  let s='';
+  const cs=Math.min(R-L,B-T)*0.62, cx=(L+R)/2-cs/2, cy=(T+B)/2-cs/2;
+  if(LOGO_URI) s+=`<image href="${LOGO_URI}" x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${cs.toFixed(1)}" height="${cs.toFixed(1)}" opacity=".07"/>`;
+  // ロゴの右に「GOナビ」、その下の行に「gonavi.jp」(横に並べると太字の幅の見積もりがずれてくっつくため2段にする)
+  const fs=30, us=21, lg=58, x2=W-72, y0=22;
+  const txtW=Math.max(tw('GOナビ',fs)*1.12, tw('gonavi.jp',us));
+  const tx=x2-txtW, lx=tx-(LOGO_URI?lg+12:0);
+  s+=`<g opacity=".92">`;
+  if(LOGO_URI) s+=`<image href="${LOGO_URI}" x="${lx.toFixed(1)}" y="${y0}" width="${lg}" height="${lg}"/>`;
+  s+=`<text x="${tx.toFixed(1)}" y="${y0+28}" font-size="${fs}" font-weight="800" fill="#ffffff">GOナビ</text>
+  <text x="${tx.toFixed(1)}" y="${y0+54}" font-size="${us}" font-weight="700" fill="#8b96c2">gonavi.jp</text></g>`;
+  return s;
+}
 // 色の明暗(f>0で白へ・f<0で黒へ近づける)
 const shade=(hex,f)=>{
   const nn=parseInt(hex.slice(1),16),r=nn>>16,g=nn>>8&255,b=nn&255;
@@ -543,10 +568,16 @@ function graphSVG(forSave){
       }
     });
   });
+  s+=watermarkSVG(W,H,L,R,T,B);
   s+='</svg>';
   return s;
 }
-function renderGraph(){ $('gwrap').innerHTML=graphSVG(); }
+function renderGraph(){
+  $('gwrap').innerHTML=graphSVG();
+  // 開発者の端末ではロゴなしで保存されることをボタンに出す(使う人には出ない)
+  const clean=devClean();
+  $('saveBtn').textContent=clean?'📷 画像を保存（ロゴなし・開発者）':'📷 画像を保存';
+}
 
 // PNG保存(1980×1440固定。動画にそのまま使えるサイズ)。
 // 保存用は graphSVG(true) で作り直す＝四隅の丸みと青系のグラデーション枠が付く(画面には出さない)
