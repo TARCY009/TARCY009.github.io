@@ -60,13 +60,16 @@
       if (!dev) { restore(); return; }
       var img = new Image();
       img.onload = function () {
-        if (!dev) return;
-        var S = 64, c = document.createElement('canvas'); c.width = c.height = S;
-        var x = c.getContext('2d'); x.drawImage(img, 0, 0, S, S);
-        x.beginPath(); x.arc(S - 15, S - 15, 13, 0, Math.PI * 2);
-        x.fillStyle = '#ff2d2d'; x.fill(); x.lineWidth = 4; x.strokeStyle = '#ffffff'; x.stroke();
-        var url = c.toDataURL('image/png');
-        links.forEach(function (l) { l.setAttribute('type', 'image/png'); l.href = url; });
+        // 読み込み後の処理は外側の try の外で動くので、ここでも包む(別サイトの画像だと書き出しでエラーになるため)
+        try {
+          if (!dev) return;
+          var S = 64, c = document.createElement('canvas'); c.width = c.height = S;
+          var x = c.getContext('2d'); x.drawImage(img, 0, 0, S, S);
+          x.beginPath(); x.arc(S - 15, S - 15, 13, 0, Math.PI * 2);
+          x.fillStyle = '#ff2d2d'; x.fill(); x.lineWidth = 4; x.strokeStyle = '#ffffff'; x.stroke();
+          var url = c.toDataURL('image/png');
+          links.forEach(function (l) { l.setAttribute('type', 'image/png'); l.href = url; });
+        } catch (e) {}
       };
       img.src = iconOrig[0].href;
     } catch (e) {}
