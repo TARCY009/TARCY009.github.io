@@ -200,6 +200,8 @@ MEGA_PLUS_MOVES = {
     # 2026-09-04追加(公式発表の威力＋元わざの時間。あくのはどう=3.0/1.4/2.3秒・とどめばり=2.0/1.6/1.8秒)
     'DARK_PULSE_PLUS':    ('HOUNDOOM_MEGA',    'DARK',     150.0, 3000, 1400, 2300),  # あくのはどう+
     'FELL_STINGER_PLUS':  ('BEEDRILL_MEGA',    'BUG',      140.0, 2000, 1600, 1800),  # とどめばり+
+    # 2026-09-12追加(公式「ムクホークのスーパーメガレイド・デイ」9/19・レイド威力150。時間は元わざ=2.0/1.0/1.6秒・タダシさん指定と一致)
+    'BRAVE_BIRD_PLUS':    ('STARAPTOR_MEGA',   'FLYING',   150.0, 2000, 1000, 1600),  # ブレイブバード+
 }
 MEGA_PLUS_JA = {
     'DYNAMIC_PUNCH_PLUS':'ばくれつパンチ+', 'FUTURE_SIGHT_PLUS':'みらいよち+',
@@ -210,6 +212,7 @@ MEGA_PLUS_JA = {
     'SURF_PLUS':'なみのり+',                'BRICK_BREAK_PLUS':'かわらわり+',
     'PSYBEAM_PLUS':'サイケこうせん+',
     'DARK_PULSE_PLUS':'あくのはどう+',      'FELL_STINGER_PLUS':'とどめばり+',
+    'BRAVE_BIRD_PLUS':'ブレイブバード+',
 }
 # わざ定義は SUPP_MOVES と同じ仕組みで注入する(提供元に正式収録されたらそちらが優先される)。
 # 覚えるのはメガ(元ポケモンではない)なので、learn は空にして main() の中で紐付ける
@@ -279,6 +282,8 @@ MANUAL_MEGA = {
     'CHESNAUGHT_MEGA': ('メガブリガロン',  242, 282, 204, ['GRASS','FIGHTING'], 'CHESNAUGHT'),
     'DELPHOX_MEGA':    ('メガマフォクシー', 331, 235, 181, ['FIRE','PSYCHIC'],   'DELPHOX'),
     'GRENINJA_MEGA':   ('メガゲッコウガ',  299, 180, 176, ['WATER','DARK'],     'GRENINJA'),
+    # 2026-09-19のスーパーメガレイド・デイで初登場(2026-09-12タダシさん指示で先行収録)
+    'STARAPTOR_MEGA':  ('メガムクホーク',  278, 207, 198, ['FIGHTING','FLYING'], 'STARAPTOR'),
 }
 # i18nに未収録の技・ポケモンの日本語名
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
