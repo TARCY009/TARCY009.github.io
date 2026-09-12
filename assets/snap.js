@@ -332,6 +332,10 @@
       xroot.appendChild(xst);
       var b2 = body.cloneNode(true);
       if (!withBg) b2.setAttribute('style', b2.getAttribute('style') + 'background:none!important;');
+      // ⚠ 背景ありのときは、背景を塗る箱を画像の高さいっぱいまで伸ばす(2026-09-12)。
+      //   高さは枠の影まで含めて決めるので、箱が中身ぶんしか無いと、いちばん下の帯に背景が届かず
+      //   外側の層が崩れた模様(青い横じま)で写った
+      else b2.setAttribute('style', b2.getAttribute('style') + 'min-height:' + h + 'px!important;');
       xroot.appendChild(b2);
       var xml = new XMLSerializer().serializeToString(xroot);
       return '<svg xmlns="http://www.w3.org/2000/svg" width="' + TW + '" height="' + h + '"><foreignObject x="0" y="0" width="100%" height="100%">' + xml + '</foreignObject></svg>';
@@ -424,6 +428,24 @@
     return out;
   }
 
+  // 保存する画像は全ツール「四隅を丸く・枠の外は透明のPNG」(2026-09-12タダシさん指示「タイプ別火力と同じ方式に」)。
+  // 丸みはタイプ別火力のグラフと同じ比率(幅1920で半径34)。edge=true なら同じ青系の細い縁取りも付ける。
+  // すでに角丸で描いた画像(一般向けの幅720・グラフ画像)は __rounded の印を付け、二重に切らない
+  function roundFrame(src, edge) {
+    var W = src.width, H = src.height, k = W / 1920;
+    var R = Math.max(10, Math.round(34 * k)), M = edge ? 2.8 * k : 0;
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var cx = cv.getContext('2d');
+    rrect(cx, M, M, W - M * 2, H - M * 2, R); cx.save(); cx.clip(); cx.drawImage(src, 0, 0); cx.restore();
+    if (edge) {
+      var eg = cx.createLinearGradient(0, 0, W, H);
+      eg.addColorStop(0, '#5ee7ff'); eg.addColorStop(0.5, '#4f8dff'); eg.addColorStop(1, '#8a7bff');
+      rrect(cx, M, M, W - M * 2, H - M * 2, R); cx.lineWidth = M * 2; cx.strokeStyle = eg; cx.stroke();
+    }
+    cv.__rounded = true;
+    return cv;
+  }
+
   async function publicImage(cfg) {
     var el = document.querySelector(cfg.target);
     if (!el) throw new Error('target');
@@ -503,6 +525,7 @@
       var dt = new Date(), ds = dt.getFullYear() + '.' + (dt.getMonth() + 1) + '.' + dt.getDate();
       cx.textAlign = 'right'; cx.fillStyle = '#7c8ab4'; cx.fillText(ds, P + W, y + 22); cx.textAlign = 'left';
     }
+    cv.__rounded = true;   // 角丸の枠で描いてある(枠の外は透明)
     return cv;
   }
   // ---------------------------------------------------------------- 1920×1440（動画用・2026-09-12タダシさん指示）
@@ -578,7 +601,7 @@
     var f = Math.min(areaW / one.w, areaH / one.h);
     var dw = one.w * f, dh = one.h * f;
     cx.drawImage(one.canvas, P + (areaW - dw) / 2, top + Math.max(0, (areaH - dh) / 2), dw, dh);
-    return cv;
+    return roundFrame(cv, true);   // 四隅を丸く・枠の外は透明・青系の細い縁取り(タイプ別火力と同じ)
   }
   // ---------------------------------------------------------------- 📊 グラフ画像（2026-09-12タダシさん指示）
   // 上位10件を縦棒グラフにした1920×1440。タイプ別火力ランキングのグラフと同じ作り（細めの棒・光彩と上端の光・棒の中に順位・
@@ -766,6 +789,7 @@
       cx.font = '700 21px ' + JP; cx.fillStyle = '#8b96c2'; cx.fillText('gonavi.jp', tx, y0 + 54);
       cx.globalAlpha = 1;
     }
+    cv.__rounded = true;   // 角丸と縁取りは描いてある
     return cv;
   }
 
@@ -811,6 +835,8 @@
     return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
   }
   function preview(canvas, filename) {
+    // 全部の画像の最後の仕上げ: 四隅を丸く・枠の外は透明(まだ角丸にしていない画像だけ)
+    if (!canvas.__rounded) { try { canvas = roundFrame(canvas, false); } catch (e) {} }
     return new Promise(function (resolve) {
       canvas.toBlob(function (blob) {
         if (!blob) { alert('画像を作れませんでした'); resolve(); return; }
