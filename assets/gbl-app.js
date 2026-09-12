@@ -743,7 +743,7 @@ function openCustom(isFast, cur, done) {
     <label>もとのわざ<select class="cbase"><option value="">（選ばずに作る）</option>${
       pool.map(m => `<option value="${m}"${ex && ex.base === m ? ' selected' : ''}>${D.moves[m].n}</option>`).join('')}</select></label>
     <label>名前<input class="cname" type="text" maxlength="14" value="${v.n}"></label>
-    <label>タイプ<select class="ctype">${Object.keys(D.typeJa).map(t =>
+    <label>タイプ<select class="ctype">${sortTypes(Object.keys(D.typeJa)).map(t =>
       `<option value="${t}"${t === v.t ? ' selected' : ''}>${D.typeJa[t]}</option>`).join('')}</select></label>
     <label>威力<input class="cpow" type="number" min="0" max="300" value="${v.p}"></label>
     ${isFast
@@ -6336,7 +6336,7 @@ function blTypeHtml(use) {
   if (!a.rows.length) return '<div class="mtnote">この期間の記録がありません</div>';
   const idx = Object.fromEntries(D.types.map((t, i) => [t, i]));
   const tot = a.rows.reduce((s, e) => s + e.cnt, 0);
-  const stats = D.types.map(T => ({ t: T, aw: 0, ar: 0, dw: 0, dr: 0 }));
+  const stats = sortTypes(D.types).map(T => ({ t: T, aw: 0, ar: 0, dw: 0, dr: 0 }));
   for (const e of a.rows) {
     const ty = D.pokemon[e.k].ty;
     // 防御面は相手の定番わざ構成(環境の確定値→無ければ効率順)のタイプで見る(2026-08-27タダシさん確認で

@@ -696,7 +696,7 @@ function bossMovesHtml(p){
 function renderBoss(){
   const p=D.pokemon[boss];
   const cf=D.pokemon[catchForm(boss)];
-  const weak=D.types.filter(t=>eff(t,p.ty)>1.01)
+  const weak=sortTypes(D.types.filter(t=>eff(t,p.ty)>1.01))
     .sort((a,b)=>eff(b,p.ty)-eff(a,p.ty))
     .map(t=>`<span class="wchip">${typeIconHTML(D.typeJa[t],18)}<b>×${eff(t,p.ty).toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}</b></span>`);
   document.getElementById('bossView').innerHTML=

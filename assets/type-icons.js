@@ -89,6 +89,25 @@
   /** タイプ色(top/mid/bot)を返す。模擬戦の演出などで使う。未知タイプはnull */
   window.typeColorOf = function (type) { return TYPE_COLOR[type] || null; };
 
+  /** 全ツール共通のタイプの並び(2026-09-12タダシさん指示: タイプ別火力ランキングのアイコンの並びにそろえる。
+   *  ノーマルはタイプ別火力に無いので先頭)。一覧を並べるときは必ず sortTypes を通す */
+  var ORDER_JA = ['ノーマル','くさ','ほのお','みず','でんき','こおり','いわ','ひこう','むし','エスパー',
+                  'ゴースト','かくとう','じめん','どく','ドラゴン','はがね','あく','フェアリー'];
+  var ORDER_EN = ['NORMAL','GRASS','FIRE','WATER','ELECTRIC','ICE','ROCK','FLYING','BUG','PSYCHIC',
+                  'GHOST','FIGHTING','GROUND','POISON','DRAGON','STEEL','DARK','FAIRY'];
+  window.TYPE_ORDER = ORDER_JA.slice();
+  /** 並びの番号(日本語名・英語名のどちらでも可。知らないタイプは最後) */
+  window.typeOrder = function (t) {
+    var i = ORDER_JA.indexOf(t);
+    if (i < 0) i = ORDER_EN.indexOf(String(t).toUpperCase());
+    return i < 0 ? 99 : i;
+  };
+  /** 配列を共通の並びに並べ替えた新しい配列を返す。key でタイプ名を取り出せる */
+  window.sortTypes = function (arr, key) {
+    key = key || function (x) { return x; };
+    return arr.slice().sort(function (a, b) { return window.typeOrder(key(a)) - window.typeOrder(key(b)); });
+  };
+
   /** 複合タイプ用: 配列を渡すと2個セット（改行不可）で返す */
   window.typePairHTML = function (types, size) {
     return '<span class="tpair">' +

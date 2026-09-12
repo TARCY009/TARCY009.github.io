@@ -545,7 +545,7 @@ footer a{color:var(--spec)}
     sug.style.display = 'none';
     bnameEl.innerHTML = `${b.n} ${chips(b.ty, 24)}`;
     const weaks = [];
-    for(let t=0;t<18;t++){
+    for(const t of sortTypes([...Array(18).keys()], ti => D.types_jp[ti])){
       const m = effVs(t, b.ty);
       if(m >= 1.5) weaks.push({t, m});
     }

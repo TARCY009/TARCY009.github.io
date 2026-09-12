@@ -552,7 +552,7 @@ function search(word){
 // ---- 絞り込みUI(タイプ・地方) ----
 function buildFilters(){
   const ft=document.getElementById('ftypes');
-  ft.innerHTML=GO.types.map(t=>`<button data-t="${t}" aria-pressed="false" title="${GO.typeJa[t]}タイプで絞り込む">${typePairHTML([GO.typeJa[t]],26)}</button>`).join('');
+  ft.innerHTML=sortTypes(GO.types).map(t=>`<button data-t="${t}" aria-pressed="false" title="${GO.typeJa[t]}タイプで絞り込む">${typePairHTML([GO.typeJa[t]],26)}</button>`).join('');
   ft.querySelectorAll('button').forEach(b=>b.onclick=()=>{
     const t=b.dataset.t;
     if(state.ftypes.has(t))state.ftypes.delete(t);
@@ -566,7 +566,7 @@ function buildFilters(){
     syncFilters();
   });
   const fw=document.getElementById('fweak');
-  fw.innerHTML=GO.types.map(t=>`<button data-t="${t}" aria-pressed="false" title="${GO.typeJa[t]}の攻撃が弱点のポケモンに絞り込む">${typePairHTML([GO.typeJa[t]],26)}</button>`).join('');
+  fw.innerHTML=sortTypes(GO.types).map(t=>`<button data-t="${t}" aria-pressed="false" title="${GO.typeJa[t]}の攻撃が弱点のポケモンに絞り込む">${typePairHTML([GO.typeJa[t]],26)}</button>`).join('');
   fw.querySelectorAll('button').forEach(b=>b.onclick=()=>{
     const t=b.dataset.t;
     if(state.fweak.has(t))state.fweak.delete(t);
@@ -709,7 +709,7 @@ function maxScp(e,cap){
 function effGroups(ty){
   const idx=Object.fromEntries(GO.types.map((t,i)=>[t,i]));
   const gs={w2:[],w1:[],r1:[],r2:[],r3:[]};
-  for(const atk of GO.types){
+  for(const atk of sortTypes(GO.types)){
     let m=1;
     for(const d of ty)m*=GO.chart[atk][idx[d]];
     const r=Math.round(m*1000)/1000;

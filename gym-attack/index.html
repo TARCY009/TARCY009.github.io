@@ -369,7 +369,7 @@ function render(def){
   const typeW={};
   for(const m of def.fast){const mv=DATA.moves[m]; if(mv) typeW[mv.type]=Math.max(typeW[mv.type]||0,wFast);}
   for(const m of def.charged){const mv=DATA.moves[m]; if(mv) typeW[mv.type]=1.0;}
-  const defTypeEntries=Object.keys(typeW).map(t=>({t:+t,w:typeW[t]}));
+  const defTypeEntries=sortTypes(Object.keys(typeW).map(t=>({t:+t,w:typeW[t]})),e=>DATA.types_jp[e.t]);
   const chargedTypes=defTypeEntries.filter(e=>e.w===1).map(e=>DATA.types_jp[e.t]);
   const fastOnlyTypes=defTypeEntries.filter(e=>e.w<1).map(e=>DATA.types_jp[e.t]);
 
