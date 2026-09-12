@@ -6986,5 +6986,12 @@ CP制限では個体値3つとPLがセットで決まるため、マスターの
 - `/gbl/` のエンジンを変更したら `pvp-tests/engine-test.html` の全ケース緑を確認する(ローカル専用・最新シミュレーター挙動との一致保証)。**ブラウザがJSをキャッシュするため、確認時はキャッシュ無効のローカルサーバー(no-store)を使うこと**
 - **Service Worker(4本立て)**: `sw.js`(サイト全体・`site-`) / `gbl/sw.js`(`gbl-`) / `rocket/sw.js`(`rkt-`) / `iv-checker/sw.js`(`ivc-`)。いずれも**ネットワーク優先＋`cache:'reload'`**で、公開先(GitHub Pages)の`max-age=600`を迂回して更新を即座に反映する。オフライン時のみキャッシュを使う
   - キャッシュ削除は**自分のプレフィックスのものだけ**にする(全部消すと他ツールのオフライン用データを壊す)
+  - **⚠ ページを開くとき(`e.request.mode === 'navigate'`)の fetch は `redirect:'manual'` にする**（5本とも・2026-09-12）。
+    `cache:'reload'` のために作り直した要求は転送を自動でたどるので、`/about`→`/about/` のような転送があると
+    「転送をたどった応答」をページとして返してしまい、ブラウザが **Response served by service worker has redirections**
+    （Chromeは ERR_FAILED）で表示を断る。gonavi.jp への移行と HTTPS の強制で転送が増えた夜にiPhoneで発生（再読み込みで開けた）。
+    画面なしのChromeを同じ保存場所で2回起動して再現・修正を確認した（scratchpad の sw_redirect_test.sh）
+  - **旧アドレス（tarcy009.github.io）に入ったままの古い仕組みは直せない**（旧アドレスは全部 gonavi.jp へ転送され、
+    仕組み自体の更新も転送で断られるため）。旧アドレスを開いた人は1回目にこのエラーが出ることがあり、**再読み込みで開ける**
   - `/gbl/`と`/rocket/`は起動に必要な一式を先読みする。読み込むファイルを増やしたら**両方のSW**の`ASSETS`に追加し、`CACHE`のバージョン名を上げる
 - `git push` とファイル削除は実行前に必ずユーザーへ確認する

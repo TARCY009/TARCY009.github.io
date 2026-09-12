@@ -15,13 +15,15 @@ self.addEventListener('activate', e => {
     Promise.all(ks.filter(k => k.startsWith(PREFIX) && k !== CACHE).map(k => caches.delete(k)))));
   self.clients.claim();
 });
+// ページを開くとき(navigate)の転送はブラウザに任せる(redirect:'manual')。転送をたどった応答をページとして返すと
+// ブラウザが表示を断る(Response served by service worker has redirections・2026-09-12にiPhoneで発生)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   const sameSite = url.origin === self.location.origin;
   e.respondWith((async () => {
     try {
-      const res = sameSite ? await fetch(url.href, { cache: 'reload' }) : await fetch(e.request);
+      const res = sameSite ? await fetch(url.href, { cache: 'reload', redirect: e.request.mode === 'navigate' ? 'manual' : 'follow' }) : await fetch(e.request);
       if (sameSite && res.ok) {
         const cp = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, cp)).catch(() => {});

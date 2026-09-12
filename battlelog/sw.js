@@ -28,13 +28,15 @@ self.addEventListener('activate', e => {
 // ネットワーク優先(更新をすぐ反映)、オフライン時のみキャッシュを使う。
 // 公開先(GitHub Pages)はHTML等を10分間ブラウザにキャッシュさせる設定のため、
 // 同一サイトのファイルは cache:'reload' でブラウザのキャッシュを使わずに取りに行く(更新が即座に届く)
+// ページを開くとき(navigate)の転送はブラウザに任せる(redirect:'manual')。転送をたどった応答をページとして返すと
+// ブラウザが表示を断る(Response served by service worker has redirections・2026-09-12にiPhoneで発生)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   const sameSite = url.origin === self.location.origin;
   e.respondWith((async () => {
     try {
-      const res = sameSite ? await fetch(url.href, { cache: 'reload' }) : await fetch(e.request);
+      const res = sameSite ? await fetch(url.href, { cache: 'reload', redirect: e.request.mode === 'navigate' ? 'manual' : 'follow' }) : await fetch(e.request);
       const cp = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, cp)).catch(() => {});
       return res;
