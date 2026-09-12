@@ -730,7 +730,11 @@ home.js を読むページ全部に効く（ページ側の追加は不要）
 - 点検（2026-09-12）: 全19ファイルでタグが1組ずつ・JSON-LD が正しい形／本番 gonavi.jp で全ページ・主要データ200、`www.` と旧アドレスは301で転送／
   ローカルで全ページを開いてツール本体のエラー0（ブラウザパネルで出る「An unknown error occurred when fetching the script.」は
   Service Worker の登録がパネルで拒まれるだけ。sw.js 自体は200で取れる）
-- **残り（タダシさんの操作が要る）**: GitHubの「Enforce HTTPS」（証明書の発行待ち）→ Search Console にサイトを登録して sitemap.xml を送る →
+- **証明書は2026-09-12 21時ごろ発行**（Settings→Pages が「DNSチェック進行中」のまま止まっていた。「取り除く」を押したらチェックがやり直されて通り、
+  直後に gonavi.jp 用の証明書が出た。ドメインは消えなかった）。**同じく止まったら「取り除く」を押してみる**
+- **Search Console は「URLプレフィックス（https://gonavi.jp/）＋HTMLファイル」で登録**。確認用ファイル
+  **`google6fae09f6e5c5311a.html`（リポジトリ直下）は消さない**——消すと所有権の確認が外れる
+- **残り（タダシさんの操作が要る）**: GitHubの「Enforce HTTPS」（証明書の発行後、画面が追いつくのを待つ）→ Search Console で sitemap.xml を送る →
   アドセンス申請 → 審査が通ったら **`ads.txt`**（発行元IDが要る）と広告のタグ
 
 ### データの引っ越し `/backup/`（2026-09-11実装・公開前の作業B1）
