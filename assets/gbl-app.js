@@ -5149,7 +5149,7 @@ function fxOne(f) {
     const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
     // SPカットインだけさらに30%遅く(1150→1495・2026-08-31タダシさん指示)
     const d = fxShow('fxsp ' + sideCls, `<div class="band" style="--fc1:${c.top};--fc2:${c.bot}">
-      <span class="mvn">${f.mv || 'SPアタック'}</span></div><i class="flash"></i>`, 1495);
+      <span class="mvn">${f.mv || 'SPアタック'}</span></div><i class="flash"></i>`, 1920);   // 2026-09-13タダシさん指示: SPの再生は前後の間込みで約4秒(1920×FX_SLOW＋FX_PRE＋FX_POST)
     if (f.shd) {
       // シールドでブロック: カットインに続けて六角形のドームを出す(防いだので着弾の揺れは無し)
       const delay = Math.min(Math.round(d * 0.55), Math.round(806 * FX_SLOW));

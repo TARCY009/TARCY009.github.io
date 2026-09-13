@@ -979,6 +979,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .bfull .rbctlbar{display:none}
 .bfull .rbfeed{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .bfull .rbdock{position:static;margin-top:6px}
+/* ⚠ スマホで「終了」などいちばん下の行が押せなくなる(2026-09-13タダシさん報告)への対処。
+   ①高さは「いま見えている高さ」(dvh)にして、Safariの下のツールバーの下に入り込まないようにする
+   ②スマホは下に少し余白を取る(画面のいちばん下をタップすると、ボタンではなくツールバーが開くため)
+   ③質問ウィンドウなどで下のまとまりが画面より高くなったら、まとまりの中をスクロールできるようにする
+     (いちばん下の行が画面の外へ押し出されて押せなくなるのを防ぐ) */
+.bfull{top:0;bottom:auto;height:100vh;height:100dvh;padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px))}
+.bfull .rbdock{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+@media (pointer:coarse){.bfull{padding-bottom:calc(22px + env(safe-area-inset-bottom, 0px))}}
 /* ⚠ ドックは sticky なので、**スタート前**は上にある「オートバトル」「結果だけ見る」の行に
    浮いて重なる(2026-09-06タダシさん報告)。スタート前だけ通常の流れに戻して下に置く
    (バトル中は .bfull、決着後は従来どおり sticky のまま) */
