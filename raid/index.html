@@ -188,6 +188,11 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 /* タップで選ぶボタン。見た目はタブと同じで、中身はネイティブのプルダウン(選択肢の一覧は元の呼び名のまま)。
    selectを透明にして重ねてあるので、iOSの自動拡大よけ(16px)を保ったまま、表示の文字だけ小さくできる。
    閉じているときの表示は option の data-face(無ければそのまま)＝フレンド・メガ応援は倍率だけになる */
+/* 「どのわざ構成でも◯人」(見出しの2段目・2026-09-13) */
+.anyppl{display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:4px 8px;margin:-2px 0 12px;font-size:.82rem;font-weight:800}
+.anyppl b{font-size:1.4rem;line-height:1}
+.anyppl i{font-style:normal;opacity:.7}
+.anyppl .anyname{font-size:.74rem;font-weight:700;opacity:.85}
 .pick{position:relative;display:inline-flex;align-items:center;--mc:#c396ff}
 :root.light .pick{--mc:#7a3cc4}
 .pick select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;padding:0;margin:0;background:none;cursor:pointer}
@@ -304,8 +309,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="card c-my">
   <div class="step"><b>STEP 2</b><h2>じぶんのアタッカー</h2></div>
   <div class="modes"><span class="seg cyanseg" id="mySeg">
-    <button type="button" data-m="auto" aria-pressed="true" title="そのボスに対して火力が最大のアタッカー(PL50・個体値15)を自動で選び、6匹そろえて出します">1位<wbr>おまかせ</button>
-    <button type="button" data-m="fewest" aria-pressed="false" title="火力上位のアタッカーを実際にこのシミュレーターで戦わせ、いちばん少ない人数で勝てる1匹（同じ人数なら早く倒せるほう）を自動で選び、6匹そろえて出します（PL50・個体値15）。ボスのわざを耐性で受けられるポケモンが上がりやすくなります">最少人数<wbr>おまかせ</button>
+    <button type="button" data-m="auto" aria-pressed="false" title="そのボスに対して火力が最大のアタッカー(PL50・個体値15)を自動で選び、6匹そろえて出します">1位<wbr>おまかせ</button>
+    <button type="button" data-m="fewest" aria-pressed="true" title="火力上位のアタッカーを実際にこのシミュレーターで戦わせ、いちばん少ない人数で勝てる1匹（同じ人数なら早く倒せるほう）を自動で選び、6匹そろえて出します（PL50・個体値15）。ボスのわざを耐性で受けられるポケモンが上がりやすくなります">最少人数<wbr>おまかせ</button>
     <button type="button" data-m="pick" aria-pressed="false" title="使うポケモンとわざを1匹選び、6匹そろえて出します">えらぶ</button>
     <button type="button" data-m="team" aria-pressed="false" title="好きなパーティを組んでシミュレートします（最大6匹・上から順に出します・入れた枠だけで戦います）">6匹編成</button>
   </span><div id="megalv" style="display:none"></div></div>
@@ -492,7 +497,7 @@ const guessTier=k=>{const p=D.pokemon[k]; return p.mega?(p.lg?'t6':'t4'):'t5';};
 
 // ---- 状態 ----
 let boss=null, tier='t5';
-let myMode='auto', myKey=null, myShadow=false;   // えらぶ のときに使う
+let myMode='fewest', myKey=null, myShadow=false;   // 既定は最少人数おまかせ(2026-09-13タダシさん指示)   // えらぶ のときに使う
 let spMode='asap';
 // 6匹編成(上から順に出す)。端末に保存して次回も同じパーティで開く
 let TEAM=[];
@@ -822,6 +827,9 @@ function syncFe(){
   if(!ok&&sel.value==='mx') sel.value='';
   syncPick(sel);
 }
+// ボスを選んだら、フィールド効果は最初からオン(メガシンカしたボス=メガミュウツーX／それ以外=ザシアン・2026-09-13タダシさん指示)。
+// 使う人が変えた選択は、次にボスを選び直すまでそのまま
+function feDefault(){ $('feSel').value=megaBoss()?'mx':'zc'; syncFe(); }
 const WEATHER={
   sunny:['GRASS','GROUND','FIRE'],          // 晴れ
   partly:['NORMAL','ROCK'],                 // 時々曇り
@@ -854,10 +862,12 @@ function buildTeamCfg(){
   return [one,one,one,one,one,one];   // 同じアタッカー6匹
 }
 // team・sp を渡すと、画面の選択ではなくそのパーティ・ボスのSPの撃ち方で計算する(最少人数おまかせの選び出しに使う)
-function buildCfg(N,seed,wantLog,team,sp){
+// bm={f,c}＝ボスのわざを差し替えて計算する(「どのわざ構成でも」用)。省けば画面で選んでいるわざ
+function buildCfg(N,seed,wantLog,team,sp,bm){
   const bp=D.pokemon[boss], t=tierOf(tier);
+  const bf=bm?bm.f:$('bfSel').value, bc=bm?bm.c:$('bcSel').value;
   const bossCfg={types:bp.ty,atk:(bp.a+15)*t.cpm,def:(bp.df+15)*t.cpm,hp:t.hp,
-    fast:mvObj($('bfSel').value),chg:$('bcSel').value?mvObj($('bcSel').value):null};
+    fast:mvObj(bf),chg:bc?mvObj(bc):null};
   return {limit:t.time,eff,boss:bossCfg,team:team||buildTeamCfg(),N,spMode:sp||spMode,dodgeSp,
     wxTypes:WEATHER[$('wxSel').value]||[],
     // チームパワー: ONなら全員がパーティを組んでいる前提で、人数から上昇Pを決める
@@ -868,6 +878,57 @@ function buildCfg(N,seed,wantLog,team,sp){
 }
 const TRIALS=30;
 let rows=[],minN=null,selN=null;
+// ---- 「どのわざ構成でも倒せる最少人数」(2026-09-13タダシさん指示) ----
+// ボスのわざ(ノーマルアタック×SPアタック)の組み合わせを全部試し、どれで来ても勝てる最少の人数。
+// 最少人数おまかせ: 火力上位の候補ごとに試し、いちばん少なく済む1匹とその人数 ／ それ以外: いまのパーティで試す。
+// 重いので1匹ごとに区切って進め(画面を固めない)、途中で設定が変わったら捨てて計算し直す。
+// ボスのSPが「ランダム」のときは、最少人数おまかせと同じく「2回に1回」で比べる
+let anyRes=null, anyTok=0;
+function bossCombos(){
+  const bp=D.pokemon[boss], fs=bossFastIds(bp), cs=bossChgIds(bp), out=[];
+  fs.forEach(f=>(cs.length?cs:[null]).forEach(c=>out.push({f,c})));
+  return out;
+}
+function anyKey(){
+  const team=myMode==='fewest'?'':JSON.stringify((buildTeamCfg()||[]).map(m=>[m.name,m.fast&&m.fast.n,m.chg&&m.chg.n,Math.round(m.atk*100),m.mult,m.mega]));
+  return [boss,tier,MegaLv.level(),spMode,dodgeSp,$('feSel').value,tpOn,$('wxSel').value,$('frSel').value,$('mgSel').value,
+    $('rejoinSec').value,myMode,team].join('|');
+}
+function anyHtml(){
+  const a=anyRes;
+  const tip='ボスのノーマルアタックとSPアタックの組み合わせを全部試して、どれで来ても勝てる最少の人数です'+
+    (myMode==='fewest'?'（最少人数おまかせは、この条件でいちばん少なく済む1匹を選び直します）':'');
+  const body=!a||a.pending?'<i>計算中…</i>':!a.n?'<i>20人でも倒しきれない</i>':
+    `<b>${a.n}人</b>${a.name?`<span class="anyname">（${a.name}）</span>`:''}`;
+  return `<div class="anyppl" id="anyppl" title="${tip}"><span>どのわざ構成でも</span>${body}</div>`;
+}
+function paintAny(){ const el=document.getElementById('anyppl'); if(el) el.outerHTML=anyHtml(); }
+async function scheduleAny(){
+  if(!boss||!$('bfSel').value){anyRes=null;return;}
+  const key=anyKey();
+  if(anyRes&&anyRes.key===key){ paintAny(); return; }
+  const tok=++anyTok; anyRes={key,pending:true}; paintAny();
+  const yieldNow=()=>new Promise(r=>setTimeout(r,0));
+  await new Promise(r=>setTimeout(r,30));
+  if(tok!==anyTok)return;
+  const sp=spMode==='coin'?'alt':spMode, combos=bossCombos();
+  const allWin=(team,n)=>combos.every(bm=>RaidEngine.simulate(buildCfg(n,1,false,team,sp,bm)).win);
+  let best=null;
+  if(myMode==='fewest'){
+    for(const a of attackerList().slice(0,FEW_CAND)){
+      const one=monCfg(a.k,a.shadow,a.f,a.c), team=[one,one,one,one,one,one];
+      const lim=best?best.n-1:20;   // いまの最良より多い人数は試さない
+      for(let n=1;n<=lim;n++) if(allWin(team,n)){ const p=D.pokemon[a.k]; best={n,name:badges(a.shadow,false,p)+p.n}; break; }
+      await yieldNow(); if(tok!==anyTok)return;
+    }
+  }else{
+    const team=buildTeamCfg();
+    if(team) for(let n=1;n<=20;n++){ if(allWin(team,n)){best={n};break;} await yieldNow(); if(tok!==anyTok)return; }
+  }
+  if(tok!==anyTok)return;
+  anyRes={key,n:best?best.n:null,name:best&&best.name};
+  paintAny();
+}
 function runAll(){
   // 最少人数おまかせは、設定(ボスのわざ・SP・回避・ブースト等)が変わると選ぶ1匹も変わる。先に選び直して表示と選択欄をそろえる
   if(myMode==='fewest'&&boss)renderMy();
@@ -899,15 +960,17 @@ function runAll(){
   }
   selN=minN||rows[rows.length-1].n;
   renderResult();
+  scheduleAny();
 }
 function renderResult(){
   const t=tierOf(tier);
   const SPTXT={asap:'ボスがSPを必ず即打ちしても勝てる最少の人数',
                alt:'ボスがSPを2回に1回撃ってくる場合に勝てる最少の人数',
                coin:`勝率50%以上になる最少の人数（${TRIALS}回試行）`};
-  const head=minN
-    ?`<div class="bigppl"><span title="${SPTXT[spMode]}">実戦の目安</span><b title="${SPTXT[spMode]}">${minN}人</b><span class="bigsub expl">${SPTXT[spMode]}</span></div>`
-    :`<div class="bigppl"><span class="ngw">20人でも倒しきれない計算です</span></div>`;
+  // 見出しは2段(2026-09-13タダシさん指示): 「このわざ構成なら◯人」(画面で選んでいるボスのわざ)と「どのわざ構成でも◯人」
+  const head=(minN
+    ?`<div class="bigppl"><span title="${SPTXT[spMode]}">このわざ構成なら</span><b title="${SPTXT[spMode]}">${minN}人</b><span class="bigsub expl">${SPTXT[spMode]}</span></div>`
+    :`<div class="bigppl"><span class="ngw">このわざ構成なら：20人でも倒しきれない計算です</span></div>`)+anyHtml();
   // 右端の▼/▶: どの行をタップしてもその人数のタイムラインが下に開く(選択中は▼で下とつながって見える)
   const tlc=on=>`<td class="tlc">${on?'▼':'▶'}</td>`;
   const trs=rows.map(r=>{
@@ -970,7 +1033,7 @@ loadTeam();
 buildTeamUI();
 attachSugg($('bossInput'),$('bossSugg'),k=>{
   boss=k;tier=guessTier(k);topCache.key=null;
-  syncFe();renderBoss();renderMy();runAll();
+  feDefault();renderBoss();renderMy();runAll();
 });
 attachSugg($('myInput'),$('mySugg'),k=>{
   myKey=k;myShadow=false;
@@ -1019,7 +1082,7 @@ if(q.get('b')&&D.pokemon[q.get('b')]){
   boss=q.get('b');
   tier=TIERS.some(t=>t.id===q.get('t'))?q.get('t'):guessTier(boss);
   $('bossInput').value=D.pokemon[boss].n;
-  syncFe();renderBoss();renderMy();runAll();
+  feDefault();renderBoss();renderMy();runAll();
 }
 
 // ---- 使い方 ----
