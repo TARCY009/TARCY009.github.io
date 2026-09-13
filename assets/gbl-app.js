@@ -8253,6 +8253,11 @@ function gbPlay(picks, foes, ans, stepwise) {
   //   **手動交代(クイックスワップ)は0.5秒(1ターン)のラグが出るのでズレる**（片方だけ交代したとき）。
   //   開幕と、倒されて出し直した対面は、両者が打ち始めからそろう
   let aligned = true;
+  // ⚠ 交代は1ターン(0.5秒)かかる(2026-09-13 テスター報告で修正)。片方だけが交代したら、交代した側は
+  //   次の対面の1ターン目に動けない(登場直後の待ち＝エンジンの stallStart)。これが無いと、交代先と相手の
+  //   ノーマルアタックの周期がぴったりそろってしまい、本来ずれるはずのSPアタックが同時発動になっていた。
+  //   両方同時の交代・倒されて次を出したときは付けない
+  let lagIn = [0, 0];
   // **直前に自分から引っ込んだユーザーのポケモン**(2026-08-20タダシさん指示・「答えの温存」に使う)。
   // 交代で下がった=倒されていない=あとで必ず戻ってくる相手
   let went0 = null;
@@ -9448,6 +9453,8 @@ function gbPlay(picks, foes, ans, stepwise) {
     // VSカード(対戦最初のタイトル)には**初手同士**を出すので、交代する前の名前を控えておく
     // (2026-09-07タダシさん指示。交代後の名前を出すと、直後の「◯◯に交代した！」と食い違う)
     [0, 1].forEach(sd => { if (leadTo[sd] != null) { leadFrom[sd] = ros[sd][cur[sd]].name; doLead(sd, leadTo[sd], !bothLead); } });
+    // 開幕交代も1ターンかかる(片方だけのとき、交代した側は1ターン目に動けない)
+    if (!bothLead) [0, 1].forEach(sd => { if (leadTo[sd] != null) lagIn[sd] = 1; });
     chase = leadTo[0] != null && leadTo[1] == null;   // ユーザーだけが逃げた＝AIは追っている側
     aligned = bothLead;   // 片方だけ開幕交代したらノーマルアタックの周期がズレる
     if (!bothLead) {
@@ -9503,6 +9510,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     }
     // 押した瞬間のターン(対面の中の何ターン目)。交代前に投げたSP(inflight)は対面の頭より前＝0
     const mspPressOf = x => { const a = ans[x.key]; return a && a.p != null ? a.p : 0; };
+    const lag = lagIn; lagIn = [0, 0];   // この対面だけに効く(交代した側の登場直後の待ち)
     const legCfg = s => {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
@@ -9514,6 +9522,7 @@ function gbPlay(picks, foes, ans, stepwise) {
         c.timing = 'plan'; c.plan = vis.map(x => ({ on: x.on, move: x.move })); delete c.shotPlan;
       }
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
+      if (lag[s]) c.stallStart = lag[s];
       return c;
     };
     const handled = new Set(), log = [];
@@ -9939,6 +9948,7 @@ function gbPlay(picks, foes, ans, stepwise) {
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
       doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot, !both && !cutAt(rowS, 1 - s));   // 交代解禁は時計で持つ
+      if (!both) lagIn[s] = 1;   // 交代した側は次の対面の1ターン目に動けない
     }
   }
   const meLeft = st[0].filter(x => x.alive).length;
