@@ -428,7 +428,7 @@ const GNAME='#cfe3ff';
 // 一度 https://gonavi.jp/type-dps/?dev=1 を開いた端末＝ ?dev=0 で解除)。
 // ⚠ SVGを画像にして保存するとき、SVGの中から外部の画像は読まれないので、ロゴは data: の形で埋め込む
 let LOGO_URI='';
-const devClean=()=>{ try{ return localStorage.getItem('site_dev')==='1'; }catch(e){ return false; } };
+const devClean=()=>{ try{ return !!(window.GonaviDev&&window.GonaviDev()); }catch(e){ return false; } };
 fetch('/assets/icons/home/icon-192.png').then(r=>r.blob()).then(b=>new Promise(res=>{
   const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b);
 })).then(u=>{ LOGO_URI=u; if($('gwrap').innerHTML) renderGraph(); }).catch(()=>{});

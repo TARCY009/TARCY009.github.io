@@ -19,7 +19,8 @@
   var PATH = location.pathname.replace(/index\.html$/, '');
   if (/^\/(battlelog|feedback)\//.test(PATH)) return;
 
-  function isDev() { try { return localStorage.getItem('site_dev') === '1'; } catch (e) { return false; } }
+  // 判定は home.js の1か所(?dev=1 で開いたタブ／ホーム画面のアプリは端末の印)
+  function isDev() { try { return !!(window.GonaviDev && window.GonaviDev()); } catch (e) { return false; } }
   // 一覧の画像は上位5件（2026-09-12タダシさん指示「10位までだと小さくなるので5位までにしてサイズにピッタリ」）。
   // 10位までは「📊 グラフ画像」（棒グラフ・GRAPH_N）で見せる
   var LIMIT = 5, GRAPH_N = 10;

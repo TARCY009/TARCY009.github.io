@@ -25,16 +25,27 @@
     var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
     var q0 = nav && nav.name ? new URL(nav.name).searchParams : q;
     var devQ = q.get('dev') || q0.get('dev');
-    if (devQ === '1') { localStorage.setItem('site_dev', '1'); }
-    if (devQ === '0') localStorage.removeItem('site_dev');
+    // ⚠ 開発者モードは「?dev=1 で開いたタブ」だけ(2026-09-13タダシさん報告「通常のURLで開いたタブにも赤い丸が付く」)。
+    //   印を端末(localStorage)だけに持つと、同じブラウザのタブが全部開発者扱いになり、ふつうの見え方を確かめられない。
+    //   ブラウザではタブごとの印(sessionStorage・そのタブ内の移動と再読み込みでは残る)で判定し、
+    //   ホーム画面のアプリだけは端末の印(site_dev)で判定する(アプリは開き直すとタブの印が消えるため)
+    if (devQ === '1') { localStorage.setItem('site_dev', '1'); sessionStorage.setItem('site_dev_tab', '1'); }
+    if (devQ === '0') { localStorage.removeItem('site_dev'); sessionStorage.removeItem('site_dev_tab'); }
     if (q.get('dev') != null) { q.delete('dev');
       var u = location.pathname + (q.toString() ? '?' + q.toString() : '') + location.hash;
       history.replaceState(null, '', u); }
-    dev = localStorage.getItem('site_dev') === '1';
     standalone = (navigator.standalone === true) ||
       (window.matchMedia && ['standalone', 'fullscreen', 'minimal-ui'].some(function (m) {
         return window.matchMedia('(display-mode: ' + m + ')').matches; }));
   } catch (e) {}
+  // 開発者モードかどうかの判定はここ1か所(snap.js・タイプ別火力の透かしもこれを呼ぶ)
+  function isDevNow() {
+    try {
+      return standalone ? localStorage.getItem('site_dev') === '1' : sessionStorage.getItem('site_dev_tab') === '1';
+    } catch (e) { return false; }
+  }
+  window.GonaviDev = isDevNow;
+  dev = isDevNow();
 
   // ⚠ iPhoneではホーム画面のアプリとSafariの保存領域が別なので、Safariで ?dev=1 を開いても印はアプリに届かない
   //   (2026-09-08タダシさん報告「そのURLで開いても出てこない」)。アプリの中から印を付けられるよう、
@@ -75,13 +86,17 @@
     } catch (e) {}
   }
   devIcon();
-  // 別のタブで開発者モードを入れた・切ったときも、このタブのアイコンをすぐそろえる
+  // ホーム画面のアプリどうしでは、別の画面で開発者モードを入れた・切ったときもアイコンをすぐそろえる
+  // (ブラウザのタブはタブごとの印なので、ほかのタブの切り替えには連動しない)
   window.addEventListener('storage', function (e) {
-    if (e.key === 'site_dev') { dev = e.newValue === '1'; devIcon(); }
+    if (e.key === 'site_dev' && standalone) { dev = isDevNow(); devIcon(); }
   });
   function setDev(on) {
     dev = !!on;
-    try { if (dev) localStorage.setItem('site_dev', '1'); else localStorage.removeItem('site_dev'); } catch (e) {}
+    try {
+      if (standalone) { if (dev) localStorage.setItem('site_dev', '1'); else localStorage.removeItem('site_dev'); }
+      else if (dev) sessionStorage.setItem('site_dev_tab', '1'); else sessionStorage.removeItem('site_dev_tab');
+    } catch (e) {}
     devIcon();
     var b = document.getElementById('reloadBtn');
     if (!dev && b) b.remove();
