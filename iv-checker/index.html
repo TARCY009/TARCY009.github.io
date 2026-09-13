@@ -157,16 +157,20 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 /* 枠の右上の「図鑑」ボタン(2026-09-13タダシさん指示): 選んだポケモンのステータス図鑑を開く。
    名前は中央ぞろえなので、ボタンがあるときは名前の左右に同じ幅の余白を取って重ならないようにする */
 #lgcard{position:relative}
-.dexlink{position:absolute;top:10px;right:10px;z-index:1;display:inline-flex;align-items:center;gap:5px;
-  padding:4px 11px 4px 5px;border-radius:999px;border:1px solid var(--line);text-decoration:none;
-  font-size:.74rem;font-weight:800;color:#c9b3ff;background:linear-gradient(180deg,#1e2850,#151d38);
-  box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .15s}
+/* 同日タダシさん指示: 表記は「ステータス」・ボタンだと分かるよう図鑑の色(紫)で塗る＋立体(内側の光と下の影)・右に「›」 */
+.dexlink{position:absolute;top:10px;right:10px;z-index:1;display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px 4px 4px;border-radius:999px;border:1px solid rgba(255,255,255,.22);text-decoration:none;
+  font-size:.78rem;font-weight:900;letter-spacing:.02em;color:#fff;text-shadow:0 1px 1px rgba(40,10,90,.45);
+  background:linear-gradient(160deg,#c3a2ff 0%,#8a5cf0 48%,#5b33b8 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.35);transition:transform .15s}
 .dexlink:hover{transform:translateY(-1px)}
-.dexlink img{width:22px;height:22px;border-radius:6px;display:block}
+.dexlink:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 0 rgba(0,0,0,.35)}
+.dexlink img{width:24px;height:24px;border-radius:7px;display:block;box-shadow:0 0 0 1.5px rgba(255,255,255,.7)}
+.dexlink i{font-style:normal;font-size:1.05rem;line-height:1;margin-left:-1px}
 .dexlink[hidden]{display:none}
-#lgcard.hasdex .lgtitle{padding:0 86px}
-:root.light .dexlink{color:#7e60a4;background:linear-gradient(180deg,#ffffff,#eef2fb)}
-@media (max-width:430px){.dexlink{padding:4px}.dexlink span{display:none}#lgcard.hasdex .lgtitle{padding:0 30px}}
+#lgcard.hasdex .lgtitle{padding:0 128px}
+/* スマホは名前の横が狭いので、名前の左右をあけず、ボタンの行ぶん名前を下げる */
+@media (max-width:560px){#lgcard.hasdex .lgtitle{padding:34px 0 0}}
 
 /* IVバー(シグネチャー: ゲーム内評価バー風) */
 .iv{margin-bottom:14px}
@@ -571,7 +575,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 </div>
 
 <div class="card" id="lgcard">
-  <a id="dexlink" class="dexlink" href="/pokedex/" hidden title="このポケモンのステータス図鑑（種族値・最大CP・わざの性能）を開きます"><img src="/assets/icons/pokedex/icon-192.png" alt=""><span>図鑑</span></a>
+  <a id="dexlink" class="dexlink" href="/pokedex/" hidden title="このポケモンのステータス図鑑（種族値・最大CP・わざの性能）を開きます"><img src="/assets/icons/pokedex/icon-192.png" alt=""><span>ステータス</span><i aria-hidden="true">›</i></a>
   <!-- 選んだポケモンの名前とタイプを、リーグの枠のいちばん上にタイトルとして出す -->
   <div id="lgtitle" class="lgtitle" style="display:none"></div>
   <label class="sec" id="lgcardlabel">リーグ</label>
