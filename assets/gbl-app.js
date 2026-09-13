@@ -11178,12 +11178,29 @@ function gbRender(body, bt, picks, foes) {
     const m = D.moves[mv];
     const t = spTarget(gt, m);
     if (!t) return;
-    const { li, on } = t;
-    const key = gbKey(li, 0, 'msp', on, 0);
+    const li = t.li;
+    let on = t.on;
+    let key = gbKey(li, 0, 'msp', on, 0);
+    // ⚠ 連打で2発目を撃てるようにする(2026-09-13 テスター報告「技を連続で打てない場合がある」)。
+    //   1発目がまだ撃たれる前(SPの演出の前半を含む)に押された2発目は、従来「同じ切れ目への入力」として黙って捨てていた。
+    //   その切れ目にもう撃つSPが入っているなら、**そのSPを撃った次のターンに撃つ2発目**として入れる。
+    //   1発目のあとのゲージが足りない・対面が終わるときは受け付けない
+    const tlS = bt.legs[li]._tl || (bt.legs[li]._tl = rbTurns(bt.legs[li].res));
+    for (let g = 0; RB.ans[key] && !RB.ans[key].late && g < 6; g++) {
+      const fr = tlS.find(r => r.tn !== '-' && r.tn >= on && (r.ev[0] || []).some(e => e && e.full !== undefined));
+      if (!fr || fr.state[0].hp <= 0 || fr.state[1].hp <= 0 || fr.state[0].en < m.e
+          || fr.tn + 1 > bt.legs[li].res.turns) return;
+      on = fr.tn + 1;
+      key = gbKey(li, 0, 'msp', on, 0);
+    }
     if (RB.ans[key] && !RB.ans[key].late) return;   // 同じ切れ目に何度押しても1発(間に合わなかった入力は押し直せる)
+    const chained = on !== t.on;   // 2発目として後ろにつないだ
     const ok = commitAns(() => {
-      // この場面より後ろの答えは消す(前提が変わるため)
+      // この場面より後ろの答えは消す(前提が変わるため)。
+      // ⚠ ただし2発目として後ろにつないだときは、同じ対面でそれより前に入っているSPの予約(1発目)は消さない
+      //   (消すと「2発目を入れたつもりが、1発目を2発目で置き換える」ことになる・実際に踏んだ)
       Object.keys(RB.ans).forEach(k2 => {
+        if (chained && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] < on) return;
         const pt2 = RBUI.pts[k2];
         if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li)
             || (!pt2 && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] > on)) delete RB.ans[k2];
