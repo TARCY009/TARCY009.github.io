@@ -460,6 +460,23 @@ if (PAGE_ROCKET) {
 
 // 交代マーク(黄色い循環矢印の画像・assets/gbl.css の .swapmark)。「⇄」の文字の代わりに全箇所で使う
 const SWAPMK = '<i class="swapmark"></i>';
+// 交代タイマー(円)。2026-09-13 テスターの声「あと何秒で溜まるか分かりやすく」→タダシさんが3案から選択(案B)。
+// 交代ボタンの上に大きな円を置き、真ん中に残り秒数。一周すると交代できる。点灯の判断は交代ボタンと同じものを渡す
+const SWRING_HTML = '<div class="hswring" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）">' +
+  '<div class="swr"><div class="core"><b></b><small>秒</small></div></div>' +
+  `<div class="rlab"><span class="t">${SWAPMK}<span class="tt"></span></span><small></small></div></div>`;
+// st: 'cool'＝待っている途中 / 'ok'＝いま押せる / 'idle'＝時間は明けたが押せない場面(スタート前・質問中など) / 'none'＝控えがいない
+function setSwapRing(el, left, cd, st) {
+  if (!el) return;
+  const sec = Math.ceil(left / 2), key = st + '|' + (st === 'cool' ? sec + '|' + Math.round(left) : '');
+  if (el.dataset.k === key) return;
+  el.dataset.k = key;
+  el.className = 'hswring ' + st;
+  el.querySelector('.swr').style.setProperty('--p', st === 'cool' ? Math.max(0, Math.min(1, 1 - left / cd)).toFixed(3) : '1');
+  el.querySelector('.core b').textContent = st === 'cool' ? sec : st === 'none' ? '—' : 'OK';
+  el.querySelector('.tt').textContent = st === 'cool' ? '交代まで' : st === 'none' ? '控えがいません' : '交代できます';
+  el.querySelector('.rlab small').textContent = st === 'cool' ? '一周すると交代できます' : st === 'ok' ? '下のボタンで交代' : '';
+}
 
 const D = window.PVP_DATA;
 // ---- メガの追加SPアタック「＋わざ」(3本目)を D.moves に合流する(2026-09-04タダシさん指示) ----
@@ -5617,7 +5634,7 @@ function rbRender(body, bt, picks, foes, extra) {
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
         </div>
       </div>
-      ${RB.step ? `<div class="hswaprow">
+      ${RB.step ? `${SWRING_HTML}<div class="hswaprow">
         <button class="hmsw" disabled title="いつでも交代できます（押すと控えを選べます・一度交代すると45秒間は次の交代ができません）。⏭コマ送りで1ターンずつ進めながら、あいてのSPアタックが飛んでくるターンに合わせて押すと、その一撃を交代先に受けさせられます（交代受け）">${SWAPMK}<b>交代</b></button>
       </div>
       <div class="hbtns">
@@ -5770,11 +5787,13 @@ function rbRender(body, bt, picks, foes, extra) {
     // (2026-09-01タダシさん指摘: HUDの左右は数字の更新で常に動くので押せない)。
     // じぶん側のここは従来どおり残り時間の表示だけ
     const swLeft = Math.max(0, (f.meta.swOk || 0) - ckOf(gt));
-    swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
+    const rkRing = mswBtn ? (mswBtn.closest('.rbdock') || document).querySelector('.hswring') : null;   // 交代タイマー(円)
+    swapEl.innerHTML = !rkRing && swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
     if (mswBtn) {
       const canSwap = RB.step && RBV.started && f.alive0 > 1 && swLeft <= 0 && gt < stop;
       mswBtn.disabled = !canSwap;
       mswBtn.classList.toggle('rdy', canSwap);
+      setSwapRing(rkRing, swLeft, RK.swapCd, f.alive0 <= 1 ? 'none' : swLeft > 0 ? 'cool' : canSwap ? 'ok' : 'idle');
     }
   }
   const revealTo = g => {
@@ -10400,6 +10419,7 @@ function gbRender(body, bt, picks, foes) {
       </div>
       ${RB.step ? `<div class="mswtip" title="あいてのゲージと、いちばん軽いSPアタックの消費から数えた発数です。あいてが撃てるようになったタイミングで交代すると、その一撃を交代先に受けさせられます（交代受け）"></div>
       ${rtOn() ? `<div class="hsprow" title="SPアタック。ゲージがたまると点灯します。押すと、いま打っているノーマルアタックが終わった切れ目で発動します（実戦と同じ）"></div>` : ''}
+      ${SWRING_HTML}
       <div class="hswaprow two">
         <button class="hmsw" data-slot="0" disabled></button>
         <button class="hmsw" data-slot="1" disabled></button>
@@ -10459,6 +10479,7 @@ function gbRender(body, bt, picks, foes) {
   // ⇄いつでも交代(rbhudの外＝独立した大きな行)。**控え2匹ぶんのボタン**を常時出し、
   // 押した瞬間に交代する(再生は止めない)＝実戦さながらに交代受けを狙う練習ができる
   const mswBtns = [...dock.querySelectorAll('.hmsw')];
+  const swRing = dock.querySelector('.hswring');   // 交代タイマー(円)
   const spRow = dock.querySelector('.hsprow');   // リアルタイムのSPボタンの行(選択式では無い)
   // その通しターンで場に出ていない味方2匹(倒れているかどうかも返す)
   const benchAt = gt => {
@@ -10598,7 +10619,8 @@ function gbRender(body, bt, picks, foes) {
     // (2026-09-01タダシさん指摘: HUDの左右は数字の更新で常に動くので押せない)。
     // じぶん側のここは従来どおり残り時間の表示だけ
     const swLeft = Math.max(0, (f.meta.swOk || 0) - ckOf(gt));
-    swapEl.innerHTML = swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
+    // 円の交代タイマーがある画面では、ボールの下の小さな秒数は出さない(同じことを2か所に出さない)
+    swapEl.innerHTML = !swRing && swLeft > 0 ? `${SWAPMK}<b>${Math.ceil(swLeft / 2)}</b><small>秒</small>` : '';
     // ⚠ **あいてのSPまで あと◯発**（2026-09-07タダシさん報告「交代受けに引っかからない」で追加）。
     //   交代受けは**あいてが撃てるようになった瞬間に交代する**技なので、
     //   その目安が画面に無いと狙いようがない（⇄が2ボタンの即時交代になったとき、
@@ -10662,6 +10684,8 @@ function gbRender(body, bt, picks, foes) {
         b.classList.toggle('rdy', ok);
         b.classList.toggle('dead', !!e.dead);
       });
+      const alive = bench.some(e => e && !e.dead);
+      setSwapRing(swRing, swLeft, GB_SWAP_CD, !alive ? 'none' : swLeft > 0 ? 'cool' : free ? 'ok' : 'idle');
     }
     const fswLeft = Math.max(0, (f.meta.fswOk || 0) - ckOf(gt));
     fswapEl.innerHTML = fswLeft > 0 ? `<b>${Math.ceil(fswLeft / 2)}</b><small>秒</small>${SWAPMK}` : '';
