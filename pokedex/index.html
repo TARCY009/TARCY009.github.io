@@ -952,7 +952,11 @@ function init(){
   const sp=new URLSearchParams(location.search);
   const want=sp.get('p');
   if(want){
-    const e=DEX.find(x=>x.name===want)||DEX.find(x=>x.pvp===want||x.go===want);
+    // 名前 → 番号(対戦データ・ジム/レイドの番号は大文字小文字を区別しない) → 番号の後ろ(_blade など)を1つずつ外して元の姿、の順に探す。
+    // 個体値チェッカーの番号(バトル中だけの姿・別の番号で載っているフォルム)からも必ずページが開くように(2026-09-13)
+    const lc=s=>(s||'').toLowerCase();
+    let e=DEX.find(x=>x.name===want);
+    for(let k=lc(want); !e && k; k=k.includes('_')?k.slice(0,k.lastIndexOf('_')):'') e=DEX.find(x=>x.pvp===k||lc(x.go)===k);
     if(e){ q.value=e.name; syncClr(); pick(e.name); }
   }
 }
