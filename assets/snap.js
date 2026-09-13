@@ -913,6 +913,77 @@
     })();
   }
 
+  // ---------------------------------------------------------------- 開発者: 狭い画面の上位N位（2026-09-13タダシさん指示）
+  // パソコンのブラウザを最小まで縮めた幅(500px)の見た目で、上位3/5/8/10位の行だけを、行の外は透明にして保存する。
+  // マックスバトルだけは行の中の文字が多いので少し広い幅(640px)。
+  // vw＝そろえる画面の幅（@media はこの幅で判定させる） / w＝その画面幅での一覧の幅（実測・2026-09-13）
+  var NARROW = {
+    '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', vw: 500, w: 448, title: 'レイド火力ランキング' },
+    '/type-dps/': { target: '#rankList', rows: '.rank-row', vw: 500, w: 446, title: 'タイプ別火力ランキング' },
+    '/gym-attack/': { target: '#ranklist', rows: '.card', vw: 500, w: 468, title: 'ジム挑戦オススメ' },
+    '/gym-defense/': { target: '#list', rows: '.row', vw: 500, w: 468, title: 'ジム防衛オススメ' },
+    '/max-battle/': { target: '#list', rows: '.row', vw: 640, w: 608, title: 'マックスバトル対策' }
+  };
+  var NARROW_N = [3, 5, 8, 10];
+  // 透明な周りを切り落とす（m＝残す余白。枠の影が切れないように少しだけ残す）
+  function trimAlpha(src, m) {
+    var W = src.width, H = src.height, d = src.getContext('2d').getImageData(0, 0, W, H).data;
+    var x0 = W, y0 = H, x1 = -1, y1 = -1;
+    for (var y = 0; y < H; y++) {
+      for (var x = 0, b = y * W * 4; x < W; x++) {
+        if (d[b + x * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; y1 = y; }
+      }
+    }
+    if (x1 < 0) return src;
+    x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(W - 1, x1 + m); y1 = Math.min(H - 1, y1 + m);
+    var cv = document.createElement('canvas'); cv.width = x1 - x0 + 1; cv.height = y1 - y0 + 1;
+    cv.getContext('2d').drawImage(src, -x0, -y0);
+    cv.__rounded = true; // 行の外は透明なので、仕上げの角丸で枠の角を削らない
+    return cv;
+  }
+  async function narrowImage(cfg, n) {
+    var el = document.querySelector(cfg.target);
+    if (!el) throw new Error('target');
+    var P = Math.round((cfg.vw - cfg.w) / 2); // 左右の余白込みで vw になる＝その画面幅の見た目で組まれる
+    var res = await renderEl(el, { width: cfg.w, mode: 'native', rootCls: document.documentElement.className,
+                                   bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: false, pad: P,
+                                   rows: cfg.rows, limit: n, drop: cfg.drop, scale: 3 });
+    return trimAlpha(res.canvas, Math.round(4 * res.s));
+  }
+  function setupNarrow() {
+    var cfg = NARROW[PATH]; if (!cfg) return;
+    var tries = 0;
+    (function place() {
+      var target = document.querySelector(cfg.target);
+      if (!target) { if (tries++ < 40) setTimeout(place, 250); return; }
+      if (document.querySelector('.snapnar')) return;
+      var bar = document.createElement('div');
+      bar.className = 'snapnar'; bar.hidden = true;
+      bar.innerHTML = '<span class="snapnlab" title="画面幅' + cfg.vw + 'pxの見た目で、行の外を透明にして保存します（開発者だけ）">狭い画面</span>' +
+        NARROW_N.map(function (n) { return '<button type="button" class="snapbtn nar" data-n="' + n + '">' + (n === 3 ? '1〜3位' : '〜' + n + '位') + '</button>'; }).join('');
+      target.parentNode.insertBefore(bar, target);
+      var btns = bar.querySelectorAll('button');
+      var sync = function () {
+        var n = target.querySelectorAll(cfg.rows).length;
+        bar.hidden = !isDev() || !n || target.offsetParent === null;
+      };
+      sync();
+      new MutationObserver(sync).observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
+      setInterval(sync, 1500);
+      bar.addEventListener('click', async function (e) {
+        var b = e.target.closest('button'); if (!b || b.disabled) return;
+        var n = +b.getAttribute('data-n');
+        btns.forEach(function (x) { x.disabled = true; }); busy(true);
+        try {
+          var cv = await narrowImage(cfg, n);
+          busy(false);
+          await preview(cv, 'GOナビ_' + cfg.title + '_上位' + n + '_' + cfg.vw + 'px_' + stamp() + '.png');
+        } catch (err) { busy(false); console.warn('snap', err); alert('画像を作れませんでした'); }
+        btns.forEach(function (x) { x.disabled = false; });
+      });
+    })();
+  }
+
   // ---------------------------------------------------------------- 開発者の撮影モード
   var pick = { on: false, el: null, locked: false, stack: [], bg: 'page' };
   var fab, hi, bar;
@@ -1120,6 +1191,11 @@
     '.snapbtn.gr{color:#04232b;background:linear-gradient(160deg,#b9f6ff 0%,#43e0ff 55%,#0fa8c4 100%);' +
       'box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 rgba(0,0,0,.35)}' +
     '.snapbar.inl{display:inline-flex;margin:0 0 0 auto}' +
+    '.snapnar{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:6px;margin:2px 0 8px}' +
+    '.snapnar[hidden]{display:none!important}' +
+    '.snapnlab{font:800 11px/1 ' + JP + ';color:#9fb2e6;margin-right:2px}' +
+    '.snapbtn.nar{padding:6px 11px;color:#e8eeff;background:linear-gradient(160deg,#6f5bd6 0%,#4a3aa8 55%,#2f2477 100%);' +
+      'box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 2px 0 rgba(0,0,0,.35)}' +
     '.snapbar[hidden]{display:none!important}' +
     '.snapbtn{font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;border:0;border-radius:999px;padding:6px 14px;' +
       'color:#241800;background:linear-gradient(160deg,#ffe9a3 0%,#ffc83d 55%,#e0a200 100%);' +
@@ -1159,6 +1235,7 @@
 
   function boot() {
     setupPublic();
+    setupNarrow();
     var sync = function () { if (isDev()) ui(); else if (fab) { if (pick.on) stopPick(); fab.remove(); fab = null; } };
     sync();
     setInterval(sync, 2000);
@@ -1181,5 +1258,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
   window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, publicGraph: publicGraph,
-                        fit1920: fit1920, PUB: PUB };
+                        fit1920: fit1920, PUB: PUB, narrowImage: narrowImage, NARROW: NARROW };
 })();
