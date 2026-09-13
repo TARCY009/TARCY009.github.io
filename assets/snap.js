@@ -478,7 +478,7 @@
     cv0.font = '700 17px ' + JP;
     var ctxLines = ctxs.length ? wrapText(cv0, ctxs.join('　／　'), W) : [];
     var headH = 28 + (eyebrow ? 22 : 0) + 38 + (ctxLines.length ? 10 + ctxLines.length * 26 : 0) + (tags.length ? 14 + 30 : 0) + 22;
-    var footH = dev ? 26 : 74;
+    var footH = 26;
     var TH = headH + content.h + footH;
     var cv = document.createElement('canvas');
     cv.width = TW * S; cv.height = TH * S;
@@ -494,6 +494,8 @@
     cx.fillStyle = bar; cx.fillRect(0, 0, TW, 5);
     cx.restore();
     rrect(cx, 1, 1, TW - 2, TH - 2, 22); cx.lineWidth = 1.5; cx.strokeStyle = 'rgba(140,170,255,.28)'; cx.stroke();
+    // 右上: GOナビのロゴとアドレス・日付（開発者の端末では出さない）
+    if (!dev) await drawBrand(cx, P + W, 26, 1);
     // 見出し
     var y = 28;
     cx.textBaseline = 'alphabetic';
@@ -524,21 +526,6 @@
     }
     y += 22;
     cx.drawImage(content.canvas, P, y, content.w, content.h);
-    y += content.h;
-    // 下: GOナビのロゴとアドレス・日付（開発者の端末では出さない）
-    if (!dev) {
-      y += 16;
-      cx.fillStyle = 'rgba(140,170,255,.18)'; cx.fillRect(P, y, W, 1);
-      y += 16;
-      var logo = await loadLogo();
-      var lx = P;
-      if (logo) { rrect(cx, lx, y, 32, 32, 8); cx.save(); cx.clip(); cx.drawImage(logo, lx, y, 32, 32); cx.restore(); lx += 42; }
-      cx.font = '900 19px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', lx, y + 23);
-      var bw = cx.measureText('GOナビ').width;
-      cx.font = '600 14px ' + JP; cx.fillStyle = '#93a3cf'; cx.fillText('gonavi.jp', lx + bw + 10, y + 22);
-      var dt = new Date(), ds = dt.getFullYear() + '.' + (dt.getMonth() + 1) + '.' + dt.getDate();
-      cx.textAlign = 'right'; cx.fillStyle = '#7c8ab4'; cx.fillText(ds, P + W, y + 22); cx.textAlign = 'left';
-    }
     cv.__rounded = true;   // 角丸の枠で描いてある(枠の外は透明)
     return cv;
   }
@@ -576,15 +563,22 @@
     }
     return y;
   }
-  async function drawFoot(cx, x, y, maxW, k) {
-    cx.fillStyle = 'rgba(140,170,255,.18)'; cx.fillRect(x, y - 16 * k, maxW, Math.max(1, k * 0.8));
-    var logo = await loadLogo(), lx = x, L = 32 * k;
-    if (logo) { rrect(cx, lx, y, L, L, 8 * k); cx.save(); cx.clip(); cx.drawImage(logo, lx, y, L, L); cx.restore(); lx += L + 10 * k; }
-    cx.font = '900 ' + (19 * k) + 'px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', lx, y + 23 * k);
-    var bw = cx.measureText('GOナビ').width;
-    cx.font = '600 ' + (14 * k) + 'px ' + JP; cx.fillStyle = '#93a3cf'; cx.fillText('gonavi.jp', lx + bw + 10 * k, y + 22 * k);
+  // GOナビのロゴ・アドレス・日付を右上に描く（right＝右端・y＝上端・k＝大きさの倍率）。
+  // 2026-09-13タダシさん指示: 下に置くと、共有されたときにトリミングで切られやすいので右上へ
+  async function drawBrand(cx, right, y, k) {
+    var logo = await loadLogo(), L = 30 * k, gap = 8 * k;
     var dt = new Date(), ds = dt.getFullYear() + '.' + (dt.getMonth() + 1) + '.' + dt.getDate();
-    cx.textAlign = 'right'; cx.fillStyle = '#7c8ab4'; cx.fillText(ds, x + maxW, y + 22 * k); cx.textAlign = 'left';
+    cx.textAlign = 'left'; cx.textBaseline = 'alphabetic';
+    cx.font = '900 ' + (17 * k) + 'px ' + JP; var w1 = cx.measureText('GOナビ').width;
+    cx.font = '600 ' + (12 * k) + 'px ' + JP; var gw = cx.measureText('gonavi.jp　').width, w2 = gw + cx.measureText(ds).width;
+    var x = right - Math.max(w1, w2);
+    cx.font = '900 ' + (17 * k) + 'px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', x, y + 15 * k);
+    cx.font = '600 ' + (12 * k) + 'px ' + JP; cx.fillStyle = '#93a3cf'; cx.fillText('gonavi.jp', x, y + 31 * k);
+    cx.fillStyle = '#7c8ab4'; cx.fillText(ds, x + gw, y + 31 * k);
+    if (logo) {
+      var lx = x - gap - L, ly = y + 2 * k;
+      rrect(cx, lx, ly, L, L, 8 * k); cx.save(); cx.clip(); cx.drawImage(logo, lx, ly, L, L); cx.restore();
+    }
   }
   // ランキングを1920×1440いっぱいに収める。縦に長い一覧は「1〜5位｜6〜10位」の2列にしたほうが大きく入るので、
   // 1列と2列のうち大きく描けるほうを選ぶ（角丸なし＝動画の画面にそのまま置く）
@@ -603,9 +597,8 @@
     var bar = cx.createLinearGradient(0, 0, W * 0.85, 0); bar.addColorStop(0, col); bar.addColorStop(1, hexA(col, 0));
     cx.fillStyle = bar; cx.fillRect(0, 0, W, 8);
     var top = drawHead(cx, cfg, P, 60, W - P * 2, K, col) + 34;
-    var footY = H - 56 - 32 * K;
-    var bottom = dev ? H - 60 : footY - 16 * K - 30;
-    if (!dev) await drawFoot(cx, P, footY, W - P * 2, K);
+    var bottom = H - 60;
+    if (!dev) await drawBrand(cx, W - P, 60, K);   // 右上にGOナビ(開発者の端末では出さない)
     var areaW = W - P * 2, areaH = bottom - top;
     // 上位5件を1列で。横長の枠に縦長の一覧を入れると左右が空くので、枠の形に合う幅で描き直してからぴったり収める
     var base = { mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0, rows: cfg.rows, drop: cfg.drop, scale: 3, from: 0, limit: LIMIT };
