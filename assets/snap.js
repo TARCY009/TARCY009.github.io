@@ -565,16 +565,16 @@
   }
   // GOナビのロゴ・アドレス・日付を右上に描く（right＝右端・y＝上端・k＝大きさの倍率）。
   // 2026-09-13タダシさん指示: 下に置くと、共有されたときにトリミングで切られやすいので右上へ
+  // 同日タダシさん指示: 日付は出さない・ロゴと文字をまとめて1.35倍・右端にそろえる
   async function drawBrand(cx, right, y, k) {
+    k *= 1.35;
     var logo = await loadLogo(), L = 30 * k, gap = 8 * k;
-    var dt = new Date(), ds = dt.getFullYear() + '.' + (dt.getMonth() + 1) + '.' + dt.getDate();
     cx.textAlign = 'left'; cx.textBaseline = 'alphabetic';
     cx.font = '900 ' + (17 * k) + 'px ' + JP; var w1 = cx.measureText('GOナビ').width;
-    cx.font = '600 ' + (12 * k) + 'px ' + JP; var gw = cx.measureText('gonavi.jp　').width, w2 = gw + cx.measureText(ds).width;
+    cx.font = '600 ' + (12 * k) + 'px ' + JP; var w2 = cx.measureText('gonavi.jp').width;
     var x = right - Math.max(w1, w2);
     cx.font = '900 ' + (17 * k) + 'px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', x, y + 15 * k);
     cx.font = '600 ' + (12 * k) + 'px ' + JP; cx.fillStyle = '#93a3cf'; cx.fillText('gonavi.jp', x, y + 31 * k);
-    cx.fillStyle = '#7c8ab4'; cx.fillText(ds, x + gw, y + 31 * k);
     if (logo) {
       var lx = x - gap - L, ly = y + 2 * k;
       rrect(cx, lx, ly, L, L, 8 * k); cx.save(); cx.clip(); cx.drawImage(logo, lx, ly, L, L); cx.restore();
