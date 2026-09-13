@@ -956,25 +956,21 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hswap small{font-size:.62rem;color:var(--sub);font-weight:700}
 .hswap:empty{display:none}
 .hswap.fswap{justify-content:flex-end}
-/* 交代タイマー(円)。2026-09-13 テスターの声を受けてタダシさんが3案から選択(案B)。
-   交代ボタンの上に置き、真ん中に残り秒数・一周すると交代できる。常に出しておく(出たり消えたりでボタンの位置が動かないように) */
-.hswring{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px}
-.hswring .swr{--p:1;flex:0 0 auto;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;
-  background:conic-gradient(var(--gold) calc(var(--p) * 360deg),var(--line) 0)}
-.hswring .core{width:45px;height:45px;border-radius:50%;background:var(--deep);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;line-height:1}
-.hswring .core b{font-size:1.3rem;font-weight:900;color:var(--ink)}
-.hswring .core small{font-size:.54rem;color:var(--sub);margin-top:2px}
-.hswring:not(.cool) .core b{font-size:.8rem;color:var(--gold)}
-.hswring:not(.cool) .core small{display:none}
-.hswring .rlab{display:flex;flex-direction:column;gap:3px;min-width:118px;font-size:.78rem;font-weight:900;color:var(--gold)}
-.hswring .rlab .t{display:flex;align-items:center;gap:5px}
-.hswring .rlab small{font-size:.64rem;font-weight:700;color:var(--sub)}
-.hswring .rlab small:empty{display:none}
-.hswring.idle,.hswring.none{opacity:.45}
-:root.light .hswring .rlab{color:#8a6000}
-/* ライトは罫線の色が背景とほぼ同じで、まだ満ちていない部分が見えなくなる → 濃いめの青灰にする */
-:root.light .hswring .swr{background:conic-gradient(var(--gold) calc(var(--p) * 360deg),rgba(40,60,120,.22) 0)}
+/* 交代タイマー(2026-09-13 テスターの声を受けてタダシさんが3案から選択＝案A)。
+   待っている間(.cool)は交代ボタンそのものに「あと◯秒」を大きく出し、金色が左から満ちていく(--p＝0〜1)。
+   満ちきると従来どおり .rdy の金色に点灯して押せる */
+.hswaprow .hmsw{position:relative;overflow:hidden}
+.hmsw .swnm{position:relative;display:flex;align-items:center;justify-content:center;gap:inherit;min-width:0}
+.hmsw .swfill{display:none;position:absolute;left:0;top:0;bottom:0;width:calc(var(--p,0) * 100%);
+  background:linear-gradient(90deg,rgba(201,147,26,.55),rgba(255,213,74,.72));border-right:2px solid #ffe9a3}
+.hmsw .swcd{display:none;position:relative;align-items:baseline;gap:3px;color:#fff;letter-spacing:0;text-shadow:0 1px 2px rgba(0,0,0,.65)}
+.hmsw .swcd .swapmark{align-self:center;margin-right:2px}
+.hswaprow .hmsw .swcd b{font-size:1.45rem;line-height:1;overflow:visible}
+.hmsw .swcd small{font-size:.68rem;font-weight:800}
+.hmsw.cool .swfill{display:block}
+.hmsw.cool .swcd{display:flex}
+.hmsw.cool .swnm{display:none}
+.hswaprow .hmsw.cool:disabled{opacity:1}
 /* バトル中の全画面ロック(2026-09-01タダシさん指示): ▶を押した瞬間に
    「タイムライン＋下に固定のHUDだけ」の画面に切り替える(スタート前は通常の流れ=空白を作らない)。
    HUDはバトル中1pxも動かず、下のURLコピーや上の入力へはスクロールできない。決着で解除 */
@@ -1035,7 +1031,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hswaprow.two .hmsw .swapmark{flex:0 0 auto;width:18px;height:18px}
 .hswaprow.two .hmsw .tpair{flex:0 0 auto}
 .hswaprow .hmsw.dead{opacity:.28}
-.hswaprow .hmsw{width:100%;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+.hswaprow .hmsw{width:100%;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;
   gap:7px;font-size:.92rem;font-weight:900;letter-spacing:.1em;color:var(--sub);
   background:linear-gradient(180deg,#1e2850,#151d38);border:1px solid var(--line);
   box-shadow:0 2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
