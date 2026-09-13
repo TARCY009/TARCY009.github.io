@@ -245,6 +245,14 @@
     }
     c.querySelectorAll('script,.snapbar,[data-snap-skip],#snapui,.snapui').forEach(function (x) { x.remove(); });
     if (o.drop) c.querySelectorAll(o.drop).forEach(function (x) { x.remove(); });
+    // fill＝自分の背景を持たない行に敷く背景（画面では外側のパネルが見せている色）。行の外は透明のまま
+    if (o.rows && o.fill) {
+      var sR = el.querySelectorAll(o.rows), dR = c.querySelectorAll(o.rows);
+      for (i = 0; i < dR.length; i++) {
+        var rs = sR[i] && getComputedStyle(sR[i]);
+        if (rs && rs.backgroundImage === 'none' && isClear(rs.backgroundColor)) dR[i].style.setProperty('background', o.fill, 'important');
+      }
+    }
     if (o.rows && o.limit) {
       // from＝何件目から残すか（1920×1440で「1〜5位｜6〜10位」の2列に分けるため）
       var from = o.from || 0;
@@ -292,13 +300,14 @@
     '.snaproot *{animation:none!important;transition:none!important;caret-color:transparent!important}';
 
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function isClear(c) { return !c || c === 'transparent' || /rgba\([^)]*,\s*0\)$/.test(c); }
 
   // 要素を画像(canvas)にする。戻り値 {canvas, w, h, s}
   async function renderEl(el, o) {
     var W = Math.max(40, Math.round(o.width));
     var P = o.pad || 0;
     var css = await collectCSS(o.mode);
-    var clone = await prepClone(el, { width: W, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from });
+    var clone = await prepClone(el, { width: W, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill });
     var chain = wrapChain(el, clone);
     var bcs = getComputedStyle(document.body);
     var bodyStyle = 'margin:0!important;padding:' + P + 'px!important;min-height:0!important;height:auto!important;' +
@@ -941,13 +950,28 @@
     cv.__rounded = true; // 行の外は透明なので、仕上げの角丸で枠の角を削らない
     return cv;
   }
+  // 行の中の背景＝画面でその行の後ろに見えている色（一覧を包むパネル）。パネルが半透明なら下にページの地の色を敷く
+  function rowFill(el) {
+    var layers = [];
+    for (var a = el; a && a !== document.documentElement; a = a.parentElement) {
+      var cs = getComputedStyle(a);
+      if (cs.backgroundImage !== 'none') layers.push(cs.backgroundImage);
+      if (!isClear(cs.backgroundColor)) {
+        layers.push('linear-gradient(' + cs.backgroundColor + ',' + cs.backgroundColor + ')');
+        if (!/rgba\(.*,\s*0?\.\d+\)$/.test(cs.backgroundColor)) break; // 不透明な色に届いたらそこまで
+      }
+    }
+    var light = /\blight\b/.test(document.documentElement.className);
+    layers.push(light ? 'linear-gradient(#f3f6ff,#f3f6ff)' : 'linear-gradient(#0b1023,#0b1023)');
+    return layers.join(',');
+  }
   async function narrowImage(cfg, n) {
     var el = document.querySelector(cfg.target);
     if (!el) throw new Error('target');
     var P = Math.round((cfg.vw - cfg.w) / 2); // 左右の余白込みで vw になる＝その画面幅の見た目で組まれる
     var res = await renderEl(el, { width: cfg.w, mode: 'native', rootCls: document.documentElement.className,
                                    bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: false, pad: P,
-                                   rows: cfg.rows, limit: n, drop: cfg.drop, scale: 3 });
+                                   rows: cfg.rows, limit: n, drop: cfg.drop, fill: rowFill(el), scale: 3 });
     return trimAlpha(res.canvas, Math.round(4 * res.s));
   }
   function setupNarrow() {
