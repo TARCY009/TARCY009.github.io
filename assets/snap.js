@@ -251,6 +251,10 @@
       for (i = 0; i < dR.length; i++) {
         var rs = sR[i] && getComputedStyle(sR[i]);
         if (rs && rs.backgroundImage === 'none' && isClear(rs.backgroundColor)) dR[i].style.setProperty('background', o.fill, 'important');
+        // frame＝枠の無い行(上の線が無い行)を、1〜3位と同じ形の独立した枠にする（画像のときだけ）
+        if (rs && o.frame && rs.borderTopStyle === 'none') {
+          for (var k in o.frame) dR[i].style.setProperty(k, o.frame[k], 'important');
+        }
       }
     }
     if (o.rows && o.limit) {
@@ -307,7 +311,7 @@
     var W = Math.max(40, Math.round(o.width));
     var P = o.pad || 0;
     var css = await collectCSS(o.mode);
-    var clone = await prepClone(el, { width: W, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill });
+    var clone = await prepClone(el, { width: W, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame });
     var chain = wrapChain(el, clone);
     var bcs = getComputedStyle(document.body);
     var bodyStyle = 'margin:0!important;padding:' + P + 'px!important;min-height:0!important;height:auto!important;' +
@@ -934,6 +938,10 @@
     '/max-battle/': { target: '#list', rows: '.row', vw: 640, w: 608, title: 'マックスバトル対策' }
   };
   var NARROW_N = [3, 5, 8, 10];
+  // 4位以下（枠の無い行）に付ける枠。角の丸み・行の間隔・左の余白は1〜3位の枠と同じ、線はページの罫線の色
+  //（2026-09-13タダシさん指示「画像保存時のみ各順位独立したフレームに」）
+  var NARROW_FRAME = { 'border': '1px solid var(--line)', 'border-radius': '12px', 'margin': '3px 0',
+                       'padding-left': '12px', 'overflow': 'hidden', 'position': 'relative' };
   // 透明な周りを切り落とす（m＝残す余白。枠の影が切れないように少しだけ残す）
   function trimAlpha(src, m) {
     var W = src.width, H = src.height, d = src.getContext('2d').getImageData(0, 0, W, H).data;
@@ -971,7 +979,7 @@
     var P = Math.round((cfg.vw - cfg.w) / 2); // 左右の余白込みで vw になる＝その画面幅の見た目で組まれる
     var res = await renderEl(el, { width: cfg.w, mode: 'native', rootCls: document.documentElement.className,
                                    bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: false, pad: P,
-                                   rows: cfg.rows, limit: n, drop: cfg.drop, fill: rowFill(el), scale: 3 });
+                                   rows: cfg.rows, limit: n, drop: cfg.drop, fill: rowFill(el), frame: NARROW_FRAME, scale: 3 });
     return trimAlpha(res.canvas, Math.round(4 * res.s));
   }
   function setupNarrow() {
