@@ -145,8 +145,21 @@ label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter
 .picked .tpair{margin-left:6px;vertical-align:-3px}
 /* リーグの枠のいちばん上のタイトル(ポケモン名＋タイプアイコン)。長い名前は折り返す。
    文字は1.82rem(2026-08-16タダシさん指示で1.4remから30%アップ) */
-.lgtitle{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;
+.lgtitle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
   margin:2px 0 12px;font-size:1.82rem;font-weight:800;letter-spacing:.02em;text-align:center}
+/* 名前の下の境界線(2026-09-13タダシさん指示): 名前と、その下のタイプ・CP・PL・SCPを分ける線。
+   線は名前のまとまりの下に引くので、2行になる長い名前でも2行目の下にだけ出る。
+   長い名前は括弧の前で折り返す(<wbr>)・語の途中では切らない */
+.lgtname{position:relative;display:inline-block;max-width:100%;padding:0 18px 12px;line-height:1.25;
+  word-break:keep-all;overflow-wrap:anywhere}
+/* 括弧の部分(「(あかつきのつばさ)」など)は途中で折らない。10文字以上の名前は字を小さくして2行に収める */
+.lgtname .nw{white-space:nowrap}
+.lgtname.long{font-size:1.45rem}
+/* 線は「名前の幅＋左右18px」＝枠からははみ出さない */
+.lgtname::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent 0%,rgba(94,231,255,.9) 22%,rgba(176,108,255,.9) 78%,transparent 100%)}
+:root.light .lgtname::after{background:linear-gradient(90deg,transparent 0%,#08b4c9 22%,#8a5cf0 78%,transparent 100%)}
+.lgtsub{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px}
 /* 名前の右のCP・PL・SCP(選択中のリーグの値。render()が更新する)。
    順位はすぐ下の3リーグのカードが担当するので、ここには出さない */
 .lgtstats{display:inline-flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:center;letter-spacing:0}
@@ -1260,7 +1273,11 @@ function setLgTitle(){
   if(state.p) dl.href='/pokedex/?p='+encodeURIComponent(state.p.i);
   if(!state.p){ el.style.display='none'; return; }
   // 名前＋タイプの右にCP・PL・SCPの置き場(#lgtstats)を作る。中身はrender()が選択中リーグの値で更新する
-  el.innerHTML='<span>'+state.p.n+'</span>'+typesHtml(state.p,26)+'<span class="lgtstats" id="lgtstats"></span>';
+  // 名前(下に境界線) → タイプとCP・PL・SCP の2段。長い名前は括弧の前で折り返し、括弧の部分は途中で折らない
+  const nm=state.p.n, pm=nm.match(/^(.+?)(\(.+\))$/);
+  el.innerHTML='<span class="lgtname'+(nm.length>=10?' long':'')+'">'+
+    (pm ? pm[1]+'<wbr><span class="nw">'+pm[2]+'</span>' : nm)+'</span>'+
+    '<div class="lgtsub">'+typesHtml(state.p,26)+'<span class="lgtstats" id="lgtstats"></span></div>';
   el.style.display='flex';
 }
 
