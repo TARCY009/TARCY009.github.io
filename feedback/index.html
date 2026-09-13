@@ -24,6 +24,11 @@
    列の名前は決め打ちしない（フォームの質問文をあとから変えても壊れないように、
    中身から役割を見分ける）。
    ========================================================================= */
+/* 読み込み先のURLを端末に保存する欄(2026-09-13)。入力欄は16px(iOSの勝手な拡大を防ぐ) */
+#csvset[hidden]{display:none}
+#csvset .row{flex-wrap:wrap}
+#csvurl{flex:1 1 260px;min-width:0;font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
 :root{
   --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560; --panel:rgba(26,35,66,.94);
   --bg2:#151d38; --cy:#43e0ff; --gold:#ffd54a; --ok:#3fe0a0;
@@ -134,6 +139,15 @@ ol.steps b{color:var(--ink)}
   <div class="row">
     <button type="button" id="reload" class="pri">最新を読み込む</button>
     <button type="button" id="topaste">貼り付けで読み込む</button>
+    <button type="button" id="setcsv">読み込み先のURL</button>
+  </div>
+  <div id="csvset" hidden>
+    <p class="note">スプレッドシートを「ウェブに公開（カンマ区切り .csv）」したURLを貼ってください。<b>この端末のブラウザにだけ保存</b>され、次からは開くだけで読み込みます。</p>
+    <div class="row">
+      <input id="csvurl" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?…output=csv" autocomplete="off" spellcheck="false">
+      <button type="button" id="savecsv" class="pri">この端末に保存</button>
+      <button type="button" id="delcsv">消す</button>
+    </div>
   </div>
   <p class="note" id="srcnote"></p>
   <div id="pastebox" hidden>
@@ -167,9 +181,14 @@ ol.steps b{color:var(--ink)}
 <script>
 /* ============================ 設定 ============================
    スプレッドシートを「ファイル → 共有 → ウェブに公開 → 形式=カンマ区切り(.csv)」で
-   公開して出てきたURLを入れる。空のままでも「貼り付けで読み込む」で使える。
-   ⚠ 公開したCSVはURLを知っていれば誰でも読めるので、URLは人に渡さないこと。 */
-var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTxDS1OR_LwQ2Jq7VU0sGtlfA47HgO7VnLp08eCZ4mRtc21Sc0DbzPCOqXj9Tqs7yubsTBdH0UqlkoQ/pub?gid=0&single=true&output=csv';
+   公開して出てきたURLは、**このファイルには書かない**（2026-09-13）。
+   ⚠ 公開したCSVはURLを知っていれば誰でも読める。このサイトのファイルはGitHubで誰でも見られるので、
+     ここに書くと届いた内容(お名前・本文・スクリーンショットのリンク)が誰でも読めてしまう。
+     URLは画面の欄から**端末のブラウザにだけ保存**する(localStorage)。空のままでも「貼り付けで読み込む」で使える */
+var CSV_KEY = 'feedback_csv_url';
+var CSV_URL = '';
+try { CSV_URL = localStorage.getItem(CSV_KEY) || ''; } catch (e) {}
+var csvOpen = false;
 /* ============================================================== */
 
 var DONE_KEY = 'feedback_done';
@@ -404,8 +423,23 @@ function load(text) {
 }
 function fail(msg) { $('err').hidden = false; $('err').textContent = msg; }
 
+function syncCsv() {
+  $('csvset').hidden = !!CSV_URL && !csvOpen;
+  $('csvurl').value = CSV_URL;
+}
+$('setcsv').addEventListener('click', function () { csvOpen = !csvOpen || !CSV_URL; syncCsv(); if (!$('csvset').hidden) $('csvurl').focus(); });
+$('savecsv').addEventListener('click', function () {
+  var v = $('csvurl').value.trim();
+  if (!/^https:\/\/docs\.google\.com\/spreadsheets\//.test(v)) { fail('スプレッドシートを「ウェブに公開」したURL（https://docs.google.com/spreadsheets/…）を貼ってください。'); return; }
+  CSV_URL = v; try { localStorage.setItem(CSV_KEY, v); } catch (e) {}
+  csvOpen = false; syncCsv(); reload();
+});
+$('delcsv').addEventListener('click', function () {
+  CSV_URL = ''; try { localStorage.removeItem(CSV_KEY); } catch (e) {}
+  csvOpen = true; syncCsv();
+});
 function reload() {
-  if (!CSV_URL) { $('pastebox').hidden = false; $('paste').focus(); return; }
+  if (!CSV_URL) { csvOpen = true; syncCsv(); $('csvurl').focus(); return; }
   $('err').hidden = true;
   fetch(CSV_URL, { cache: 'no-store' })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
