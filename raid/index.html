@@ -336,7 +336,11 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <option value="coin">ランダム</option>
     </select><span class="face"></span></span>
     <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SP回避</button>
-    <button type="button" class="optbtn" id="zcBtn" aria-pressed="false" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
+    <span class="pick" data-pre="フィールド" title="フィールド効果（アドベンチャーエフェクト）は同時に1つだけ使えます。自分のポケモンだけにかかります。ザシアン＝攻撃1.1倍（どのレイドでも）／メガミュウツーX＝メガシンカしたボスへのダメージ1.15倍（メガレイド・スーパーメガレイドだけ・ゲンシには効かない）"><select id="feSel">
+      <option value="" selected>なし</option>
+      <option value="zc" data-face="×1.1">ザシアン ×1.1</option>
+      <option value="mx" data-face="×1.15">メガミュウツーX ×1.15</option>
+    </select><span class="face"></span></span>
     <button type="button" class="optbtn" id="tpBtn" aria-pressed="false" title="パーティプレイのチームパワーです。参加する全員がパーティを組んでいる前提で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P）、満タンで次のSPアタックが2倍になります。1人のときは効果がありません。点灯したら毎回すぐ使う想定です">チームパワー</button>
   </div>
   <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝手持ちが全滅してからバトルに戻るまでの秒数です。</p>
@@ -402,7 +406,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <ul>
     <li><b>SPのみ回避</b>＝ボスのSPアタックだけ回避します。被ダメージ<b>75%カット</b>（最低1）で、回避に<b>0.5秒</b>かかるぶん次の攻撃が遅れます（ノーマルアタックは受けたまま攻撃し続けます）</li>
     <li><b>天候</b>＝選んだ天候で1.2倍になるタイプのわざが強くなります。<b>自分のわざだけでなくボスのわざにも掛かります</b>（例: 曇りならボスのきあいだまも1.2倍）。対象タイプ: 晴れ＝くさ・じめん・ほのお ／ 時々曇り＝ノーマル・いわ ／ 曇り＝フェアリー・かくとう・どく ／ 雨＝みず・でんき・むし ／ 霧＝あく・ゴースト ／ 雪＝こおり・はがね ／ 強風＝ドラゴン・ひこう・エスパー</li>
-    <li><b>フレンド</b>＝友達×1.03／仲良し×1.05／親友×1.07／大親友×1.10／大親友＋×1.12 ／ <b>メガ応援</b>＝他の参加者のメガシンカで別タイプ×1.1・同タイプ×1.3 ／ <b>ザシアン効果</b>＝フィールド効果で攻撃1.1倍。フレンドとメガ応援は、<b>選ぶときの一覧には呼び名が出て、選んだあとのボタンには倍率だけ</b>を出します（設定を1行に収めるため）</li>
+    <li><b>フレンド</b>＝友達×1.03／仲良し×1.05／親友×1.07／大親友×1.10／大親友＋×1.12 ／ <b>メガ応援</b>＝他の参加者のメガシンカで別タイプ×1.1・同タイプ×1.3 ／ <b>フィールド</b>＝フィールド効果（同時に1つだけ・自分のポケモンだけにかかる）。ザシアン＝攻撃1.1倍／メガミュウツーX＝メガシンカしたボスへのダメージ1.15倍（メガレイド・スーパーメガレイドだけ・ゲンシには効かない）。フレンドとメガ応援は、<b>選ぶときの一覧には呼び名が出て、選んだあとのボタンには倍率だけ</b>を出します（設定を1行に収めるため）</li>
     <li><b>チームパワー</b>＝パーティプレイのボーナス。ONにすると<b>参加する全員がパーティを組んでいる前提</b>で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P・SPアタックでも増える）、満タンで<b>次のSPアタックが2倍</b>になります。1人のときは効果がありません。点灯したら毎回すぐ使う前提で、瀕死交代してもメーターは引き継ぎます（外部攻略情報と実測検証で一致した値）</li>
     <li>メガ応援は、本当は<b>わざのタイプごと</b>に効きますが、ここでは選んだ倍率が<b>全部のわざに掛かる</b>前提です（ノーマルとSPでタイプがちがう構成では少しだけ強めに出ます）</li>
     <li>ダメージが増えるとボスのゲージも速くたまるので、ブーストを入れるとSPアタックが飛んでくる頻度も上がります（そこまで込みで計算しています）</li>
@@ -590,7 +594,7 @@ const FEW_CAND=24;
 let fewCache={key:null,val:null};
 function fewestAttacker(){
   if(!boss||!D.pokemon[boss]||$('bfSel').dataset.boss!==boss||!$('bfSel').value)return null;
-  const ck=[boss,tier,MegaLv.level(),$('bfSel').value,$('bcSel').value,spMode,dodgeSp,zcOn,tpOn,
+  const ck=[boss,tier,MegaLv.level(),$('bfSel').value,$('bcSel').value,spMode,dodgeSp,$('feSel').value,tpOn,
     $('wxSel').value,$('frSel').value,$('mgSel').value,$('rejoinSec').value].join('|');
   if(fewCache.key===ck)return fewCache.val;
   const sp=spMode==='coin'?'alt':spMode;
@@ -805,7 +809,19 @@ function renderMy(){
 // ブースト: 天候は「対象タイプのわざだけ1.2倍・ボスのわざにも掛かる」(エンジン側で処理)。
 // フレンド・ザシアン・メガ応援はこちらの攻撃にまとめて掛ける
 // (メガ応援は本当はわざのタイプごとに効くが、ここでは全わざに掛かる前提。使い方タブに明記)
-let dodgeSp=false, zcOn=false, tpOn=false;
+let dodgeSp=false, tpOn=false;
+// フィールド効果(アドベンチャーエフェクト・2026-09-13): どんな理由でも同時に1つだけ・自分のポケモンだけにかかる。
+//   ザシアン＝攻撃1.1倍 ／ メガミュウツーX＝メガシンカしたボスへのダメージ1.15倍(メガレイド・スーパーメガレイドだけ)。
+//   ⚠ データの mega の印はゲンシにも付いているので、番号の末尾 _PRIMAL で外す(運営はメガとゲンシを分けて扱う)
+const megaBoss=()=>!!(boss&&D.pokemon[boss]&&D.pokemon[boss].mega&&!/_PRIMAL$/.test(boss));
+function feMult(){ const v=$('feSel').value; return v==='zc'?1.1:(v==='mx'&&megaBoss()?1.15:1); }
+// メガシンカしたボスでなければメガミュウツーXは選べない(選んだままボスを替えたら「なし」に戻す)
+function syncFe(){
+  const sel=$('feSel'), o=sel.querySelector('option[value="mx"]'), ok=megaBoss();
+  o.disabled=!ok; o.textContent=ok?'メガミュウツーX ×1.15':'メガミュウツーX ×1.15（メガのボスだけ）';
+  if(!ok&&sel.value==='mx') sel.value='';
+  syncPick(sel);
+}
 const WEATHER={
   sunny:['GRASS','GROUND','FIRE'],          // 晴れ
   partly:['NORMAL','ROCK'],                 // 時々曇り
@@ -816,7 +832,7 @@ const WEATHER={
   wind:['DRAGON','FLYING','PSYCHIC'],       // 強風
 };
 function boostMult(){
-  return (zcOn?1.1:1)*(+$('frSel').value||1)*(+$('mgSel').value||1);
+  return feMult()*(+$('frSel').value||1)*(+$('mgSel').value||1);
 }
 // lv・iv を省くと PL50・個体値15(1位おまかせ・えらぶ・最少人数おまかせはこれ)。6匹編成は枠ごとの値を渡す
 function monCfg(k,sh,f,c,lv,iv){
@@ -954,7 +970,7 @@ loadTeam();
 buildTeamUI();
 attachSugg($('bossInput'),$('bossSugg'),k=>{
   boss=k;tier=guessTier(k);topCache.key=null;
-  renderBoss();renderMy();runAll();
+  syncFe();renderBoss();renderMy();runAll();
 });
 attachSugg($('myInput'),$('mySugg'),k=>{
   myKey=k;myShadow=false;
@@ -987,7 +1003,8 @@ $('spSel').addEventListener('change',()=>{
 });
 $('rejoinSec').addEventListener('input',runAll);
 $('dodgeBtn').onclick=()=>{dodgeSp=!dodgeSp;$('dodgeBtn').setAttribute('aria-pressed',dodgeSp);runAll();};
-$('zcBtn').onclick=()=>{zcOn=!zcOn;$('zcBtn').setAttribute('aria-pressed',zcOn);runAll();};
+$('feSel').addEventListener('change',runAll);
+syncFe();
 $('wxSel').addEventListener('change',runAll);
 $('frSel').addEventListener('change',runAll);
 $('mgSel').addEventListener('change',runAll);
@@ -1002,7 +1019,7 @@ if(q.get('b')&&D.pokemon[q.get('b')]){
   boss=q.get('b');
   tier=TIERS.some(t=>t.id===q.get('t'))?q.get('t'):guessTier(boss);
   $('bossInput').value=D.pokemon[boss].n;
-  renderBoss();renderMy();runAll();
+  syncFe();renderBoss();renderMy();runAll();
 }
 
 // ---- 使い方 ----

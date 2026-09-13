@@ -493,7 +493,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <li>スーパーメガレイドはゲーム内では★の数ではなく<b>シールドの枚数</b>でレベルが表示されます（ここでは1ランクとして扱います）</li>
     <li>ランクはボスから見当を付けて自動で選びます（<b>メガ伝説・ゲンシ</b>→★6、ふつうのメガ→★4、それ以外→★5）。違うランクのときはタップで替えてください</li>
     <li>この計算だけは、ものさし防御100ではなく<b>そのボスの実際の防御（ランクごとの補正込み）</b>でダメージを出し直しています</li>
-    <li><b>天候ブースト・フレンド・ザシアン効果・チームパワーは「⚙ 詳細」で前提に入れられます</b>（既定はすべてなし）。閉じていても選択中の前提はボタンに表示されます</li>
+    <li><b>天候ブースト・フレンド・フィールド効果（ザシアン効果／ボスがメガシンカしたポケモンのときはメガミュウツーX効果・どちらか一方）・チームパワーは「⚙ 詳細」で前提に入れられます</b>（既定はすべてなし）。閉じていても選択中の前提はボタンに表示されます</li>
     <li><b>チームパワー</b>＝パーティプレイのボーナス。ONにすると<b>参加する全員がパーティを組んでいる前提</b>で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P・SPアタックでも増える）、満タンで<b>次のSPアタックが2倍</b>になります。1人のときは効果がありません。人数ごとの上昇量で成立するいちばん少ない人数を答えにし、SPアタックの何割に2倍が乗るかはわざ構成の充填サイクルから計算しています（外部攻略情報と実測検証で一致した値）</li>
     <li>倒されて出し直す時間・メガシンカの応援は入れていません。<b>実際はこの人数より多めが安全</b>です</li>
     <li><b>スーパーメガレイドは「シールドを壊さない前提」で計算します</b>——最少人数での討伐ではシールドを壊す頭数がそろわないため。ボスのHPが約80%になるとシールドが張られ、以後は<b>ボスの防御4倍（暫定値）</b>のまま削り切る想定です。倍率は実測で確定したら更新します</li>
@@ -778,7 +778,8 @@ function renderBoss(){
          <span class="setgrp"><span class="lbl" title="フレンドと一緒に参加したときの攻撃ボーナスです">フレンド</span><select id="mpFr">
            <option value="1">なし</option><option value="1.03">友達 ×1.03</option><option value="1.05">仲良し ×1.05</option><option value="1.07">親友 ×1.07</option><option value="1.10">大親友 ×1.10</option><option value="1.12">大親友＋ ×1.12</option>
          </select></span>
-         <button type="button" class="optbtn" id="mpZc" aria-pressed="${MPB.zc}" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します">ザシアン効果</button>
+         <button type="button" class="optbtn" id="mpZc" aria-pressed="${MPB.zc}" title="ザシアンのフィールド効果（攻撃1.1倍）が乗っている前提で計算します。フィールド効果は同時に1つだけです">ザシアン効果</button>
+         ${mpMegaBoss()?`<button type="button" class="optbtn" id="mpMx" aria-pressed="${MPB.mx}" title="メガミュウツーXのフィールド効果（メガシンカしたボスへのダメージ1.15倍・ゲンシには効かない）が乗っている前提で計算します。フィールド効果は同時に1つだけなので、ザシアン効果とはどちらか一方です">メガミュウツーX効果</button>`:''}
          <button type="button" class="optbtn" id="mpTp" aria-pressed="${MPB.tp}" title="パーティプレイのチームパワーです。参加する全員がパーティを組んでいる前提で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P）、満タンで次のSPアタックが2倍になります。1人のときは効果がありません">チームパワー</button>
        </div>
      </div>
@@ -796,7 +797,12 @@ function renderBoss(){
   document.getElementById('mpWx').onchange=e=>{MPB.wx=e.target.value;mpSync();};
   document.getElementById('mpFr').onchange=e=>{MPB.fr=e.target.value;mpSync();};
   document.getElementById('mpTp').onclick=e=>{MPB.tp=!MPB.tp;e.currentTarget.setAttribute('aria-pressed',MPB.tp);mpSync();};
-  document.getElementById('mpZc').onclick=e=>{MPB.zc=!MPB.zc;e.currentTarget.setAttribute('aria-pressed',MPB.zc);mpSync();};
+  // フィールド効果はどちらか一方(押した側をONにしたら、もう一方はOFF)
+  const feAria=()=>{document.getElementById('mpZc').setAttribute('aria-pressed',MPB.zc);
+    const b=document.getElementById('mpMx'); if(b)b.setAttribute('aria-pressed',MPB.mx);};
+  document.getElementById('mpZc').onclick=()=>{MPB.zc=!MPB.zc;if(MPB.zc)MPB.mx=false;feAria();mpSync();};
+  const mpMx=document.getElementById('mpMx');
+  if(mpMx)mpMx.onclick=()=>{MPB.mx=!MPB.mx;if(MPB.mx)MPB.zc=false;feAria();mpSync();};
   document.querySelectorAll('#tierSeg button').forEach(b=>b.onclick=()=>{
     raidTier=b.dataset.t;
     // ★7以外を選んだ＝スーパーメガレイドではない → スーパーメガ専用のシールド破壊の一覧は解除する
@@ -826,18 +832,21 @@ const MP_WEATHER={sunny:['GRASS','GROUND','FIRE'],partly:['NORMAL','ROCK'],cloud
   rain:['WATER','ELECTRIC','BUG'],fog:['DARK','GHOST'],snow:['ICE','STEEL'],wind:['DRAGON','FLYING','PSYCHIC']};
 const MP_WXNAME={sunny:'晴れ',partly:'時々曇り',cloudy:'曇り',rain:'雨',fog:'霧',snow:'雪',wind:'強風'};
 const MP_FRNAME={'1.03':'友達','1.05':'仲良し','1.07':'親友','1.10':'大親友','1.12':'大親友＋'};
-const MPB={wx:'',fr:'1',zc:false,tp:false,open:false};
+const MPB={wx:'',fr:'1',zc:false,mx:false,tp:false,open:false};
+// フィールド効果は同時に1つだけ(ザシアン効果とメガミュウツーX効果はどちらか一方・2026-09-13)。
+// メガミュウツーX＝メガシンカしたボスへのダメージ1.15倍。データの mega の印はゲンシにも付いているので _PRIMAL で外す
+const mpMegaBoss=()=>!!(boss&&D.pokemon[boss]&&D.pokemon[boss].mega&&!/_PRIMAL$/.test(boss));
 // comboDPSへ渡すブースト。何も選ばれていなければnull(=従来どおり)
 // チームパワーは「参加する全員がパーティを組む前提」なので、上昇Pは人数から決める(mpCalc)。
 // ここではONかどうか(tpOn)だけ持ち、tpはmpCalcが人数ごとに差し替える
 function mpEx(){
-  const flat=(MPB.zc?1.1:1)*(+MPB.fr||1), wx=MP_WEATHER[MPB.wx]||[];
+  const flat=(MPB.zc?1.1:1)*(MPB.mx&&mpMegaBoss()?1.15:1)*(+MPB.fr||1), wx=MP_WEATHER[MPB.wx]||[];
   return (flat!==1||wx.length||MPB.tp)?{flat,wx,tp:0,tpOn:MPB.tp}:null;
 }
 // 閉じていても選択中の前提が分かるよう、ボタンに選択内容を添える
 function mpDetSum(){
   const a=[];
-  if(MPB.wx)a.push(MP_WXNAME[MPB.wx]); if(MPB.fr!=='1')a.push(MP_FRNAME[MPB.fr]); if(MPB.zc)a.push('ザシアン');
+  if(MPB.wx)a.push(MP_WXNAME[MPB.wx]); if(MPB.fr!=='1')a.push(MP_FRNAME[MPB.fr]); if(MPB.zc)a.push('ザシアン'); if(MPB.mx&&mpMegaBoss())a.push('メガミュウツーX');
   if(MPB.tp)a.push('チームパワー');
   return a.length?`<b>（${a.join('・')}）</b>`:'';
 }
