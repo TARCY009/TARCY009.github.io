@@ -1563,9 +1563,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 :root.light .blentry.me{--sc:#0b8fa8;--scb:rgba(11,143,168,.35);border-color:rgba(11,143,168,.3)}
 :root.light .blentry.foe{--sc:#a8760a;--scb:rgba(168,118,10,.35);border-color:rgba(168,118,10,.3)}
 /* 1〜3匹目の枠: 左に色の帯・番号は色の札・入力欄は一段沈めた面(層ごとに色を変える) */
-#blog .pslot{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--scb);border-radius:12px;padding:8px 9px 9px 12px}
-#blog .pslot::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--scl),var(--scd))}
-#blog .pslot.lead{border-color:var(--sc);box-shadow:inset 0 0 0 1px var(--scb)}
+/* ⚠ overflow:hidden にしない(検索候補 .sugg-list は枠の外へ伸びる絶対配置。切ると候補が出なくなる・2026-09-14に踏んだ)。
+   左の色の帯は内側の影で描く(角丸に沿う) */
+#blog .pslot{position:relative;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--scb);border-radius:12px;padding:8px 9px 9px 12px;
+  box-shadow:inset 4px 0 0 var(--sc)}
+#blog .pslot.lead{border-color:var(--sc);box-shadow:inset 4px 0 0 var(--sc),inset 0 0 0 1px var(--scb)}
 #blog .phd{gap:5px;margin-bottom:6px}
 #blog .phd .pnum{margin-right:0;background:linear-gradient(160deg,var(--scl) 0%,var(--sc) 45%,var(--scd) 100%);color:var(--sct);
   font-size:.62rem;font-weight:900;padding:2px 8px;border-radius:999px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
@@ -1580,6 +1582,8 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   font-size:.7rem;font-weight:700;padding:5px 11px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .blmyrecent[aria-expanded="true"]{color:var(--ink)}
 .blmyrecent[hidden],.blrecent[hidden]{display:none}
+/* 候補の右端: 自分の記録での回数(よく出る相手ほど上に並ぶ) */
+.blslot .sugg-list .blsug{margin-left:auto;font-style:normal;font-size:.62rem;font-weight:800;color:var(--goldc);padding-left:6px;white-space:nowrap}
 .blhd{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
 .blhd .lbl,.blmyhd .lbl{font-size:.82rem;font-weight:800;color:var(--ink)}
 .blhd .blhint{color:var(--sub);font-size:.66rem}

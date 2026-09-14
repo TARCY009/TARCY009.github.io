@@ -277,7 +277,7 @@ document.getElementById('app').innerHTML = `
     </div>
   </div>
   <div class="blentry foe">
-    <div class="blhd"><span class="lbl">あいて</span><span class="blhint">1匹目＝初手。見えたぶんだけでOK</span></div>
+    <div class="blhd"><span class="lbl">あいて</span></div>
     <div class="pslots blslots"></div>
     <div class="blpred"></div>
     <div class="blquick"></div>
@@ -6249,6 +6249,21 @@ function blAgg(use) {
   return { battles: use.length, rows: [...map.values()].sort((a, b) => b.cnt - a.cnt || b.lead - a.lead) };
 }
 
+// 候補の並び順の材料: ポケモンごとの「自分の記録での出現数(cnt)・そのうちシャドウ(sh)・環境上位の順位(meta)」。
+// リーグ(cap)と記録の件数が変わったときだけ作り直す
+let BL_RANK = { key: '', map: null };
+function blSuggRank() {
+  const recs = blRecs();
+  const key = cap + '|' + recs.length + '|' + (recs.length ? recs[recs.length - 1].id : 0);
+  if (BL_RANK.key === key && BL_RANK.map) return BL_RANK.map;
+  const map = new Map();
+  const at = k => { let e = map.get(k); if (!e) { e = { cnt: 0, sh: 0, meta: 999 }; map.set(k, e); } return e; };
+  blAgg(recs).rows.forEach(e => { const x = at(e.k); x.cnt += e.cnt; if (e.s) x.sh += e.cnt; });
+  ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || [])
+    .forEach((m, idx) => { const x = at(m.k); if (idx < x.meta) x.meta = idx; });
+  BL_RANK = { key, map };
+  return map;
+}
 // 入力の3枠(あいて)。パーティ診断の枠と同じ見た目・同じ検索
 function buildBlogSlots() {
   const box = document.querySelector('#blog .blslots');
@@ -6271,13 +6286,29 @@ function buildBlogSlots() {
       if (!e.isComposing) { const v = toKata(inp.value); if (v !== inp.value) inp.value = v; }
       const q = toKata(inp.value.trim());
       if (!q) { list.style.display = 'none'; return; }
-      const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
-      if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => suggRow(k, ngOf(k, megaOver(BLE.foes, k, i) ? MEGA_NG : ''))).join('');
+      const hits0 = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
+      if (!hits0.length) { list.style.display = 'none'; return; }
+      // バトル中の入力を速くする(2026-09-14タダシさん指示): **採用率の高い順**に並べる(自分の記録 → 環境上位の順位)。
+      // ひらがな2文字でも上に出るので、全部打たずに選べる。よく出る相手にはその回数を添える
+      const rk = blSuggRank();
+      const hits = hits0.map((k, j) => ({ k, j, r: rk.get(k) })).sort((a, b) => {
+        const ca = a.r ? a.r.cnt : 0, cb = b.r ? b.r.cnt : 0;
+        if (ca !== cb) return cb - ca;
+        const ma = a.r ? a.r.meta : 999, mb = b.r ? b.r.meta : 999;
+        if (ma !== mb) return ma - mb;
+        return a.j - b.j;
+      });
+      list.innerHTML = hits.map(x => {
+        const row = suggRow(x.k, ngOf(x.k, megaOver(BLE.foes, x.k, i) ? MEGA_NG : ''));
+        const tag = x.r && x.r.cnt ? `<i class="bs blsug">${x.r.cnt}回</i>` : '';
+        return tag ? row.replace(/<\/div>$/, tag + '</div>') : row;
+      }).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
-        BLE.foes[i] = { k: d.dataset.k, s: false };
+        // 記録ではシャドウのほうが多い相手なら、最初からシャドウで入れる(ボタンで切り替えられる)
+        const r = rk.get(d.dataset.k);
+        BLE.foes[i] = { k: d.dataset.k, s: !!(r && r.sh > r.cnt - r.sh) };
         syncBlogSlot(i);
       });
     });
