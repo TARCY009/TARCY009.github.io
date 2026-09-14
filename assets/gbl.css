@@ -1556,6 +1556,30 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blttl{margin:2px 0 8px}
 .blentry{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 10px 10px;margin-bottom:10px;overflow:hidden}
 .blentry::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,#e0b64a,#ffd54a 50%,#e0b64a);opacity:.85}
+/* じぶん(水色)とあいて(金)は別の枠(2026-09-14タダシさん指示)。枠の色＝上端の帯・枠線・番号の札・入力欄の枠線で示す */
+.blentry.me{--sc:#43e0ff;--scd:#0a7f96;--scl:#7ce7ff;--scb:rgba(67,224,255,.28);--sct:#042330;border-color:rgba(67,224,255,.22)}
+.blentry.foe{--sc:#ffd54a;--scd:#a8760a;--scl:#ffe08a;--scb:rgba(232,197,106,.3);--sct:#2b2305;border-color:rgba(232,197,106,.24)}
+.blentry.me::before{background:linear-gradient(90deg,#08b4c9,#7ce7ff 50%,#08b4c9)}
+:root.light .blentry.me{--sc:#0b8fa8;--scb:rgba(11,143,168,.35);border-color:rgba(11,143,168,.3)}
+:root.light .blentry.foe{--sc:#a8760a;--scb:rgba(168,118,10,.35);border-color:rgba(168,118,10,.3)}
+/* 1〜3匹目の枠: 左に色の帯・番号は色の札・入力欄は一段沈めた面(層ごとに色を変える) */
+#blog .pslot{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--scb);border-radius:12px;padding:8px 9px 9px 12px}
+#blog .pslot::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--scl),var(--scd))}
+#blog .pslot.lead{border-color:var(--sc);box-shadow:inset 0 0 0 1px var(--scb)}
+#blog .phd{gap:5px;margin-bottom:6px}
+#blog .phd .pnum{margin-right:0;background:linear-gradient(160deg,var(--scl) 0%,var(--sc) 45%,var(--scd) 100%);color:var(--sct);
+  font-size:.62rem;font-weight:900;padding:2px 8px;border-radius:999px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+#blog .phd .pfill{flex:1}
+#blog .blslot .bllead{margin:0;color:var(--sc);font-size:.64rem;font-weight:800;letter-spacing:.04em}
+#blog .pslot input{background:rgba(0,0,0,.28);border:1px solid var(--scb);border-radius:9px;padding:8px 9px;font-weight:700}
+:root.light #blog .pslot input{background:rgba(255,255,255,.75)}
+#blog .pslot input:focus{border-color:var(--sc)}
+#blog .phd .pclr{border-color:var(--line2)}
+/* 「最近のパーティ」は押したときだけ */
+.blmyrecent{flex:0 0 auto;background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--sub);
+  font-size:.7rem;font-weight:700;padding:5px 11px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.blmyrecent[aria-expanded="true"]{color:var(--ink)}
+.blmyrecent[hidden],.blrecent[hidden]{display:none}
 .blhd{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
 .blhd .lbl,.blmyhd .lbl{font-size:.82rem;font-weight:800;color:var(--ink)}
 .blhd .blhint{color:var(--sub);font-size:.66rem}
@@ -1604,11 +1628,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blmini{display:block;height:3px;margin:3px auto 0;width:78%;border-radius:2px;background:var(--line);overflow:hidden}
 .blmini::after{content:"";display:block;height:100%;width:var(--w,0%);background:linear-gradient(90deg,#e0b64a,#ffd54a)}
 /* じぶんのパーティ(2026-09-14): ふだんは1行・「変更」で3枠を開く */
-.blmybox{margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
-.blmyhd{display:flex;align-items:center;gap:8px}
+.blmybox{margin:0}
+.blmyhd{display:flex;align-items:center;gap:6px}
 .blmynames{flex:1;min-width:0;font-size:.82rem;font-weight:700;line-height:1.5}
 .blmynames small{color:var(--sub);font-weight:400;font-size:.66rem}
-.blmyedit{flex:0 0 auto;background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--goldc);
+.blmyedit{flex:0 0 auto;background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--cy);
   font-size:.72rem;font-weight:800;padding:5px 13px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .blmyedit[aria-expanded="true"]{color:var(--ink)}
 /* じぶんの3匹＝番号＋タイプアイコン＋名前の小さなカード */
@@ -1616,7 +1640,8 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blmc{display:flex;align-items:center;gap:5px;min-width:0;padding:6px 7px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;font-size:.76rem;font-weight:700}
 .blmc>span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .blmc.empty{border-style:dashed;color:var(--sub);font-weight:400}
-.blmcn{flex:0 0 auto;width:16px;height:16px;border-radius:50%;background:linear-gradient(160deg,#ffe08a,#e0b64a 55%,#a8760a);color:#2b2305;
+.blmc{border-color:var(--scb,var(--line2))}
+.blmcn{flex:0 0 auto;width:16px;height:16px;border-radius:50%;background:linear-gradient(160deg,#7ce7ff,#43e0ff 55%,#0a7f96);color:#042330;
   font-style:normal;font-size:.6rem;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
 .blmc.empty .blmcn{background:var(--line);color:var(--sub)}
 /* 狭い画面はカード1枚が105px前後しか無い。タイプアイコンを落として名前を優先する(「ベロ…」と切れないように) */

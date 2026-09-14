@@ -263,17 +263,21 @@ document.getElementById('app').innerHTML = `
 <div class="multi" id="blog" style="display:none">
   <h3 class="blttl">対戦記録</h3>
   <div class="enote expl">GBLの環境はレート帯で変わります。戦った相手をここに記録すると、<b>あなたの土俵の採用率</b>と<b>刺さるポケモン</b>が分かります。記録はこの端末の中だけに保存されます(リーグごとに別集計)。</div>
-  <div class="blentry">
-    <!-- じぶんのパーティ(2026-09-14テスター#8・タダシさん指示)。パーティ診断と同じ3枠(PT)を共有する。
-         ふだんは1行にまとめ、「変更」で3枠を開く(あいての3枠と合わせて6枠が並ぶと入力画面が長くなりすぎるため) -->
+  <!-- じぶんのパーティ(2026-09-14テスター#8・タダシさん指示)。パーティ診断と同じ3枠(PT)を共有する。
+       ふだんは3枚のカードにまとめ、「変更」で3枠を開く。「最近」も押したときだけ出す(出しっぱなしだと文字が多い)。
+       じぶん(水色)とあいて(金)は別の枠に分ける(同日タダシさん指示) -->
+  <div class="blentry me">
     <div class="blmybox">
       <div class="blmyhd"><span class="lbl">じぶん</span><span class="blmynames"></span>
+        <button class="blmyrecent" aria-expanded="false" hidden title="記録から拾った、最近使ったほかのパーティを出します(押すと3匹まとめて入れ替わります)">最近のパーティ</button>
         <button class="blmyedit" aria-expanded="false" title="自分のパーティを入れ替えます(パーティ診断の3枠と同じ3匹です)">変更</button></div>
       <div class="blmycards"></div>
       <div class="pslots blmyslots" hidden></div>
-      <div class="blrecent"></div>
+      <div class="blrecent" hidden></div>
     </div>
-    <div class="blhd"><span class="lbl">あいてのパーティ</span><span class="blhint">1匹目＝初手。見えたぶんだけでOK</span></div>
+  </div>
+  <div class="blentry foe">
+    <div class="blhd"><span class="lbl">あいて</span><span class="blhint">1匹目＝初手。見えたぶんだけでOK</span></div>
     <div class="pslots blslots"></div>
     <div class="blpred"></div>
     <div class="blquick"></div>
@@ -6249,8 +6253,8 @@ function blAgg(use) {
 function buildBlogSlots() {
   const box = document.querySelector('#blog .blslots');
   if (!box) return;
-  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot fslot blslot" data-i="${i}">
-    <div class="phd"><span class="pnum">${i + 1}匹目${i === 0 ? '<small class="bllead">初手</small>' : ''}</span>
+  box.innerHTML = [0, 1, 2].map(i => `<div class="pslot fslot blslot${i === 0 ? ' lead' : ''}" data-i="${i}">
+    <div class="phd"><span class="pnum">${i + 1}匹目</span>${i === 0 ? '<small class="bllead">初手</small>' : ''}<span class="pfill"></span>
       <button class="pshadow" aria-label="シャドウ" title="シャドウとして記録する"><i class="shadowmark"></i></button>
       <button class="pclr" title="この枠を空にする">×</button></div>
     <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
@@ -6442,8 +6446,11 @@ function blRenderMine(recs) {
     seen.add(key); recent.push(m);
   }
   const rb = box.querySelector('.blrecent');
-  rb.innerHTML = recent.length ? '<span class="blqlbl">最近:</span>' + recent.map((m, i) =>
-    `<button class="blchip blptchip" data-i="${i}" title="このパーティに入れ替えます">${blMineNames(m)}</button>`).join('') : '';
+  rb.innerHTML = recent.map((m, i) =>
+    `<button class="blchip blptchip" data-i="${i}" title="このパーティに入れ替えます">${blMineNames(m)}</button>`).join('');
+  // 「最近のパーティ」は押したときだけ出す(2026-09-14タダシさん指示)。候補が無ければボタンごと隠す
+  const rbtn = box.querySelector('.blmyrecent');
+  if (rbtn) { rbtn.hidden = !recent.length; if (!recent.length) { rb.hidden = true; rbtn.setAttribute('aria-expanded', 'false'); } }
   rb.querySelectorAll('.blptchip').forEach(b => b.onclick = () => {
     const m = recent[+b.dataset.i];
     // 同じポケモンが入っている枠は個体値・わざの設定ごと残す(パーティ診断の枠と共有しているため)
@@ -6455,6 +6462,7 @@ function blRenderMine(recs) {
     });
     savePt(); [0, 1, 2].forEach(syncPartySlot);
     blSetMsg('自分のパーティを入れ替えました');
+    rb.hidden = true; if (rbtn) rbtn.setAttribute('aria-expanded', 'false');
     runBlog();
   });
 }
@@ -12989,6 +12997,12 @@ const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } }
     sl.hidden = !sl.hidden;
     myEdit.setAttribute('aria-expanded', !sl.hidden);
     myEdit.textContent = sl.hidden ? '変更' : '閉じる';
+  };
+  const myRecent = document.querySelector('#blog .blmyrecent');
+  if (myRecent) myRecent.onclick = () => {
+    const rb = document.querySelector('#blog .blrecent');
+    rb.hidden = !rb.hidden;
+    myRecent.setAttribute('aria-expanded', !rb.hidden);
   };
   document.querySelectorAll('#blog .blres button').forEach(b => b.onclick = () => {
     BLE.win = BLE.win === b.dataset.v ? null : b.dataset.v;
