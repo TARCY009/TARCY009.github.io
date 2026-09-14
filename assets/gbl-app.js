@@ -261,7 +261,7 @@ document.getElementById('app').innerHTML = `
 <!-- 対戦記録: 自分が戦った相手を記録して「自分の土俵の環境」を分析する(2026-08-27タダシさん指示)。
      ツールの環境リストは全体像で、レート帯によって採用率はけっこう違う。記録はこの端末の中だけに保存される -->
 <div class="multi" id="blog" style="display:none">
-  <h3>📒 対戦記録</h3>
+  <h3 class="blttl">対戦記録</h3>
   <div class="enote expl">GBLの環境はレート帯で変わります。戦った相手をここに記録すると、<b>あなたの土俵の採用率</b>と<b>刺さるポケモン</b>が分かります。記録はこの端末の中だけに保存されます(リーグごとに別集計)。</div>
   <div class="blentry">
     <!-- じぶんのパーティ(2026-09-14テスター#8・タダシさん指示)。パーティ診断と同じ3枠(PT)を共有する。
@@ -269,6 +269,7 @@ document.getElementById('app').innerHTML = `
     <div class="blmybox">
       <div class="blmyhd"><span class="lbl">じぶん</span><span class="blmynames"></span>
         <button class="blmyedit" aria-expanded="false" title="自分のパーティを入れ替えます(パーティ診断の3枠と同じ3匹です)">変更</button></div>
+      <div class="blmycards"></div>
       <div class="pslots blmyslots" hidden></div>
       <div class="blrecent"></div>
     </div>
@@ -277,19 +278,18 @@ document.getElementById('app').innerHTML = `
     <div class="blpred"></div>
     <div class="blquick"></div>
     <div class="blctl">
-      <span class="lbl">勝敗</span>
       <div class="opts blres">
         <button data-v="w" aria-pressed="false" title="この対戦に勝ちました(もう一度押すと取り消し)">勝ち</button><button data-v="l" aria-pressed="false" title="この対戦に負けました(もう一度押すと取り消し)">負け</button>
       </div>
-      <input type="text" class="blrate" inputmode="numeric" placeholder="レート" title="対戦後のレートが分かるときだけ入れてください(任意・5戦セットの区切りで入れる形でOK)。入れた記録だけが📈レートの折れ線グラフの点になります">
-      <button class="bladd" title="この対戦を記録します。自分のパーティ(パーティ診断の3枠)も一緒に控えます">＋ 記録する</button>
+      <label class="blratew" title="対戦後のレートが分かるときだけ入れてください(任意・5戦セットの区切りで入れる形でOK)。入れた記録だけがレートの折れ線グラフの点になります"><em>レート</em><input type="text" class="blrate" inputmode="numeric" placeholder="ー"></label>
+      <button class="bladd" title="この対戦を記録します。自分のパーティも一緒に控えます">＋ 記録する</button>
     </div>
     <div class="blmsg"></div>
   </div>
   <div class="blsum"></div>
   <div class="blviews">
     <div class="opts blvtabs">
-      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="party" aria-pressed="false" title="自分が使ったパーティごとの戦績(戦った数・勝率)です">🧩 パーティ</button><button data-v="lead" aria-pressed="false" title="あいての初手ごとの勝率と、その初手の裏によくいるポケモン。自分の初手ごとの勝率も見ます">🎬 初手</button><button data-v="type" aria-pressed="false" title="記録した相手のタイプを自動集計して、タイプごとに弱点をどれくらい突けるか・どれくらい突かれるかをグラフで見ます">⚔️ 相性</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
+      <button data-v="rate" data-c="cyan" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">採用率</button><button data-v="hit" data-c="gold" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">刺さるポケモン</button><button data-v="party" data-c="green" aria-pressed="false" title="自分が使ったパーティごとの戦績(戦った数・勝率)です">パーティ</button><button data-v="lead" data-c="violet" aria-pressed="false" title="あいての初手ごとの勝率と、その初手の裏によくいるポケモン。自分の初手ごとの勝率も見ます">初手</button><button data-v="type" data-c="red" aria-pressed="false" title="記録した相手のタイプを自動集計して、タイプごとに弱点をどれくらい突けるか・どれくらい突かれるかをグラフで見ます">相性</button><button data-v="graph" data-c="blue" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">レート</button><button data-v="hist" data-c="gray" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">履歴</button>
     </div>
     <div class="opts blperiod">
       <button data-v="all" aria-pressed="true" title="このリーグの記録を全部使って集計します">全部</button><button data-v="50" aria-pressed="false" title="新しいほうから50戦だけで集計します(環境の入れ替わりを追いたいとき)">直近50戦</button><button data-v="20" aria-pressed="false" title="新しいほうから20戦だけで集計します">直近20戦</button>
@@ -6373,9 +6373,9 @@ function runBlog() {
   blRenderMine(recs);
   // よく出る相手のワンタップ入力(このリーグの全記録から)
   const qbox = document.querySelector('#blog .blquick');
-  const freq = blAgg(recs).rows.slice(0, 12);
-  qbox.innerHTML = freq.length ? '<span class="blqlbl">よく出る:</span>' + freq.map((e, i) =>
-    `<button class="blchip" data-i="${i}" title="タップすると空いている枠に入ります">${shMark(blName(e))}</button>`).join('') : '';
+  const freq = blAgg(recs).rows.slice(0, 8);   // 8個まで(多いと同じ色の札が並ぶだけ・2026-09-14)
+  qbox.innerHTML = freq.length ? '<span class="blqlbl">よく出る</span>' + freq.map((e, i) =>
+    `<button class="blchip${i < 3 ? ' top' : ''}" data-i="${i}" title="採用率${i + 1}位。タップすると空いている枠に入ります">${shMark(blName(e))}</button>`).join('') : '';
   qbox.querySelectorAll('.blchip').forEach(b => b.onclick = () => {
     const e = freq[+b.dataset.i];
     const slot = BLE.foes.findIndex(x => !x);
@@ -6387,10 +6387,19 @@ function runBlog() {
   const use = blUse(recs);
   const w = use.filter(r => r.win === 'w').length, l = use.filter(r => r.win === 'l').length;
   const sumEl = document.querySelector('#blog .blsum');
+  // まとめは「数字の帯」(戦数・勝率・最新レート)。文章で並べない(2026-09-14タダシさん指示)
+  const rated = use.filter(r => r.rate != null);
+  const lastR = rated.length ? rated[rated.length - 1].rate : null;
+  const prevR = rated.length > 1 ? rated[rated.length - 2].rate : null;
+  const dlt = lastR != null && prevR != null ? lastR - prevR : null;
+  const wr = w + l ? Math.round(w / (w + l) * 100) : null;
   sumEl.innerHTML = recs.length
-    ? `<b>${BL_LGN[cap] || 'このリーグ'}</b>の記録: <b>${use.length}戦</b>${BLV.period !== 'all' ? '<small>(直近だけで集計中)</small>' : ''}` +
-      (w + l ? ` ・ 勝ち${w}/負け${l}(勝率<b>${Math.round(w / (w + l) * 100)}%</b>)` : '') +
-      (recs.length >= 5 ? `<button class="blusecup" title="記録から作った採用率順のリスト(マイ環境)を相手にして、自分のパーティの穴をチェックします">📒 マイ環境でパーティ診断</button>` : '')
+    ? `<div class="blstats">
+        <div class="blst"><b>${use.length}</b><small>${BL_LGN[cap] || 'このリーグ'}${BLV.period !== 'all' ? '・直近' : ''}の記録</small></div>
+        <div class="blst ${wr == null ? '' : wr >= 50 ? 'ok' : 'bad'}"><b>${wr == null ? 'ー' : wr + '%'}</b><small>勝率 ${w}勝${l}敗</small></div>
+        <div class="blst rate"><b>${lastR == null ? 'ー' : lastR}</b><small>レート${dlt == null ? '' : ` <i class="${dlt >= 0 ? 'up' : 'dn'}">${dlt >= 0 ? '▲' : '▼'}${Math.abs(dlt)}</i>`}</small></div>
+      </div>` +
+      (recs.length >= 5 ? `<button class="blusecup" title="記録から作った採用率順のリスト(マイ環境)を相手にして、自分のパーティの穴をチェックします">マイ環境でパーティ診断</button>` : '')
     : `<b>${BL_LGN[cap] || 'このリーグ'}</b>の記録はまだありません。上の枠に戦った相手を入れて「＋ 記録する」を押してください`;
   const useBtn = sumEl.querySelector('.blusecup');
   if (useBtn) useBtn.onclick = blToParty;
@@ -6421,10 +6430,13 @@ function blRenderMine(recs) {
   const box = document.querySelector('#blog .blmybox');
   if (!box) return;
   const cur = blPtMine(), curKey = blMineKey(cur);
-  box.querySelector('.blmynames').innerHTML = curKey ? blMineNames(cur)
-    : '<small>未設定(入れておくとパーティ別の戦績が出ます)</small>';
+  box.querySelector('.blmynames').innerHTML = curKey ? '' : '<small>未設定(入れておくとパーティ別の戦績が出ます)</small>';
+  // 3匹はタイプアイコン付きの小さなカードで(2026-09-14タダシさん指示「文字が多い」)。空きは点線の枠
+  box.querySelector('.blmycards').innerHTML = cur.map((f, i) => f
+    ? `<span class="blmc"><i class="blmcn">${i + 1}</i>${typeIcons(D.pokemon[f.k], 15)}<span>${shMark(blName(f))}</span></span>`
+    : `<span class="blmc empty"><i class="blmcn">${i + 1}</i><span>ー</span></span>`).join('');
   const seen = new Set([curKey]), recent = [];
-  for (let j = recs.length - 1; j >= 0 && recent.length < 4; j--) {
+  for (let j = recs.length - 1; j >= 0 && recent.length < 2; j--) {
     const m = recs[j].mine, key = blMineKey(m);
     if (!key || seen.has(key) || !m.every(f => !f || D.pokemon[f.k])) continue;
     seen.add(key); recent.push(m);
@@ -6469,7 +6481,7 @@ function blPartyHtml(use) {
   const curKey = blMineKey(blPtMine());
   const rows = [...map.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last - a[1].last).map(([key, e], i) =>
     `<div class="bltr blptr">
-      <span class="blrank">${i + 1}</span>
+      <span class="blrank${i < 3 ? ' r' + (i + 1) : ''}">${i + 1}</span>
       <span class="blnm blptnm">${blMineNames(e.m)}${key === curKey ? '<b class="blnow">いま</b>' : ''}</span>
       <span class="blcell" title="このパーティで戦った数です">${e.n}<small>戦</small></span>
       ${blWrCell(e.w, e.l, 'このパーティでの勝率です(勝敗を記録したぶんだけ)')}
@@ -6508,9 +6520,9 @@ function blLeadHtml(use) {
     const back = [...e.back.values()].sort((a, b) => b.n - a.n).slice(0, 3);
     return `<div class="blldr">
       <div class="blldtop">
-        <span class="blrank">${i + 1}</span>
+        <span class="blrank${i < 3 ? ' r' + (i + 1) : ''}">${i + 1}</span>
         <span class="blnm">${shMark(blName(e.f))}${typeIcons(D.pokemon[e.f.k], 15)}</span>
-        <span class="blcell" title="この期間の${use.length}戦のうち、初手で出てきた回数です">${Math.round(e.n / use.length * 100)}%<small>${e.n}回</small></span>
+        <span class="blcell" title="この期間の${use.length}戦のうち、初手で出てきた回数です">${Math.round(e.n / use.length * 100)}%<small>${e.n}回</small><i class="blmini" style="--w:${Math.round(e.n / use.length * 100)}%"></i></span>
         ${blWrCell(e.w, e.l, 'このポケモンが初手だった対戦での、あなたの勝率です')}
       </div>
       ${back.length ? `<div class="blback"><span class="blbl">裏</span>${back.map(x =>
@@ -6518,7 +6530,7 @@ function blLeadHtml(use) {
     </div>`;
   }).join('');
   const meRows = [...me.values()].sort((a, b) => b.n - a.n).map((e, i) => `<div class="bltr blmer">
-      <span class="blrank">${i + 1}</span>
+      <span class="blrank${i < 3 ? ' r' + (i + 1) : ''}">${i + 1}</span>
       <span class="blnm">${shMark(blName(e.f))}${typeIcons(D.pokemon[e.f.k], 15)}</span>
       <span class="blcell" title="このポケモンを初手にして戦った数です">${e.n}<small>戦</small></span>
       ${blWrCell(e.w, e.l, 'このポケモンを初手にした対戦での勝率です')}
@@ -6630,9 +6642,9 @@ function blRateHtml(use) {
     const wl = e.w + e.l;
     const wr = wl ? Math.round(e.w / wl * 100) : null;
     return `<div class="bltr">
-      <span class="blrank">${i + 1}</span>
+      <span class="blrank${i < 3 ? ' r' + (i + 1) : ''}">${i + 1}</span>
       <span class="blnm">${shMark(blName(e))}${typeIcons(D.pokemon[e.k], 15)}</span>
-      <span class="blcell" title="この期間の${a.battles}戦のうち、${e.cnt}回パーティに入っていました">${pct}%<small>${e.cnt}回</small></span>
+      <span class="blcell" title="この期間の${a.battles}戦のうち、${e.cnt}回パーティに入っていました">${pct}%<small>${e.cnt}回</small><i class="blmini" style="--w:${pct}%"></i></span>
       <span class="blcell dim" title="初手(1匹目)で出てきた回数です">${e.lead || 'ー'}</span>
       <span class="blcell ${wr == null ? 'dim' : wr >= 50 ? 'ok' : 'bad'}" title="このポケモンがいた対戦での、あなたの勝率です(勝敗を記録したぶんだけ)。低いほど苦手な相手です">${wr == null ? 'ー' : wr + '%'}</span>
       <button class="blcnt" data-k="${e.k}" data-s="${e.s ? 1 : 0}" title="このポケモンに勝てるポケモンを対策さがしで調べます">対策</button>

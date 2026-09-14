@@ -1551,27 +1551,77 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 
 /* ---- 対戦記録(mode 'blog')。自分の土俵の環境を記録・分析する(2026-08-27) ---- */
 #blog h3{margin:2px 0 8px}
-.blentry{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+/* 2026-09-14 作り替え(タダシさん指示「文字が多い・色分けが無い・ボタンが平坦」): 主役の色は金(記録帳のアイコンと同じ)。
+   勝ち=緑・負け=赤だけを状態の色に使う。光彩は付けない(全ツール共通ルール) */
+.blttl{margin:2px 0 8px}
+.blentry{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 10px 10px;margin-bottom:10px;overflow:hidden}
+.blentry::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,#e0b64a,#ffd54a 50%,#e0b64a);opacity:.85}
 .blhd{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
-.blhd .blhint{color:var(--sub);font-size:.7rem}
+.blhd .lbl,.blmyhd .lbl{font-size:.82rem;font-weight:800;color:var(--ink)}
+.blhd .blhint{color:var(--sub);font-size:.66rem}
 .blquick{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:8px}
-.blquick .blqlbl{color:var(--sub);font-size:.7rem;flex:0 0 auto}
+.blquick .blqlbl,.blrecent .blqlbl{color:var(--sub);font-size:.66rem;flex:0 0 auto;font-weight:700}
 .blchip{background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--ink);
-  font-size:.72rem;padding:4px 9px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+  font-size:.72rem;padding:4px 10px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.blchip.top{color:var(--goldc);border-color:rgba(232,197,106,.5);font-weight:700}
 .blchip:hover{transform:translateY(-1px)}
-.blctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
-.bladd{margin-left:auto;background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);
-  border:none;border-radius:10px;color:#042330;font-weight:700;font-size:.86rem;padding:9px 16px;cursor:pointer;
-  box-shadow:0 5px 16px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.blctl{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-top:12px}
+/* 勝ち／負け＝排他の2択なので2pxでくっつける。点灯は緑／赤の面、未選択も文字色で役割を示す */
+.blres{gap:2px;flex:0 0 auto}
+.blres button{flex:0 0 auto;min-width:62px;padding:8px 12px;font-size:.84rem;font-weight:800;background:var(--tab);border:1px solid var(--line);
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);border-radius:6px}
+.blres button:first-child{border-radius:11px 6px 6px 11px}
+.blres button:last-child{border-radius:6px 11px 11px 6px}
+.blres button[data-v="w"]{color:var(--win)}
+.blres button[data-v="l"]{color:var(--lose)}
+.blres button[data-v="w"][aria-pressed="true"]{background:linear-gradient(160deg,#a8f7d0 0%,#3ddc84 45%,#1e9c5c 100%);border-color:#a8f7d0;color:#042c1a;transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.blres button[data-v="l"][aria-pressed="true"]{background:linear-gradient(160deg,#ffc2cc 0%,#ff6b81 45%,#c93a52 100%);border-color:#ffc2cc;color:#3a0b14;transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+/* レート: 枠の中に札を入れた1つの入力(数字は16px=iOSが勝手に拡大しない) */
+.blratew{display:inline-flex;align-items:center;gap:6px;padding:0 6px 0 10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;flex:0 0 auto}
+.blratew em{font-style:normal;color:var(--sub);font-size:.66rem;font-weight:700;white-space:nowrap}
+.blratew input{width:64px;font-size:16px;background:none;border:none;color:var(--ink);outline:none;padding:6px 0;font-variant-numeric:tabular-nums;font-weight:700}
+.blratew:focus-within{border-color:var(--gl)}
+.bladd{margin-left:auto;background:linear-gradient(160deg,#ffe08a 0%,#e0b64a 45%,#a8760a 100%);
+  border:1px solid #ffe08a;border-radius:11px;color:#2b2305;font-weight:900;font-size:.9rem;padding:9px 18px;cursor:pointer;
+  box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
 .bladd:hover{transform:translateY(-1px)}
+/* まとめの数字の帯 */
+.blstats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0 8px}
+.blst{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 6px 7px;text-align:center;line-height:1.2}
+.blst b{display:block;font-size:1.35rem;font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink)}
+.blst small{display:block;margin-top:3px;color:var(--sub);font-size:.62rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blst.ok b{color:var(--win)}
+.blst.bad b{color:var(--lose)}
+.blst.rate b{color:var(--gold)}
+.blst small i{font-style:normal;font-weight:800}
+.blst small i.up{color:var(--win)}
+.blst small i.dn{color:var(--lose)}
+/* 順位の色(1〜3位)と、割合の小さなバー */
+.blrank.r1{color:#ffd54a;font-weight:900}
+.blrank.r2{color:#d6dcea;font-weight:900}
+.blrank.r3{color:#d99a5b;font-weight:900}
+.blcell{position:relative}
+.blmini{display:block;height:3px;margin:3px auto 0;width:78%;border-radius:2px;background:var(--line);overflow:hidden}
+.blmini::after{content:"";display:block;height:100%;width:var(--w,0%);background:linear-gradient(90deg,#e0b64a,#ffd54a)}
 /* じぶんのパーティ(2026-09-14): ふだんは1行・「変更」で3枠を開く */
 .blmybox{margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .blmyhd{display:flex;align-items:center;gap:8px}
 .blmynames{flex:1;min-width:0;font-size:.82rem;font-weight:700;line-height:1.5}
-.blmynames small{color:var(--sub);font-weight:400;font-size:.7rem}
-.blmyedit{flex:0 0 auto;background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--cy);
-  font-size:.72rem;font-weight:700;padding:4px 12px;cursor:pointer}
+.blmynames small{color:var(--sub);font-weight:400;font-size:.66rem}
+.blmyedit{flex:0 0 auto;background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--goldc);
+  font-size:.72rem;font-weight:800;padding:5px 13px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .blmyedit[aria-expanded="true"]{color:var(--ink)}
+/* じぶんの3匹＝番号＋タイプアイコン＋名前の小さなカード */
+.blmycards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.blmc{display:flex;align-items:center;gap:5px;min-width:0;padding:6px 7px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;font-size:.76rem;font-weight:700}
+.blmc>span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.blmc.empty{border-style:dashed;color:var(--sub);font-weight:400}
+.blmcn{flex:0 0 auto;width:16px;height:16px;border-radius:50%;background:linear-gradient(160deg,#ffe08a,#e0b64a 55%,#a8760a);color:#2b2305;
+  font-style:normal;font-size:.6rem;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
+.blmc.empty .blmcn{background:var(--line);color:var(--sub)}
+/* 狭い画面はカード1枚が105px前後しか無い。タイプアイコンを落として名前を優先する(「ベロ…」と切れないように) */
+@media (max-width:430px){.blmc{font-size:.7rem;padding:6px 5px;gap:4px}.blmc .tpair{display:none}
+  .blmc>span{white-space:normal;line-height:1.2;word-break:break-all}}   /* 「チルタ…」と切るより2行に折る */
 .blmyslots{margin-top:8px}
 .blmyslots[hidden]{display:none}   /* .pslots の表示指定が hidden に勝つため明示する */
 .blrecent{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:8px}
@@ -1610,16 +1660,39 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blmsg{color:var(--cy);font-size:.76rem;margin-top:5px;min-height:1em}
 .blsum{font-size:.82rem;margin:10px 0;line-height:1.9}
 .blsum small{color:var(--sub);margin-left:4px}
-.blusecup{display:block;margin-top:6px;background:var(--tab);border:1px solid var(--goldc);border-radius:10px;
-  color:var(--goldc);font-weight:700;font-size:.78rem;padding:8px 13px;cursor:pointer;
+.blusecup{display:block;margin:0 0 12px;background:var(--tab);border:1px solid rgba(232,197,106,.55);border-radius:10px;
+  color:var(--goldc);font-weight:800;font-size:.78rem;padding:8px 13px;cursor:pointer;
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .blusecup:hover{transform:translateY(-1px)}
 .blviews{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .blviews .blperiod{margin-left:auto}
 .blviews .blperiod button{font-size:.7rem}
 /* 表示タブが7つになったので、文字は折らずにボタンごと次の行へ送る(2026-09-14) */
-#blog .blvtabs,#blog .blperiod{flex-wrap:wrap}
+#blog .blvtabs,#blog .blperiod{flex-wrap:wrap;gap:5px}
 #blog .blvtabs button,#blog .blperiod button{white-space:nowrap;flex:0 1 auto}
+/* 表示タブ＝サイト共通の立体タブ＋役割ごとの色(未選択は文字色・点灯はその色のグラデーション) */
+#blog .blvtabs button{padding:8px 12px;font-size:.8rem;font-weight:800;background:var(--tab);border:1px solid var(--line);border-radius:11px;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:transform .12s ease,color .12s ease}
+#blog .blvtabs button:hover{transform:translateY(-1px)}
+#blog .blvtabs button[data-c="cyan"]{color:var(--cy)}
+#blog .blvtabs button[data-c="gold"]{color:var(--goldc)}
+#blog .blvtabs button[data-c="green"]{color:var(--win)}
+#blog .blvtabs button[data-c="violet"]{color:var(--mcS)}
+#blog .blvtabs button[data-c="red"]{color:var(--lose)}
+#blog .blvtabs button[data-c="blue"]{color:#8fb3ff}
+#blog .blvtabs button[data-c="gray"]{color:var(--sub)}
+:root.light #blog .blvtabs button[data-c="blue"]{color:#2f5fd0}
+#blog .blvtabs button[aria-pressed="true"]{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.65);border-color:transparent}
+#blog .blvtabs button[data-c="cyan"][aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330}
+#blog .blvtabs button[data-c="gold"][aria-pressed="true"]{background:linear-gradient(160deg,#ffe08a 0%,#e0b64a 45%,#a8760a 100%);color:#2b2305}
+#blog .blvtabs button[data-c="green"][aria-pressed="true"]{background:linear-gradient(160deg,#a8f7d0 0%,#3ddc84 45%,#1e9c5c 100%);color:#042c1a}
+#blog .blvtabs button[data-c="violet"][aria-pressed="true"]{background:linear-gradient(160deg,#d9b8ff 0%,#b06cff 45%,#7c3aed 100%);color:#fff}
+#blog .blvtabs button[data-c="red"][aria-pressed="true"]{background:linear-gradient(160deg,#ffc2cc 0%,#ff6b81 45%,#c93a52 100%);color:#3a0b14}
+#blog .blvtabs button[data-c="blue"][aria-pressed="true"]{background:linear-gradient(160deg,#b4ceff 0%,#4d8dff 45%,#2a5bd0 100%);color:#fff}
+#blog .blvtabs button[data-c="gray"][aria-pressed="true"]{background:linear-gradient(160deg,#e6ebfa 0%,#aab6dd 45%,#6f7ea8 100%);color:#10172b}
+#blog .blperiod button{padding:6px 10px;font-size:.7rem;font-weight:700;background:var(--tab);border:1px solid var(--line);border-radius:9px;color:var(--sub);
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+#blog .blperiod button[aria-pressed="true"]{background:linear-gradient(160deg,#ffe08a 0%,#e0b64a 45%,#a8760a 100%);border-color:transparent;color:#2b2305;box-shadow:inset 0 1px 0 rgba(255,255,255,.65)}
 /* 採用率の表 */
 .bltbl{border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .blth,.bltr{display:grid;grid-template-columns:30px 1fr 74px 40px 48px 52px;align-items:center;gap:4px;padding:6px 8px}
@@ -1672,9 +1745,6 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 }
 .blslot .bllead{margin-left:5px;color:var(--sub);font-size:.62rem;font-weight:400}
 /* レート入力とグラフ・全削除(2026-08-27) */
-.blrate{width:110px;font-size:16px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
-  color:var(--ink);padding:8px 10px;outline:none}
-.blrate:focus{border-color:var(--gl)}
 .blgraph{border:1px solid var(--line);border-radius:12px;padding:10px 8px 4px}
 .blghead{font-size:.82rem;margin:0 4px 6px}
 .blghead b{font-size:1.05rem;color:var(--cy)}
@@ -1704,7 +1774,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   font-size:.8rem;padding:9px 16px;cursor:pointer}
 .blcno{background:var(--tab);border:1px solid var(--line2);border-radius:10px;color:var(--ink);
   font-size:.8rem;padding:9px 16px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh)}
-@media (max-width:560px){.blrate{width:96px}}
+@media (max-width:560px){.blratew input{width:52px}}
 /* タイプ相性の4グラフ(対戦記録・2026-08-27) */
 .bltysec{font-size:.84rem;font-weight:700;margin:12px 2px 8px}
 .bltysec small{color:var(--sub);font-weight:400;font-size:.7rem;margin-left:6px}
