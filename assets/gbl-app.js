@@ -264,6 +264,14 @@ document.getElementById('app').innerHTML = `
   <h3>📒 対戦記録</h3>
   <div class="enote expl">GBLの環境はレート帯で変わります。戦った相手をここに記録すると、<b>あなたの土俵の採用率</b>と<b>刺さるポケモン</b>が分かります。記録はこの端末の中だけに保存されます(リーグごとに別集計)。</div>
   <div class="blentry">
+    <!-- じぶんのパーティ(2026-09-14テスター#8・タダシさん指示)。パーティ診断と同じ3枠(PT)を共有する。
+         ふだんは1行にまとめ、「変更」で3枠を開く(あいての3枠と合わせて6枠が並ぶと入力画面が長くなりすぎるため) -->
+    <div class="blmybox">
+      <div class="blmyhd"><span class="lbl">じぶん</span><span class="blmynames"></span>
+        <button class="blmyedit" aria-expanded="false" title="自分のパーティを入れ替えます(パーティ診断の3枠と同じ3匹です)">変更</button></div>
+      <div class="pslots blmyslots" hidden></div>
+      <div class="blrecent"></div>
+    </div>
     <div class="blhd"><span class="lbl">あいてのパーティ</span><span class="blhint">1匹目＝初手。見えたぶんだけでOK</span></div>
     <div class="pslots blslots"></div>
     <div class="blquick"></div>
@@ -275,13 +283,12 @@ document.getElementById('app').innerHTML = `
       <input type="text" class="blrate" inputmode="numeric" placeholder="レート" title="対戦後のレートが分かるときだけ入れてください(任意・5戦セットの区切りで入れる形でOK)。入れた記録だけが📈レートの折れ線グラフの点になります">
       <button class="bladd" title="この対戦を記録します。自分のパーティ(パーティ診断の3枠)も一緒に控えます">＋ 記録する</button>
     </div>
-    <div class="blmine"></div>
     <div class="blmsg"></div>
   </div>
   <div class="blsum"></div>
   <div class="blviews">
     <div class="opts blvtabs">
-      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="type" aria-pressed="false" title="記録した相手のタイプを自動集計して、タイプごとに弱点をどれくらい突けるか・どれくらい突かれるかをグラフで見ます">⚔️ 相性</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
+      <button data-v="rate" aria-pressed="true" title="記録から集計した、あなたの土俵の採用率ランキングです">📊 採用率</button><button data-v="hit" aria-pressed="false" title="あなたの環境(記録の上位)に対して、どのポケモンがいちばん勝てるかをシミュレートします">🎯 刺さるポケモン</button><button data-v="party" aria-pressed="false" title="自分が使ったパーティごとの戦績(戦った数・勝率)です">🧩 パーティ</button><button data-v="lead" aria-pressed="false" title="あいての初手ごとの勝率と、その初手の裏によくいるポケモン。自分の初手ごとの勝率も見ます">🎬 初手</button><button data-v="type" aria-pressed="false" title="記録した相手のタイプを自動集計して、タイプごとに弱点をどれくらい突けるか・どれくらい突かれるかをグラフで見ます">⚔️ 相性</button><button data-v="graph" aria-pressed="false" title="記録したレートの推移を折れ線グラフで見ます(レートを入れた記録だけが点になります)">📈 レート</button><button data-v="hist" aria-pressed="false" title="記録した対戦の一覧です。まちがえた記録はここから消せます">📜 履歴</button>
     </div>
     <div class="opts blperiod">
       <button data-v="all" aria-pressed="true" title="このリーグの記録を全部使って集計します">全部</button><button data-v="50" aria-pressed="false" title="新しいほうから50戦だけで集計します(環境の入れ替わりを追いたいとき)">直近50戦</button><button data-v="20" aria-pressed="false" title="新しいほうから20戦だけで集計します">直近20戦</button>
@@ -1441,8 +1448,13 @@ ${PAGE_ROCKET ? '' : `
   <p>GBLの環境は<b>レート帯によって採用率がけっこう違います</b>。「対戦記録」のページで戦った相手を
   記録すると、ツールの環境リスト（全体像）ではなく<b>あなたの土俵の環境</b>で分析できます。</p>
   <ul>
-    <li><b>記録の中身</b> … あいての3匹（1匹目＝初手）・勝敗・自分のパーティ（パーティ診断の3枠を自動で控えます）。
+    <li><b>記録の中身</b> … あいての3匹（1匹目＝初手）・勝敗・自分のパーティ。
       見えたぶんだけの記録でかまいません。記録は<b>この端末の中だけ</b>に保存され、リーグごとに別集計です</li>
+    <li><b>じぶんのパーティ</b> … 入力欄のいちばん上の「変更」で入れ替えます（パーティ診断の3枠と同じ3匹です）。
+      「最近:」のボタンは記録から自動で拾ったパーティで、押すと3匹まとめて入れ替わります</li>
+    <li><b>パーティ(🧩タブ)</b> … 自分が使ったパーティごとの戦った数と勝率です。並び（初手）が違えば別のパーティとして数えます</li>
+    <li><b>初手(🎬タブ)</b> … あいての初手ごとの勝率と、その初手の<b>裏（2・3匹目）によくいるポケモン</b>を多い順に3匹。
+      下には自分の初手ごとの勝率も出ます</li>
     <li><b>採用率</b> … 記録した対戦のうち、そのポケモンがパーティに入っていた割合です。
       「勝率」はそのポケモンがいた対戦でのあなたの勝率で、<b>低いほど苦手な相手</b>です。「対策」を押すと対策さがしへ飛びます</li>
     <li><b>相性(⚔️タブ)</b> … 記録した相手を自動集計して、タイプごとの通りやすさをボタンで選んだ1つずつグラフに出します。
@@ -6301,12 +6313,8 @@ function blAddRecord() {
 }
 
 function runBlog() {
-  // 自分のパーティの控え(記録と一緒に保存される)
   const recs = blRecs();
-  const mineEl = document.querySelector('#blog .blmine');
-  const mine = PT.filter(Boolean).map(p => shMark((p.shadow ? 'シャドウ' : '') + D.pokemon[p.key].n)).join('・');
-  mineEl.innerHTML = mine ? `自分のパーティも一緒に控えます: <b>${mine}</b> <small>(パーティ診断の3枠)</small>`
-    : '<small>パーティ診断の3枠に自分のパーティを入れておくと、一緒に記録されます</small>';
+  blRenderMine(recs);
   // よく出る相手のワンタップ入力(このリーグの全記録から)
   const qbox = document.querySelector('#blog .blquick');
   const freq = blAgg(recs).rows.slice(0, 12);
@@ -6338,11 +6346,130 @@ function runBlog() {
   if (BLV.view === 'rate') { body.innerHTML = blRateHtml(use); blBindRate(body); }
   else if (BLV.view === 'hist') { body.innerHTML = blHistHtml(recs); blBindHist(body); }
   else if (BLV.view === 'graph') body.innerHTML = blGraphHtml(use);
+  else if (BLV.view === 'party') body.innerHTML = blPartyHtml(use);
+  else if (BLV.view === 'lead') body.innerHTML = blLeadHtml(use);
   else if (BLV.view === 'type') {
     body.innerHTML = blTypeHtml(use);
     body.querySelectorAll('.bltysel button').forEach(b => b.onclick = () => { BLV.tsel = b.dataset.t; runBlog(); });
   }
   else blHitStart(use, body);
+}
+
+// ---- じぶんのパーティ(2026-09-14テスター#8・タダシさん指示) ----
+// 記録の mine と同じ形({k,s}の3枠)の見分け用の鍵。並び(初手)も含めて同じなら同じパーティ
+const blMineKey = arr => arr && arr.some(Boolean) ? arr.map(f => f ? f.k + (f.s ? '|s' : '') : '-').join(',') : null;
+const blPtMine = () => PT.map(p => p ? { k: p.key, s: !!p.shadow } : null);
+const blMineNames = arr => arr.filter(Boolean).map(f => shMark(blName(f))).join('・');
+// 1行のまとめ＋「最近のパーティ」(記録から自動で拾う・保存の操作は要らない)
+function blRenderMine(recs) {
+  const box = document.querySelector('#blog .blmybox');
+  if (!box) return;
+  const cur = blPtMine(), curKey = blMineKey(cur);
+  box.querySelector('.blmynames').innerHTML = curKey ? blMineNames(cur)
+    : '<small>未設定(入れておくとパーティ別の戦績が出ます)</small>';
+  const seen = new Set([curKey]), recent = [];
+  for (let j = recs.length - 1; j >= 0 && recent.length < 4; j--) {
+    const m = recs[j].mine, key = blMineKey(m);
+    if (!key || seen.has(key) || !m.every(f => !f || D.pokemon[f.k])) continue;
+    seen.add(key); recent.push(m);
+  }
+  const rb = box.querySelector('.blrecent');
+  rb.innerHTML = recent.length ? '<span class="blqlbl">最近:</span>' + recent.map((m, i) =>
+    `<button class="blchip blptchip" data-i="${i}" title="このパーティに入れ替えます">${blMineNames(m)}</button>`).join('') : '';
+  rb.querySelectorAll('.blptchip').forEach(b => b.onclick = () => {
+    const m = recent[+b.dataset.i];
+    // 同じポケモンが入っている枠は個体値・わざの設定ごと残す(パーティ診断の枠と共有しているため)
+    const old = PT.slice();
+    [0, 1, 2].forEach(i => {
+      const f = m[i];
+      const keep = f && old.find(p => p && p.key === f.k && !!p.shadow === !!f.s);
+      PT[i] = !f ? null : keep ? keep : { key: f.k, ivMode: 'auto', shadow: !!f.s, maxLv: 51 };
+    });
+    savePt(); [0, 1, 2].forEach(syncPartySlot);
+    blSetMsg('自分のパーティを入れ替えました');
+    runBlog();
+  });
+}
+// 勝率の表示(勝敗を記録したぶんだけで出す)
+const blWr = (w, l) => w + l ? Math.round(w / (w + l) * 100) : null;
+const blWrCell = (w, l, tip) => {
+  const wr = blWr(w, l);
+  return `<span class="blcell ${wr == null ? 'dim' : wr >= 50 ? 'ok' : 'bad'}" title="${tip}">${wr == null ? 'ー' : wr + '%'}<small>${w}勝${l}敗</small></span>`;
+};
+// パーティ別の戦績。並び(初手)が違えば別のパーティとして数える
+function blPartyHtml(use) {
+  const map = new Map();
+  let none = 0;
+  for (const r of use) {
+    const key = blMineKey(r.mine);
+    if (!key) { none++; continue; }
+    let e = map.get(key);
+    if (!e) { e = { m: r.mine, n: 0, w: 0, l: 0, last: 0 }; map.set(key, e); }
+    e.n++; e.last = r.t;
+    if (r.win === 'w') e.w++; else if (r.win === 'l') e.l++;
+  }
+  const noneNote = none ? `<div class="mtnote">自分のパーティを入れずに記録した${none}戦は数えていません</div>` : '';
+  if (!map.size) return '<div class="mtnote">自分のパーティを入れて記録すると、パーティごとの戦績が出ます</div>' + noneNote;
+  const curKey = blMineKey(blPtMine());
+  const rows = [...map.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last - a[1].last).map(([key, e], i) =>
+    `<div class="bltr blptr">
+      <span class="blrank">${i + 1}</span>
+      <span class="blnm blptnm">${blMineNames(e.m)}${key === curKey ? '<b class="blnow">いま</b>' : ''}</span>
+      <span class="blcell" title="このパーティで戦った数です">${e.n}<small>戦</small></span>
+      ${blWrCell(e.w, e.l, 'このパーティでの勝率です(勝敗を記録したぶんだけ)')}
+    </div>`).join('');
+  return `<div class="bltbl"><div class="blth blptr"><span></span><span>パーティ(左が初手)</span><span>戦数</span><span>勝率</span></div>${rows}</div>${noneNote}`;
+}
+// 初手: あいての初手ごとの勝率と、その裏(2・3匹目)によくいるポケモン／自分の初手ごとの勝率
+function blLeadHtml(use) {
+  const foe = new Map(), me = new Map();
+  for (const r of use) {
+    const f0 = r.foes[0];
+    if (f0 && D.pokemon[f0.k]) {
+      const kk = f0.k + (f0.s ? '|s' : '');
+      let e = foe.get(kk);
+      if (!e) { e = { f: f0, n: 0, w: 0, l: 0, back: new Map() }; foe.set(kk, e); }
+      e.n++;
+      if (r.win === 'w') e.w++; else if (r.win === 'l') e.l++;
+      r.foes.slice(1).forEach(b => {
+        if (!b || !D.pokemon[b.k]) return;
+        const bk = b.k + (b.s ? '|s' : '');
+        const x = e.back.get(bk) || { f: b, n: 0 };
+        x.n++; e.back.set(bk, x);
+      });
+    }
+    const m0 = r.mine && r.mine[0];
+    if (m0 && D.pokemon[m0.k]) {
+      const kk = m0.k + (m0.s ? '|s' : '');
+      let e = me.get(kk);
+      if (!e) { e = { f: m0, n: 0, w: 0, l: 0 }; me.set(kk, e); }
+      e.n++;
+      if (r.win === 'w') e.w++; else if (r.win === 'l') e.l++;
+    }
+  }
+  if (!foe.size && !me.size) return '<div class="mtnote">この期間の記録がありません</div>';
+  const foeRows = [...foe.values()].sort((a, b) => b.n - a.n).slice(0, 12).map((e, i) => {
+    const back = [...e.back.values()].sort((a, b) => b.n - a.n).slice(0, 3);
+    return `<div class="blldr">
+      <div class="blldtop">
+        <span class="blrank">${i + 1}</span>
+        <span class="blnm">${shMark(blName(e.f))}${typeIcons(D.pokemon[e.f.k], 15)}</span>
+        <span class="blcell" title="この期間の${use.length}戦のうち、初手で出てきた回数です">${Math.round(e.n / use.length * 100)}%<small>${e.n}回</small></span>
+        ${blWrCell(e.w, e.l, 'このポケモンが初手だった対戦での、あなたの勝率です')}
+      </div>
+      ${back.length ? `<div class="blback"><span class="blbl">裏</span>${back.map(x =>
+        `<span class="blbk" title="この初手の裏(2・3匹目)に${x.n}回いました">${shMark(blName(x.f))}<b>${x.n}</b></span>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  const meRows = [...me.values()].sort((a, b) => b.n - a.n).map((e, i) => `<div class="bltr blmer">
+      <span class="blrank">${i + 1}</span>
+      <span class="blnm">${shMark(blName(e.f))}${typeIcons(D.pokemon[e.f.k], 15)}</span>
+      <span class="blcell" title="このポケモンを初手にして戦った数です">${e.n}<small>戦</small></span>
+      ${blWrCell(e.w, e.l, 'このポケモンを初手にした対戦での勝率です')}
+    </div>`).join('');
+  return `<div class="blsec">あいての初手<small class="expl">「裏」はその初手と一緒に出てきた2・3匹目。多い順に3匹</small></div>
+    <div class="bltbl">${foeRows}</div>
+    ${meRows ? `<div class="blsec">じぶんの初手</div><div class="bltbl"><div class="blth blmer"><span></span><span>ポケモン</span><span>戦数</span><span>勝率</span></div>${meRows}</div>` : ''}`;
 }
 
 // タイプ相性の自動集計(2026-08-27タダシさん指示)。記録した相手のタイプから、
@@ -12787,6 +12914,14 @@ const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } }
   // 対戦記録(mode 'blog'): 入力の3枠と勝敗・記録ボタン・表示タブ
   bootStep('対戦記録', () => {
   buildBlogSlots();
+  buildPartySlots(document.querySelector('#blog .blmyslots'));   // じぶんのパーティ(PTを共有・わざ欄なし)
+  const myEdit = document.querySelector('#blog .blmyedit');
+  if (myEdit) myEdit.onclick = () => {
+    const sl = document.querySelector('#blog .blmyslots');
+    sl.hidden = !sl.hidden;
+    myEdit.setAttribute('aria-expanded', !sl.hidden);
+    myEdit.textContent = sl.hidden ? '変更' : '閉じる';
+  };
   document.querySelectorAll('#blog .blres button').forEach(b => b.onclick = () => {
     BLE.win = BLE.win === b.dataset.v ? null : b.dataset.v;
     document.querySelectorAll('#blog .blres button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === BLE.win));

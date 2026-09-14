@@ -1564,8 +1564,37 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   border:none;border-radius:10px;color:#042330;font-weight:700;font-size:.86rem;padding:9px 16px;cursor:pointer;
   box-shadow:0 5px 16px rgba(8,180,201,.4),inset 0 1px 0 rgba(255,255,255,.6)}
 .bladd:hover{transform:translateY(-1px)}
-.blmine{color:var(--sub);font-size:.72rem;margin-top:8px;line-height:1.6}
-.blmine b{color:var(--ink);font-weight:600}
+/* じぶんのパーティ(2026-09-14): ふだんは1行・「変更」で3枠を開く */
+.blmybox{margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.blmyhd{display:flex;align-items:center;gap:8px}
+.blmynames{flex:1;min-width:0;font-size:.82rem;font-weight:700;line-height:1.5}
+.blmynames small{color:var(--sub);font-weight:400;font-size:.7rem}
+.blmyedit{flex:0 0 auto;background:var(--tab);border:1px solid var(--line2);border-radius:999px;color:var(--cy);
+  font-size:.72rem;font-weight:700;padding:4px 12px;cursor:pointer}
+.blmyedit[aria-expanded="true"]{color:var(--ink)}
+.blmyslots{margin-top:8px}
+.blmyslots[hidden]{display:none}   /* .pslots の表示指定が hidden に勝つため明示する */
+.blrecent{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:8px}
+.blrecent:empty{display:none}
+.blrecent .blqlbl{color:var(--sub);font-size:.7rem;flex:0 0 auto}
+.blptchip{font-size:.72rem}
+/* パーティ別の戦績・初手 */
+.blth.blptr,.bltr.blptr,.bltr.blmer{grid-template-columns:30px 1fr 50px 64px}
+/* ⚠ .blnm(1行に収めて切る)より後ろにあるとは限らないので、クラス2つで指定して必ず勝たせる */
+.blnm.blptnm{display:block;white-space:normal;overflow:visible;line-height:1.45}
+.blnm.blptnm .shadowmark{vertical-align:-2px}
+.blnow{margin-left:6px;padding:1px 6px;border-radius:999px;background:var(--cy);color:#042330;font-size:.6rem;font-weight:800;flex:0 0 auto}
+.blsec{margin:14px 2px 6px;font-size:.8rem;font-weight:800;color:var(--ink)}
+.blsec:first-child{margin-top:4px}
+.blsec small{margin-left:8px;color:var(--sub);font-weight:400;font-size:.66rem}
+.blldr{border-top:1px solid var(--line);padding:6px 8px}
+.blldr:first-child{border-top:none}
+.blldr:nth-child(even){background:rgba(77,141,255,.05)}
+.blldtop{display:grid;grid-template-columns:30px 1fr 56px 64px;align-items:center;gap:4px;font-size:.8rem}
+.blback{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:4px 0 2px 34px;font-size:.7rem}
+.blbl{color:var(--sub);font-size:.64rem}
+.blbk{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border:1px solid var(--line2);border-radius:999px;background:var(--bg2)}
+.blbk b{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
 .blmsg{color:var(--cy);font-size:.76rem;margin-top:5px;min-height:1em}
 .blsum{font-size:.82rem;margin:10px 0;line-height:1.9}
 .blsum small{color:var(--sub);margin-left:4px}
@@ -1576,6 +1605,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blviews{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .blviews .blperiod{margin-left:auto}
 .blviews .blperiod button{font-size:.7rem}
+/* 表示タブが7つになったので、文字は折らずにボタンごと次の行へ送る(2026-09-14) */
+#blog .blvtabs,#blog .blperiod{flex-wrap:wrap}
+#blog .blvtabs button,#blog .blperiod button{white-space:nowrap;flex:0 1 auto}
 /* 採用率の表 */
 .bltbl{border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .blth,.bltr{display:grid;grid-template-columns:30px 1fr 74px 40px 48px 52px;align-items:center;gap:4px;padding:6px 8px}
