@@ -1217,6 +1217,7 @@ sideEl.forEach((el, i) => {
     el.querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
     if (S[i].key) {
       el.querySelector('input').value = (S[i].shadow ? 'シャドウ' : '') + D.pokemon[S[i].key].n;
+      if (S[i].mvDef) applyDefaultMoves(i, true);   // 既定のままなら、シャドウ用の確定値に入れ替える
       run();
     }
   };
@@ -1274,6 +1275,7 @@ sideEl.forEach((el, i) => {
   // わざ欄。いちばん下の「＋ 自由設定」を選ぶと、性能を自分で決めたわざを作れる
   const mvPick = (cls, key, isFast) => el.querySelector(cls).onchange = e => {
     const v = e.target.value;
+    S[i].mvDef = false;   // 手で選んだ＝以後は既定を入れ直さない
     if (v === CUST_PICK) { pickCustom(e.target, isFast, S[i][key], id => { S[i][key] = id; run(); }); return; }
     S[i][key] = v; run();
   };
@@ -1282,13 +1284,14 @@ sideEl.forEach((el, i) => {
   mvPick('.selC2', 'c2', false);
   // SPアタック2の「×」= 2本目を外して1本に戻す(2026-08-13タダシさん指示)。
   // プレースホルダーを選び直しても外せるが気づきにくく、発ごとのSP設定が出っぱなしになる
-  el.querySelector('.c2clear').onclick = () => { S[i].c2 = null; resetSpPlan(i); run(); };
+  el.querySelector('.c2clear').onclick = () => { S[i].c2 = null; S[i].mvDef = false; resetSpPlan(i); run(); };
 });
 
 // リーグ/カップ切替の共通処理(わざ再選択とマニュアルPLの上限内再調整)
 // 自動選出で確定したわざ(pin)だけ新リーグで選び直す。手動で選んだわざは変えない
 function afterCapChange() {
   S.forEach((s, i) => resetPin(i));
+  S.forEach((s, i) => { if (s.mvDef) applyDefaultMoves(i, true); });   // 既定のままの側は新しいリーグの確定値に入れ替える
   S.forEach((s, i) => {
     if (s.ivMode === 'manual' && s.mIvs && s.key) {
       s.mLevel = maxLevelFor(s.key, s.mIvs, cap, s.maxLv);
@@ -1948,6 +1951,11 @@ function applyMode() {
   // 1対1のランキング表示のときは「じぶん」を選ぶ必要がない(あいてだけ決めればよい)
   const rkRankView = rk && RK.play === '1v1' && RKR.view !== 'sim';
   const mock = mode === 'mock';   // GBL模擬戦(3匹×3匹)。専用の枠を使うので左右パネルは隠す
+  // 既定のわざ: あいてが「わざ全通り」で評価される画面(対策さがし・ロケット団)に入ったら外し、出たら入れ直す
+  if (S[1].mvDef) {
+    if (defOff(1)) { S[1].fast = S[1].c1 = S[1].c2 = null; resetPin(1); }
+    else if (!S[1].fast && !S[1].c1) applyDefaultMoves(1, true);
+  }
   // ⚠模擬戦から離れるときは再生を止める。画面は display:none で隠すだけでDOMには残るので、
   // タイマーの「消えていたら止める」判定が効かず、**切り替えた先の画面の上に
   // SP発動・くりだし・KOのカットインが全画面で流れ続けていた**(#fxlayer は最前面)
@@ -2654,6 +2662,7 @@ function applyMeta(m, i) {
   // 環境リストのわざ構成(SP2本)とブラフの前提をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する。
   // ブラフは一覧では両者に同じ前提を使っているので、左右そろえて渡す
   S[i].fast = m.f || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  S[i].mvDef = false;   // 一覧の構成を引き継いだ(既定の入れ直しの対象にしない)
   [0, 1].forEach(k => {
     S[k].bluff = metaBluff;
     sideEl[k].querySelectorAll('.bluff button').forEach(x =>
@@ -2733,6 +2742,7 @@ function runCounter() {
       const mv = row && row.cells[j] && row.cells[j].mv;
       if (mv) {
         S[1].fast = mv.fast || null; S[1].c1 = mv.c1 || null; S[1].c2 = mv.c2 || null;
+        S[1].mvDef = false;
         resetPin(1); resetSpPlan(1);
       }
     }
@@ -6735,6 +6745,7 @@ function blToCounter(k, s) {
   S[1].key = k; S[1].shadow = s; S[1].maxLv = 51; S[1].megaLv = MEGA_LV_DEF; syncSmax(1);
   sideEl[1].querySelector('.shadowtab').setAttribute('aria-pressed', s);
   S[1].fast = null; S[1].c1 = null; S[1].c2 = null;
+  S[1].mvDef = true;   // 対策さがしでは全通り。1対1へ移ったら既定を入れる
   resetPin(1); resetSpPlan(1);
   S[1].ivMode = 'auto'; S[1].mIvs = null; S[1].mLevel = null;
   sideEl[1].querySelector('input').value = (s ? 'シャドウ' : '') + D.pokemon[k].n;
@@ -11616,10 +11627,12 @@ function applyMyPk(i, m, skipRun) {
   if (!m || !D.pokemon[m.key]) return;
   S[i].key = m.key;
   S[i].fast = m.fast || null; S[i].c1 = m.c1 || null; S[i].c2 = m.c2 || null;
+  S[i].mvDef = false;
   resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);   // 発ごとのSP設定は「おまかせ」に戻す(前のポケモンの指定を残さない)
   S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
   S[i].shadow = !!m.shadow;
+  applyDefaultMoves(i);   // ★登録にわざが無ければ既定を入れる
   S[i].maxLv = m.maxLv || 51;
   S[i].megaLv = megaLvOf(m);
   syncSmax(i);
@@ -11658,9 +11671,24 @@ function resetSpPlan(i) {
   S[i].spMv = ['auto', 'auto', 'auto', 'auto', 'auto']; S[i].spMvRest = 'auto';
 }
 
+// 既定のわざ(2026-09-14テスター#13・タダシさん指示): ポケモンを入れた時点で、**環境の確定値(載っていなければ効率順のわざ)**を
+// わざ欄に入れておく。以前は「わざを選ぶまで結果を出さない」で空欄のままだった(1つずつ選ぶのが手間)。
+// 入れた既定は S[i].mvDef=true の印を持ち、リーグ・シャドウを替えたら選び直す。手でわざを選んだら印を消す(以後は手動)。
+// ⚠ あいてが「わざ全通り」で評価される画面(対策さがし・ロケット団のあいて)には入れない(入れると全通りの前提が崩れる)
+const defOff = i => i === 1 && (mode === 'counter' || mode === 'rocket');
+function applyDefaultMoves(i, force) {
+  const s = S[i];
+  if (!s.key || defOff(i)) return;
+  if (!force && (s.fast || s.c1 || s.c2)) return;
+  const d = mockDefaultMoves(s.key, s.shadow);
+  s.fast = d.fast || null; s.c1 = d.c1 || null; s.c2 = d.c2 || null;
+  s.mvDef = true;
+  resetPin(i); resetSpPlan(i);
+}
 function pick(i, key) {
   S[i].key = key;
-  S[i].fast = S[i].c1 = S[i].c2 = null;   // 自動選択に戻す
+  S[i].fast = S[i].c1 = S[i].c2 = null;   // いったん空にしてから既定を入れる
+  S[i].mvDef = false;
   resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);
   S[i].shadow = false;
@@ -11670,6 +11698,7 @@ function pick(i, key) {
   sideEl[i].querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'auto'));
   sideEl[i].querySelector('.custIv').style.display = 'none';
   if (mode === 'rocket' && i === 1) syncRocket();   // ロケット団のポケモンはシャドウ固定
+  applyDefaultMoves(i);
   run();
 }
 
@@ -12978,6 +13007,8 @@ const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } }
     put(f, 'fast'); put(c, 'c1');
     if (c2 && D.moves[c2]) S[i].c2 = c2;
   });
+  // 共有リンクにわざが無い側は既定のわざを入れる(mvDef)。対策さがし・ロケット団のあいては applyMode で外す
+  [0, 1].forEach(i => { if (S[i].key && !S[i].fast && !S[i].c1 && !S[i].c2 && !S[i].pin.fast && !S[i].pin.c1) applyDefaultMoves(i, true); });
   ['bfl', 'bfr'].forEach((k, i) => {   // ブラフ設定の復元(既定は「しない」。旧リンクの bfl=0 は既定と同じ)
     if (q.get(k) === '1') {
       S[i].bluff = true;
