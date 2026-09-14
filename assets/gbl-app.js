@@ -274,6 +274,7 @@ document.getElementById('app').innerHTML = `
     </div>
     <div class="blhd"><span class="lbl">あいてのパーティ</span><span class="blhint">1匹目＝初手。見えたぶんだけでOK</span></div>
     <div class="pslots blslots"></div>
+    <div class="blpred"></div>
     <div class="blquick"></div>
     <div class="blctl">
       <span class="lbl">勝敗</span>
@@ -1453,8 +1454,11 @@ ${PAGE_ROCKET ? '' : `
     <li><b>じぶんのパーティ</b> … 入力欄のいちばん上の「変更」で入れ替えます（パーティ診断の3枠と同じ3匹です）。
       「最近:」のボタンは記録から自動で拾ったパーティで、押すと3匹まとめて入れ替わります</li>
     <li><b>パーティ(🧩タブ)</b> … 自分が使ったパーティごとの戦った数と勝率です。並び（初手）が違えば別のパーティとして数えます</li>
-    <li><b>初手(🎬タブ)</b> … あいての初手ごとの勝率と、その初手の<b>裏（2・3匹目）によくいるポケモン</b>を多い順に3匹。
+    <li><b>初手(🎬タブ)</b> … あいての初手ごとの勝率と、その初手の<b>裏（2・3匹目）によくいるポケモン</b>を多い順に3匹（その初手だった対戦のうち裏にいた割合）。
       下には自分の初手ごとの勝率も出ます</li>
+    <li><b>裏読み</b> … 入力欄であいての1匹目（初手）を入れた瞬間に、自分の記録からその初手の<b>裏にいた割合</b>を高い順に出します。
+      2匹目まで入れると、その2匹を含む対戦だけに絞って3匹目を読み直します。候補を押すと空いている枠に入ります。
+      裏は2匹いるので、割合の合計は100%を超えます。記録が5戦未満のときは参考程度です</li>
     <li><b>採用率</b> … 記録した対戦のうち、そのポケモンがパーティに入っていた割合です。
       「勝率」はそのポケモンがいた対戦でのあなたの勝率で、<b>低いほど苦手な相手</b>です。「対策」を押すと対策さがしへ飛びます</li>
     <li><b>相性(⚔️タブ)</b> … 記録した相手を自動集計して、タイプごとの通りやすさをボタンで選んだ1つずつグラフに出します。
@@ -6288,6 +6292,58 @@ function syncBlogSlot(i) {
   const f = BLE.foes[i];
   el.querySelector('input').value = f ? blName(f) : '';
   el.querySelector('.pshadow').setAttribute('aria-pressed', !!(f && f.s));
+  blRenderPred();
+}
+// ---- 裏読み(2026-09-14タダシさん指示「勝率が2〜3%は上がる」) ----
+// あいての初手を入れた瞬間に、自分の記録から「その初手の裏(2・3匹目)にいた割合」を高い順に出す。
+// 2匹目まで見えたら、その2匹を含む対戦だけに絞って3匹目を読み直す。記録はいま見ているリーグの全部を使う
+function blPredOf(foes) {
+  const f0 = foes[0];
+  if (!f0) return null;
+  const same = (a, b) => !!(a && b && a.k === b.k && !!a.s === !!b.s);
+  const recs = blRecs();
+  let pool = recs.filter(r => same(r.foes[0], f0)), loose = false;
+  // 通常⇄シャドウの記録しか無いときは、それも含めて読む(その旨を添える)
+  if (!pool.length) { pool = recs.filter(r => r.foes[0] && r.foes[0].k === f0.k); loose = pool.length > 0; }
+  const seen = foes.slice(1).filter(Boolean);
+  if (seen.length) pool = pool.filter(r => seen.every(s => r.foes.slice(1).some(b => same(b, s))));
+  const map = new Map();
+  pool.forEach(r => r.foes.slice(1).forEach(b => {
+    if (!b || !D.pokemon[b.k] || seen.some(s => same(s, b))) return;
+    const kk = b.k + (b.s ? '|s' : '');
+    const x = map.get(kk) || { f: b, n: 0 };
+    x.n++; map.set(kk, x);
+  }));
+  return { n: pool.length, loose, narrowed: seen.length > 0,
+    rows: [...map.values()].sort((a, b) => b.n - a.n).slice(0, 6) };
+}
+function blRenderPred() {
+  const box = document.querySelector('#blog .blpred');
+  if (!box) return;
+  const f0 = BLE.foes[0];
+  if (!f0 || BLE.foes.every(Boolean)) { box.innerHTML = ''; return; }
+  const p = blPredOf(BLE.foes);
+  const ttl = '<span class="blpredttl">裏読み</span>';
+  if (!p.n) {
+    box.innerHTML = `<div class="blpredhd">${ttl}<small>${p.narrowed ? 'この組み合わせ' : 'この初手'}の記録はまだありません</small></div>`;
+    return;
+  }
+  const note = (p.narrowed ? '見えた2匹を含む' : '初手が同じ') + `${p.n}戦から` +
+    (p.loose ? '(シャドウ違いも含む)' : '') + (p.n < 5 ? '・記録が少ないので参考程度' : '');
+  box.innerHTML = `<div class="blpredhd">${ttl}<small>${note}</small></div><div class="blpredrows">` +
+    p.rows.map((x, i) => {
+      const pct = Math.round(x.n / p.n * 100);
+      return `<button class="blpredrow" data-i="${i}" title="${p.n}戦のうち${x.n}戦で裏にいました。タップすると空いている枠に入ります">` +
+        `<span class="blnm">${shMark(blName(x.f))}${typeIcons(D.pokemon[x.f.k], 14)}</span>` +
+        `<span class="blbar"><i style="width:${pct}%"></i></span><b>${pct}%</b></button>`;
+    }).join('') + '</div>';
+  box.querySelectorAll('.blpredrow').forEach(b => b.onclick = () => {
+    const x = p.rows[+b.dataset.i];
+    const slot = BLE.foes.findIndex(v => !v);
+    if (slot < 0) return;
+    BLE.foes[slot] = { k: x.f.k, s: !!x.f.s };
+    syncBlogSlot(slot);
+  });
 }
 function blSetMsg(t) { const m = document.querySelector('#blog .blmsg'); if (m) m.textContent = t || ''; }
 function blAddRecord() {
@@ -6458,7 +6514,7 @@ function blLeadHtml(use) {
         ${blWrCell(e.w, e.l, 'このポケモンが初手だった対戦での、あなたの勝率です')}
       </div>
       ${back.length ? `<div class="blback"><span class="blbl">裏</span>${back.map(x =>
-        `<span class="blbk" title="この初手の裏(2・3匹目)に${x.n}回いました">${shMark(blName(x.f))}<b>${x.n}</b></span>`).join('')}</div>` : ''}
+        `<span class="blbk" title="この初手だった${e.n}戦のうち、${x.n}戦で裏(2・3匹目)にいました">${shMark(blName(x.f))}<b>${Math.round(x.n / e.n * 100)}%</b></span>`).join('')}</div>` : ''}
     </div>`;
   }).join('');
   const meRows = [...me.values()].sort((a, b) => b.n - a.n).map((e, i) => `<div class="bltr blmer">

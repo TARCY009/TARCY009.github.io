@@ -1595,6 +1595,18 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blbl{color:var(--sub);font-size:.64rem}
 .blbk{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border:1px solid var(--line2);border-radius:999px;background:var(--bg2)}
 .blbk b{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
+/* 裏読み(2026-09-14): あいての初手を入れた瞬間に、裏にいた割合を高い順に出す */
+.blpred:empty{display:none}
+.blpred{margin-top:8px;padding:8px 10px;border:1px solid var(--goldc,#e0b64a);border-radius:12px;background:var(--bg2)}
+.blpredhd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.blpredttl{color:var(--gold);font-weight:900;font-size:.84rem}
+.blpredhd small{color:var(--sub);font-size:.68rem}
+.blpredrows{display:flex;flex-direction:column;gap:4px}
+.blpredrow{display:grid;grid-template-columns:minmax(0,1fr) 72px 42px;align-items:center;gap:8px;width:100%;
+  background:var(--tab);border:1px solid var(--line2);border-radius:10px;color:var(--ink);padding:6px 8px;font-size:.8rem;cursor:pointer;text-align:left}
+.blpredrow:hover{transform:translateY(-1px)}
+.blpredrow .blbar i{background:linear-gradient(90deg,#e0b64a,#ffd54a)}
+.blpredrow b{text-align:right;color:var(--gold);font-weight:900;font-variant-numeric:tabular-nums}
 .blmsg{color:var(--cy);font-size:.76rem;margin-top:5px;min-height:1em}
 .blsum{font-size:.82rem;margin:10px 0;line-height:1.9}
 .blsum small{color:var(--sub);margin-left:4px}
