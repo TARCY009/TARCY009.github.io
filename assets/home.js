@@ -257,10 +257,12 @@
       quiet(inp);
       if (cur === inp && inp._sgOutAt && Date.now() - inp._sgOutAt < 250) return;
       cur = inp; inp._sgBefore = inp.value; inp._sgPicked = false; inp._sgShown = shown(listOf(inp)); inp._sgOutAt = 0;
+      inp._sgTyped = null;
     });
     // 打つたびに「候補が出たか」を控える（候補が一度も出ない欄＝CPの数字欄などは守りの対象にしない）
     document.addEventListener('input', function (e) {
       var inp = e.target; if (!isSearch(inp)) return;
+      inp._sgTyped = inp.value;   // 自分で打った文字(ページ側が入れた名前と見分けるため)
       setTimeout(function () { if (shown(listOf(inp))) inp._sgShown = true; }, 0);
     });
     // 候補を押した＝選んだ（一覧の直下の、選べる候補だけ）
@@ -298,6 +300,10 @@
         // ⚠ 以前は「候補が一度も出なかった入力」を守らなかったため、どれにも当たらない文字(例「アアア」)を打って離れると
         //   入力欄は「アアア」なのに中身は前のポケモン、という食い違いが残った(2026-09-11に発見)。数字の欄は isSearch で除いたので、名前の欄は常に守る
         if (inp._sgPicked) return;
+        // ⚠ 入力欄の文字が「自分で打った文字」でないなら、ページ側が一覧の外から名前を入れた(裏読み・よく出る・最近のパーティ・
+        //   ★登録リストのボタン等)ので、そちらを尊重して何もしない。以前はここで「入力前の名前」に戻してしまい、
+        //   中身は入ったのに欄の文字だけ消えていた(2026-09-14タダシさん報告: 裏読みのエンペルトを押すと2匹目の欄が空になった)
+        if (inp.value !== (inp._sgTyped == null ? inp._sgBefore : inp._sgTyped)) return;
         var l = listOf(inp);
         var c = shown(l) ? match(inp, l, false) : null;
         if (c) { c.click(); return; }
