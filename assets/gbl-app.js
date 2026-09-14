@@ -279,7 +279,6 @@ document.getElementById('app').innerHTML = `
   <div class="blentry foe">
     <div class="blhd"><span class="lbl">あいて</span></div>
     <div class="pslots blslots"></div>
-    <div class="blpred"></div>
     <div class="blquick"></div>
     <div class="blctl">
       <div class="opts blres">
@@ -6274,6 +6273,10 @@ function buildBlogSlots() {
       <button class="pclr" title="この枠を空にする">×</button></div>
     <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
   </div>`).join('');
+  // 裏読みは**1匹目のすぐ下**に置く(スマホでは1匹目が横いっぱい・2/3匹目が半分ずつ・その間に裏読み。2026-09-14タダシさん指示)。
+  // パソコン幅では3枠の下へ回す(CSSの order)
+  const pred = document.createElement('div'); pred.className = 'blpred';
+  box.insertBefore(pred, box.children[1]);
   box.querySelectorAll('.blslot').forEach(el => {
     const i = +el.dataset.i;
     const inp = el.querySelector('input'), list = el.querySelector('.sugg-list');
@@ -6399,7 +6402,16 @@ function blAddRecord() {
   rEl.value = '';
   [0, 1, 2].forEach(syncBlogSlot);
   document.querySelectorAll('#blog .blres button').forEach(b => b.setAttribute('aria-pressed', false));
-  blSetMsg(`記録しました(${BL_LGN[cap] || 'このリーグ'} ${blRecs().length}戦目)`);
+  // 押した手応え: ボタンが勝ち＝緑／負け＝赤に一瞬光って「◯戦目」を出す(2026-09-14タダシさん指示)
+  const btn = document.querySelector('#blog .bladd');
+  if (btn) {
+    const win = BLOG[BLOG.length - 1].win;
+    btn.dataset.flash = win || 'n';
+    btn.innerHTML = `記録しました <b>${blRecs().length}戦目</b>`;
+    clearTimeout(btn._ft);
+    btn._ft = setTimeout(() => { delete btn.dataset.flash; btn.textContent = '＋ 記録する'; }, 1400);
+  }
+  blSetMsg('');
   runBlog();
 }
 
@@ -6435,7 +6447,13 @@ function runBlog() {
         <div class="blst rate"><b>${lastR == null ? 'ー' : lastR}</b><small>レート${dlt == null ? '' : ` <i class="${dlt >= 0 ? 'up' : 'dn'}">${dlt >= 0 ? '▲' : '▼'}${Math.abs(dlt)}</i>`}</small></div>
       </div>` +
       (recs.length >= 5 ? `<button class="blusecup" title="記録から作った採用率順のリスト(マイ環境)を相手にして、自分のパーティの穴をチェックします">マイ環境でパーティ診断</button>` : '')
-    : `<b>${BL_LGN[cap] || 'このリーグ'}</b>の記録はまだありません。上の枠に戦った相手を入れて「＋ 記録する」を押してください`;
+    : `<div class="blguide"><div class="blgttl">${BL_LGN[cap] || 'このリーグ'}の記録はまだありません</div>
+        <ol class="blgsteps">
+          <li><i>1</i><span>あいての枠に、戦った相手を入れる<small>見えたぶんだけでOK</small></span></li>
+          <li><i>2</i><span>勝ち／負けを押す<small>レートは分かるときだけ</small></span></li>
+          <li><i>3</i><span>記録する</span></li>
+        </ol>
+        <div class="blgnote">記録がたまると、採用率・裏読み・刺さるポケモンが出ます</div></div>`;
   const useBtn = sumEl.querySelector('.blusecup');
   if (useBtn) useBtn.onclick = blToParty;
   document.querySelectorAll('#blog .blvtabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === BLV.view));
@@ -6620,7 +6638,8 @@ function blTypeHtml(use) {
     dr: ['good', '🛡️ 耐性で軽減できる', '高いタイプほど、相手の定番わざ構成を軽減しやすいです', 'そのタイプが軽減できるわざを持ちます(定番構成)'],
   };
   const sel = G[BLV.tsel] ? BLV.tsel : 'aw';
-  const btn = (k, lbl, tip) => `<button data-t="${k}" aria-pressed="${sel === k}" title="${tip}">${lbl}</button>`;
+  // 攻撃面(⚔️)＝赤・防御面(🛡️)＝水色の役割色(共通の立体タブ・2026-09-14)
+  const btn = (k, lbl, tip) => `<button data-t="${k}" data-c="${k[0] === 'a' ? 'red' : 'cyan'}" aria-pressed="${sel === k}" title="${tip}">${lbl}</button>`;
   return `<div class="bltype">
     <div class="enote expl">あなたの記録(採用数の重み付き・のべ${tot}匹)からタイプごとの通りやすさを集計したものです。攻撃面(⚔️)＝相手のタイプに対して(複合タイプは掛け算・二重弱点/二重耐性込み)、防御面(🛡️)＝相手の定番わざ構成(環境の確定値・載っていなければ効率順)のノーマル＋SP2本のタイプに対して、1本でも当てはまれば数えます。</div>
     <div class="opts bltysel">
@@ -6676,23 +6695,38 @@ function blGraphHtml(use) {
 function blRateHtml(use) {
   const a = blAgg(use);
   if (!a.rows.length) return '<div class="mtnote">この期間の記録がありません</div>';
+  // 「対策」ボタンを全行に並べず、行をタップしたときだけ2つの行き先を出す(2026-09-14タダシさん指示・文字を減らす)
   const rows = a.rows.map((e, i) => {
     const pct = Math.round(e.cnt / a.battles * 100);
     const wl = e.w + e.l;
     const wr = wl ? Math.round(e.w / wl * 100) : null;
-    return `<div class="bltr">
+    const kk = e.k + (e.s ? '|s' : ''), open = BLV.openRate === kk;
+    return `<div class="bltr${open ? ' open' : ''}" data-kk="${kk}" role="button" tabindex="0" title="タップすると対策さがし・裏読みへの近道が出ます">
       <span class="blrank${i < 3 ? ' r' + (i + 1) : ''}">${i + 1}</span>
       <span class="blnm">${shMark(blName(e))}${typeIcons(D.pokemon[e.k], 15)}</span>
       <span class="blcell" title="この期間の${a.battles}戦のうち、${e.cnt}回パーティに入っていました">${pct}%<small>${e.cnt}回</small><i class="blmini" style="--w:${pct}%"></i></span>
       <span class="blcell dim" title="初手(1匹目)で出てきた回数です">${e.lead || 'ー'}</span>
       <span class="blcell ${wr == null ? 'dim' : wr >= 50 ? 'ok' : 'bad'}" title="このポケモンがいた対戦での、あなたの勝率です(勝敗を記録したぶんだけ)。低いほど苦手な相手です">${wr == null ? 'ー' : wr + '%'}</span>
-      <button class="blcnt" data-k="${e.k}" data-s="${e.s ? 1 : 0}" title="このポケモンに勝てるポケモンを対策さがしで調べます">対策</button>
-    </div>`;
+      <span class="blchev" aria-hidden="true">›</span>
+    </div>${open ? `<div class="blact">
+      <button class="blcnt" data-k="${e.k}" data-s="${e.s ? 1 : 0}" title="このポケモンに勝てるポケモンを対策さがしで調べます">対策さがし</button>
+      <button class="blpk" data-k="${e.k}" data-s="${e.s ? 1 : 0}" title="このポケモンを初手として入力欄に入れ、裏読みを出します">裏読みで見る</button>
+    </div>` : ''}`;
   }).join('');
   return `<div class="bltbl"><div class="blth"><span></span><span>ポケモン</span><span title="この期間の対戦のうち、パーティに入っていた割合です">採用率</span><span title="初手(1匹目)で出てきた回数です">初手</span><span title="そのポケモンがいた対戦でのあなたの勝率です。低いほど苦手な相手です">勝率</span><span></span></div>${rows}</div>`;
 }
 function blBindRate(body) {
+  body.querySelectorAll('.bltr[data-kk]').forEach(r => {
+    const tog = () => { BLV.openRate = BLV.openRate === r.dataset.kk ? null : r.dataset.kk; runBlog(); };
+    r.onclick = tog;
+    r.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tog(); } };
+  });
   body.querySelectorAll('.blcnt').forEach(b => b.onclick = () => blToCounter(b.dataset.k, b.dataset.s === '1'));
+  body.querySelectorAll('.blpk').forEach(b => b.onclick = () => {
+    BLE.foes = [{ k: b.dataset.k, s: b.dataset.s === '1' }, null, null];
+    [0, 1, 2].forEach(syncBlogSlot);
+    document.querySelector('#blog .blentry.foe').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 // 「対策」→ 対策さがしのあいて欄へ入れてモードを切り替える(applyMetaと同じ手順の縮小版)。
 // 対戦記録ページ(/battlelog/)からはGBLページへURL引き継ぎで移動する(ロケット団と同じ「入口は別」の作り)
@@ -6718,18 +6752,26 @@ function blToParty() {
 
 // 履歴(新しい順)。×→「削除する?」の2タップで消す(押しまちがい防止)
 function blHistHtml(recs) {
-  const rows = recs.slice().reverse().map(r => {
-    const d = new Date(r.t);
-    const foes = r.foes.filter(Boolean).map(f => shMark(blName(f))).join('・') || '(相手の記録なし)';
-    const mine = r.mine && r.mine.some(Boolean) ? r.mine.filter(Boolean).map(f => shMark(blName(f))).join('・') : '';
-    const del = BLV.del === r.id;
-    return `<div class="blhrow">
-      <span class="bldate">${d.getMonth() + 1}/${d.getDate()}</span>
-      <span class="blfoes">${foes}${mine ? `<small class="blvs">自分: ${mine}</small>` : ''}</span>
-      <span class="blwl ${r.win || ''}">${r.win === 'w' ? '勝ち' : r.win === 'l' ? '負け' : 'ー'}</span>
-      <button class="bldel${del ? ' arm' : ''}" data-id="${r.id}" title="この記録を消します">${del ? '削除する?' : '×'}</button>
-    </div>`;
-  }).join('');
+  // 日付ごとにまとめ、勝ち負けは文字ではなく左端の色の帯(緑／赤)で示す。相手は札・初手は金の枠(2026-09-14タダシさん指示)
+  const days = [];
+  recs.slice().reverse().forEach(r => {
+    const d = new Date(r.t), key = `${d.getMonth() + 1}/${d.getDate()}`;
+    let g = days[days.length - 1];
+    if (!g || g.key !== key) { g = { key, w: 0, l: 0, rows: [] }; days.push(g); }
+    if (r.win === 'w') g.w++; else if (r.win === 'l') g.l++;
+    g.rows.push(r);
+  });
+  const rows = days.map(g => `<div class="blhday"><b>${g.key}</b><small>${g.rows.length}戦${g.w + g.l ? `・${g.w}勝${g.l}敗` : ''}</small></div>` +
+    g.rows.map(r => {
+      const foes = r.foes.filter(Boolean).map((f, i) => `<span class="blfc${i === 0 ? ' lead' : ''}">${shMark(blName(f))}</span>`).join('') || '<span class="blfc none">相手の記録なし</span>';
+      const mine = r.mine && r.mine.some(Boolean) ? r.mine.filter(Boolean).map(f => shMark(blName(f))).join('・') : '';
+      const del = BLV.del === r.id;
+      return `<div class="blhrow ${r.win || 'n'}">
+        <span class="blfoes">${foes}${mine ? `<small class="blvs">${mine}</small>` : ''}</span>
+        ${r.rate != null ? `<span class="blhrate" title="記録したレート">${r.rate}</span>` : ''}
+        <button class="bldel${del ? ' arm' : ''}" data-id="${r.id}" title="この記録を消します">${del ? '削除する?' : '×'}</button>
+      </div>`;
+    }).join('')).join('');
   // 全削除(リセット)。まちがえて押しても消えないよう、確認ウィンドウを出してから消す(2026-08-27タダシさん指示)
   const reset = BLV.resetArm
     ? `<div class="blconfirm"><b>${BL_LGN[cap] || 'このリーグ'}の記録${recs.length}戦をすべて削除します。</b>元に戻せません。よろしいですか?

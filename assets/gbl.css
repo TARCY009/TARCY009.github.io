@@ -1582,6 +1582,65 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
   font-size:.7rem;font-weight:700;padding:5px 11px;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .blmyrecent[aria-expanded="true"]{color:var(--ink)}
 .blmyrecent[hidden],.blrecent[hidden]{display:none}
+/* あいての3枠: パソコンは3列＋裏読みは下の行(order)。スマホは1匹目が横いっぱい・2/3匹目が半分ずつ・裏読みは1匹目の直下(2026-09-14) */
+#blog .blslots .blpred{grid-column:1/-1;order:1;margin-top:0}
+@media (max-width:520px){
+  #blog .blslots{grid-template-columns:1fr 1fr;gap:6px}
+  #blog .blslot.lead,#blog .blslots .blpred{grid-column:1/-1}
+  #blog .blslots .blpred{order:0}
+}
+/* 記録するは横いっぱいの1本。押すと勝ち＝緑／負け＝赤に一瞬光る */
+.blctl .bladd{flex:1 1 100%;margin:4px 0 0;padding:12px 18px;font-size:.95rem}
+.bladd[data-flash]{animation:blflash .5s ease}
+.bladd[data-flash="w"]{background:linear-gradient(160deg,#a8f7d0 0%,#3ddc84 45%,#1e9c5c 100%);border-color:#a8f7d0;color:#042c1a}
+.bladd[data-flash="l"]{background:linear-gradient(160deg,#ffc2cc 0%,#ff6b81 45%,#c93a52 100%);border-color:#ffc2cc;color:#3a0b14}
+.bladd b{font-weight:900}
+@keyframes blflash{0%{transform:scale(1)}35%{transform:scale(1.04)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.bladd[data-flash]{animation:none}}
+/* 採用率の行: タップで「対策さがし」「裏読みで見る」を開く */
+.bltr[data-kk]{cursor:pointer}
+.bltr[data-kk]:hover{background:rgba(255,213,74,.06)}
+.bltr.open{background:rgba(255,213,74,.1)}
+.blchev{color:var(--sub);font-size:1rem;text-align:center;transition:transform .15s}
+.bltr.open .blchev{transform:rotate(90deg);color:var(--gold)}
+.blact{display:flex;gap:6px;padding:6px 8px 8px 38px;background:rgba(255,213,74,.06);border-top:1px dashed var(--line)}
+.blact button{background:var(--tab);border:1px solid var(--line2);border-radius:9px;font-size:.72rem;font-weight:800;padding:6px 12px;cursor:pointer;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.blact .blcnt{color:var(--cy);padding:6px 12px}
+.blact .blpk{color:var(--goldc)}
+/* 相性タブのボタン: 共通の立体タブ(攻撃=赤・防御=水色) */
+#blog .bltysel button{flex:0 1 auto;padding:7px 12px;font-size:.76rem;font-weight:800;background:var(--tab);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);white-space:nowrap}
+#blog .bltysel button[data-c="red"]{color:var(--lose)}
+#blog .bltysel button[data-c="cyan"]{color:var(--cy)}
+#blog .bltysel button[data-c="red"][aria-pressed="true"]{background:linear-gradient(160deg,#ffc2cc 0%,#ff6b81 45%,#c93a52 100%);border-color:transparent;color:#3a0b14;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+#blog .bltysel button[data-c="cyan"][aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);border-color:transparent;color:#042330;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+/* 履歴: 日付の見出し＋左端の色の帯 */
+.blhday{display:flex;align-items:baseline;gap:8px;padding:7px 10px 5px;background:var(--bg2);border-top:1px solid var(--line);font-size:.78rem}
+.blhday:first-child{border-top:none}
+.blhday b{color:var(--gold);font-weight:900}
+.blhday small{color:var(--sub);font-size:.66rem}
+.blhrow{position:relative;padding-left:14px;box-shadow:inset 4px 0 0 var(--line)}
+.blhrow.w{box-shadow:inset 4px 0 0 var(--win)}
+.blhrow.l{box-shadow:inset 4px 0 0 var(--lose)}
+.blhrow:nth-child(even){background:none}
+.blfoes{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.blfc{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border:1px solid var(--line2);border-radius:999px;background:var(--panel);font-size:.72rem;font-weight:700}
+.blfc.lead{border-color:rgba(232,197,106,.7)}
+.blfc.none{color:var(--sub);font-weight:400;border-style:dashed}
+.blfoes .blvs{flex:1 0 100%;margin-top:2px}
+.blhrate{flex:0 0 auto;color:var(--gold);font-size:.7rem;font-weight:800;font-variant-numeric:tabular-nums}
+/* はじめて開いたとき(記録0)の3段の案内 */
+.blguide{padding:12px 12px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg2)}
+.blgttl{font-size:.84rem;font-weight:800;margin-bottom:8px}
+.blgsteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.blgsteps li{display:flex;align-items:flex-start;gap:9px;font-size:.8rem;font-weight:700;line-height:1.5}
+.blgsteps li>span{min-width:0}
+.blgsteps li small{display:block}
+.blgsteps li i{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:linear-gradient(160deg,#ffe08a,#e0b64a 55%,#a8760a);color:#2b2305;
+  font-style:normal;font-size:.72rem;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
+.blgsteps li small{color:var(--sub);font-weight:400;font-size:.68rem}
+.blgnote{margin-top:10px;color:var(--sub);font-size:.7rem}
 /* 候補の右端: 自分の記録での回数(よく出る相手ほど上に並ぶ) */
 .blslot .sugg-list .blsug{margin-left:auto;font-style:normal;font-size:.62rem;font-weight:800;color:var(--goldc);padding-left:6px;white-space:nowrap}
 .blhd{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
@@ -1724,7 +1783,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 #blog .blperiod button[aria-pressed="true"]{background:linear-gradient(160deg,#ffe08a 0%,#e0b64a 45%,#a8760a 100%);border-color:transparent;color:#2b2305;box-shadow:inset 0 1px 0 rgba(255,255,255,.65)}
 /* 採用率の表 */
 .bltbl{border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.blth,.bltr{display:grid;grid-template-columns:30px 1fr 74px 40px 48px 52px;align-items:center;gap:4px;padding:6px 8px}
+.blth,.bltr{display:grid;grid-template-columns:30px 1fr 74px 40px 48px 16px;align-items:center;gap:4px;padding:6px 8px}
 .blth{background:var(--bg2);color:var(--sub);font-size:.66rem;text-align:center}
 .blth span:nth-child(2){text-align:left}
 .bltr{border-top:1px solid var(--line);font-size:.8rem}
@@ -1768,7 +1827,7 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .cupslots .mycup{border-color:var(--goldc)}
 .cupslots .mycup small{color:var(--goldc)}
 @media (max-width:560px){
-  .blth,.bltr{grid-template-columns:24px 1fr 62px 34px 44px 46px;padding:6px 5px}
+  .blth,.bltr{grid-template-columns:24px 1fr 62px 34px 44px 14px;padding:6px 5px}
   .bltr{font-size:.74rem}
   .blviews .blperiod{margin-left:0}
 }
