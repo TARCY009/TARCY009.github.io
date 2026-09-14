@@ -8069,9 +8069,9 @@ function gbChoices(p, ctx) {
     const list = ctx.swTo[s].map(k => ({ a: 'to', to: k, cls: 'fire',
       label: `${SWAPMK} ${shMark(ros[s][k].name)}`,
       tip: '開幕にこのポケモンへ交代します(相手の打ちかけの1発は交代先に入ります)' }));
-    // あいての開幕交代はAIが決めるので、「交代しない」も選び直せるようにする
-    return s ? list.concat([{ a: 'stay', label: 'このまま', cls: 'hold',
-      tip: '開幕は交代せず、そのまま戦います' }]) : list;
+    // 「交代しない」も選び直せるようにする(じぶんは開始直後の⇄で入るので、取り消しの道として)
+    return list.concat([{ a: 'stay', label: 'このまま', cls: 'hold',
+      tip: '開幕は交代せず、そのまま戦います' }]);
   }
   if (p.kind === 'sp') {
     // わざごとのフレームに「最適」「即打ち」の2大ボタン(2026-08-20タダシさん指示・最適が左)。
@@ -9423,8 +9423,8 @@ function gbPlay(picks, foes, ans, stepwise) {
   // ユーザーが開幕交代する**前**の初手に対して行う
   const leadTo = [null, null];
   if (foes.length && picks.length) {
-    // じぶん: 枠の「開幕交代」トグルがONのときだけ(交代先は選ぶ)
-    if (MK.leadSwap && picks.length > 1) {
+    // じぶん: 開始直後に⇄を押した(答えが記録されている)ときだけ。トグル(MK.leadSwap)は廃止済み
+    if ((MK.leadSwap || ans[gbKey(0, 0, 'lead', 0, 0)]) && picks.length > 1) {
       const key = gbKey(0, 0, 'lead', 0, 0);
       const lctx = { li: 0, base: 0, ros, swTo: [benches(0), benches(1)] };
       const opts = gbChoices({ kind: 'lead', side: 0 }, lctx);
@@ -11043,6 +11043,19 @@ function gbRender(body, bt, picks, foes) {
     let li = bt.legs.findIndex(l => gt < l.base + l.res.turns);
     if (li < 0) li = bt.legs.length - 1;
     const leg = bt.legs[li]; if (!leg || to == null || to === leg.myIdx) return;
+    // ---- 開幕交代(2026-09-14テスター#12・タダシさん指示) ----
+    // 開始直後(まだ何も起きていない1ターン目まで)に押したら、ノーマルアタックの切れ目を待たず
+    // **0秒の開幕交代**として記録する(初手のノーマルアタックは1発も出ない)。あいての打ちかけの1発が
+    // 交代先に入る・45秒のクールタイムは、あいての開幕交代と同じ仕組み(gbPlay の lead)。
+    // すでに表示した行が変わる(1ターン目に初手が攻撃を受けている等)なら、ふつうの交代に回す
+    if (li === 0 && gt <= 1) {
+      const lkey = gbKey(0, 0, 'lead', 0, 0);
+      const ok0 = commitAns(() => {
+        Object.keys(RB.ans).forEach(k2 => { if (k2.indexOf('0:1:lead:') !== 0) delete RB.ans[k2]; });
+        RB.ans[lkey] = { a: 'to', to };
+      });
+      if (ok0) { RBUI.open = null; RBV.keepFx = true; run(); return; }
+    }
     // ---- 先行入力(2026-09-07タダシさん指示) ----
     // 交代ボタンは**いつ押してもよい**が、実際に交代が起きるのは
     // **自分のノーマルアタックが終わったあと**。3ターンわざの1ターン目に押したら4ターン目に交代する。
