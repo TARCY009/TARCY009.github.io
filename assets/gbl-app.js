@@ -722,13 +722,15 @@ function dropUnknownPk() {
   });
   try { SD.pick = (SD.pick || []).filter(i => SD.my[i]); } catch (e) {}
   // ★登録リストも掃除する(消えたポケモンの行は選んでも枠に入らないので、残しておく意味がない)
-  try {
-    const list = loadMyPk();
-    const keep = list.filter(m => m && m.key && D.pokemon[m.key]);
-    let fixed = false;
-    keep.forEach(m => { if (fixIvOf(m)) fixed = true; });
-    if (fixed || keep.length !== list.length) saveMyPkList(keep);
-  } catch (e) {}
+  ['my', 'foe'].forEach(side => {   // じぶん用・あいて用の両方
+    try {
+      const list = loadMyPk(side);
+      const keep = list.filter(m => m && m.key && D.pokemon[m.key]);
+      let fixed = false;
+      keep.forEach(m => { if (fixIvOf(m)) fixed = true; });
+      if (fixed || keep.length !== list.length) saveMyPkList(keep, side);
+    } catch (e) {}
+  });
 }
 // 手入力の個体値が正しい形か(攻・防・HPの3つの数とPL)。壊れていたら理想個体値に戻して true を返す
 function fixIvOf(m) {
@@ -1210,10 +1212,11 @@ sideEl.forEach((el, i) => {
   // ★登録: いまの構成(個体値・わざ込み)を登録リストへ。同じポケモンは上書き
   el.querySelector('.savepk').onclick = () => {
     if (!S[i].key) return;
-    const l = loadMyPk().filter(m => m.key !== S[i].key);
+    // 左(じぶん)はじぶん用・右(あいて)はあいて用のリストへ(2026-09-14)
+    const l = loadMyPk(i).filter(m => m.key !== S[i].key);
     l.unshift({ key: S[i].key, ivMode: S[i].ivMode, mIvs: S[i].mIvs, mLevel: S[i].mLevel,
                 fast: S[i].fast, c1: S[i].c1, c2: S[i].c2, shadow: S[i].shadow, maxLv: S[i].maxLv, megaLv: S[i].megaLv });
-    saveMyPkList(l); renderMyPk();
+    saveMyPkList(l, i); renderMyPk();
     const b = el.querySelector('.savepk');
     b.textContent = '★登録した！'; setTimeout(() => { b.textContent = '★登録'; }, 1200);
   };
@@ -7408,9 +7411,9 @@ function buildSdSlots(side) {
     if (star) star.onclick = () => {
       const win = el.querySelector('.pstarwin');
       const open = win.style.display === 'none';
-      const saved = loadMyPk();
+      const saved = loadMyPk(side);   // じぶんの6匹=じぶん用・あいての6匹=あいて用のリスト
       win.innerHTML = saved.length
-        ? '<div class="popttl">★登録リストから選ぶ</div>' + saved.map((m, k) => {
+        ? `<div class="popttl">★登録リスト(${side === 'foe' ? 'あいて' : 'じぶん'})から選ぶ</div>` + saved.map((m, k) => {
             const p = D.pokemon[m.key];
             if (!p) return '';
             const iv = m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
@@ -7419,9 +7422,9 @@ function buildSdSlots(side) {
             return `<div class="mypkrow${ng ? ' dup' : ''}"${ng ? '' : ` data-k="${k}"`}>` +
               `<span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span>${ng ? `<i class="dupn">${ng}</i>` : ''}</div>`;
           }).join('')
-        : '<div class="mypkempty">まだ登録がありません。1対1シミュでポケモンを選び「★登録」を押すとここに追加されます</div>';
+        : `<div class="mypkempty">まだ登録がありません。1対1シミュの${side === 'foe' ? '右(あいて)' : '左(じぶん)'}でポケモンを選び「★登録」を押すとここに追加されます</div>`;
       win.querySelectorAll('.mypkrow[data-k]').forEach(row => row.onclick = () => {
-        const src = loadMyPk()[+row.dataset.k];
+        const src = loadMyPk(side)[+row.dataset.k];
         const d = mockDefaultMoves(src.key, !!src.shadow);
         // ★登録の個体はわざも登録されていることがある。無い欄だけ環境の定番構成で埋める
         A[i] = { ...src, fast: src.fast || d.fast, c1: src.c1 || d.c1, c2: src.c2 || d.c2 };
@@ -11293,23 +11296,27 @@ const RK_OUTCOME = {
   timeout: { cls: 'lose', txt: '決着つかず', mark: '⏱' },
 };
 // ---- ★登録リスト(端末内保存・両側の欄から呼び出せる) ----
-const MYPK_KEY = 'gbl_mypoke';
+// ★登録リストは「じぶん用」と「あいて用」の2つ(2026-09-14テスター#10・タダシさん指示)。
+// じぶん=gbl_mypoke(従来の保存先。それまでの登録は全部こちらに残る)／あいて=gbl_foepoke。
+// 側の指定: 省略・0・'my'=じぶん ／ 1・'foe'=あいて。ロケット団・対戦記録・ブレイクポイントはじぶん用だけを使う
+const MYPK_KEY = 'gbl_mypoke', FOEPK_KEY = 'gbl_foepoke';
+const pkStoreKey = side => (side === 1 || side === 'foe') ? FOEPK_KEY : MYPK_KEY;
 // ⚠ **一覧(配列)で、中身がポケモンの形のものだけ通す**(2026-09-12タダシさん報告「GBLのボタンが全部押せない」)。
 // 以前は「JSON として読めれば何でも返す」だったので、保存データが文字列・オブジェクトになっていると
 // 起動の終わり(renderMyPk)で list.map が例外になり、以後どのボタンを押しても同じ描画で落ちて何も起きなくなった
-const loadMyPk = () => {
+const loadMyPk = side => {
   try {
-    const v = JSON.parse(localStorage.getItem(MYPK_KEY));
+    const v = JSON.parse(localStorage.getItem(pkStoreKey(side)));
     return Array.isArray(v) ? v.filter(m => m && typeof m === 'object' && typeof m.key === 'string') : [];
   } catch (e) { return []; }
 };
-const saveMyPkList = list => { try { localStorage.setItem(MYPK_KEY, JSON.stringify(list.slice(0, 30))); } catch (e) {} };
+const saveMyPkList = (list, side) => { try { localStorage.setItem(pkStoreKey(side), JSON.stringify(list.slice(0, 30))); } catch (e) {} };
 function renderMyPk() {
-  const list = loadMyPk();
   sideEl.forEach((el, i) => {
+    const list = loadMyPk(i);
     const box = el.querySelector('.mypklist');
     if (!list.length) {
-      box.innerHTML = '<div class="mypkempty">まだ登録がありません。ポケモンを選んで「★登録」を押すとここに追加されます</div>';
+      box.innerHTML = `<div class="mypkempty">まだ登録がありません。${i ? 'あいて' : 'じぶん'}のポケモンを選んで「★登録」を押すとここに追加されます</div>`;
       return;
     }
     box.innerHTML = list.map((m, k) => {
@@ -11320,10 +11327,10 @@ function renderMyPk() {
     }).join('');
     box.querySelectorAll('.mypkrow').forEach(row => row.onclick = e => {
       if (e.target.dataset.del !== undefined) {   // ×で削除
-        const l = loadMyPk(); l.splice(+e.target.dataset.del, 1); saveMyPkList(l); renderMyPk();
+        const l = loadMyPk(i); l.splice(+e.target.dataset.del, 1); saveMyPkList(l, i); renderMyPk();
         return;
       }
-      applyMyPk(i, loadMyPk()[+row.dataset.k]);
+      applyMyPk(i, loadMyPk(i)[+row.dataset.k]);
       box.style.display = 'none';   // 選んだら一覧を閉じる
       el.querySelector('.mypktab').setAttribute('aria-pressed', 'false');
     });

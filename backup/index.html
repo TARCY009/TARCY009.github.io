@@ -139,8 +139,9 @@ h3.sub{margin:2px 0 8px}
     blog.forEach(function(r){ if (r && r.cap != null) by[r.cap] = (by[r.cap] || 0) + 1; });
     var caps = Object.keys(by).sort(function(a, b){ return (+a || 1e9) - (+b || 1e9); });
     rows.push(['対戦記録', blog.length ? '<b>' + blog.length + '戦</b>（' + caps.map(function(c){ return (LG[c] || 'CP' + c) + ' ' + by[c]; }).join('・') + '）' : none]);
-    var my = parse(data.gbl_mypoke, []);
-    rows.push(['★登録', Array.isArray(my) && my.length ? '<b>' + my.length + '匹</b>' : none]);
+    var my = parse(data.gbl_mypoke, []), fo = parse(data.gbl_foepoke, []);
+    var myN = Array.isArray(my) ? my.length : 0, foN = Array.isArray(fo) ? fo.length : 0;
+    rows.push(['★登録', myN || foN ? 'じぶん <b>' + myN + '</b>・あいて <b>' + foN + '</b>' : none]);
     var cnt = function(a){ return Array.isArray(a) ? a.filter(function(x){ return x && (x.key || x.k); }).length : 0; };
     var pt = parse(data.gbl_party, null);
     var ptN = cnt(pt && (pt.slots || pt));
@@ -159,7 +160,7 @@ h3.sub{margin:2px 0 8px}
     var cm = parse(data.gbl_custom_moves, []);
     rows.push(['自由設定わざ', Array.isArray(cm) && cm.length ? '<b>' + cm.length + '本</b>' : none]);
     var rest = Object.keys(data).filter(function(k){
-      return !/^(gbl_battlelog|gbl_mypoke|gbl_party|gbl_showdown|gbl_mock_foes|raid_party|gbl_custom_moves)$/.test(k);
+      return !/^(gbl_battlelog|gbl_mypoke|gbl_foepoke|gbl_party|gbl_showdown|gbl_mock_foes|raid_party|gbl_custom_moves)$/.test(k);
     }).length;
     rows.push(['表示・操作の設定', rest ? '<b>' + rest + '件</b>' : none]);
     return rows.map(function(r){ return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('');
@@ -263,7 +264,7 @@ h3.sub{margin:2px 0 8px}
         var l = unionBy(cur[k], data[k], function(r){ return r.id != null ? 'i' + r.id : JSON.stringify(r); });
         l.sort(function(x, y){ return (x.t || 0) - (y.t || 0); });
         put[k] = JSON.stringify(l);
-      } else if (k === 'gbl_mypoke') {
+      } else if (k === 'gbl_mypoke' || k === 'gbl_foepoke') {
         put[k] = JSON.stringify(unionBy(cur[k], data[k], function(m){ return JSON.stringify(m); }).slice(0, 30));
       } else if (k === 'gbl_custom_moves') {
         put[k] = JSON.stringify(unionBy(cur[k], data[k], function(c){ return c.id || JSON.stringify(c); }));
