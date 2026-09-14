@@ -1735,16 +1735,20 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .blbk b{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
 /* 裏読み(2026-09-14): あいての初手を入れた瞬間に、裏にいた割合を高い順に出す */
 .blpred:empty{display:none}
-.blpred{margin-top:8px;padding:8px 10px;border:1px solid var(--goldc,#e0b64a);border-radius:12px;background:var(--bg2)}
+/* 色は明るい紫(2026-09-14タダシさん指示。あいての金・じぶんの水色と区別する) */
+.blpred{margin-top:8px;padding:8px 10px;border:1px solid #c396ff;border-radius:12px;background:var(--bg2)}
 .blpredhd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-.blpredttl{color:var(--gold);font-weight:900;font-size:.84rem}
+.blpredttl{color:#c396ff;font-weight:900;font-size:.84rem}
+:root.light .blpred{border-color:#9d5cf0}
+:root.light .blpredttl{color:#7a3cc4}
 .blpredhd small{color:var(--sub);font-size:.68rem}
 .blpredrows{display:flex;flex-direction:column;gap:4px}
 .blpredrow{display:grid;grid-template-columns:minmax(0,1fr) 72px 42px;align-items:center;gap:8px;width:100%;
   background:var(--tab);border:1px solid var(--line2);border-radius:10px;color:var(--ink);padding:6px 8px;font-size:.8rem;cursor:pointer;text-align:left}
 .blpredrow:hover{transform:translateY(-1px)}
-.blpredrow .blbar i{background:linear-gradient(90deg,#e0b64a,#ffd54a)}
-.blpredrow b{text-align:right;color:var(--gold);font-weight:900;font-variant-numeric:tabular-nums}
+.blpredrow .blbar i{background:linear-gradient(90deg,#8b5cf6,#c396ff)}
+.blpredrow b{text-align:right;color:#c396ff;font-weight:900;font-variant-numeric:tabular-nums}
+:root.light .blpredrow b{color:#7a3cc4}
 .blmsg{color:var(--cy);font-size:.76rem;margin-top:5px;min-height:1em}
 .blsum{font-size:.82rem;margin:10px 0;line-height:1.9}
 .blsum small{color:var(--sub);margin-left:4px}
