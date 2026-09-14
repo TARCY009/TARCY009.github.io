@@ -6236,11 +6236,9 @@ function blMovesOf(k, s, cap0) {
   const src = ((window.META_LISTS || {})[String(cap0)] || []).concat((window.META_EXT || {})[String(cap0)] || []);
   const m = src.find(x => x.k === k && !!x.s === !!s) || src.find(x => x.k === k);
   if (m && m.f && m.c1) return { f: m.f, c1: m.c1, c2: m.c2 };
-  const { fasts, chargeds } = movePool(k);
-  const ty = D.pokemon[k].ty;
-  const dpt = mv => D.moves[mv].p * (ty.includes(D.moves[mv].t) ? 1.2 : 1) / (D.moves[mv].tn || 1);
+  const { chargeds } = movePool(k);
   const byDpe = chargeds.slice().sort((a, b) => dpeOf(k, b) - dpeOf(k, a));
-  return { f: fasts.slice().sort((a, b) => dpt(b) - dpt(a))[0] || '', c1: byDpe[0] || '', c2: byDpe[1] };
+  return { f: bestFastOf(k) || '', c1: byDpe[0] || '', c2: byDpe[1] };   // ノーマルは DPT＋EPT×1.3 の総合(bestFastOf)
 }
 
 // 集計: 1匹1行(通常とシャドウは別)。cnt=出現数 / lead=初手(1匹目)の数 / w,l=その相手がいた対戦の自分の勝ち負け
@@ -7080,13 +7078,24 @@ try { const v = JSON.parse(localStorage.getItem(GBM_KEY)); if (Array.isArray(v))
 const saveGbm = () => { try { localStorage.setItem(GBM_KEY, JSON.stringify(GBM)); } catch (e) {} };
 // 既定のわざ: 環境の確定値(人が確認した実戦の定番構成)があればそれ。SP2本目が無い行は
 // 残りから効率のよいわざを足す。載っていないポケモンは効率の式で叩き台を作る(選び直せる)
-function mockDefaultMoves(key, shadow) {
-  const mm = ptMetaMoves(key, shadow);
-  const { fasts, chargeds } = movePool(key);
+// 確定値が無いポケモンのノーマルアタックの既定(2026-09-14タダシさん指示):
+// **ダメージ効率(DPT)とチャージ効率(EPT)の総合**で選ぶ。それぞれ候補の中の最大値を1として足し、
+// **チャージ効率のほうを3割重く**見る(1.3倍)。ダメージ効率だけで選ぶと、ゲージのたまらないわざが上に来る
+function bestFastOf(key) {
+  const { fasts } = movePool(key);
+  if (!fasts.length) return '';
   const ty = D.pokemon[key].ty;
   const dpt = m => D.moves[m].p * (ty.includes(D.moves[m].t) ? 1.2 : 1) / (D.moves[m].tn || 1);
+  const ept = m => (D.moves[m].eg || 0) / (D.moves[m].tn || 1);
+  const mD = Math.max(...fasts.map(dpt)) || 1, mE = Math.max(...fasts.map(ept)) || 1;
+  const score = m => dpt(m) / mD + 1.3 * ept(m) / mE;
+  return fasts.slice().sort((a, b) => score(b) - score(a))[0];
+}
+function mockDefaultMoves(key, shadow) {
+  const mm = ptMetaMoves(key, shadow);
+  const { chargeds } = movePool(key);
   const byDpe = chargeds.slice().sort((a, b) => dpeOf(key, b) - dpeOf(key, a));
-  const fast = (mm && mm.fast) || fasts.slice().sort((a, b) => dpt(b) - dpt(a))[0] || '';
+  const fast = (mm && mm.fast) || bestFastOf(key) || '';
   const c1 = (mm && mm.c1) || byDpe[0] || '';
   const c2 = (mm && mm.c2) || byDpe.find(x => x !== c1) || '';
   return { fast, c1, c2 };
