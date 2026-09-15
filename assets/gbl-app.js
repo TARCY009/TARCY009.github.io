@@ -4557,7 +4557,13 @@ function rbPoints(turns, ctx, dec) {
   // asked = その発についてもう聞いた（撃つ or 撃たないが決まるまで、毎ターン聞き直さない）
   let spIdx = 0, armed = false, normals = 0, asked = false;
   const cost = ctx.cost;
+  // ターンごとの能力変化を追う(SPの質問に「その時点の状態」を持たせて与ダメージを出すため・2026-09-15)
+  const bb = [((ctx.bAt || [])[0] || [0, 0]).slice(), ((ctx.bAt || [])[1] || [0, 0]).slice()];
   for (const t of turns) {
+    for (let i = 0; i < 2; i++) for (const e of t.ev[i]) {
+      if (!e.buff) continue;
+      bb[e.buff.target === 'opponent' ? 1 - i : i] = e.buff.to.slice();
+    }
     // あいてのSPアタックが飛んできた(1ターンに複数入ることは無いが念のため配列で見る)
     for (const e of t.ev[1]) {
       if (e.full === undefined) continue;
@@ -4582,7 +4588,12 @@ function rbPoints(turns, ctx, dec) {
       const dw = sht ? sht.wait : dec.wait;
       const w = typeof dw === 'number' ? dw : (sht && sht.after) || 0;
       // en = この時点のゲージ。選択ウィンドウで「ゲージが足りないわざはあと何発で発動か」を出すのに使う
-      if (normals >= w) { pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn, en: t.state[0].en }); armed = false; asked = true; }
+      if (normals >= w) {
+        pts.push({ kind: 'sp', seq: spIdx, w, tn: t.tn, en: t.state[0].en,
+          st0: { hp: t.state[0].hp, en: t.state[0].en, b: bb[0].slice() },
+          st1: { hp: t.state[1].hp, en: t.state[1].en, b: bb[1].slice(), sh: ctx.foeSh || 0 } });
+        armed = false; asked = true;
+      }
     }
   }
   // --- あいての次のポケモンが出てきた(倒した直後など・硬直中): こちらも交代するか ---
@@ -4616,11 +4627,15 @@ function rbChoices(p, ctx) {
             tip: 'ノーマルアタックだけで倒しきれて、あいてのSPアタックも飛んできません。撃たずにゲージを次の相手へ持ち越すのがおすすめです' }
         : { a: 'hold', label: '撃たない', cls: 'hold', tip: 'この相手には撃たず、ゲージを次の相手に持ち越します' },
     ];
+    // 与ダメージ(2026-09-15): その瞬間の両者の状態で、このあいてにいくつ入るか
+    const dmgTag = (p.st0 && p.st1 && ctx.me && ctx.foe)
+      ? m => spDmgTag(m, spAtt(ctx.me, p.st0.b), spDfn(ctx.foe, p.st1.b), p.st1.hp, p.st1.sh)
+      : () => '';
     ctx.spList.forEach(id => {
       const m = D.moves[id];
       const need = fm && fm.eg > 0 && p.en != null
         ? Math.max(0, Math.ceil((m.e - p.en) / fm.eg)) : 0;
-      const head = `${mvChip(m.n, 14)}<i class="cost">${m.e}</i>${
+      const head = `${mvChip(m.n, 14)}<i class="cost">${m.e}</i>${dmgTag(m)}${
         need ? `<i class="need">${fm.n}＋${need}</i>` : ''}`;
       const optN = p.optNs ? p.optNs[id] : null;
       list.push({ a: 'opt', mv: id, grp: id, head, cls: 'best',
@@ -4764,7 +4779,10 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
     const cost = spList.length ? Math.min(...spList.map(id => D.moves[id].e)) : 0;
     const swTo = picks.map((p, k) => k).filter(k => k !== mi && st[k].alive);
     const ctx = { li, base, cost, spList, picks, myShLeft, foeEntry, swOkAt, swTo, fast: pol.fast,
-      ck: tn => base + tn + spTot };   // その時点の実時間(SPの待ち時間を含む)
+      ck: tn => base + tn + spTot,   // その時点の実時間(SPの待ち時間を含む)
+      // 与ダメージ表示用(2026-09-15): じぶん・あいての実数値と、対面開始時の能力変化・あいてのシールド
+      me: picks[mi].base, foe: rktCfg(foes[fi], { shields: foeShLeft, stallStart: foeEntry }), foeSh: foeShLeft,
+      bAt: [((st[mi].resume && st[mi].resume.buffs) || [0, 0]).slice(), ((foeResume && foeResume.buffs) || [0, 0]).slice()] };
     const dec = { shots: [], wait: 0, hold: false, shieldAt: [], swapTo: null, swapAt: 0 };
     // 決めた場面はキーで覚える(「撃たない」を選ぶとその場面自体が消えるなど、
     // 決めるたびに場面の並びが変わるので、番号ではなくキーで対応づける)
@@ -8360,6 +8378,34 @@ function gbPoints(turns, ctx, dec) {
 
 // 決断ひとつぶんの選択肢(画面に出すボタン)。ロケット団の rbChoices の側つき版。
 // GBLは硬直が無いので、交代は「すぐ」だけ(＋N発攻撃してから、はロケット団専用)
+// ---- SPアタックの与ダメージ表示(2026-09-15テスター#23・タダシさん指示) ----
+// 選択ウィンドウのわざの見出しと、リアルタイムのSPボタンに「この相手にいくつ入るか」を小さく添える。
+// 計算はエンジンと同じ PvpEngine.damage(その瞬間の能力変化込み)。**シールドで防がれれば1**になるので、
+// 出す数字は「防がれなければ」の値(あいてのシールドが残っていれば長押し説明でそう断る)。
+// あいての残りHP以上なら .ko(金)＝倒しきれる
+// spAtt = 攻める側の実数値(ギルガルドはSPをブレードの攻撃で撃つ・メガLvの倍率も側ごと)
+function spAtt(base, buffs) {
+  const s = PvpEngine.buildStats(D, base);
+  if (base.key === 'aegislash_shield' && D.pokemon.aegislash_blade)
+    s.atk = PvpEngine.buildStats(D, { ...base, key: 'aegislash_blade' }).atk;
+  const o = { ...s, buffs: (buffs || [0, 0]).slice() };
+  if (MEGA_MULT[base.megaLv]) o.megaMult = MEGA_MULT[base.megaLv];
+  return o;
+}
+function spDfn(base, buffs) {
+  return { ...PvpEngine.buildStats(D, base), buffs: (buffs || [0, 0]).slice() };
+}
+function spDmgTag(m, att, dfn, foeHp, foeSh) {
+  if (!m || !att || !dfn || !m.e) return '';
+  const d = PvpEngine.damage(D, m, att, dfn);
+  const ko = foeHp != null && d >= foeHp;
+  const tip = `${m.n}の与ダメージ（いまの能力変化込み）。` +
+    (ko ? 'あいての残りHPを上回るので倒しきれます'
+        : (foeHp ? `あいての残りHP ${foeHp} のうち約${Math.round(100 * d / foeHp)}%` : '')) +
+    (foeSh > 0 ? '。あいてがシールドで防ぐとダメージは1' : '');
+  return `<i class="dmg${ko ? ' ko' : ''}" title="${tip}">-${d}</i>`;
+}
+
 function gbChoices(p, ctx) {
   const s = p.side || 0;
   const ros = ctx.ros;
@@ -8379,11 +8425,18 @@ function gbChoices(p, ctx) {
     // ＋1〜＋3の細かい指定は使う頻度が低いので「…詳細」(det)に畳む
     const fm = ctx.fast[s] && D.moves[ctx.fast[s]];
     const list = [];
+    // 与ダメージ(2026-09-15): その瞬間の両者の状態(st0/st1)で、この相手にいくつ入るか
+    const oS = 1 - s, stMe = p['st' + s], stFoe = p['st' + oS];
+    const meE = ros && ros[s] && ctx.cur ? ros[s][ctx.cur[s]] : null;
+    const foeE = ros && ros[oS] && ctx.cur ? ros[oS][ctx.cur[oS]] : null;
+    const dmgTag = (stMe && stFoe && meE && meE.base && foeE && foeE.base)
+      ? m => spDmgTag(m, spAtt(meE.base, stMe.b), spDfn(foeE.base, stFoe.b), stFoe.hp, stFoe.sh)
+      : () => '';
     ctx.spList[s].forEach(id => {
       const m = D.moves[id];
       const need = fm && fm.eg > 0 && p.en != null
         ? Math.max(0, Math.ceil((m.e - p.en) / fm.eg)) : 0;
-      const head = `${mvChip(m.n, 14)}<i class="cost">${m.e}</i>${
+      const head = `${mvChip(m.n, 14)}<i class="cost">${m.e}</i>${dmgTag(m)}${
         need ? `<i class="need">${fm.n}＋${need}</i>` : ''}`;
       const optN = p.optNs ? p.optNs[id] : null;
       list.push({ a: 'opt', mv: id, grp: id, head, cls: 'best',
@@ -10444,6 +10497,9 @@ function gbRender(body, bt, picks, foes) {
       sp0: (leg.pol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp1: (leg.foePol.charged || []).map(id => ({ n: D.moves[id].n, e: D.moves[id].e })),
       sp0id: (leg.pol.charged || []).slice(),   // リアルタイムのSPボタン用(わざID)
+      // SPボタンの与ダメージ用(2026-09-15): 両者の実数値(能力変化はフレームの b0/b1 で毎回掛ける)
+      att0: picks[leg.myIdx] && picks[leg.myIdx].base ? spAtt(picks[leg.myIdx].base) : null,
+      def1: foes[leg.foeIdx] && foes[leg.foeIdx].base ? spDfn(foes[leg.foeIdx].base) : null,
       fast1: leg.foePol.fast,   // 「あいてのSPまで あと◯発」を出すのに使う
       swOk: leg.swOk || 0, fswOk: leg.fswOk || 0,
     };
@@ -10947,17 +11003,26 @@ function gbRender(body, bt, picks, foes) {
           const m = D.moves[id]; if (!m) return '';
           const ja = D.typeJa[MOVE_TYPE[m.n]] || D.typeJa[m.t] || '';
           const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
-          return `<button class="hsp" data-mv="${id}" style="--tc:${c.mid};--tc2:${c.bot}" disabled title="${m.n}（ゲージ${m.e}）">
-            <span class="tico">${typeIconHTML(ja, 16)}</span><b>${m.n}</b><small>${m.e}</small></button>`;
+          return `<button class="hsp" data-mv="${id}" style="--tc:${c.mid};--tc2:${c.bot}" disabled title="${m.n}（ゲージ${m.e}）。赤い数字はいまのあいてへの与ダメージ（あいてがシールドで防ぐと1・金なら倒しきれる）">
+            <span class="tico">${typeIconHTML(ja, 16)}</span><b>${m.n}</b><small>${m.e}</small><small class="dmg"></small></button>`;
         }).join('');
         spRow.querySelectorAll('.hsp').forEach(b => { b.onclick = () => manualSp(b.dataset.mv); });
       }
       // 押せる条件は manualSp と同じ判定(spTarget)をそのまま使う(2026-09-10・食い違わせない)
       const live = RBV.started && !ended() && !(bt.pending && gt >= stop);
+      const att0 = f.meta.att0, def1 = f.meta.def1;
       spRow.querySelectorAll('.hsp').forEach(b => {
         const m = D.moves[b.dataset.mv];
         const ok = !!(live && m && spTarget(gt, m));
         b.disabled = !ok; b.classList.toggle('rdy', ok);
+        // 与ダメージ(2026-09-15テスター#23): いまの能力変化込み・あいての残りHP以上なら金(倒しきれる)
+        const de = b.querySelector('.dmg');
+        if (de && m && att0 && def1) {
+          const dm = PvpEngine.damage(D, m, { ...att0, buffs: f.b0 || [0, 0] }, { ...def1, buffs: f.b1 || [0, 0] });
+          const tx = `-${dm}`;
+          if (de.textContent !== tx) de.textContent = tx;
+          de.classList.toggle('ko', f.hp1 != null && dm >= f.hp1);
+        }
       });
     }
     if (mswBtns.length) {

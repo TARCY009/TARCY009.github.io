@@ -911,6 +911,15 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rwb button.bluffbtn small{display:block;font-size:.56rem;font-weight:700;opacity:.8;white-space:nowrap}
 .rwb .need{font-style:normal;font-size:.6rem;font-weight:700;color:var(--sub)}
 .rwb .dmg{color:var(--lose)}
+/* SPアタックの与ダメージ(2026-09-15テスター#23): わざの見出し・リアルタイムのSPボタンに小さく添える。
+   赤=いまの能力変化込みの与ダメージ／金=あいての残りHP以上(倒しきれる) */
+.rwb .mvopt .mh .dmg{font-style:normal;font-size:.66rem;font-weight:900;color:var(--lose);letter-spacing:.01em}
+.rwb .mvopt .mh .dmg.ko{color:var(--gold)}
+.hsprow .hsp small.dmg{border:0;padding:0;opacity:1;font-size:.7rem;font-weight:900;color:#ff8fa3}
+.hsprow .hsp small.dmg.ko{color:#ffd873}
+.hsprow .hsp.rdy small.dmg{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.hsprow .hsp.rdy small.dmg.ko{color:#ffe28a}
+.hsprow .hsp small.dmg:empty{display:none}
 .rbhud{display:grid;grid-template-columns:1fr 74px 1fr;gap:8px;align-items:start;
   background:rgba(12,17,34,.96);backdrop-filter:blur(8px);border:1px solid var(--gl);
   border-radius:14px;padding:9px 10px 8px;box-shadow:0 -6px 28px rgba(0,0,0,.45),0 0 0 1px rgba(77,141,255,.12)}
