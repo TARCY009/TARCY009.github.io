@@ -37,7 +37,12 @@ MEGA_PLUS_PVP_CHECK = {
     #   情報元に入った時点で自動収録され、威力が公式と違えば警告が出る
     'DARK_PULSE_PLUS':    (60,  None),   # あくのはどう+(メガヘルガー)
     'FELL_STINGER_PLUS':  (40,  None),   # とどめばり+(メガスピアー・こうげき+1)
-    'BRAVE_BIRD_PLUS':    (70,  None),   # ブレイブバード+(メガムクホーク・自分のぼうぎょ-3・2026-09-12追加)
+    'BRAVE_BIRD_PLUS':    (70,  -40),    # ブレイブバード+(メガムクホーク・自分のぼうぎょ-3確定・消費40＝2026-09-16タダシさん確定)
+}
+# 提供元にまだ無い＋わざの手動定義(2026-09-16タダシさん指示)。**提供元に入ったらそちらを優先**し、上の見張りで数値を突き合わせる。
+# 消費ゲージ(e)は正の数で持つ(通常のわざと同じ形)。ゲージが未確定のわざはここに入れない(実在しない性能になる)
+MEGA_PLUS_PVP_MANUAL = {
+    'BRAVE_BIRD_PLUS': {'t': 'FLYING', 'p': 70, 'e': 40, 'bf': [0, -3], 'bt': 'self', 'bc': 1.0},   # ブレイブバード+(メガムクホーク)
 }
 
 # PvPoke固有ID・i18n未収録の技の日本語名(GM側と表記が違うものはID照合で解決するのでここは最小限)
@@ -195,6 +200,10 @@ def main():
     for mid in MEGA_PLUS_MOVES:
         mv = src_mv.get(mid)
         if not mv:
+            man = MEGA_PLUS_PVP_MANUAL.get(mid)
+            if man:
+                plus_moves[mid] = {'n': MEGA_PLUS_JA[mid], **man}
+                print('手動定義の＋わざを収録(提供元に入るまで) →', mid); continue
             print('警告: 対戦データに＋わざがありません →', mid); continue
         e = {'n': MEGA_PLUS_JA[mid], 't': mv['type'].upper(), 'p': mv['power'], 'e': mv['energy']}
         for k_src, k_dst in (('buffs','bf'), ('buffTarget','bt'), ('buffApplyChance','bc')):
