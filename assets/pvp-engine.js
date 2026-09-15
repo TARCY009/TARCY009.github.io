@@ -547,13 +547,14 @@
       }
       // 予約しておいた通常技の着弾を、ゲージ技(とその能力変化)のあとに入れる(2026-09-15確定)。
       // ダメージはこの時点の能力変化で計算する＝ゲージ技で下がった攻撃・上がった防御が効く。
-      // ゲージ技で倒された側の通常技も入る(同じターンに投げたわざは着弾する＝相打ちがありうる)
+      // **ゲージ技で倒された側の通常技は入らない**(同日タダシさん確定「倒されたら入らない」＝この形では相打ちにならない)
       {
         const fev = [null, null];
         let any = false;
         for (let i = 0; i < 2; i++) {
           if (!landed[i]) continue;
           const s = sides[i];
+          if (s.hp <= 0) continue;
           const dmg = fastDamage(i);
           sides[1 - i].hp -= dmg;
           s.en = Math.min(100, s.en + s.fast.eg);
