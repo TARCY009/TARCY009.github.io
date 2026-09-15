@@ -62,6 +62,9 @@ UNTRADEABLE_EXTRA = {'zygarde'}
 #   交換不可のポケモン(幻+ジガルデ)は既定でPL15。レイドでしか配られていないものだけ20
 LEVEL_FLOOR_DEFAULT = 15          # 交換不可ポケモンの既定(スペシャルリサーチ産)
 LEVEL_FLOOR = {'zygarde': 20, 'deoxys': 20, 'darkrai': 20}   # レイドでしか手に入らない(ゲノセクトはタスク産があるので15)
+# シャドウのときだけ別の下限を持つもの(ivfs)。シャドウダークライはワイルドエリアのシャドウレイド産で最低個体値6
+# (2026-09-15テスター#22・タダシさん指示)。通常のダークライは従来どおり10
+SHADOW_IV_FLOOR = {'darkrai': 6}
 MANUAL_RELEASED = {'cramorant',        # ウッウ(2026-08-18実装)
                    'staraptor_mega'}   # メガムクホーク(2026-09-19スーパーメガレイド・デイ・タダシさん指示で先行)
 # 情報元がシャドウ実装に追随していないぶんを手動で補う(タダシさん指示で先行反映)。
@@ -287,6 +290,8 @@ def main():
             pokes[sid]['lvf'] = LEVEL_FLOOR_DEFAULT
         for x, lv in LEVEL_FLOOR.items():
             if sid == x or sid.startswith(x + '_'): pokes[sid]['lvf'] = lv
+        for x, iv in SHADOW_IV_FLOOR.items():
+            if (sid == x or sid.startswith(x + '_')) and pokes[sid].get('shadow'): pokes[sid]['ivfs'] = iv
     # 前回との差分を報告に足す(新しい幻が情報元に入ったときに気づけるように)
     try:
         prev = json.load(open('pvp_data.json', encoding='utf-8'))['pokemon']

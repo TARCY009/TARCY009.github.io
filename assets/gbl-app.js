@@ -856,10 +856,16 @@ function cpOf(p, a, d, h, c) {
 // 1匹あたり4096通りの計算を毎回やり直すと1秒以上かかるため)
 const R1C = new Map();
 // 交換できないポケモン(幻・ジガルデ等。pvp_data の ivf)は最低個体値10。個体値10未満の個体はゲーム内に存在しない(恒久ルール・2026-08-23)
-const ivFloorOf = key => (D.pokemon[key] && D.pokemon[key].ivf) || 0;
+// シャドウのときだけ別の下限(ivfs)を持つものがある(シャドウダークライ=6・2026-09-15テスター#22)。
+// 個体値の下限を見るときは必ずシャドウかどうかも渡す
+const ivFloorOf = (key, shadow) => {
+  const p = D.pokemon[key];
+  if (!p) return 0;
+  return (shadow && p.ivfs != null) ? p.ivfs : (p.ivf || 0);
+};
 const lvFloorOf = key => (D.pokemon[key] && D.pokemon[key].lvf) || 1;   // PLの下限(ジガルデ20)
-function rank1(key, cap, minIv, maxLv) {
-  minIv = Math.max(minIv || 0, ivFloorOf(key));
+function rank1(key, cap, minIv, maxLv, shadow) {
+  minIv = Math.max(minIv || 0, ivFloorOf(key, shadow));
   const ck = key + '|' + cap + '|' + (minIv || 0) + '|' + (maxLv || '');
   if (R1C.has(ck)) return R1C.get(ck);
   const v = rank1Calc(key, cap, minIv, maxLv);
@@ -1163,7 +1169,7 @@ sideEl.forEach((el, i) => {
     S[i].ivMode = b.dataset.v;
     el.querySelector('.custIv').style.display = S[i].ivMode === 'manual' ? 'block' : 'none';
     if (S[i].ivMode === 'manual' && S[i].key && !S[i].mIvs) {
-      const r1 = rank1(S[i].key, cap, 0, S[i].maxLv);
+      const r1 = rank1(S[i].key, cap, 0, S[i].maxLv, S[i].shadow);
       S[i].mIvs = r1.ivs.slice(); S[i].mLevel = r1.level;
     }
     if (S[i].mIvs) {
@@ -1175,7 +1181,7 @@ sideEl.forEach((el, i) => {
   // パターン別最適個体: 入手方法の個体値下限つきランク1個体を入力欄へ反映
   el.querySelectorAll('.ivpresets button').forEach(b => b.onclick = () => {
     if (!S[i].key) return;
-    const r = rank1(S[i].key, cap, +b.dataset.f, S[i].maxLv);
+    const r = rank1(S[i].key, cap, +b.dataset.f, S[i].maxLv, S[i].shadow);
     S[i].mIvs = r.ivs.slice(); S[i].mLevel = r.level;
     ivInputs[0].value = r.ivs[0]; ivInputs[1].value = r.ivs[1];
     ivInputs[2].value = r.ivs[2]; ivInputs[3].value = r.level;
@@ -1187,7 +1193,7 @@ sideEl.forEach((el, i) => {
     if (!S[i].mIvs) S[i].mIvs = [15, 15, 15];
     el.querySelectorAll('.ivpresets button').forEach(x => x.setAttribute('aria-pressed', false));   // 手入力したらパターン選択を解除
     if (k < 3) {
-      S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), ivFloorOf(S[i].key), 15); inp.value = S[i].mIvs[k];   // 交換不可は10未満にできない
+      S[i].mIvs[k] = clamp(Math.round(+inp.value || 0), ivFloorOf(S[i].key, S[i].shadow), 15); inp.value = S[i].mIvs[k];   // 交換不可は10未満にできない
       // 個体値に合わせてPLをCP上限内の最大(最適)レベルへ自動調整
       S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap, S[i].maxLv);
       ivInputs[3].value = S[i].mLevel;
@@ -2378,7 +2384,7 @@ function runMulti() {
     if (needMv) {   // わざ欄だけは先に埋めて、すぐ選べるようにする
       const mb = S[0].ivMode === 'manual' && S[0].mIvs
         ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }
-        : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+        : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }))(rank1(S[0].key, cap, 0, S[0].maxLv, S[0].shadow));
       fillMoves(0, mb);
     }
     box.innerHTML = metaOnlyHtml(list, needMy
@@ -2400,7 +2406,7 @@ function runMulti() {
   };
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
     ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }
-    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv));
+    : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv, S[0].shadow));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
   // SPアタック2を選んでいれば、2本を相手に合わせて使い分ける前提で計算する(わざ開放した実戦に合わせる)
   const myPols = policies(S[0].key, polOpts(0));
@@ -2428,7 +2434,7 @@ function runMulti() {
     const t0 = performance.now();
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
-      const r1 = rank1(m.k, cap);
+      const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
       const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
         bluff: metaBluff, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       const cells = [0, 1, 2].map(sh => {
@@ -2691,10 +2697,10 @@ function cnAllList(foeBase) {
   for (const key of KEYS) {
     if (isMega(key) && !megaOk) continue;
     const p = D.pokemon[key];
-    const r = rank1(key, cap);
     const { fasts, chargeds } = movePool(key);
     if (!fasts.length) continue;
     for (const sh of (p.shadow ? [false, true] : [false])) {
+      const r = rank1(key, cap, 0, undefined, sh);   // シャドウは下限が違うことがある(シャドウダークライ=6)
       const me = { ...PvpEngine.buildStats(D, { key, ivs: r.ivs, level: r.level, shadow: sh, cap }), buffs: [0, 0] };
       let f = null, fv = -1, c = null, cv = -1;
       for (const id of fasts) {
@@ -2728,7 +2734,7 @@ function runCounter() {
   // 倒したい相手(あいて)の設定。わざは対面ごとに相手側が最善を選ぶ前提で評価する
   const foeBase = S[1].ivMode === 'manual' && S[1].mIvs
     ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }
-    : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv));
+    : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv, S[1].shadow));
   // 「全ポケモン」は環境リストの代わりに、全ポケモン(シャドウ込み)から同じ形の候補を作る
   const list = cnTop === 'all' ? cnAllList(foeBase) : cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
   CV.pick = (k, j) => {
@@ -2774,7 +2780,7 @@ function runCounter() {
     const t0 = performance.now();
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
-      const r1 = rank1(m.k, cap);
+      const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
       const cdCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
         bluff: metaBluff, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       const cells = [0, 1, 2].map(sh => {
@@ -2885,7 +2891,7 @@ const PTR = { sig: '', ops: null };
 const ptrSig = () => `${cap}|${cup ? cup.slug : ''}|${metaBluff}|${SIMOPT.buffMode}`;
 // その場面での相手側の設定(環境リストの標準構成。表のマスと同じ前提でそろえる)
 const ptRoleOps = (list, sh) => list.map(m => {
-  const r1 = rank1(m.k, cap);
+  const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
   return { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
     bluff: metaBluff, shields: sh, fast: m.f || movePool(m.k).fasts[0],
     charged: [m.c1, m.c2].filter(Boolean) };
@@ -3342,7 +3348,7 @@ function ptBase(m, capX) {
   const cp = capX != null ? capX : cap;
   if (m.ivMode === 'manual' && m.mIvs)
     return { key: m.key, ivs: m.mIvs.slice(), level: m.mLevel, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
-  const r = rank1(m.key, cp, 0, m.maxLv || 51);
+  const r = rank1(m.key, cp, 0, m.maxLv || 51, !!m.shadow);
   return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
 }
 // シールドの枚数ごとの「穴」(3匹とも勝てない相手)の数。
@@ -3353,7 +3359,7 @@ function ptShieldHoles(list, bases, usedPols, curHoles) {
   [0, 1, 2].filter(sh => sh !== ptShield).forEach(sh => {
     let holes = 0;
     list.forEach(m => {
-      const r1 = rank1(m.k, cap);
+      const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
       const op = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
         bluff: metaBluff, shields: sh, fast: m.f || movePool(m.k).fasts[0],
         charged: [m.c1, m.c2].filter(Boolean) };
@@ -3440,7 +3446,7 @@ function runParty() {
     const t0 = performance.now();
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
-      const r1 = rank1(m.k, cap);
+      const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
       // bluff は必ず渡す(エンジンは未指定だとブラフする)。ここを揃えないと、
       // マスの勝敗とタップして開く1対1シミュの結果が食い違う
       const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap, bluff: metaBluff,
@@ -3674,7 +3680,7 @@ function ptRoughBase(key, shadow) {
 // 穴だけで選ぶと、そこにしか刺さらない尖ったポケモンばかりが上がってきてパーティが弱くなる
 function ptSwapRough(pool, targets, wide, keep) {
   const mk = list => list.map(m => {
-    const r1 = rank1(m.k, cap);
+    const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
     const st = { ...PvpEngine.buildStats(D, { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, cap }),
       buffs: [0, 0] };
     const mp = movePool(m.k);
@@ -3743,7 +3749,7 @@ function runPtSwap() {
   renderPtSwap();
   const n = B.idxs.length;
   const foes = B.list.map(m => {
-    const r1 = rank1(m.k, cap);
+    const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
     return { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
       bluff: metaBluff, shields: ptShield, fast: m.f || movePool(m.k).fasts[0],
       charged: [m.c1, m.c2].filter(Boolean) };
@@ -6839,7 +6845,7 @@ function blHitStart(use, body) {
   const token = ++BLV.token;
   const mkCfg = (k, s, sh) => {
     const mv = blMovesOf(k, s, cap);
-    const r1 = rank1(k, cap);
+    const r1 = rank1(k, cap, 0, undefined, !!s);
     return { key: k, ivs: r1.ivs, level: r1.level, shadow: !!s, timing: 'optimal', cap,
       bluff: metaBluff, shields: sh, fast: mv.f || movePool(k).fasts[0], charged: [mv.c1, mv.c2].filter(Boolean) };
   };
@@ -7285,7 +7291,7 @@ function gbAutoPrepare(onDone, onProg) {
   // 相手の前提は環境一覧・パーティ診断とそろえる(理想個体値・定番わざ・ブラフは画面の設定)。
   // シールドはおたがい1枚(0-0と2-2の真ん中)で1回だけ測る
   const cfg = m => {
-    const r1 = rank1(m.k, cap), d = mockDefaultMoves(m.k, !!m.s);
+    const r1 = rank1(m.k, cap, 0, undefined, !!m.s), d = mockDefaultMoves(m.k, !!m.s);
     return { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, cap, timing: 'optimal',
       bluff: metaBluff, shields: 1, fast: d.fast, charged: [d.c1, d.c2].filter(Boolean) };
   };
@@ -11829,7 +11835,7 @@ function run() {
   const base = S.map((s, i) => {
     const c = carryOf(i);
     if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), ...c };
-    const r1 = rank1(s.key, capX, 0, s.maxLv);
+    const r1 = rank1(s.key, capX, 0, s.maxLv, s.shadow);
     return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), ...c };
   });
   if (myStall) base[0].stallStart = myStall;
@@ -11856,7 +11862,7 @@ function run() {
       if (n) n.style.display = noCap ? 'none' : '';
     });
     // 交換できないポケモンは下限10未満の入手方法(大親友交換・シャドウレイド)を出さない
-    const fl = ivFloorOf(s.key);
+    const fl = ivFloorOf(s.key, s.shadow);
     el2.querySelectorAll('.ivpresets button').forEach(b => { b.style.display = +b.dataset.f < fl ? 'none' : ''; });
   });
   // 1対1シミュは「自分で選んだ構成の結果を見る」画面なので、

@@ -61,7 +61,7 @@ FORM_RE = re.compile(r'^(.*?)_(mega(?:_[xy])?|primal|alolan|galarian|hisuian|pal
 # 出力するキーの並び（既存ファイルと同じにして無駄な差分を出さない）
 # t=タイプ(対戦データのtyそのまま・大文字英語)。2026-08-16にタイプアイコン表示のため追加。
 # 種族値と同じく毎回同期する(タイプ変更の告知は無いが、元データに追従しておく)
-ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm', 'u', 'lf']
+ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm', 'u', 'us', 'lf']
 
 
 def ja_name(sid, name):
@@ -129,6 +129,11 @@ def main():
                 if p.get('lvf'): e['lf'] = p['lvf']
                 else: e.pop('lf', None)
                 updated.append((e['n'], 'lf', p.get('lvf')))
+            # シャドウのときだけの下限 us(シャドウダークライ=6・2026-09-15)も対戦データの ivfs に追従する
+            if (p.get('ivfs') or None) != e.get('us'):
+                if p.get('ivfs'): e['us'] = p['ivfs']
+                else: e.pop('us', None)
+                updated.append((e['n'], 'us', p.get('ivfs')))
             continue
         name = ja_name(sid, p['n'])
         if row(name, p['dex'], p['a'], p['df'], p['h']) in sigs:
@@ -150,6 +155,8 @@ def main():
             ent['m'] = 1
         if p.get('ivf'):
             ent['u'] = 1   # 交換不可=最低個体値10
+        if p.get('ivfs'):
+            ent['us'] = p['ivfs']   # シャドウのときだけの下限(シャドウダークライ=6)
         if p.get('lvf'):
             ent['lf'] = p['lvf']   # PLの下限(ジガルデ20)
         at = insert_at(arr, ent['d'])
@@ -187,6 +194,7 @@ def main():
         for n, b, a in updated:
             if b == 'u': print(f'  交換不可(最低個体値10)の印: {n} → {"付けた" if a else "外した"}')
             elif b == 'lf': print(f'  PL下限: {n} → {("PL" + str(a)) if a else "解除"}')
+            elif b == 'us': print(f'  シャドウのときの最低個体値: {n} → {a if a else "解除"}')
             else: print(f'  種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}')
     if dup:
         print(f'まったく同じ行がすでにあるので足さなかったもの（{len(dup)}件）:', '、'.join(dup))
