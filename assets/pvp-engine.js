@@ -427,9 +427,13 @@
         if (together || s.en >= 100) { s.waitCnt = 0; s.shotWait = 0; charging[i] = sync[i]; }
         else { s.cd = s.fast.tn; s.startedNow = true; }
       }
-      // ターン経過 → 完了した通常技の発生
+      // ターン経過 → このターンに完了する通常技は「着弾の予約」だけにする。
+      // **実際のダメージ・ゲージはゲージ技の解決のあと**に入れる(2026-09-15タダシさん実機検証・確定):
+      // 同じターンにゲージ技が発動したら、ゲージ技のダメージと能力変化が先に反映され、そのあとで
+      // 通常技のダメージが入る(1ターンわざも、複数ターンわざの最終ターンも同じ)。
       // 相手がゲージ技のターンに打ち始めた通常技は差し込み(前倒し)扱いなのでここでは進めない
       const row = { tn: turn, ev: [null, null], stalled, idle: [false, false] };
+      const landed = [false, false];   // このターンに着弾する通常技(ゲージ技のあとで入れる)
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
         if (charging[i] || stalled[i]) continue;
@@ -439,18 +443,10 @@
         // 画面には「1ターン待った」と出す(何も起きない行になって訳が分からなくなるため)
         if (s.idleNow) { s.idleNow = false; row.idle[i] = true; continue; }
         s.cd--;
-        if (s.cd === 0) {
-          const dmg = fastDamage(i);
-          sides[1 - i].hp -= dmg;
-          s.en = Math.min(100, s.en + s.fast.eg);
-          row.ev[i] = { move: s.fast.n, dmg };
-        }
+        if (s.cd === 0) landed[i] = true;
       }
       row.state = sides.map(s => ({ hp: Math.max(0, s.hp), en: s.en }));
       rows.push(row);
-      // 2026年新システム: 同ターンにノーマルアタックで倒れてもそのターンのゲージ技は解決される
-      const koByFast = [sides[0].hp <= 0, sides[1].hp <= 0];
-      if ((sides[0].hp <= 0 || sides[1].hp <= 0) && !charging[0] && !charging[1]) break;
 
       // ゲージ技の発動(同時の場合は攻撃実数値が高い側が先=CMP)
       const order = sides[0].atk * buffMult(sides[0].buffs[0]) >= sides[1].atk * buffMult(sides[1].buffs[0]) ? [0, 1] : [1, 0];
@@ -458,7 +454,7 @@
         const mv = charging[i];
         if (!mv) continue;
         const s = sides[i], o = sides[1 - i];
-        if (s.hp <= 0 && !koByFast[i]) continue;   // 同ターンの相手ゲージ技で倒れた場合のみ不発
+        if (s.hp <= 0) continue;   // 同ターンの相手ゲージ技(CMPで先)で倒れた場合だけ不発(通常技はまだ着弾していない)
         s.en -= mv.e;
         // ウッウ: なみのり・ダイビングを撃つと獲物を咥える。**撃った時点のHP**で姿が決まる
         // (50%以上=うのみ / 50%未満=まるのみ)。相手がシールドで防いでも姿は変わる
@@ -547,6 +543,29 @@
           fev[1 - i] = { move: o.fast.n, dmg, forwarded: true };
           rows.push({ tn: '-', ev: fev, state: sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })) });
           if (s.hp <= 0) break;
+        }
+      }
+      // 予約しておいた通常技の着弾を、ゲージ技(とその能力変化)のあとに入れる(2026-09-15確定)。
+      // ダメージはこの時点の能力変化で計算する＝ゲージ技で下がった攻撃・上がった防御が効く。
+      // ゲージ技で倒された側の通常技も入る(同じターンに投げたわざは着弾する＝相打ちがありうる)
+      {
+        const fev = [null, null];
+        let any = false;
+        for (let i = 0; i < 2; i++) {
+          if (!landed[i]) continue;
+          const s = sides[i];
+          const dmg = fastDamage(i);
+          sides[1 - i].hp -= dmg;
+          s.en = Math.min(100, s.en + s.fast.eg);
+          fev[i] = { move: s.fast.n, dmg };
+          any = true;
+        }
+        if (any) {
+          const st = sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en }));
+          // 番号行が空(このターンにゲージ技が無い)なら通常技は番号行に入る。ゲージ技があった
+          // ターンは、ゲージ技が番号行・通常技の着弾は'-'行(＝処理された順のまま)
+          if (!row._merged && !row.ev[0] && !row.ev[1]) { row.ev = fev; row.state = st; }
+          else rows.push({ tn: '-', ev: fev, state: st });
         }
       }
       if (sides[0].hp <= 0 || sides[1].hp <= 0) break;
