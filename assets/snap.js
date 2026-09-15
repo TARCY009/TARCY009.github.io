@@ -441,6 +441,26 @@
     });
     return out;
   }
+  // 条件のピルを左からk倍の大きさで描く(2026-09-16タダシさん指示: 一覧の画像もグラフ画像と同じ色に)。
+  // シャドウ＝紫＋炎、メガ・ゲンシ／メガLv＝マゼンタ→紫のグラデーション、ほかはツールの色。上半分に薄い光沢
+  function drawPills(cx, tags, x, y, maxW, k, col) {
+    if (!flameP) flameP = new Path2D(FLAME);
+    cx.font = '800 ' + (13 * k) + 'px ' + JP;
+    var tx = x, H = 26 * k, ico = 17 * k;
+    tags.forEach(function (t) {
+      var fl = /^シャドウ/.test(t), mega = /メガ|ゲンシ/.test(t);
+      var pad = fl ? 7 * k + ico + 4 * k : 11 * k;
+      var tw = cx.measureText(t).width + pad + 11 * k;
+      if (tx + tw > x + maxW) return;
+      rrect(cx, tx, y, tw, H, H / 2);
+      if (mega) { var mg = cx.createLinearGradient(tx, 0, tx + tw, 0); mg.addColorStop(0, '#d63384'); mg.addColorStop(1, '#7a3cc4'); cx.fillStyle = mg; }
+      else cx.fillStyle = fl ? '#7c3aed' : hexA(col, 0.5);
+      cx.fill();
+      rrect(cx, tx, y, tw, H / 2, H / 4); cx.fillStyle = 'rgba(255,255,255,.14)'; cx.fill();
+      if (fl) { var s2 = ico / 1024; cx.save(); cx.translate(tx + 7 * k, y + (H - ico) / 2); cx.scale(s2, s2); cx.fillStyle = '#ffffff'; cx.fill(flameP); cx.restore(); }
+      cx.fillStyle = '#ffffff'; cx.fillText(t, tx + pad, y + 18 * k); tx += tw + 8 * k;
+    });
+  }
 
   // 保存する画像は全ツール「四隅を丸く・枠の外は透明のPNG」(2026-09-12タダシさん指示「タイプ別火力と同じ方式に」)。
   // 丸みはタイプ別火力のグラフと同じ比率(幅1920で半径34)。edge=true なら同じ青系の細い縁取りも付ける。
@@ -513,15 +533,7 @@
       ctxLines.forEach(function (ln) { cx.fillText(ln, P, y + 18); y += 26; });
     }
     if (tags.length) {
-      y += 14; cx.font = '800 13px ' + JP;
-      var tx = P;
-      tags.forEach(function (t) {
-        var tw = cx.measureText(t).width + 22;
-        if (tx + tw > P + W) return;
-        rrect(cx, tx, y, tw, 26, 13); cx.fillStyle = hexA(col, 0.22); cx.fill();
-        cx.strokeStyle = hexA(col, 0.55); cx.lineWidth = 1; cx.stroke();
-        cx.fillStyle = '#ffffff'; cx.fillText(t, tx + 11, y + 18); tx += tw + 8;
-      });
+      y += 14; drawPills(cx, tags, P, y, W, 1, col);
       y += 30;
     }
     y += 22;
@@ -550,15 +562,7 @@
       wrapText(cx, ctxs.join('　／　'), maxW).forEach(function (ln) { cx.fillText(ln, x, y + 18 * k); y += 26 * k; });
     }
     if (tags.length) {
-      y += 14 * k; cx.font = '800 ' + (13 * k) + 'px ' + JP;
-      var tx = x;
-      tags.forEach(function (t) {
-        var tw = cx.measureText(t).width + 22 * k;
-        if (tx + tw > x + maxW) return;
-        rrect(cx, tx, y, tw, 26 * k, 13 * k); cx.fillStyle = hexA(col, 0.22); cx.fill();
-        cx.strokeStyle = hexA(col, 0.55); cx.lineWidth = k; cx.stroke();
-        cx.fillStyle = '#ffffff'; cx.fillText(t, tx + 11 * k, y + 18 * k); tx += tw + 8 * k;
-      });
+      y += 14 * k; drawPills(cx, tags, x, y, maxW, k, col);
       y += 30 * k;
     }
     return y;
