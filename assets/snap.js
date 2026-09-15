@@ -692,8 +692,9 @@
     var logo = dev ? null : await loadLogo();
     // 真ん中の淡いロゴ（切り取られても残る透かし・開発者の端末では出さない）
     if (logo) {
+      // 中央より少し上に置く(2026-09-15タダシさん指示: 棒の上に「ナビ」の文字が少し見えるくらい・タイプ別火力と同じ位置)
       var cs = Math.min(R - L, B - T) * 0.62;
-      cx.globalAlpha = 0.07; cx.drawImage(logo, (L + R) / 2 - cs / 2, (T + B) / 2 - cs / 2, cs, cs); cx.globalAlpha = 1;
+      cx.globalAlpha = 0.07; cx.drawImage(logo, (L + R) / 2 - cs / 2, (T + B) / 2 - cs / 2 - (B - T) * 0.10, cs, cs); cx.globalAlpha = 1;
     }
     // 目盛り（点線）と単位
     cx.textBaseline = 'alphabetic';

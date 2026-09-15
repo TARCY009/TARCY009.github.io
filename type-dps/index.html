@@ -436,7 +436,8 @@ fetch('/assets/icons/home/icon-192.png').then(r=>r.blob()).then(b=>new Promise(r
 function watermarkSVG(W,H,L,R,T,B){
   if(devClean()) return '';
   let s='';
-  const cs=Math.min(R-L,B-T)*0.62, cx=(L+R)/2-cs/2, cy=(T+B)/2-cs/2;
+  // 中央より少し上に置く(2026-09-15タダシさん指示: 棒の上に「ナビ」の文字が少し見えるくらい)
+  const cs=Math.min(R-L,B-T)*0.62, cx=(L+R)/2-cs/2, cy=(T+B)/2-cs/2-(B-T)*0.10;
   if(LOGO_URI) s+=`<image href="${LOGO_URI}" x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${cs.toFixed(1)}" height="${cs.toFixed(1)}" opacity=".07"/>`;
   // ロゴの右に「GOナビ」、その下の行に「gonavi.jp」(横に並べると太字の幅の見積もりがずれてくっつくため2段にする)
   const fs=30, us=21, lg=58, x2=W-72, y0=22;
