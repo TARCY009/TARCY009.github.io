@@ -4689,6 +4689,15 @@ function rbChoices(p, ctx) {
 }
 
 // 決めた答えを、その対面の決定(dec)に反映する
+// 答えがいまの場面に合っているか(2026-09-16 テスター#18「マッギョがキュウコンのウェザーボールを撃った」の根治):
+// わざ(mv)は**その場に出ているポケモンのSPアタック**に、交代先(to)は**出せる控え**に限る。
+// 前の決断を選び直す・⇄で交代する、と対面の並びが変わるので、記録(RB.ans)に残った古い答え
+// (別のポケモンのわざ・倒れた控え)が同じ鍵(対面:側:種別:連番)に当たることがある。
+// エンジンは台本に渡されたわざをそのまま撃つので、**使う瞬間にここで弾く**(合わなければ無かったことにする)。
+// ⚠ 答えを台本へ渡す場所を新しく作るときも、必ずこれを通すこと
+const ansFits = (a, charged, swTo) => !!a
+  && (a.mv == null || (charged || []).includes(a.mv))
+  && (a.to == null || !swTo || swTo.includes(a.to));
 function rbApply(dec, p, ans) {
   if (p.kind === 'sp') {
     // おまかせ＝エンジンの最適タイミング判断にゆだねる(従来の自動とまったく同じ動き)
@@ -4902,6 +4911,8 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
       p.key = rbKey(li, p.kind, p.seq, p.w);
       p.gt = base + p.tn;
       if (p.kind === 'sp') { p.optNs = optNsOf(p); p.noSp = finishNoSp(p); }
+      // 古い答えが、いま場に出ているポケモンのわざ／出せる控えに合わなければ無かったことにする(ansFits・GBLと同じ守り)
+      if (ans[p.key] && !ansFits(ans[p.key], ctx.spList, p.kind === 'swap' ? ctx.swTo : null)) delete ans[p.key];
       const a = ans[p.key] || (stepwise ? null : RB_AUTO[p.kind]);
       if (!a) { pending = { ...p, ctx, opts: rbChoices(p, ctx) }; break; }
       handled.add(p.key);
@@ -4958,12 +4969,13 @@ function rbPlay(picks, foes, myShields, ans, stepwise, worst) {
         const rest = picks.map((p, k) => k).filter(k => st[k].alive);
         if (rest.length > 1) {
           const key = rbKey(li, 'next', 0, 0), nctx = { ...ctx, swTo: rest };
+          if (ans[key] && !ansFits(ans[key], null, rest)) delete ans[key];   // 倒れた控えを指す古い答えは捨てる
           const a = ans[key] || (stepwise ? null : RB_AUTO.next);
           const pt = { kind: 'next', seq: 0, w: 0, key, tn: res.turns, gt: base, ctx: nctx,
             opts: rbChoices({ kind: 'next' }, nctx), ans: a, auto: !ans[key] };
           if (!a) { pending = pt; legs[legs.length - 1].pending = pt; break; }
           legs[legs.length - 1].nextPoint = pt;
-          mi = a.a === 'to' ? a.to : nextAlive(mi);
+          mi = a.a === 'to' && rest.includes(a.to) ? a.to : nextAlive(mi);
         } else mi = rest.length ? rest[0] : -1;
       }
       foeEntry = Math.max(meDown ? RK.koMe : 0, foeDown ? RK.koFoe : 0);
@@ -5360,6 +5372,10 @@ function rbTrim(key) {
     const q = RBUI.pts[k];
     if (j > i && (!q || q.gt == null || q.gt >= g)) delete RB.ans[k];
   });
+  // 画面に出ていない答え(古い並びのときに記録され、いまの再生では使われなかったもの)も、
+  // 選び直した対面より後ろの対面ぶんは消す(2026-09-16 テスター#18: 残っていると並びが変わったとき別のポケモンに当たる)
+  const li0 = +key.split(':')[0];
+  Object.keys(RB.ans).forEach(k => { if (!RBUI.pts[k] && +k.split(':')[0] > li0) delete RB.ans[k]; });
 }
 function rbAskTitle(p) {
   if (p.kind === 'lead') return SWAPMK + ' 開幕交代';
@@ -10115,12 +10131,17 @@ function gbPlay(picks, foes, ans, stepwise) {
       // 交代を押したあと(押した瞬間〜実際に交代するターン)のじぶんのSPの質問は出さない(2026-09-08タダシさん指示)。
       // 実戦では交代を押したらSPは撃てない。従来は同じターンにSPの選択もできてしまい、
       // 交代受けを狙いながらSPも撃てる(ありえない)状態になっていた
-      if (p.side === 0 && p.kind === 'sp' && dec[0].mswP != null && p.tn >= dec[0].mswP) { handled.add(p.key); continue; }
+      // 飛ばした質問の答えは記録からも消す(画面に出ないまま残ると、並びが変わったとき別のポケモンに当たる)
+      if (p.side === 0 && p.kind === 'sp' && dec[0].mswP != null && p.tn >= dec[0].mswP) { handled.add(p.key); delete ans[p.key]; continue; }
       // 投げ済みのSP: 対面の頭の最初のSPは、交代前に投げたわざをそのまま即打ち(交代先を見て選び直さない)。
       // 投げている最中は交代もできない(あいての対面の頭の「交代する？」は残る)
       let forced = null;
       if (p.kind === 'sp' && p.seq === 0 && inflight[p.side]) forced = { a: 'fire', mv: inflight[p.side] };
       else if (p.kind === 'swap' && p.seq === 0 && p.side === 1 && inflight[1]) forced = { a: 'stay' };
+      // 古い答え・投げ済みが、いま場に出ているポケモンのわざ／出せる控えに合わなければ無かったことにする(ansFits)
+      const chS = ((p.side ? P1 : P0).pol.charged) || [];
+      if (forced && !ansFits(forced, chS, null)) forced = null;
+      if (ans[p.key] && !ansFits(ans[p.key], chS, p.kind === 'swap' ? ctx.swTo[p.side] : null)) delete ans[p.key];
       let a = forced || ans[p.key];
       if (!a && p.side === 1) {
         // あいてAIの判断: その時点より前に押されたじぶんのSPだけを見せる(交代受けの読み tlPred も同じ範囲で作り直す)
@@ -10264,6 +10285,7 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (rest.length > 1) {
         const key = gbKey(li, s, 'next', 0, 0);
         const nctx = { ...ctx, swTo: s ? [ctx.swTo[0], rest] : [rest, ctx.swTo[1]] };
+        if (ans[key] && !ansFits(ans[key], null, rest)) delete ans[key];   // 倒れた控えを指す古い答えは捨てる
         // 両方が同時に倒れたときは、AIはユーザーが次に何を出すか**分からない**ので読み合いにならない。
         // 完全な運まかせなので**2分の1のコイントス**にする(2026-08-18タダシさん指示)。
         // ただし決断を1つ選ぶたびに1ターン目から回し直す作りなので、**同じ場面なら必ず同じ結果**に
@@ -10279,7 +10301,7 @@ function gbPlay(picks, foes, ans, stepwise) {
         if (!a) { pending = pt; legs[legs.length - 1].pending = pt; break; }
         if (s === 0) legs[legs.length - 1].nextPoint = pt;
         else legs[legs.length - 1].foeNextPoint = pt;
-        cur[s] = a.a === 'to' && ros[s][a.to] ? a.to : nextAlive(s, cur[s]);
+        cur[s] = a.a === 'to' && rest.includes(a.to) ? a.to : nextAlive(s, cur[s]);
         // 選ぶのにかかった時間(秒・答えに t で入る)は時計に足す＝交代のクールタイムと制限時間に効く
         if (s === 0 && a.t) extraTot += Math.round(Math.min(GB_NEXT_WAIT / 1000, Math.max(0, +a.t)) * 2);
       } else cur[s] = rest[0];
