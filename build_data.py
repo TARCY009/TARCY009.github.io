@@ -45,6 +45,7 @@ SUPP_EQ = {  # 通常技の特別枠へ追加
     'MEWTWO': ['COUNTER_FAST'],                       # カウンター(GOフェス2026)
     'OINKOLOGNE':        ['MUD_SLAP_FAST'],           # パフュートン(オス): どろかけ(GM未反映・2026-08-13確認)
     'OINKOLOGNE_FEMALE': ['MUD_SLAP_FAST'],           # パフュートン(メス): 同上
+    'ZOROARK':           ['SUCKER_PUNCH_FAST'],       # ゾロアーク: ふいうち(コミュニティデイ2026-10の特別わざ・ゾロアは覚えない・ヒスイゾロアークは別キーで対象外)
 }
 # 2026-06シーズン「新たな歩み」の新規習得技(通常入手枠)。GM未反映のため手動補完。
 # 出典: https://pokemongo.com/ja/news/go-battle-league-forever-forward

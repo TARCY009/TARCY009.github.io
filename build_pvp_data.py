@@ -81,6 +81,8 @@ MANUAL_SHADOW = {   # 2026-09-08 実装確定
 MANUAL_LEARN = {
     'toxtricity_amped':   {'c': ['SWIFT']},
     'toxtricity_low_key': {'c': ['SWIFT']},
+    # ゾロアーク: ふいうち(コミュニティデイ2026-10の特別わざ・特別枠 eq)。ゾロアは覚えない。ヒスイゾロアーク(zoroark_hisuian)は対象外
+    'zoroark':            {'eq': ['SUCKER_PUNCH']},
 }
 HIDDEN_FORMS = {'aegislash_blade', 'mimikyu_busted', 'cramorant_gulping', 'cramorant_gorging', 'morpeko_hangry'}
 
