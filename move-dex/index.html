@@ -374,7 +374,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <li><b>効果</b> … 能力変化です。敵防⬇️=相手の防御ダウン、自攻⬆️=自分の攻撃アップ。矢印の数が段階、下の数字は発動する確率です</li>
   </ul>
   <h4>並び順</h4>
-  <p>最初は<b>効率の高い順</b>(ジム・レイド=DPS／トレーナーバトル=ノーマルアタックはDPT・SPアタックはDPE)です。表の見出しをタップすると、その数値の高い順に並べ替えます。</p>
+  <p>最初は<b>わざの名前のあいうえお順</b>です。表の見出し(威力・DPSなど)をタップすると、その数値の順に並べ替えます(時間・ターン・ゲージ・消費は少ない順、ほかは高い順)。「わざ」の見出しをタップするとあいうえお順に戻ります。</p>
   <h4>特別わざ(*)</h4>
   <p>わざ名が<b style="color:var(--special)">オレンジ色＋うしろに「*」</b>のものは、<b>覚えるポケモンすべてにとって特別なわざ(レガシー・コミュニティデイ限定など)</b>であることの目印です。通常のわざマシンでは覚えられません。覚えるポケモンの一覧でも、そのポケモンにとって特別なわざなら名前のうしろに「*」が付きます。</p>
   <h4>＋わざ(メガシンカの追加SPアタック)</h4>
@@ -577,15 +577,17 @@ function sectionHtml(key,title,kind,rows,opts){
   opts=opts||{};
   const cols=COLS[kind];
   const pve=kind.startsWith('pve');
-  const sk=state.sort[key]||cols.find(c=>c.def).k;
-  const col=cols.find(c=>c.k===sk)||cols.find(c=>c.def);
+  // 最初の並びはあいうえお順(2026-09-16タダシさん指示)。見出しをタップするとその数値の順
+  const sk=state.sort[key]||'name';
+  const col=cols.find(c=>c.k===sk)||null;
   const mOf=e=>pve?GO.moves[e.gid]:PVP.moves[e.pid];
   const idOf=e=>pve?e.gid:e.pid;
-  const val=e=>col.v(mOf(e),idOf(e));
-  rows=rows.slice().sort((a,b)=>{ const d=col.asc?val(a)-val(b):val(b)-val(a); return d||a.n.localeCompare(b.n,'ja'); });
-  const head=`<th class="nm">わざ</th>`+cols.map(c=>c.eff
+  const val=e=>col?col.v(mOf(e),idOf(e)):0;
+  const byName=(a,b)=>a.n.localeCompare(b.n,'ja');
+  rows=rows.slice().sort((a,b)=>{ if(!col)return byName(a,b); const d=col.asc?val(a)-val(b):val(b)-val(a); return d||byName(a,b); });
+  const head=`<th class="nm${col?'':' on'}" data-k="name" title="タップであいうえお順に並べ替えます">わざ</th>`+cols.map(c=>c.eff
     ?`<th title="${c.tip}">${c.h}</th>`
-    :`<th data-k="${c.k}" class="${c.k===col.k?'on':''}" title="${c.tip?c.tip+'。':''}タップでこの順に並べ替えます">${c.h}</th>`).join('');
+    :`<th data-k="${c.k}" class="${col&&c.k===col.k?'on':''}" title="${c.tip?c.tip+'。':''}タップでこの順に並べ替えます">${c.h}</th>`).join('');
   const body=rows.map(e=>{
     const m=mOf(e), id=idOf(e);
     const extra=[(!pve||kind!=='pveSp')?'':gaugeBar(m,id), e.plus?plusWho(e):''].filter(Boolean).join('');
