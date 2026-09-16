@@ -1,0 +1,166 @@
+/* マックスバトル タイプ別ランキング（アタッカー /max-type/ ・タンク /max-type/tank/ の共通の見た目） */
+/* 色は :root(ダーク=既定) と :root.light の2ブロックだけで決める。
+   行のデザインはマックスバトル対策ツールと同じ(同じ仲間のツールだと一目で分かるように) */
+:root{
+  --bg:#0b0912; --bg2:#131022;
+  --card:#171128; --card2:#1e1633; --line:#2d2347; --line2:#3d3060;
+  --text:#f3eefb; --sub:#9d92b8; --faint:#6f6590;
+  --dyna:#ff3d6e; --dyna2:#ff7a5c; --violet:#8b5cf6;
+  --warn:#ffb35c; --special:#ff9750;
+  --gold1:#ffd76a; --gold2:#e8a23d;
+  --sil1:#e6edf7; --sil2:#9fb0c6; --brz1:#f0b183; --brz2:#c2723f;
+  --f3a:#c9793a; --f3b:#8a4a22; --f3c:#7a4a5e;
+  --nmink:#fff; --nmsh:rgba(0,0,0,.45);
+  --ptsgrad:linear-gradient(180deg,#fff,#e9d9ff);
+  --no1pts:linear-gradient(180deg,#ffd76a,#fff2c8);
+  --okink:#4ad6b8; --onwarn:#33210a;
+  --res2bg:#2b6b5c; --res2ink:#bff2e4;
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabsh:rgba(0,0,0,.4); --tabin:rgba(255,255,255,.06);
+  --panel:linear-gradient(180deg,rgba(30,22,51,.94),rgba(23,17,40,.94));
+  --bgimg:
+    radial-gradient(900px 480px at 50% -160px, rgba(255,61,110,.16), transparent 62%),
+    radial-gradient(700px 400px at 85% -120px, rgba(139,92,246,.12), transparent 60%),
+    radial-gradient(900px 560px at 10% 110%, rgba(74,214,184,.08), transparent 62%),
+    #0b0912;
+  --cardsh:none;
+  --tcolor:#0b0912;
+  --radius:16px;
+  font-size:16px;
+}
+:root.light{
+  --bg:#f3f0fb; --bg2:#ffffff;
+  --card:rgba(255,255,255,.90); --card2:rgba(252,250,255,.90); --line:#e6e0f5; --line2:#d6ccee;
+  --text:#241c38; --sub:#645a80; --faint:#8d84a6;
+  --warn:#c9761a; --special:#d1490a;
+  --sil1:#ffffff; --sil2:#b9c6d6; --brz1:#f7c9a4; --brz2:#cf8551;
+  --f3a:#d98a4d; --f3b:#a35a28; --f3c:#8f5f75;
+  --nmink:#241c38; --nmsh:rgba(0,0,0,.10);
+  --ptsgrad:linear-gradient(180deg,#3a2d5c,#6b4aa8);
+  --no1pts:linear-gradient(180deg,#c98a00,#e8a23d);
+  --okink:#12806a; --onwarn:#ffffff;
+  --res2bg:#d6f0e8; --res2ink:#14604e;
+  --tab:linear-gradient(180deg,#fff,#f4f0fc); --tabsh:rgba(60,30,90,.13); --tabin:#fff;
+  --panel:rgba(255,255,255,.88);
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,61,110,.16), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(139,92,246,.17), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(74,214,184,.14), transparent 62%),
+    linear-gradient(165deg,#fdeef5 0%,#f2ecfd 50%,#ecf8f4 100%);
+  --cardsh:0 14px 30px -18px rgba(150,80,170,.30), 0 1px 0 rgba(255,255,255,.8) inset;
+  --tcolor:#f3f0fb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bgimg);background-attachment:fixed;min-height:100vh;color:var(--text);
+  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+  line-height:1.55;padding-bottom:72px}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+header{padding:26px 0 6px}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#e04e74;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(224,78,116,.55),transparent)}
+h1{font-size:1.45rem;font-weight:900;letter-spacing:.03em;margin-top:8px}
+@media (max-width:430px){h1{font-size:1.28rem}}
+h1 .ttl{white-space:nowrap}
+.expl{display:none}
+.explain .expl{display:revert}
+.enote{font-size:.72rem;color:var(--sub);line-height:1.75;margin:8px 2px 0}
+
+/* ── アタッカー／タンク(マックスバトル対策と同じ大きなタブ) ── */
+.tabs{display:flex;gap:8px;margin-top:16px}
+.tab{flex:1;display:block;text-align:center;text-decoration:none;padding:12px;border-radius:var(--radius);border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s}
+.tab[aria-current="page"]{background:linear-gradient(135deg,var(--dyna),var(--dyna2));border-color:transparent;color:#2b0512}
+.tab.tank[aria-current="page"]{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
+
+/* ── タイプの選択(タイプ別火力ランキングと同じアイコンのグリッド) ── */
+.typegrid{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;padding:12px;margin-top:12px;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--cardsh)}
+.tbtn{font:inherit;width:48px;height:48px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:1px solid var(--line2);border-radius:13px;background:var(--tab);
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:transform .12s,box-shadow .12s;padding:0}
+.tbtn:hover{transform:translateY(-1px)}
+.tbtn[aria-pressed="true"]{transform:translateY(-1px);border-color:var(--tc);
+  box-shadow:0 0 0 2px var(--tc),inset 0 1px 0 rgba(255,255,255,.25)}
+
+/* ── 見出しと切り替え ── */
+.rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.tttl{display:inline-flex;align-items:center;gap:8px;font-size:1.08rem;font-weight:900}
+.tttl>span{display:inline-flex;align-items:center;gap:8px}
+.tttl small{font-size:.72rem;font-weight:700;color:var(--sub)}
+.rhead .gtabs{margin-left:auto}
+.gtabs button{font-size:.85rem;padding:8px 16px}
+.gtabs button small{display:block;font-size:.58rem;font-weight:700;opacity:.8;line-height:1.2}
+
+/* ── ランキング(マックスバトル対策と同じ行) ── */
+.list{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.row{position:relative;background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--cardsh)}
+.row.no1,.row.no2,.row.no3{border-color:transparent;overflow:hidden}
+.row.no1::after,.row.no2::after,.row.no3::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;pointer-events:none}
+.row.no1::after{background:linear-gradient(180deg,#ffe08a,#f2c14e 55%,#c99a14)}
+.row.no2::after{background:linear-gradient(180deg,#f2f6fb,#c8d3de 55%,#8f9dad)}
+.row.no3::after{background:linear-gradient(180deg,#e8b489,#c98d5f 55%,#a06437)}
+.row.no1::before,.row.no2::before,.row.no3::before{content:"";position:absolute;inset:0;border-radius:var(--radius);padding:1px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.row.no1::before{background:linear-gradient(135deg,var(--gold1),var(--dyna),var(--violet))}
+.row.no2::before{background:linear-gradient(135deg,var(--sil1),var(--sil2),var(--violet))}
+.row.no3::before{background:linear-gradient(135deg,var(--f3a),var(--f3b),var(--f3c))}
+.prow{display:flex;align-items:center;gap:12px;margin-bottom:9px;padding-top:9px}
+.pname{display:flex;align-items:center;flex-wrap:wrap;flex:1;min-width:0}
+.nameplate{display:inline-block;max-width:100%;position:relative;padding:7px 13px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(255,61,110,.16) 65%,rgba(255,122,92,.12));border:1px solid rgba(255,255,255,.16);box-shadow:0 3px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10);line-height:1.35}
+.nameplate .nm{font-weight:900;font-size:1.31rem;letter-spacing:.02em;color:var(--nmink);text-shadow:0 1px 10px var(--nmsh);vertical-align:middle}
+.nameplate .tgroup{margin-left:8px;vertical-align:middle}
+.row.no1 .nameplate{background:linear-gradient(135deg,rgba(255,215,106,.30),rgba(255,61,110,.20));border-color:rgba(255,215,106,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.row.no2 .nameplate{background:linear-gradient(135deg,rgba(230,237,247,.24),rgba(139,92,246,.16));border-color:rgba(200,214,230,.40);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.row.no3 .nameplate{background:linear-gradient(135deg,rgba(201,121,58,.30),rgba(122,74,94,.20));border-color:rgba(201,121,58,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.cattag{position:absolute;top:-10px;left:12px;transform:skewX(-12deg);font-size:.58rem;font-weight:800;letter-spacing:.06em;padding:2px 10px;border-radius:5px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+.cattag.G{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512}
+.cattag.D{background:linear-gradient(135deg,#7fb0ff,#5f86e8);color:#0a1533}
+.cattag.S{background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
+.top{display:flex;align-items:center;gap:12px}
+.rank{min-width:56px;text-align:center;font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1rem;border-radius:10px;padding:6px 0;background:var(--bg2);color:var(--faint);border:1px solid var(--line)}
+.rank.r1{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#3a2500;border-color:transparent}
+.rank.r2{background:linear-gradient(135deg,var(--sil1),var(--sil2));color:#20303e;border-color:transparent}
+.rank.r3{background:linear-gradient(135deg,var(--brz1),var(--brz2));color:#2e1602;border-color:transparent}
+.namebox{flex:1;min-width:0}
+.tgroup{display:inline-flex;gap:4px;white-space:nowrap;flex-shrink:0}
+.moves{color:var(--sub);font-size:.78rem;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.moves+.moves{margin-top:5px}
+.moves b{color:var(--text);font-weight:700}
+.sp{color:var(--special)}
+.pts{text-align:right;min-width:88px}
+.pts b{font-family:"Oswald","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:1.55rem;background:var(--ptsgrad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.row.no1 .pts b{background:var(--no1pts);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pts small{color:var(--faint);font-size:.64rem;display:block;letter-spacing:.14em}
+.meter{display:block;height:8px;border-radius:99px;overflow:hidden;background:var(--bg2);margin-top:11px}
+.meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--dyna) 60%,var(--dyna2))}
+.list.tank .meter i{background:linear-gradient(90deg,#3aa8d8,#4ad6b8)}
+.detail{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;color:var(--sub);font-size:.72rem}
+.detail b{color:var(--text);font-weight:700}
+.chip{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800}
+.halfchip{background:linear-gradient(135deg,#cdeeff,#a9dcf6);color:#0c3346}
+.nohalf{background:var(--warn);color:var(--onwarn)}
+.guardb{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
+.wallb{background:linear-gradient(135deg,#c98fff,#9a5cf0);color:#1e0a3a}
+.effres{background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
+.effres2{background:var(--res2bg);color:var(--res2ink);border:1px solid var(--okink)}
+.eff1{background:var(--bg2);color:var(--sub);border:1px solid var(--line)}
+.eff16{background:var(--warn);color:var(--onwarn)}
+.eff256{background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512}
+.arrow{color:var(--faint)}
+.more{margin-top:16px;width:100%;padding:14px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--sub);font-size:.9rem;cursor:pointer;font-family:inherit;transition:all .15s}
+.more:hover{border-color:var(--dyna);color:var(--text)}
+.empty{margin-top:22px;color:var(--sub);text-align:center;font-size:.9rem}
+.backlink{display:inline-flex;align-items:center;gap:6px;margin-top:22px;font-size:.8rem;font-weight:800;color:var(--sub);text-decoration:none;border:1px solid var(--line2);border-radius:999px;padding:8px 16px;background:var(--card)}
+.backlink:hover{color:var(--text);border-color:var(--dyna)}
+:focus-visible{outline:2px solid var(--dyna);outline-offset:2px}
+@media (max-width:560px){
+  .rhead .gtabs{margin-left:0;width:100%}
+  .gtabs button{flex:1 1 auto}
+  .tbtn{width:42px;height:42px}
+}
+@media (max-width:480px){
+  .rank{min-width:46px;font-size:.9rem}
+  .pts{min-width:72px}
+  .pts b{font-size:1.35rem}
+  .nameplate .nm{font-size:1.15rem}
+}
+/* タンクのページは英字の小見出しをタイトルの青緑に合わせる */
+body[data-mode="tank"] .eyebrow{color:#2fb8a0}
+body[data-mode="tank"] .eyebrow::after{background:linear-gradient(90deg,rgba(47,184,160,.55),transparent)}

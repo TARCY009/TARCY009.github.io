@@ -76,7 +76,8 @@
     '/iv-checker/': '個体値チェッカー',
     '/pokedex/': 'ステータス図鑑',
     '/bulk/': '耐久指数ランキング',
-    '/max-type/': 'マックスバトル タイプ別ランキング'
+    '/max-type/': 'マックスバトル タイプ別アタッカー',
+    '/max-type/tank/': 'マックスバトル タイプ別タンク'
   };
   var path = location.pathname.replace(/index\.html$/, '');
   if (path.charAt(path.length - 1) !== '/') path += '/';
