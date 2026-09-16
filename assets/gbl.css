@@ -2409,10 +2409,15 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    小さな前書き → 水色→白のグラデーション文字(1.85rem) → 水色の下線(マックスバトルの見出しと同じ流儀)。
    ⚠ グラデーション文字は .sdgt(文字だけ)に限定し、中に他の要素を入れない(iPhone対策の恒久ルール) */
 .sdglbl .sdgeb{display:block;font-size:.66rem;font-weight:800;letter-spacing:.14em;color:#2aa9c4;margin-bottom:2px}
-.sdglbl .sdgrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.sdglbl .sdgrow{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px}
 .sdglbl .sdgt{font-size:1.85rem;font-weight:900;letter-spacing:.02em;line-height:1.1;
   background:linear-gradient(180deg,#ffffff 0%,#dffaff 45%,#43e0ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sdglbl .sdgtag{font-size:.62rem;font-weight:700;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:2px 9px;letter-spacing:.06em}
+/* 「相性表」はボタンに見えない形(2026-09-16タダシさん指摘・5案から「見出しの足元に『／ 相性表』」):
+   枠なし・薄い文字・見出しのベースラインにそろえる */
+.sdglbl .sdgtag{font-size:.62rem;font-weight:700;color:#6b76a3;letter-spacing:.12em}
+.sdglbl .sdgtag::before{content:'／';margin-right:4px;color:#3b4f92}
+:root.light .sdglbl .sdgtag{color:#7a86ad}
+:root.light .sdglbl .sdgtag::before{color:#b7c2e2}
 .sdglbl .sdgul{display:block;height:3px;margin-top:6px;border-radius:2px;background:linear-gradient(90deg,#43e0ff,rgba(67,224,255,0) 80%)}
 .sdglbl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:6px;line-height:1.55}
 .sdglbl small.expl{display:none}
