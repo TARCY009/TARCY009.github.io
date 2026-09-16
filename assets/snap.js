@@ -1140,19 +1140,27 @@
     // ランキングの一覧（一般向けの保存ボタンを付けている一覧）は、一覧全体を1つの枠にする。
     // 一覧を包む枠が無いページ（ジム防衛・ジム挑戦・マックスバトル）で、1行ずつにボタンが50個並んだため（2026-09-12）
     var pubT = PUB[PATH] ? document.querySelector(PUB[PATH].target) : null;
+    var ovOut = null;   // 固定の覆い（ウィンドウ）が開いているあいだは、その中の枠だけに付ける（後ろに隠れた枠のボタンが覆いの上に透けて出ないように）
     (function walk(n) {
       for (var c = n.firstElementChild; c; c = c.nextElementSibling) {
         if (c.id === 'snapdevlayer' || isUI(c) || /^(SCRIPT|STYLE|HEADER|NAV|NOSCRIPT|TEMPLATE|svg)$/.test(c.tagName)) continue;
         var cs = getComputedStyle(c);
-        if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed') continue;
+        if (cs.display === 'none' || cs.visibility === 'hidden') continue;
         var r = c.getBoundingClientRect();
+        // 固定表示は枠にしない（HUD・帯など）。ただし画面をほぼ覆う固定の覆い＝ウィンドウの幕（図鑑のわざ詳細 .mvov 等）は、
+        // その中の枠（わざ詳細ウィンドウ）にボタンを付けたいので中を見に行く（2026-09-16タダシさん指示「図鑑のわざ性能ウィンドウも保存できるように」）
+        if (cs.position === 'fixed') {
+          var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+          if (r.width >= vw * 0.9 && r.height >= vh * 0.9) { var keep = out; out = ovOut = ovOut || []; walk(c); out = keep; }
+          continue;
+        }
         if (c === pubT) { if (r.height >= 40 && c.children.length) out.push(c); continue; }
         if (r.width < minW || r.height < 40) continue;
         if (r.height >= 70 && isFrame(cs)) { out.push(c); continue; }
         walk(c);
       }
     })(document.body);
-    return out;
+    return ovOut && ovOut.length ? ovOut : out;
   }
   function renderDev() {
     if (!isDev() || pick.on || document.querySelector('.bfull') || document.querySelector('.snapov')) {
@@ -1174,9 +1182,16 @@
     }
     while (devLayer.children.length > fr.length) devLayer.lastChild.remove();
     devMap = fr;
+    placeDev();
+  }
+  // ボタンの置き直しだけ（枠の探し直しはしない）。固定の覆いの中（図鑑のわざ詳細）は覆いの中だけがスクロールするので、
+  // 文書の座標で置いたボタンが枠から離れる。スクロールのたびに位置だけそろえ直す
+  function placeDev() {
+    if (!devLayer || devLayer.hidden) return;
     var sx = window.scrollX, sy = window.scrollY;
-    fr.forEach(function (el, i) {
+    devMap.forEach(function (el, i) {
       var g = devLayer.children[i], r = el.getBoundingClientRect();
+      if (!g) return;
       g.setAttribute('data-i', i);
       g.style.left = Math.max(4, r.right + sx - g.offsetWidth - 14) + 'px';
       g.style.top = Math.max(0, r.top + sy - 13) + 'px';
@@ -1273,6 +1288,12 @@
     renderDev();
     setInterval(renderDev, 1000);
     window.addEventListener('resize', renderDev);
+    // 固定の覆いの中がスクロールしたときは、ボタンの位置だけ次の描画でそろえ直す（capture で覆いのスクロールも拾う）
+    var devRaf = null;
+    document.addEventListener('scroll', function () {
+      if (devRaf || !devLayer || devLayer.hidden) return;
+      devRaf = requestAnimationFrame(function () { devRaf = null; placeDev(); });
+    }, true);
     // 画面の中身が変わったら少し待って置き直す（1秒ごとの見直しだけだと、消えた枠を指したままの時間ができる）
     var devTimer = null;
     new MutationObserver(function (ms) {
