@@ -245,6 +245,7 @@ tbody tr:hover{background:var(--mebg)}
 .mvwin .gv{display:flex;align-items:center;gap:8px}
 .mvwin .gv .gbar{margin-top:0;width:62px}
 .mvwin .gv b{color:var(--ink)}
+.mvwin .mdlink{display:block;margin-top:12px;text-align:right;font-size:.76rem;font-weight:800;color:var(--cy);text-decoration:none}
 .mvwin .note{margin-top:10px;font-size:.78rem;color:var(--sub);line-height:1.7}
 /* 絞り込み(タイプ・地方) */
 .filttab{margin-top:10px;background:none;border:none;color:var(--sub);font-size:.8rem;font-weight:700;cursor:pointer;padding:2px 0}
@@ -930,6 +931,7 @@ function openMove(id){
     ${pve}${pvp}
     ${!gm?'<div class="note">このわざはジム・レイドには存在しません</div>':''}
     ${!pm?'<div class="note">このわざはトレーナーバトルには存在しません</div>':''}
+    <a class="mdlink" href="/move-dex/?t=${base.t.toLowerCase()}" title="わざ図鑑で、このタイプのわざの一覧と覚えるポケモンを見ます">${GO.typeJa[base.t]}タイプのわざをわざ図鑑で見る ›</a>
   </div>`;
   document.body.appendChild(ov);
   ov.addEventListener('click',ev=>{ if(ev.target===ov)ov.remove(); });
