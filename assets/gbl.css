@@ -2404,11 +2404,23 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    いちばん下の行に「選んだ3匹で、その相手に勝てる味方の数」が並ぶ(列がそろうので穴が縦に見える) */
 /* 見出しは「3匹選出」(何をする場所か)を大きく、「相性表」(この表が何か)は右の小さな札にする
    (2026-09-16テスター#20「どこで選ぶんだ？」・タダシさん指示。説明文は📖説明モードだけ) */
-.sdglbl{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:.98rem;font-weight:900;color:var(--cy)}
+.sdglbl{display:block}
+/* 見せ合いは選出が主役なので見出しを豪華に(2026-09-16タダシさん指示・5案からA)。
+   小さな前書き → 水色→白のグラデーション文字(1.85rem) → 水色の下線(マックスバトルの見出しと同じ流儀)。
+   ⚠ グラデーション文字は .sdgt(文字だけ)に限定し、中に他の要素を入れない(iPhone対策の恒久ルール) */
+.sdglbl .sdgeb{display:block;font-size:.66rem;font-weight:800;letter-spacing:.14em;color:#2aa9c4;margin-bottom:2px}
+.sdglbl .sdgrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.sdglbl .sdgt{font-size:1.85rem;font-weight:900;letter-spacing:.02em;line-height:1.1;
+  background:linear-gradient(180deg,#ffffff 0%,#dffaff 45%,#43e0ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .sdglbl .sdgtag{font-size:.62rem;font-weight:700;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:2px 9px;letter-spacing:.06em}
-.sdglbl small{display:block;flex:1 1 100%;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:2px;line-height:1.55}
+.sdglbl .sdgul{display:block;height:3px;margin-top:6px;border-radius:2px;background:linear-gradient(90deg,#43e0ff,rgba(67,224,255,0) 80%)}
+.sdglbl small{display:block;font-size:.62rem;font-weight:400;color:var(--sub);margin-top:6px;line-height:1.55}
 .sdglbl small.expl{display:none}
 .explain .sdglbl small.expl{display:block}
+/* ライトはベタ塗りの濃い水色(ライトで金属加工・グラデーション文字はしない恒久ルール) */
+:root.light .sdglbl .sdgt{background:none;-webkit-background-clip:initial;background-clip:initial;color:#0b7f96}
+:root.light .sdglbl .sdgeb{color:#1c8aa3}
+:root.light .sdglbl .sdgul{background:linear-gradient(90deg,#0b8fa8,rgba(11,143,168,0) 80%)}
 .sdgwrap{margin-top:8px;padding:0}
 /* 広い画面で表を横いっぱいに伸ばしても読みやすさは増えない(マスがスカスカになるだけ)ので上限をつける */
 @media (min-width:520px){

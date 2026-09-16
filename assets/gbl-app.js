@@ -7943,7 +7943,7 @@ function sdGridHtml() {
   // 「穴◯／1匹頼み◯／2匹勝ち◯」の要約は出さない(2026-09-06タダシさん指示)——
   // 表のいちばん下の行を見れば分かるので、同じことを文章で繰り返さない
   return `<div class="sdgrid">
-    <div class="sdglbl"><span class="sdgt">3匹選出</span><span class="sdgtag">相性表</span><small class="expl">行を押すと選出（押した順が並び順・①が初手）。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</small></div>
+    <div class="sdglbl"><span class="sdgeb">6匹の中から3匹と並び順を決める</span><span class="sdgrow"><span class="sdgt">3匹選出</span><span class="sdgtag">相性表</span></span><span class="sdgul"></span><small class="expl">行を押すと選出（押した順が並び順・①が初手）。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</small></div>
     <div class="sdgwrap"><table class="sdtbl">
       <thead><tr class="sdhh"><th class="sdch" rowspan="2">${ixHtml}</th>
       <th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
