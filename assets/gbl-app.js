@@ -10769,7 +10769,8 @@ function gbRender(body, bt, picks, foes) {
 
   // ---- 画面を組む ----
   { const pf = body.querySelector('.rbfeed'); if (pf) RBV.feedTop = pf.scrollTop; }   // 再描画の前に読み返し位置を控える
-  body.innerHTML = `<div class="rbctlbar">
+  // リアルタイムではオートバトル・結果だけ見るを使わないので、行ごと隠す(中身だけ隠すと空の小さな枠が残る・2026-09-16タダシさん指摘)
+  body.innerHTML = `<div class="rbctlbar"${rtOn() ? ' style="display:none"' : ''}>
       <div class="rbctl">
         <div class="rbrow1 rbfind"${rtOn() ? ' style="display:none"' : ''}><span class="lbl">🔎 オートバトル</span>
           <button class="rbgo" data-g="best" aria-pressed="${RB.goal === 'best'}" title="勝ちと手持ちの残りがいちばん良くなる手順をさがします（押して選んでから ▶ バトルスタート！で開始）">最善</button>
