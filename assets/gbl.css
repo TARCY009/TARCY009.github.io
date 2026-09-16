@@ -2437,15 +2437,21 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    状態(有利/互角/不利)は**数字の色と、その下の罫線の色**で伝える */
 /* 2026-09-16タダシさん指示: 数字だけ30%小さく(2.1→1.5rem)、線なし・塗りだけの枠に入れる。
    色はこのページで使っていない**インディゴ(藍・紫寄り)**(5案から選択)。ライトは同じ色相の淡い面 */
-.sdix{display:block;width:max-content;max-width:100%;margin:0 auto;text-align:center;padding:5px 12px 6px;border-radius:10px;
+/* 同日の再調整(4案から「列いっぱい・ほんのわずかに縮める」): 枠は列の幅の94%・数字1.5rem。
+   数字と%は**白→状態の色のグラデーション文字**(ダークだけ。文字だけの要素 .sdix b に限定＝iPhone対策)。ライトはベタ塗り */
+.sdix{display:block;width:94%;margin:0 auto;text-align:center;padding:7px 6px 8px;border-radius:10px;
   background:linear-gradient(160deg,#2f2e7a 0%,#221f58 100%)}
 :root.light .sdix{background:linear-gradient(160deg,#e6e4ff 0%,#d6d2fb 100%)}
-.sdix i{display:block;font-style:normal;font-size:.5rem;font-weight:800;color:var(--sub);
+.sdix i{display:block;font-style:normal;font-size:.54rem;font-weight:800;color:var(--sub);
   letter-spacing:.1em;text-indent:.1em}
-/* 同日「枠を4割ほど小さく」: 枠は中身ぶんの幅だけ・余白と字を一段詰める(数字1.5→1.25rem) */
-.sdix b{display:block;font-size:1.25rem;font-weight:900;letter-spacing:-.04em;line-height:1;
-  margin:2px 0 0;text-shadow:0 2px 6px rgba(0,0,0,.4)}
-:root.light .sdix b{text-shadow:0 1px 0 rgba(255,255,255,.9)}
+.sdix b{display:block;font-size:1.5rem;font-weight:900;letter-spacing:-.04em;line-height:1;
+  margin:3px 0 0;-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.sdix.good b{background-image:linear-gradient(180deg,#ffffff 0%,#c8ffe0 45%,var(--win) 100%)}
+.sdix.even b{background-image:linear-gradient(180deg,#ffffff 0%,#fff1c4 45%,var(--gold) 100%)}
+.sdix.bad b{background-image:linear-gradient(180deg,#ffffff 0%,#ffd0d0 45%,var(--lose) 100%)}
+:root.light .sdix b{background-image:none;-webkit-background-clip:initial;background-clip:initial;filter:none;
+  text-shadow:0 1px 0 rgba(255,255,255,.9)}
 .sdix b small{font-size:.66rem;font-weight:800;margin-left:2px;letter-spacing:0}
 /* 数字の下の1本の罫線。中央が濃く、両端へ消える(状態の色) */
 .sdix b::after{content:'';display:block;height:1px;width:74%;margin:4px auto 0}
@@ -2454,9 +2460,9 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 .sdix.bad b::after{background:linear-gradient(90deg,transparent,var(--lose),transparent)}
 .sdix em{display:block;font-style:normal;font-size:.58rem;font-weight:800;margin-top:3px;
   letter-spacing:.02em}
-.sdix.good b,.sdix.good em{color:var(--win)}
-.sdix.even b,.sdix.even em{color:var(--gold)}
-.sdix.bad b,.sdix.bad em{color:var(--lose)}
+.sdix.good em,:root.light .sdix.good b{color:var(--win)}
+.sdix.even em,:root.light .sdix.even b{color:var(--gold)}
+.sdix.bad em,:root.light .sdix.bad b{color:var(--lose)}
 /* 列の見出しが「あいての6匹」なので、行の側も対で示す */
 /* 能力変化わざのウィンドウ。中の #gopt は移動して使い回すので、見た目だけここで整える */
 .sdoptwin{margin-top:8px;padding:10px 12px}
