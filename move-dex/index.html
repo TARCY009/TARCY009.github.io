@@ -297,6 +297,17 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 .mds.wide .mds-tv{font-size:34px}
 .mds.wide .mds-g3,.mds.wide .mds-g4{grid-template-columns:1fr 1fr}
 .mds.wide .mds-g3:not(.bigrow)>.mds-t:nth-child(3){grid-column:1/-1}
+.mds-g1.stack>.mds-t{display:flex;align-items:center;gap:20px}
+.mds-g1.stack>.mds-t .mds-tl{min-width:84px}
+.mds-g1.stack>.mds-t .mds-ts{margin-left:auto}
+.mds-g1.stack>.mds-t .mds-ts .mds-bars{max-width:none;width:150px}
+.mds-g1.stack>.mds-t .mds-ts .mds-bars i{height:10px}
+.mds.wide .mds-g1.stack>.mds-t .mds-tl{min-width:96px}
+.mds.wide .mds-g1.stack>.mds-t .mds-ts{flex-wrap:nowrap;white-space:nowrap}
+.mds.wide .mds-g1.stack>.mds-t .mds-ts .mds-bars{width:auto;flex:0 1 110px;min-width:36px}
+.mds-g1.stack>.mds-t .mds-ts{min-width:0;flex:0 1 auto}
+.mds-g1.stack>.mds-t .mds-tv{flex:none}
+.mds.wide .mds-g1.stack>.mds-t .mds-ts{font-size:16px}
 .mds.wide .mds-g3.bigrow{grid-template-columns:1fr 1fr}
 .mds.wide .mds-g3.bigrow>.mds-t:first-child{grid-column:1/-1;display:flex;align-items:center;gap:24px}
 .mds.wide .mds-g3.bigrow>.mds-t:first-child .mds-tl{min-width:64px}
@@ -330,6 +341,7 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 :root.light .mds-chip,:root.light .mds-buff{background:#fff;border-color:rgba(30,40,90,.12)}
 
 .helpbody b{color:var(--ink)}
+.helpbody a{color:var(--cy);font-weight:700}
 footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-height:1.8}
 </style>
 </head>
@@ -376,8 +388,17 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <li><b>EPS</b> … 1秒あたりのゲージ増加(ノーマルアタック)</li>
     <li><b>DPS</b> … 1秒あたりのダメージ(威力÷時間・ノーマルアタックだけ)</li>
     <li>SPアタックのわざ名の下のバーは<b>ゲージの本数</b>で、「ゲージ消費」は1本あたりのゲージ量です(分割なし=100・2分割=50・3分割=33)</li>
-    <li><b>SPアタック単体のDPSはのせていません。</b>ゲージをためる時間が入らないので、単体では強さを表さないためです。ジム・レイドでは<b>ノーマルアタックとSPアタックをセットで</b>見ます(組み合わせの火力はレイド火力チェッカー・タイプ別火力ランキングで比べられます)</li>
+    <li><b>SPアタック単体のDPSはのせていません</b>(理由は次の項目)</li>
   </ul>
+  <h4>ジム・レイドは「ノーマルアタックとSPアタックのセット」で見る</h4>
+  <p>ジム・レイドでは、<b>SPアタックだけの強さ(1秒あたりのダメージ)は気にしなくて大丈夫です</b>。SPアタックは、ノーマルアタックでゲージをためてから撃つわざなので、実際の火力は<b>「ノーマルアタックでためる時間」と「SPアタックを撃つ時間」をひと続きにした流れ</b>で決まります。</p>
+  <ul>
+    <li><b>SPアタック単体のDPSが高くても強いとは限りません。</b>威力÷わざの時間には、ゲージをためる時間が入っていないためです。ゲージ100の大技は単体の数字が高く出やすいですが、ためるのに時間がかかるぶん、実際の差は縮むか逆転します</li>
+    <li><b>大事なのは、ノーマルアタックとSPアタックの両方のダメージ効率です。</b>ノーマルアタックは「ダメージ効率(DPS)」と「チャージ効率(EPS＝ゲージのたまりやすさ)」、SPアタックは「威力」と「ゲージ消費(何本に分かれているか)」を合わせて見ます</li>
+    <li>ためやすいノーマルアタックと、少ないゲージで大きく削れるSPアタックの組み合わせほど、1回の戦いで多くのダメージを出せます</li>
+    <li>組み合わせた火力は<a href="/type-dps/">タイプ別火力ランキング</a>や<a href="/dps/">レイド火力チェッカー</a>で比べられます(どちらもノーマルアタック100回ぶんとそのゲージで撃てるSPアタックを合わせて計算しています)</li>
+  </ul>
+  <p>このページでジム・レイドのSPアタックにDPSをのせていないのは、この理由からです。</p>
   <h4>トレーナーバトルの数値</h4>
   <ul>
     <li><b>ゲージ</b> … 1発で増えるゲージ量(ノーマルアタック) ／ <b>消費</b> … 撃つのに使うゲージ量(SPアタック)</li>
@@ -773,7 +794,7 @@ function cardSec(kind,e,st){
               :T('ゲージ消費',P.gauge,{big:true,sub:`${bars}<span>${P.bars===1?'分割なし':P.bars+'分割'}</span>`}));
     const small=T('全体の時間',num(P.d)+'<u>秒</u>')+T('ダメージ発生',num(P.w,2)+'<u>秒</u>')+(P.fast?T('ゲージ増加',P.eg):'');
     return `<div class="mds-sec pve"><div class="mds-sh"><span class="mds-en">GYM &amp; RAID</span><span class="mds-ja">ジム・レイド</span></div>
-      <div class="${P.fast?'mds-g3 bigrow':'mds-g2'}">${big}</div><div class="mds-g${P.fast?3:2}">${small}</div></div>`;
+      <div class="${P.fast?'mds-g3 bigrow':'mds-g1 stack'}">${big}</div><div class="mds-g${P.fast?3:2}">${small}</div></div>`;
   }
   const V=pvpVals(e,st);
   const eff=V.buff?`<div class="mds-buff"><span class="mds-bl">能力変化</span><span class="mds-be">${effHtml(V.m)}</span><span class="mds-bt">${esc(V.buff)}</span></div>`:'';
