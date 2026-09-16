@@ -192,6 +192,131 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 .mvwin .lrnl a:hover{border-color:var(--cy)}
 .mvwin .lrnl a .st{color:var(--special);font-weight:900}
 
+/* 性能ウィンドウ: タイプ一致ボタン・開発者の保存 */
+.stabrow{display:flex;justify-content:flex-end;margin-top:8px}
+.stabbtn{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;
+  color:var(--sub);background:var(--tab);box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.stabbtn[aria-pressed="true"]{color:#3a1400;border-color:transparent;background:linear-gradient(160deg,#ffd0a0 0%,#ff9750 50%,#e0621e 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}
+.mvwin .r .stab{color:var(--special)}
+.mvwin .r small.raw{font-size:.7rem;font-weight:600;color:var(--sub);margin-left:6px}
+.mvdev{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line2)}
+.mvdevh{font-size:.78rem;font-weight:900;color:var(--gold);margin-bottom:8px}
+.mvdevh small{font-size:.62rem;font-weight:800;color:var(--sub);border:1px solid var(--line2);border-radius:999px;padding:0 6px;margin-left:4px}
+.mvdev .gseg{flex-wrap:wrap}
+.mvdev .gtabs button{font-size:.72rem;padding:7px 10px}
+.mvdevb{display:flex;gap:8px;margin-top:10px}
+.mvdevb button{flex:1;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;border:0;border-radius:999px;padding:9px 12px}
+.mvdevb .svn{color:#241800;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 rgba(0,0,0,.35)}
+.mvdevb .svb{color:#e8eeff;background:linear-gradient(160deg,#5566a3,#34427a 55%,#232d57);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.35)}
+.mvdevn{margin-top:6px;font-size:.66rem;color:var(--sub)}
+
+/* ── 画像用のカード(開発者の保存専用。画面には出さない) ──
+   濃紺の板＋左上にタイプ色の光・上端にタイプ色の帯。数値は大きなタイル。
+   ジム・レイド=赤橙の見出し／トレーナーバトル=青紫の見出し。枠の外は透明で書き出す */
+.mds{position:relative;overflow:hidden;border-radius:30px;padding:30px 30px 28px;color:#eef2ff;
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;line-height:1.5;
+  background:radial-gradient(520px 300px at 0% 0%,var(--cg),transparent 70%),radial-gradient(520px 320px at 100% 100%,var(--cg2),transparent 70%),linear-gradient(160deg,#1b2650 0%,#121a3a 55%,#0c1230 100%);
+  border:1.5px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.mds::before{content:"";position:absolute;left:0;top:0;right:0;height:7px;background:linear-gradient(90deg,var(--c),var(--c2))}
+.mds-hd{display:flex;align-items:center;gap:18px}
+.mds-ic{flex:none;line-height:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.mds-tt{min-width:0}
+.mds-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.mds-tags span{font-size:13px;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:3px 11px;line-height:1.4}
+.mds-type{color:#0b1230;background:linear-gradient(160deg,var(--c2),var(--c))}
+.mds-kind{color:#dfe6ff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18)}
+.mds-stab{color:#3a1400;background:linear-gradient(160deg,#ffd0a0,#ff9750 55%,#e0621e)}
+.mds-nm{font-size:40px;font-weight:900;line-height:1.2;letter-spacing:.02em;display:flex;align-items:flex-start;gap:4px}
+.mds-nm span{background:linear-gradient(180deg,#ffffff 15%,#eef3fb 50%,#b9c4d8 95%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 0 #4a5470) drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.mds-st{color:#ff9750;font-size:30px}
+.mds-note{margin-top:12px;font-size:13px;font-weight:800;color:#ffb07a;border-left:3px solid #ff9750;padding:2px 0 2px 10px}
+.mds-note.pl{color:#f5a3d6;border-color:#e060b0}
+.mds-body{display:flex;flex-direction:column;gap:18px;margin-top:22px}
+.mds-body.h{flex-direction:row;align-items:stretch}
+.mds-body.h>.mds-sec{flex:1 1 0;min-width:0}
+.mds-sec{position:relative;border-radius:20px;padding:18px 18px 18px;background:rgba(8,12,32,.55);border:1px solid rgba(255,255,255,.09);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.mds-sec.pve{--a1:#ff8a5c;--a2:#ffc35c;--ag:rgba(255,122,92,.14)}
+.mds-sec.pvp{--a1:#6ea1ff;--a2:#b08bff;--ag:rgba(110,161,255,.14)}
+.mds-sec.lrn{--a1:#c3e85a;--a2:#5fd3a0;--ag:rgba(195,232,90,.12);margin-top:22px}
+.mds-sec{background:linear-gradient(180deg,var(--ag),rgba(8,12,32,.5) 42%)}
+.mds-sh{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.mds-en{font-family:"Oswald",sans-serif;font-size:12px;letter-spacing:.28em;font-weight:600;color:var(--a1)}
+.mds-ja{font-size:19px;font-weight:900;background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mds-cnt{margin-left:auto;font-size:28px;font-weight:900;color:#fff}
+.mds-cnt u{text-decoration:none;font-size:14px;color:#aab4dd;margin-left:3px}
+.mds-g1,.mds-g2,.mds-g3,.mds-g4{display:grid;gap:10px;margin-top:10px}
+.mds-g1{grid-template-columns:1fr}
+.mds-g2{grid-template-columns:1fr 1fr}
+.mds-g3{grid-template-columns:1fr 1fr 1fr}
+.mds-g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.mds-sh+.mds-g2{margin-top:0}
+.mds-t{border-radius:14px;padding:10px 12px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);min-width:0}
+.mds-t.wide{grid-column:auto}
+.mds-tl{font-size:12px;font-weight:800;color:#aab4dd;letter-spacing:.06em}
+.mds-tv{font-size:26px;font-weight:900;line-height:1.25;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:0;white-space:nowrap}
+.mds-tv u{text-decoration:none;font-size:13px;font-weight:700;color:#aab4dd;margin-left:4px;align-self:flex-end;padding-bottom:5px}
+.mds-ts{font-size:11px;font-weight:700;color:#8d97c2;margin-top:1px}
+.mds-t.big{padding:12px 14px 12px;background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border-color:rgba(255,255,255,.14)}
+.mds-t.big .mds-tv{font-size:48px;line-height:1.1;background:linear-gradient(180deg,#ffffff 20%,#dfe7f7 60%,#a9b6d2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 0 #3a4260) drop-shadow(0 5px 8px rgba(0,0,0,.4));display:block}
+.mds-t.big.hi .mds-tv{background:linear-gradient(180deg,#fff3e2 10%,#ffc38a 50%,#ff8a3c 100%);-webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 2px 0 #8a3a10) drop-shadow(0 5px 8px rgba(0,0,0,.4))}
+.mds-bars{display:flex;gap:6px;flex:1;max-width:220px;margin-right:12px}
+.mds-meter{flex:1;height:14px;margin:0 12px 0 16px;border-radius:7px;background:rgba(255,255,255,.08);box-shadow:inset 0 2px 4px rgba(0,0,0,.4);overflow:hidden}
+.mds-meter i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--a1),var(--a2));box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+:root.light .mds-meter{background:#e3e8f5;box-shadow:inset 0 1px 3px rgba(30,40,90,.15)}
+.mds-bars i{flex:1;height:12px;border-radius:6px;background:linear-gradient(180deg,var(--c2),var(--c));box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.35)}
+.mds-buff{margin-top:10px;display:flex;align-items:center;gap:12px;border-radius:14px;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.mds-bl{font-size:12px;font-weight:800;color:#aab4dd;letter-spacing:.06em;flex:none}
+.mds-be{font-size:22px;font-weight:900;white-space:nowrap;line-height:1.2;text-align:center}
+.mds-be .eg{display:inline-block}.mds-be .eg+.eg{margin-left:.3em}
+.mds-be .ar{font-style:normal}.mds-be .ar.m{letter-spacing:-.22em;margin-right:.22em}
+.mds-be small{display:block;font-size:12px;color:#aab4dd}
+.mds-bt{font-size:14px;font-weight:700;color:#dfe6ff}
+.mds-chips{display:flex;flex-wrap:wrap;gap:8px}
+.mds-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 8px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.mds-chip b{font-size:15px;font-weight:800;white-space:nowrap}
+.mds-chip i{font-style:normal;color:#ff9750;font-weight:900}
+.mds.wide{padding:40px 44px 40px;border-radius:40px}
+.mds.wide .mds-nm{font-size:58px}
+.mds.wide .mds-tags span{font-size:16px;padding:4px 14px}
+.mds.wide .mds-body{gap:24px;margin-top:28px}
+.mds.wide .mds-sec{padding:24px;border-radius:26px}
+.mds.wide .mds-ja{font-size:24px}
+.mds.wide .mds-t.big .mds-tv{font-size:64px}
+.mds.wide .mds-tv{font-size:34px}
+.mds.wide .mds-g3,.mds.wide .mds-g4{grid-template-columns:1fr 1fr}
+.mds.wide .mds-g3>.mds-t:nth-child(3){grid-column:1/-1}
+.mds.wide .mds-t{padding:14px 18px}
+.mds.wide .mds-tl{font-size:15px}
+.mds.wide .mds-ts{font-size:13px}
+.mds.wide .mds-tv u{font-size:16px}
+.mds.wide .mds-buff{padding:14px 18px}
+.mds.wide .mds-be{font-size:28px}
+.mds.wide .mds-bt{font-size:17px}
+.mds.wide .mds-note{font-size:16px}
+/* ライト */
+:root.light .mds{color:#1f2644;background:radial-gradient(520px 300px at 0% 0%,var(--cg),transparent 70%),radial-gradient(520px 320px at 100% 100%,var(--cg2),transparent 70%),linear-gradient(160deg,#ffffff 0%,#f3f6fd 60%,#e9eefa 100%);
+  border-color:rgba(30,40,90,.14);box-shadow:inset 0 1px 0 #fff}
+:root.light .mds-nm span{background:none;color:#1f2644;filter:none;text-shadow:0 1px 0 #bcc8e6,0 3px 6px rgba(59,110,240,.25)}
+:root.light .mds-sec{background:linear-gradient(180deg,var(--ag),rgba(255,255,255,.75) 42%);border-color:rgba(30,40,90,.1);box-shadow:none}
+:root.light .mds-t{background:rgba(255,255,255,.8);border-color:rgba(30,40,90,.1)}
+:root.light .mds-t.big .mds-tv{background:none;color:#1f2644;filter:none}
+:root.light .mds-t.big.hi .mds-tv{color:#c4500e}
+:root.light .mds-tl,:root.light .mds-tv u,:root.light .mds-bl,:root.light .mds-be small{color:#5f6a92}
+:root.light .mds-ts{color:#7b86ad}
+:root.light .mds-kind{color:#3b4570;background:#fff;border-color:rgba(30,40,90,.15)}
+:root.light .mds-sec.pve{--a1:#d4502a;--a2:#d8830e}
+:root.light .mds-sec.pvp{--a1:#2f5fd0;--a2:#7a3cc4}
+:root.light .mds-sec.lrn{--a1:#5f7f1a;--a2:#1f8a5a}
+:root.light .mds-en{color:var(--a1)}
+:root.light .mds-cnt{color:#1f2644}
+:root.light .mds-bt{color:#3b4570}
+:root.light .mds-chip,:root.light .mds-buff{background:#fff;border-color:rgba(30,40,90,.12)}
+
 .helpbody b{color:var(--ink)}
 footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-height:1.8}
 </style>
@@ -286,7 +411,7 @@ const num=(v,d)=>String(+(+v).toFixed(d==null?1:d));
 
 // ---- 状態(共有URL: t=タイプ英語小文字, m=pvp) ----
 const Q=new URLSearchParams(location.search);
-const state={ t:null, mode:Q.get('m')==='pvp'?'pvp':'pve', sort:{} };   // sort: 節ごとの並べ替えの列
+const state={ t:null, mode:Q.get('m')==='pvp'?'pvp':'pve', sort:{}, stab:false };   // stab: 性能ウィンドウのタイプ一致   // sort: 節ごとの並べ替えの列
 
 Promise.all([
   fetch('/godata.json').then(r=>r.json()),
@@ -523,56 +648,167 @@ function sync(){
 }
 
 // ---- わざの性能ウィンドウ(タップで開く・画面外タップで閉じる。✕は置かない＝画像に写さない) ----
+// タイプ一致ボタン(全員・ページを開いているあいだ保持)で、威力と効率(DPS/DPT/DPE)を1.2倍にして見せる。
+// 開発者の端末では、下に画像保存の4パターン(両方／ジム・レイド／トレーナーバトル／覚えるポケモン)と1920×1440を出す
+const SNAP_PATS=[['both','ジム・レイド＋トレーナーバトル'],['pve','ジム・レイド'],['pvp','トレーナーバトル'],['lrn','覚えるポケモン']];
+let snapPat='both';
+const NAME_TY=new Map();   // ポケモン名 → タイプ(覚えるポケモンの札にタイプアイコンを出す)
+function nameTyOf(n){
+  if(!NAME_TY.size){
+    for(const p of Object.values(PVP.pokemon)) if(!NAME_TY.has(p.n)) NAME_TY.set(p.n,p.ty);
+    for(const p of Object.values(GO.pokemon)) if(!NAME_TY.has(p.n)) NAME_TY.set(p.n,p.ty);
+  }
+  return NAME_TY.get(n)||[];
+}
+// 両モードの数値(タイプ一致なら威力と効率を1.2倍)
+function pveVals(e,st){
+  const gm=e.gid?GO.moves[e.gid]:null; if(!gm)return null;
+  const k=st?1.2:1, fast=gm.e>0, en=pveEnergyOf(e.gid,gm);
+  return {m:gm,fast,pw:gm.p*k,p0:gm.p,d:gm.d,w:gm.w,eg:gm.e,eps:gm.e/gm.d,dps:gm.p*k/gm.d,gauge:Math.round(-en),bars:en>=-34?3:en>=-51?2:1};
+}
+function pvpVals(e,st){
+  const pm=e.pid?PVP.moves[e.pid]:null; if(!pm)return null;
+  const k=st?1.2:1, fast=pm.tn!=null;
+  return {m:pm,fast,pw:pm.p*k,p0:pm.p,tn:pm.tn,eg:pm.eg||0,ept:(pm.eg||0)/(pm.tn||1),dpt:pm.p*k/(pm.tn||1),e:pm.e,dpe:pm.p*k/(pm.e||1),buff:buffText(pm)};
+}
+const kindOf=e=>{ const v=pveVals(e,false)||pvpVals(e,false); return e.plus?'＋わざ':v.fast?'ノーマルアタック':'SPアタック'; };
+const sortLrn=e=>{ const isMg=n=>/^(メガ|ゲンシ)/.test(n)?1:0;
+  return [...e.lrn.entries()].sort((a,b)=>a[1].dex-b[1].dex||isMg(a[0])-isMg(b[0])||a[0].localeCompare(b[0],'ja')); };
+
 function openMove(eid){
   const e=ENTRIES.find(x=>x.id===eid);
   if(!e)return;
-  const gm=e.gid?GO.moves[e.gid]:null, pm=e.pid?PVP.moves[e.pid]:null;
+  const ov=document.createElement('div');
+  ov.className='mvov';
+  ov.setAttribute('data-snap-nodev','');   // 汎用の保存ボタンは出さない(下の専用ボタンを使う)
+  document.body.appendChild(ov);
+  ov.addEventListener('click',ev=>{ if(ev.target===ov)ov.remove(); });
+  drawWin(ov,e);
+}
+function drawWin(ov,e){
+  const st=state.stab;
   const c=colorOf(e.t);
   const r=(k,v,tip)=>`<div class="r"${tip?` title="${tip}"`:''}><span>${k}</span><b>${v}</b></div>`;
-  const isFast=gm?gm.e>0:(pm&&pm.tn!=null);
+  const base0=v=>st?`<small class="raw">素 ${num(v)}</small>`:'';
+  const P=pveVals(e,st), V=pvpVals(e,st);
+  const sc=st?' class="stab"':'';
   let pve='';
-  if(gm){
-    const en=pveEnergyOf(e.gid,gm);
+  if(P){
     pve=`<div class="grp"><div class="gttl">ジム・レイド</div><div class="rows">
-      ${r('威力',num(gm.p)+(gm.p?`<span style="color:var(--sub);font-weight:600;font-size:.74rem"> (一致 ${num(gm.p*1.2)})</span>`:''),'カッコ内はタイプ一致(1.2倍)のときの威力です')}
-      ${r('わざ全体の時間',num(gm.d)+'秒')}
-      ${r('ダメージ発生',num(gm.w,2)+'秒','わざを出し始めてからダメージが入るまでの時間です')}
-      ${isFast?r('ゲージ増加',gm.e+' (EPS '+num(gm.e/gm.d)+')')
-        :`<div class="r" title="ゲージの分割数と1本あたりの量です(分割なし=100・2分割=50・3分割=33)"><span>ゲージ</span><span class="gv">${gaugeBar(gm,e.gid)}<b>${Math.round(-en)}</b></span></div>`}
-      ${r('DPS',num(gm.p/gm.d),'1秒あたりのダメージ(威力÷時間)')}
+      ${r('威力',`<span${sc}>${num(P.pw)}</span>${st?base0(P.p0):(P.p0?`<small class="raw">一致 ${num(P.p0*1.2)}</small>`:'')}`,'タイプ一致なら1.2倍になります')}
+      ${r('わざ全体の時間',num(P.d)+'秒')}
+      ${r('ダメージ発生',num(P.w,2)+'秒','わざを出し始めてからダメージが入るまでの時間です')}
+      ${P.fast?r('ゲージ増加',P.eg+' <small class="raw">EPS '+num(P.eps)+'</small>')
+        :`<div class="r" title="ゲージの分割数と1本あたりの量です(分割なし=100・2分割=50・3分割=33)"><span>ゲージ</span><span class="gv">${gaugeBar(P.m,e.gid)}<b>${P.gauge}</b></span></div>`}
+      ${r('DPS',`<span${sc}>${num(P.dps)}</span>`,'1秒あたりのダメージ(威力÷時間)')}
     </div></div>`;
   }
   let pvp='';
-  if(pm){
-    const bt=buffText(pm);
-    const fastP=pm.tn!=null;
+  if(V){
     pvp=`<div class="grp"><div class="gttl">トレーナーバトル</div><div class="rows">
-      ${r('威力',num(pm.p)+(pm.p?`<span style="color:var(--sub);font-weight:600;font-size:.74rem"> (一致 ${num(pm.p*1.2)})</span>`:''),'カッコ内はタイプ一致(1.2倍)のときの威力です')}
-      ${fastP?r('ターン',pm.tn+' ('+(pm.tn*0.5)+'秒)')+r('ゲージ増加',(pm.eg||0)+' (EPT '+num((pm.eg||0)/pm.tn)+')')+r('DPT',num(pm.p/pm.tn),'1ターンあたりのダメージ')
-        :r('消費ゲージ',pm.e)+r('DPE',num(pm.p/(pm.e||1),2),'消費ゲージ1あたりのダメージ')}
-      ${bt?r('能力変化',bt):''}
+      ${r('威力',`<span${sc}>${num(V.pw)}</span>${st?base0(V.p0):(V.p0?`<small class="raw">一致 ${num(V.p0*1.2)}</small>`:'')}`,'タイプ一致なら1.2倍になります')}
+      ${V.fast?r('ターン',V.tn+' <small class="raw">'+(V.tn*0.5)+'秒</small>')+r('ゲージ増加',V.eg+' <small class="raw">EPT '+num(V.ept)+'</small>')+r('DPT',`<span${sc}>${num(V.dpt)}</span>`,'1ターンあたりのダメージ')
+        :r('消費ゲージ',V.e)+r('DPE',`<span${sc}>${num(V.dpe,2)}</span>`,'消費ゲージ1あたりのダメージ')}
+      ${V.buff?r('能力変化',V.buff):''}
     </div></div>`;
   }
-  const isMg=n=>/^(メガ|ゲンシ)/.test(n)?1:0;
-  const lrn=[...e.lrn.entries()].sort((a,b)=>a[1].dex-b[1].dex||isMg(a[0])-isMg(b[0])||a[0].localeCompare(b[0],'ja'));
+  const lrn=sortLrn(e);
   const nLeg=lrn.filter(x=>x[1].legacy).length;
   const lrnHtml=lrn.length?`<div class="lrn">
       <div class="lrnh">覚えるポケモン <b>${lrn.length}匹</b>${nLeg&&nLeg<lrn.length?`<span>(うち特別わざ ${nLeg}匹)</span>`:''}</div>
       <div class="lrnl">${lrn.map(([nm,v])=>`<a href="/pokedex/?p=${encodeURIComponent(nm)}" title="${v.legacy?'このポケモンにとって特別なわざ(レガシー)です。':''}ステータス図鑑で開きます">${esc(nm)}${v.legacy&&!e.legacy?'<span class="st">*</span>':''}</a>`).join('')}</div>
     </div>`:'';
-  const ov=document.createElement('div');
-  ov.className='mvov';
+  const dev=(window.GonaviSnap&&GonaviSnap.isDev())?`<div class="mvdev">
+      <div class="mvdevh">画像を保存 <small>開発者</small></div>
+      <div class="gtabs"><div class="gseg">${SNAP_PATS.map(([k,l])=>{
+        const ok=k==='pve'?!!P:k==='pvp'?!!V:k==='lrn'?lrn.length>0:(!!P||!!V);
+        return `<button type="button" class="t-gold" data-pat="${k}" aria-pressed="${snapPat===k}"${ok?'':' disabled'}>${l}</button>`;}).join('')}</div></div>
+      <div class="mvdevb"><button type="button" class="svn" data-big="0">📷 画像を保存</button><button type="button" class="svb" data-big="1">1920×1440</button></div>
+      ${snapPat==='both'?'<div class="mvdevn">1920×1440は、左にジム・レイド、右にトレーナーバトルを並べます</div>':''}
+    </div>`:'';
   ov.innerHTML=`<div class="mvwin" role="dialog" style="--wc:${c};--wc2:${colorOf2(e.t)};--wg:${hexA(c,.2)};${thVars(c)}">
-    <div class="hd">${typeIconHTML(GO.typeJa[e.t],28)}<b>${esc(e.n)}</b><span class="kind">${e.plus?'＋わざ':isFast?'ノーマルアタック':'SPアタック'}</span></div>
+    <div class="hd">${typeIconHTML(GO.typeJa[e.t],28)}<b>${esc(e.n)}</b><span class="kind">${kindOf(e)}</span></div>
+    <div class="stabrow"><button type="button" class="stabbtn" aria-pressed="${st}" title="タイプ一致(わざのタイプとポケモンのタイプが同じ)のときの性能に切り替えます。威力と効率が1.2倍になります">タイプ一致 ×1.2</button></div>
     ${e.legacy?`<div class="lg">＊ 特別なわざ(レガシー) — 通常のわざマシンでは覚えられません</div>`:''}
     ${e.plus?`<div class="lg pl">メガシンカ中だけ使える3本目のSPアタック — 自動で覚えます(わざマシン不要)。レイドとGOバトルリーグで使えますが、ジムバトルでは使えません。下の威力はメガLv${MegaLv.level()}の値です</div>`:''}
     ${pve}${pvp}
-    ${!gm?(e.sameAs?`<div class="note">ジム・レイドでは、ふつうの「${esc(e.sameAs)}」と同じ性能です</div>`:'<div class="note">このわざはジム・レイドには存在しません</div>'):''}
-    ${!pm?(e.plus?'<div class="note">トレーナーバトルの性能はまだ発表されていません</div>':'<div class="note">このわざはトレーナーバトルには存在しません</div>'):''}
+    ${!P?(e.sameAs?`<div class="note">ジム・レイドでは、ふつうの「${esc(e.sameAs)}」と同じ性能です</div>`:'<div class="note">このわざはジム・レイドには存在しません</div>'):''}
+    ${!V?(e.plus?'<div class="note">トレーナーバトルの性能はまだ発表されていません</div>':'<div class="note">このわざはトレーナーバトルには存在しません</div>'):''}
     ${lrnHtml}
+    ${dev}
   </div>`;
-  document.body.appendChild(ov);
-  ov.addEventListener('click',ev=>{ if(ev.target===ov)ov.remove(); });
+  ov.querySelector('.stabbtn').onclick=()=>{ state.stab=!state.stab; const y=ov.scrollTop; drawWin(ov,e); ov.scrollTop=y; };
+  ov.querySelectorAll('.mvdev [data-pat]').forEach(b=>b.onclick=()=>{ snapPat=b.dataset.pat; const y=ov.scrollTop; drawWin(ov,e); ov.scrollTop=y; });
+  ov.querySelectorAll('.mvdev [data-big]').forEach(b=>b.onclick=()=>saveCard(e,snapPat,b.dataset.big==='1',ov));
+}
+
+// ---- 画像用のカード(開発者の保存専用・画面には出さない) ----
+// 枠の外は透明。両方＋1920×1440は横並び(左=ジム・レイド／右=トレーナーバトル)
+function cardSec(kind,e,st){
+  const T=(lbl,val,opt)=>{ opt=opt||{};
+    return `<div class="mds-t${opt.big?' big':''}${opt.wide?' wide':''}${opt.hi?' hi':''}"><div class="mds-tl">${lbl}</div><div class="mds-tv">${val}</div>${opt.sub?`<div class="mds-ts">${opt.sub}</div>`:''}</div>`; };
+  const raw=v=>st?`素の値 ${num(v)}`:'';
+  if(kind==='pve'){
+    const P=pveVals(e,st);
+    const bars=`<span class="mds-bars">${Array.from({length:P.bars},()=>'<i></i>').join('')}</span>`;
+    const small=P.fast
+      ?T('全体の時間',num(P.d)+'<u>秒</u>')+T('ダメージ発生',num(P.w,2)+'<u>秒</u>')+T('ゲージ増加',P.eg)+T('EPS',num(P.eps),{sub:'1秒あたりのゲージ'})
+      :T('全体の時間',num(P.d)+'<u>秒</u>')+T('ダメージ発生',num(P.w,2)+'<u>秒</u>')+T('ゲージ',`${bars}<span>${P.gauge}</span>`,{wide:true,sub:P.bars===1?'分割なし':P.bars+'分割'});
+    return `<div class="mds-sec pve"><div class="mds-sh"><span class="mds-en">GYM &amp; RAID</span><span class="mds-ja">ジム・レイド</span></div>
+      <div class="mds-g2">${T('威力',num(P.pw),{big:true,hi:st,sub:raw(P.p0)})}${T('DPS',num(P.dps),{big:true,hi:st,sub:'1秒あたりのダメージ'})}</div>
+      <div class="mds-g${P.fast?4:3}">${small}</div></div>`;
+  }
+  const V=pvpVals(e,st);
+  const eff=V.buff?`<div class="mds-buff"><span class="mds-bl">能力変化</span><span class="mds-be">${effHtml(V.m)}</span><span class="mds-bt">${esc(V.buff)}</span></div>`:'';
+  const small=V.fast
+    ?`<div class="mds-g3">${T('わざの長さ',V.tn+`<u>ターン（${V.tn*0.5}秒）</u>`)+T('ゲージ増加',V.eg)+T('EPT',num(V.ept),{sub:'1ターンあたりのゲージ'})}</div>`
+    :`<div class="mds-g1">${T('消費ゲージ',`<span class="mds-num">${V.e}</span><span class="mds-meter"><i style="width:${Math.min(100,V.e)}%"></i></span><u>/ 100</u>`,{wide:true,sub:'ゲージ100のうち、1発で使う量'})}</div>`;
+  return `<div class="mds-sec pvp"><div class="mds-sh"><span class="mds-en">TRAINER BATTLE</span><span class="mds-ja">トレーナーバトル</span></div>
+    <div class="mds-g2">${T('威力',num(V.pw),{big:true,hi:st,sub:raw(V.p0)})}${V.fast?T('DPT',num(V.dpt),{big:true,hi:st,sub:'1ターンあたりのダメージ'}):T('DPE',num(V.dpe,2),{big:true,hi:st,sub:'ゲージ1あたりのダメージ'})}</div>
+    ${small}${eff}</div>`;
+}
+function cardHtml(e,pat,horiz){
+  const st=state.stab, c=colorOf(e.t), c2=colorOf2(e.t), ja=GO.typeJa[e.t];
+  const leg=e.legacy?'<span class="mds-st">*</span>':'';
+  const plusWhoN=[...e.lrn.keys()].join('・');
+  const note=e.plus?`<div class="mds-note pl">${plusWhoN?esc(plusWhoN)+'が':''}メガシンカ中だけ使える3本目のSPアタック・メガLv${MegaLv.level()}の威力</div>`
+    :e.legacy?'<div class="mds-note">特別なわざ(レガシー)</div>':'';
+  const head=`<div class="mds-hd"><div class="mds-ic">${typeIconHTML(ja,horiz?78:62)}</div>
+    <div class="mds-tt"><div class="mds-tags"><span class="mds-type">${ja}</span><span class="mds-kind">${kindOf(e)}</span>${st&&pat!=='lrn'?'<span class="mds-stab">タイプ一致 ×1.2</span>':''}</div>
+    <div class="mds-nm"><span>${esc(e.n)}</span>${leg}</div></div></div>${note}`;
+  let body='';
+  if(pat==='lrn'){
+    const lrn=sortLrn(e);
+    body=`<div class="mds-sec lrn"><div class="mds-sh"><span class="mds-en">LEARNED BY</span><span class="mds-ja">覚えるポケモン</span><span class="mds-cnt">${lrn.length}<u>匹</u></span></div>
+      <div class="mds-chips">${lrn.map(([nm,v])=>`<span class="mds-chip">${typePairHTML(nameTyOf(nm).map(t=>GO.typeJa[t]),18)}<b>${esc(nm)}</b>${v.legacy&&!e.legacy?'<i>*</i>':''}</span>`).join('')}</div></div>`;
+  }else{
+    const secs=[];
+    if((pat==='both'||pat==='pve')&&e.gid) secs.push(cardSec('pve',e,st));
+    if((pat==='both'||pat==='pvp')&&e.pid) secs.push(cardSec('pvp',e,st));
+    body=`<div class="mds-body${horiz&&secs.length>1?' h':''}">${secs.join('')}</div>`;
+  }
+  return `<div class="mds${horiz?' wide':''}" style="--c:${c};--c2:${c2};--cg:${hexA(c,.28)};--cg2:${hexA(c,.12)};--cl:${hexA(c,.55)}">${head}${body}</div>`;
+}
+async function saveCard(e,pat,big,ov){
+  const S=window.GonaviSnap; if(!S)return;
+  const horiz=big&&pat==='both'&&e.gid&&e.pid;
+  const W=horiz?1080:(pat==='lrn'?640:560);
+  const host=document.createElement('div');
+  host.style.cssText=`position:fixed;left:-30000px;top:0;width:${W}px;pointer-events:none`;
+  host.innerHTML=cardHtml(e,pat,horiz);
+  document.body.appendChild(host);
+  S.busy(true);
+  ov.style.visibility='hidden';
+  try{
+    const res=await S.renderEl(host.firstElementChild,{width:W,mode:'window',rootCls:document.documentElement.className,
+      bodyCls:document.body.className,bg:false,pad:14,scale:big?3:2});
+    let cv=big?await S.fit1920(res,false,horiz?36:60):res.canvas;
+    cv.__rounded=true;   // 枠の外はもう透明なので、仕上げの角丸はかけない
+    S.busy(false);
+    const tag={both:'',pve:'_ジムレイド',pvp:'_トレーナーバトル',lrn:'_覚えるポケモン'}[pat];
+    await S.preview(cv,`わざ図鑑_${e.n.replace(/[\\/:*?"<>|\s]/g,'')}${tag}${state.stab&&pat!=='lrn'?'_タイプ一致':''}_${S.stamp()}${big?'_1920x1440':''}.png`);
+  }catch(err){ S.busy(false); console.warn('snap',err); alert('画像を作れませんでした'); }
+  finally{ host.remove(); ov.style.visibility=''; }
 }
 
 // ---- わざ名で探す ----

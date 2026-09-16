@@ -1211,7 +1211,7 @@
     // ランキングの一覧（一般向けの保存ボタンを付けている一覧）は、一覧全体を1つの枠にする。
     // 一覧を包む枠が無いページ（ジム防衛・ジム挑戦・マックスバトル）で、1行ずつにボタンが50個並んだため（2026-09-12）
     var pubT = PUB[PATH] ? document.querySelector(PUB[PATH].target) : null;
-    var ovOut = null;   // 固定の覆い（ウィンドウ）が開いているあいだは、その中の枠だけに付ける（後ろに隠れた枠のボタンが覆いの上に透けて出ないように）
+    var ovOut = null, ovNone = false;   // 固定の覆い（ウィンドウ）が開いているあいだは、その中の枠だけに付ける（後ろに隠れた枠のボタンが覆いの上に透けて出ないように）
     (function walk(n) {
       for (var c = n.firstElementChild; c; c = c.nextElementSibling) {
         if (c.id === 'snapdevlayer' || isUI(c) || /^(SCRIPT|STYLE|HEADER|NAV|NOSCRIPT|TEMPLATE|svg)$/.test(c.tagName)) continue;
@@ -1222,7 +1222,11 @@
         // その中の枠（わざ詳細ウィンドウ）にボタンを付けたいので中を見に行く（2026-09-16タダシさん指示「図鑑のわざ性能ウィンドウも保存できるように」）
         if (cs.position === 'fixed') {
           var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
-          if (r.width >= vw * 0.9 && r.height >= vh * 0.9) { var keep = out; out = ovOut = ovOut || []; walk(c); out = keep; }
+          if (r.width >= vw * 0.9 && r.height >= vh * 0.9) {
+            // data-snap-nodev＝ページが自前の保存ボタンを持つ覆い（わざ図鑑の性能ウィンドウ）。中の枠には付けず、後ろの枠のボタンも隠す
+            if (c.hasAttribute('data-snap-nodev')) { ovOut = ovOut || []; ovNone = true; continue; }
+            var keep = out; out = ovOut = ovOut || []; walk(c); out = keep;
+          }
           continue;
         }
         if (c === pubT) { if (r.height >= 40 && c.children.length) out.push(c); continue; }
@@ -1231,7 +1235,7 @@
         walk(c);
       }
     })(document.body);
-    return ovOut && ovOut.length ? ovOut : out;
+    return ovOut && (ovOut.length || ovNone) ? ovOut : out;
   }
   function renderDev() {
     if (!isDev() || pick.on || document.querySelector('.bfull') || document.querySelector('.snapov')) {
@@ -1383,5 +1387,7 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
   window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, publicGraph: publicGraph,
-                        fit1920: fit1920, PUB: PUB, narrowImage: narrowImage, NARROW: NARROW };
+                        fit1920: fit1920, PUB: PUB, narrowImage: narrowImage, NARROW: NARROW,
+                        // ページが自前で画像を組み立てるとき用（わざ図鑑の性能カード・2026-09-16）
+                        preview: preview, busy: busy, stamp: stamp, isDev: isDev };
 })();
