@@ -164,6 +164,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   background:rgba(140,155,190,.22);line-height:1.5}
 .tb1{background:var(--goldgrad);color:var(--ongold);box-shadow:0 2px 6px rgba(255,213,74,.4)}
 /* 与える/受けるの切り替え(一覧の直上) */
+.t-def{--mc:#8fdcff;--mcl:#1f6aa8;--mi:#fff;--mgl:rgba(47,128,237,.45);--mg:linear-gradient(160deg,#8fd0ff 0%,#2f80ed 45%,#1d4fa8 100%)}
 .t-atk{--mc:#ffb08a;--mcl:#b84a1e;--mi:#fff;--mgl:rgba(255,110,60,.45);--mg:linear-gradient(160deg,#ffb27a 0%,#ff6a3d 45%,#c23a1a 100%)}
 .dirrow{margin:2px 2px 10px}
 .dirrow button{flex:1 1 auto}
@@ -278,13 +279,13 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .ivsum .plseg button[aria-pressed="true"]{background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330;border-color:transparent}
 .ivsum .barrow{display:flex;gap:6px;align-items:stretch;margin-top:10px}
 /* タブの数字が「個体値」だと分かるラベル(2026-08-30タダシさん指摘: 表記が無くダメージと紛らわしい)。
-   1段目の「攻撃/防御」は与える/受けるタブと同じ色(t-atk/t-shadowの未選択文字色) */
+   1段目の「攻撃/防御」は与える/受けるタブと同じ色(t-atk/t-defの未選択文字色) */
 .ivsum .ivlbl{flex:none;align-self:center;width:52px;text-align:center;font-size:.62rem;font-weight:800;color:var(--sub);line-height:1.45}
 .ivsum .ivlbl em{font-style:normal;font-size:.74rem}
 .ivsum .ivlbl.give em{color:#ffb08a}
-.ivsum .ivlbl.take em{color:#c9a7ff}
+.ivsum .ivlbl.take em{color:#8fdcff}
 :root.light .ivsum .ivlbl.give em{color:#b84a1e}
-:root.light .ivsum .ivlbl.take em{color:#7a3cc4}
+:root.light .ivsum .ivlbl.take em{color:#1f6aa8}
 .ivsum .lowbtn{flex:none;min-width:52px;font:inherit;font-size:.6rem;font-weight:800;color:var(--sub);cursor:pointer;padding:0 8px;
   background:none;border:1px dashed var(--line);border-radius:9px;line-height:1.25;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ivsum .lowbtn b{color:var(--gold);font-size:.66rem}
@@ -592,7 +593,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
   <button class="t-atk" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックのダメージが1上がる境目を見ます">🗡️ 与える</button>
-  <button class="t-shadow" data-dir="take" aria-pressed="false" title="あいてのノーマルアタックから受けるダメージが1下がる境目を見ます">🛡 受ける</button>
+  <button class="t-def" data-dir="take" aria-pressed="false" title="あいてのノーマルアタックから受けるダメージが1下がる境目を見ます">🛡 受ける</button>
 </div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="4096通りの個体値をぜんぶ試して、環境100匹との勝ち数が多い順に並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button><button class="t-mega mega4" id="cpb" aria-pressed="false" style="display:none" title="メガシンカCPブースト（イベントボーナス）を計算に入れます。メガLv4のPL+2がPL+5になるので、メガの行・列にPL55を足します（最高の相棒を足しても55まで）">CPブースト</button></div>
 <div id="reco"></div>
 <div id="ivsum"></div>
