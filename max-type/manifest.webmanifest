@@ -1,0 +1,24 @@
+{
+  "name": "マックスバトル タイプ別ランキング",
+  "short_name": "マックスバトル タイプ別ランキング",
+  "description": "マックスバトルのタイプ別アタッカー・タンクランキングを表示します。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0912",
+  "theme_color": "#0b0912",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "/assets/icons/max-type/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/max-type/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

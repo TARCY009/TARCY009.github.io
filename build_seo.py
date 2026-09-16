@@ -67,6 +67,14 @@ PAGES = [
        eyebrow='POKÉMON GO MAX BATTLE', name='マックスバトル対策ツール',
        tag='攻める役と耐える役、それぞれ誰を出せばいいか決まります',
        color='#ff74c4', ld='app'),
+  dict(path='/max-type/', key='max-type',
+       title='マックスバトル タイプ別ランキング｜ポケモンGOのダイマックス最強アタッカー・タンク｜GOナビ',
+       desc='ポケモンGOのマックスバトルで、タイプごとに強いアタッカー(ダイマックスわざの火力順)とタンク(そのタイプのわざへの耐久順)を並べたランキング。ダイウォールの壁込みで防御型を評価する並びにも切り替えられます。',
+       og_title='マックスバトル タイプ別ランキング｜ポケモンGO',
+       og_desc='タイプごとに、強いアタッカーと倒されにくいタンクが分かります。',
+       eyebrow='POKÉMON GO MAX TYPE RANKING', name='マックスバトル タイプ別ランキング',
+       tag='タイプごとの強いアタッカーとタンク',
+       color='#ff7a9c', ld='app'),
   dict(path='/gym-attack/', key='gym-attack',
        title='ジム挑戦オススメツール｜ポケモンGOのジムバトル攻略｜GOナビ',
        desc='ポケモンGOのジムに置かれた相手を、いちばん速く崩せるポケモンを火力と総合力で並べます。シャドウ・メガの切り替え、わざ違いの表示にも対応。',
@@ -160,7 +168,7 @@ NAME_BR = {
   'type-dps': 'タイプ別火力|ランキング', 'max-battle': 'マックスバトル|対策ツール',
   'gym-attack': 'ジム挑戦|オススメツール', 'gym-defense': 'ジム防衛|オススメツール',
   'breakpoint': 'GBL|ブレイクポイント', 'rocket': 'GOロケット団|対策シミュレーター',
-  'bulk': '耐久指数|ランキング', 'iv-checker': '個体値|チェッカー',
+  'bulk': '耐久指数|ランキング', 'max-type': 'マックスバトル|タイプ別ランキング', 'iv-checker': '個体値|チェッカー',
 }
 for _p in PAGES:
     if _p['key'] in NAME_BR and _p.get('name'):

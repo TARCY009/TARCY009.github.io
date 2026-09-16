@@ -44,6 +44,7 @@
 .wmk[data-tool="iv-checker"]{--wmk-d:#ff7ec2}
 .wmk[data-tool="pokedex"]{--wmk-d:#bd93ff}
 .wmk[data-tool="bulk"]{--wmk-d:#8ec9ff}
+.wmk[data-tool="max-type"]{--wmk-d:#ff7a9c}
 /* ライトはツールごとのベタ塗り（変更なし） */
 :root.light .wmk{
   color:var(--wmk-c,#3a4a86);
@@ -61,6 +62,7 @@
 :root.light .wmk[data-tool="iv-checker"]{--wmk-c:#a44b76}
 :root.light .wmk[data-tool="pokedex"]{--wmk-c:#7e60a4}
 :root.light .wmk[data-tool="bulk"]{--wmk-c:#4b6f8c}
+:root.light .wmk[data-tool="max-type"]{--wmk-c:#b04262}
 /* 「オススメツール」等の決まり文句は常に白（ダーク）／--inkに準じる地色（ライト）のまま */
 .wmksuf{
   font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;

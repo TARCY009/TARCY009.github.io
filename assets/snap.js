@@ -44,6 +44,9 @@
     '/max-battle/': { target: '#list', rows: '.row', ctx: ['#bname'],
                       tags: '#tabs [aria-selected="true"],#filters [aria-pressed="true"]', title: 'マックスバトル対策',
                       graph: { name: '.nm', val: '.pts b', unit: 'ポイント', head: '#bname' } },
+    '/max-type/': { target: '#list', rows: '.row', ctx: ['#curTypeName'],
+                    tags: '#tabs [aria-selected="true"],.rhead [aria-pressed="true"]', title: 'マックスバトル タイプ別',
+                    graph: { name: '.gname,.pname .nm', val: '.pts b', unit: 'ポイント', head: '#curTypeName' } },
     '/iv-checker/': { target: '#result .tblwrap', rows: 'tbody tr',
                       ctx: ['#lgtitle > span:first-child', '#lgtabs .lgc.act .lgc-n', '#lgtabs .lgc.act .lgc-r', '#lgtstats'],
                       barIn: '#result .tophead', title: '個体値チェッカー TOP5' }

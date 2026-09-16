@@ -50,7 +50,7 @@
 :root{
   --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560; --panel:rgba(26,35,66,.94);
   --cy:#43e0ff; --gold:#ffd54a;
-  --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff;   /* 3グループの色 */
+  --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff; --g4:#ff5abe;   /* 4グループの色 */
   --hair:rgba(255,255,255,.14);               /* 罫線。高級感は線の細さで出す */
   /* 看板は44pxと大きいので、ここだけ**中央に反射の折れ目**を入れた金属のグラデーションを使う。
      ⚠ この折れ目つきは小さい字に流用しないこと（1px以下の汚い線になる）。
@@ -73,7 +73,7 @@
 :root.light{
   --ink:#20263a; --sub:#6a7391; --line:#dfe6f5; --panel:rgba(255,255,255,.9);
   --cy:#0b8fa8; --gold:#b07a00;
-  --g1:#e05a20; --g2:#0b8fa8; --g3:#7a3cc4;
+  --g1:#e05a20; --g2:#0b8fa8; --g3:#7a3cc4; --g4:#c2247e;
   --hair:rgba(40,60,120,.16);
   /* ライトも銀のまま明度を落とす（折れ目の位置は同じ）。
      ⚠ 押し出しは文字より暗い色にする（明るい銀だと白くにじんで輪郭がぼやける）。
@@ -238,14 +238,19 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <p class="btag">Pok&eacute;mon GO Tools</p>
 </header>
 
-<div class="gsec" style="--gc:var(--g1)"><span class="en">Raid &amp; Gym</span><span class="ja">レイド・ジム</span><span class="rule"></span><span class="no">06</span></div>
+<div class="gsec" style="--gc:var(--g1)"><span class="en">Raid &amp; Gym</span><span class="ja">レイド・ジム</span><span class="rule"></span><span class="no">05</span></div>
 <div class="cards" style="--gc:var(--g1)">
   <a class="card" href="/dps/"><img src="/assets/icons/karyoku/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイド火力チェッカー</b><span class="ds expl">ボスを選ぶだけで、いちばん速く削れるポケモンが順に並びます</span></span></a>
   <a class="card" href="/raid/"><img src="/assets/icons/raid/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">レイドシミュレーター</b><span class="ds expl">何人集まれば倒せるか、実際に戦わせて数えます</span></span></a>
   <a class="card" href="/type-dps/"><img src="/assets/icons/type-dps/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">タイプ別火力ランキング</b><span class="ds expl">ほのお・みずなど、タイプごとの最強アタッカーが分かります</span></span></a>
-  <a class="card" href="/max-battle/"><img src="/assets/icons/max-battle/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">マックスバトル対策</b><span class="ds expl">攻める役と耐える役、それぞれ誰を出せばいいか決まります</span></span></a>
   <a class="card" href="/gym-attack/"><img src="/assets/icons/gym-attack/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム挑戦</b><span class="ds expl">相手のジムを、いちばん速く崩せるポケモンを教えます</span></span></a>
   <a class="card" href="/gym-defense/"><img src="/assets/icons/gym-defense/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ジム防衛</b><span class="ds expl">ジムに置くと、長く残りやすいポケモンが分かります</span></span></a>
+</div>
+
+<div class="gsec" style="--gc:var(--g4)"><span class="en">Max Battle</span><span class="ja">マックスバトル</span><span class="rule"></span><span class="no">02</span></div>
+<div class="cards" style="--gc:var(--g4)">
+  <a class="card" href="/max-battle/"><img src="/assets/icons/max-battle/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">マックスバトル対策</b><span class="ds expl">攻める役と耐える役、それぞれ誰を出せばいいか決まります</span></span></a>
+  <a class="card" href="/max-type/"><img src="/assets/icons/max-type/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">タイプ別ランキング</b><span class="ds expl">タイプごとに、強いアタッカーと倒されにくいタンクが分かります</span></span></a>
 </div>
 
 <div class="gsec" style="--gc:var(--g2)"><span class="en">Trainer Battle</span><span class="ja">トレーナーバトル</span><span class="rule"></span><span class="no">04</span></div>
