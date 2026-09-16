@@ -199,8 +199,8 @@
     // もう一方のページへのタブにも、いまのタイプと設定を引き継ぐ
     const lq = new URLSearchParams(q); lq.delete(mode === 'atk' ? 'lg' : 'g');
     const ls = lq.toString() ? '?' + lq.toString() : '';
-    $('tabAtk').href = '/max-type/' + ls;
-    $('tabTank').href = '/max-type/tank/' + ls;
+    const sw = $('swLink');
+    if(sw) sw.href = (mode === 'atk' ? '/max-type/tank/' : '/max-type/') + ls;
   }
   function sync(){
     $('atkOpts').style.display = mode === 'atk' ? '' : 'none';
