@@ -465,10 +465,11 @@ function graphSVG(forSave,Wopt){
   // 幅はふつう1980。動画用の1920×1440で保存するときだけ1920(2026-09-12タダシさん指示)。右側の位置は幅から決める
   const W=Wopt||1980,H=1440;
   const n=rows.length||1;
-  // 目盛り: 下限=最下位の3%下を刻みで切り下げ・上限=1位の少し上(差がはっきり見える)
+  // 目盛り: 下限は全タイプ共通で30に固定(2026-09-16タダシさん指示。最下位に合わせて動かすと、タイプや絞り込みで
+  // 棒の長さの意味が変わって見えるため)。上限=1位の少し上。万一30を切る値があれば0から
   const dmax=rows.length?rows[0].dps:10, dmin=rows.length?rows[rows.length-1].dps:0;
-  const step=(dmax-dmin)<6?1:(dmax-dmin)<14?2:5;
-  const v0=Math.max(0,Math.floor(dmin*0.97/step)*step);
+  const v0=dmin>=30?30:0;
+  const step=(dmax-v0)<6?1:(dmax-v0)<14?2:(dmax-v0)<30?5:10;
   const v1=Math.ceil(dmax*1.02/step)*step;
   const L=118,R=W-52,T=252;
   const colW=(R-L)/n, barW=Math.min(colW*0.42,96); // 細めの棒

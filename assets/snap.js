@@ -689,8 +689,12 @@
     var B = Math.round(H - PAD - nameH);
     var vals = rows.map(function (r) { return r.v; });
     var dmax = Math.max.apply(null, vals), dmin = Math.min.apply(null, vals);
-    var step = niceStep((dmax - dmin) || dmax * 0.2 || 1);
-    var v0 = Math.max(0, Math.floor(dmin * 0.97 / step) * step), v1 = Math.ceil(dmax * 1.02 / step) * step;
+    // 目盛りの下限は30に固定(2026-09-16タダシさん指示・タイプ別火力のグラフと同じ)。
+    // 30を切る値があるとき・耐久指数のように桁が大きく30が刻みに乗らないときだけ0から
+    var step = niceStep((dmax - 30) || dmax * 0.2 || 1);
+    var v0 = (dmin >= 30 && step <= 30) ? 30 : 0;
+    if (v0 === 0) step = niceStep(dmax || 1);
+    var v1 = Math.ceil(dmax * 1.02 / step) * step;
     if (v1 <= v0) v1 = v0 + step;
     var yv = function (v) { return B - (v - v0) / (v1 - v0) * (B - T); };
     var logo = dev ? null : await loadLogo();
