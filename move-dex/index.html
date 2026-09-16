@@ -254,12 +254,19 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 .mds-sh+.mds-g2{margin-top:0}
 .mds-t{border-radius:14px;padding:10px 12px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);min-width:0}
 .mds-t.wide{grid-column:auto}
-.mds-tl{font-size:12px;font-weight:800;color:#aab4dd;letter-spacing:.06em}
+.mds-tl{font-size:12px;font-weight:800;color:var(--lc,#aab4dd);letter-spacing:.06em;display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px}
+.mds-sec.pve{--lc:#ffbf99;--tgb:rgba(255,138,92,.16);--tgl:rgba(255,160,110,.4)}
+.mds-sec.pvp{--lc:#b3c8ff;--tgb:rgba(110,161,255,.16);--tgl:rgba(140,170,255,.42)}
+.mds-tg{font-size:10px;font-weight:800;letter-spacing:.02em;padding:1px 7px;border-radius:999px;color:var(--lc);background:var(--tgb);border:1px solid var(--tgl);line-height:1.5}
+.mds-t.big .mds-ts{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+.mds-t.big .mds-ts .mds-bars{max-width:90px;margin-right:0}
+.mds-t.big .mds-ts .mds-bars i{height:8px}
+.mds-t.big .mds-ts .mds-meter{margin:0;height:8px;max-width:110px}
 .mds-tv{font-size:26px;font-weight:900;line-height:1.25;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:0;white-space:nowrap}
 .mds-tv u{text-decoration:none;font-size:13px;font-weight:700;color:#aab4dd;margin-left:4px;align-self:flex-end;padding-bottom:5px}
 .mds-ts{font-size:11px;font-weight:700;color:#8d97c2;margin-top:1px}
 .mds-t.big{padding:12px 14px 12px;background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border-color:rgba(255,255,255,.14)}
-.mds-t.big .mds-tv{font-size:48px;line-height:1.1;background:linear-gradient(180deg,#ffffff 20%,#dfe7f7 60%,#a9b6d2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+.mds-t.big .mds-tv{font-size:44px;line-height:1.1;background:linear-gradient(180deg,#ffffff 20%,#dfe7f7 60%,#a9b6d2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 2px 0 #3a4260) drop-shadow(0 5px 8px rgba(0,0,0,.4));display:block}
 .mds-t.big.hi .mds-tv{background:linear-gradient(180deg,#fff3e2 10%,#ffc38a 50%,#ff8a3c 100%);-webkit-background-clip:text;background-clip:text;
   filter:drop-shadow(0 2px 0 #8a3a10) drop-shadow(0 5px 8px rgba(0,0,0,.4))}
@@ -286,12 +293,17 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 .mds.wide .mds-body{gap:24px;margin-top:28px}
 .mds.wide .mds-sec{padding:24px;border-radius:26px}
 .mds.wide .mds-ja{font-size:24px}
-.mds.wide .mds-t.big .mds-tv{font-size:64px}
+.mds.wide .mds-t.big .mds-tv{font-size:58px}
 .mds.wide .mds-tv{font-size:34px}
 .mds.wide .mds-g3,.mds.wide .mds-g4{grid-template-columns:1fr 1fr}
-.mds.wide .mds-g3>.mds-t:nth-child(3){grid-column:1/-1}
+.mds.wide .mds-g3:not(.bigrow)>.mds-t:nth-child(3){grid-column:1/-1}
+.mds.wide .mds-g3.bigrow{grid-template-columns:1fr 1fr}
+.mds.wide .mds-g3.bigrow>.mds-t:first-child{grid-column:1/-1;display:flex;align-items:center;gap:24px}
+.mds.wide .mds-g3.bigrow>.mds-t:first-child .mds-tl{min-width:64px}
+.mds.wide .mds-g3.bigrow>.mds-t:first-child .mds-ts{margin-left:auto}
 .mds.wide .mds-t{padding:14px 18px}
 .mds.wide .mds-tl{font-size:15px}
+.mds.wide .mds-tg{font-size:12px}
 .mds.wide .mds-ts{font-size:13px}
 .mds.wide .mds-tv u{font-size:16px}
 .mds.wide .mds-buff{padding:14px 18px}
@@ -306,11 +318,11 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 :root.light .mds-t{background:rgba(255,255,255,.8);border-color:rgba(30,40,90,.1)}
 :root.light .mds-t.big .mds-tv{background:none;color:#1f2644;filter:none}
 :root.light .mds-t.big.hi .mds-tv{color:#c4500e}
-:root.light .mds-tl,:root.light .mds-tv u,:root.light .mds-bl,:root.light .mds-be small{color:#5f6a92}
+:root.light .mds-tv u,:root.light .mds-bl,:root.light .mds-be small{color:#5f6a92}
 :root.light .mds-ts{color:#7b86ad}
 :root.light .mds-kind{color:#3b4570;background:#fff;border-color:rgba(30,40,90,.15)}
-:root.light .mds-sec.pve{--a1:#d4502a;--a2:#d8830e}
-:root.light .mds-sec.pvp{--a1:#2f5fd0;--a2:#7a3cc4}
+:root.light .mds-sec.pve{--a1:#d4502a;--a2:#d8830e;--lc:#b8522a;--tgb:rgba(212,80,42,.08);--tgl:rgba(212,80,42,.3)}
+:root.light .mds-sec.pvp{--a1:#2f5fd0;--a2:#7a3cc4;--lc:#3656b8;--tgb:rgba(47,95,208,.07);--tgl:rgba(47,95,208,.28)}
 :root.light .mds-sec.lrn{--a1:#5f7f1a;--a2:#1f8a5a}
 :root.light .mds-en{color:var(--a1)}
 :root.light .mds-cnt{color:#1f2644}
@@ -362,8 +374,9 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <li><b>威力</b> … わざの素の威力です(タイプ一致なら1.2倍になります)</li>
     <li><b>時間</b> … わざ全体の秒数です。ダメージが出るまでの時間は、わざをタップすると出ます</li>
     <li><b>EPS</b> … 1秒あたりのゲージ増加(ノーマルアタック)</li>
-    <li><b>DPS</b> … 1秒あたりのダメージ(威力÷時間)</li>
-    <li>SPアタックのわざ名の下のバーは<b>ゲージの本数</b>で、右の数字は1本あたりのゲージ量です(分割なし=100・2分割=50・3分割=33)</li>
+    <li><b>DPS</b> … 1秒あたりのダメージ(威力÷時間・ノーマルアタックだけ)</li>
+    <li>SPアタックのわざ名の下のバーは<b>ゲージの本数</b>で、「ゲージ消費」は1本あたりのゲージ量です(分割なし=100・2分割=50・3分割=33)</li>
+    <li><b>SPアタック単体のDPSはのせていません。</b>ゲージをためる時間が入らないので、単体では強さを表さないためです。ジム・レイドでは<b>ノーマルアタックとSPアタックをセットで</b>見ます(組み合わせの火力はレイド火力チェッカー・タイプ別火力ランキングで比べられます)</li>
   </ul>
   <h4>トレーナーバトルの数値</h4>
   <ul>
@@ -555,8 +568,7 @@ const COLS={
   pveSp:[
     {h:'威力',k:'p',v:(m)=>m.p,f:v=>num(v)},
     {h:'時間',k:'d',v:(m)=>m.d,f:v=>num(v),asc:true,tip:'わざ全体の秒数(短い順に並べます)'},
-    {h:'ゲージ',k:'g',v:(m,id)=>-pveEnergyOf(id,m),f:v=>Math.round(v),asc:true,tip:'1本あたりのゲージ量(分割なし=100・2分割=50・3分割=33。少ない順に並べます)'},
-    {h:'DPS',k:'dps',v:(m)=>m.p/m.d,f:v=>num(v),def:true,hi:true,tip:'1秒あたりのダメージ(威力÷時間)'},
+    {h:'ゲージ消費',k:'g',v:(m,id)=>-pveEnergyOf(id,m),f:v=>Math.round(v),asc:true,tip:'1本あたりのゲージ量(分割なし=100・2分割=50・3分割=33。少ない順に並べます)'},
   ],
   pvpFast:[
     {h:'威力',k:'p',v:(m)=>m.p,f:v=>num(v)},
@@ -701,8 +713,8 @@ function drawWin(ov,e){
       ${r('わざ全体の時間',num(P.d)+'秒')}
       ${r('ダメージ発生',num(P.w,2)+'秒','わざを出し始めてからダメージが入るまでの時間です')}
       ${P.fast?r('ゲージ増加',P.eg+' <small class="raw">EPS '+num(P.eps)+'</small>')
-        :`<div class="r" title="ゲージの分割数と1本あたりの量です(分割なし=100・2分割=50・3分割=33)"><span>ゲージ</span><span class="gv">${gaugeBar(P.m,e.gid)}<b>${P.gauge}</b></span></div>`}
-      ${r('DPS',`<span${sc}>${num(P.dps)}</span>`,'1秒あたりのダメージ(威力÷時間)')}
+        :`<div class="r" title="ゲージの分割数と1本あたりの量です(分割なし=100・2分割=50・3分割=33)"><span>ゲージ消費</span><span class="gv">${gaugeBar(P.m,e.gid)}<b>${P.gauge}</b></span></div>`}
+      ${P.fast?r('DPS',`<span${sc}>${num(P.dps)}</span>`,'1秒あたりのダメージ(威力÷時間)'):''}
     </div></div>`;
   }
   let pvp='';
@@ -747,27 +759,33 @@ function drawWin(ov,e){
 // ---- 画像用のカード(開発者の保存専用・画面には出さない) ----
 // 枠の外は透明。両方＋1920×1440は横並び(左=ジム・レイド／右=トレーナーバトル)
 function cardSec(kind,e,st){
+  // 大きいタイル3つ＝威力・ダメージ効率・チャージ効率(同じ大きさで並べる・2026-09-17タダシさん指示)。
+  // チャージ効率はノーマルアタック=EPS/EPT、SPアタック=ゲージ(ジム・レイド)／消費ゲージ(トレーナーバトル)
   const T=(lbl,val,opt)=>{ opt=opt||{};
-    return `<div class="mds-t${opt.big?' big':''}${opt.wide?' wide':''}${opt.hi?' hi':''}"><div class="mds-tl">${lbl}</div><div class="mds-tv">${val}</div>${opt.sub?`<div class="mds-ts">${opt.sub}</div>`:''}</div>`; };
+    return `<div class="mds-t${opt.big?' big':''}${opt.hi?' hi':''}"><div class="mds-tl">${lbl}${opt.tag?`<span class="mds-tg">${opt.tag}</span>`:''}</div><div class="mds-tv">${val}</div>${opt.sub?`<div class="mds-ts">${opt.sub}</div>`:''}</div>`; };
   const raw=v=>st?`素の値 ${num(v)}`:'';
   if(kind==='pve'){
     const P=pveVals(e,st);
     const bars=`<span class="mds-bars">${Array.from({length:P.bars},()=>'<i></i>').join('')}</span>`;
-    const small=P.fast
-      ?T('全体の時間',num(P.d)+'<u>秒</u>')+T('ダメージ発生',num(P.w,2)+'<u>秒</u>')+T('ゲージ増加',P.eg)+T('EPS',num(P.eps),{sub:'1秒あたりのゲージ'})
-      :T('全体の時間',num(P.d)+'<u>秒</u>')+T('ダメージ発生',num(P.w,2)+'<u>秒</u>')+T('ゲージ',`${bars}<span>${P.gauge}</span>`,{wide:true,sub:P.bars===1?'分割なし':P.bars+'分割'});
+    // ジム・レイドのSPアタック単体のDPSは出さない(ゲージをためる時間が入らず、強さはノーマルアタックとのセットで決まるため・2026-09-17タダシさん判断)
+    const big=T('威力',num(P.pw),{big:true,hi:st,sub:raw(P.p0)})
+      +(P.fast?T('DPS',num(P.dps),{big:true,hi:st,tag:'ダメージ効率'})+T('EPS',num(P.eps),{big:true,tag:'チャージ効率'})
+              :T('ゲージ消費',P.gauge,{big:true,sub:`${bars}<span>${P.bars===1?'分割なし':P.bars+'分割'}</span>`}));
+    const small=T('全体の時間',num(P.d)+'<u>秒</u>')+T('ダメージ発生',num(P.w,2)+'<u>秒</u>')+(P.fast?T('ゲージ増加',P.eg):'');
     return `<div class="mds-sec pve"><div class="mds-sh"><span class="mds-en">GYM &amp; RAID</span><span class="mds-ja">ジム・レイド</span></div>
-      <div class="mds-g2">${T('威力',num(P.pw),{big:true,hi:st,sub:raw(P.p0)})}${T('DPS',num(P.dps),{big:true,hi:st,sub:'1秒あたりのダメージ'})}</div>
-      <div class="mds-g${P.fast?4:3}">${small}</div></div>`;
+      <div class="${P.fast?'mds-g3 bigrow':'mds-g2'}">${big}</div><div class="mds-g${P.fast?3:2}">${small}</div></div>`;
   }
   const V=pvpVals(e,st);
   const eff=V.buff?`<div class="mds-buff"><span class="mds-bl">能力変化</span><span class="mds-be">${effHtml(V.m)}</span><span class="mds-bt">${esc(V.buff)}</span></div>`:'';
-  const small=V.fast
-    ?`<div class="mds-g3">${T('わざの長さ',V.tn+`<u>ターン（${V.tn*0.5}秒）</u>`)+T('ゲージ増加',V.eg)+T('EPT',num(V.ept),{sub:'1ターンあたりのゲージ'})}</div>`
-    :`<div class="mds-g1">${T('消費ゲージ',`<span class="mds-num">${V.e}</span><span class="mds-meter"><i style="width:${Math.min(100,V.e)}%"></i></span><u>/ 100</u>`,{wide:true,sub:'ゲージ100のうち、1発で使う量'})}</div>`;
+  const meter=`<span class="mds-meter"><i style="width:${Math.min(100,V.e||0)}%"></i></span><span>/ 100</span>`;
+  const big=T('威力',num(V.pw),{big:true,hi:st,sub:raw(V.p0)})
+    +(V.fast?T('DPT',num(V.dpt),{big:true,hi:st,tag:'ダメージ効率'})
+            :T('DPE',num(V.dpe,2),{big:true,hi:st,tag:'ダメージ効率'}))
+    +(V.fast?T('EPT',num(V.ept),{big:true,tag:'チャージ効率'})
+            :T('ゲージ消費',V.e,{big:true,sub:meter}));
+  const small=V.fast?`<div class="mds-g2">${T('わざの長さ',V.tn+`<u>ターン（${V.tn*0.5}秒）</u>`)+T('ゲージ増加',V.eg)}</div>`:'';
   return `<div class="mds-sec pvp"><div class="mds-sh"><span class="mds-en">TRAINER BATTLE</span><span class="mds-ja">トレーナーバトル</span></div>
-    <div class="mds-g2">${T('威力',num(V.pw),{big:true,hi:st,sub:raw(V.p0)})}${V.fast?T('DPT',num(V.dpt),{big:true,hi:st,sub:'1ターンあたりのダメージ'}):T('DPE',num(V.dpe,2),{big:true,hi:st,sub:'ゲージ1あたりのダメージ'})}</div>
-    ${small}${eff}</div>`;
+    <div class="mds-g3 bigrow">${big}</div>${small}${eff}</div>`;
 }
 function cardHtml(e,pat,horiz){
   const st=state.stab, c=colorOf(e.t), c2=colorOf2(e.t), ja=GO.typeJa[e.t];
