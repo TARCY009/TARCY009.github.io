@@ -1586,7 +1586,7 @@ ${PAGE_ROCKET ? '' : `
   <b>相手が選んだ3匹は、場に出てくるまで分かりません</b>——なので、あいての6匹を見て
   「何を出してくるか」を読みながら選ぶのがこのルールの中身です。</p>
   <ul>
-    <li><b>相性表</b>が選出の画面です。じぶんの6匹（行）が、あいての6匹（列）それぞれに
+    <li><b>「3匹選出」の相性表</b>が選出の画面です。じぶんの6匹（行）が、あいての6匹（列）それぞれに
     どれだけ勝てるかを、シールド<b>0-0／1-1／2-2の3通り</b>で戦わせた結果を並べています——
     <b>◎</b>＝3通りとも勝ち／<b>◯</b>＝2通りで勝ち／<b>△</b>＝1通りだけ勝ち（惜しい）／<b>✕</b>＝3通りとも負け。
     <b>行を押すとその1匹が選出に入り、押した順が並び順</b>になります（①が初手・もう一度押すと外れます）</li>
@@ -7934,7 +7934,7 @@ function sdGridHtml() {
         const g = ptTier(t, n);
         return `<td class="sdt ${g}" title="${ptName(SD.foe[foe[j]])}／${ptTierLabel(g, n)}（${ptTierDesc(g, n)}）">${t}</td>`;
       }).join('')}</tr>`
-    : `<tr class="sdft"><th class="sdftn" colspan="${nFoe + 1}">あと${3 - SD.pick.length}匹選ぶと、ここに<b>勝てる味方の数</b>が出ます</th></tr>`;
+    : `<tr class="sdft"><th class="sdftn" colspan="${nFoe + 1}">3匹選ぶと、ここに<b>勝てる味方の数</b>が出ます</th></tr>`;
   // 表の左上のあき地に「6対6の相性」を出す(選出の前に、この6匹どうしの相性を掴むための数字)
   const ix = sdIndex(W, my.length, nFoe), ixl = sdIxLabel(ix);
   const ixHtml = `<div class="sdix ${ixl.c}" title="じぶんの${my.length}匹とあいての${nFoe}匹が、シールド0-0／1-1／2-2の3通りで戦った${my.length * nFoe * 3}通りのうち、じぶんが勝った数の割合です。50%で互角。選出を決める前の「この6匹どうしの相性」を表します">` +
@@ -7943,7 +7943,7 @@ function sdGridHtml() {
   // 「穴◯／1匹頼み◯／2匹勝ち◯」の要約は出さない(2026-09-06タダシさん指示)——
   // 表のいちばん下の行を見れば分かるので、同じことを文章で繰り返さない
   return `<div class="sdgrid">
-    <div class="sdglbl">相性表<small><b>行を押すと選出</b>です（押した順が並び順）<span class="expl">。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</span></small></div>
+    <div class="sdglbl"><span class="sdgt">3匹選出</span><span class="sdgtag">相性表</span><small class="expl">行を押すと選出（押した順が並び順・①が初手）。じぶんの${my.length}匹が、あいての${nFoe}匹それぞれにどれだけ勝てるかを、シールド0-0／1-1／2-2の3通りで戦わせた結果です</small></div>
     <div class="sdgwrap"><table class="sdtbl">
       <thead><tr class="sdhh"><th class="sdch" rowspan="2">${ixHtml}</th>
       <th class="sdfg" colspan="${nFoe}" title="見せ合いでは、あいてが選んだ3匹も、わざの構成も見えません">あいての${nFoe}匹 <i>この中から3匹が来ます<span class="expl">・わざは見えません</span></i></th></tr>
