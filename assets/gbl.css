@@ -2772,3 +2772,119 @@ button.sdchip.on .tbadge{filter:none}
   border-radius:50%;transform:translateY(-50%);opacity:.8;pointer-events:none}
 .ft.fs0::before{left:2px;background:var(--flc0)}
 .ft.fs1::after{right:2px;background:var(--flc1)}
+
+/* ===== 1対1の結果: 画像に保存したときだけの見た目（2026-09-16タダシさん指示「動画でしっかり綺麗に見せる」）=====
+   snap.js が複製にだけ .snapd を付ける（画面の見た目は変えない）。テーマによらず濃紺で固定する */
+.result.snapd{display:block!important;position:relative;overflow:hidden;padding:22px 22px 20px;border-radius:22px;border:0;
+  color:#eaf0ff;background:linear-gradient(160deg,#18234a 0%,#0f1733 55%,#0b1026 100%);
+  box-shadow:inset 0 0 0 1.5px rgba(120,160,255,.38),inset 0 1px 0 rgba(255,255,255,.1)}
+.result.snapd::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;
+  background:linear-gradient(90deg,#43e0ff,#8b7bff 50%,#ff5abe)}
+.result.snapd::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 50% at 0% 0%,rgba(67,224,255,.12),transparent 70%),radial-gradient(60% 50% at 100% 0%,rgba(255,90,190,.10),transparent 70%)}
+.result.snapd>*{position:relative;z-index:1}
+.snapd .vs{gap:14px;align-items:stretch}
+.snapd .fighter{padding:14px 14px 12px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015));
+  box-shadow:inset 0 0 0 1px rgba(150,180,255,.2)}
+.snapd .fighter:has(.badge.win){box-shadow:inset 0 0 0 1.5px rgba(80,230,150,.55)}
+.snapd .fighter .top{gap:9px}
+.snapd .fighter .top .nm{font-size:1.28rem;font-weight:900;color:#fff;letter-spacing:.02em}
+.snapd .badge{font-size:.95rem;font-weight:900;letter-spacing:.06em;padding:3px 12px;border-radius:9px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 2px 0 rgba(0,0,0,.35)}
+.snapd .badge.win{color:#042414;background:linear-gradient(160deg,#b8ffd6 0%,#3ee08a 55%,#15a85c 100%)}
+.snapd .badge.lose{color:#2d0710;background:linear-gradient(160deg,#ffc2cc 0%,#ff5a78 55%,#c7243f 100%)}
+.snapd .badge.draw{color:#2b2305;background:linear-gradient(160deg,#fff0b3 0%,#ffcc33 55%,#d99a00 100%)}
+.snapd .hpbar{height:16px;margin-top:12px;border:0;background:rgba(0,0,0,.45);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.snapd .hpbar i{background:linear-gradient(90deg,#1fc978,#8ff5b8);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+.snapd .hpbar i.low{background:linear-gradient(90deg,#e8364f,#ff9aa8)}
+.snapd .enbar{height:10px;margin-top:12px;border:0;background:rgba(0,0,0,.45);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.snapd .enbar i{background:linear-gradient(90deg,#7c5cff,#e0b8ff);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+.snapd .subline{color:#9fb0dc;font-size:.82rem;font-weight:700;margin-top:5px}
+.snapd .subline b{color:#fff;font-size:1.05rem}
+.snapd .shline{margin-top:8px}
+.snapd .shline .sh{font-size:1.35rem;margin-right:4px}
+.snapd .vsmark{align-self:center;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1.05rem;font-weight:900;font-style:italic;color:#fff;letter-spacing:.02em;
+  background:linear-gradient(160deg,#8b7bff 0%,#5b3fd6 55%,#34238f 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 0 rgba(0,0,0,.4)}
+.snapd .mvcols .vsmark{width:46px;height:1px}
+.snapd .tapnote{display:none}
+.snapd .shmtx{margin-top:20px;padding:16px 14px 14px;border-radius:16px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px rgba(150,180,255,.16)}
+.snapd .mvhead{color:#cfdcff;font-size:.9rem;font-weight:800;border:0;padding-bottom:6px}
+.snapd .mvhead small{color:#8fa0cc;font-size:.72rem;font-weight:600}
+.snapd .shmtx table{max-width:none;border-spacing:8px;margin-top:4px}
+.snapd .shmtx th{color:#b8c6ee;font-size:.95rem;font-weight:800}
+.snapd .shmtx th.corner{font-size:.72rem;color:#8fa0cc}
+.snapd .shmtx td{padding:16px 4px 14px;border-radius:13px;border:0;background:linear-gradient(180deg,#1c2750,#141c3c);
+  box-shadow:inset 0 0 0 1px rgba(150,180,255,.18),inset 0 1px 0 rgba(255,255,255,.07)}
+.snapd .shmtx td.w{background:linear-gradient(180deg,rgba(40,190,110,.30),rgba(20,90,60,.22));box-shadow:inset 0 0 0 1px rgba(90,230,150,.45)}
+.snapd .shmtx td.l{background:linear-gradient(180deg,rgba(220,50,80,.26),rgba(90,20,40,.22));box-shadow:inset 0 0 0 1px rgba(255,110,135,.4)}
+.snapd .shmtx td.d{background:linear-gradient(180deg,rgba(230,180,40,.24),rgba(90,70,10,.2));box-shadow:inset 0 0 0 1px rgba(255,210,90,.4)}
+.snapd .shmtx td b{font-size:1.5rem;font-weight:900;letter-spacing:.04em}
+.snapd .shmtx td.w b{color:#7dffb4}
+.snapd .shmtx td.l b{color:#ff8fa3}
+.snapd .shmtx td.d b{color:#ffd76a}
+.snapd .shmtx td small{color:#dfe7ff;font-size:.82rem;font-weight:700;margin-top:4px}
+.snapd .shmtx td.cur{box-shadow:inset 0 0 0 2.5px #43e0ff,0 0 0 1px rgba(67,224,255,.35)}
+.snapd .mvcols{gap:14px;margin-top:18px}
+.snapd .mvside{padding:12px 14px 6px;border-radius:14px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(150,180,255,.14)}
+.snapd .mvside .mvhead{font-size:.82rem;color:#9fb0dc;border-bottom:1px solid rgba(150,180,255,.18)}
+.snapd .mvside .mvrow{border-bottom:1px solid rgba(150,180,255,.1);padding:8px 0;font-size:.95rem;font-weight:800;color:#fff}
+.snapd .mvside .mvrow:last-child{border-bottom:0}
+.snapd .mvside .mvrow .num{color:#b8c6ee;font-size:.82rem;font-weight:700}
+.snapd .shield{color:#43e0ff}
+.snapd .cmpnote,.snapd .carrytag{color:#b8c6ee}
+.snapd .fighter .top{align-items:flex-start}
+.snapd .fighter .top .nm{white-space:normal;overflow:visible;line-height:1.25;word-break:keep-all;overflow-wrap:anywhere}
+.snapd .fighter .top .badge{margin-top:2px}
+/* 9マスの「じぶん／あいて」の見出しと、名前の前の札は画像のときだけ出す */
+.mtxt,.mtxl,.sidetag{display:none}
+.snapd .sidetag{display:inline-block;vertical-align:3px;margin-right:7px;padding:2px 8px;border-radius:7px;font-style:normal;font-size:.72rem;font-weight:900;letter-spacing:.06em}
+.snapd .fighter:first-child .sidetag{color:#04232b;background:linear-gradient(160deg,#b9f6ff,#43e0ff 55%,#0fa8c4)}
+.snapd .fighter:last-child .sidetag{color:#2b1c00;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200)}
+.snapd .mtxg{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto 1fr;column-gap:6px}
+.snapd .mtxt{display:flex;grid-column:2;grid-row:1;align-items:center;justify-content:center;gap:8px;
+  margin:4px 0 0;padding:7px 12px;border-radius:11px;color:#ffe2a0;font-size:.9rem;font-weight:800;
+  background:linear-gradient(90deg,rgba(255,200,61,.06),rgba(255,200,61,.2),rgba(255,200,61,.06));box-shadow:inset 0 0 0 1px rgba(255,200,61,.4)}
+.snapd .mtxl{display:flex;grid-column:1;grid-row:2;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  margin:8px 0;padding:12px 7px;border-radius:11px;color:#bff4ff;font-size:.9rem;font-weight:800;
+  background:linear-gradient(180deg,rgba(67,224,255,.06),rgba(67,224,255,.2),rgba(67,224,255,.06));box-shadow:inset 0 0 0 1px rgba(67,224,255,.4)}
+.snapd .mtxl span{writing-mode:vertical-rl;letter-spacing:.06em}
+.snapd .mtxt b,.snapd .mtxl b{padding:2px 8px;border-radius:7px;font-size:.78rem;font-weight:900;letter-spacing:.04em}
+.snapd .mtxt b{color:#2b1c00;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200)}
+.snapd .mtxl b{color:#04232b;background:linear-gradient(160deg,#b9f6ff,#43e0ff 55%,#0fa8c4);writing-mode:vertical-rl;padding:8px 3px}
+.snapd .mtxt i,.snapd .mtxl i{font-style:normal;font-weight:900;opacity:.8}
+.snapd .mtxg table{grid-column:2;grid-row:2}
+.snapd .shmtx th.corner{font-size:0}
+
+/* 1920×1440のときだけの横長の配置（上＝両者・下の左＝9マス・下の右＝わざ）。枠の縦横比を画像に合わせ、9マスで高さを埋める */
+.result.snapd.snapbig{display:grid!important;grid-template-columns:1.3fr 1fr;grid-template-rows:auto 1fr;
+  grid-template-areas:"vs vs" "mtx mv";column-gap:22px;aspect-ratio:1872/1392;padding:26px 28px 26px}
+.snapbig>*{grid-column:1/-1}
+.snapbig>.vs{grid-area:vs}
+.snapbig>.shmtx{grid-area:mtx;display:flex;flex-direction:column;margin-top:22px}
+.snapbig>.mvcols{grid-area:mv;display:flex;flex-direction:column;gap:22px;margin-top:22px}
+.snapbig .mvcols>.vsmark{display:none}
+.snapbig .mvside{flex:1;display:flex;flex-direction:column;justify-content:center}
+.snapbig .mtxg{flex:1}
+.snapbig .shmtx table{height:100%}
+.snapbig .fighter .top .nm{font-size:1.65rem;white-space:nowrap}
+.snapbig .sidetag{font-size:.8rem}
+.snapbig .badge{font-size:1.1rem;padding:4px 14px}
+.snapbig .hpbar{height:20px}
+.snapbig .enbar{height:13px}
+.snapbig .subline{font-size:.95rem}
+.snapbig .subline b{font-size:1.25rem}
+.snapbig .vsmark{width:62px;height:62px;font-size:1.35rem}
+.snapbig .mvhead{font-size:1.05rem}
+.snapbig .mvhead small{font-size:.82rem}
+.snapbig .shmtx th{font-size:1.15rem}
+.snapbig .shmtx td b{font-size:2.1rem}
+.snapbig .shmtx td small{font-size:1.02rem}
+.snapbig .mtxt,.snapbig .mtxl{font-size:1.02rem}
+.snapbig .mvside .mvhead{font-size:1rem}
+.snapbig .mvside .mvrow{font-size:1.2rem;padding:14px 0}
+.snapbig .mvside .mvrow .num{font-size:1rem}
+.snapbig>.mvcols{width:auto!important;justify-self:stretch;align-self:stretch}
+.snapbig .mvside{width:100%!important;max-width:none!important;box-sizing:border-box;justify-content:flex-start}
+.snapbig .mvside .mvrow{flex:1}
+.snapbig .shline .sh{font-size:1.7rem}

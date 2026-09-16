@@ -422,7 +422,7 @@ document.getElementById('app').innerHTML = `
     <div class="goptnote" id="gbluffnote"></div>
   </div>
 </div>
-<div class="result" id="result"></div>
+<div class="result" id="result" data-snap-cls="snapd" data-snap-bigw="1180"></div>
 <div class="tl" id="tl"></div>
 
 <div class="share" id="share" style="display:none">
@@ -12203,7 +12203,7 @@ function render(res, L, R, matrix) {
     const carryTxt = cfg.startHpPct != null || cfg.startEn
       ? `<div class="carrytag">連戦 HP${cfg.startHpPct != null ? cfg.startHpPct : 100}%・ゲージ${cfg.startEn || 0}</div>` : '';
     return `<div class="fighter">
-      <div class="top">${badge(i)}<span class="nm">${shMark(f.name)}</span></div>
+      <div class="top">${badge(i)}<span class="nm"><em class="sidetag">${i ? 'あいて' : 'じぶん'}</em>${shMark(f.name)}</span></div>
       ${carryTxt}
       <div class="hpbar"><i class="${pct <= 25 ? 'low' : ''}" style="width:${pct}%"></i></div>
       <div class="subline">HP ${f.hp}/${f.hpMax}（${pct}%）</div>
@@ -12240,16 +12240,19 @@ function render(res, L, R, matrix) {
       <b>${txt}</b><small>${c.w === 'draw' ? '両者0' : c.w == null ? '決着なし' : '残HP' + c.pct + '%'}</small></td>`;
   };
   const mtxHtml = rkMode ? `<div class="shmtx">
-    <div class="mvhead">🛡 自分のシールド別<small>タップで切替</small></div>
+    <div class="mvhead">🛡 自分のシールド別<small class="tapnote">タップで切替</small></div>
     <table>
       <tr><th class="corner">自分のシールド</th><th>勝敗</th></tr>
       ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${mtxCell(a, 0)}</tr>`).join('')}
     </table></div>` : `<div class="shmtx">
-    <div class="mvhead">🛡 シールド枚数別<small>タップで切替・残HPは勝った側</small></div>
+    <div class="mvhead">🛡 シールド枚数別<small><span class="tapnote">タップで切替・</span>残HPは勝った側</small></div>
+    <div class="mtxg">
+    <div class="mtxt"><b>あいて</b><span>${escH(res.final[1].name)}のシールド</span><i>→</i></div>
+    <div class="mtxl"><b>じぶん</b><span>${escH(res.final[0].name)}のシールド</span><i>↓</i></div>
     <table>
       <tr><th class="corner">自分＼相手</th><th>🛡0</th><th>🛡1</th><th>🛡2</th></tr>
       ${[0, 1, 2].map(a => `<tr><th>🛡${a}</th>${[0, 1, 2].map(b => mtxCell(a, b)).join('')}</tr>`).join('')}
-    </table></div>`;
+    </table></div></div>`;
   // 「同時」を使っているときは、撃ち合いになったらどちらが先に当たるか(CMP)を出す
   let cmpHtml = '';
   if (S[0].timing === 'sync' || S[1].timing === 'sync') {
@@ -12277,7 +12280,7 @@ function render(res, L, R, matrix) {
       <div class="vsmark" style="visibility:hidden">VS</div>
       <div class="mvside"><div class="mvhead">${res.final[1].name}の技</div>${mvRows(1)}</div>
     </div>
-    <a class="bplink" href="${bpUrl(L, R)}">🎯 ブレイクポイント<small>この個体でダメージが変わる境目をチェック</small><b>↗</b></a>`;
+    <a class="bplink" data-snap-skip href="${bpUrl(L, R)}">🎯 ブレイクポイント<small>この個体でダメージが変わる境目をチェック</small><b>↗</b></a>`;
   // 3×3表のマスをタップ→両者のシールド枚数をその組み合わせに変更
   rEl.querySelectorAll('.shmtx td[data-a]').forEach(td => td.onclick = () => {
     [+td.dataset.a, +td.dataset.b].forEach((v, i) => {

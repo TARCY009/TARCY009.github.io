@@ -437,16 +437,13 @@ function watermarkSVG(W,H,L,R,T,B){
   if(devClean()) return '';
   let s='';
   // 中央より少し上に置く(2026-09-15タダシさん指示: 棒の上に「ナビ」の文字が少し見えるくらい)
-  const cs=Math.min(R-L,B-T)*0.62, cx=(L+R)/2-cs/2, cy=(T+B)/2-cs/2-(B-T)*0.10;
+  const cs=Math.min(R-L,B-T)*0.62, cx=(L+R)/2-cs/2, cy=(T+B)/2-cs/2-(B-T)*0.17;
   if(LOGO_URI) s+=`<image href="${LOGO_URI}" x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${cs.toFixed(1)}" height="${cs.toFixed(1)}" opacity=".07"/>`;
-  // ロゴの右に「GOナビ」、その下の行に「gonavi.jp」(横に並べると太字の幅の見積もりがずれてくっつくため2段にする)
-  const fs=30, us=21, lg=58, x2=W-72, y0=22;
-  const txtW=Math.max(tw('GOナビ',fs)*1.12, tw('gonavi.jp',us));
-  const tx=x2-txtW, lx=tx-(LOGO_URI?lg+12:0);
+  // 右上: ロゴ＋その下に「gonavi.jp」(2026-09-16タダシさん指示で「GOナビ」の文字は出さず、ロゴを少し大きく)
+  const us=22, lg=88, y0=30, bw=Math.max(lg, tw('gonavi.jp',us)), bm=W-72-bw/2;
   s+=`<g opacity=".92">`;
-  if(LOGO_URI) s+=`<image href="${LOGO_URI}" x="${lx.toFixed(1)}" y="${y0}" width="${lg}" height="${lg}"/>`;
-  s+=`<text x="${tx.toFixed(1)}" y="${y0+28}" font-size="${fs}" font-weight="800" fill="#ffffff">GOナビ</text>
-  <text x="${tx.toFixed(1)}" y="${y0+54}" font-size="${us}" font-weight="700" fill="#8b96c2">gonavi.jp</text></g>`;
+  if(LOGO_URI) s+=`<image href="${LOGO_URI}" x="${(bm-lg/2).toFixed(1)}" y="${y0}" width="${lg}" height="${lg}"/>`;
+  s+=`<text x="${bm.toFixed(1)}" y="${y0+lg+26}" font-size="${us}" font-weight="700" fill="#8b96c2" text-anchor="middle">gonavi.jp</text></g>`;
   return s;
 }
 // 色の明暗(f>0で白へ・f<0で黒へ近づける)
@@ -529,7 +526,7 @@ function graphSVG(forSave,Wopt){
   const pills=[];
   if(fShadow) pills.push({t:'シャドウ',fill:'#7c3aed',flame:true});
   if(fMega) pills.push({t:'メガ・ゲンシ',fill:'url(#gmega)'});
-  let px=W-70;
+  let px=W-70-(devClean()?0:128);   // 右上のロゴの幅ぶん左へ
   for(const p2 of [...pills].reverse()){
     const pfs=31, ph=60, py=92, padL=p2.flame?58:24;
     const pw=tw(p2.t,pfs)+padL+24;

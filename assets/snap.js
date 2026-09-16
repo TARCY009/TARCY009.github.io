@@ -43,6 +43,8 @@
                        graph: { name: '.pname', val: '.pts b', unit: 'ポイント' } },
     '/max-battle/': { target: '#list', rows: '.row', ctx: ['#bname'],
                       tags: '#tabs [aria-selected="true"],#filters [aria-pressed="true"]', title: 'マックスバトル対策',
+                      // 1920×1440は左右4位ずつ・8位まで。絞り込みの札はボス名の横（2026-09-16タダシさん指示）
+                      l1920: { type: 'grid', per: 4, inlineTags: true },
                       graph: { name: '.nm', val: '.pts b', unit: 'ポイント', head: '#bname' } },
     '/max-type/': { target: '#list', rows: '.row', ctx: ['#curTypeName'],
                     tags: '.rhead [aria-pressed="true"]', title: 'マックスバトル タイプ別アタッカー',
@@ -251,6 +253,8 @@
     }
     c.querySelectorAll('script,.snapbar,[data-snap-skip],#snapui,.snapui').forEach(function (x) { x.remove(); });
     if (o.drop) c.querySelectorAll(o.drop).forEach(function (x) { x.remove(); });
+    // data-snap-cls＝画像のときだけ付けるクラス（保存用の見た目をCSS側で持つ・2026-09-16 GBLの1対1の結果）
+    if (el.getAttribute('data-snap-cls')) el.getAttribute('data-snap-cls').split(/\s+/).concat(o.big ? ['snapbig'] : []).forEach(function (k) { if (k) c.classList.add(k); });
     // fill＝自分の背景を持たない行に敷く背景（画面では外側のパネルが見せている色）。行の外は透明のまま
     if (o.rows && o.fill) {
       var sR = el.querySelectorAll(o.rows), dR = c.querySelectorAll(o.rows);
@@ -317,7 +321,7 @@
     var W = Math.max(40, Math.round(o.width));
     var P = o.pad || 0;
     var css = await collectCSS(o.mode);
-    var clone = await prepClone(el, { width: W, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame });
+    var clone = await prepClone(el, { width: W, big: o.big, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame });
     var chain = wrapChain(el, clone);
     var bcs = getComputedStyle(document.body);
     var bodyStyle = 'margin:0!important;padding:' + P + 'px!important;min-height:0!important;height:auto!important;' +
@@ -549,7 +553,8 @@
   }
   // ---------------------------------------------------------------- 1920×1440（動画用・2026-09-12タダシさん指示）
   // 見出しと下のロゴを k 倍の大きさで描く（1920×1440用）
-  function drawHead(cx, cfg, x, y, maxW, k, col) {
+  // inline＝絞り込みの札を条件（ボス名など）の右横に並べる（見出しの高さを1段ぶん詰める）
+  function drawHead(cx, cfg, x, y, maxW, k, col, inline) {
     var eyebrow = txt('header .eyebrow').toUpperCase();
     var ctxs = (cfg.ctx || []).map(txt).filter(Boolean);
     var tags = tagLabels(cfg.tags);
@@ -562,6 +567,14 @@
     }
     cx.font = '900 ' + (28 * k) + 'px ' + JP; cx.fillStyle = '#ffffff';
     cx.fillText(cfg.title, x, y + 29 * k); y += 38 * k;
+    if (ctxs.length && tags.length && inline) {
+      cx.font = '700 ' + (17 * k) + 'px ' + JP; cx.fillStyle = '#c4d0f0';
+      y += 10 * k;
+      var ct = ctxs.join('　／　'), cw = cx.measureText(ct).width;
+      cx.fillText(ct, x, y + 21 * k);
+      drawPills(cx, tags, x + cw + 18 * k, y + 1 * k, maxW - cw - 18 * k, k, col);
+      return y + 30 * k;
+    }
     if (ctxs.length) {
       cx.font = '700 ' + (17 * k) + 'px ' + JP; cx.fillStyle = '#c4d0f0';
       y += 10 * k;
@@ -576,23 +589,25 @@
   // GOナビのロゴ・アドレス・日付を右上に描く（right＝右端・y＝上端・k＝大きさの倍率）。
   // 2026-09-13タダシさん指示: 下に置くと、共有されたときにトリミングで切られやすいので右上へ
   // 同日タダシさん指示: 日付は出さない・ロゴと文字をまとめて1.35倍・右端にそろえる
+  // 2026-09-16タダシさん指示: 「GOナビ」の文字は出さず、ロゴを少し大きくして「gonavi.jp」の上に載せる（右端そろえ）
   async function drawBrand(cx, right, y, k) {
     k *= 1.35;
-    var logo = await loadLogo(), L = 30 * k, gap = 8 * k;
-    cx.textAlign = 'left'; cx.textBaseline = 'alphabetic';
-    cx.font = '900 ' + (17 * k) + 'px ' + JP; var w1 = cx.measureText('GOナビ').width;
-    cx.font = '600 ' + (12 * k) + 'px ' + JP; var w2 = cx.measureText('gonavi.jp').width;
-    var x = right - Math.max(w1, w2);
-    cx.font = '900 ' + (17 * k) + 'px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', x, y + 15 * k);
-    cx.font = '600 ' + (12 * k) + 'px ' + JP; cx.fillStyle = '#93a3cf'; cx.fillText('gonavi.jp', x, y + 31 * k);
+    var logo = await loadLogo(), L = 40 * k;
+    cx.textBaseline = 'alphabetic';
+    cx.font = '700 ' + (12 * k) + 'px ' + JP; var w2 = cx.measureText('gonavi.jp').width;
+    var bw = Math.max(L, w2), cxm = right - bw / 2;
     if (logo) {
-      var lx = x - gap - L, ly = y + 2 * k;
-      rrect(cx, lx, ly, L, L, 8 * k); cx.save(); cx.clip(); cx.drawImage(logo, lx, ly, L, L); cx.restore();
+      var lx = cxm - L / 2;
+      rrect(cx, lx, y, L, L, 10 * k); cx.save(); cx.clip(); cx.drawImage(logo, lx, y, L, L); cx.restore();
     }
+    cx.textAlign = 'center'; cx.fillStyle = '#93a3cf'; cx.fillText('gonavi.jp', cxm, y + L + 14 * k);
+    cx.textAlign = 'left';
   }
+
   // ランキングを1920×1440いっぱいに収める。縦に長い一覧は「1〜5位｜6〜10位」の2列にしたほうが大きく入るので、
   // 1列と2列のうち大きく描けるほうを選ぶ（角丸なし＝動画の画面にそのまま置く）
-  async function publicImage1920(cfg) {
+  async function publicImage1920(cfg, lay) {
+    lay = lay || cfg.l1920 || 'auto';
     var el = document.querySelector(cfg.target);
     if (!el) throw new Error('target');
     var dev = isDev(), CW = 720, W = 1920, H = 1440, P = 84, K = 1.8;
@@ -606,12 +621,59 @@
     cx.fillStyle = rg; cx.fillRect(0, 0, W, H);
     var bar = cx.createLinearGradient(0, 0, W * 0.85, 0); bar.addColorStop(0, col); bar.addColorStop(1, hexA(col, 0));
     cx.fillStyle = bar; cx.fillRect(0, 0, W, 8);
-    var top = drawHead(cx, cfg, P, 60, W - P * 2, K, col) + 34;
+    // lay は文字('auto'など)か、2列の並べ方の指定 {type:'grid', per:1列の行数, headK:見出しの倍率, dropDetail:細かい数値の行を外すか}
+    var G2 = typeof lay === 'object' ? lay : null;
+    var HK = G2 && G2.headK || K;
+    var top = drawHead(cx, cfg, P, 60, W - P * 2, HK, col, G2 && G2.inlineTags) + (G2 ? 26 : 34);
     var bottom = H - 60;
-    if (!dev) await drawBrand(cx, W - P, 60, K);   // 右上にGOナビ(開発者の端末では出さない)
+    if (!dev) await drawBrand(cx, W - P, 60, HK);   // 右上にGOナビ(開発者の端末では出さない)
     var areaW = W - P * 2, areaH = bottom - top;
     // 上位5件を1列で。横長の枠に縦長の一覧を入れると左右が空くので、枠の形に合う幅で描き直してからぴったり収める
     var base = { mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0, rows: cfg.rows, drop: cfg.drop, scale: 3, from: 0, limit: LIMIT };
+    if (G2 && G2.type === 'grid') {
+      // 2列×per行（左に1〜per位・右にper+1〜2per位）。
+      // 列の幅は「per行ぶんの高さ」に合わせて決め直す＝枠の高さと列の幅の両方にぴったり収める
+      var per = G2.per || 4, GP = 44, cW = (areaW - GP) / 2;
+      var gb = Object.assign({}, base, G2.dropDetail ? { drop: [cfg.drop, '.detail'].filter(Boolean).join(',') } : {});
+      var probe = await renderEl(el, Object.assign({}, gb, { width: 600, from: 0, limit: per }));
+      // 行の高さは幅でほとんど変わらないので、幅 = 高さ × (列の横 ÷ 枠の高さ) にすると、ちょうど両方に届く
+      var gw = Math.round(Math.max(460, Math.min(900, probe.h * cW / areaH)));
+      var L = gw === 600 ? probe : await renderEl(el, Object.assign({}, gb, { width: gw, from: 0, limit: per }));
+      var R = await renderEl(el, Object.assign({}, gb, { width: gw, from: per, limit: per }));
+      var fg = Math.min(cW / L.w, areaH / Math.max(L.h, R.h));
+      var gtw = L.w * fg * 2 + GP, gx = P + (areaW - gtw) / 2, gy = top + Math.max(0, (areaH - Math.max(L.h, R.h) * fg) / 2);
+      cx.drawImage(L.canvas, gx, gy, L.w * fg, L.h * fg);
+      cx.drawImage(R.canvas, gx + L.w * fg + GP, gy, R.w * fg, R.h * fg);
+      return roundFrame(cv, true);
+    }
+    if (lay === 'two') {
+      // 2列（1〜3位｜4〜5位）。列ごとに同じ幅で描き、同じ倍率で並べる
+      var GAP = 48, colW = (areaW - GAP) / 2, cw = +cfg.l1920w2 || 560;
+      var a = await renderEl(el, Object.assign({}, base, { width: cw, from: 0, limit: 3 }));
+      var b = await renderEl(el, Object.assign({}, base, { width: cw, from: 3, limit: 2 }));
+      var f2 = Math.min(colW / a.w, areaH / Math.max(a.h, b.h));
+      // 見出しのすぐ下から並べる（中央寄せにすると見出しとのあいだが大きく空く）
+      var tw = a.w * f2 * 2 + GAP, x0 = P + (areaW - tw) / 2, y0 = top + Math.max(0, Math.min(40, (areaH - a.h * f2) / 2));
+      cx.drawImage(a.canvas, x0, y0, a.w * f2, a.h * f2);
+      cx.drawImage(b.canvas, x0 + a.w * f2 + GAP, y0, b.w * f2, b.h * f2);
+      return roundFrame(cv, true);
+    }
+    if (lay === 'compact') {
+      // 行の下の細かい数値(.detail)を外して1行を低くし、1列で大きく描く
+      var cw2 = +cfg.l1920w || 760;
+      var c1 = await renderEl(el, Object.assign({}, base, { width: cw2, drop: [cfg.drop, cfg.l1920drop || '.detail'].filter(Boolean).join(',') }));
+      var fc = Math.min(areaW / c1.w, areaH / c1.h);
+      cx.drawImage(c1.canvas, P + (areaW - c1.w * fc) / 2, top + Math.max(0, (areaH - c1.h * fc) / 2), c1.w * fc, c1.h * fc);
+      return roundFrame(cv, true);
+    }
+    if (lay === 'narrow' || lay === 'top3') {
+      // 1列を狭い幅のまま描き、高さいっぱいまで拡大する（文字が大きくなる・左右は空く）
+      var nw = +cfg.l1920w || 640;
+      var n1 = await renderEl(el, Object.assign({}, base, { width: nw, limit: lay === 'top3' ? 3 : LIMIT }));
+      var fn = Math.min(areaW / n1.w, areaH / n1.h);
+      cx.drawImage(n1.canvas, P + (areaW - n1.w * fn) / 2, top + Math.max(0, (areaH - n1.h * fn) / 2), n1.w * fn, n1.h * fn);
+      return roundFrame(cv, true);
+    }
     var one = await renderEl(el, Object.assign({}, base, { width: CW }));
     var ideal = Math.round(Math.max(560, Math.min(1100, one.h * areaW / areaH)));
     if (Math.abs(ideal - CW) > 40) one = await renderEl(el, Object.assign({}, base, { width: ideal }));
@@ -708,7 +770,7 @@
     if (logo) {
       // 中央より少し上に置く(2026-09-15タダシさん指示: 棒の上に「ナビ」の文字が少し見えるくらい・タイプ別火力と同じ位置)
       var cs = Math.min(R - L, B - T) * 0.62;
-      cx.globalAlpha = 0.07; cx.drawImage(logo, (L + R) / 2 - cs / 2, (T + B) / 2 - cs / 2 - (B - T) * 0.10, cs, cs); cx.globalAlpha = 1;
+      cx.globalAlpha = 0.07; cx.drawImage(logo, (L + R) / 2 - cs / 2, (T + B) / 2 - cs / 2 - (B - T) * 0.17, cs, cs); cx.globalAlpha = 1;
     }
     // 目盛り（点線）と単位
     cx.textBaseline = 'alphabetic';
@@ -787,7 +849,8 @@
       return { t: t, flame: fl, mega: /メガ|ゲンシ/.test(t), w: cx.measureText(t).width + (fl ? 58 : 24) + 24 };
     });
     var totalPW = pills.reduce(function (a, p) { return a + p.w + 16; }, 0);
-    var py = chipEnd + 30 > W - 70 - totalPW ? 196 : 92, pxr = W - 70;
+    var BRW = logo ? 128 : 0;   // 右上のロゴの幅ぶん、札を左へずらす
+    var py = chipEnd + 30 > W - 70 - BRW - totalPW ? 196 : 92, pxr = W - 70 - BRW;
     for (var k = pills.length - 1; k >= 0; k--) {
       var p = pills[k]; pxr -= p.w;
       rrect(cx, pxr, py, p.w, 60, 30);
@@ -799,16 +862,14 @@
       cx.fillStyle = '#ffffff'; cx.fillText(p.t, pxr + (p.flame ? 58 : 24), py + 41);
       pxr -= 16;
     }
-    // 右上: GOナビ（開発者の端末では出さない）
+    // 右上: GOナビのロゴ＋その下に gonavi.jp（開発者の端末では出さない）
     if (logo) {
-      var lg = 58, x2 = W - 72, y0 = 22;
-      cx.font = '800 30px ' + JP; var tw1 = cx.measureText('GOナビ').width * 1.05;
-      cx.font = '700 21px ' + JP; var tw2 = cx.measureText('gonavi.jp').width;
-      var tx = x2 - Math.max(tw1, tw2), lx = tx - lg - 12;
+      var lg = 88, y0 = 30;
+      cx.font = '700 22px ' + JP; var tw2 = cx.measureText('gonavi.jp').width;
+      var bm = W - 72 - Math.max(lg, tw2) / 2;
       cx.globalAlpha = 0.92;
-      rrect(cx, lx, y0, lg, lg, 12); cx.save(); cx.clip(); cx.drawImage(logo, lx, y0, lg, lg); cx.restore();
-      cx.font = '800 30px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText('GOナビ', tx, y0 + 28);
-      cx.font = '700 21px ' + JP; cx.fillStyle = '#8b96c2'; cx.fillText('gonavi.jp', tx, y0 + 54);
+      rrect(cx, bm - lg / 2, y0, lg, lg, 18); cx.save(); cx.clip(); cx.drawImage(logo, bm - lg / 2, y0, lg, lg); cx.restore();
+      cx.textAlign = 'center'; cx.fillStyle = '#8b96c2'; cx.fillText('gonavi.jp', bm, y0 + lg + 26); cx.textAlign = 'left';
       cx.globalAlpha = 1;
     }
     cv.__rounded = true;   // 角丸と縁取りは描いてある
@@ -834,8 +895,8 @@
     return cv;
   }
   // 撮影モードの1920×1440: 選んだ部分を中央に大きく置く（背景ありならページの背景を全面に敷く）
-  async function fit1920(res, withBg) {
-    var W = 1920, H = 1440, M = 60;
+  async function fit1920(res, withBg, margin) {
+    var W = 1920, H = 1440, M = margin == null ? 60 : margin;
     var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var cx = cv.getContext('2d');
     if (withBg) { try { cx.drawImage(await pageBg(W, H), 0, 0); } catch (e) {} }
@@ -1225,12 +1286,15 @@
     busy(true);
     try {
       var r = el.getBoundingClientRect();
+      // data-snap-bigw＝1920×1440のときだけ、その幅の横長の配置で描く（.snapbig・枠いっぱいに収める）
+      var bigW = big && +el.getAttribute('data-snap-bigw');
+      var rw = bigW || r.width;
       // 1920×1440は拡大して置くので、ぼやけないよう細かく描いておく。背景はあとで全面に敷くので、ここでは透明で描く
-      var scl = big ? Math.min(4, Math.max(2, Math.ceil(Math.min(1800 / (r.width + 20), 1320 / (r.height + 20))))) : 2;
-      var res = await renderEl(el, { width: r.width, mode: 'window', rootCls: document.documentElement.className,
+      var scl = big ? (bigW ? 2 : Math.min(4, Math.max(2, Math.ceil(Math.min(1800 / (r.width + 20), 1320 / (r.height + 20)))))) : 2;
+      var res = await renderEl(el, { width: rw, big: !!bigW, mode: 'window', rootCls: document.documentElement.className,
                                      bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : pick.bg === 'page',
                                      pad: !big && pick.bg === 'page' ? 16 : 10, scale: scl });
-      var outCv = big ? await fit1920(res, pick.bg === 'page') : res.canvas;
+      var outCv = big ? await fit1920(res, pick.bg === 'page', bigW ? 24 : 60) : res.canvas;
       busy(false);
       var h1 = txt('header h1') || document.title.split('｜')[0];
       await preview(outCv, h1.replace(/\s+/g, '') + '_' + stamp() + (big ? '_1920x1440' : '') + '.png');
