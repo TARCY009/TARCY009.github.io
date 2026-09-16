@@ -2773,9 +2773,11 @@ button.sdchip.on .tbadge{filter:none}
 .ft.fs0::before{left:2px;background:var(--flc0)}
 .ft.fs1::after{right:2px;background:var(--flc1)}
 
-/* ===== 1対1の結果: 画像に保存したときだけの見た目（2026-09-16タダシさん指示「動画でしっかり綺麗に見せる」）=====
-   snap.js が複製にだけ .snapd を付ける（画面の見た目は変えない）。テーマによらず濃紺で固定する */
-.result.snapd{display:block!important;position:relative;overflow:hidden;padding:22px 22px 20px;border-radius:22px;border:0;
+/* ===== 1対1の結果の見た目（2026-09-16タダシさん指示「動画でしっかり綺麗に見せる」→同日「画面もこの見た目に」）=====
+   画面でも保存画像でも .snapd。画像のときだけ snap.js が複製に .snapshot（と1920×1440なら .snapbig）を足す。
+   テーマによらず濃紺で固定するので、中で使う色の変数もダークの値に置きかえる（ライトでも読めるように） */
+.result.snapd{--ink:#eef1fb;--sub:#8b96c2;--line:#2a3560;--deep:#0a0f22;--panel:#1a2342;--cy:#43e0ff;--win:#3ddc84;--lose:#ff6b81;--gold:#ffd54a;--ml:#b06cff;--line2:#3b4a86;
+  position:relative;overflow:hidden;padding:22px 22px 20px;border-radius:22px;border:0;
   color:#eaf0ff;background:linear-gradient(160deg,#18234a 0%,#0f1733 55%,#0b1026 100%);
   box-shadow:inset 0 0 0 1.5px rgba(120,160,255,.38),inset 0 1px 0 rgba(255,255,255,.1)}
 .result.snapd::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;
@@ -2807,7 +2809,7 @@ button.sdchip.on .tbadge{filter:none}
   font-size:1.05rem;font-weight:900;font-style:italic;color:#fff;letter-spacing:.02em;
   background:linear-gradient(160deg,#8b7bff 0%,#5b3fd6 55%,#34238f 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 0 rgba(0,0,0,.4)}
 .snapd .mvcols .vsmark{width:46px;height:1px}
-.snapd .tapnote{display:none}
+.snapshot .tapnote{display:none}
 .snapd .shmtx{margin-top:20px;padding:16px 14px 14px;border-radius:16px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px rgba(150,180,255,.16)}
 .snapd .mvhead{color:#cfdcff;font-size:.9rem;font-weight:800;border:0;padding-bottom:6px}
 .snapd .mvhead small{color:#8fa0cc;font-size:.72rem;font-weight:600}
@@ -2852,6 +2854,7 @@ button.sdchip.on .tbadge{filter:none}
 .snapd .mtxt b,.snapd .mtxl b{padding:2px 8px;border-radius:7px;font-size:.78rem;font-weight:900;letter-spacing:.04em}
 .snapd .mtxt b{color:#2b1c00;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200)}
 .snapd .mtxl b{color:#04232b;background:linear-gradient(160deg,#b9f6ff,#43e0ff 55%,#0fa8c4);writing-mode:vertical-rl;padding:8px 3px}
+.snapd .mtxt b,.snapd .sidetag{white-space:nowrap;flex-shrink:0}
 .snapd .mtxt i,.snapd .mtxl i{font-style:normal;font-weight:900;opacity:.8}
 .snapd .mtxg table{grid-column:2;grid-row:2}
 .snapd .shmtx th.corner{font-size:0}
@@ -2888,3 +2891,24 @@ button.sdchip.on .tbadge{filter:none}
 .snapbig .mvside{width:100%!important;max-width:none!important;box-sizing:border-box;justify-content:flex-start}
 .snapbig .mvside .mvrow{flex:1}
 .snapbig .shline .sh{font-size:1.7rem}
+@media (max-width:540px){
+  .result.snapd{padding:16px 12px 14px}
+  .snapd .vs{gap:8px}
+  .snapd .fighter{padding:10px 9px 9px}
+  .snapd .fighter .top{flex-wrap:wrap;gap:5px}
+  .snapd .fighter .top .nm{font-size:1.02rem}
+  .snapd .badge{font-size:.8rem;padding:2px 9px}
+  .snapd .vsmark{width:36px;height:36px;font-size:.85rem}
+  .snapd .mvcols .vsmark{width:0;height:1px}
+  .snapd .shmtx{padding:12px 8px 10px}
+  .snapd .shmtx table{border-spacing:5px}
+  .snapd .shmtx td{padding:11px 2px 10px}
+  .snapd .shmtx td b{font-size:1.15rem}
+  .snapd .shmtx td small{font-size:.7rem}
+  .snapd .mtxt,.snapd .mtxl{font-size:.76rem}
+  .snapd .mtxl{padding:10px 5px}
+  .snapd .mvcols{grid-template-columns:1fr;gap:10px}
+  .snapd .subline{font-size:.72rem;white-space:nowrap}
+  .snapd .subline b{font-size:.95rem}
+  .snapd .mtxt{gap:6px;padding:6px 8px;text-align:center}
+}

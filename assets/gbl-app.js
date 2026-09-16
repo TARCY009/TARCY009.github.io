@@ -422,7 +422,7 @@ document.getElementById('app').innerHTML = `
     <div class="goptnote" id="gbluffnote"></div>
   </div>
 </div>
-<div class="result" id="result" data-snap-cls="snapd" data-snap-bigw="1180"></div>
+<div class="result snapd" id="result" data-snap-cls="snapshot" data-snap-bigw="1180"></div>
 <div class="tl" id="tl"></div>
 
 <div class="share" id="share" style="display:none">
