@@ -1024,7 +1024,7 @@ function timelineHtml(){
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
   const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で討伐`:`時間切れ・ボスの残りHP ${Math.round(r.bossLeft/t.hp*100)}%`;
   const hasMega=cfg.team.some(m=>m.mega);
-  return `<details class="tl" open><summary>タイムライン　<b>${selN}人</b>で挑んだとき｜${sum}｜実戦DPS ${(r.dmg/r.t).toFixed(1)}｜ひんし${r.faints}回・${hasMega?'再突入':'全滅'}${r.wipes}回</summary>
+  return `<details class="tl" open data-snap-skip><summary>タイムライン　<b>${selN}人</b>で挑んだとき｜${sum}｜実戦DPS ${(r.dmg/r.t).toFixed(1)}｜ひんし${r.faints}回・${hasMega?'再突入':'全滅'}${r.wipes}回</summary>
     <div class="tlwrap"><table class="tl"><thead><tr><th>ポケモン</th><th title="残り時間(秒)">タイム</th><th>わざ</th><th>ダメージ</th><th title="この行のあとのボスの残りHP(数値と割合)">ボス残りHP</th><th title="この行のあとのじぶんのポケモンのHP">じぶんHP</th></tr></thead><tbody>${rowsH}</tbody></table></div>${more}</details>`;
 }
 
