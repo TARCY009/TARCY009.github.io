@@ -7939,7 +7939,7 @@ function sdGridHtml() {
   const ix = sdIndex(W, my.length, nFoe), ixl = sdIxLabel(ix);
   const ixHtml = `<div class="sdix ${ixl.c}" title="じぶんの${my.length}匹とあいての${nFoe}匹が、シールド0-0／1-1／2-2の3通りで戦った${my.length * nFoe * 3}通りのうち、じぶんが勝った数の割合です。50%で互角。選出を決める前の「この6匹どうしの相性」を表します">` +
     `<i>6対6の相性</i><b>${ix}<small>%</small></b><em>${ixl.t}</em>` +
-    `<span class="sdixyou">↓ じぶんの${my.length}匹</span></div>`;
+    `</div><span class="sdixyou">↓ じぶんの${my.length}匹</span>`;   // 「↓ じぶんの6匹」は枠の外(2026-09-16タダシさん指示)
   // 「穴◯／1匹頼み◯／2匹勝ち◯」の要約は出さない(2026-09-06タダシさん指示)——
   // 表のいちばん下の行を見れば分かるので、同じことを文章で繰り返さない
   return `<div class="sdgrid">
