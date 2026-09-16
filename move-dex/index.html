@@ -267,11 +267,14 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 .mds-tv u{text-decoration:none;font-size:13px;font-weight:700;color:#aab4dd;margin-left:4px;align-self:flex-end;padding-bottom:5px}
 .mds-ts{font-size:11px;font-weight:700;color:#8d97c2;margin-top:1px}
 .mds-t.big{padding:12px 14px 12px;background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border-color:rgba(255,255,255,.14)}
-.mds-t.big .mds-tv{font-size:44px;line-height:1.1;display:flex;align-items:baseline}
+.mds-t.big .mds-tv{font-size:44px;line-height:1.1;display:flex;align-items:baseline;gap:10px}
+.mds-t.big.eff .mds-tv{font-size:35px}
+.mds-t.big.eff.fr .mds-tv{font-size:27px;gap:7px}
 .mds-t.big .mds-bn{background:linear-gradient(180deg,#ffffff 20%,#dfe7f7 60%,#a9b6d2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 2px 0 #3a4260) drop-shadow(0 5px 8px rgba(0,0,0,.4))}
-.mds-from{font-size:.46em;font-weight:800;color:#aab4dd;margin-right:.22em;white-space:nowrap}
-.mds-from i{font-style:normal;margin-left:.18em;color:#ffb07a}
+.mds-from{font-size:.46em;font-weight:800;color:#aab4dd;white-space:nowrap}
+.mds-arw{font-size:.46em;font-weight:800;color:#ffb07a;white-space:nowrap}
+.mds-t.big.eff.fr .mds-from,.mds-t.big.eff.fr .mds-arw{font-size:.56em}
 .mds-gauge{margin-top:10px}
 .mds-gauge .mds-bars{max-width:none;margin:0;gap:8px}
 .mds-gauge .mds-bars i{height:16px;border-radius:8px}
@@ -304,7 +307,9 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 .mds.wide .mds-body{gap:24px;margin-top:28px}
 .mds.wide .mds-sec{padding:24px;border-radius:26px}
 .mds.wide .mds-ja{font-size:24px}
-.mds.wide .mds-t.big .mds-tv{font-size:58px}
+.mds.wide .mds-t.big .mds-tv{font-size:58px;gap:14px}
+.mds.wide .mds-t.big.eff .mds-tv{font-size:46px}
+.mds.wide .mds-t.big.eff.fr .mds-tv{font-size:36px;gap:9px}
 .mds.wide .mds-gauge{margin-top:14px}
 .mds.wide .mds-tv{font-size:34px}
 .mds.wide .mds-g3,.mds.wide .mds-g4{grid-template-columns:1fr 1fr}
@@ -320,10 +325,11 @@ td.eff small{display:block;font-size:.64rem;color:var(--sub);font-weight:700;mar
 .mds-g1.stack>.mds-t .mds-ts{min-width:0;flex:0 1 auto}
 .mds-g1.stack>.mds-t .mds-tv{flex:none}
 .mds.wide .mds-g1.stack>.mds-t .mds-ts{font-size:16px}
-.mds.wide .mds-g3.bigrow{grid-template-columns:1fr 1fr}
-.mds.wide .mds-g3.bigrow>.mds-t:first-child{grid-column:1/-1;display:flex;align-items:center;gap:24px}
-.mds.wide .mds-g3.bigrow>.mds-t:first-child .mds-tl{min-width:64px}
-.mds.wide .mds-g3.bigrow>.mds-t:first-child .mds-ts{margin-left:auto}
+/* 大きい枠の並び(通常サイズ・1920×1440とも): 威力を横長の1段目、その下にダメージ効率とチャージ効率(またはゲージ消費)を2つ */
+.mds-g3.bigrow{grid-template-columns:1fr 1fr}
+.mds-g3.bigrow>.mds-t:first-child{grid-column:1/-1;display:flex;align-items:center;gap:24px}
+.mds-g3.bigrow>.mds-t:first-child .mds-tl{min-width:84px}
+.mds.wide .mds-g3.bigrow>.mds-t:first-child .mds-tl{min-width:96px}
 .mds.wide .mds-t{padding:14px 18px}
 .mds.wide .mds-tl{font-size:15px}
 .mds.wide .mds-tg{font-size:12px}
@@ -737,7 +743,7 @@ function drawWin(ov,e){
   const st=state.stab;
   const c=colorOf(e.t);
   const r=(k,v,tip)=>`<div class="r"${tip?` title="${tip}"`:''}><span>${k}</span><b>${v}</b></div>`;
-  const base0=v=>`<small class="raw from">${num(v)} ➡︎</small>`;
+  const base0=(v,d)=>`<small class="raw from">${num(v,d)} ➡︎</small>`;
   const P=pveVals(e,st), V=pvpVals(e,st);
   const sc=st?' class="stab"':'';
   let pve='';
@@ -748,15 +754,15 @@ function drawWin(ov,e){
       ${r('ダメージ発生',num(P.w,2)+'秒','わざを出し始めてからダメージが入るまでの時間です')}
       ${P.fast?r('ゲージ増加',P.eg+' <small class="raw">EPS '+num(P.eps)+'</small>')
         :`<div class="r" title="ゲージの分割数と1本あたりの量です(分割なし=100・2分割=50・3分割=33)"><span>ゲージ消費</span><span class="gv">${gaugeBar(P.m,e.gid)}<b>${P.gauge}</b></span></div>`}
-      ${P.fast?r('DPS',`<span${sc}>${num(P.dps)}</span>`,'1秒あたりのダメージ(威力÷時間)'):''}
+      ${P.fast?r('DPS',`${st?base0(P.p0/P.d):''}<span${sc}>${num(P.dps)}</span>`,'1秒あたりのダメージ(威力÷時間)'):''}
     </div></div>`;
   }
   let pvp='';
   if(V){
     pvp=`<div class="grp"><div class="gttl">トレーナーバトル</div><div class="rows">
       ${r('威力',st?`${base0(V.p0)}<span${sc}>${num(V.pw)}</span>`:`${num(V.pw)}${V.p0?`<small class="raw">一致 ${num(V.p0*1.2)}</small>`:''}`,'タイプ一致なら1.2倍になります')}
-      ${V.fast?r('ターン',V.tn+' <small class="raw">'+(V.tn*0.5)+'秒</small>')+r('ゲージ増加',V.eg+' <small class="raw">EPT '+num(V.ept)+'</small>')+r('DPT',`<span${sc}>${num(V.dpt)}</span>`,'1ターンあたりのダメージ')
-        :r('ゲージ消費',V.e)+r('DPE',`<span${sc}>${num(V.dpe,2)}</span>`,'消費ゲージ1あたりのダメージ')}
+      ${V.fast?r('ターン',V.tn+' <small class="raw">'+(V.tn*0.5)+'秒</small>')+r('ゲージ増加',V.eg+' <small class="raw">EPT '+num(V.ept)+'</small>')+r('DPT',`${st?base0(V.p0/V.tn):''}<span${sc}>${num(V.dpt)}</span>`,'1ターンあたりのダメージ')
+        :r('ゲージ消費',V.e)+r('DPE',`${st?base0(V.p0/(V.e||1),2):''}<span${sc}>${num(V.dpe,2)}</span>`,'ゲージ1あたりのダメージ')}
       ${V.buff?r('能力変化',V.buff):''}
     </div></div>`;
   }
@@ -796,17 +802,17 @@ function cardSec(kind,e,st){
   // 大きいタイル3つ＝威力・ダメージ効率・チャージ効率(同じ大きさで並べる・2026-09-17タダシさん指示)。
   // チャージ効率はノーマルアタック=EPS/EPT、SPアタック=ゲージ(ジム・レイド)／消費ゲージ(トレーナーバトル)
   const T=(lbl,val,opt)=>{ opt=opt||{};
-    const v=opt.big?`${opt.from!=null?`<span class="mds-from">${opt.from}<i>➡︎</i></span>`:''}<span class="mds-bn">${val}</span>`:val;
-    return `<div class="mds-t${opt.big?' big':''}${opt.hi?' hi':''}"><div class="mds-tl">${lbl}${opt.tag?`<span class="mds-tg">${opt.tag}</span>`:''}</div><div class="mds-tv">${v}</div>${opt.after||''}${opt.sub?`<div class="mds-ts">${opt.sub}</div>`:''}</div>`; };
+    const v=opt.big?`${opt.from!=null?`<span class="mds-from">${opt.from}</span><span class="mds-arw">➡︎</span>`:''}<span class="mds-bn">${val}</span>`:val;
+    return `<div class="mds-t${opt.big?' big':''}${opt.hi?' hi':''}${opt.eff?' eff':''}${opt.eff&&opt.from!=null?' fr':''}"><div class="mds-tl">${lbl}${opt.tag?`<span class="mds-tg">${opt.tag}</span>`:''}</div><div class="mds-tv">${v}</div>${opt.after||''}${opt.sub?`<div class="mds-ts">${opt.sub}</div>`:''}</div>`; };
   // タイプ一致のときは「素の威力(小) ➡︎ 一致の威力(大)」(2026-09-17タダシさん指示)
-  const from=v=>st?num(v):null;
+  const from=(v,d)=>st?num(v,d):null;
   if(kind==='pve'){
     const P=pveVals(e,st);
     const bars=`<div class="mds-gauge"><span class="mds-bars">${Array.from({length:P.bars},()=>'<i></i>').join('')}</span></div>`;
     // ジム・レイドのSPアタック単体のDPSは出さない(ゲージをためる時間が入らず、強さはノーマルアタックとのセットで決まるため・2026-09-17タダシさん判断)
     const big=T('威力',num(P.pw),{big:true,hi:st,from:from(P.p0)})
-      +(P.fast?T('DPS',num(P.dps),{big:true,hi:st,tag:'ダメージ効率'})+T('EPS',num(P.eps),{big:true,tag:'チャージ効率'})
-              :T('ゲージ消費',P.gauge,{big:true,after:bars}));
+      +(P.fast?T('DPS',num(P.dps),{big:true,eff:true,hi:st,tag:'ダメージ効率',from:from(P.p0/P.d)})+T('EPS',num(P.eps),{big:true,eff:true,tag:'チャージ効率'})
+              :T('ゲージ消費',P.gauge,{big:true,eff:true,after:bars}));
     const small=T('全体の時間',num(P.d)+'<u>秒</u>')+T('ダメージ発生',num(P.w,2)+'<u>秒</u>')+(P.fast?T('ゲージ増加',P.eg):'');
     return `<div class="mds-sec pve"><div class="mds-sh"><span class="mds-en">GYM &amp; RAID</span><span class="mds-ja">ジム・レイド</span></div>
       <div class="${P.fast?'mds-g3 bigrow':'mds-g1 stack'}">${big}</div><div class="mds-g${P.fast?3:2}">${small}</div></div>`;
@@ -815,10 +821,10 @@ function cardSec(kind,e,st){
   const eff=V.buff?`<div class="mds-buff"><span class="mds-bl">能力変化</span><span class="mds-be">${effHtml(V.m)}</span><span class="mds-bt">${esc(V.buff)}</span></div>`:'';
   const meter=`<div class="mds-gauge"><span class="mds-meter"><i style="width:${Math.min(100,V.e||0)}%"></i></span></div>`;
   const big=T('威力',num(V.pw),{big:true,hi:st,from:from(V.p0)})
-    +(V.fast?T('DPT',num(V.dpt),{big:true,hi:st,tag:'ダメージ効率'})
-            :T('DPE',num(V.dpe,2),{big:true,hi:st,tag:'ダメージ効率'}))
-    +(V.fast?T('EPT',num(V.ept),{big:true,tag:'チャージ効率'})
-            :T('ゲージ消費',V.e,{big:true,after:meter}));
+    +(V.fast?T('DPT',num(V.dpt),{big:true,eff:true,hi:st,tag:'ダメージ効率',from:from(V.p0/(V.tn||1))})
+            :T('DPE',num(V.dpe,2),{big:true,eff:true,hi:st,tag:'ダメージ効率',from:from(V.p0/(V.e||1),2)}))
+    +(V.fast?T('EPT',num(V.ept),{big:true,eff:true,tag:'チャージ効率'})
+            :T('ゲージ消費',V.e,{big:true,eff:true,after:meter}));
   const small=V.fast?`<div class="mds-g2">${T('わざの長さ',V.tn+`<u>ターン（${V.tn*0.5}秒）</u>`)+T('ゲージ増加',V.eg)}</div>`:'';
   return `<div class="mds-sec pvp"><div class="mds-sh"><span class="mds-en">TRAINER BATTLE</span><span class="mds-ja">トレーナーバトル</span></div>
     <div class="mds-g3 bigrow">${big}</div>${small}${eff}</div>`;
