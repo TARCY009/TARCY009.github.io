@@ -458,6 +458,18 @@ body.has-sticky{padding-top:52px}
 .modebtns{display:flex;gap:6px;margin-left:auto}
 .tophead label.sec{margin-bottom:0}
 .evb{padding:6px 10px;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;flex:none}
+/* 表示の3択(標準｜実数値｜進化前CP)は排他なので、すき間2pxでくっつけて1つのまとまりに見せる(共通ルール)。
+   進化前CPは進化前がいないときは隠れるので、右端の角丸はJSが .end を付けたボタンに当てる */
+.tblmode{display:inline-flex;gap:2px;margin-left:auto}
+.tblmode>.evb{border-radius:5px}
+.tblmode>.evb:first-child{border-radius:10px 5px 5px 10px}
+.tblmode>.evb.end{border-radius:5px 10px 10px 5px}
+/* 順位一覧を伸ばすボタン(耐久指数ランキングと同じ見た目)。「TOP10に戻す」は控えめに右へ */
+.morerow{display:flex;gap:8px;margin-top:8px}
+.more{flex:1;font:inherit;font-size:.8rem;font-weight:700;color:var(--sub);
+  background:var(--tabbg);border:1px solid var(--line);border-radius:11px;padding:9px;cursor:pointer;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
+.more.less{flex:0 0 auto;padding:9px 14px}
 /* 「CP→個体値」の矢印は文字の→だと細くて読み取りにくいので、太い線のSVGで描く */
 #cpmode{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;padding:6px 11px}
 #cpmode .arw{width:17px;height:11px;flex:none;fill:none;stroke:currentColor;
@@ -698,8 +710,13 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
 <div class="card" id="result">
   <div>
     <div class="tophead">
-      <label class="sec">TOP10</label>
-      <button id="evobtn" class="evb" style="display:none" title="進化する前の姿を同じPL・同じ個体値にしたときのCPを一覧に足します。ゲーム画面ではPLを確認できないため、進化前のいまのCPがこの値を超えていなければ、進化させてもCP制限に収まるという確認に使えます">進化前CP</button>
+      <label class="sec" id="toplabel">TOP10</label>
+      <!-- 表示の3択(排他・2026-09-16テスター#17): 標準＝CP/SCP/アメXL ／ 実数値＝攻撃/防御/HP(列を差し替える＝6列のままスマホでも崩れない) ／ 進化前CP -->
+      <div class="tblmode" id="tblmode">
+        <button id="stdbtn" class="evb act" title="CP・SCP・アメXLの列で見ます">標準</button>
+        <button id="statbtn" class="evb" title="CP・SCP・アメXLの代わりに、そのPLでの攻撃・防御・HPの実数値を見ます。攻撃はSPアタックの同時発動（攻撃実数値が高いほうが先）の判定に、攻撃・防御はブレイクポイントの計算に使えます">実数値</button>
+        <button id="evobtn" class="evb" style="display:none" title="進化する前の姿を同じPL・同じ個体値にしたときのCPを一覧に足します。ゲーム画面ではPLを確認できないため、進化前のいまのCPがこの値を超えていなければ、進化させてもCP制限に収まるという確認に使えます">進化前CP</button>
+      </div>
     </div>
     <div class="capsel" id="evorow" style="display:none;margin:0 0 8px"></div>
     <div class="iv-hint" id="evonote" style="display:none;margin:0 0 8px"></div>
@@ -708,6 +725,11 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
         <thead><tr id="thd"><th>順位</th><th title="攻撃／防御／HPの個体値の組み合わせです">個体値</th><th title="CP上限いっぱいまで強化したときのポケモンレベル（PL）です。マスターはPL上限タブの値になります">PL</th><th title="そのPLまで強化したときのCPです">CP</th><th title="攻撃・防御・HPから計算する対戦向けの総合的な強さです。総合の並びはこの値が高い順で、同じSCPは同順位になります">SCP</th><th title="PL40から上の強化に必要なアメXLの合計です。通常個体の必要数で、シャドウは1.2倍、ライトは0.9倍になります">アメXL</th></tr></thead>
         <tbody id="top10"></tbody>
       </table>
+    </div>
+    <!-- 順位一覧を50件ずつ伸ばす(2026-09-16テスター#17「順位一覧を全部見たい」・耐久指数ランキングと同じ形) -->
+    <div class="morerow" id="morerow" style="display:none">
+      <button class="more" id="moreBtn" type="button">さらに50件見る</button>
+      <button class="more less" id="lessBtn" type="button" style="display:none">TOP10に戻す</button>
     </div>
     <!-- 11位以下のあなたの個体はTOP10の枠に混ぜず、別の枠で出す -->
     <div id="mewrap" style="display:none;margin-top:12px">
@@ -805,6 +827,7 @@ const POKE = [{"i":"bulbasaur","n":"フシギダネ","e":"Bulbasaur","d":1,"a":1
 
 const state = { p:null, mode:'iv', iv:[10,10,10], league:'gl', cap:50, floor:0, sort:'scp',
   evoCol:false, evoFrom:null, evoChain:[], hdLv:null,   // 進化前CP列(トグル・どの姿から・進化前の系列)／100%チェックで選んだPL
+  statCol:false, showN:10, listKey:'',   // 表示「実数値」(CP/SCP/アメXLの列を攻撃/防御/HPに差し替え)／順位一覧を何件出すか(さらに50件見る)／件数を戻す判定用
   cpNow:null, plNow:null };   // いまのCP(任意入力)と、そこから割り出したPL(CPMSの添字。無ければnull)
 const CAPS = { lc:500, gl:1500, ul:2500, ml:null };   // lc=リトルカップ(CP500・2026-09-04追加)
 
@@ -833,7 +856,7 @@ function rankAll(p,capCP,maxLv,fl){
     if(p.lf && 1+r[0]/2<p.lf) continue;   // PL下限未満の個体は存在しない(ジガルデ20)
     const m=CPMS[r[0]];
     const A=(p.a+ia)*m, D=(p.f+id_)*m, H=floor((p.h+ih)*m);
-    rows.push({sp:A*D*H, cp:r[1], lv:1+r[0]/2, ia, id:id_, ih});
+    rows.push({sp:A*D*H, cp:r[1], lv:1+r[0]/2, ia, id:id_, ih, at:A, df:D, hp:H});   // at/df/hp=実数値(表示の「実数値」用)
   }
   // 並べ替えは丸める前のステータス積そのもの。CP降順は積が同じ個体どうしの並びを決めるだけで、
   // 順位番号には効かせない(assignRanks を参照)
@@ -948,10 +971,23 @@ function render(){
   // 進化前CPの列(トグルONのときだけ7列にする)。進化してもPL・個体値は変わらないので、
   // 進化前の種族値に同じ個体値・同じPLのCPM(float32表)を当てるだけでよい
   const evo=(state.evoCol && state.evoFrom!==null)? POKE[IDX[state.evoFrom]] : null;
+  const stat=state.statCol && !evo;   // 表示「実数値」: CP/SCP/アメXLの3列を 攻撃/防御/HP に差し替える(列数は6のまま)
   document.getElementById('rktbl').classList.toggle('evo', !!evo);
   document.getElementById('thd').innerHTML=
-    '<th>順位</th><th title="攻撃／防御／HPの個体値の組み合わせです">個体値</th><th title="CP上限いっぱいまで強化したときのポケモンレベル（PL）です。マスターはPL上限タブの値になります">PL</th><th title="そのPLまで強化したときのCPです">CP</th>'+(evo?'<th class="evoth">進化前CP</th>':'')+'<th title="攻撃・防御・HPから計算する対戦向けの総合的な強さです。総合の並びはこの値が高い順で、同じSCPは同順位になります">SCP</th><th title="PL40から上の強化に必要なアメXLの合計です。通常個体の必要数で、シャドウは1.2倍、ライトは0.9倍になります">アメXL</th>';
+    '<th>順位</th><th title="攻撃／防御／HPの個体値の組み合わせです">個体値</th><th title="CP上限いっぱいまで強化したときのポケモンレベル（PL）です。マスターはPL上限タブの値になります">PL</th>'+
+    (stat
+      ? '<th title="そのPLでの攻撃の実数値です。SPアタックの同時発動は、この値が高いほうが先に解決されます">攻撃</th><th title="そのPLでの防御の実数値です">防御</th><th title="そのPLでのHPの実数値です">HP</th>'
+      : '<th title="そのPLまで強化したときのCPです">CP</th>'+(evo?'<th class="evoth">進化前CP</th>':'')+'<th title="攻撃・防御・HPから計算する対戦向けの総合的な強さです。総合の並びはこの値が高い順で、同じSCPは同順位になります">SCP</th><th title="PL40から上の強化に必要なアメXLの合計です。通常個体の必要数で、シャドウは1.2倍、ライトは0.9倍になります">アメXL</th>');
   const evoTd=r=> evo? '<td>'+cp(evo.a+r.ia, evo.f+r.id, evo.h+r.ih, CPMS[(r.lv-1)*2])+'</td>' : '';
+  // 1行の右側3列(標準=CP/SCP/アメXL・実数値=攻/防/HP)。攻撃・防御は小数1桁(同時発動の判定は小数まで効く)・HPは整数
+  const tailTd=r=>{
+    if(stat) return '<td>'+r.at.toFixed(1)+'</td><td>'+r.df.toFixed(1)+'</td><td>'+r.hp+'</td>';
+    const xl=xlFor(r.lv);
+    return '<td>'+r.cp+'</td>'+evoTd(r)+'<td>'+scp(r.sp)+'</td><td>'+(xl>0?xl:'—')+'</td>';
+  };
+  // ポケモン・リーグ・並び・前提が変わったら件数をTOP10へ戻す
+  const listKey=[state.p.i,state.league,state.sort,state.cap,state.floor].join('|');
+  if(listKey!==state.listKey){ state.listKey=listKey; state.showN=10; }
 
   if(idx<0){
     if(stEl) stEl.innerHTML='<span class="lgterr">'+(belowFloor
@@ -960,6 +996,7 @@ function render(){
       : 'この個体はリーグCP制限を満たせません')+'</span>';
     document.getElementById('top10').innerHTML='';
     document.getElementById('mewrap').style.display='none';
+    document.getElementById('morerow').style.display='none';
     document.getElementById('lvnote').textContent='';
     sticky.style.display='none';
     document.body.classList.remove('has-sticky');
@@ -977,19 +1014,26 @@ function render(){
 
   const rkHtml=r=>'<span class="rkc">'+r+'位</span>';
   let html='';
-  rows.slice(0,10).forEach((r,i)=>{
+  const showN=Math.min(state.showN, rows.length);
+  rows.slice(0,showN).forEach((r,i)=>{
     const cls=(i===idx)?' class="me"':'';
-    const xl=xlFor(r.lv);
-    html+='<tr'+cls+'><td>'+rkHtml(r.rank)+'</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td>'+evoTd(r)+'<td>'+scp(r.sp)+'</td><td>'+(xl>0?xl:'—')+'</td></tr>';
+    html+='<tr'+cls+'><td>'+rkHtml(r.rank)+'</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td>'+tailTd(r)+'</tr>';
   });
   document.getElementById('top10').innerHTML=html;
-  // 11位以下のあなたの個体はTOP10の枠に混ぜず、下の別枠に出す(枠はTOP10で切る)
+  document.getElementById('toplabel').textContent= showN>10 ? 'TOP'+showN : 'TOP10';
+  // 「さらに50件見る」(全部出しきったら消える)・「TOP10に戻す」(伸ばしているときだけ)
+  const rest=rows.length-showN;
+  document.getElementById('morerow').style.display='flex';
+  const mb=document.getElementById('moreBtn'), lb=document.getElementById('lessBtn');
+  mb.style.display= rest>0 ? '' : 'none';
+  mb.textContent='さらに'+Math.min(50,rest)+'件見る';
+  lb.style.display= showN>10 ? '' : 'none';
+  // 表に載っていない順位のあなたの個体は、表の枠に混ぜず下の別枠に出す(枠はTOP◯で切る)
   const mw=document.getElementById('mewrap');
-  if(idx>=10){
-    const mxl=xlFor(me.lv);
+  if(idx>=showN){
     document.getElementById('metbl').classList.toggle('evo', !!evo);
     document.getElementById('mebody').innerHTML=
-      '<tr class="me"><td>'+rkHtml(rank)+'</td><td>'+me.ia+'/'+me.id+'/'+me.ih+'</td><td>'+me.lv+'</td><td>'+me.cp+'</td>'+evoTd(me)+'<td>'+scp(me.sp)+'</td><td>'+(mxl>0?mxl:'—')+'</td></tr>';
+      '<tr class="me"><td>'+rkHtml(rank)+'</td><td>'+me.ia+'/'+me.id+'/'+me.ih+'</td><td>'+me.lv+'</td>'+tailTd(me)+'</tr>';
     mw.style.display='block';
   } else {
     mw.style.display='none';
@@ -1591,6 +1635,12 @@ function syncEvoUi(){
   eb.style.display=chain.length?'':'none';
   const on=state.evoCol && chain.length>0;
   eb.classList.toggle('act', on);
+  // 表示の3択の点灯(排他)と、右端の角丸(進化前CPが隠れているときは実数値が右端)
+  const st=state.statCol && !on;
+  document.getElementById('statbtn').classList.toggle('act', st);
+  document.getElementById('stdbtn').classList.toggle('act', !on && !st);
+  document.getElementById('statbtn').classList.toggle('end', !chain.length);
+  eb.classList.toggle('end', !!chain.length);
   const row=document.getElementById('evorow');
   if(on && chain.length>=2){
     // 進化前が2段階以上あるときだけ、どの姿のまま強化するかを選ばせる
@@ -1607,9 +1657,19 @@ function syncEvoUi(){
 }
 document.getElementById('evobtn').addEventListener('click',()=>{
   if(!(state.evoChain||[]).length) return;
-  state.evoCol=!state.evoCol;
+  state.evoCol=true; state.statCol=false;
   syncEvoUi(); render();
 });
+document.getElementById('stdbtn').addEventListener('click',()=>{
+  state.evoCol=false; state.statCol=false;
+  syncEvoUi(); render();
+});
+document.getElementById('statbtn').addEventListener('click',()=>{
+  state.evoCol=false; state.statCol=true;
+  syncEvoUi(); render();
+});
+document.getElementById('moreBtn').addEventListener('click',()=>{ state.showN+=50; render(); });
+document.getElementById('lessBtn').addEventListener('click',()=>{ state.showN=10; render(); });
 document.getElementById('evorow').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   state.evoFrom=b.dataset.i;
