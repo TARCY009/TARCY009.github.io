@@ -1180,7 +1180,7 @@ function renderFamily(){
   wrap.style.display='block';
 }
 
-// 開発者の「進化系統」画像(2026-09-17タダシさん指示): 系統の姿ごとに、スーパー・ハイパー・マスターの上位5位を1枚ずつ。
+// 開発者の「進化系統」画像(2026-09-17タダシさん指示): 系統の姿ごとに、スーパー・ハイパー(・最終進化はマスター)の上位5位を1枚ずつ。
 // 動画で必要な組み合わせ(例: 中間進化のスーパー＋最終進化のスーパー・ハイパー)を選んで使う。入力した個体は載せない
 window.GonaviFamilyImages=async function(){
   const S=window.GonaviSnap;
@@ -1193,7 +1193,10 @@ window.GonaviFamilyImages=async function(){
   const LG=[['gl','スーパーリーグ'],['ul','ハイパーリーグ'],['ml','マスターリーグ']];
   const W=520, out=[];
   for(const m of forms){
+    // マスターリーグは最終進化の姿(とメガ・ゲンシ)だけ(2026-09-17タダシさん指示)
+    const final=/_(mega|primal)/.test(m.i) || !descendants(m).length;
     for(const [lg,lgName] of LG){
+      if(lg==='ml' && !final) continue;
       // 攻撃優先はマスター専用の並び。スーパー・ハイパーは個体値順(SCP)で作る
       const atk=state.sort==='atk' && lg==='ml';
       const all=famRowsBy(m,lg,atk?'atk':'scp');
