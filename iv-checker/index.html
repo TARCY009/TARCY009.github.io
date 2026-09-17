@@ -304,6 +304,19 @@ tbody tr td:nth-child(2){font-weight:700;letter-spacing:.01em}
 tr.me td{background:var(--mebg);color:var(--cy);font-weight:700}
 tr.me td:first-child{box-shadow:inset 3px 0 0 var(--cy)}
 tr.me .rkc{color:var(--cy)}
+/* 開発者の「進化系統」画像のカード(画面には出さない・GonaviFamilyImages が画面外で組んで描く) */
+.ivfam{padding:16px 16px 14px;border-radius:18px;border:1px solid rgba(140,170,255,.28);
+  background:linear-gradient(180deg,#141d3c,#0b1026);color:#e8eeff}
+.ivfam-hd{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin:0 2px 12px}
+.ivfam-hd b{font-size:1.5rem;font-weight:900;letter-spacing:.02em;color:#fff;line-height:1.25}
+.ivfam-hd .lg{font-size:1.05rem;font-weight:800}
+.ivfam[data-lg="gl"] .lg{color:var(--gl)}
+.ivfam[data-lg="ul"] .lg{color:var(--ul)}
+.ivfam[data-lg="ml"] .lg{color:var(--ml)}
+.ivfam-hd .srt{font-size:.85rem;font-weight:700;color:#9fb0e0;margin-left:auto}
+.ivfam .tblwrap{background:#0f1733}
+.ivfam table{font-size:.95rem}
+.ivfam td{padding:10px 5px}
 /* あなたの個体の別枠(11位以下のときだけ出す)。枠線を水色にして「自分のもの」を示す */
 #mewrap .tblwrap{border-color:var(--meline)}
 /* スマホは6列を収めるために文字と余白を詰める(横スクロールさせない) */
@@ -1165,6 +1178,50 @@ function renderFamily(){
       '</div>';
   }).join('');
   wrap.style.display='block';
+}
+
+// 開発者の「進化系統」画像(2026-09-17タダシさん指示): 系統の姿ごとに、スーパー・ハイパー・マスターの上位5位を1枚ずつ。
+// 動画で必要な組み合わせ(例: 中間進化のスーパー＋最終進化のスーパー・ハイパー)を選んで使う。入力した個体は載せない
+window.GonaviFamilyImages=async function(){
+  const S=window.GonaviSnap;
+  if(!S||!state.p||state.mode!=='iv') return [];
+  const base=POKE[IDX[state.p.i.replace(/_(mega(_[xy])?|primal)$/,'')]]||state.p;
+  const forms=[state.p, ...familyOf(state.p)];
+  const order=[...preChain(base), base, ...descendants(base)].map(m=>m.i);
+  const pos=m=>{ const k=order.indexOf(m.i); return k>=0? k : order.indexOf(m.i.replace(/_(mega(_[xy])?|primal)$/,''))+0.5; };
+  forms.sort((a,b)=>pos(a)-pos(b));
+  const LG=[['gl','スーパーリーグ'],['ul','ハイパーリーグ'],['ml','マスターリーグ']];
+  const W=520, out=[];
+  for(const m of forms){
+    for(const [lg,lgName] of LG){
+      // 攻撃優先はマスター専用の並び。スーパー・ハイパーは個体値順(SCP)で作る
+      const atk=state.sort==='atk' && lg==='ml';
+      const all=famRowsBy(m,lg,atk?'atk':'scp');
+      const top=all.slice(0,5);
+      if(!top.length) continue;
+      const srt=atk?'攻撃優先順':'個体値順';
+      const host=document.createElement('div');
+      host.style.cssText='position:fixed;left:-30000px;top:0;width:'+W+'px;pointer-events:none';
+      host.innerHTML='<div class="ivfam" data-lg="'+lg+'"><div class="ivfam-hd"><b>'+m.n+'</b><span class="lg">'+lgName+'</span><span class="srt">'+srt+' TOP5</span></div>'+
+        '<div class="tblwrap"><table><thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th></tr></thead><tbody>'+
+        top.map(r=>'<tr><td class="rkc">'+r.rank+'位</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td></tr>').join('')+
+        '</tbody></table></div></div>';
+      document.body.appendChild(host);
+      try{
+        const res=await S.renderEl(host.firstElementChild,{width:W,mode:'window',rootCls:document.documentElement.className,
+          bodyCls:document.body.className,bg:false,pad:10,scale:2});
+        out.push({canvas:res.canvas, label:m.n+' '+lgName, name:m.n.replace(/[\\/:*?"<>|\s]/g,'')+'_'+lgName+'_'+srt+'TOP5.png'});
+      }finally{ host.remove(); }
+    }
+  }
+  return out;
+};
+function famRowsBy(m,lg,sort){
+  const mega=/_(mega|primal)/.test(m.i);
+  const cap=mega? state.cap : (state.cap>51? 50 : state.cap);
+  const key=m.i+'|'+lg+'|'+cap+'|'+state.floor+'|'+sort;
+  if(!famCache[key]) famCache[key]=assignRanks(sortRows(rankAll(m, CAPS[lg], cap, state.floor),sort),sort);
+  return famCache[key];
 }
 
 // ===== 100%チェック(個体値15/15/15のCPを、入手した場面のPLごとに出す) =====

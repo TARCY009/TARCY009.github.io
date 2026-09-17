@@ -52,10 +52,21 @@
     '/max-type/tank/': { target: '#list', rows: '.row', ctx: ['#curTypeName'],
                     tags: '.rhead [aria-pressed="true"]', title: 'マックスバトル タイプ別タンク',
                     graph: { name: '.pname .nm', val: '.pts b', unit: 'ポイント', head: '#curTypeName' } },
-    '/iv-checker/': { target: '#result .tblwrap', rows: 'tbody tr',
-                      ctx: ['#lgtitle > span:first-child', '#lgtabs .lgc.act .lgc-n', '#lgtabs .lgc.act .lgc-r', '#lgtstats'],
-                      barIn: '#result .tophead', title: '個体値チェッカー TOP10', limit: 10 }
+    // 動画で大事なのは「ポケモン名・リーグ・個体値順」の3つ（2026-09-17タダシさん指示）。ツール名と、入力した個体の順位・CPは出さない。
+    // 開発者の端末では枠ごとのボタンを出さず、この並びに「表だけ」「進化系統」をまとめる（ボタンの渋滞を解消）
+    '/iv-checker/': { target: '#result .tblwrap', rows: 'tbody tr', barIn: '#result .tophead', limit: 10,
+                      title: '個体値順 TOP10', head: ivHead, strip: ['me'], no1920: true, devFrames: false,
+                      devBtns: [{ k: 'tbl', label: '表だけ', title: '表の枠だけを保存します（表示中の行すべて）' },
+                                { k: 'fam', label: '進化系統', title: '進化前・進化後・メガの、スーパー・ハイパー・マスターの上位5位を1枚ずつ作ります' }] }
   };
+
+  function ivHead() {
+    var nm = txt('#lgtitle .lgtname') || txt('#lgtitle > span:first-child');
+    var act = document.querySelector('#lgtabs .lgc.act');
+    var lg = { lc: 'リトルカップ', gl: 'スーパーリーグ', ul: 'ハイパーリーグ', ml: 'マスターリーグ' }[act && act.getAttribute('data-lg')] || '';
+    var srt = document.querySelector('.srt.act[data-s="atk"]') ? '攻撃優先順' : '個体値順';
+    return { title: nm, ctx: [lg, srt + ' TOP10'].filter(Boolean), file: nm + '_' + lg + '_' + srt };
+  }
 
   // ---------------------------------------------------------------- ファイルを data: にする
   var urlCache = {};
@@ -255,6 +266,8 @@
     if (o.drop) c.querySelectorAll(o.drop).forEach(function (x) { x.remove(); });
     // data-snap-cls＝画像のときだけ付けるクラス（保存用の見た目をCSS側で持つ・2026-09-16 GBLの1対1の結果）
     if (el.getAttribute('data-snap-cls')) el.getAttribute('data-snap-cls').split(/\s+/).concat(o.big ? ['snapbig'] : []).forEach(function (k) { if (k) c.classList.add(k); });
+    // strip＝画像では外すクラス（個体値チェッカーの「あなたの個体」の点灯など）
+    (o.strip || []).forEach(function (k) { c.querySelectorAll('.' + k).forEach(function (x) { x.classList.remove(k); }); });
     // under＝要素そのものの下に敷く背景（半透明の枠を、画面で透けて見えている色ごと写す）
     if (o.under) c.style.setProperty('background', o.under, 'important');
     // fill＝自分の背景を持たない行に敷く背景（画面では外側のパネルが見せている色）。行の外は透明のまま
@@ -323,7 +336,7 @@
     var W = Math.max(40, Math.round(o.width));
     var P = o.pad || 0;
     var css = await collectCSS(o.mode);
-    var clone = await prepClone(el, { width: W, big: o.big, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame, under: o.under });
+    var clone = await prepClone(el, { width: W, big: o.big, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame, under: o.under, strip: o.strip });
     var chain = wrapChain(el, clone);
     var bcs = getComputedStyle(document.body);
     var bodyStyle = 'margin:0!important;padding:' + P + 'px!important;min-height:0!important;height:auto!important;' +
@@ -521,11 +534,12 @@
     var dev = isDev();
     var W = 720, P = 30, S = 2;
     var content = await renderEl(el, { width: W, mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0,
-                                       rows: cfg.rows, limit: cfg.limit || LIMIT, drop: cfg.drop, scale: S });
+                                       rows: cfg.rows, limit: cfg.limit || LIMIT, drop: cfg.drop, strip: cfg.strip, scale: S });
     var col = toolColor();
     var eyebrow = txt('header .eyebrow').toUpperCase();
-    var title = cfg.title;
-    var ctxs = (cfg.ctx || []).map(txt).filter(Boolean);
+    var hd = cfg.head ? cfg.head() : null;
+    var title = hd ? hd.title : cfg.title;
+    var ctxs = hd ? hd.ctx : (cfg.ctx || []).map(txt).filter(Boolean);
     var tags = tagLabels(cfg.tags);
     // 見出しの高さを先に測る
     var cv0 = document.createElement('canvas').getContext('2d');
@@ -995,6 +1009,34 @@
       }, 'image/png');
     });
   }
+  // 複数の画像を並べて、1枚ずつ／まとめて保存する（個体値チェッカーの進化系統・2026-09-17）。items＝[{canvas, name}]
+  function previewMany(items) {
+    return new Promise(function (resolve) {
+      var list = items.map(function (it) {
+        var cv = it.canvas;
+        if (!cv.__rounded) { try { cv = roundFrame(cv, false); } catch (e) {} }
+        try { cv = devGrade(cv); } catch (e) {}
+        return { url: cv.toDataURL('image/png'), name: it.name, label: it.label || it.name };
+      });
+      var ov = document.createElement('div'); ov.className = 'snapov'; ov.id = 'snapui';
+      ov.innerHTML = '<div class="snapbox many"><div class="snapbtns"><button type="button" class="snapgo" data-all>すべて保存（' + list.length + '枚）</button>' +
+        '<button type="button" class="snapno">閉じる</button></div><div class="snapgrid">' +
+        list.map(function (x, i) {
+          return '<figure><img alt=""><figcaption>' + x.label.replace(/</g, '&lt;') + '</figcaption><button type="button" class="snapgo" data-i="' + i + '">保存</button></figure>';
+        }).join('') + '</div></div>';
+      ov.querySelectorAll('.snapgrid img').forEach(function (im, i) { im.src = list[i].url; });
+      document.body.appendChild(ov);
+      var dl = function (x) { var a = document.createElement('a'); a.href = x.url; a.download = x.name; document.body.appendChild(a); a.click(); a.remove(); };
+      var close = function () { ov.remove(); resolve(); };
+      ov.addEventListener('click', async function (e) {
+        if (e.target === ov) return close();
+        var b = e.target.closest('button'); if (!b) return;
+        if (b.classList.contains('snapno')) return close();
+        if (b.hasAttribute('data-all')) { for (var i = 0; i < list.length; i++) { dl(list[i]); await sleep(250); } return; }
+        dl(list[+b.getAttribute('data-i')]); b.textContent = '保存済み';
+      });
+    });
+  }
   function busy(on) {
     var b = document.getElementById('snapbusy');
     if (on && !b) { b = document.createElement('div'); b.id = 'snapbusy'; b.textContent = '画像を作っています…'; document.body.appendChild(b); }
@@ -1013,15 +1055,21 @@
       var bar = document.createElement(cfg.barIn ? 'span' : 'div');
       bar.className = 'snapbar' + (cfg.barIn ? ' inl' : '');
       // ボタンは2つ: ふつうの保存（幅720の縦長）と、動画用の1920×1440（2026-09-12タダシさん指示）
-      bar.innerHTML = '<button type="button" class="snapbtn">📷 画像を保存</button>' +
-        '<button type="button" class="snapbtn alt" title="動画でそのまま使える1920×1440の画像にします（上位5件）">1920×1440サイズ</button>' +
-        (cfg.graph ? '<button type="button" class="snapbtn gr" title="上位10件を棒グラフにした1920×1440の画像にします">📊 グラフ画像</button>' : '');
+      // devBtns＝開発者の端末だけに出すボタン（同じ並びにまとめる）。no1920＝1920×1440を出さない
+      bar.innerHTML = '<button type="button" class="snapbtn" data-run="n">📷 画像を保存</button>' +
+        (cfg.no1920 ? '' : '<button type="button" class="snapbtn alt" data-run="b" title="動画でそのまま使える1920×1440の画像にします（上位5件）">1920×1440サイズ</button>') +
+        (cfg.graph ? '<button type="button" class="snapbtn gr" data-run="g" title="上位10件を棒グラフにした1920×1440の画像にします">📊 グラフ画像</button>' : '') +
+        (cfg.devBtns || []).map(function (d) {
+          return '<button type="button" class="snapbtn alt devonly" data-run="' + d.k + '" title="' + d.title + '（開発者だけ）">' + d.label + '</button>';
+        }).join('');
       if (holder) holder.appendChild(bar); else target.parentNode.insertBefore(bar, target);
-      var btns = bar.querySelectorAll('button'), btn = btns[0], btn2 = btns[1], btn3 = btns[2] || null;
+      var btns = bar.querySelectorAll('button'), btn = btns[0];
       var sync = function () {
         var n = cfg.rows ? target.querySelectorAll(cfg.rows).length : target.children.length;
+        var dev = isDev();
         bar.hidden = !n || target.offsetParent === null;
-        btn.textContent = isDev() ? '📷 画像を保存（ロゴなし・開発者）' : '📷 画像を保存';
+        btn.textContent = dev ? '📷 画像を保存（開発者）' : '📷 画像を保存';
+        bar.querySelectorAll('.devonly').forEach(function (x) { x.hidden = !dev; });
       };
       sync();
       new MutationObserver(sync).observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
@@ -1031,16 +1079,22 @@
         if (btn.disabled) return;
         btns.forEach(function (x) { x.disabled = true; }); busy(true);
         try {
-          var cv = kind === 'g' ? await publicGraph(cfg) : kind === 'b' ? await publicImage1920(cfg) : await publicImage(cfg);
-          busy(false);
-          var tail = kind === 'g' ? '_グラフ_1920x1440' : kind === 'b' ? '_1920x1440' : '';
-          await preview(cv, 'GOナビ_' + cfg.title.replace(/\s+/g, '') + '_' + stamp().slice(0, 8) + tail + '.png');
+          if (kind === 'tbl') { busy(false); await devSave(target, false, false, { strip: cfg.strip }); }
+          else if (kind === 'fam') {
+            var items = window.GonaviFamilyImages ? await window.GonaviFamilyImages() : [];
+            busy(false);
+            if (items.length) await previewMany(items); else alert('進化前・進化後のポケモンがいません');
+          } else {
+            var cv = kind === 'g' ? await publicGraph(cfg) : kind === 'b' ? await publicImage1920(cfg) : await publicImage(cfg);
+            busy(false);
+            var tail = kind === 'g' ? '_グラフ_1920x1440' : kind === 'b' ? '_1920x1440' : '';
+            var base = cfg.head ? cfg.head().file : cfg.title;
+            await preview(cv, 'GOナビ_' + base.replace(/\s+/g, '') + '_' + stamp().slice(0, 8) + tail + '.png');
+          }
         } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした。このブラウザでは対応していない可能性があります'); }
         btns.forEach(function (x) { x.disabled = false; });
       };
-      btn.onclick = function () { run('n'); };
-      btn2.onclick = function () { run('b'); };
-      if (btn3) btn3.onclick = function () { run('g'); };
+      btns.forEach(function (x) { x.onclick = function () { run(x.getAttribute('data-run')); }; });
     })();
   }
 
@@ -1256,6 +1310,7 @@
       !/rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
   }
   function findFrames() {
+    if (PUB[PATH] && PUB[PATH].devFrames === false) return [];
     var out = [], minW = Math.min(280, document.documentElement.clientWidth * 0.5);
     // ランキングの一覧（一般向けの保存ボタンを付けている一覧）は、一覧全体を1つの枠にする。
     // 一覧を包む枠が無いページ（ジム防衛・ジム挑戦・マックスバトル）で、1行ずつにボタンが50個並んだため（2026-09-12）
@@ -1325,6 +1380,8 @@
       var g = devLayer.children[i], r = el.getBoundingClientRect();
       if (!g) return;
       g.setAttribute('data-i', i);
+      // 1920×1440は、中身を横長に組み直せる枠(data-snap-bigw)だけ。ほかは透明な余白が増えるだけなので出さない(2026-09-17タダシさん指示)
+      var bb = g.querySelector('[data-k="b"]'); if (bb) bb.hidden = !el.hasAttribute('data-snap-bigw');
       g.style.left = Math.max(4, r.right + sx - g.offsetWidth - 14) + 'px';
       g.style.top = Math.max(0, r.top + sy - 13) + 'px';
     });
@@ -1343,7 +1400,7 @@
     renderDev();
   }
   // 開発者の保存（枠のボタン・撮影モード共通）。画面の見た目どおり・ロゴなし。withBg＝枠の外にページの背景を敷くか
-  async function devSave(el, big, withBg) {
+  async function devSave(el, big, withBg, extra) {
     busy(true);
     try {
       var r = el.getBoundingClientRect();
@@ -1356,7 +1413,8 @@
                                      bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : withBg,
                                      pad: !big && withBg ? 16 : 10, scale: scl,
                                      // 外側の枠の中にある枠(data-snap-frame)は地が半透明なので、画面で透けて見えている色を下に敷く
-                                     under: el.hasAttribute('data-snap-frame') ? rowFill(el) : null });
+                                     under: el.hasAttribute('data-snap-frame') ? rowFill(el) : null,
+                                     strip: extra && extra.strip });
       var outCv = big ? await fit1920(res, withBg, bigW ? 24 : 60) : res.canvas;
       busy(false);
       var h1 = txt('header h1') || document.title.split('｜')[0];
@@ -1395,6 +1453,13 @@
     '.snapbtns button{font:800 14px/1 ' + JP + ';border:0;border-radius:999px;padding:11px 22px;cursor:pointer}' +
     '.snapgo{color:#241800;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200)}' +
     '.snapno{color:#dfe6ff;background:#26304f}' +
+    '.snapbox.many{max-width:min(96vw,1100px);width:100%}' +
+    '.snapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;overflow:auto;max-height:78vh;width:100%;' +
+      'padding:10px;border-radius:14px;background:repeating-conic-gradient(#c9ced9 0% 25%,#eef0f4 0% 50%) 0 0/20px 20px}' +
+    '.snapgrid figure{margin:0;display:flex;flex-direction:column;gap:6px;align-items:center}' +
+    '.snapgrid img{width:100%;height:auto;display:block}' +
+    '.snapgrid figcaption{font:700 12px/1.3 ' + JP + ';color:#1a2342;text-align:center}' +
+    '.snapgrid .snapgo{padding:5px 16px;font-size:.78rem}' +
     '#snapfab{position:fixed;left:12px;bottom:12px;z-index:2147483400;width:46px;height:46px;border-radius:50%;border:1px solid rgba(160,190,255,.4);' +
       'background:rgba(12,18,40,.88);font-size:22px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.45)}' +
     '#snapfab.on{background:#ffc83d;border-color:#ffe9a3}' +
@@ -1413,7 +1478,8 @@
     '.snapdev button{font:800 11px/1 ' + JP + ';border:0;border-radius:999px;padding:6px 10px;cursor:pointer;' +
       'box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 8px rgba(0,0,0,.45)}' +
     '.snapdev button[data-k="n"]{color:#241800;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200)}' +
-    '.snapdev button[data-k="b"]{color:#e8eeff;background:linear-gradient(160deg,#5566a3,#34427a 55%,#232d57)}';
+    '.snapdev button[data-k="b"]{color:#e8eeff;background:linear-gradient(160deg,#5566a3,#34427a 55%,#232d57)}' +
+    '.snapdev button[hidden],.snapbtn[hidden]{display:none!important}';
   document.head.appendChild(css);
 
   function boot() {
@@ -1449,5 +1515,5 @@
   window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, publicGraph: publicGraph,
                         fit1920: fit1920, PUB: PUB, narrowImage: narrowImage, NARROW: NARROW,
                         // ページが自前で画像を組み立てるとき用（わざ図鑑の性能カード・2026-09-16）
-                        preview: preview, busy: busy, stamp: stamp, isDev: isDev, devGrade: devGrade };
+                        preview: preview, previewMany: previewMany, busy: busy, stamp: stamp, isDev: isDev, devGrade: devGrade };
 })();
