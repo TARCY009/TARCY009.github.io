@@ -1,0 +1,30 @@
+{
+  "_説明": "見張り役(guard.py)の対応表。paths に当てはまるファイルを書き換える前に、rules のメモが読み込まれている必要がある。checks は保存(コミット)前に流す答え合わせ(.claude/checks/run.py の名前)。",
+  "sets": {
+    "gbl": {
+      "label": "GBL・ロケット団・対戦記録・模擬戦",
+      "rules": ".claude/rules/gbl.md",
+      "checklist": ".claude/checklists/gbl.md",
+      "checks": [
+        "gbl-engine"
+      ],
+      "paths": [
+        "assets/gbl-app.js",
+        "assets/gbl.css",
+        "assets/pvp-engine.js",
+        "assets/meta_lists.js",
+        "assets/meta_moves.js",
+        "assets/meta_past.js",
+        "assets/rocket_roster.js",
+        "gbl/**",
+        "rocket/**",
+        "battlelog/**",
+        "pvp-tests/**",
+        "build_meta.py",
+        "build_past_cups.py",
+        "build_help.py",
+        "build_pvp_data.py"
+      ]
+    }
+  }
+}
