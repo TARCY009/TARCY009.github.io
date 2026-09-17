@@ -1137,6 +1137,15 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hbtns .hpace.slow b{color:#3fdc8a}
 :root.light .hbtns .hpace.slow b{color:#12804a}
 @media (max-width:380px){.hbtns{gap:3px}.hbtns button b{font-size:.52rem}}
+/* マークと文字は1行に横並び(2026-09-17タダシさん指示・縦に積むと横が空いているのに窮屈に見える)。
+   ボタンが6つ並ぶ選択式は、狭い画面だけ従来どおり縦に積む(1つ55px前後で横並びが入らない) */
+.hbtns button{flex-direction:row;gap:4px;padding:8px 4px;font-size:.8rem}
+.hbtns button b{font-size:.66rem}
+@media (max-width:560px){
+  .hbtns:has(>button:nth-child(6)) button{flex-direction:column;gap:2px;padding:5px 2px;font-size:.74rem}
+  .hbtns:has(>button:nth-child(6)) button b{font-size:.56rem}
+}
+@media (max-width:380px){.hbtns:has(>button:nth-child(6)) button b{font-size:.52rem}}
 .hctl{display:flex;justify-content:center;gap:4px;margin-top:4px;flex-wrap:wrap;max-width:66px;margin-left:auto;margin-right:auto}
 .hctl button{width:26px;height:22px;font-size:.6rem;background:var(--bg2);border:1px solid var(--line);
   border-radius:7px;color:var(--ink);cursor:pointer;padding:0}
