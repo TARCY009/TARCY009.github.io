@@ -2,8 +2,11 @@
 """答え合わせ（見張り役4人目）。使い方: python3 .claude/checks/run.py gbl-engine [...]
 すべて合格なら終了コード0。1つでも不合格・実行できなければ1。
 
-gbl-engine: pvp-tests/engine-test.html（GBLエンジンの実測突き合わせ・7ケース×3項目＝21項目）を
-            画面なしの Chrome で開き、21項目すべて ✅ かを確かめる。
+gbl-engine:  pvp-tests/engine-test.html（GBLエンジンの実測突き合わせ・7ケース×3項目＝21項目）
+iv-calc:     .claude/checks/iv-check.html（個体値チェッカーのCP・順位・逆引き・進化後CP＝16項目）
+raid-engine: .claude/checks/raid-check.html（スクショ5例のボスの攻撃時刻＋回帰5通り。基準は raid-baseline.json）
+いずれも画面なしのブラウザで開き、すべて ✅ かを確かめる。
+答え（期待値・基準ファイル）を変えるときは、必ずタダシさんに確認してから。
 """
 import sys, os, re, socket, subprocess, tempfile, threading, pathlib, functools, http.server, shutil, html
 
@@ -63,7 +66,28 @@ def check_gbl_engine(port):
     return True, f'engine-test: 21項目すべて✅'
 
 
-CHECKS = {'gbl-engine': check_gbl_engine}
+def page_check(path, min_ok):
+    """.claude/checks/ の答え合わせページ（結果を #sum の data-ok／data-ng に書く形）を読む。"""
+    def fn(port):
+        dom = dump_dom(f'http://127.0.0.1:{port}/{path}')
+        m = re.search(r'id="sum" data-ok="(\d+)" data-ng="(\d+)"', dom)
+        body = re.search(r'<div id="out">(.*?)<iframe', dom, re.S)
+        detail = html.unescape(re.sub(r'<[^>]+>', '\n', body.group(1) if body else dom[:500]))
+        detail = '\n'.join(l for l in detail.split('\n') if l.strip())
+        if not m:
+            return False, f'{path} が最後まで動きませんでした\n{detail[:800]}'
+        okn, ngn = int(m.group(1)), int(m.group(2))
+        if ngn or okn < min_ok:
+            return False, f'{path}: ✅{okn} ❌{ngn}（{min_ok}項目以上すべて✅が合格）\n' + '\n'.join(l for l in detail.split('\n') if '❌' in l or '実行エラー' in l)[:1500]
+        return True, f'{path}: {okn}項目すべて✅'
+    return fn
+
+
+CHECKS = {
+    'gbl-engine': check_gbl_engine,
+    'iv-calc': page_check('.claude/checks/iv-check.html', 16),
+    'raid-engine': page_check('.claude/checks/raid-check.html', 10),
+}
 
 
 def main(names):

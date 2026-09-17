@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>個体値チェッカーの答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<iframe id="f" src="/iv-checker/index.html" style="width:400px;height:300px"></iframe>
+<script>
+// 個体値チェッカーの本物の関数（cp・rankAll・assignRanks・scp・CPMS）を呼び、確認済みの数値と照らし合わせる。
+// 答えは CLAUDE.md／.claude/rules/iv.md に記録された、外部の実測・タダシさん確認済みの値。
+// 答えを変えるときは必ずタダシさんに確認すること。
+const f = document.getElementById('f');
+const out = document.getElementById('out');
+f.onload = () => setTimeout(() => {
+  const res = [];
+  const ok = (name, got, want) => res.push([name, String(got) === String(want), got, want]);
+  try {
+    const W = f.contentWindow, E = s => W.eval(s);
+    const P = k => E('POKE').find(p => p.i === k);
+    const CPMS = E('CPMS'), cp = W.cp;
+    const cpAt = (k, iv, pl) => { const p = P(k); return cp(p.a + iv[0], p.f + iv[1], p.h + iv[2], CPMS[(pl - 1) * 2]); };
+    ok('マリルリ 0/15/15 PL45.5 のCP', cpAt('azumarill', [0, 15, 15], 45.5), 1499);
+    ok('ミュウツー 15/15/15 PL50 のCP', cpAt('mewtwo', [15, 15, 15], 50), 4724);
+    ok('レックウザ 15/15/15 PL40 のCP', cpAt('rayquaza', [15, 15, 15], 40), 3835);
+    ok('カイリキー 15/15/15 PL40 のCP', cpAt('machamp', [15, 15, 15], 40), 3056);
+    ok('バンギラス 15/15/15 PL40 のCP', cpAt('tyranitar', [15, 15, 15], 40), 3834);
+    ok('ケッキング 15/15/15 PL40 のCP', cpAt('slaking', [15, 15, 15], 40), 4431);
+    // スーパーの1位（野生・PL上限50）
+    const ra = W.assignRanks(W.rankAll(P('azumarill'), 1500, 50, 0), 'scp');
+    ok('マリルリ スーパー1位の個体', `${ra[0].ia}/${ra[0].id}/${ra[0].ih} PL${ra[0].lv} SCP${W.scp(ra[0].sp)}`, '0/15/15 PL45.5 SCP1818');
+    // 同じ値は同順位（グラードン・マスター・最低個体値1）
+    const rg = W.assignRanks(W.rankAll(P('groudon'), null, 50, 1), 'scp');
+    const rk = iv => { const r = rg.find(x => x.ia === iv[0] && x.id === iv[1] && x.ih === iv[2]); return `${r.rank}位 SCP${W.scp(r.sp)}`; };
+    ok('グラードン 15/15/15', rk([15, 15, 15]), '1位 SCP4326');
+    ok('グラードン 15/15/14', rk([15, 15, 14]), '1位 SCP4326');
+    ok('グラードン 14/15/15', rk([14, 15, 15]), '3位 SCP4315');
+    ok('グラードン 15/14/15', rk([15, 14, 15]), '5位 SCP4314');
+    ok('グラードン 15/15/13', rk([15, 15, 13]), '7位 SCP4310');
+    ok('グラードン 13/15/15', rk([13, 15, 15]), '8位 SCP4305');
+    // CPから逆引き: ガラルフリーザー CP1425 は野生(PL1〜35の整数・個体値0〜15)で42通り
+    let n = 0; const g = P('articuno_galarian');
+    for (let lv = 1; lv <= 35; lv++) for (let a = 0; a < 16; a++) for (let d = 0; d < 16; d++) for (let h = 0; h < 16; h++)
+      if (cp(g.a + a, g.f + d, g.h + h, CPMS[(lv - 1) * 2]) === 1425) n++;
+    ok('ガラルフリーザー CP1425 の組み合わせ数', n, 42);
+    // いまのCPから進化後: ゾロア 10/10/10 CP637 → PL20.5 → ゾロアーク CP1429
+    let pl = null;
+    for (let i = 0; i < CPMS.length; i++) if (cpAt('zorua', [10, 10, 10], 1 + i / 2) === 637) { pl = 1 + i / 2; break; }
+    ok('ゾロア 10/10/10 CP637 のPL', pl, 20.5);
+    ok('そのままゾロアークへ進化したCP', pl && cpAt('zoroark', [10, 10, 10], pl), 1429);
+  } catch (e) {
+    res.push(['実行エラー', false, String(e), '']);
+  }
+  const bad = res.filter(r => !r[1]).length;
+  out.innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div>`;
+}, 300);
+</script>
+</body></html>

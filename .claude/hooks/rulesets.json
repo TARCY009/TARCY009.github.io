@@ -30,7 +30,9 @@
       "label": "レイド火力チェッカー・レイドシミュレーター・タイプ別火力",
       "rules": ".claude/rules/raid.md",
       "checklist": ".claude/checklists/raid.md",
-      "checks": [],
+      "checks": [
+        "raid-engine"
+      ],
       "paths": [
         "template.html",
         "dps/**",
@@ -43,7 +45,9 @@
       "label": "個体値チェッカー",
       "rules": ".claude/rules/iv.md",
       "checklist": ".claude/checklists/iv.md",
-      "checks": [],
+      "checks": [
+        "iv-calc"
+      ],
       "paths": [
         "iv-checker/**"
       ]
@@ -63,7 +67,9 @@
       "label": "GBLブレイクポイント",
       "rules": ".claude/rules/breakpoint.md",
       "checklist": ".claude/checklists/breakpoint.md",
-      "checks": [],
+      "checks": [
+        "gbl-engine"
+      ],
       "paths": [
         "breakpoint/**"
       ]

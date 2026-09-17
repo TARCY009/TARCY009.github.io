@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>レイドエンジンの答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<pre id="snap"></pre>
+<script src="/assets/raid-engine.js"></script>
+<script>
+// ① タダシさん提供のスクショ5枚（★5・300秒）の「ボスの攻撃が当たったときの残り時間」15個
+// ② 回帰: 決まった入力でのエンジンの結果を raid-baseline.json と比べる（入力は下に直書き＝毎日のデータ更新の影響を受けない）
+// 答え（①の数値・raid-baseline.json）を変えるときは必ずタダシさんに確認すること。
+(async () => {
+  const res = [];
+  const ok = (name, got, want) => res.push([name, String(got) === String(want), got, want]);
+  try {
+    const RE = window.RaidEngine;
+    const eff1 = () => 1;
+    const MON = (t, atk, def, hp, fast, chg, extra) => Object.assign({ types: t, atk, def, hp, fast, chg, mult: 1, mega: false }, extra || {});
+    // ① ボスの開幕3発（わざの数値はゲーム内公開データの値を直書き）
+    const BOSS_FAST = {
+      'かぜおこし': { n: 'かぜおこし', t: 'FLYING', p: 25, d: 2.0, w: 0.9, e: 20, want: [297.5, 296.5, 294.5] },
+      'こおりのつぶて': { n: 'こおりのつぶて', t: 'ICE', p: 10, d: 1.0, w: 0.4, e: 10, want: [298.0, 297.0, 295.0] },
+      'サイコカッター': { n: 'サイコカッター', t: 'PSYCHIC', p: 4, d: 0.5, w: 0.27, e: 7, want: [298.1, 297.1, 295.1] },
+      'ボルトチェンジ': { n: 'ボルトチェンジ', t: 'ELECTRIC', p: 13, d: 1.5, w: 0.6, e: 20, want: [297.8, 296.8, 294.8] },
+      'やきつくす': { n: 'やきつくす', t: 'FIRE', p: 32, d: 2.5, w: 0.7, e: 22, want: [297.7, 296.7, 294.7] },
+    };
+    const myFast = { n: 'たいあたり', t: 'NORMAL', p: 5, d: 0.5, w: 0.3, e: 5 };
+    for (const [nm, mv] of Object.entries(BOSS_FAST)) {
+      const r = RE.simulate({ limit: 300, eff: eff1, N: 1, spMode: 'asap', rejoin: 10, seed: 1, wantLog: true,
+        boss: { types: ['NORMAL'], atk: 200, def: 200, hp: 15000, fast: mv, chg: null },
+        team: Array(6).fill(MON(['NORMAL'], 150, 150, 500, myFast, null)) });
+      const hits = r.log.filter(x => x.side === 'boss').slice(0, 3).map(x => (300 - x.t).toFixed(1));
+      ok(`ボス ${nm} の開幕3発の残り時間`, hits.join(' / '), mv.want.map(v => v.toFixed(1)).join(' / '));
+    }
+    // ② 回帰
+    const DB = { n: 'りゅうのいぶき', t: 'DRAGON', p: 6, d: 0.5, w: 0.3, e: 4 };
+    const OUT = { n: 'げきりん', t: 'DRAGON', p: 110, d: 3.5, w: 2.6, e: -50 };
+    const ICEF = { n: 'こおりのキバ', t: 'ICE', p: 12, d: 1.5, w: 0.6, e: 20 };
+    const AVAL = { n: 'ゆきなだれ', t: 'ICE', p: 90, d: 2.5, w: 1.7, e: -50 };
+    const PLUS = { n: 'げきりん+', t: 'DRAGON', p: 185 * 1.3, d: 4.0, w: 2.6, e: -100 };
+    const effT = (mt, dts) => dts.reduce((m, t) => m * ((mt === 'ICE' && (t === 'DRAGON' || t === 'FLYING')) ? 1.6
+      : (mt === 'DRAGON' && t === 'DRAGON') ? 1.6 : (mt === 'ICE' && t === 'ICE') ? 0.625 : 1), 1);
+    const boss5 = { types: ['DRAGON', 'FLYING'], atk: (263 + 15) * 0.7903, def: (198 + 15) * 0.7903, hp: 15000, fast: DB, chg: OUT };
+    const cpm = 0.84029999;
+    const att = MON(['ICE'], (246 + 15) * cpm, (170 + 15) * cpm, Math.floor((225 + 15) * cpm), ICEF, AVAL);
+    const attSh = MON(['ICE'], (246 + 15) * cpm, (170 + 15) * cpm * 5 / 6, Math.floor((225 + 15) * cpm), ICEF, AVAL, { mult: 1.2 });
+    const megaA = MON(['DRAGON', 'FLYING'], (263 + 15) * cpm, (198 + 15) * cpm, Math.floor((209 + 15) * cpm), DB, PLUS, { mega: true });
+    const base = { limit: 300, eff: effT, boss: boss5, spMode: 'asap', rejoin: 10, seed: 1 };
+    const SC = {
+      '★5・即打ち・6匹同じ': n => Object.assign({}, base, { N: n, team: Array(6).fill(att) }),
+      '★5・2回に1回・SP回避・天候こおり・チームパワー': n => Object.assign({}, base, { N: n, spMode: 'alt', dodgeSp: true, wxTypes: ['ICE'], tp: Math.max(0, Math.min(n, 4) - 1), team: Array(6).fill(attSh) }),
+      '★6・メガ1匹で再突入': n => Object.assign({}, base, { N: n, boss: Object.assign({}, boss5, { hp: 22500 }), team: [megaA, att, att, att, att, att] }),
+      'スーパーメガ・シールド': n => Object.assign({}, base, { N: n, t7shield: true, boss: Object.assign({}, boss5, { hp: 25000 }), team: Array(6).fill(att) }),
+      '★5・ランダム(種7)': n => Object.assign({}, base, { N: n, spMode: 'coin', seed: 7, team: Array(6).fill(att) }),
+    };
+    const snap = {};
+    for (const [nm, mk] of Object.entries(SC)) {
+      snap[nm] = [1, 2, 3, 4, 6, 8].map(n => { const r = RE.simulate(mk(n)); return `${n}人:${r.win ? '勝' : '負'} t=${(+r.t).toFixed(2)} 倒${r.faints} 全${r.wipes} 与${r.dmg} 残${r.bossLeft}`; });
+    }
+    document.getElementById('snap').textContent = JSON.stringify(snap, null, 1);
+    const bl = await fetch('/.claude/checks/raid-baseline.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null);
+    if (!bl) res.push(['回帰の基準ファイルがありません', false, '', '']);
+    else for (const nm of Object.keys(SC)) ok(`回帰 ${nm}`, (snap[nm] || []).join(' | '), (bl[nm] || []).join(' | '));
+  } catch (e) {
+    res.push(['実行エラー', false, String(e), '']);
+  }
+  const bad = res.filter(r => !r[1]).length;
+  document.getElementById('out').innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+})();
+</script>
+</body></html>
