@@ -25,6 +25,60 @@
         "build_help.py",
         "build_pvp_data.py"
       ]
+    },
+    "raid": {
+      "label": "レイド火力チェッカー・レイドシミュレーター・タイプ別火力",
+      "rules": ".claude/rules/raid.md",
+      "checklist": ".claude/checklists/raid.md",
+      "checks": [],
+      "paths": [
+        "template.html",
+        "dps/**",
+        "raid/**",
+        "assets/raid-engine.js",
+        "type-dps/**"
+      ]
+    },
+    "iv": {
+      "label": "個体値チェッカー",
+      "rules": ".claude/rules/iv.md",
+      "checklist": ".claude/checklists/iv.md",
+      "checks": [],
+      "paths": [
+        "iv-checker/**"
+      ]
+    },
+    "gym": {
+      "label": "ジム挑戦・ジム防衛・マックスバトル対策",
+      "rules": ".claude/rules/gym.md",
+      "checklist": ".claude/checklists/gym.md",
+      "checks": [],
+      "paths": [
+        "gym-attack/**",
+        "gym-defense/**",
+        "max-battle/**"
+      ]
+    },
+    "breakpoint": {
+      "label": "GBLブレイクポイント",
+      "rules": ".claude/rules/breakpoint.md",
+      "checklist": ".claude/checklists/breakpoint.md",
+      "checks": [],
+      "paths": [
+        "breakpoint/**"
+      ]
+    },
+    "dex": {
+      "label": "ステータス図鑑・わざ図鑑・耐久指数・マックスバトル タイプ別",
+      "rules": ".claude/rules/dex.md",
+      "checklist": ".claude/checklists/dex.md",
+      "checks": [],
+      "paths": [
+        "pokedex/**",
+        "move-dex/**",
+        "bulk/**",
+        "max-type/**"
+      ]
     }
   }
 }

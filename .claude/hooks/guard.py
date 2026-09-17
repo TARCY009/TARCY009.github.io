@@ -137,7 +137,7 @@ def need_msg(conf, names, what):
     lines = [f'【見張り役】{what}の前に、次の決まりをこのチャットで読み込む必要があります（まだ読み込まれていません）。']
     for n in names:
         s = conf[n]
-        ex = next((g for g in s['paths'] if '*' not in g), s['paths'][0])
+        ex = next((g for g in s['paths'] if '*' not in g), s['paths'][0].replace('**', 'index.html'))
         lines.append(f'- {s["label"]}: {s["rules"]}  → Read ツールで `{ex}` など対象のファイルを開くと自動で読み込まれます'
                      f'（先頭の数行でよい）。決まりの中身を確認してから、もう一度実行してください。')
     return '\n'.join(lines)
