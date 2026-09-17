@@ -54,7 +54,7 @@
                     graph: { name: '.pname .nm', val: '.pts b', unit: 'ポイント', head: '#curTypeName' } },
     '/iv-checker/': { target: '#result .tblwrap', rows: 'tbody tr',
                       ctx: ['#lgtitle > span:first-child', '#lgtabs .lgc.act .lgc-n', '#lgtabs .lgc.act .lgc-r', '#lgtstats'],
-                      barIn: '#result .tophead', title: '個体値チェッカー TOP5' }
+                      barIn: '#result .tophead', title: '個体値チェッカー TOP10', limit: 10 }
   };
 
   // ---------------------------------------------------------------- ファイルを data: にする
@@ -255,6 +255,8 @@
     if (o.drop) c.querySelectorAll(o.drop).forEach(function (x) { x.remove(); });
     // data-snap-cls＝画像のときだけ付けるクラス（保存用の見た目をCSS側で持つ・2026-09-16 GBLの1対1の結果）
     if (el.getAttribute('data-snap-cls')) el.getAttribute('data-snap-cls').split(/\s+/).concat(o.big ? ['snapbig'] : []).forEach(function (k) { if (k) c.classList.add(k); });
+    // under＝要素そのものの下に敷く背景（半透明の枠を、画面で透けて見えている色ごと写す）
+    if (o.under) c.style.setProperty('background', o.under, 'important');
     // fill＝自分の背景を持たない行に敷く背景（画面では外側のパネルが見せている色）。行の外は透明のまま
     if (o.rows && o.fill) {
       var sR = el.querySelectorAll(o.rows), dR = c.querySelectorAll(o.rows);
@@ -321,7 +323,7 @@
     var W = Math.max(40, Math.round(o.width));
     var P = o.pad || 0;
     var css = await collectCSS(o.mode);
-    var clone = await prepClone(el, { width: W, big: o.big, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame });
+    var clone = await prepClone(el, { width: W, big: o.big, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame, under: o.under });
     var chain = wrapChain(el, clone);
     var bcs = getComputedStyle(document.body);
     var bodyStyle = 'margin:0!important;padding:' + P + 'px!important;min-height:0!important;height:auto!important;' +
@@ -435,6 +437,29 @@
     for (var ch of t) { if (cx.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; } else cur += ch; }
     if (cur) lines.push(cur); return lines;
   }
+  // 条件の文字は「／」で区切った項目ごとに折り返す（「SCP」と「1327」を別の行に分けない・2026-09-17）。
+  // 1項目が1行に入らないときだけ、項目の中の空白→文字の順で折る
+  function wrapCtx(cx, items, maxW) {
+    var SEP = '　／　', lines = [], cur = '';
+    function add(piece, sep) {
+      if (cur && cx.measureText(cur + sep + piece).width <= maxW) { cur += sep + piece; return true; }
+      if (!cur && cx.measureText(piece).width <= maxW) { cur = piece; return true; }
+      return false;
+    }
+    items.forEach(function (it, n) {
+      if (add(it, n ? SEP : '')) return;
+      if (cur) { lines.push(cur + (n ? SEP.trimEnd() : '')); cur = ''; }
+      if (add(it, '')) return;
+      it.split(' ').forEach(function (w) {
+        if (add(w, ' ')) return;
+        if (cur) lines.push(cur);
+        cur = '';
+        if (!add(w, '')) { var ws = wrapText(cx, w, maxW); cur = ws.pop(); lines = lines.concat(ws); }
+      });
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
   function tagLabels(sel) {
     if (!sel) return [];
     var out = [];
@@ -496,7 +521,7 @@
     var dev = isDev();
     var W = 720, P = 30, S = 2;
     var content = await renderEl(el, { width: W, mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0,
-                                       rows: cfg.rows, limit: LIMIT, drop: cfg.drop, scale: S });
+                                       rows: cfg.rows, limit: cfg.limit || LIMIT, drop: cfg.drop, scale: S });
     var col = toolColor();
     var eyebrow = txt('header .eyebrow').toUpperCase();
     var title = cfg.title;
@@ -506,7 +531,8 @@
     var cv0 = document.createElement('canvas').getContext('2d');
     var TW = W + P * 2;
     cv0.font = '700 17px ' + JP;
-    var ctxLines = ctxs.length ? wrapText(cv0, ctxs.join('　／　'), W) : [];
+    // 右上のロゴ・gonavi.jp と重ならないよう、その手前で折り返す（2026-09-17・個体値チェッカーでSCPが重なった）
+    var ctxLines = ctxs.length ? wrapCtx(cv0, ctxs, dev ? W : W - BRAND_W) : [];
     var headH = 28 + (eyebrow ? 22 : 0) + 38 + (ctxLines.length ? 10 + ctxLines.length * 26 : 0) + (tags.length ? 14 + 30 : 0) + 22;
     var footH = 26;
     var TH = headH + content.h + footH;
@@ -554,6 +580,7 @@
   // ---------------------------------------------------------------- 1920×1440（動画用・2026-09-12タダシさん指示）
   // 見出しと下のロゴを k 倍の大きさで描く（1920×1440用）
   // inline＝絞り込みの札を条件（ボス名など）の右横に並べる（見出しの高さを1段ぶん詰める）
+  var BRAND_W = 100;   // 右上のロゴ・gonavi.jp が占める幅（倍率1のとき・すき間込み）
   function drawHead(cx, cfg, x, y, maxW, k, col, inline) {
     var eyebrow = txt('header .eyebrow').toUpperCase();
     var ctxs = (cfg.ctx || []).map(txt).filter(Boolean);
@@ -578,7 +605,7 @@
     if (ctxs.length) {
       cx.font = '700 ' + (17 * k) + 'px ' + JP; cx.fillStyle = '#c4d0f0';
       y += 10 * k;
-      wrapText(cx, ctxs.join('　／　'), maxW).forEach(function (ln) { cx.fillText(ln, x, y + 18 * k); y += 26 * k; });
+      wrapCtx(cx, ctxs, maxW).forEach(function (ln) { cx.fillText(ln, x, y + 18 * k); y += 26 * k; });
     }
     if (tags.length) {
       y += 14 * k; drawPills(cx, tags, x, y, maxW, k, col);
@@ -624,12 +651,12 @@
     // lay は文字('auto'など)か、2列の並べ方の指定 {type:'grid', per:1列の行数, headK:見出しの倍率, dropDetail:細かい数値の行を外すか}
     var G2 = typeof lay === 'object' ? lay : null;
     var HK = G2 && G2.headK || K;
-    var top = drawHead(cx, cfg, P, 60, W - P * 2, HK, col, G2 && G2.inlineTags) + (G2 ? 26 : 34);
+    var top = drawHead(cx, cfg, P, 60, W - P * 2 - (dev ? 0 : BRAND_W * HK), HK, col, G2 && G2.inlineTags) + (G2 ? 26 : 34);
     var bottom = H - 60;
     if (!dev) await drawBrand(cx, W - P, 60, HK);   // 右上にGOナビ(開発者の端末では出さない)
     var areaW = W - P * 2, areaH = bottom - top;
     // 上位5件を1列で。横長の枠に縦長の一覧を入れると左右が空くので、枠の形に合う幅で描き直してからぴったり収める
-    var base = { mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0, rows: cfg.rows, drop: cfg.drop, scale: 3, from: 0, limit: LIMIT };
+    var base = { mode: 'native', rootCls: '', bodyCls: '', bg: false, pad: 0, rows: cfg.rows, drop: cfg.drop, scale: 3, from: 0, limit: cfg.limit || LIMIT };
     if (G2 && G2.type === 'grid') {
       // 2列×per行（左に1〜per位・右にper+1〜2per位）。
       // 列の幅は「per行ぶんの高さ」に合わせて決め直す＝枠の高さと列の幅の両方にぴったり収める
@@ -669,7 +696,7 @@
     if (lay === 'narrow' || lay === 'top3') {
       // 1列を狭い幅のまま描き、高さいっぱいまで拡大する（文字が大きくなる・左右は空く）
       var nw = +cfg.l1920w || 640;
-      var n1 = await renderEl(el, Object.assign({}, base, { width: nw, limit: lay === 'top3' ? 3 : LIMIT }));
+      var n1 = await renderEl(el, Object.assign({}, base, { width: nw, limit: lay === 'top3' ? 3 : cfg.limit || LIMIT }));
       var fn = Math.min(areaW / n1.w, areaH / n1.h);
       cx.drawImage(n1.canvas, P + (areaW - n1.w * fn) / 2, top + Math.max(0, (areaH - n1.h * fn) / 2), n1.w * fn, n1.h * fn);
       return roundFrame(cv, true);
@@ -1253,7 +1280,15 @@
         }
         if (c === pubT) { if (r.height >= 40 && c.children.length) out.push(c); continue; }
         if (r.width < minW || r.height < 40) continue;
-        if (r.height >= 70 && isFrame(cs)) { out.push(c); continue; }
+        if (r.height >= 70 && isFrame(cs)) {
+          out.push(c);
+          // data-snap-frame＝外側の枠の中にあっても、その部分だけを保存するボタンを付ける（個体値チェッカーのTOP10の表・2026-09-17）
+          c.querySelectorAll('[data-snap-frame]').forEach(function (m) {
+            var mr = m.getBoundingClientRect();
+            if (mr.width >= minW && mr.height >= 40 && m.offsetParent !== null) out.push(m);
+          });
+          continue;
+        }
         walk(c);
       }
     })(document.body);
@@ -1319,7 +1354,9 @@
       var scl = big ? (bigW ? 2 : Math.min(4, Math.max(2, Math.ceil(Math.min(1800 / (r.width + 20), 1320 / (r.height + 20)))))) : 2;
       var res = await renderEl(el, { width: rw, big: !!bigW, mode: 'window', rootCls: document.documentElement.className,
                                      bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : withBg,
-                                     pad: !big && withBg ? 16 : 10, scale: scl });
+                                     pad: !big && withBg ? 16 : 10, scale: scl,
+                                     // 外側の枠の中にある枠(data-snap-frame)は地が半透明なので、画面で透けて見えている色を下に敷く
+                                     under: el.hasAttribute('data-snap-frame') ? rowFill(el) : null });
       var outCv = big ? await fit1920(res, withBg, bigW ? 24 : 60) : res.canvas;
       busy(false);
       var h1 = txt('header h1') || document.title.split('｜')[0];
