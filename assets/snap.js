@@ -1188,7 +1188,7 @@
     if (a === 'down' && pick.stack.length) { pick.el = pick.stack.pop(); pick.locked = true; }
     if ((a === 'save' || a === 's1920') && pick.el) {
       hi.style.display = 'none'; bar.style.visibility = 'hidden';
-      await devSave(pick.el, a === 's1920');
+      await devSave(pick.el, a === 's1920', pick.bg === 'page');
       if (bar) bar.style.visibility = '';
     }
     drawHi(); syncTool();
@@ -1282,11 +1282,11 @@
     if (!r0 || r0.width < 1 || r0.height < 1) { renderDev(); return; }
     if (b.disabled) return;
     devLayer.hidden = true;
-    await devSave(el, b.getAttribute('data-k') === 'b');
+    await devSave(el, b.getAttribute('data-k') === 'b', false);   // 枠ボタンは枠の外を透明にする
     renderDev();
   }
-  // 開発者の保存（枠のボタン・撮影モード共通）。画面の見た目どおり・ロゴなし
-  async function devSave(el, big) {
+  // 開発者の保存（枠のボタン・撮影モード共通）。画面の見た目どおり・ロゴなし。withBg＝枠の外にページの背景を敷くか
+  async function devSave(el, big, withBg) {
     busy(true);
     try {
       var r = el.getBoundingClientRect();
@@ -1296,9 +1296,9 @@
       // 1920×1440は拡大して置くので、ぼやけないよう細かく描いておく。背景はあとで全面に敷くので、ここでは透明で描く
       var scl = big ? (bigW ? 2 : Math.min(4, Math.max(2, Math.ceil(Math.min(1800 / (r.width + 20), 1320 / (r.height + 20)))))) : 2;
       var res = await renderEl(el, { width: rw, big: !!bigW, mode: 'window', rootCls: document.documentElement.className,
-                                     bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : pick.bg === 'page',
-                                     pad: !big && pick.bg === 'page' ? 16 : 10, scale: scl });
-      var outCv = big ? await fit1920(res, pick.bg === 'page', bigW ? 24 : 60) : res.canvas;
+                                     bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: big ? false : withBg,
+                                     pad: !big && withBg ? 16 : 10, scale: scl });
+      var outCv = big ? await fit1920(res, withBg, bigW ? 24 : 60) : res.canvas;
       busy(false);
       var h1 = txt('header h1') || document.title.split('｜')[0];
       await preview(outCv, h1.replace(/\s+/g, '') + '_' + stamp() + (big ? '_1920x1440' : '') + '.png');
