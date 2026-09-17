@@ -1328,7 +1328,8 @@
       'background:rgba(10,16,34,.94);color:#fff;font:700 13px/1.2 ' + JP + ';box-shadow:0 6px 20px rgba(0,0,0,.4)}' +
     '.snapov{position:fixed;inset:0;z-index:2147483500;background:rgba(4,8,20,.72);display:flex;align-items:center;justify-content:center;padding:16px}' +
     '.snapbox{max-width:min(94vw,820px);max-height:92vh;display:flex;flex-direction:column;gap:10px;align-items:center}' +
-    '.snapimg{overflow:auto;max-height:74vh;border-radius:14px;background:repeating-conic-gradient(#1b2340 0% 25%,#141a31 0% 50%) 0 0/20px 20px}' +
+    // 見本の下地は明るい市松模様(透明の部分がひと目で分かるように。暗い色だと背景付きに見えた・2026-09-17)
+    '.snapimg{overflow:auto;max-height:74vh;border-radius:14px;background:repeating-conic-gradient(#c9ced9 0% 25%,#eef0f4 0% 50%) 0 0/20px 20px}' +
     '.snapimg img{display:block;max-width:min(92vw,800px);height:auto}' +
     '.snaphint{margin:0;color:#b8c3e6;font:600 12px/1.4 ' + JP + '}' +
     '.snapbtns{display:flex;gap:10px}' +
