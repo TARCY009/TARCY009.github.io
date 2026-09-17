@@ -597,7 +597,9 @@ function saveGraph(W){
     const ctx=cv.getContext('2d');
     ctx.drawImage(img,0,0,W,1440);
     URL.revokeObjectURL(url);
-    cv.toBlob(b=>{
+    // 開発者の端末では、動画編集でいつもかける色調整を済ませて保存する(snap.js の devGrade)
+    const out=(window.GonaviSnap&&GonaviSnap.devGrade)?GonaviSnap.devGrade(cv):cv;
+    out.toBlob(b=>{
       const a=document.createElement('a');
       a.href=URL.createObjectURL(b);
       a.download=`タイプ別火力ランキング_${JA[curT]}_TOP10${W===1920?'_1920x1440':''}.png`;

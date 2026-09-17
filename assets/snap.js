@@ -917,9 +917,31 @@
     var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
     return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
   }
+  // 開発者の端末で保存する画像は、動画編集でいつもかけている色調整を済ませておく(2026-09-17タダシさん指示)。
+  // 調整前後の2枚から割り出した色の行列(彩度・明るさ・黒の締まり)。各行＝[R,G,B,足す値]・0〜1の値で計算
+  var DEV_GRADE = [[1.1968, -0.1788, 0.0185, -0.0305], [-0.0761, 1.2186, -0.0356, -0.0149], [-0.0618, -0.2227, 1.2804, 0.011]];
+  function devGrade(src) {
+    if (!isDev() || src.__graded) return src;
+    var cv = document.createElement('canvas'); cv.width = src.width; cv.height = src.height;
+    var cx = cv.getContext('2d'); cx.drawImage(src, 0, 0);
+    var img = cx.getImageData(0, 0, cv.width, cv.height), d = img.data, M = DEV_GRADE;
+    var lut = [];   // 0〜255 → 0〜1 の表で掛け算を減らす
+    for (var k = 0; k < 256; k++) lut[k] = k / 255;
+    for (var i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;   // 透明な画素はそのまま
+      var r = lut[d[i]], g = lut[d[i + 1]], b = lut[d[i + 2]];
+      d[i] = (M[0][0] * r + M[0][1] * g + M[0][2] * b + M[0][3]) * 255;   // 範囲外と端数は画素の配列が自動で丸める
+      d[i + 1] = (M[1][0] * r + M[1][1] * g + M[1][2] * b + M[1][3]) * 255;
+      d[i + 2] = (M[2][0] * r + M[2][1] * g + M[2][2] * b + M[2][3]) * 255;
+    }
+    cx.putImageData(img, 0, 0);
+    cv.__rounded = src.__rounded; cv.__graded = true;
+    return cv;
+  }
   function preview(canvas, filename) {
     // 全部の画像の最後の仕上げ: 四隅を丸く・枠の外は透明(まだ角丸にしていない画像だけ)
     if (!canvas.__rounded) { try { canvas = roundFrame(canvas, false); } catch (e) {} }
+    try { canvas = devGrade(canvas); } catch (e) {}
     return new Promise(function (resolve) {
       canvas.toBlob(function (blob) {
         if (!blob) { alert('画像を作れませんでした'); resolve(); return; }
@@ -1390,5 +1412,5 @@
   window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, publicGraph: publicGraph,
                         fit1920: fit1920, PUB: PUB, narrowImage: narrowImage, NARROW: NARROW,
                         // ページが自前で画像を組み立てるとき用（わざ図鑑の性能カード・2026-09-16）
-                        preview: preview, busy: busy, stamp: stamp, isDev: isDev };
+                        preview: preview, busy: busy, stamp: stamp, isDev: isDev, devGrade: devGrade };
 })();
