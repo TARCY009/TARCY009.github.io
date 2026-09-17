@@ -1197,6 +1197,11 @@ window.GonaviFamilyImages=async function(){
     const final=/_(mega|primal)/.test(m.i) || !descendants(m).length;
     for(const [lg,lgName] of LG){
       if(lg==='ml' && !final) continue;
+      // 最大CP(15/15/15・PL上限)がCP制限に300以上届かないリーグは作らない(2026-09-17タダシさん指示。例: タンドンのスーパー・ハイパー)
+      if(lg!=='ml'){
+        const capLv=/_(mega|primal)/.test(m.i)? state.cap : (state.cap>51? 50 : state.cap);   // 表の計算(famRowsBy)と同じPL上限
+        if(cp(m.a+15, m.f+15, m.h+15, CPMS[(capLv-1)*2]) < CAPS[lg]-300) continue;
+      }
       // 攻撃優先はマスター専用の並び。スーパー・ハイパーは個体値順(SCP)で作る
       const atk=state.sort==='atk' && lg==='ml';
       const all=famRowsBy(m,lg,atk?'atk':'scp');
