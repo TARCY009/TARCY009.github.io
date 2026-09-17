@@ -1764,7 +1764,7 @@ ${PAGE_ROCKET ? '' : `
     <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
-    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>⏱️ 速さ</b>＝タイムラインが流れる速さを押すたびに少しずつ遅くする（×1→×0.9→…→×0.5。×2・×4と組み合わせると掛け算になります。リアルタイム操作でも使え、結果や時計は変わりません）／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>🎬 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
+    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>⏱️ 速さ</b>＝押すとウィンドウが開き、タイムラインが流れる速さをつまみで×0.3〜×1に調整できる（×2・×4と組み合わせると掛け算になります。リアルタイム操作でも使え、結果や時計は変わりません）／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>🎬 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
   </ul>
   <h4>わざの決め方</h4>
   <ul>
@@ -5085,22 +5085,52 @@ const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig:
   hold: 0,               // 決断に答えた直後に置く「間」(ms)。交代受けの構えを取る時間(2026-09-07)
   fxDone: new Set(),     // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
   pvDone: new Set() };   // 交代受けの演出を出したターン(シールドの質問と同時に出すので、行では二度出さない)
-// タイムラインの流れる速さ(2026-09-17テスター#24・タダシさん指示): ×1→×0.9→…→×0.5を押すたびに切り替える(動画の再生速度と同じ×表記)。
-// 実戦より体感が速く感じる人・わざのモーションを見て撃つ人向け。流れる間隔だけを延ばし、バトルの計算・時計・
-// リアルタイムの猶予(シールド10秒・次のポケモン12秒)・演出の長さは変えない。端末に保存する(gbl_ で引っ越しにも入る)
-const RB_PACES = [1, 0.9, 0.8, 0.7, 0.6, 0.5];
-RBV.pace = (() => { try { const v = +localStorage.getItem('gbl_mock_pace'); return RB_PACES.includes(v) ? v : 1; } catch (e) { return 1; } })();
+// タイムラインの流れる速さ(2026-09-17テスター#24・タダシさん指示): ボタンを押すとウィンドウが開き、つまみで×0.3〜×1を選ぶ
+// (動画の再生速度の調整と同じ形・0.05刻み)。実戦より体感が速く感じる人・わざのモーションを見て撃つ人向け。
+// 流れる間隔だけを延ばし、バトルの計算・時計・リアルタイムの猶予(シールド10秒・次のポケモン12秒)・演出の長さは変えない。
+// 端末に保存する(gbl_ で引っ越しにも入る)
+const PACE_MIN = 0.3, PACE_MAX = 1, PACE_STEP = 0.05, PACE_PRESETS = [0.3, 0.5, 0.7, 0.8, 1];
+const paceFix = v => Math.min(PACE_MAX, Math.max(PACE_MIN, Math.round(v / PACE_STEP) * PACE_STEP));
+RBV.pace = (() => { try { const v = parseFloat(localStorage.getItem('gbl_mock_pace')); return isFinite(v) ? +paceFix(v).toFixed(2) : 1; } catch (e) { return 1; } })();
 const rbRate = () => (RBV.speed || 1) * (RBV.pace || 1);
-const paceLabel = () => '速さ×' + (RBV.pace === 1 ? '1' : RBV.pace.toFixed(1));
-const paceHtml = () => `<button class="hpace${RBV.pace < 1 ? ' slow' : ''}" title="タイムラインが流れる速さ。押すたびに少しずつ遅くなります（×1→×0.9→…→×0.5→×1）。バトルの結果や時計には影響しません">⏱️<b>${paceLabel()}</b></button>`;
+const paceNum = v => (v === 1 ? '1' : String(+v.toFixed(2)));   // 0.8→「0.8」・0.85→「0.85」
+const paceLabel = () => '速さ×' + paceNum(RBV.pace);
+const paceHtml = () => `<button class="hpace${RBV.pace < 1 ? ' slow' : ''}" title="タイムラインが流れる速さ。押すとつまみで×0.3〜×1を選べます。バトルの結果や時計には影響しません">⏱️<b>${paceLabel()}</b></button>`;
 function bindPace(dock, startTimer) {
   const b = dock.querySelector('.hpace'); if (!b) return;
-  b.onclick = () => {
-    RBV.pace = RB_PACES[(RB_PACES.indexOf(RBV.pace) + 1) % RB_PACES.length];
+  const set = v => {
+    RBV.pace = +paceFix(v).toFixed(2);
     try { localStorage.setItem('gbl_mock_pace', String(RBV.pace)); } catch (e) {}
     b.querySelector('b').textContent = paceLabel();
     b.classList.toggle('slow', RBV.pace < 1);
     if (RBV.timer) startTimer();
+  };
+  b.onclick = () => {
+    document.getElementById('pacewin')?.remove();
+    const ov = document.createElement('div');
+    ov.id = 'pacewin'; ov.className = 'pacewin';
+    ov.innerHTML = `<div class="pwbox" role="dialog" aria-label="タイムラインの速さ">
+      <div class="pwgrip"></div>
+      <div class="pwval"></div>
+      <div class="pwrow"><button class="pwstep" data-d="-1" aria-label="遅くする">−</button>
+        <input class="pwrange" type="range" min="${PACE_MIN}" max="${PACE_MAX}" step="${PACE_STEP}" aria-label="速さ">
+        <button class="pwstep" data-d="1" aria-label="速くする">＋</button></div>
+      <div class="pwpre">${PACE_PRESETS.map(v => `<button data-v="${v}">${v === 1 ? '1.0' : v}${v === 1 ? '<small>標準</small>' : ''}</button>`).join('')}</div>
+      <p class="pwnote">タイムラインが流れる速さだけが変わります（結果・時計は同じ）</p>
+    </div>`;
+    document.body.appendChild(ov);
+    const range = ov.querySelector('.pwrange'), val = ov.querySelector('.pwval');
+    const sync = () => {
+      range.value = RBV.pace;
+      range.style.setProperty('--pct', ((RBV.pace - PACE_MIN) / (PACE_MAX - PACE_MIN) * 100) + '%');
+      val.textContent = '×' + RBV.pace.toFixed(2);
+      ov.querySelectorAll('.pwpre button').forEach(x => x.setAttribute('aria-pressed', String(Math.abs(+x.dataset.v - RBV.pace) < 1e-6)));
+    };
+    sync();
+    range.oninput = () => { set(+range.value); sync(); };
+    ov.querySelectorAll('.pwstep').forEach(x => x.onclick = () => { set(RBV.pace + PACE_STEP * +x.dataset.d); sync(); });
+    ov.querySelectorAll('.pwpre button').forEach(x => x.onclick = () => { set(+x.dataset.v); sync(); });
+    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
   };
 }
 const RBUI = { pts: {}, order: [], open: null };

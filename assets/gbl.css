@@ -1136,6 +1136,36 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 /* 流れる速さ(100%以外は緑で点灯して、遅くしていることが分かるように) */
 .hbtns .hpace.slow b{color:#3fdc8a}
 :root.light .hbtns .hpace.slow b{color:#12804a}
+/* 速さのウィンドウ(動画の再生速度の調整と同じ形: 下から出るパネル＋つまみ＋−/＋＋よく使う値) */
+.pacewin{position:fixed;inset:0;z-index:2147483000;background:rgba(4,8,20,.55);display:flex;align-items:flex-end;justify-content:center;
+  padding:12px;touch-action:manipulation}
+.pwbox{width:min(100%,460px);background:linear-gradient(180deg,#1e2850,#141b36);border:1px solid var(--line);border-radius:18px;
+  padding:10px 16px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);color:var(--ink);user-select:none;-webkit-user-select:none}
+.pwgrip{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin:0 auto 10px}
+.pwval{text-align:center;font-size:1.9rem;font-weight:900;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin-bottom:8px}
+.pwrow{display:flex;align-items:center;gap:12px}
+.pwstep{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.07);
+  color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer}
+.pwrange{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:30px;background:transparent;touch-action:none}
+.pwrange::-webkit-slider-runnable-track{height:6px;border-radius:3px;
+  background:linear-gradient(90deg,#43e0ff 0 var(--pct),rgba(255,255,255,.18) var(--pct) 100%)}
+.pwrange::-moz-range-track{height:6px;border-radius:3px;background:rgba(255,255,255,.18)}
+.pwrange::-moz-range-progress{height:6px;border-radius:3px;background:#43e0ff}
+.pwrange::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:#fff;
+  border:3px solid #43e0ff;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.pwrange::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #43e0ff}
+.pwpre{display:flex;gap:6px;margin-top:14px}
+.pwpre button{flex:1 1 0;min-width:0;padding:9px 0 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.07);
+  color:var(--ink);font-weight:800;font-size:.9rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
+.pwpre button small{font-size:.58rem;font-weight:700;color:var(--sub)}
+.pwpre button[aria-pressed="true"]{background:linear-gradient(160deg,#b9f6ff 0%,#43e0ff 55%,#0fa8c4 100%);color:#042330;border-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.pwpre button[aria-pressed="true"] small{color:#042330}
+.pwnote{margin:12px 0 0;text-align:center;font-size:.66rem;color:var(--sub)}
+:root.light .pwbox{background:linear-gradient(180deg,#ffffff,#eef3ff)}
+:root.light .pwstep,:root.light .pwpre button:not([aria-pressed="true"]){background:#eef2fb}
+:root.light .pwrange::-webkit-slider-runnable-track{background:linear-gradient(90deg,#0891a8 0 var(--pct),#d5dcea var(--pct) 100%)}
+:root.light .pwgrip{background:#c8d0e0}
 @media (max-width:380px){.hbtns{gap:3px}.hbtns button b{font-size:.52rem}}
 /* マークと文字は1行に横並び(2026-09-17タダシさん指示・縦に積むと横が空いているのに窮屈に見える)。
    ボタンが6つ並ぶ選択式は、狭い画面だけ従来どおり縦に積む(1つ55px前後で横並びが入らない) */
