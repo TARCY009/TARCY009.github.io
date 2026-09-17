@@ -1086,7 +1086,7 @@
   }
 
   // ---------------------------------------------------------------- 開発者の撮影モード
-  var pick = { on: false, el: null, locked: false, stack: [], bg: 'page' };
+  var pick = { on: false, el: null, locked: false, stack: [], bg: 'clear' };   // 既定は枠の外を透明(2026-09-17タダシさん指示)
   var fab, hi, bar;
   function ui() {
     if (fab) return;
@@ -1103,7 +1103,7 @@
     bar.innerHTML = '<span class="snapdesc">撮りたい所をタップ</span>' +
       '<button type="button" data-a="up" title="ひと回り外側">▲外側</button>' +
       '<button type="button" data-a="down" title="ひと回り内側">▼内側</button>' +
-      '<button type="button" data-a="bg">背景あり</button>' +
+      '<button type="button" data-a="bg">背景透明</button>' +
       '<button type="button" data-a="save" class="go">保存</button>' +
       '<button type="button" data-a="s1920" class="go" title="選んだ部分を1920×1440の中央に大きく置いて保存">1920×1440</button>' +
       '<button type="button" data-a="x">✕</button>';
