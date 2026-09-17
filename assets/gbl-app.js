@@ -1764,7 +1764,7 @@ ${PAGE_ROCKET ? '' : `
     <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
-    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>🎬 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
+    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>🐢 速さ</b>＝タイムラインが流れる速さを押すたびに10%ずつ遅くする（100%→50%。リアルタイム操作でも使え、結果や時計は変わりません）／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>🎬 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
   </ul>
   <h4>わざの決め方</h4>
   <ul>
@@ -5085,6 +5085,23 @@ const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig:
   hold: 0,               // 決断に答えた直後に置く「間」(ms)。交代受けの構えを取る時間(2026-09-07)
   fxDone: new Set(),     // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
   pvDone: new Set() };   // 交代受けの演出を出したターン(シールドの質問と同時に出すので、行では二度出さない)
+// タイムラインの流れる速さ(2026-09-17テスター#24・タダシさん指示): 100%→90%→…→50%を押すたびに切り替える。
+// 実戦より体感が速く感じる人・わざのモーションを見て撃つ人向け。流れる間隔だけを延ばし、バトルの計算・時計・
+// リアルタイムの猶予(シールド10秒・次のポケモン12秒)・演出の長さは変えない。端末に保存する(gbl_ で引っ越しにも入る)
+const RB_PACES = [1, 0.9, 0.8, 0.7, 0.6, 0.5];
+RBV.pace = (() => { try { const v = +localStorage.getItem('gbl_mock_pace'); return RB_PACES.includes(v) ? v : 1; } catch (e) { return 1; } })();
+const rbRate = () => (RBV.speed || 1) * (RBV.pace || 1);
+const paceHtml = () => `<button class="hpace${RBV.pace < 1 ? ' slow' : ''}" title="タイムラインが流れる速さ。押すたびに10%ずつ遅くなります（100%→90%→…→50%→100%）。バトルの結果や時計には影響しません">🐢<b>速さ${Math.round(RBV.pace * 100)}%</b></button>`;
+function bindPace(dock, startTimer) {
+  const b = dock.querySelector('.hpace'); if (!b) return;
+  b.onclick = () => {
+    RBV.pace = RB_PACES[(RB_PACES.indexOf(RBV.pace) + 1) % RB_PACES.length];
+    try { localStorage.setItem('gbl_mock_pace', String(RBV.pace)); } catch (e) {}
+    b.querySelector('b').textContent = '速さ' + Math.round(RBV.pace * 100) + '%';
+    b.classList.toggle('slow', RBV.pace < 1);
+    if (RBV.timer) startTimer();
+  };
+}
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
 const RB_ICON = { sp: '⚡', sh: '🛡', swap: SWAPMK, msw: SWAPMK, next: '', lead: SWAPMK, msp: '⚡' };
@@ -5704,6 +5721,7 @@ function rbRender(body, bt, picks, foes, extra) {
       <div class="hbtns">
         <button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
         <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>
+        ${paceHtml()}
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
         <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">🎬<b>演出</b></button>
         <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
@@ -6038,9 +6056,9 @@ function rbRender(body, bt, picks, foes, extra) {
   // 速さの設定(×2/×4)で割るので、急ぎたい人は従来どおり速く見られる
   const startTimer = () => {
     stopTimer(); if (!onScreen()) return;
-    const wait = RBV.hold ? Math.round(RBV.hold / (RBV.speed || 1)) : 0;
+    const wait = RBV.hold ? Math.round(RBV.hold / rbRate()) : 0;
     RBV.hold = 0;
-    const go = () => { if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+    const go = () => { if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / rbRate()); setPlayBtn(); };
     if (wait) { setPlayBtn(); RBV.timer = setTimeout(() => { RBV.timer = null; go(); }, wait); }
     else go();
   };
@@ -6127,6 +6145,7 @@ function rbRender(body, bt, picks, foes, extra) {
     hspd.textContent = '×' + RBV.speed;
     if (RBV.timer) startTimer();
   };
+  bindPace(dock, startTimer);
   if (hskip) hskip.onclick = () => {
     RBV.started = true;
     // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)
@@ -10811,6 +10830,7 @@ function gbRender(body, bt, picks, foes) {
       <div class="hbtns">
         ${rtOn() ? '' : `<button class="hstep" title="1ターン（0.5秒）だけ進めます。⏸で止めて、相手のわざの周期を見ながら交代したいときに使います">⏭<b>コマ送り</b></button>
         <button class="hskip" title="次の決断の場面まで一気に飛ばします">⏩<b>決断まで</b></button>`}
+        ${paceHtml()}
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
         <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">🎬<b>演出</b></button>
         <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
@@ -11306,9 +11326,9 @@ function gbRender(body, bt, picks, foes) {
   // 速さの設定(×2/×4)で割るので、急ぎたい人は従来どおり速く見られる
   const startTimer = () => {
     stopTimer(); if (!onScreen()) return;
-    const wait = RBV.hold ? Math.round(RBV.hold / (RBV.speed || 1)) : 0;
+    const wait = RBV.hold ? Math.round(RBV.hold / rbRate()) : 0;
     RBV.hold = 0;
-    const go = () => { if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / RBV.speed); setPlayBtn(); };
+    const go = () => { if (!onScreen()) return; RBV.timer = setInterval(tick, 500 / rbRate()); setPlayBtn(); };
     if (wait) { setPlayBtn(); RBV.timer = setTimeout(() => { RBV.timer = null; go(); }, wait); }
     else go();
   };
@@ -11392,6 +11412,7 @@ function gbRender(body, bt, picks, foes) {
     hspd.textContent = '×' + RBV.speed;
     if (RBV.timer) startTimer();
   };
+  bindPace(dock, startTimer);
   if (hskip) hskip.onclick = () => {
     RBV.started = true;
     // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)

@@ -1133,6 +1133,9 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hbtns .hend,.hbtns .hend b{color:#ff8f8f}
 :root.light .hbtns .hend,:root.light .hbtns .hend b{color:#c92a2a}
 .hbtns .hfx[aria-pressed="false"]{opacity:.45;filter:grayscale(1)}
+/* 流れる速さ(100%以外は緑で点灯して、遅くしていることが分かるように) */
+.hbtns .hpace.slow b{color:#3fdc8a}
+:root.light .hbtns .hpace.slow b{color:#12804a}
 @media (max-width:380px){.hbtns{gap:3px}.hbtns button b{font-size:.52rem}}
 .hctl{display:flex;justify-content:center;gap:4px;margin-top:4px;flex-wrap:wrap;max-width:66px;margin-left:auto;margin-right:auto}
 .hctl button{width:26px;height:22px;font-size:.6rem;background:var(--bg2);border:1px solid var(--line);
