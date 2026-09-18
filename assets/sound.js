@@ -226,6 +226,33 @@
       });
     }
   }
+  // ゴング・鐘（金属の板の振動。整数でない倍音を重ね、高い倍音ほど速く減衰させるのが金属らしさの正体）
+  function gong(freq, dur, o) {
+    o = o || {};
+    var ratios = o.ratios || [1, 1.62, 2.11, 2.68, 3.24, 3.91, 4.52, 5.31, 6.12, 7.03, 8.21, 9.48];
+    var decay = o.decay == null ? 1.1 : o.decay, hiDecay = o.hiDecay == null ? 5.5 : o.hiDecay;
+    var beat = o.beat == null ? 1 : o.beat, strike = o.strike == null ? .5 : o.strike;
+    playBuf(bufOf(dur, function (L, R, sr, len) {
+      var n = ratios.length, g = 1 / (n * .42), i, k;
+      var w = [], wr = [], dc = [], am = [];
+      for (k = 0; k < n; k++) {
+        w.push(2 * Math.PI * freq * ratios[k] / sr);
+        wr.push(2 * Math.PI * freq * ratios[k] * (1 + beat * .0006 * ((k % 3) - 1)) / sr);
+        dc.push(decay + (hiDecay - decay) * (k / (n - 1)));
+        am.push(1 / (1 + k * .38));
+      }
+      for (i = 0; i < len; i++) {
+        var t = i / sr, vl = 0, vr = 0;
+        for (k = 0; k < n; k++) {
+          var e = Math.exp(-dc[k] * t) * am[k];
+          if (e < .0004) continue;
+          vl += Math.sin(w[k] * i) * e; vr += Math.sin(wr[k] * i) * e;
+        }
+        var hit = (Math.random() * 2 - 1) * strike * Math.exp(-70 * t), f = fade(i, sr, .8);
+        L[i] = (vl * g + hit) * f; R[i] = (vr * g + hit) * f;
+      }
+    }), o);
+  }
   // 持続する和音
   function pad(freqs, dur, o) {
     o = o || {};
@@ -363,6 +390,26 @@
     shimmer(4, { base: 2093, dur: .9, span: 1.4, vol: .06, at: 1.2, spread: 1.4 });
   }
 
+  // バトルスタート「開始のコール」（演出2.1秒。0.53秒でVSが決まる）
+  function seVs() {
+    [523, 659, 784].forEach(function (f, i) {
+      fm(f, .14, { ratio: 1.01, index: 3, decay: 12, vol: .3, at: i * .14, dly: .18 });
+    });
+    fm(1046, .9, { ratio: 1.01, index: 5, decay: 3, vol: .36, at: .5, rev: .55, dly: .25, wide: 1 });
+    gong(1046, 1.2, { decay: 2.2, hiDecay: 8, strike: .25, vol: .45, rev: .5, at: .5 });
+    noise({ f: 6000, f2: 2400, q: 1.6, dur: .3, vol: .2, at: .5, rev: .4 });
+    pad([262, 392, 523], 1.1, { vol: .12, at: .55, rev: .6, open: 2600, type: 'triangle' });
+  }
+  // ポケモンをくりだす「水が弾ける」（演出2.1秒。0.53秒で着地・0.95秒で弾けて光が散る）
+  function seIn() {
+    noise({ f: 1600, f2: 400, q: 2.2, dur: .5, vol: .26, rev: .3, pan: -.4, pan2: .2 });
+    for (var i = 0; i < 6; i++) fm(700 + i * 160, .2, { ratio: 2.01, index: 2.2, decay: 10, vol: .08, at: .2 + i * .07, pan: (i % 2 ? 1 : -1) * .5, dly: .3, rev: .4 });
+    noise({ f: 400, f2: 2600, q: 1.8, dur: .45, vol: .3, at: .53, rev: .4 });
+    burst(.45, { cut: 6000, cut2: 1200, decay: 6, drive: .25, vol: .3, at: .95, hi: 600, rev: .5 });
+    shimmer(6, { base: 1568, dur: .45, span: .5, vol: .1, at: .97 });
+    pad([262, 349, 440], .9, { vol: .12, at: .97, rev: .7, open: 2000, type: 'triangle' });
+  }
+
   var subTimers = [];
   function clearSub() { subTimers.forEach(clearTimeout); subTimers = []; }
 
@@ -387,6 +434,8 @@
       }
     },
     sp: function (eff) { if (on && ac()) seSp(eff); },
+    vs: function () { if (on && ac()) seVs(); },       // バトルスタート
+    intro: function () { if (on && ac()) seIn(); },    // ポケモンをくりだす
     swap: function () { if (on && ac()) seSwap(); },
     ko: function () { if (on && ac()) seKo(); },
     win: function () { if (on && ac()) seWin(); },
