@@ -1764,7 +1764,7 @@ ${PAGE_ROCKET ? '' : `
     <li><b>${SWAPMK} 開幕交代</b>… 1匹目の枠のタブをONにすると、バトルスタート直後に交代先を選びます。あいての打ちかけの1発は交代先に入り、あいては4.5秒硬直します（交代クールタイム45秒もここから始まります）</li>
     <li><b>💀 次に出すのは？</b>… 倒されたときの交代先</li>
     <li>決めた場面はタイムラインに<b>チップ</b>で残ります。タップすると<b>その場面まで巻き戻してやり直せます</b>（それより後ろの選択は消えます）</li>
-    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>⏱️ 速さ</b>＝押すとウィンドウが開き、タイムラインが流れる速さをつまみで×0.3〜×1に調整できる（×2・×4と組み合わせると掛け算になります。リアルタイム操作でも使え、結果や時計は変わりません）／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>🎬 演出</b>＝カットインのON/OFF／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
+    <li>下のフレームで <b>⏸</b>（一時停止）と <b>×1</b>（倍速 ×1→×2→×4）を切り替えられます。その下の行は文字つきで、<b>⏭ コマ送り</b>＝1ターン（0.5秒）だけ進める／<b>⏩ 決断まで</b>＝次の決断の場面まで飛ばす／<b>⏱️ 速さ</b>＝押すとウィンドウが開き、タイムラインが流れる速さをつまみで×0.3〜×1に調整できる（×2・×4と組み合わせると掛け算になります。リアルタイム操作でも使え、結果や時計は変わりません）／<b>↺ やり直し</b>＝選んだ手を消して同じ編成でもう一度／<b>🎬 演出</b>＝カットインのON/OFF／<b>🔊 音</b>＝効果音のON/OFF（既定は切。ノーマルアタックは「わざの1ターン目に強い音・2ターン目以降に小さい音」で鳴るので、<b>SPアタックまでの発数を耳で数えられます</b>。SPアタックは効果（等倍／こうかばつぐん／こうかいまひとつ）で音が変わります）／<b>✕ 終了</b>＝バトルをやめて、ポケモンやわざを入れ替える画面に戻る、です。決着後の <b>↻</b> は同じ選択のまま再生し直します</li>
   </ul>
   <h4>わざの決め方</h4>
   <ul>
@@ -5084,7 +5084,8 @@ const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.
 const RBV = { cur: 0, playing: true, speed: 1, timer: null, started: false, sig: undefined,
   hold: 0,               // 決断に答えた直後に置く「間」(ms)。交代受けの構えを取る時間(2026-09-07)
   fxDone: new Set(),     // 再生済みの演出(決断後の再描画で同じ演出を二重に出さない/取りこぼさないための記録)
-  pvDone: new Set() };   // 交代受けの演出を出したターン(シールドの質問と同時に出すので、行では二度出さない)
+  pvDone: new Set(),     // 交代受けの演出を出したターン(シールドの質問と同時に出すので、行では二度出さない)
+  sndDone: new Set() };  // 効果音を鳴らした行(決断後の描き直しやコマ送りで、同じ行の音が二度鳴らないように)
 // タイムラインの流れる速さ(2026-09-17テスター#24・タダシさん指示): ボタンを押すとウィンドウが開き、つまみで×0.3〜×1を選ぶ
 // (動画の再生速度の調整と同じ形・0.05刻み)。実戦より体感が速く感じる人・わざのモーションを見て撃つ人向け。
 // 流れる間隔だけを延ばし、バトルの計算・時計・リアルタイムの猶予(シールド10秒・次のポケモン12秒)・演出の長さは変えない。
@@ -5396,13 +5397,58 @@ function fxRun(list, done, onHit) {
 }
 // data-fx属性のHTML(単引用符で囲むのでJSONの単引用符だけ実体参照にする)
 const fxAttr = fx => fx && fx.length ? ` data-fx='${JSON.stringify(fx).replace(/'/g, '&#39;')}'` : '';
+// ---- 模擬戦の効果音(assets/sound.js・2026-09-18タダシさん選択) ----
+// ねらいは**ノーマルアタックの回数を耳で数えられるようにすること**。音は演出(🎬)とは別に入り切りできる。
+// ⚠ 音を鳴らすのは**再生で行が新しく現れたとき**だけ(revealStep)。決断後の描き直しで過去の行をまとめて
+//    出すとき(revealTo)は鳴らさない＝同じ場面の音が二重に鳴らない
+const SND = () => (window.GonaviSound && window.GonaviSound.isOn()) ? window.GonaviSound : null;
+const sndOn = () => !!(window.GonaviSound && window.GonaviSound.isOn());
+// SPアタックの効果(音の出し分け)。's'=こうかばつぐん / 'w'=いまひとつ / 'n'=等倍
+function sndEff(mvName, defKey) {
+  try {
+    const ty = MOVE_TYPE[mvName], p = defKey && D.pokemon[defKey];
+    if (!ty || !p || !D.chart[ty]) return 'n';
+    const row = D.chart[ty];
+    let m = 1;
+    (p.ty || []).forEach(t => { const i = D.types.indexOf(t); if (i >= 0) m *= row[i]; });
+    return m > 1.01 ? 's' : m < 0.99 ? 'w' : 'n';
+  } catch (e) { return 'n'; }
+}
+// 行に持たせる音の情報(ノーマルアタックだけ。SP・交代・撃退は data-fx から拾う)
+const sndAttr = s => s ? ` data-snd='${JSON.stringify(s)}'` : '';
+// じぶんのノーマルアタックの行なら {k:'atk', tn:わざのターン数} を返す
+function sndOfRow(r) {
+  const e = r.ev[0];
+  if (!e || e.full !== undefined) return null;
+  return { k: 'atk', tn: e.tn || 1 };
+}
+// 行が現れたときに鳴らす。i = タイムライン内の位置(描き直しても変わらないので、二重再生の見分けに使う)
+function sndRow(el, i) {
+  const S = SND(); if (!S || !el || !el.dataset) return;
+  const key = i + '|' + el.dataset.gt;
+  if (RBV.sndDone.has(key)) return;
+  RBV.sndDone.add(key);
+  if (el.dataset.snd) {
+    try { const a = JSON.parse(el.dataset.snd); if (a.k === 'atk') S.atk(a.tn, rbRate()); } catch (e) { }
+  }
+  if (el.dataset.fx) {
+    try {
+      JSON.parse(el.dataset.fx).forEach(f => {
+        if (f.k === 'sp') S.sp(f.eff);
+        else if (f.k === 'swap') S.swap();
+        else if (f.k === 'ko' && f.win) S.ko();   // 撃退(あいてをたおした)だけ鳴らす
+      });
+    } catch (e) { }
+  }
+}
 // タイムラインの1行(エンジンのsub行)から、SP発動とフォルムチェンジの演出を拾う
-function fxOfRow(r) {
+// keys = [じぶんのkey, あいてのkey]（SPアタックの音を相性で出し分けるために使う）
+function fxOfRow(r, keys) {
   const out = [];
   [0, 1].forEach(sd => {
     const e = r.ev[sd];
     if (!e || e.full === undefined) return;
-    out.push({ k: 'sp', side: sd, mv: e.move, shd: !!e.shielded });
+    out.push({ k: 'sp', side: sd, mv: e.move, shd: !!e.shielded, eff: sndEff(e.move, keys && keys[1 - sd]) });
     if (e.gulpOn) out.push({ k: 'form', side: sd, mk: GULP_MK[e.gulpOn], name: `${GULP_JA[e.gulpOn]}のすがた` });
     if (e.gulp) out.push({ k: 'form', side: 1 - sd, mk: GULP_MK[e.gulp.form], name: '獲物を吐き出した！' });
   });
@@ -5666,7 +5712,8 @@ function rbRender(body, bt, picks, foes, extra) {
         const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kOf(foes[leg.foeIdx])) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []) + waitCell(r, 0);
         const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kOf(picks[leg.myIdx])) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + waitCell(r, 1) + (first ? stallMark : '');
         if (!e0 && !e1) continue;
-        items.push({ gt, fx: fxOfRow(r), html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        items.push({ gt, fx: fxOfRow(r, [kOf(picks[leg.myIdx]), kOf(foes[leg.foeIdx])]), snd: sndOfRow(r),
+          html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
       if (first) items.push({ gt, html: stallMark
@@ -5728,7 +5775,7 @@ function rbRender(body, bt, picks, foes, extra) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}${sndAttr(x.snd)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
@@ -5755,6 +5802,7 @@ function rbRender(body, bt, picks, foes, extra) {
         ${paceHtml()}
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
         <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">🎬<b>演出</b></button>
+        <button class="hsnd" aria-pressed="${sndOn()}" title="効果音のON/OFF。ノーマルアタックは「1ターン目に強い音・2ターン目以降に小さい音」で鳴るので、SPアタックまでの発数を耳で数えられます（バトルの結果には影響しません）">🔊<b>音</b></button>
         <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
       </div>` : ''}
     </div>`;
@@ -5926,6 +5974,7 @@ function rbRender(body, bt, picks, foes, extra) {
       const el = els[ptr];
       el.classList.remove('future'); el.classList.add('in');
       lastEl = el; out.push(el); ptr++;
+      sndRow(el, ptr - 1);   // 効果音（🔊がONのときだけ・演出のON/OFFとは別）
       if (el.dataset.fx && fxOk() && fxPending([el]).length) break;
     }
     return out;
@@ -6030,6 +6079,11 @@ function rbRender(body, bt, picks, foes, extra) {
     else {
       RBV.playing = false;
       // 決着のバナー(2026-09-07タダシさん指示・締めくくりの演出)。1回のバトルで1度だけ
+      if (RBV.endSnd !== RBV.sig) {
+        RBV.endSnd = RBV.sig;
+        const S = SND();
+        if (S) setTimeout(() => { if (onScreen()) (bt.outcome === 'win' ? S.win() : S.lose()); }, 260);
+      }
       if (fxOk() && RBV.endFx !== RBV.sig) {
         RBV.endFx = RBV.sig;
         setTimeout(() => { if (onScreen()) fxOne({ k: 'end', win: bt.outcome === 'win', outcome: bt.outcome }); }, 260);
@@ -6186,6 +6240,12 @@ function rbRender(body, bt, picks, foes, extra) {
   };
   const hstop = dock.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
+  const hsnd = dock.querySelector('.hsnd');
+  if (hsnd) hsnd.onclick = () => {
+    // ⚠ 音は**押した瞬間**に用意する（ブラウザは操作のない再生を止めるため）
+    const on = window.GonaviSound ? window.GonaviSound.toggle() : false;
+    hsnd.setAttribute('aria-pressed', on);
+  };
   const hfx = dock.querySelector('.hfx');
   if (hfx) hfx.onclick = () => {
     FX.on = !FX.on; fxSave();
@@ -6266,7 +6326,7 @@ function rbRender(body, bt, picks, foes, extra) {
   // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
   //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
   //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
-  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null; }   // 最初からの再生(スタート・↻)だけ
   RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
@@ -10743,13 +10803,13 @@ function gbRender(body, bt, picks, foes) {
         // 交代受けが決まった瞬間の演出。**SPのカットインより先に**出す(2026-09-08タダシさん指示)。
         // 順番は「交代受け成功！ → SPのカットイン → 着弾でHPが減る」。
         // 後ろに付けると「HPが減ってから成功！」になって、決まった瞬間と食い違って見えた
-        let fxr = fxOfRow(r);
+        let fxr = fxOfRow(r, [kMe, kFoe]);
         if (fxr && pvSide != null && t.tn <= GB_PIVOT_SHOW && !RBV.pvDone.has(gt)
             && fxr.some(x => x.k === 'sp' && x.side === 1 - pvSide && !x.shd)) {
           fxr = [{ k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName }].concat(fxr);
           pvSide = null;
         }
-        items.push({ gt, fx: fxr, html: `<div class="ft${flCls(t.tn)}"${flSty(t.tn)}><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        items.push({ gt, fx: fxr, snd: sndOfRow(r), html: `<div class="ft${flCls(t.tn)}"${flSty(t.tn)}><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
       if (first) items.push({ gt, html: `<div class="ft q${flCls(t.tn)}"${flSty(t.tn)}><i class="tn">${gt}</i></div>` });
@@ -10831,7 +10891,7 @@ function gbRender(body, bt, picks, foes) {
       </div>
       ${rtOn() ? '' : `<button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>`}
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}${sndAttr(x.snd)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
@@ -10864,6 +10924,7 @@ function gbRender(body, bt, picks, foes) {
         ${paceHtml()}
         <button class="hstop" title="選んだ手を消して、同じ編成でもう一度はじめから戦います">↺<b>やり直し</b></button>
         <button class="hfx" aria-pressed="${FX.on}" title="くりだし・SPアタック発動などの演出のON/OFF。演出のあいだ再生は止まりますが、バトルの結果には影響しません">🎬<b>演出</b></button>
+        <button class="hsnd" aria-pressed="${sndOn()}" title="効果音のON/OFF。ノーマルアタックは「1ターン目に強い音・2ターン目以降に小さい音」で鳴るので、SPアタックまでの発数を耳で数えられます（バトルの結果には影響しません）">🔊<b>音</b></button>
         <button class="hend" title="バトルをやめて、ポケモンやわざを入れ替える画面に戻ります">✕<b>終了</b></button>
       </div>` : ''}
     </div>`;
@@ -11150,6 +11211,7 @@ function gbRender(body, bt, picks, foes) {
       const el = els[ptr];
       el.classList.remove('future'); el.classList.add('in');
       lastEl = el; out.push(el); ptr++;
+      sndRow(el, ptr - 1);   // 効果音（🔊がONのときだけ・演出のON/OFFとは別）
       if (el.dataset.fx && fxOk() && fxPending([el]).length) break;
     }
     return out;
@@ -11300,6 +11362,11 @@ function gbRender(body, bt, picks, foes) {
     } else {
       RBV.playing = false;
       // 決着のバナー(2026-09-07タダシさん指示・締めくくりの演出)。1回のバトルで1度だけ
+      if (RBV.endSnd !== RBV.sig) {
+        RBV.endSnd = RBV.sig;
+        const S = SND();
+        if (S) setTimeout(() => { if (onScreen()) (bt.outcome === 'win' ? S.win() : S.lose()); }, 260);
+      }
       if (fxOk() && RBV.endFx !== RBV.sig) {
         RBV.endFx = RBV.sig;
         setTimeout(() => { if (onScreen()) fxOne({ k: 'end', win: bt.outcome === 'win', outcome: bt.outcome, timeUp: bt.timeUp }); }, 260);
@@ -11453,6 +11520,12 @@ function gbRender(body, bt, picks, foes) {
   };
   const hstop = dock.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
+  const hsnd = dock.querySelector('.hsnd');
+  if (hsnd) hsnd.onclick = () => {
+    // ⚠ 音は**押した瞬間**に用意する（ブラウザは操作のない再生を止めるため）
+    const on = window.GonaviSound ? window.GonaviSound.toggle() : false;
+    hsnd.setAttribute('aria-pressed', on);
+  };
   const hfx = dock.querySelector('.hfx');
   if (hfx) hfx.onclick = () => {
     FX.on = !FX.on; fxSave();
@@ -11692,7 +11765,7 @@ function gbRender(body, bt, picks, foes) {
   // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
   //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
   //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
-  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; }   // 最初からの再生(スタート・↻)だけ
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null; }   // 最初からの再生(スタート・↻)だけ
   RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が

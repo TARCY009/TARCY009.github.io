@@ -1132,7 +1132,8 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hbtns button:active{transform:translateY(1px)}
 .hbtns .hend,.hbtns .hend b{color:#ff8f8f}
 :root.light .hbtns .hend,:root.light .hbtns .hend b{color:#c92a2a}
-.hbtns .hfx[aria-pressed="false"]{opacity:.45;filter:grayscale(1)}
+.hbtns .hfx[aria-pressed="false"],
+.hbtns .hsnd[aria-pressed="false"]{opacity:.45;filter:grayscale(1)}
 /* 流れる速さ(100%以外は緑で点灯して、遅くしていることが分かるように) */
 .hbtns .hpace.slow b{color:#3fdc8a}
 :root.light .hbtns .hpace.slow b{color:#12804a}

@@ -558,7 +558,8 @@
           const dmg = fastDamage(i);
           sides[1 - i].hp -= dmg;
           s.en = Math.min(100, s.en + s.fast.eg);
-          fev[i] = { move: s.fast.n, dmg };
+          // tn はノーマルアタックのターン数（模擬戦の効果音が「1ターン目＝強い音・2ターン目以降＝小さい音」に使う）
+          fev[i] = { move: s.fast.n, dmg, tn: s.fast.tn };
           any = true;
         }
         if (any) {
