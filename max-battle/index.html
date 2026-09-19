@@ -230,6 +230,11 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .sprow label{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:.8rem}
 .sprow input{width:110px;padding:8px 10px;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;color:var(--text);font-size:.9rem;outline:none}
 .sprow input:focus{border-color:#f2c14e}
+/* ランクはボスごとに固定なので、分かっているボスは選ばせず表示だけにする */
+.spfixed{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;
+  background:linear-gradient(160deg,#f7dd8a 0%,#e8b93f 55%,#b8860b 100%);color:#3a2600;
+  font-size:.82rem;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+:root.light .spfixed{color:#3a2600}
 .spstatus{font-size:.7rem;color:var(--sub)}
 .spstatus.ok{color:var(--okink);font-weight:800}
 .tanknote{color:var(--faint);font-size:.7rem;line-height:1.6;margin:10px 2px 0}
@@ -317,10 +322,8 @@ footer a{color:var(--spec)}
 
 <div id="spPanel" class="sppanel" style="display:none">
   <div class="sprow gtabs">
-    <div class="gseg">
-      <button id="spStar5" class="t-gold" aria-pressed="false" title="★5ボスのマックスメーター設定で判定します">★5</button>
-      <button id="spStar6" class="t-gold" aria-pressed="true" title="★6・キョダイマックスボスのマックスメーター設定で判定します">★6・キョダイ</button>
-    </div>
+    <div class="gseg" id="spStarSeg" style="display:none"></div>
+    <span id="spStarFixed" class="spfixed" style="display:none"></span>
     <span id="spStatus" class="spstatus"></span>
   </div>
   <div class="sprow">
@@ -368,8 +371,9 @@ footer a{color:var(--spec)}
   </ul>
   <h4>SP判定のしくみ</h4>
   <p>ダイマックスフェイズへの移行は、SPアタックの<b>0.5秒あたりのチャージ量が1％以上</b>ならSPを撃つほうが早く、
-    1％未満なら0.5秒のノーマルアタックを連打するほうが早い、という判定です。一覧に無いボスは既定値で計算します
-    （分かりしだい反映します）。</p>
+    1％未満なら0.5秒のノーマルアタックを連打するほうが早い、という判定です。</p>
+  <p><b>ボスのランク（★の数）はボスごとに決まっている</b>ので、選ぶ必要はありません（画面には確認用に出しています）。
+    マックスバトルに登場したことのないポケモンを選んだときだけ、ランクを選ぶボタンが出ます。</p>
   <p>マックスメーターは<b>1回の攻撃ごとに「与えたダメージ ÷ ボスの最大HP」の割合で溜まり、最低でも1％</b>は溜まります。
     2026年にこの溜まり方が調整され、★5と★6では以前よりずっと速く溜まるようになりました。
     そのため<b>★6でもSPアタックを撃ったほうが速いボスがあります</b>（以前はどのボスでも0.5秒のノーマルアタック連打が最速でした）。
@@ -390,10 +394,13 @@ footer a{color:var(--spec)}
   const filtersEl=$('filters'), fLegacy=$('fLegacy'), fHalf=$('fHalf'), fSwap=$('fSwap');
   const tabsEl=$('tabs'), tabAtk=$('tabAtk'), tabTank=$('tabTank');
   const swapMovesEl=$('swapMoves'), myqwrap=$('myqwrap'), mq=$('mq'), pinEl=$('pinlist');
-  const fSp=$('fSp'), spPanel=$('spPanel'), spStar5=$('spStar5'), spStar6=$('spStar6');
+  const fSp=$('fSp'), spPanel=$('spPanel'), spStarSeg=$('spStarSeg'), spStarFixed=$('spStarFixed');
   const myivBox=$('myiv'), ivCP=$('ivCP'), ivA=$('ivA'), ivD=$('ivD'), ivS=$('ivS'), ivInfo=$('ivInfo');
   const spHP=$('spHP'), spDef=$('spDef'), spStatus=$('spStatus');
-  const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {defaults:{"5":{hp:20000,defCpm:0.8},"6":{hp:100000,defCpm:0.85}}, coeff:{"5":0.00125,"6":0.00033333}, bosses:{}};
+  const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {
+    defaults:{"1":{hp:1700,defCpm:0.15},"2":{hp:5000,defCpm:0.38},"3":{hp:10000,defCpm:0.5},
+              "4":{hp:20000,defCpm:0.6},"5":{hp:20000,defCpm:0.8},"6":{hp:100000,defCpm:0.85}},
+    coeff:{"1":0.005,"2":0.005,"3":0.005,"4":0.005,"5":0.00125,"6":0.00033333}, bosses:{}};
   const cpm = D.cpm50;
 
   let boss=null, mode='atk', swapOn=false, halfOnly=true, includeLegacy=true;
@@ -609,12 +616,35 @@ footer a{color:var(--spec)}
   });
 
   // ---------- SP判定: ボスパラメータ ----------
+  // ランクの表記。ボスごとに固定なので、分かっているボスでは選ばせず表示するだけにする
+  // （2026-09-19タダシさん確定。以前は★5/★6のボタンが出ていたが、押しても自動判定に上書きされて
+  //   「壊れているように見える」状態だった）
+  // 表示用は長い名前、選ぶボタンは「★6」だけ(375pxで3行に折り返してしまうため)
+  const STAR_LABEL = {1:'★1', 2:'★2', 3:'★3', 4:'★4', 5:'★5', 6:'★6・キョダイマックス'};
+  function renderStar(known){
+    const lb = STAR_LABEL[spStar] || ('★'+spStar);
+    if(known){
+      spStarSeg.style.display = 'none';
+      spStarFixed.style.display = '';
+      spStarFixed.textContent = lb;
+      spStarFixed.title = 'このボスのランクは' + lb
+        + 'で固定です（同じポケモンのボスレベルは変わらないため、選ぶ必要はありません）';
+      return;
+    }
+    spStarFixed.style.display = 'none';
+    spStarSeg.style.display = '';
+    spStarSeg.innerHTML = [1,2,3,4,5,6].map(n =>
+      `<button type="button" class="t-gold" data-star="${n}" aria-pressed="${n===spStar}"
+        title="${STAR_LABEL[n]}ボスのマックスメーター設定で判定します">★${n}</button>`).join('');
+    spStarSeg.querySelectorAll('button').forEach(b => b.onclick = () => {
+      spStar = +b.dataset.star; applyBossParams(); compute();
+    });
+  }
   function applyBossParams(){
     if(!boss) return;
     const e = BP.bosses[boss.n];
     if(e && e.star) spStar = e.star;
-    spStar5.setAttribute('aria-pressed', String(spStar===5));
-    spStar6.setAttribute('aria-pressed', String(spStar===6));
+    renderStar(!!(e && e.star));
     const d = BP.defaults[String(spStar)] || {};
     const hp = (e && e.hp != null) ? e.hp : d.hp;
     const dc = (e && e.defCpm != null) ? e.defCpm : d.defCpm;
@@ -623,8 +653,6 @@ footer a{color:var(--spec)}
     spStatus.textContent = 'SP判定＝SPアタック発動の可否';
     spStatus.className = 'spstatus ok';
   }
-  spStar5.addEventListener('click', () => { spStar = 5; applyBossParams(); compute(); });
-  spStar6.addEventListener('click', () => { spStar = 6; applyBossParams(); compute(); });
   spHP.addEventListener('input', () => compute());
   spDef.addEventListener('input', () => compute());
 
