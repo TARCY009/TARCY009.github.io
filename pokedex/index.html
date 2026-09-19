@@ -326,7 +326,10 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <div class="fregs" id="fregs"></div>
     <div class="flbl">しぼる</div>
     <div class="fregs" id="fflags">
-      <button data-f="lg" aria-pressed="false" title="伝説・幻のポケモンだけに絞り込みます">伝説・幻</button>
+      <button data-f="lg" aria-pressed="false" title="伝説・幻・ウルトラビーストだけに絞り込みます">伝説・幻</button>
+      <button data-f="lgx" aria-pressed="false" title="伝説・幻・ウルトラビーストを一覧から外します">伝説・幻除く</button>
+      <button data-f="mg" aria-pressed="false" title="メガシンカ・ゲンシカイキのすがただけに絞り込みます">メガ・ゲンシ</button>
+      <button data-f="mgx" aria-pressed="false" title="メガシンカ・ゲンシカイキのすがたを一覧から外します">メガ・ゲンシ除く</button>
       <button data-f="fe" aria-pressed="false" title="最終進化(これ以上進化しない)のポケモンだけに絞り込みます">最終進化</button>
     </div>
     <div class="flbl">並べ替え</div>
@@ -387,7 +390,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <li><b>タイプ</b> … 2つまで選べて、2つ選ぶと複合タイプ(両方を持つポケモン)に絞れます</li>
     <li><b>弱点</b> … 選んだタイプの攻撃が<b>弱点(×1.6以上)</b>のポケモンに絞れます(例: でんきを選ぶと、でんきわざで攻撃したいポケモンの一覧)</li>
     <li><b>地方</b> … 全国図鑑の番号で分けています。アローラ・ガラルなどの地方フォルムは元のポケモンの地方に入ります</li>
-    <li><b>しぼる</b> … 伝説・幻／最終進化だけに絞れます</li>
+    <li><b>しぼる</b> … 伝説・幻／メガ・ゲンシ／最終進化だけに絞れます。<b>「除く」</b>を押すと逆に一覧から外せます（「伝説・幻」と「伝説・幻除く」は同時には押せません）</li>
     <li><b>並べ替え</b> … 一覧を最大CP・攻撃・防御・HPの高い順に並べ替えられます</li>
   </ul>
   <h4>わざから探す</h4>
@@ -409,7 +412,8 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 'use strict';
 // ---- データ読み込み(入口は別・データは共通: godata.json=ジム・レイド / pvp_data.json=トレーナーバトル) ----
 let GO=null, PVP=null, PLUS_IDS=[];
-const state={ key:null, tab:'pve', ftypes:new Set(), fweak:new Set(), freg:null, flg:false, ffe:false, fsort:'dex', fmove:null };   // 絞り込み: タイプ/弱点/地方/伝説/最終進化/並べ替え/わざ逆引き
+// 絞り込み: タイプ/弱点/地方/伝説/伝説除く/メガ/メガ除く/最終進化/並べ替え/わざ逆引き
+const state={ key:null, tab:'pve', ftypes:new Set(), fweak:new Set(), freg:null, flg:false, flgx:false, fmg:false, fmgx:false, ffe:false, fsort:'dex', fmove:null };
 // 地方は全国図鑑の番号で分ける(地方フォルムは元のポケモンの番号=元の地方に入る)
 const REGIONS=[
   {id:'kanto',label:'カントー',lo:1,hi:151},{id:'johto',label:'ジョウト',lo:152,hi:251},
@@ -536,6 +540,9 @@ function passFilter(e){
   for(const t of state.fweak) if(!weakSetOf(e).has(t)) return false;
   if(state.freg){ const r=REGIONS.find(x=>x.id===state.freg); if(!(e.dex>=r.lo&&e.dex<=r.hi)) return false; }
   if(state.flg&&!e.lg) return false;
+  if(state.flgx&&e.lg) return false;
+  if(state.fmg&&!e.mega) return false;
+  if(state.fmgx&&e.mega) return false;
   if(state.ffe&&!e.fe) return false;
   if(state.fmove){ const m=MOVE_INDEX.get(state.fmove); if(!m||!m.has(e.name)) return false; }
   return true;
@@ -575,7 +582,11 @@ function buildFilters(){
     syncFilters();
   });
   document.querySelectorAll('#fflags button').forEach(b=>b.onclick=()=>{
-    if(b.dataset.f==='lg')state.flg=!state.flg; else state.ffe=!state.ffe;
+    const f=b.dataset.f;
+    state['f'+f]=!state['f'+f];
+    // 「◯◯」と「◯◯除く」は反対の意味なので、片方を押したらもう片方は消す
+    const other=FLAG_OPP[f];
+    if(state['f'+f]&&other) state['f'+other]=false;
     syncFilters();
   });
   document.querySelectorAll('#fsorts button').forEach(b=>b.onclick=()=>{
@@ -591,17 +602,19 @@ function buildFilters(){
   };
   document.getElementById('fclear').onclick=()=>{
     state.ftypes.clear(); state.fweak.clear(); state.freg=null;
-    state.flg=state.ffe=false; state.fsort='dex'; state.fmove=null;
+    state.flg=state.flgx=state.fmg=state.fmgx=state.ffe=false; state.fsort='dex'; state.fmove=null;
     syncFilters();
   };
 }
+// 「だけに絞る」と「除く」の対。片方を押したらもう片方を消す
+const FLAG_OPP={lg:'lgx',lgx:'lg',mg:'mgx',mgx:'mg'};
 function syncFilters(){
   document.querySelectorAll('#ftypes button').forEach(b=>b.setAttribute('aria-pressed',state.ftypes.has(b.dataset.t)));
   document.querySelectorAll('#fweak button').forEach(b=>b.setAttribute('aria-pressed',state.fweak.has(b.dataset.t)));
   document.querySelectorAll('#fregs button').forEach(b=>b.setAttribute('aria-pressed',state.freg===b.dataset.r));
-  document.querySelectorAll('#fflags button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f==='lg'?state.flg:state.ffe));
+  document.querySelectorAll('#fflags button').forEach(b=>b.setAttribute('aria-pressed',!!state['f'+b.dataset.f]));
   document.querySelectorAll('#fsorts button').forEach(b=>b.setAttribute('aria-pressed',state.fsort===b.dataset.s));
-  const on=state.ftypes.size>0||state.fweak.size>0||!!state.freg||state.flg||state.ffe||!!state.fmove;
+  const on=state.ftypes.size>0||state.fweak.size>0||!!state.freg||state.flg||state.flgx||state.fmg||state.fmgx||state.ffe||!!state.fmove;
   document.getElementById('fclear').style.display=on?'block':'none';
   const wrap=document.getElementById('flwrap');
   if(!on){ wrap.style.display='none'; return; }
@@ -618,6 +631,9 @@ function syncFilters(){
   if(state.fweak.size)parts.push([...state.fweak].map(t=>GO.typeJa[t]).join('×')+'が弱点');
   if(state.freg)parts.push(REGIONS.find(r=>r.id===state.freg).label);
   if(state.flg)parts.push('伝説・幻');
+  if(state.flgx)parts.push('伝説・幻除く');
+  if(state.fmg)parts.push('メガ・ゲンシ');
+  if(state.fmgx)parts.push('メガ・ゲンシ除く');
   if(state.ffe)parts.push('最終進化');
   document.getElementById('flcnt').textContent=`${parts.join('・')} — ${list.length}匹`;
   const mvIdx=state.fmove?MOVE_INDEX.get(state.fmove):null;
