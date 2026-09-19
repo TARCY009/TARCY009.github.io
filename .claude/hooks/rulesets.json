@@ -57,7 +57,9 @@
       "label": "ジム挑戦・ジム防衛・マックスバトル対策",
       "rules": ".claude/rules/gym.md",
       "checklist": ".claude/checklists/gym.md",
-      "checks": [],
+      "checks": [
+        "max-attacker"
+      ],
       "paths": [
         "gym-attack/**",
         "gym-defense/**",

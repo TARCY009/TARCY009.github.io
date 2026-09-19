@@ -273,6 +273,8 @@ footer a{color:var(--spec)}
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
+<!-- ダイマックス勢のノーマルアタックの決め方（画面と答え合わせで共通） -->
+<script src="/max-battle/pick-fast.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -679,9 +681,10 @@ footer a{color:var(--spec)}
       let best = null;
       if(p.cat === 'D'){
         // ダイマックス勢: ノーマルアタックのタイプ=マックスわざのタイプになるため、
-        // ①ボスの弱点を突けるタイプの技が最優先 ②その中に0.5秒技があれば優先
-        // ③ノーマルアタック自体のタイプ補正込み与ダメ ④非レガシー の順で選出
-        // (マックスわざの威力は固定のため、わざ与ダメによる比較は行わない)
+        // **マックスわざの与ダメージがいちばん大きいタイプ**を選ぶ（同じなら0.5秒わざ）。
+        // ⚠ 決め方は max-battle/pick-fast.js の1か所。以前は「弱点かどうか」をあるなしで見ていたため、
+        //   二重弱点(2.56倍)と単弱点(1.6倍)が同じ扱いになり0.5秒わざが勝って弱いわざを選んでいた
+        //   (2026-09-19タダシさん報告・オムスター対ファイヤー)。答え合わせは max-attacker
         const pool = (p.fm||[]).filter(f => includeLegacy || !f.e);
         if(!pool.length) continue;
         const sc = fastSelCtx(p);
@@ -691,13 +694,9 @@ footer a{color:var(--spec)}
           return {f, stab, eff,
                   dmg: power * atkStat * stab * eff,
                   sel: fastSelScore(p, f, sc),
-                  weak: eff >= 1.5 ? 1 : 0,
                   half: f.q ? 1 : 0};
         });
-        scored.sort((a,b) => b.weak - a.weak || b.half - a.half ||
-                             b.sel - a.sel ||
-                             (a.f.e||0) - (b.f.e||0));
-        const s0 = scored[0];
+        const s0 = pickMaxFast(scored);
         best = {dmg: s0.dmg, t: s0.f.t, stab: s0.stab, eff: s0.eff,
                 fast: s0.f, moveName: D.generic_max_jp[s0.f.t]};
       }else{

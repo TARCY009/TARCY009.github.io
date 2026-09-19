@@ -5,6 +5,7 @@
 gbl-engine:  pvp-tests/engine-test.html（GBLエンジンの実測突き合わせ・7ケース×3項目＝21項目）
 iv-calc:     .claude/checks/iv-check.html（個体値チェッカーのCP・順位・逆引き・進化後CP＝16項目）
 raid-engine: .claude/checks/raid-check.html（スクショ5例のボスの攻撃時刻＋回帰5通り。基準は raid-baseline.json）
+max-attacker:.claude/checks/max-check.html（マックスバトルのアタッカーが「ダメージ最大のマックスわざ」を選ぶか＝5項目）
 いずれも画面なしのブラウザで開き、すべて ✅ かを確かめる。
 答え（期待値・基準ファイル）を変えるときは、必ずタダシさんに確認してから。
 """
@@ -87,6 +88,7 @@ CHECKS = {
     'gbl-engine': check_gbl_engine,
     'iv-calc': page_check('.claude/checks/iv-check.html', 16),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
+    'max-attacker': page_check('.claude/checks/max-check.html', 5),
 }
 
 

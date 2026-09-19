@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>マックスバトル対策の答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<script src="/max-battle/data/max_data.js"></script>
+<script src="/max-battle/pick-fast.js"></script>
+<script>
+/* ダイマックス勢が撃つ「マックスわざのタイプ」＝ノーマルアタックの選び方の答え合わせ。
+   画面（max-battle/index.html）と同じ max-battle/pick-fast.js を呼んで確かめる。
+
+   ⚠ 2026-09-19タダシさん報告の不具合の再発防止:
+      以前は「ボスの弱点を突けるか」を**あるなしの2つ**でしか見ていなかったため、
+      ①二重弱点(2.56倍)と単弱点(1.6倍)が同じ扱いになる ②弱点が無いときは相性をまったく見ない、
+      の2つが起きて**0.5秒わざの優先が勝ち、弱いわざを選んでいた**（全体の14.9%・最悪で1/5の火力）。
+      マックスわざの威力は固定なので、**ダメージがいちばん大きいタイプを選ぶ**のが正しい。
+   答え（基準値）を変えるときは必ずタダシさんに確認すること。 */
+(() => {
+  const res = [];
+  const ok = (name, got, want) => res.push([name, String(got) === String(want), got, want]);
+  try {
+    const D = MAX_DATA;
+    const effOf = (mt, dts) => dts.reduce((m, t) => m * (D.chart[mt] ? D.chart[mt][t] : 1), 1);
+    const r6 = v => Math.round(v * 1e6) / 1e6;
+    // 画面と同じ形の候補を作る（ダメージの比だけ見るので、威力と攻撃実数値の定数は省く）
+    const scoreOf = (p, boss) => (p.fm || []).map(f => {
+      const stab = p.ty.includes(f.t) ? D.stab : 1, e = effOf(f.t, boss.ty);
+      return { f, stab, e, dmg: stab * e, half: f.q ? 1 : 0, sel: (f.p || 0) * stab * e };
+    });
+    const dmax = [...D.roster].filter(p => p.cat === 'D' && (p.fm || []).length);
+
+    // ① 全ボス × 全ダイマックス勢: 選んだわざのダメージは、持っているわざの中でいちばん大きいか
+    let n = 0, bad = 0, badEx = '', tieN = 0, tieBad = 0, mixed = 0;
+    for (const boss of D.bosses) for (const p of dmax) {
+      const sc = scoreOf(p, boss);
+      const pick = pickMaxFast(sc);
+      const best = Math.max(...sc.map(x => x.dmg));
+      n++;
+      if (r6(pick.dmg) !== r6(best)) { bad++; if (!badEx) badEx = `${boss.n}に${p.n}が${pick.f.jp}(${pick.dmg.toFixed(2)}倍・最大は${best.toFixed(2)}倍)`; }
+      // ② ダメージが同じわざが複数あるときは 0.5秒わざを選ぶ（同点のときだけ効かせる決まり）
+      const tops = sc.filter(x => r6(x.dmg) === r6(best));
+      if (tops.length > 1 && tops.some(x => x.half)) { tieN++; if (!pick.half) tieBad++; }
+      // ③ 検査が空回りしていないか: 二重弱点と単弱点が混じる組が実際にあるか（不具合の入口）
+      if (sc.some(x => x.e >= 2.4) && sc.some(x => x.e >= 1.5 && x.e < 2.4)) mixed++;
+    }
+    ok(`全ボス×ダイマックス勢 ${n}組で「ダメージ最大のわざ」を選んでいる`, bad === 0 ? '違反0' : `違反${bad}件（例: ${badEx}）`, '違反0');
+    ok(`ダメージが同じときは0.5秒わざを選ぶ（${tieN}組）`, tieBad === 0 ? '違反0' : `違反${tieBad}件`, '違反0');
+    ok('二重弱点と単弱点が混じる組がある（検査が意味を持つことの確認）', mixed > 0 ? 'ある' : 'ない', 'ある');
+
+    // ④ 基準値（2026-09-19タダシさん報告の実例）。オムスター（いわ／みず）は
+    //    ファイヤー（ほのお／ひこう）にもフリーザー（こおり／ひこう）にも、いわが二重弱点で 2.56倍。
+    //    オムスターはいわタイプなのでタイプ一致1.2が乗って **3.07倍**（みずでっぽうは1.6倍・0.5秒）
+    const om = D.roster.find(p => p.n === 'オムスター');
+    for (const bn of ['ファイヤー', 'フリーザー']) {
+      const b = D.bosses.find(x => x.n === bn);
+      if (!om || !b) { ok(`基準値 オムスター対${bn}`, 'データが見つかりません', 'いわおとし（3.07倍）'); continue; }
+      const pick = pickMaxFast(scoreOf(om, b));
+      ok(`基準値 オムスター対${bn}のマックスわざ`, `${pick.f.jp}（${pick.dmg.toFixed(2)}倍）`, 'いわおとし（3.07倍）');
+    }
+  } catch (e) {
+    res.push(['実行エラー', false, String(e), '']);
+  }
+  const bad = res.filter(r => !r[1]).length;
+  document.getElementById('out').innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+})();
+</script>
+</body></html>
