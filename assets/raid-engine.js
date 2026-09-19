@@ -31,8 +31,13 @@
   var DODGE_SEC = 0.5;             // 回避モーション(公開データ dodgeDurationMs=500)
   var DODGE_CUT = 0.25;            // 回避時に受けるダメージの割合(75%カット)
   var TP_MAX = 18;                 // チームパワーのメーター最大(外部攻略情報とカネール氏の検証で一致)
-  // スーパーメガレイドのシールド(cfg.t7shield・壊さない前提の暫定モデル。レイド火力チェッカーと同じ):
-  // ボスのHPが80%を切るとシールドが張られ、以後ずっと ボス防御×4(暫定)・ボス攻撃×1.8(実測確定)
+  // スーパーメガレイドのシールド(cfg.t7shield):
+  // ボスのHPが80%を切るとシールドが張られ、ボス防御×4(暫定)・ボス攻撃×1.8(実測確定)
+  // 割る仕様(2026-09-19実装・日本語/英語の攻略情報と海外シミュレーターのコードが一致):
+  //   ・メガシンカのSPアタックが当たると1枚割れる。わざの威力は無関係
+  //   ・1人1枚まで(メガミュウツーXのフィールド効果なら1人2枚)。ゲンシ・非メガでは割れない
+  //   ・全部割ると通常状態に戻り、二度と張り直さない
+  //   ・枚数はボスごと(7〜10)。人数が枚数に足りなければ一生割れない＝従来の「壊さない前提」と同じ動き
   var SH_AT = 0.8, SH_DEF = 4, SH_ATK = 1.8;
 
   // 再現できる乱数(同じseedなら同じ結果)。ランダムSPの試行に使う
@@ -59,7 +64,9 @@
      N      … 人数(全員が同じパーティの想定。ボスの被ダメ・ゲージに掛かる)
      spMode … 'asap'(即打ち・既定) | 'alt'(撃てる機会の2回に1回・交互) | 'coin'(撃てるとき1/2)
      tp     … チームパワーのわざ1回あたりの上昇P(0=なし/1=2人/2=3人/3=4人)
-     t7shield … trueならスーパーメガのシールド(HP80%から防御4倍・攻撃1.8倍・壊さない前提の暫定モデル)
+     t7shield … trueならスーパーメガのシールド(HP80%から防御4倍・攻撃1.8倍)
+     t7shields… ボスのシールド枚数(7〜10)。0/未指定なら割らない＝従来の「壊さない前提」
+     t7break … 1人が割れる枚数(既定1・メガミュウツーXのフィールド効果なら2)
      rejoin … 全滅→再突入の秒数
      seed   … 乱数の種(coin用)
      wantLog… タイムラインを返すか */
@@ -106,7 +113,8 @@
     var t = 0, myGen = 0, mon = 0, faints = 0, wipes = 0;
     var myHP = team[0].hp, myE = 0, bE = 0, total = 0, win = false, endT = null;
     var tp = cfg.tp || 0, tpMeter = 0;   // チームパワー(瀕死交代しても引き継ぐのでポケモンごとに戻さない)
-    var sh = 0;                          // スーパーメガのシールド(0=展開前 1=展開中。ダメージ表の添字)
+    var sh = 0;                          // スーパーメガのシールド(0=展開前/破壊後 1=展開中。ダメージ表の添字)
+    var shDone = false, shWarned = false; // シールドを割り切ったか / 割れないと記録済みか
     var spOpp = 0;        // 'alt'用: SPを撃てた機会の数(2回に1回撃つ)
     var activeFrom = 0;   // この時刻までこちらのポケモンは場にいない(交代・再突入の待ち)
     var pendAct = null;   // 予約中のこちらの行動(回避したらこの開始を0.5秒うしろへずらす)
@@ -145,10 +153,25 @@
         L({ t: t, side: 'me', mv: e.mv, dmg: md, sp: e.sp, tp: e.tp, mi: e.mi,
             bl: Math.max(0, bs.hp - total * N), mh: myHP });
         if (total * N >= bs.hp) { win = true; endT = t; break; }
-        // スーパーメガ: HPが80%を切った瞬間にシールド展開(壊さない前提の暫定モデル)
-        if (cfg.t7shield && !sh && total * N >= bs.hp * (1 - SH_AT)) {
+        // スーパーメガ: シールドを割る(メガのSPアタックが当たった瞬間・1人1〜2枚)。
+        // 全員が同じパーティなので、同じ瞬間にN人ぶんがまとめて割れる。
+        // 足りなければ「1人1枚まで」の縛りで一生割れない＝従来の壊さない前提と同じ動きになる
+        if (sh && !shDone && e.sp && team[e.mi].mega && cfg.t7shields > 0) {
+          var per = cfg.t7break || 1, able = N * per;
+          if (able >= cfg.t7shields) {
+            sh = 0; shDone = true;
+            L({ t: t, side: 'sys', note: 'シールド' + cfg.t7shields + '枚をすべて破壊（メガのSPアタックで1人' + per + '枚）→ 通常の防御・攻撃に戻る',
+                bl: Math.max(0, bs.hp - total * N), mh: myHP });
+          } else if (!shWarned) {
+            shWarned = true;
+            L({ t: t, side: 'sys', note: 'シールドを割り切れない（' + cfg.t7shields + '枚に対して' + N + '人×' + per + '枚＝' + able + '枚ぶんまで。1人1枚までなので以後も割れない）',
+                bl: Math.max(0, bs.hp - total * N), mh: myHP });
+          }
+        }
+        // スーパーメガ: HPが80%を切った瞬間にシールド展開(割り切ったあとは張り直さない)
+        if (cfg.t7shield && !sh && !shDone && total * N >= bs.hp * (1 - SH_AT)) {
           sh = 1;
-          L({ t: t, side: 'sys', note: 'ボスがシールドを展開（以後 防御4倍・攻撃1.8倍の暫定値・壊さない前提）', bl: Math.max(0, bs.hp - total * N), mh: myHP });
+          L({ t: t, side: 'sys', note: 'ボスがシールドを展開（防御4倍・攻撃1.8倍。防御4倍は暫定値）', bl: Math.max(0, bs.hp - total * N), mh: myHP });
         }
       } else if (e.k === 'bact') {               // ボスの行動
         var canC = bs.chg && bE >= Math.abs(bs.chg.e);
@@ -212,7 +235,7 @@
 
   // 版番号: raid/index.html が同じ値を期待し、食い違ったら古いキャッシュとみなして取り直す(2026-09-04)。
   // ⚠ このファイルを変えたら必ず上げ、raid/index.html の RAID_ENGINE_VER と <script src> の ?v= も同じ値にする
-  var VERSION = '2026-09-04.2';
+  var VERSION = '2026-09-19.1';
   root.RaidEngine = { simulate: simulate, damage: damage, VERSION: VERSION,
     PLAYER_START: PLAYER_START, BOSS_STARTS: BOSS_STARTS, BOSS_GAP: BOSS_GAP };
 })(typeof window !== 'undefined' ? window : globalThis);

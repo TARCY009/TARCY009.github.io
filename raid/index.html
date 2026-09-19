@@ -429,7 +429,9 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <li>スーパーメガレイドはゲーム内では★の数ではなく<b>シールドの枚数</b>でレベルが表示されます（ここでは1ランクとして扱います）</li>
     <li>ボスの攻撃・防御は<b>（種族値＋15）×ランクごとの補正</b>、HPは上の固定値です</li>
     <li>ボスのわざは通常枠だけ（特別わざ・レガシーわざは使ってきません）。既定では<b>いちばん痛い組み合わせ</b>を選んでいます</li>
-    <li><b>スーパーメガレイドは「シールドを壊さない前提」で計算します</b>。ボスのHPが約80%になるとシールドが張られ、以後は<b>ボスの防御4倍（暫定値）・攻撃1.8倍（実測値）</b>のまま戦う想定です。倍率は実測で確定したら更新します</li>
+    <li><b>スーパーメガレイドのシールド</b>：ボスのHPが約80%になるとシールドが張られ、<b>ボスの防御4倍（暫定値）・攻撃1.8倍（実測値）</b>になります。倍率は実測で確定したら更新します</li>
+    <li><b>シールドは「メガシンカのSPアタック」でしか割れません</b>。<b>1人1枚まで</b>なので、<b>シールドの枚数以上の人数</b>が必要です（枚数はボスごとに7〜10枚。ムクホーク・エアームド・ライチュウX/Y・スターミー＝7／ウツボット・カラマネロ・タイレーツ＝8／カイリュー・ミュウツーX/Y＝10）。<b>フィールド効果にメガミュウツーXを選ぶと1人2枚</b>割れるので、必要な人数は半分になります</li>
+    <li>人数が足りないときは<b>シールドを残したまま</b>削り切る計算になります（残っていてもダメージは通るので、時間内なら倒せます）。パーティに<b>メガシンカが1匹もいない</b>ときも同じです</li>
   </ul>
   </div>
 </div>
@@ -443,14 +445,14 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <script src="/assets/home.js"></script>
 <script src="/assets/feedback.js"></script>
 <script src="/assets/mega-lv.js"></script>
-<script src="/assets/raid-engine.js?v=2026-09-04.2"></script>
+<script src="/assets/raid-engine.js?v=2026-09-19.1"></script>
 <script>
 // ---- エンジンの版チェック(2026-09-04タダシさん報告で追加) ----
 // 画面だけ新しく、エンジン(raid-engine.js)がブラウザのキャッシュに古いまま残ると、
 // タイムラインが undefined/NaN になったり、メガの再突入ルールが効かなかったりする(実際に本番で起きた)。
 // 対策は3段: ①<script src> に ?v= を付けてキャッシュを避ける ②エンジンの VERSION がこの値と違ったら
 // キャッシュを使わずに取り直して1回だけ再読み込みする ③それでも直らなければ上に案内を出す(下の timelineHtml も値が無ければ「—」を出す)
-const RAID_ENGINE_VER='2026-09-04.2';
+const RAID_ENGINE_VER='2026-09-19.1';
 (function(){
   try{
     const have=window.RaidEngine&&RaidEngine.VERSION;
@@ -658,10 +660,7 @@ function renderBoss(){
   $('bossName').innerHTML=`${badges(false,bp.mega,bp)}${bp.n}${typeIcons(bp,22)}`;
   $('tierSeg').innerHTML=TIERS.map(t=>`<button type="button" data-t="${t.id}" aria-pressed="${t.id===tier}" title="${t.help}として計算します">${t.label}</button>`).join('');
   $('tierSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{tier=b.dataset.t;topCache.key=null;renderBoss();renderMy();runAll();});
-  // スーパーメガのシールドは「壊さない前提」の暫定モデルで計算する(レイド火力チェッカーと同じ前提)
-  const tn=$('tierNote');
-  tn.textContent='※シールドを壊さない前提で計算します（HP約80%でシールド展開→以後 ボス防御4倍・攻撃1.8倍。防御4倍は暫定値）';
-  tn.style.display=tier==='t7'?'block':'none';
+  syncTierNote();
   const fs=bossFastIds(bp), cs=bossChgIds(bp);
   const cur=defaultBossMoves();
   fillBossSel($('bfSel'),fs,$('bfSel').dataset.boss===boss?$('bfSel').value:cur.bf);
@@ -819,6 +818,23 @@ let dodgeSp=false, tpOn=false;
 //   ザシアン＝攻撃1.1倍 ／ メガミュウツーX＝メガシンカしたボスへのダメージ1.15倍(メガレイド・スーパーメガレイドだけ)。
 //   ⚠ データの mega の印はゲンシにも付いているので、番号の末尾 _PRIMAL で外す(運営はメガとゲンシを分けて扱う)
 const megaBoss=()=>!!(boss&&D.pokemon[boss]&&D.pokemon[boss].mega&&!/_PRIMAL$/.test(boss));
+// スーパーメガのシールド枚数(ボスごと・既定7)。メガのSPアタックで1人1枚だけ割れる。
+// 出どころ: 日本語の攻略情報(ウツボット/カラマネロ8・カイリュー10)と海外シミュレーターの表が一致
+const T7_SHIELDS={MEWTWO_MEGA_X:10,MEWTWO_MEGA_Y:10,DRAGONITE_MEGA:10,
+  VICTREEBEL_MEGA:8,MALAMAR_MEGA:8,FALINKS_MEGA:8,
+  SKARMORY_MEGA:7,RAICHU_MEGA_X:7,RAICHU_MEGA_Y:7,STARMIE_MEGA:7,STARAPTOR_MEGA:7};
+const shieldCount=()=>T7_SHIELDS[boss]||7;
+// 1人が割れる枚数: メガミュウツーXのフィールド効果なら一度に2枚
+const shieldBreakPer=()=>($('feSel').value==='mx'&&megaBoss())?2:1;
+// シールドの注記(ボス・ランク・フィールド効果のどれが変わっても出し直す)
+function syncTierNote(){
+  const tn=$('tierNote'); if(!tn)return;
+  tn.style.display=tier==='t7'?'block':'none';
+  if(tier!=='t7'||!boss)return;
+  const s=shieldCount(), per=shieldBreakPer();
+  tn.textContent='※このボスのシールドは'+s+'枚。HP約80%で展開し、ボス防御4倍・攻撃1.8倍になります（防御4倍は暫定値）。'
+    +'メガシンカのSPアタックで1人'+per+'枚だけ割れるので、'+Math.ceil(s/per)+'人未満ではシールドを残したまま戦います';
+}
 function feMult(){ const v=$('feSel').value; return v==='zc'?1.1:(v==='mx'&&megaBoss()?1.15:1); }
 // メガシンカしたボスでなければメガミュウツーXは選べない(選んだままボスを替えたら「なし」に戻す)
 function syncFe(){
@@ -873,7 +889,9 @@ function buildCfg(N,seed,wantLog,team,sp,bm){
     // チームパワー: ONなら全員がパーティを組んでいる前提で、人数から上昇Pを決める
     // (1人=0(パーティを組めない)・2人=+1P・3人=+2P・4人以上=+3P)
     tp:tpOn?Math.max(0,Math.min(N,4)-1):0,
-    t7shield:tier==='t7',      // スーパーメガのシールド(壊さない前提の暫定モデル)
+    t7shield:tier==='t7',      // スーパーメガのシールド(HP80%から防御4倍・攻撃1.8倍)
+    t7shields:tier==='t7'?shieldCount():0,   // 枚数(人数が足りなければ割れない)
+    t7break:shieldBreakPer(),                // 1人が割れる枚数(メガミュウツーX効果なら2)
     rejoin:Math.max(0,Math.min(60,+$('rejoinSec').value||0)),seed,wantLog};
 }
 const TRIALS=30;
@@ -1066,7 +1084,7 @@ $('spSel').addEventListener('change',()=>{
 });
 $('rejoinSec').addEventListener('input',runAll);
 $('dodgeBtn').onclick=()=>{dodgeSp=!dodgeSp;$('dodgeBtn').setAttribute('aria-pressed',dodgeSp);runAll();};
-$('feSel').addEventListener('change',runAll);
+$('feSel').addEventListener('change',()=>{syncTierNote();runAll();});
 syncFe();
 $('wxSel').addEventListener('change',runAll);
 $('frSel').addEventListener('change',runAll);
