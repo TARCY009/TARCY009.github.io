@@ -5348,6 +5348,9 @@ const FX_PRE = 420, FX_POST = 700, FX_GAP = 260;
 const fxClear = () => { const l = document.getElementById('fxlayer'); if (l) l.textContent = ''; };
 // 演出の要素から「その演出が属する対面(leg)の番号」を取り出す(HUDをその時点の状態にするため)
 const fxLi = el => { const v = el && el.dataset ? el.dataset.li : null; return v == null || v === '' ? undefined : +v; };
+// その行が終わった時点の状態の番号(rowHud の位置)。⚠ HUDはこれで**行ごと**に塗る
+// (同じターンに両者のSPが解決したとき、ターン終わりの状態で塗ると両方のHPバーが一度に減る・2026-09-19タダシさん報告)
+const fxHf = el => { const v = el && el.dataset ? el.dataset.hf : null; return v == null || v === '' ? null : +v; };
 // その行の演出が**再生を止めない演出**（HUDの⇄ボタンで交代したときのカットイン）かどうか。
 // 実戦の交代はリアルタイムなので、演出のあいだもタイムラインを流し続ける(2026-09-07タダシさん指示)
 const fxLive = el => {
@@ -5644,7 +5647,8 @@ function rbRender(body, bt, picks, foes, extra) {
 
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
   // items は時系列どおりに積む(gt=通しターン。表示はそこまで「再生」が進んだら出す)
-  const items = [], frames = [], legEnd = [];
+  const items = [], frames = [], legEnd = [], rowHud = [];   // rowHud=行ごとの状態(同時発動でHPを片方ずつ減らすため)
+  const hfPut = st => { if (!st) return null; rowHud.push(st); return rowHud.length - 1; };
   // 通しターンごとの「それまでのSPアタックの待ち時間」(RK_SP_TURNSの項)。
   // 経過時間の表示と交代クールタイムの残りは、この実時間で出す
   const spByGt = [];
@@ -5714,6 +5718,7 @@ function rbRender(body, bt, picks, foes, extra) {
       <div class="c foe">${evCell([{ move: leg.leadHit.mv, dmg: leg.leadHit.dmg }])}</div></div>` });
     // ⚠ 対面の切れ目は同じ通しターンを共有するので、上書きの前に退避する(GBL模擬戦と同じ理由)
     if (leg.li > 0 && frames[base]) legEnd[leg.li - 1] = frames[base];
+    let hpA = leg.hud.hp0, hpB = leg.hud.hp1;   // 行ごとに追うHP(ターン終わりの値とは別)
     frames[base] = { meta, li: leg.li, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, rv: rvArr };
     const ptAt = {};
@@ -5739,21 +5744,37 @@ function rbRender(body, bt, picks, foes, extra) {
         if (k >= 0) subs = subs.slice(0, k);
       }
       // シールド・能力変化の追跡は「見せる出来事」だけに対して行う(仮の結果を混ぜない)
-      for (const r of subs) for (let i = 0; i < 2; i++) {
-        const e = r.ev[i];
-        if (!e) continue;
-        // SPアタック1発ぶんの待ち時間(じぶん9秒／あいて5秒・シールドで防ぐと7秒)
-        if (e.full !== undefined)
-          spSeen += i === 0 ? RK_SP_TURNS.me : (e.shielded ? RK_SP_TURNS.foeShd : RK_SP_TURNS.foe);
-        if (e.shielded) { if (i === 0) sh1--; else sh0--; }
-        if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
-          if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
-        // ウッウ: 咥えた(撃った側)／吐き出した(受けた側が通常の姿に戻り、撃った側の能力が下がる)
-        if (e.gulpOn) { if (i === 0) g0 = e.gulpOn; else g1 = e.gulpOn; }
-        if (e.gulp) {
-          if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
-          else { g0 = null; b1 = e.gulp.buff.to.slice(); }
+      // ⚠ HPは**行ごと**に追う(2026-09-19タダシさん報告)。同じターンに両者のSPが解決したとき、
+      //    ターン終わりの状態だけで塗ると**両方のHPバーが一度に減って**しまい、カットインの順番と食い違う
+      const rowAt = new Map();
+      for (const r of subs) {
+        for (let i = 0; i < 2; i++) {
+          const e = r.ev[i];
+          if (!e) continue;
+          // SPアタック1発ぶんの待ち時間(じぶん9秒／あいて5秒・シールドで防ぐと7秒)
+          if (e.full !== undefined)
+            spSeen += i === 0 ? RK_SP_TURNS.me : (e.shielded ? RK_SP_TURNS.foeShd : RK_SP_TURNS.foe);
+          if (e.shielded) { if (i === 0) sh1--; else sh0--; }
+          if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
+            if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
+          // ウッウ: 咥えた(撃った側)／吐き出した(受けた側が通常の姿に戻り、撃った側の能力が下がる)
+          if (e.gulpOn) { if (i === 0) g0 = e.gulpOn; else g1 = e.gulpOn; }
+          if (e.gulp) {
+            if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
+            else { g0 = null; b1 = e.gulp.buff.to.slice(); }
+          }
+          const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
+          if (i === 0) hpB = Math.max(0, hpB - dm); else hpA = Math.max(0, hpA - dm);
+          // ウッウの反撃のダメージは**撃った側**が受ける
+          if (e.gulp && e.gulp.dmg) { if (i === 0) hpA = Math.max(0, hpA - e.gulp.dmg); else hpB = Math.max(0, hpB - e.gulp.dmg); }
         }
+        rowAt.set(r, { li: leg.li, hp0: hpA, hp1: hpB, b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, rv: rvArr });
+      }
+      // ⚠ 最後の行は**ターン終わりの確定値**にそろえる(細かなずれを次のターンへ持ち越さない)
+      if (!partial && subs.length) {
+        hpA = t.state[0].hp; hpB = t.state[1].hp;
+        const lastSt = rowAt.get(subs[subs.length - 1]);
+        if (lastSt) { lastSt.hp0 = hpA; lastSt.hp1 = hpB; }
       }
       while (spByGt.length <= gt) spByGt.push(spSeen);
       spByGt[gt] = spSeen;
@@ -5782,7 +5803,7 @@ function rbRender(body, bt, picks, foes, extra) {
         const e0 = evCell(r.ev[0] ? [r.ev[0]] : [], kOf(foes[leg.foeIdx])) + shdCell(r.ev[1] ? [r.ev[1]] : []) + dgCell(r.ev[1] ? [r.ev[1]] : []) + waitCell(r, 0);
         const e1 = evCell(r.ev[1] ? [r.ev[1]] : [], kOf(picks[leg.myIdx])) + shdCell(r.ev[0] ? [r.ev[0]] : []) + dgCell(r.ev[0] ? [r.ev[0]] : []) + waitCell(r, 1) + (first ? stallMark : '');
         if (!e0 && !e1) continue;
-        items.push({ gt, fx: fxOfRow(r, [kOf(picks[leg.myIdx]), kOf(foes[leg.foeIdx])]), snd: sndOfRow(r),
+        items.push({ gt, hf: hfPut(rowAt.get(r)), fx: fxOfRow(r, [kOf(picks[leg.myIdx]), kOf(foes[leg.foeIdx])]), snd: sndOfRow(r),
           html: `<div class="ft"><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
@@ -5845,7 +5866,7 @@ function rbRender(body, bt, picks, foes, extra) {
       </div>
       <button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}${sndAttr(x.snd)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${x.hf == null ? '' : ` data-hf="${x.hf}"`}${fxAttr(x.fx)}${sndAttr(x.snd)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
@@ -5922,7 +5943,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const mswBtn = dock.querySelector('.hmsw');          // ⇄いつでも交代(rbhudの外＝独立した大きな行)
   let ptr = 0, lastEl = null, curLegKey = '';
   let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
-  function updateHud(gt, li) {
+  function updateHud(gt, li, hf) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     // ⚠ ロックを解いた瞬間、フィードは自前のスクロールを失って**ページの一番上**へ飛ぶ
     //   (2026-09-07タダシさん報告「勝利したとき勝手に一番上までスクロールする」)。
@@ -5946,6 +5967,11 @@ function rbRender(body, bt, picks, foes, extra) {
     //   「前の対面の最後のSPのカットイン中に、もう交代後のポケモンがHUDに出る」ことになる
     if (li != null && f && f.li != null && li < f.li && legEnd[li]) f = legEnd[li];
     if (!f) return;
+    // ⚠ 行ごとの状態があればそれを重ねる(2026-09-19タダシさん報告)。
+    //   同じターンに両者のSPが解決したとき、ターン終わりの状態で塗ると**両方のHPバーが一度に減る**。
+    //   カットインは1つずつ流れるので、HPも**その行までの分**だけ減らす＝演出とダメージの反映がそろう
+    const rs = hf != null ? rowHud[hf] : null;
+    if (rs && rs.li === f.li) f = { ...f, hp0: rs.hp0, hp1: rs.hp1, b0: rs.b0, b1: rs.b1, g0: rs.g0, g1: rs.g1, sh0: rs.sh0, sh1: rs.sh1, rv: rs.rv };
     RBV.hudLi = f.li;   // いま表示している対面。再描画の直後の塗りに使う(下の run() 参照)
     const legKey = f.meta.name0 + '|' + f.meta.name1;
     if (legKey !== curLegKey) {   // 対面が変わったときだけ名前・CP・ゲージの器を作り直す
@@ -6054,6 +6080,9 @@ function rbRender(body, bt, picks, foes, extra) {
   // 共有するので、li を渡さないと「SPが当たった行を出しているのに、HUDだけ次の対面」になり、
   // **HPが減る演出が飛ぶ**(2026-09-07タダシさん報告)
   const curLi = () => fxLi(lastEl);
+  // ⚠ HUDは**いま出ているいちばん新しい行まで**の状態で塗る(2026-09-19)。
+  //   これを渡さないと、同じターンに両者のSPが解決したとき両方のHPが一度に減る
+  const curHf = () => fxHf(lastEl);
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
@@ -6176,7 +6205,7 @@ function rbRender(body, bt, picks, foes, extra) {
     //   実戦の交代はリアルタイムなので、演出は流しっぱなしで行も進め続ける
     if (fxEls.length && fxEls.every(fxLive)) {
       fxRun(fxEls, () => {});          // HUDは下の通常の流れで更新する(onHitは渡さない)
-      updateHud(RBV.cur, curLi());
+      updateHud(RBV.cur, curLi(), curHf());
       if (moreThisTurn()) { advance(); return; }
       if (RBV.cur >= stop) atStop();
       else if (RBV.playing && !RBV.timer) startTimer();
@@ -6187,15 +6216,15 @@ function rbRender(body, bt, picks, foes, extra) {
       // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
       fxRun(fxEls, () => {
         if (!onScreen()) return;
-        updateHud(RBV.cur, curLi());
+        updateHud(RBV.cur, curLi(), curHf());
         if (moreThisTurn()) { advance(); return; }   // 同じターンの残りの行を続ける
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
-      }, el => updateHud(RBV.cur, fxLi(el)));
+      }, el => updateHud(RBV.cur, fxLi(el), fxHf(el)));
       return;
     }
-    updateHud(RBV.cur, curLi());
+    updateHud(RBV.cur, curLi(), curHf());
     if (RBV.cur >= stop) atStop();
     // ⚠ 演出が無いまま行を出し切ったときは、タイマーが止まっていれば動かし直す
     //   (スタート直後・決断に答えた直後は advance から入るので、これが無いと再生が始まらない)
@@ -6288,7 +6317,7 @@ function rbRender(body, bt, picks, foes, extra) {
       if (!document.body.contains(feedEl)) return;
       advance();   // 開幕交代などの残りの行を、演出で区切りながら出す(出し切ったら再生へ)
     };
-    if (fx0.length) fxRun(fx0, go, el => updateHud(RBV.cur, fxLi(el))); else go();
+    if (fx0.length) fxRun(fx0, go, el => updateHud(RBV.cur, fxLi(el), fxHf(el))); else go();
   };
   if (hplay) hplay.onclick = () => {
     if (!RBV.started) { startBattle(); return; }
@@ -10640,7 +10669,8 @@ function gbRender(body, bt, picks, foes) {
   bt.legs.forEach(leg => { (leg.leadPts || []).forEach(regPt); (leg.points || []).forEach(regPt); regPt(leg.nextPoint); regPt(leg.foeNextPoint); regPt(leg.pending); });
 
   // ---- タイムラインの項目(全ターン)と、ターンごとの状況(HUD用)を作る ----
-  const items = [], frames = [], legEnd = [];
+  const items = [], frames = [], legEnd = [], rowHud = [];   // rowHud=行ごとの状態(同時発動でHPを片方ずつ減らすため)
+  const hfPut = st => { if (!st) return null; rowHud.push(st); return rowHud.length - 1; };
   // 通しターンごとの「それまでに撃たれたSPアタックの数」。実時間はSPの演出ぶんだけ余分に進む
   // (GB_SP_TURNSの項)。経過時間の表示と交代のクールタイムの残りはこの時計で出す
   const spByGt = [], exByGt = [];
@@ -10753,6 +10783,7 @@ function gbRender(body, bt, picks, foes) {
     //   「前の対面の最後のターン」の状態が消えるので、先に退避しておく
     //   (演出はその対面のものを出す＝SPのカットイン中に交代後のHUDが出ない・2026-09-07)
     if (leg.li > 0 && frames[base]) legEnd[leg.li - 1] = frames[base];
+    let hpA = leg.hud.hp0, hpB = leg.hud.hp1;   // 行ごとに追うHP(ターン終わりの値とは別)
     frames[base] = { meta, li: leg.li, hp0: leg.hud.hp0, en0: leg.hud.en0, hp1: leg.hud.hp1, en1: leg.hud.en1,
       b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, alive0, alive1, sn0, sn1, dd0, dd1, rv: rvArr };
     const ptAt = {};
@@ -10816,26 +10847,42 @@ function gbRender(body, bt, picks, foes) {
         const k = subs.findIndex(r => r.ev[1] && r.ev[1].full !== undefined);
         if (k >= 0) subs = subs.slice(0, k);
       }
-      for (const r of subs) for (let i = 0; i < 2; i++) {
-        const e = r.ev[i];
-        if (!e) continue;
-        if (e.full !== undefined) {
-          spSeen++;   // SPアタック1発ぶん、実時間が余分に進む
-          // わざオート中: あいてが撃ったSPはこの時点で正体が判明する(HUDの？→タイプアイコン)
-          if (i === 1 && MK.foeAuto) {
-            const rk = leg.foeName + '|' + e.move;
-            if (!rvArr.includes(rk)) rvArr = rvArr.concat(rk);
+      // ⚠ HPは**行ごと**に追う(2026-09-19タダシさん報告)。同じターンに両者のSPが解決したとき、
+      //    ターン終わりの状態だけで塗ると**両方のHPバーが一度に減って**しまい、カットインの順番と食い違う
+      const rowAt = new Map();
+      for (const r of subs) {
+        for (let i = 0; i < 2; i++) {
+          const e = r.ev[i];
+          if (!e) continue;
+          if (e.full !== undefined) {
+            spSeen++;   // SPアタック1発ぶん、実時間が余分に進む
+            // わざオート中: あいてが撃ったSPはこの時点で正体が判明する(HUDの？→タイプアイコン)
+            if (i === 1 && MK.foeAuto) {
+              const rk = leg.foeName + '|' + e.move;
+              if (!rvArr.includes(rk)) rvArr = rvArr.concat(rk);
+            }
           }
+          if (e.shielded) { if (i === 0) sh1--; else sh0--; }
+          if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
+            if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
+          // ウッウ: 咥えた(撃った側)／吐き出した(受けた側が通常の姿に戻り、撃った側の能力が下がる)
+          if (e.gulpOn) { if (i === 0) g0 = e.gulpOn; else g1 = e.gulpOn; }
+          if (e.gulp) {
+            if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
+            else { g0 = null; b1 = e.gulp.buff.to.slice(); }
+          }
+          const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
+          if (i === 0) hpB = Math.max(0, hpB - dm); else hpA = Math.max(0, hpA - dm);
+          // ウッウの反撃のダメージは**撃った側**が受ける
+          if (e.gulp && e.gulp.dmg) { if (i === 0) hpA = Math.max(0, hpA - e.gulp.dmg); else hpB = Math.max(0, hpB - e.gulp.dmg); }
         }
-        if (e.shielded) { if (i === 0) sh1--; else sh0--; }
-        if (e.buff) { const tgt = e.buff.target === 'opponent' ? 1 - i : i;
-          if (tgt === 0) b0 = e.buff.to.slice(); else b1 = e.buff.to.slice(); }
-        // ウッウ: 咥えた(撃った側)／吐き出した(受けた側が通常の姿に戻り、撃った側の能力が下がる)
-        if (e.gulpOn) { if (i === 0) g0 = e.gulpOn; else g1 = e.gulpOn; }
-        if (e.gulp) {
-          if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
-          else { g0 = null; b1 = e.gulp.buff.to.slice(); }
-        }
+        rowAt.set(r, { li: leg.li, hp0: hpA, hp1: hpB, b0: b0.slice(), b1: b1.slice(), g0, g1, sh0, sh1, rv: rvArr });
+      }
+      // ⚠ 最後の行は**ターン終わりの確定値**にそろえる(細かなずれを次のターンへ持ち越さない)
+      if (!partial && subs.length) {
+        hpA = t.state[0].hp; hpB = t.state[1].hp;
+        const lastSt = rowAt.get(subs[subs.length - 1]);
+        if (lastSt) { lastSt.hp0 = hpA; lastSt.hp1 = hpB; }
       }
       while (spByGt.length <= gt) spByGt.push(spSeen);
       spByGt[gt] = spSeen;
@@ -10881,7 +10928,7 @@ function gbRender(body, bt, picks, foes) {
           fxr = [{ k: 'pivot', side: pvSide, name: pvSide ? leg.foeName : leg.meName }].concat(fxr);
           pvSide = null;
         }
-        items.push({ gt, fx: fxr, snd: sndOfRow(r), html: `<div class="ft${flCls(t.tn)}"${flSty(t.tn)}><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
+        items.push({ gt, hf: hfPut(rowAt.get(r)), fx: fxr, snd: sndOfRow(r), html: `<div class="ft${flCls(t.tn)}"${flSty(t.tn)}><div class="c me">${e0}</div><i class="tn">${first ? gt : ''}</i><div class="c foe">${e1}</div></div>` });
         first = false;
       }
       if (first) items.push({ gt, html: `<div class="ft q${flCls(t.tn)}"${flSty(t.tn)}><i class="tn">${gt}</i></div>` });
@@ -10963,7 +11010,7 @@ function gbRender(body, bt, picks, foes) {
       </div>
       ${rtOn() ? '' : `<button class="rbonly" aria-pressed="${!RB.step}" title="バトルを流さず、結果を一気に出します。もう一度押すとバトル表示に戻ります">結果だけ見る</button>`}
     </div>
-    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${fxAttr(x.fx)}${sndAttr(x.snd)}>${x.html}</div>`).join('')}</div>
+    <div class="rbfeed">${sortTimeline(items).map(x => `<div class="fi future g${x.gt % 2}" data-gt="${x.gt}" data-li="${x.li == null ? '' : x.li}"${x.hf == null ? '' : ` data-hf="${x.hf}"`}${fxAttr(x.fx)}${sndAttr(x.snd)}>${x.html}</div>`).join('')}</div>
     <div class="rbdock">
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
@@ -11061,7 +11108,7 @@ function gbRender(body, bt, picks, foes) {
   const mswTip = dock.querySelector('.mswtip');   // 「あいてのSPまで あと◯発」
   let ptr = 0, lastEl = null, curLegKey = '';
   let hudFresh = true;   // 画面を作り直した直後は、HPバーをアニメさせずに置く(2026-09-07)
-  function updateHud(gt, li) {
+  function updateHud(gt, li, hf) {
     // バトル中の全画面ロック(2026-09-01): スタート中だけ.bfull。決着・スタート前は解除
     // ⚠ ロックを解いた瞬間、フィードは自前のスクロールを失って**ページの一番上**へ飛ぶ
     //   (2026-09-07タダシさん報告「勝利したとき勝手に一番上までスクロールする」)。
@@ -11089,6 +11136,11 @@ function gbRender(body, bt, picks, foes) {
     //   「前の対面の最後のSPのカットイン中に、もう交代後のポケモンがHUDに出る」ことになる
     if (li != null && f && f.li != null && li < f.li && legEnd[li]) f = legEnd[li];
     if (!f) return;
+    // ⚠ 行ごとの状態があればそれを重ねる(2026-09-19タダシさん報告)。
+    //   同じターンに両者のSPが解決したとき、ターン終わりの状態で塗ると**両方のHPバーが一度に減る**。
+    //   カットインは1つずつ流れるので、HPも**その行までの分**だけ減らす＝演出とダメージの反映がそろう
+    const rs = hf != null ? rowHud[hf] : null;
+    if (rs && rs.li === f.li) f = { ...f, hp0: rs.hp0, hp1: rs.hp1, b0: rs.b0, b1: rs.b1, g0: rs.g0, g1: rs.g1, sh0: rs.sh0, sh1: rs.sh1, rv: rs.rv };
     RBV.hudLi = f.li;   // いま表示している対面。再描画の直後の塗りに使う(下の run() 参照)
     const legKey = f.meta.name0 + '|' + f.meta.name1 + (mask ? '|?' : '');
     if (legKey !== curLegKey) {
@@ -11293,6 +11345,9 @@ function gbRender(body, bt, picks, foes) {
   // 共有するので、li を渡さないと「SPが当たった行を出しているのに、HUDだけ次の対面」になり、
   // **HPが減る演出が飛ぶ**(2026-09-07タダシさん報告)
   const curLi = () => fxLi(lastEl);
+  // ⚠ HUDは**いま出ているいちばん新しい行まで**の状態で塗る(2026-09-19)。
+  //   これを渡さないと、同じターンに両者のSPが解決したとき両方のHPが一度に減る
+  const curHf = () => fxHf(lastEl);
   const autoScroll = () => {
     // 全画面ロック中はフィード自身がスクロールする(手で上へ読み返し中なら連れ戻さない)
     if (body.classList.contains('bfull')) {
@@ -11461,7 +11516,7 @@ function gbRender(body, bt, picks, foes) {
     //   実戦の交代はリアルタイムなので、演出は流しっぱなしで行も進め続ける
     if (fxEls.length && fxEls.every(fxLive)) {
       fxRun(fxEls, () => {});          // HUDは下の通常の流れで更新する(onHitは渡さない)
-      updateHud(RBV.cur, curLi());
+      updateHud(RBV.cur, curLi(), curHf());
       if (moreThisTurn()) { advance(); return; }
       if (RBV.cur >= stop) atStop();
       else if (RBV.playing && !RBV.timer) startTimer();
@@ -11472,15 +11527,15 @@ function gbRender(body, bt, picks, foes) {
       // HUD(HP・ゲージ・シールド)の更新は演出の後半に回す＝カットインのあとにHPが減って見える
       fxRun(fxEls, () => {
         if (!onScreen()) return;
-        updateHud(RBV.cur, curLi());
+        updateHud(RBV.cur, curLi(), curHf());
         if (moreThisTurn()) { advance(); return; }   // 同じターンの残りの行を続ける
         if (RBV.cur >= stop) atStop();
         else if (RBV.playing) startTimer();
         else setPlayBtn();
-      }, el => updateHud(RBV.cur, fxLi(el)));
+      }, el => updateHud(RBV.cur, fxLi(el), fxHf(el)));
       return;
     }
-    updateHud(RBV.cur, curLi());
+    updateHud(RBV.cur, curLi(), curHf());
     if (RBV.cur >= stop) atStop();
     // ⚠ 演出が無いまま行を出し切ったときは、タイマーが止まっていれば動かし直す
     //   (スタート直後・決断に答えた直後は advance から入るので、これが無いと再生が始まらない)
@@ -11570,7 +11625,7 @@ function gbRender(body, bt, picks, foes) {
       if (!document.body.contains(feedEl)) return;
       advance();   // 開幕交代などの残りの行を、演出で区切りながら出す(出し切ったら再生へ)
     };
-    if (fx0.length) fxRun(fx0, go, el => updateHud(RBV.cur, fxLi(el))); else go();
+    if (fx0.length) fxRun(fx0, go, el => updateHud(RBV.cur, fxLi(el), fxHf(el))); else go();
   };
   if (hplay) hplay.onclick = () => {
     if (!RBV.started) { startBattle(); return; }
