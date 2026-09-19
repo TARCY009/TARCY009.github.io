@@ -5230,7 +5230,10 @@ function fxQuake() {
   });
 }
 // 1件の演出。f = {k, side, name, mv, mk} 。返り値=かかる時間(ms)
+// ⚠ **効果音はここで鳴らす**(2026-09-19)。行が現れた瞬間にまとめて鳴らすと、
+//   ①カットインの順番と音がずれる ②決断に答えた直後にまとめて出る行の音が丸ごと鳴らない、の2つが起きていた
 function fxOne(f) {
+  sndFx(f);
   const sideCls = f.side ? 'foe' : 'me';
   if (f.k === 'vs') {
     return fxShow('fxvs', `<div class="vswrap"><span class="pn me">${f.me || ''}${tyIco(f.me)}</span><em>VS</em><span class="pn foe">${f.foe || ''}${tyIco(f.foe)}</span></div>`, 1400);
@@ -5356,14 +5359,36 @@ let FX_GEN = 0;
 // list=演出の並び ／ done=すべて終わったあと ／ onHit=最初の演出の後半で1回だけ呼ぶ
 // (⚠ HUDの更新はここで行う。先に更新すると、カットインを見ているあいだにHPバーが
 //   減り終わってしまい「HPが減る演出が無い」ように見える・2026-09-07タダシさん報告)
+// 演出を再生中か。⚠ **再生中に次の演出が来たら、いまのを最後まで流してから始める**
+// (2026-09-19タダシさん報告「SPを2発ためて連続でタップすると1発目の演出がカットされる」)。
+// 原因は、入力を受け付けた直後の画面の作り直し(run)が fxRun を呼び、FX_GEN で再生中の演出を降ろしていたこと
+let FX_BUSY = false, FX_WAIT = null;
+// 仕切り直し(バトルスタート・↺やり直し)で、前の演出と音を降ろす。
+// ⚠ これが無いと、前のバトルの静止表示(.fxhold)が残ったままスタートし、
+//   「交代した！」が出てから VS が出る順番違いに見える(2026-09-19タダシさん報告)
+function fxDrop() {
+  FX_GEN++; FX_BUSY = false; FX_WAIT = null; fxClear();
+  const S = SND(); if (S) S.stop();
+}
 function fxRun(list, done, onHit) {
+  // ⇄交代のカットイン(再生を止めない演出)だけは、従来どおり割り込んでよい
+  const live = list.length > 0 && list.every(fxLive);
+  if (FX_BUSY && !live) { FX_WAIT = { list: list, done: done, onHit: onHit }; return; }
   let i = 0;
   const gen = ++FX_GEN;                       // 途中で新しい演出が始まったら、この回は静かに降りる
+  FX_BUSY = true;
   const sp = () => Math.max(1, RBV.speed || 1);
+  // ⚠ 再生中に画面を作り直していたら、そちらを優先する(古い done は捨てる＝古いDOMへ進めない)
+  const fin = () => {
+    if (gen !== FX_GEN) return;               // 新しい演出に譲った(FX_BUSY はそちらが持っている)
+    FX_BUSY = false; fxClear();
+    const w = FX_WAIT; FX_WAIT = null;
+    if (w) fxRun(w.list, w.done, w.onHit); else done();
+  };
   const step = () => {
     if (gen !== FX_GEN) return;
     // ⚠ 最後の演出も「一呼吸のあいだ出したまま」にして、done の直前に片づける
-    if (i >= list.length) { setTimeout(() => { if (gen !== FX_GEN) return; fxClear(); done(); }, FX_POST / sp()); return; }
+    if (i >= list.length) { setTimeout(fin, FX_POST / sp()); return; }
     fxClear();   // 前の行の演出を片づけてから次へ
     const el = list[i];
     RBV.fxDone.add(fxKey(el));
@@ -5440,7 +5465,24 @@ function sndStep(f) {
 }
 // シールドのドームが出るまでの時間(fxOne の sp の delay と同じ式)
 const sndShdMs = sp => Math.min(Math.round(Math.max(300, Math.round(1920 * FX_SLOW / sp)) * .55), Math.round(806 * FX_SLOW));
+// 1つの演出の音。⚠ SPアタックだけ**じぶんとあいてで別の音**(2026-09-19タダシさん指示・あいて＝怪光線)。
+// 交代・くりだす・撃退は両側とも同じ音（画面のカットインで側が分かるため）。
+// 決着(end)だけはここで鳴らさない（RBV.endSnd で1バトル1回だけ鳴らす）
+function sndFx(f, at) {
+  const S = SND(); if (!S || !f) return;
+  if (f.k === 'sp') S.sp(f.eff, f.side, at);
+  else if (f.k === 'vs') S.vs(at);            // バトルスタート
+  else if (f.k === 'in') S.intro(at);         // ポケモンをくりだす
+  else if (f.k === 'swap') S.swap(at);
+  else if (f.k === 'ko') S.ko(at);            // たおした/たおれた どちらも同じ音
+  else if (f.k === 'pivot') S.pivot(f.side, at);          // 交代受け(じぶん=成功・あいて=された で別の音)
+  else if (f.k === 'shd') S.shield(at);                   // シールドのブロック
+  else if (f.k === 'form') (f.spit ? S.spit : S.form)(at); // 吐き出した=反撃／咥えた=すがたが変わる
+}
 // 行が現れたときに鳴らす。i = タイムライン内の位置(描き直しても変わらないので、二重再生の見分けに使う)
+// ⚠ カットインが流れるとき、その音は fxOne が**演出と同じ瞬間**に鳴らす。ここで鳴らすのは
+//   ①ノーマルアタック(カットイン無し) ②ミミッキュのばけのかわ(カットイン無し)
+//   ③演出OFF・reduced-motion のときのカットインぶん、の3つだけ
 function sndRow(el, i) {
   const S = SND(); if (!S || !el || !el.dataset) return;
   const key = i + '|' + el.dataset.gt;
@@ -5454,22 +5496,15 @@ function sndRow(el, i) {
       a.forEach(x => { if (x.k === 'atk') S.atk(x.tn, rbRate()); else extra.push(x); });
     } catch (e) { }
   }
-  let t = fxOk() && el.dataset.fx ? FX_PRE / Math.max(1, RBV.speed || 1) / 1000 : 0;
+  let t = 0;
   if (el.dataset.fx) {
+    const play = !fxOk();   // 演出が流れないときだけ、ここで鳴らす
     try {
       JSON.parse(el.dataset.fx).forEach(f => {
-        // SPアタックだけ**じぶんとあいてで別の音**(2026-09-19タダシさん指示・あいて＝怪光線)。
-        // 交代・くりだす・撃退は両側とも同じ音（画面のカットインで側が分かるため）
-        if (f.k === 'sp') {
-          S.sp(f.eff, f.side, t);
-          // シールドで防いだときは、ドームが出るのに合わせて「エネルギーの膜」を鳴らす
-          if (f.shd) S.shield(t + (fxOk() ? sndShdMs(Math.max(1, RBV.speed || 1)) / 1000 : .7));
-        } else if (f.k === 'vs') S.vs(t);          // バトルスタート
-        else if (f.k === 'in') S.intro(t);         // ポケモンをくりだす
-        else if (f.k === 'swap') S.swap(t);
-        else if (f.k === 'ko') S.ko(t);   // たおした/たおれた どちらも同じ音(2026-09-18タダシさん指示)
-        else if (f.k === 'pivot') S.pivot(f.side, t);   // 交代受け(じぶん=成功・あいて=された で別の音)
-        else if (f.k === 'form') (f.spit ? S.spit : S.form)(t);   // 吐き出した=反撃／咥えた=すがたが変わる
+        if (play) {
+          sndFx(f, t);
+          if (f.k === 'sp' && f.shd) S.shield(t + .7);   // シールドのドームぶん遅らせる
+        }
         t += sndStep(f);
       });
     } catch (e) { }
@@ -6192,6 +6227,7 @@ function rbRender(body, bt, picks, foes, extra) {
     run();
   };
   const restart = () => {
+    fxDrop();   // ⚠ 前の演出の静止表示・鳴りかけの音を降ろしてから作り直す(2026-09-19)
     RB.ans = {}; RBUI.open = null; RB.found = null;
     RBV.cur = 0; RBV.playing = true;
     if (RB.step) RBV.started = true;   // そのまま新しいバトルが最初から始まる
@@ -6229,6 +6265,7 @@ function rbRender(body, bt, picks, foes, extra) {
   // HUDの再生コントロール
   const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = dock.querySelector('.hskip');
   const startBattle = () => {
+    fxDrop();   // ⚠ 前の演出の静止表示が残っていると、VSより先に出てしまう(2026-09-19)
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
     // ⚠ スタート前に隠していた行(開幕交代のチップ・打ちかけの1発)は、一度に出さずに
@@ -11385,8 +11422,6 @@ function gbRender(body, bt, picks, foes) {
       if (pivotWin && !RBV.pvDone.has(pivotWin.gt) && fxOk() && bt.pending.gt === pivotWin.gt) {
         RBV.pvDone.add(pivotWin.gt);
         const p0 = bt.pending, fx0 = pivotWin.fx;
-        // ⚠ この経路は sndRow を通らないので、効果音もここで鳴らす（カットインと同じタイミング）
-        const S0 = SND(); if (S0) S0.pivot(fx0.side, FX_PRE / 1000);
         setTimeout(() => {
           if (!onScreen()) return;
           const d = fxOne(fx0);
@@ -11476,6 +11511,7 @@ function gbRender(body, bt, picks, foes) {
     run();
   };
   const restart = () => {
+    fxDrop();   // ⚠ 前の演出の静止表示・鳴りかけの音を降ろしてから作り直す(2026-09-19)
     RB.ans = {}; RBUI.open = null; RB.found = null;
     if (mode === 'mock') RB.rseed = (Math.random() * 1e9) | 0;   // ⏹=新しいバトル: あいての癖も引き直す
     RBV.cur = 0; RBV.playing = true;
@@ -11509,6 +11545,7 @@ function gbRender(body, bt, picks, foes) {
   });
   const hplay = hud.querySelector('.hplay'), hspd = hud.querySelector('.hspd'), hskip = dock.querySelector('.hskip');
   const startBattle = () => {
+    fxDrop();   // ⚠ 前の演出の静止表示が残っていると、VSより先に出てしまう(2026-09-19)
     RBV.started = true; RBV.playing = true;
     body.classList.add('bfull');   // ▶を押した瞬間に全画面ロックへ(2026-09-01タダシさん指示)
     // 見せ合いの伏せ字はスタートした瞬間に外す(VSの演出と同時に相手が分かる)。

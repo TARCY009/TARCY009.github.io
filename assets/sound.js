@@ -16,7 +16,7 @@
   var on = false;
   try { on = localStorage.getItem(KEY) === '1'; } catch (e) { }
 
-  var AC = null, BUS = null, MASTER = null, CONV = null, DLYIN = null, LIVE = [];
+  var AC = null, BUS = null, MASTER = null, CONV = null, DLYIN = null, LIVE = [], KA = null;
 
   function ac() {
     if (!AC) {
@@ -57,9 +57,25 @@
       });
       // iPhoneのマナーモードでも鳴らす（対応ブラウザのみ）
       try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
+      keepAlive();
     }
-    if (AC.state === 'suspended') { try { AC.resume(); } catch (e) { } }
+    // ⚠ iPhoneは「しばらく無音」「画面を離れた」「着信」などで音の出口が眠る
+    //    （suspended だけでなく Safari 独自の interrupted にもなる）。
+    //    眠ったまま鳴らそうとすると無音になり、「音ONなのに鳴らない」「交代したら鳴り出した」になる
+    //    （2026-09-19タダシさん報告）。running 以外なら必ず起こしにいく
+    if (AC.state !== 'running') { try { AC.resume(); } catch (e) { } }
     return AC;
+  }
+  // ⚠ 眠り対策その2: ごく小さな無音を流し続ける（iPhoneは無音が続くと出口を止めてしまう）
+  function keepAlive() {
+    if (!AC || KA) return;
+    try {
+      KA = AC.createBufferSource();
+      KA.buffer = AC.createBuffer(1, Math.max(2, Math.round(AC.sampleRate * .5)), AC.sampleRate);
+      KA.loop = true;
+      var g = AC.createGain(); g.gain.value = .0001;
+      KA.connect(g); g.connect(AC.destination); KA.start();
+    } catch (e) { KA = null; }
   }
 
   function route(node, o) {
@@ -92,8 +108,10 @@
     var oo = {}; for (var k in o) oo[k] = o[k];
     if (oo.dur == null) oo.dur = b.duration;
     route(g, oo);
-    s.start(c.currentTime + (o.at || 0)); LIVE.push(s);
+    s.start(c.currentTime + (o.at || 0)); keep(s);
   }
+  // 鳴らした音の控え。⚠ 長いバトルでたまり続けないよう上限をつける（止めるときに使うだけ）
+  function keep(n) { LIVE.push(n); if (LIVE.length > 400) LIVE = LIVE.slice(-200); }
   function fade(i, sr, ms) { return Math.min(1, i / (sr * (ms || 3) / 1000)); }
   // 種を決めると毎回まったく同じ波形になる乱数（ノーマルアタックの粒をそろえる）
   function rng(seed) {
@@ -307,7 +325,7 @@
       [-7, 0, 7].forEach(function (d) {
         var os = c.createOscillator();
         os.type = o.type || 'sawtooth'; os.frequency.setValueAtTime(f, t); os.detune.setValueAtTime(d + (i % 2 ? 3 : -3), t);
-        os.connect(lp); os.start(t); os.stop(t + dur + .1); LIVE.push(os);
+        os.connect(lp); os.start(t); os.stop(t + dur + .1); keep(os);
       });
     });
     var oo = {}; for (var k in o) oo[k] = o[k];
@@ -322,7 +340,7 @@
       var os = c.createOscillator();
       os.type = o.type || 'triangle'; os.frequency.setValueAtTime(f, t); os.detune.setValueAtTime(cents, t);
       if (o.f2) os.frequency.exponentialRampToValueAtTime(Math.max(20, o.f2), t + dur);
-      os.connect(g); os.start(t); os.stop(t + dur + .05); LIVE.push(os);
+      os.connect(g); os.start(t); os.stop(t + dur + .05); keep(os);
     };
     mk(0); if (o.det) { mk(o.det); mk(-o.det); }
     g.gain.setValueAtTime(.0001, t);
@@ -340,7 +358,7 @@
     s.buffer = buf; bp.type = 'bandpass'; bp.frequency.setValueAtTime(f, t);
     if (o.f2) bp.frequency.exponentialRampToValueAtTime(Math.max(40, o.f2), t + dur);
     bp.Q.value = q; g.gain.value = o.vol == null ? .4 : o.vol;
-    s.connect(bp).connect(g); route(g, o); s.start(t); s.stop(t + dur + .05); LIVE.push(s);
+    s.connect(bp).connect(g); route(g, o); s.start(t); s.stop(t + dur + .05); keep(s);
   }
 
   /* ---------------- 場面ごとの音（2026-09-18タダシさん選択） ---------------- */
@@ -539,7 +557,7 @@
     },
     toggle: function () { return api.setOn(!on); },
     // ユーザーの操作の中で呼んでおく（そうしないとブラウザが音を出させてくれない）
-    unlock: function () { if (on) ac(); },
+    unlock: function () { wake(); },
     // ノーマルアタック。turns=わざのターン数（1〜5）・rate=再生の速さ（×2なら2）
     atk: function (turns, rate) {
       if (!on || !ac()) return;
@@ -567,5 +585,17 @@
       LIVE = [];
     }
   };
+  // ⚠ ブラウザは「利用者が操作した瞬間」でないと音の出口を開けてくれない。
+  //    どのタップ・キー操作でも起こしにいく（音がONのときだけ・何度呼んでも害はない）。
+  //    これが無いと、眠ったあとは次に🔊を押し直すまで鳴らないままになる
+  function wake() { if (on) { ac(); keepAlive(); } }
+  ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach(function (ev) {
+    try { document.addEventListener(ev, wake, { capture: true, passive: true }); } catch (e) { document.addEventListener(ev, wake, true); }
+  });
+  // 画面に戻ったとき・別のページから戻ったときも起こす
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); });
+  window.addEventListener('pageshow', wake);
+  window.addEventListener('focus', wake);
+
   window.GonaviSound = api;
 })();
