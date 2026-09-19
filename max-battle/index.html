@@ -368,10 +368,12 @@ footer a{color:var(--spec)}
   </ul>
   <h4>SP判定のしくみ</h4>
   <p>ダイマックスフェイズへの移行は、SPアタックの<b>0.5秒あたりのチャージ量が1％以上</b>ならSPを撃つほうが早く、
-    1％未満なら0.5秒のノーマルアタックを連打するほうが早い、という判定です。判明していないボスは既定値で計算します
+    1％未満なら0.5秒のノーマルアタックを連打するほうが早い、という判定です。一覧に無いボスは既定値で計算します
     （分かりしだい反映します）。</p>
-  <p>2026年から★5・★6ボスのマックスメーターのチャージ設定が調整されているため、それ以降に登場したポケモンの設定は
-    分かっていません。SP判定の既定値は、調整後に登場した初代御三家と同じ値にしています。</p>
+  <p>マックスメーターは<b>1回の攻撃ごとに「与えたダメージ ÷ ボスの最大HP」の割合で溜まり、最低でも1％</b>は溜まります。
+    2026年にこの溜まり方が調整され、★5と★6では以前よりずっと速く溜まるようになりました。
+    そのため<b>★6でもSPアタックを撃ったほうが速いボスがあります</b>（以前はどのボスでも0.5秒のノーマルアタック連打が最速でした）。
+    1％に必要なダメージは<b>★5＝ボスHP÷800、★6＝ボスHP÷3000</b>です。</p>
 </div>
 
 </div>
@@ -391,7 +393,7 @@ footer a{color:var(--spec)}
   const fSp=$('fSp'), spPanel=$('spPanel'), spStar5=$('spStar5'), spStar6=$('spStar6');
   const myivBox=$('myiv'), ivCP=$('ivCP'), ivA=$('ivA'), ivD=$('ivD'), ivS=$('ivS'), ivInfo=$('ivInfo');
   const spHP=$('spHP'), spDef=$('spDef'), spStatus=$('spStatus');
-  const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {defaults:{"5":{hp:null,defCpm:0.7},"6":{hp:60000,defCpm:0.85}}, coeff:{"5":0.0025,"6":0.00033}, bosses:{}};
+  const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {defaults:{"5":{hp:20000,defCpm:0.8},"6":{hp:100000,defCpm:0.85}}, coeff:{"5":0.00125,"6":0.00033333}, bosses:{}};
   const cpm = D.cpm50;
 
   let boss=null, mode='atk', swapOn=false, halfOnly=true, includeLegacy=true;
@@ -790,7 +792,7 @@ footer a{color:var(--spec)}
     const hp = parseFloat(spHP.value);
     const defCpm = parseFloat(spDef.value);
     const e = BP.bosses[boss.n];
-    const coeff = (e && e.coeff) || (BP.coeff || {"5":0.00125,"6":0.00033})[String(spStar)];
+    const coeff = (e && e.coeff) || (BP.coeff || {"5":0.00125,"6":0.00033333})[String(spStar)];
     if(!defCpm || !boss.df) return null;
     return {bossDef: (boss.df + 15) * defCpm,
             denom: (hp && coeff) ? hp * coeff : null};
