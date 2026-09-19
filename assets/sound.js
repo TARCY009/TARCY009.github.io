@@ -17,6 +17,7 @@
   try { on = localStorage.getItem(KEY) === '1'; } catch (e) { }
 
   var AC = null, BUS = null, MASTER = null, CONV = null, DLYIN = null, LIVE = [], KA = null;
+  var asleep = false;   // 画面を閉じているあいだの印（⚠ document.hidden を直接見ない・下の sleep/wake を参照）
 
   function ac() {
     if (!AC) {
@@ -542,7 +543,9 @@
   // at 秒あとに鳴らす（1つの行に演出が複数あるとき、カットインと同じ間でずらすのに使う）。
   // ⚠ 予約は subTimers に積む＝🔊を切る・止めるで必ず消える
   function later(fn, at) {
-    if (!on || !ac()) return;
+    // ⚠ 画面を閉じている（ほかのアプリ・別のタブ・画面ロック）あいだは鳴らさないし予約もしない。
+    //    予約すると、戻ってきた瞬間にためこんだ音がまとめて鳴る
+    if (!on || asleep || !ac()) return;
     if (at > 0) subTimers.push(setTimeout(function () { if (on) fn(); }, at * 1000));
     else fn();
   }
@@ -560,7 +563,7 @@
     unlock: function () { wake(); },
     // ノーマルアタック。turns=わざのターン数（1〜5）・rate=再生の速さ（×2なら2）
     atk: function (turns, rate) {
-      if (!on || !ac()) return;
+      if (!on || asleep || !ac()) return;
       kachi();
       var step = 500 / (rate || 1);
       for (var k = 1; k < (turns || 1); k++) {
@@ -588,12 +591,21 @@
   // ⚠ ブラウザは「利用者が操作した瞬間」でないと音の出口を開けてくれない。
   //    どのタップ・キー操作でも起こしにいく（音がONのときだけ・何度呼んでも害はない）。
   //    これが無いと、眠ったあとは次に🔊を押し直すまで鳴らないままになる
-  function wake() { if (on) { ac(); keepAlive(); } }
+  function wake() { asleep = false; if (on) { ac(); keepAlive(); } }
   ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach(function (ev) {
     try { document.addEventListener(ev, wake, { capture: true, passive: true }); } catch (e) { document.addEventListener(ev, wake, true); }
   });
-  // 画面に戻ったとき・別のページから戻ったときも起こす
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); });
+  // ⚠ 画面を閉じたら音を消す（2026-09-19タダシさん指示）。
+  //    マナーモードでも鳴るように navigator.audioSession.type='playback' にしてあるぶん、
+  //    そのままだと**ほかのアプリに移っても・画面を消しても鳴り続ける**。
+  //    鳴っている音と予約を捨てて、出口そのものを眠らせる（戻ってきたら wake が起こす）
+  function sleep() {
+    asleep = true;
+    try { api.stop(); } catch (e) { }
+    if (AC) { try { AC.suspend(); } catch (e) { } }
+  }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) sleep(); else wake(); });
+  window.addEventListener('pagehide', sleep);
   window.addEventListener('pageshow', wake);
   window.addEventListener('focus', wake);
 
