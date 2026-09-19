@@ -5414,36 +5414,67 @@ function sndEff(mvName, defKey) {
     return m > 1.01 ? 's' : m < 0.99 ? 'w' : 'n';
   } catch (e) { return 'n'; }
 }
-// 行に持たせる音の情報(ノーマルアタックだけ。SP・交代・撃退は data-fx から拾う)
-const sndAttr = s => s ? ` data-snd='${JSON.stringify(s)}'` : '';
-// じぶんのノーマルアタックの行なら {k:'atk', tn:わざのターン数} を返す
+// 行に持たせる音の情報(カットインの無いものだけ。SP・交代・撃退は data-fx から拾う)
+const sndAttr = s => s && s.length ? ` data-snd='${JSON.stringify(s)}'` : '';
+// じぶんのノーマルアタック {k:'atk', tn:わざのターン数} と、
+// ミミッキュの「ばけのかわがはがれた！」{k:'form'}（＝すがたが変わる音。カットイン演出は無いので音だけ）
 function sndOfRow(r) {
+  const out = [];
   const e = r.ev[0];
-  if (!e || e.full !== undefined) return null;
-  return { k: 'atk', tn: e.tn || 1 };
+  if (e && e.full === undefined) out.push({ k: 'atk', tn: e.tn || 1 });
+  // disguised は**撃った側**のイベントに付く（はがれたのは受けた側）
+  if ((r.ev[0] && r.ev[0].disguised) || (r.ev[1] && r.ev[1].disguised)) out.push({ k: 'form' });
+  return out.length ? out : null;
 }
+// ⚠ 1つの行に演出が複数あるとき、音も**カットインと同じ順番・同じ間**でずらす(2026-09-19)。
+//   まとめて同時に鳴らすと、SPの音とシールドやフォルムチェンジの音が重なって潰れる。
+//   値は fxOne / fxShow / fxRun と同じ式なので、**演出の長さを変えたらここもそろえる**
+const SND_FXD = { vs: 1400, in: 1400, swap: 1700, pivot: 1150, sp: 1920, ko: 1550, form: 1910 };
+// その演出ぶん進む時間(秒)。演出OFFのときは短く一定にする(音は演出とは別に鳴るため)
+function sndStep(f) {
+  const sp = Math.max(1, RBV.speed || 1);
+  if (!fxOk()) return f.k === 'sp' ? .9 : .5;
+  let d = Math.max(300, Math.round((SND_FXD[f.k] || 600) * FX_SLOW / sp));
+  if (f.k === 'sp' && f.shd) d = sndShdMs(sp) + Math.max(300, Math.round(950 * FX_SLOW / sp));
+  return (FX_PRE / sp + d + FX_POST / sp + FX_GAP / sp) / 1000;
+}
+// シールドのドームが出るまでの時間(fxOne の sp の delay と同じ式)
+const sndShdMs = sp => Math.min(Math.round(Math.max(300, Math.round(1920 * FX_SLOW / sp)) * .55), Math.round(806 * FX_SLOW));
 // 行が現れたときに鳴らす。i = タイムライン内の位置(描き直しても変わらないので、二重再生の見分けに使う)
 function sndRow(el, i) {
   const S = SND(); if (!S || !el || !el.dataset) return;
   const key = i + '|' + el.dataset.gt;
   if (RBV.sndDone.has(key)) return;
   RBV.sndDone.add(key);
+  let extra = [];   // カットインの無い音(ミミッキュ)は、カットインの音が終わってから鳴らす
   if (el.dataset.snd) {
-    try { const a = JSON.parse(el.dataset.snd); if (a.k === 'atk') S.atk(a.tn, rbRate()); } catch (e) { }
+    try {
+      let a = JSON.parse(el.dataset.snd);
+      if (!Array.isArray(a)) a = [a];
+      a.forEach(x => { if (x.k === 'atk') S.atk(x.tn, rbRate()); else extra.push(x); });
+    } catch (e) { }
   }
+  let t = fxOk() && el.dataset.fx ? FX_PRE / Math.max(1, RBV.speed || 1) / 1000 : 0;
   if (el.dataset.fx) {
     try {
       JSON.parse(el.dataset.fx).forEach(f => {
         // SPアタックだけ**じぶんとあいてで別の音**(2026-09-19タダシさん指示・あいて＝怪光線)。
         // 交代・くりだす・撃退は両側とも同じ音（画面のカットインで側が分かるため）
-        if (f.k === 'sp') S.sp(f.eff, f.side);
-        else if (f.k === 'vs') S.vs();          // バトルスタート
-        else if (f.k === 'in') S.intro();       // ポケモンをくりだす
-        else if (f.k === 'swap') S.swap();
-        else if (f.k === 'ko') S.ko();   // たおした/たおれた どちらも同じ音(2026-09-18タダシさん指示)
+        if (f.k === 'sp') {
+          S.sp(f.eff, f.side, t);
+          // シールドで防いだときは、ドームが出るのに合わせて「エネルギーの膜」を鳴らす
+          if (f.shd) S.shield(t + (fxOk() ? sndShdMs(Math.max(1, RBV.speed || 1)) / 1000 : .7));
+        } else if (f.k === 'vs') S.vs(t);          // バトルスタート
+        else if (f.k === 'in') S.intro(t);         // ポケモンをくりだす
+        else if (f.k === 'swap') S.swap(t);
+        else if (f.k === 'ko') S.ko(t);   // たおした/たおれた どちらも同じ音(2026-09-18タダシさん指示)
+        else if (f.k === 'pivot') S.pivot(f.side, t);   // 交代受け(じぶん=成功・あいて=された で別の音)
+        else if (f.k === 'form') (f.spit ? S.spit : S.form)(t);   // 吐き出した=反撃／咥えた=すがたが変わる
+        t += sndStep(f);
       });
     } catch (e) { }
   }
+  extra.forEach(x => { if (x.k === 'form') S.form(t); });
 }
 // タイムラインの1行(エンジンのsub行)から、SP発動とフォルムチェンジの演出を拾う
 // keys = [じぶんのkey, あいてのkey]（SPアタックの音を相性で出し分けるために使う）
@@ -5454,7 +5485,7 @@ function fxOfRow(r, keys) {
     if (!e || e.full === undefined) return;
     out.push({ k: 'sp', side: sd, mv: e.move, shd: !!e.shielded, eff: sndEff(e.move, keys && keys[1 - sd]) });
     if (e.gulpOn) out.push({ k: 'form', side: sd, mk: GULP_MK[e.gulpOn], name: `${GULP_JA[e.gulpOn]}のすがた` });
-    if (e.gulp) out.push({ k: 'form', side: 1 - sd, mk: GULP_MK[e.gulp.form], name: '獲物を吐き出した！' });
+    if (e.gulp) out.push({ k: 'form', side: 1 - sd, mk: GULP_MK[e.gulp.form], name: '獲物を吐き出した！', spit: true });
   });
   return out.length ? out : null;
 }
@@ -11354,6 +11385,8 @@ function gbRender(body, bt, picks, foes) {
       if (pivotWin && !RBV.pvDone.has(pivotWin.gt) && fxOk() && bt.pending.gt === pivotWin.gt) {
         RBV.pvDone.add(pivotWin.gt);
         const p0 = bt.pending, fx0 = pivotWin.fx;
+        // ⚠ この経路は sndRow を通らないので、効果音もここで鳴らす（カットインと同じタイミング）
+        const S0 = SND(); if (S0) S0.pivot(fx0.side, FX_PRE / 1000);
         setTimeout(() => {
           if (!onScreen()) return;
           const d = fxOne(fx0);

@@ -6,7 +6,8 @@
    ⚠ ノーマルアタックは**乱数の種を固定**して、1発ごとの大きさを完全にそろえる（数えるための音なので粒がそろわないと意味がない）。
    ⚠ 音の長さは模擬戦のカットインの長さに合わせてある（交代2.55秒／SP2.88秒（着弾1.05秒）／撃退2.33秒（ズドン0.47秒）／勝敗3.15秒）。
 
-   使い方: GonaviSound.isOn()/setOn(b) で入り切り、atk(turns, rate)・sp(eff, side)・swap()・ko()・win()・lose() で鳴らす。
+   使い方: GonaviSound.isOn()/setOn(b) で入り切り、atk(turns, rate)・sp(eff, side, at)・swap(at)・ko(at)・
+   pivot(side, at)・shield(at)・form(at)・spit(at)・win()・lose() で鳴らす（at＝何秒あとに鳴らすか・省略でいますぐ）。
    ⚠ SPアタックは**じぶんとあいてで別の音**（side=1 があいて）。どちらが撃ったか音だけで分かるようにするため。
    保存キーは gbl_snd（gbl_ なので「データの引っ越し」に入る）。既定はOFF。 */
 (function () {
@@ -423,6 +424,50 @@
     tone({ f: 880, f2: 110, type: 'sawtooth', dur: .55, vol: .26, at: 1.05, lo: 2600, dly: .2 });
     kick(.4, { f0: 200, f1: 50, vol: .595, at: 1.05, drive: .6, decay: 6 });
   }
+  // 交代受け「電気のスイッチ」（2026-09-19タダシさん選択・見本13の案3）
+  // 演出1.73秒。⇄が回って 0.88 秒でカチッと止まるところに山を合わせてある。
+  // side: 0=じぶんが決めた「交代受け成功！」（明るく上がる） / 1=あいてに決められた（暗く下がる）
+  function sePivot(side) {
+    if (side) {
+      stutter(9, { f0: 2400, f1: 800, dur: .022, vol: .348, at: .06, span: .78, pan: .8, pan2: -.8 });
+      burst(.34, { cut: 5200, cut2: 700, decay: 8, drive: .4, vol: .626, at: .88, hi: 400, rev: .4 });
+      tone({ f: 784, f2: 196, type: 'square', dur: .2, vol: .261, at: .88, lo: 2600 });
+      fm(523, .7, { ratio: 1.49, index: 3.4, decay: 2.8, vol: .383, at: .95, rev: .6, dly: .25, wide: 1 });
+      kick(.4, { f0: 190, f1: 48, vol: .592, at: .9, drive: .6, decay: 6 });
+      return;
+    }
+    stutter(9, { f0: 900, f1: 2600, dur: .02, vol: .426, at: .06, span: .78, pan: -.8, pan2: .8 });
+    burst(.26, { cut: 9000, cut2: 2400, decay: 12, drive: .3, vol: .724, at: .88, hi: 1600, rev: .3 });
+    tone({ f: 1568, f2: 3136, type: 'square', dur: .12, vol: .298, at: .88, lo: 5000 });
+    fm(2093, .5, { ratio: 2.01, index: 3, decay: 4, vol: .511, at: .95, rev: .26, dly: .12, wide: 1 });
+    shimmer(4, { base: 2637, dur: .26, span: .22, vol: .17, at: .96, spread: 1.4 });
+  }
+  // シールドのブロック「エネルギーの膜」（見本13の案3）。演出1.43秒・膜が張るのは0.43秒。
+  // バトル中いちばん多く鳴るので、ほかより控えめ（ピーク .55前後）にしてある
+  function seShield() {
+    pad([147, 220, 294], .55, { vol: .146, rev: .35, open: 1200, type: 'sawtooth', atk: .1 });
+    sweep(.4, { f0: 500, f1: 3000, q: 9, tone: .18, t0: 180, t1: 700, env: 'up', vol: .237, at: .04, dly: .15 });
+    burst(.3, { cut: 6000, cut2: 1600, decay: 10, drive: .25, vol: .255, at: .42, hi: 900, rev: .4 });
+    fm(1568, .5, { ratio: 2.01, index: 2, decay: 4.5, vol: .164, at: .43, rev: .5, dly: .2, wide: 1 });
+    pad([294, 440, 587], .65, { vol: .091, at: .46, rev: .6, open: 2600, type: 'triangle' });
+  }
+  // フォルムチェンジ「電子のパルス」（見本13の案3）＝**すがたが変わる**音。
+  // ⚠ ウッウ専用にしない（ギルガルド・モルペコ・ミミッキュにも使う）ので、水や生き物に寄せない。
+  // ⚠ 音の山は先頭に置く（カットイン演出があるのはウッウだけなので、あるときだけ遅らせて鳴らす）
+  function seForm() {
+    tone({ f: 330, f2: 1760, type: 'square', dur: .1, vol: .397, lo: 4000 });
+    noise({ f: 4200, q: 9, dur: .025, vol: .992, at: .1, seed: 4601 });
+    tone({ f: 1760, f2: 880, type: 'square', dur: .14, vol: .446, at: .12, lo: 3600 });
+    fm(1319, .4, { ratio: 3.01, index: 2.4, decay: 6, vol: .496, at: .14, rev: .4, dly: .2, wide: 1 });
+    pad([294, 440], .5, { vol: .223, at: .16, rev: .45, open: 2200, type: 'triangle' });
+  }
+  // ウッウの反撃「ビリッ」（見本13の案4）＝獲物を吐き出したとき。**短い一撃**（0.8秒ほど）
+  function seSpit() {
+    stutter(4, { f0: 2600, f1: 1400, dur: .02, vol: .72, span: .12, pan: .5, pan2: -.5 });
+    burst(.24, { cut: 9000, cut2: 1800, decay: 13, drive: .3, vol: .72, at: .03, hi: 1200, rev: .3 });
+    tone({ f: 1174, f2: 294, type: 'square', dur: .18, vol: .384, at: .03, lo: 3200 });
+    kick(.22, { f0: 180, f1: 56, vol: .576, at: .03, drive: .5, decay: 10 });
+  }
   // 撃退「叩きつける」（打った音が左右の壁に跳ね返って戻る）
   function seKo() {
     whoosh(.35, { f0: 700, f1: 2600, vol: .3, pan: -.6, pan2: .2, dur: .35 });
@@ -476,6 +521,13 @@
 
   var subTimers = [];
   function clearSub() { subTimers.forEach(clearTimeout); subTimers = []; }
+  // at 秒あとに鳴らす（1つの行に演出が複数あるとき、カットインと同じ間でずらすのに使う）。
+  // ⚠ 予約は subTimers に積む＝🔊を切る・止めるで必ず消える
+  function later(fn, at) {
+    if (!on || !ac()) return;
+    if (at > 0) subTimers.push(setTimeout(function () { if (on) fn(); }, at * 1000));
+    else fn();
+  }
 
   var api = {
     isOn: function () { return on; },
@@ -498,13 +550,17 @@
       }
     },
     // side: 0/省略=じぶん（斬撃） / 1=あいて（怪光線）。音でどちらが撃ったか分かるようにする
-    sp: function (eff, side) { if (on && ac()) (side ? seSpFoe : seSp)(eff); },
-    vs: function () { if (on && ac()) seVs(); },       // バトルスタート
-    intro: function () { if (on && ac()) seIn(); },    // ポケモンをくりだす
-    swap: function () { if (on && ac()) seSwap(); },
-    ko: function () { if (on && ac()) seKo(); },
-    win: function () { if (on && ac()) seWin(); },
-    lose: function () { if (on && ac()) seLose(); },
+    sp: function (eff, side, at) { later(function () { (side ? seSpFoe : seSp)(eff); }, at); },
+    vs: function (at) { later(seVs, at); },            // バトルスタート
+    intro: function (at) { later(seIn, at); },         // ポケモンをくりだす
+    swap: function (at) { later(seSwap, at); },
+    ko: function (at) { later(seKo, at); },
+    pivot: function (side, at) { later(function () { sePivot(side); }, at); },   // 交代受け
+    shield: function (at) { later(seShield, at); },    // シールドのブロック
+    form: function (at) { later(seForm, at); },        // すがたが変わる
+    spit: function (at) { later(seSpit, at); },        // ウッウの反撃
+    win: function (at) { later(seWin, at); },
+    lose: function (at) { later(seLose, at); },
     stop: function () {
       clearSub();
       LIVE.forEach(function (s) { try { s.stop(); } catch (e) { } });
