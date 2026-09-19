@@ -110,7 +110,7 @@ h3.sub{margin:2px 0 8px}
   'use strict';
   // このサイトが端末に保存しているものだけを対象にする（同じオリジンに別の用途のキーが混ざっても触らない）
   var KEYRE = /^(gbl_|rkt_|raid_|site_|karyoku_)/;
-  var SKIP = { site_dev: 1 };            // 開発者モードの印は引っ越さない
+  var SKIP = { site_dev: 1, site_devex: 1 };   // 開発者モードの印・開発者だけの除外は引っ越さない
   var APP = 'gonavi', VER = 1;
   var LG = { 1500: 'スーパー', 2500: 'ハイパー', 0: 'マスター', 500: 'リトル' };
   var $ = function(id){ return document.getElementById(id); };

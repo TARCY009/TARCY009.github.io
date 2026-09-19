@@ -177,6 +177,8 @@ h1 b{white-space:nowrap}
   .rdps{width:56px;font-size:.92rem}
 }
 </style>
+<!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
+<script src="/assets/devex.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -207,6 +209,7 @@ h1 b{white-space:nowrap}
     </div>
   </div>
   <p class="cond expl">全ポケモンをPL50・個体値15にそろえ、ノーマルアタックとSPアタックが両方このタイプの構成で、そのタイプが弱点の相手（×1.6）に攻撃したときの火力を比べています。</p>
+  <div id="devexbox"></div>
   <div id="rankList"></div>
 </section>
 
@@ -339,11 +342,14 @@ function bestOfType(p, tEn, shadow){
 }
 const rankCache=new Map();
 function buildRows(){
-  const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+MegaLv.level();
+  // ⚠ 開発者の除外もキャッシュの鍵に入れる（メガLv・分割SP優遇と同じ落とし穴）
+  const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+MegaLv.level()+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'');
   if(rankCache.has(key)) return rankCache.get(key);
   const rows=[];
   for(const k of KEYS){
     const p=D.pokemon[k];
+    // 開発者だけの除外（未実装の先行収録を動画用に外す・ふつうの人には効かない）
+    if(window.GonaviDevEx&&GonaviDevEx.has(p.n)) continue;
     if(!p.mega&&!p.fe) continue;
     if(p.mega&&!fMega) continue;
     const b=bestOfType(p,curT,false);
@@ -642,6 +648,11 @@ document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.d
   tab.onclick=()=>{const o=body.hidden;body.hidden=!o;tab.setAttribute('aria-expanded',String(o));};
 }
 renderTypeGrid();
+// 開発者だけの「🚫 除外」（未実装の先行収録を動画用に外す）
+if(window.GonaviDevEx){
+  GonaviDevEx.mount($('devexbox'), ()=>KEYS.map(k=>D.pokemon[k].n));
+  GonaviDevEx.on(()=>{ rankCache.clear(); sync(); });
+}
 sync();
 </script>
 <script src="/assets/snap.js"></script>

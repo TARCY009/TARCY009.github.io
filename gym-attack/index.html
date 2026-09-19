@@ -196,6 +196,8 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 }
 .enote{font-size:.72rem;color:var(--sub);line-height:1.75;margin:6px 2px 10px}
 </style>
+<!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
+<script src="/assets/devex.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -241,6 +243,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 </details>
 
 <div class="loading" id="loading">データ読み込み中…</div>
+<div id="devexbox"></div>
 <div class="ranklist" id="ranklist"></div>
 <button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
 <div id="helpbody" class="helpbody" style="display:none">
@@ -342,6 +345,11 @@ let MODE='power'; // 'power'=火力のみ / 'total'=耐久込み
 ['c1','c2','c3','rex','wf','dpl','topn'].forEach(id=>{
   document.getElementById(id).addEventListener('input',()=>{ if(currentDefender) render(currentDefender); });
 });
+// 開発者だけの「🚫 除外」（未実装の先行収録を動画用に外す）
+if(window.GonaviDevEx){
+  GonaviDevEx.mount(document.getElementById('devexbox'), ()=>DATA.pokemon.map(p=>p.name));
+  GonaviDevEx.on(()=>{ if(currentDefender) render(currentDefender); });
+}
 
 function eff(moveType, defTypes){
   let m=1; for(const t of defTypes) m*=DATA.chart[moveType][t]; return m;
@@ -386,6 +394,8 @@ function render(def){
 
   const rows=[];
   for(const p of DATA.pokemon){
+    // 開発者だけの除外（未実装の先行収録を動画用に外す・ふつうの人には効かない）
+    if(window.GonaviDevEx&&GonaviDevEx.has(p.name)) continue;
     if(p.mega&&!FL.mega) continue;
     const variants=(p.shadow&&FL.shadow)?[false,true]:[false];
     for(const isShadow of variants){

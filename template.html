@@ -405,6 +405,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}
 .enote{font-size:.72rem;color:var(--sub);line-height:1.75;margin:6px 2px 10px}
 </style>
+<!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
+<script src="/assets/devex.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -469,6 +471,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   </div>
   <div id="mineSummary"></div>
   <p class="enote expl">一覧はPL50・個体値15、相手は防御100のものさしで統一した火力（1秒あたりのダメージ）です。選んだボスのタイプ相性は反映されます。シャドウ・メガ・ゲンシはタブで含めるかを選べます。</p>
+  <div id="devexbox"></div>
   <div id="rankList"><div class="empty">ボスを選ぶとランキングが出ます</div></div>
   <button class="more" id="moreBtn" style="display:none">さらに表示</button>
 </div>
@@ -865,11 +868,13 @@ function guessTier(k){
 //   分割SP優遇(fSplit)もわざ構成を変えるので同じくキーに入れる
 let mpTopCache={key:null,rows:null};
 function mpTop(){
-  const ck=boss+'|'+MegaLv.level()+'|'+fSplit;
+  // ⚠ 開発者の除外もキーに入れる（1位アタッカーが変わるため）
+  const ck=boss+'|'+MegaLv.level()+'|'+fSplit+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'');
   if(mpTopCache.key===ck) return mpTopCache.rows;
   const bt=D.pokemon[boss].ty, rows=[];
   for(const k of KEYS){
     const p=D.pokemon[k];
+    if(window.GonaviDevEx&&GonaviDevEx.has(p.n)) continue;   // 開発者だけの除外
     if(!p.mega && !p.fe) continue;   // ランキングと同じ範囲(最終進化＋メガ)
     const b=bestCombo(p,bt,false);
     if(b) rows.push({p,f:b.f,c:b.c,shadow:false,dps:b.dps});
@@ -1122,6 +1127,11 @@ MegaLv.mount(megalvBox);
 let rankHasPlus=false;
 function syncMegaLvVis(){ megalvBox.style.display=(rankHasPlus||!MegaLv.isDefault())?'':'none'; }
 MegaLv.onChange(()=>{ MegaLv.apply(D.moves, PLUS_IDS); syncModes(); if(boss) renderMinPlayers(); renderRank(); });
+// 開発者だけの「🚫 除外」（未実装の先行収録を動画用に外す）
+if(window.GonaviDevEx){
+  GonaviDevEx.mount(document.getElementById('devexbox'), ()=>KEYS.map(k=>D.pokemon[k].n));
+  GonaviDevEx.on(()=>{ mpTopCache={key:null,rows:null}; if(boss) renderMinPlayers(); renderRank(); });
+}
 function syncModes(){
   shadowBtn.setAttribute('aria-pressed',fShadow);
   megaBtn.setAttribute('aria-pressed',fMega);
@@ -1170,6 +1180,8 @@ function buildRanking(){
   const bt=D.pokemon[boss].ty, rows=[];
   for(const k of KEYS){
     const p=D.pokemon[k];
+    // 開発者だけの除外（未実装の先行収録を動画用に外す・ふつうの人には効かない）
+    if(window.GonaviDevEx&&GonaviDevEx.has(p.n)) continue;
     if(p.mega && !fMega) continue;
     if(!p.mega && !p.fe) continue; // 進化前はランキングに表示しない(ボス選択・自分の登録では選択可)
     // 極低耐久の除外はシャドウ補正込みで行ごとに判定(素は残ってシャドウだけ消えるポケモンがある)
