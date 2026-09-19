@@ -458,9 +458,15 @@
         s.en -= mv.e;
         // ウッウ: なみのり・ダイビングを撃つと獲物を咥える。**撃った時点のHP**で姿が決まる
         // (50%以上=うのみ / 50%未満=まるのみ)。相手がシールドで防いでも姿は変わる
+        // ⚠ 知らせるのは「すがたが本当に変わったとき」だけ(2026-09-19タダシさん報告)。
+        //   咥えたまま2発目を撃っても同じすがたなら、フォルムチェンジの演出も行も出さない。
+        //   うのみ→まるのみ(HPが50%を切った)や、吐き出したあとの咥え直しは変化なので知らせる
         let gulpOn = null;
-        if (s.cram && (mv === D.moves.SURF || mv === D.moves.DIVE))
-          gulpOn = s.gulp = s.hp / s.hpMax >= 0.5 ? 'gulping' : 'gorging';
+        if (s.cram && (mv === D.moves.SURF || mv === D.moves.DIVE)) {
+          const next = s.hp / s.hpMax >= 0.5 ? 'gulping' : 'gorging';
+          if (s.gulp !== next) gulpOn = next;
+          s.gulp = next;
+        }
         // ギルガルド: SPアタック使用の直前にブレードフォルム化(このSPからブレードの攻撃で計算)
         if (s.form === 'shield') {
           s.form = 'blade';

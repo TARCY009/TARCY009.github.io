@@ -603,12 +603,18 @@ function saveGraph(W){
     const ctx=cv.getContext('2d');
     ctx.drawImage(img,0,0,W,1440);
     URL.revokeObjectURL(url);
-    // 開発者の端末では、動画編集でいつもかける色調整を済ませて保存する(snap.js の devGrade)
+    cv.__rounded=true;   // graphSVG が四隅を丸めて描いているので、snap.js 側で二重に切らせない
+    const name=`タイプ別火力ランキング_${JA[curT]}_TOP10${W===1920?'_1920x1440':''}.png`;
+    // ⚠ 押した瞬間に保存しない。まず見本を見せて「保存する」で保存する(全ツール共通の決まり)。
+    //   画像作りに時間がかかると、iPhoneが「ユーザーの操作ではない」として保存を断るため。
+    //   開発者の端末の色調整(devGrade)も snap.js の preview が中でかけてくれる
+    if(window.GonaviSnap&&GonaviSnap.preview){ GonaviSnap.preview(cv,name); return; }
+    // snap.js を読めなかったときだけの保険
     const out=(window.GonaviSnap&&GonaviSnap.devGrade)?GonaviSnap.devGrade(cv):cv;
     out.toBlob(b=>{
       const a=document.createElement('a');
       a.href=URL.createObjectURL(b);
-      a.download=`タイプ別火力ランキング_${JA[curT]}_TOP10${W===1920?'_1920x1440':''}.png`;
+      a.download=name;
       a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     },'image/png');

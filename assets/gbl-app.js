@@ -83,7 +83,7 @@ document.getElementById('app').innerHTML = `
 <div class="duel">
   <div class="side mine" id="sideL">
     <h2>じぶん<button class="shadowtab" aria-pressed="false" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button></h2>
-    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
@@ -160,7 +160,7 @@ document.getElementById('app').innerHTML = `
   </div>
   <div class="side foe" id="sideR">
     <h2>あいて<button class="shadowtab" aria-pressed="false" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button></h2>
-    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="opts mypkbar"><button class="mypktab" aria-pressed="false" title="★登録したポケモンの一覧を開く">★登録リスト</button></div>
     <div class="popwin mypklist" style="display:none"></div>
     <div class="pkview" style="display:none">
@@ -3120,7 +3120,7 @@ function buildPartySlots(box, mvStore) {
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする"><i class="shadowmark"></i></button>
       <button class="pstar" title="★登録リストから選ぶ（自分の個体値・わざで診断できます）">★</button>
       <button class="pclr" title="この枠を空にする">×</button></div>
-    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="popwin pstarwin" style="display:none"></div>
     <div class="pmeta"></div>
     ${withMoves ? '<div class="pmv"></div>' : ''}
@@ -3998,7 +3998,7 @@ function buildFoeSlots() {
     <div class="phd"><span class="pnum">${i + 1}匹目</span>
       <span class="fshadow" title="ロケット団のポケモンは必ずシャドウです"><i class="shadowmark"></i></span>
       <button class="pclr" title="この枠を空にする">×</button></div>
-    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="fbody" style="display:none">
       <select class="selFast" title="あいてのノーマルアタック"></select>
       <select class="selC1" title="あいてのSPアタック"></select>
@@ -4093,7 +4093,7 @@ function renderRkMy() {
   const saved = loadMyPk();
   const p = RKM.key && D.pokemon[RKM.key];
   box.innerHTML = `
-    <div class="sugg rkmysugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg rkmysugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     ${p ? `<div class="rkmysel">
       <button class="rkmyshadow" aria-pressed="${RKM.shadow}" title="シャドウとして計算する"><i class="shadowmark"></i></button>
       <b>${RKM.shadow ? SHADOWMK : ''}${p.n}</b>${typeIcons(p, 15)}</div>
@@ -5588,8 +5588,16 @@ function gulpCell(e) {
     e.gulp.dmg ? `<b class="dmg">-${e.gulp.dmg}</b>` : ''}${buffTag({ ...e.gulp.buff, target: 'self' })}</span>`;
   return h;
 }
-// 場を離れたら通常の姿に戻る(交代でリセット)。引き継ぎ状態からフォルムを落とす
-const gulpOff = rs => { if (rs && rs.gulp) rs.gulp = null; };
+// 場を離れたら元の姿に戻る(交代でリセット)。引き継ぎ状態からフォルムを落とす。
+// ・ウッウ: 咥えた獲物を落とす(咥え直しが必要)
+// ・ギルガルド: ブレードフォルムからシールドフォルムへ戻す(2026-09-19タダシさん報告で追加。
+//   戻さないと、交代して出し直したのに攻撃の高いブレードの実数値のまま戦ってしまう)
+// ⚠ 相手だけが倒れて次の相手を迎えるときは場に残っているので呼ばない(その場合はフォルム維持が正しい)
+const gulpOff = rs => {
+  if (!rs) return;
+  if (rs.gulp) rs.gulp = null;
+  if (rs.form === 'blade') rs.form = 'shield';
+};
 // 能力変化のタグ(⬆⬇)。1段階ちょうど以外は段階数を添える
 function buffTag(bf) {
   let out = '';
@@ -6530,7 +6538,7 @@ function buildBlogSlots() {
     <div class="phd"><span class="pnum">${i + 1}匹目</span>${i === 0 ? '<small class="bllead">初手</small>' : ''}<span class="pfill"></span>
       <button class="pshadow" aria-label="シャドウ" title="シャドウとして記録する"><i class="shadowmark"></i></button>
       <button class="pclr" title="この枠を空にする">×</button></div>
-    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
   </div>`).join('');
   // 裏読みは**1匹目のすぐ下**に置く(スマホでは1匹目が横いっぱい・2/3匹目が半分ずつ・その間に裏読み。2026-09-14タダシさん指示)。
   // パソコン幅では3枠の下へ回す(CSSの order)
@@ -7382,7 +7390,7 @@ function buildGbFoeSlots() {
     <div class="phd"><span class="pnum">${i + 1}匹目</span>
       <button class="pshadow" aria-label="シャドウ" title="シャドウ（攻撃1.2倍・防御5/6）として計算する"><i class="shadowmark"></i></button>
       <button class="pclr" title="この枠を空にする">×</button></div>
-    <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    <div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
     <div class="fbody" style="display:none">
       <select class="selFast" title="あいてのノーマルアタック"></select>
       <select class="selC1" title="あいてのSPアタック1"></select>
@@ -7894,7 +7902,7 @@ function buildSdSlots(side) {
           <button class="pstar" title="★登録リストから選ぶ（登録した個体値・わざで計算できます）">★</button>
           <button class="pclr" title="この枠を空にする">×</button></span></div>
       <div class="sdname">
-        <div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+        <div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
         <b class="sdcp"></b></div>
       <div class="popwin pstarwin" style="display:none"></div>
       <div class="fbody" style="display:none">
@@ -12982,7 +12990,7 @@ function easyRender() {
   if (EASY.step === 'search') {
     const g = EASY_GBL[EASY.goal];
     q = g.search;
-    body = `<div class="sugg"><input type="search" placeholder="ポケモン名(例: マリルリ)" autocomplete="off"><div class="sugg-list"></div></div>
+    body = `<div class="sugg"><input type="text" placeholder="ポケモン名(例: マリルリ)" autocomplete="off"><div class="sugg-list"></div></div>
       <button class="easyback">← もどる</button>`;
   }
   if (EASY.step === 'note') {
@@ -12993,7 +13001,7 @@ function easyRender() {
   if (EASY.step === 'act') { q = 'どうしますか？'; body = `<div class="easycards">${EASY_RK_ACT.map(card).join('')}</div><button class="easyback">← もどる</button>`; }
   if (EASY.step === 'gfoe') {
     q = 'あいてのポケモンの名前は？(画面に出ている名前)';
-    body = `<div class="sugg"><input type="search" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
+    body = `<div class="sugg"><input type="text" placeholder="ポケモン名" autocomplete="off"><div class="sugg-list"></div></div>
       <button class="easyback">← もどる</button>`;
   }
   if (EASY.step === 'rknote') {

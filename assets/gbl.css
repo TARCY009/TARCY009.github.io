@@ -2375,8 +2375,10 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 /* 入力中は欄を2列ぶんに広げる。iOSは触れた時点の字が16px未満だと画面を勝手に拡大して
    戻らないので**16pxは外せない**——そのぶん欄を広げて、長い名前でも読めるようにする */
 .sdslot .sugg{position:relative}
-.sdslot.filled.editing .sugg input,
-.sdslot.filled .sugg input:focus{position:absolute;top:0;left:0;z-index:30;
+/* ⚠ 空の枠でも同じ見た目にする(2026-09-19タダシさん報告)。filled のときだけ広げていたので、
+   1匹目を打つときは狭いまま・確定して打ち直すときだけ広がる、というちぐはぐな動きだった */
+.sdslot.editing .sugg input,
+.sdslot .sugg input:focus{position:absolute;top:0;left:0;z-index:30;
   width:calc(200% + 9px);background:var(--panel);border-color:var(--gl);
   padding:6px 8px;font-size:16px;letter-spacing:0;
   box-shadow:0 6px 18px rgba(0,0,0,.45)}
