@@ -5330,14 +5330,25 @@ function fxOne(f) {
 // 演出の「再生済みキー」。決断(シールドの使う/受ける等)の直後は画面を作り直して
 // 途中まで一気に表示するため、これが無いと質問で隠れていたSPの演出が飛んだり(取りこぼし)、
 // 逆に同じ演出が二重に出たりする(2026-08-30タダシさん報告で追加)
-const fxKey = el => el.dataset.gt + '|' + el.dataset.fx;
-const fxPending = els => els.filter(e => e.dataset.fx && !RBV.fxDone.has(fxKey(e)));
+// ⚠⚠ 記録は「行ごと」ではなく**演出1つごと**にする(2026-09-20タダシさん報告で根治)。
+//   行ごと(gt + data-fx全体)を鍵にしていたため、**あとから同じ行に演出が増えると鍵が変わり、
+//   すでに流した演出まで「未再生」と判定されてもう一度流れていた**。
+//   例: バトルスタート直後に⇄で交代すると、VSカードの行の演出が
+//       [VS] → [VS, じぶん交代, あいて交代] に変わる ＝ 交代のあとにVSがもう一度流れる。
+//   演出ごとの鍵にすれば、増えたぶん(交代)だけが流れる。
+const fxList = el => {
+  try { const a = JSON.parse(el.dataset.fx); return Array.isArray(a) ? a : (a ? [a] : []); }
+  catch (e) { return []; }
+};
+const fxKey1 = (el, f) => el.dataset.gt + '|' + (el.dataset.li || '') + '|' + JSON.stringify(f);
+const fxNew = el => fxList(el).filter(f => !RBV.fxDone.has(fxKey1(el, f)));
+const fxPending = els => els.filter(e => e.dataset.fx && fxNew(e).length);
 // 今あらわれた要素の未再生の演出を返す。✨OFF・reduced-motionのときは再生済み扱いにして
 // 空を返す(あとでONに切り替えたとき、たまっていたぶんがまとめて出ないように)
 const fxConsume = els => {
   const list = fxPending(els);
   if (fxOk()) return list;
-  list.forEach(e => RBV.fxDone.add(fxKey(e)));
+  list.forEach(e => fxList(e).forEach(f => RBV.fxDone.add(fxKey1(e, f))));
   return [];
 };
 // data-fx を持つ要素の演出を順番に再生して、終わったら done()
@@ -5394,11 +5405,12 @@ function fxRun(list, done, onHit) {
     if (i >= list.length) { setTimeout(fin, FX_POST / sp()); return; }
     fxClear();   // 前の行の演出を片づけてから次へ
     const el = list[i];
-    RBV.fxDone.add(fxKey(el));
-    let fs = [];
-    try { fs = JSON.parse(el.dataset.fx); } catch (e) {}
+    // ⚠ この行の**まだ流していない演出だけ**を流す(2026-09-20)。
+    //   行ごとに再生済みを持つと、あとから演出が増えたときに最初から流し直してしまう
+    const fs = fxNew(el);
+    fs.forEach(f => RBV.fxDone.add(fxKey1(el, f)));
     i++;
-    if (!Array.isArray(fs)) fs = fs ? [fs] : [];
+    if (!fs.length) { setTimeout(step, 0); return; }
     // ⚠ 同じ行に演出が複数あるときは**順番に**流す(2026-09-07タダシさん指示)。
     //   まとめて同時に出すと、たとえば「VSカード」と「開幕交代」が重なって、
     //   どちらが先に起きたのか分からなくなる
@@ -6343,7 +6355,7 @@ function rbRender(body, bt, picks, foes, extra) {
   if (hskip) hskip.onclick = () => {
     RBV.started = true;
     // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)
-    revealTo(stop).forEach(e => { if (e.dataset.fx) RBV.fxDone.add(fxKey(e)); });
+    revealTo(stop).forEach(e => { if (e.dataset.fx) fxList(e).forEach(f => RBV.fxDone.add(fxKey1(e, f))); });
     RBV.cur = stop; updateHud(stop); autoScroll();
     if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
   };
@@ -6366,7 +6378,13 @@ function rbRender(body, bt, picks, foes, extra) {
   const hend = dock.querySelector('.hend');
   if (hend) hend.onclick = () => {
     stopTimer();
+    // ⚠⚠ GBL模擬戦と同じ扱い(2026-09-20)。選んだ手と演出の再生済み記録も消す。
+    //   残すと、もう一度スタートしたときに前回の選択が自動で再現される
+    RB.ans = {}; RBUI.open = null;
+    fxDrop();
     RBV.started = false; RBV.playing = false; RBV.cur = 0;
+    RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear();
+    RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null;
     body.classList.remove('bfull');
     run();
   };
@@ -11651,7 +11669,7 @@ function gbRender(body, bt, picks, foes) {
   if (hskip) hskip.onclick = () => {
     RBV.started = true;
     // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)
-    revealTo(stop).forEach(e => { if (e.dataset.fx) RBV.fxDone.add(fxKey(e)); });
+    revealTo(stop).forEach(e => { if (e.dataset.fx) fxList(e).forEach(f => RBV.fxDone.add(fxKey1(e, f))); });
     RBV.cur = stop; updateHud(stop); autoScroll();
     if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
   };
@@ -11674,7 +11692,16 @@ function gbRender(body, bt, picks, foes) {
   const hend = dock.querySelector('.hend');
   if (hend) hend.onclick = () => {
     stopTimer();
+    // ⚠⚠ 選んだ手も消す(2026-09-20タダシさん報告)。旧実装は「選んだ手は消さない」仕様だったが、
+    //   ✕終了で入力画面に戻ってからもう一度スタートすると、**交代もしていないのに前回の交代が
+    //   自動で再現される**＝「勝手に交代する」と見えていた。終了はバトルをやめる操作なので手も捨てる。
+    // ⚠ ここで演出の再生済み記録も消す。run() はスタート前(!RBV.started)だと途中で return するので、
+    //   その先にあるクリア処理まで届かない
+    RB.ans = {}; RBUI.open = null;
+    fxDrop();
     RBV.started = false; RBV.playing = false; RBV.cur = 0;
+    RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear();
+    RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null;
     body.classList.remove('bfull');
     run();
   };
