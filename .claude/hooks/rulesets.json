@@ -6,7 +6,8 @@
       "rules": ".claude/rules/gbl.md",
       "checklist": ".claude/checklists/gbl.md",
       "checks": [
-        "gbl-engine"
+        "gbl-engine",
+        "mock-fx"
       ],
       "paths": [
         "assets/gbl-app.js",

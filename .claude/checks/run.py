@@ -84,11 +84,30 @@ def page_check(path, min_ok):
     return fn
 
 
+def check_mock_fx(port):
+    """模擬戦の通しテスト（.claude/checks/mock-fx.py）。自前でサーバーを立てるので port は使わない。
+    ①スタート→すぐ⇄交代 で「交代のあとにVSがまた流れない」
+    ②✕終了→もう一度スタート で「押していない交代が再現されない」
+    この2つは何度も再発した症状なので、保存のたびに機械で確かめる（2026-09-20タダシさん指示）"""
+    f = ROOT / '.claude/checks/mock-fx.py'
+    if not f.is_file():
+        return False, '.claude/checks/mock-fx.py がありません（答え合わせができないため不合格扱い）'
+    try:
+        r = subprocess.run(['python3', str(f)], capture_output=True, text=True, timeout=300)
+    except subprocess.TimeoutExpired:
+        return False, '模擬戦の通しテストが時間内に終わりませんでした'
+    tail = '\n'.join(l for l in r.stdout.strip().split('\n') if l.strip())[-700:]
+    if r.returncode == 0:
+        return True, '模擬戦の通し（交代のあとのVS・終了後の手の残り）2項目とも✅'
+    return False, '模擬戦の通しテストが不合格\n' + tail
+
+
 CHECKS = {
     'gbl-engine': check_gbl_engine,
     'iv-calc': page_check('.claude/checks/iv-check.html', 16),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
     'max-attacker': page_check('.claude/checks/max-check.html', 5),
+    'mock-fx': check_mock_fx,
 }
 
 
