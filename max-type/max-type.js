@@ -72,6 +72,8 @@
   function atkRows(){
     const rows = [];
     for(const p of D.roster){
+      // 開発者だけの除外（未実装の先行収録を動画用に外す・ふつうの人には効かない）
+      if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;
       const atkStat = (p.atk + 15) * cpm;
       const power = D.power[p.cat];
       let fast, moveName;
@@ -102,6 +104,7 @@
   function tankRows(){
     const rows = [];
     for(const p of tanks){
+      if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;   // 開発者だけの除外
       const hp0 = p.st + (p.wall ? (D.wall_hp || 60) / cpm : 0);
       const bulk = hp0 * p.df;
       const gbulk = (hp0 + (guardOn ? GUARD / cpm : 0)) * p.df;
@@ -219,6 +222,13 @@
   { const tab = $('helptab'), body = $('helpbody');
     tab.onclick = () => { const o = body.hidden; body.hidden = !o; tab.setAttribute('aria-expanded', String(o)); }; }
   renderTypeGrid();
+  // 開発者だけの「🚫 除外」（未実装の先行収録を動画用に外す）。置き場所は一覧の直前
+  if(window.GonaviDevEx){
+    const host = document.createElement('div');
+    const list = $('list'); list.parentNode.insertBefore(host, list);
+    GonaviDevEx.mount(host, () => D.roster.map(p => p.n));
+    GonaviDevEx.on(render);
+  }
   sync();
   if('serviceWorker' in navigator){
     window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
