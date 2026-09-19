@@ -83,7 +83,9 @@
   --no3bg:linear-gradient(160deg,#fdf1e9,#fdf6fa);
   --sil1:#ffffff; --sil2:#b9c6d6; --brz1:#f7c9a4; --brz2:#cf8551;
   --f3a:#d98a4d; --f3b:#a35a28; --f3c:#8f5f75;
-  --nmink:#241c38; --nmsh:rgba(0,0,0,.10);
+  /* ⚠ ライトの名前は暗すぎると重く見える(2026-09-20タダシさん指示)。明るさを上げて彩度は抑える
+     (HSL 261,33%,16% → 256,15%,29%)。白い面とのコントラストは10:1以上あるので読みやすさは保つ */
+  --nmink:#453f56; --nmsh:rgba(0,0,0,.10);
   --ptsgrad:linear-gradient(180deg,#3a2d5c,#6b4aa8);
   --no1pts:linear-gradient(180deg,#c98a00,#e8a23d);
   --okink:#12806a; --goldink:#a8760a; --onwarn:#ffffff;

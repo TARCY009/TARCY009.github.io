@@ -471,6 +471,14 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:linear-gradient(160deg,rgba(38,50,98,.5),rgba(18,24,52,.5));
   border:1px solid rgba(120,150,255,.18);
   box-shadow:0 6px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06)}
+/* ⚠ ライトは必ず明るい面を敷く(2026-09-20タダシさん報告)。
+   上の濃紺の半透明(.5)しか無かったので、明るい背景に重なって**灰紫のもや**がかかり、
+   3枚のパネルの中が全部くすんで読みづらくなっていた。
+   全ツール共通の決まり「ライトのカードは半透明の白＋淡い色の落ち影」にそろえる */
+:root.light .ptcard{
+  background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(238,244,255,.94));
+  border-color:rgba(110,140,220,.30);
+  box-shadow:0 5px 14px rgba(70,85,130,.13),inset 0 1px 0 rgba(255,255,255,.9)}
 /* 見出しのバッジ。どのパネルも同じ水色で「ここが節の頭」と分かるようにする
    (状態を表す赤・黄・緑とは役割が別なので、色はぶつけない)。押すと中身が開く */
 .ptsec{display:inline-flex;align-items:center;gap:6px;padding:3px 12px 3px 11px;
@@ -533,6 +541,27 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   box-shadow:0 6px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06)}
 .ptdiag.warn{--dc:255,213,74}
 .ptdiag.bad{--dc:255,107,129}
+/* ⚠ ライトは必ず明るい面を敷く(.ptcard と同じ理由・2026-09-20タダシさん報告)。
+   濃紺の半透明(rgba(18,24,52,.5))へ向かうグラデーションだけだったので、
+   カードの下へいくほど暗い灰色になり、いちばん読ませたい診断文が読みづらかった。
+   ⚠ 状態の色(--dc＝緑/黄/赤)は枠とほのかな面に残す＝深刻度が色で分かる作りは変えない */
+:root.light .ptdiag{
+  background:linear-gradient(160deg,rgba(var(--dc),.16),rgba(255,255,255,.96) 62%);
+  border-color:rgba(var(--dc),.55);
+  box-shadow:0 5px 14px rgba(70,85,130,.13),inset 0 1px 0 rgba(255,255,255,.9)}
+/* ⚠ ライトは状態の色(--dc)そのものを濃い版に差し替える（恒久・全ツール共通の落とし穴）。
+   ダークの明るい緑/黄/赤は、白い面の上では文字にも枠にも薄すぎて読めない。
+   面は rgba(var(--dc),.1) のように薄めて使うので、濃くしても地の色は変わらない */
+:root.light .ptdiag{--dc:20,115,58}
+:root.light .ptdiag.warn{--dc:146,96,0}
+:root.light .ptdiag.bad{--dc:190,28,62}
+:root.light .ptwhead.t-hole,:root.light .ptwchips.t-hole{--dc:190,28,62}
+:root.light .ptwhead.t-n1,:root.light .ptwchips.t-n1{--dc:146,96,0}
+/* チップ・凡例ボタン・「得意な場面」の行も、地はライト用に明るくする
+   （どれもダーク用の濃紺の半透明しか持っていなかったので、白い面の上で灰色に沈んでいた） */
+:root.light .ptwchip{background:rgba(255,255,255,.92);border-color:rgba(var(--dc),.5)}
+:root.light .ptglegend button{background:rgba(255,255,255,.9)}
+:root.light .ptwk{background:linear-gradient(160deg,rgba(226,235,255,.95),rgba(246,249,255,.95))}
 /* ⚠リストの枠だけは「そこに並んでいるものの色」で固定する(相性の図の凡例と同じ色) */
 .ptwhead.t-hole,.ptwchips.t-hole{--dc:255,107,129}
 .ptwhead.t-n1,.ptwchips.t-n1{--dc:255,213,74}
