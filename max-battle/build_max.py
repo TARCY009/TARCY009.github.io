@@ -333,22 +333,29 @@ def main():
             name = tid.split("_POKEMON_")[1]
             unmatched.append(tid)
         fasts = []
+        # ⚠ gym_dataに無いわざは載せない。載せると jp が英語IDのまま・威力0・時間0のダミーになり、
+        #   0.5秒あたりの計算で0割り(Infinity)を起こす。該当はめざめるパワーの素のID
+        #   HIDDEN_POWER_FAST(実在するのは16タイプ版だけ)で、スターミー・スイクン・ホウオウが持っていた
         for q in (ps.get("quickMoves", []) or []):
             ty = move_type.get(q)
             if ty in T_IDX:
-                mj = gym["moves"].get(q, {})
-                f = {"jp": mj.get("jp", q), "t": T_IDX[ty], "e": 0,
-                     "p": mj.get("power", 0), "d": mj.get("dur") or 0, "en": mj.get("energy") or 0}
-                if mj.get("dur") == 500:
+                mj = gym["moves"].get(q)
+                if not mj or not mj.get("dur"):
+                    continue
+                f = {"jp": mj["jp"], "t": T_IDX[ty], "e": 0,
+                     "p": mj.get("power", 0), "d": mj["dur"], "en": mj.get("energy") or 0}
+                if mj["dur"] == 500:
                     f["q"] = 1  # 0.5秒技
                 fasts.append(f)
         for q in (ps.get("eliteQuickMove", []) or []):
             ty = move_type.get(q)
             if ty in T_IDX:
-                mj = gym["moves"].get(q, {})
-                f = {"jp": mj.get("jp", q), "t": T_IDX[ty], "e": 1,
-                     "p": mj.get("power", 0), "d": mj.get("dur") or 0, "en": mj.get("energy") or 0}
-                if mj.get("dur") == 500:
+                mj = gym["moves"].get(q)
+                if not mj or not mj.get("dur"):
+                    continue
+                f = {"jp": mj["jp"], "t": T_IDX[ty], "e": 1,
+                     "p": mj.get("power", 0), "d": mj["dur"], "en": mj.get("energy") or 0}
+                if mj["dur"] == 500:
                     f["q"] = 1
                 fasts.append(f)
         # 新シーズン習得のノーマルアタックを補完(GM未反映分)
