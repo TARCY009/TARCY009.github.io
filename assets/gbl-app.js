@@ -5434,7 +5434,9 @@ function sndRow(el, i) {
   if (el.dataset.fx) {
     try {
       JSON.parse(el.dataset.fx).forEach(f => {
-        if (f.k === 'sp') S.sp(f.eff);
+        // SPアタックだけ**じぶんとあいてで別の音**(2026-09-19タダシさん指示・あいて＝怪光線)。
+        // 交代・くりだす・撃退は両側とも同じ音（画面のカットインで側が分かるため）
+        if (f.k === 'sp') S.sp(f.eff, f.side);
         else if (f.k === 'vs') S.vs();          // バトルスタート
         else if (f.k === 'in') S.intro();       // ポケモンをくりだす
         else if (f.k === 'swap') S.swap();

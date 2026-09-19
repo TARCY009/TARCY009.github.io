@@ -10,6 +10,7 @@
       ],
       "paths": [
         "assets/gbl-app.js",
+        "assets/sound.js",
         "assets/gbl.css",
         "assets/pvp-engine.js",
         "assets/meta_lists.js",

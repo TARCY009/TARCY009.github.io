@@ -6,7 +6,8 @@
    ⚠ ノーマルアタックは**乱数の種を固定**して、1発ごとの大きさを完全にそろえる（数えるための音なので粒がそろわないと意味がない）。
    ⚠ 音の長さは模擬戦のカットインの長さに合わせてある（交代2.55秒／SP2.88秒（着弾1.05秒）／撃退2.33秒（ズドン0.47秒）／勝敗3.15秒）。
 
-   使い方: GonaviSound.isOn()/setOn(b) で入り切り、atk(turns, rate)・sp(eff)・swap()・ko()・win()・lose() で鳴らす。
+   使い方: GonaviSound.isOn()/setOn(b) で入り切り、atk(turns, rate)・sp(eff, side)・swap()・ko()・win()・lose() で鳴らす。
+   ⚠ SPアタックは**じぶんとあいてで別の音**（side=1 があいて）。どちらが撃ったか音だけで分かるようにするため。
    保存キーは gbl_snd（gbl_ なので「データの引っ越し」に入る）。既定はOFF。 */
 (function () {
   'use strict';
@@ -182,6 +183,40 @@
       }
     }), o);
   }
+  // 掃きの音（riser の上下自由版。env: up=だんだん大きく / down=だんだん小さく / bell=山なり）
+  function sweep(dur, o) {
+    o = o || {};
+    var f0 = o.f0 == null ? 4000 : o.f0, f1 = o.f1 == null ? 300 : o.f1, q = o.q == null ? 7 : o.q;
+    var tn = o.tone == null ? .25 : o.tone, t0 = o.t0 == null ? 1200 : o.t0, t1 = o.t1 == null ? 90 : o.t1;
+    var env = o.env || 'up';
+    playBuf(bufOf(dur, function (L, R, sr, len) {
+      var fl = svf(), fr = svf(), ph = 0;
+      for (var i = 0; i < len; i++) {
+        var k = i / len, t = i / sr, f = (f0 * Math.pow(f1 / f0, k)) / sr;
+        var nl = fl(Math.random() * 2 - 1, f, q).bp, nr = fr(Math.random() * 2 - 1, f, q).bp;
+        ph += 2 * Math.PI * (t0 * Math.pow(t1 / t0, k)) / sr;
+        var e = env === 'down' ? Math.pow(1 - k, .8) : env === 'bell' ? Math.sin(Math.PI * k) : Math.pow(k, .6);
+        e *= fade(i, sr, 8) * (1 - Math.max(0, (t - (dur - .03)) / .03));
+        L[i] = (nl * 1.4 + Math.sin(ph) * tn) * e;
+        R[i] = (nr * 1.4 + Math.sin(ph) * tn) * e;
+      }
+    }), o);
+  }
+  // はじける連打（機械的なチャージ）。左右に動かしながら n 発
+  function stutter(n, o) {
+    o = o || {};
+    var f0 = o.f0 == null ? 1400 : o.f0, f1 = o.f1 == null ? 2600 : o.f1;
+    var dur = o.dur == null ? .03 : o.dur, vol = o.vol == null ? .2 : o.vol;
+    var at = o.at || 0, span = o.span == null ? .6 : o.span;
+    var p0 = o.pan == null ? 0 : o.pan, p1 = o.pan2 == null ? p0 : o.pan2;
+    for (var i = 0; i < n; i++) {
+      var k = n < 2 ? 0 : i / (n - 1);
+      noise({
+        f: f0 * Math.pow(f1 / f0, k), q: 7, dur: dur, vol: vol * (.55 + k * .8),
+        at: at + span * Math.pow(k, 1.45), pan: p0 + (p1 - p0) * k, rev: .25, dly: .15, seed: 2200 + i * 37
+      });
+    }
+  }
   // ためる音（上がるノイズ）
   function riser(dur, o) {
     o = o || {};
@@ -327,7 +362,7 @@
     [523, 784].forEach(function (f, i) { fm(f, .6, { ratio: 2.01, index: 2.4, decay: 4, vol: .16, at: 1.2 + i * .08, rev: .5, dly: .25, wide: 1 }); });
     pad([330, 440, 523], .7, { vol: .12, at: 1.25, rev: .55, open: 2200, type: 'triangle' });
   }
-  // SPアタック「斬撃（鋭い）」。eff: 's'=こうかばつぐん / 'w'=いまひとつ / それ以外=等倍
+  // じぶんのSPアタック「斬撃（鋭い）」。eff: 's'=こうかばつぐん / 'w'=いまひとつ / それ以外=等倍
   // 着弾は3種類とも1.05秒（カットインの画面が揺れる瞬間）にそろえてある
   function seSp(eff) {
     var i;
@@ -358,6 +393,35 @@
     burst(.34, { cut: 7000, cut2: 1600, decay: 8, drive: .3, vol: .42, at: 1.05, hi: 900, rev: .35 });
     kick(.35, { f0: 240, f1: 62, vol: .42, at: 1.05, drive: .5, decay: 7 });
     pad([294, 392, 494], .7, { vol: .1, at: 1.15, rev: .5, open: 2400, type: 'triangle' });
+  }
+  // あいてのSPアタック「怪光線」（2026-09-19タダシさん選択・5案から案2）
+  // ⚠ じぶんの音（明るい斬撃）と聞き分けられるように、①暗く低い音を土台にする ②音が右から来る
+  //    （じぶんは左から）の2点でそろえてある。着弾だけ 1.05 秒でそろえる（カットインの揺れの瞬間）。
+  // 3種類は高さ違いではなく作りが別物（ばつぐん＝放電が増えて金属が散る／いまひとつ＝しぼんで小さく弾けるだけ）。
+  function seSpFoe(eff) {
+    if (eff === 's') {
+      pad([73, 110, 155, 185], 1.2, { vol: .198, rev: .45, open: 2400, type: 'sawtooth', atk: .25 });
+      stutter(11, { f0: 1800, f1: 3000, dur: .025, vol: .264, at: .24, span: .76, pan: 1, pan2: -.6 });
+      sweep(.42, { f0: 800, f1: 5200, q: 11, tone: .14, t0: 200, t1: 900, vol: .37, at: .63, dly: .18 });
+      burst(.6, { cut: 9000, cut2: 1400, decay: 5, drive: .4, vol: .5, at: 1.05, hi: 800, rev: .5 });
+      for (var i = 0; i < 6; i++) ks(1500 + i * 540, .4, { damp: .991, tone: .95, decay: 9, vol: .112, at: 1.05 + i * .012, pan: (i % 2 ? -1 : 1) * .7, rev: .45, dly: .2 });
+      kick(.5, { f0: 240, f1: 45, vol: .554, at: 1.05, drive: .7, decay: 5 });
+      shimmer(7, { base: 1175, dur: .55, span: .7, vol: .099, at: 1.18, spread: 1.5 });
+      return;
+    }
+    if (eff === 'w') {
+      pad([73, 98], .95, { vol: .171, rev: .35, open: 800, type: 'sawtooth', atk: .35 });
+      stutter(4, { f0: 900, f1: 620, dur: .035, vol: .239, at: .5, span: .4, pan: .7, pan2: .3 });
+      noise({ f: 520, f2: 240, q: 3, dur: .28, vol: .342, at: 1.05, lo: 1800 });
+      tone({ f: 220, f2: 150, type: 'sawtooth', dur: .3, vol: .205, at: 1.06, lo: 1200 });
+      return;
+    }
+    pad([73, 110, 146], 1.15, { vol: .245, rev: .4, open: 1300, type: 'sawtooth', atk: .3 });
+    stutter(7, { f0: 1400, f1: 900, dur: .03, vol: .35, at: .34, span: .6, pan: 1, pan2: 0 });
+    sweep(.35, { f0: 600, f1: 2400, q: 9, tone: .2, t0: 140, t1: 520, vol: .385, at: .7, dly: .15 });
+    burst(.45, { cut: 4800, cut2: 900, decay: 6, drive: .35, vol: .595, at: 1.05, hi: 500, rev: .4 });
+    tone({ f: 880, f2: 110, type: 'sawtooth', dur: .55, vol: .26, at: 1.05, lo: 2600, dly: .2 });
+    kick(.4, { f0: 200, f1: 50, vol: .595, at: 1.05, drive: .6, decay: 6 });
   }
   // 撃退「叩きつける」（打った音が左右の壁に跳ね返って戻る）
   function seKo() {
@@ -433,7 +497,8 @@
         subTimers.push(setTimeout(kachiSub, k * step));
       }
     },
-    sp: function (eff) { if (on && ac()) seSp(eff); },
+    // side: 0/省略=じぶん（斬撃） / 1=あいて（怪光線）。音でどちらが撃ったか分かるようにする
+    sp: function (eff, side) { if (on && ac()) (side ? seSpFoe : seSp)(eff); },
     vs: function () { if (on && ac()) seVs(); },       // バトルスタート
     intro: function () { if (on && ac()) seIn(); },    // ポケモンをくりだす
     swap: function () { if (on && ac()) seSwap(); },
