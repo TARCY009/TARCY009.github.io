@@ -220,8 +220,14 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
    ⚠ 既定のまま(なし・即打ち・10秒)は白い枠のまま＝「自分が動かした設定」がひと目で分かる */
 .prerow .pick.chg .face,.prerow .numwrap.chg,.prerow .optbtn.chg,
 .bonusrow .pick.chg .face,.bonusrow .optbtn.chg,.bonusrow .optbtn[aria-pressed="true"]{
-  color:#fff;border-color:transparent;transform:translateY(-1px);
+  color:#fff;border-color:transparent;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 rgba(0,0,0,.35)}
+/* ⚠ 1px持ち上げるのは「選ぶ欄そのもの(.pick)」にかける。中の .face にかけると transform が重なり順を作り、
+   透明な <select> の上に face が乗って **選び直せなくなる**(2026-09-20タダシさん報告で判明)。
+   保険として select を必ず上に置く */
+.prerow .pick.chg,.bonusrow .pick.chg{transform:translateY(-1px)}
+.pick select{z-index:2}
+.pick .face{position:relative;z-index:1}
 .prerow .pick.chg .face,.prerow .numwrap.chg,.prerow .optbtn.chg{
   background:linear-gradient(160deg,#9ab6ff 0%,#5b7bf0 45%,#2f4fc0 100%)}
 .bonusrow .pick.chg .face,.bonusrow .optbtn.chg,.bonusrow .optbtn[aria-pressed="true"]{
