@@ -215,14 +215,20 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
   padding:2px 2px;text-align:center;font-size:16px;color:var(--ink);font-weight:800;-moz-appearance:textfield}
 #rejoinSec:focus{outline:2px solid #8b5cf6;outline-offset:1px;border-color:transparent}
 #rejoinSec::-webkit-outer-spin-button,#rejoinSec::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-/* 前提の3つ(ボス技・SP回避・再突入)は、既定から変えると枠が青くなる(2026-09-20タダシさん指示)。
-   ひと目で「自分が動かした設定」が分かるようにするため。色はタダシさん指定の #6b88f7 を少し濃く暗くしたもの */
-.prerow{--chg:#5b7bf0;--chgbg:rgba(91,123,240,.20)}
-:root.light .prerow{--chg:#3f57c9;--chgbg:rgba(63,87,201,.13)}
+/* 設定を既定から変えたら、ボーナス一括と同じ質感のグラデーションで点灯する(2026-09-20タダシさん指示)。
+   前提(ボス技・SP回避・再突入)＝青／ボーナス個別(フィールド・天候ブースト・フレンド・メガ応援・チームパワー)＝紫の入ったピンク。
+   ⚠ 既定のまま(なし・即打ち・10秒)は白い枠のまま＝「自分が動かした設定」がひと目で分かる */
+.prerow .pick.chg .face,.prerow .numwrap.chg,.prerow .optbtn.chg,
+.bonusrow .pick.chg .face,.bonusrow .optbtn.chg,.bonusrow .optbtn[aria-pressed="true"]{
+  color:#fff;border-color:transparent;transform:translateY(-1px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 rgba(0,0,0,.35)}
 .prerow .pick.chg .face,.prerow .numwrap.chg,.prerow .optbtn.chg{
-  border-color:var(--chg);color:var(--chg);background:var(--chgbg);
-  box-shadow:0 2px 0 rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.10)}
-.prerow .pick.chg .face em,.prerow .numwrap.chg em,.prerow .numwrap.chg i{color:var(--chg);opacity:.85}
+  background:linear-gradient(160deg,#9ab6ff 0%,#5b7bf0 45%,#2f4fc0 100%)}
+.bonusrow .pick.chg .face,.bonusrow .optbtn.chg,.bonusrow .optbtn[aria-pressed="true"]{
+  background:linear-gradient(160deg,#ff9ad8 0%,#d63384 45%,#7a3cc4 100%)}
+.prerow .pick.chg .face em,.prerow .numwrap.chg em,.prerow .numwrap.chg i,
+.bonusrow .pick.chg .face em{color:rgba(255,255,255,.88)}
+.prerow .numwrap.chg #rejoinSec{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#fff}
 /* 狭い画面は字と余白を詰めて、それぞれ1行に収める */
 @media (max-width:430px){
   .setrow{gap:6px 3px}
@@ -353,8 +359,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <div class="setrow prerow">
     <span class="lbl">前提</span>
     <span class="pick" data-pre="ボス技" title="ボスがSPアタックを撃つ条件です。即打ち＝ゲージがたまったら必ず撃つ（きびしめの前提）／2回に1回＝確率どおりの平均的な動き（毎回同じ結果）／ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）"><select id="spSel">
-      <option value="asap" selected>即打ち</option>
-      <option value="alt">2回に1回</option>
+      <option value="asap">即打ち</option>
+      <option value="alt" selected>2回に1回</option>
       <option value="coin">ランダム</option>
     </select><span class="face"></span></span>
     <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SP回避</button>
@@ -525,7 +531,7 @@ const guessTier=k=>{const p=D.pokemon[k]; return p.mega?(p.lg?'t6':'t4'):'t5';};
 // ---- 状態 ----
 let boss=null, tier='t5';
 let myMode='fewest', myKey=null, myShadow=false;   // 既定は最少人数おまかせ(2026-09-13タダシさん指示)   // えらぶ のときに使う
-let spMode='asap';
+let spMode='alt';   // 既定は「2回に1回」＝確率どおりの平均的な動き（2026-09-20タダシさん指示）
 // 6匹編成(上から順に出す)。端末に保存して次回も同じパーティで開く
 let TEAM=[];
 function loadTeam(){
@@ -1114,9 +1120,11 @@ $('dodgeBtn').onclick=()=>{dodgeSp=!dodgeSp;$('dodgeBtn').setAttribute('aria-pre
 // 前提の3つ: 既定(即打ち／回避なし／10秒)から変えたら枠を青くする。一括設定では動かさない設定なので、ここだけ別の見た目にする
 function syncPre(){
   const mark=(el,on)=>{ if(el) el.classList.toggle('chg',!!on); };
-  mark($('spSel').closest('.pick'), $('spSel').value!=='asap');
+  mark($('spSel').closest('.pick'), $('spSel').value!=='alt');
   mark($('dodgeBtn'), dodgeSp);
   mark($('rejoinSec').closest('.numwrap'), (+$('rejoinSec').value||0)!==10);
+  // ボーナス個別も同じ考え方（「なし」のままなら白いまま）。チームパワーは aria-pressed で点灯する
+  [['feSel',''],['wxSel',''],['frSel','1'],['mgSel','1']].forEach(([id,def])=>mark($(id).closest('.pick'), $(id).value!==def));
 }
 $('feSel').addEventListener('change',()=>{syncTierNote();runAll();});
 syncFe();
@@ -1149,7 +1157,7 @@ function applyPreset(k){
   // 天候は「いまのアタッカー」から決めるので、ほかの設定を入れたあとに選ぶ
   if(k==='best'){ $('wxSel').value=bestWeather(); syncPick($('wxSel')); }
   presetWx=(k==='best')?$('wxSel').value:'';
-  syncTierNote(); syncPreset(); runAll();
+  syncTierNote(); syncPreset(); syncPre(); runAll();
 }
 function syncPreset(){
   const fe=$('feSel').value, wx=$('wxSel').value, fr=$('frSel').value, mg=$('mgSel').value;
@@ -1160,7 +1168,7 @@ function syncPreset(){
 $('pBest').onclick=()=>applyPreset('best');
 $('pMx').onclick=()=>applyPreset('mx');
 $('pNone').onclick=()=>applyPreset('none');
-['wxSel','frSel','mgSel','feSel'].forEach(id=>$(id).addEventListener('change',syncPreset));
+['wxSel','frSel','mgSel','feSel'].forEach(id=>$(id).addEventListener('change',()=>{syncPreset();syncPre();}));
 ['bfSel','bcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('bfSel','bfType');syncTypeIcon('bcSel','bcType');runAll();}));
 ['mfSel','mcSel'].forEach(id=>$(id).addEventListener('change',()=>{syncTypeIcon('mfSel','mfType');syncTypeIcon('mcSel','mcType');runAll();}));
 $('myShadow').onclick=()=>{myShadow=!myShadow;renderMy();runAll();};
