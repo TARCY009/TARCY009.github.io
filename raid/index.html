@@ -211,6 +211,14 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
   padding:2px 2px;text-align:center;font-size:16px;color:var(--ink);font-weight:800;-moz-appearance:textfield}
 #rejoinSec:focus{outline:2px solid #8b5cf6;outline-offset:1px;border-color:transparent}
 #rejoinSec::-webkit-outer-spin-button,#rejoinSec::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+/* 前提の3つ(ボス技・SP回避・再突入)は、既定から変えると枠が青くなる(2026-09-20タダシさん指示)。
+   ひと目で「自分が動かした設定」が分かるようにするため。色はタダシさん指定の #6b88f7 を少し濃く暗くしたもの */
+.prerow{--chg:#5b7bf0;--chgbg:rgba(91,123,240,.20)}
+:root.light .prerow{--chg:#3f57c9;--chgbg:rgba(63,87,201,.13)}
+.prerow .pick.chg .face,.prerow .numwrap.chg,.prerow .optbtn.chg{
+  border-color:var(--chg);color:var(--chg);background:var(--chgbg);
+  box-shadow:0 2px 0 rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.10)}
+.prerow .pick.chg .face em,.prerow .numwrap.chg em,.prerow .numwrap.chg i{color:var(--chg);opacity:.85}
 /* 狭い画面は字と余白を詰めて、それぞれ1行に収める */
 @media (max-width:430px){
   .setrow{gap:6px 3px}
@@ -338,29 +346,31 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <div class="card c-res">
   <div class="step"><b>結果</b><h2>実戦シミュレート</h2></div>
   <div class="setrow presetrow">
-    <span class="lbl">前提</span>
+    <span class="lbl">ボーナス一括</span>
     <button type="button" class="optbtn pbtn" id="pBest" aria-pressed="false" title="いちばん有利な前提です。フィールド効果・天候・フレンド（大親友＋）・メガ応援（同タイプ）・チームパワーをすべて入れます。ここで出る人数が「条件がそろえば何人で倒せるか」の下限です">最善</button>
-    <button type="button" class="optbtn pbtn" id="pMx" aria-pressed="false" title="ミュウツーのフィールド効果「ばくれつパンチ+」だけ入れます（メガシンカしたボスへのダメージ1.15倍・シールドを1人2枚割れる）。ほかのボーナスは入れません">ミュウツー効果</button>
     <button type="button" class="optbtn pbtn" id="pNone" aria-pressed="false" title="フィールド効果もボーナスも何も入れない、いちばん厳しい前提です">ボーナスなし</button>
+    <button type="button" class="optbtn pbtn" id="pMx" aria-pressed="false" title="ミュウツーのフィールド効果「ばくれつパンチ+」だけ入れます（メガシンカしたボスへのダメージ1.15倍・シールドを1人2枚割れる）。ほかのボーナスは入れません">ミュウツー効果</button>
   </div>
-  <div class="setrow">
-    <span class="pick" data-pre="ボス" title="ボスがSPアタックを撃つ条件です。即打ち＝ゲージがたまったら必ず撃つ（きびしめの前提）／2回に1回＝確率どおりの平均的な動き（毎回同じ結果）／ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）"><select id="spSel">
+  <!-- 前提＝一括設定で動かないもの（ボスの動き・こちらの操作）。既定から変えると枠が青くなる（2026-09-20タダシさん指示） -->
+  <div class="setrow prerow">
+    <span class="lbl">前提</span>
+    <span class="pick" data-pre="ボス技" title="ボスがSPアタックを撃つ条件です。即打ち＝ゲージがたまったら必ず撃つ（きびしめの前提）／2回に1回＝確率どおりの平均的な動き（毎回同じ結果）／ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）"><select id="spSel">
       <option value="asap" selected>即打ち</option>
       <option value="alt">2回に1回</option>
       <option value="coin">ランダム</option>
     </select><span class="face"></span></span>
     <button type="button" class="optbtn" id="dodgeBtn" aria-pressed="false" title="ボスのSPアタックだけ回避します（被ダメージ75%カット・回避に0.5秒かかるぶん次の攻撃が遅れます）">SP回避</button>
+    <label class="numwrap" for="rejoinSec" title="手持ちが全滅してからバトルに戻るまでの時間です（0〜60秒・タップで打ち直せます）。ひんし→次のポケモンは1秒固定"><em>再突入</em><input type="number" id="rejoinSec" inputmode="numeric" min="0" max="60" step="1" value="10"><i>秒</i></label>
+  </div>
+  <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝手持ちが全滅してからバトルに戻るまでの秒数です。</p>
+  <div class="setrow bonusrow">
+    <span class="lbl">ボーナス個別</span>
     <span class="pick" data-pre="フィールド" title="フィールド効果（アドベンチャーエフェクト）は同時に1つだけ使えます。自分のポケモンだけにかかります。ザシアン＝攻撃1.1倍（どのレイドでも）／ミュウツー（ばくれつパンチ+）＝メガシンカしたボスへのダメージ1.15倍（メガレイド・スーパーメガレイドだけ・ゲンシには効かない）"><select id="feSel">
       <option value="" selected>なし</option>
       <option value="zc" data-face="×1.1">ザシアン ×1.1</option>
       <option value="mx" data-face="×1.15">ミュウツー ×1.15</option>
     </select><span class="face"></span></span>
-    <button type="button" class="optbtn" id="tpBtn" aria-pressed="false" title="パーティプレイのチームパワーです。参加する全員がパーティを組んでいる前提で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P）、満タンで次のSPアタックが2倍になります。1人のときは効果がありません。点灯したら毎回すぐ使う想定です">チームパワー</button>
-  </div>
-  <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝手持ちが全滅してからバトルに戻るまでの秒数です。</p>
-  <div class="setrow">
-    <label class="numwrap" for="rejoinSec" title="手持ちが全滅してからバトルに戻るまでの時間です（0〜60秒・タップで打ち直せます）。ひんし→次のポケモンは1秒固定"><em>再突入</em><input type="number" id="rejoinSec" inputmode="numeric" min="0" max="60" step="1" value="10"><i>秒</i></label>
-    <span class="pick" data-pre="天候" title="選んだ天候で1.2倍になるタイプのわざが強くなります。自分のわざだけでなく、ボスのわざにも掛かります（例: 曇りならボスのきあいだまも1.2倍）"><select id="wxSel">
+    <span class="pick" data-pre="天候ブースト" title="選んだ天候で1.2倍になるタイプのわざが強くなります。自分のわざだけでなく、ボスのわざにも掛かります（例: 曇りならボスのきあいだまも1.2倍）"><select id="wxSel">
       <option value="" selected>なし</option>
       <option value="sunny">晴れ</option>
       <option value="partly">時々曇り</option>
@@ -383,6 +393,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <option value="1.1" data-face="×1.1">別タイプ ×1.1</option>
       <option value="1.3" data-face="×1.3">同タイプ ×1.3</option>
     </select><span class="face"></span></span>
+    <button type="button" class="optbtn" id="tpBtn" aria-pressed="false" title="パーティプレイのチームパワーです。参加する全員がパーティを組んでいる前提で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P）、満タンで次のSPアタックが2倍になります。1人のときは効果がありません。点灯したら毎回すぐ使う想定です">チームパワー</button>
   </div>
   <div id="resBody"><div class="empty">ボスを選ぶと結果が出ます</div></div>
 </div>
@@ -1063,7 +1074,7 @@ loadTeam();
 buildTeamUI();
 attachSugg($('bossInput'),$('bossSugg'),k=>{
   boss=k;tier=guessTier(k);topCache.key=null;
-  feDefault();syncPreset();renderBoss();renderMy();runAll();
+  feDefault();syncPreset();syncPre();renderBoss();renderMy();runAll();
 });
 attachSugg($('myInput'),$('mySugg'),k=>{
   myKey=k;myShadow=false;
@@ -1092,10 +1103,17 @@ document.querySelectorAll('.pick select').forEach(sel=>{
 });
 $('spSel').addEventListener('change',()=>{
   spMode=$('spSel').value;
-  runAll();
+  syncPre(); runAll();
 });
-$('rejoinSec').addEventListener('input',runAll);
-$('dodgeBtn').onclick=()=>{dodgeSp=!dodgeSp;$('dodgeBtn').setAttribute('aria-pressed',dodgeSp);runAll();};
+$('rejoinSec').addEventListener('input',()=>{syncPre();runAll();});
+$('dodgeBtn').onclick=()=>{dodgeSp=!dodgeSp;$('dodgeBtn').setAttribute('aria-pressed',dodgeSp);syncPre();runAll();};
+// 前提の3つ: 既定(即打ち／回避なし／10秒)から変えたら枠を青くする。一括設定では動かさない設定なので、ここだけ別の見た目にする
+function syncPre(){
+  const mark=(el,on)=>{ if(el) el.classList.toggle('chg',!!on); };
+  mark($('spSel').closest('.pick'), $('spSel').value!=='asap');
+  mark($('dodgeBtn'), dodgeSp);
+  mark($('rejoinSec').closest('.numwrap'), (+$('rejoinSec').value||0)!==10);
+}
 $('feSel').addEventListener('change',()=>{syncTierNote();runAll();});
 syncFe();
 $('wxSel').addEventListener('change',runAll);
@@ -1149,7 +1167,7 @@ if(q.get('b')&&D.pokemon[q.get('b')]){
   boss=q.get('b');
   tier=TIERS.some(t=>t.id===q.get('t'))?q.get('t'):guessTier(boss);
   $('bossInput').value=D.pokemon[boss].n;
-  feDefault();syncPreset();renderBoss();renderMy();runAll();
+  feDefault();syncPreset();syncPre();renderBoss();renderMy();runAll();
 }
 
 // ---- 使い方 ----
