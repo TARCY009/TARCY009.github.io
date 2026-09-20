@@ -124,6 +124,11 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .selrow{display:flex;align-items:center;gap:6px}
 .selrow select{flex:1;min-width:0}
+/* おまかせのときのわざ欄は自動で決まる＝変えられない（仕様）。
+   ⚠ 変えられないのに下向きの矢印が出ていると「押せるのに反応しない」と読まれるので、
+   矢印を消して「固定してある」と分かる平らな枠にする（2026-09-20タダシさん指摘） */
+.selrow select:disabled{-webkit-appearance:none;appearance:none;opacity:1;cursor:default;
+  color:var(--sub);background:transparent;border-style:dashed;border-color:var(--rowline);box-shadow:none}
 .seltype{flex-shrink:0;display:inline-flex}
 .tbadge{box-shadow:var(--tbadge)}
 /* タブ(立体グラデーション・全ツール共通の見た目) */
