@@ -282,8 +282,10 @@ select option[value=""]{color:var(--sub)}
    pagelinkの質感だけを持つ */
 header h1{display:flex;flex-wrap:wrap;gap:0 .35em}
 /* ボールの見た目は共通ファイル assets/pageheader.css が持つ（2026-09-20に全ページへ）。
-   この h1 は gap を持っていてボールの右にも効くので、共通側の margin だけ打ち消す。 */
-header h1::before{margin-right:0}
+   この h1 は gap を持っていてボールの右にも効くので、共通側の margin だけ打ち消す。
+   ⚠ このファイルは pageheader.css より先に読み込まれるので、同じ詳細度だと共通側が勝つ。
+      body を足して詳細度を1つ上げてある（外すとボールが離れて見える）。 */
+body header h1::before{margin-right:0}
 header h1>span,header h1>b{white-space:nowrap}
 header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
 /* パーティ診断 */

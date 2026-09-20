@@ -135,11 +135,12 @@
 | gbl | シミュレーター | GBL |
 | rocket | `対策シミュレーター` | `GOロケット団` |
 | battlelog | 対戦記録 | GBL |
-| breakpoint | ブレイクポイント | 🎯 GBL |
+| breakpoint | ブレイクポイント | GBL |
 | gym-defense | ジム防衛 | オススメツール |
 
 - **GBL関連4ツールは「ブランド接頭辞=白・機能を表す語=色」**
-- breakpoint は前が決まり文句（PREFIX型）。絵文字ごと`.wmksuf`に入れ、`white-space:nowrap`の外枠で折り返しを防ぐ（元は`h1 b{white-space:nowrap}`の塊）
+- breakpoint は前が決まり文句（PREFIX型）。`.wmksuf`に入れ、`white-space:nowrap`の外枠で折り返しを防ぐ（元は`h1 b{white-space:nowrap}`の塊）。
+  **🎯の絵文字は2026-09-20にタダシさん指示で削除**（ボールマークと並ぶと飾りが多いため）
 - **⚠ 個体値チェッカーの副題 `<small>` は`.wmk`/`.wmksuf`の外（h1直下）**（中だと`.wmk small{color:inherit}`で`color`が付く。外なら`h1 small{color:var(--sub)}`）
 
 **⚠ eyebrow・タイトル・白の3色構成（全ツールの恒久ルール・基準はマックスバトル）**:
@@ -668,6 +669,12 @@ GBL（3リーグの環境勝率と順位・確定わざ・圧勝できる相手�
 
 > **GBL・ロケット団・対戦記録・模擬戦の決まりは `.claude/rules/gbl.md` に移しました**（2026-09-17）。
 > `assets/gbl-app.js`・`assets/pvp-engine.js`・`gbl/`・`rocket/`・`battlelog/` などを開くと自動で読み込まれます。
+
+**⚠ タイトルの左のモンスターボールは `assets/pageheader.css` の1か所（2026-09-20・全ページ共通）**:
+ボールは `header h1::before`（inline-block＋`margin-right:.4em`）。**h1 を flex にしない**——flex にすると同じ余白（column-gap）が語と語の間にも入り、「タイプ別火力｜ランキング」のような見出しが開いてしまう。
+**⚠ すでに h1 が flex＋gap を持つページ**（レイド火力・レイドシミュ・ジム系・マックスバトル・GBL系）は、その gap がボールの右にも効いて**二重の余白になる**ので、ページ側で `margin-right:0` を当てて打ち消す。
+**⚠ `assets/gbl.css` は pageheader.css より先に読み込まれる**ので、打ち消しは `body header h1::before` と詳細度を1つ上げて書く（同じ詳細度だと共通側が勝ってボールが離れる・実際に踏んだ）。
+基準（390px幅でのボールと文字のすき間）: レイド火力9.3px／ジム系・マックスバトル10.0px／GBL系7.2px／そのほか8.2px
 
 ### 全ツール共通の「🏠 ツール一覧」（2026-09-01・共通ファイル）
 
