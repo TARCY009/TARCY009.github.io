@@ -906,9 +906,13 @@ function mpCalc(tierId){
   // need＝1人で削り切るのに必要な秒数(t7はシールド前20%+シールド中80%・防御3.6倍の2段階)。
   // ブースト選択中は候補20件×全わざ構成を選び直す(天候やチームパワーで最適構成が変わるため)。
   // ブーストなしのときはものさしの構成をそのまま使う(「分割SP優遇」の設定もそのまま反映される)
-  const bestFor=(P)=>{
-    const plain=!ex||(P===0&&ex.flat===1&&!ex.wx.length);
-    const exP=plain?null:{...ex,tp:P};
+  // solo=true は「1人で挑むとき」。フレンドボーナスは一緒に入るフレンドがいないと成立しないので外す
+  //   (チームパワーは P=0 で元から効かない)。2026-09-20タダシさん指示:
+  //   まず有利な前提で最少人数を出し、1人になったらこの3つを外して計算し直す。1人で倒せなければ最少は2人
+  const bestFor=(P,solo)=>{
+    const flatS=solo?ex&&ex.flat/(+MPB.fr||1):ex&&ex.flat;
+    const plain=!ex||(P===0&&flatS===1&&!ex.wx.length);
+    const exP=plain?null:{...ex,tp:P,flat:flatS};
     let best=null;
     for(const r of mpTop()){
       const atk=(r.p.a+15)*D.cpm['50'];
@@ -936,7 +940,7 @@ function mpCalc(tierId){
     // 全員がパーティを組む前提: 1人=P0(組めない)・2人=+1P・3人=+2P・4人以上=+3P。
     // それぞれのPで成立する最少人数の候補を出して、いちばん少ないものを採用する
     const cand=[];
-    const b0=bestFor(0); if(b0&&b0.need<=t.time)   cand.push({n:1,b:b0});
+    const b0=bestFor(0,true); if(b0&&b0.need<=t.time)   cand.push({n:1,b:b0});   // 1人はフレンドも外す
     const b1=bestFor(1); if(b1&&b1.need<=t.time*2) cand.push({n:2,b:b1});
     const b2=bestFor(2); if(b2&&b2.need<=t.time*3) cand.push({n:3,b:b2});
     const b3=bestFor(3); if(b3) cand.push({n:Math.max(4,Math.ceil(b3.need/t.time)),b:b3});
@@ -947,6 +951,11 @@ function mpCalc(tierId){
     best=bestFor(0);
     if(!best) return null;
     n=Math.max(1,Math.ceil(best.need/t.time));
+    if(n===1){
+      // 1人で足りる計算になったら、フレンドを外して calc し直す。倒せなければ最少は2人
+      const solo=bestFor(0,true);
+      if(solo&&solo.need<=t.time) best=solo; else n=2;
+    }
   }
   return {t,best,n};
 }

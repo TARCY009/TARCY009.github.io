@@ -396,7 +396,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <option value="snow">雪</option>
       <option value="wind">強風</option>
     </select><span class="face"></span></span>
-    <span class="pick" data-pre="フレンド" title="フレンドと一緒に参加したときの攻撃ボーナスです。×1.03=友達／×1.05=仲良し／×1.07=親友／×1.10=大親友／×1.12=大親友＋"><select id="frSel">
+    <span class="pick" data-pre="フレンド" title="フレンドと一緒に参加したときの攻撃ボーナスです。×1.03=友達／×1.05=仲良し／×1.07=親友／×1.10=大親友／×1.12=大親友＋。1人で挑むときは効きません"><select id="frSel">
       <option value="1" selected>なし</option>
       <option value="1.03" data-face="×1.03">友達 ×1.03</option>
       <option value="1.05" data-face="×1.05">仲良し ×1.05</option>
@@ -404,7 +404,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <option value="1.10" data-face="×1.10">大親友 ×1.10</option>
       <option value="1.12" data-face="×1.12">大親友＋ ×1.12</option>
     </select><span class="face"></span></span>
-    <span class="pick" data-pre="メガ応援" title="他の参加者がメガシンカを出しているときの応援ボーナスです。×1.1=別タイプ／×1.3=同タイプ（自分のわざとメガのタイプが同じとき）"><select id="mgSel">
+    <span class="pick" data-pre="メガ応援" title="他の参加者がメガシンカを出しているときの応援ボーナスです。×1.1=別タイプ／×1.3=同タイプ（自分のわざとメガのタイプが同じとき）。1人で挑むときは効きません"><select id="mgSel">
       <option value="1" selected>なし</option>
       <option value="1.1" data-face="×1.1">別タイプ ×1.1</option>
       <option value="1.3" data-face="×1.3">同タイプ ×1.3</option>
@@ -923,7 +923,14 @@ function buildCfg(N,seed,wantLog,team,sp,bm){
   const bf=bm?bm.f:$('bfSel').value, bc=bm?bm.c:$('bcSel').value;
   const bossCfg={types:bp.ty,atk:(bp.a+15)*t.cpm,def:(bp.df+15)*t.cpm,hp:t.hp,
     fast:mvObj(bf),chg:bc?mvObj(bc):null};
-  return {limit:t.time,eff,boss:bossCfg,team:team||buildTeamCfg(),N,spMode:sp||spMode,dodgeSp,
+  // ⚠ 1人のときは「複数人ありき」のボーナスを外す(2026-09-20タダシさん指示)。
+  //   フレンドボーナスは一緒に入るフレンドが、メガ応援はメガを出す他の参加者がいないと成立しない。
+  //   チームパワーは下の tp が 1人=0 なので元から効かない。
+  //   → 有利な前提で1人になっても、この3つを外して勝てなければ最少は2人になる
+  let tm=team||buildTeamCfg();
+  const soloOff=N===1?(+$('frSel').value||1)*(+$('mgSel').value||1):1;
+  if(tm&&soloOff!==1) tm=tm.map(m=>({...m,mult:m.mult/soloOff}));
+  return {limit:t.time,eff,boss:bossCfg,team:tm,N,spMode:sp||spMode,dodgeSp,
     wxTypes:WEATHER[$('wxSel').value]||[],
     // チームパワー: ONなら全員がパーティを組んでいる前提で、人数から上昇Pを決める
     // (1人=0(パーティを組めない)・2人=+1P・3人=+2P・4人以上=+3P)
