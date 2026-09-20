@@ -93,6 +93,9 @@ header{margin:4px 2px 14px}
 h1{font-size:1.45rem;margin:0;line-height:1.35}
 @media (max-width:430px){h1{font-size:1.28rem}}
 h1 b{white-space:nowrap}
+/* 「GBL」と「ブレイクポイント」の間を少しあける（GBL・ロケット団・対戦記録の見出しと同じ .35em・
+   2026-09-20タダシさん指示）。このページの h1 は flex ではないので gap ではなく margin で取る。 */
+h1 .wmksuf{margin-right:.35em}
 h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-spacing:.05em}
 .pagelink{font-size:.7rem;font-weight:800;color:#9fc0ff;text-decoration:none;white-space:nowrap;
   border:1px solid #3b6ef0;border-radius:10px;padding:7px 10px;background:rgba(59,110,240,.12)}
