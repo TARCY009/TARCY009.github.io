@@ -6734,7 +6734,7 @@ function runBlog() {
       (recs.length >= 5 ? `<button class="blusecup" title="記録から作った採用率順のリスト(マイ環境)を相手にして、自分のパーティの穴をチェックします">マイ環境でパーティ診断</button>` : '')
     : `<div class="blguide"><div class="blgttl">${BL_LGN[cap] || 'このリーグ'}の記録はまだありません</div>
         <ol class="blgsteps">
-          <li><i>1</i><span>あいての枠に、戦った相手を入れる<small>見えたぶんだけでOK</small></span></li>
+          <li><i>1</i><span>あいての枠に、戦った相手を入れる</span></li>
           <li><i>2</i><span>勝ち／負けを押す<small>レートは分かるときだけ</small></span></li>
           <li><i>3</i><span>記録する</span></li>
         </ol>

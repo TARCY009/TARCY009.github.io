@@ -91,10 +91,18 @@ MANUAL_LEARN = {
 }
 HIDDEN_FORMS = {'aegislash_blade', 'mimikyu_busted', 'cramorant_gulping', 'cramorant_gorging', 'morpeko_hangry'}
 
+# タイプの並びが情報元とゲーム内公開データで逆になっているものを、ゲーム内の並びにそろえる。
+# 並びは表示だけの話だが、ツールごとに違うと気になる人がいるので合わせる（2026-09-20タダシさん指示）。
+# 値はゲーム内公開データ(GAME_MASTER)の type / type2 の順。情報元が直したら消してよい
+TYPE_ORDER_FIX = {
+    'voltorb_hisuian': ['ELECTRIC', 'GRASS'],   # ゲーム内: でんき・くさ（情報元は くさ・でんき）
+    'groudon_primal':  ['GROUND', 'FIRE'],      # ゲンシグラードン。ゲーム内: じめん・ほのお（情報元は ほのお・じめん）
+}
+
 SPECIES_JA_FIX = {
     'pikachu_5th_anniversary': 'ピカチュウ（5しゅうねん）',
-    'pikachu_flying': 'そらをとぶピカチュウ',
-    'pikachu_libre': 'マスクド・ピカチュウ',
+    'pikachu_flying': 'ピカチュウ（そらとぶ）',       # すがたは括弧に書く（2026-09-20タダシさん指示・レイド側の表記と同じ）
+    'pikachu_libre': 'ピカチュウ（マスクド）',
     'pikachu_shaymin': 'ピカチュウ（シェイミスカーフ）',
     'tauros_aqua': 'パルデアケンタロス（アクア種）',
     'tauros_blaze': 'パルデアケンタロス（ブレイズ種）',
@@ -255,7 +263,7 @@ def main():
         st = p['baseStats']
         pokes[sid] = {'n': nm, 'dex': p.get('dex', 0),
                       'a': st['atk'], 'df': st['def'], 'h': st['hp'],
-                      'ty': [t.upper() for t in p['types'] if t != 'none'],
+                      'ty': TYPE_ORDER_FIX.get(sid) or [t.upper() for t in p['types'] if t != 'none'],
                       'q': p.get('fastMoves', []), 'c': p.get('chargedMoves', []),
                       'eq': [m for m in p.get('eliteMoves', []) if m.endswith('_FAST') or (m in moves and 'eg' in moves[m])],
                       'ec': [m for m in p.get('eliteMoves', []) if m in moves and 'e' in moves[m]],
@@ -353,6 +361,26 @@ def main():
         c = cpm[str(45.5)]
         cp = math.floor(a * math.sqrt(d) * math.sqrt(h) * c * c / 10)
         print(f'検証: マリルリ0/15/15 PL45.5 → CP{cp}', '✅' if cp == 1499 else '❌(1499のはず)')
+
+    # ---- タイプの並びがレイド側(godata)と食い違っていないか見張る ----
+    # 上の TYPE_ORDER_FIX で直しているぶん以外に新しい食い違いが出たら知らせる（提供元の値が変わることがある）
+    try:
+        gop = json.load(open('godata.json', encoding='utf-8'))['pokemon']
+        gkey = {k.lower().replace('_alola', '_alolan').replace('_paldea', '_paldean'): v for k, v in gop.items()}
+        bad = []
+        for sid, v in pokes.items():
+            g = gkey.get(sid)
+            if g and g.get('ty') and v.get('ty') and g['ty'] != v['ty']:
+                bad.append(f'- タイプの並びがレイド側と違う: {v["n"]} ({sid}) レイド {g["ty"]} / 対戦 {v["ty"]}')
+        if bad:
+            print('警告: タイプの並びの食い違い', len(bad), '件')
+            print('\n'.join(bad))
+            try: open('changes.md', 'a', encoding='utf-8').write('\n### タイプの並びの食い違い\n' + '\n'.join(bad) + '\n')
+            except Exception: pass
+        else:
+            print('検証: タイプの並びはレイド側と一致 ✅')
+    except Exception as e:
+        print('警告: タイプの並びの突き合わせに失敗 →', e)
 
     # ---- シーズンのわざアップデートの反映状況(3か月ごとの大型調整・season_moves.py) ----
     # 提供元のデータが追いついたかを毎回突き合わせ、未反映があれば changes.md に出す
