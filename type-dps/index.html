@@ -91,6 +91,9 @@ header{margin:4px 2px 14px}
 .eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#6f44ff;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(111,68,255,.55),transparent)}
 h1{font-size:1.45rem;margin:0;line-height:1.35}
+/* 先頭の「レイド」（白）とツール名の間を少しあける（マックスバトル タイプ別・ブレイクポイントと同じ .35em・
+   2026-09-20タダシさん指示）。この h1 は flex ではないので gap ではなく margin で取る。 */
+h1 .wmksuf:first-child{margin-right:.35em}
 @media (max-width:430px){h1{font-size:1.28rem}}
 h1 b{white-space:nowrap}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
@@ -184,7 +187,7 @@ h1 b{white-space:nowrap}
 <div class="wrap">
 <header>
   <div class="eyebrow">Pok&eacute;mon GO Type DPS Ranking</div>
-  <h1><b class="wmk" data-tool="type-dps">タイプ別火力</b><span class="wmksuf">ランキング</span></h1>
+  <h1><span class="wmksuf">レイド</span><b class="wmk" data-tool="type-dps">タイプ別火力</b><span class="wmksuf">ランキング</span></h1>
   <div id="themesw"></div>
 </header>
 
