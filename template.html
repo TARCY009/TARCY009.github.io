@@ -688,7 +688,9 @@ function attachSugg(inputEl, listEl, onPick, filterFn, rowFn){
     }
     const q=toKata(inputEl.value.trim());
     if(!q){listEl.style.display='none';return;}
-    const res=KEYS.filter(k=>D.pokemon[k].n.includes(q) && (!filterFn||filterFn(k))).slice(0,12);
+    // ⚠ 候補は最大100件・前方一致を先に(全ツール共通の決まり)。黙って切ると「データが無い」と読まれる
+    const hitAll=KEYS.filter(k=>D.pokemon[k].n.includes(q) && (!filterFn||filterFn(k)));
+    const res=hitAll.filter(k=>D.pokemon[k].n.startsWith(q)).concat(hitAll.filter(k=>!D.pokemon[k].n.startsWith(q))).slice(0,100);
     if(!res.length){listEl.style.display='none';return;}
     listEl.innerHTML=res.map(k=>{
       const p=D.pokemon[k];

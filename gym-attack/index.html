@@ -313,7 +313,10 @@ $q.addEventListener('input',e=>{
   }
   const v=toKata($q.value.trim());
   if(!v){$sg.style.display='none';return;}
-  const hits=DATA.pokemon.filter(p=>p.name.includes(v)).slice(0,12);
+  // ⚠ 候補は最大100件・前方一致を先に(全ツール共通の決まり)。12件で黙って切ると
+  //   「メガ」と打ったときにメガが一部しか出ず「データが無い」と読まれる(過去に実際に誤解された)
+  const all=DATA.pokemon.filter(p=>p.name.includes(v));
+  const hits=all.filter(p=>p.name.startsWith(v)).concat(all.filter(p=>!p.name.startsWith(v))).slice(0,100);
   $sg.innerHTML='';
   hits.forEach(p=>{
     const b=document.createElement('button');

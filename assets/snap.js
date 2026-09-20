@@ -716,7 +716,9 @@
       return roundFrame(cv, true);
     }
     var one = await renderEl(el, Object.assign({}, base, { width: CW }));
-    var ideal = Math.round(Math.max(560, Math.min(1100, one.h * areaW / areaH)));
+    // ⚠ 下限は561px（560ちょうどだとスマホ用の @media (max-width:560px) が当たり、幅720で作る画像には出ている
+    //   タイプアイコン等が1920×1440だけ消える・2026-09-20に耐久指数で発見）
+    var ideal = Math.round(Math.max(561, Math.min(1100, one.h * areaW / areaH)));
     if (Math.abs(ideal - CW) > 40) one = await renderEl(el, Object.assign({}, base, { width: ideal }));
     var f = Math.min(areaW / one.w, areaH / one.h);
     var dw = one.w * f, dh = one.h * f;

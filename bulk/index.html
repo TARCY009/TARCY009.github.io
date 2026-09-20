@@ -282,8 +282,10 @@ function renderRank(){
   const q=query.trim().replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
   let rows, note;
   if(q){
-    rows=all.filter(r=>r.p.n.includes(q)).slice(0,100);
-    note=rows.length?`「${q}」に当てはまる ${rows.length}件（順位は${all.length}件の中での順位）`:`「${q}」に当てはまるポケモンがいません`;
+    // ⚠ 100件で切るときは必ず「本当の件数」を出す(黙って切ると「データが無い」と読まれる・全ツール共通の決まり)
+    const hit=all.filter(r=>r.p.n.includes(q));
+    rows=hit.slice(0,100);
+    note=rows.length?`「${q}」に当てはまる ${hit.length}件${hit.length>rows.length?`のうち上位${rows.length}件`:''}（順位は${all.length}件の中での順位）`:`「${q}」に当てはまるポケモンがいません`;
   }else{
     rows=all.slice(0,showN+extra);
     note=`${all.length}件のうち上位${Math.min(all.length,showN+extra)}件を表示中`;
