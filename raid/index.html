@@ -244,6 +244,9 @@ table.tl tr.me td{background:var(--mero)}
 table.tl tr.boss td{background:var(--bossro)}
 table.tl tr.sys td{color:var(--sub);font-size:.72rem}
 table.tl td.nm{text-align:left;white-space:nowrap}
+/* ⚠ わざ名は折り返さない。折ると狭い画面(390px)で1文字ずつ縦に割れ、1行がとても高くなる(2026-09-20)。
+   表が入りきらないときは .tlwrap の中で横にスクロールする(ページは横スクロールしない) */
+table.tl td.mv{white-space:nowrap}
 table.tl td.bhp{position:relative;white-space:nowrap;min-width:84px;font-variant-numeric:tabular-nums}
 table.tl td.bhp small{margin-left:4px;color:var(--sub);font-size:.68rem}
 table.tl td.bhp i{position:absolute;left:0;bottom:0;height:3px;opacity:.85;pointer-events:none;border-radius:99px}
@@ -1045,7 +1048,7 @@ function timelineHtml(){
     const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
     const cls=x.side==='me'?'me':'boss';
     return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
-      <td>${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td>${bhp}${mhp}</tr>`;
+      <td class="mv">${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td>${bhp}${mhp}</tr>`;
   }).join('');
   if(lacked)console.warn('レイドシミュ: エンジンの記録にHPが無い行があります(エンジンが古い可能性)');
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
