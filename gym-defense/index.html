@@ -88,6 +88,9 @@ header{padding:20px 0 4px}
 .eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#42dc4f;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(66,220,79,.55),transparent)}
 h1{font-size:1.45rem;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
+/* ボールの見た目は共通ファイル assets/pageheader.css が持つ（2026-09-20に全ページへ）。
+   この h1 は gap を持っていてボールの右にも効くので、共通側の margin だけ打ち消す。 */
+header h1::before{margin-right:0}
 @media (max-width:430px){h1{font-size:1.28rem}}
 h1 .badge{font-size:.65rem;background:var(--accent);color:var(--onaccent);border-radius:6px;padding:2px 8px;font-weight:700;letter-spacing:.08em}
 .lead{color:var(--sub);font-size:.85rem;margin-top:6px}

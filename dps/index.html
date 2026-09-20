@@ -73,8 +73,6 @@
   --mainink:#062038; --disbg:#273154; --disink:#6b76a3;
   --mcS:#c396ff; --mcM:#f58fc2; --mcC:#5fd8ea; --mcO:#ffab70; --mcG:#8ee6a8; --smaxline:#5b3f8f; --smaxink:#c396ff;
   --helpbody:rgba(26,35,66,.9); --helpline:#4a3a7d;
-  --ballsh:0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22);
-  --ballbtm:#e9edf8;
   --tbadge:inset 0 0 0 1px rgba(255,255,255,.16);
   --tcolor:#0b1023;   /* スマホのアドレスバーの色(theme.js が読む) */
 }
@@ -107,8 +105,6 @@
   --mainink:#fff; --disbg:#b9c6dd; --disink:#fff;
   --mcS:#7a3cc4; --mcM:#c02c76; --mcC:#0b7f92; --mcO:#b54a0e; --mcG:#0f7a3f; --smaxline:#c4b0ea; --smaxink:#6d3fc4;
   --helpbody:rgba(255,255,255,.92); --helpline:#cfc6f0;
-  --ballsh:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55);
-  --ballbtm:#ffffff;
   --tbadge:none;
   --tcolor:#e9f1ff;
 }
@@ -129,11 +125,9 @@ header{margin:6px 0 18px}
   header p{font-size:.74rem}
 }
 header h1{font-size:1.45rem;font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:.4em}
-header h1::before{content:'';width:1em;height:1em;border-radius:50%;flex-shrink:0;
-  background:
-    radial-gradient(circle at center,#fff 0 17%,#20263a 17% 30%,transparent 30%),
-    linear-gradient(180deg,#ff5470 0 44%,#20263a 44% 56%,var(--ballbtm) 56% 100%);
-  box-shadow:var(--ballsh)}
+/* ボールの見た目は共通ファイル assets/pageheader.css が持つ（2026-09-20に全ページへ）。
+   この h1 は gap を持っていてボールの右にも効くので、共通側の margin だけ打ち消す。 */
+header h1::before{margin-right:0}
 /* 幅が足りないときは「ポケモンGO / レイド火力チェッカー」の切れ目で折り返す(語の途中で切らない) */
 header h1{flex-wrap:wrap}
 header h1 .brand,header h1 .tool,header h1 .wmksuf{white-space:nowrap}

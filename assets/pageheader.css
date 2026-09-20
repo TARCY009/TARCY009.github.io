@@ -32,3 +32,22 @@ header{display:flex;flex-wrap:wrap;align-items:center;row-gap:8px;column-gap:12p
 header>*{flex:1 1 100%;min-width:0}
 header #themesw{flex:0 0 auto;margin-left:auto;order:-1}
 header .pagelink{flex:0 0 auto;order:-2}
+
+/* ===== タイトルの左のモンスターボール（2026-09-20タダシさん指示で全ページ共通に） =====
+   もともとレイド火力チェッカー（/dps/）だけに付いていたものを、全ツール・案内ページへ広げた。
+   見た目の定義はこの1か所だけに置く（ページ側には書かない・色もここの変数で切り替える）。
+   ⚠ h1 を flex に変えない（2026-09-20タダシさん指示「語間は開いていない方がいい」）。
+      h1 を flex にそろえると、ボールと同じ余白（column-gap）が語と語の間にも入ってしまい、
+      「タイプ別火力｜ランキング」のようにくっついていた見出しが開いてしまう。
+      inline-block ＋ vertical-align なら、flex の h1（レイド火力・ジム系など）でも
+      素の h1（図鑑・耐久指数など）でも、行の先頭に同じ位置で出せて語間は一切動かない。
+   ⚠ h1 がすでに flex ＋ gap を持つページ（/dps/・/raid/・ジム系・GBL系）は、
+      その gap がボールの右にも効くので、ページ側で margin-right:0 に打ち消してある。 */
+:root{--ballbtm:#e9edf8;--ballsh:0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22)}
+:root.light{--ballbtm:#ffffff;--ballsh:0 2px 5px rgba(30,40,90,.35), inset 0 0 0 1px rgba(32,38,58,.55)}
+header h1::before{content:'';display:inline-block;vertical-align:-.13em;flex:0 0 auto;
+  width:1em;height:1em;border-radius:50%;margin-right:.4em;
+  background:
+    radial-gradient(circle at center,#fff 0 17%,#20263a 17% 30%,transparent 30%),
+    linear-gradient(180deg,#ff5470 0 44%,#20263a 44% 56%,var(--ballbtm) 56% 100%);
+  box-shadow:var(--ballsh)}

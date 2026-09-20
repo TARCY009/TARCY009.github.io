@@ -113,6 +113,9 @@ header{padding:26px 0 6px;text-align:left}
 .eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:var(--dyna);text-transform:uppercase;display:flex;align-items:center;gap:10px}
 .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,61,110,.55),transparent)}
 h1{font-size:1.45rem;font-weight:900;letter-spacing:.03em;margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* ボールの見た目は共通ファイル assets/pageheader.css が持つ（2026-09-20に全ページへ）。
+   この h1 は gap を持っていてボールの右にも効くので、共通側の margin だけ打ち消す。 */
+header h1::before{margin-right:0}
 h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--dyna2));color:#2b0512;border-radius:999px;padding:3px 12px;font-weight:800;letter-spacing:.12em}
 .lead{color:var(--sub);font-size:.82rem;margin-top:8px;max-width:60ch}
 /* 文字を減らすために画面から外した補足は、消さずに隠しておく

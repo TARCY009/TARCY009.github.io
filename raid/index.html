@@ -89,6 +89,9 @@ body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",syst
 .wrap{max-width:860px;margin:0 auto}
 header{margin:6px 0 14px}
 header h1{font-size:1.45rem;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;display:flex;align-items:center;gap:.4em}
+/* ボールの見た目は共通ファイル assets/pageheader.css が持つ（2026-09-20に全ページへ）。
+   この h1 は gap を持っていてボールの右にも効くので、共通側の margin だけ打ち消す。 */
+header h1::before{margin-right:0}
 header h1 .brand,header h1 .tool,header h1 .wmksuf{white-space:nowrap}
 .eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:#1eba9f;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(63,224,196,.55),transparent)}
