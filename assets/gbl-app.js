@@ -13,6 +13,8 @@ document.getElementById('app').innerHTML = `
   <div id="themesw"></div>
 </header>
 
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
 <div class="easyrow"><button class="easybtn" id="easybtn" title="はじめての方向けの案内。質問に答えると、目的に合った画面へ設定済みの状態で移動します"><span class="lf">🔰</span>かんたん案内</button></div>
 
 <div class="leagues" id="leagues">

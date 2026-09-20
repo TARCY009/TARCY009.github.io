@@ -34,6 +34,8 @@
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/feedback.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script src="/assets/ads.js"></script>
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -570,6 +572,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div id="themesw"></div>
 </header>
 
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
 <div class="card">
   <div class="tophead">
     <label class="sec">ポケモン</label>
@@ -764,6 +768,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     <div id="fambody"></div>
   </div>
 </div>
+
+<div class="adslot" data-ad="mid" data-ad-when="#top10" data-snap-skip></div>
 
 <button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
 <div id="helpbody" class="helpbody" style="display:none">
