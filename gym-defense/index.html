@@ -31,6 +31,8 @@
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/feedback.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script src="/assets/ads.js"></script>
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -174,6 +176,8 @@ footer a{color:var(--accent2)}
   <p class="lead expl">耐久・かくとう相性・やる気の下がりにくさから出した総合ポイントのランキングです。PL50・個体値15想定。伝説・幻・メガ(配置不可)は除外済み。</p>
 </header>
 
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
 <div class="searchbox">
   <input id="q" type="search" placeholder="ポケモン名で検索" autocomplete="off">
 </div>
@@ -205,6 +209,8 @@ footer a{color:var(--accent2)}
 <div id="list" class="list"></div>
 <button id="more" class="more">さらに表示</button>
 <p id="empty" class="empty" style="display:none">該当するポケモンがありません</p>
+
+<div class="adslot" data-ad="mid" data-snap-skip></div>
 
 <button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
 <div id="helpbody" class="helpbody" style="display:none">

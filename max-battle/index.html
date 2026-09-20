@@ -30,6 +30,8 @@
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/feedback.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script src="/assets/ads.js"></script>
 <link rel="stylesheet" href="/assets/tabs.css">
 <!-- 保存してあるテーマを、画面を描く前に当てる(あとから当てるとダークが一瞬光る) -->
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
@@ -295,6 +297,8 @@ footer a{color:var(--spec)}
   <p class="lead expl">ボスポケモンを入力してダイマックスフェイズのアタッカー火力ランキングを表示</p>
 </header>
 
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
 
 <p class="bosslabel">敵ボスポケモン</p>
 <div class="searchbox">
@@ -355,6 +359,8 @@ footer a{color:var(--spec)}
 <button id="more" class="more" style="display:none">さらに表示</button>
 <p id="empty" class="empty" style="display:none">該当するポケモンがありません</p>
 <p id="placeholder" class="placeholder">上の入力欄からボスを選ぶと、アタッカー/タンクのランキングが表示されます。</p>
+
+<div class="adslot" data-ad="mid" data-ad-when="#list" data-snap-skip></div>
 
 <button id="helptab" class="helptab" type="button" aria-expanded="false">？ 使い方・計算の前提</button>
 <div id="helpbody" class="helpbody" style="display:none">

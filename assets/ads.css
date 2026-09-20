@@ -1,0 +1,31 @@
+/* 広告の枠（全ツール共通・自己完結）。中身を入れるのは ads.js。
+   決まり:
+   1. 枠の高さは最初から確保する。広告が来ても・来なくても・失敗しても、下の中身を1pxも動かさない
+      （時間差でクイッと動く広告は絶対に作らない）
+   2. 置くのは2か所だけ: top＝タイトルのすぐ下／mid＝ランキング（主な結果）の下。操作の途中には挟まない
+   3. ads.js が html に adson（本番）か adtest（見本）を付けたときだけ枠が出る。どちらも無ければ何も出ない */
+.adslot{display:none}
+html.adson .adslot,html.adtest .adslot{
+  display:block;box-sizing:border-box;max-width:100%;overflow:hidden;text-align:center;
+  margin:14px auto;padding:0;line-height:0;
+}
+html.adson .adslot::before,html.adtest .adslot::before{
+  content:'広告';display:block;height:16px;
+  font:500 10px/16px system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;
+  letter-spacing:.2em;color:#8b96c2;opacity:.75;
+}
+/* data-ad-when="#要素": その要素に結果が入るまで枠ごと出さない（ボスを選ぶ前の空の画面に広告だけ置かない）。
+   出るのは結果の「下」なので、出た瞬間に上の中身は動かない */
+html.adson .adslot[data-ad-when]:not(.adshow),html.adtest .adslot[data-ad-when]:not(.adshow){display:none}
+/* 高さ＝ラベル16px＋広告の高さ（top は 320×100 か 728×90 のどちらでも収まる100・mid は 300×250）。
+   広告そのものの大きさは ads.js が枠の幅を見て決める（高さはここで確保した範囲を超えない） */
+.adslot[data-ad="top"]{height:116px}
+.adslot[data-ad="mid"]{height:266px}
+.adslot ins,.adslot .adph{display:block;margin:0 auto;max-width:100%}
+/* 見本（?adtest=1）: 本物の広告の代わりに同じ大きさの点線の箱を出す */
+.adslot .adph{
+  box-sizing:border-box;border:2px dashed #ffd873;border-radius:10px;background:rgba(255,216,115,.10);
+  color:#ffd873;font:700 13px/1.5 system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;
+  display:flex;align-items:center;justify-content:center;
+}
+:root.light .adslot .adph{border-color:#b07a00;color:#8a6000;background:rgba(176,122,0,.08)}
