@@ -280,7 +280,9 @@ select option[value=""]{color:var(--sub)}
    assets/pageheader.css が持つ(2026-09-04)。ここではタイトル内部の見た目
    (「GOバトルリーグ / 対面シミュレーター」の切れ目での折り返し・グラデ)と
    pagelinkの質感だけを持つ */
-header h1{display:flex;flex-wrap:wrap;gap:0 .35em}
+/* ⚠ align-items:center は必須（2026-09-20タダシさん報告）。指定が無いと flex の既定（stretch）で
+   タイトルの左のボール（::before）が行の上端に貼り付き、文字より上にズレて見える。 */
+header h1{display:flex;flex-wrap:wrap;align-items:center;gap:0 .35em}
 /* ボールの見た目は共通ファイル assets/pageheader.css が持つ（2026-09-20に全ページへ）。
    この h1 は gap を持っていてボールの右にも効くので、共通側の margin だけ打ち消す。
    ⚠ このファイルは pageheader.css より先に読み込まれるので、同じ詳細度だと共通側が勝つ。
