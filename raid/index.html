@@ -182,7 +182,11 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .setrow .seg{flex:0 1 auto}
 .optbtn{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45)}
 :root.light .optbtn{--mc:#7a3cc4}
-.setrow+.setrow{margin-top:10px;padding-top:10px;border-top:1px dashed var(--rowline)}
+/* 3つの行(前提・ボーナス一括・ボーナス個別)は、線のないさりげない面に入れる(2026-09-20タダシさん指示)。
+   ⚠ アウトライン(枠線)は付けない——枠の入れ子に見えて画面がうるさくなるため。面と余白だけでまとまりを示す */
+.c-res .setrow{background:rgba(255,255,255,.06);border-radius:12px;padding:8px 10px;margin-top:6px}
+:root.light .c-res .setrow{background:rgba(20,30,70,.055)}
+.setrow+.setrow{margin-top:6px}
 .setgrp{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .setrow .lbl{font-size:.78rem;color:var(--sub);font-weight:700}
 /* タップで選ぶボタン。見た目はタブと同じで、中身はネイティブのプルダウン(選択肢の一覧は元の呼び名のまま)。
@@ -345,12 +349,6 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 
 <div class="card c-res">
   <div class="step"><b>結果</b><h2>実戦シミュレート</h2></div>
-  <div class="setrow presetrow">
-    <span class="lbl">ボーナス一括</span>
-    <button type="button" class="optbtn pbtn" id="pBest" aria-pressed="false" title="いちばん有利な前提です。フィールド効果・天候・フレンド（大親友＋）・メガ応援（同タイプ）・チームパワーをすべて入れます。ここで出る人数が「条件がそろえば何人で倒せるか」の下限です">最善</button>
-    <button type="button" class="optbtn pbtn" id="pNone" aria-pressed="false" title="フィールド効果もボーナスも何も入れない、いちばん厳しい前提です">ボーナスなし</button>
-    <button type="button" class="optbtn pbtn" id="pMx" aria-pressed="false" title="ミュウツーのフィールド効果「ばくれつパンチ+」だけ入れます（メガシンカしたボスへのダメージ1.15倍・シールドを1人2枚割れる）。ほかのボーナスは入れません">ミュウツー効果</button>
-  </div>
   <!-- 前提＝一括設定で動かないもの（ボスの動き・こちらの操作）。既定から変えると枠が青くなる（2026-09-20タダシさん指示） -->
   <div class="setrow prerow">
     <span class="lbl">前提</span>
@@ -363,6 +361,12 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <label class="numwrap" for="rejoinSec" title="手持ちが全滅してからバトルに戻るまでの時間です（0〜60秒・タップで打ち直せます）。ひんし→次のポケモンは1秒固定"><em>再突入</em><input type="number" id="rejoinSec" inputmode="numeric" min="0" max="60" step="1" value="10"><i>秒</i></label>
   </div>
   <p class="enote expl">即打ち＝ボスがSPを必ず撃つ、きびしめの前提。2回に1回＝平均的な動き。ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）。再突入＝手持ちが全滅してからバトルに戻るまでの秒数です。</p>
+  <div class="setrow presetrow">
+    <span class="lbl">ボーナス一括</span>
+    <button type="button" class="optbtn pbtn" id="pBest" aria-pressed="false" title="いちばん有利な前提です。フィールド効果・天候・フレンド（大親友＋）・メガ応援（同タイプ）・チームパワーをすべて入れます。ここで出る人数が「条件がそろえば何人で倒せるか」の下限です">最善</button>
+    <button type="button" class="optbtn pbtn" id="pNone" aria-pressed="false" title="フィールド効果もボーナスも何も入れない、いちばん厳しい前提です">ボーナスなし</button>
+    <button type="button" class="optbtn pbtn" id="pMx" aria-pressed="false" title="ミュウツーのフィールド効果「ばくれつパンチ+」だけ入れます（メガシンカしたボスへのダメージ1.15倍・シールドを1人2枚割れる）。ほかのボーナスは入れません">ミュウツー効果</button>
+  </div>
   <div class="setrow bonusrow">
     <span class="lbl">ボーナス個別</span>
     <span class="pick" data-pre="フィールド" title="フィールド効果（アドベンチャーエフェクト）は同時に1つだけ使えます。自分のポケモンだけにかかります。ザシアン＝攻撃1.1倍（どのレイドでも）／ミュウツー（ばくれつパンチ+）＝メガシンカしたボスへのダメージ1.15倍（メガレイド・スーパーメガレイドだけ・ゲンシには効かない）"><select id="feSel">
