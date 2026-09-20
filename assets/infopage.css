@@ -1,5 +1,5 @@
 /* =========================================================================
-   運営者情報・プライバシーポリシー・お問い合わせ の3ページ共通（2026-09-10）
+   運営者情報・プライバシーポリシー・フィードバック の3ページ共通（2026-09-10）
    公開（広告の審査）に向けて必要な案内ページ。見た目はサイトの土台（濃紺のグラデーション・
    半透明のカード・1pxの罫線）にそろえ、読みものとして落ち着いた字組みにする。
    トップページの決めごと（絵文字を使わない・動く飾りを足さない）にも合わせる。
@@ -51,7 +51,7 @@ dl.facts dd{font-size:.9rem}
 dl.facts>*:nth-last-child(-n+2){border-bottom:0}
 .note{font-size:.8rem;color:var(--sub)}
 .date{margin-top:6px;font-size:.78rem;color:var(--sub);text-align:right}
-/* お問い合わせの大きなボタン（サイトの立体ボタンと同じ質感。光彩は付けない＝全ツール共通ルール） */
+/* フィードバックの大きなボタン（サイトの立体ボタンと同じ質感。光彩は付けない＝全ツール共通ルール） */
 .cbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:240px;
   padding:13px 26px;margin:6px 0 14px;border-radius:999px;border:0;cursor:pointer;
   font:inherit;font-size:.95rem;font-weight:900;letter-spacing:.06em;color:#042330;text-decoration:none;

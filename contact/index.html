@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>お問い合わせ｜GOナビ</title>
+<title>フィードバック｜GOナビ</title>
 <!-- seo:start (build_seo.py が作る・手で編集しない) -->
-<meta name="description" content="ポケモンGO攻略ツール集「GOナビ」へのお問い合わせ・不具合の報告・ご意見はこちらから。">
+<meta name="description" content="ポケモンGO攻略ツール集「GOナビ」へのフィードバック。不具合の報告・数字がおかしい点・ご意見はこちらから。">
 <link rel="canonical" href="https://gonavi.jp/contact/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="GOナビ">
 <meta property="og:locale" content="ja_JP">
-<meta property="og:title" content="お問い合わせ｜GOナビ">
+<meta property="og:title" content="フィードバック｜GOナビ">
 <meta property="og:description" content="不具合の報告・ご意見はこちらから。">
 <meta property="og:url" content="https://gonavi.jp/contact/">
 <meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
@@ -31,15 +31,15 @@
 <body>
 <div class="wrap">
 <header>
-  <div><div class="eyebrow">Contact</div><h1>お問い合わせ</h1>
-  <p class="lead">不具合の報告・数字がおかしい点・ご意見・ご質問を受け付けています。</p></div>
+  <div><div class="eyebrow">Feedback</div><h1>フィードバック</h1>
+  <p class="lead">不具合の報告・数字がおかしい点・ご意見・ご感想をお待ちしています。</p></div>
   <div id="themesw"></div>
 </header>
 
 <section class="card center">
   <h2>フォームから送る</h2>
   <p>下のボタンから専用のフォームが開きます。スクリーンショットも付けられます。</p>
-  <a class="cbtn" id="cform" href="#" rel="noopener" target="_blank">お問い合わせフォームを開く</a>
+  <a class="cbtn" id="cform" href="#" rel="noopener" target="_blank">フィードバックを送る</a>
 </section>
 
 <section class="card">
@@ -54,8 +54,8 @@
 </section>
 </div>
 <script>
-// お問い合わせはテスター用と同じフォームを使う(送り先は assets/feedback.js の FORM と同じ)。
-// 隠し項目 tool に「お問い合わせ」、ctx に端末のあらまし(不具合の再現用)を入れて開く
+// フィードバックはテスター用と同じフォームを使う(送り先は assets/feedback.js の FORM と同じ)。
+// 隠し項目 tool に「フィードバック」、ctx に端末のあらまし(不具合の再現用)を入れて開く
 (function(){
   var FORM = 'https://tally.so/r/jaR6DE';
   function ctx(){
@@ -68,7 +68,7 @@
       document.referrer || location.href].join('｜');
   }
   var a = document.getElementById('cform');
-  var set = function(){ a.href = FORM + '?tool=' + encodeURIComponent('お問い合わせ') + '&ctx=' + encodeURIComponent(ctx()); };
+  var set = function(){ a.href = FORM + '?tool=' + encodeURIComponent('フィードバック') + '&ctx=' + encodeURIComponent(ctx()); };
   set(); a.addEventListener('pointerdown', set); a.addEventListener('focus', set);
 })();
 </script>

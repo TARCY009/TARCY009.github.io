@@ -53,7 +53,7 @@
 header h1,header h1 *{-webkit-user-select:none !important;user-select:none !important;-webkit-touch-callout:none !important;-webkit-tap-highlight-color:transparent;
   touch-action:manipulation}   /* 7回タップ(開発者モード)の途中で2回タップの拡大が起きないように(ピンチの拡大は残る・2026-09-11) */
 
-/* ページのいちばん下の案内リンク（運営者情報・プライバシーポリシー・お問い合わせ・2026-09-10）。
+/* ページのいちばん下の案内リンク（運営者情報・プライバシーポリシー・フィードバック・2026-09-10）。
    home.js が body の最後に差し込む。ツールの中身のじゃまをしないよう小さく控えめに */
 .sitefoot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;
   margin:28px auto 18px;padding:14px 12px 0;max-width:760px;border-top:1px solid rgba(160,180,240,.16);
