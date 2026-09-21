@@ -49,6 +49,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 sys.path.insert(0, REPO)
 from build_data import SRC, fetch      # noqa: E402  取得先URLと取得処理を使い回す
+# バトル中だけの姿（ギルガルド(ブレード)・ミミッキュ(ばれた)・ウッウの2つの姿・モルペコ(はらぺこ)）は載せない。
+# 手元のポケモンはいつも戦闘開始時の姿で、ゲーム画面のCPもその姿のもの。バトル中の姿で個体値を見ると、
+# CP・順位が手元と合わない数字になる（2026-09-21タダシさん指示。ゲーム側で扱いが変わるまで）。表は対戦データと共通
+from build_pvp_data import HIDDEN_FORMS as BATTLE_ONLY   # noqa: E402
 
 PVP = os.path.join(REPO, 'pvp_data.json')
 PAGE = os.path.join(HERE, 'index.html')
@@ -99,6 +103,8 @@ def main():
     if not m:
         raise SystemExit('index.html の const POKE が見つかりません')
     arr = json.loads(m.group(1))
+    dropped = [e['n'] for e in arr if e['i'] in BATTLE_ONLY]
+    arr = [e for e in arr if e['i'] not in BATTLE_ONLY]
     idx = {p['i']: i for i, p in enumerate(arr)}
 
     # 「名前・図鑑番号・種族値がすべて同じ」＝画面上まったく同じ行、を見つけるための索引
@@ -109,6 +115,8 @@ def main():
 
     added, updated, dup = [], [], []
     for sid, p in pvp.items():
+        if sid in BATTLE_ONLY:
+            continue
         stat = (p['a'], p['df'], p['h'], p['dex'])
         ty = [x for x in (p.get('ty') or []) if x and x != 'NONE']
         if sid in idx:
@@ -174,7 +182,7 @@ def main():
     have = {row(e['n'], e['d'], e['a'], e['f'], e['h']) for e in arr}
     ids = {e['i'] for e in arr}
     missing = [f'{sid}({p["n"]})' for sid, p in pvp.items()
-               if sid not in ids
+               if sid not in ids and sid not in BATTLE_ONLY
                and row(ja_name(sid, p['n']), p['dex'], p['a'], p['df'], p['h']) not in have]
     if missing:
         raise SystemExit('取りこぼしがあります（同じ内容の行も見つかりません）: ' + '、'.join(missing))
@@ -196,6 +204,8 @@ def main():
             elif b == 'lf': print(f'  PL下限: {n} → {("PL" + str(a)) if a else "解除"}')
             elif b == 'us': print(f'  シャドウのときの最低個体値: {n} → {a if a else "解除"}')
             else: print(f'  種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}')
+    if dropped:
+        print('バトル中だけの姿なので外したもの:', '、'.join(dropped))
     if dup:
         print(f'まったく同じ行がすでにあるので足さなかったもの（{len(dup)}件）:', '、'.join(dup))
         print('  ※ 別のポケモンなのにここに出てきたら、名前を手で付け分けること')
