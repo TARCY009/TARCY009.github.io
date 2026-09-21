@@ -2378,11 +2378,11 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 :root.light .sdslot.filled:active{box-shadow:
   0 2px 5px rgba(70,80,120,.14),0 1px 0 var(--tabsh),inset 0 1px 0 rgba(255,255,255,.8)}
 /* 上段: タイプアイコン(左)と操作ボタン(右) */
-.sdslot .sdtop{display:flex;align-items:center;gap:4px;min-height:20px}
+.sdslot .sdtop{display:flex;align-items:center;gap:4px;min-height:28px}
 .sdslot .sdty{display:flex;gap:2px;min-width:0}
-.sdslot .sdops{margin-left:auto;display:flex;gap:3px;flex:0 0 auto}
-.sdslot .sdops button{width:20px;height:20px;padding:0;display:inline-flex;align-items:center;justify-content:center;
-  font-size:.66rem;line-height:1;border-radius:7px;cursor:pointer;font-family:inherit;
+.sdslot .sdops{margin-left:auto;display:flex;gap:4px;flex:0 0 auto}
+.sdslot .sdops button{width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  font-size:.84rem;line-height:1;border-radius:8px;cursor:pointer;font-family:inherit;
   color:var(--sub);background:var(--bg2);border:1px solid var(--line)}
 .sdslot .sdops .pshadow[aria-pressed="true"]{background:linear-gradient(135deg,#7c3aed,#b06cff);border-color:transparent;color:#fff}
 .sdslot .sdops .pstar{color:var(--gold)}
@@ -2405,12 +2405,12 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
    縮めたぶんは width を 1/倍率 にして、見た目の幅をカードに合わせる */
 .sdslot.filled .sugg input{background:transparent;border-color:transparent;font-weight:800;
   padding:3px 1px;font-size:16px;letter-spacing:-.02em;
-  transform:scale(.92);transform-origin:0 50%;width:calc(100% / .92)}
-.sdslot.filled .sugg input[data-len="5"]{transform:scale(.84);width:calc(100% / .84)}
-.sdslot.filled .sugg input[data-len="6"]{transform:scale(.72);width:calc(100% / .72)}
-.sdslot.filled .sugg input[data-len="7"]{transform:scale(.64);width:calc(100% / .64)}
-.sdslot.filled .sugg input[data-len="8"]{transform:scale(.58);width:calc(100% / .58)}
-.sdslot.filled .sugg input[data-len="9"],
+  transform:scale(1.1);transform-origin:0 50%;width:calc(100% / 1.1)}
+.sdslot.filled .sugg input[data-len="5"]{transform:scale(1);width:100%}
+.sdslot.filled .sugg input[data-len="6"]{transform:scale(.88);width:calc(100% / .88)}
+.sdslot.filled .sugg input[data-len="7"]{transform:scale(.76);width:calc(100% / .76)}
+.sdslot.filled .sugg input[data-len="8"]{transform:scale(.67);width:calc(100% / .67)}
+.sdslot.filled .sugg input[data-len="9"]{transform:scale(.6);width:calc(100% / .6)}
 .sdslot.filled .sugg input[data-len="10"]{transform:scale(.56);width:calc(100% / .56)}
 /* 入力中は欄を2列ぶんに広げる。iOSは触れた時点の字が16px未満だと画面を勝手に拡大して
    戻らないので**16pxは外せない**——そのぶん欄を広げて、長い名前でも読めるようにする */
@@ -2448,8 +2448,8 @@ footer{margin-top:26px;color:#5b6690;font-size:.68rem;text-align:center}
 @media (max-width:360px){
   .sdteams .sdslots{gap:6px}
   .sdslot .sdin{padding:5px 6px 7px}
-  .sdslot .sdops{gap:2px}
-  .sdslot .sdops button{width:18px;height:18px;font-size:.6rem}
+  .sdslot .sdops{gap:3px}
+  .sdslot .sdops button{width:24px;height:24px;font-size:.74rem}
   .sdslot .sdcp{font-size:.58rem}
   .sdslot .sdcp i{font-size:.5rem}
   .sdslot .sdname{gap:2px}
@@ -3003,5 +3003,9 @@ button.sdchip.on .tbadge{filter:none}
    透明な当たり判定を主に上下へ足す。左右はとなりのボタンとのすき間の半分まで＝となりと重ねない
    （×＝枠を空にする が ★ のすぐ横にあるため、重ねると押しまちがいが増える） */
 .sdslot .sdops button,.phd button,.hctl button{position:relative}
-.sdslot .sdops button::after,.phd button::after{content:'';position:absolute;inset:-9px -1px 0}
+.sdslot .sdops button::after{content:'';position:absolute;inset:-6px -2px 0}
+.phd button::after{content:'';position:absolute;inset:-9px -1px 0}
+/* ふつう(3対3)・1対1・対戦記録の枠のボタンも、見せ合いのカードと同じ28pxにそろえる */
+.phd button{min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:.78rem}
+.phd .pshadow{font-size:.9rem}
 .hctl button::after{content:'';position:absolute;inset:-7px -2px}
