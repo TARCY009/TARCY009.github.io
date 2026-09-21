@@ -8951,6 +8951,7 @@ function gbPlay(picks, foes, ans, stepwise) {
   // (2026-08-20タダシさん報告: 表示しないと、対面の切れ目をまたいだノーマルアタックが
   //  タイムラインから消えたように見える。HPは正しく減っていた=表示だけの問題)
   let swapHitEv = null;
+  let swapKo = null;   // 交代先が、入ってきた1発でその場で倒れる(次の対面はその1ターンだけ)
   // 倒れたあと次のポケモンを選ぶのにかかった時間(ターン換算・累計)。時計＝ターン＋SPの演出＋これ
   // (2026-09-08タダシさん指示「すべての時間経過を交代可能時間に反映」)。あいて(AI)は即答＝0
   let extraTot = 0;
@@ -9157,11 +9158,17 @@ function gbPlay(picks, foes, ans, stepwise) {
       if (hit) {
         const maxB = PvpEngine.buildStats(D, ros[sd][to].base).hp;
         const rs = st[sd][to].resume || { hp: maxB, en: 0, buffs: [0, 0], stall: 0 };
-        // エンジンのresumeはHP最低1で受けるので、打ちかけの1発で倒れることはない(仕様)
-        st[sd][to].resume = { ...rs, hp: Math.max(1, rs.hp - hit.dmg) };
-        const ors = st[od][cur[od]].resume;
-        if (ors) ors.en = Math.min(100, (ors.en || 0) + hit.eg);
-        swapHitEv = { side: sd, mv: hit.mv, dmg: hit.dmg };   // 次の対面の頭に表示する
+        if (rs.hp - hit.dmg <= 0) {
+          // ⚠ この1発で交代先のHPが尽きるなら、**出てきたその場で倒れる**(2026-09-22タダシさん確定のバトルルール)。
+          //   それまではHPを1残して戦わせていた。次の対面を「交代の1ターンに1発が入って倒れた」だけの対面にする
+          //   (swapKoRes)。ダメージと相手のゲージはそちらで入れるので、ここでは入れない
+          swapKo = { side: sd, mv: hit.mv, dmg: hit.dmg, eg: hit.eg };
+        } else {
+          st[sd][to].resume = { ...rs, hp: rs.hp - hit.dmg };
+          const ors = st[od][cur[od]].resume;
+          if (ors) ors.en = Math.min(100, (ors.en || 0) + hit.eg);
+          swapHitEv = { side: sd, mv: hit.mv, dmg: hit.dmg };   // 次の対面の頭に表示する
+        }
       }
     }
     cur[sd] = to;
@@ -10156,6 +10163,8 @@ function gbPlay(picks, foes, ans, stepwise) {
     const li = legs.length;
     const legSwapHit = swapHitEv;   // 直前の交代で交代先に入った1発(この対面の頭に表示)
     swapHitEv = null;
+    const legSwapKo = swapKo;       // 直前の交代で、交代先がその1発で倒れる
+    swapKo = null;
     seen[0].add(cur[0]); seen[1].add(cur[1]);   // 場に出た＝おたがいに見えた
     const P0 = picks[cur[0]], P1 = foes[cur[1]];
     const spL = [P0, P1].map(P => (P.pol.charged || []).slice());
@@ -10329,6 +10338,26 @@ function gbPlay(picks, foes, ans, stepwise) {
     ctx.spHit = (p, a) => spHitTl(p, a).tn;
     // 決断を1つずつ解決する(1つ決めるたびに1ターン目から回し直す。1回のシミュは0.02ms未満)
     for (let guard = 0; guard < 90; guard++) {
+      // ---- 交代先が、入ってきた1発でその場で倒れる対面(2026-09-22タダシさん確定) ----
+      // 交代に使う1ターンのあいだに相手のノーマルアタックが入り、HPが尽きる。だれも行動しないので決断も無い。
+      // 形はエンジンの結果と同じにして(両者が動けない1ターンを回して書き足す)、あとの流れ
+      // (倒れた→次のポケモンを選ぶ・KOの表示・時計)はふつうの対面と同じ道を通す
+      if (legSwapKo) {
+        const k = legSwapKo, sd = k.side, od = 1 - sd;
+        res = PvpEngine.simulate(D, { ...legCfg(0), stallStart: 1 }, { ...legCfg(1), stallStart: 1 }, { ...SIMOPT, stopAt: 1 });
+        const row = res.rows[0], fo = res.final[od], fs = res.final[sd];
+        const fmv = D.moves[ros[od][cur[od]].pol.fast];
+        row.ev = [null, null];
+        row.ev[od] = { move: k.mv, dmg: k.dmg, tn: fmv ? fmv.tn : 1 };
+        row.stalled = [sd === 0, sd === 1];
+        fs.hp = 0; fs.resume.hp = 0;
+        fo.en = fo.resume.en = Math.min(100, (fo.en || 0) + k.eg);
+        row.state = [0, 1].map(x => ({ hp: res.final[x].hp, en: res.final[x].en }));
+        res.rows = [row]; res.turns = 1; res.winner = od; res.stopped = false;
+        ctx.ck = tn => base + tn + GB_SP_TURNS * spTot + extraTot;
+        ctx.tl = rbTurns(res);
+        break;
+      }
       const cutA = [0, 1].filter(s => dec[s].swapTo != null).map(s => dec[s].swapAt);
       if (timeCut) cutA.push(timeCut);
       const sopt = { ...SIMOPT, stopAt: cutA.length ? Math.min(...cutA) : 0 };
