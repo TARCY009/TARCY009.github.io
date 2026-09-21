@@ -427,17 +427,16 @@
         if (together || s.en >= 100) { s.waitCnt = 0; s.shotWait = 0; charging[i] = sync[i]; }
         else { s.cd = s.fast.tn; s.startedNow = true; }
       }
-      // ターン経過 → このターンに完了する通常技は「着弾の予約」だけにする。
-      // **実際のダメージ・ゲージはゲージ技の解決のあと**に入れる(2026-09-15タダシさん実機検証・確定):
-      // 同じターンにゲージ技が発動したら、ゲージ技のダメージと能力変化が先に反映され、そのあとで
-      // 通常技のダメージが入る(1ターンわざも、複数ターンわざの最終ターンも同じ)。
+      // ターン経過 → このターンに完了する通常技を集める(着弾の処理はすぐ下・順番の決まりもそこに書いてある)。
       // 相手がゲージ技のターンに打ち始めた通常技は差し込み(前倒し)扱いなのでここでは進めない
       const row = { tn: turn, ev: [null, null], stalled, idle: [false, false] };
-      const landed = [false, false];   // このターンに着弾する通常技(ゲージ技のあとで入れる)
+      const landed = [false, false];   // このターンに着弾する通常技
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
         if (charging[i] || stalled[i]) continue;
-        if (charging[1 - i] && s.startedNow) { s.startedNow = false; continue; }
+        // 相手がSPを撃ったターンに打ち始めた**2ターン以上のわざ**は、SPの反映後に処理する(下の「差し込み」)。
+        // **1ターンわざは打ち始めたそのターンに当たる**ので、ふつうの着弾として扱う(＝ノーマルが先。倒れてしまう一撃なら入らない)
+        if (charging[1 - i] && s.startedNow && s.fast.tn > 1) { s.startedNow = false; continue; }
         s.startedNow = false;
         // 「0.5秒待つ」ターンは通常技を始めていないので、進行させない(cdは0のまま)。
         // 画面には「1ターン待った」と出す(何も起きない行になって訳が分からなくなるため)
@@ -448,6 +447,29 @@
       row.state = sides.map(s => ({ hp: Math.max(0, s.hp), en: s.en }));
       rows.push(row);
 
+      // ---- このターンに終わる通常技の着弾(2026-09-22タダシさん確定のバトルルール・これが正解) ----
+      // ①ノーマルアタックのダメージが入るターンと、SPアタックを入力したターンが同じなら、**ノーマルのダメージが先**に入る
+      //   (ダメージはSPの能力変化を受ける前の値)。
+      // ②**例外: そのノーマルで倒れてしまうときは、SPが先に処理される。先に処理される＝そのノーマルは入らない**
+      //   (ダメージもゲージも無し。だから相打ちにならない)。
+      // ③打ちかけ(途中)のノーマルの最中にSPを撃たれたら、SPが先(下の「差し込み」・従来どおり)。
+      // 両者のノーマルが同じターンに当たるときは同時(片方が倒れても、もう片方のぶんも入る＝1ターンわざ同士は相打ち)
+      {
+        const hits = [0, 1].map(i => landed[i] ? fastDamage(i) : 0);
+        const fev = [null, null];
+        let any = false;
+        for (let i = 0; i < 2; i++) {
+          if (!landed[i]) continue;
+          const s = sides[i], o = sides[1 - i];
+          if (charging[1 - i] && hits[i] >= o.hp) continue;   // ②倒れてしまう一撃: SPが先に処理され、この1発は入らない
+          o.hp -= hits[i];
+          s.en = Math.min(100, s.en + s.fast.eg);
+          // tn はノーマルアタックのターン数（模擬戦の効果音が「1ターン目＝強い音・2ターン目以降＝小さい音」に使う）
+          fev[i] = { move: s.fast.n, dmg: hits[i], tn: s.fast.tn };
+          any = true;
+        }
+        if (any) { row.ev = fev; row.state = sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })); }
+      }
       // ゲージ技の発動(同時の場合は攻撃実数値が高い側が先=CMP)。
       // **比べるのは素の攻撃実数値**(種族値＋個体値×レベル補正)。シャドウの1.2倍と能力変化は入れない
       // (2026-09-22タダシさん確定のバトルルール。それまでは両方とも入れて比べていた)。
@@ -563,31 +585,6 @@
           fev[1 - i] = { move: o.fast.n, dmg, forwarded: true };
           rows.push({ tn: '-', ev: fev, state: sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en })) });
           if (s.hp <= 0) break;
-        }
-      }
-      // 予約しておいた通常技の着弾を、ゲージ技(とその能力変化)のあとに入れる(2026-09-15確定)。
-      // ダメージはこの時点の能力変化で計算する＝ゲージ技で下がった攻撃・上がった防御が効く。
-      // **ゲージ技で倒された側の通常技は入らない**(同日タダシさん確定「倒されたら入らない」＝この形では相打ちにならない)
-      {
-        const fev = [null, null];
-        let any = false;
-        for (let i = 0; i < 2; i++) {
-          if (!landed[i]) continue;
-          const s = sides[i];
-          if (s.hp <= 0) continue;
-          const dmg = fastDamage(i);
-          sides[1 - i].hp -= dmg;
-          s.en = Math.min(100, s.en + s.fast.eg);
-          // tn はノーマルアタックのターン数（模擬戦の効果音が「1ターン目＝強い音・2ターン目以降＝小さい音」に使う）
-          fev[i] = { move: s.fast.n, dmg, tn: s.fast.tn };
-          any = true;
-        }
-        if (any) {
-          const st = sides.map(x => ({ hp: Math.max(0, x.hp), en: x.en }));
-          // 番号行が空(このターンにゲージ技が無い)なら通常技は番号行に入る。ゲージ技があった
-          // ターンは、ゲージ技が番号行・通常技の着弾は'-'行(＝処理された順のまま)
-          if (!row._merged && !row.ev[0] && !row.ev[1]) { row.ev = fev; row.state = st; }
-          else rows.push({ tn: '-', ev: fev, state: st });
         }
       }
       if (sides[0].hp <= 0 || sides[1].hp <= 0) break;
