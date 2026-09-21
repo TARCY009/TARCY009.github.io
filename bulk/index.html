@@ -159,7 +159,9 @@ h1 b{white-space:nowrap}
 @media (max-width:560px){
   .gtabs button{flex:1 1 auto}
   .rval{width:66px;font-size:.92rem}
-  .rname .ty{display:none}   /* 狭い画面はタイプより名前を優先(名前が切れるほうが致命的) */
+  /* 狭い画面でもタイプアイコンは出す（ほかのランキングと同じ）。名前は切らず、入りきらないときはアイコン・札が次の行へ回る */
+  .rname{flex-wrap:wrap;row-gap:2px}
+  .rname .nm{overflow:visible;flex-shrink:0;max-width:100%;white-space:normal}
 }
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
