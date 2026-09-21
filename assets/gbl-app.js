@@ -5557,7 +5557,11 @@ function sndFx(f, at) {
 //   ③演出OFF・reduced-motion のときのカットインぶん、の3つだけ
 function sndRow(el, i) {
   const S = SND(); if (!S || !el || !el.dataset) return;
-  const key = i + '|' + el.dataset.gt;
+  // ⚠ 鳴らし済みの印は「行ごとの番号(data-hf)」で持つ（2026-09-21）。タイムラインの何行目か(i)で持つと、
+  //   決断に答えて行が差し込まれたとき番号がずれ、**まだ鳴らしていない行（あいてのSPなど）を鳴らし済みと取り違える**
+  //   （演出OFFでSPの音が抜けていた原因）。data-hf の無い行（チップなど）だけ従来の i を使う
+  //   行の中身（演出・音の印）も混ぜる＝選び直して同じ番号に別の行が来ても取り違えない
+  const key = (el.dataset.hf != null && el.dataset.hf !== '' ? 'h' + el.dataset.hf : i) + '|' + el.dataset.gt + '|' + (el.dataset.fx || '') + '|' + (el.dataset.snd || '');
   if (RBV.sndDone.has(key)) return;
   RBV.sndDone.add(key);
   let extra = [];   // カットインの無い音(ミミッキュ)は、カットインの音が終わってから鳴らす
@@ -11370,7 +11374,8 @@ function gbRender(body, bt, picks, foes) {
       // SPアタックが撃てるようになった合図（2026-09-21タダシさん指示・リアルタイムだけ）。
       // 点いた瞬間に1回だけ鳴らす。⚠ HUDは決断のたびに作り直されるので、点いているわざは RBV.rdyMem に覚える
       // （作り直しのたびに鳴り直さないように）。SP1本目＝低め・2本目＝高め
-      if (!live || !RBV.rdyMem || RBV.rdyMem.li !== li) RBV.rdyMem = { li, on: new Set() };
+      // ⚠ 質問が出ているあいだ（live=false）は忘れない。忘れると答えた直後に、ゲージが変わっていないのに鳴り直す
+      if (!RBV.started || ended() || !RBV.rdyMem || RBV.rdyMem.li !== li) RBV.rdyMem = { li, on: new Set() };
       spRow.querySelectorAll('.hsp').forEach((b, bi) => {
         const m = D.moves[b.dataset.mv];
         const ok = !!(live && m && spTarget(gt, m));
@@ -11378,7 +11383,7 @@ function gbRender(body, bt, picks, foes) {
         if (ok && !RBV.rdyMem.on.has(b.dataset.mv)) {
           RBV.rdyMem.on.add(b.dataset.mv);
           const S = SND(); if (S && S.ready && RBV.playing) S.ready(bi);
-        } else if (!ok) RBV.rdyMem.on.delete(b.dataset.mv);
+        } else if (!ok && live) RBV.rdyMem.on.delete(b.dataset.mv);   // 撃ってゲージが減ったら、次にたまったときにまた鳴らす
         // 与ダメージ(2026-09-15テスター#23): いまの能力変化込み・あいての残りHP以上なら金(倒しきれる)
         const de = b.querySelector('.dmg');
         if (de && m && att0 && def1) {

@@ -7,7 +7,8 @@
    ⚠ 音の長さは模擬戦のカットインの長さに合わせてある（交代2.55秒／SP2.88秒（着弾1.05秒）／撃退2.33秒（ズドン0.47秒）／勝敗3.15秒）。
 
    使い方: GonaviSound.isOn()/setOn(b) で入り切り、atk(turns, rate)・sp(eff, side, at)・swap(at)・ko(at)・
-   pivot(side, at)・shield(at)・form(at)・spit(at)・win()・lose() で鳴らす（at＝何秒あとに鳴らすか・省略でいますぐ）。
+   pivot(side, at)・shield(at)・form(at)・spit(at)・ready(i)・tick(last, i)・buff(up, side, at)・win()・lose() で鳴らす
+   （at＝何秒あとに鳴らすか・省略でいますぐ）。
    ⚠ SPアタックは**じぶんとあいてで別の音**（side=1 があいて）。どちらが撃ったか音だけで分かるようにするため。
    保存キーは gbl_snd（gbl_ なので「データの引っ越し」に入る）。既定はOFF。 */
 (function () {
@@ -538,6 +539,26 @@
     pad([262, 349, 440], .9, { vol: .12, at: .97, rev: .7, open: 2000, type: 'triangle' });
   }
 
+  // ---- 2026-09-21タダシさん選択（見本14）----
+  // SPアタックが撃てるようになった合図「チャージのキュイン」（案2）。リアルタイム操作だけ。
+  // i=0 がSP1本目（低め）・1 が2本目（長3度上）＝どちらが撃てるようになったか耳で分かる
+  function seReady(i) {
+    var m = i ? Math.pow(2, 4 / 12) : 1;
+    sweep(.2, { f0: 900 * m, f1: 3400 * m, q: 10, tone: .2, t0: 400 * m, t1: 1400 * m, env: 'up', vol: .216 });
+    fm(1568 * m, .4, { ratio: 3.01, index: 2, decay: 7, vol: .249, at: .19, rev: .35, dly: .2, wide: 1 });
+  }
+  // 残り3秒の合図「鼓動のドクッ」（案4）。シールド・次のポケモン選びの最後の3秒に1回ずつ・最後だけ強め
+  function seTick(last) {
+    kick(.22, { f0: 140, f1: 55, vol: last ? .768 : .589, drive: .3, decay: 14, click: .05 });
+    kick(.18, { f0: 120, f1: 50, vol: last ? .538 : .384, drive: .2, decay: 16, click: .03, at: .13 });
+  }
+  // 能力変化「3音のアルペジオ」（案1）。上がる＝上がる3音／下がる＝下がる3音。
+  // 変わった側から聞こえる（じぶん＝左・あいて＝右＝SPアタックの音と同じ向き）
+  function seBuff(up, side) {
+    var sc = up ? [659, 784, 1047] : [784, 622, 494], pan = side ? .6 : -.6;
+    sc.forEach(function (f, i) { fm(f, .32, { ratio: 2.01, index: 2.2, decay: 7, vol: .338, at: i * .09, pan: pan, rev: .35, dly: .15, wide: 1 }); });
+  }
+
   var subTimers = [];
   function clearSub() { subTimers.forEach(clearTimeout); subTimers = []; }
   // at 秒あとに鳴らす（1つの行に演出が複数あるとき、カットインと同じ間でずらすのに使う）。
@@ -580,6 +601,9 @@
     shield: function (at) { later(seShield, at); },    // シールドのブロック
     form: function (at) { later(seForm, at); },        // すがたが変わる
     spit: function (at) { later(seSpit, at); },        // ウッウの反撃
+    ready: function (i, at) { later(function () { seReady(i); }, at); },            // SPアタックが撃てる（リアルタイム）
+    tick: function (last, i, at) { later(function () { seTick(last); }, at); },     // 残り3秒（リアルタイム）
+    buff: function (up, side, at) { later(function () { seBuff(up, side); }, at); }, // 能力変化（side 0=じぶん・1=あいて）
     win: function (at) { later(seWin, at); },
     lose: function (at) { later(seLose, at); },
     stop: function () {
