@@ -5509,6 +5509,18 @@ function sndOfRow(r) {
   if (e && e.full === undefined) out.push({ k: 'atk', tn: e.tn || 1 });
   // disguised は**撃った側**のイベントに付く（はがれたのは受けた側）
   if ((r.ev[0] && r.ev[0].disguised) || (r.ev[1] && r.ev[1].disguised)) out.push({ k: 'form' });
+  // ギルガルド（シールド⇄ブレード）・モルペコ（まんぷく⇄はらぺこ）もすがたが変わる音（2026-09-21タダシさん指示）。
+  // SPを撃つたびに切り替わるので、**SPのカットインが終わってから**鳴らす＝SPの音と重ねない（演出を分ける）。
+  // 1行に何回変わっても音は1回（ギルガルド同士でブレード化と防御でのシールド戻りが同じ行に来ることがある）
+  else if ([r.ev[0], r.ev[1]].some(x => x && (x.formTo || x.foeFormTo || x.mformTo))) out.push({ k: 'form' });
+  // 能力変化（2026-09-21タダシさん指示）: 上がった／下がった・変わった側（0=じぶん・1=あいて）。SPが当たった少しあとに鳴らす
+  [0, 1].forEach(sd => {
+    const b = r.ev[sd] && r.ev[sd].buff;
+    if (!b || !b.from || !b.to) return;
+    const d = (b.to[0] - b.from[0]) + (b.to[1] - b.from[1]);
+    const up = d > 0 || (d === 0 && (b.to[0] > b.from[0] || b.to[1] > b.from[1]));
+    out.push({ k: 'buff', up, side: b.target === 'opponent' ? 1 - sd : sd });
+  });
   return out.length ? out : null;
 }
 // ⚠ 1つの行に演出が複数あるとき、音も**カットインと同じ順番・同じ間**でずらす(2026-09-19)。
@@ -5556,7 +5568,7 @@ function sndRow(el, i) {
       a.forEach(x => { if (x.k === 'atk') S.atk(x.tn, rbRate()); else extra.push(x); });
     } catch (e) { }
   }
-  let t = 0;
+  let t = 0, spAt = null;
   if (el.dataset.fx) {
     const play = !fxOk();   // 演出が流れないときだけ、ここで鳴らす
     try {
@@ -5565,11 +5577,19 @@ function sndRow(el, i) {
           sndFx(f, t);
           if (f.k === 'sp' && f.shd) S.shield(t + .7);   // シールドのドームぶん遅らせる
         }
+        // SPの音が鳴り始める時刻（演出あり＝FX_PREのあと・なし＝その場）。能力変化の音はここから数える
+        if (f.k === 'sp' && spAt == null) spAt = t + (play ? 0 : FX_PRE / Math.max(1, RBV.speed || 1) / 1000);
         t += sndStep(f);
       });
     } catch (e) { }
   }
-  extra.forEach(x => { if (x.k === 'form') S.form(t); });
+  // 能力変化はSPの着弾（音の1.05秒）の少しあと。SPの無い行（あり得ないが念のため）はカットインのあと
+  const buffAt = spAt != null ? spAt + 1.45 / Math.max(1, RBV.speed || 1) : t;
+  let nb = 0;
+  extra.forEach(x => {
+    if (x.k === 'form') S.form(t);
+    else if (x.k === 'buff' && S.buff) S.buff(x.up, x.side, buffAt + .5 * nb++);
+  });
 }
 // タイムラインの1行(エンジンのsub行)から、SP発動とフォルムチェンジの演出を拾う
 // keys = [じぶんのkey, あいてのkey]（SPアタックの音を相性で出し分けるために使う）
@@ -11347,10 +11367,18 @@ function gbRender(body, bt, picks, foes) {
       // 押せる条件は manualSp と同じ判定(spTarget)をそのまま使う(2026-09-10・食い違わせない)
       const live = RBV.started && !ended() && !(bt.pending && gt >= stop);
       const att0 = f.meta.att0, def1 = f.meta.def1;
-      spRow.querySelectorAll('.hsp').forEach(b => {
+      // SPアタックが撃てるようになった合図（2026-09-21タダシさん指示・リアルタイムだけ）。
+      // 点いた瞬間に1回だけ鳴らす。⚠ HUDは決断のたびに作り直されるので、点いているわざは RBV.rdyMem に覚える
+      // （作り直しのたびに鳴り直さないように）。SP1本目＝低め・2本目＝高め
+      if (!live || !RBV.rdyMem || RBV.rdyMem.li !== li) RBV.rdyMem = { li, on: new Set() };
+      spRow.querySelectorAll('.hsp').forEach((b, bi) => {
         const m = D.moves[b.dataset.mv];
         const ok = !!(live && m && spTarget(gt, m));
         b.disabled = !ok; b.classList.toggle('rdy', ok);
+        if (ok && !RBV.rdyMem.on.has(b.dataset.mv)) {
+          RBV.rdyMem.on.add(b.dataset.mv);
+          const S = SND(); if (S && S.ready && RBV.playing) S.ready(bi);
+        } else if (!ok) RBV.rdyMem.on.delete(b.dataset.mv);
         // 与ダメージ(2026-09-15テスター#23): いまの能力変化込み・あいての残りHP以上なら金(倒しきれる)
         const de = b.querySelector('.dmg');
         if (de && m && att0 && def1) {
@@ -11518,10 +11546,15 @@ function gbRender(body, bt, picks, foes) {
       const cd = document.createElement('i'); cd.className = 'rwcd';
       const t0 = performance.now();
       const tt = winbox.querySelector('.rwt'); if (tt) tt.appendChild(cd);
+      let rung = 0;   // 残り3秒の合図を鳴らした数（残り3・2・1秒で1回ずつ・最後だけ強め・2026-09-21タダシさん指示）
       const tickCd = () => {
         const left = Math.max(0, (p.kind === 'next' ? GB_NEXT_WAIT : GB_RT_WAIT) - (performance.now() - t0));
         cd.textContent = (left / 1000).toFixed(1);
         cd.classList.toggle('low', left <= 3000);
+        while (rung < 3 && left > 0 && left <= 3000 - rung * 1000) {
+          const S = SND(); if (S && S.tick) S.tick(rung === 2, rung);
+          rung++;
+        }
         if (left > 0) return;
         clearInterval(RBV.cdTimer); RBV.cdTimer = null;
         if (!onScreen() || bt.pending !== p) return;

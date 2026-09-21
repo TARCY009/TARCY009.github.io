@@ -468,7 +468,10 @@
           s.gulp = next;
         }
         // ギルガルド: SPアタック使用の直前にブレードフォルム化(このSPからブレードの攻撃で計算)
+        // formTo / foeFormTo / mformTo は「すがたが変わった」ことを画面に知らせる印だけ(計算には使わない・2026-09-21)
+        let formTo = null, foeFormTo = null;
         if (s.form === 'shield') {
+          formTo = 'blade';
           s.form = 'blade';
           s.atk = s.bladeSt.atk; s.def = s.bladeSt.def;
           const bid = AEGIS_FAST_BLADE[s.fastId];
@@ -488,6 +491,7 @@
           o.shields--;
           // ギルガルド: シールドを使うとシールドフォルムに戻る
           if (o.form === 'blade') {
+            foeFormTo = 'shield';
             o.form = 'shield';
             o.atk = o.shieldStats.atk; o.def = o.shieldStats.def;
             const sid = AEGIS_FAST_SHIELD[o.fastId];
@@ -527,7 +531,9 @@
         if (gulp) ev[i].gulp = gulp;      // 吐き出し(撃った側が受ける)
         if (gulpOn) ev[i].gulpOn = gulpOn;   // 獲物を咥えた(撃った側の姿が変わる)
         // モルペコ: SPアタックを打つたびに まんぷく⇄はらぺこ が切り替わる(オーラぐるまのタイプが変化)
-        if (s.mform) s.mform = s.mform === 'full' ? 'hangry' : 'full';
+        if (s.mform) { s.mform = s.mform === 'full' ? 'hangry' : 'full'; ev[i].mformTo = s.mform; }
+        if (formTo) ev[i].formTo = formTo;           // 撃った側(ギルガルド)がブレードに
+        if (foeFormTo) ev[i].foeFormTo = foeFormTo;  // 防いだ側(ギルガルド)がシールドに戻った
         // 表示規則: 番号行が空(通常技の自然完了なし)ならゲージ技は番号行に入る
         if (!row._merged && !row.ev[0] && !row.ev[1]) {
           row._merged = true;
