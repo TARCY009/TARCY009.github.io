@@ -561,10 +561,12 @@ document.getElementById('loading').style.display = 'none';
 
 // ---- 検索対象(実装済み・メガ除外) ----
 // 実装済み(r)は全て検索可能にする。メガ・ゲンシもメガバージョン系カップ用に含める
-const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r);   // 実装済み(一覧・ランキングの候補)
+const KEYS = Object.keys(D.pokemon).filter(k => D.pokemon[k].r && k !== 'ditto' && k !== 'shedinja');   // 実装済み(一覧・ランキングの候補)
 // 検索で選べるのは未実装(r=0)も含めた全ポケモン(2026-09-04タダシさん指示「実装直前の動画で使う」)。
 // バトル中の内部フォルム・重複(hid=1)だけは出さない。環境一覧・対策さがし・ランキングの候補(KEYS)は従来どおり実装済みだけ
-const KEYS_ALL = Object.keys(D.pokemon).filter(k => !D.pokemon[k].hid);
+// **メタモン・ヌケニンはトレーナーバトルで使えない**ので候補に出さない(2026-09-22タダシさん確定のバトルルール)
+const PVP_BAN = new Set(['ditto', 'shedinja']);
+const KEYS_ALL = Object.keys(D.pokemon).filter(k => !D.pokemon[k].hid && !PVP_BAN.has(k));
 const isUnreleased = k => !!(D.pokemon[k] && !D.pokemon[k].r);
 const UNREL_TAG = '<i class="unrel" title="ゲームにまだ実装されていないポケモンです。データ元の性能（変わることがあります）で計算します">未実装</i>';
 const pkSuggName = k => D.pokemon[k].n + (isUnreleased(k) ? UNREL_TAG : '');
@@ -835,12 +837,24 @@ const pkKeyOf = m => (m && (m.key || m.k)) || null;
 const megaOver = (arr, key, skip) => isMega(key) &&
   (arr || []).some((m, i) => i !== skip && isMega(pkKeyOf(m)));
 const MEGA_NG = 'メガは1匹まで';
+// **GOバトルリーグではパーティに同じポケモンを2匹入れられない**(2026-09-22タダシさん確定のバトルルール・基本中の基本)。
+// 判定は図鑑番号＝通常⇄シャドウ・メガ・地方のすがたも同じポケモン扱い(見せ合いの sdDup と同じ)。
+// ⚠ **ロケット団戦(とフレンドとの対戦)は同じポケモンを使える**ので、ロケット団のページ・モードでは効かせない
+//   (じぶんの3枠 PT はロケット団の模擬戦と共用。だから保存データの掃除はせず、選ぶときに止めるだけ)
+const dupOver = (arr, key, skip) => {
+  if (window.PAGE_ROCKET || (typeof mode !== 'undefined' && mode === 'rocket')) return false;
+  const dx = (D.pokemon[key] || {}).dex;
+  if (dx == null) return false;
+  return (arr || []).some((m, i) => i !== skip && pkKeyOf(m) && (D.pokemon[pkKeyOf(m)] || {}).dex === dx);
+};
+const DUP_NG = 'すでに入っています';
+const partyNg = (arr, key, skip) => dupOver(arr, key, skip) ? DUP_NG : megaOver(arr, key, skip) ? MEGA_NG : '';
 // **ノーマルアタックを1つも覚えないポケモンは戦えない**(2026-09-05の総点検で発見)。
 // 未実装のマギアナが該当する(未実装ポケモンも選べるようにした2026-09-04以降、枠に入れられた)。
 // 入れると対策さがし・パーティ診断・模擬戦が例外で止まり、**結果が出なくなる**ので、
 // **戦う枠には入れさせない**(1対1の左右・パーティ3枠・模擬戦のあいて・見せ合いの6枠・
 //  ロケット団のあいて・対戦記録の入力・★登録リスト・かんたん案内)
-const canFight = key => !!(key && D.pokemon[key] && movePool(key).fasts.length);
+const canFight = key => !!(key && D.pokemon[key] && !PVP_BAN.has(key) && movePool(key).fasts.length);
 const NOFIGHT_NG = 'わざのデータがありません';
 // 候補に出せない理由(戦えない > メガ1匹 > 呼び出し側の理由)
 const ngOf = (k, extra) => !canFight(k) ? NOFIGHT_NG : (extra || '');
@@ -3187,7 +3201,7 @@ function buildPartySlots(box, mvStore) {
       if (!q) { list.style.display = 'none'; return; }
       const hits = searchPk(q);
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => suggRow(k, ngOf(k, megaOver(PT, k, i) ? MEGA_NG : ''))).join('');
+      list.innerHTML = hits.map(k => suggRow(k, ngOf(k, partyNg(PT, k, i)))).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -3222,7 +3236,7 @@ function buildPartySlots(box, mvStore) {
             const p = D.pokemon[m.key];
             if (!p) return '';
             const iv = m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `<i>${m.mIvs.join('/')} PL${m.mLevel}</i>` : '<i>理想個体値</i>';
-            const ng = ngOf(m.key, megaOver(PT, m.key, i) ? MEGA_NG : '');
+            const ng = ngOf(m.key, partyNg(PT, m.key, i));
             return `<div class="mypkrow${ng ? ' dup' : ''}"${ng ? '' : ` data-k="${k}"`}>` +
               `<span>${m.shadow ? SHADOWMK : ''}${p.n}${iv}</span>${ng ? `<i class="dupn">${ng}</i>` : ''}</div>`;
           }).join('')
@@ -3631,13 +3645,15 @@ const ptRoughN = () => (PTS.range === 'all' ? 120 : 999);
 // 候補の一覧。すでにパーティにいるポケモンは除く
 function ptSwapPool() {
   const used = new Set(PTS.base.idxs.map(i => PT[i].key + (PT[i].shadow ? '|s' : '')));
+  // GOバトルリーグではパーティに同じポケモンを入れられない(図鑑番号で判定)＝いまの3匹と同じポケモンは提案しない
+  const usedDex = new Set(PTS.base.idxs.map(i => (D.pokemon[PT[i].key] || {}).dex));
   // 「メガなし」を押しているあいだはメガを候補から外す(メガ枠はもう決まっていて、
   // 残りの2匹をメガ以外から選びたいときのため。2026-09-03タダシさん指示)
   const noMega = PTS.noMega;
   if (PTS.range !== 'all') {
     const src = cup ? (cup.list || []).concat(cup.ext || [])
       : ((window.META_LISTS || {})[String(cap)] || []).concat((window.META_EXT || {})[String(cap)] || []);
-    return src.filter(m => !used.has(m.k + (m.s ? '|s' : '')) && !(noMega && isMega(m.k)));
+    return src.filter(m => !used.has(m.k + (m.s ? '|s' : '')) && !usedDex.has((D.pokemon[m.k] || {}).dex) && !(noMega && isMega(m.k)));
   }
   // 全ポケモンは構成の総当たりが重すぎるので、わざはダメージ効率で選ぶ
   // (ノーマルは1ターンあたり・SPは効率のよい2本。実戦のわざ開放に合わせてSPは2本持たせる)
@@ -3651,6 +3667,7 @@ function ptSwapPool() {
   for (const key of KEYS) {
     if (isMega(key) && !megaOk) continue;
     const p = D.pokemon[key];
+    if (usedDex.has(p.dex)) continue;
     const { fasts, chargeds } = movePool(key);
     if (!fasts.length) continue;
     const dpt = m => D.moves[m].p * (p.ty.includes(D.moves[m].t) ? 1.2 : 1) / (D.moves[m].tn || 1);
@@ -6662,7 +6679,7 @@ function buildBlogSlots() {
         return a.j - b.j;
       });
       list.innerHTML = hits.map(x => {
-        const row = suggRow(x.k, ngOf(x.k, megaOver(BLE.foes, x.k, i) ? MEGA_NG : ''));
+        const row = suggRow(x.k, ngOf(x.k, partyNg(BLE.foes, x.k, i)));
         const tag = x.r && x.r.cnt ? `<i class="bs blsug">${x.r.cnt}回</i>` : '';
         return tag ? row.replace(/<\/div>$/, tag + '</div>') : row;
       }).join('');
@@ -7510,7 +7527,7 @@ function buildGbFoeSlots() {
       // メガはメガカップのときだけ(GBLでは他のリーグで使えない。対策さがしの全ポケモンと同じ基準)
       const hits = searchPk(q, k => !isMega(k) || !!(cup && cup.slug.startsWith('mega')));
       if (!hits.length) { list.style.display = 'none'; return; }
-      list.innerHTML = hits.map(k => suggRow(k, ngOf(k, megaOver(GBT, k, i) ? MEGA_NG : ''))).join('');
+      list.innerHTML = hits.map(k => suggRow(k, ngOf(k, partyNg(GBT, k, i)))).join('');
       list.style.display = 'block';
       list.querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
         list.style.display = 'none';
@@ -7654,7 +7671,8 @@ function gbAutoPick() {
   while (picked.length < 3) {
     // 同じポケモンは2匹入れられない(通常・シャドウの違いも同じポケモン扱い)
     // 同じポケモンは2匹入れられない／メガ・ゲンシは1匹まで(ゲームのルール)
-    const rest = cands.map((c, i) => i).filter(i => !picked.some(p => cands[p].k === cands[i].k)
+    const dexOf = k => (D.pokemon[k] || {}).dex;
+    const rest = cands.map((c, i) => i).filter(i => !picked.some(p => dexOf(cands[p].k) === dexOf(cands[i].k))
       && !(isMega(cands[i].k) && picked.some(p => isMega(cands[p].k))));
     if (!rest.length) break;
     const scored = rest.map(i => {
