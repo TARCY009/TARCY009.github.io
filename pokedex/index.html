@@ -247,6 +247,9 @@ tbody tr:hover{background:var(--mebg)}
 .mvwin .gv{display:flex;align-items:center;gap:8px}
 .mvwin .gv .gbar{margin-top:0;width:62px}
 .mvwin .gv b{color:var(--ink)}
+/* 1ポケモン1ページへの入口（名前の枠＝画像に撮る枠の外に置く） */
+.pglink{display:block;margin:-4px 2px 14px;text-align:right;font-size:.82rem;font-weight:800;color:var(--cy);text-decoration:none}
+.pglink[hidden]{display:none}
 .mvwin .mdlink{display:block;margin-top:12px;text-align:right;font-size:.76rem;font-weight:800;color:var(--cy);text-decoration:none}
 .mvwin .note{margin-top:10px;font-size:.78rem;color:var(--sub);line-height:1.7}
 /* 絞り込み(タイプ・地方) */
@@ -353,6 +356,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 
 <div id="result" style="display:none">
   <div class="card" id="herocard"></div>
+  <a class="pglink" id="pglink" hidden></a>
   <div class="card" id="mvcard"></div>
 </div>
 <div class="card" id="emptycard"><div class="mtnote">ポケモンを選ぶと、種族値・最大CP・弱点・わざ性能が出ます</div></div>
@@ -786,8 +790,24 @@ function render(){
       ${rHtml?'<div class="effcap rs">耐性</div>'+rHtml:'<div class="effnone">耐性はありません</div>'}
     </div></div>`);
   renderMoves();
+  pageLink();
   updateUrl();
 }
+// 1ポケモン1ページ（/pokedex/<キー>/）への入口。ページの一覧（pages.json・名前→キー）があるときだけ出す
+// ＝ページを公開するまでは一覧が無いので何も出ない
+let PAGEMAP=null;
+function pageLink(){
+  const a=document.getElementById('pglink'), e=entryOf(state.key);
+  const n=e&&e.name.replace(/\(/g,'（').replace(/\)/g,'）');
+  // コスチューム違い（ピカチュウ（アイドル）など）はページを分けていないので、括弧の前の名前のページへ
+  const pk=PAGEMAP&&n&&(PAGEMAP[n]||PAGEMAP[n.replace(/（.*?）/g,'')]);
+  if(!pk){a.hidden=true;return;}
+  a.href='/pokedex/'+pk+'/';
+  a.textContent=e.name+'の強さと使い道 ›';
+  a.title='レイド・ジム・マックスバトル・GBL・ロケット団ごとの強さと、進化の条件・わざをまとめたページです';
+  a.hidden=false;
+}
+fetch('/pokedex/pages.json').then(r=>r.ok?r.json():null).then(j=>{PAGEMAP=j;if(state.key)pageLink();}).catch(()=>{});
 
 // ---- わざ表 ----
 const stabOf=(e,t)=>e.ty.includes(t);

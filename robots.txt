@@ -3,5 +3,6 @@ Disallow: /feedback/
 Disallow: /scratchpad/
 Disallow: /pvp-tests/
 Disallow: /iconlab/
+Disallow: /pokepage/
 
 Sitemap: https://gonavi.jp/sitemap.xml

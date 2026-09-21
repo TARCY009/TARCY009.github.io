@@ -108,3 +108,38 @@ jobs:
           gh issue create \
             --title "📢 ゲームデータの更新内容（$(TZ=Asia/Tokyo date '+%-m/%-d')）${HEADLINE:-内部データの調整のみ}" \
             --body-file /tmp/issue_body.md
+
+      # ---- 1ポケモン1ページ（/pokedex/<キー>/）----
+      # 公開はアドセンスの審査に合格してから（タダシさん決定）。それまではリポジトリの変数 POKEPAGE を on にしないので、
+      # この4つは動かない（Settings → Secrets and variables → Actions → Variables に POKEPAGE = on を足すと毎朝動き出す）。
+      # POKEPAGE = test のときは、作って点検するところまで（公開しない＝GitHubの実行環境で動くかの試し）。
+      # 数字は各ツール本体を画面なしブラウザで開き、ランキングの出口から集める（ツールと同じ計算・食い違い禁止）
+      - name: 画面なしブラウザを入れる（1ポケモン1ページ用）
+        if: vars.POKEPAGE == 'on' || vars.POKEPAGE == 'test'
+        run: npx -y playwright@1 install --with-deps --only-shell chromium
+
+      # 出口の数字が画面と同じかを先に確かめる。ずれていたらページは作らない
+      - name: 答え合わせ（各ツールの出口＝画面の数字か）
+        if: vars.POKEPAGE == 'on' || vars.POKEPAGE == 'test'
+        run: python3 .claude/checks/run.py exit-rank exit-gbl
+
+      # 集める→組む→点検（リンク切れ・表記・タイルの数字の突き合わせ）。1つでも問題があれば止まって公開しない
+      - name: 1ポケモン1ページを作り直す
+        if: vars.POKEPAGE == 'on' || vars.POKEPAGE == 'test'
+        run: python3 pokepage/run.py --publish
+
+      # 日付だけが変わったページは書き換えない（build.py）ので、中身が変わったページだけが保存される
+      - name: ポケモンのページの変化を公開
+        if: vars.POKEPAGE == 'on'
+        run: |
+          git add pokedex/*/index.html pokedex/pages.json sitemap-pokemon.xml assets/pokepage.css
+          if git diff --cached --quiet; then
+            echo "ポケモンのページに変化なし"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            N=$(git diff --cached --name-only -- 'pokedex/*/index.html' | wc -l | tr -d ' ')
+            git commit -m "chore: ポケモンのページを自動更新（${N}ページ）"
+            git pull --rebase
+            git push
+          fi

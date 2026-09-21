@@ -1,0 +1,94 @@
+<!DOCTYPE html><meta charset="utf-8"><title>1ポケモン1ページ 集める係</title><body><pre id="json"></pre>
+<script>
+// 各ツール本体を iframe で開き、出口(GonaviExport / GonaviGym / GonaviGbl)を呼んで数字を集める。
+// 使い方: collect.html?part=simple ／ gym ／ rocket ／ gbl&lg=1500&from=0&to=300
+// 結果は <pre id="json"> に書く（collect.py が画面なしブラウザの --dump-dom で読む）
+const Q = new URLSearchParams(location.search), part = Q.get('part') || 'simple';
+const load = src => new Promise(r => { const f = document.createElement('iframe'); f.width = 900; f.height = 900; f.onload = () => r(f); f.src = src; document.body.appendChild(f); });
+const wait = (fn, ms = 60000) => new Promise((r, j) => { const t0 = Date.now(); (function lp() { let v; try { v = fn(); } catch (e) { } if (v) return r(v); if (Date.now() - t0 > ms) return j(new Error('timeout')); setTimeout(lp, 30); })(); });
+const exOf = async src => { const f = await load(src); const w = f.contentWindow; await wait(() => w.GonaviExport); const v = w.GonaviExport(); f.remove(); return v; };
+const norm = s => s.replace(/\(/g, '（').replace(/\)/g, '）');
+
+// ---- ジム挑戦の評価: ジム防衛の総合 上位30匹への総合力（重み e^(-0.7×(順位-1))・わざ開放ずみ・耐える回数 r/(r+3)・極低耐久0.6倍） ----
+// 計算の部品はジム挑戦ツール本体（GonaviGym）。ここは組み立てだけ
+async function gymEval(gymdef) {
+  const f = await load('/gym-attack/'), w = f.contentWindow;
+  await wait(() => w.GonaviGym && w.GonaviGym.data());
+  const G = w.GonaviGym, DATA = G.data(), o = G.opts(), K = 0.7, RK = 3, LOW = 0.6, THR = 16000;
+  const by = {}; DATA.pokemon.forEach(p => by[norm(p.name)] = p);
+  // パンプジン・バケッチャのサイズは、ジム防衛とジム挑戦のデータで呼び名が違う（中身は同じ）
+  for (const [a, b] of [['ギガだましゅ', '4ふん'], ['おおだましゅ', '3ふん'], ['ふつうのだましゅ', '2ふん'], ['ちいさいだましゅ', '1ふん']])
+    for (const n of ['パンプジン', 'バケッチャ']) if (by[`${n}（${b}）`]) by[`${n}（${a}）`] = by[`${n}（${b}）`];
+  const defs = gymdef.total.filter(x => !x.dw).slice(0, 30).map(x => ({ rank: x.rank, n: x.n, p: by[norm(x.n)] }));
+  const miss = defs.filter(d => !d.p).map(d => d.n);
+  const pool = DATA.pokemon.filter(p => !p.mega), rows = [];
+  const tbl = defs.filter(d => d.p).map(d => {
+    const ctx = G.defCtx(d.p, o.dpl, o.wFast);
+    return { d, ctx, wgt: Math.exp(-K * (d.rank - 1)), top: 0, sc: new Map() };
+  });
+  const sc = (t, p, fm, c) => {
+    const cb = G.comboOf(p, false, fm, c, t.ctx, o.gauge); if (!cb) return 0;
+    let h = t.sc.get(p); if (h == null) { h = G.hitOf(p, false, t.ctx, o.rex, RK).resist; t.sc.set(p, h); }
+    const v = cb.sPower * h; return isFinite(v) && v > 0 ? v : 0;
+  };
+  for (const t of tbl) for (const p of pool) for (const fm of p.fast) for (const c of p.charged) t.top = Math.max(t.top, sc(t, p, fm, c));
+  const wsum = tbl.reduce((a, t) => a + t.wgt, 0);
+  for (const p of pool) {
+    const ch = p.charged.filter(c => DATA.moves[c] && DATA.moves[c].bars);
+    const pairs = []; for (let i = 0; i < ch.length; i++) for (let j = i + 1; j < ch.length; j++) pairs.push([ch[i], ch[j]]);
+    if (!pairs.length) ch.forEach(c => pairs.push([c]));
+    let best = null;
+    for (const fm of p.fast) {
+      const per = new Map(ch.map(c => [c, tbl.map(t => sc(t, p, fm, c))]));
+      for (const pr of pairs) {
+        let tot = 0; tbl.forEach((t, i) => { tot += t.wgt * 100 * Math.max(...pr.map(c => per.get(c)[i])) / t.top; });
+        const v = tot / wsum; if (!best || v > best.v) best = { v, fm, pr };
+      }
+    }
+    if (!best) continue;
+    const low = p.def * p.sta < THR;
+    rows.push({ n: p.name, v: best.v * (low ? LOW : 1), low, fast: DATA.moves[best.fm].jp, charged: best.pr.map(c => DATA.moves[c].jp) });
+  }
+  rows.sort((a, b) => b.v - a.v);
+  const top = rows[0].v, cls = v => v >= 85 ? 'S' : v >= 68 ? 'A' : v >= 55 ? 'B' : 'C';
+  f.remove();
+  return { defs: defs.map(d => d.n), miss, total: rows.length,
+    rows: rows.map((r, i) => { const pt = Math.round(r.v / top * 1000) / 10; return { rank: i + 1, name: r.n, pt, cls: cls(pt), low: r.low, fast: r.fast, charged: r.charged }; }) };
+}
+
+(async () => {
+  let out = {};
+  try {
+    if (part === 'simple') {
+      out.typedps = await exOf('/type-dps/');
+      out.bulk = await exOf('/bulk/');
+      out.gymdef = await exOf('/gym-defense/');
+      out.maxtype = await exOf('/max-type/');
+    } else if (part === 'gym') {
+      out.gymeval = await gymEval(await exOf('/gym-defense/'));
+    } else if (part === 'rocket') {
+      const f = await load('/rocket/'), w = f.contentWindow;
+      await wait(() => w.GonaviGbl && w.ROCKET_ROSTER && w.eval('typeof KEYS') !== 'undefined' && w.eval('KEYS.length'));
+      const R = w.ROCKET_ROSTER; out.updated = R.updated; out.foes = [];
+      for (const kind of ['leader', 'boss']) for (const who of R.list[kind]) who.slots.forEach((sl, si) => sl.forEach(k => {
+        // ページに要るのは上位30位まで（＋先に倒されないか）
+        out.foes.push({ kind, who: who.name, slot: si + 1, k, total: 0, rows: w.GonaviGbl.rocket(kind, k).slice(0, 30) });
+      }));
+    } else if (part === 'gbl') {
+      const lg = +Q.get('lg'), from = +Q.get('from') || 0, to = +Q.get('to') || 1e9;
+      const f = await load('/gbl/'), w = f.contentWindow;
+      await wait(() => w.GonaviGbl && w.META_LISTS && w.eval('typeof KEYS_ALL') !== 'undefined' && w.eval('KEYS_ALL.length'));
+      const D = w.eval('D'), keys = Object.keys(D.pokemon).slice(from, to);
+      out.lg = lg; out.meta = (w.META_LISTS[String(lg)] || []).map(m => m.k + (m.s ? '|s' : '')); out.n = Object.keys(D.pokemon).length; out.data = {};
+      const pack = e => e && { score: e.score, mv: [e.fast, e.c1, e.c2], ivs: e.ivs, lv: e.level, cp: e.cp, over: e.over,
+        w: e.rows.map(r => r.cells.filter(c => c.w === 0).length).join(''), l: e.rows.map(r => r.cells.filter(c => c.w === 1).length).join('') };
+      for (const k of keys) {
+        const o = { n: pack(w.GonaviGbl.env(k, false, lg)) };
+        if (D.pokemon[k].shadow) o.s = pack(w.GonaviGbl.env(k, true, lg));
+        if (o.n || o.s) out.data[k] = o;
+      }
+    }
+  } catch (e) { out.error = String(e && e.stack || e); }
+  document.getElementById('json').textContent = JSON.stringify(out);
+})();
+</script>

@@ -191,7 +191,7 @@ for _p in PAGES:
         _p['name_br'] = NAME_BR[_p['key']]
 
 # 検索エンジンに見せない場所（管理用・作業用）
-DISALLOW = ['/feedback/', '/scratchpad/', '/pvp-tests/', '/iconlab/']
+DISALLOW = ['/feedback/', '/scratchpad/', '/pvp-tests/', '/iconlab/', '/pokepage/']
 
 
 # ---------------------------------------------------------------- 1) head のタグ
@@ -450,6 +450,9 @@ def write_sitemap():
 
 def write_robots():
     txt = 'User-agent: *\n' + ''.join(f'Disallow: {d}\n' for d in DISALLOW) + f'\nSitemap: {SITE}/sitemap.xml\n'
+    # 1ポケモン1ページのサイトマップ（pokepage/build.py --publish が作る）は、あるときだけ知らせる
+    if subprocess.run(['git', 'ls-files', '--error-unmatch', 'sitemap-pokemon.xml'], cwd=HERE, capture_output=True).returncode == 0:
+        txt += f'Sitemap: {SITE}/sitemap-pokemon.xml\n'
     open(os.path.join(HERE, 'robots.txt'), 'w', encoding='utf-8').write(txt)
 
 

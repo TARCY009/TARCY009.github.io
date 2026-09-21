@@ -18,6 +18,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 def find_browser():
     import glob
     c = sorted(glob.glob(os.path.expanduser('~/Library/Caches/ms-playwright/chromium_headless_shell-*/*/chrome-headless-shell')))
+    # GitHub の実行環境（Linux）では毎朝の自動更新が入れる画面なし専用ブラウザ（1ポケモン1ページの前の答え合わせ用）
+    c = c or sorted(glob.glob(os.path.expanduser('~/.cache/ms-playwright/chromium_headless_shell-*/*/chrome-headless-shell'))
+                    + glob.glob(os.path.expanduser('~/.cache/ms-playwright/chromium_headless_shell-*/*/headless_shell')))
     return c[-1] if c else '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
 
@@ -44,7 +47,7 @@ def dump_dom(url, budget_ms=30000):
     prof = tempfile.mkdtemp(prefix='gonavi-check-')
     try:
         head = [] if 'headless-shell' in CHROME else ['--headless=new']
-        r = subprocess.run([CHROME] + head + ['--disable-gpu', '--no-first-run', '--no-default-browser-check',
+        r = subprocess.run([CHROME] + head + ['--disable-gpu', '--no-sandbox', '--no-first-run', '--no-default-browser-check',
                             f'--user-data-dir={prof}', f'--virtual-time-budget={budget_ms}', '--dump-dom', url],
                            capture_output=True, text=True, timeout=120)
         return r.stdout
