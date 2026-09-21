@@ -8894,7 +8894,14 @@ function gbAnsLabel(p, a) {
 // picks/foes = [{ m, base, pol:{fast, charged[]}, name }]。わざは画面の欄の具体値で固定
 // (表示と結果を食い違わせない)。ans=決断の答え(RB.ans)。stepwise=1手ずつ(じぶんの決断で止まる)。
 // あいての決断は止まらず、あいて難易度(GB_AI)のAIが自動で答える(ansにあればそちらを優先)
+// 同時発動で攻撃実数値がまったく同じときの先後はランダム(2026-09-22タダシさん確定)。模擬戦では**バトルごとの種**から決める
+// (決断のたびに1ターン目から回し直すので、同じバトルの同じ場面なら必ず同じ結果にする＝gbCoin)。
+// gbPlay の中のすべてのシミュ(本番・下読み・ラベル)が同じ SIMOPT を使うので、ここで出し入れする
 function gbPlay(picks, foes, ans, stepwise) {
+  SIMOPT.cmpTie = (turn, a, b) => gbCoin('cmp' + (RB.rseed || 0) + '|' + turn + '|' + a + '|' + b) % 2;
+  try { return gbPlayCore(picks, foes, ans, stepwise); } finally { delete SIMOPT.cmpTie; }
+}
+function gbPlayCore(picks, foes, ans, stepwise) {
   ans = ans || {};
   const ai = GB_AI[MK.ai] || GB_AI.normal;
   const ros = [picks, foes];
@@ -10685,11 +10692,12 @@ function gbPlay(picks, foes, ans, stepwise) {
     return sum + (x.resume ? Math.max(0, x.resume.hp) / max : 1);
   }, 0);
   const hpLeft = hpSum(0, picks), foeHpLeft = hpSum(1, foes);
-  // タイムアップの勝敗(2026-09-08): 残りの匹数 → 残りのシールド → 残りHP(割合の合計)の順で比べる
+  // タイムアップの勝敗: 残りの匹数 → 残りHP(割合の合計)の順で比べる。同じなら引き分け
   let outcome, tieBy = null;
   if (pending) outcome = 'playing';
   else if (timeUpAll) {
-    const cmp = [[meLeft, foeLeft, 'count'], [shLeft[0], shLeft[1], 'shield'], [hpLeft, foeHpLeft, 'hp']];
+    // ⚠ シールドの枚数は見ない(2026-09-22タダシさん確定のバトルルール。それまでは2番目に見ていた)
+    const cmp = [[meLeft, foeLeft, 'count'], [hpLeft, foeHpLeft, 'hp']];
     outcome = 'draw';
     for (const [a, b, k] of cmp) { if (Math.abs(a - b) > 1e-9) { outcome = a > b ? 'win' : 'lose'; tieBy = k; break; } }
   } else outcome = foeLeft === 0 ? (meLeft > 0 ? 'win' : 'draw') : (meLeft === 0 ? 'lose' : 'timeout');
@@ -12672,12 +12680,14 @@ function render(res, L, R, matrix) {
   // 「同時」を使っているときは、撃ち合いになったらどちらが先に当たるか(CMP)を出す
   let cmpHtml = '';
   if (S[0].timing === 'sync' || S[1].timing === 'sync') {
-    const at = [PvpEngine.buildStats(D, L).atk, PvpEngine.buildStats(D, R).atk];
+    // 比べるのは素の攻撃実数値(シャドウの1.2倍と能力変化は入れない・エンジンの CMP と同じ・2026-09-22タダシさん確定)
+    const at = [L, R].map(c => PvpEngine.buildStats(D, c).atk / (c.shadow ? D.settings.shadowAtkMult : 1));
     const fst = at[0] >= at[1] ? 0 : 1;   // 攻撃の実数値が高いほうが先に当たる
     const fmt1 = v => (Math.round(v * 10) / 10).toFixed(1);
-    cmpHtml = `<div class="cmpnote">同じターンに撃ち合ったときは <b>${res.final[fst].name}</b> のSPアタックが先に当たります
-      （能力変化がない状態の攻撃実数値 ${fmt1(at[fst])} ${at[0] === at[1] ? '＝' : '＞'} ${fmt1(at[1 - fst])}。
-      戦闘中に攻撃が上下すると入れ替わることがあります）</div>`;
+    cmpHtml = at[0] === at[1]
+      ? `<div class="cmpnote">同じターンに撃ち合ったときの先後は、攻撃実数値が同じ（${fmt1(at[0])}）なので<b>ランダム</b>です（この画面では左を先にしています）</div>`
+      : `<div class="cmpnote">同じターンに撃ち合ったときは <b>${res.final[fst].name}</b> のSPアタックが先に当たります
+      （攻撃実数値 ${fmt1(at[fst])} ＞ ${fmt1(at[1 - fst])}。シャドウの補正と能力変化は先後に関係しません）</div>`;
   }
   // ロケット団戦は「いかに早く倒せるか」が大事なので、決着までの時間を必ず出す。
   // あいてのわざはランダムなので、全通り試した結果も添える

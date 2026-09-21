@@ -448,8 +448,16 @@
       row.state = sides.map(s => ({ hp: Math.max(0, s.hp), en: s.en }));
       rows.push(row);
 
-      // ゲージ技の発動(同時の場合は攻撃実数値が高い側が先=CMP)
-      const order = sides[0].atk * buffMult(sides[0].buffs[0]) >= sides[1].atk * buffMult(sides[1].buffs[0]) ? [0, 1] : [1, 0];
+      // ゲージ技の発動(同時の場合は攻撃実数値が高い側が先=CMP)。
+      // **比べるのは素の攻撃実数値**(種族値＋個体値×レベル補正)。シャドウの1.2倍と能力変化は入れない
+      // (2026-09-22タダシさん確定のバトルルール。それまでは両方とも入れて比べていた)。
+      // **まったく同じならランダム**。opt.cmpTie(ターン, 左の名前, 右の名前) が先に動く側(0/1)を返す。
+      // 渡されなければ左が先(1対1や一覧は結果を毎回同じにするため。模擬戦だけバトルごとの種で決める)
+      const cmpAtk = s => s.atk / (s.cfg.shadow ? D.settings.shadowAtkMult : 1);
+      const ca0 = cmpAtk(sides[0]), ca1 = cmpAtk(sides[1]);
+      const lead = ca0 !== ca1 ? (ca0 > ca1 ? 0 : 1)
+        : (opt.cmpTie ? (opt.cmpTie(turn, sides[0].name, sides[1].name) ? 1 : 0) : 0);
+      const order = lead === 0 ? [0, 1] : [1, 0];
       for (const i of order) {
         const mv = charging[i];
         if (!mv) continue;
