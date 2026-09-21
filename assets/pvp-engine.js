@@ -598,7 +598,10 @@
         en: s.en, shields: s.shields, buffs: s.buffs,
         // 3匹の連戦で次の対面へ引き継ぐ状態(生き残った側だけ使う)
         resume: { hp: Math.max(0, s.hp), en: s.en, buffs: s.buffs.slice(), stall: s.stall,
-                  disguise: !!s.disguise, form: s.form, mform: s.mform, gulp: s.gulp || null },
+                  disguise: !!s.disguise, form: s.form, mform: s.mform, gulp: s.gulp || null,
+                  // ミミッキュが「ばれたすがた」になったか。このときの防御-1はふつうの能力変化と違い、
+                  // 交代しても消えない(2026-09-22タダシさん確定)。交代で能力変化を消す側(gbl-app.js の gulpOff)が見る
+                  busted: s.cfg.key === 'mimikyu' && !s.disguise },
       })),
     };
   }

@@ -5117,6 +5117,8 @@ function rbTurns(res) {
 //   仕切り直しになり、0.5秒待つとその側だけ1ターンずれるので、対面の途中で位相が動く。
 //   交代受けの判定・交代の先行入力の丸めは、必ずタイムラインの実際の行で見る
 const cutAt = (t, side) => !!t && ((t.ev[side] || []).length > 0 || (t.sub || []).some(r => r.idle && r.idle[side]));
+// そのターンにSPアタックが解決したか(どちらの側でも)。SP発動直後の交代は1ターンを消費しない(2026-09-22タダシさん確定)
+const spAt = t => !!t && [0, 1].some(sd => (t.ev[sd] || []).some(e => e && e.full !== undefined));
 // じぶんが撃てるSPアタックの一覧(1本でも2本でも同じ形にする)
 const rbSpList = pol => (pol.charged && pol.charged.length ? pol.charged : (pol.throw ? [pol.throw] : []));
 
@@ -5674,10 +5676,14 @@ function gulpCell(e) {
 // ・ギルガルド: ブレードフォルムからシールドフォルムへ戻す(2026-09-19タダシさん報告で追加。
 //   戻さないと、交代して出し直したのに攻撃の高いブレードの実数値のまま戦ってしまう)
 // ⚠ 相手だけが倒れて次の相手を迎えるときは場に残っているので呼ばない(その場合はフォルム維持が正しい)
+// ・能力変化(わざによる攻撃・防御の上下)は交代で消える(2026-09-22タダシさん確定のバトルルール。
+//   それまでは消さずに持ち越していて、出し直したポケモンが上がった攻撃のまま戦っていた)。
+//   ⚠ ミミッキュの「ばれたすがた」の防御-1だけは特殊で、交代しても消えない(rs.busted・エンジンの resume)
 const gulpOff = rs => {
   if (!rs) return;
   if (rs.gulp) rs.gulp = null;
   if (rs.form === 'blade') rs.form = 'shield';
+  rs.buffs = [0, rs.busted ? -1 : 0];
 };
 // 能力変化のタグ(⬆⬇)。1段階ちょうど以外は段階数を添える
 function buffTag(bf) {
@@ -10625,16 +10631,21 @@ function gbPlay(picks, foes, ans, stepwise) {
     if (pending) break;
     // 手動交代の実行(両方同時なら、お互いの打ちかけの1発は無しにする)
     chase = swapped[0] && !swapped[1];   // ユーザーだけが逃げた → AIは追っている側
-    aligned = swapped[0] === swapped[1];   // 片方だけ交代した対面はズレる(両方・どちらもなしならそろう)
     const both = swapped[0] && swapped[1];
+    // ⚠ SPアタックの発動直後の交代は1ターンを消費しない(2026年からの仕様・2026-09-22タダシさん確定)。
+    //   自分のSPでも相手のSPでも同じ。交代のターンにSPが解決していたら、交代先は次の対面の1ターン目から動ける
+    //   (＝周期もずれない)。それ以外の交代は従来どおり1ターンかかる
+    const spSwap = spAt(rbTurns(res).find(t => t.tn === res.turns));
+    aligned = swapped[0] === swapped[1] || spSwap;   // 片方だけ交代した対面はズレる(両方・どちらもなし・SP直後ならそろう)
     // ⚠ 交代先に入る「打ちかけの1発」は、交代した瞬間に相手のノーマルアタックが**本当に途中だった**ときだけ(2026-09-10)。
     //   交代受けは切れ目がそろったときに起きるので、相手のノーマルアタックはちょうど当たり終わっている(打ちかけは無い)。
     //   それでも1発足していたため、交代先に「足した1発＋打ち直した1発」の2発が入ってから SP が出ていた(タダシさん報告)
     const rowS = rbTurns(res).find(t => t.tn === res.turns);
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
-      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot, !both && !cutAt(rowS, 1 - s));   // 交代解禁は時計で持つ
-      if (!both) lagIn[s] = 1;   // 交代した側は次の対面の1ターン目に動けない
+      // ⚠ SPが解決したターンは両者のノーマルアタックが仕切り直し(打ちかけは前倒しで完了ずみ)なので、打ちかけの1発は無い
+      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot, !both && !spSwap && !cutAt(rowS, 1 - s));   // 交代解禁は時計で持つ
+      if (!both && !spSwap) lagIn[s] = 1;   // 交代した側は次の対面の1ターン目に動けない(SP発動直後の交代だけは例外)
     }
   }
   const meLeft = st[0].filter(x => x.alive).length;
@@ -11830,7 +11841,8 @@ function gbRender(body, bt, picks, foes) {
     //   SPを撃つと周期がそこで仕切り直しになるので、倍数で丸めると1ターンずれる場面がある
     const tl0 = leg._tl || (leg._tl = rbTurns(leg.res));
     const pressed = Math.max(1, gt - leg.base);
-    const cutRow = tl0.find(t => t.tn >= pressed && cutAt(t, 0));
+    // SPが解決したターンは、撃っていない側のノーマルアタックも仕切り直しになる＝そこも切れ目(あいてのSPの直後にすぐ交代できる)
+    const cutRow = tl0.find(t => t.tn >= pressed && (cutAt(t, 0) || spAt(t)));
     if (!cutRow) return;   // この対面のうちに入力が通らない(押しても間に合わない)
     const tn = cutRow.tn;
     const key = gbKey(li, 0, 'msw', tn, 0);
