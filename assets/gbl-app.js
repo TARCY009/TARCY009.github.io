@@ -2374,6 +2374,61 @@ function metaOnlyHtml(list, note) {
     }).join('')}
     </tbody></table>`;
 }
+// 環境の1匹(m)との3通り(🛡0-0/1-1/2-2)の勝ち負け。
+// 環境一覧(runMulti)と出口(GonaviGbl.env)が同じ関数を呼ぶ＝画面の数字と集計が食い違わない
+function multiCellsOf(m, myPols, myCfg) {
+  const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
+  const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
+    bluff: metaBluff, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
+  return [0, 1, 2].map(sh => {
+    let best = null;
+    for (const pol of myPols) {   // 自分のわざはこの対面・このシールド数での最善を採用
+      const res = PvpEngine.simulate(D, myCfg(pol, sh), { ...opCfg, shields: sh }, SIMOPT);
+      const sc = scoreOf(res, 0);
+      if (!best || sc > best.sc) best = { sc, res };
+    }
+    const r = best.res, w = r.winner;
+    return { w, sc: best.sc, pct: noWin(w) ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
+  });
+}
+// ---- 出口: 1ポケモン1ページの集計用(画面は変えない)。計算は画面と同じ関数を呼ぶ ----
+// env(key, shadow, capV)＝そのリーグの環境一覧に、ポケモンを入れただけの状態(既定のわざ・理想個体・設定は既定)で出る結果。
+//   環境上位50匹との勝ち負けと環境勝率。戦えないポケモンは null
+// rocket(kind, foeKey)＝ロケット団のあいて1匹へのノーマルアタック火力ランキング(rkRankFor・絞り込みは既定＝シャドウあり・メガなし)
+window.GonaviGbl = {
+  env(key, shadow, capV) {
+    if (!canFight(key)) return null;
+    const sv = [cap, cup];
+    try {
+      cap = capV; cup = null;
+      const list = (window.META_LISTS || {})[String(cap)] || [];
+      const d = mockDefaultMoves(key, shadow);
+      const st = { ...mkSide(), key, shadow: !!shadow, fast: d.fast || null, c1: d.c1 || null, c2: d.c2 || null };
+      const r = rank1(key, cap, 0, st.maxLv, st.shadow);
+      const meBase = { key, ivs: r.ivs, level: r.level, shadow: st.shadow, cap, megaLv: megaLvOf(st) };
+      const myPols = policies(key, { fast: st.fast || undefined, c1: st.c1 || undefined, c2: st.c2 || undefined });
+      const myCfg = (pol, sh) => listSideCfgOf(st, meBase, pol, sh, 'optimal');
+      let wSum = 0, wSc = 0;
+      const rows = list.map((m, idx) => {
+        const cells = multiCellsOf(m, myPols, myCfg), wgt = metaWgt(idx);
+        wSum += wgt;
+        cells.forEach(c => { wSc += c.w === 0 ? wgt : noWin(c.w) ? wgt * 0.5 : 0; });
+        return { k: m.k, s: !!m.s, cells: cells.map(c => ({ w: c.w, pct: c.pct, sc: Math.round(c.sc) })) };
+      });
+      return { score: envScore(wSc / (wSum * 3)).toFixed(1), fast: st.fast, c1: st.c1, c2: st.c2,
+        ivs: r.ivs, level: r.level, cp: PvpEngine.buildStats(D, meBase).cp, over: !!overCapCp(meBase), rows };
+    } finally { [cap, cup] = sv; }
+  },
+  rocket(kind, foeKey) {
+    const sv = [RK.kind, RKR.shadow, RKR.mega];
+    try {
+      RK.kind = kind; RKR.shadow = true; RKR.mega = false;
+      return rkRankFor({ key: foeKey }, false).filter(r => !r.mine).map((r, i) => ({ rank: i + 1, k: r.key, s: !!r.shadow,
+        fast: r.fast, dps: r.dps.toFixed(1), checked: !!r.checked, win: !!r.win, anyWin: !!r.anyWin,
+        sec: r.checked && r.anyWin ? (r.turns / 2).toFixed(1) : null, loseTo: r.loseTo || [] }));
+    } finally { [RK.kind, RKR.shadow, RKR.mega] = sv; }
+  },
+};
 function runMulti() {
   const box = document.getElementById('multi');
   const list = cup ? cup.list : ((window.META_LISTS || {})[String(cap)] || []);
@@ -2436,19 +2491,7 @@ function runMulti() {
     const t0 = performance.now();
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
-      const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
-      const opCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
-        bluff: metaBluff, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
-      const cells = [0, 1, 2].map(sh => {
-        let best = null;
-        for (const pol of myPols) {   // 自分のわざはこの対面・このシールド数での最善を採用
-          const res = PvpEngine.simulate(D, myCfg(pol, sh), { ...opCfg, shields: sh }, SIMOPT);
-          const sc = scoreOf(res, 0);
-          if (!best || sc > best.sc) best = { sc, res };
-        }
-        const r = best.res, w = r.winner;
-        return { w, sc: best.sc, pct: noWin(w) ? 0 : Math.round(r.final[w].hp / r.final[w].hpMax * 100) };
-      });
+      const cells = multiCellsOf(m, myPols, myCfg);
       const tds = rowsEl[idx].querySelectorAll('td');
       const wgt = metaWgt(idx);
       wSum += wgt;
@@ -12102,21 +12145,24 @@ const parseNums = v => (v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
 const carryOf = i => S[i].carry ? { startHpPct: S[i].cHp, startEn: S[i].cEn } : {};
 // 発ごとのSP設定(何発目をどのタイミング・どのわざで撃つか)を計算用の設定に変換する
 // move=null は「自動」＝その時点で威力効率が高いほうをエンジンが選ぶ
-function shotsCfg(i, m1, m2) {
+function shotsCfg(i, m1, m2) { return shotsCfgOf(S[i], m1, m2); }
+// st=パネルの状態(S[i] と同じ形)。画面のパネルでも、出口(GonaviGbl)が作る既定の状態でも同じ計算を通す
+function shotsCfgOf(st, m1, m2) {
   const pick = v => v === '2' ? m2 : v === '1' ? m1 : null;
   return { timing: 'shots',
-    shotPlan: S[i].spMode.map((mode, k) => ({ mode, move: pick(S[i].spMv[k]) })),
-    shotRest: { mode: S[i].spModeRest, move: pick(S[i].spMvRest) } };
+    shotPlan: st.spMode.map((mode, k) => ({ mode, move: pick(st.spMv[k]) })),
+    shotRest: { mode: st.spModeRest, move: pick(st.spMvRest) } };
 }
 // 一覧系で使う「自分側の1構成」を作る(SP2指定・発ごとの設定を1対1シミュと同じ扱いにする)
-function listSideCfg(i, base, pol, sh, timing) {
+function listSideCfg(i, base, pol, sh, timing) { return listSideCfgOf(S[i], base, pol, sh, timing); }
+function listSideCfgOf(st, base, pol, sh, timing) {
   // 一覧系のブラフは共通の「ブラフ」枠で両者まとめて決める(片側だけ違うと見かたが分かりにくい)
   const c = { ...base, ...pol, timing, shields: sh, bluff: metaBluff };
-  if (S[i].timing === 'plan' || S[i].c2) {
-    const m1 = S[i].c1 || (pol.charged ? pol.charged[0] : pol.throw), m2 = S[i].c2 || m1;
-    c.charged = [m1, S[i].c2].filter(Boolean);
+  if (st.timing === 'plan' || st.c2) {
+    const m1 = st.c1 || (pol.charged ? pol.charged[0] : pol.throw), m2 = st.c2 || m1;
+    c.charged = [m1, st.c2].filter(Boolean);
     delete c.throw;
-    Object.assign(c, shotsCfg(i, m1, m2));
+    Object.assign(c, shotsCfgOf(st, m1, m2));
   }
   return c;
 }

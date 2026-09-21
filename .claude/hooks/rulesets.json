@@ -7,7 +7,8 @@
       "checklist": ".claude/checklists/gbl.md",
       "checks": [
         "gbl-engine",
-        "mock-fx"
+        "mock-fx",
+        "exit-gbl"
       ],
       "paths": [
         "assets/gbl-app.js",
@@ -33,7 +34,8 @@
       "rules": ".claude/rules/raid.md",
       "checklist": ".claude/checklists/raid.md",
       "checks": [
-        "raid-engine"
+        "raid-engine",
+        "exit-rank"
       ],
       "paths": [
         "template.html",
@@ -59,7 +61,8 @@
       "rules": ".claude/rules/gym.md",
       "checklist": ".claude/checklists/gym.md",
       "checks": [
-        "max-attacker"
+        "max-attacker",
+        "exit-rank"
       ],
       "paths": [
         "gym-attack/**",
@@ -82,7 +85,9 @@
       "label": "ステータス図鑑・わざ図鑑・耐久指数・マックスバトル タイプ別",
       "rules": ".claude/rules/dex.md",
       "checklist": ".claude/checklists/dex.md",
-      "checks": [],
+      "checks": [
+        "exit-rank"
+      ],
       "paths": [
         "pokedex/**",
         "move-dex/**",

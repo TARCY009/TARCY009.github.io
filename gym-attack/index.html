@@ -376,11 +376,9 @@ function selectDefender(p){
   render(p);
 }
 
-function render(def){
-  const c=[+val('c1'),+val('c2'),+val('c3')];
-  const gauge={1:c[0],2:c[1],3:c[2]};
-  const rex=+val('rex'); const dpl=+val('dpl')||40; const topn=+val('topn')||30;
-  const wFast=Math.min(1,Math.max(0,+val('wf')||0.3));
+// ---- 計算の部品。画面(render)と出口(GonaviGym)が同じ関数を呼ぶ＝画面の数字と集計が食い違わない ----
+// 防衛側の実数値と、わざのタイプごとの比重
+function defCtx(def, dpl, wFast){
   const cpmD=CFG.CPM_TBL[dpl]||CFG.CPM_TBL[40];
   const defStat=(def.def+CFG.IV)*cpmD;
   const defAtk=(def.atk+CFG.IV)*cpmD; // 防衛側の攻撃実数値(「何発耐えるか」の被ダメ計算に使う)
@@ -390,6 +388,60 @@ function render(def){
   for(const m of def.fast){const mv=DATA.moves[m]; if(mv) typeW[mv.type]=Math.max(typeW[mv.type]||0,wFast);}
   for(const m of def.charged){const mv=DATA.moves[m]; if(mv) typeW[mv.type]=1.0;}
   const defTypeEntries=sortTypes(Object.keys(typeW).map(t=>({t:+t,w:typeW[t]})),e=>DATA.types_jp[e.t]);
+  return {def,defStat,defAtk,defHP,defTypeEntries};
+}
+// 被弾のしにくさ（総合力の補正）と、チップに出す内訳。k は耐え数のカーブ r/(r+k) の定数（ツールは2で固定）
+function hitOf(p, isShadow, ctx, rex, k){
+  const def=ctx.def; if(k==null) k=2;
+  // 被弾耐性: 比重付き平均有効度(内部計算用) + 表示用の単純タイプ数
+  let inc=0, tw=0, hitW=0, hitN=0, hitR=0, cW=0, cN=0, cR=0;
+  for(const {t,w} of ctx.defTypeEntries){
+    const e=eff(t,p.types); inc+=e*w; tw+=w;
+    if(e>=1.6){hitW+=w;cW++;} else if(e<1){hitR+=w;cR++;} else {hitN+=w;cN++;}
+  }
+  const avgInc=tw?inc/tw:1;
+  // 防衛側のいちばん痛いわざ(実ダメージ)を何発耐えるか(チップ表示と被弾補正の両方に使う)。
+  // シャドウの防御5/6はmyDefに入る
+  const myDef=(p.def+CFG.IV)*CFG.CPM50*(isShadow?5/6:1);
+  const myHP=Math.floor((p.sta+CFG.IV)*CFG.CPM50);
+  let worst=null;
+  for(const m of [...def.fast,...def.charged]){
+    const mv=DATA.moves[m]; if(!mv||!mv.power) continue;
+    const d=dmg(ctx.defAtk,myDef,mv.power,stab(mv.type,def.types),eff(mv.type,p.types),1.0);
+    if(!worst||d>worst.d) worst={d,jp:mv.jp};
+  }
+  const tank=worst?{n:Math.max(0,Math.ceil(myHP/worst.d)-1),jp:worst.jp,d:worst.d,hp:myHP}:null;
+  // 被弾のしにくさ＝タイプ相性(avgInc)^rex × 耐え数の飽和カーブ r/(r+2)。
+  // r=HP÷最大被ダメ(小数のまま)。1発で倒れる紙耐久を大きく割り引き、
+  // 十分耐えるポケモン同士では火力の差が順位を決める。
+  // 耐久指数の比率を掛ける案は、超高HPなだけのポケモン(ムゲンダイナ等)が浮上するので不採用
+  const rHit=worst?myHP/worst.d:9;
+  const resist=Math.pow(1/avgInc,rex)*(rHit/(rHit+k));
+  return {resist,hitW,hitN,hitR,cW,cN,cR,tank};
+}
+// わざ構成1つの火力（サイクルDPS×ゲージ補正）。計算できない構成は null
+function comboOf(p, isShadow, f, cmid, ctx, gauge){
+  const def=ctx.def;
+  const fm=DATA.moves[f], cm=DATA.moves[cmid]; if(!fm||!cm||!cm.bars) return null;
+  const atkStat=(p.atk+CFG.IV)*CFG.CPM50;
+  const shadowMult=isShadow?1.2:1.0;
+  const eF=eff(fm.type,def.types), eC=eff(cm.type,def.types);
+  const dF=dmg(atkStat,ctx.defStat,fm.power,stab(fm.type,p.types),eF,shadowMult);
+  const dC=dmg(atkStat,ctx.defStat,cm.power,stab(cm.type,p.types),eC,shadowMult);
+  const n2=(fm.energy*100)/Math.abs(cm.energy);
+  const total=dF*100+dC*n2;
+  const time=(fm.dur*100+cm.dur*n2)/1000;
+  const dps=total/time;
+  return {bars:cm.bars,dps,sPower:dps*gauge[cm.bars]};
+}
+
+function render(def){
+  const c=[+val('c1'),+val('c2'),+val('c3')];
+  const gauge={1:c[0],2:c[1],3:c[2]};
+  const rex=+val('rex'); const dpl=+val('dpl')||40; const topn=+val('topn')||30;
+  const wFast=Math.min(1,Math.max(0,+val('wf')||0.3));
+  const ctx=defCtx(def,dpl,wFast);
+  const {defHP,defTypeEntries}=ctx;
   const chargedTypes=defTypeEntries.filter(e=>e.w===1).map(e=>DATA.types_jp[e.t]);
   const fastOnlyTypes=defTypeEntries.filter(e=>e.w<1).map(e=>DATA.types_jp[e.t]);
 
@@ -411,49 +463,15 @@ function render(def){
     if(p.mega&&!FL.mega) continue;
     const variants=(p.shadow&&FL.shadow)?[false,true]:[false];
     for(const isShadow of variants){
-      const atkStat=(p.atk+CFG.IV)*CFG.CPM50;
-      const shadowMult=isShadow?1.2:1.0;
-      // 被弾耐性: 比重付き平均有効度(内部計算用) + 表示用の単純タイプ数
-      let inc=0, tw=0, hitW=0, hitN=0, hitR=0, cW=0, cN=0, cR=0;
-      for(const {t,w} of defTypeEntries){
-        const e=eff(t,p.types); inc+=e*w; tw+=w;
-        if(e>=1.6){hitW+=w;cW++;} else if(e<1){hitR+=w;cR++;} else {hitN+=w;cN++;}
-      }
-      const avgInc=tw?inc/tw:1;
-      // 防衛側のいちばん痛いわざ(実ダメージ)を何発耐えるか(チップ表示と被弾補正の両方に使う)。
-      // シャドウの防御5/6はmyDefに入る
-      const myDef=(p.def+CFG.IV)*CFG.CPM50*(isShadow?5/6:1);
-      const myHP=Math.floor((p.sta+CFG.IV)*CFG.CPM50);
-      let worst=null;
-      for(const m of [...def.fast,...def.charged]){
-        const mv=DATA.moves[m]; if(!mv||!mv.power) continue;
-        const d=dmg(defAtk,myDef,mv.power,stab(mv.type,def.types),eff(mv.type,p.types),1.0);
-        if(!worst||d>worst.d) worst={d,jp:mv.jp};
-      }
-      const tank=worst?{n:Math.max(0,Math.ceil(myHP/worst.d)-1),jp:worst.jp,d:worst.d,hp:myHP}:null;
-      // 被弾のしにくさ＝タイプ相性(avgInc)^rex × 耐え数の飽和カーブ r/(r+2)。
-      // r=HP÷最大被ダメ(小数のまま)。1発で倒れる紙耐久を大きく割り引き、
-      // 十分耐えるポケモン同士では火力の差が順位を決める。
-      // 耐久指数の比率を掛ける案は、超高HPなだけのポケモン(ムゲンダイナ等)が浮上するので不採用
-      const rHit=worst?myHP/worst.d:9;
-      const resist=Math.pow(1/avgInc,rex)*(rHit/(rHit+2));
+      const {resist,hitW,hitN,hitR,cW,cN,cR,tank}=hitOf(p,isShadow,ctx,rex);
       const local=[];
       for(const f of p.fast){
-        const fm=DATA.moves[f]; if(!fm) continue;
         for(const cmid of p.charged){
-          const cm=DATA.moves[cmid]; if(!cm||!cm.bars) continue;
-          const eF=eff(fm.type,def.types), eC=eff(cm.type,def.types);
-          const dF=dmg(atkStat,defStat,fm.power,stab(fm.type,p.types),eF,shadowMult);
-          const dC=dmg(atkStat,defStat,cm.power,stab(cm.type,p.types),eC,shadowMult);
-          const n2=(fm.energy*100)/Math.abs(cm.energy);
-          const total=dF*100+dC*n2;
-          const time=(fm.dur*100+cm.dur*n2)/1000;
-          const dps=total/time;
-          const sPower=dps*gauge[cm.bars];
-          const sTotal=sPower*resist;
-          const score=(MODE==='power')?sPower:sTotal;
+          const cb=comboOf(p,isShadow,f,cmid,ctx,gauge); if(!cb) continue;
+          const sTotal=cb.sPower*resist;
+          const score=(MODE==='power')?cb.sPower:sTotal;
           if(!isFinite(score)||score<=0) continue; // わるあがき等の異常値を除外
-          local.push({p,isShadow,f,cmid,bars:cm.bars,dps,score,hitW,hitN,hitR,cW,cN,cR,tank});
+          local.push({p,isShadow,f,cmid,bars:cb.bars,dps:cb.dps,score,hitW,hitN,hitR,cW,cN,cR,tank});
         }
       }
       local.sort((a,b)=>b.score-a.score);
@@ -505,6 +523,13 @@ function render(def){
   });
 }
 function val(id){return document.getElementById(id).value;}
+// ---- 出口: 計算の部品をそのまま渡す（1ポケモン1ページの集計用・画面は変えない） ----
+// opts() は詳細設定のいまの値（既定のまま開けば既定値）
+window.GonaviGym={
+  data:()=>DATA, defCtx, hitOf, comboOf,
+  opts:()=>({gauge:{1:+val('c1'),2:+val('c2'),3:+val('c3')},rex:+val('rex'),dpl:+val('dpl')||40,
+             wFast:Math.min(1,Math.max(0,+val('wf')||0.3))}),
+};
 // 使い方タブ(仕様・前提の説明はここ1か所にまとめる)
 (function(){
   const tab=document.getElementById('helptab'), body=document.getElementById('helpbody');

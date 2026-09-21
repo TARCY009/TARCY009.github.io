@@ -355,6 +355,19 @@ document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.d
   const tab=$('helptab'),body=$('helpbody');
   tab.onclick=()=>{const o=body.hidden;body.hidden=!o;tab.setAttribute('aria-expanded',String(o));};
 }
+// ---- 出口: 全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ buildRows を呼ぶ・画面は変えない） ----
+// base=既定（最終進化だけ）／all=シャドウ＋メガ・ゲンシ＋進化前も
+window.GonaviExport=function(){
+  const sv=[fShadow,fMega,fNoLg,fPre], keyOf=new Map(KEYS.map(k=>[D.pokemon[k],k])), out={};
+  try{
+    fNoLg=false;
+    for(const [name,on] of [['base',false],['all',true]]){
+      fShadow=on; fMega=on; fPre=on;
+      out[name]=buildRows().map(r=>({k:keyOf.get(r.p),sh:r.shadow,rank:r.rank,v:Math.floor(r.v)}));
+    }
+  } finally { [fShadow,fMega,fNoLg,fPre]=sv; }
+  return out;
+};
 sync();
 </script>
 <script src="/assets/snap.js"></script>

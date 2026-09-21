@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>出口（1ポケモン1ページの集計用）の答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<script>
+/* 各ツールの「出口」（GonaviExport／GonaviGbl）が返す数字が、**画面に出ている順位・数値とまったく同じか**を確かめる。
+   1ポケモン1ページはこの出口の数字で作るので、ここがずれるとページとツールが食い違う（食い違い禁止・タダシさん指示）。
+   あわせて「出口を呼んでも画面が変わらない」ことも見る。
+   ?only=rank（ランキング4ツール）／?only=gbl（GBL・ロケット団）で片方だけ流せる。
+   答え（比べ方）を変えるときは必ずタダシさんに確認すること。 */
+(() => {
+  const only = new URLSearchParams(location.search).get('only');
+  const res = [];
+  const ok = (name, cond, note) => res.push([name, !!cond, note || '']);
+  const txt = (el, sel) => { const x = el.querySelector(sel); return x ? x.textContent.trim() : ''; };
+  const load = src => new Promise(r => { const f = document.createElement('iframe'); f.hidden = false; f.width = 900; f.height = 900; f.style.cssText = 'position:absolute;left:-9999px'; f.onload = () => r(f); f.src = src; document.body.appendChild(f); });
+  const wait = (fn, ms = 60000) => new Promise((r, j) => { const t0 = Date.now(); (function lp() { let v; try { v = fn(); } catch (e) { } if (v) return r(v); if (Date.now() - t0 > ms) return j(new Error('時間内に画面が出ませんでした')); setTimeout(lp, 30); })(); });
+
+  async function rank(src, listSel, rowSel, read, pick) {
+    const f = await load(src), w = f.contentWindow, d = w.document;
+    await wait(() => w.GonaviExport && d.querySelectorAll(listSel + ' ' + rowSel).length);
+    const before = d.querySelector(listSel).innerHTML, url0 = w.location.href;
+    const ex = w.GonaviExport();
+    ok(src + ' 出口を呼んでも画面が変わらない', d.querySelector(listSel).innerHTML === before && w.location.href === url0);
+    const rows = [...d.querySelectorAll(listSel + ' ' + rowSel)].map(read);
+    const want = pick(ex).slice(0, rows.length);
+    const bad = rows.map((r, i) => JSON.stringify(r) === JSON.stringify(want[i]) ? null : `${i + 1}行目 画面${JSON.stringify(r)} 出口${JSON.stringify(want[i])}`).filter(Boolean);
+    ok(`${src} 画面の${rows.length}行と出口が一致`, rows.length > 0 && !bad.length, bad.slice(0, 2).join(' ／ '));
+    return { ex, w, f };
+  }
+
+  async function ranks() {
+    const G = await (await fetch('/godata.json')).json();
+    for (const [q, t, set] of [['', 'GRASS', 'base'], ['?t=fire&sh=1&mg=1&n=40', 'FIRE', 'all']]) {
+      const r = await rank('/type-dps/' + q, '#rankList', '.rank-row',
+        el => [txt(el, '.rk'), txt(el, '.nm'), !!el.querySelector('.shadowmark'), el.querySelector('.rdps').firstChild.textContent.trim()],
+        ex => ex.types[t][set].map(x => [x.rank + '位', G.pokemon[x.k].n, x.sh, x.dps]));
+      r.f.remove();
+    }
+    for (const [q, set] of [['', 'base'], ['?sh=1&mg=1&pre=1&n=100', 'all']]) {
+      const r = await rank('/bulk/' + q, '#rankList', '.rank-row',
+        el => [txt(el, '.rk'), txt(el, '.nm'), !!el.querySelector('.shadowmark'), el.querySelector('.rval').firstChild.textContent.trim()],
+        ex => ex[set].map(x => [x.rank + '位', G.pokemon[x.k].n, x.sh, x.v.toLocaleString('ja-JP')]));
+      r.f.remove();
+    }
+    {
+      const rd = el => [txt(el, '.rank'), el.querySelector('.pname').firstChild.textContent.trim(), txt(el, '.pts b')];
+      const r = await rank('/gym-defense/', '#list', '.row', rd, ex => ex.total.filter(x => !x.dw).map(x => [x.rank + '位', x.n, x.v]));
+      const d = r.w.document, IDS = { pb: 'sPb', pt: 'sPt', py: 'sPy', pi: 'sPi' };
+      for (const k in IDS) {   // ほかの4つの並べ替えは、タブを押した画面と比べる
+        d.getElementById(IDS[k]).click();
+        const rows = [...d.querySelectorAll('#list .row')].map(rd);
+        const want = r.ex[k].filter(x => !x.dw).slice(0, rows.length).map(x => [x.rank + '位', x.n, x.v]);
+        ok(`/gym-defense/ ${k} の${rows.length}行と出口が一致`, rows.length && JSON.stringify(rows) === JSON.stringify(want));
+      }
+      r.f.remove();
+    }
+    {
+      const rd = el => [txt(el, '.rank'), txt(el, '.pname .nm'), txt(el, '.pts b')];
+      (await rank('/max-type/?t=fire', '#list', '.row', rd, ex => ex.fire.atk.map(x => [x.rank + '位', x.n, x.pts]))).f.remove();
+      (await rank('/max-type/tank/?t=dragon', '#list', '.row', rd, ex => ex.dragon.tank.map(x => [x.rank + '位', x.n, x.pts]))).f.remove();
+      (await rank('/max-type/tank/?t=dragon&g=1', '#list', '.row', rd, ex => ex.dragon.tankGuard.map(x => [x.rank + '位', x.n, x.pts]))).f.remove();
+    }
+  }
+
+  async function gbl() {
+    // 環境一覧: ポケモンを入れただけの画面（既定のわざ）と env() を比べる。特殊能力・シャドウ・メガ・上限超え・SPなしを混ぜる
+    const CASES = [['1500', 'azumarill', 0], ['1500', 'cramorant', 0], ['1500', 'aegislash_shield', 0], ['2500', 'feraligatr', 1],
+      ['0', 'dragonite_mega', 0], ['0', 'magikarp', 0]];
+    for (const [lg, k, sh] of CASES) {
+      const f = await load(`/gbl/?lg=${lg}&md=multi&l=${k}${sh ? '&shl=1' : ''}`), w = f.contentWindow;
+      await wait(() => w.document.querySelector('#multi .mtscore'));
+      const d = w.document, cell = w.eval('cellHtml');
+      const scr = { score: d.querySelector('#multi .mtscore').textContent.trim(), mv: [w.eval('S[0].fast'), w.eval('S[0].c1'), w.eval('S[0].c2')],
+        rows: [...d.querySelectorAll('#multi tr[data-k]')].map(tr => [...tr.querySelectorAll('td')].slice(1).map(td => td.textContent.trim()).join(' ')) };
+      const e = w.GonaviGbl.env(k, !!sh, +lg);
+      const exv = { score: '環境勝率 ' + e.score + '%', mv: [e.fast, e.c1, e.c2],
+        rows: e.rows.map(r => r.cells.map(c => cell(c).replace(/<[^>]+>/g, '').trim()).join(' ')) };
+      ok(`/gbl/ 環境一覧 ${lg}・${k}${sh ? '(シャドウ)' : ''} 画面と出口が一致（${scr.score}）`, JSON.stringify(scr) === JSON.stringify(exv), scr.score + ' ／ ' + exv.score);
+      ok(`/gbl/ ${k} 出口を呼んでもリーグが変わらない`, String(w.eval('cap')) === lg);
+      f.remove();
+    }
+    // ロケット団: ランキングの画面と rocket() を比べる。別の種別を指定しても画面の種別は変わらない
+    for (const [kind, k, other] of [['leader', 'tyranitar', 'boss'], ['boss', 'persian', 'grunt']]) {
+      const f = await load(`/rocket/?rk=${kind}&r=${k}`), w = f.contentWindow;
+      await wait(() => w.document.querySelectorAll('#rkrank .rkrcard').length);
+      const d = w.document, D = w.eval('D');
+      const scr = [...d.querySelectorAll('#rkrank .rkrcard')].map(c => [c.querySelector('.rkrank').textContent.trim(),
+        c.querySelector('.rkrname').textContent.replace(/\s+/g, ''), !!c.querySelector('.rkrname .shadowmark'),
+        c.querySelector('.rkrdps').textContent.trim(), c.querySelector('.rkrnum b') ? c.querySelector('.rkrnum b').textContent : '—', c.classList.contains('warn')]);
+      w.GonaviGbl.rocket(other, k);
+      const exr = w.GonaviGbl.rocket(kind, k).slice(0, scr.length).map(r => [String(r.rank), D.pokemon[r.k].n, r.s, r.dps + '/秒', r.sec != null ? r.sec : '—', r.checked && !r.win]);
+      ok(`/rocket/ ${kind}・${k} 画面の${scr.length}行と出口が一致`, scr.length && JSON.stringify(scr) === JSON.stringify(exr), JSON.stringify(scr[0]) + JSON.stringify(exr[0]));
+      ok(`/rocket/ ${k} 出口を呼んでも種別が変わらない`, w.eval('RK.kind') === kind);
+      f.remove();
+    }
+  }
+
+  (async () => {
+    try {
+      if (only !== 'gbl') await ranks();
+      if (only !== 'rank') await gbl();
+    } catch (e) { res.push(['実行エラー', false, String(e && e.stack || e)]); }
+    const bad = res.filter(r => !r[1]).length;
+    document.getElementById('out').innerHTML = res.map(([n, g, note]) => `<div>${g ? '✅' : '❌'} ${n}${g ? '' : '　' + note}</div>`).join('')
+      + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+  })();
+})();
+</script>
+</body></html>

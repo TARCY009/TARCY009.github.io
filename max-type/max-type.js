@@ -229,6 +229,25 @@
     GonaviDevEx.mount(host, () => D.roster.map(p => p.n));
     GonaviDevEx.on(render);
   }
+  // ---- 出口: 全タイプのアタッカー・タンクの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ atkRows／tankRows を呼ぶ・画面は変えない） ----
+  // 既定の設定（特別技も＝ON・ダイウォール込み＝OFF）。tankGuard はダイウォール込みの順位
+  window.GonaviExport = function(){
+    const sv = [curT, guardOn, includeLegacy], out = {};
+    const pt = r => r.pts >= 99.95 ? '100' : r.pts.toFixed(1);
+    try {
+      includeLegacy = true;
+      for(const ti of TYPE_IDX){
+        curT = ti;
+        const o = out[EN[ti]] = {};
+        guardOn = false;
+        o.atk = atkRows().map(r => ({n:r.p.n, cat:r.p.cat, rank:r.rank, pts:pt(r), mv:r.moveName, fast:r.fast ? r.fast.jp : null}));
+        o.tank = tankRows().map(r => ({n:r.p.n, rank:r.rank, pts:pt(r), mult:r.mult}));
+        guardOn = true;
+        o.tankGuard = tankRows().map(r => ({n:r.p.n, rank:r.rank, pts:pt(r)}));
+      }
+    } finally { [curT, guardOn, includeLegacy] = sv; }
+    return out;
+  };
   sync();
   if('serviceWorker' in navigator){
     window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });

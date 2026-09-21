@@ -437,6 +437,19 @@ footer a{color:var(--accent2)}
     render();
   });
   moreBtn.addEventListener('click', () => { shown += PAGE; render(); });
+  // 出口: 5つの並べ替えの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ buildRanks を呼ぶ・画面は変えない）
+  // rank＝画面の既定（二重弱点を除いて振った順位。二重弱点持ちは null）／rankAll＝「二重弱点も」の順位
+  window.GonaviExport = function(){
+    const sv = sortKey, out = {};
+    try {
+      for (const k of Object.keys(SORTS)) {
+        sortKey = k;
+        const r = buildRanks();
+        out[k] = r.sorted.map(e => ({ n:e.n, dw:e.dw?1:0, v:fmt(valOf(e,k)), rank:e.dw ? null : r.N.r[e.n], rankAll:r.A.r[e.n] }));
+      }
+    } finally { sortKey = sv; }
+    return out;
+  };
   render();
 })();
 // 使い方タブ(仕様・前提の説明はここ1か所にまとめる)

@@ -668,6 +668,22 @@ if(window.GonaviDevEx){
   GonaviDevEx.mount($('devexbox'), ()=>KEYS.map(k=>D.pokemon[k].n));
   GonaviDevEx.on(()=>{ rankCache.clear(); sync(); });
 }
+// ---- 出口: 全タイプの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ buildRows を呼ぶ・画面は変えない） ----
+// base=絞り込みなし／all=シャドウ＋メガ・ゲンシ。分割SP優遇は既定のOFF
+window.GonaviExport=function(){
+  const sv=[curT,fShadow,fMega,fSplit], keyOf=new Map(KEYS.map(k=>[D.pokemon[k],k])), out={};
+  try{
+    fSplit=false;
+    for(const [en] of TYPES){
+      curT=en; out[en]={};
+      for(const [name,on] of [['base',false],['all',true]]){
+        fShadow=on; fMega=on;
+        out[en][name]=buildRows().map(r=>({k:keyOf.get(r.p),sh:r.shadow,rank:r.rank,dps:r.dps.toFixed(2),f:r.f.id,c:r.c.id}));
+      }
+    }
+  } finally { [curT,fShadow,fMega,fSplit]=sv; }
+  return {megaLv:MegaLv.level(), types:out};
+};
 sync();
 </script>
 <script src="/assets/snap.js"></script>

@@ -6,6 +6,8 @@ gbl-engine:  pvp-tests/engine-test.html（GBLエンジンの実測突き合わ�
 iv-calc:     .claude/checks/iv-check.html（個体値チェッカーのCP・順位・逆引き・進化後CP＝16項目）
 raid-engine: .claude/checks/raid-check.html（スクショ5例のボスの攻撃時刻＋回帰5通り。基準は raid-baseline.json）
 max-attacker:.claude/checks/max-check.html（マックスバトルのアタッカーが「ダメージ最大のマックスわざ」を選ぶか＝5項目）
+exit-rank:   .claude/checks/exit-check.html?only=rank（1ポケモン1ページ用の出口＝画面の数字か。タイプ別火力・耐久指数・ジム防衛・マックスバトル タイプ別＝20項目）
+exit-gbl:    .claude/checks/exit-check.html?only=gbl（同・GBLの環境一覧とロケット団のランキング＝16項目）
 いずれも画面なしのブラウザで開き、すべて ✅ かを確かめる。
 答え（期待値・基準ファイル）を変えるときは、必ずタダシさんに確認してから。
 """
@@ -67,10 +69,10 @@ def check_gbl_engine(port):
     return True, f'engine-test: 21項目すべて✅'
 
 
-def page_check(path, min_ok):
+def page_check(path, min_ok, budget_ms=30000):
     """.claude/checks/ の答え合わせページ（結果を #sum の data-ok／data-ng に書く形）を読む。"""
     def fn(port):
-        dom = dump_dom(f'http://127.0.0.1:{port}/{path}')
+        dom = dump_dom(f'http://127.0.0.1:{port}/{path}', budget_ms)
         m = re.search(r'id="sum" data-ok="(\d+)" data-ng="(\d+)"', dom)
         body = re.search(r'<div id="out">(.*?)<iframe', dom, re.S)
         detail = html.unescape(re.sub(r'<[^>]+>', '\n', body.group(1) if body else dom[:500]))
@@ -108,6 +110,8 @@ CHECKS = {
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
     'max-attacker': page_check('.claude/checks/max-check.html', 5),
     'mock-fx': check_mock_fx,
+    'exit-rank': page_check('.claude/checks/exit-check.html?only=rank', 20, 120000),
+    'exit-gbl': page_check('.claude/checks/exit-check.html?only=gbl', 16, 300000),
 }
 
 
