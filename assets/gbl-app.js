@@ -5852,7 +5852,7 @@ function rbRender(body, bt, picks, foes, extra) {
             if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
             else { g0 = null; b1 = e.gulp.buff.to.slice(); }
           }
-          const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
+          const dm = e.full !== undefined ? (e.shielded || e.disguised ? 1 : e.full) : (e.dmg || 0);   // ミミッキュのばけのかわも1だけ(2026-09-21)
           if (i === 0) hpB = Math.max(0, hpB - dm); else hpA = Math.max(0, hpA - dm);
           // ウッウの反撃のダメージは**撃った側**が受ける
           if (e.gulp && e.gulp.dmg) { if (i === 0) hpA = Math.max(0, hpA - e.gulp.dmg); else hpB = Math.max(0, hpB - e.gulp.dmg); }
@@ -5877,7 +5877,7 @@ function rbRender(body, bt, picks, foes, extra) {
         let hp0p = pf.hp0, hp1p = pf.hp1;
         for (const r of subs) for (let i = 0; i < 2; i++) {
           const e = r.ev[i]; if (!e) continue;
-          const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
+          const dm = e.full !== undefined ? (e.shielded || e.disguised ? 1 : e.full) : (e.dmg || 0);   // ミミッキュのばけのかわも1だけ(2026-09-21)
           if (i === 0) hp1p = Math.max(0, hp1p - dm); else hp0p = Math.max(0, hp0p - dm);
         }
         frames[gt] = { meta, li: leg.li, hp0: hp0p, en0: pf.en0, hp1: hp1p, en1: pf.en1,
@@ -10966,7 +10966,7 @@ function gbRender(body, bt, picks, foes) {
             if (i === 0) { g1 = null; b0 = e.gulp.buff.to.slice(); }
             else { g0 = null; b1 = e.gulp.buff.to.slice(); }
           }
-          const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
+          const dm = e.full !== undefined ? (e.shielded || e.disguised ? 1 : e.full) : (e.dmg || 0);   // ミミッキュのばけのかわも1だけ(2026-09-21)
           if (i === 0) hpB = Math.max(0, hpB - dm); else hpA = Math.max(0, hpA - dm);
           // ウッウの反撃のダメージは**撃った側**が受ける
           if (e.gulp && e.gulp.dmg) { if (i === 0) hpA = Math.max(0, hpA - e.gulp.dmg); else hpB = Math.max(0, hpB - e.gulp.dmg); }
@@ -10994,7 +10994,7 @@ function gbRender(body, bt, picks, foes) {
         let hp0p = pf.hp0, hp1p = pf.hp1;
         for (const r of subs) for (let i = 0; i < 2; i++) {
           const e = r.ev[i]; if (!e) continue;
-          const dm = e.full !== undefined ? (e.shielded ? 1 : e.full) : (e.dmg || 0);
+          const dm = e.full !== undefined ? (e.shielded || e.disguised ? 1 : e.full) : (e.dmg || 0);   // ミミッキュのばけのかわも1だけ(2026-09-21)
           if (i === 0) hp1p = Math.max(0, hp1p - dm); else hp0p = Math.max(0, hp0p - dm);
         }
         frames[gt] = { meta, li: leg.li, hp0: hp0p, en0: pf.en0, hp1: hp1p, en1: pf.en1,
