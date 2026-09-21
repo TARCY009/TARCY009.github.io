@@ -2998,3 +2998,10 @@ button.sdchip.on .tbadge{filter:none}
   .snapd .subline b{font-size:.95rem}
   .snapd .mtxt{gap:6px;padding:6px 8px;text-align:center}
 }
+
+/* 小さいボタンの「押せる範囲」だけを広げる（見た目は変えない・テスター#20「スマホで操作しづらい」）。
+   透明な当たり判定を主に上下へ足す。左右はとなりのボタンとのすき間の半分まで＝となりと重ねない
+   （×＝枠を空にする が ★ のすぐ横にあるため、重ねると押しまちがいが増える） */
+.sdslot .sdops button,.phd button,.hctl button{position:relative}
+.sdslot .sdops button::after,.phd button::after{content:'';position:absolute;inset:-9px -1px 0}
+.hctl button::after{content:'';position:absolute;inset:-7px -2px}
