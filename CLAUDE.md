@@ -462,7 +462,7 @@ GBL（3リーグの環境勝率と順位・確定わざ・圧勝できる相手�
   自動更新ではその前に答え合わせ `exit-rank`・`exit-gbl`（出口＝画面）も流す
 - **検索エンジン**: サイトマップに載せるのは `build.py` の `STAGE`（いま1）までの段階。載せない候補（強い場面0・進化先に①なし・固有の仕様なし）は noindex。canonical・og・パンくず（JSON-LD）はページごと。
   robots.txt の `Sitemap:` の行は `sitemap-pokemon.xml` が git に入ってから `build_seo.py` が足す。`/pokepage/` は robots.txt で除外
-- 共有用画像はいまステータス図鑑のもの（`assets/ogp/pokedex.png`）を共用（ポケモンごとの画像は未定）
+- 共有用画像は全ページでステータス図鑑のもの（`assets/ogp/pokedex.png`）を共用。**ポケモンごとの画像は作らない**（2026-09-21タダシさん決定・1,120枚は重く、一部だけ作るのも中途半端なため）
 - ステータス図鑑のヒーローカードの下に「◯◯の強さと使い道 ›」（`#pglink`）。`pages.json` が無ければ出ない＝公開前は何も出ない。コスチューム違いは括弧の前の名前のページへ
 - 一覧から外れたページは消さずに知らせるだけ（消すのはタダシさんの確認のあと）
 - **公開の日の手順**: ①`.git/info/exclude` の5行を消す ②変数 `POKEPAGE` を `on`（または一度 `test` で試してから）③自動更新を手動で1回流す ④公開されたら `python3 build_seo.py --no-images` で robots.txt にサイトマップの行を足してpush ⑤Search Console に `sitemap-pokemon.xml` を送る ⑥段階を広げるときは `STAGE` を上げる
