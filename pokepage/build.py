@@ -20,6 +20,9 @@ OUT = 'out'
 # --publish のときは本番の置き場所（/pokedex/<キー>/）へ書く。省略時は確認用に pokepage/out/ へ（検索エンジンには全部見せない）
 PUBLISH = '--publish' in sys.argv
 SITE = 'https://gonavi.jp'
+# アドセンスの審査が終わるまで、全ページを検索に載せない（noindex・サイトマップも空）。2026-09-22タダシさん指示。
+# 2026年8月のスパムアップデートが大量の自動生成ページを狙ったため。ページは消さない。合格したら False に戻して段階的に載せる
+HOLD = True
 STAGE = 1   # サイトマップに載せる段階（①最終進化・メガ・伝説で強い場面が2つ以上 → ②人気の進化前 → ③残り の順に増やす）
 TIERS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'tiers.json'), encoding='utf-8'))
 
@@ -711,7 +714,7 @@ def head_tags(pg, name, desc):
     title = name + 'の強さと使い道｜ポケモンGO｜GOナビ'
     t = TIERS.get(pg['pk'], {})
     L = ['<title>' + e(title) + '</title>', '<meta name="description" content="' + e(desc) + '">']
-    if not PUBLISH or t.get('noindex'):
+    if not PUBLISH or HOLD or t.get('noindex'):
         L.append('<meta name="robots" content="noindex">')
     L += ['<link rel="canonical" href="' + url + '">',
           '<meta property="og:type" content="article">', '<meta property="og:site_name" content="GOナビ">',
@@ -812,7 +815,7 @@ def write_sitemap():
     rows = []
     for pg in sorted(b.PAGES, key=lambda x: (PVP['pokemon'][x['pk']]['dex'], x['pk'])):
         t = TIERS.get(pg['pk'], {})
-        if t.get('noindex') or t.get('tier', 9) > STAGE:
+        if HOLD or t.get('noindex') or t.get('tier', 9) > STAGE:
             continue
         lm = today if (CHANGED.get(pg['pk']) or pg['pk'] not in prev) else prev[pg['pk']]
         rows.append('  <url><loc>' + SITE + '/pokedex/' + pg['pk'] + '/</loc><lastmod>' + lm + '</lastmod><priority>0.6</priority></url>')
