@@ -418,6 +418,102 @@
     kick(.35, { f0: 240, f1: 62, vol: .42, at: 1.05, drive: .5, decay: 7 });
     pad([294, 392, 494], .7, { vol: .1, at: 1.15, rev: .5, open: 2400, type: 'triangle' });
   }
+  // ---- じぶんのSPアタックの新しい候補5案（2026-09-22タダシさん指示「メーターの音と似ていて2回聴いている感覚になる」）----
+  // ⚠ 威力調整メーターの音（電子ビープのスライド・ため→炸裂→和音のEXCELLENT）と作りを変える:
+  //    上がるノイズ(riser)と「ため→炸裂」の形は使わない。着弾は従来どおり1.05秒・じぶんは左から。
+  //    SP_PAT=0 は従来の「斬撃」。1〜5が新しい案（見本 scratchpad/mock-spsound2.html）
+  var SP_PAT = 0;
+  function seSp2(eff, pat, at) {
+    var a = at || 0, i;
+    switch (pat) {
+      case 1:   // 打撃（重い一撃）: 布を切る風→ズドンと太鼓＋低い衝撃。ばつぐんは2発目と金属の割れ
+        whoosh(.34, { f0: 500, f1: 2200, vol: .26, at: a, pan: -1, pan2: .1, dur: .34 });
+        whoosh(.2, { f0: 800, f1: 3000, vol: .3, at: a + .78, pan: -.6, pan2: .3, dur: .2 });
+        if (eff === 'w') {
+          kick(.35, { f0: 170, f1: 55, vol: .5, at: a + 1.05, drive: .3, decay: 9, click: .05 });
+          noise({ f: 700, f2: 250, q: 2, dur: .25, vol: .3, at: a + 1.05, lo: 1800 });
+          return;
+        }
+        kick(.55, { f0: 280, f1: 45, vol: .68, at: a + 1.05, drive: .9, decay: 5, click: .3 });
+        burst(.4, { cut: 3200, cut2: 500, decay: 6, drive: .5, vol: .34, at: a + 1.05, hi: 200, rev: .4 });
+        pad([98, 147], .7, { vol: .12, at: a + 1.08, rev: .6, open: 900, type: 'sawtooth', atk: .02 });
+        if (eff === 's') {
+          kick(.5, { f0: 260, f1: 42, vol: .6, at: a + 1.24, drive: .9, decay: 5, click: .3 });
+          gong(1760, .9, { decay: 3, hiDecay: 10, strike: .5, vol: .3, at: a + 1.05, rev: .45 });
+          for (i = 0; i < 4; i++) ks(1800 + i * 500, .3, { damp: .99, tone: .95, decay: 9, vol: .09, at: a + 1.25 + i * .01, pan: (i % 2 ? 1 : -1) * .6, rev: .4, seed: 2100 + i });
+        }
+        return;
+      case 2:   // 雷撃（放電）: パチパチと帯電→バチッと落雷＋高い割れ。ばつぐんは帯電が長く残響が散る／いまひとつは弱い放電だけ
+        stutter(eff === 'w' ? 4 : 9, { f0: 3000, f1: 7000, dur: .018, vol: eff === 'w' ? .3 : .45, at: a + .25, span: .7, pan: -1, pan2: -.2 });
+        if (eff === 'w') {
+          tone({ f: 1800, f2: 400, type: 'sawtooth', dur: .18, vol: .45, at: a + 1.05, lo: 2600 });
+          noise({ f: 2400, f2: 800, q: 3, dur: .16, vol: .7, at: a + 1.05, seed: 3301 });
+          return;
+        }
+        tone({ f: 4200, f2: 90, type: 'sawtooth', dur: .3, vol: .3, at: a + 1.05, lo: 6000, dly: .15 });
+        burst(.3, { cut: 10000, cut2: 2600, decay: 12, drive: .5, vol: .5, at: a + 1.05, hi: 1500, rev: .4 });
+        kick(.4, { f0: 200, f1: 48, vol: .5, at: a + 1.06, drive: .7, decay: 6 });
+        noise({ f: 6000, f2: 1500, q: 1.5, dur: .5, vol: .2, at: a + 1.1, rev: .6, pan: -.4, pan2: .5 });
+        if (eff === 's') {
+          stutter(7, { f0: 4000, f1: 8000, dur: .015, vol: .32, at: a + 1.12, span: .5, pan: -.5, pan2: .8 });
+          shimmer(8, { base: 2637, dur: .5, span: .6, vol: .09, at: a + 1.15, spread: 1.4 });
+          fm(2093, .7, { ratio: 1.41, index: 4, decay: 4, vol: .2, at: a + 1.12, rev: .5, dly: .25, wide: 1 });
+        }
+        return;
+      case 3:   // 波動（うねり）: 低い和音がふくらむ→ドォンと深い一撃＋鐘の残り。ばつぐんは鐘が2つ重なる／いまひとつはこもる
+        pad([110, 165, 220], 1.05, { vol: eff === 'w' ? .12 : .2, at: a, rev: .5, open: eff === 'w' ? 700 : 1800, type: 'triangle', atk: .5 });
+        sweep(.5, { f0: 300, f1: 1400, q: 5, tone: .3, t0: 110, t1: 330, env: 'bell', vol: .22, at: a + .5, pan: -.8, pan2: 0, dur: .5 });
+        if (eff === 'w') {
+          kick(.4, { f0: 150, f1: 50, vol: .42, at: a + 1.05, drive: .3, decay: 7, click: .04 });
+          fm(330, .5, { ratio: 1.5, index: 2, decay: 5, vol: .16, at: a + 1.06, lo: 1500 });
+          return;
+        }
+        kick(.6, { f0: 300, f1: 40, vol: .62, at: a + 1.05, drive: .8, decay: 4, click: .15 });
+        gong(392, 1.4, { decay: 1.6, hiDecay: 6, strike: .3, vol: .36, at: a + 1.05, rev: .55 });
+        pad([131, 196, 262], .9, { vol: .14, at: a + 1.1, rev: .7, open: 1600, type: 'sawtooth', atk: .03 });
+        if (eff === 's') {
+          gong(784, 1.2, { decay: 2, hiDecay: 8, strike: .35, vol: .3, at: a + 1.1, rev: .55 });
+          burst(.5, { cut: 5000, cut2: 800, decay: 6, drive: .4, vol: .3, at: a + 1.05, hi: 300, rev: .5 });
+          shimmer(6, { base: 1568, dur: .6, span: .7, vol: .08, at: a + 1.2 });
+        }
+        return;
+      case 4:   // 射撃（発射→飛翔→着弾）: 0.3秒でピュンと撃ち、左から右へ飛んで1.05秒で砕ける。ばつぐんは破片が多い／いまひとつはポスッ
+        tone({ f: 2400, f2: 600, type: 'square', dur: .16, vol: .2, at: a + .3, lo: 5000, pan: -.9 });
+        noise({ f: 3000, f2: 1200, q: 4, dur: .12, vol: .28, at: a + .3, pan: -.9, seed: 4401 });
+        whoosh(.6, { f0: 900, f1: 2800, vol: .22, at: a + .42, pan: -.9, pan2: .7, dur: .6, q: 5 });
+        if (eff === 'w') {
+          noise({ f: 900, f2: 300, q: 2, dur: .22, vol: .3, at: a + 1.05, lo: 2200, pan: .5 });
+          kick(.25, { f0: 160, f1: 60, vol: .3, at: a + 1.05, drive: .2, decay: 12 });
+          return;
+        }
+        burst(.38, { cut: 8000, cut2: 1400, decay: 8, drive: .4, vol: .56, at: a + 1.05, hi: 700, rev: .4, pan: .5 });
+        kick(.4, { f0: 230, f1: 55, vol: .62, at: a + 1.05, drive: .5, decay: 7 });
+        for (i = 0; i < (eff === 's' ? 7 : 3); i++) ks(1600 + i * 430, .35, { damp: .99, tone: .95, decay: 8, vol: .1, at: a + 1.05 + i * .015, pan: .2 + (i % 2 ? .6 : -.3), rev: .45, dly: .15, seed: 5100 + i });
+        if (eff === 's') {
+          tone({ f: 1760, f2: 440, type: 'triangle', dur: .5, vol: .16, at: a + 1.08, rev: .5, dly: .25 });
+          shimmer(8, { base: 2093, dur: .5, span: .7, vol: .09, at: a + 1.15, spread: 1.4 });
+          pad([294, 440, 587], .8, { vol: .1, at: a + 1.15, rev: .6, open: 2800, type: 'triangle' });
+        }
+        return;
+      case 5:   // 太鼓の連打（和）: ドン・ドン・ドンと3連→大太鼓＋銅鑼。ばつぐんは連打が5つ＋銅鑼が高く鳴る／いまひとつは小太鼓だけ
+        var n5 = eff === 's' ? 5 : 3, sp5 = eff === 's' ? .13 : .2;
+        for (i = 0; i < n5; i++) kick(.22, { f0: 210, f1: 70, vol: (eff === 'w' ? .3 : .42) * (.7 + i * .1), at: a + .38 + i * sp5, drive: .4, decay: 12, click: .12, pan: -.7 + i * .25 });
+        if (eff === 'w') {
+          kick(.35, { f0: 190, f1: 60, vol: .52, at: a + 1.05, drive: .3, decay: 9, click: .1 });
+          noise({ f: 1500, f2: 500, q: 2, dur: .2, vol: .35, at: a + 1.05, lo: 3000 });
+          return;
+        }
+        kick(.7, { f0: 320, f1: 38, vol: .78, at: a + 1.05, drive: 1, decay: 3.5, click: .35 });
+        gong(eff === 's' ? 523 : 262, 1.5, { decay: 1.5, hiDecay: 6, strike: .45, vol: eff === 's' ? .52 : .44, at: a + 1.05, rev: .55 });
+        burst(.35, { cut: 2600, cut2: 400, decay: 7, drive: .4, vol: .34, at: a + 1.05, hi: 150, rev: .45 });
+        if (eff === 's') {
+          gong(1046, 1, { decay: 2.4, hiDecay: 9, strike: .4, vol: .26, at: a + 1.12, rev: .5 });
+          shimmer(6, { base: 1568, dur: .6, span: .6, vol: .08, at: a + 1.2 });
+        }
+        return;
+      default: seSp(eff);
+    }
+  }
   // あいてのSPアタック「怪光線」（2026-09-19タダシさん選択・5案から案2）
   // ⚠ じぶんの音（明るい斬撃）と聞き分けられるように、①暗く低い音を土台にする ②音が右から来る
   //    （じぶんは左から）の2点でそろえてある。着弾だけ 1.05 秒でそろえる（カットインの揺れの瞬間）。
@@ -708,7 +804,10 @@
       }
     },
     // side: 0/省略=じぶん（斬撃） / 1=あいて（怪光線）。音でどちらが撃ったか分かるようにする
-    sp: function (eff, side, at) { later(function () { (side ? seSpFoe : seSp)(eff); }, at); },
+    sp: function (eff, side, at) { later(function () { if (side) seSpFoe(eff); else if (SP_PAT) seSp2(eff, SP_PAT, 0); else seSp(eff); }, at); },
+    // じぶんのSPの音の案(0=従来の斬撃・1〜5=新しい候補)。見本と測定用: spRaw(eff, pat, at)
+    spPattern: function (n) { if (n == null) return SP_PAT; SP_PAT = +n; return SP_PAT; },
+    spRaw: function (eff, pat, at) { if (!ac()) return; if (pat) seSp2(eff, pat, at); else seSp(eff); },
     vs: function (at) { later(seVs, at); },            // バトルスタート
     intro: function (at) { later(seIn, at); },         // ポケモンをくりだす
     swap: function (at) { later(seSwap, at); },
