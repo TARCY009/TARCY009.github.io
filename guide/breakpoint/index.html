@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ブレイクポイントとは｜ノーマルアタックの1ダメージが試合を変える理由｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOのトレーナーバトルで、ノーマルアタックのダメージが1増える境目（ブレイクポイント）とは何か。ダメージが階段状に増えるしくみ、1ターンのわざほど影響が大きい理由、マスターリーグとCP上限のあるリーグでの考え方を解説します。">
+<link rel="canonical" href="https://gonavi.jp/guide/breakpoint/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="ブレイクポイントとは｜GOナビ">
+<meta property="og:description" content="ノーマルアタックの1ダメージが試合を変える理由を、ダメージの式から解説。">
+<meta property="og:url" content="https://gonavi.jp/guide/breakpoint/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GOナビ">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"ブレイクポイントとは｜GOナビ","url":"https://gonavi.jp/guide/breakpoint/","description":"ポケモンGOのトレーナーバトルで、ノーマルアタックのダメージが1増える境目（ブレイクポイント）とは何か。ダメージが階段状に増えるしくみ、1ターンのわざほど影響が大きい理由、マスターリーグとCP上限のあるリーグでの考え方を解説します。","inLanguage":"ja","author":{"@type":"Person","name":"TARCY"},"publisher":{"@type":"Organization","name":"GOナビ","url":"https://gonavi.jp/"},"isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"}}</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script src="/assets/ads.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">Guide</div><h1>ブレイクポイントとは</h1>
+  <p class="lead">トレーナーバトルで、ノーマルアタックのダメージが1増える「境目」。なぜダメージは階段状にしか増えないのか、1ターンのわざほど影響が大きい理由、CP上限のあるリーグでの考え方まで。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<article>
+<section class="card">
+  <h2>ダメージは「階段状」にしか増えない</h2>
+  <p>ポケモンGOのダメージは、小数を切り捨てた整数です。トレーナーバトルでは、おおまかに次の形で決まります。</p>
+  <p class="formula">ダメージ ＝ 切り捨て（0.5 × 威力 × 攻撃 ÷ 防御 × 倍率 × 1.3）＋ 1</p>
+  <p>最後の1.3は、トレーナーバトルだけに掛かる補正です。倍率にはタイプ一致（1.2倍）やタイプ相性が入ります。</p>
+  <p>切り捨てがあるので、強化して攻撃の実数値が少し上がっても、ダメージは<b>5→5→5→6</b>のように、ある所までは変わらず、境目を越えた瞬間にだけ1増えます。この境目を<b>ブレイクポイント</b>と呼びます。受ける側も同じで、防御の実数値が境目を越えると、受けるダメージが1減ります（こちらはバルクポイントと呼ばれることもあります）。</p>
+</section>
+
+<section class="card">
+  <h2>1ターンのわざほど効く</h2>
+  <p>同じ「1ダメージ増える」でも、わざによって重みが違います。</p>
+  <dl class="facts">
+    <dt>1ターンのわざ</dt><dd>5→6なら、1発あたり20%増える</dd>
+    <dt>2ターンのわざ</dt><dd>10→11なら、1発あたり10%増える</dd>
+  </dl>
+  <p>ダメージの小さい1ターンのわざは、1増えたときの割合が大きく、しかもバトル中に何十回も当たります。そのため、ブレイクポイントはとくに1ターンのわざで大きな差になります。</p>
+  <p>実例として、マスターリーグでパルキア（オリジン）がレシラムにりゅうのいぶきを撃つ場合、PL50では1発5ダメージで、倒すまでに37発かかります。PL50.5（最高の相棒）まで上げると1発6ダメージになり、31発で倒せます。6発ぶん、つまり<b>3.0秒早く</b>倒せる計算です。</p>
+</section>
+
+<section class="card">
+  <h2>SPアタックはなぜ対象にしないのか</h2>
+  <p>SPアタックのダメージも同じように階段状ですが、GOナビのブレイクポイントのツールでは、SPアタックは扱っていません。SPアタックが当たるのは1バトルで数回で、しかもシールドで防がれるかどうかで結果が大きく変わります。1ダメージの差が勝ち負けを分ける場面を言い切りにくいため、何十回も当たるノーマルアタックに絞っています。</p>
+</section>
+
+<section class="card">
+  <h2>マスターリーグでは「攻撃の個体値」</h2>
+  <p>マスターリーグにはCP上限がないので、誰でも同じPL上限まで強化できます。この場合、ダメージを決めるのは攻撃の実数値だけなので、<b>攻撃の個体値が高いほど境目を越えやすく</b>なります。上の例も、攻撃の個体値が15でなければPL50.5でも6ダメージに届きません。</p>
+  <p>GOナビのブレイクポイントのツールでは、マスターリーグでポケモンを選ぶと、環境上位100匹それぞれについて「攻撃の個体値がいくつ以上なら、最大まで強化したときに境目を越えるか」を一覧にします。</p>
+</section>
+
+<section class="card">
+  <h2>CP上限のあるリーグでは「順位」で考える</h2>
+  <p>スーパーリーグ・ハイパーリーグでは事情が違います。CP上限があるので、攻撃の個体値を上げるとPLを上げられなくなります。逆に、防御やHPの個体値を下げると、そのぶんPLを高くでき、結果として攻撃の実数値が上がることもあります。<b>攻撃以外の個体値もダメージに効く</b>ということです。</p>
+  <p>そのため、CP上限のあるリーグでは「どの個体値なら届くか」を、個体値の順位（4096通りの中の位置）で見るのが実際的です。GOナビのツールでは、境目を越えられる個体のうち、SCP（実数値の積から出す総合の数字）がいちばん高いもの、つまり犠牲がいちばん小さい個体の順位を相手ごとに出しています。</p>
+  <p>もう1つ大事なのは、<b>相手の個体によっても境目が動く</b>ことです。同じポケモンでも、個体値の順位によって防御の実数値が違い、1位の個体がいちばん硬いとは限りません。ツールの「あいての順位」で、相手を1位だけと考えるか、100位以内のどれが来ても届く個体を探すかを切り替えられます。</p>
+</section>
+
+<section class="card">
+  <h2>ブレイクポイントと勝ち負け</h2>
+  <p>境目を越える個体を選ぶために、防御やHPを大きく削ってしまうと、今度は受けるダメージが増えます。ブレイクポイントを増やすことが、そのまま勝ちの数を増やすとは限りません。</p>
+  <p>GOナビのツールの「おすすめ個体」は、候補の個体ごとに環境上位100匹とシールド3通り（0-0・1-1・2-2）で実際に戦わせ、<b>勝った数</b>で並べています。境目をいくつ越えたかは、勝ち数が同じときの見分けとして添えています。</p>
+</section>
+
+<section class="card">
+  <h2>ツールで調べる</h2>
+  <ul>
+    <li><a href="/breakpoint/">GBLブレイクポイント</a>──ポケモンとリーグを選ぶと、環境上位100匹への境目を一覧にします。与えるダメージ・受けるダメージの両方と、おすすめ個体まで見られます。</li>
+    <li><a href="/iv-checker/">個体値チェッカー</a>──個体値の順位を調べて、そのままブレイクポイントのツールへ移れます。</li>
+    <li><a href="/gbl/">GBLシミュレーター</a>──1対1の結果の下のボタンから、その対面の境目を調べられます。</li>
+    <li><a href="/guide/iv-rank/">読み物「個体値の順位とは何か」</a>──CP上限のあるリーグで順位がどう決まるかを解説しています。</li>
+  </ul>
+  <p class="date">2026年9月時点の仕様にもとづいています。</p>
+</section>
+</article>
+
+<p class="back"><a href="/guide/">読み物の一覧へ</a></p>
+</div>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>
