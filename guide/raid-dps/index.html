@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>レイドの「火力（DPS）」の読み方｜ランキングの数字はどう決まるか｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOのレイドの火力（DPS）は、ノーマルアタックとSPアタックを組み合わせた1秒あたりのダメージ。ものさしにした相手、ダメージの式と倍率、わざ構成の選ばれ方、数字に入っていないものまで解説します。">
+<link rel="canonical" href="https://gonavi.jp/guide/raid-dps/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="レイドの「火力（DPS）」の読み方｜GOナビ">
+<meta property="og:description" content="レイド火力ランキングの数字が何を前提にどう計算されているかを解説。">
+<meta property="og:url" content="https://gonavi.jp/guide/raid-dps/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GOナビ">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"レイドの「火力（DPS）」の読み方｜GOナビ","url":"https://gonavi.jp/guide/raid-dps/","description":"ポケモンGOのレイドの火力（DPS）は、ノーマルアタックとSPアタックを組み合わせた1秒あたりのダメージ。ものさしにした相手、ダメージの式と倍率、わざ構成の選ばれ方、数字に入っていないものまで解説します。","inLanguage":"ja","author":{"@type":"Person","name":"TARCY"},"publisher":{"@type":"Organization","name":"GOナビ","url":"https://gonavi.jp/"},"isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"}}</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script src="/assets/ads.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">Guide</div><h1>レイドの「火力（DPS）」の読み方</h1>
+  <p class="lead">レイド火力のランキングに並ぶ数字は、何を前提にどう計算した値なのか。1秒あたりのダメージの意味、ものさしにした相手、わざ構成の選ばれ方、数字に入っていないものまで。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<article>
+<section class="card">
+  <h2>DPSは「1秒あたりのダメージ」</h2>
+  <p>DPS（Damage Per Second）は、そのポケモンが攻撃し続けたときに<b>1秒あたり平均で何ダメージ出せるか</b>を表す数字です。レイドは制限時間のあるバトルなので、同じ時間でどれだけ削れるかがそのまま討伐の速さにつながります。</p>
+  <p>レイドでは、ノーマルアタックでゲージをため、たまったらSPアタックを撃つ、という流れを繰り返します。そこでGOナビのレイド火力チェッカーは、<b>ノーマルアタック100回ぶんと、そのあいだにたまるゲージで撃てるSPアタック</b>をひとまとまりの「サイクル」として、合計のダメージをかかった時間で割っています。ノーマルアタックだけ、SPアタックだけの数字ではなく、2つを組み合わせたときの値です。</p>
+</section>
+
+<section class="card">
+  <h2>1発のダメージの決まり方</h2>
+  <p>1発のダメージは、おおまかに次の形で決まります。</p>
+  <p class="formula">ダメージ ＝ 切り捨て（0.5 × 威力 × 攻撃 ÷ 防御 × 倍率）＋ 1</p>
+  <p>攻撃と防御は、種族値に個体値を足し、PLごとの係数を掛けた「実数値」です。倍率には次のようなものが掛け合わされます。</p>
+  <dl class="facts">
+    <dt>タイプ一致</dt><dd>わざのタイプが自分のタイプと同じなら1.2倍</dd>
+    <dt>タイプ相性</dt><dd>弱点1.6倍・二重弱点2.56倍、耐性0.625倍・二重耐性0.390625倍</dd>
+    <dt>シャドウ</dt><dd>与えるダメージが1.2倍（受けるダメージも1.2倍）</dd>
+    <dt>天候ブースト</dt><dd>天候に対応するタイプのわざが1.2倍</dd>
+  </dl>
+  <p>倍率は<b>切り捨ての前</b>に掛かります。あとから1.2倍するのとは結果が少しずれることがあるので、GOナビのツールはすべてこの順番で計算しています。</p>
+</section>
+
+<section class="card">
+  <h2>相手は「ものさし」でそろえている</h2>
+  <p>ボスごとに防御の種族値は違うので、ボスの本当の防御で計算すると、同じアタッカーでもボスによって数字の大きさが変わってしまいます。そこでランキングでは、相手を<b>防御種族値100・個体値15・PL40</b>の共通のものさしに固定し、<b>選んだボスのタイプ相性だけ</b>を反映させています。</p>
+  <p>こうすると、ボスが変わっても「タイプ相性で有利になるアタッカーが上がる」という形で並びが変わり、数字の大きさはボスをまたいで比べやすくなります。一方で、画面の数字は実際のボスに対するダメージそのものではありません。実際のボスの防御で計算し直しているのは、同じページの「最少討伐人数」と、レイドシミュレーターのほうです。</p>
+  <p>アタッカー側は<b>PL50・個体値15</b>で計算しています。自分のポケモンを登録した場合だけは、入力したPL・個体値・わざで計算し直した値がランキングの中に並びます。</p>
+</section>
+
+<section class="card">
+  <h2>わざ構成の選ばれ方</h2>
+  <p>ポケモンが覚えるノーマルアタックとSPアタックの組み合わせを全部試し、火力がいちばん高い組み合わせを一覧に出しています。PLによって最適な組み合わせが入れ替わることがあるので、<b>PL1〜51の全レベルで計算し、いちばん多くのレベルで1位だった組み合わせ</b>を採用しています。</p>
+  <p>SPアタックには、ゲージを1本まるごと使うもの（1ゲージ・消費100）と、2分割（消費50）・3分割（消費33）のものがあります。1ゲージのわざは1発が重い代わりに撃てるまで時間がかかり、分割のわざは早く撃てます。既定は純粋に火力がいちばん高い組み合わせですが、「分割SP優遇」を押すと、1位が1ゲージのわざでも<b>分割のわざとの差が7%未満なら分割のほうを選ぶ</b>並びに切り替わります。</p>
+  <p>わざ名がオレンジ色で後ろに「*」が付いているものは、イベントや特別なわざマシンでしか覚えられない特別わざです。</p>
+</section>
+
+<section class="card">
+  <h2>数字に入っていないもの</h2>
+  <p>ランキングのDPSは、<b>倒されずに攻撃し続けたとき</b>の値です。実際のレイドでは、次のような時間が加わります。</p>
+  <ul>
+    <li>ボスの攻撃で倒され、次のポケモンが出るまでの時間</li>
+    <li>パーティが全滅して、ロビーから入り直す時間</li>
+    <li>ボスのSPアタックを避けるための回避の時間</li>
+  </ul>
+  <p>そのため、火力の高いポケモンでも耐久が低いと、実戦では数字ほど削れないことがあります。ランキングの「⚠️極低耐久」の印は、防御種族値×HP種族値が16000未満のポケモンに付けている倒されやすさの目安です（シャドウは防御が下がるぶんも込みで判定しています）。</p>
+  <p>逆に、ボスから攻撃を受けるとこちらのゲージもたまるので、SPアタックを撃てる回数は実戦のほうが多くなります。倒される時間・ゲージのやりとり・ボスの攻撃の間隔まで含めて何人で倒せるかを見るには、レイドシミュレーターを使います。</p>
+</section>
+
+<section class="card">
+  <h2>メガシンカの「＋わざ」</h2>
+  <p>一部のメガシンカポケモンは、メガシンカ中だけ使える3本目のSPアタック（わざ名の最後が「+」）を持っています。このわざはメガレベルが上がるほど威力が上がり、Lv1で1.0倍、Lv2で1.1倍、Lv3で1.2倍、Lv4で1.3倍です。レイド火力チェッカーは既定でLv4の威力を使い、メガLvのタブで切り替えられます。</p>
+</section>
+
+<section class="card">
+  <h2>ツールで調べる</h2>
+  <ul>
+    <li><a href="/dps/">レイド火力チェッカー</a>──ボスを選ぶと、全ポケモンの火力ランキングと最少討伐人数（理論値）を出します。自分のポケモンを登録して順位を比べることもできます。</li>
+    <li><a href="/raid/">レイドシミュレーター</a>──倒される時間やゲージのやりとりまで再現して、実戦で何人いれば倒せるかを出します。</li>
+    <li><a href="/type-dps/">タイプ別火力ランキング</a>──ボスを決めずに、タイプごとの火力の順位を見られます。</li>
+  </ul>
+  <p class="date">2026年9月時点の仕様にもとづいています。</p>
+</section>
+</article>
+
+<p class="back"><a href="/guide/">読み物の一覧へ</a></p>
+</div>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>

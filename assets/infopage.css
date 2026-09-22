@@ -51,6 +51,9 @@ dl.facts dd{font-size:.9rem}
 dl.facts>*:nth-last-child(-n+2){border-bottom:0}
 .note{font-size:.8rem;color:var(--sub)}
 .date{margin-top:6px;font-size:.78rem;color:var(--sub);text-align:right}
+/* 読み物の式（1行・細い罫線の枠。狭い画面では折り返す） */
+.formula{margin:4px 0 14px;padding:11px 14px;border:1px solid var(--hair);border-radius:10px;
+  font-size:.86rem;font-weight:700;text-align:center;line-height:1.7;word-break:keep-all}
 /* フィードバックの大きなボタン（サイトの立体ボタンと同じ質感。光彩は付けない＝全ツール共通ルール） */
 .cbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:240px;
   padding:13px 26px;margin:6px 0 14px;border-radius:999px;border:0;cursor:pointer;
