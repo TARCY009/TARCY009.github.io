@@ -10,6 +10,7 @@ document.getElementById('app').innerHTML = `
 <header>
   <div class="eyebrow eb-gbl">Pok&eacute;mon GO Battle League</div>
   <h1><span class="wmksuf">GBL</span> <b class="wmk" data-tool="gbl">シミュレーター</b></h1>
+  <p class="intro" id="intro">GOバトルリーグの対面を1ターンずつ再現するシミュレーターです。1対1の勝ち負けとタイムラインのほか、環境上位との一覧、苦手な相手の対策さがし、パーティの穴チェック、3対3の模擬戦まで1つの画面で使えます。リーグを選んでポケモンを入れると定番のわざ構成が自動で入り、すぐに結果が出ます。</p>
   <div id="themesw"></div>
 </header>
 
@@ -450,6 +451,7 @@ if (PAGE_ROCKET) {
   // ロケット団対策ページ: モードは固定なのでタブ行ごと隠し、見出しを差し替える
   document.querySelector('header h1').innerHTML = '<span class="wmksuf">GOロケット団</span> <b class="wmk" data-tool="rocket">対策シミュレーター</b>';
   document.querySelector('header .eyebrow').outerHTML = '<div class="eyebrow eb-rocket">Pok&eacute;mon GO Team Rocket</div>';
+  document.getElementById('intro').textContent = 'GOロケット団のしたっぱ・リーダー・サカキに、短い時間で勝てるポケモンを探すシミュレーターです。あいてのポケモンを選ぶと、どのわざで来ても勝てるかを計算したおすすめランキングが出ます。3対3の模擬戦では、交代やSPアタックのタイミングを決めながら通しの流れを試せます。';
   document.getElementById('modes').style.display = 'none';
   // ダーク⇄ライトの切り替えが右端になるよう、リンクはその手前に置く
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
@@ -459,6 +461,7 @@ if (PAGE_ROCKET) {
   const headerEl = document.querySelector('header');
   headerEl.querySelector('h1').innerHTML = '<span class="wmksuf">GBL</span> <b class="wmk" data-tool="battlelog">対戦記録</b>';
   headerEl.querySelector('.eyebrow').outerHTML = '<div class="eyebrow eb-blog">Pok\u00e9mon GO Battle Log</div>';
+  document.getElementById('intro').textContent = 'GOバトルリーグで戦った相手を記録して、自分のレート帯の環境を分析するツールです。あいての3匹と勝敗を入れるだけで、よく当たるポケモン・初手の傾向・勝率の高いパーティ・刺さるポケモンが自動でまとまります。記録は端末の中にだけ保存され、レートを入れると推移のグラフも見られます。';
   document.getElementById('modes').style.display = 'none';
   document.getElementById('themesw').insertAdjacentHTML('beforebegin',
     '<a class="pagelink" href="/gbl/" title="GOバトルリーグ(対人戦)のGBLシミュレーターへ">GBLシミュレーター ↗</a>');

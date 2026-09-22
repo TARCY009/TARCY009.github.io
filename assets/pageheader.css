@@ -51,3 +51,12 @@ header h1::before{content:'';display:inline-block;vertical-align:-.13em;flex:0 0
     radial-gradient(circle at center,#fff 0 17%,#20263a 17% 30%,transparent 30%),
     linear-gradient(180deg,#ff5470 0 44%,#20263a 44% 56%,var(--ballbtm) 56% 100%);
   box-shadow:var(--ballsh)}
+
+/* ===== タイトルのすぐ下の紹介文（2026-09-22・タダシさん指示・全ツール共通） =====
+   アドセンスの審査「有用性の低いコンテンツ」への手当て。画面を開いた時点で「何のツールで・どう使い・何が分かるか」が
+   3文で読めるようにする（📖説明モードに隠さない・恒久＝審査後も消さない）。文言は各ページの <p class="intro">
+   （GBL・ロケット団・対戦記録は gbl-app.js の骨組みの #intro）。見た目はここ1か所。
+   ⚠ header の中に置く（広告の枠A＝「タイトルのすぐ下」の並びを崩さない）。h1 の直後・#themesw より前。 */
+header .intro{flex:1 1 100%;margin:6px 0 0;font-size:.82rem;line-height:1.75;color:var(--sub,#9fb0e0);max-width:64ch;letter-spacing:.01em;text-align:left}
+/* 個体値チェッカーは見出しが中央寄せなので、段落だけ左そろえにする（5行の中央寄せは読みにくい） */
+@media (max-width:430px){header .intro{font-size:.76rem;line-height:1.7}}
