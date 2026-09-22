@@ -58,8 +58,10 @@
         DLYIN.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl);
         if (p) { lp.connect(p); p.connect(BUS); } else lp.connect(BUS);
       });
-      // iPhoneのマナーモードでも鳴らす（対応ブラウザのみ）
-      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
+      // ⚠ 音の出口の種類は「ほかの音と混ざる(ambient)」(2026-09-22タダシさん報告で変更)。
+      //    以前の 'playback'(音楽の再生扱い・マナーモードでも鳴る)は、模擬戦を開いた瞬間にYouTubeなど
+      //    **ほかのアプリの音楽を止めてしまう**。ambient なら音楽と混ざって鳴る。代わりにマナーモード中は鳴らない
+      try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { }
       keepAlive();
     }
     // ⚠ iPhoneは「しばらく無音」「画面を離れた」「着信」などで音の出口が眠る
@@ -740,7 +742,7 @@
     try { document.addEventListener(ev, wake, { capture: true, passive: true }); } catch (e) { document.addEventListener(ev, wake, true); }
   });
   // ⚠ 画面を閉じたら音を消す（2026-09-19タダシさん指示）。
-  //    マナーモードでも鳴るように navigator.audioSession.type='playback' にしてあるぶん、
+  //    （以前 navigator.audioSession.type='playback' にしていたときは
   //    そのままだと**ほかのアプリに移っても・画面を消しても鳴り続ける**。
   //    鳴っている音と予約を捨てて、出口そのものを眠らせる（戻ってきたら wake が起こす）
   function sleep() {
