@@ -924,7 +924,7 @@ function overCapCp(base) {
   return cp > base.cap ? cp : 0;
 }
 const overCapTag = base => overCapCp(base) ? ' <span class="over">⚠リーグ上限超え</span>' : '';
-// 勝者が決まらなかった対面(res.winner)。'draw'=相打ち / null=480ターン(240秒)たっても
+// 勝者が決まらなかった対面(res.winner)。'draw'=相打ち / null=540ターン(270秒)たっても
 // どちらも倒れなかった。**null のときに res.final[winner] を引くと落ちる**ので、
 // 残HP%を出す前に必ずこれで弾く(SPアタックを覚えないポケモン同士などで実際に起きる)
 const noWin = w => w === 'draw' || w == null;
@@ -3766,7 +3766,7 @@ function ptSwapRough(pool, targets, wide, keep) {
         const myHp = me.hp + ptShield * ptBestSp(t.chargeds, t.st, me);
         const foeHp = t.st.hp + ptShield * ptBestSp(chargeds, me, t.st);
         const myTtk = foeHp / mine;   // 相手を倒すまでのターン数
-        // 制限時間(480ターン)内に倒しきれない相手は勝ちようがない。
+        // 制限時間(540ターン)内に倒しきれない相手は勝ちようがない。
         // こういう候補はシミュも最後まで回って重いので、ここで落としておく
         if (myTtk > 400) { s -= w; continue; }
         // 倒すまでのターン数と、自分が倒されるまでのターン数の比(1匹に偏らないよう上限を付ける)
@@ -12637,7 +12637,7 @@ function render(res, L, R, matrix) {
   fillMoves(0, L); fillMoves(1, R);
   const rEl = document.getElementById('result');
   rEl.style.display = 'block';
-  // 決着なし(winner===null)は480ターン(240秒)たっても両者倒れなかった対面。
+  // 決着なし(winner===null)は540ターン(270秒)たっても両者倒れなかった対面。
   // 相打ち(draw)とは別物なので言葉で分ける
   const badge = i => res.winner === 'draw' ? '<span class="badge draw">DRAW</span>'
     : res.winner == null ? '<span class="badge draw">決着つかず</span>'

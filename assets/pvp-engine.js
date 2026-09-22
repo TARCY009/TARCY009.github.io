@@ -157,7 +157,8 @@
 
   function simulate(D, cfgL, cfgR, opt) {
     opt = opt || {};
-    const maxTurn = opt.maxTurn || 480;
+    // 1つの対面の上限は実戦の制限時間と同じ540ターン(270秒・2026-09-22タダシさん指示。それまでは480＝240秒で「決着なし」にしていた)
+    const maxTurn = opt.maxTurn || 540;
     // opt.stopAt: このターンを終えたところで打ち切る。交代(場が仕切り直しになる場面)に使う。
     // 打ち切った場合は winner=null・stopped=true で返り、final[].resume から続きを始められる。
     // 注意: resume はHP・ゲージ・能力変化・硬直までで、打ちかけの通常技(cd)やタイミングAIの
