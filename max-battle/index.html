@@ -392,7 +392,8 @@ footer a{color:var(--spec)}
     2026年にこの溜まり方が調整され、★5と★6では以前よりずっと速く溜まるようになりました。
     そのため<b>★6でもSPアタックを撃ったほうが速いボスがあります</b>（以前はどのボスでも0.5秒のノーマルアタック連打が最速でした）。
     1％に必要なダメージは<b>★5＝ボスHP÷800、★6＝ボスHP÷3000</b>です。</p>
-  <p><b>ダイキノコ</b>を押すと、ダイキノコを使ったときの判定になります。バトル中の自分の攻撃のダメージがすべて2倍（最後に出たダメージを2倍）になるので、メーターも速く溜まります。0.5秒わざ以外のノーマルアタックでも、0.5秒あたり1％を超えて溜まるものは「ノーマル ◯◯ ◯％」と添えて表示します（SPアタックの合間の攻撃の参考）。</p>
+  <p><b>ダイキノコ</b>を押すと、ダイキノコを使ったときの判定になります。バトル中の自分の攻撃のダメージがすべて2倍（最後に出たダメージを2倍）になるので、メーターも速く溜まります。</p>
+  <p>ノーマルアタックは、0.5秒わざの連打なら0.5秒あたり1％です。1秒以上のわざでも、1発のダメージが大きく0.5秒あたり1％を超えるなら、そちらのほうが速く溜まります（HPの小さい★1〜★4のボスや、ダイキノコを使ったときによく起きます）。そのようなわざは「ノーマル ◯◯ ◯％」と添えて表示し、SPアタックはそのわざの連打より速いときに「SP打ってOK」とします。</p>
 </div>
 
 </div>
@@ -855,8 +856,9 @@ footer a{color:var(--spec)}
     if(!pr || !pr.denom) return {invalid: true};
     return pr;
   }
-  // ノーマルアタックの連打で、0.5秒あたりいちばん速くメーターを溜められるわざ（ダイキノコのときだけ使う）。
-  // ダイキノコなしでは0.5秒わざの1%（最低値）を基準にする従来の判定のまま
+  // ノーマルアタックの連打で、0.5秒あたりいちばん速くメーターを溜められるわざ。
+  // 0.5秒わざの連打は1%（最低値）なので、1秒以上のわざでも0.5秒あたり1%を超えるならそちらが速い
+  // （★1〜★4はボスのHPが小さく、ダイキノコなしでもよく起きる。2026-09-23タダシさん指示で全ランク・キノコの有無によらず比べる）
   function fastBestOf(p, ctx, atk){
     const mu = ctx.mush || 1;
     let best = null;
@@ -873,7 +875,7 @@ footer a{color:var(--spec)}
     if(!p.cm || !p.cm.length) return null;
     const atk = atkOverride || (p.atk + 15) * cpm;
     const mu = ctx.mush || 1;
-    const fb = (mu > 1 && ctx.denom) ? fastBestOf(p, ctx, atk) : null;
+    const fb = ctx.denom ? fastBestOf(p, ctx, atk) : null;
     const thr = fb ? Math.max(1, fb.per) : 1;   // SPアタックがこれより速ければ「打ってOK」
     const elite = new Set(p.ce || []);
     const cands = [];
@@ -936,18 +938,18 @@ footer a{color:var(--spec)}
     const b = spBestOf(p, ctx, atkOverride);
     if(!b) return '<div class="catline"><span class="spng">SP判定: 技データなし</span></div>';
     const pct = `<b class="spv">${b.per.toFixed(2)}%</b>`;
-    // ダイキノコで、0.5秒わざ以外のノーマルアタックが0.5秒わざの連打（1%）より速くなるとき
+    // 0.5秒わざ以外のノーマルアタックの連打が、SPアタックより速いとき
     const fb = b.fb;
     if(fb && fb.per > 1.0001 && !b.ok){
       const sec = (fb.f.d/1000).toFixed(1).replace(/\.0$/,'');
-      return `<div class="catline"><span class="spok" title="ダイキノコを使うと、このノーマルアタックの連打が0.5秒わざの連打より速くメーターを溜められます（数字は0.5秒あたりのチャージ量）。SPアタックはこれより遅いので撃たないほうが速く溜まります">ノーマル連打が最速: ${fb.f.jp}(${sec}秒)<b class="spv">${fb.per.toFixed(2)}%</b></span></div>`;
+      return `<div class="catline"><span class="spok" title="このノーマルアタックの連打は、0.5秒わざの連打より速くメーターを溜められます（数字は0.5秒あたりのチャージ量）。SPアタックはこれより遅いので撃たないほうが速く溜まります">ノーマル連打が最速: ${fb.f.jp}(${sec}秒)<b class="spv">${fb.per.toFixed(2)}%</b></span></div>`;
     }
     const verdict = b.ok
       ? `<span class="spok" title="数字は0.5秒あたりのマックスメーターのチャージ量です。1%を超えるSPアタックは、撃った方がメーターを速く溜められます">SP打ってOK: ${b.m.jp}${pct}</span>`
       : `<span class="nohalf" title="どのSPアタックも0.5秒あたりのチャージ量が1%未満なので、ノーマルアタック連打の方がメーターが速く溜まります（数字はいちばん高いSPの参考値）">SP封印推奨(0.5秒技連打)${pct}</span>`;
-    // ダイキノコで、0.5秒わざ以外のノーマルアタックも0.5秒わざの連打（1%）より速く溜まるなら添える（SPの合間の攻撃の参考）
+    // 0.5秒わざ以外のノーマルアタックも0.5秒わざの連打（1%）より速く溜まるなら添える（SPの合間の攻撃の参考）
     const fbTag = (fb && fb.per > 1.0001 && fb.f.d > 500)
-      ? ` <span class="fastalt" title="ダイキノコを使うと、このノーマルアタックでも0.5秒わざの連打より速くメーターが溜まります（数字は0.5秒あたりのチャージ量）">ノーマル ${fb.f.jp} ${fb.per.toFixed(2)}%</span>` : '';
+      ? ` <span class="fastalt" title="このノーマルアタックでも、0.5秒わざの連打より速くメーターが溜まります（数字は0.5秒あたりのチャージ量）">ノーマル ${fb.f.jp} ${fb.per.toFixed(2)}%</span>` : '';
     return `<div class="catline">${verdict}${fbTag}</div>`;
   }
 
