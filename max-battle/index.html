@@ -323,8 +323,9 @@ footer a{color:var(--spec)}
 
 <div class="filters gtabs" id="filters" style="display:none">
   <button id="fSp" class="t-gold" aria-pressed="false" title="SPアタックを打った方がマックスメーターのチャージを早められる場合は「SP打ってOK」と表示。打たない方がチャージが早い場合は「SP封印推奨」と表示します">SP判定</button>
+  <button type="button" id="spMush" class="t-red" style="display:none" aria-pressed="false" title="ダイキノコを使ったときの判定に切り替えます。バトル中の自分の攻撃のダメージがすべて2倍になり（最後に出たダメージを2倍）、マックスメーターの溜まりも速くなります。0.5秒わざ以外のノーマルアタックの連打のほうが速くなる場合も判定します">ダイキノコ</button>
   <button id="fLegacy" class="t-cyan" aria-pressed="true" title="特別なわざ（いまは覚えられない限定のわざ）も候補に含めます">特別技も</button>
-  <button id="fHalf" class="t-cyan" aria-pressed="true" style="display:none" title="発生0.5秒のノーマルアタックを持つポケモンだけに絞ります（連打でマックスメーターを速く溜められます）">0.5秒技だけ</button>
+  <button id="fHalf" class="t-cyan" aria-pressed="true" style="display:none" title="マックスメーターを速く溜められるノーマルアタックを持つポケモンだけに絞ります（0.5秒わざ、または連打すると0.5秒あたり1％以上溜まる1秒以上のわざ）">0.5秒技だけ</button>
   <button id="fSwap" class="t-shadow" aria-pressed="false" style="display:none" title="ボスのわざを選んで、交代でそれを受け止めたときの被ダメージの少なさで並べます">交代受け</button>
 </div>
 <p id="tankNote" class="tanknote expl" style="display:none">耐久指数 ＝ HP種族値 × 防御種族値</p>
@@ -335,7 +336,6 @@ footer a{color:var(--spec)}
   <div class="sprow gtabs">
     <div class="gseg" id="spStarSeg" style="display:none"></div>
     <span id="spStarFixed" class="spfixed" style="display:none"></span>
-    <button type="button" id="spMush" class="t-red" aria-pressed="false" title="ダイキノコを使ったときの判定に切り替えます。バトル中の自分の攻撃のダメージがすべて2倍になり（最後に出たダメージを2倍）、マックスメーターの溜まりも速くなります。0.5秒わざ以外のノーマルアタックの連打のほうが速くなる場合も判定します">ダイキノコ</button>
     <span id="spStatus" class="spstatus"></span>
   </div>
   <div class="sprow">
@@ -380,7 +380,8 @@ footer a{color:var(--spec)}
   <ul>
     <li><b>SP判定</b> ＝ SPアタックを撃つべきかを判定して、最適なわざを選び直します</li>
     <li><b>特別技も</b> ＝ 特別なわざ（覚えさせるのに条件が要るもの）を含めます。一覧では<b class="sp">わざ名がオレンジ色＋うしろに「*」</b>で出ます</li>
-    <li><b>0.5秒技だけ</b> ＝ 発生の速いノーマルアタックを持つポケモンだけに絞ります</li>
+    <li><b>0.5秒技だけ</b> ＝ マックスメーターを速く溜められるノーマルアタックを持つポケモンだけに絞ります。0.5秒わざのほか、1秒以上のわざでも連打すると0.5秒あたり1％以上溜まるもの（ダイキノコを使ったときやHPの小さいボスでよくあります）も含めます</li>
+    <li><b>ダイキノコ</b> ＝ ダイキノコを使ったときの計算にします（自分の攻撃のダメージがすべて2倍）。SP判定とメーターの溜まり方に効きます</li>
     <li><b>交代受け</b> ＝ ボスの攻撃を受け止める役として評価します</li>
   </ul>
   <h4>SP判定のしくみ</h4>
@@ -392,6 +393,7 @@ footer a{color:var(--spec)}
     2026年にこの溜まり方が調整され、★5と★6では以前よりずっと速く溜まるようになりました。
     そのため<b>★6でもSPアタックを撃ったほうが速いボスがあります</b>（以前はどのボスでも0.5秒のノーマルアタック連打が最速でした）。
     1％に必要なダメージは<b>★5＝ボスHP÷800、★6＝ボスHP÷3000</b>です。</p>
+  <p>おすすめのノーマルアタックは、<b>チャージ効率（連打したときの0.5秒あたりの溜まり方）が高い順、同じならDPSが高い順</b>に選びます（キョダイマックス・タンク。ダイマックスのアタッカーは、ノーマルアタックのタイプでマックスわざのタイプが決まるので、ダメージが最大のわざを選びます）。</p>
   <p><b>ダイキノコ</b>を押すと、ダイキノコを使ったときの判定になります。バトル中の自分の攻撃のダメージがすべて2倍（最後に出たダメージを2倍）になるので、メーターも速く溜まります。</p>
   <p>ノーマルアタックは、0.5秒わざの連打なら0.5秒あたり1％です。1秒以上のわざでも、1発のダメージが大きく0.5秒あたり1％を超えるなら、そちらのほうが速く溜まります（HPの小さい★1〜★4のボスや、ダイキノコを使ったときによく起きます）。そのようなわざは「ノーマル ◯◯ ◯％」と添えて表示し、SPアタックはそのわざの連打より速いときに「SP打ってOK」とします。</p>
 </div>
@@ -504,21 +506,43 @@ footer a{color:var(--spec)}
     }
     return (f.p||0) * (p.ty.includes(f.t) ? D.stab : 1) * effVs(f.t, boss.ty);
   }
-  function halfMoveOf(p){
-    const cands = (p.fm || []).filter(f => f.q);
+  // ---------- メーターをためるためのノーマルアタック（2026-09-23タダシさん指示） ----------
+  // チャージ効率＝そのわざを連打したときの0.5秒あたりのマックスメーターのたまり方（最低1%/発）。
+  // 0.5秒わざは1%、1秒以上のわざでも1発のダメージが大きく0.5秒あたり1%を超えるならそちらが速い。
+  // おすすめは「チャージ効率が高い順 → 同じならDPSが高い順 → 同じなら特別わざでないもの」。
+  // ⚠ ダイマックス勢のアタッカーは使わない（ノーマルアタックのタイプ＝マックスわざのタイプなので「ダメージ最大」の決まり・pick-fast.js）
+  function fastDmgOf(p, f, pr){
+    const stab = p.ty.includes(f.t) ? D.stab : 1;
+    const eff = boss ? effVs(f.t, boss.ty) : 1;
+    if(!pr) return (f.p||0) * stab * eff;
+    return (Math.floor(0.5 * (f.p||0) * ((p.atk + 15) * cpm / pr.bossDef) * stab * eff) + 1) * (pr.mush || 1);
+  }
+  function chargeOf(p, f, pr){
+    if(!f.d) return 0;
+    const hit = (pr && pr.denom) ? Math.max(1, fastDmgOf(p, f, pr) / pr.denom) : 1;   // ボスの値が分からなければ1発1%
+    return hit / ((f.d / 1000) * 2);
+  }
+  function recFastOf(p, pool){
+    const cands = (pool || p.fm || []).filter(f => f.d);
     if(!cands.length) return null;
-    if(cands.length === 1) return cands[0];
-    const sc = fastSelCtx(p);
-    return cands.slice().sort((a,b) =>
-      fastSelScore(p, b, sc) - fastSelScore(p, a, sc) || (a.e||0) - (b.e||0))[0];
+    const pr = boss ? spParams() : null;
+    const r6 = v => Math.round(v * 1e6);
+    return cands.map(f => ({f, c: chargeOf(p, f, pr), dps: fastDmgOf(p, f, pr) / (f.d / 1000)}))
+      .sort((a,b) => r6(b.c) - r6(a.c) || b.dps - a.dps || (a.f.e?1:0) - (b.f.e?1:0))[0];
+  }
+  // 0.5秒あたり1%以上ためられるノーマルアタック（0.5秒わざ、または1%を超える1秒以上のわざ）。無ければ null
+  function halfMoveOf(p){
+    const r = recFastOf(p);
+    return (r && r.c >= 1 - 1e-9) ? Object.assign({}, r.f, {chg: r.c}) : null;
   }
   function bestFastOf(p){
-    // 0.5秒技を持たないポケモン向け: 早いわざ > タイプ補正込みで火力の高いわざ の優先度
-    const cands = (p.fm || []).slice();
-    if(!cands.length) return null;
-    const dmg = f => (f.p||0) * (p.ty.includes(f.t) ? D.stab : 1) * (boss ? effVs(f.t, boss.ty) : 1);
-    cands.sort((a,b) => (a.d||9999) - (b.d||9999) || dmg(b) - dmg(a) || (a.e||0) - (b.e||0));
-    return cands[0];
+    const r = recFastOf(p);
+    return r ? Object.assign({}, r.f, {chg: r.c}) : null;
+  }
+  // 0.5秒わざ以外で1%を超えるわざの札（「ノーマル うちおとす(1秒) 1.28%」）
+  function chgTag(f){
+    const sec = (f.d/1000).toFixed(1).replace(/\.0$/,'');
+    return `<span class="halfchip" title="0.5秒わざではありませんが、1発のダメージが大きく、連打すると0.5秒あたり1％以上マックスメーターを溜められます（0.5秒わざの連打以上の速さ）">${f.jp}${f.e?'*':''}(${sec}秒) ${f.chg.toFixed(2)}%</span>`;
   }
 
   // ---------- ボス検索 ----------
@@ -618,6 +642,7 @@ footer a{color:var(--spec)}
   }
   function syncControls(){
     fSp.style.display = boss ? '' : 'none';
+    spMush.style.display = boss ? '' : 'none';   // ダイキノコはアタッカー・タンクのどちらでも効く（SP判定・チャージ効率）
     fLegacy.style.display = (mode==='atk' || spOn) ? '' : 'none';
     fHalf.style.display   = (mode==='tank' && !swapOn) ? '' : 'none';
     fSwap.style.display   = (mode==='tank') ? '' : 'none';
@@ -760,14 +785,11 @@ footer a{color:var(--spec)}
         // 最もダメージが出る技(例: ムゲンダイナはボスに合わせてドラゴンテールorどくづき)
         const stab = p.ty.includes(p.ft) ? D.stab : 1;
         const eff = effVs(p.ft, boss.ty);
-        const sc = fastSelCtx(p);
-        const pool = (p.fm||[]).map(f => {
-          return {f, sel: fastSelScore(p, f, sc), half: f.q ? 1 : 0};
-        });
-        pool.sort((a,b) => b.half - a.half || b.sel - a.sel || (a.f.e||0) - (b.f.e||0));
+        // 2026-09-23から「チャージ効率 → DPS」で選ぶ（0.5秒わざにこだわらない・タダシさん指示）
+        const rf = recFastOf(p);
         best = {dmg: power * atkStat * stab * eff, t: p.ft, stab, eff,
                 fast: null, moveName: p.gm,
-                rec: pool.length ? pool[0].f : null};
+                rec: rf ? Object.assign({}, rf.f, {chg: rf.c}) : null};
       }
       rows.push({p, ...best});
     }
@@ -1076,10 +1098,12 @@ footer a{color:var(--spec)}
           ? ' <span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒</span>'
           : ' <span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>';
         fastInfo = `<span>ノーマルアタック: <b${r.fast.e?' class="sp" title="特別わざ・レガシーわざです（イベント限定やすごいわざマシンスペシャルなどで習得）"':''}>${r.fast.jp}${r.fast.e?'*':''}</b>${halfTag}</span>`;
-      }else if(r.rec){ // キョダイ・特別枠: 推奨ノーマルアタック(0.5秒技を最優先)
+      }else if(r.rec){ // キョダイ・特別枠: 推奨ノーマルアタック（チャージ効率 → DPS の順で選ぶ）
         const halfTag = r.rec.q
           ? ' <span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒</span>'
-          : ' <span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>';
+          : (r.rec.chg >= 1 - 1e-9
+            ? ` <span class="halfchip" title="0.5秒わざではありませんが、連打すると0.5秒あたり1％以上マックスメーターを溜められます">0.5秒あたり${r.rec.chg.toFixed(2)}%</span>`
+            : ' <span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>');
         fastInfo = `<span>ノーマルアタック: <b${r.rec.e?' class="sp" title="特別わざ・レガシーわざです（イベント限定やすごいわざマシンスペシャルなどで習得）"':''}>${r.rec.jp}${r.rec.e?'*':''}</b>${halfTag}</span>`;
       }
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank <= 3 ? ' no' + r.rank : ''}">
@@ -1109,7 +1133,7 @@ footer a{color:var(--spec)}
   function renderTank(){
     paint(r => {
       const halfChip = r.half
-        ? `<span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒技 <span${r.half.e?' class="sp"':''}>${r.half.jp}${r.half.e?'*':''}</span></span>`
+        ? (r.half.q ? `<span class="halfchip" title="発生0.5秒のノーマルアタックです。連打でマックスメーターをいちばん速く溜められます">0.5秒技 <span${r.half.e?' class="sp"':''}>${r.half.jp}${r.half.e?'*':''}</span></span>` : chgTag(r.half))
         : `<span class="nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>${r.bf ? ` <span class="fastalt">最速わざ ${r.bf.jp}(${(r.bf.d/1000).toFixed(1).replace(/\.0$/,'')}秒)</span>` : ''}`;
       const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank <= 3 && !r._all ? ' no' + r.rank : ''}">
@@ -1137,7 +1161,7 @@ footer a{color:var(--spec)}
   function renderSwap(m){
     paint(r => {
       const halfInfo = r.half
-        ? `<span>0.5秒技 <b>${r.half.jp}</b></span>`
+        ? (r.half.q ? `<span>0.5秒技 <b>${r.half.jp}</b></span>` : `<span>ノーマル <b>${r.half.jp}</b>(${(r.half.d/1000).toFixed(1).replace(/\.0$/,'')}秒) ${r.half.chg.toFixed(2)}%</span>`)
         : `<span>0.5秒技なし(交代受け専任)${r.bf ? ` / 最速わざ <b>${r.bf.jp}</b>` : ''}</span>`;
       const wallChip = r.p.wall ? '<span class="wallb">開始時ウォール+60</span>' : '';
       return `<div class="row${r._pin ? ' hit' : ''}${r.rank <= 3 ? ' no' + r.rank : ''}">
