@@ -335,6 +335,7 @@ footer a{color:var(--spec)}
   <div class="sprow gtabs">
     <div class="gseg" id="spStarSeg" style="display:none"></div>
     <span id="spStarFixed" class="spfixed" style="display:none"></span>
+    <button type="button" id="spMush" class="t-red" aria-pressed="false" title="ダイキノコを使ったときの判定に切り替えます。バトル中の自分の攻撃のダメージがすべて2倍になり（最後に出たダメージを2倍）、マックスメーターの溜まりも速くなります。0.5秒わざ以外のノーマルアタックの連打のほうが速くなる場合も判定します">ダイキノコ</button>
     <span id="spStatus" class="spstatus"></span>
   </div>
   <div class="sprow">
@@ -391,6 +392,7 @@ footer a{color:var(--spec)}
     2026年にこの溜まり方が調整され、★5と★6では以前よりずっと速く溜まるようになりました。
     そのため<b>★6でもSPアタックを撃ったほうが速いボスがあります</b>（以前はどのボスでも0.5秒のノーマルアタック連打が最速でした）。
     1％に必要なダメージは<b>★5＝ボスHP÷800、★6＝ボスHP÷3000</b>です。</p>
+  <p><b>ダイキノコ</b>を押すと、ダイキノコを使ったときの判定になります。バトル中の自分の攻撃のダメージがすべて2倍（最後に出たダメージを2倍）になるので、メーターも速く溜まります。0.5秒わざ以外のノーマルアタックでも、0.5秒あたり1％を超えて溜まるものは「ノーマル ◯◯ ◯％」と添えて表示します（SPアタックの合間の攻撃の参考）。</p>
 </div>
 
 </div>
@@ -409,7 +411,7 @@ footer a{color:var(--spec)}
   const swapMovesEl=$('swapMoves'), myqwrap=$('myqwrap'), mq=$('mq'), pinEl=$('pinlist');
   const fSp=$('fSp'), spPanel=$('spPanel'), spStarSeg=$('spStarSeg'), spStarFixed=$('spStarFixed');
   const myivBox=$('myiv'), ivCP=$('ivCP'), ivA=$('ivA'), ivD=$('ivD'), ivS=$('ivS'), ivInfo=$('ivInfo');
-  const spHP=$('spHP'), spDef=$('spDef'), spStatus=$('spStatus');
+  const spHP=$('spHP'), spDef=$('spDef'), spStatus=$('spStatus'), spMush=$('spMush');
   const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {
     defaults:{"1":{hp:1700,defCpm:0.15},"2":{hp:5000,defCpm:0.38},"3":{hp:10000,defCpm:0.5},
               "4":{hp:20000,defCpm:0.6},"5":{hp:20000,defCpm:0.8},"6":{hp:100000,defCpm:0.85}},
@@ -418,6 +420,9 @@ footer a{color:var(--spec)}
 
   let boss=null, mode='atk', swapOn=false, halfOnly=true, includeLegacy=true;
   let spStar=6, spOn=false;
+  // ダイキノコ（2026-09-23タダシさん指示）。最後に出たダメージを2倍する＝(切り捨て(…)+1)×2。
+  // 途中で2倍（切り捨ての前）だと外部の実測（ドサイドンのうちおとす→ファイヤー2.56%・フリーザー2.28%）と合わない
+  let mush=false;
   let myQuery='', shown=30, ranked=[], rankedAll=[], swapSel=0;
 
   // ---------- 共通ヘルパー ----------
@@ -473,9 +478,10 @@ footer a{color:var(--spec)}
   function comboEffOf(p, f, m, atk, bossDef){
     const n2 = (f.en * 100) / m.en;
     const fstab = p.ty.includes(f.t) ? D.stab : 1;
-    const fd = Math.floor(0.5 * (f.p||0) * (atk / bossDef) * fstab * effVs(f.t, boss.ty)) + 1;
+    const mu = mush ? 2 : 1;
+    const fd = (Math.floor(0.5 * (f.p||0) * (atk / bossDef) * fstab * effVs(f.t, boss.ty)) + 1) * mu;
     const stab = p.ty.includes(m.t) ? D.stab : 1;
-    const dmg = Math.floor(0.5 * m.p * (atk / bossDef) * stab * effVs(m.t, boss.ty)) + 1;
+    const dmg = (Math.floor(0.5 * m.p * (atk / bossDef) * stab * effVs(m.t, boss.ty)) + 1) * mu;
     return (fd * 100 + dmg * n2) / ((f.d/1000) * 100 + (m.d/1000) * n2);
   }
   // ノーマルアタック選出スコア:
@@ -667,6 +673,11 @@ footer a{color:var(--spec)}
     spStatus.className = 'spstatus ok';
   }
   spHP.addEventListener('input', () => compute());
+  spMush.addEventListener('click', () => {
+    mush = !mush;
+    spMush.setAttribute('aria-pressed', String(mush));
+    compute();
+  });
   spDef.addEventListener('input', () => compute());
 
   fLegacy.addEventListener('click', () => {
@@ -836,7 +847,7 @@ footer a{color:var(--spec)}
     const coeff = (e && e.coeff) || (BP.coeff || {"5":0.00125,"6":0.00033333})[String(spStar)];
     if(!defCpm || !boss.df) return null;
     return {bossDef: (boss.df + 15) * defCpm,
-            denom: (hp && coeff) ? hp * coeff : null};
+            denom: (hp && coeff) ? hp * coeff : null, mush: mush ? 2 : 1};
   }
   function spCtx(){
     if(!spOn || !boss) return null;
@@ -844,9 +855,26 @@ footer a{color:var(--spec)}
     if(!pr || !pr.denom) return {invalid: true};
     return pr;
   }
+  // ノーマルアタックの連打で、0.5秒あたりいちばん速くメーターを溜められるわざ（ダイキノコのときだけ使う）。
+  // ダイキノコなしでは0.5秒わざの1%（最低値）を基準にする従来の判定のまま
+  function fastBestOf(p, ctx, atk){
+    const mu = ctx.mush || 1;
+    let best = null;
+    for(const f of (p.fm||[])){
+      if(!f.d) continue;
+      const fstab = p.ty.includes(f.t) ? D.stab : 1;
+      const fd = (Math.floor(0.5 * (f.p||0) * (atk / ctx.bossDef) * fstab * effVs(f.t, boss.ty)) + 1) * mu;
+      const per = Math.max(1, fd / ctx.denom) / ((f.d / 1000) * 2);
+      if(!best || per > best.per) best = {f, per};
+    }
+    return best;
+  }
   function spBestOf(p, ctx, atkOverride){
     if(!p.cm || !p.cm.length) return null;
     const atk = atkOverride || (p.atk + 15) * cpm;
+    const mu = ctx.mush || 1;
+    const fb = (mu > 1 && ctx.denom) ? fastBestOf(p, ctx, atk) : null;
+    const thr = fb ? Math.max(1, fb.per) : 1;   // SPアタックがこれより速ければ「打ってOK」
     const elite = new Set(p.ce || []);
     const cands = [];
     for(const mi of p.cm){
@@ -854,7 +882,7 @@ footer a{color:var(--spec)}
       const m = D.cmoves[mi];
       const stab = p.ty.includes(m.t) ? D.stab : 1;
       const eff = effVs(m.t, boss.ty);
-      const dmg = Math.floor(0.5 * m.p * (atk / ctx.bossDef) * stab * eff) + 1;
+      const dmg = (Math.floor(0.5 * m.p * (atk / ctx.bossDef) * stab * eff) + 1) * mu;
       const charge = ctx.denom ? Math.max(1, dmg / ctx.denom) : 0; // 1%未満は1に補正(検証済み仕様)
       const per = ctx.denom ? charge / ((m.d / 1000) * 2) : 0;
       // ダメージ効率 = 火力ランキングツールと同方式の「わざ1&わざ2」コンボDPS
@@ -865,14 +893,14 @@ footer a{color:var(--spec)}
           if(!(f.en > 0)) continue;
           const n2 = (f.en * 100) / m.en;
           const fstab = p.ty.includes(f.t) ? D.stab : 1;
-          const fd = Math.floor(0.5 * (f.p||0) * (atk / ctx.bossDef) * fstab * effVs(f.t, boss.ty)) + 1;
+          const fd = (Math.floor(0.5 * (f.p||0) * (atk / ctx.bossDef) * fstab * effVs(f.t, boss.ty)) + 1) * mu;
           const v = (fd * 100 + dmg * n2) / ((f.d/1000) * 100 + (m.d/1000) * n2);
           if(effv === null || v > effv) effv = v;
         }
       }
       if(effv === null) effv = dmg / (m.d / 1000); // エネルギー情報なし時のみの代替値
       cands.push({m, mi, dmg, charge, per, eff: effv,
-                  split: (m.en||0) > 0 && m.en < 100, ok: per >= 1});
+                  split: (m.en||0) > 0 && m.en < 100, ok: per >= thr, fb});
     }
     if(!cands.length) return null;
     let best;
@@ -908,10 +936,19 @@ footer a{color:var(--spec)}
     const b = spBestOf(p, ctx, atkOverride);
     if(!b) return '<div class="catline"><span class="spng">SP判定: 技データなし</span></div>';
     const pct = `<b class="spv">${b.per.toFixed(2)}%</b>`;
+    // ダイキノコで、0.5秒わざ以外のノーマルアタックが0.5秒わざの連打（1%）より速くなるとき
+    const fb = b.fb;
+    if(fb && fb.per > 1.0001 && !b.ok){
+      const sec = (fb.f.d/1000).toFixed(1).replace(/\.0$/,'');
+      return `<div class="catline"><span class="spok" title="ダイキノコを使うと、このノーマルアタックの連打が0.5秒わざの連打より速くメーターを溜められます（数字は0.5秒あたりのチャージ量）。SPアタックはこれより遅いので撃たないほうが速く溜まります">ノーマル連打が最速: ${fb.f.jp}(${sec}秒)<b class="spv">${fb.per.toFixed(2)}%</b></span></div>`;
+    }
     const verdict = b.ok
       ? `<span class="spok" title="数字は0.5秒あたりのマックスメーターのチャージ量です。1%を超えるSPアタックは、撃った方がメーターを速く溜められます">SP打ってOK: ${b.m.jp}${pct}</span>`
       : `<span class="nohalf" title="どのSPアタックも0.5秒あたりのチャージ量が1%未満なので、ノーマルアタック連打の方がメーターが速く溜まります（数字はいちばん高いSPの参考値）">SP封印推奨(0.5秒技連打)${pct}</span>`;
-    return `<div class="catline">${verdict}</div>`;
+    // ダイキノコで、0.5秒わざ以外のノーマルアタックも0.5秒わざの連打（1%）より速く溜まるなら添える（SPの合間の攻撃の参考）
+    const fbTag = (fb && fb.per > 1.0001 && fb.f.d > 500)
+      ? ` <span class="fastalt" title="ダイキノコを使うと、このノーマルアタックでも0.5秒わざの連打より速くメーターが溜まります（数字は0.5秒あたりのチャージ量）">ノーマル ${fb.f.jp} ${fb.per.toFixed(2)}%</span>` : '';
+    return `<div class="catline">${verdict}${fbTag}</div>`;
   }
 
   // ---------- 描画 ----------
