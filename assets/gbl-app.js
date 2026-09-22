@@ -5254,7 +5254,7 @@ function spqMeter(mvId, done, cancel, opt) {
   ov.id = 'spqwin'; ov.className = 'spqwin';
   ov.innerHTML = `<div class="sqbox" role="dialog" aria-label="威力調整" data-zone="base" style="--tc1:${col.top};--tc2:${col.bot}">
     <button class="sqx" title="やめる（選び直す）" aria-label="やめる">✕</button>
-    <div class="sqtime"><span class="sqleft" title="バトルの残り時間（入力のあいだも減ります）">⏱ <b>--:--</b></span><span class="sqin" title="入力の猶予（7秒。過ぎるとその位置で確定）"><small>入力</small><i class="sqinbar"><i></i></i><b>7.0</b><small>秒</small></span></div>
+    <div class="sqtime"><span class="sqleft" title="バトルの残り時間（入力のあいだも減ります）">⏱ <b>--:--</b></span></div>
     <div class="sqhead"><span class="sqty">${typeIconHTML(ja, 34)}</span><span class="sqttl">威力調整</span><b class="sqmv">${m ? m.n : ''}</b></div>
     <div class="sqpct"><b>0</b><i>%</i></div>
     <div class="sqmeter"><div class="sqtrack">
@@ -5269,7 +5269,7 @@ function spqMeter(mvId, done, cancel, opt) {
   const box = ov.querySelector('.sqbox'), track = ov.querySelector('.sqtrack');
   const pctEl = ov.querySelector('.sqpct b'), judge = ov.querySelector('.sqjudge');
   const segs = [...ov.querySelectorAll('.sqs')];
-  let pct = 0, dragging = false, fired = false;
+  let pct = 0, dragging = false, fired = false, litPrev = 0;
   const tierOf = v => v >= 100 ? 'excellent' : v >= SPQ_GREAT_PCT ? 'great' : v >= SPQ_NICE_PCT ? 'nice' : 'base';
   const LIVE = { excellent: 'EXCELLENT!', great: 'GREAT!', nice: 'NICE!', base: '' };
   const setPct = v => {
@@ -5278,6 +5278,8 @@ function spqMeter(mvId, done, cancel, opt) {
     box.style.setProperty('--pct', pct + '%');
     // 案2「セグメント」(2026-09-22タダシさん選択): 20個のブロックが左から点いていく。100%なら全部オレンジ
     const lit = Math.round(pct / (100 / SPQ_SEGS));
+    // 指の動きに合わせて鳴る(⚠ 古い sound.js が残っている端末でも止まらないよう関数の有無を見る)
+    if (lit !== litPrev) { const S1 = SND(); if (S1 && S1.spqSlide && lit > 0 && dragging) S1.spqSlide(pct); litPrev = lit; }
     segs.forEach((el, i) => el.classList.toggle('on', i < lit));
     pctEl.textContent = String(Math.round(pct));
     box.dataset.zone = tierOf(pct);
@@ -5293,14 +5295,12 @@ function spqMeter(mvId, done, cancel, opt) {
   const onMove = e => { if (!dragging || fired) return; setPct(xToPct(e.clientX)); e.preventDefault(); };
   // 時間: バトルの残り時間(opt.ck=その瞬間の時計・ターン換算)と入力の猶予7秒を0.1秒ごとに減らす。猶予が切れたらその位置で確定
   const t0 = performance.now();
-  const leftEl = ov.querySelector('.sqleft b'), inEl = ov.querySelector('.sqin b'), inBar = ov.querySelector('.sqinbar i');
+  const leftEl = ov.querySelector('.sqleft b');
   const ck0 = opt && opt.ck != null ? opt.ck : null;
+  // 猶予の残りは画面に出さない(2026-09-22タダシさん指示で右上のメーターは廃止)。過ぎたらその位置で確定するのは同じ
   const tickT = () => {
     const el = (performance.now() - t0) / 1000;
     const inLeft = Math.max(0, SPQ_INPUT_SEC - el);
-    inEl.textContent = inLeft.toFixed(1);
-    inBar.style.width = (inLeft / SPQ_INPUT_SEC * 100) + '%';
-    ov.querySelector('.sqin').classList.toggle('low', inLeft <= 2);
     if (ck0 != null) {
       const leftT = Math.max(0, GB_ROUND_TURNS - ck0 - el * 2);
       leftEl.textContent = rbClock(leftT) + '.' + Math.floor((leftT / 2 % 1) * 10);
@@ -5316,7 +5316,7 @@ function spqMeter(mvId, done, cancel, opt) {
     const tier = tierOf(pct), pw = spqFromPct(pct);
     box.dataset.tier = tier; box.classList.add('fire');
     judge.textContent = tier === 'base' ? '威力 25%' : LIVE[tier];
-    const S2 = SND(); if (S2 && S2.spq) S2.spq(tier);
+    const S2 = SND(); if (S2 && S2.spqResult) S2.spqResult(tier);   // 出来ごとの音(NICE未満／NICE／GREAT／EXCELLENT)
     setTimeout(() => { ov.remove(); done(pw); }, tier === 'base' ? 700 : 1150);
   };
   track.addEventListener('pointerdown', onDown);

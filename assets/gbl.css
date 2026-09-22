@@ -3025,15 +3025,10 @@ button.sdchip.on .tbadge{filter:none}
 .sqx{position:absolute;top:8px;right:10px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);
   color:var(--sub);font-size:.9rem;line-height:1;cursor:pointer;z-index:3}
 /* 時間: 左=バトルの残り時間・右=入力の猶予(7秒のバー) */
-.sqtime{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 30px 6px 0;font-size:.72rem;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums}
-.sqtime b{font-size:.92rem;color:var(--ink)}
+/* 左上＝バトルの残り時間(大きめ・入力のあいだも減る)。右上の猶予メーターは2026-09-22タダシさん指示で廃止 */
+.sqtime{display:flex;align-items:center;margin:0 30px 4px 0;font-size:.9rem;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums}
+.sqtime b{font-size:1.25rem;color:var(--ink);letter-spacing:.02em}
 .sqleft.low b{color:#ff6b6b}
-.sqin{display:inline-flex;align-items:center;gap:5px}
-.sqin small{font-size:.6rem;font-weight:800;color:var(--sub)}
-.sqinbar{position:relative;width:64px;height:6px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
-.sqinbar i{position:absolute;left:0;top:0;bottom:0;width:100%;border-radius:3px;background:linear-gradient(90deg,#43e0ff,#8ff5ff);transition:width .1s linear}
-.sqin.low .sqinbar i{background:linear-gradient(90deg,#ff5c5c,#ffb14a)}
-.sqin.low b{color:#ff6b6b}
 .sqhead{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 2px}
 .sqhead .sqty{display:inline-flex;filter:drop-shadow(0 0 8px var(--zg))}
 .sqhead .sqttl{font-size:.66rem;font-weight:800;letter-spacing:.26em;color:var(--sub)}

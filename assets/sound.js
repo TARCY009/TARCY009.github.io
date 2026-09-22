@@ -18,6 +18,7 @@
   try { on = localStorage.getItem(KEY) === '1'; } catch (e) { }
 
   var AC = null, BUS = null, MASTER = null, CONV = null, DLYIN = null, LIVE = [], KA = null;
+  var GAIN = 1;   // 一時的な音量の倍率(威力調整の音で案ごとの大きさをそろえる。鳴らし終えたら1に戻す)
   var asleep = false;   // 画面を閉じているあいだの印（⚠ document.hidden を直接見ない・下の sleep/wake を参照）
 
   function ac() {
@@ -105,7 +106,7 @@
   function playBuf(b, o) {
     o = o || {};
     var c = ac(), s = c.createBufferSource(), g = c.createGain();
-    s.buffer = b; g.gain.value = o.vol == null ? 1 : o.vol;
+    s.buffer = b; g.gain.value = (o.vol == null ? 1 : o.vol) * GAIN;
     s.connect(g);
     var oo = {}; for (var k in o) oo[k] = o[k];
     if (oo.dur == null) oo.dur = b.duration;
@@ -318,7 +319,7 @@
     lp.type = 'lowpass'; lp.frequency.setValueAtTime(700, t);
     lp.frequency.linearRampToValueAtTime(o.open || 2600, t + Math.min(.6, dur * .4));
     lp.frequency.linearRampToValueAtTime(900, t + dur);
-    var v = Math.max(.002, o.vol == null ? .18 : o.vol);
+    var v = Math.max(.002, (o.vol == null ? .18 : o.vol) * GAIN);
     g.gain.setValueAtTime(.0001, t);
     g.gain.exponentialRampToValueAtTime(v, t + (o.atk || .12));
     g.gain.setValueAtTime(v, t + dur * .6);
@@ -336,7 +337,7 @@
   }
   function tone(o) {
     var c = ac(); if (!c) return;
-    var f = o.f == null ? 440 : o.f, dur = o.dur == null ? .1 : o.dur, vol = o.vol == null ? .3 : o.vol;
+    var f = o.f == null ? 440 : o.f, dur = o.dur == null ? .1 : o.dur, vol = (o.vol == null ? .3 : o.vol) * GAIN;
     var t = c.currentTime + (o.at || 0), g = c.createGain();
     var mk = function (cents) {
       var os = c.createOscillator();
@@ -359,7 +360,7 @@
     var s = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
     s.buffer = buf; bp.type = 'bandpass'; bp.frequency.setValueAtTime(f, t);
     if (o.f2) bp.frequency.exponentialRampToValueAtTime(Math.max(40, o.f2), t + dur);
-    bp.Q.value = q; g.gain.value = o.vol == null ? .4 : o.vol;
+    bp.Q.value = q; g.gain.value = (o.vol == null ? .4 : o.vol) * GAIN;
     s.connect(bp).connect(g); route(g, o); s.start(t); s.stop(t + dur + .05); keep(s);
   }
 
@@ -559,6 +560,118 @@
     sc.forEach(function (f, i) { fm(f, .32, { ratio: 2.01, index: 2.2, decay: 7, vol: .338, at: i * .09, pan: pan, rev: .35, dly: .15, wide: 1 }); });
   }
 
+  // ==== SPアタックの出来「威力調整」の入力メーターの音（2026-09-22タダシさん指示・見本は scratchpad/mock-spqsound.html）====
+  // スライド音＝メーターのブロックが1つ点くたびに鳴る（指の動きに連動・pctで高さが上がる）。
+  // 結果の音＝指を離したときの「NICE未満(base)／NICE／GREAT／EXCELLENT（少し豪華）」。
+  // 5案ずつ作ってあり SPQ_PAT で案を選ぶ（タダシさんの選択で確定したら既定を書き換える）
+  var SPQ_PAT = { slide: 1, base: 1, nice: 1, great: 1, excellent: 1 };
+  // 案ごとの音量の倍率(2026-09-22に OfflineAudioContext で測って、スライド≒.28・NICE未満≒.4・NICE≒.5・GREAT≒.62・EXCELLENT≒.72 にそろえた)
+  var SPQ_GAIN = { slide: [1, 1.8, 1.7, 1.4, 1.35], base: [1.1, 1.8, 3.5, 1.6, 1.25], nice: [1.5, 1.45, 3.2, 1.1, 1.3], great: [1.15, 2.2, .9, 1, 1.7], excellent: [1, 1, 1, 1.2, 1.05] };
+  function spqGain(kind, pat) { var a = SPQ_GAIN[kind] || []; return a[(pat || 1) - 1] || 1; }
+  function seSpqSlide(pct, pat, at) {
+    GAIN = spqGain('slide', pat);
+    try { seSpqSlide0(pct, pat, at); } finally { GAIN = 1; }
+  }
+  function seSpqSlide0(pct, pat, at) {
+    var k = Math.max(0, Math.min(1, pct / 100)), a = at || 0, sd = Math.round(k * 20);
+    switch (pat) {
+      case 2:   // 電子ビープ（短い矩形波が上がる）
+        tone({ f: 600 * Math.pow(4, k), type: 'square', dur: .045, vol: .15, at: a, lo: 6000 }); break;
+      case 3:   // ラチェット（カチカチと歯車を回す）
+        noise({ f: 1800 * Math.pow(3.5, k), q: 12, dur: .03, vol: .6, at: a, seed: 3100 + sd }); break;
+      case 4:   // 水滴（ベルの粒）
+        fm(900 * Math.pow(3.3, k), .16, { ratio: 2.01, index: 2.6, decay: 16, vol: .2, at: a, rev: .25, wide: 1 }); break;
+      case 5:   // チャージ（キュッと上がる音＋粒）
+        tone({ f: 500 * Math.pow(3, k), f2: 500 * Math.pow(3, k) * 1.35, type: 'triangle', dur: .07, vol: .2, at: a, dly: .1 });
+        noise({ f: 5000, q: 8, dur: .02, vol: .25, at: a, seed: 4400 }); break;
+      default:  // 木琴（はじく音が左から右へ上がる）
+        ks(420 * Math.pow(3.8, k), .12, { damp: .985, tone: .8, decay: 18, vol: .3, at: a, seed: 5000 + sd, pan: -.5 + k });
+    }
+  }
+  function seSpqResult(tier, pat, at) {
+    GAIN = spqGain(tier, pat);
+    try { seSpqResult0(tier, pat, at); } finally { GAIN = 1; }
+  }
+  function seSpqResult0(tier, pat, at) {
+    at = at || 0;
+    var B;
+    if (tier === 'base') {   // NICE未満（何も取れない25%）＝はずした音
+      switch (pat) {
+        case 2: tone({ f: 660, f2: 180, type: 'triangle', dur: .35, vol: .3, at: at, lo: 2400 }); break;            // ぴゅ〜と下がる
+        case 3: noise({ f: 1200, f2: 300, q: 2, dur: .22, vol: .5, at: at, lo: 3000 }); break;                       // スカッ
+        case 4: ks(180, .4, { damp: .994, tone: .3, decay: 7, vol: .5, at: at, lo: 1200, seed: 61 }); break;         // 鈍い弦
+        case 5: [392, 311].forEach(function (f, i) { fm(f, .3, { ratio: 1.5, index: 2, decay: 9, vol: .3, at: at + i * .16, lo: 2500 }); }); break;   // 下がる2音
+        default: kick(.3, { f0: 160, f1: 50, vol: .55, at: at, drive: .4, decay: 9, click: .1 });                    // ボスッ
+      }
+      return;
+    }
+    if (tier === 'nice') {
+      switch (pat) {
+        case 2: [784, 1046].forEach(function (f, i) { fm(f, .4, { ratio: 2.01, index: 2.4, decay: 7, vol: .3, at: at + i * .11, rev: .35, dly: .15, wide: 1 }); }); break;   // 上がる2音
+        case 3: [1046, 1319, 1568].forEach(function (f, i) { ks(f, .5, { damp: .992, tone: .9, decay: 5, vol: .22, at: at + i * .03, rev: .4, seed: 700 + i }); }); break;   // 軽い和音
+        case 4: sweep(.18, { f0: 900, f1: 3200, q: 9, tone: .2, t0: 500, t1: 1400, env: 'up', vol: .22, at: at });     // シュッ→ベル
+          fm(1568, .45, { ratio: 3.01, index: 2, decay: 6, vol: .26, at: at + .17, rev: .35, dly: .15, wide: 1 }); break;
+        case 5: shimmer(4, { base: 2093, dur: .35, span: .25, vol: .16, at: at, spread: 1.2 });                       // きらめき
+          tone({ f: 1046, type: 'triangle', dur: .25, vol: .14, at: at, rev: .4 }); break;
+        default: fm(1568, .55, { ratio: 2.01, index: 3, decay: 5, vol: .34, at: at, rev: .45, dly: .2, wide: 1 });   // ベル1つ
+          noise({ f: 5000, q: 6, dur: .03, vol: .35, at: at, seed: 8801 });
+      }
+      return;
+    }
+    if (tier === 'great') {
+      switch (pat) {
+        case 2: gong(1319, .9, { decay: 2.6, hiDecay: 9, strike: .3, vol: .42, at: at, rev: .45 });                    // 明るい鐘＋きらめき
+          shimmer(5, { base: 2093, dur: .4, span: .4, vol: .1, at: at + .1 }); break;
+        case 3: pad([392, 494, 587], .8, { vol: .16, at: at, rev: .5, open: 2800, type: 'triangle', atk: .05 });       // 和音の広がり
+          fm(1175, .6, { ratio: 2.01, index: 2.8, decay: 5, vol: .3, at: at + .05, rev: .4, dly: .2, wide: 1 }); break;
+        case 4: riser(.28, { f0: 500, f1: 4000, q: 9, tone: .15, vol: .28, at: at });                                 // ため→弾ける
+          burst(.3, { cut: 7000, cut2: 1800, decay: 9, drive: .3, vol: .32, at: at + .27, hi: 1000, rev: .4 });
+          fm(1568, .6, { ratio: 3.01, index: 2.4, decay: 5, vol: .3, at: at + .28, rev: .45, dly: .2, wide: 1 }); break;
+        case 5: [784, 988, 1175, 1568].forEach(function (f, i) { ks(f, .5, { damp: .992, tone: .9, decay: 5, vol: .24, at: at + i * .07, rev: .4, dly: .15, seed: 900 + i }); });   // 弦のアルペジオ
+          pad([392, 494, 587], .7, { vol: .1, at: at + .25, rev: .5, open: 2400, type: 'triangle' }); break;
+        default: [784, 988, 1175].forEach(function (f, i) { fm(f, .45, { ratio: 2.01, index: 3, decay: 5.5, vol: .3, at: at + i * .1, rev: .4, dly: .2, wide: 1 }); });   // 上がる3音
+          kick(.3, { f0: 180, f1: 55, vol: .3, at: at + .2, drive: .3, decay: 9 });
+      }
+      return;
+    }
+    // EXCELLENT（少し豪華に）
+    switch (pat) {
+      case 2:   // 大きな鐘＋上がる風＋きらめきの雨
+        gong(1046, 1.3, { decay: 2, hiDecay: 8, strike: .3, vol: .46, at: at, rev: .5 });
+        sweep(.4, { f0: 800, f1: 6000, q: 10, tone: .15, t0: 300, t1: 1600, env: 'up', vol: .26, at: at });
+        shimmer(12, { base: 2093, dur: .6, span: .9, vol: .11, at: at + .2, spread: 1.4 });
+        pad([523, 659, 784, 1046], 1.2, { vol: .13, at: at + .25, rev: .7, open: 3200 }); break;
+      case 3:   // ため→炸裂→和音
+        riser(.35, { f0: 400, f1: 5000, q: 9, tone: .15, vol: .3, at: at });
+        burst(.45, { cut: 9000, cut2: 2000, decay: 7, drive: .3, vol: .4, at: at + .34, hi: 1200, rev: .45 });
+        kick(.4, { f0: 220, f1: 55, vol: .45, at: at + .34, drive: .5, decay: 6 });
+        [1046, 1319, 1568, 2093].forEach(function (f, i) { fm(f, .9, { ratio: 2.01, index: 3, decay: 4, vol: .26, at: at + .36 + i * .03, rev: .5, dly: .25, wide: 1 }); });
+        shimmer(10, { base: 2637, dur: .6, span: .8, vol: .1, at: at + .45, spread: 1.4 }); break;
+      case 4:   // 連打のチャージ→高い和音
+        stutter(8, { f0: 1200, f1: 3200, dur: .025, vol: .3, at: at, span: .4, pan: -.8, pan2: .8 });
+        [523, 659, 784].forEach(function (f, i) { fm(f * 2, .8, { ratio: 3.01, index: 3.4, decay: 4, vol: .26, at: at + .42 + i * .05, rev: .5, dly: .25, wide: 1 }); });
+        kick(.4, { f0: 200, f1: 55, vol: .42, at: at + .42, drive: .5, decay: 6 });
+        shimmer(12, { base: 2093, dur: .6, span: .8, vol: .12, at: at + .5, spread: 1.5 });
+        pad([523, 784, 1046], 1, { vol: .12, at: at + .5, rev: .7, open: 3000 }); break;
+      case 5:   // 弦の駆け上がり→ベル
+        [523, 659, 784, 1046, 1319, 1568].forEach(function (f, i) { ks(f, .7, { damp: .993, tone: .9, decay: 4, vol: .26, at: at + i * .06, rev: .45, dly: .2, seed: 1200 + i }); });
+        fm(2093, .9, { ratio: 2.01, index: 3, decay: 4, vol: .3, at: at + .4, rev: .5, dly: .25, wide: 1 });
+        shimmer(10, { base: 2637, dur: .6, span: .7, vol: .1, at: at + .45, spread: 1.4 });
+        pad([523, 659, 784, 1046], 1.1, { vol: .13, at: at + .4, rev: .7, open: 3200 });
+        kick(.4, { f0: 200, f1: 55, vol: .38, at: at + .4, drive: .4, decay: 7 }); break;
+      default:  // ファンファーレ（勝利の音の短い版＋きらめき）
+        B = function (f, a, d, v) {
+          fm(f, d, { ratio: 3.01, index: 4, decay: 5.5, vol: v, at: at + a, rev: .4, dly: .2, wide: 1 });
+          ks(f, d, { damp: .992, decay: 6, vol: v * .5, at: at + a, seed: 1300 + Math.round(f) });
+        };
+        B(784, 0, .16, .26); B(1046, .11, .16, .26); B(1319, .22, .16, .26); B(1568, .33, .8, .3);
+        [1046, 1319, 1568, 2093].forEach(function (f, i) { B(f, .5 + i * .04, .8, .2); });
+        pad([523, 659, 784, 1046], 1.2, { vol: .15, at: at + .5, rev: .7, open: 3200 });
+        shimmer(12, { base: 2093, dur: .6, span: .9, vol: .12, at: at + .6, spread: 1.4 });
+        kick(.4, { f0: 200, f1: 55, vol: .4, at: at + .5, drive: .4, decay: 7 });
+    }
+  }
+
   var subTimers = [];
   function clearSub() { subTimers.forEach(clearTimeout); subTimers = []; }
   // at 秒あとに鳴らす（1つの行に演出が複数あるとき、カットインと同じ間でずらすのに使う）。
@@ -606,6 +719,12 @@
     buff: function (up, side, at) { later(function () { seBuff(up, side); }, at); }, // 能力変化（side 0=じぶん・1=あいて）
     win: function (at) { later(seWin, at); },
     lose: function (at) { later(seLose, at); },
+    // 威力調整の入力メーター（2026-09-22）: スライド音（pct=いまの％）と結果の音（tier=base/nice/great/excellent）
+    spqSlide: function (pct, at) { later(function () { seSpqSlide(pct, SPQ_PAT.slide, 0); }, at); },
+    spqResult: function (tier, at) { later(function () { seSpqResult(tier, SPQ_PAT[tier] || 1, 0); }, at); },
+    spqPattern: function (kind, n) { if (n == null) return SPQ_PAT[kind]; SPQ_PAT[kind] = +n; return SPQ_PAT[kind]; },
+    // 見本・測定用: 予約を使わず、音の側の at で並べて鳴らす（OfflineAudioContext で1回のレンダリングにまとめるため）
+    spqRaw: function (kind, arg, pat, at) { if (!ac()) return; if (kind === 'slide') seSpqSlide(arg, pat, at); else seSpqResult(arg, pat, at); },
     stop: function () {
       clearSub();
       LIVE.forEach(function (s) { try { s.stop(); } catch (e) { } });
