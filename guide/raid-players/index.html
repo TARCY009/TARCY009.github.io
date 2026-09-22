@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>レイドの「最少討伐人数」｜理論値と実戦の目安が違う理由｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOのレイドを何人で倒せるか。理論値の求め方、ランクごとのHPと制限時間、ボスの攻撃のタイミング、ゲージのやりとり、スーパーメガレイドのシールドまで、理論値と実戦の目安が違う理由を解説します。">
+<link rel="canonical" href="https://gonavi.jp/guide/raid-players/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="レイドの「最少討伐人数」｜GOナビ">
+<meta property="og:description" content="理論値と実戦の目安で人数が違う理由を、ボスの攻撃とゲージのしくみから解説。">
+<meta property="og:url" content="https://gonavi.jp/guide/raid-players/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GOナビ">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"レイドの「最少討伐人数」｜GOナビ","url":"https://gonavi.jp/guide/raid-players/","description":"ポケモンGOのレイドを何人で倒せるか。理論値の求め方、ランクごとのHPと制限時間、ボスの攻撃のタイミング、ゲージのやりとり、スーパーメガレイドのシールドまで、理論値と実戦の目安が違う理由を解説します。","inLanguage":"ja","author":{"@type":"Person","name":"TARCY"},"publisher":{"@type":"Organization","name":"GOナビ","url":"https://gonavi.jp/"},"isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"}}</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script src="/assets/ads.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">Guide</div><h1>レイドの「最少討伐人数」</h1>
+  <p class="lead">同じボスでも、理論値と実戦の目安で人数が違って出るのはなぜか。ランクごとのHPと制限時間、ボスの攻撃のタイミング、ゲージのやりとり、倒されたときの時間まで。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<article>
+<section class="card">
+  <h2>2つの「人数」</h2>
+  <p>GOナビには、レイドボスを何人で倒せるかを出す場所が2つあります。</p>
+  <dl class="facts">
+    <dt>理論値</dt><dd>レイド火力チェッカーの「最少討伐人数」。全員が火力1位のアタッカーで、倒されずに攻撃し続けたときの人数</dd>
+    <dt>実戦の目安</dt><dd>レイドシミュレーター。ボスの攻撃・倒される時間・ゲージのやりとりまで時間の順に再現して、勝てるいちばん少ない人数</dd>
+  </dl>
+  <p>2つは前提が違うので、同じボスでも人数がずれることがあります。どちらが正しいというより、何を入れて何を入れていないかの違いです。</p>
+</section>
+
+<section class="card">
+  <h2>理論値の求め方</h2>
+  <p>理論値は、次の式で出しています。</p>
+  <p class="formula">人数 ＝ 切り上げ（ボスのHP ÷（1位のアタッカーの火力 × 制限時間））</p>
+  <p>ボスのHPと制限時間はランクで決まっています。HPは種族値と関係なく、ランクごとの固定値です。</p>
+  <dl class="facts">
+    <dt>★1</dt><dd>HP600・180秒</dd>
+    <dt>★3</dt><dd>HP3,600・180秒</dd>
+    <dt>★4（メガ）</dt><dd>HP9,000・300秒</dd>
+    <dt>★5</dt><dd>HP15,000・300秒</dd>
+    <dt>★6</dt><dd>HP22,500・300秒（メガシンカした伝説・ゲンシカイキ）</dd>
+    <dt>スーパーメガ</dt><dd>HP25,000・300秒</dd>
+  </dl>
+  <p>ボスの攻撃と防御は（種族値＋15）にランクごとの補正を掛けた値です。理論値の計算だけは、ランキングで使っている共通の「ものさし」ではなく、この実際のボスの防御でダメージを出し直しています。</p>
+</section>
+
+<section class="card">
+  <h2>実戦で加わる「攻撃できない時間」</h2>
+  <p>実際のレイドでは、ボスの攻撃でこちらのポケモンが倒されます。倒されると次のポケモンが出るまでの時間があり、6匹とも倒されるとロビーから入り直す時間がかかります。レイドシミュレーターは次の前提で再現しています。</p>
+  <ul>
+    <li>ひんしから次のポケモンが出るまで1秒</li>
+    <li>全滅から入り直すまで既定10秒（設定で変えられます）</li>
+    <li>メガシンカしたポケモンは1匹しか使えないので、そのポケモンが倒されたら控えを出さずに入り直す</li>
+  </ul>
+  <p>この時間のぶん、理論値より人数が増える方向に働きます。火力が高くても耐久の低いポケモンは倒される回数が多く、実戦の目安では順位が下がることがあります。</p>
+</section>
+
+<section class="card">
+  <h2>ボスの攻撃のタイミング</h2>
+  <p>ボスの攻撃には決まったリズムがあります。レイドシミュレーターは、実際のバトルの記録と照らし合わせて確かめた次の形で再現しています。</p>
+  <ul>
+    <li>最初の3発は、開始から<b>1.6秒・2.6秒・4.6秒</b>に撃ち始める（わざの長さに関係なく固定）</li>
+    <li>4発目からは、<b>わざの長さ＋2秒</b>ごとに撃つ</li>
+    <li>ダメージが入るのは、撃ち始めてからそのわざの「ダメージが出るまでの時間」がたったあと</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>ゲージのやりとり</h2>
+  <p>ボスもこちらも、受けたダメージでゲージがたまります。</p>
+  <dl class="facts">
+    <dt>こちら</dt><dd>ノーマルアタックでたまるぶん＋受けたダメージ×0.5</dd>
+    <dt>ボス</dt><dd>参加者全員から受けたダメージ×0.5</dd>
+  </dl>
+  <p>こちらは攻撃を受けるほどSPアタックを早く撃てるので、この点は理論値より有利に働きます。理論値は「倒されない」代わりに「攻撃を受けてゲージがたまる」ことも入れていないので、<b>理論値がいつも実戦より少ないとは限りません</b>。</p>
+  <p>一方、ボスは参加者全員の与えたダメージでゲージがたまるので、人数や火力が増えるほどボスのSPアタックが飛んでくる回数も増えます。ボスがゲージを使うかどうかは実際には確率で決まるので、レイドシミュレーターでは「即打ち」「2回に1回（既定）」「ランダム」の3つから選べます。</p>
+</section>
+
+<section class="card">
+  <h2>スーパーメガレイドのシールド</h2>
+  <p>スーパーメガレイドでは、ボスのHPが約80%になるとシールドが張られ、ボスの攻撃が強く、防御が硬くなります。攻撃の倍率は1.8倍を実測で確かめています。防御の倍率は3.6倍で計算していますが、これは実戦の記録から逆算した暫定値です。</p>
+  <p>シールドは、メガシンカしたポケモンのSPアタックでしか割れず、1人1枚までです。枚数はボスごとに7〜10枚なので、人数が枚数に足りないと割り切れません。レイドシミュレーターは割れる場合と割れない場合の両方を計算に入れています。理論値のほうは、少ない人数ではシールドを割る頭数がそろわないため、「割らずに削り切る」前提で出しています。</p>
+</section>
+
+<section class="card">
+  <h2>ツールで調べる</h2>
+  <ul>
+    <li><a href="/dps/">レイド火力チェッカー</a>──ボスを選ぶと、火力ランキングと最少討伐人数（理論値）を出します。天候やフレンドなどの前提は「⚙ 詳細」で入れられます。</li>
+    <li><a href="/raid/">レイドシミュレーター</a>──倒される時間やゲージのやりとりまで再現して、人数ごとの勝ち負けとタイムラインを出します。「最少人数おまかせ」は、火力上位のポケモンを実際に戦わせて、いちばん少ない人数で勝てる1匹を選びます。</li>
+  </ul>
+  <p class="date">2026年9月時点の仕様にもとづいています。</p>
+</section>
+</article>
+
+<p class="back"><a href="/guide/">読み物の一覧へ</a></p>
+</div>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>
