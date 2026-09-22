@@ -17,9 +17,9 @@
   <url><loc>https://gonavi.jp/pokedex/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://gonavi.jp/move-dex/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://gonavi.jp/bulk/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
-  <url><loc>https://gonavi.jp/about/</loc><lastmod>2026-09-20</lastmod><priority>0.3</priority></url>
-  <url><loc>https://gonavi.jp/privacy/</loc><lastmod>2026-09-20</lastmod><priority>0.3</priority></url>
-  <url><loc>https://gonavi.jp/contact/</loc><lastmod>2026-09-20</lastmod><priority>0.3</priority></url>
+  <url><loc>https://gonavi.jp/about/</loc><lastmod>2026-09-22</lastmod><priority>0.3</priority></url>
+  <url><loc>https://gonavi.jp/privacy/</loc><lastmod>2026-09-22</lastmod><priority>0.3</priority></url>
+  <url><loc>https://gonavi.jp/contact/</loc><lastmod>2026-09-22</lastmod><priority>0.3</priority></url>
   <url><loc>https://gonavi.jp/guide/</loc><lastmod>2026-09-22</lastmod><priority>0.3</priority></url>
   <url><loc>https://gonavi.jp/guide/iv-rank/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://gonavi.jp/guide/raid-dps/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
@@ -30,8 +30,19 @@
   <url><loc>https://gonavi.jp/guide/gbl-turns/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://gonavi.jp/guide/gbl-shield-bluff/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
   <url><loc>https://gonavi.jp/guide/gbl-swap/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
-  <url><loc>https://gonavi.jp/guide/gbl-charge/</loc><priority>0.8</priority></url>
-  <url><loc>https://gonavi.jp/guide/gym-defense/</loc><priority>0.8</priority></url>
-  <url><loc>https://gonavi.jp/guide/max-battle-roles/</loc><priority>0.8</priority></url>
-  <url><loc>https://gonavi.jp/backup/</loc><lastmod>2026-09-19</lastmod><priority>0.3</priority></url>
+  <url><loc>https://gonavi.jp/guide/gbl-charge/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/gym-defense/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/max-battle-roles/</loc><lastmod>2026-09-22</lastmod><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/philosophy/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/battle-types/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/type-chart/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/shadow-pokemon/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/raid-bonuses/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/bulk-index/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/gbl-simulator-tips/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/gbl-party-types/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/showdown/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/iv-checker-howto/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/guide/rocket-basics/</loc><priority>0.8</priority></url>
+  <url><loc>https://gonavi.jp/backup/</loc><lastmod>2026-09-22</lastmod><priority>0.3</priority></url>
 </urlset>

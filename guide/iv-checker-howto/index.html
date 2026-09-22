@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>個体値チェッカーの使い方｜入力例で見る順位・PL・進化後のCP｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOの個体値チェッカーの使い方を入力例で解説。4リーグの順位の読み方、いまのCPからPLを割り出して進化後のCPを調べる方法、順位の前提、CPから個体値を逆に調べる方法まで。">
+<link rel="canonical" href="https://gonavi.jp/guide/iv-checker-howto/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="個体値チェッカーの使い方｜GOナビ">
+<meta property="og:description" content="入力例で、順位・PL・進化後のCPの調べ方を解説。">
+<meta property="og:url" content="https://gonavi.jp/guide/iv-checker-howto/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GOナビ">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"個体値チェッカーの使い方｜GOナビ","url":"https://gonavi.jp/guide/iv-checker-howto/","description":"ポケモンGOの個体値チェッカーの使い方を入力例で解説。4リーグの順位の読み方、いまのCPからPLを割り出して進化後のCPを調べる方法、順位の前提、CPから個体値を逆に調べる方法まで。","inLanguage":"ja","author":{"@type":"Person","name":"TARCY"},"publisher":{"@type":"Organization","name":"GOナビ","url":"https://gonavi.jp/"},"isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"}}</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script src="/assets/ads.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
+  <div><div class="eyebrow">Guide</div><h1>個体値チェッカーの使い方</h1>
+  <p class="lead">手持ちのポケモンの個体値を入れると、4096通りの中で何位かが、リトル・スーパー・ハイパー・マスターの4リーグ同時に分かります。実際の入力例を使って、画面の数字の読み方と、いまのCPからPLや進化後のCPを調べる方法を紹介します。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<article>
+<section class="card">
+  <h2>基本の使い方</h2>
+  <ol>
+    <li>ポケモンの名前を入れて、出てきた候補から選ぶ</li>
+    <li>攻撃・防御・HPの個体値を、バーをタップして入れる（0〜15）</li>
+    <li>4つのリーグの順位と、選んだリーグの上位10個体の表が出る</li>
+  </ol>
+  <p>個体値は、ゲームのポケモンの「評価」の画面で、3本のバーの長さとして見られます。バーが1マス分で1、満タンで15です。</p>
+</section>
+
+<section class="card">
+  <h2>入力例1：スーパーリーグのマリルリ</h2>
+  <p>マリルリで、攻撃0・防御15・HP15を入れると、スーパーリーグの欄は<b>1位</b>になります。</p>
+  <dl class="facts">
+    <dt>個体値</dt><dd>0／15／15</dd>
+    <dt>PL</dt><dd>45.5（CP1500に収まる最大のPL）</dd>
+    <dt>CP</dt><dd>1499</dd>
+    <dt>SCP</dt><dd>1818</dd>
+  </dl>
+  <p>同じ個体をマスターリーグの欄で見ると、順位はずっと下になります。マスターリーグにはCPの上限がないので、個体値が高いほど上に来るからです。<b>同じ個体でも、リーグによって順位がまったく違う</b>ことが、4リーグを並べて見る理由です。</p>
+  <p>表のPLは「CPの上限に収まるところまで強化したとき」のPLです。表の「アメXL」は、そのPLまで上げるのに必要なアメXLの数です。</p>
+</section>
+
+<section class="card">
+  <h2>入力例2：いまのCPから、PLと進化後のCPを調べる</h2>
+  <p>ゲームの画面ではPLが見えないので、「この個体を進化させたらスーパーリーグに収まるか」が分かりにくいことがあります。個体値の下の「いまのCP」に、ゲームで見えているCPを入れると、PLを割り出せます。</p>
+  <p>たとえばゾロアで、個体値10／10／10・いまのCP637を入れると、この個体は<b>PL20.5</b>と分かります。すると下の「進化系統の順位」に、このPLのまま進化させた場合のCPが出ます。この例では、ゾロアークに進化すると<b>CP1429</b>になり、スーパーリーグ（CP1500以下）に収まることが分かります。</p>
+</section>
+
+<section class="card">
+  <h2>順位の前提を合わせる</h2>
+  <p>順位は、いくつかの前提によって変わります。人と比べるときは、前提がそろっているかを先に確かめると食い違いが減ります。</p>
+  <ul>
+    <li><b>PLの上限</b>：40（アメXLなし）・41・50・51（相棒）。メガシンカできるポケモンは52・53も選べます</li>
+    <li><b>入手方法</b>：野生（0以上）・交換（友達の種類で1〜5以上）・シャドウレイド（6以上）・レイド/ふか/リワード（10以上）。下限より低い個体値は存在しないので、その範囲の中で順位を数えます</li>
+    <li><b>並び順</b>：ふつうはSCP（実数値の積から出す数字）の高い順。マスターリーグには、攻撃の個体値を優先した並びもあります</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>CPから個体値を逆に調べる</h2>
+  <p>名前の欄の右上の「CP→個体値」を使うと、野生で出会ったポケモンのCPから、ありうるPLと個体値の組み合わせを全部出せます。組み合わせのうち100位以内が何%あるかも出るので、捕まえる前に「高い順位の個体である見込み」を知る目安になります。探すのは、野生で出るPL1〜35の範囲です。</p>
+</section>
+
+<section class="card">
+  <h2>ツールで調べる</h2>
+  <ul>
+    <li><a href="/iv-checker/">個体値チェッカー</a>──この記事の操作はすべてこのページでできます。</li>
+    <li><a href="/breakpoint/">GBLブレイクポイント</a>──順位の近い個体どうしで、ダメージが変わる境目を比べられます。</li>
+    <li><a href="/guide/iv-rank/">読み物「個体値の順位とは何か」</a>──順位の決まり方を詳しく解説しています。</li>
+  </ul>
+  <p class="date">2026年9月時点の仕様にもとづいています。</p>
+</section>
+</article>
+
+<p class="back"><a href="/guide/">読み物の一覧へ</a></p>
+</div>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>
