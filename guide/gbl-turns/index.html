@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GBLの「ターン」の仕組み｜0.5秒刻みで何が起きているか｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOのGOバトルリーグは0.5秒ごとのターンで進みます。ノーマルアタックが当たるターン、SPアタックが始まるターン、同じターンに重なったときの順番、SPアタックの同時発動、制限時間4分30秒の勝敗まで、2026年6月からの新しいバトルシステムにもとづいて解説します。">
+<link rel="canonical" href="https://gonavi.jp/guide/gbl-turns/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="GBLの「ターン」の仕組み｜GOナビ">
+<meta property="og:description" content="0.5秒刻みのターンで何が起きているかを、同じターンの順番まで解説。">
+<meta property="og:url" content="https://gonavi.jp/guide/gbl-turns/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GOナビ">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"GBLの「ターン」の仕組み｜GOナビ","url":"https://gonavi.jp/guide/gbl-turns/","description":"ポケモンGOのGOバトルリーグは0.5秒ごとのターンで進みます。ノーマルアタックが当たるターン、SPアタックが始まるターン、同じターンに重なったときの順番、SPアタックの同時発動、制限時間4分30秒の勝敗まで、2026年6月からの新しいバトルシステムにもとづいて解説します。","inLanguage":"ja","author":{"@type":"Person","name":"TARCY"},"publisher":{"@type":"Organization","name":"GOナビ","url":"https://gonavi.jp/"},"isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"}}</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script src="/assets/ads.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">Guide</div><h1>GBLの「ターン」の仕組み</h1>
+  <p class="lead">GOバトルリーグのバトルは0.5秒ごとの「ターン」で進みます。ノーマルアタックとSPアタックがどのターンに当たり、同じターンに重なったときにどちらが先に処理されるのか。2026年6月からの新しいバトルシステムにもとづいて整理します。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<article>
+<section class="card">
+  <h2>1ターン＝0.5秒</h2>
+  <p>トレーナーバトルは、<b>0.5秒を1ターン</b>として進みます。画面では連続して動いているように見えますが、ダメージやゲージの計算はすべてターンの区切りで行われます。</p>
+  <p>ノーマルアタックには、わざごとに決まった長さ（ターン数）があります。1ターンのわざ（0.5秒）から5ターンのわざ（2.5秒）まであり、<b>わざの最後のターンの終わりにダメージが入り、ゲージがたまります</b>。たとえば3ターンのわざなら、打ち始めてから3ターン目の終わりに当たります。</p>
+  <dl class="facts">
+    <dt>ダメージ効率</dt><dd>1ターンあたりのダメージ（DPT）</dd>
+    <dt>チャージ効率</dt><dd>1ターンあたりにたまるゲージ（EPT）</dd>
+  </dl>
+  <p>ノーマルアタックの強さは、この2つで比べられることが多い数字です。</p>
+</section>
+
+<section class="card">
+  <h2>SPアタックは「次のターン」に始まる</h2>
+  <p>ゲージがたまったSPアタックは、ボタンを押してもその瞬間には撃たれません。<b>いま打っているノーマルアタックが終わってから</b>、次のターンの頭に始まります。3ターンのわざを打っている途中で押した場合は、そのわざが当たってから撃つことになります。</p>
+  <p>SPアタックの演出のあいだも、バトルの制限時間は止まりません。GOナビの模擬戦では、SPアタック1発につき10秒を時計に足して数えています。</p>
+</section>
+
+<section class="card">
+  <h2>同じターンに重なったときの順番</h2>
+  <p>ノーマルアタックとSPアタックが同じターンに重なったときは、次の順で処理されます。</p>
+  <ul>
+    <li><b>SPアタックを入力したターンに当たるノーマルアタックは、先に当たる</b>（そのダメージは、SPアタックの能力変化を受ける前の値）</li>
+    <li>ただし、<b>そのノーマルアタックで倒れてしまう場合は、SPアタックが先</b>に処理され、そのノーマルアタックは入りません。相打ちにはなりません</li>
+    <li>相手が<b>ノーマルアタックを打っている途中</b>（たとえば3ターンのわざの2ターン目）にSPアタックを撃たれた場合は、SPアタックが先です</li>
+  </ul>
+  <p>両者のノーマルアタックが同じターンに当たる場合は同時です。片方がそれで倒れても、もう片方のぶんも入るので、1ターンのわざどうしでは相打ちが起こります。</p>
+</section>
+
+<section class="card">
+  <h2>SPアタックの同時発動</h2>
+  <p>両者が同じターンにSPアタックを撃った場合は、<b>攻撃の実数値が高い側が先</b>に当たります。この比べ方では、シャドウの1.2倍や能力変化は入れず、素の攻撃の実数値だけで比べます。まったく同じ値の場合は、どちらが先かはランダムです。</p>
+  <p>先に当たった側のSPアタックで相手が倒れれば、後の側のSPアタックは撃たれません。そのため、同じポケモンどうしの対面では、攻撃の個体値の高さが勝ち負けに直接つながることがあります。</p>
+</section>
+
+<section class="card">
+  <h2>わざの周期がそろうと何が起きるか</h2>
+  <p>両者のノーマルアタックのターン数が同じなら、わざが終わるタイミング（切れ目）もそろいます。この場合、SPアタックは撃てるようになったらすぐ撃っても、相手に余分なノーマルアタックを与えることはありません。</p>
+  <p>ターン数が違う対面では、相手のノーマルアタックの途中でSPアタックを撃つと、相手の打ちかけのノーマルアタックがSPアタックの演出のあいだに前倒しで終わり、ダメージとゲージが入ります。そのぶん相手に得をさせる場面があります。相手のわざの切れ目に合わせて撃つ技術は、海外では「fast move alignment」と呼ばれています。</p>
+  <p>GOナビのGBLシミュレーターの「最適」は、両者のターン数が同じならすぐ撃ち、違うなら相手の切れ目を見て撃つタイミングを選びます。</p>
+</section>
+
+<section class="card">
+  <h2>制限時間は4分30秒</h2>
+  <p>1バトルの制限時間は<b>270秒（4分30秒）</b>です。時間切れになった場合は、次の順で勝敗が決まります。</p>
+  <ol>
+    <li>残っているポケモンの数が多いほう</li>
+    <li>それも同じなら、残りHPの割合の合計が多いほう</li>
+  </ol>
+  <p>シールドの残り枚数は勝敗に関係しません。</p>
+</section>
+
+<section class="card">
+  <h2>ツールで調べる</h2>
+  <ul>
+    <li><a href="/gbl/">GBLシミュレーター</a>──1対1の対面を1ターンずつ再現し、どのターンに何が起きたかをタイムラインで見られます。模擬戦では、SPアタックや交代を自分で選びながら3対3で戦えます。</li>
+    <li><a href="/breakpoint/">GBLブレイクポイント</a>──ノーマルアタックのダメージが1変わる境目を調べられます。</li>
+    <li><a href="/move-dex/">わざ図鑑</a>──ノーマルアタックのターン数・ダメージ効率・チャージ効率をタイプごとに一覧できます。</li>
+  </ul>
+  <p class="date">2026年9月時点の仕様にもとづいています。</p>
+</section>
+</article>
+
+<p class="back"><a href="/guide/">読み物の一覧へ</a></p>
+</div>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>
