@@ -438,8 +438,8 @@ document.getElementById('app').innerHTML = `
 <div class="loading" id="loading">データ読み込み中…</div>
 <!-- 使い方・見かたの説明。画面の中には結論だけを置き、説明はすべてここにまとめる -->
 <div class="helpwrap">
-  <button id="helptab" aria-expanded="false">？ 使い方・マークの見かた</button>
-  <div id="helpbody" style="display:none"></div>
+  <button id="helptab" aria-expanded="true">？ 使い方・マークの見かた（閉じる）</button>
+  <div id="helpbody"></div>
 </div>
 
 <footer>データ: ゲーム内公開データ / 判定基準は独自集計。ポケモンおよびポケモンGOの名称・データは各権利者に帰属します。</footer>

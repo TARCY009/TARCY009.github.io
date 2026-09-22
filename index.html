@@ -122,6 +122,13 @@ body{
 .bmark{width:30px;height:30px;border-radius:9px;display:block;
   box-shadow:0 4px 12px -5px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.09) inset}
 .themesw{width:max-content}
+/* 右側: 読み物へのリンク＋表示の切り替え（2026-09-22タダシさん指示・アドセンス再申請の準備）。
+   絵文字・光彩なし。細い罫線のピルだけで、切り替えボタンより控えめに置く */
+.tbr{display:flex;align-items:center;gap:10px}
+.tblink{font-size:.72rem;letter-spacing:.14em;text-indent:.14em;color:var(--sub);text-decoration:none;
+  padding:6px 13px;border:1px solid var(--hair);border-radius:999px;white-space:nowrap;
+  transition:color .2s,border-color .2s}
+.tblink:hover,.tblink:focus-visible{color:var(--ink,#e8edf2);border-color:var(--sub)}
 
 /* ---- 看板 ---- */
 .hero{text-align:center;padding:14px 0 44px}
@@ -232,7 +239,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 
 <div class="topbar">
   <img class="bmark" src="/assets/icons/home/icon-192.png" alt="GOナビ" width="30" height="30" decoding="async">
-  <div id="themesw"></div>
+  <div class="tbr"><a class="tblink" href="/guide/">読み物</a><div id="themesw"></div></div>
 </div>
 
 <header class="hero">
