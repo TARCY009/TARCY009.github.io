@@ -79,3 +79,7 @@ article .card b{color:var(--ink)}
 .back{margin:8px 0 0;font-size:.86rem}
 .back a{text-decoration:none}
 .back a::before{content:"‹ ";}
+/* 読み物の画面の画像（2026-09-22・実際のツールの画面を撮ったもの）。幅と高さは img に書いて表示のずれを防ぐ */
+figure.shot{margin:14px 0 16px}
+figure.shot img{display:block;width:100%;max-width:390px;height:auto;margin:0 auto;border-radius:12px;border:1px solid var(--hair)}
+figure.shot figcaption{margin-top:7px;font-size:.76rem;line-height:1.7;color:var(--sub);text-align:center}
