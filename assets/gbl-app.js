@@ -8,6 +8,7 @@ const PAGE_BLOG = !!window.PAGE_BLOG;   // 対戦記録ページ(/battlelog/)。
 document.getElementById('app').innerHTML = `
 <div class="wrap">
 <header>
+  <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
   <div class="eyebrow eb-gbl">Pok&eacute;mon GO Battle League</div>
   <h1><span class="wmksuf">GBL</span> <b class="wmk" data-tool="gbl">シミュレーター</b></h1>
   <p class="intro" id="intro">GOバトルリーグの対面を1ターンずつ再現するシミュレーターです。1対1の勝ち負けとタイムラインのほか、環境上位との一覧、苦手な相手の対策さがし、パーティの穴チェック、3対3の模擬戦まで1つの画面で使えます。リーグを選んでポケモンを入れると定番のわざ構成が自動で入り、すぐに結果が出ます。</p>
