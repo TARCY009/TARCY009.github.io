@@ -421,8 +421,10 @@
   // ---- じぶんのSPアタックの新しい候補5案（2026-09-22タダシさん指示「メーターの音と似ていて2回聴いている感覚になる」）----
   // ⚠ 威力調整メーターの音（電子ビープのスライド・ため→炸裂→和音のEXCELLENT）と作りを変える:
   //    上がるノイズ(riser)と「ため→炸裂」の形は使わない。着弾は従来どおり1.05秒・じぶんは左から。
-  //    SP_PAT=0 は従来の「斬撃」。1〜5が新しい案（見本 scratchpad/mock-spsound2.html）
-  var SP_PAT = 0;
+  //    種類ごとに案を選ぶ（0=従来の「斬撃」・1〜5=新しい案。見本 scratchpad/mock-spsound2.html）。
+  //    2026-09-22タダシさん決定: 等倍＝案4 射撃／こうかばつぐん＝案2 雷撃／いまひとつ＝案3 波動
+  var SP_PAT = { n: 4, s: 2, w: 3 };
+  function spPatOf(eff) { return SP_PAT[eff === 's' ? 's' : eff === 'w' ? 'w' : 'n'] || 0; }
   function seSp2(eff, pat, at) {
     var a = at || 0, i;
     switch (pat) {
@@ -804,9 +806,9 @@
       }
     },
     // side: 0/省略=じぶん（斬撃） / 1=あいて（怪光線）。音でどちらが撃ったか分かるようにする
-    sp: function (eff, side, at) { later(function () { if (side) seSpFoe(eff); else if (SP_PAT) seSp2(eff, SP_PAT, 0); else seSp(eff); }, at); },
-    // じぶんのSPの音の案(0=従来の斬撃・1〜5=新しい候補)。見本と測定用: spRaw(eff, pat, at)
-    spPattern: function (n) { if (n == null) return SP_PAT; SP_PAT = +n; return SP_PAT; },
+    sp: function (eff, side, at) { later(function () { if (side) seSpFoe(eff); else { var pt = spPatOf(eff); if (pt) seSp2(eff, pt, 0); else seSp(eff); } }, at); },
+    // じぶんのSPの音の案(種類ごと・0=従来の斬撃・1〜5=新しい候補)。見本と測定用: spRaw(eff, pat, at)
+    spPattern: function (eff, n) { var k = eff === 's' ? 's' : eff === 'w' ? 'w' : 'n'; if (n == null) return SP_PAT[k]; SP_PAT[k] = +n; return SP_PAT[k]; },
     spRaw: function (eff, pat, at) { if (!ac()) return; if (pat) seSp2(eff, pat, at); else seSp(eff); },
     vs: function (at) { later(seVs, at); },            // バトルスタート
     intro: function (at) { later(seIn, at); },         // ポケモンをくりだす
