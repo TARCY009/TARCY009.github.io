@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>個体値の「順位」とは何か｜スーパーリーグで100%が1位にならない理由｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOの個体値の順位は4096通りをCP上限で並べたもの。なぜ攻撃0の個体が1位になるのか、マスターリーグとの違い、PL上限と入手方法による下限まで、個体値チェッカーの数字の読み方を解説します。">
+<link rel="canonical" href="https://gonavi.jp/guide/iv-rank/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="個体値の「順位」とは何か｜GOナビ">
+<meta property="og:description" content="スーパーリーグで100%が1位にならない理由を、4096通りとCP上限のしくみから解説。">
+<meta property="og:url" content="https://gonavi.jp/guide/iv-rank/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GOナビ">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"個体値の「順位」とは何か｜GOナビ","url":"https://gonavi.jp/guide/iv-rank/","description":"ポケモンGOの個体値の順位は4096通りをCP上限で並べたもの。なぜ攻撃0の個体が1位になるのか、マスターリーグとの違い、PL上限と入手方法による下限まで、個体値チェッカーの数字の読み方を解説します。","inLanguage":"ja","author":{"@type":"Person","name":"TARCY"},"publisher":{"@type":"Organization","name":"GOナビ","url":"https://gonavi.jp/"},"isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"}}</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script src="/assets/ads.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">Guide</div><h1>個体値の「順位」とは何か</h1>
+  <p class="lead">スーパーリーグで100%の個体が1位にならない理由。4096通りの並べ方、CP上限とPLの関係、入手方法による下限まで。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<article>
+<section class="card">
+  <h2>順位は「4096通り」の中の位置</h2>
+  <p>ポケモンGOの個体値は、攻撃・防御・HPがそれぞれ0〜15の16段階です。組み合わせは16×16×16＝<b>4096通り</b>あり、「順位」はこの4096通りを並べたときの位置を指します。</p>
+  <p>並べる基準はリーグによって違います。CP上限があるリーグ（リトル・スーパー・ハイパー）では、<b>CP上限に収まる範囲でいちばん高いPLまで強化したときの実数値（攻撃×防御×HP）</b>が大きい順です。この値を10で割ってまとめたものが「SCP」と呼ばれる数字で、GOナビの個体値チェッカーもSCPの高い順に並べています。同じSCPになる個体は同じ順位です。</p>
+</section>
+
+<section class="card">
+  <h2>なぜ100%が1位にならないのか</h2>
+  <p>CPの計算では、攻撃の実数値がそのまま掛かるのに対して、防御とHPは平方根で掛かります。つまり<b>CPは攻撃を重く数える</b>ため、攻撃の個体値が高いほど、同じPLでもCPが早く上限に届いてしまいます。</p>
+  <p>裏を返すと、攻撃の個体値が低い個体は、CP上限のぎりぎりまでPLを高くできます。PLが上がれば攻撃・防御・HPの実数値がそろって上がるので、結果として「攻撃0・防御15・HP15」のような個体が、攻撃15の個体より実数値の積で上回ることが起きます。</p>
+  <p>実例として、スーパーリーグのマリルリは次の個体が1位です。</p>
+  <dl class="facts">
+    <dt>個体値</dt><dd>攻撃0／防御15／HP15</dd>
+    <dt>PL</dt><dd>45.5</dd>
+    <dt>CP</dt><dd>1499</dd>
+    <dt>SCP</dt><dd>1818</dd>
+  </dl>
+  <p>攻撃が0なのに1位、という並びはこのしくみから来ています。100%（15/15/15）の個体は、CP上限のあるリーグでは上位になりにくい、というのが一般的な傾向です。</p>
+</section>
+
+<section class="card">
+  <h2>マスターリーグでは100%が1位</h2>
+  <p>マスターリーグにはCP上限がないので、全員が同じPL上限まで強化できます。その場合は個体値が高いほど実数値も高いので、<b>15/15/15が1位</b>です。同じSCPになる個体は同順位なので、たとえばグラードンでは15/15/15と15/15/14がどちらも1位（SCP4326）、次が3位になります。</p>
+  <p>ただし、マスターリーグでは「攻撃の実数値の高さ」が別の意味を持ちます。両者が同じターンにSPアタックを撃ったとき、攻撃の実数値が高い側が先に当たるためです。個体値チェッカーの「攻撃優先」の並びは、この用途のために攻撃個体値の高い順で並べ直したものです。</p>
+</section>
+
+<section class="card">
+  <h2>順位には「PL上限」の前提がある</h2>
+  <p>同じ個体でも、どこまで強化するかで順位は変わります。ふつうの上限はPL50で、相棒にすると51まで上げられます。PL40より上の強化にはアメXLが必要なので、アメXLを使わない前提（PL40まで、相棒で41まで）で順位を見たい場合もあります。</p>
+  <p>GOナビの個体値チェッカーは、PL上限を40（アメXLなし）・41・50・51から選べます。メガシンカできるポケモンは、メガレベル最大でさらに52・53まで選べます。<b>順位を人と比べるときは、同じPL上限の前提かどうかを先に確かめる</b>と食い違いが減ります。</p>
+</section>
+
+<section class="card">
+  <h2>入手方法によって「ありえない個体値」がある</h2>
+  <p>個体値の下限は入手方法で決まっています。下限より低い個体値は存在しないので、順位を見るときも、その入手方法で出る範囲の中で数えるのが実態に合います。</p>
+  <dl class="facts">
+    <dt>野生</dt><dd>0以上</dd>
+    <dt>交換</dt><dd>友達1・仲良し2・親友3・大親友5以上</dd>
+    <dt>シャドウレイド</dt><dd>6以上</dd>
+    <dt>レイド・ふか・リワード</dt><dd>10以上</dd>
+  </dl>
+  <p>幻のポケモンやジガルデのように交換できないポケモンは、レイドやリサーチでしか手に入らないので最低が10になります。そのため、スーパーリーグのCP上限に収まる個体がそもそも存在しないポケモンもあります。</p>
+</section>
+
+<section class="card">
+  <h2>ツールで調べる</h2>
+  <ul>
+    <li><a href="/iv-checker/">個体値チェッカー</a>──個体値を入れると、リトル・スーパー・ハイパー・マスターの順位を同時に表示します。CPから個体値の組み合わせを逆引きしたり、進化前のCPを出したりもできます。</li>
+    <li><a href="/breakpoint/">GBLブレイクポイント</a>──順位が近い個体どうしで、ノーマルアタックのダメージが変わる境目を調べられます。</li>
+    <li><a href="/gbl/">GBLシミュレーター</a>──1位の個体を自動で使って、相手との対面を1ターンずつ再現します。</li>
+  </ul>
+  <p class="date">2026年9月時点の仕様にもとづいています。</p>
+</section>
+</article>
+
+<p class="back"><a href="/guide/">読み物の一覧へ</a></p>
+</div>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>

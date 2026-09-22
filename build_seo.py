@@ -173,6 +173,13 @@ PAGES = [
   dict(path='/contact/', key='home', title='フィードバック｜GOナビ',
        desc='ポケモンGO攻略ツール集「GOナビ」へのフィードバック。不具合の報告・数字がおかしい点・ご意見はこちらから。',
        og_title='フィードバック｜GOナビ', og_desc='不具合の報告・ご意見はこちらから。'),
+  # 読み物（解説記事・2026-09-22〜）。共有用画像はトップと同じ。記事を足したらここにも足す
+  dict(path='/guide/', key='home', title='読み物｜ポケモンGOの仕組みとツールの読み方｜GOナビ',
+       desc='ポケモンGOの個体値の順位・レイドの火力・GBLのターンやシールドなど、ゲームの仕組みとGOナビのツールの数字の読み方を解説する記事の一覧。',
+       og_title='読み物｜GOナビ', og_desc='ゲームの仕組みと、ツールの数字の読み方を解説します。'),
+  dict(path='/guide/iv-rank/', key='home', title='個体値の「順位」とは何か｜スーパーリーグで100%が1位にならない理由｜GOナビ',
+       desc='ポケモンGOの個体値の順位は4096通りをCP上限で並べたもの。なぜ攻撃0の個体が1位になるのか、マスターリーグとの違い、PL上限と入手方法による下限まで、個体値チェッカーの数字の読み方を解説します。',
+       og_title='個体値の「順位」とは何か｜GOナビ', og_desc='スーパーリーグで100%が1位にならない理由を、4096通りとCP上限のしくみから解説。', ld='article'),
   dict(path='/backup/', key='home', title='データの引っ越し｜GOナビ',
        desc='ポケモンGO攻略ツール集「GOナビ」に保存した対戦記録・★登録・パーティなどを書き出して、別の端末やブラウザへ移せます。',
        og_title='データの引っ越し｜GOナビ', og_desc='保存した記録を書き出して、別の端末やブラウザへ移せます。'),
@@ -223,6 +230,12 @@ def head_block(p):
                 'operatingSystem': 'Any', 'inLanguage': 'ja',
                 'isPartOf': {'@type': 'WebSite', 'name': BRAND, 'url': SITE + '/'},
                 'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'JPY'}}
+    elif ld == 'article':
+        data = {'@context': 'https://schema.org', '@type': 'Article', 'headline': p['og_title'],
+                'url': url, 'description': p['desc'], 'inLanguage': 'ja',
+                'author': {'@type': 'Person', 'name': 'TARCY'},
+                'publisher': {'@type': 'Organization', 'name': BRAND, 'url': SITE + '/'},
+                'isPartOf': {'@type': 'WebSite', 'name': BRAND, 'url': SITE + '/'}}
     else:
         data = None
     if data:

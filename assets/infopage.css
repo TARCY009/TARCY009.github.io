@@ -63,3 +63,16 @@ dl.facts>*:nth-last-child(-n+2){border-bottom:0}
 .center{text-align:center}
 @media (max-width:430px){body{padding:12px 11px 56px}.card{padding:15px 14px 6px}
   dl.facts{grid-template-columns:6.8em 1fr}h1{font-size:1.28rem}}
+
+/* ===== 読み物（/guide/）2026-09-22 ===== */
+ul.arts{list-style:none;padding:0;margin:0 0 6px}
+ul.arts li{padding:10px 0;border-bottom:1px solid var(--hair)}
+ul.arts li:last-child{border-bottom:0}
+ul.arts a{font-weight:800;font-size:.98rem;text-decoration:none}
+ul.arts a:hover{text-decoration:underline}
+ul.arts .sub{display:block;margin-top:3px;font-size:.8rem;color:var(--sub)}
+article .card p{font-size:.92rem}
+article .card b{color:var(--ink)}
+.back{margin:8px 0 0;font-size:.86rem}
+.back a{text-decoration:none}
+.back a::before{content:"‹ ";}
