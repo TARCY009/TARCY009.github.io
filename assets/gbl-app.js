@@ -5702,6 +5702,7 @@ const gulpOff = rs => {
   if (!rs) return;
   if (rs.gulp) rs.gulp = null;
   if (rs.form === 'blade') rs.form = 'shield';
+  if (rs.mform) rs.mform = 'full';   // モルペコ: 交代で下がると「まんぷく」に戻る(2026-09-22タダシさん確定。倒して次を迎えるときは持ち越す)
   rs.buffs = [0, rs.busted ? -1 : 0];
 };
 // 能力変化のタグ(⬆⬇)。1段階ちょうど以外は段階数を添える

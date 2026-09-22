@@ -8,7 +8,7 @@
 //   B6 シールドで防ぐと1 ／ B7 ゲージ0〜100 ／ B8 シールド2枚 ／ C6 同時発動は素の攻撃実数値が高い側が先 ／ C8 倒れた側は動かない
 //   C15 ゲージが足りなければ撃てない ／ D1 交代のクールタイム45秒 ／ D2 倒れて出す交代はクールタイムを消費しない
 //   D3/D3' 交代の1ターン(SP直後は無し) ／ D5 打ちかけの1発は交代先に ／ D6 その1発で倒れる ／ D7 交代で能力変化が消える(ばれたミミッキュは-1のまま)
-//   D8 生き残りの引き継ぎ ／ E4/E5 ばけのかわ ／ E8 うのミサイル ／ G6 時間切れの勝敗 ／ G8/B13 編成 ／ 同じ入力なら同じ結果
+//   D8 生き残りの引き継ぎ ／ E1/E2 ギルガルド ／ E4/E5 ばけのかわ ／ E6 モルペコ(交代でまんぷくに戻る) ／ E8 うのミサイル ／ G6 時間切れの勝敗 ／ G8/B13 編成 ／ 同じ入力なら同じ結果
 // 使い方: window.__RAND_OPTS__ = { n:何戦, seed:種, ms:打ち切り(ミリ秒), ai:['easy','normal','hard'] } を先に置く(無ければ既定)
 window.__scenario = function (orig) {
   const O = Object.assign({ n: 30, seed: 1, ms: 45000, ai: ['easy', 'normal', 'hard'], caps: [1500, 2500] }, window.__RAND_OPTS__ || {});
@@ -122,7 +122,7 @@ window.__scenario = function (orig) {
         if (!eq(hh.en, ex.en)) viol(b, 'D7/D8', `対面${k} 側${s}(${P[s].name}) 頭のゲージ ${hh.en}≠追跡${ex.en}`);
         if (!eqArr(hh.b, ex.buffs)) viol(b, 'D7', `対面${k} 側${s}(${P[s].name}) 頭の能力変化 [${hh.b}]≠追跡[${ex.buffs}]`);
         if (hh.hp <= 0) viol(b, 'D6', `対面${k} 側${s}: HP${hh.hp}で場に出た`);
-        return { hp: hh.hp, en: hh.en, buffs: hh.b.slice(), sh: sh[s], busted: ex.busted, form: ex.form || 'shield' };
+        return { hp: hh.hp, en: hh.en, buffs: hh.b.slice(), sh: sh[s], busted: ex.busted, form: ex.form || 'shield', mform: ex.mform || 'full' };
       });
       // 1ターン目の硬直(交代にかかる1ターン・D3/D3'/D4)
       const expStall = [false, false];
@@ -163,6 +163,13 @@ window.__scenario = function (orig) {
           if (e.full !== undefined) {
             // SPアタック
             if (isAeg(P[i]) && cur[i].form === 'shield') cur[i].form = 'blade';   // E1: 撃つ直前にブレード
+            if (P[i].m.key === 'morpeko_full_belly') {   // E6: オーラぐるまのタイプはいまのすがた、撃つたびに切り替わる
+              if (e.move.startsWith('オーラぐるま')) {
+                const want = cur[i].mform === 'full' ? 'オーラぐるま（でんき）' : 'オーラぐるま（あく）';
+                if (e.move !== want) viol(b, 'E6', `対面${k} T${curTn}: モルペコは${cur[i].mform === 'full' ? 'まんぷく' : 'はらぺこ'}のはずなのに${e.move}を撃った`);
+              }
+              cur[i].mform = cur[i].mform === 'full' ? 'hangry' : 'full';
+            }
             const cands = spCands(P[i], e.move);
             const costs = cands.map(m => m.e);
             if (!costs.length) viol(b, 'DATA', `${e.move}の消費ゲージが不明`);
@@ -260,14 +267,14 @@ window.__scenario = function (orig) {
             if (nIdx !== to) viol(b, 'D1', `対面${k} 側${s}: 交代先(${to})と次の対面の頭(${nIdx})が違う`);
           }
           // 場を離れた側: 能力変化は消える(ミミッキュの「ばれた」の防御-1は残る)
-          S[s][idx[s]] = { ...S[s][idx[s]], hp: res.final[s].hp, en: res.final[s].en, buffs: [0, cur[s].busted ? -1 : 0], busted: cur[s].busted, form: 'shield' };
+          S[s][idx[s]] = { ...S[s][idx[s]], hp: res.final[s].hp, en: res.final[s].en, buffs: [0, cur[s].busted ? -1 : 0], busted: cur[s].busted, form: 'shield', mform: 'full' };
         } else {
           if (N && !eq(nOk, swOkS)) viol(b, 'D2', `対面${k} 側${s}: 交代していないのに解禁が ${swOkS}→${nOk} に変わった`);
           if (down[s]) {
             S[s][idx[s]].alive = false;
             if (N && nIdx === idx[s]) viol(b, 'END', `対面${k} 側${s}: 倒れたポケモンがまた出た`);
           } else {
-            S[s][idx[s]] = { ...S[s][idx[s]], hp: res.final[s].hp, en: res.final[s].en, buffs: res.final[s].buffs.slice(), busted: cur[s].busted, form: cur[s].form };
+            S[s][idx[s]] = { ...S[s][idx[s]], hp: res.final[s].hp, en: res.final[s].en, buffs: res.final[s].buffs.slice(), busted: cur[s].busted, form: cur[s].form, mform: cur[s].mform };
             if (N && !L.timeUp && nIdx !== idx[s]) viol(b, 'D8', `対面${k} 側${s}: 生き残りが入れ替わった`);
           }
         }
