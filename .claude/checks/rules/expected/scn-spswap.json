@@ -1,0 +1,48 @@
+{
+ "mySpTurn": 15,
+ "foeSpTurn": 16,
+ "afterMySp": {
+  "me": "マリルリ",
+  "stalled0": false,
+  "b0": [
+   0,
+   0
+  ],
+  "sw0": true,
+  "t0": 15,
+  "swapHit": null
+ },
+ "afterFoeSp": {
+  "me": "マリルリ",
+  "stalled0": false,
+  "b0": [
+   0,
+   0
+  ],
+  "sw0": true,
+  "t0": 16,
+  "swapHit": null
+ },
+ "mimikyuBack": {
+  "li": 3,
+  "b0": [
+   0,
+   -1
+  ]
+ },
+ "normalSwap": {
+  "me": "マリルリ",
+  "stalled0": true,
+  "b0": [
+   0,
+   0
+  ],
+  "sw0": true,
+  "t0": 4,
+  "swapHit": {
+   "side": 0,
+   "mv": "あわ",
+   "dmg": 3
+  }
+ }
+}

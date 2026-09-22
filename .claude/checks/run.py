@@ -8,6 +8,8 @@ raid-engine: .claude/checks/raid-check.html（スクショ5例のボスの攻撃
 max-attacker:.claude/checks/max-check.html（マックスバトルのアタッカーが「ダメージ最大のマックスわざ」を選ぶか＝5項目）
 exit-rank:   .claude/checks/exit-check.html?only=rank（1ポケモン1ページ用の出口＝画面の数字か。タイプ別火力・耐久指数・ジム防衛・マックスバトル タイプ別＝20項目）
 exit-gbl:    .claude/checks/exit-check.html?only=gbl（同・GBLの環境一覧とロケット団のランキング＝16項目）
+rules-scn:   .claude/checks/rules/scncheck.py（GBLのバトルルールのシナリオ6本＝expected/*.json と突き合わせ）
+rules-random:.claude/checks/rules/randcheck.py（同・種1で600戦をランダムに回し、バトルルール違反0か）
 いずれも画面なしのブラウザで開き、すべて ✅ かを確かめる。
 答え（期待値・基準ファイル）を変えるときは、必ずタダシさんに確認してから。
 """
@@ -107,8 +109,28 @@ def check_mock_fx(port):
     return False, '模擬戦の通しテストが不合格\n' + tail
 
 
+def sub_check(rel, args, label, timeout=600):
+    """自前でブラウザを立てる検査(.claude/checks/rules/*.py)を子プロセスで流す。終了コード0が合格。"""
+    def fn(port):
+        f = ROOT / rel
+        if not f.is_file():
+            return False, f'{rel} がありません（答え合わせができないため不合格扱い）'
+        try:
+            r = subprocess.run(['python3', str(f)] + args, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return False, f'{label}が時間内に終わりませんでした'
+        out = '\n'.join(l for l in (r.stdout + r.stderr).strip().split('\n') if l.strip())
+        if r.returncode == 0:
+            return True, label + ': ' + out[-300:].replace('\n', ' ／ ')
+        return False, label + 'が不合格\n' + out[-1200:]
+    return fn
+
+
 CHECKS = {
     'gbl-engine': check_gbl_engine,
+    # バトルルールの検査(2026-09-22): シナリオ6本＝期待値との突き合わせ／ランダム＝種固定で600戦回して違反0
+    'rules-scn': sub_check('.claude/checks/rules/scncheck.py', [], 'バトルルールのシナリオ検査'),
+    'rules-random': sub_check('.claude/checks/rules/randcheck.py', ['--n', '600', '--seed', '1', '--ms', '60000'], 'バトルルールのランダム検査'),
     'iv-calc': page_check('.claude/checks/iv-check.html', 16),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
     'max-attacker': page_check('.claude/checks/max-check.html', 5),

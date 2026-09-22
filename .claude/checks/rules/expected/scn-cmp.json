@@ -1,0 +1,17 @@
+{
+ "mirror": {
+  "meFirst": 10,
+  "foeFirst": 10,
+  "sameSeedSameResult": true
+ },
+ "shadow": {
+  "atk": [
+   91.59402797650074,
+   103.86108529478209
+  ],
+  "lowSide": 0,
+  "lowSideShadowAtk": 109.91283357180089,
+  "firstPlain": 1,
+  "firstWithShadow": 1
+ }
+}

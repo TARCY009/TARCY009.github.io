@@ -5134,6 +5134,8 @@ function rbTurns(res) {
 //   仕切り直しになり、0.5秒待つとその側だけ1ターンずれるので、対面の途中で位相が動く。
 //   交代受けの判定・交代の先行入力の丸めは、必ずタイムラインの実際の行で見る
 const cutAt = (t, side) => !!t && ((t.ev[side] || []).length > 0 || (t.sub || []).some(r => r.idle && r.idle[side]));
+// そのターン、その側が硬直していた(交代の1ターン・ロケット団の硬直)＝何も打ち始めていないので打ちかけのノーマルアタックは無い
+const stalledAt = (t, side) => !!t && (t.sub || []).some(r => r.stalled && r.stalled[side]);
 // そのターンにSPアタックが解決したか(どちらの側でも)。SP発動直後の交代は1ターンを消費しない(2026-09-22タダシさん確定)
 const spAt = t => !!t && [0, 1].some(sd => (t.ev[sd] || []).some(e => e && e.full !== undefined));
 // じぶんが撃てるSPアタックの一覧(1本でも2本でも同じ形にする)
@@ -10560,6 +10562,9 @@ function gbPlayCore(picks, foes, ans, stepwise) {
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
     // 制限時間で打ち切られた対面(倒れてもいない・交代でもない)
     const timeUp = !!(timeCut && res.stopped && res.turns === timeCut && !down[0] && !down[1]);
+    // 制限時間に達したターンに倒れた(倒したSPの演出のあいだに時計が切れた)ときもバトルはそこで終わり(2026-09-22ランダム検査で発見)。
+    // 従来は「倒れた」が優先されて次の対面が始まり、制限時間を過ぎてから1ターン戦っていた。勝敗は残りの匹数→残りHPのふつうの時間切れと同じ
+    const timeHit = !!(timeCut && res.turns >= timeCut);
     const swapped = [0, 1].map(s =>
       !!(res.stopped && !timeUp && dec[s].swapTo != null && dec[s].swapAt <= res.turns && !down[0] && !down[1]));
     // ---- 交代を押していたのに起きなかった(2026-09-10) ----
@@ -10621,7 +10626,7 @@ function gbPlayCore(picks, foes, ans, stepwise) {
       leadHits: li === 0 ? leadHits : [null, null],
       swapHit: legSwapHit,   // 交代で交代先に入った打ちかけの1発(対面の頭に表示)
       extra: extraTot,   // この対面の頭までの「次のポケモン選び」の累計(ターン換算・時計に足す)
-      timeUp,            // この対面の最後で制限時間に達した
+      timeUp: timeHit,   // この対面の最後で制限時間に達した(倒れたターンと同時のときも)
       hud: { hp0: rs0 ? Math.max(0, rs0.hp) : res.final[0].hpMax, en0: rs0 ? rs0.en : 0,
              b0: ((rs0 && rs0.buffs) || [0, 0]).slice(),
              hp1: rs1 ? Math.max(0, rs1.hp) : res.final[1].hpMax, en1: rs1 ? rs1.en : 0,
@@ -10642,6 +10647,7 @@ function gbPlayCore(picks, foes, ans, stepwise) {
       st[s][cur[s]].alive = !down[s];
       st[s][cur[s]].resume = down[s] ? null : res.final[s].resume;
     });
+    if (timeHit) { timeUpAll = true; break; }   // 倒れたターンに制限時間に達した: 次のポケモンは出さずに終わり
     if (!down[0] && !down[1] && !swapped[0] && !swapped[1]) break;   // 上限ターンまで決着せず
     // 倒れた側は次を出す(じぶんは選べる・あいては順番どおり＝チップで変更できる)
     for (const s of [0, 1]) {
@@ -10698,7 +10704,11 @@ function gbPlayCore(picks, foes, ans, stepwise) {
     for (const s of [0, 1]) {
       if (!swapped[s]) continue;
       // ⚠ SPが解決したターンは両者のノーマルアタックが仕切り直し(打ちかけは前倒しで完了ずみ)なので、打ちかけの1発は無い
-      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot, !both && !spSwap && !cutAt(rowS, 1 - s));   // 交代解禁は時計で持つ
+      // ⚠ 相手が交代の1ターン(硬直)で何も打ち始めていないときも打ちかけは無い(2026-09-22ランダム検査で発見):
+      //   相手が交代した直後の1ターン目にこちらも交代すると(実戦の「返し交代」)、相手はまだノーマルアタックを
+      //   打ち始めていないのに1発を足し、交代先に余分なダメージとゲージが付いていた
+      doSwap(s, dec[s].swapTo, base + GB_SP_TURNS * spTot + extraTot,
+        !both && !spSwap && !cutAt(rowS, 1 - s) && !stalledAt(rowS, 1 - s));   // 交代解禁は時計で持つ
       if (!both && !spSwap) lagIn[s] = 1;   // 交代した側は次の対面の1ターン目に動けない(SP発動直後の交代だけは例外)
     }
   }

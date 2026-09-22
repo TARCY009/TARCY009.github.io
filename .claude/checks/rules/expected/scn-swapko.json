@@ -1,0 +1,97 @@
+{
+ "draw": {
+  "rows": 207,
+  "ko": 1
+ },
+ "azuHpAtSwapOut": 5,
+ "found": {
+  "li": 2,
+  "t2": 1
+ },
+ "outcome": "lose",
+ "legs": [
+  {
+   "li": 2,
+   "me": "トリデプス",
+   "foe": "フシギバナ",
+   "turns": 1,
+   "sw0": true,
+   "meDown": false,
+   "foeDown": false,
+   "hp0start": 142,
+   "hp0end": 142,
+   "swapHit": null
+  },
+  {
+   "li": 3,
+   "me": "マリルリ",
+   "foe": "フシギバナ",
+   "turns": 1,
+   "sw0": false,
+   "meDown": true,
+   "foeDown": false,
+   "hp0start": 5,
+   "hp0end": 0,
+   "swapHit": null
+  },
+  {
+   "li": 4,
+   "me": "トリデプス",
+   "foe": "フシギバナ",
+   "turns": 6,
+   "sw0": false,
+   "meDown": false,
+   "foeDown": true,
+   "hp0start": 142,
+   "hp0end": 130,
+   "swapHit": null
+  },
+  {
+   "li": 5,
+   "me": "トリデプス",
+   "foe": "エアームド",
+   "turns": 36,
+   "sw0": false,
+   "meDown": false,
+   "foeDown": true,
+   "hp0start": 130,
+   "hp0end": 86,
+   "swapHit": null
+  }
+ ],
+ "koRow": [
+  {
+   "tn": 1,
+   "ev": [
+    null,
+    {
+     "move": "はっぱカッター",
+     "dmg": 10,
+     "tn": 2
+    }
+   ],
+   "stalled": [
+    true,
+    false
+   ],
+   "idle": [
+    false,
+    false
+   ],
+   "state": [
+    {
+     "hp": 0,
+     "en": 22
+    },
+    {
+     "hp": 11,
+     "en": 5
+    }
+   ]
+  }
+ ],
+ "clockBase": [
+  69,
+  70
+ ]
+}
