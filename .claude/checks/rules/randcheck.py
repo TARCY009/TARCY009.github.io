@@ -45,7 +45,7 @@ def main():
     c = v['counts']
     print(f"ランダム検査: {c['battles']}戦(種{a.seed}・{v['elapsed']/1000:.1f}秒・実{time.time()-t0:.1f}秒) "
           f"勝{c['win']}/負{c['lose']}/引{c['draw']}/決着なし{c['timeout']}(時間切れ{c['timeUp']}) "
-          f"対面{c['legs']}・決断{c['decisions']}・交代{c['swaps']}(⇄{c['msw']}・開幕{c['lead']})・SP{c['sp']}(防いだ{c['shields']}) 難易度{c['byAi']}")
+          f"対面{c['legs']}・決断{c['decisions']}・交代{c['swaps']}(⇄{c['msw']}・開幕{c['lead']})・SP{c['sp']}(防いだ{c['shields']}・出来つき{c.get('spEvPw', 0)}/答え{c.get('pw', 0)}) 難易度{c['byAi']}")
     for d in v.get('dumps') or []:
         print(f"---- 戦{d['b']} {d['ai']} buff={d['buff']} cap={d['cap']}")
         print('  じぶん', d['picks']); print('  あいて', d['foes']); print('  答え', d['ans'])

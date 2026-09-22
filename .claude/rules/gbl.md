@@ -40,6 +40,21 @@ paths:
   次の対面の1ターン目にじぶんが動けないのは ふつうの交代だけ（SP直後は自分のSP・相手のSPとも動ける）／
   `scn-swapko.js`: HP5のマリルリへ交代→はっぱカッター10で1ターンの対面・`meDown`・次にトリデプスが出る
 
+### SPアタックの出来（ミニゲーム）で威力が変わる「威力調整」（2026-09-22実装・タダシさん指示・GBL 1対1と模擬戦）
+
+**倍率はエンジンの `PvpEngine.CHARGE_PW`**（ゲーム内公開データ: 何も取れない25%／NICE 50%／GREAT 75%／EXCELLENT 100%）。`damage(D, mv, att, dfn, mult)` の5番目の引数で、**ノーマルアタックには効かない**。
+エンジンは発ごとの `shotPlan[].pw`／`plan[].pw`、無ければ側の `cfg.spq`、無ければ1。SPの出来事に `ev.pw`（EXCELLENT以外のとき）。
+
+- **模擬戦＝入力メーター `spqMeter(mvId, done, cancel, {ck})`**（`gbl-app.js`・見た目は `gbl.css` の `.spqwin`〜）: じぶんのSPを撃つ答え（`SPQ_FIRE`＝opt/fire/hold1/bluff）を選んだ瞬間（カットインの前）と、リアルタイムのSPボタンを押した瞬間に画面の真ん中へ。
+  左から右へスライドして離した％で決まる: **30%未満=25%・30〜69%=NICE・70〜99%=GREAT・100%=EXCELLENT**（`SPQ_NICE_PCT`／`SPQ_GREAT_PCT`・タダシさん指定・右端は97%以上を100%に丸める）。
+  **入力の猶予7秒（`SPQ_INPUT_SEC`）を過ぎたらその位置で確定**（触っていなければ25%）。バトルの残り時間（`opt.ck` から）と猶予のバーを0.1秒ごとに減らして見せる（**表示だけ**。時計はSP1発10秒で数える従来どおり）。
+  離した瞬間に出来の色で光る（NICE=白〜氷色・GREAT=黄・EXCELLENT=オレンジ・25%は光らない）。**リアルタイムはメーターのあいだ再生を止める**（`stopTimer`→確定で `run()`／✕で `startTimer`）
+- 答えは `{a, mv, pw}`（`rbApply` が `shots[].pw` へ、リアルタイムは `mspPlan`→`plan[].pw`）。**投げ済みSP（inflight）も出来を持ち越す**（`inflightPw`）。
+  **共有リンク `rb=`** はわざIDの後ろに `!n`（NICE）`!g`（GREAT）`!b`（25%）（`SPQ_CODE`／`SPQ_DECODE`・EXCELLENTは無印）。チップとタイムラインに札 `spqTag`（`.pwtag`・EXCELLENTは出さない）
+- **1対1＝側ごとの「SPの出来」**（`.spqwrap`・`S[i].spq`・100/75/50/25・共有リンク `sql`/`sqr`）。**⚠ 一覧系（環境一覧・対策さがし・パーティ診断）は常に100%**: `listDefaults` が1に寄せて隠し（`syncMultiPanel`/`syncCounterPanel`）、`applyMeta`（マスから開く1対1）も両側1に戻す（食い違い禁止）。ロケット団のあいてには出さない
+- **AIは常にEXCELLENT**（ランダム検査 `G13` が「あいてのSPに出来が付いたら違反」で守る）。おまかせ（`auto`）・結果だけ見る・オートバトルも100%
+- 基準: グロウパンチ GREAT＝-8（EXCELLENTなら-10）／マリルリ対ガラルマッギョで じぶんのSPの出来50%にすると LOSE
+
 ### バトルルールの自動検査と、それで直した2つ（2026-09-22）
 
 `.claude/checks/rules/` の **`rules-scn`**（シナリオ6本＝`expected/*.json` と突き合わせ）と **`rules-random`**（種固定で600戦をランダムに回し、下書きの「検査 できる」の項目を機械で照合）が保存の前に自動で流れる。

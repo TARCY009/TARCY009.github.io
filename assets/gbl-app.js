@@ -97,6 +97,7 @@ document.getElementById('app').innerHTML = `
         </div>
       </div>
       <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
+      <div class="spqwrap"><div class="megalv spq"><span class="mlvl" title="SPアタックのミニゲーム(アイコンをタップする画面)の出来。EXCELLENT=100%／GREAT=75%／NICE=50%／何も取れない=25%の威力になります(ゲーム内公開データ)。この側のSPアタック全部に効きます。既定は100%">SPの出来</span><span class="mlvseg"><button type="button" data-pw="1" aria-pressed="true">100</button><button type="button" data-pw="0.75">75</button><button type="button" data-pw="0.5">50</button><button type="button" data-pw="0.25">25</button></span><span class="mlvnote">％ ＝ EXCELLENT／GREAT／NICE／最低</span></div></div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
       <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
@@ -174,6 +175,7 @@ document.getElementById('app').innerHTML = `
         </div>
       </div>
       <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
+      <div class="spqwrap"><div class="megalv spq"><span class="mlvl" title="SPアタックのミニゲーム(アイコンをタップする画面)の出来。EXCELLENT=100%／GREAT=75%／NICE=50%／何も取れない=25%の威力になります(ゲーム内公開データ)。この側のSPアタック全部に効きます。既定は100%">SPの出来</span><span class="mlvseg"><button type="button" data-pw="1" aria-pressed="true">100</button><button type="button" data-pw="0.75">75</button><button type="button" data-pw="0.5">50</button><button type="button" data-pw="0.25">25</button></span><span class="mlvnote">％ ＝ EXCELLENT／GREAT／NICE／最低</span></div></div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
       <div class="c2row"><select class="selC2" title="SPアタック2（わざ開放で覚えさせた2本目。選ぶと対面ごとに2本を使い分けます）"></select><button class="c2clear" style="display:none" title="SPアタック2を外す（1本に戻す）">×</button></div>
@@ -498,6 +500,26 @@ const isPlusMv = id => !!(id && D.moves[id] && D.moves[id].plus);
 // ＋わざを持つメガか(pvp_data の cp = 追加SPアタックのID。対戦データに未収録のわざは対象外)
 const hasPlus = key => !!(key && D.pokemon[key] && D.pokemon[key].cp && D.moves[D.pokemon[key].cp]);
 const megaLvOf = o => (o && MEGA_MULT[o.megaLv]) ? o.megaLv : MEGA_LV_DEF;
+// ---- SPアタックの出来(ミニゲーム)の威力の倍率(2026-09-22タダシさん指示で導入) ----
+// 倍率はエンジンの CHARGE_PW(ゲーム内公開データ: 25%/NICE 50%/GREAT 75%/EXCELLENT 100%)。
+// 模擬戦は「入力メーター」(spqMeter)で発ごとに決め(答えの pw)、1対1はじぶん／あいての側ごとの設定(S[i].spq)。
+// 一覧系(環境一覧・対策さがし・パーティ診断)とAIは常に100%(食い違い禁止)
+const SPQ = PvpEngine.CHARGE_PW;
+const SPQ_TIERS = [
+  { k: 'excellent', pw: SPQ.excellent, label: 'EXCELLENT!', pct: 100 },
+  { k: 'great', pw: SPQ.great, label: 'GREAT!', pct: 75 },
+  { k: 'nice', pw: SPQ.nice, label: 'NICE!', pct: 50 },
+  { k: 'base', pw: SPQ.base, label: '25%', pct: 0 }];
+const spqTierOf = pw => SPQ_TIERS.find(t => Math.abs(t.pw - (pw == null ? 1 : pw)) < 1e-6) || SPQ_TIERS[0];
+// メーターの％ → 倍率(しきい値はタダシさん指定: 30%未満=25% ／ 30〜69%=NICE ／ 70〜99%=GREAT ／ 100%=EXCELLENT)
+const SPQ_NICE_PCT = 30, SPQ_GREAT_PCT = 70;
+const spqFromPct = pct => pct >= 100 ? SPQ.excellent : pct >= SPQ_GREAT_PCT ? SPQ.great : pct >= SPQ_NICE_PCT ? SPQ.nice : SPQ.base;
+// 入力の猶予(秒)。ゲーム内公開データ minigameDurationSeconds=7.0。過ぎたらその時点の位置で確定(何もしなければ25%)
+const SPQ_INPUT_SEC = 7;
+// タイムライン・チップに添える札(EXCELLENT=既定は出さない)
+const spqTag = pw => { const t = spqTierOf(pw); return t.pw === 1 ? '' : `<i class="pwtag ${t.k}">${t.label}</i>`; };
+const SPQ_CODE = { [SPQ.nice]: 'n', [SPQ.great]: 'g', [SPQ.base]: 'b' }, SPQ_DECODE = { n: SPQ.nice, g: SPQ.great, b: SPQ.base };
+const SPQ_FIRE = new Set(['opt', 'fire', 'hold1', 'bluff']);   // 入力メーターを通す答え(じぶんのSPを撃つもの)
 // ---- ＋わざは「3本目のSPアタック」として自動で持つ(2026-09-11・公開前の作業B5・タダシさん指示) ----
 // ゲームと同じく、＋わざを持つメガはSP1/SP2とは別枠で＋わざも覚えている(選ばなくても常に3本目)。
 // 足す場所を1か所にするため、エンジンの入口(PvpEngine.simulate)を包む＝1対1・環境一覧・対策さがし・パーティ診断・
@@ -1102,7 +1124,7 @@ const mkSide = () => ({ key: null, shields: 2, timing: 'optimal', fast: null, c1
   shieldMode: null, shieldSlots: [true, true, false, false, false], shieldRest: false,
   spMode: ['opt', 'opt', 'opt', 'opt', 'opt'], spModeRest: 'opt',
   spMv: ['auto', 'auto', 'auto', 'auto', 'auto'], spMvRest: 'auto',
-  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51, megaLv: 4, spOpen: false,
+  ivMode: 'auto', mIvs: null, mLevel: null, shadow: false, maxLv: 51, megaLv: 4, spq: 1, spOpen: false,
   carry: false, cHp: 100, cEn: 0, bluff: false });
 const S = [mkSide(), mkSide()];
 const sideEl = [document.getElementById('sideL'), document.getElementById('sideR')];
@@ -1219,6 +1241,10 @@ sideEl.forEach((el, i) => {
   // メガLv(＋わざを持つメガだけ): 追加SPアタックの威力倍率。既定はLv4(1.3倍)
   el.querySelectorAll('.mlvwrap .mlvseg button').forEach(b => b.onclick = () => {
     S[i].megaLv = +b.dataset.lv; syncSmax(i); run();
+  });
+  // SPの出来(ミニゲームの威力の倍率・2026-09-22): この側のSPアタック全部に効く。既定は100%
+  el.querySelectorAll('.spqwrap .mlvseg button').forEach(b => b.onclick = () => {
+    S[i].spq = +b.dataset.pw; syncSideCtl(i); run();
   });
   // スーパーマックスレベル(メガ専用): PL上限を52/53へ拡張。同じタブ再タップで解除
   el.querySelectorAll('.smax button').forEach(b => b.onclick = () => {
@@ -2135,7 +2161,7 @@ function syncRocket() {
   if (S[1].key) el.querySelector('input').value = 'シャドウ' + D.pokemon[S[1].key].n;
   // シールド(種別で決まる)・タイミング(常に撃てしだい)・連戦(登場の設定で扱う)は選ばせない
   // ★登録リストは「自分の個体値で計算する」ための機能。あいてはNPCで倍率が決まっているので出さない
-  ['.ivmode', '.custIv', '.smaxwrap', '.mlvwrap', '.c2row', '.bluffwrap', '.shields', '.custShield',
+  ['.ivmode', '.custIv', '.smaxwrap', '.mlvwrap', '.spqwrap', '.c2row', '.bluffwrap', '.shields', '.custShield',
    '.timing', '.custSp', '.carry', '.custCarry', '.mypkbar', '.mypklist'].forEach(sel => {
     const n = el.querySelector(sel);
     if (n) n.style.display = 'none';
@@ -2192,12 +2218,12 @@ const LIST_PREV = [null, null];
 function listDefaults(i, on) {
   if (!sideEl[i]) return;
   if (on) {
-    if (!LIST_PREV[i]) LIST_PREV[i] = { timing: S[i].timing, carry: S[i].carry, shieldMode: S[i].shieldMode };
-    S[i].timing = 'optimal'; S[i].carry = false;
+    if (!LIST_PREV[i]) LIST_PREV[i] = { timing: S[i].timing, carry: S[i].carry, shieldMode: S[i].shieldMode, spq: S[i].spq };
+    S[i].timing = 'optimal'; S[i].carry = false; S[i].spq = 1;   // 一覧はSPの出来100%(EXCELLENT)で計算している
     if (S[i].shieldMode === 'plan') { S[i].shieldMode = null; S[i].shields = 2; }
     resetSpPlan(i);
   } else if (LIST_PREV[i]) {
-    S[i].timing = LIST_PREV[i].timing; S[i].carry = LIST_PREV[i].carry; S[i].shieldMode = LIST_PREV[i].shieldMode;
+    S[i].timing = LIST_PREV[i].timing; S[i].carry = LIST_PREV[i].carry; S[i].shieldMode = LIST_PREV[i].shieldMode; S[i].spq = LIST_PREV[i].spq || 1;
     LIST_PREV[i] = null;
     resetSpPlan(i);
   } else return;   // 触っていない側は何もしない(点灯を勝手に書き換えない)
@@ -2209,6 +2235,7 @@ function syncSideCtl(i) {
   if (!el) return;
   el.querySelectorAll('.timing button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S[i].timing));
   el.querySelectorAll('.carry button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === (S[i].carry ? 'on' : 'off')));
+  el.querySelectorAll('.spqwrap .mlvseg button').forEach(b => b.setAttribute('aria-pressed', Math.abs(+b.dataset.pw - (S[i].spq || 1)) < 1e-6));
   el.querySelectorAll('.shields button').forEach(b => b.setAttribute('aria-pressed',
     b.dataset.v === (S[i].shieldMode === 'plan' ? 'plan' : String(S[i].shields))));
   const cs = el.querySelector('.custShield'); if (cs) cs.style.display = S[i].shieldMode ? 'block' : 'none';
@@ -2231,6 +2258,7 @@ function syncMultiPanel(on) {
     const n = el.querySelector(sel);
     if (n && on) n.style.display = 'none';
   });
+  const sq = el.querySelector('.spqwrap'); if (sq) sq.style.display = on ? 'none' : '';   // SPの出来は一覧では100%固定
 }   // 値の既定化・復元は listDefaults(0, …) が担当する(両側に効かせるため)
 function syncCounterPanel(on) {
   const el = sideEl[1];
@@ -2252,6 +2280,7 @@ function syncCounterPanel(on) {
     if (n && on) n.style.display = 'none';
   });
   if (planBtn) planBtn.style.display = on ? 'none' : '';
+  const sq = el.querySelector('.spqwrap'); if (sq) sq.style.display = (on || rkHide) ? 'none' : '';   // SPの出来は一覧・ロケット団のあいてでは出さない
 }   // 値の既定化・復元は listDefaults(1, …) が担当する(両側に効かせるため)
 // ロケット団戦から他のモードへ戻したときに、隠した欄を元に戻す
 function restoreFoeInputs() {
@@ -2723,6 +2752,7 @@ function applyMeta(m, i) {
   i = i === 0 ? 0 : 1;   // 省略時は「あいて」側
   S[i].key = m.k; S[i].shadow = !!m.s;
   S[i].maxLv = 51; S[i].megaLv = MEGA_LV_DEF; syncSmax(i);   // 一覧はメガLv4で計算している(食い違い禁止)
+  S[0].spq = S[1].spq = 1; syncSideCtl(0); syncSideCtl(1);   // 一覧はSPの出来100%で計算している(食い違い禁止)
   sideEl[i].querySelector('.shadowtab').setAttribute('aria-pressed', S[i].shadow);
   // 環境リストのわざ構成(SP2本)とブラフの前提をそのまま引き継ぐ→一覧の結果と1対1シミュの結果が一致する。
   // ブラフは一覧では両者に同じ前提を使っているので、左右そろえて渡す
@@ -4505,19 +4535,25 @@ const rbAnsCount = () => Object.keys(RB.ans).length;
 const RB_CODE = { fire: 'f', wait: 'w', hold: 'h', use: 'u', no: 'n', stay: 'y', order: 'o', to: 't', toq: 'q', auto: 'a', opt: 'p', bluff: 'b', hold1: 'g' };
 const rbAnsToStr = () => Object.keys(RB.ans).map(k => {
   const a = RB.ans[k], c = RB_CODE[a.a] || 'a';
-  const v = a.a === 'fire' ? (a.after ? `${a.mv}~${a.after}` : a.mv)
-    : a.a === 'opt' || a.a === 'hold1' ? a.mv : a.a === 'bluff' ? `${a.mv}~${a.until}`
+  // SPの出来は わざID の後ろに「!n」(NICE)「!g」(GREAT)「!b」(25%) を添える(EXCELLENT=無印・2026-09-22)
+  const mvq = a.mv + (a.pw != null && a.pw !== 1 && SPQ_CODE[a.pw] ? '!' + SPQ_CODE[a.pw] : '');
+  const v = a.a === 'fire' ? (a.after ? `${mvq}~${a.after}` : mvq)
+    : a.a === 'opt' || a.a === 'hold1' ? mvq : a.a === 'bluff' ? `${mvq}~${a.until}`
     : a.a === 'wait' ? a.n : (a.a === 'to' || a.a === 'toq') ? a.to : null;
   return `${k.replace(/:/g, '.')}~${c}${v != null ? '~' + v : ''}`;
 }).join(',');
 function rbAnsFromStr(str) {
   str.split(',').forEach(s => {
-    const [k, c, v, v2] = s.split('~');
+    const [k, c, v0, v2] = s.split('~');
     if (!k || !c) return;
-    const a = c === 'f' ? (D.moves[v] ? { a: 'fire', mv: v, ...(+v2 ? { after: Math.max(1, Math.min(9, +v2)) } : {}) } : null)
-      : c === 'p' ? (D.moves[v] ? { a: 'opt', mv: v } : null)   // このわざを最適タイミングで(2026-08-20)
-      : c === 'g' ? (D.moves[v] ? { a: 'hold1', mv: v } : null)   // 0.5秒待ってから撃つ=交代受けを防ぐ(2026-09-08)
-      : c === 'b' ? (D.moves[v] ? { a: 'bluff', mv: v, until: Math.max(0, Math.min(100, +v2 || 0)) } : null)   // ためてブラフ(2026-08-30)
+    // わざIDの後ろの「!n/!g/!b」はSPの出来(2026-09-22)。無印はEXCELLENT
+    const [v, q0] = (v0 || '').split('!');
+    const pw = SPQ_DECODE[q0];
+    const wp = a => (a && pw != null) ? { ...a, pw } : a;
+    const a = c === 'f' ? wp(D.moves[v] ? { a: 'fire', mv: v, ...(+v2 ? { after: Math.max(1, Math.min(9, +v2)) } : {}) } : null)
+      : c === 'p' ? wp(D.moves[v] ? { a: 'opt', mv: v } : null)   // このわざを最適タイミングで(2026-08-20)
+      : c === 'g' ? wp(D.moves[v] ? { a: 'hold1', mv: v } : null)   // 0.5秒待ってから撃つ=交代受けを防ぐ(2026-09-08)
+      : c === 'b' ? wp(D.moves[v] ? { a: 'bluff', mv: v, until: Math.max(0, Math.min(100, +v2 || 0)) } : null)   // ためてブラフ(2026-08-30)
       : c === 'w' ? { a: 'wait', n: Math.max(1, Math.min(9, +v || 1)) }
       : c === 'h' ? { a: 'hold' } : c === 'u' ? { a: 'use' } : c === 'n' ? { a: 'no' }
       : c === 'y' ? { a: 'stay' } : c === 'o' ? { a: 'order' }
@@ -4765,13 +4801,13 @@ function rbApply(dec, p, ans) {
     // おまかせ＝エンジンの最適タイミング判断にゆだねる(従来の自動とまったく同じ動き)
     if (ans.a === 'auto') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: null }; dec.wait = 0; }
     // 最適(わざ指定・2026-08-20): このわざを、エンジンの最適タイミングで撃つ
-    else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: ans.mv }; dec.wait = 0; }
+    else if (ans.a === 'opt') { dec.shots[p.seq] = { wait: 'opt', after: dec.wait, mv: ans.mv, pw: ans.pw }; dec.wait = 0; }
     // 交代受けを防ぐ(2026-09-08): **0.5秒(1ターン)何も打たずに待ってから**そのわざを撃つ。
     // 自分のノーマルアタックの周期が1ターンずれるので、あいての交代の切れ目から外れる
-    else if (ans.a === 'hold1') { dec.shots[p.seq] = { wait: 'hold', hold: 1, after: dec.wait, mv: ans.mv }; dec.wait = 0; }
-    else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait + (ans.after || 0), mv: ans.mv }; dec.wait = 0; }
+    else if (ans.a === 'hold1') { dec.shots[p.seq] = { wait: 'hold', hold: 1, after: dec.wait, mv: ans.mv, pw: ans.pw }; dec.wait = 0; }
+    else if (ans.a === 'fire') { dec.shots[p.seq] = { wait: dec.wait + (ans.after || 0), mv: ans.mv, pw: ans.pw }; dec.wait = 0; }
     // ためてブラフ(2026-08-30): 重いわざのゲージ(until)までためてから軽いわざ(mv)を撃つ
-    else if (ans.a === 'bluff') { dec.shots[p.seq] = { wait: 'en', until: ans.until, mv: ans.mv }; dec.wait = 0; }
+    else if (ans.a === 'bluff') { dec.shots[p.seq] = { wait: 'en', until: ans.until, mv: ans.mv, pw: ans.pw }; dec.wait = 0; }
     else if (ans.a === 'wait') dec.wait += ans.n;
     else dec.hold = true;
   } else if (p.kind === 'sh') {
@@ -5199,6 +5235,91 @@ function bindPace(dock, startTimer) {
     ov.querySelectorAll('.pwpre button').forEach(x => x.onclick = () => { set(+x.dataset.v); sync(); });
     ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
   };
+}
+// ==== SPアタックの出来(ミニゲーム)の入力メーター「威力調整」(2026-09-22タダシさん指示) ====
+// 模擬戦でじぶんのSPを撃つと決めた瞬間(カットインの前)に、画面の真ん中へ出す。
+// 指を左から右へスライドし、離した位置の％で威力が決まる:
+//   30%未満=25%(何も取れない) ／ 30〜69%=NICE(50%) ／ 70〜99%=GREAT(75%) ／ 右端(100%)=EXCELLENT(100%)(2026-09-22タダシさん指定)
+// 離した瞬間に、出来に応じた色で光る(NICE=白〜氷色・GREAT=黄・EXCELLENT=オレンジ)。
+// 実戦と同じく時間は流れる: 入力の猶予7秒(過ぎたらその位置で確定)と、バトルの残り時間(opt.ck=その瞬間の時計)を減らして見せる。
+// ⚠ 表示だけ。バトルの時計はSP1発10秒(GB_SP_TURNS)で数えるのは従来どおり
+// 倍率はエンジンの CHARGE_PW(ゲーム内公開データ)。見た目は gbl.css の .spqwin 〜
+function spqMeter(mvId, done, cancel, opt) {
+  document.getElementById('spqwin')?.remove();
+  const m = D.moves[mvId];
+  const ja = m ? (D.typeJa[m.t] || '') : '';
+  const col = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
+  const ov = document.createElement('div');
+  ov.id = 'spqwin'; ov.className = 'spqwin';
+  ov.innerHTML = `<div class="sqbox" role="dialog" aria-label="威力調整" data-zone="base" style="--tc1:${col.top};--tc2:${col.bot}">
+    <button class="sqx" title="やめる（選び直す）" aria-label="やめる">✕</button>
+    <div class="sqtime"><span class="sqleft" title="バトルの残り時間（入力のあいだも減ります）">⏱ <b>--:--</b></span><span class="sqin" title="入力の猶予（過ぎるとその位置で確定）"><i class="sqinbar"><i></i></i><b>7.0</b></span></div>
+    <div class="sqhead"><span class="sqty">${typeIconHTML(ja, 34)}</span><span class="sqttl">威力調整</span><b class="sqmv">${m ? m.n : ''}</b></div>
+    <div class="sqpct"><b>0</b><i>%</i></div>
+    <div class="sqmeter"><div class="sqtrack">
+      <i class="sqfill"></i><i class="sqglow"></i><i class="sqtick" style="left:${SPQ_NICE_PCT}%"></i><i class="sqtick" style="left:${SPQ_GREAT_PCT}%"></i><b class="sqknob"></b>
+    </div><div class="sqscale"><span class="s0">0</span><span style="left:${SPQ_NICE_PCT}%">NICE</span><span style="left:${SPQ_GREAT_PCT}%">GREAT</span><span class="s100">MAX</span></div></div>
+    <div class="sqjudge" aria-live="polite"></div>
+    <div class="sqhint">左から右へスライドして、はなす</div>
+    <i class="sqburst"></i><i class="sqring"></i><i class="sqring r2"></i>
+    <span class="sqsp p1"></span><span class="sqsp p2"></span><span class="sqsp p3"></span><span class="sqsp p4"></span><span class="sqsp p5"></span><span class="sqsp p6"></span><span class="sqsp p7"></span><span class="sqsp p8"></span>
+  </div>`;
+  document.body.appendChild(ov);
+  const box = ov.querySelector('.sqbox'), track = ov.querySelector('.sqtrack');
+  const pctEl = ov.querySelector('.sqpct b'), judge = ov.querySelector('.sqjudge');
+  let pct = 0, dragging = false, fired = false;
+  const tierOf = v => v >= 100 ? 'excellent' : v >= SPQ_GREAT_PCT ? 'great' : v >= SPQ_NICE_PCT ? 'nice' : 'base';
+  const LIVE = { excellent: 'EXCELLENT!', great: 'GREAT!', nice: 'NICE!', base: '' };
+  const setPct = v => {
+    pct = Math.max(0, Math.min(100, v));
+    if (pct >= 97) pct = 100;   // 右端は指が届きにくいので少し甘く
+    box.style.setProperty('--pct', pct + '%');
+    pctEl.textContent = String(Math.round(pct));
+    box.dataset.zone = tierOf(pct);
+    judge.textContent = LIVE[tierOf(pct)];
+  };
+  const xToPct = x => { const r = track.getBoundingClientRect(); return r.width ? (x - r.left) / r.width * 100 : 0; };
+  const onDown = e => {
+    if (fired) return;
+    dragging = true; box.classList.add('drag');
+    try { track.setPointerCapture(e.pointerId); } catch (x) {}
+    setPct(xToPct(e.clientX)); e.preventDefault();
+  };
+  const onMove = e => { if (!dragging || fired) return; setPct(xToPct(e.clientX)); e.preventDefault(); };
+  // 時間: バトルの残り時間(opt.ck=その瞬間の時計・ターン換算)と入力の猶予7秒を0.1秒ごとに減らす。猶予が切れたらその位置で確定
+  const t0 = performance.now();
+  const leftEl = ov.querySelector('.sqleft b'), inEl = ov.querySelector('.sqin b'), inBar = ov.querySelector('.sqinbar i');
+  const ck0 = opt && opt.ck != null ? opt.ck : null;
+  const tickT = () => {
+    const el = (performance.now() - t0) / 1000;
+    const inLeft = Math.max(0, SPQ_INPUT_SEC - el);
+    inEl.textContent = inLeft.toFixed(1);
+    inBar.style.width = (inLeft / SPQ_INPUT_SEC * 100) + '%';
+    ov.querySelector('.sqin').classList.toggle('low', inLeft <= 2);
+    if (ck0 != null) {
+      const leftT = Math.max(0, GB_ROUND_TURNS - ck0 - el * 2);
+      leftEl.textContent = rbClock(leftT) + '.' + Math.floor((leftT / 2 % 1) * 10);
+      ov.querySelector('.sqleft').classList.toggle('low', leftT < 120);
+    }
+    if (inLeft <= 0 && !fired) { dragging = true; onUp(); }   // 猶予切れ: 触っていなければ0%=25%で確定
+  };
+  const timer = setInterval(tickT, 100);
+  const onUp = () => {
+    if (!dragging || fired) return;
+    clearInterval(timer);
+    dragging = false; fired = true; box.classList.remove('drag');
+    const tier = tierOf(pct), pw = spqFromPct(pct);
+    box.dataset.tier = tier; box.classList.add('fire');
+    judge.textContent = tier === 'base' ? '威力 25%' : LIVE[tier];
+    const S2 = SND(); if (S2 && S2.spq) S2.spq(tier);
+    setTimeout(() => { ov.remove(); done(pw); }, tier === 'base' ? 700 : 1150);
+  };
+  track.addEventListener('pointerdown', onDown);
+  track.addEventListener('pointermove', onMove);
+  track.addEventListener('pointerup', onUp);
+  track.addEventListener('pointercancel', onUp);
+  ov.querySelector('.sqx').onclick = () => { if (fired) return; clearInterval(timer); ov.remove(); if (cancel) cancel(); };
+  setPct(0); tickT();
 }
 const RBUI = { pts: {}, order: [], open: null };
 // next(倒れて次を出す)に💀を付けない: 場に出したポケモンが倒れたように見える(2026-08-30タダシさん指摘)
@@ -5777,7 +5898,7 @@ function rbRender(body, bt, picks, foes, extra) {
   const evCell = (list, defKey) => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     // 「こうかばつぐん／いまひとつ」の札は2026-09-10タダシさん指示で廃止(行がうるさくて見づらい)
-    if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
+    if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${spqTag(e.pw)}${
       e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
     return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
@@ -8883,19 +9004,19 @@ function gbAskTitle(p) {
 }
 function gbAnsLabel(p, a) {
   if (!a) return '？';
-  if (p.kind === 'msp') return a.a === 'late' ? 'SPの入力が間に合わなかった' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;   // リアルタイムで押したSP
+  if (p.kind === 'msp') return a.a === 'late' ? 'SPの入力が間に合わなかった' : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${spqTag(a.pw)}`;   // リアルタイムで押したSP
   if (p.kind === 'sp') {
     if (a.a === 'auto') return 'おまかせ';
     // あいてのSPが2本(またはわざオート)なら、チップにもわざ名を出さない(2026-08-20タダシさん指示。
     // 撃つ前にチップが見えるので、名前を出すとあいてのブラフが成立しない)
     const hide = p.side && p.ctx && ((p.ctx.spList[1] || []).length >= 2 || MK.foeAuto);
-    if (a.a === 'opt') return hide ? '▶ SPアタック' : `${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'opt') return hide ? '▶ SPアタック' : `${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${spqTag(a.pw)}`;
     // 0.5秒待ってから撃った(交代受けを防ぐ)。あいて側は従来どおり名前を隠す
-    if (a.a === 'hold1') return hide ? '▶ SPアタック' : `⏸ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+    if (a.a === 'hold1') return hide ? '▶ SPアタック' : `⏸ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${spqTag(a.pw)}`;
     // 「交代受けを防ぐ」(after付き)は、はさんだ発数もチップに出す(あとから見て何をしたか分かるように)
     if (a.a === 'fire') return hide ? '▶ SPアタック'
-      : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${a.after ? `＋${a.after}` : ''}`;
-    if (a.a === 'bluff') return hide ? '▶ SPアタック' : `ため→${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}`;
+      : `▶ ${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${a.after ? `＋${a.after}` : ''}${spqTag(a.pw)}`;
+    if (a.a === 'bluff') return hide ? '▶ SPアタック' : `ため→${D.moves[a.mv] ? D.moves[a.mv].n : a.mv}${spqTag(a.pw)}`;
     if (a.a === 'wait') return `＋${a.n}`;
     return '撃たない';
   }
@@ -8987,6 +9108,7 @@ function gbPlayCore(picks, foes, ans, stepwise) {
   // 交代前に投げられたSP(2026-09-08タダシさん指示): 対面が切れた次のターンに着弾するはずだったSPは
   // 「投げ済み」として持ち越し、新しい対面の頭でそのわざを即打ちする(交代先を見て選び直さない)。両側とも同じ扱い
   let inflight = [null, null];
+  let inflightPw = [null, null];   // 投げ済みSPの出来(威力の倍率・入力メーターで決めた値を交代先にもそのまま当てる)
   let carryMsw = null;   // 押したまま起きなかった交代を次の対面へ持ち越す(2026-09-10)
   // ---- あいてAIは「判断した時点より前に押されたSP」しか知らない(2026-09-10・リアルタイム) ----
   // じぶんが押したSPは台本(mspPlan)としてエンジンに渡すが、全部をそのまま渡すと、**押す前のターンにしたAIの判断まで
@@ -10223,13 +10345,13 @@ function gbPlayCore(picks, foes, ans, stepwise) {
     // 「指定ターン以降の最初の切れ目で撃つ」をそのまま使う。押していなければ一度も撃たない(実戦と同じ)
     const rt = rtOn();
     const mspPlan = !rt ? [] : Object.keys(ans).filter(k => k.indexOf(li + ':0:msp:') === 0)
-      .map(k => ({ on: +k.split(':')[3], move: ans[k] && ans[k].mv, key: k }))
+      .map(k => ({ on: +k.split(':')[3], move: ans[k] && ans[k].mv, pw: ans[k] && ans[k].pw, key: k }))
       .filter(x => x.on >= 1 && x.move && (P0.pol.charged || []).includes(x.move))
       .sort((a, b) => a.on - b.on);
     // 交代前に押していたSP(投げ済み)は、この対面の頭で撃つ(あいてが交代受けをしても押したぶんは消えない)
     if (rt && inflight[0] && (P0.pol.charged || []).includes(inflight[0])) {
       const k1 = gbKey(li, 0, 'msp', 1, 0);
-      if (!mspPlan.some(x => x.key === k1)) mspPlan.unshift({ on: 1, move: inflight[0], key: k1 });
+      if (!mspPlan.some(x => x.key === k1)) mspPlan.unshift({ on: 1, move: inflight[0], pw: inflightPw[0], key: k1 });
     }
     // 押した瞬間のターン(対面の中の何ターン目)。交代前に投げたSP(inflight)は対面の頭より前＝0
     const mspPressOf = x => { const a = ans[x.key]; return a && a.p != null ? a.p : 0; };
@@ -10238,11 +10360,11 @@ function gbPlayCore(picks, foes, ans, stepwise) {
       const P = ros[s][cur[s]], d = dec[s];
       const c = { ...P.base, fast: P.pol.fast, charged: (P.pol.charged || []).slice(), shields: shLeft[s],
         bluff: s === 1 ? (ai.bluff && !ai.proBluff) : false, timing: 'shots',
-        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until, hold: x.hold })), shotRest: null,
+        shotPlan: d.shots.map(x => ({ mode: x.wait, move: x.mv, after: x.after, until: x.until, hold: x.hold, pw: x.pw })), shotRest: null,
         shieldPlan: d.shieldAt.slice(), shieldRest: false };
       if (rt && s === 0) {
         const vis = aiSee == null ? mspPlan : mspPlan.filter(x => mspPressOf(x) < aiSee);
-        c.timing = 'plan'; c.plan = vis.map(x => ({ on: x.on, move: x.move })); delete c.shotPlan;
+        c.timing = 'plan'; c.plan = vis.map(x => ({ on: x.on, move: x.move, pw: x.pw })); delete c.shotPlan;
       }
       if (st[s][cur[s]].resume) c.resume = st[s][cur[s]].resume;
       if (lag[s]) c.stallStart = lag[s];
@@ -10505,7 +10627,7 @@ function gbPlayCore(picks, foes, ans, stepwise) {
       // 投げ済みのSP: 対面の頭の最初のSPは、交代前に投げたわざをそのまま即打ち(交代先を見て選び直さない)。
       // 投げている最中は交代もできない(あいての対面の頭の「交代する？」は残る)
       let forced = null;
-      if (p.kind === 'sp' && p.seq === 0 && inflight[p.side]) forced = { a: 'fire', mv: inflight[p.side] };
+      if (p.kind === 'sp' && p.seq === 0 && inflight[p.side]) forced = { a: 'fire', mv: inflight[p.side], pw: inflightPw[p.side] };
       else if (p.kind === 'swap' && p.seq === 0 && p.side === 1 && inflight[1]) forced = { a: 'stay' };
       // 古い答え・投げ済みが、いま場に出ているポケモンのわざ／出せる控えに合わなければ無かったことにする(ansFits)
       const chS = ((p.side ? P1 : P0).pol.charged) || [];
@@ -10557,7 +10679,7 @@ function gbPlayCore(picks, foes, ans, stepwise) {
         const ft = tlF.find(t => t.tn >= x.on && !used.has(t.tn) && (t.ev[0] || []).some(e => e && e.full !== undefined));
         if (!ft) continue;
         used.add(ft.tn);
-        log.push({ side: 0, kind: 'msp', seq: x.on, w: 0, tn: ft.tn, key: x.key, gt: base + ft.tn, ans: { a: 'fire', mv: x.move }, auto: false });
+        log.push({ side: 0, kind: 'msp', seq: x.on, w: 0, tn: ft.tn, key: x.key, gt: base + ft.tn, ans: { a: 'fire', mv: x.move, pw: x.pw }, auto: false });   // pw=出来(チップの札)
       }
     }
     const down = [res.final[0].hp <= 0, res.final[1].hp <= 0];
@@ -10592,7 +10714,7 @@ function gbPlayCore(picks, foes, ans, stepwise) {
     // 従来は対面が切れると新しい対面の頭でSPを選び直していたので、あいてが**交代先を見てから**
     // 効くわざを撃っているように見えた(交代受けの意味が薄れる)。切れ目の次のターンに着弾する
     // SPがあれば、その側の「投げ済み」として持ち越す(交代した側のSPは投げていないので対象外)
-    inflight = [null, null];
+    inflight = [null, null]; inflightPw = [null, null];
     if (res.stopped && (swapped[0] || swapped[1])) {
       const S = res.turns;
       const t2 = rbTurns(PvpEngine.simulate(D, legCfg(0), legCfg(1), { ...SIMOPT, stopAt: S + 1 })).find(t => t.tn === S + 1);
@@ -10602,7 +10724,12 @@ function gbPlayCore(picks, foes, ans, stepwise) {
         if (!e) continue;
         const P = s ? P1 : P0;
         const id = (P.pol.charged || []).find(k => D.moves[k] && D.moves[k].n === e.move);
-        if (id) inflight[s] = id;
+        if (id) {
+          inflight[s] = id;
+          // この対面で撃った数＝次の発の番号。その発の答えの出来(pw)を持ち越す
+          const nFired = res.rows.filter(r => r.ev[s] && r.ev[s].full !== undefined).length;
+          inflightPw[s] = (dec[s].shots[nFired] || {}).pw;
+        }
       }
     }
     // optNs・noSpはじぶん側のSPだけ計算する(あいて側の編集ウィンドウでは表示に出ないだけ。
@@ -10864,7 +10991,7 @@ function gbRender(body, bt, picks, foes) {
   const evCell = (list, defKey) => list.map(e => {
     const b = e.buff ? buffTag(e.buff) : '';
     // 「こうかばつぐん／いまひとつ」の札は2026-09-10タダシさん指示で廃止(行がうるさくて見づらい)
-    if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${
+    if (e.full !== undefined) return `<span class="ev sp">${mvChip(e.move, 13)}${spqTag(e.pw)}${
       e.shielded ? '' : `<b class="dmg">-${e.dmg}</b>`}${b}</span>${gulpCell(e)}`;
     return `<span class="ev">${mvChip(e.move, 12)}<b class="dmg">-${e.dmg}</b>${b}</span>`;
   }).join('');
@@ -11609,17 +11736,24 @@ function gbRender(body, bt, picks, foes) {
       if (b.classList.contains('wdet')) { b.onclick = () => showWin(p, editing, true); return; }
       b.onclick = () => {
         clearInterval(RBV.cdTimer); RBV.cdTimer = null;
-        const prevA = RB.ans[p.key];
-        rbTrim(p.key);
-        if (b.dataset.i === 'reset') delete RB.ans[p.key];
-        else {
-          RB.ans[p.key] = withT(p.opts[+b.dataset.i]);
-          // 交代の選び直しでは押した瞬間(p・遅い交代受けの判定に使う)を引き継ぐ(2026-09-10)
-          if (p.kind === 'msw' && prevA && prevA.p != null && RB.ans[p.key].p == null) RB.ans[p.key].p = prevA.p;
-        }
-        RBUI.open = null; RBV.playing = true;
-        RBV.hold = GB_ANS_HOLD;   // 答えた直後は少し間を置く(交代受けの構えを取る時間)
-        run();
+        const o = b.dataset.i === 'reset' ? null : p.opts[+b.dataset.i];
+        const commit = pw => {
+          const prevA = RB.ans[p.key];
+          rbTrim(p.key);
+          if (!o) delete RB.ans[p.key];
+          else {
+            RB.ans[p.key] = withT(o);
+            if (pw != null) RB.ans[p.key].pw = pw;   // SPの出来(入力メーターで決めた威力の倍率)
+            // 交代の選び直しでは押した瞬間(p・遅い交代受けの判定に使う)を引き継ぐ(2026-09-10)
+            if (p.kind === 'msw' && prevA && prevA.p != null && RB.ans[p.key].p == null) RB.ans[p.key].p = prevA.p;
+          }
+          RBUI.open = null; RBV.playing = true;
+          RBV.hold = GB_ANS_HOLD;   // 答えた直後は少し間を置く(交代受けの構えを取る時間)
+          run();
+        };
+        // じぶんのSPを撃つ答えは、先に入力メーター(SPの出来)を通してから記録する(2026-09-22タダシさん指示・カットインの前)
+        if (o && p.kind === 'sp' && !p.side && SPQ_FIRE.has(o.a)) { spqMeter(o.mv, commit, null, { ck: p.ck != null ? p.ck : p.gt }); return; }
+        commit(null);
       };
     });
     // ---- リアルタイム: シールドと次のポケモンは10秒の猶予(2026-09-08タダシさん指示) ----
@@ -12051,22 +12185,28 @@ function gbRender(body, bt, picks, foes) {
     }
     if (RB.ans[key] && !RB.ans[key].late) return;   // 同じ切れ目に何度押しても1発(間に合わなかった入力は押し直せる)
     const chained = on !== t.on;   // 2発目として後ろにつないだ
-    const ok = commitAns(() => {
-      // この場面より後ろの答えは消す(前提が変わるため)。
-      // ⚠ ただし2発目として後ろにつないだときは、同じ対面でそれより前に入っているSPの予約(1発目)は消さない
-      //   (消すと「2発目を入れたつもりが、1発目を2発目で置き換える」ことになる・実際に踏んだ)
-      Object.keys(RB.ans).forEach(k2 => {
-        if (chained && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] < on) return;
-        const pt2 = RBUI.pts[k2];
-        if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li)
-            || (!pt2 && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] > on)) delete RB.ans[k2];
+    const go = pw => {
+      const ok = commitAns(() => {
+        // この場面より後ろの答えは消す(前提が変わるため)。
+        // ⚠ ただし2発目として後ろにつないだときは、同じ対面でそれより前に入っているSPの予約(1発目)は消さない
+        //   (消すと「2発目を入れたつもりが、1発目を2発目で置き換える」ことになる・実際に踏んだ)
+        Object.keys(RB.ans).forEach(k2 => {
+          if (chained && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] < on) return;
+          const pt2 = RBUI.pts[k2];
+          if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li)
+              || (!pt2 && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] > on)) delete RB.ans[k2];
+        });
+        RB.ans[key] = { a: 'fire', mv, p: t.p, pw };
       });
-      RB.ans[key] = { a: 'fire', mv, p: t.p };
-    });
-    if (!ok) return;
-    RBUI.open = null;
-    RBV.keepFx = true;
-    run();
+      if (!ok) { if (RBV.playing && !RBV.timer) startTimer(); return; }
+      RBUI.open = null;
+      RBV.keepFx = true;
+      run();
+    };
+    // 押した瞬間に入力メーター(SPの出来・2026-09-22タダシさん指示)。メーターのあいだ再生は止める
+    // (記録するターンは押した瞬間のまま。実戦でもミニゲームのあいだは画面が止まる)
+    stopTimer();
+    spqMeter(mv, go, () => { if (RBV.playing && !RBV.timer) startTimer(); }, { ck: ckOf(gt) });
   };
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
@@ -12310,9 +12450,9 @@ function run() {
   const myStall = rk ? RK_ENTER[RK.enter].me : 0;
   const base = S.map((s, i) => {
     const c = carryOf(i);
-    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), ...c };
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ...c };
     const r1 = rank1(s.key, capX, 0, s.maxLv, s.shadow);
-    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), ...c };
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ...c };
   });
   if (myStall) base[0].stallStart = myStall;
   // マニュアル個体値のCPと実数値を表示し、リーグ上限超えは警告する(計算は続行)。
@@ -12785,6 +12925,7 @@ function updateUrl() {
     if (s.shadow) qp[i ? 'shr' : 'shl'] = 1;
     if (s.maxLv !== 51) qp[i ? 'mlr' : 'mll'] = s.maxLv;
     if (hasPlus(s.key) && megaLvOf(s) !== MEGA_LV_DEF) qp[i ? 'mgr' : 'mgl'] = s.megaLv;   // メガLv(＋わざの威力倍率・既定4)
+    if ((s.spq || 1) !== 1) qp[i ? 'sqr' : 'sql'] = s.spq;   // SPの出来(威力の倍率・既定1=EXCELLENT)
     if (s.carry) qp[i ? 'cyr' : 'cyl'] = s.cHp + '.' + s.cEn;   // 連戦(開始HP%.開始ゲージ)
     if (s.bluff) qp[i ? 'bfr' : 'bfl'] = 1;   // ブラフする設定(既定はしない)
     // わざ構成(ノーマル~SP1~SP2)。手動選択は「!」付き、自動選出の確定値はそのまま書く。
@@ -13541,6 +13682,10 @@ const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } }
   ['mgl', 'mgr'].forEach((k, i) => {   // メガLv(＋わざの威力倍率)の復元
     const v = +q.get(k);
     if (MEGA_MULT[v] && S[i].key) { S[i].megaLv = v; syncSmax(i); }
+  });
+  ['sql', 'sqr'].forEach((k, i) => {   // SPの出来(威力の倍率)の復元
+    const v = +q.get(k);
+    if (SPQ_TIERS.some(t => Math.abs(t.pw - v) < 1e-6)) { S[i].spq = v; syncSideCtl(i); }
   });
   ['il', 'ir'].forEach((k, i) => {   // マニュアル個体値(攻.防.HP.PL)の復元
     const v = q.get(k); if (!v) return;

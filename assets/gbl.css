@@ -3009,3 +3009,93 @@ button.sdchip.on .tbadge{filter:none}
 .phd button{min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:.78rem}
 .phd .pshadow{font-size:.9rem}
 .hctl button::after{content:'';position:absolute;inset:-7px -2px}
+
+
+/* ==== SPアタックの出来「威力調整」の入力メーター(2026-09-22タダシさん指示) ====
+   模擬戦でじぶんのSPを撃つと決めた瞬間(カットインの前)に画面の真ん中へ出す。指を左から右へスライドし、離した位置で威力が決まる。
+   ゾーンの色: 25%=青灰 ／ NICE=白〜氷色 ／ GREAT=黄 ／ EXCELLENT=オレンジ。離した瞬間にその色で光る(.fire) */
+.spqwin{position:fixed;inset:0;z-index:2147483001;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:rgba(4,8,20,.66);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.sqbox{--pct:0%;--z1:#cfd8ee;--z2:#7f92c4;--zg:rgba(127,146,196,.35);position:relative;width:min(100%,400px);padding:12px 18px 16px;border-radius:22px;overflow:hidden;
+  background:linear-gradient(180deg,#1e2850,#111731);border:1px solid rgba(255,255,255,.14);box-shadow:0 16px 44px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);
+  color:var(--ink);user-select:none;-webkit-user-select:none;text-align:center;touch-action:none}
+.sqbox[data-zone="nice"]{--z1:#ffffff;--z2:#bfe3ff;--zg:rgba(215,236,255,.55)}
+.sqbox[data-zone="great"]{--z1:#fff4b0;--z2:#ffcc2e;--zg:rgba(255,214,60,.55)}
+.sqbox[data-zone="excellent"]{--z1:#ffd9a3;--z2:#ff7d1f;--zg:rgba(255,140,40,.6)}
+.sqx{position:absolute;top:8px;right:10px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);
+  color:var(--sub);font-size:.9rem;line-height:1;cursor:pointer;z-index:3}
+/* 時間: 左=バトルの残り時間・右=入力の猶予(7秒のバー) */
+.sqtime{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 30px 6px 0;font-size:.72rem;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums}
+.sqtime b{font-size:.92rem;color:var(--ink)}
+.sqleft.low b{color:#ff6b6b}
+.sqin{display:inline-flex;align-items:center;gap:6px}
+.sqinbar{position:relative;width:64px;height:6px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
+.sqinbar i{position:absolute;left:0;top:0;bottom:0;width:100%;border-radius:3px;background:linear-gradient(90deg,#43e0ff,#8ff5ff);transition:width .1s linear}
+.sqin.low .sqinbar i{background:linear-gradient(90deg,#ff5c5c,#ffb14a)}
+.sqin.low b{color:#ff6b6b}
+.sqhead{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 2px}
+.sqhead .sqty{display:inline-flex;filter:drop-shadow(0 0 8px var(--zg))}
+.sqhead .sqttl{font-size:.66rem;font-weight:800;letter-spacing:.26em;color:var(--sub)}
+.sqhead .sqmv{font-size:.92rem;font-weight:900;letter-spacing:.02em}
+.sqpct{font-size:2.7rem;font-weight:900;line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin:8px 0 12px;color:var(--z1);
+  text-shadow:0 0 18px var(--zg),0 2px 0 rgba(0,0,0,.35);transition:color .15s}
+.sqpct i{font-style:normal;font-size:1rem;margin-left:3px;color:var(--sub)}
+.sqmeter{padding:0 4px}
+.sqtrack{position:relative;height:40px;border-radius:20px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.36));border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.06);touch-action:none;cursor:pointer}
+.sqfill,.sqglow{position:absolute;inset:0;border-radius:20px;pointer-events:none;
+  background:linear-gradient(90deg,#5b6f9e 0%,#b9c8ea 28%,#ffffff 32%,#e2f1ff 60%,#ffe680 70%,#ffb347 92%,#ff6a00 100%);
+  clip-path:inset(0 calc(100% - var(--pct)) 0 0 round 20px);transition:clip-path .04s linear}
+.sqglow{filter:blur(9px);opacity:.55;transform:scale(1.02,1.35)}
+.sqtick{position:absolute;top:6px;bottom:6px;width:2px;margin-left:-1px;border-radius:1px;background:rgba(255,255,255,.35);pointer-events:none}
+.sqknob{position:absolute;top:50%;left:var(--pct);width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,#ffffff 0%,#dfe8f8 45%,#a9b8d6 100%);border:2px solid var(--z2);
+  box-shadow:0 0 0 4px rgba(255,255,255,.12),0 0 16px var(--zg),0 3px 8px rgba(0,0,0,.5);transition:transform .12s,border-color .15s,box-shadow .15s}
+.sqbox.drag .sqknob{transform:scale(1.16);box-shadow:0 0 0 6px rgba(255,255,255,.14),0 0 26px var(--zg),0 3px 8px rgba(0,0,0,.5)}
+.sqscale{position:relative;height:16px;margin-top:6px;font-size:.6rem;font-weight:800;letter-spacing:.06em;color:var(--sub)}
+.sqscale span{position:absolute;top:0;transform:translateX(-50%)}
+.sqscale .s0{left:0;transform:none}
+.sqscale .s100{right:0;transform:none;color:#ffb347}
+.sqjudge{height:2.4rem;margin-top:10px;font-size:1.7rem;font-weight:900;font-style:italic;letter-spacing:.06em;line-height:2.4rem;color:var(--z1);
+  text-shadow:0 0 14px var(--zg),0 0 30px var(--zg),0 2px 0 rgba(0,0,0,.4);transition:color .15s}
+.sqhint{font-size:.66rem;color:var(--sub);margin-top:4px;transition:opacity .2s}
+.sqbox.fire .sqhint,.sqbox.fire .sqx{opacity:0;pointer-events:none}
+/* 離した瞬間の光: 面いっぱいの閃光(sqburst)・広がる輪(sqring)・飛び散る粒(sqsp)。色は出来(data-tier)で決まる */
+.sqburst,.sqring,.sqsp{position:absolute;pointer-events:none;opacity:0}
+.sqburst{inset:-10%;background:radial-gradient(circle at 50% 62%,var(--z1) 0%,var(--zg) 22%,transparent 58%)}
+.sqring{left:50%;top:62%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:3px solid var(--z1);box-shadow:0 0 18px var(--zg),inset 0 0 12px var(--zg)}
+.sqsp{left:50%;top:62%;width:7px;height:7px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--z1);box-shadow:0 0 10px var(--z2)}
+.sqbox.fire .sqburst{animation:sqburst 1.05s ease-out forwards}
+.sqbox.fire .sqring{animation:sqring 1s cubic-bezier(.2,.8,.2,1) forwards}
+.sqbox.fire .sqring.r2{animation-delay:.12s}
+.sqbox.fire .sqjudge{animation:sqpop .7s cubic-bezier(.2,1.4,.4,1) both}
+.sqbox.fire .sqpct{animation:sqpctpop .5s ease-out}
+.sqbox.fire .sqsp{animation:sqsp .9s ease-out forwards}
+.sqbox.fire .p1{--dx:-110px;--dy:-70px}.sqbox.fire .p2{--dx:120px;--dy:-60px}.sqbox.fire .p3{--dx:-60px;--dy:-120px}.sqbox.fire .p4{--dx:70px;--dy:-115px}
+.sqbox.fire .p5{--dx:-140px;--dy:10px}.sqbox.fire .p6{--dx:140px;--dy:20px}.sqbox.fire .p7{--dx:-30px;--dy:-140px;animation-delay:.06s}.sqbox.fire .p8{--dx:40px;--dy:-135px;animation-delay:.06s}
+/* 25%(何も取れない)は光らせない。NICEは白の閃光だけ控えめ・GREATは輪1つ・EXCELLENTは輪2つ＋粒 */
+.sqbox.fire[data-tier="base"] .sqburst,.sqbox.fire[data-tier="base"] .sqring,.sqbox.fire[data-tier="base"] .sqsp{animation:none}
+.sqbox.fire[data-tier="nice"] .sqsp,.sqbox.fire[data-tier="nice"] .sqring.r2{animation:none}
+.sqbox.fire[data-tier="great"] .sqring.r2{animation:none}
+.sqbox.fire[data-tier="nice"] .sqjudge{background:linear-gradient(180deg,#ffffff 0%,#dbeeff 55%,#b9c9ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none;filter:drop-shadow(0 0 10px rgba(200,225,255,.85)) drop-shadow(0 0 22px rgba(160,190,255,.5))}
+.sqbox.fire[data-tier="great"] .sqjudge{background:linear-gradient(180deg,#fff9d6 0%,#ffe066 50%,#f5a800 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none;filter:drop-shadow(0 0 10px rgba(255,214,60,.85)) drop-shadow(0 0 24px rgba(255,190,0,.5))}
+.sqbox.fire[data-tier="excellent"] .sqjudge{background:linear-gradient(180deg,#fff1cc 0%,#ffb340 45%,#ff5a00 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none;filter:drop-shadow(0 0 12px rgba(255,150,40,.9)) drop-shadow(0 0 28px rgba(255,90,0,.55))}
+@keyframes sqburst{0%{opacity:0}12%{opacity:.95}100%{opacity:0}}
+@keyframes sqring{0%{opacity:0;transform:scale(.25)}15%{opacity:1}100%{opacity:0;transform:scale(4.2)}}
+@keyframes sqpop{0%{opacity:0;transform:scale(.35) rotate(-6deg)}45%{opacity:1;transform:scale(1.22) rotate(1deg)}100%{opacity:1;transform:scale(1)}}
+@keyframes sqpctpop{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes sqsp{0%{opacity:0;transform:translate(0,0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
+@media (prefers-reduced-motion:reduce){.sqbox.fire *{animation:none!important}}
+@media (max-width:380px){.sqbox{padding:10px 12px 14px}.sqpct{font-size:2.3rem}.sqjudge{font-size:1.45rem}}
+/* 1対1の「SPの出来」の添え書きは折り返してよい(狭い幅で切れないように) */
+.megalv.spq .mlvnote{white-space:normal;line-height:1.35}
+/* タイムライン・チップの「出来」の札(EXCELLENTは出さない) */
+.pwtag{display:inline-block;margin-left:4px;padding:0 5px;border-radius:999px;font-size:.56rem;font-weight:900;font-style:italic;letter-spacing:.04em;line-height:1.55;vertical-align:middle}
+.pwtag.nice{background:rgba(255,255,255,.2);color:#fff}
+.pwtag.great{background:rgba(255,213,74,.28);color:#ffe27a}
+.pwtag.base{background:rgba(255,255,255,.1);color:var(--sub)}
+:root.light .pwtag.nice{background:#e3e9f6;color:#33405e}
+:root.light .pwtag.great{background:#ffefb3;color:#8a6000}

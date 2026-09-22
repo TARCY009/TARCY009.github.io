@@ -183,8 +183,10 @@ window.__scenario = function (orig) {
               const att = { ...stats(P[i].base), buffs: cur[i].buffs, megaMult: MEGA_MULT[megaLvOf(P[i].base)] };
               const dfn = { ...stats(P[o].base), buffs: cur[o].buffs };
               if (!cands.length) viol(b, 'DATA', `${e.move}がわざの一覧に無い`);
-              else if (!cands.some(m => PvpEngine.damage(D, m, att, dfn) === e.full))
-                viol(b, 'B1', `対面${k} T${curTn}: ${e.move}の威力計算 ${e.full}≠${cands.map(m => PvpEngine.damage(D, m, att, dfn)).join('/')}(能力[${cur[i].buffs}]/[${cur[o].buffs}])`);
+              else if (!cands.some(m => PvpEngine.damage(D, m, att, dfn, e.pw || 1) === e.full))
+                viol(b, 'B1', `対面${k} T${curTn}: ${e.move}の威力計算 ${e.full}≠${cands.map(m => PvpEngine.damage(D, m, att, dfn, e.pw || 1)).join('/')}(能力[${cur[i].buffs}]/[${cur[o].buffs}]・出来${e.pw || 1})`);
+              if (i === 1 && e.pw != null) viol(b, 'G13', `対面${k} T${curTn}: あいてのSPに出来(${e.pw})が付いた(AIは常にEXCELLENT)`);
+              if (e.pw != null && ![.25, .5, .75].includes(e.pw)) viol(b, 'G13', `対面${k} T${curTn}: 出来の倍率が不正 ${e.pw}`);
             }
             const expDealt = (e.shielded || e.disguised) ? 1 : e.full;
             if (e.dmg !== expDealt) viol(b, 'B6', `対面${k} T${curTn}: ${e.move}のダメージ ${e.dmg}≠${expDealt}`);
@@ -308,7 +310,7 @@ window.__scenario = function (orig) {
 
   // ---- 何戦も回す ----
   const dumps = [];
-  const counts = { battles: 0, win: 0, lose: 0, draw: 0, timeout: 0, timeUp: 0, legs: 0, swaps: 0, msw: 0, lead: 0, sp: 0, shields: 0, decisions: 0, byAi: {} };
+  const counts = { battles: 0, win: 0, lose: 0, draw: 0, timeout: 0, timeUp: 0, legs: 0, swaps: 0, msw: 0, lead: 0, sp: 0, shields: 0, decisions: 0, pw: 0, spEvPw: 0, byAi: {} };
   const saveAi = MK.ai, saveBuff = SIMOPT.buffMode, saveSeed = RB.rseed, saveRt = MK.rt, saveFa = MK.foeAuto;
   MK.rt = false; MK.foeAuto = false;
   try {
@@ -344,6 +346,7 @@ window.__scenario = function (orig) {
           if (!p.opts || !p.opts.length) { viol(b, 'END', `選択肢が無い決断: ${p.key}`); break; }
           const a = slim(pick(p.opts));
           if (p.kind === 'next' && rng() < 0.5) a.t = rint(16);
+          if (p.kind === 'sp' && ['opt', 'fire', 'hold1', 'bluff'].includes(a.a) && rng() < 0.6) { a.pw = pick([1, .75, .5, .25]); counts.pw++; }   // SPの出来(入力メーターの代わり)
           ans[p.key] = a;
         }
       } catch (e) { viol(b, 'ERR', `${ai}: ${String(e && e.stack || e).slice(0, 300)}`); continue; }
@@ -366,8 +369,9 @@ window.__scenario = function (orig) {
       if (bt.timeUp) counts.timeUp++;
       counts.legs += bt.legs.length;
       bt.legs.forEach(l => { counts.swaps += (l.swapped0 ? 1 : 0) + (l.swapped1 ? 1 : 0);
-        l.res.rows.forEach(r => [0, 1].forEach(i => { const e = r.ev[i]; if (e && e.full !== undefined) { counts.sp++; if (e.shielded) counts.shields++; } })); });
+        l.res.rows.forEach(r => [0, 1].forEach(i => { const e = r.ev[i]; if (e && e.full !== undefined) { counts.sp++; if (e.shielded) counts.shields++; if (e.pw != null) counts.spEvPw++; } })); });
     }
   } finally { MK.ai = saveAi; SIMOPT.buffMode = saveBuff; RB.rseed = saveSeed; MK.rt = saveRt; MK.foeAuto = saveFa; }
+  if (counts.pw > 20 && !counts.spEvPw) viol(-1, 'G13', `出来を答えに入れた(${counts.pw}回)のに、出来つきのSPが1発も無い(答えの pw がエンジンに届いていない)`);
   return { opts: O, elapsed: Math.round(performance.now() - t0), counts, viol: V, dumps };
 };

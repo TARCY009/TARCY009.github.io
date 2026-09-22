@@ -64,13 +64,17 @@
     return { atk, def, hp, cp, types: p.ty, name: p.n };
   }
 
-  // ダメージ = floor(0.5 × 威力 × 攻/防 × 相性 × タイプ一致 × 1.3) + 1
-  function damage(D, mv, att, dfn) {
+  // SPアタックのミニゲームの出来による威力の倍率(ゲーム内公開データ COMBAT_SETTINGS の chargeScore〜・2026-09-22タダシさん指示で導入):
+  //   何も取れない=25% ／ NICE=50% ／ GREAT=75% ／ EXCELLENT=100%。ノーマルアタックには関係しない
+  const CHARGE_PW = { base: 0.25, nice: 0.5, great: 0.75, excellent: 1 };
+  // ダメージ = floor(0.5 × 威力 × 出来の倍率 × 攻/防 × 相性 × タイプ一致 × 1.3) + 1
+  // mult=SPの出来の倍率(省略=1=EXCELLENT。ノーマルアタックは常に1)
+  function damage(D, mv, att, dfn, mult) {
     const eff  = effectiveness(D, mv.t, dfn.types);
     const stab = att.types.includes(mv.t) ? STAB : 1;
     const a = att.atk * buffMult(att.buffs[0]);
     const d = dfn.def * buffMult(dfn.buffs[1]);
-    return Math.floor(0.5 * powerOf(mv, att) * (a / d) * eff * stab * BONUS) + 1;
+    return Math.floor(0.5 * powerOf(mv, att) * (mult || 1) * (a / d) * eff * stab * BONUS) + 1;
   }
 
   /* わざの「能力変化ぶんの価値」。ダメージ効率に掛けて使う(1.0で影響なし)。
@@ -309,8 +313,11 @@
       const charging = [null, null];
       const sync = [null, null];   // 「同時」待ち: 相手が撃つかどうかを見てから決める(下の2周目)
       const stalled = [false, false];   // ロケット団戦の硬直(このターンは何もしない)
+      // SPの出来(威力の倍率)。発ごとの指定(shotPlan / plan の pw)があればそれ、無ければ側の設定(cfg.spq)、無ければ1=EXCELLENT
+      const chargePw = [1, 1];
       for (let i = 0; i < 2; i++) {
         const s = sides[i];
+        s._pw = null;
         if (s.stall > 0) { s.stall--; stalled[i] = true; continue; }   // 硬直中
         if (s.cd !== 0) continue;               // 通常技の途中
         if (s.cfg.timing === 'sync') {
@@ -363,6 +370,7 @@
           const idx = s.thrown || 0;
           const sh = idx < (s.cfg.shotPlan || []).length ? s.cfg.shotPlan[idx] : s.cfg.shotRest;
           if (sh) {
+            if (sh.pw != null) s._pw = sh.pw;   // この発の出来(模擬戦で入力メーターから決めた威力)
             const o = sides[1 - i];
             // わざ指定なし(自動)のときは相手の状況に合わせて選ぶ(ブラフ→効率)
             const mv = sh.move ? D.moves[rmv(s, sh.move)] : autoMove(s, o);
@@ -412,7 +420,7 @@
           const planIdx = s.plan.findIndex(p => p.on <= turn);
           if (planIdx >= 0) {
             const mv = D.moves[rmv(s, s.plan[planIdx].move)];
-            if (s.en >= mv.e) { s.plan.splice(planIdx, 1); charging[i] = mv; continue; }
+            if (s.en >= mv.e) { if (s.plan[planIdx].pw != null) s._pw = s.plan[planIdx].pw; s.plan.splice(planIdx, 1); charging[i] = mv; continue; }
           }
         }
         s.cd = s.fast.tn;                       // 通常技を開始
@@ -428,6 +436,7 @@
         if (together || s.en >= 100) { s.waitCnt = 0; s.shotWait = 0; charging[i] = sync[i]; }
         else { s.cd = s.fast.tn; s.startedNow = true; }
       }
+      for (let i = 0; i < 2; i++) if (charging[i]) chargePw[i] = sides[i]._pw != null ? sides[i]._pw : (sides[i].cfg.spq || 1);
       // ターン経過 → このターンに完了する通常技を集める(着弾の処理はすぐ下・順番の決まりもそこに書いてある)。
       // 相手がゲージ技のターンに打ち始めた通常技は差し込み(前倒し)扱いなのでここでは進めない
       const row = { tn: turn, ev: [null, null], stalled, idle: [false, false] };
@@ -508,8 +517,9 @@
           const bid = AEGIS_FAST_BLADE[s.fastId];
           if (bid) { s.fastId = bid; s.fast = D.moves[bid]; }
         }
-        // ロケット団のしたっぱはSPアタックを弱い威力で撃ってくる(spMult)
-        const full = s.spMult === 1 ? damage(D, mv, s, o) : Math.max(1, Math.floor(damage(D, mv, s, o) * s.spMult));
+        // ロケット団のしたっぱはSPアタックを弱い威力で撃ってくる(spMult)。pw=SPの出来の倍率(EXCELLENT=1)
+        const pw = chargePw[i];
+        const full = s.spMult === 1 ? damage(D, mv, s, o, pw) : Math.max(1, Math.floor(damage(D, mv, s, o, pw) * s.spMult));
         // シールド判断: shieldPlan(相手のSP何発目で使うかの配列)があればそれに従う
         // shieldRest=trueなら6発目以降はすべて使う
         o.spSeen = (o.spSeen || 0) + 1;
@@ -559,6 +569,7 @@
         const buff = applyBuffs(mv, s, o, opt);
         const ev = [null, null];
         ev[i] = { move: mv.n, dmg: dealt, full, shielded, disguised, buff };
+        if (pw !== 1) ev[i].pw = pw;      // SPの出来(EXCELLENT以外のときだけ。画面のNICE/GREATの札と検査に使う)
         if (gulp) ev[i].gulp = gulp;      // 吐き出し(撃った側が受ける)
         if (gulpOn) ev[i].gulpOn = gulpOn;   // 獲物を咥えた(撃った側の姿が変わる)
         // モルペコ: SPアタックを打つたびに まんぷく⇄はらぺこ が切り替わる(オーラぐるまのタイプが変化)
@@ -661,5 +672,5 @@
   }
 
   window.PvpEngine = { buildStats, damage, effectiveness, buffMult, buffAdj, simulate, chooseThrows, simulateAuto,
-                       MEGA_MULT, MEGA_LV_DEF };
+                       MEGA_MULT, MEGA_LV_DEF, CHARGE_PW };
 })();
