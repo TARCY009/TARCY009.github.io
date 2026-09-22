@@ -563,8 +563,9 @@
   // ==== SPアタックの出来「威力調整」の入力メーターの音（2026-09-22タダシさん指示・見本は scratchpad/mock-spqsound.html）====
   // スライド音＝メーターのブロックが1つ点くたびに鳴る（指の動きに連動・pctで高さが上がる）。
   // 結果の音＝指を離したときの「NICE未満(base)／NICE／GREAT／EXCELLENT（少し豪華）」。
-  // 5案ずつ作ってあり SPQ_PAT で案を選ぶ（タダシさんの選択で確定したら既定を書き換える）
-  var SPQ_PAT = { slide: 1, base: 1, nice: 1, great: 1, excellent: 1 };
+  // 5案ずつ作ってあり SPQ_PAT で案を選ぶ（見本のページで選べるよう残してある）
+  // 2026-09-22タダシさん決定: スライド＝案2 電子ビープ／NICE未満＝案1 ボスッ／NICE＝案4 シュッ→ベル／GREAT＝案2 明るい鐘＋きらめき／EXCELLENT＝案3 ため→炸裂→和音
+  var SPQ_PAT = { slide: 2, base: 1, nice: 4, great: 2, excellent: 3 };
   // 案ごとの音量の倍率(2026-09-22に OfflineAudioContext で測って、スライド≒.28・NICE未満≒.4・NICE≒.5・GREAT≒.62・EXCELLENT≒.72 にそろえた)
   var SPQ_GAIN = { slide: [1, 1.8, 1.7, 1.4, 1.35], base: [1.1, 1.8, 3.5, 1.6, 1.25], nice: [1.5, 1.45, 3.2, 1.1, 1.3], great: [1.15, 2.2, .9, 1, 1.7], excellent: [1, 1, 1, 1.2, 1.05] };
   function spqGain(kind, pat) { var a = SPQ_GAIN[kind] || []; return a[(pat || 1) - 1] || 1; }

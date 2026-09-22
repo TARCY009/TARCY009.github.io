@@ -49,7 +49,7 @@ paths:
   左から右へスライドして離した％で決まる: **30%未満=25%・30〜69%=NICE・70〜99%=GREAT・100%=EXCELLENT**（`SPQ_NICE_PCT`／`SPQ_GREAT_PCT`・タダシさん指定・右端は97%以上を100%に丸める）。
   **入力の猶予7秒（`SPQ_INPUT_SEC`）を過ぎたらその位置で確定**（触っていなければ25%）。**猶予の残りは画面に出さない**（右上のメーター式のタイマーは2026-09-22タダシさん指示で廃止）。左上にバトルの残り時間（`opt.ck` から・大きめ）を0.1秒ごとに減らして見せる（**表示だけ**。時計はSP1発10秒で数える従来どおり）。
   **音**（`sound.js`・🔊がONのとき）: ブロックが1つ点くたびに**スライド音**（`spqSlide(pct)`・右ほど高い）、離した瞬間に**結果の音**（`spqResult(tier)`＝NICE未満／NICE／GREAT／EXCELLENT（少し豪華））。
-  **5案ずつ作ってあり `SPQ_PAT` で案を選ぶ**（既定は全部1・タダシさんの選択で確定したら書き換える）。案ごとの音量は `SPQ_GAIN`（測定でそろえた倍率・`GAIN` で一時的に掛ける）。見本は `scratchpad/mock-spqsound.html`、測定は `mock-spqsound-measure.html`（`spqRaw` で1回のレンダリングにまとめる）
+  **5案ずつ作ってあり `SPQ_PAT` で案を選ぶ**。**確定（2026-09-22タダシさん決定）: スライド＝案2 電子ビープ／NICE未満＝案1 ボスッ／NICE＝案4 シュッ→ベル／GREAT＝案2 明るい鐘＋きらめき／EXCELLENT＝案3 ため→炸裂→和音**。案ごとの音量は `SPQ_GAIN`（測定でそろえた倍率・`GAIN` で一時的に掛ける）。見本は `scratchpad/mock-spqsound.html`、測定は `mock-spqsound-measure.html`（`spqRaw` で1回のレンダリングにまとめる）
   離した瞬間に出来の色で光る（NICE=白〜氷色・GREAT=黄・EXCELLENT=オレンジ・25%は光らない）。**リアルタイムはメーターのあいだ再生を止める**（`stopTimer`→確定で `run()`／✕で `startTimer`）
 - 答えは `{a, mv, pw}`（`rbApply` が `shots[].pw` へ、リアルタイムは `mspPlan`→`plan[].pw`）。**投げ済みSP（inflight）も出来を持ち越す**（`inflightPw`）。
   **共有リンク `rb=`** はわざIDの後ろに `!n`（NICE）`!g`（GREAT）`!b`（25%）（`SPQ_CODE`／`SPQ_DECODE`・EXCELLENTは無印）。チップとタイムラインに札 `spqTag`（`.pwtag`・EXCELLENTは出さない）
