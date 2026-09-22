@@ -516,6 +516,7 @@ const SPQ_NICE_PCT = 30, SPQ_GREAT_PCT = 70;
 const spqFromPct = pct => pct >= 100 ? SPQ.excellent : pct >= SPQ_GREAT_PCT ? SPQ.great : pct >= SPQ_NICE_PCT ? SPQ.nice : SPQ.base;
 // 入力の猶予(秒)。ゲーム内公開データ minigameDurationSeconds=7.0。過ぎたらその時点の位置で確定(何もしなければ25%)
 const SPQ_INPUT_SEC = 7;
+const SPQ_SEGS = 20;   // 入力メーターのブロックの数(案2「セグメント」・1つ=5%)
 // タイムライン・チップに添える札(EXCELLENT=既定は出さない)
 const spqTag = pw => { const t = spqTierOf(pw); return t.pw === 1 ? '' : `<i class="pwtag ${t.k}">${t.label}</i>`; };
 const SPQ_CODE = { [SPQ.nice]: 'n', [SPQ.great]: 'g', [SPQ.base]: 'b' }, SPQ_DECODE = { n: SPQ.nice, g: SPQ.great, b: SPQ.base };
@@ -5253,11 +5254,11 @@ function spqMeter(mvId, done, cancel, opt) {
   ov.id = 'spqwin'; ov.className = 'spqwin';
   ov.innerHTML = `<div class="sqbox" role="dialog" aria-label="威力調整" data-zone="base" style="--tc1:${col.top};--tc2:${col.bot}">
     <button class="sqx" title="やめる（選び直す）" aria-label="やめる">✕</button>
-    <div class="sqtime"><span class="sqleft" title="バトルの残り時間（入力のあいだも減ります）">⏱ <b>--:--</b></span><span class="sqin" title="入力の猶予（過ぎるとその位置で確定）"><i class="sqinbar"><i></i></i><b>7.0</b></span></div>
+    <div class="sqtime"><span class="sqleft" title="バトルの残り時間（入力のあいだも減ります）">⏱ <b>--:--</b></span><span class="sqin" title="入力の猶予（7秒。過ぎるとその位置で確定）"><small>入力</small><i class="sqinbar"><i></i></i><b>7.0</b><small>秒</small></span></div>
     <div class="sqhead"><span class="sqty">${typeIconHTML(ja, 34)}</span><span class="sqttl">威力調整</span><b class="sqmv">${m ? m.n : ''}</b></div>
     <div class="sqpct"><b>0</b><i>%</i></div>
     <div class="sqmeter"><div class="sqtrack">
-      <i class="sqfill"></i><i class="sqglow"></i><i class="sqtick" style="left:${SPQ_NICE_PCT}%"></i><i class="sqtick" style="left:${SPQ_GREAT_PCT}%"></i><b class="sqknob"></b>
+      ${Array.from({ length: SPQ_SEGS }, (_, i) => `<i class="sqs ${(i + 1) * (100 / SPQ_SEGS) <= SPQ_NICE_PCT ? 'z1' : (i + 1) * (100 / SPQ_SEGS) <= SPQ_GREAT_PCT ? 'z2' : 'z3'}"></i>`).join('')}<b class="sqknob"></b>
     </div><div class="sqscale"><span class="s0">0</span><span style="left:${SPQ_NICE_PCT}%">NICE</span><span style="left:${SPQ_GREAT_PCT}%">GREAT</span><span class="s100">MAX</span></div></div>
     <div class="sqjudge" aria-live="polite"></div>
     <div class="sqhint">左から右へスライドして、はなす</div>
@@ -5267,6 +5268,7 @@ function spqMeter(mvId, done, cancel, opt) {
   document.body.appendChild(ov);
   const box = ov.querySelector('.sqbox'), track = ov.querySelector('.sqtrack');
   const pctEl = ov.querySelector('.sqpct b'), judge = ov.querySelector('.sqjudge');
+  const segs = [...ov.querySelectorAll('.sqs')];
   let pct = 0, dragging = false, fired = false;
   const tierOf = v => v >= 100 ? 'excellent' : v >= SPQ_GREAT_PCT ? 'great' : v >= SPQ_NICE_PCT ? 'nice' : 'base';
   const LIVE = { excellent: 'EXCELLENT!', great: 'GREAT!', nice: 'NICE!', base: '' };
@@ -5274,6 +5276,9 @@ function spqMeter(mvId, done, cancel, opt) {
     pct = Math.max(0, Math.min(100, v));
     if (pct >= 97) pct = 100;   // 右端は指が届きにくいので少し甘く
     box.style.setProperty('--pct', pct + '%');
+    // 案2「セグメント」(2026-09-22タダシさん選択): 20個のブロックが左から点いていく。100%なら全部オレンジ
+    const lit = Math.round(pct / (100 / SPQ_SEGS));
+    segs.forEach((el, i) => el.classList.toggle('on', i < lit));
     pctEl.textContent = String(Math.round(pct));
     box.dataset.zone = tierOf(pct);
     judge.textContent = LIVE[tierOf(pct)];

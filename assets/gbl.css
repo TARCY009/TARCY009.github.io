@@ -3028,7 +3028,8 @@ button.sdchip.on .tbadge{filter:none}
 .sqtime{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 30px 6px 0;font-size:.72rem;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums}
 .sqtime b{font-size:.92rem;color:var(--ink)}
 .sqleft.low b{color:#ff6b6b}
-.sqin{display:inline-flex;align-items:center;gap:6px}
+.sqin{display:inline-flex;align-items:center;gap:5px}
+.sqin small{font-size:.6rem;font-weight:800;color:var(--sub)}
 .sqinbar{position:relative;width:64px;height:6px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
 .sqinbar i{position:absolute;left:0;top:0;bottom:0;width:100%;border-radius:3px;background:linear-gradient(90deg,#43e0ff,#8ff5ff);transition:width .1s linear}
 .sqin.low .sqinbar i{background:linear-gradient(90deg,#ff5c5c,#ffb14a)}
@@ -3041,17 +3042,18 @@ button.sdchip.on .tbadge{filter:none}
   text-shadow:0 0 18px var(--zg),0 2px 0 rgba(0,0,0,.35);transition:color .15s}
 .sqpct i{font-style:normal;font-size:1rem;margin-left:3px;color:var(--sub)}
 .sqmeter{padding:0 4px}
-.sqtrack{position:relative;height:40px;border-radius:20px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.36));border:1px solid rgba(255,255,255,.16);
-  box-shadow:inset 0 2px 6px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.06);touch-action:none;cursor:pointer}
-.sqfill,.sqglow{position:absolute;inset:0;border-radius:20px;pointer-events:none;
-  background:linear-gradient(90deg,#5b6f9e 0%,#b9c8ea 28%,#ffffff 32%,#e2f1ff 60%,#ffe680 70%,#ffb347 92%,#ff6a00 100%);
-  clip-path:inset(0 calc(100% - var(--pct)) 0 0 round 20px);transition:clip-path .04s linear}
-.sqglow{filter:blur(9px);opacity:.55;transform:scale(1.02,1.35)}
-.sqtick{position:absolute;top:6px;bottom:6px;width:2px;margin-left:-1px;border-radius:1px;background:rgba(255,255,255,.35);pointer-events:none}
-.sqknob{position:absolute;top:50%;left:var(--pct);width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle at 35% 30%,#ffffff 0%,#dfe8f8 45%,#a9b8d6 100%);border:2px solid var(--z2);
-  box-shadow:0 0 0 4px rgba(255,255,255,.12),0 0 16px var(--zg),0 3px 8px rgba(0,0,0,.5);transition:transform .12s,border-color .15s,box-shadow .15s}
-.sqbox.drag .sqknob{transform:scale(1.16);box-shadow:0 0 0 6px rgba(255,255,255,.14),0 0 26px var(--zg),0 3px 8px rgba(0,0,0,.5)}
+/* 案2「セグメント」(2026-09-22タダシさん選択): 20個のブロックが左から点いていく。色はブロックの位置のゾーン(z1=25%・z2=NICE・z3=GREAT)、100%は全部オレンジ */
+.sqtrack{position:relative;display:flex;gap:3px;height:38px;padding:5px;box-sizing:border-box;border-radius:12px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.36));
+  border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 2px 6px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.06);touch-action:none;cursor:pointer}
+.sqs{flex:1 1 0;min-width:0;border-radius:4px;background:rgba(255,255,255,.08);pointer-events:none;transition:background .08s,box-shadow .08s}
+.sqs.on.z1{background:linear-gradient(180deg,#c9d6f5,#7f92c4);box-shadow:0 0 8px rgba(127,146,196,.7)}
+.sqs.on.z2{background:linear-gradient(180deg,#ffffff,#bfe3ff);box-shadow:0 0 8px rgba(191,227,255,.8)}
+.sqs.on.z3{background:linear-gradient(180deg,#fff4b0,#ffcc2e);box-shadow:0 0 8px rgba(255,204,46,.8)}
+.sqbox[data-zone="excellent"] .sqs.on{background:linear-gradient(180deg,#ffd9a3,#ff7d1f);box-shadow:0 0 10px rgba(255,125,31,.85)}
+.sqknob{position:absolute;top:-8px;bottom:-8px;left:var(--pct);width:6px;margin-left:-3px;border-radius:3px;pointer-events:none;background:#fff;
+  box-shadow:0 0 12px #fff,0 0 20px var(--zg);transition:box-shadow .15s}
+.sqbox.drag .sqknob{box-shadow:0 0 14px #fff,0 0 30px var(--zg)}
+.sqbox:not(.drag):not(.fire) .sqknob{opacity:.85}
 .sqscale{position:relative;height:16px;margin-top:6px;font-size:.6rem;font-weight:800;letter-spacing:.06em;color:var(--sub)}
 .sqscale span{position:absolute;top:0;transform:translateX(-50%)}
 .sqscale .s0{left:0;transform:none}
