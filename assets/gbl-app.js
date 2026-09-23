@@ -5249,6 +5249,24 @@ function bindPace(dock, startTimer) {
 // 実戦と同じく時間は流れる: 入力の猶予7秒(過ぎたらその位置で確定)と、バトルの残り時間(opt.ck=その瞬間の時計)を減らして見せる。
 // ⚠ 表示だけ。バトルの時計はSP1発10秒(GB_SP_TURNS)で数えるのは従来どおり
 // 倍率はエンジンの CHARGE_PW(ゲーム内公開データ)。見た目は gbl.css の .spqwin 〜
+// ---- SPアタックが始まる演出（2026-09-23タダシさん選択・案D）----
+// メーターの直前に約0.5秒: 画面のふちがわざのタイプ色で光り、真ん中から波紋が2回広がる。効果音は GonaviSound.spStart。
+// 🎬演出OFF・動きを減らす設定のときは見た目を省く（音は🔊の設定どおり）。終わったら then() でメーターへ
+function spStartFx(mvId, then) {
+  try { if (window.GonaviSound) GonaviSound.spStart(); } catch (e) {}
+  if (!fxOk()) { then(); return; }
+  document.getElementById('spstfx')?.remove();
+  const m = D.moves[mvId];
+  const ja = m ? (D.typeJa[m.t] || '') : '';
+  const col = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
+  const fx = document.createElement('div');
+  fx.id = 'spstfx'; fx.className = 'spstfx';
+  fx.style.cssText = `--tc1:${col.top};--tc2:${col.bot}`;
+  fx.innerHTML = '<i class="edge"></i><i class="ring"></i><i class="ring r2"></i>';
+  document.body.appendChild(fx);
+  setTimeout(then, 520);
+  setTimeout(() => fx.remove(), 900);
+}
 function spqMeter(mvId, done, cancel, opt) {
   document.getElementById('spqwin')?.remove();
   const m = D.moves[mvId];
@@ -11744,7 +11762,7 @@ function gbRender(body, bt, picks, foes) {
     if (!key) { if (RBV.playing && !RBV.timer) startTimer(); return; }
     stopTimer();
     const a = RB.ans[key];
-    spqMeter(a.mv, pw => {
+    spStartFx(a.mv, () => spqMeter(a.mv, pw => {
       const x = RB.ans[key];
       if (x) { if (pw != null) x.pw = pw; delete x.pwPend; }
       RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
@@ -11754,7 +11772,7 @@ function gbRender(body, bt, picks, foes) {
       delete RB.ans[key];
       RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
       run();
-    } : null, { ck: ckOf(+el.dataset.gt) });
+    } : null, { ck: ckOf(+el.dataset.gt) }));
   };
   const revealStep = g => {
     const out = [];
@@ -11879,7 +11897,7 @@ function gbRender(body, bt, picks, foes) {
         //   答えは「威力は未確定(pwPend)」で記録し、計算は100%のまま進める(じぶんのSPより前の行は威力に左右されない)
         if (o && p.kind === 'sp' && !p.side && SPQ_FIRE.has(o.a)) {
           if (RB.step) { commit(null, true); return; }
-          spqMeter(o.mv, commit, null, { ck: p.ck != null ? p.ck : p.gt }); return;
+          spStartFx(o.mv, () => spqMeter(o.mv, commit, null, { ck: p.ck != null ? p.ck : p.gt })); return;
         }
         commit(null);
       };

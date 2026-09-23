@@ -773,6 +773,39 @@
     }
   }
 
+  // ==== SPアタックが始まる音（2026-09-23タダシさん指示・見本は scratchpad/mock-spstartsound.html）====
+  // 撃つと決めてから威力調整のメーターが出るまでの約0.6秒（見た目＝画面のふちが光り、真ん中から波紋が2回広がる＝案D）。
+  // 5案ずつ作ってあり SPST_PAT で選ぶ。⚠ 威力調整の「ため→炸裂」・撃てる合図の「上がるキュイン」とは作りを変える
+  var SPST_PAT = 1;
+  var SPST_GAIN = [1.45, 1.2, 1, .72, 1.9];   // 案ごとの音量の倍率（OfflineAudioContext で測ってピーク≒.5にそろえた＝シールドの音より少し控えめ）
+  function seSpStart(pat, at) {
+    GAIN = SPST_GAIN[(pat || 1) - 1] || 1;
+    try { seSpStart0(pat, at || 0); } finally { GAIN = 1; }
+  }
+  function seSpStart0(pat, a) {
+    switch (pat) {
+      case 2:   // ドン・ウォン（低い一打に、短い鐘の余韻）
+        kick(.3, { f0: 120, f1: 48, vol: .5, drive: .3, decay: 9, click: .04, at: a });
+        gong(165, .8, { decay: 3.2, hiDecay: 9, strike: .25, vol: .32, at: a + .02, rev: .45 });
+        break;
+      case 3:   // 空気が張る（風がふくらんで、短い和音が開く）
+        whoosh(.36, { f0: 500, f1: 2600, q: 3, vol: .34, at: a, pan: 0 });
+        pad([330, 494, 659], .5, { vol: .14, at: a + .18, rev: .55, open: 2400, type: 'triangle' });
+        break;
+      case 4:   // 光のにじみ（高いところから降りてくる光の帯＋小さなきらめき）
+        sweep(.5, { f0: 3600, f1: 900, q: 8, tone: .12, t0: 1400, t1: 700, env: 'bell', vol: .3, at: a });
+        shimmer(5, { base: 2093, dur: .35, span: .25, vol: .1, at: a + .15, spread: 1.2 });
+        break;
+      case 5:   // ふた呼吸のパルス（波紋2つに合わせた、やわらかい2音・2音目は低く）
+        tone({ f: 740, f2: 560, type: 'sine', dur: .2, vol: .34, at: a, lo: 3000, dly: .12 });
+        tone({ f: 555, f2: 420, type: 'sine', dur: .28, vol: .3, at: a + .16, lo: 2400, dly: .16 });
+        break;
+      default:  // 波紋のソナー（波紋2つに合わせた、澄んだ2つの響き）
+        fm(880, .5, { ratio: 1.5, index: 1.6, decay: 5, vol: .3, at: a, rev: .45, dly: .22, wide: 1 });
+        fm(1175, .55, { ratio: 1.5, index: 1.4, decay: 4.5, vol: .26, at: a + .16, rev: .5, dly: .25, wide: 1 });
+    }
+  }
+
   var subTimers = [];
   function clearSub() { subTimers.forEach(clearTimeout); subTimers = []; }
   // at 秒あとに鳴らす（1つの行に演出が複数あるとき、カットインと同じ間でずらすのに使う）。
@@ -826,6 +859,10 @@
     // 威力調整の入力メーター（2026-09-22）: スライド音（pct=いまの％）と結果の音（tier=base/nice/great/excellent）
     spqSlide: function (pct, at) { later(function () { seSpqSlide(pct, SPQ_PAT.slide, 0); }, at); },
     spqResult: function (tier, at) { later(function () { seSpqResult(tier, SPQ_PAT[tier] || 1, 0); }, at); },
+    // SPアタックが始まる音（威力調整のメーターの直前・2026-09-23）
+    spStart: function (at) { later(function () { seSpStart(SPST_PAT, 0); }, at); },
+    spStartPattern: function (n) { if (n == null) return SPST_PAT; SPST_PAT = +n; return SPST_PAT; },
+    spStartRaw: function (pat, at) { if (!ac()) return; seSpStart(pat, at); },
     spqPattern: function (kind, n) { if (n == null) return SPQ_PAT[kind]; SPQ_PAT[kind] = +n; return SPQ_PAT[kind]; },
     // 見本・測定用: 予約を使わず、音の側の at で並べて鳴らす（OfflineAudioContext で1回のレンダリングにまとめるため）
     spqRaw: function (kind, arg, pat, at) { if (!ac()) return; if (kind === 'slide') seSpqSlide(arg, pat, at); else seSpqResult(arg, pat, at); },

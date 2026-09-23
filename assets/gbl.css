@@ -3099,3 +3099,13 @@ button.sdchip.on .tbadge{filter:none}
 .pwtag.base{background:rgba(255,255,255,.1);color:var(--sub)}
 :root.light .pwtag.nice{background:#e3e9f6;color:#33405e}
 :root.light .pwtag.great{background:#ffefb3;color:#8a6000}
+
+/* ===== SPアタックが始まる演出（2026-09-23タダシさん選択・案D・gbl-app.js の spStartFx）=====
+   メーターの直前に約0.5秒: 画面のふちがわざのタイプ色で光り、真ん中から波紋が2回広がる。押せない・邪魔しない(pointer-events:none) */
+.spstfx{position:fixed;inset:0;z-index:2147483000;pointer-events:none}
+.spstfx .edge{position:absolute;inset:0;opacity:0;animation:spstEdge .7s ease forwards}
+.spstfx .ring{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;border:3px solid var(--tc1);opacity:0;
+  animation:spstRing .6s ease-out forwards}
+.spstfx .ring.r2{animation-delay:.16s}
+@keyframes spstEdge{0%{opacity:0;box-shadow:inset 0 0 0 0 var(--tc1)}30%{opacity:1;box-shadow:inset 0 0 34px 8px var(--tc1)}100%{opacity:0;box-shadow:inset 0 0 52px 12px var(--tc2)}}
+@keyframes spstRing{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(7)}}
