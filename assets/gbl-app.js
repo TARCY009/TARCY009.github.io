@@ -5258,8 +5258,8 @@ function spqMeter(mvId, done, cancel, opt) {
   ov.id = 'spqwin'; ov.className = 'spqwin';
   ov.innerHTML = `<div class="sqbox" role="dialog" aria-label="威力調整" data-zone="base" style="--tc1:${col.top};--tc2:${col.bot}">
     <button class="sqx" title="やめる（選び直す）" aria-label="やめる">✕</button>
-    <div class="sqtime"><span class="sqleft" title="バトルの残り時間（入力のあいだも減ります）">⏱ <b>--:--</b></span></div>
-    <div class="sqhead"><span class="sqty">${typeIconHTML(ja, 34)}</span><span class="sqttl">威力調整</span><b class="sqmv">${m ? m.n : ''}</b></div>
+    <div class="sqtime"><span class="sqleft" title="バトルの残り時間（入力のあいだも減ります）">⏱ <b>--:--</b></span><span class="sqttl">威力調整</span></div>
+    <div class="sqhead"><span class="sqty">${typeIconHTML(ja, 34)}</span><b class="sqmv">${m ? m.n : ''}</b></div>
     <div class="sqpct"><b>0</b><i>%</i></div>
     <div class="sqmeter"><div class="sqtrack">
       ${Array.from({ length: SPQ_SEGS }, (_, i) => `<i class="sqs ${(i + 1) * (100 / SPQ_SEGS) <= SPQ_NICE_PCT ? 'z1' : (i + 1) * (100 / SPQ_SEGS) <= SPQ_GREAT_PCT ? 'z2' : 'z3'}"></i>`).join('')}<b class="sqknob"></b>

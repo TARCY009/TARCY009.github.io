@@ -3026,13 +3026,16 @@ button.sdchip.on .tbadge{filter:none}
   color:var(--sub);font-size:.9rem;line-height:1;cursor:pointer;z-index:3}
 /* 時間: 左=バトルの残り時間・右=入力の猶予(7秒のバー) */
 /* 左上＝バトルの残り時間(大きめ・入力のあいだも減る)。右上の猶予メーターは2026-09-22タダシさん指示で廃止 */
-.sqtime{display:flex;align-items:center;margin:0 30px 4px 0;font-size:.9rem;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums}
+.sqtime{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 26px 4px 0;font-size:.9rem;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums}
 .sqtime b{font-size:1.25rem;color:var(--ink);letter-spacing:.02em}
 .sqleft.low b{color:#ff6b6b}
-.sqhead{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 2px}
+/* 右上の「威力調整」(2026-09-23タダシさん指示・案B): 目立たせず、細いゴシック＋字間広め＋銀の文字でさりげなく */
+.sqtime .sqttl{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;font-size:.95rem;font-weight:300;letter-spacing:.34em;margin-right:-.34em;
+  background:linear-gradient(180deg,#f4f7ff 0%,#c3cde6 55%,#8d9abb 100%);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+:root.light .sqtime .sqttl{background:none;color:#c3cde6}
+.sqhead{display:flex;align-items:center;justify-content:center;gap:4px;margin:2px 0 2px}
 .sqhead .sqty{display:inline-flex;filter:drop-shadow(0 0 8px var(--zg))}
-.sqhead .sqttl{font-size:.66rem;font-weight:800;letter-spacing:.26em;color:var(--sub)}
-.sqhead .sqmv{font-size:.92rem;font-weight:900;letter-spacing:.02em}
+.sqhead .sqmv{font-size:1.35rem;font-weight:900;letter-spacing:.02em;line-height:1.2}
 .sqpct{font-size:2.7rem;font-weight:900;line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin:8px 0 12px;color:var(--z1);
   text-shadow:0 0 18px var(--zg),0 2px 0 rgba(0,0,0,.35);transition:color .15s}
 .sqpct i{font-style:normal;font-size:1rem;margin-left:3px;color:var(--sub)}
