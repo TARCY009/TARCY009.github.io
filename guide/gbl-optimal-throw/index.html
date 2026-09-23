@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>最適撃ち早見表｜ノーマルアタック何発目でSPアタックを撃つか｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOのGOバトルリーグで、SPアタックを相手のノーマルアタックの切れ目に合わせて撃つ「最適撃ち」を、自分と相手のノーマルアタックのターン数ごとの早見表にまとめました。表の読み方と、最適撃ちにこだわらない場面も解説します。">
+<link rel="canonical" href="https://gonavi.jp/guide/gbl-optimal-throw/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="最適撃ち早見表｜GOナビ">
+<meta property="og:description" content="ノーマルアタック何発目でSPアタックを撃つかを、ターン数ごとの1枚の表で。">
+<meta property="og:url" content="https://gonavi.jp/guide/gbl-optimal-throw/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/home.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GOナビ">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"最適撃ち早見表｜GOナビ","url":"https://gonavi.jp/guide/gbl-optimal-throw/","description":"ポケモンGOのGOバトルリーグで、SPアタックを相手のノーマルアタックの切れ目に合わせて撃つ「最適撃ち」を、自分と相手のノーマルアタックのターン数ごとの早見表にまとめました。表の読み方と、最適撃ちにこだわらない場面も解説します。","inLanguage":"ja","author":{"@type":"Person","name":"TARCY"},"publisher":{"@type":"Organization","name":"GOナビ","url":"https://gonavi.jp/"},"isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"}}</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#0b1023">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/home/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/home/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/infopage.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script src="/assets/ads.js"></script>
+<style>
+/* 最適撃ち早見表（2026-09-23タダシさんと決めた見た目・案D） */
+.card.tbl{padding:16px 10px 10px}
+.cctt{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fixed;margin:4px 0 2px}
+.cctt th,.cctt td{text-align:center;padding:0;border-radius:8px;font-variant-numeric:tabular-nums;line-height:1.2}
+.cctt thead th{font-size:.66rem;font-weight:800;color:#ffc94a;padding:6px 0;background:rgba(255,201,74,.10)}
+.cctt tbody th{font-size:.8rem;font-weight:900;color:#43e0ff;background:rgba(67,224,255,.10);line-height:1}
+.cctt tbody th small{display:block;font-size:.37rem;font-weight:700;margin-top:2px;opacity:.85}
+.cctt th.corner{background:none;font-size:.5rem;color:var(--sub);line-height:1.3;width:9%}
+.cctt th.corner i{font-style:normal;color:#ffc94a}.cctt th.corner u{text-decoration:none;color:#43e0ff}
+.cctt td{height:34px;font-size:.78rem;font-weight:900;letter-spacing:-.01em;white-space:nowrap;background:var(--bg);color:var(--fg)}
+.cctt td i{font-style:normal;font-weight:500;opacity:.5;margin:0 .06em}
+.cctt td.any{color:var(--sub);font-size:.62rem;font-weight:700;background:rgba(255,255,255,.04)}
+:root.light .cctt thead th{color:#8a6000;background:rgba(200,150,20,.12)}
+:root.light .cctt th.corner i{color:#8a6000}
+:root.light .cctt tbody th,:root.light .cctt th.corner u{color:#0b7f99}
+:root.light .cctt tbody th{background:rgba(11,127,153,.10)}
+:root.light .cctt td.any{background:rgba(40,60,120,.05)}
+.tnote{font-size:.72rem;color:var(--sub);margin:8px 4px 4px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
+  <div><div class="eyebrow">Guide</div><h1>最適撃ち早見表</h1>
+  <p class="lead">SPアタックを撃つタイミングを、相手のノーマルアタックの切れ目に合わせる考え方です。自分と相手のノーマルアタックのターン数ごとに、何発目で撃つとよいかを早見表にまとめました。</p></div>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<article>
+<section class="card">
+  <h2>最適撃ちとは</h2>
+  <p>ノーマルアタックを効率よく打っていくことは、高みを目指していくうえで大切な要素のひとつです。そのためのポイントが、<b>SPアタックを撃つタイミング</b>です。</p>
+  <p>SPアタックを撃つと、相手が打っている途中のノーマルアタックは、SPアタックの演出のあいだに前倒しで終わります。まだ残りのターンがあっても、ダメージとゲージはまるごと入ります。つまり、相手のノーマルアタックの<b>打ち始めに撃つと相手が得をして、終わりぎわに撃つと相手の得がなくなります</b>。</p>
+  <p>このページでは、相手のノーマルアタックの切れ目に合わせてSPアタックを撃つことを「<b>最適撃ち</b>」と呼びます（いわゆる「CCT」と同じ考え方です）。自分と相手のノーマルアタックのターン数ごとの最適撃ちの回数を把握して、勝率アップを目指しましょう。</p>
+</section>
+
+<section class="card tbl">
+  <h2>最適撃ち早見表</h2>
+  <table class="cctt"><caption hidden>最適撃ち早見表（縦＝自分・横＝相手のノーマルアタックのターン数）</caption><thead><tr><th class="corner" scope="col"><u>自分</u><br><i>相手</i></th><th scope="col">1ターン</th><th scope="col">2ターン</th><th scope="col">3ターン</th><th scope="col">4ターン</th><th scope="col">5ターン</th></tr></thead><tbody><tr><th scope="row">1<small>ターン</small></th><td class="any">いつでも</td><td style="--bg:#cdeeff;--fg:#0b4a6e">1<i>/</i>3<i>/</i>5</td><td style="--bg:#dcf5c4;--fg:#2f5a0e">2<i>/</i>5<i>/</i>8</td><td style="--bg:#ffd6ec;--fg:#7a1850">3<i>/</i>7<i>/</i>11</td><td style="--bg:#dde3ef;--fg:#2d3a55">4<i>/</i>9<i>/</i>14</td></tr><tr><th scope="row">2<small>ターン</small></th><td class="any">いつでも</td><td class="any">いつでも</td><td style="--bg:#fff1b8;--fg:#6b5200">1<i>/</i>4<i>/</i>7</td><td style="--bg:#cdeeff;--fg:#0b4a6e">1<i>/</i>3<i>/</i>5</td><td style="--bg:#e6dcff;--fg:#43257f">2<i>/</i>7<i>/</i>12</td></tr><tr><th scope="row">3<small>ターン</small></th><td class="any">いつでも</td><td style="--bg:#cdeeff;--fg:#0b4a6e">1<i>/</i>3<i>/</i>5</td><td class="any">いつでも</td><td style="--bg:#ffe0c7;--fg:#7a3a08">1<i>/</i>5<i>/</i>9</td><td style="--bg:#efe2cf;--fg:#5a4020">3<i>/</i>8</td></tr><tr><th scope="row">4<small>ターン</small></th><td class="any">いつでも</td><td class="any">いつでも</td><td style="--bg:#dcf5c4;--fg:#2f5a0e">2<i>/</i>5</td><td class="any">いつでも</td><td style="--bg:#ffd8d4;--fg:#7c1f16">1<i>/</i>6</td></tr><tr><th scope="row">5<small>ターン</small></th><td class="any">いつでも</td><td style="--bg:#cdeeff;--fg:#0b4a6e">1<i>/</i>3<i>/</i>5</td><td style="--bg:#fff1b8;--fg:#6b5200">1<i>/</i>4</td><td style="--bg:#ffd6ec;--fg:#7a1850">3</td><td class="any">いつでも</td></tr></tbody></table>
+  <p class="tnote">縦＝自分・横＝相手のノーマルアタックのターン数。数字は「自分のノーマルアタックを何発打ったところで撃つか」です。以降も同じ間隔で続きます（たとえば「3/8」の次は13、18）。同じ色は、同じ数字から始まる並びです。</p>
+</section>
+
+<section class="card">
+  <h2>表の読み方</h2>
+  <p>数えはじめは、<b>おたがいが同時にノーマルアタックを打ち始めたところ</b>です。バトルの開始や、どちらかがSPアタックを撃ったあとは、両者のノーマルアタックがそろって打ち直しになるので、そこから数えます。</p>
+  <ul>
+    <li><b>自分1ターン・相手3ターン</b>──2発目・5発目・8発目…のあとに撃つと、相手のノーマルアタックの最後のターンに重なります。ゲージが5発目でたまったら、そのまま5発目で撃てます。7発目でたまったら、8発目まで待ちます。</li>
+    <li><b>自分2ターン・相手4ターン</b>──1発目・3発目・5発目…。2ターンのわざでは相手の4ターン目にぴったり合わせることはできないので、残りが少ない側（3ターン目）に合わせます。</li>
+  </ul>
+  <p>「いつでも」のマスは、いつ撃っても相手の得が変わらない組み合わせです。</p>
+  <ul>
+    <li><b>同じターン数どうし</b>──おたがいの切れ目がそろっているので、撃てるようになったときに撃っても相手は得をしません。</li>
+    <li><b>相手が1ターンのわざ</b>──相手のわざは毎ターン終わるので、途中で打ち切られる分がありません。</li>
+    <li><b>自分4ターン・相手2ターン</b>──自分の切れ目がいつも相手の切れ目と同じ位置に来るので、合わせる先がありません。</li>
+  </ul>
+  <p>なお、交代した直後は交代にかかる1ターンのぶん周期がずれます。その対面は、SPアタックで打ち直しになったところから数え直します。</p>
+</section>
+
+<section class="card">
+  <h2>最適撃ちにこだわらない場面</h2>
+  <p>最適撃ちは、あくまで「待っても損をしない」ときの撃ち方です。次のような場面では、待たずに撃ったほうがよいこともあります。</p>
+  <ul>
+    <li><b>次の1発を待つあいだに倒されるかもしれないとき</b>──相手のノーマルアタックや、たまったSPアタックで倒されると、撃てたはずのSPアタックを撃てずに終わります。</li>
+    <li><b>有利な対面で、相手の交代のクールタイムが明けそうなとき</b>──待っているあいだに交代で逃げられると、いまの相手に当てたかったSPアタックを当てられなくなります。</li>
+    <li><b>ゲージが100までたまっているとき</b>──それ以上ためられないので、ノーマルアタックでたまる分が無駄になります。</li>
+    <li><b>SPアタックで倒しきれるとき</b>──待つ理由がありません。</li>
+  </ul>
+  <p>その場の状況によって最適撃ちをするかどうかを判断することで、より適切な行動をとれます。</p>
+</section>
+
+<section class="card">
+  <h2>GOナビで確かめる・練習する</h2>
+  <ul>
+    <li><a href="/gbl/">GBLシミュレーター</a>──SPアタックのタイミング「最適」は、この早見表どおりのタイミングで撃ちます。待つあいだに倒されうるとき・次の1発でゲージがあふれるとき・倒しきれるときは、待たずに撃ちます。1対1のタイムラインで、何発目に撃ったかを確かめられます。</li>
+    <li>模擬戦──SPアタックの選択で「⭐最適」を選ぶと、同じ考え方で撃ちます。相手の交代のクールタイムの見きわめは、自分で判断して「即打ち」を選んで練習できます。</li>
+    <li><a href="/move-dex/">わざ図鑑</a>──ノーマルアタックのターン数を調べられます。</li>
+    <li><a href="/guide/gbl-turns/">GBLの「ターン」の仕組み</a>──SPアタックと同じターンに重なったときの順番など、ターンの決まりをまとめています。</li>
+  </ul>
+  <p class="tnote">2026年9月時点の仕様にもとづいています。</p>
+</section>
+</article>
+
+<p class="back"><a href="/guide/">読み物の一覧へ</a></p>
+</div>
+<script src="/assets/theme.js"></script>
+<script src="/assets/home.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>

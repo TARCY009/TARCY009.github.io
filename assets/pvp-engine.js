@@ -282,14 +282,37 @@
     // タイミングを合わせる意味が無い。従来は同時開始(cd===0)を待っていたが、常に撃つに変更)。
     // 保険: 撃てるのに最適タイミングが来ないまま3回待ったら発動する(周期のズレ等での硬直防止)。
     // true=このターンに撃つ。false のときは待ちを1回数える(呼び出し側は通常技を開始する)
+    // 2026-09-23 作り直し(タダシさん指示・読み物「最適撃ち早見表」と一致させる):
+    //   旧: 相手の最終ターン(cd===1)だけを待ち、来なければ3回で撃つ → 自分2×相手4・自分4×相手2 と
+    //   相手5ターンわざ(4回待つ場面)で表とずれていた(240通り中43通り)。
+    //   新: 「この先ノーマルアタックを何発待っても、相手のわざの残りがいまより少ない瞬間は来ない」なら撃つ
+    //   (＝相手の周期の中でいちばん終わりぎわ。どこも同じ＝合わせられない組み合わせは、すぐ撃つ)。
+    // 最適撃ちにこだわらない場面(タダシさん指示): 待つと撃つ前に倒されうる(ノーマル・SP)／次の1発でゲージがあふれる
     const optWindow = (s, o, mv) => {
       if (s.fast.tn === o.fast.tn) return true;   // 同じターン数=即打ち
       // 発動時にブレード化する場合はブレードの攻撃、ばけのかわ未使用の相手には1ダメージで読む
       const att = s.form === 'shield' ? { ...s, atk: s.bladeSt.atk } : s;
       const dealt = (o.shields > 0 || o.disguise) ? 1 : damage(D, mv, att, o);
-      const oppFinal = o.cd === 1 || (o.cd === 0 && o.fast.tn === 1);
-      const stuck = (s.waitCnt || 0) >= 3;
-      if (dealt >= o.hp || oppFinal || stuck) return true;
+      if (dealt >= o.hp) return true;
+      if (s.en + (s.fast.eg || 0) > 100) return true;   // 次の1発でゲージがあふれる
+      const m = s.fast.tn, a = o.fast.tn;
+      // 相手のわざの残りターン(このターンを含む)。いま始める直前なら a
+      const r0 = o.cd > 0 ? o.cd : a;
+      const remAt = t => ((r0 - 1 - t) % a + a) % a + 1;
+      let best = r0;
+      for (let k = 1; k <= a; k++) best = Math.min(best, remAt(k * m));
+      if (r0 <= best) return true;
+      // 自分のノーマル1発(mターン)を待つあいだに倒されうるなら撃つ
+      const hits = r0 <= m ? Math.floor((m - r0) / a) + 1 : 0;
+      const fastIn = hits * damage(D, o.fast, o, s);
+      if (fastIn >= s.hp) return true;
+      if (s.shields <= 0) {
+        const oen = Math.min(100, o.en + hits * (o.fast.eg || 0));
+        const spIn = Math.max(0, ...(o.cfg.charged || []).map(id => D.moves[rmv(o, id)])
+          .filter(c => c && oen >= c.e).map(c => damage(D, c, o, s)));
+        if (spIn > 0 && fastIn + spIn >= s.hp) return true;
+      }
+      if ((s.waitCnt || 0) >= 5) return true;   // 保険(相手の周期が読めない場面での硬直防止)
       s.waitCnt = (s.waitCnt || 0) + 1;
       return false;
     };
