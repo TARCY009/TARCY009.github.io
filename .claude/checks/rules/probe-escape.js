@@ -30,7 +30,7 @@ window.__scenario = function (orig, picks0, foes0) {
     LIST.forEach(function (u) {
       LIST.forEach(function (l) {
         if (l === u) return;
-        var b = farmer(u, l); if (!b) return;
+        var b = farmer(u, l) || LIST.filter(function (k) { return k !== u && k !== l; })[0];
         var z = LIST.filter(function (k) { return k !== u && k !== l && k !== b; })[0];
         var picks = [P[u]], foes = [P[l], P[b], P[z]];
         var base = { '0:1:lead:0:0': { a: 'stay' } };
