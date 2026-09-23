@@ -11730,10 +11730,38 @@ function gbRender(body, bt, picks, foes) {
   //   ターンの行をまとめて出すと、SPのカットインを見ているあいだに
   //   「たおした」や「次のポケモン」の行までタイムラインに出てしまい、時系列が崩れて見える。
   //   演出を1つ見終わってから、その先の行を出す(advance が繰り返し呼ぶ)
+  // じぶんのSPの行で、答えの威力(入力メーター)がまだ決まっていないものの答えの鍵(2026-09-23)
+  const spPendKey = el => {
+    const f = fxList(el).find(x => x && x.k === 'sp' && x.side === 0);
+    if (!f) return null;
+    const ks = Object.keys(RB.ans).filter(k => RB.ans[k] && RB.ans[k].pwPend);
+    return ks.find(k => D.moves[RB.ans[k].mv] && D.moves[RB.ans[k].mv].n === f.mv) || null;
+  };
+  // 再生がじぶんのSPの行に来た: 入力メーターで威力を決めてから計算し直し、その行から続ける。
+  // ⚠ 決まった威力はその行より後ろしか変えない(まだ出していない)ので、時系列の守り(commitAns)は通さない
+  const spMeterAt = el => {
+    const key = spPendKey(el);
+    if (!key) { if (RBV.playing && !RBV.timer) startTimer(); return; }
+    stopTimer();
+    const a = RB.ans[key];
+    spqMeter(a.mv, pw => {
+      const x = RB.ans[key];
+      if (x) { if (pw != null) x.pw = pw; delete x.pwPend; }
+      RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
+      run();
+    }, rtOn() ? () => {
+      // リアルタイムの ✕＝このSPを撃つのをやめる(従来の「押したあとにやめる」と同じ)
+      delete RB.ans[key];
+      RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
+      run();
+    } : null, { ck: ckOf(+el.dataset.gt) });
+  };
   const revealStep = g => {
     const out = [];
     while (ptr < els.length && +els[ptr].dataset.gt <= g) {
       const el = els[ptr];
+      // じぶんのSPの行で威力が未確定なら、**行を出す前に止めて**入力メーターを出す(advance → spMeterAt)
+      if (RB.step && spPendKey(el)) { RBV.meterAt = el; break; }
       el.classList.remove('future'); el.classList.add('in');
       lastEl = el; out.push(el); ptr++;
       sndRow(el, ptr - 1);   // 効果音（🔊がONのときだけ・演出のON/OFFとは別）
@@ -11830,13 +11858,14 @@ function gbRender(body, bt, picks, foes) {
       b.onclick = () => {
         clearInterval(RBV.cdTimer); RBV.cdTimer = null;
         const o = b.dataset.i === 'reset' ? null : p.opts[+b.dataset.i];
-        const commit = pw => {
+        const commit = (pw, pend) => {
           const prevA = RB.ans[p.key];
           rbTrim(p.key);
           if (!o) delete RB.ans[p.key];
           else {
             RB.ans[p.key] = withT(o);
             if (pw != null) RB.ans[p.key].pw = pw;   // SPの出来(入力メーターで決めた威力の倍率)
+            if (pend) RB.ans[p.key].pwPend = true;   // 威力はまだ未確定(再生がこのSPの行に来たらメーターを出す)
             // 交代の選び直しでは押した瞬間(p・遅い交代受けの判定に使う)を引き継ぐ(2026-09-10)
             if (p.kind === 'msw' && prevA && prevA.p != null && RB.ans[p.key].p == null) RB.ans[p.key].p = prevA.p;
           }
@@ -11845,7 +11874,13 @@ function gbRender(body, bt, picks, foes) {
           run();
         };
         // じぶんのSPを撃つ答えは、先に入力メーター(SPの出来)を通してから記録する(2026-09-22タダシさん指示・カットインの前)
-        if (o && p.kind === 'sp' && !p.side && SPQ_FIRE.has(o.a)) { spqMeter(o.mv, commit, null, { ck: p.ck != null ? p.ck : p.gt }); return; }
+        // ⚠ 1手ずつ再生しているときは、メーターは**再生がそのSPの行に来たとき**に出す(2026-09-23タダシさん指示)。
+        //   同時発動で相手が先攻なら、相手のSPの演出とダメージのあとにじぶんのメーター、が実戦の順番。
+        //   答えは「威力は未確定(pwPend)」で記録し、計算は100%のまま進める(じぶんのSPより前の行は威力に左右されない)
+        if (o && p.kind === 'sp' && !p.side && SPQ_FIRE.has(o.a)) {
+          if (RB.step) { commit(null, true); return; }
+          spqMeter(o.mv, commit, null, { ck: p.ck != null ? p.ck : p.gt }); return;
+        }
         commit(null);
       };
     });
@@ -11924,6 +11959,12 @@ function gbRender(body, bt, picks, foes) {
   function advance() {
     const rev = revealStep(RBV.cur);
     autoScroll();
+    if (RBV.meterAt) {   // じぶんのSPの行の手前で止まった＝入力メーター(威力調整)
+      const el = RBV.meterAt; RBV.meterAt = null;
+      updateHud(RBV.cur, curLi(), curHf());
+      spMeterAt(el);
+      return;
+    }
     const fxEls = fxConsume(rev);
     // ⚠ HUDの⇄ボタンで交代したときのカットインは**再生を止めない**(2026-09-07タダシさん指示)。
     //   実戦の交代はリアルタイムなので、演出は流しっぱなしで行も進め続ける
@@ -12289,17 +12330,16 @@ function gbRender(body, bt, picks, foes) {
           if ((pt2 && pt2.gt > gt) || (!pt2 && +k2.split(':')[0] > li)
               || (!pt2 && k2.indexOf(li + ':0:msp:') === 0 && +k2.split(':')[3] > on)) delete RB.ans[k2];
         });
-        RB.ans[key] = { a: 'fire', mv, p: t.p, pw };
+        RB.ans[key] = pw == null ? { a: 'fire', mv, p: t.p, pwPend: true } : { a: 'fire', mv, p: t.p, pw };
       });
       if (!ok) { if (RBV.playing && !RBV.timer) startTimer(); return; }
       RBUI.open = null;
       RBV.keepFx = true;
       run();
     };
-    // 押した瞬間に入力メーター(SPの出来・2026-09-22タダシさん指示)。メーターのあいだ再生は止める
-    // (記録するターンは押した瞬間のまま。実戦でもミニゲームのあいだは画面が止まる)
-    stopTimer();
-    spqMeter(mv, go, () => { if (RBV.playing && !RBV.timer) startTimer(); }, { ck: ckOf(gt) });
+    // 入力メーター(SPの出来)は**再生がそのSPの行に来たとき**に出す(2026-09-23タダシさん指示・spMeterAt)。
+    // 押した瞬間は「威力は未確定」で記録する(同時発動で相手が先攻なら、相手のSPの演出とダメージが先)
+    go(null);
   };
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
