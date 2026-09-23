@@ -16,6 +16,9 @@
 | `.claude/rules/gym.md` | ジム挑戦・ジム防衛・マックスバトル対策 | `gym-attack/`・`gym-defense/`・`max-battle/` |
 | `.claude/rules/breakpoint.md` | GBLブレイクポイント | `breakpoint/` |
 | `.claude/rules/dex.md` | ステータス図鑑・わざ図鑑・耐久指数・マックスバトル タイプ別 | `pokedex/`・`move-dex/`・`bulk/`・`max-type/` |
+| `.claude/rules/inspection.md` | **点検のルール（全ツール共通）** | `.claude/checks/` を開いたとき。**点検・チェックの指示が来たら自分で Read する** |
+
+**⚠ 点検のルール（2026-09-24タダシさん決定・恒久）: 「チェックして」「点検して」「検査して」「確かめて」と指示されたら、作業の前に必ず `.claude/rules/inspection.md` を Read する。** 数をこなすのではなく、点検がしっかり活きる形で行う（先に不具合の条件を決める・検査そのものを疑う・同じ型を探す・直したら種を変えて回し直す・確かめていない範囲を書く、など31項目）
 
 **⚠ 共通ファイル（`build_data.py`・`assets/snap.js` など）を直して、分けたツールの結果が変わりうるときは、影響するツールのファイルを Read で開いてそのツールの決まりも読むこと**（見張り役は共通ファイルの書き換えでは止めないため）。
 
