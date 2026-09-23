@@ -30,13 +30,23 @@
 <link rel="stylesheet" href="/assets/ads.css">
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <script src="/assets/ads.js"></script>
+<style>
+/* 耐久指数の例の表（この読み物だけ） */
+.bt{width:100%;border-collapse:collapse;margin:2px 0 14px;font-size:.86rem;font-variant-numeric:tabular-nums}
+.bt th,.bt td{padding:7px 6px;border-bottom:1px solid var(--hair);text-align:right}
+.bt th:first-child,.bt td:first-child{text-align:left}
+.bt thead th{font-size:.74rem;color:var(--sub);font-weight:700;white-space:nowrap}
+.bt caption{caption-side:top;text-align:left;font-size:.76rem;color:var(--sub);padding:0 0 4px}
+.bt td b{font-weight:900}
+.bt tbody tr:last-child td{border-bottom:0}
+</style>
 </head>
 <body>
 <div class="wrap">
 <header>
   <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
   <div><div class="eyebrow">Guide</div><h1>耐久指数とは</h1>
-  <p class="lead">ポケモンの「倒されにくさ」は、HPと防御の組み合わせで決まります。GOナビで使っている耐久指数の求め方、シャドウポケモンの扱い、ジム・レイド・マックスバトルでの使い道まで。</p></div>
+  <p class="lead">ポケモンの「倒されにくさ」は、HPと防御の組み合わせで決まります。GOナビで使っている耐久指数の求め方、シャドウポケモンの扱い、ジム・レイド・マックスバトルでの使い道、トレーナーバトルでの見方まで。</p></div>
   <div id="themesw"></div>
 </header>
 
@@ -48,6 +58,27 @@
   <p class="formula">耐久指数 ＝ HPの種族値 × 防御の種族値</p>
   <p>受けるダメージは防御が高いほど小さくなり、HPが高いほど多くのダメージに耐えられます。そのため、倒されるまでに受けられる攻撃の回数は、おおまかにHPと防御の<b>掛け算</b>に比例します。HPだけ、防御だけが高くても、もう片方が低ければ倒れやすいままです。</p>
   <p>GOナビの耐久指数ランキングでは、1位のハピナスが83,824です。HPの種族値が飛び抜けて高いことが、この数字につながっています。</p>
+</section>
+
+<section class="card">
+  <h2>数字で見る</h2>
+  <table class="bt">
+    <thead><tr><th scope="col">ポケモン</th><th scope="col">HP</th><th scope="col">防御</th><th scope="col">耐久指数</th></tr></thead>
+    <tbody>
+      <tr><td>ハピナス</td><td>496</td><td>169</td><td><b>83,824</b></td></tr>
+      <tr><td>カビゴン</td><td>330</td><td>169</td><td><b>55,770</b></td></tr>
+      <tr><td>レジスチル</td><td>190</td><td>285</td><td><b>54,150</b></td></tr>
+      <tr><td>ハガネール</td><td>181</td><td>272</td><td><b>49,232</b></td></tr>
+      <tr><td>フェローチェ</td><td>174</td><td>85</td><td><b>14,790</b></td></tr>
+    </tbody>
+  </table>
+  <p>カビゴンはHPが高く、レジスチルは防御が高い、と硬さの中身はちがいますが、耐久指数はほぼ同じです。掛け算で比べると、HPが高いタイプと防御が高いタイプを同じものさしで並べられます。いちばん下のフェローチェは、「⚠️極低耐久」の目安（16,000未満）を下回っています。</p>
+</section>
+
+<section class="card">
+  <h2>なぜ種族値だけで比べられるのか</h2>
+  <p>実際の戦闘では、「（種族値＋個体値）×PLごとの係数」で決まる<b>実数値</b>が使われます。PLと個体値が同じなら係数は全員共通なので、倒されにくさの順番は、種族値の掛け算でほぼ決まります。</p>
+  <p>個体値のぶん（最大15）が足されるため、種族値の低いポケモンほどわずかに差が縮みますが、順位が大きく入れ替わることはほとんどありません。ジム・レイド・マックスバトルのように、PLや個体値をそろえて比べる場面では、耐久指数がそのまま目安になります。</p>
 </section>
 
 <section class="card">
@@ -71,11 +102,29 @@
 </section>
 
 <section class="card">
+  <h2>トレーナーバトルではCP制限で見え方が変わる</h2>
+  <p>CPは、攻撃・防御・HPの実数値から次の式で決まります。</p>
+  <p class="formula">CP ＝ 攻撃 × √防御 × √HP ÷ 10</p>
+  <p>防御とHPは平方根（√）で入るのに対して、攻撃はそのまま掛けられるので、<b>CPは攻撃の高さが大きく反映される式</b>になっています。そのため、スーパーリーグ（CP1500まで）のようなCP制限があると、攻撃の低いポケモンほどPLを高くでき、そのぶんHPと防御も伸びます。</p>
+  <table class="bt">
+    <caption>個体値15/15/15・CP1500以内に収めたとき</caption><thead><tr><th scope="col">ポケモン</th><th scope="col">耐久指数</th><th scope="col">PL</th><th scope="col">CP</th><th scope="col">SCP</th></tr></thead>
+    <tbody>
+      <tr><td>ミュウツー</td><td>38,948</td><td>12.5</td><td>1492</td><td><b>1307</b></td></tr>
+      <tr><td>マリルリ</td><td>34,200</td><td>36</td><td>1497</td><td><b>1741</b></td></tr>
+    </tbody>
+  </table>
+  <p>耐久指数ではミュウツーのほうが上ですが、CP1500以内に収めると、マリルリはPL36まで上げられるのに対してミュウツーはPL12.5までです。CPはほぼ同じでも、実際の防御とHPはマリルリのほうがずっと高くなります。</p>
+  <p>こうした差を正しく比べるために、トレーナーバトルでは<b>SCP</b>を指標にするのが適しています。SCPは、攻撃・防御・HPの実数値を掛け合わせて、CPと同じくらいの大きさの数字にそろえたものです。3つのステータスが<b>等しく反映される</b>ので、CPでは同じくらいに見える2匹でも、総合的な強さのちがいが数字に出ます。上の例では、CPはほぼ同じでも、SCPはマリルリのほうが400以上高くなっています。</p>
+  <p>SCPと個体値の関係は、読み物「<a href="/guide/iv-rank/">個体値の「順位」とは何か</a>」でくわしく説明しています。</p>
+</section>
+
+<section class="card">
   <h2>ツールで調べる</h2>
   <ul>
     <li><a href="/bulk/">耐久指数ランキング</a>──全ポケモンを耐久指数の順に並べています。シャドウ・メガシンカ・伝説を含めるか、進化前も含めるかを選べます。</li>
     <li><a href="/gym-defense/">ジム防衛オススメツール</a>──耐久にタイプとやる気を加えた、ジムで長く残る順のランキングです。</li>
     <li><a href="/max-type/tank/">マックスバトル タイプ別タンク</a>──受けるわざのタイプごとに、倒されにくいタンクを並べています。</li>
+    <li><a href="/iv-checker/">個体値チェッカー</a>──トレーナーバトルのリーグごとに、個体値ごとのSCPと順位を調べられます。</li>
   </ul>
   <p class="date">2026年9月時点の仕様にもとづいています。</p>
 </section>
