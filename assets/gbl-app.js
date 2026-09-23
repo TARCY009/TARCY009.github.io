@@ -8846,12 +8846,33 @@ function gbPoints(turns, ctx, dec) {
       seq++;   // 質問を出さなかった回も数えて、キーが前の決断とずれないようにする
     }
   }
+  // 倒されそうなときの「逃げて控えに起点を作らせる」交代(w=2・あいて側だけ・逃げ回りのAI＝NORMAL/HARD・2026-09-23タダシさん指示):
+  // あいてのHPが「ユーザーのノーマルアタック3発で倒れる」ところまで減ったら、HPかゲージが動いたターンごとに
+  // 「交代する？」を置く(撃てる軽いSPで倒れるより、逃げて控えにユーザーのポケモンを倒させ、あとで重いSPを撃つほうが得な場面がある)。
+  // 判断は aiAnswer の w=2(ユーザーが逃げられない・控えがノーマルアタックだけで倒せる、などを見る)
+  if (ctx.foeDump && ctx.swTo[1].length) {
+    let seq = 0, uHit = 0, prev = null;
+    for (const t of turns) {
+      if (t.tn > cut) break;
+      for (const e of t.ev[0]) if (e.full === undefined && e.dmg > 0) uHit = Math.max(uHit, e.dmg);
+      const over = t.state[0].hp <= 0 || t.state[1].hp <= 0;
+      const now = t.state[1].hp + ':' + t.state[1].en;
+      const moved = prev !== null && now !== prev;
+      prev = now;
+      if (over || !moved || !uHit || t.state[1].hp > uHit * 3) continue;
+      if (t.ev[0].some(e => e.full !== undefined)) continue;   // ユーザーのSPが飛んできたターンはシールドの判断に任せる
+      if (dec[1].swapTo == null && ck(t.tn) >= ctx.swOk[1])
+        pts.push({ side: 1, kind: 'swap', seq, w: 2, tn: t.tn, ...(snap[t.tn] || {}) });
+      seq++;   // 質問を出さなかった回も数えて、キーが前の決断とずれないようにする
+    }
+  }
   // 時系列の順に(同じターンは 対面の頭の交代 → SP・シールド → SPを撃った直後・下げ消しの交代、
   // じぶん→あいての順)。**SPを撃った直後の交代(seq>0)と下げ消し(w=1)は後ろに置く**
   // (2026-08-31タダシさん報告で修正: 前に置くと、シールドの質問に答える前にAIの交代が決まって
   // 「交代した！」チップが先に見えてしまう＝時系列が崩れる。後ろに置けば、シールドの答えを
   // 反映したシミュでAIが交代を判断することにもなり、「その瞬間の状態で読み直す」の確定仕様どおり)
-  const ord = p => p.kind !== 'swap' ? 1 : (p.seq > 0 || p.w === 1 ? 2 : 0);
+  // 倒されそうなときの交代(w=2)は**同じターンのSPより前**(逃げるなら、そのターンに軽いSPを撃って倒れる答えは要らない)
+  const ord = p => p.kind !== 'swap' ? 1 : (p.w === 2 ? 0 : p.seq > 0 || p.w === 1 ? 2 : 0);
   // 同じターンのシールド質問どうしは**解決順(so)**で並べる(2026-08-31タダシさん指示・同時発動の時系列:
   // 先に解決したSPへのシールド判断が先。先に撃った側は相手の結果を見てから自分の判断をする)
   pts.sort((a, b) => a.tn - b.tn || ord(a) - ord(b)
@@ -10123,6 +10144,36 @@ function gbPlayCore(picks, foes, ans, stepwise) {
       // 対面の途中の質問(SPを撃った直後・デバフを受けた直後)は、その瞬間の状態で下読みする。
       // これがあるので「SPで削ってから交代すれば裏が勝てる」という判断が成り立つ
       const ov = nowOv || {};
+      // ---- 倒されそうなら逃げて、控えに起点を作らせる(w=2・2026-09-23タダシさん指示・NORMAL/HARD) ----
+      // 「どうせやられるなら撃つ」が基本。ただし次の条件がそろえば、いま撃てる軽いSPで倒れるより、
+      // 控えに交代してユーザーのポケモンをノーマルアタックだけで倒させ(控えはゲージをためる＝起点)、
+      // このポケモンはHPとゲージを残して下げておき、あとで出し直して本命の重いSPを撃つほうが得:
+      //  ①ユーザーが交代で逃げられない(クールタイムが20秒以上残っている・またはラスト1匹)
+      //  ②いま撃てるSPでユーザーのポケモンを倒しきれない(倒せるなら撃って倒すのが最善)
+      //  ③本命のいちばん重いSPにはまだ届いていない(届いているなら撃つほうが得)
+      //  ④控えのだれかが、いまのユーザーのポケモンをノーマルアタックだけで倒せて、HPを6割以上残せる
+      //    (いまの状態のユーザーのポケモンが相手・交代で受ける打ちかけの1発ぶんも見込んで余裕を取る)
+      // 例(タダシさん): マリルリが交代できない場面で、倒されそうなチャーレムが逃げ、後続がマリルリを起点にし、
+      //    チャーレムはあとでじゃれつくぶんまでためて撃つ
+      if (p.w === 2) {
+        if (!p.st0 || !p.st1 || !(ai.sw || ai.farm)) return { a: 'stay' };
+        if (!(userLocked() || ctx.swTo[0].length === 0)) return { a: 'stay' };
+        const en1 = p.st1.en || 0;
+        const myC = (ctx.spList[1] || []).map(id => D.moves[id]).filter(Boolean);
+        if (!myC.length || en1 >= Math.max(...myC.map(m => m.e))) return { a: 'stay' };
+        const att1 = { ...PvpEngine.buildStats(D, ros[1][cur[1]].base), buffs: p.st1.b.slice() };
+        const dfn0 = { ...PvpEngine.buildStats(D, ros[0][cur[0]].base), buffs: p.st0.b.slice() };
+        if (myC.some(m => m.e <= en1 && PvpEngine.damage(D, m, att1, dfn0) >= p.st0.hp)) return { a: 'stay' };
+        let best = null, bestHp = -1;
+        for (const idx of benches(1)) {
+          const R = { ...plainCfg(1, idx), timing: 'shots', shotPlan: [], shotRest: null };
+          const r = PvpEngine.simulate(D, plainCfg(0, cur[0], ov.ov0), R, SIMOPT);
+          if (r.winner !== 1) continue;
+          const frac = r.final[1].hp / r.final[1].hpMax;
+          if (frac >= GB_BENCH_HP && frac > bestHp) { best = idx; bestHp = frac; }
+        }
+        return best != null ? { a: 'toq', to: best } : { a: 'stay' };
+      }
       // **投げようとしたSPは引っ込められない**: ユーザーの交代に合わせ返さず、残って撃つ。
       // これが無いと、ユーザーが交代した瞬間にあいてが必ず逃げるので交代受けが成立しない
       if (p.seq === 0 && !p.w && aiThrown(ctx, p.st1 ? p.st1.en : ctx.enAt[1])) return { a: 'stay' };
@@ -10659,6 +10710,8 @@ function gbPlayCore(picks, foes, ans, stepwise) {
       // 交代受けを狙いながらSPも撃てる(ありえない)状態になっていた
       // 飛ばした質問の答えは記録からも消す(画面に出ないまま残ると、並びが変わったとき別のポケモンに当たる)
       if (p.side === 0 && p.kind === 'sp' && dec[0].mswP != null && p.tn >= dec[0].mswP) { handled.add(p.key); delete ans[p.key]; continue; }
+      // あいてが「倒されそうなので逃げる」(w=2)と決めたあとの、同じターン以降のSPの質問は出さない(交代するので撃たない)
+      if (p.side === 1 && p.kind === 'sp' && dec[1].escAt != null && p.tn >= dec[1].escAt) { handled.add(p.key); delete ans[p.key]; continue; }
       // 投げ済みのSP: 対面の頭の最初のSPは、交代前に投げたわざをそのまま即打ち(交代先を見て選び直さない)。
       // 投げている最中は交代もできない(あいての対面の頭の「交代する？」は残る)
       let forced = null;
@@ -10701,6 +10754,7 @@ function gbPlayCore(picks, foes, ans, stepwise) {
         dec[p.side].swapAt = Math.max(1, at);
         if (a.at != null && a.x != null) { dec[p.side].pivotX = a.x; dec[p.side].pivotKey = p.key; dec[p.side].pivotHolds = holdsIn(dec[0]); }
         if (at !== p.tn) { log[log.length - 1].tn0 = p.tn; log[log.length - 1].tn = at; }
+        if (p.w === 2) dec[p.side].escAt = dec[p.side].swapAt;
         continue;
       }
       rbApply(dec[p.side], p, a);   // sp / sh の反映はロケット団と同じ
