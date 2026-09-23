@@ -5249,6 +5249,24 @@ function bindPace(dock, startTimer) {
 // 実戦と同じく時間は流れる: 入力の猶予7秒(過ぎたらその位置で確定)と、バトルの残り時間(opt.ck=その瞬間の時計)を減らして見せる。
 // ⚠ 表示だけ。バトルの時計はSP1発10秒(GB_SP_TURNS)で数えるのは従来どおり
 // 倍率はエンジンの CHARGE_PW(ゲーム内公開データ)。見た目は gbl.css の .spqwin 〜
+// ---- リアルタイムのSPボタンのゲージアイコン（2026-09-24タダシさん指示）----
+// ゲームのSPボタンのように、丸の中に**いつものタイプアイコン**、下から水面のように満ちる。
+// 1周（SP1発ぶん）ごとに色が濃くなる: 1周目＝タイプ色・2周目＝暗い側に黒を25%・3周目以降＝黒を55%
+// （点灯中のボタンの地もタイプ色なので、ゲージはそれより濃くして浮かせる）。
+// 例: 消費35でゲージ100なら2.85発ぶん＝3周目(いちばん濃い)が85%まで
+const spGaugeMix = (h, t, a) => { const n = parseInt(String(h).slice(1), 16), r = n >> 16, g = n >> 8 & 255, b = n & 255;
+  return 'rgb(' + [r, g, b].map(v => Math.round(v + (t - v) * a)).join(',') + ')'; };
+function spGaugeSvg(en, cost, ja) {
+  const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#9ff3ff', mid: '#2b9fd8', bot: '#1b6fb0' };
+  const lv = k => [c.mid, spGaugeMix(c.bot, 0, .25), spGaugeMix(c.bot, 0, .55)][Math.min(2, k)];
+  const r = cost > 0 ? Math.max(0, en) / cost : 0, full = Math.floor(r + 1e-9), frac = r - full;
+  const cur = frac > 1e-6 ? full : Math.max(0, full - 1), fill = frac > 1e-6 ? frac : (full ? 1 : 0);
+  const under = cur > 0 ? `<rect x="0" y="0" width="36" height="36" fill="${lv(cur - 1)}"/>` : '';
+  const y = +(36 * (1 - fill)).toFixed(2), part = fill > 0 && fill < 1;
+  const body = part ? `M0 ${y} Q9 ${y - 2.2} 18 ${y} T36 ${y} V36 H0 Z` : `M0 ${y} H36 V36 H0 Z`;
+  const top = part ? `<path d="M0 ${y} Q9 ${y - 2.2} 18 ${y} T36 ${y}" stroke="rgba(255,255,255,.75)" stroke-width="1.6" fill="none"/>` : '';
+  return `<svg viewBox="0 0 36 36" aria-hidden="true">${under}<path d="${body}" fill="${lv(cur)}"/>${top}</svg><span class="sym">${typeIconHTML(ja, 20)}</span>`;
+}
 // ---- SPアタックが始まる演出（2026-09-23タダシさん選択・案D）----
 // メーターの直前に約0.5秒: 画面のふちがわざのタイプ色で光り、真ん中から波紋が2回広がる。効果音は GonaviSound.spStart。
 // 🎬演出OFF・動きを減らす設定のときは見た目を省く（音は🔊の設定どおり）。終わったら then() でメーターへ
@@ -11679,7 +11697,7 @@ function gbRender(body, bt, picks, foes) {
           const ja = D.typeJa[MOVE_TYPE[m.n]] || D.typeJa[m.t] || '';
           const c = (window.typeColorOf && typeColorOf(ja)) || { top: '#43e0ff', mid: '#2b9fd8', bot: '#1b6fb0' };
           return `<button class="hsp" data-mv="${id}" style="--tc:${c.mid};--tc2:${c.bot}" disabled title="${m.n}（ゲージ${m.e}）。赤い数字はいまのあいてへの与ダメージ（あいてがシールドで防ぐと1・金なら倒しきれる）">
-            <span class="tico">${typeIconHTML(ja, 16)}</span><b>${m.n}</b><small>${m.e}</small><small class="dmg"></small></button>`;
+            <span class="tico">${typeIconHTML(ja, 16)}</span><span class="nm"><b style="--nf:${m.n.length <= 5 ? '.8rem' : m.n.length === 6 ? '.72rem' : m.n.length === 7 ? '.62rem' : '.55rem'}">${m.n}</b><small class="cost">ゲージ ${m.e}</small></span><span class="gg" data-ja="${ja}" data-e="${m.e}"></span><small class="dmg"></small></button>`;
         }).join('');
         spRow.querySelectorAll('.hsp').forEach(b => { b.onclick = () => manualSp(b.dataset.mv); });
       }
@@ -11699,6 +11717,9 @@ function gbRender(body, bt, picks, foes) {
           RBV.rdyMem.on.add(b.dataset.mv);
           const S = SND(); if (S && S.ready && RBV.playing) S.ready(bi);
         } else if (!ok && live) RBV.rdyMem.on.delete(b.dataset.mv);   // 撃ってゲージが減ったら、次にたまったときにまた鳴らす
+        // ゲージアイコン(2026-09-24): 表示中のゲージ(hen0)で満ち具合を描く。変わったときだけ描き直す
+        const gg = b.querySelector('.gg');
+        if (gg && m) { const ek = String(Math.floor(hen0 || 0)); if (gg.dataset.en !== ek) { gg.dataset.en = ek; gg.innerHTML = spGaugeSvg(hen0 || 0, m.e, gg.dataset.ja); } }
         // 与ダメージ(2026-09-15テスター#23): いまの能力変化込み・あいての残りHP以上なら金(倒しきれる)
         const de = b.querySelector('.dmg');
         if (de && m && att0 && def1) {
