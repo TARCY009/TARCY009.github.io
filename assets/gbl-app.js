@@ -9883,7 +9883,33 @@ function gbPlayCore(picks, foes, ans, stepwise) {
         const kill = ctx.spList[p.side].map(id => ({ id, m: D.moves[id] }))
           .filter(x => x.m && x.m.e <= en0 && PvpEngine.damage(D, x.m, att0, dfn0) >= p.st0.hp)
           .sort((a, b) => a.m.e - b.m.e)[0];
-        if (kill) return { a: 'fire', mv: kill.id };
+        if (kill) {
+          // ---- HARD: 倒しきれても、安全なうちはノーマルアタックでチャージしてから撃つ(2026-09-23タダシさん指示) ----
+          // GBLの基本は「チャージできる場面ではチャージする」。①相手が交代で逃げられない
+          // ②相手のSPアタックがまだ飛んでこない ③こちらのHPに相手のノーマルアタックを受けても余裕がある
+          // ——のあいだはノーマルアタックを打ってゲージをため、どれかが崩れる直前にトドメを撃つ。
+          // NORMAL は従来どおり倒しきれるならすぐ撃つ
+          if (ai.omni) {
+            const mf = D.moves[ctx.fast[1]], uf = D.moves[ctx.fast[0]];
+            const eg = mf ? (mf.eg || 0) : 0, ftn = mf ? (mf.tn || 1) : 1;
+            const now = p.ck != null ? p.ck : ctx.base + p.tn;
+            // ①相手が交代できるようになる前に撃つ(控えがいなければ逃げられない)
+            // (交代できる時刻が読めない場面は待たない)
+            const nSwap = !benches(0).length ? Infinity
+              : Number.isFinite(ctx.swOk[0] - now) ? Math.floor((ctx.swOk[0] - now) / ftn) - 1 : 0;
+            // ②相手のSPが撃てるようになる直前まで
+            const nSp = untilUserSp() - 1;
+            // ③待つあいだに受ける相手のノーマルアタックに、もう1発ぶん耐えられる余裕を残す
+            const ud = uf ? PvpEngine.damage(D, uf, dfn0, att0) : 0;
+            let nHp = Infinity;
+            if (ud > 0) { nHp = 0; while (nHp < 30 && (Math.ceil((nHp + 1) * ftn / (uf.tn || 1)) + 1) * ud < p.st1.hp) nHp++; }
+            // ゲージがあふれる手前まで
+            const nEn = eg > 0 ? Math.floor((100 - en0) / eg) : 0;
+            const n = Math.min(nSwap, nSp, nHp, nEn, 30);
+            if (n >= 1) return { a: 'wait', n };
+          }
+          return { a: 'fire', mv: kill.id };
+        }
       }
       // ---- **もう倒されてもおかしくない場面では、ためずにすぐ撃つ**(2026-09-07タダシさん指示) ----
       // 効率のよい撃ち方(CCT)は大事だが、いつ倒されてもおかしくないときは「撃てるうちに撃つ」が優先。
