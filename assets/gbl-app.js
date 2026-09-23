@@ -5282,6 +5282,7 @@ function spStartFx(mvId, then) {
   fx.style.cssText = `--tc1:${col.top};--tc2:${col.bot}`;
   fx.innerHTML = '<i class="edge"></i><i class="ring"></i><i class="ring r2"></i>';
   document.body.appendChild(fx);
+  RBV.spstUntil = performance.now() + 520;   // 演出が終わる時刻(この間にメーターの番が来たら、終わるのを待ってから出す)
   setTimeout(then, 520);
   setTimeout(() => fx.remove(), 900);
 }
@@ -11770,11 +11771,57 @@ function gbRender(body, bt, picks, foes) {
   //   「たおした」や「次のポケモン」の行までタイムラインに出てしまい、時系列が崩れて見える。
   //   演出を1つ見終わってから、その先の行を出す(advance が繰り返し呼ぶ)
   // じぶんのSPの行で、答えの威力(入力メーター)がまだ決まっていないものの答えの鍵(2026-09-23)
+  // ⚠ 答えと行は**位置で**対応づける(2026-09-24・わざの名前だけで探すと、同じわざを続けて予約したときに
+  //   別の行でメーターが出る／じぶんのSPの行が止まったままになる、が自動検査で見つかった):
+  //   選択式の答え li:0:sp:seq ＝ その対面の seq 発目(0から)のじぶんのSP ／
+  //   リアルタイムの入力 li:0:msp:on ＝ その対面の on ターン目以降で最初のじぶんのSP ／
+  //   どちらも自分の対面に見つからなければ、交代の瞬間に投げたSP＝次の対面の頭(1〜2ターン目)の最初のじぶんのSP
+  let spPendMap = null;
+  // わざ名は「かっこ書き」を除いてくらべる（モルペコのオーラぐるまは、すがたで（でんき）⇄（あく）と表示名が変わる・自動検査で見つかった）
+  const spNameKey = n => String(n || '').replace(/（[^）]*）|\([^)]*\)/g, '').trim();
+  const spPendBuild = () => {
+    const rows = [];   // じぶんのSPの行 { el, li, tn, idx, mv }
+    const cnt = {};
+    els.forEach(el => {
+      const f = fxList(el).find(x => x && x.k === 'sp' && x.side === 0);
+      if (!f) return;
+      const li = +el.dataset.li, L = bt.legs[li];
+      if (!L) return;
+      const idx = cnt[li] || 0; cnt[li] = idx + 1;
+      rows.push({ el, li, tn: +el.dataset.gt - L.base, idx, mv: spNameKey(f.mv) });
+    });
+    const map = new Map(), used = new Set();
+    // ⚠ 間に合わなかった入力(late)は撃たれないので数えない。行のわざと答えのわざが同じときだけ結びつける
+    // ⚠ メーターが済んだ入力(pw あり)も行を使う側に数える。同じ切れ目の入力が2つ重なって1発しか撃たれないとき、
+    //   1つ目が済んだあとに2つ目が同じ行を拾って2回目のメーターを出していた(自動検査で見つかった)
+    const keys = Object.keys(RB.ans).filter(k => { const a = RB.ans[k], ps = k.split(':');
+        return a && !a.late && ps[1] === '0' && (ps[2] === 'sp' || ps[2] === 'msp') && (a.pwPend || a.pw != null) && SPQ_FIRE.has(a.a); })
+      .map(k => { const ps = k.split(':'); const m = D.moves[RB.ans[k].mv];
+        return { k, li: +ps[0], kind: ps[2], v: +ps[3], n: m ? spNameKey(m.n) : '' }; })
+      .sort((a, b) => a.li - b.li || a.v - b.v);
+    const take = (q, r) => { if (r) { used.add(r.el); map.set(r.el, q.k); q.done = true; } };
+    // 0回目: 対面の終わりより後ろに予約した入力(交代の瞬間に投げたSP)＝次の対面の頭で**先に**撃たれる
+    keys.forEach(q => {
+      const L = bt.legs[q.li];
+      if (q.kind === 'msp' && L && L.res && q.v > L.res.turns)
+        take(q, rows.find(x => x.li === q.li + 1 && x.idx === 0 && x.tn <= 2 && x.mv === q.n && !used.has(x.el)));
+    });
+    // 1回目: 自分の対面の中で見つかるもの
+    keys.forEach(q => {
+      if (q.done) return;
+      if (q.kind === 'sp') take(q, rows.find(x => x.li === q.li && x.idx === q.v && x.mv === q.n && !used.has(x.el)));
+      else if (q.kind === 'msp') take(q, rows.find(x => x.li === q.li && x.tn >= q.v && x.mv === q.n && !used.has(x.el)));
+    });
+    // 2回目: 交代の瞬間に投げたSP＝次の対面の頭の最初のじぶんのSP(1回目で決まらなかったものだけ)
+    keys.forEach(q => {
+      if (!q.done) take(q, rows.find(x => x.li === q.li + 1 && x.idx === 0 && x.tn <= 2 && x.mv === q.n && !used.has(x.el)));
+    });
+    return map;
+  };
   const spPendKey = el => {
-    const f = fxList(el).find(x => x && x.k === 'sp' && x.side === 0);
-    if (!f) return null;
-    const ks = Object.keys(RB.ans).filter(k => RB.ans[k] && RB.ans[k].pwPend);
-    return ks.find(k => D.moves[RB.ans[k].mv] && D.moves[RB.ans[k].mv].n === f.mv) || null;
+    if (!spPendMap) spPendMap = spPendBuild();
+    const k = spPendMap.get(el);
+    return k && RB.ans[k] && RB.ans[k].pwPend ? k : null;   // 結びついた答えがまだ未確定のときだけ
   };
   // 再生がじぶんのSPの行に来た: 入力メーターで威力を決めてから計算し直し、その行から続ける。
   // ⚠ 決まった威力はその行より後ろしか変えない(まだ出していない)ので、時系列の守り(commitAns)は通さない
@@ -11783,7 +11830,8 @@ function gbRender(body, bt, picks, foes) {
     if (!key) { if (RBV.playing && !RBV.timer) startTimer(); return; }
     stopTimer();
     const a = RB.ans[key];
-    spStartFx(a.mv, () => spqMeter(a.mv, pw => {
+    const wait = Math.max(0, (RBV.spstUntil || 0) - performance.now());
+    setTimeout(() => spqMeter(a.mv, pw => {
       const x = RB.ans[key];
       if (x) { if (pw != null) x.pw = pw; delete x.pwPend; }
       RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
@@ -11793,7 +11841,7 @@ function gbRender(body, bt, picks, foes) {
       delete RB.ans[key];
       RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
       run();
-    } : null, { ck: ckOf(+el.dataset.gt) }));
+    } : null, { ck: ckOf(+el.dataset.gt) }), wait);
   };
   const revealStep = g => {
     const out = [];
@@ -11917,7 +11965,7 @@ function gbRender(body, bt, picks, foes) {
         //   同時発動で相手が先攻なら、相手のSPの演出とダメージのあとにじぶんのメーター、が実戦の順番。
         //   答えは「威力は未確定(pwPend)」で記録し、計算は100%のまま進める(じぶんのSPより前の行は威力に左右されない)
         if (o && p.kind === 'sp' && !p.side && SPQ_FIRE.has(o.a)) {
-          if (RB.step) { commit(null, true); return; }
+          if (RB.step) { spStartFx(o.mv, () => {}); commit(null, true); return; }   // 押した瞬間に「SPが始まる」演出(2026-09-24)
           spStartFx(o.mv, () => spqMeter(o.mv, commit, null, { ck: p.ck != null ? p.ck : p.gt })); return;
         }
         commit(null);
@@ -12358,6 +12406,10 @@ function gbRender(body, bt, picks, foes) {
     }
     if (RB.ans[key] && !RB.ans[key].late) return;   // 同じ切れ目に何度押しても1発(間に合わなかった入力は押し直せる)
     const chained = on !== t.on;   // 2発目として後ろにつないだ
+    // もう「間に合わなかった」と分かっている入力の押し直し(同じターンに押した)なら、計算し直しも再生のやり直しもしない。
+    // ⚠ 撃てない場面でボタンを連打すると、押すたびに作り直し＝再生のタイマーが最初からになり、
+    //   連打のあいだ再生が止まっていた(2026-09-24・自動検査で見つかった)
+    const wasLate = !!(RB.ans[key] && RB.ans[key].late && RB.ans[key].p === t.p);
     const go = pw => {
       const ok = commitAns(() => {
         // この場面より後ろの答えは消す(前提が変わるため)。
@@ -12372,6 +12424,12 @@ function gbRender(body, bt, picks, foes) {
         RB.ans[key] = pw == null ? { a: 'fire', mv, p: t.p, pwPend: true } : { a: 'fire', mv, p: t.p, pw };
       });
       if (!ok) { if (RBV.playing && !RBV.timer) startTimer(); return; }
+      if (wasLate && RB.ans[key] && RB.ans[key].late) { if (RBV.playing && !RBV.timer) startTimer(); return; }
+      // 押した瞬間に「SPが始まる」演出(2026-09-24タダシさん指示・受け付けた入力だけ)。
+      // 同時発動で相手が先攻でも演出はここで先に出し、再生は止めない(相手のSP → じぶんのメーター の順に続く)
+      // ⚠ 相手のSPが先に来ることがもう決まっていて「間に合わなかった」入力(late)になったときは出さない
+      //   (撃たれないのに演出だけが出る＝押すたびに何度も出ていた・自動検査で見つかった)
+      if (pw == null && !(RB.ans[key] && RB.ans[key].late)) spStartFx(mv, () => {});
       RBUI.open = null;
       RBV.keepFx = true;
       run();

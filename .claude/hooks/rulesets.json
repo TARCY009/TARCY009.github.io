@@ -10,6 +10,7 @@
         "rules-scn",
         "rules-random",
         "mock-fx",
+        "mock-sp",
         "exit-gbl"
       ],
       "paths": [

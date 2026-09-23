@@ -10,6 +10,7 @@ exit-rank:   .claude/checks/exit-check.html?only=rank（1ポケモン1ページ�
 exit-gbl:    .claude/checks/exit-check.html?only=gbl（同・GBLの環境一覧とロケット団のランキング＝16項目）
 rules-scn:   .claude/checks/rules/scncheck.py（GBLのバトルルールのシナリオ6本＝expected/*.json と突き合わせ）
 rules-random:.claude/checks/rules/randcheck.py（同・種1で600戦をランダムに回し、バトルルール違反0か）
+mock-sp:     .claude/checks/mock-sp.py --quick（模擬戦を画面ごと回し、SPボタン・メーター・同時発動の順番が崩れないか。広く見るときは --seed N で16戦）
 いずれも画面なしのブラウザで開き、すべて ✅ かを確かめる。
 答え（期待値・基準ファイル）を変えるときは、必ずタダシさんに確認してから。
 """
@@ -135,6 +136,8 @@ CHECKS = {
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
     'max-attacker': page_check('.claude/checks/max-check.html', 5),
     'mock-fx': check_mock_fx,
+    # 模擬戦のSPアタックの通し検査(2026-09-24): 押した瞬間の演出・メーターの順番・同時発動・止まらない など。保存前は短い版(2戦)
+    'mock-sp': sub_check('.claude/checks/mock-sp.py', ['--quick'], '模擬戦のSPアタックの通し検査'),
     'exit-rank': page_check('.claude/checks/exit-check.html?only=rank', 20, 120000),
     'exit-gbl': page_check('.claude/checks/exit-check.html?only=gbl', 16, 300000),
 }
