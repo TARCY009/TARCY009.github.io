@@ -52,12 +52,21 @@ header h1::before{content:'';display:inline-block;vertical-align:-.13em;flex:0 0
     linear-gradient(180deg,#ff5470 0 44%,#20263a 44% 56%,var(--ballbtm) 56% 100%);
   box-shadow:var(--ballsh)}
 
+/* ===== 審査用⇄本番用のスイッチ（2026-09-23・タダシさん決定・全ツール共通・ここ1行） =====
+   review＝審査用: 紹介文を出す・「使い方」は開いたまま（いまの見た目）
+   post  ＝本番用: 紹介文は📖説明モードのときだけ・「使い方」は読み込み後に閉じる（home.js が --gonavi-mode を読む）
+   アドセンスに合格したら、下の1行を  :root{--gonavi-mode:post;--intro-show:none}  に書き換えるだけ。
+   どちらでも文章はHTMLに残る（Googleの方針で、操作で開閉する内容は隠し文字に当たらない）。
+   ⚠ 隠すのは display だけ。文字色・画面の外・文字サイズ0・透明度0で隠さない（隠し文字の禁止例そのもの） */
+:root{--gonavi-mode:review;--intro-show:block}
+:root.explain{--intro-show:block}
+
 /* ===== タイトルのすぐ下の紹介文（2026-09-22・タダシさん指示・全ツール共通） =====
    アドセンスの審査「有用性の低いコンテンツ」への手当て。画面を開いた時点で「何のツールで・どう使い・何が分かるか」が
-   3文で読めるようにする（📖説明モードに隠さない・恒久＝審査後も消さない）。文言は各ページの <p class="intro">
+   3文で読めるようにする。**HTMLからは消さない**（2026-09-23: 合格後は上のスイッチで📖説明モードのときだけ出す）。文言は各ページの <p class="intro">
    （GBL・ロケット団・対戦記録は gbl-app.js の骨組みの #intro）。見た目はここ1か所。
    ⚠ header の中に置く（広告の枠A＝「タイトルのすぐ下」の並びを崩さない）。h1 の直後・#themesw より前。 */
-header .intro{flex:1 1 100%;margin:6px 0 0;font-size:.82rem;line-height:1.75;color:var(--sub,#9fb0e0);max-width:64ch;letter-spacing:.01em;text-align:left}
+header .intro{display:var(--intro-show,block);flex:1 1 100%;margin:6px 0 0;font-size:.82rem;line-height:1.75;color:var(--sub,#9fb0e0);max-width:64ch;letter-spacing:.01em;text-align:left}
 /* 個体値チェッカーは見出しが中央寄せなので、段落だけ左そろえにする（5行の中央寄せは読みにくい） */
 @media (max-width:430px){header .intro{font-size:.76rem;line-height:1.7}}
 

@@ -14,7 +14,8 @@ b.PAGES = F.ROSTER
 b.GM = F.GM
 b.td_rows, b.max_rows, b.gbl_of, b.rkt_best = F.td_rows, F.max_rows, F.gbl_of, F.rkt_best
 b.ITEM_JA = gm_ja.ITEM_JA
-_d = datetime.date.today()
+# 日付はふつう今日。手元でページだけ組み直すときは、データを集めた日を POKEPAGE_DATE=2026-09-22 のように渡す（「◯月◯日時点」をデータに合わせる）
+_d = datetime.date.fromisoformat(os.environ['POKEPAGE_DATE']) if os.environ.get('POKEPAGE_DATE') else datetime.date.today()
 b.DATE_JA = '%d年%d月%d日' % (_d.year, _d.month, _d.day)
 OUT = 'out'
 # --publish のときは本番の置き場所（/pokedex/<キー>/）へ書く。省略時は確認用に pokepage/out/ へ（検索エンジンには全部見せない）
@@ -24,6 +25,17 @@ SITE = 'https://gonavi.jp'
 # 2026年8月のスパムアップデートが大量の自動生成ページを狙ったため。ページは消さない。合格したら False に戻して段階的に載せる
 HOLD = True
 STAGE = 1   # サイトマップに載せる段階（①最終進化・メガ・伝説で強い場面が2つ以上 → ②人気の進化前 → ③残り の順に増やす）
+# 広告を出すページ（2026-09-23タダシさん決定）。1ポケモン1ページは広告なしで公開し、本当に強いポケモンに特別な説明を手で加えたら、
+# そのページのキー（/pokedex/<キー>/ の <キー>）を ad_ok.txt に1行ずつ足す＝足した順に広告が出る。
+# Googleの広告の方針に「人が確認していない自動生成のページに広告を出さない」例があるため。載っていないページは広告の読み込みも枠も出さない
+AD_OK = set()
+try:
+    for _ln in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ad_ok.txt'), encoding='utf-8'):
+        _ln = _ln.split('#', 1)[0].strip()
+        if _ln:
+            AD_OK.add(_ln)
+except OSError:
+    pass
 TIERS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'tiers.json'), encoding='utf-8'))
 
 HERE, ROOT, GO, PVP, GM, JA = b.HERE, b.ROOT, b.GO, b.PVP, b.GM, b.JA
@@ -756,21 +768,23 @@ def build(pg, faq=False):
     pre_evo = any(k == '進化' for k, _ in pg['related'])
     secs = [('' if pre_evo else related(pg)), sec_raid(pg), sec_gym(pg, p), sec_max(pg, p), sec_gbl(pg), sec_rocket(pg), sec_grow(pg), sec_notes(pg), sec_base(pg, p), sec_moves(pg, p), (sec_faq(pg, p) if faq else '')]
     nav = ''.join('<a href="#' + a + '">' + l + '</a>' for a, l in NAV)
+    ad = pg['pk'] in AD_OK   # 広告を出すページか（ad_ok.txt）
     body = ('<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             + head_tags(pg, name, desc) +
             "<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>"
             '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Zen+Kaku+Gothic+New:wght@900&display=swap" rel="stylesheet">'
-            '<link rel="stylesheet" href="/assets/theme.css"><link rel="stylesheet" href="/assets/home.css"><link rel="stylesheet" href="/assets/ads.css"><script src="/assets/ads.js"></script>'
+            '<link rel="stylesheet" href="/assets/theme.css"><link rel="stylesheet" href="/assets/home.css">'
+            + ('<link rel="stylesheet" href="/assets/ads.css"><script src="/assets/ads.js"></script>' if ad else '')
             + ('<link rel="stylesheet" href="/assets/pokepage.css">' if PUBLISH else '<style>' + CSS + '</style>') + '</head>'
             '<body style="--c1:' + c1 + ';--c2:' + c2 + '"><div class="glow"></div><div class="wrap">'
             '<div class="topbar"><a class="back" href="' + ('/pokedex/?p=' + urllib.parse.quote(name) if PUBLISH else '../../out.html') + '">GOナビ ／ ポケモン</a><div id="themesw"></div></div>'
             '<header class="hero"><div class="wm">' + ''.join('<span data-ty="' + JA[t] + '" data-sz="230"></span>' for t in p['ty']) + '</div><div class="no">No.' + ('%04d' % p['dex']) + ''.join('<span>' + t + '</span>' for t in tags if t) + '</div>'
             '<h1>' + esc(main) + ('<small>' + esc(sub) + '</small>' if sub else '') + '</h1><div class="tys">' + tys + '</div>' + body_line(pg) +
             '<div class="spec">' + spec + '<div class="cp"><small>最大CP</small><b>' + str(max_cp(p)) + '</b></div></div></header>'
-            '<div class="adslot" data-ad="top" data-snap-skip></div>'
+            + ('<div class="adslot" data-ad="top" data-snap-skip></div>' if ad else '') +
             '<nav class="snav">' + nav + '</nav>'
             + (related(pg, True) if pre_evo else '') +
-            '<section id="strength" class="first"><header class="sh"><span class="eb">Where it shines</span><h2>どこで強いか</h2></header><div class="tiles">' + tl + '</div><p class="sum">' + esc(facts_text(pg, p, T)) + '</p></section><div class="adslot" data-ad="mid" data-snap-skip></div>'
+            '<section id="strength" class="first"><header class="sh"><span class="eb">Where it shines</span><h2>どこで強いか</h2></header><div class="tiles">' + tl + '</div><p class="sum">' + esc(facts_text(pg, p, T)) + '</p></section>' + ('<div class="adslot" data-ad="mid" data-snap-skip></div>' if ad else '')
             + ''.join(secs) + pager(pg) +
             '<p class="foot">' + b.DATE_JA + '時点。数字はすべて GOナビ の各ツールと同じ計算です。</p></div>'
             '<script src="/assets/type-icons.js"></script>'

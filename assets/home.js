@@ -184,6 +184,29 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
   else build();
 
+  // ---- 本番用のときは「使い方」を閉じる（2026-09-23・タダシさん決定） ----
+  // 切り替えは pageheader.css の --gonavi-mode の1行（review＝審査用・post＝本番用）。
+  // 閉じるのはページ自身の開閉ボタンを1回押す形にする（ページごとに開閉の作りがちがうため・状態の食い違いを作らない）。
+  // ボタンの処理はページのスクリプトがあとから付けるので、付くまで少し待つ。閉じたら二度と触らない（利用者が開き直せる）
+  // ⚠ 処理の付け方は onclick のページと addEventListener のページ（マックスバトル・ジム挑戦・ジム防衛・個体値チェッカー）がある。
+  //   どちらでも効くように本当に押す（click）。処理がまだ付いていなければ何も起きず aria-expanded が true のまま＝押し直す。
+  //   どのページの処理も aria-expanded を書き換えるので、閉じたかどうかはそれで見る
+  function closeHelpIfPost() {
+    var mode = '';
+    try { mode = getComputedStyle(document.documentElement).getPropertyValue('--gonavi-mode').trim(); } catch (e) {}
+    if (mode !== 'post') return;
+    var tries = 0;
+    (function step() {
+      var tab = document.getElementById('helptab');
+      if (tab && tab.getAttribute('aria-expanded') !== 'true') return;   // 閉じた（またはもともと閉じている）
+      if (tab) tab.click();
+      if (tab && tab.getAttribute('aria-expanded') !== 'true') return;
+      if (++tries < 80) setTimeout(step, 150);   // 最大12秒ほど待つ（GBLはデータを読んでから処理を付ける）
+    })();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', closeHelpIfPost);
+  else closeHelpIfPost();
+
   // ==== 名前の検索欄の守り（全ツール共通・2026-09-10タダシさん報告で新設） ====
   // 候補をタップせずにキーボードの「✓」や「完了」で入力を終えると、入力欄には打った名前が残るのに
   // 枠の中身は前のポケモンのまま・候補の一覧も開いたまま、になっていた（iPhoneで実際に起きた。
