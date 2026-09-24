@@ -6232,6 +6232,7 @@ function rbRender(body, bt, picks, foes, extra) {
     //   解いた直後に、いちばん新しい行が見えるところまでページを送って位置を保つ
     const wasLock = body.classList.contains('bfull');
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
+    gbNoZoom(body.classList.contains('bfull'));   // バトル中だけ拡大を止める(2026-09-24)
     if (wasLock && !body.classList.contains('bfull') && lastEl) {
       const el = lastEl;
       requestAnimationFrame(() => {
@@ -7504,17 +7505,41 @@ const GB_RT_WAIT = 10000;   // リアルタイムのシールドの猶予(ミリ
 // CSSの touch-action:manipulation だけでは iPhone で「2回タップ＝拡大」が残った。
 // バトル中の全画面(.bfull)では、**前のタップから350ms以内の2回目のタップ**を JS で打ち消す
 // (拡大の判定は2回目のタップで起きる)。ボタンの上なら押した扱いは残す(click を自分で起こす)
+// ⚠ 2026-09-24タダシさん報告「SPボタン連打でたまにまだ拡大される」→ バトル中の全画面では**拡大を完全に止める**(3段目以降を追加):
+//   ① 2回タップの判定を350→500ms(iPhoneの2回タップの受付はもっと長いことがある)・ボタンの外や全画面の外に重なる演出の上でも打ち消す
+//   ② 2本指(ピンチ)の拡大を止める: gesturestart/gesturechange(iPhoneのSafari)と、2本指の touchmove
+//   ③ 画面幅の設定に maximum-scale=1, user-scalable=no をバトル中だけ足す(ホーム画面のアプリで効く。終わったら元に戻す)
+//   ④ CSS は gbl.css の html.gbnozoom(バトル中だけ・touch-action:pan-x pan-y＝スクロールだけ許して拡大を止める)
+//   バトルの外(一覧・1対1など)は拡大できるまま(読みにくいときに拡大したい人がいるため)
+// ⚠ 画面を切り替えて全画面が隠れただけ(display:none)のときはバトルの外として扱う(getClientRects が空)
+const gbInBattle = () => { const el = document.querySelector('.bfull'); const on = !!(el && el.getClientRects().length); if (!on) gbNoZoom(false); return on; };
+let gbZoomVp = null;
+function gbNoZoom(on) {
+  const root = document.documentElement;
+  if (root.classList.contains('gbnozoom') === !!on) return;
+  root.classList.toggle('gbnozoom', !!on);
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (!vp) return;
+  if (on) { gbZoomVp = vp.getAttribute('content'); vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'); }
+  else if (gbZoomVp != null) { vp.setAttribute('content', gbZoomVp); gbZoomVp = null; }
+}
 (function () {
   let last = 0;
   document.addEventListener('touchend', e => {
-    if (!document.querySelector('.bfull')) return;
-    const now = Date.now(), dbl = now - last <= 350;
+    if (!gbInBattle()) return;
+    if (e.touches && e.touches.length) return;   // まだ指が残っている(2本指の途中)
+    const now = Date.now(), dbl = now - last <= 500;
     last = now;
     if (!dbl || !e.cancelable) return;
     e.preventDefault();
     const b = e.target && e.target.closest ? e.target.closest('button') : null;
     if (b && !b.disabled) b.click();
   }, { passive: false });
+  const stopPinch = e => { if (gbInBattle() && e.cancelable) e.preventDefault(); };
+  document.addEventListener('gesturestart', stopPinch, { passive: false });
+  document.addEventListener('gesturechange', stopPinch, { passive: false });
+  document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) stopPinch(e); }, { passive: false });
+  document.addEventListener('dblclick', e => { if (gbInBattle() && e.cancelable) e.preventDefault(); }, { passive: false });
 })();
 // 倒れたあと次のポケモンを選ぶ猶予＝実戦と同じ12秒(ゲーム内公開データ changePokemonDurationSeconds=12・2026-09-08タダシさん指示)
 const GB_NEXT_WAIT = 12000;
@@ -11544,6 +11569,7 @@ function gbRender(body, bt, picks, foes) {
     //   解いた直後に、いちばん新しい行が見えるところまでページを送って位置を保つ
     const wasLock = body.classList.contains('bfull');
     body.classList.toggle('bfull', RB.step && RBV.started && !ended());
+    gbNoZoom(body.classList.contains('bfull'));   // バトル中だけ拡大を止める(2026-09-24)
     if (wasLock && !body.classList.contains('bfull') && lastEl) {
       const el = lastEl;
       requestAnimationFrame(() => {

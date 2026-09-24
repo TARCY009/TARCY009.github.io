@@ -2026,7 +2026,10 @@ HUDの下の行に「⏱️速さ×1」。**押すと下から出るウィンド
 - **⚠ 連打で拡大しない**（タダシさん報告）: CSSだけでは iPhone で残るので2段構え。JS で `.bfull`（バトル中の全画面）の中では
   **前のタップから350ms以内の2回目の `touchend` を preventDefault**し、ボタンの上なら `click()` を自分で起こす（`gbl-app.js` 先頭近くの即時関数）。
   `.bfull`・`.rbdock`・`.rbwinbox`とその中のボタンに **`touch-action:manipulation`**（ピンチは残る）＋ `user-select:none`。
-  **viewportの `user-scalable=no` は使わない**（アクセシビリティのため）
+  ~~viewportの `user-scalable=no` は使わない~~ → **2026-09-24タダシさん指示「完全に拡大できないように」でバトル中の全画面だけ拡大を完全に止める**（それでも連打でたまに拡大されたため）:
+  `gbNoZoom(on)`（全画面の切り替え `body.classList.toggle('bfull')` の直後・2か所）が `html.gbnozoom` を付け、viewport に `maximum-scale=1.0, user-scalable=no` を足す（バトルが終わる・画面を切り替えると元の文字列に戻す）。
+  CSS は `:where(html.gbnozoom, html.gbnozoom *){touch-action:pan-x pan-y}`（スクロールだけ許す・詳細度0なので威力メーターのつまみなど touch-action:none の部品が勝つ）。
+  JS は2回タップの判定を500ms・`gesturestart`/`gesturechange`・2本指の `touchmove`・`dblclick` を止める。**バトルの外（一覧・1対1・入力画面）は拡大できるまま**
 - **⚠ SPボタンは「硬直が解ける少し前」から押せる**（2026-09-10タダシさん指示・`spTarget`）。実戦は約0.4秒前から受け付けるので、
   **ゲージを満たすノーマルアタックが当たるターンの途中（表示中がその1つ前のターン）から**押せる。
   1ターンわざ＝最後の1発の打ち始めから／2ターンわざ＝最後の1発の2ターン目から／3ターン以上も当たるターンの途中から。

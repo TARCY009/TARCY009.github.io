@@ -1102,6 +1102,13 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
    (ピンチの拡大は残る)。バトル中の全画面(.bfull)とHUD・質問ウィンドウ・SP/交代ボタンに付ける。
    連打で文字が選択されるのも防ぐ(user-select:none) */
 .bfull,.rbdock,.rbdock *,.rbwinbox,.rbwinbox *,.rbctlbar button{touch-action:manipulation}
+/* バトル中の全画面では拡大を完全に止める(2026-09-24タダシさん報告「連打でたまにまだ拡大される」)。
+   pan-x pan-y＝スクロールだけ許し、2回タップ・ピンチの拡大を切る。html.gbnozoom はバトル中だけ(gbNoZoom)。
+   :where で詳細度0にして、個別に touch-action:none を持つ部品(威力メーターのつまみ等)はそちらを優先させる。
+   iPhoneのSafariで効かない分は gbl-app.js の touchend/gesturestart/2本指の touchmove で止める */
+:where(html.gbnozoom, html.gbnozoom *){touch-action:pan-x pan-y}
+/* ↓ 上の manipulation と同じ詳細度(:where で html の分を数えない)・後ろに置いて上書き。後ろにある touch-action:none の部品はそちらが勝つ */
+:where(html.gbnozoom) :is(.bfull,.rbdock,.rbdock *,.rbwinbox,.rbwinbox *,.rbctlbar button){touch-action:pan-x pan-y}
 .rbdock button,.rbwinbox button,.rbctlbar button{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 /* リアルタイム操作のSPボタン(2026-09-08タダシさん指示)。実戦のSPボタンと同じく2つ横並び。
    ゲージがたまると そのわざのタイプ色で点灯する */
