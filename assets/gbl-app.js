@@ -7514,7 +7514,7 @@ const GB_RT_WAIT = 10000;   // リアルタイムのシールドの猶予(ミリ
 // ⚠ 画面を切り替えて全画面が隠れただけ(display:none)のときはバトルの外として扱う(getClientRects が空)
 // ---- 決着パネル(2026-09-24タダシさん指示) ----
 // 模擬戦の決着の演出(WIN/LOSE)が終わったら、同じ場所に消えないパネルを出す: WIN/LOSE ＋
-// 「再戦(同じポケモンでやり直す)」「入れ替えて再戦(ポケモンを入れ替えてやり直す)」「終了(トップページへ)」。
+// 「再戦(同じポケモンでやり直す)」「入れ替えて再戦(ポケモンを入れ替えてやり直す)」「終了(GBLページの一番上へ)」。
 // ✕で閉じるとタイムラインを見返せる(ドックの ↺やり直し・✕終了 は今までどおり使える)。
 // 🎬演出OFF・動きを減らす設定でも、パネルだけは出す(ボタンが要るため)
 function gbEndHide() { document.getElementById('gbend')?.remove(); }
@@ -12144,8 +12144,8 @@ function gbRender(body, bt, picks, foes) {
       const to = document.querySelector(sdOn() ? '#sdwrap .sdpick' : '#mk3');
       if (to) to.scrollIntoView({ block: 'start', behavior: 'smooth' });
     },
-    // 終了: トップページ(ツール一覧)へ
-    end: () => { resetBattle(); location.href = '/'; },
+    // 終了: バトルを片付けて、GBLページの一番上へ(2026-09-24タダシさん指示・サイトのトップページではない)
+    end: () => { resetBattle(); run(); scrollTo({ top: 0, behavior: 'smooth' }); },
   };
   // いまこの模擬戦の画面が出ているかどうか。display:none で隠れているだけだと
   // document.body.contains() は真のままなので、これを見ないとモードを切り替えたあとも
