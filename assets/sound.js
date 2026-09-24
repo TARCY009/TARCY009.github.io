@@ -590,14 +590,57 @@
     kick(.22, { f0: 180, f1: 56, vol: .576, at: .03, drive: .5, decay: 10 });
   }
   // 撃退「叩きつける」（打った音が左右の壁に跳ね返って戻る）
-  function seKo() {
-    whoosh(.35, { f0: 700, f1: 2600, vol: .3, pan: -.6, pan2: .2, dur: .35 });
-    kick(.7, { f0: 300, f1: 40, vol: .58, at: .47, drive: .9, decay: 3.2 });
-    burst(.6, { cut: 4200, cut2: 400, decay: 4, drive: .4, vol: .42, at: .47, rev: .5, hi: 180 });
-    burst(.3, { cut: 2600, cut2: 500, decay: 7, drive: .2, vol: .2, at: .75, pan: -.85, rev: .4 });
-    burst(.25, { cut: 2000, cut2: 450, decay: 8, drive: .2, vol: .14, at: .98, pan: .85, rev: .4 });
-    noise({ f: 1200, f2: 300, q: 1.6, dur: .9, vol: .12, at: 1.05, rev: .5 });
-    pad([98, 131, 165], 1, { vol: .13, at: .9, rev: .75, open: 1000 });
+  function seKo(a) {   // a = 見本・測定で並べて鳴らすときのずらし(ふだんは0)
+    a = a || 0;
+    whoosh(.35, { f0: 700, f1: 2600, vol: .3, pan: -.6, pan2: .2, dur: .35, at: a });
+    kick(.7, { f0: 300, f1: 40, vol: .58, at: a + .47, drive: .9, decay: 3.2 });
+    burst(.6, { cut: 4200, cut2: 400, decay: 4, drive: .4, vol: .42, at: a + .47, rev: .5, hi: 180 });
+    burst(.3, { cut: 2600, cut2: 500, decay: 7, drive: .2, vol: .2, at: a + .75, pan: -.85, rev: .4 });
+    burst(.25, { cut: 2000, cut2: 450, decay: 8, drive: .2, vol: .14, at: a + .98, pan: .85, rev: .4 });
+    noise({ f: 1200, f2: 300, q: 1.6, dur: .9, vol: .12, at: a + 1.05, rev: .5 });
+    pad([98, 131, 165], 1, { vol: .13, at: a + .9, rev: .75, open: 1000 });
+  }
+  // あいてをたおしたときの音の候補（2026-09-24タダシさん指示「変えるのはあいてを倒したときだけ・候補を5つ」）。
+  // たおされたとき（じぶんが倒れた）は従来の「叩きつける」(seKo)のまま。KOW_PAT=0 は従来と同じ音。
+  // ⚠ 5案は高さ違いにせず、作り（使う音・順番・長さ）から変える。山（💥が決まる瞬間）は演出と同じ0.47秒にそろえる。
+  //   勝利のファンファーレ・SPの音（射撃・雷撃・波動）・くりだす（水が弾ける）と似せない
+  var KOW_PAT = 1;   // 案1「撃破の爆発」に決定(2026-09-24タダシさん選択)
+  function seKoWin(pat, a) {
+    a = a || 0;
+    var H = a + .47;   // 💥が決まる瞬間
+    if (pat === 1) {   // 案1 撃破の爆発: 吸い込む風→ドカン→破片が左右に散って落ちる
+      whoosh(.4, { f0: 500, f1: 2400, vol: .26, pan: .5, pan2: -.2, dur: .4, at: a + .05 });
+      kick(.9, { f0: 260, f1: 36, vol: .62, at: H, drive: 1.1, decay: 2.6 });
+      burst(1.1, { cut: 7000, cut2: 250, decay: 2.8, drive: .7, vol: .5, at: H, rev: .55, hi: 120 });
+      stutter(9, { f0: 3800, f1: 900, dur: .035, vol: .2, span: .7, at: H + .12, pan: -.8, pan2: .8 });
+    } else if (pat === 2) {   // 案2 金属の鐘「カーン」: 短い打撃＋金属の板が長く鳴る＋少しのきらめき
+      kick(.3, { f0: 220, f1: 70, vol: .56, at: H, drive: .4, decay: 9 });
+      gong(392, 2.2, { vol: .74, at: H, decay: 1.3, hiDecay: 6, strike: .6, rev: .5, dly: .2 });
+      gong(587, 1.6, { vol: .32, at: H + .02, decay: 1.8, hiDecay: 7, strike: .2, rev: .5, pan: .3 });
+      shimmer(6, { base: 2349, dur: .5, span: .5, vol: .11, at: H + .2, spread: 1.2 });
+    } else if (pat === 3) {   // 案3 決めの一撃＋上がる4音: ドン→はじく音が駆け上がる（「やった」の手ごたえ）
+      kick(.45, { f0: 240, f1: 50, vol: .64, at: H, drive: .8, decay: 6 });
+      burst(.25, { cut: 5000, cut2: 900, decay: 12, drive: .3, vol: .38, at: H, hi: 300 });
+      [659, 784, 988, 1319].forEach(function (f, i) {
+        var t = H + .1 + i * .075;
+        ks(f, .5, { damp: .994, tone: .7, decay: 5, vol: .48, at: t, seed: 4100 + i, pan: -.3 + i * .2 });
+        fm(f * 2, .35, { ratio: 2.01, index: 1.6, decay: 7, vol: .14, at: t, rev: .35 });
+      });
+    } else if (pat === 4) {   // 案4 ガラスが砕ける「パリーン」: 高い割れる音＋かけらが降る（低音は控えめ）
+      kick(.3, { f0: 180, f1: 60, vol: .3, at: H, drive: .3, decay: 10 });
+      noise({ f: 6500, f2: 2500, q: 1.2, dur: .35, vol: .9, at: H, rev: .4 });
+      burst(.5, { cut: 9000, cut2: 3000, decay: 6, drive: .2, vol: .3, at: H, hi: 2000, rev: .5 });
+      for (var i = 0; i < 12; i++) {
+        var f = 2600 + ((i * 523) % 2400);
+        fm(f, .4, { ratio: 2.76, index: 2.4, decay: 7, idecay: 12, vol: .09 + (i % 3) * .02, at: H + .05 + i * .045 + (i % 2) * .02,
+          rev: .45, pan: ((i * 7) % 11) / 5.5 - 1 });
+      }
+    } else if (pat === 5) {   // 案5 重い一撃＋あたたかい和音の余韻: 低く沈む一撃のあと、明るい和音がふわっと広がる
+      sweep(.42, { f0: 2600, f1: 500, q: 5, tone: .15, t0: 900, t1: 200, env: 'up', vol: .22, at: a + .05 });
+      kick(.8, { f0: 150, f1: 38, vol: .66, at: H, drive: 1, decay: 3.4 });
+      burst(.4, { cut: 2600, cut2: 400, decay: 6, drive: .5, vol: .32, at: H, rev: .4, hi: 150 });
+      pad([262, 330, 392, 523], 1.5, { vol: .15, at: H + .12, rev: .7, open: 2400, atk: .25 });
+    } else seKo(a);   // 0 = 従来の「叩きつける」
   }
   // 勝利「ファンファーレ」
   function seWin() {
@@ -846,7 +889,11 @@
     vs: function (at) { later(seVs, at); },            // バトルスタート
     intro: function (at) { later(seIn, at); },         // ポケモンをくりだす
     swap: function (at) { later(seSwap, at); },
-    ko: function (at) { later(seKo, at); },
+    ko: function (at) { later(function () { seKo(0); }, at); },
+    // あいてをたおした（2026-09-24・候補の選択待ち。KOW_PAT=0 のあいだは従来の「叩きつける」）
+    koWin: function (at) { later(function () { seKoWin(KOW_PAT, 0); }, at); },
+    koWinPattern: function (n) { if (n == null) return KOW_PAT; KOW_PAT = +n; return KOW_PAT; },
+    koWinRaw: function (pat, at) { if (!ac()) return; seKoWin(pat, at); },
     pivot: function (side, at) { later(function () { sePivot(side); }, at); },   // 交代受け
     shield: function (at) { later(seShield, at); },    // シールドのブロック
     form: function (at) { later(seForm, at); },        // すがたが変わる

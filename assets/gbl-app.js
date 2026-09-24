@@ -5609,27 +5609,40 @@ let FX_GEN = 0;
 // 演出を再生中か。⚠ **再生中に次の演出が来たら、いまのを最後まで流してから始める**
 // (2026-09-19タダシさん報告「SPを2発ためて連続でタップすると1発目の演出がカットされる」)。
 // 原因は、入力を受け付けた直後の画面の作り直し(run)が fxRun を呼び、FX_GEN で再生中の演出を降ろしていたこと
-let FX_BUSY = false, FX_WAIT = null;
+// ⚠ 待ちは**1枠ではなく列**(FX_Q・2026-09-24タダシさん報告「あいてを倒したのに『くりだした！』ではなく『交代した！』で出てきた」)。
+//   1枠(FX_WAIT)だと、待っている演出があるところへ次の演出が来ると**前のものを上書きして捨てていた**
+//   (捨てられた「くりだした！」は再生済みにならず二度と出ない→次の「交代した！」だけが見える)。
+//   FX_CUR = いま流している並び(⇄の割り込みで降ろされたとき、まだ流していない行を列の先頭へ戻すため)
+let FX_BUSY = false, FX_Q = [], FX_CUR = null;
 // 仕切り直し(バトルスタート・↺やり直し)で、前の演出と音を降ろす。
 // ⚠ これが無いと、前のバトルの静止表示(.fxhold)が残ったままスタートし、
 //   「交代した！」が出てから VS が出る順番違いに見える(2026-09-19タダシさん報告)
 function fxDrop() {
-  FX_GEN++; FX_BUSY = false; FX_WAIT = null; fxClear();
+  FX_GEN++; FX_BUSY = false; FX_Q = []; FX_CUR = null; fxClear();
   const S = SND(); if (S) S.stop();
 }
 function fxRun(list, done, onHit) {
   // ⇄交代のカットイン(再生を止めない演出)だけは、従来どおり割り込んでよい
   const live = list.length > 0 && list.every(fxLive);
-  if (FX_BUSY && !live) { FX_WAIT = { list: list, done: done, onHit: onHit }; return; }
+  if (FX_BUSY && !live) { FX_Q.push({ list: list, done: done, onHit: onHit }); return; }
+  // ⇄交代(止めない演出)の割り込み: 降ろされる並びの**まだ流していない行**は捨てずに列の先頭へ戻す。
+  //   続きの進行(done)は割り込んだ側がタイマーを動かし直すので、戻した分は演出を流すだけ(done は空)
+  if (FX_BUSY && live && FX_CUR) {
+    const rest = FX_CUR.list.slice(FX_CUR.i);
+    if (rest.length) FX_Q.unshift({ list: rest, done: () => {}, onHit: null });
+  }
   let i = 0;
   const gen = ++FX_GEN;                       // 途中で新しい演出が始まったら、この回は静かに降りる
   FX_BUSY = true;
+  const cur = { list: list, i: 0 };
+  FX_CUR = cur;
   const sp = () => Math.max(1, RBV.speed || 1);
   // ⚠ 再生中に画面を作り直していたら、そちらを優先する(古い done は捨てる＝古いDOMへ進めない)
   const fin = () => {
     if (gen !== FX_GEN) return;               // 新しい演出に譲った(FX_BUSY はそちらが持っている)
-    FX_BUSY = false; fxClear();
-    const w = FX_WAIT; FX_WAIT = null;
+    FX_BUSY = false; FX_CUR = null; fxClear();
+    // 待っている演出があれば順に流す(いちばん新しい画面の done が最後に呼ばれる＝従来の1枠と同じ考え方)
+    const w = FX_Q.shift();
     if (w) fxRun(w.list, w.done, w.onHit); else done();
   };
   const step = () => {
@@ -5642,7 +5655,7 @@ function fxRun(list, done, onHit) {
     //   行ごとに再生済みを持つと、あとから演出が増えたときに最初から流し直してしまう
     const fs = fxNew(el);
     fs.forEach(f => RBV.fxDone.add(fxKey1(el, f)));
-    i++;
+    i++; cur.i = i;
     if (!fs.length) { setTimeout(step, 0); return; }
     // ⚠ 同じ行に演出が複数あるときは**順番に**流す(2026-09-07タダシさん指示)。
     //   まとめて同時に出すと、たとえば「VSカード」と「開幕交代」が重なって、
@@ -5734,7 +5747,8 @@ function sndFx(f, at) {
   else if (f.k === 'vs') S.vs(at);            // バトルスタート
   else if (f.k === 'in') S.intro(at);         // ポケモンをくりだす
   else if (f.k === 'swap') S.swap(at);
-  else if (f.k === 'ko') S.ko(at);            // たおした/たおれた どちらも同じ音
+  // あいてをたおした(win)は専用の音(2026-09-24タダシさん指示・候補の選択待ちのあいだは従来と同じ音)。たおされたは「叩きつける」
+  else if (f.k === 'ko') (f.win && S.koWin ? S.koWin : S.ko)(at);
   else if (f.k === 'pivot') S.pivot(f.side, at);          // 交代受け(じぶん=成功・あいて=された で別の音)
   else if (f.k === 'shd') S.shield(at);                   // シールドのブロック
   else if (f.k === 'form') (f.spit ? S.spit : S.form)(at); // 吐き出した=反撃／咥えた=すがたが変わる
@@ -11902,14 +11916,20 @@ function gbRender(body, bt, picks, foes) {
     const key = spPendKey(el);
     if (!key) { if (RBV.playing && !RBV.timer) startTimer(); return; }
     stopTimer();
+    // ⚠ 同じSPのメーターを2回出さない(2026-09-24・自動検査で見つかった)。リアルタイムで⇄交代と同時になると、
+    //   再生の流れが2本動いて同じ行に来て、メーターが2つ続けて出ていた。開いているあいだは2本目を止めるだけ
+    if (RBV.meterKey === key) return;
+    RBV.meterKey = key;
     const a = RB.ans[key];
     const wait = Math.max(0, (RBV.spstUntil || 0) - performance.now());
     setTimeout(() => spqMeter(a.mv, pw => {
+      RBV.meterKey = null;
       const x = RB.ans[key];
       if (x) { if (pw != null) x.pw = pw; delete x.pwPend; }
       RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
       run();
     }, rtOn() ? () => {
+      RBV.meterKey = null;
       // リアルタイムの ✕＝このSPを撃つのをやめる(従来の「押したあとにやめる」と同じ)
       delete RB.ans[key];
       RBV.keepFx = true; RBV.playing = true; RBUI.open = null;
@@ -12121,7 +12141,7 @@ function gbRender(body, bt, picks, foes) {
   // 新しいバトルとして仕切り直す(✕終了と同じ片付け＋あいての癖の乱数を引き直す)
   const resetBattle = () => {
     stopTimer(); fxDrop(); gbEndHide();
-    RB.ans = {}; RBUI.open = null; RBV.spQ = null; RB.found = null;
+    RB.ans = {}; RBUI.open = null; RBV.spQ = null; RBV.meterKey = null; RB.found = null;
     RB.rseed = (Math.random() * 1e9) | 0;
     RBV.started = false; RBV.playing = true; RBV.cur = 0;
     RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear();
@@ -12219,7 +12239,7 @@ function gbRender(body, bt, picks, foes) {
   };
   const restart = () => {
     fxDrop();   // ⚠ 前の演出の静止表示・鳴りかけの音を降ろしてから作り直す(2026-09-19)
-    RB.ans = {}; RBUI.open = null; RBV.spQ = null; RB.found = null;
+    RB.ans = {}; RBUI.open = null; RBV.spQ = null; RBV.meterKey = null; RB.found = null;
     if (mode === 'mock') RB.rseed = (Math.random() * 1e9) | 0;   // ⏹=新しいバトル: あいての癖も引き直す
     RBV.cur = 0; RBV.playing = true;
     if (RB.step) RBV.started = true;
@@ -12323,7 +12343,7 @@ function gbRender(body, bt, picks, foes) {
     //   自動で再現される**＝「勝手に交代する」と見えていた。終了はバトルをやめる操作なので手も捨てる。
     // ⚠ ここで演出の再生済み記録も消す。run() はスタート前(!RBV.started)だと途中で return するので、
     //   その先にあるクリア処理まで届かない
-    RB.ans = {}; RBUI.open = null; RBV.spQ = null;
+    RB.ans = {}; RBUI.open = null; RBV.spQ = null; RBV.meterKey = null;
     fxDrop();
     RBV.started = false; RBV.playing = false; RBV.cur = 0;
     RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear();

@@ -17,6 +17,7 @@
  G. 対戦が最後まで終わる
  P. 決着のあとに決着パネル（再戦・入れ替えて再戦・終了）が出て、「再戦」ですぐ次のバトルが始まる（2026-09-24）
  Q. たおれた側から次に出てくるポケモンは「くりだした！」で出る（「交代した！」にならない・2026-09-24）
+ R. 表示した行の演出（くりだした・交代した・たおした・SPなど）が1つも取りこぼされずに流れる（2026-09-24）
  I. 押した（撃つと答えた）SPには、押した瞬間の「SPが始まる」演出がある（シールドの窓のあいだに押したものも・2026-09-24）
 使い方: python3 .claude/checks/mock-sp.py [--quick]
 """
@@ -104,6 +105,10 @@ INJECT = r"""<script>
         var pn = document.getElementById('gbend');
         if(pn || now() - cur.fin > 9000){
           cur.pend = Object.keys(RB.ans).filter(function(k){ return RB.ans[k] && RB.ans[k].pwPend; }).map(function(k){ return k + (RB.ans[k].late ? '(late)' : ''); });
+          // R: 表示した行の演出がすべて流れたか(取りこぼし＝待ちの上書きで捨てられた演出・2026-09-24)
+          try { cur.fxMiss = [].slice.call(document.querySelectorAll('.rbfeed .fi.in[data-fx]')).reduce(function(a, el){
+              fxList(el).forEach(function(f){ if (f && !RBV.fxDone.has(fxKey1(el, f))) a.push(el.dataset.gt + ':' + f.k + (f.side ? '1' : '0') + ':' + (f.name || f.mv || '')); }); return a; }, []);
+          } catch (x) { cur.fxMiss = ['(調べられず) ' + x]; }
           cur.panel = !!pn; cur.panelTxt = pn ? pn.textContent.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
           battles.push(cur); cur = null;
           if(battles.length >= CFG.n){ var e = document.querySelector('.hend'); if(e) e.click(); done = true; out(); return; }
@@ -224,7 +229,7 @@ def judge(b, rt):
             if not nxt or nxt[1] == 'end' or nxt[1] == 'meter': bad.append(f'B メーターのあとにじぶんのSPが出ない(ターン{e[3]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:260]}@{x[3]}' for x in ev[max(0, i - 8):i + 8]))
             elif nxt[1] == 'fxsp1': bad.append(f'C メーターとじぶんのSPのあいだにあいてのSP(ターン{e[3]}) 前後: ' + '\n        ' + '\n        '.join(f'{x[1]}:{x[2]}@{x[3]}' for x in ev[max(0, i - 6):i + 8]))
     # D: じぶんのSPの演出の前にはメーター(直前のじぶんのSPより後)
-    last_sp = -1
+    last_sp = -1; used_st = 0
     for i, e in enumerate(ev):
         if e[1] == 'fxsp0':
             seg = ev[last_sp + 1:i]
@@ -232,7 +237,10 @@ def judge(b, rt):
             # 選択式で「おまかせ」「撃たない」系を選んだ発はメーターを通らない(威力100%のまま)。撃つ答え・リアルタイムの入力だけ見る
             fired_by_user = any(x[1] == 'press' for x in seg) or any(x[1] == 'answer' and re.search(r'即打ち|最適|ため|⏸|▶', x[2]) for x in seg)
             # I: 押した・撃つと答えたSPには、押した瞬間の「SPが始まる」演出がある(2026-09-24タダシさん報告「同時発動で後攻のとき出なかった」)
-            if fired_by_user and not any(x[1] == 'start' for x in seg):
+            # ⚠ 連打で予約した2発目は、演出が1発目より前(押した瞬間)に出ている。区間だけで見ると取り違えるので、
+            #   「ここまでに出た演出の数」が「ここまでにじぶんが撃ったSPの数」以上かで見る
+            if fired_by_user: used_st += 1
+            if fired_by_user and sum(1 for x in ev[:i] if x[1] == 'start') < used_st:
                 bad.append(f'I 押したのに「SPが始まる」演出が出ていない(ターン{e[3]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:200]}@{x[3]}' for x in ev[max(last_sp + 1, i - 12):i + 2]))
             if fired_by_user and not has_meter: bad.append(f'D じぶんのSPなのにメーターが出ていない(ターン{e[3]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:200]}@{x[3]}' for x in ev[max(last_sp + 1, i - 12):i + 2]))
             last_sp = i
@@ -309,6 +317,7 @@ def main():
                         if nx and nx[1] == 'fxsp0': cnt['窓→じぶんのSP'] = cnt.get('窓→じぶんのSP', 0) + 1
                         else: cnt['窓→SPなし'] = cnt.get('窓→SPなし', 0) + 1   # 倒された・メーターでやめた、もありうるので数だけ出す
                     else: probs.append(f'I 窓が出る直前に点いていたSPボタンを窓のあいだに押したのに、演出が出ない(ターン{x[3]})')
+            if b.get('fxMiss'): probs.append('R 流れなかった演出(取りこぼし): ' + ', '.join(b['fxMiss'][:8]))
             if not b.get('panel'): probs.append('P 決着パネル(再戦・入れ替えて再戦・終了)が出ない')
             elif not all(w in b.get('panelTxt', '') for w in ('再戦', '入れ替えて再戦', '終了')): probs.append('P 決着パネルのボタンが足りない: ' + b.get('panelTxt', ''))
             if b.get('viaRe') and not b.get('reStarted'): probs.append('P 「再戦」を押しても、すぐに新しいバトルが始まらない')
