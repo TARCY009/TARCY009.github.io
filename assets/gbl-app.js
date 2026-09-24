@@ -11704,6 +11704,8 @@ function gbRender(body, bt, picks, foes) {
       }
       // 押せる条件は manualSp と同じ判定(spTarget)をそのまま使う(2026-09-10・食い違わせない)
       const live = RBV.started && !ended() && !(bt.pending && gt >= stop);
+      // あいてのSPが来て「シールドを使うか」の窓が出ているあいだも、直前に点いていたSPボタンは押せる(予約・spQ)
+      const shWin = spShWin(gt);
       const att0 = f.meta.att0, def1 = f.meta.def1;
       // SPアタックが撃てるようになった合図（2026-09-21タダシさん指示・リアルタイムだけ）。
       // 点いた瞬間に1回だけ鳴らす。⚠ HUDは決断のたびに作り直されるので、点いているわざは RBV.rdyMem に覚える
@@ -11712,7 +11714,7 @@ function gbRender(body, bt, picks, foes) {
       if (!RBV.started || ended() || !RBV.rdyMem || RBV.rdyMem.li !== li) RBV.rdyMem = { li, on: new Set() };
       spRow.querySelectorAll('.hsp').forEach((b, bi) => {
         const m = D.moves[b.dataset.mv];
-        const ok = !!(live && m && spTarget(gt, m));
+        const ok = !!(m && (live ? spTarget(gt, m) : shWin && spShOk(gt, m)));
         b.disabled = !ok; b.classList.toggle('rdy', ok);
         if (ok && !RBV.rdyMem.on.has(b.dataset.mv)) {
           RBV.rdyMem.on.add(b.dataset.mv);
@@ -12108,7 +12110,7 @@ function gbRender(body, bt, picks, foes) {
   };
   const restart = () => {
     fxDrop();   // ⚠ 前の演出の静止表示・鳴りかけの音を降ろしてから作り直す(2026-09-19)
-    RB.ans = {}; RBUI.open = null; RB.found = null;
+    RB.ans = {}; RBUI.open = null; RBV.spQ = null; RB.found = null;
     if (mode === 'mock') RB.rseed = (Math.random() * 1e9) | 0;   // ⏹=新しいバトル: あいての癖も引き直す
     RBV.cur = 0; RBV.playing = true;
     if (RB.step) RBV.started = true;
@@ -12212,7 +12214,7 @@ function gbRender(body, bt, picks, foes) {
     //   自動で再現される**＝「勝手に交代する」と見えていた。終了はバトルをやめる操作なので手も捨てる。
     // ⚠ ここで演出の再生済み記録も消す。run() はスタート前(!RBV.started)だと途中で return するので、
     //   その先にあるクリア処理まで届かない
-    RB.ans = {}; RBUI.open = null;
+    RB.ans = {}; RBUI.open = null; RBV.spQ = null;
     fxDrop();
     RBV.started = false; RBV.playing = false; RBV.cur = 0;
     RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear();
@@ -12345,6 +12347,19 @@ function gbRender(body, bt, picks, foes) {
     if (on > leg.res.turns + 1) return no('撃つ前に対面が終わる');
     return { li, on, p: Math.max(0, pr) };
   }
+  // ---- シールドの窓が出ているあいだのSP入力(2026-09-24タダシさん報告「同時発動で後攻のとき、押した瞬間に演出が出ない」) ----
+  // あいてのSPが来て「シールドを使うか」の窓が出ているあいだ、SPボタンは押せず、押しても黙って捨てていた。
+  // 同時に押したつもりの指はちょうどこの瞬間に当たる。シールドが残っていない場面(窓が出ない)では同じ瞬間の入力を
+  // 受け付けて、あいてのSPのあとに撃っていた＝窓があるかどうかで扱いが食い違っていた。
+  // → 窓のあいだの入力は「予約」(RBV.spQ)として受け付け、押した瞬間に「SPが始まる」演出を出す。
+  //   シールドを選んだあと(窓が閉じて計算し直したあと)に、窓が出た時点(gt)に押したものとして manualSp に渡す
+  //   ＝シールドの窓が出ない場面とまったく同じ扱い(あいてのSP → じぶんのメーター → じぶんのSP)
+  function spShWin(gt) {
+    const p = bt.pending;
+    return !!(rtOn() && RBV.started && !ended() && p && gt >= stop && p.kind === 'sh' && p.side === 0 && !RBV.spQ);
+  }
+  // 窓のあいだ押せるのは、窓が出る直前に点いていたボタン(先の行はまだ計算されていないので、1つ手前で見る)
+  function spShOk(gt, m) { return !!(spTarget(gt, m) || spTarget(gt - 1, m)); }
   // 確認用の口(開発者向け・画面の動きは変えない): RBV.spProbe(通しターン, わざID) → 'ok' か撃てない理由
   RBV.spProbe = (gt, id) => { const w = []; const r = spTarget(gt, D.moves[id], w); return r ? 'ok:' + r.on : (w.join(',') || '不明'); };
   // ---- 時系列の守り(2026-09-10タダシさん指示「時系列の乱れだけは絶対になくして」) ----
@@ -12382,10 +12397,20 @@ function gbRender(body, bt, picks, foes) {
     }
     return ok;
   }
-  const manualSp = mv => {
+  // q＝シールドの窓のあいだに予約した入力(演出は押したときに出し済み・gt は窓が出た時点)
+  const manualSp = (mv, q) => {
     if (!rtOn() || !RBV.started || ended()) return;
-    const gt = RBV.cur;
-    if (bt.pending && gt >= stop) return;   // シールド・次のポケモンを選んでいる最中は押せない
+    const gt = q ? q.gt : RBV.cur;
+    if (bt.pending && gt >= stop) {
+      // シールドの窓のあいだ: 予約して、押した瞬間に演出を出す(次のポケモンを選んでいる最中は押せない)
+      const m0 = D.moves[mv];
+      if (!q && spShWin(gt) && m0 && spShOk(gt, m0)) {
+        RBV.spQ = { mv, gt, sig: RBV.sig };
+        spStartFx(mv, () => {});
+        updateHud(RBV.cur, curLi(), curHf());   // 予約したらボタンを消す(二重に予約しない)
+      }
+      return;
+    }
     const m = D.moves[mv];
     const t = spTarget(gt, m);
     if (!t) return;
@@ -12429,7 +12454,7 @@ function gbRender(body, bt, picks, foes) {
       // 同時発動で相手が先攻でも演出はここで先に出し、再生は止めない(相手のSP → じぶんのメーター の順に続く)
       // ⚠ 相手のSPが先に来ることがもう決まっていて「間に合わなかった」入力(late)になったときは出さない
       //   (撃たれないのに演出だけが出る＝押すたびに何度も出ていた・自動検査で見つかった)
-      if (pw == null && !(RB.ans[key] && RB.ans[key].late)) spStartFx(mv, () => {});
+      if (!q && pw == null && !(RB.ans[key] && RB.ans[key].late)) spStartFx(mv, () => {});
       RBUI.open = null;
       RBV.keepFx = true;
       run();
@@ -12438,6 +12463,16 @@ function gbRender(body, bt, picks, foes) {
     // 押した瞬間は「威力は未確定」で記録する(同時発動で相手が先攻なら、相手のSPの演出とダメージが先)
     go(null);
   };
+  // シールドの窓のあいだに予約したSP(RBV.spQ): 窓が閉じて計算し直したら、窓が出た時点に押したものとして入れる。
+  // ⚠ 画面を作り直すたびに呼ばれるので、古い画面(作り直された後)では何もせず、新しい画面に任せる
+  if (RBV.spQ && !(bt.pending && RBV.spQ.gt >= stop)) {
+    setTimeout(() => {
+      const q = RBV.spQ;
+      if (!q || !onScreen() || !RBV.started) return;
+      RBV.spQ = null;
+      if (q.sig === RBV.sig && rtOn()) manualSp(q.mv, q);
+    }, 0);
+  }
 
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));

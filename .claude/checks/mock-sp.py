@@ -15,6 +15,7 @@
  E. 画面のエラー・起動の赤い帯が出ない
  F. 途中で止まらない（質問もメーターも出ていないのに時間だけ進んで再生が進まない、が無い）
  G. 対戦が最後まで終わる
+ I. 押した（撃つと答えた）SPには、押した瞬間の「SPが始まる」演出がある（シールドの窓のあいだに押したものも・2026-09-24）
 使い方: python3 .claude/checks/mock-sp.py [--quick]
 """
 import os, re, sys, json, glob, socket, shutil, tempfile, threading, pathlib, subprocess, random
@@ -81,7 +82,7 @@ INJECT = r"""<script>
     new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes, function(n){
       if(n.id === 'spstfx') log('start');
     }); }); }).observe(document.body, { childList: true });
-    var lastCur = -1, lastMove = now(), started = false;
+    var lastCur = -1, lastMove = now(), started = false; var lastRdy = [];
     function drive(){
       if(done) return;
       var bfull = document.querySelector('.bfull');
@@ -111,10 +112,20 @@ INJECT = r"""<script>
       // 質問への答え(じぶんの窓だけ)
       var w = document.querySelector('.rbwin:not(.foe)');
       if(w){
-        var bs = [].slice.call(w.querySelectorAll('.rwb button')).filter(function(x){ return !x.classList.contains('wdet') && !x.disabled; });
+        // リアルタイム: シールドの窓のあいだにSPを押す(同時発動で相手が先攻のとき、押した瞬間に演出が出るか・2026-09-24)
+        if(CFG.rt && !w.dataset.spTried){
+          w.dataset.spTried = '1';
+          // 人は灰色になったボタンでも押すので、窓が出る直前に点いていたボタンを押す(旧実装はここで黙って捨てていた)
+          var rw = [].slice.call(document.querySelectorAll('.hsp')).filter(function(x){ return lastRdy.indexOf(x.dataset.mv) >= 0; });
+          if(rw.length && rnd() < .7){ var b3 = rw[Math.floor(rnd()*rw.length)]; log('press', b3.dataset.mv + ' (シールドの窓)'); b3.click();
+            if(rnd() < .3){ log('press', b3.dataset.mv + ' (シールドの窓・連打)'); b3.click(); } }
+          return setTimeout(drive, 300);
+        }
+        var bs =[].slice.call(w.querySelectorAll('.rwb button')).filter(function(x){ return !x.classList.contains('wdet') && !x.disabled; });
         if(bs.length){ var pick = bs[Math.floor(rnd()*bs.length)]; log('answer', pick.textContent.replace(/\s+/g,' ').trim().slice(0,20)); pick.click(); }
         return setTimeout(drive, 120);
       }
+      lastRdy = [].slice.call(document.querySelectorAll('.hsp.rdy')).filter(function(x){ return !x.disabled; }).map(function(x){ return x.dataset.mv; });
       if(CFG.rt && !document.getElementById('spqwin')){
         var rdy = [].slice.call(document.querySelectorAll('.hsp.rdy')).filter(function(x){ return !x.disabled; });
         if(rdy.length && rnd() < CFG.pressP){
@@ -209,6 +220,9 @@ def judge(b, rt):
             has_meter = any(x[1] == 'meterOK' for x in seg)
             # 選択式で「おまかせ」「撃たない」系を選んだ発はメーターを通らない(威力100%のまま)。撃つ答え・リアルタイムの入力だけ見る
             fired_by_user = any(x[1] == 'press' for x in seg) or any(x[1] == 'answer' and re.search(r'即打ち|最適|ため|⏸|▶', x[2]) for x in seg)
+            # I: 押した・撃つと答えたSPには、押した瞬間の「SPが始まる」演出がある(2026-09-24タダシさん報告「同時発動で後攻のとき出なかった」)
+            if fired_by_user and not any(x[1] == 'start' for x in seg):
+                bad.append(f'I 押したのに「SPが始まる」演出が出ていない(ターン{e[3]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:200]}@{x[3]}' for x in ev[max(last_sp + 1, i - 12):i + 2]))
             if fired_by_user and not has_meter: bad.append(f'D じぶんのSPなのにメーターが出ていない(ターン{e[3]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:200]}@{x[3]}' for x in ev[max(last_sp + 1, i - 12):i + 2]))
             last_sp = i
     # H: 同じターンに「SPが始まる」演出が3回以上(押しても撃てない入力で演出だけが出ている)
@@ -263,12 +277,23 @@ def main():
         for b in res.get('battles', []):
             total_b += 1
             for x in b['ev']: cnt[x[1]] = cnt.get(x[1], 0) + 1
+            # シールドの窓で押した回数・そのとき演出が出た回数・そのあとじぶんのSPが出た回数(次のじぶんのSPより前にあいてのSPが1回だけ)
+            ev = b['ev']
+            for i, x in enumerate(ev):
+                if x[1] == 'press' and '(シールドの窓)' in str(x[2]):
+                    cnt['窓で押す'] = cnt.get('窓で押す', 0) + 1
+                    if any(y[1] == 'start' and y[0] - x[0] <= 30 for y in ev[i + 1:i + 4]):
+                        cnt['窓で演出'] = cnt.get('窓で演出', 0) + 1
+                        nx = next((y for y in ev[i + 1:] if y[1] in ('fxsp0', 'end')), None)
+                        if nx and nx[1] == 'fxsp0': cnt['窓→じぶんのSP'] = cnt.get('窓→じぶんのSP', 0) + 1
+                        else: cnt['窓→SPなし'] = cnt.get('窓→SPなし', 0) + 1   # 倒された・メーターでやめた、もありうるので数だけ出す
+                    else: probs.append(f'I 窓が出る直前に点いていたSPボタンを窓のあいだに押したのに、演出が出ない(ターン{x[3]})')
             probs += judge(b, cfg['rt'])
         total_bad += len(probs)
         summary.append((tag, probs, cnt, res.get('warn', [])[:3], [b.get('pend') for b in res.get('battles', [])]))
     for tag, probs, cnt, warn, pend in summary:
         print(('✅ ' if not probs else '❌ ') + tag)
-        print('   ', {k: cnt.get(k, 0) for k in ('press', 'answer', 'start', 'meter', 'meterOK', 'meterX', 'fxsp0', 'fxsp1', 'swap', 'end')},
+        print('   ', {k: cnt.get(k, 0) for k in ('press', 'answer', 'start', 'meter', 'meterOK', 'meterX', 'fxsp0', 'fxsp1', 'swap', 'end', '窓で押す', '窓で演出', '窓→じぶんのSP', '窓→SPなし')},
               '未確定のまま残った答え:', pend)
         for w in warn: print('    (時系列の守りで断った入力)', w)
         for p in probs[:12]: print('    ', p)
