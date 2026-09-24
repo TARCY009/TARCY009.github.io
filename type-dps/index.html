@@ -184,6 +184,7 @@ h1 b{white-space:nowrap}
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
+<script src="/assets/devadd.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -669,6 +670,17 @@ renderTypeGrid();
 if(window.GonaviDevEx){
   GonaviDevEx.mount($('devexbox'), ()=>KEYS.map(k=>D.pokemon[k].n));
   GonaviDevEx.on(()=>{ rankCache.clear(); sync(); });
+}
+// 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）
+if(window.GonaviDevAdd){
+  GonaviDevAdd.mount($('devexbox'), '/pokedex/unreleased.json', (U, on)=>{
+    for(const [k,p] of Object.entries(U.pokemon||{})){
+      const i=KEYS.indexOf(k);
+      if(on(p.n)){ if(!D.pokemon[k]) D.pokemon[k]=p; if(i<0) KEYS.push(k); }
+      else if(i>=0) KEYS.splice(i,1);
+    }
+    rankCache.clear(); sync();
+  });
 }
 // ---- 出口: 全タイプの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ buildRows を呼ぶ・画面は変えない） ----
 // base=絞り込みなし／all=シャドウ＋メガ・ゲンシ。分割SP優遇は既定のOFF

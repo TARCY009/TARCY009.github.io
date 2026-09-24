@@ -71,8 +71,8 @@ jobs:
           HEADLINE: ${{ steps.build.outputs.headline }}
         run: |
           FILES="dps/index.html godata.json
-                 gym-attack/data/gym_data.json gym-attack/data/gym_data.js
-                 gym-defense/data/defense_data.js gym-defense/data/defense_data.json
+                 gym-attack/data/gym_data.json gym-attack/data/gym_data.js gym-attack/data/gym_unreleased.json
+                 gym-defense/data/defense_data.js gym-defense/data/defense_data.json gym-defense/data/defense_unreleased.json
                  max-battle/data/max_data.js
                  pvp_data.js pvp_data.json assets/meta_moves.js
                  iv-checker/index.html pokedex/unreleased.json"

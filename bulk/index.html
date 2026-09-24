@@ -166,6 +166,7 @@ h1 b{white-space:nowrap}
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
+<script src="/assets/devadd.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -349,6 +350,17 @@ document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.d
   if(window.GonaviDevEx){
     GonaviDevEx.mount($('devexbox'), ()=>KEYS.map(k=>D.pokemon[k].n));
     GonaviDevEx.on(()=>{ cache.clear(); renderRank(); });
+  }
+  // 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）
+  if(window.GonaviDevAdd){
+    GonaviDevAdd.mount($('devexbox'), '/pokedex/unreleased.json', (U, on)=>{
+      for(const [k,p] of Object.entries(U.pokemon||{})){
+        const i=KEYS.indexOf(k);
+        if(on(p.n)){ if(!D.pokemon[k]) D.pokemon[k]=p; if(i<0) KEYS.push(k); }
+        else if(i>=0) KEYS.splice(i,1);
+      }
+      cache.clear(); renderRank();
+    });
   }
   // 変換中も絞り込む(iPhoneは「確定」まで変換中なので、止めると確定するまで一覧が変わらなかった)
   inp.addEventListener('input',()=>apply());

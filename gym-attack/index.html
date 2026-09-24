@@ -203,6 +203,7 @@ footer{margin-top:28px;color:var(--sub);font-size:.7rem;text-align:center}
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
+<script src="/assets/devadd.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -363,6 +364,20 @@ let MODE='power'; // 'power'=火力のみ / 'total'=耐久込み
 if(window.GonaviDevEx){
   GonaviDevEx.mount(document.getElementById('devexbox'), ()=>DATA.pokemon.map(p=>p.name));
   GonaviDevEx.on(()=>{ if(currentDefender) render(currentDefender); });
+}
+// 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）
+// データは build_gym.py が gym_data と同じ変換で作った data/gym_unreleased.json
+if(window.GonaviDevAdd){
+  GonaviDevAdd.mount(document.getElementById('devexbox'), '/gym-attack/data/gym_unreleased.json', (U, on)=>{
+    if(!DATA) return;
+    for(const [k,m] of Object.entries(U.moves||{})) if(!DATA.moves[k]) DATA.moves[k]=m;
+    for(const p of U.pokemon||[]){
+      const i=DATA.pokemon.indexOf(p);
+      if(on(p.name)){ if(i<0) DATA.pokemon.push(p); }
+      else if(i>=0) DATA.pokemon.splice(i,1);
+    }
+    if(currentDefender) render(currentDefender);
+  });
 }
 
 function eff(moveType, defTypes){

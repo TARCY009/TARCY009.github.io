@@ -95,6 +95,16 @@ def guess_dex(n):
 PLUS_MOVES = {v['plus'] for v in god['pokemon'].values() if v.get('plus')}
 if PLUS_MOVES:
     print(f'ジムバトルで使えない＋わざを除外: {len(PLUS_MOVES)}本')
+
+
+def new_entry(v, n, ty, fast, charged):
+    entry = {'name': n, 'dex': guess_dex(n), 'types': ty, 'atk': v['a'], 'def': v['df'], 'sta': v['h'],
+             'fast': fast, 'charged': charged, 'shadow': bool(v.get('shadow'))}
+    if v.get('mega'):
+        entry['mega'] = True
+    return entry
+
+
 added, updated = [], []
 for k, v in god['pokemon'].items():
     ty = [ti[t] for t in v['ty']]
@@ -120,10 +130,7 @@ for k, v in god['pokemon'].items():
         continue
     if sig(v['a'], v['df'], v['h'], ty) in by_sig:
         continue   # 名前は違うが中身が同じ(コスチューム等)は追加しない
-    entry = {'name': n, 'dex': guess_dex(n), 'types': ty, 'atk': v['a'], 'def': v['df'], 'sta': v['h'],
-             'fast': fast, 'charged': charged, 'shadow': bool(v.get('shadow'))}
-    if v.get('mega'):
-        entry['mega'] = True
+    entry = new_entry(v, n, ty, fast, charged)
     if not entry['dex']:
         print('注意: 図鑑番号が分からないまま追加 →', n)
     gym['pokemon'].append(entry)
@@ -135,6 +142,20 @@ used = set()
 for p in gym['pokemon']:
     used.update(p['fast'])
     used.update(p['charged'])
+
+
+def conv_move(gm):
+    e = gm['e']
+    return {'jp': gm['n'], 'type': ti[gm['t']], 'power': gm['p'],
+            'energy': e, 'dur': int(round(gm['d'] * 1000)),
+            # dw = ダメージが出るまでの時間 / dwe = ダメージ判定が終わる時間(ミリ秒)。
+            #      全体の長さ(dur)とは別物。例: じしんは dur=3500 だが dw=2600 で先にダメージが出る
+            'dw': int(round(gm.get('w', 0) * 1000)) or None,
+            'dwe': int(round(gm.get('we', 0) * 1000)) or None,
+            'fast': e > 0,
+            'bars': None if e > 0 else (1 if e <= -100 else 2 if e <= -50 else 3)}
+
+
 moves = dict(gym['moves'])   # godataに無い既存エントリは温存
 missing = []
 for mid in sorted(used):
@@ -143,15 +164,7 @@ for mid in sorted(used):
         if mid not in moves:
             missing.append(mid)
         continue
-    e = gm['e']
-    moves[mid] = {'jp': gm['n'], 'type': ti[gm['t']], 'power': gm['p'],
-                  'energy': e, 'dur': int(round(gm['d'] * 1000)),
-                  # dw = ダメージが出るまでの時間 / dwe = ダメージ判定が終わる時間(ミリ秒)。
-                  #      全体の長さ(dur)とは別物。例: じしんは dur=3500 だが dw=2600 で先にダメージが出る
-                  'dw': int(round(gm.get('w', 0) * 1000)) or None,
-                  'dwe': int(round(gm.get('we', 0) * 1000)) or None,
-                  'fast': e > 0,
-                  'bars': None if e > 0 else (1 if e <= -100 else 2 if e <= -50 else 3)}
+    moves[mid] = conv_move(gm)
 gym['moves'] = moves
 if missing:
     print('警告: godataに無いわざ →', missing)
@@ -162,3 +175,27 @@ open(OUT_JS, 'w', encoding='utf-8').write('window.GYM_DATA=' + out + ';\n')
 print(f'完了: ポケモン{len(gym["pokemon"])}種 / わざ{len(moves)}種')
 print(f'追加 {len(added)}件: {"、".join(added[:20])}{" …" if len(added) > 20 else ""}')
 print(f'更新 {len(updated)}件: {"、".join(updated[:10])}{" …" if len(updated) > 10 else ""}')
+
+# ---- 未実装ポケモン（開発者だけが一覧に足せる・assets/devadd.js） ----
+# build_data.py が一覧から外した未実装ポケモン（pokedex/unreleased.json）を、上と同じ形に変換して
+# data/gym_unreleased.json へ別に書き出す。ふつうの人は読まない（gym_data には混ぜない）
+UNREL = os.path.join(REPO, 'pokedex', 'unreleased.json')
+if os.path.exists(UNREL):
+    un = json.load(open(UNREL, encoding='utf-8')).get('pokemon', {})
+    u_poke, u_moves = [], {}
+    for k, v in un.items():
+        ty = [ti[t] for t in v['ty']]
+        fast = v['q'] + v['eq']
+        charged = [m for m in (v['c'] + v['ec']) if m not in PLUS_MOVES]
+        if not fast or not charged:
+            continue
+        e = new_entry(v, norm(v['n']), ty, fast, charged)
+        if v.get('lg'):
+            e['lg'] = True   # 伝説・幻（ジム防衛が配置できないポケモンを外すのに使う・図鑑番号が無いことがあるため）
+        u_poke.append(e)
+        for mid in fast + charged:
+            if mid not in moves and mid in god['moves']:
+                u_moves[mid] = conv_move(god['moves'][mid])
+    out_u = json.dumps({'pokemon': u_poke, 'moves': u_moves}, ensure_ascii=False, separators=(',', ':'))
+    open(os.path.join(HERE, 'data', 'gym_unreleased.json'), 'w', encoding='utf-8').write(out_u)
+    print(f'未実装ポケモン（開発者用）: {len(u_poke)}種 → data/gym_unreleased.json')

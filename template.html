@@ -403,6 +403,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
+<script src="/assets/devadd.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -1145,6 +1146,17 @@ MegaLv.onChange(()=>{ MegaLv.apply(D.moves, PLUS_IDS); syncModes(); if(boss) ren
 if(window.GonaviDevEx){
   GonaviDevEx.mount(document.getElementById('devexbox'), ()=>KEYS.map(k=>D.pokemon[k].n));
   GonaviDevEx.on(()=>{ mpTopCache={key:null,rows:null}; if(boss) renderMinPlayers(); renderRank(); });
+}
+// 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）
+if(window.GonaviDevAdd){
+  GonaviDevAdd.mount(document.getElementById('devexbox'), '/pokedex/unreleased.json', (U, on)=>{
+    for(const [k,p] of Object.entries(U.pokemon||{})){
+      const i=KEYS.indexOf(k);
+      if(on(p.n)){ if(!D.pokemon[k]) D.pokemon[k]=p; if(i<0) KEYS.push(k); }
+      else if(i>=0) KEYS.splice(i,1);
+    }
+    mpTopCache={key:null,rows:null}; if(boss) renderMinPlayers(); renderRank();
+  });
 }
 function syncModes(){
   shadowBtn.setAttribute('aria-pressed',fShadow);

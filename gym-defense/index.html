@@ -166,6 +166,7 @@ footer a{color:var(--accent2)}
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
+<script src="/assets/devadd.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -410,6 +411,18 @@ footer a{color:var(--accent2)}
   if(window.GonaviDevEx){
     GonaviDevEx.mount(document.getElementById('devexbox'), ()=>D.entries.map(e=>e.n));
     GonaviDevEx.on(apply);
+  }
+  // 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）
+  // 点数は build_defense.py が同じ計算で作った data/defense_unreleased.json（最大値は実装済みの一覧のまま）
+  if(window.GonaviDevAdd){
+    GonaviDevAdd.mount(document.getElementById('devexbox'), '/gym-defense/data/defense_unreleased.json', (U, on)=>{
+      for(const e of U.entries||[]){
+        const i=D.entries.indexOf(e);
+        if(on(e.n)){ if(i<0) D.entries.push(e); }
+        else if(i>=0) D.entries.splice(i,1);
+      }
+      apply();
+    });
   }
   function setSort(k){
     sortKey = k;

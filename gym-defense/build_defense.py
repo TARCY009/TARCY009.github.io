@@ -260,14 +260,9 @@ def double_weak(types):
         if m > 2.0: return True
     return False
 
-entries = []
-seen = set()
-for p in gd['pokemon']:
-    if p['name'] in seen: continue
-    seen.add(p['name'])
-    if p.get('mega'): continue
-    if p['dex'] in LM_DEX: continue
-    if p['name'].startswith(MANUAL_EXCLUDE_PREFIX): continue
+
+def score_entry(p):
+    """1匹ぶんの点数（迎撃・タイプ・やる気のタブ用の値は、あとで全体の最大値でそろえる）。使えなければ None"""
     hp = int((p['sta'] + 15) * CPM50)
     df = (p['def'] + 15) * CPM50
     cp = max(10, int((p['atk'] + 15) * math.sqrt(p['def'] + 15) * math.sqrt(p['sta'] + 15) * CPM50 ** 2 / 10))
@@ -294,10 +289,10 @@ for p in gd['pokemon']:
             v = atk50 * (na_dps + SP_WEIGHT * sp_dps)
             if best_int is None or v > best_int[0]:
                 best_int = (v, fm['jp'], cm['jp'])
-    if best_int is None: continue
+    if best_int is None: return None
     # 画面に出すおすすめ構成は、ポイント計算とは別のルールで選ぶ（重いわざを避ける）
     rec = recommend_moves(p)
-    if not rec: continue
+    if not rec: return None
     ov = MANUAL_RECOMMEND.get(p['name'])
     if ov:
         jp_charged = {MV[c]['jp'] for c in p.get('charged', []) if c in MV}
@@ -309,18 +304,32 @@ for p in gd['pokemon']:
     p_type = type_score(p['types'])
     p_yar = yaruki(cp)
     rs, ws = res_weak(p['types'])
-    entries.append({
+    return {
         'n': NAME_FIX.get(p['name'], p['name']), 't': p['types'], 'cp': cp,
         'pb': round(p_bulk, 1), 'pt': round(p_type, 1), 'py': p_yar,
         'rs': rs, 'ws': ws, 'bk': round(bulk * 1000),   # 耐性の数・弱点の数・耐久指数(HP×防御)
         'iv': best_int[0], 'im': best_int[1] + '＋' + best_int[2],  # 迎撃の生値と、その元になったわざ
         'fm': rec[0], 'cm': rec[1], 'cm2': rec[2], 'dw': 1 if double_weak(p['types']) else 0,
-    })
+    }
+
+
+entries = []
+seen = set()
+for p in gd['pokemon']:
+    if p['name'] in seen: continue
+    seen.add(p['name'])
+    if p.get('mega'): continue
+    if p['dex'] in LM_DEX: continue
+    if p['name'].startswith(MANUAL_EXCLUDE_PREFIX): continue
+    e = score_entry(p)
+    if e: entries.append(e)
 
 # 迎撃Pと、並べ替えタブ用のスコア（耐久・タイプ・やる気の配点は変えない）
 BK_MAX = max(e['bk'] for e in entries)
 IV_MAX = max(e['iv'] for e in entries)
-for e in entries:
+
+
+def finish1(e):
     # 迎撃は頭打ちにせず、いちばん強いポケモンを8点として比例配分する（同点1位を作らないため）
     e['pi'] = round(INT_MAX * e['iv'] / IV_MAX, 1)
     # 迎撃タブ用: 迎撃力 × 硬さ ＋ かくとう相性（あとで最大が100になるようそろえる）
@@ -332,15 +341,25 @@ for e in entries:
                     + TYPE_BULK_W * e['bk'] / BK_MAX, 1)
     e['sy'] = round((e['py'] + YARUKI_FIGHT_W * e['pt']) * e['bk'] / BK_MAX * 10, 1)
     del e['iv']
+
+
+for e in entries:
+    finish1(e)
 SI_MAX = max(e['si'] for e in entries)
 # タイプは素の値が -7〜11 と小さく、他のタブと桁がそろわないので 0〜100 に引き伸ばす
 # （最小を0・最大を100にするだけの一次変換なので、並び順は変わらない）
 ST_MIN, ST_MAX = min(e['st'] for e in entries), max(e['st'] for e in entries)
 SY_MAX = max(e['sy'] for e in entries)
-for e in entries:
+
+
+def finish2(e):
     e['si'] = round(100.0 * e['si'] / SI_MAX, 1)
     e['st'] = round(100.0 * (e['st'] - ST_MIN) / (ST_MAX - ST_MIN), 1)
     e['sy'] = round(100.0 * e['sy'] / SY_MAX, 1)
+
+
+for e in entries:
+    finish2(e)
 
 entries.sort(key=lambda x: -x['total'])
 out = {
@@ -355,3 +374,25 @@ open(os.path.join(BASE, 'data', 'defense_data.js'), 'w', encoding='utf-8').write
 json.dump(out, open(os.path.join(BASE, 'data', 'defense_data.json'), 'w', encoding='utf-8'), ensure_ascii=False)
 print('entries:', len(entries))
 print('top5:', [e['n'] for e in entries[:5]])
+
+# ---- 未実装ポケモン（開発者だけが一覧に足せる・assets/devadd.js） ----
+# gym-attack/data/gym_unreleased.json（build_gym.py が作る）を上と同じ計算で点数にし、
+# data/defense_unreleased.json へ別に書き出す。**最大値でそろえる値は実装済みの一覧の最大値のまま**使う
+# （足しても実装済みのポケモンの点数が1つも動かないように）。伝説・幻・メガ・バトル中だけの姿は上と同じく外す
+UNREL = os.path.join(REPO, 'gym-attack', 'data', 'gym_unreleased.json')
+if os.path.exists(UNREL):
+    un = json.load(open(UNREL, encoding='utf-8'))
+    for k, v in un.get('moves', {}).items():
+        MV.setdefault(k, v)
+    u_entries = []
+    for p in un.get('pokemon', []):
+        if p.get('mega') or p.get('lg') or p['dex'] in LM_DEX: continue
+        if p['name'].startswith(MANUAL_EXCLUDE_PREFIX): continue
+        e = score_entry(p)
+        if not e: continue
+        finish1(e)
+        finish2(e)
+        u_entries.append(e)
+    json.dump({'entries': u_entries}, open(os.path.join(BASE, 'data', 'defense_unreleased.json'), 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
+    print('未実装ポケモン（開発者用）:', len(u_entries))
