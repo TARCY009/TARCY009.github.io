@@ -15,6 +15,7 @@
  E. 画面のエラー・起動の赤い帯が出ない
  F. 途中で止まらない（質問もメーターも出ていないのに時間だけ進んで再生が進まない、が無い）
  G. 対戦が最後まで終わる
+ P. 決着のあとに決着パネル（再戦・入れ替えて再戦・終了）が出て、「再戦」ですぐ次のバトルが始まる（2026-09-24）
  I. 押した（撃つと答えた）SPには、押した瞬間の「SPが始まる」演出がある（シールドの窓のあいだに押したものも・2026-09-24）
 使い方: python3 .claude/checks/mock-sp.py [--quick]
 """
@@ -96,11 +97,18 @@ INJECT = r"""<script>
       var ended = cur.ev.some(function(e){ return e[1] === 'end'; });
       if(ended && !document.getElementById('spqwin')){
         if(!cur.fin){ cur.fin = now(); }
-        if(now() - cur.fin > 2500){
+        // 決着パネル(2026-09-24): 出るのを待ち、1戦目のあとは「再戦」を押して次のバトルが始まるかを見る(最後は✕終了)
+        var pn = document.getElementById('gbend');
+        if(pn || now() - cur.fin > 9000){
           cur.pend = Object.keys(RB.ans).filter(function(k){ return RB.ans[k] && RB.ans[k].pwPend; }).map(function(k){ return k + (RB.ans[k].late ? '(late)' : ''); });
+          cur.panel = !!pn; cur.panelTxt = pn ? pn.textContent.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
           battles.push(cur); cur = null;
-          var e = document.querySelector('.hend'); if(e) e.click();
-          if(battles.length >= CFG.n){ done = true; out(); return; }
+          if(battles.length >= CFG.n){ var e = document.querySelector('.hend'); if(e) e.click(); done = true; out(); return; }
+          if(pn){
+            cur = { ev: [], i: battles.length, t0: now(), viaRe: true };
+            pn.querySelector('.gbe-re').click();
+            cur.reStarted = !document.getElementById('gbend') && !!document.querySelector('.bfull') && RBV.started && RBV.cur === 0 && !Object.keys(RB.ans).length;
+          } else { var e2 = document.querySelector('.hend'); if(e2) e2.click(); }
         }
         return setTimeout(drive, 150);
       }
@@ -288,6 +296,9 @@ def main():
                         if nx and nx[1] == 'fxsp0': cnt['窓→じぶんのSP'] = cnt.get('窓→じぶんのSP', 0) + 1
                         else: cnt['窓→SPなし'] = cnt.get('窓→SPなし', 0) + 1   # 倒された・メーターでやめた、もありうるので数だけ出す
                     else: probs.append(f'I 窓が出る直前に点いていたSPボタンを窓のあいだに押したのに、演出が出ない(ターン{x[3]})')
+            if not b.get('panel'): probs.append('P 決着パネル(再戦・入れ替えて再戦・終了)が出ない')
+            elif not all(w in b.get('panelTxt', '') for w in ('再戦', '入れ替えて再戦', '終了')): probs.append('P 決着パネルのボタンが足りない: ' + b.get('panelTxt', ''))
+            if b.get('viaRe') and not b.get('reStarted'): probs.append('P 「再戦」を押しても、すぐに新しいバトルが始まらない')
             probs += judge(b, cfg['rt'])
         total_bad += len(probs)
         summary.append((tag, probs, cnt, res.get('warn', [])[:3], [b.get('pend') for b in res.get('battles', [])]))

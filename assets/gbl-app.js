@@ -7512,6 +7512,33 @@ const GB_RT_WAIT = 10000;   // リアルタイムのシールドの猶予(ミリ
 //   ④ CSS は gbl.css の html.gbnozoom(バトル中だけ・touch-action:pan-x pan-y＝スクロールだけ許して拡大を止める)
 //   バトルの外(一覧・1対1など)は拡大できるまま(読みにくいときに拡大したい人がいるため)
 // ⚠ 画面を切り替えて全画面が隠れただけ(display:none)のときはバトルの外として扱う(getClientRects が空)
+// ---- 決着パネル(2026-09-24タダシさん指示) ----
+// 模擬戦の決着の演出(WIN/LOSE)が終わったら、同じ場所に消えないパネルを出す: WIN/LOSE ＋
+// 「再戦(同じポケモンでやり直す)」「入れ替えて再戦(ポケモンを入れ替えてやり直す)」「終了(トップページへ)」。
+// ✕で閉じるとタイムラインを見返せる(ドックの ↺やり直し・✕終了 は今までどおり使える)。
+// 🎬演出OFF・動きを減らす設定でも、パネルだけは出す(ボタンが要るため)
+function gbEndHide() { document.getElementById('gbend')?.remove(); }
+function gbEndShow(outcome, timeUp, acts) {
+  gbEndHide();
+  const win = outcome === 'win';
+  const ttl = timeUp ? `TIME UP<small>${win ? 'WIN' : outcome === 'draw' ? 'DRAW' : 'LOSE'}</small>`
+    : win ? 'WIN' : (outcome === 'timeout' ? 'TIME UP' : outcome === 'draw' ? 'DRAW' : 'LOSE');
+  const el = document.createElement('div');
+  el.id = 'gbend'; el.className = 'gbend ' + (win ? 'win' : 'lose');
+  el.innerHTML = `<div class="gbendbox" role="dialog" aria-label="バトルの結果">
+      <button class="gbendx" aria-label="閉じる" title="閉じてタイムラインを見返す">✕</button>
+      <div class="ebig">${ttl}</div>
+      <div class="gbendbtns">
+        <button class="gbe gbe-re"><b>再戦</b><small>同じポケモンでやり直す</small></button>
+        <button class="gbe gbe-sw"><b>入れ替えて再戦</b><small>ポケモンを入れ替えてやり直す</small></button>
+        <button class="gbe gbe-end"><b>終了</b></button>
+      </div></div>`;
+  el.querySelector('.gbendx').onclick = gbEndHide;
+  el.querySelector('.gbe-re').onclick = () => { gbEndHide(); acts.re(); };
+  el.querySelector('.gbe-sw').onclick = () => { gbEndHide(); acts.sw(); };
+  el.querySelector('.gbe-end').onclick = () => { gbEndHide(); acts.end(); };
+  document.body.appendChild(el);
+}
 const gbInBattle = () => { const el = document.querySelector('.bfull'); const on = !!(el && el.getClientRects().length); if (!on) gbNoZoom(false); return on; };
 let gbZoomVp = null;
 function gbNoZoom(on) {
@@ -8062,8 +8089,26 @@ function sdFoePick() {
   const megaLimit = k => isMega(SD.foe[pool[k]].key);
   return sdBestCombo(W, pool.map((_, k) => k), megaLimit).map(k => pool[k]);
 }
+// あいての6匹からランダムに3匹(メガ・ゲンシは1匹まで＝ゲームのルール)。決着パネルの「入れ替えて再戦」用
+function sdFoeRandom() {
+  const pool = sdList('foe').slice();
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const sel = [];
+  for (const i of pool) {
+    if (sel.length >= 3) break;
+    if (isMega(SD.foe[i].key) && sel.some(j => isMega(SD.foe[j].key))) continue;
+    sel.push(i);
+  }
+  SD.foeFix = { foe: JSON.stringify(SD.foe), sel };
+}
 // 選出は「あいての6匹・(HARDなら)じぶんの選出・難易度・リーグ」が同じあいだ作り直さない
 function sdFoePickCached() {
+  // 決着パネルの「入れ替えて再戦」で決めた、あいての6匹からランダムの3匹(2026-09-24タダシさん指示)。
+  // あいての6匹が同じあいだだけ使う(6匹を入れ替えたら、ふだんのAIの選び方に戻る)
+  if (SD.foeFix && SD.foeFix.foe === JSON.stringify(SD.foe)) {
+    const ok = SD.foeFix.sel.filter(i => SD.foe[i]);
+    if (ok.length) return ok;
+  }
   const ai = GB_AI[MK.ai] || GB_AI.normal;
   const sig = JSON.stringify([SD.foe, ai.omni ? SD.pick.map(i => SD.my[i]) : SD.my,
     MK.ai, MK.foeAuto, cap, cup && cup.slug, SIMOPT.buffMode]);
@@ -12057,13 +12102,51 @@ function gbRender(body, bt, picks, foes) {
         const S = SND();
         if (S) setTimeout(() => { if (onScreen()) (bt.outcome === 'win' ? S.win() : S.lose()); }, 260);
       }
+      // 決着パネル(2026-09-24): 演出(WIN/LOSE)が終わったら同じ場所に出す。演出が無い設定ならすぐ出す
+      const panel = RB.step && RBV.started && RBV.endPanel !== RBV.sig;
+      if (panel) RBV.endPanel = RBV.sig;
+      const showPanel = () => { if (onScreen() && ended()) gbEndShow(bt.outcome, bt.timeUp, endActs); };
       if (fxOk() && RBV.endFx !== RBV.sig) {
         RBV.endFx = RBV.sig;
-        setTimeout(() => { if (onScreen()) fxOne({ k: 'end', win: bt.outcome === 'win', outcome: bt.outcome, timeUp: bt.timeUp }); }, 260);
-      }
+        setTimeout(() => {
+          if (!onScreen()) return;
+          const d = fxOne({ k: 'end', win: bt.outcome === 'win', outcome: bt.outcome, timeUp: bt.timeUp });
+          if (panel) setTimeout(() => { if (onScreen() && ended()) { fxClear(); showPanel(); } }, d || 0);
+        }, 260);
+      } else if (panel) setTimeout(showPanel, 300);
     }
     setPlayBtn();
   }
+  // 決着パネルのボタン(2026-09-24タダシさん指示)
+  // 新しいバトルとして仕切り直す(✕終了と同じ片付け＋あいての癖の乱数を引き直す)
+  const resetBattle = () => {
+    stopTimer(); fxDrop(); gbEndHide();
+    RB.ans = {}; RBUI.open = null; RBV.spQ = null; RB.found = null;
+    RB.rseed = (Math.random() * 1e9) | 0;
+    RBV.started = false; RBV.playing = true; RBV.cur = 0;
+    RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear();
+    RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null; RBV.endPanel = null;
+    body.classList.remove('bfull'); gbNoZoom(false);
+  };
+  const endActs = {
+    // 再戦: 同じポケモン・同じ選出で、すぐに次のバトルを始める(▶ バトルスタート！を押したのと同じ)
+    re: () => {
+      resetBattle(); run();
+      const b = body.querySelector('.rbstart');
+      if (b) b.click();
+    },
+    // 入れ替えて再戦: 見せ合いは じぶんの選出からやり直し・あいては6匹からランダムに3匹。
+    // ふつうの3対3は選出が無いので、じぶんの3匹の枠へ戻る(あいてはそのまま)
+    sw: () => {
+      resetBattle();
+      if (sdOn()) { SD.pick = []; SD.edit = false; sdFoeRandom(); saveSd(); }
+      run();
+      const to = document.querySelector(sdOn() ? '#sdwrap .sdpick' : '#mk3');
+      if (to) to.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    },
+    // 終了: トップページ(ツール一覧)へ
+    end: () => { resetBattle(); location.href = '/'; },
+  };
   // いまこの模擬戦の画面が出ているかどうか。display:none で隠れているだけだと
   // document.body.contains() は真のままなので、これを見ないとモードを切り替えたあとも
   // タイマーと演出の後始末(startTimer)が動き続け、**切り替えた先の画面の上に
@@ -12244,7 +12327,7 @@ function gbRender(body, bt, picks, foes) {
     fxDrop();
     RBV.started = false; RBV.playing = false; RBV.cur = 0;
     RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear();
-    RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null;
+    RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null; RBV.endPanel = null; gbEndHide();
     body.classList.remove('bfull');
     run();
   };
@@ -12521,7 +12604,7 @@ function gbRender(body, bt, picks, foes) {
   // ⚠ 0ターン目でも「途中の操作」なら演出をやり直さない(2026-09-07タダシさん報告)。
   //   開幕直後に⇄で交代すると RBV.cur が 0 のままなので、ここで演出を未再生に戻すと
   //   VSカードからの再生し直しになり「最初からやり直し」に見えていた
-  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null; }   // 最初からの再生(スタート・↻)だけ
+  if (RBV.cur === 0 && !RBV.keepFx) { RBV.fxDone.clear(); RBV.pvDone.clear(); RBV.sndDone.clear(); RBV.hpSnap = null; RBV.hudLi = null; RBV.endFx = null; RBV.endSnd = null; RBV.endPanel = null; gbEndHide(); }   // 最初からの再生(スタート・↻)だけ
   RBV.keepFx = false;
   // ⚠ 1手ずつの再生中は advance() に任せる＝**行 → 演出 → 行**の順で出す(2026-09-07タダシさん指示)。
   //   ここで revealTo すると、決断に答えた瞬間に「SP・たおした・次のポケモン」の行が
@@ -12726,6 +12809,7 @@ function run() {
   // 一覧系は多数のポケモンを回すので、確率わざの切り替えは常に出す。
   // 対面を1つに決めて計算する画面だけ、そのわざを使っているときに絞る(下で上書きする)
   setProbTab(true);
+  if (mode !== 'mock') gbEndHide();   // 模擬戦の決着パネルは、ほかの画面へ移ったら消す
   if (mode === 'multi') { runMulti(); return; }
   if (mode === 'counter') { runCounter(); return; }
   if (mode === 'party') { runParty(); return; }

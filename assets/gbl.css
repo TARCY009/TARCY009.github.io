@@ -3129,3 +3129,34 @@ button.sdchip.on .tbadge{filter:none}
 .spstfx .ring.r2{animation-delay:.16s}
 @keyframes spstEdge{0%{opacity:0;box-shadow:inset 0 0 0 0 var(--tc1)}30%{opacity:1;box-shadow:inset 0 0 34px 8px var(--tc1)}100%{opacity:0;box-shadow:inset 0 0 52px 12px var(--tc2)}}
 @keyframes spstRing{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(7)}}
+
+/* ---- 模擬戦の決着パネル(2026-09-24タダシさん指示): WIN/LOSE の下に 再戦／入れ替えて再戦／終了 ----
+   決着の演出(.fxend)が終わったら同じ場所に出す。文字は .fxend .ebig の静止表示と同じ見た目。
+   ボタンは共通の立体の作り(土台のグラデーション・黒い落ち影・内側のハイライト)・光彩は付けない */
+.gbend{position:fixed;inset:0;z-index:410;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:rgba(6,9,22,.55);animation:gbendin .25s ease-out both;--ec1:#ffd54a;--ec2:#ff9750}
+.gbend.lose{--ec1:#8b9ac4;--ec2:#4a5680}
+@keyframes gbendin{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.gbend{animation:none}}
+.gbendbox{position:relative;width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:18px;
+  padding:26px 18px 18px;border-radius:18px;background:linear-gradient(180deg,rgba(30,40,80,.96),rgba(17,23,46,.96));
+  border:1px solid rgba(140,160,230,.28);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+.gbend .ebig{font-size:3.2rem;font-weight:900;letter-spacing:.14em;line-height:1;text-align:center;
+  background:linear-gradient(180deg,#fff,var(--ec1) 46%,var(--ec2));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 rgba(0,0,0,.5))}
+.gbend .ebig small{display:block;font-size:.42em;letter-spacing:.3em;margin-top:.15em;opacity:.9}
+.gbendx{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);color:#b8c4e8;font-size:.9rem;cursor:pointer;touch-action:manipulation}
+.gbendbtns{width:100%;display:flex;flex-direction:column;gap:9px}
+.gbe{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:11px 12px;border-radius:13px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);color:#fff;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+  background:linear-gradient(180deg,#1e2850,#151d38);box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}
+.gbe b{font-size:1rem;font-weight:900;letter-spacing:.04em}
+.gbe small{font-size:.7rem;font-weight:700;opacity:.82}
+.gbe:hover{transform:translateY(-1px)}
+.gbe:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}
+.gbe-re{border:none;background:linear-gradient(160deg,#ffe28a 0%,#f5b82e 45%,#c9861a 100%);color:#2a1a00;
+  box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.gbe-sw{border:none;background:linear-gradient(160deg,#7fe8ff 0%,#22b8d8 45%,#0e7fa8 100%);color:#042330;
+  box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.gbe-end{padding:10px 12px;color:#c6d0ee}
