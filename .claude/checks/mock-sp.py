@@ -16,6 +16,7 @@
  F. 途中で止まらない（質問もメーターも出ていないのに時間だけ進んで再生が進まない、が無い）
  G. 対戦が最後まで終わる
  P. 決着のあとに決着パネル（再戦・入れ替えて再戦・終了）が出て、「再戦」ですぐ次のバトルが始まる（2026-09-24）
+ Q. たおれた側から次に出てくるポケモンは「くりだした！」で出る（「交代した！」にならない・2026-09-24）
  I. 押した（撃つと答えた）SPには、押した瞬間の「SPが始まる」演出がある（シールドの窓のあいだに押したものも・2026-09-24）
 使い方: python3 .claude/checks/mock-sp.py [--quick]
 """
@@ -78,6 +79,8 @@ INJECT = r"""<script>
     window.fxOne = function(f){
       if(f && f.k === 'sp') log('fxsp' + (f.side ? '1' : '0'), f.mv);
       if(f && f.k === 'end') log('end', f.outcome || '');
+      if(f && (f.k === 'in' || f.k === 'swap')) log('fx' + f.k + (f.side ? '1' : '0'), f.name || '');
+      if(f && f.k === 'ko') log('fxko' + (f.win ? '1' : '0'), f.name || '');   // fxko1 = あいてをたおした
       return of.apply(this, arguments);
     };
     new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes, function(n){
@@ -233,6 +236,16 @@ def judge(b, rt):
                 bad.append(f'I 押したのに「SPが始まる」演出が出ていない(ターン{e[3]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:200]}@{x[3]}' for x in ev[max(last_sp + 1, i - 12):i + 2]))
             if fired_by_user and not has_meter: bad.append(f'D じぶんのSPなのにメーターが出ていない(ターン{e[3]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:200]}@{x[3]}' for x in ev[max(last_sp + 1, i - 12):i + 2]))
             last_sp = i
+    # Q: たおれた側から次に出てくるポケモンは「くりだした」(in)。「交代した」(swap)にならない(2026-09-24タダシさん報告)
+    lastk = {0: None, 1: None}
+    for i, e in enumerate(ev):
+        m = re.match(r'fx(ko|in|swap)([01])$', e[1])
+        if not m: continue
+        k, sd = m.group(1), int(m.group(2))
+        if k == 'ko': lastk[sd] = 'ko'; continue
+        if k == 'swap' and lastk[sd] == 'ko':
+            bad.append(f'Q {"あいて" if sd else "じぶん"}がたおれたあとに出てきたのに「交代した！」(ターン{e[3]}・{e[2]}) 前後:\n        ' + '\n        '.join(f'{x[1]}:{str(x[2])[:120]}@{x[3]}' for x in ev[max(0, i - 10):i + 3]))
+        lastk[sd] = k
     # H: 同じターンに「SPが始まる」演出が3回以上(押しても撃てない入力で演出だけが出ている)
     from collections import Counter
     c = Counter(e[3] for e in ev if e[1] == 'start')
@@ -299,12 +312,21 @@ def main():
             if not b.get('panel'): probs.append('P 決着パネル(再戦・入れ替えて再戦・終了)が出ない')
             elif not all(w in b.get('panelTxt', '') for w in ('再戦', '入れ替えて再戦', '終了')): probs.append('P 決着パネルのボタンが足りない: ' + b.get('panelTxt', ''))
             if b.get('viaRe') and not b.get('reStarted'): probs.append('P 「再戦」を押しても、すぐに新しいバトルが始まらない')
+            # たおれたあと、くりだしてすぐ(同じターン)に交代した(見た目は「交代した！」が主役に見える)
+            for a2, b2 in zip(ev, ev[1:]):
+                if a2[1][:4] == 'fxin' and b2[1] == 'fxswap' + a2[1][-1] and b2[3] - a2[3] <= 2:
+                    cnt['くりだし直後に交代'] = cnt.get('くりだし直後に交代', 0) + 1
+                    print('    くりだし直後に交代:', a2, b2)
+            if os.environ.get('SP_DUMP'):
+                print('   --- 出来事', b['i'])
+                for x in ev:
+                    if x[1][:4] in ('fxko', 'fxin', 'fxsw') or x[1] in ('end', 'answer'): print('     ', x[1], str(x[2])[:30], '@', x[3])
             probs += judge(b, cfg['rt'])
         total_bad += len(probs)
         summary.append((tag, probs, cnt, res.get('warn', [])[:3], [b.get('pend') for b in res.get('battles', [])]))
     for tag, probs, cnt, warn, pend in summary:
         print(('✅ ' if not probs else '❌ ') + tag)
-        print('   ', {k: cnt.get(k, 0) for k in ('press', 'answer', 'start', 'meter', 'meterOK', 'meterX', 'fxsp0', 'fxsp1', 'swap', 'end', '窓で押す', '窓で演出', '窓→じぶんのSP', '窓→SPなし')},
+        print('   ', {k: cnt.get(k, 0) for k in ('press', 'answer', 'start', 'meter', 'meterOK', 'meterX', 'fxsp0', 'fxsp1', 'swap', 'end', '窓で押す', '窓で演出', '窓→じぶんのSP', '窓→SPなし', 'fxko1', 'fxin1', 'fxswap1', 'fxko0', 'fxin0', 'fxswap0', 'くりだし直後に交代')},
               '未確定のまま残った答え:', pend)
         for w in warn: print('    (時系列の守りで断った入力)', w)
         for p in probs[:12]: print('    ', p)
