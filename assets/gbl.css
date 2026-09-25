@@ -1173,6 +1173,15 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   color:#2b2305;background:linear-gradient(180deg,#ffe27a,#ffc93a);border:1px solid #ffd54a;border-radius:99px;
   cursor:pointer;box-shadow:0 4px 20px rgba(255,213,74,.35),0 0 0 1px rgba(255,213,74,.2);animation:stpl 1.6s infinite}
 @keyframes stpl{50%{transform:scale(1.04);box-shadow:0 4px 26px rgba(255,213,74,.55),0 0 0 1px rgba(255,213,74,.3)}}
+/* 画面の下に浮かぶスタートボタン(2026-09-25タダシさん選択・案B)。本物の .rbstart と同じ金色・パーティがそろって本物が画面の外にあるときだけ */
+.startdock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);z-index:900;
+  width:min(420px,calc(100% - 24px));height:52px;border-radius:14px;font:inherit;font-size:1rem;font-weight:900;letter-spacing:.04em;
+  color:#2b2305;background:linear-gradient(180deg,#ffe27a,#ffc93a);border:1px solid #ffd54a;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 6px 18px rgba(0,0,0,.5);animation:sdkIn .22s ease-out}
+.startdock[hidden]{display:none}
+.startdock:active{transform:translateX(-50%) translateY(2px)}
+@keyframes sdkIn{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.startdock{animation:none}}
 .hm{text-align:center}
 .hm .clk{display:block;font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .hm .trn{display:block;font-style:normal;font-size:.55rem;color:var(--sub);font-variant-numeric:tabular-nums}

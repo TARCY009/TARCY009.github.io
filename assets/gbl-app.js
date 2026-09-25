@@ -14205,6 +14205,41 @@ const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } }
     applyMode();
   }
   });
+  // ---- 画面の下に浮かぶ「▶ バトルスタート！」(2026-09-25タダシさん選択・案B) ----
+  // パーティを入れ終えても、本物のスタートボタンまで画面約2枚ぶん下へスクロールが要ったため。
+  // じぶんとあいての枠がそろい(見せ合いは3匹の選出まで済み)、本物のボタンが画面の外にあるときだけ出す。
+  // 押すと本物のボタンを押したのと同じ。画面は勝手に動かさない。入力中(キーボードが出ている)・バトル中は出さない
+  bootStep('浮かぶスタートボタン', () => {
+    const dock = document.createElement('button');
+    dock.type = 'button'; dock.className = 'startdock'; dock.hidden = true;
+    dock.innerHTML = '▶ バトルスタート！';
+    dock.title = '下にある「バトルスタート！」と同じです（押すとそのまま始まります）';
+    document.body.appendChild(dock);
+    const realBtn = () => [...document.querySelectorAll('.rbstart')].find(b => b.offsetParent && !b.closest('.bfull'));
+    const full = () => SD.on && mode === 'mock' ? true
+      : PAGE_ROCKET || mode === 'rocket' ? PT.every(Boolean) && RKT.every(Boolean)
+      : PT.every(Boolean) && GBT.every(Boolean);
+    let raf = 0;
+    const sync = () => {
+      raf = 0;
+      const b = realBtn(), ae = document.activeElement;
+      const typing = ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName);
+      let show = false;
+      if (b && !typing && !document.querySelector('.bfull') && full()) {
+        const r = b.getBoundingClientRect();
+        show = r.top > innerHeight - 10 || r.bottom < 0;   // 本物のボタンが見えているあいだは出さない
+      }
+      if (dock.hidden === show) dock.hidden = !show;
+    };
+    const later = () => { if (!raf) raf = setTimeout(sync, 60); };   // まとめて1回(バトル中の大量の書き換えでも軽い)
+    dock.onclick = () => { const b = realBtn(); dock.hidden = true; if (b) b.click(); };
+    addEventListener('scroll', later, { passive: true });
+    addEventListener('resize', later);
+    document.addEventListener('focusin', later);
+    document.addEventListener('focusout', () => setTimeout(later, 60));
+    new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+    later();
+  });
   bootStep('パーティの枠', () => {
   buildPartySlots(document.querySelector('#party .pslots'), 'pt');
   buildPartySlots(document.querySelector('#rkteam .myslots'), 'rbm');   // 模擬戦でも同じ3枠(PT)を使う
