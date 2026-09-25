@@ -1076,7 +1076,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
    マークは点灯の金地で沈まないよう、マスク方式で文字色に追従させる */
 /* ⇄交代は独立した大きな行(2026-09-07タダシさん指示)。
    **交代受けは自分でタイミングを見極めて押す練習**なので、いちばん押しやすい大きさにする */
-.hswaprow{margin-top:6px}
+.hswaprow{margin-top:10px}   /* SPと交代の押し間違い対策で少し広げた(2026-09-25タダシさん指示・旧6px) */
 /* 控え2匹ぶんを横に並べる(2026-09-07タダシさん指示)。押した瞬間に交代＝再生は止めない */
 .hswaprow.two{display:flex;gap:6px}
 .hswaprow.two .hmsw{flex:1 1 0;min-width:0;letter-spacing:.02em;font-size:.82rem;gap:5px;padding:0 6px}
@@ -1179,7 +1179,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 /* たまにしか押さないボタンは、HUDの下に**文字つき**で並べる(2026-09-02タダシさん指摘)。
    ⏹＝やり直し・✨＝演出・⏭＝コマ送り が、マークだけでは何のボタンか分からなかったため。
    真ん中の列は幅60〜74pxしかないので文字が入らない。ここは横いっぱい使える */
-.hbtns{display:flex;gap:5px;margin-top:6px}
+.hbtns{display:flex;gap:5px;margin-top:10px}   /* 交代と下の段(やり直し・終了)を少し離す(2026-09-25・旧6px) */
 .hbtns button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:2px;padding:5px 2px;font-size:.74rem;line-height:1;background:var(--bg2);border:1px solid var(--line);
   border-radius:8px;color:var(--ink);cursor:pointer;transition:transform .08s}
@@ -1233,11 +1233,12 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   .hbtns:has(>button:nth-child(6)) button b{font-size:.56rem}
 }
 @media (max-width:380px){.hbtns:has(>button:nth-child(6)) button b{font-size:.52rem}}
-.hctl{display:flex;justify-content:center;gap:4px;margin-top:4px;flex-wrap:wrap;max-width:66px;margin-left:auto;margin-right:auto}
-.hctl button{width:26px;height:22px;font-size:.6rem;background:var(--bg2);border:1px solid var(--line);
+.hctl{display:flex;justify-content:center;gap:4px;margin-top:4px;flex-wrap:wrap;max-width:70px;margin-left:auto;margin-right:auto}
+.hctl button{width:28px;height:27px;font-size:.66rem;   /* ▶と×1を少し大きく(2026-09-25タダシさん指示・旧26×22/30×22) */
+  background:var(--bg2);border:1px solid var(--line);
   border-radius:7px;color:var(--ink);cursor:pointer;padding:0}
-.hctl .hspd{width:30px}
-@media (max-width:520px){.rbhud{grid-template-columns:1fr 60px 1fr;padding:7px 7px 6px}.hs .nm{font-size:.63rem}
+.hctl .hspd{width:32px}
+@media (max-width:520px){.rbhud{grid-template-columns:1fr 64px 1fr;padding:7px 7px 6px}.hs .nm{font-size:.63rem}
   .gq{width:21px;height:21px}.gq i{width:16px;height:16px}.ft{grid-template-columns:1fr 30px 1fr}
   .ev{font-size:.6rem;padding:2px 5px}.rwb button{font-size:.72rem;padding:6px 10px}}
 /* ロケット団戦 1対1: おすすめランキング */
