@@ -285,6 +285,22 @@
       });
     }
   }
+  // ガラスをはじいた音（2026-09-25・交代を押した音の高い部分用）。サイン波に、ガラスらしい整数でない倍音(2.76倍・5.4倍)を少しだけ重ねる。
+  // FMの鐘（倍音が多く金属らしい）とも弦(ks)とも別の音色。trem>0 で細かく揺らすと鈴のようになる
+  function glass(freq, dur, o) {
+    o = o || {};
+    var decay = o.decay == null ? 12 : o.decay, trem = o.trem || 0, glide = o.glide || 0;
+    playBuf(bufOf(dur, function (L, R, sr, len) {
+      var p1 = 0, p2 = 0, p3 = 0;
+      for (var i = 0; i < len; i++) {
+        var t = i / sr, f = freq * (1 + glide * Math.min(1, t / .05));
+        p1 += 2 * Math.PI * f / sr; p2 += 2 * Math.PI * f * 2.76 / sr; p3 += 2 * Math.PI * f * 5.4 / sr;
+        var env = Math.exp(-decay * t) * fade(i, sr, 1.5) * (trem ? (1 - .35 * (1 + Math.sin(2 * Math.PI * trem * t)) / 2) : 1);
+        var v = (Math.sin(p1) + .28 * Math.sin(p2) * Math.exp(-decay * 1.8 * t) + .1 * Math.sin(p3) * Math.exp(-decay * 3 * t)) * env;
+        L[i] = v; R[i] = v;
+      }
+    }), o);
+  }
   // ゴング・鐘（金属の板の振動。整数でない倍音を重ね、高い倍音ほど速く減衰させるのが金属らしさの正体）
   function gong(freq, dur, o) {
     o = o || {};
@@ -853,7 +869,7 @@
   // 押した瞬間に鳴る短い音（0.45秒以内）。あとで流れる交代のカットインの音（seSwap）・SPが始まる音とは作りを変える。
   // 5案ずつ作ってあり SWP_PAT で選ぶ（0にすると鳴らさない）
   var SWP_PAT = 5;   // 2026-09-25タダシさん決定: 案5 トン・キン
-  var SWP_GAIN = [.4, 2.8, 1.1, 1.75, 1.45];   // 案ごとの音量の倍率（OfflineAudioContext で測ってピーク≒.45＝SPが始まる音と同じくらいにそろえた）
+  var SWP_GAIN = [.4, 2.8, 1.1, 1.75, 1.45, 1.95, 1.45];   // 案ごとの音量の倍率（OfflineAudioContext で測ってピーク≒.45＝SPが始まる音と同じくらいにそろえた）
   function seSwapPress(pat, at) {
     GAIN = SWP_GAIN[(pat || 1) - 1] || 1;
     try { seSwapPress0(pat, at || 0); } finally { GAIN = 1; }
@@ -875,13 +891,20 @@
         tone({ f: 840, f2: 3000, type: 'sine', dur: .14, vol: .12, at: a + .02, lo: 6000 });
         shimmer(2, { base: 2637, dur: .22, span: .06, vol: .08, at: a + .12, spread: .8 });
         break;
-      case 5:   // トン・カン（軽い打音に、乾いた金属の「カン」）
+      case 5:   // トン・チン（軽い打音に、ガラスをはじいたような澄んだ高い音）
         // ⚠ 高い音は、ほかの効果音で使っていない音色にする（2026-09-25タダシさん指示）。
-        //   以前の「キン」＝FMの鐘1568Hzは、シールド・SPが撃てる合図・負け・威力調整の結果と同じ音だった。
-        //   いまは四角い波2つ(587Hz・845Hz)を重ねたカウベルの音。ほかの効果音には無い
+        //   最初の「キン」＝FMの鐘1568Hzは、シールド・SPが撃てる合図・負け・威力調整の結果と同じ音だった。
+        //   「カン」（四角い波のカウベル）は元の音から離れすぎたので、近い高さのガラスの音（glass・ほかで未使用）にした
         kick(.16, { f0: 190, f1: 110, vol: .34, drive: .2, decay: 22, click: .12, at: a });
-        tone({ f: 587, type: 'square', dur: .16, vol: .16, at: a + .05, lo: 3400, hi: 450, attack: .002 });
-        tone({ f: 845, type: 'square', dur: .12, vol: .12, at: a + .05, lo: 3400, hi: 450, attack: .002, dly: .1 });
+        glass(1480, .4, { decay: 11, vol: .26, at: a + .05, rev: .3, dly: .12 });
+        break;
+      case 6:   // トン・リン（小さな鈴のように細かく揺れる高い音）
+        kick(.16, { f0: 190, f1: 110, vol: .34, drive: .2, decay: 22, click: .12, at: a });
+        glass(1976, .42, { decay: 9, trem: 22, vol: .22, at: a + .05, rev: .3, dly: .1 });
+        break;
+      case 7:   // トン・ピィン（少し上へすべるガラスの音）
+        kick(.16, { f0: 190, f1: 110, vol: .34, drive: .2, decay: 22, click: .12, at: a });
+        glass(1397, .4, { decay: 11, glide: .06, vol: .26, at: a + .05, rev: .3, dly: .12 });
         break;
       default:  // シュッ（短い風切りが左から右へ抜ける）
         whoosh(.24, { f0: 900, f1: 4600, q: 4, vol: .5, at: a, pan: -.8, pan2: .8, dur: .24 });
