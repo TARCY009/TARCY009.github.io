@@ -853,7 +853,7 @@
   // 押した瞬間に鳴る短い音（0.45秒以内）。あとで流れる交代のカットインの音（seSwap）・SPが始まる音とは作りを変える。
   // 5案ずつ作ってあり SWP_PAT で選ぶ（0にすると鳴らさない）
   var SWP_PAT = 5;   // 2026-09-25タダシさん決定: 案5 トン・キン
-  var SWP_GAIN = [.4, 2.8, 1.1, 1.75, 1.9];   // 案ごとの音量の倍率（OfflineAudioContext で測ってピーク≒.45＝SPが始まる音と同じくらいにそろえた）
+  var SWP_GAIN = [.4, 2.8, 1.1, 1.75, 1.45];   // 案ごとの音量の倍率（OfflineAudioContext で測ってピーク≒.45＝SPが始まる音と同じくらいにそろえた）
   function seSwapPress(pat, at) {
     GAIN = SWP_GAIN[(pat || 1) - 1] || 1;
     try { seSwapPress0(pat, at || 0); } finally { GAIN = 1; }
@@ -875,9 +875,13 @@
         tone({ f: 840, f2: 3000, type: 'sine', dur: .14, vol: .12, at: a + .02, lo: 6000 });
         shimmer(2, { base: 2637, dur: .22, span: .06, vol: .08, at: a + .12, spread: .8 });
         break;
-      case 5:   // トン・キン（軽い打音に、小さな鐘をひとつ）
+      case 5:   // トン・カン（軽い打音に、乾いた金属の「カン」）
+        // ⚠ 高い音は、ほかの効果音で使っていない音色にする（2026-09-25タダシさん指示）。
+        //   以前の「キン」＝FMの鐘1568Hzは、シールド・SPが撃てる合図・負け・威力調整の結果と同じ音だった。
+        //   いまは四角い波2つ(587Hz・845Hz)を重ねたカウベルの音。ほかの効果音には無い
         kick(.16, { f0: 190, f1: 110, vol: .34, drive: .2, decay: 22, click: .12, at: a });
-        fm(1568, .38, { ratio: 2.01, index: 2.2, decay: 9, idecay: 14, vol: .2, at: a + .05, rev: .35, dly: .15, wide: 1 });
+        tone({ f: 587, type: 'square', dur: .16, vol: .16, at: a + .05, lo: 3400, hi: 450, attack: .002 });
+        tone({ f: 845, type: 'square', dur: .12, vol: .12, at: a + .05, lo: 3400, hi: 450, attack: .002, dly: .1 });
         break;
       default:  // シュッ（短い風切りが左から右へ抜ける）
         whoosh(.24, { f0: 900, f1: 4600, q: 4, vol: .5, at: a, pan: -.8, pan2: .8, dur: .24 });
