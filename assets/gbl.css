@@ -819,6 +819,13 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .flg .tpair .tbadge,.fxitem .tx .tpair .tbadge,.fxvs .pn .tpair .tbadge{margin-left:0}
 .flg .tpair,.fxitem .tx .tpair,.fxvs .pn .tpair{margin-left:4px}
 .flg em{font-style:normal;font-size:.6rem;color:var(--sub);letter-spacing:.12em}
+/* 交代で出てきた側の「交代」の札(2026-09-25タダシさん指示) */
+.flg .swtag{font-style:normal;font-size:.58rem;font-weight:800;letter-spacing:.06em;margin-left:6px;padding:1px 6px;border-radius:999px;
+  border:1px solid currentColor;opacity:.85;vertical-align:1px}
+/* たおれた／たおした の行の「じぶん／あいて」の札(2026-09-25タダシさん指示・演出の帯と同じ形) */
+.fko .wh{font-size:.72em;font-weight:800;letter-spacing:.04em;padding:1px 7px;border-radius:999px;margin-right:2px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#e4ecff}
+.fko.win .wh{background:rgba(255,213,74,.18);border-color:rgba(255,213,74,.45);color:#ffe6a3}
 .ft{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:4px;padding:2px 0;min-height:25px}
 .ft.q{min-height:12px;padding:0}
 .ft .tn{grid-column:2;text-align:center;font-size:.55rem;color:#5a6a9c;font-variant-numeric:tabular-nums}
@@ -873,6 +880,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rbwinbox:empty{display:none}
 .rbwin{margin:0 auto 8px;max-width:520px;background:rgba(19,26,51,.97);border:1px solid var(--gold);
   border-radius:14px;padding:10px 12px;box-shadow:0 6px 30px rgba(0,0,0,.55),0 0 0 1px rgba(255,213,74,.15);
+  color:#eef1fb;   /* ⚠ 窓の地はテーマによらず濃紺なので文字色も固定(ライトで継承の濃い文字色になり、SPのわざ名が見えなかった・2026-09-25) */
   animation:winup .22s ease-out}
 @keyframes winup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .rwt{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.84rem;color:var(--gold);margin-bottom:8px}
@@ -957,6 +965,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .hsprow .hsp.rdy small.dmg.ko{color:#ffe28a}
 .hsprow .hsp small.dmg:empty{display:none}
 .rbhud{display:grid;grid-template-columns:1fr 74px 1fr;gap:8px;align-items:start;
+  color:#eef1fb;   /* ⚠ HUDの地はテーマによらず濃紺なので文字色も固定(ライトで時計が継承の濃い文字色になり読みにくかった・2026-09-25) */
   background:rgba(12,17,34,.96);backdrop-filter:blur(8px);border:1px solid var(--gl);
   border-radius:14px;padding:9px 10px 8px;box-shadow:0 -6px 28px rgba(0,0,0,.45),0 0 0 1px rgba(77,141,255,.12)}
 .hs{min-width:0}

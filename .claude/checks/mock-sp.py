@@ -18,7 +18,8 @@
  P. 決着のあとに決着パネル（再戦・入れ替えて再戦・終了）が出て、「再戦」ですぐ次のバトルが始まる（2026-09-24）
  Q. たおれた側から次に出てくるポケモンは「くりだした！」で出る（「交代した！」にならない・2026-09-24）
  R. 表示した行の演出（くりだした・交代した・たおした・SPなど）が1つも取りこぼされずに流れる（2026-09-24）
- I. 押した（撃つと答えた）SPには、押した瞬間の「SPが始まる」演出がある（シールドの窓のあいだに押したものも・2026-09-24）
+ I. 押した（撃つと答えた）SPには、押した瞬間の「SPが始まる」演出がある（2026-09-24）
+ J. シールドの窓のあいだ（あいてのSPがもう入っている）に押したSPは、演出も出ず、あいてのSPのあとに勝手に撃たれない（押し直しが要る・2026-09-25タダシさん指示）
 使い方: python3 .claude/checks/mock-sp.py [--quick]
 """
 import os, re, sys, json, glob, socket, shutil, tempfile, threading, pathlib, subprocess, random
@@ -311,12 +312,13 @@ def main():
             for i, x in enumerate(ev):
                 if x[1] == 'press' and '(シールドの窓)' in str(x[2]):
                     cnt['窓で押す'] = cnt.get('窓で押す', 0) + 1
+                    # J(2026-09-25): 窓のあいだの入力は「間に合わなかった」扱い＝演出は出ず、押し直すまでじぶんのSPは撃たれない
                     if any(y[1] == 'start' and y[0] - x[0] <= 30 for y in ev[i + 1:i + 4]):
-                        cnt['窓で演出'] = cnt.get('窓で演出', 0) + 1
-                        nx = next((y for y in ev[i + 1:] if y[1] in ('fxsp0', 'end')), None)
-                        if nx and nx[1] == 'fxsp0': cnt['窓→じぶんのSP'] = cnt.get('窓→じぶんのSP', 0) + 1
-                        else: cnt['窓→SPなし'] = cnt.get('窓→SPなし', 0) + 1   # 倒された・メーターでやめた、もありうるので数だけ出す
-                    else: probs.append(f'I 窓が出る直前に点いていたSPボタンを窓のあいだに押したのに、演出が出ない(ターン{x[3]})')
+                        probs.append(f'J 窓のあいだに押したSPに「SPが始まる」演出が出た(ターン{x[3]})')
+                    nx = next((y for y in ev[i + 1:] if y[1] in ('fxsp0', 'end') or (y[1] == 'press' and '(シールドの窓' not in str(y[2]))), None)
+                    # 同じターン(同時発動)は、窓が出る前に押していた入力が通ったもの＝正しい。あとのターンに撃たれたら違反
+                    if nx and nx[1] == 'fxsp0' and nx[3] > x[3]: probs.append(f'J 窓のあいだに押したSPが、押し直していないのにあいてのSPのあとに撃たれた(ターン{x[3]}→{nx[3]})')
+                    else: cnt['窓→撃たれない'] = cnt.get('窓→撃たれない', 0) + 1
             if b.get('fxMiss'): probs.append('R 流れなかった演出(取りこぼし): ' + ', '.join(b['fxMiss'][:8]))
             if not b.get('panel'): probs.append('P 決着パネル(再戦・入れ替えて再戦・終了)が出ない')
             elif not all(w in b.get('panelTxt', '') for w in ('再戦', '入れ替えて再戦', '終了')): probs.append('P 決着パネルのボタンが足りない: ' + b.get('panelTxt', ''))
@@ -335,7 +337,7 @@ def main():
         summary.append((tag, probs, cnt, res.get('warn', [])[:3], [b.get('pend') for b in res.get('battles', [])]))
     for tag, probs, cnt, warn, pend in summary:
         print(('✅ ' if not probs else '❌ ') + tag)
-        print('   ', {k: cnt.get(k, 0) for k in ('press', 'answer', 'start', 'meter', 'meterOK', 'meterX', 'fxsp0', 'fxsp1', 'swap', 'end', '窓で押す', '窓で演出', '窓→じぶんのSP', '窓→SPなし', 'fxko1', 'fxin1', 'fxswap1', 'fxko0', 'fxin0', 'fxswap0', 'くりだし直後に交代')},
+        print('   ', {k: cnt.get(k, 0) for k in ('press', 'answer', 'start', 'meter', 'meterOK', 'meterX', 'fxsp0', 'fxsp1', 'swap', 'end', '窓で押す', '窓→撃たれない', 'fxko1', 'fxin1', 'fxswap1', 'fxko0', 'fxin0', 'fxswap0', 'くりだし直後に交代')},
               '未確定のまま残った答え:', pend)
         for w in warn: print('    (時系列の守りで断った入力)', w)
         for p in probs[:12]: print('    ', p)

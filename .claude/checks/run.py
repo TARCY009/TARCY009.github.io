@@ -13,6 +13,7 @@ exit-gbl:    .claude/checks/exit-check.html?only=gbl（同・GBLの環境一覧�
 rules-scn:   .claude/checks/rules/scncheck.py（GBLのバトルルールのシナリオ6本＝expected/*.json と突き合わせ）
 rules-random:.claude/checks/rules/randcheck.py（同・種1で600戦をランダムに回し、バトルルール違反0か）
 mock-sp:     .claude/checks/mock-sp.py --quick（模擬戦を画面ごと回し、SPボタン・メーター・同時発動の順番が崩れないか。広く見るときは --seed N で16戦）
+mock-skip:   .claude/checks/mock-skip.py --quick（模擬戦を⏸→⏩決断まで／演出中に⏩ で決着まで進め、決着パネル・決着の演出・威力調整・演出の列の空回りが崩れないか。全部見るときは引数なしで4本×3戦）
 いずれも画面なしのブラウザで開き、すべて ✅ かを確かめる。
 答え（期待値・基準ファイル）を変えるときは、必ずタダシさんに確認してから。
 """
@@ -142,6 +143,8 @@ CHECKS = {
     'mock-fx': check_mock_fx,
     # 模擬戦のSPアタックの通し検査(2026-09-24): 押した瞬間の演出・メーターの順番・同時発動・止まらない など。保存前は短い版(2戦)
     'mock-sp': sub_check('.claude/checks/mock-sp.py', ['--quick'], '模擬戦のSPアタックの通し検査'),
+    # ⏩決断まで・⏸の通し検査(2026-09-25の点検で見つけた3件の再発防止): 決着パネルが出る・威力調整を通る・演出の列が空回りしない
+    'mock-skip': sub_check('.claude/checks/mock-skip.py', ['--quick'], '模擬戦の⏩決断まで・⏸の通し検査'),
     'exit-rank': page_check('.claude/checks/exit-check.html?only=rank', 20, 120000),
     'exit-gbl': page_check('.claude/checks/exit-check.html?only=gbl', 16, 300000),
 }

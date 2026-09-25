@@ -5656,14 +5656,24 @@ function fxRun(list, done, onHit) {
   const fin = () => {
     if (gen !== FX_GEN) return;               // 新しい演出に譲った(FX_BUSY はそちらが持っている)
     FX_BUSY = false; FX_CUR = null; fxClear();
-    // 待っている演出があれば順に流す(いちばん新しい画面の done が最後に呼ばれる＝従来の1枠と同じ考え方)
-    const w = FX_Q.shift();
-    if (w) fxRun(w.list, w.done, w.onHit); else done();
+    // 待っている演出があれば順に流す(いちばん新しい画面の done が最後に呼ばれる＝従来の1枠と同じ考え方)。
+    // ⚠ 待っているあいだに再生済みになった行(同じ行が何度も積まれる)は**流さずに飛ばす**(2026-09-25・点検の自動検査で発見)。
+    //   演出中に答えや⏩を続けて押すと、画面を作り直すたびに同じ行が列に積まれ、中身の無い演出ごとに
+    //   一呼吸(FX_PRE＋FX_POST≒1.1秒)の空白が積み重なって、10秒以上なにも動かない時間ができていた
+    let w;
+    while ((w = FX_Q.shift())) {
+      const rest = w.list.filter(el => fxNew(el).length);
+      if (rest.length) { fxRun(rest, w.done, w.onHit); return; }
+      w.done();                 // 流すものが無い＝すぐ次へ(古い画面の done は onScreen で自分から降りる)
+      if (FX_BUSY) return;      // done の中で新しい演出が始まった
+    }
+    done();
   };
+  let played = 0;   // この並びで実際に流した演出の数(⏩で全部が再生済みになったときは、一呼吸を置かずに終える・2026-09-25)
   const step = () => {
     if (gen !== FX_GEN) return;
     // ⚠ 最後の演出も「一呼吸のあいだ出したまま」にして、done の直前に片づける
-    if (i >= list.length) { setTimeout(fin, FX_POST / sp()); return; }
+    if (i >= list.length) { setTimeout(fin, played ? FX_POST / sp() : 0); return; }
     fxClear();   // 前の行の演出を片づけてから次へ
     const el = list[i];
     // ⚠ この行の**まだ流していない演出だけ**を流す(2026-09-20)。
@@ -5672,6 +5682,7 @@ function fxRun(list, done, onHit) {
     fs.forEach(f => RBV.fxDone.add(fxKey1(el, f)));
     i++; cur.i = i;
     if (!fs.length) { setTimeout(step, 0); return; }
+    played += fs.length;
     // ⚠ 同じ行に演出が複数あるときは**順番に**流す(2026-09-07タダシさん指示)。
     //   まとめて同時に出すと、たとえば「VSカード」と「開幕交代」が重なって、
     //   どちらが先に起きたのか分からなくなる
@@ -5696,6 +5707,9 @@ function fxRun(list, done, onHit) {
   };
   setTimeout(step, FX_PRE / sp());
 }
+// 演出が流れていなければすぐ、流れていれば**いま待っている演出の最後**に回して呼ぶ(2026-09-25)。
+// ⏩決断まで で決着に達したときの「決着の演出・パネル」など、演出の順番を崩さずに続きを頼むときに使う
+function fxIdle(fn) { if (FX_BUSY) FX_Q.push({ list: [], done: fn, onHit: null }); else fn(); }
 // data-fx属性のHTML(単引用符で囲むのでJSONの単引用符だけ実体参照にする)
 const fxAttr = fx => fx && fx.length ? ` data-fx='${JSON.stringify(fx).replace(/'/g, '&#39;')}'` : '';
 // ---- 模擬戦の効果音(assets/sound.js・2026-09-18タダシさん選択) ----
@@ -6022,7 +6036,9 @@ function rbRender(body, bt, picks, foes, extra) {
          pv.swapped && { k: 'swap', side: 0, name: leg.meName, live: pvMsw || undefined }].filter(Boolean);
     if (!pv && leg.leadPt && leg.leadPt.ans && leg.leadPt.ans.a === 'to')
       fxv.push({ k: 'swap', side: 0, name: leg.meName });
-    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
+    // 交代で出てきた側には「交代」の札(2026-09-25タダシさん指示・GBLと同じ)
+    const swTag0 = pv && pv.swapped ? '<i class="swtag">交代</i>' : '';
+    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}${swTag0}</span><em>VS</em><span class="foe">${shMark(leg.foeName)}${tyIco(leg.foeName)}</span></div>` });
     // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
     if (leg.leadPt) items.push({ ...chipItem(leg.leadPt, base), o: IT.lead });
     if (leg.leadHit) items.push({ gt: base, o: IT.hit, html: `<div class="ft"><div class="c me"></div><i class="tn">${base}</i>
@@ -6127,9 +6143,9 @@ function rbRender(body, bt, picks, foes, extra) {
     // 決断待ちのあいだは倒れたかどうかもまだ決まっていない(仮の結果)ので出さない
     if (!pend) {
       if (leg.foeDown) { alive1--; items.push({ gt: endGt, fx: [{ k: 'ko', win: true, name: leg.foeName }],
-        html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
+        html: `<div class="fko win">💥 <b class="wh">あいて</b>の ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
       if (leg.meDown) { alive0--; items.push({ gt: endGt, fx: [{ k: 'ko', name: leg.meName }],
-        html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
+        html: `<div class="fko lose">💀 <b class="wh">じぶん</b>の ${leg.meName} はたおれた</div>` }); }
       if (leg.meDown || leg.foeDown) {
         const f = frames[endGt] || frames[endGt - 1];
         if (f) frames[endGt] = { ...f, alive0, alive1 };
@@ -6182,7 +6198,7 @@ function rbRender(body, bt, picks, foes, extra) {
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
       <div class="rbhud">
-        <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
+        <div class="hs me"><div class="hn"><span class="nm"></span><b class="hpn"></b></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           <div class="hswap" title="次に交代できるまでの残り時間（一度交代すると45秒間は次の交代ができません）"></div>
@@ -6190,7 +6206,7 @@ function rbRender(body, bt, picks, foes, extra) {
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
           <div class="hctl">${RB.step ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
         </div>
-        <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
+        <div class="hs foe"><div class="hn"><b class="hpn"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
         </div>
@@ -6292,7 +6308,6 @@ function rbRender(body, bt, picks, foes, extra) {
         // 下のフレームは幅が狭いので「シャドウ○○」は「S○○」に縮める(ロケット団はほぼ全部シャドウ)
         Rf.nm.textContent = nm.replace(/^シャドウ/, 'S');
         Rf.nm.title = nm;
-        Rf.cp.textContent = 'CP' + cp;
         Rf.gqs.innerHTML = sps.map(m => `<span class="gq" data-e="${m.e}" title="${m.n}（ゲージ${m.e}）"><i>${typeIconHTML(D.typeJa[MOVE_TYPE[m.n]] || '', 13)}</i><b></b></span>`).join('');
       });
     }
@@ -6649,7 +6664,10 @@ function rbRender(body, bt, picks, foes, extra) {
     // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)
     revealTo(stop).forEach(e => { if (e.dataset.fx) fxList(e).forEach(f => RBV.fxDone.add(fxKey1(e, f))); });
     RBV.cur = stop; updateHud(stop); autoScroll();
-    if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
+    // ⚠ 決着に達したら、⏸で止めていた(タイマーが無い)ときも決着の演出・音を出す(2026-09-25・GBL側と同じ直し)
+    if (RBV.timer || bt.pending) atStop();
+    else if (ended()) fxIdle(() => { if (onScreen()) atStop(); });
+    else { RBV.playing = false; setPlayBtn(); }
   };
   const hstop = dock.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
@@ -11292,7 +11310,9 @@ function gbRender(body, bt, picks, foes) {
       if (pt && pt.ans && pt.ans.a === 'to')
         fxv.push({ k: 'swap', side: sd, name: sd ? leg.foeName : leg.meName });
     });
-    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}</span><em>VS</em><span class="foe"><b class="fnm">${shMark(vsFoe)}${tyIco(vsFoe)}</b></span></div>` });
+    // 交代で出てきた側には「交代」の札(2026-09-25タダシさん指示。「くりだした」と見分けがつかず紛らわしいため)
+    const swTag = sd => (pv && (sd ? pv.swapped1 : pv.swapped0)) ? '<i class="swtag">交代</i>' : '';
+    items.push({ gt: base, o: IT.vs, fx: fxv, html: `<div class="flg"><span class="me">${shMark(vsMe)}${tyIco(vsMe)}${swTag(0)}</span><em>VS</em><span class="foe"><b class="fnm">${shMark(vsFoe)}${tyIco(vsFoe)}</b>${swTag(1)}</span></div>` });
     // 開幕交代のチップは**VSカードの後ろ**(演出の順=VS→交代 と合わせる)
     (leg.leadPts || []).forEach(p => { if (p && !(hideFoeChips && p.side)) items.push({ ...chipItem(p, base), o: IT.lead }); });
     // 開幕交代で入った「相手の打ちかけの1発」。撃ったのは交代しなかった側なので、その側の列に出す
@@ -11490,9 +11510,9 @@ function gbRender(body, bt, picks, foes) {
     const endGt = base + res.turns;
     if (!pend) {
       if (leg.foeDown) { alive1--; dd1 |= 1 << leg.foeIdx; items.push({ gt: endGt, fx: [{ k: 'ko', win: true, name: leg.foeName }],
-        html: `<div class="fko win">💥 ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
+        html: `<div class="fko win">💥 <b class="wh">あいて</b>の ${leg.foeName} をたおした！<i>⏱${rbSec(ckOf(endGt))}</i></div>` }); }
       if (leg.meDown) { alive0--; dd0 |= 1 << leg.myIdx; items.push({ gt: endGt, fx: [{ k: 'ko', name: leg.meName }],
-        html: `<div class="fko lose">💀 ${leg.meName} はたおれた</div>` }); }
+        html: `<div class="fko lose">💀 <b class="wh">じぶん</b>の ${leg.meName} はたおれた</div>` }); }
       if (leg.meDown || leg.foeDown) {
         const f = frames[endGt] || frames[endGt - 1];
         if (f) frames[endGt] = { ...f, alive0, alive1, dd0, dd1 };
@@ -11544,7 +11564,7 @@ function gbRender(body, bt, picks, foes) {
       <button class="hfollow" type="button" title="いちばん新しい行まで戻り、以後また自動で追いかけます">⬇ 最新へ</button>
       <div class="rbwinbox"></div>
       <div class="rbhud">
-        <div class="hs me"><div class="hn"><span class="nm"></span><b class="cp"></b><b class="hpn"></b></div>
+        <div class="hs me"><div class="hn"><span class="nm"></span><b class="hpn"></b></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           ${sdOn() ? '<div class="hteam" title="選んだ3匹。たおれた匹は暗くなります"></div>' : ''}
@@ -11553,7 +11573,7 @@ function gbRender(body, bt, picks, foes) {
         <div class="hm"><b class="clk">0.0</b><i class="trn">0T</i>
           <div class="hctl">${RB.step && !rtOn() ? `<button class="hplay" title="一時停止／再生">⏸</button><button class="hspd" title="再生の速さ（×1→×2→×4）">×${RBV.speed}</button>` : ''}</div>
         </div>
-        <div class="hs foe"><div class="hn"><b class="hpn"></b><b class="cp"></b><span class="nm"></span></div>
+        <div class="hs foe"><div class="hn"><b class="hpn"></b><span class="nm"></span></div>
           <div class="hb"><em></em><i></i></div>
           <div class="hx"><span class="balls"></span><span class="shds"></span><span class="gqg"><span class="gqs"></span><b class="gqn" title="いまのゲージ量(100でまんたん)"></b></span><span class="bfs"></span></div>
           ${sdOn() ? '<div class="hteam" title="あいての3匹。場に出て名前が分かった匹だけ出ます（たおれた匹は暗くなります）"></div>' : ''}
@@ -11678,7 +11698,6 @@ function gbRender(body, bt, picks, foes) {
       [[R0, f.meta.name0, f.meta.cp0, f.meta.sp0, false], [R1, f.meta.name1, f.meta.cp1, f.meta.sp1, true]].forEach(([Rf, nm, cp, sps, isFoe]) => {
         Rf.nm.textContent = isFoe && mask ? '？？？' : nm.replace(/^シャドウ/, 'S');   // 下のフレームは幅が狭い(確定仕様の縮め方)
         Rf.nm.title = isFoe && mask ? 'バトルが始まると分かります（見せ合いルール）' : nm;
-        Rf.cp.textContent = 'CP' + cp;
         // わざオート中は、あいてのゲージ円にわざ名・タイプを出さない(何が飛んでくるか分からない設定)。
         // ただし**一度撃って正体が判明したわざ**は、その時点から先はタイプアイコンで出す
         // (2026-09-01タダシさん指示。下のrv判定が毎フレーム切り替える。data-mvは判定用)
@@ -11861,9 +11880,11 @@ function gbRender(body, bt, picks, foes) {
     const fswLeft = Math.max(0, (f.meta.fswOk || 0) - ckOf(gt));
     fswapEl.innerHTML = fswLeft > 0 ? `<b>${Math.ceil(fswLeft / 2)}</b><small>秒</small>${SWAPMK}` : '';
   }
-  const revealTo = g => {
+  // atMeter=true(⏩決断まで)は、じぶんのSPの威力が未確定(入力メーター待ち)の行の手前で止める(RBV.meterAt に控える・2026-09-25)
+  const revealTo = (g, atMeter) => {
     const out = [];   // 今あらわれた要素(演出の判定に使う)
     while (ptr < els.length && +els[ptr].dataset.gt <= g) {
+      if (atMeter && RB.step && spPendKey(els[ptr])) { RBV.meterAt = els[ptr]; break; }
       els[ptr].classList.remove('future'); els[ptr].classList.add('in');
       lastEl = els[ptr]; out.push(els[ptr]); ptr++;
     }
@@ -12331,9 +12352,23 @@ function gbRender(body, bt, picks, foes) {
   if (hskip) hskip.onclick = () => {
     RBV.started = true;
     // ⏩で飛ばした演出は再生済み扱いにする(あとでまとめて再生されないように)
-    revealTo(stop).forEach(e => { if (e.dataset.fx) fxList(e).forEach(f => RBV.fxDone.add(fxKey1(e, f))); });
+    // ⚠ じぶんのSPの威力が未確定(入力メーター待ち)の行の手前で止めてメーターを出す(2026-09-25・点検で発見)。
+    //   前は⏩がメーターを通らずに100%で撃っていた(押すだけでEXCELLENT扱いになる穴)
+    revealTo(stop, true).forEach(e => { if (e.dataset.fx) fxList(e).forEach(f => RBV.fxDone.add(fxKey1(e, f))); });
+    if (RBV.meterAt) {
+      const el = RBV.meterAt; RBV.meterAt = null;
+      RBV.cur = Math.min(stop, +el.dataset.gt);
+      updateHud(RBV.cur, curLi(), curHf()); autoScroll();
+      spMeterAt(el);
+      return;
+    }
     RBV.cur = stop; updateHud(stop); autoScroll();
-    if (RBV.timer || bt.pending) atStop(); else { RBV.playing = false; setPlayBtn(); }
+    // ⚠ 決着に達したら、⏸で止めていた(タイマーが無い)ときも決着の演出・音・決着パネルを出す(2026-09-25・点検で発見)。
+    //   前は RBV.timer が無いと atStop を呼ばず、タイムラインが最後まで出るだけでWIN/LOSEもパネルも出なかった。
+    //   演出が流れている最中なら、その演出の列の最後に回す(順番を崩さない)
+    if (RBV.timer || bt.pending) atStop();
+    else if (ended()) fxIdle(() => { if (onScreen()) atStop(); });
+    else { RBV.playing = false; setPlayBtn(); }
   };
   const hstop = dock.querySelector('.hstop');
   if (hstop) hstop.onclick = restart;
@@ -12493,16 +12528,13 @@ function gbRender(body, bt, picks, foes) {
     if (on > leg.res.turns + 1) return no('撃つ前に対面が終わる');
     return { li, on, p: Math.max(0, pr) };
   }
-  // ---- シールドの窓が出ているあいだのSP入力(2026-09-24タダシさん報告「同時発動で後攻のとき、押した瞬間に演出が出ない」) ----
-  // あいてのSPが来て「シールドを使うか」の窓が出ているあいだ、SPボタンは押せず、押しても黙って捨てていた。
-  // 同時に押したつもりの指はちょうどこの瞬間に当たる。シールドが残っていない場面(窓が出ない)では同じ瞬間の入力を
-  // 受け付けて、あいてのSPのあとに撃っていた＝窓があるかどうかで扱いが食い違っていた。
-  // → 窓のあいだの入力は「予約」(RBV.spQ)として受け付け、押した瞬間に「SPが始まる」演出を出す。
-  //   シールドを選んだあと(窓が閉じて計算し直したあと)に、窓が出た時点(gt)に押したものとして manualSp に渡す
-  //   ＝シールドの窓が出ない場面とまったく同じ扱い(あいてのSP → じぶんのメーター → じぶんのSP)
+  // ---- シールドの窓が出ているあいだのSP入力 ----
+  // あいてのSPが来て「シールドを使うか」の窓が出ているあいだに押したSPは「間に合わなかった入力」(2026-09-25タダシさん確定のバトルルール:
+  // 入力が遅れてあいてのSPが入ったら反映されず、あいてのSPのあとはノーマルアタックの撃ち合いに戻る＝撃つなら押し直す)。
+  // ⚠ 2026-09-24の「予約(RBV.spQ)してあいてのSPのあとに撃つ」は実戦と違ったので廃止。ボタンは押せるが、manualSp が late として記録するだけ
   function spShWin(gt) {
     const p = bt.pending;
-    return !!(rtOn() && RBV.started && !ended() && p && gt >= stop && p.kind === 'sh' && p.side === 0 && !RBV.spQ);
+    return !!(rtOn() && RBV.started && !ended() && p && gt >= stop && p.kind === 'sh' && p.side === 0);
   }
   // 窓のあいだ押せるのは、窓が出る直前に点いていたボタン(先の行はまだ計算されていないので、1つ手前で見る)
   function spShOk(gt, m) { return !!(spTarget(gt, m) || spTarget(gt - 1, m)); }
@@ -12548,12 +12580,18 @@ function gbRender(body, bt, picks, foes) {
     if (!rtOn() || !RBV.started || ended()) return;
     const gt = q ? q.gt : RBV.cur;
     if (bt.pending && gt >= stop) {
-      // シールドの窓のあいだ: 予約して、押した瞬間に演出を出す(次のポケモンを選んでいる最中は押せない)
+      // シールドの窓のあいだ(あいてのSPがもう入っている)の入力は**間に合わなかった入力**として記録する(2026-09-25タダシさん指示)。
+      // 実戦では、あいてのSPが入ったあとの入力は反映されず、SPのあとはノーマルアタックの撃ち合いに戻る(撃つなら押し直す)。
+      // ⚠ 旧実装(2026-09-24)は予約してあいてのSPのあとに勝手に撃っていたが、実戦と違うので廃止。演出も出さない。
+      //   押した瞬間(p)を「あいてのSPの行の1つ手前」にして記録すると、gbPlay の「遅いSP入力は通らない」がそのまま
+      //   late にして、チップ「SPの入力が間に合わなかった」を出す(押し直せる)。画面は作り直さない(シールドの猶予が戻るため)
       const m0 = D.moves[mv];
-      if (!q && spShWin(gt) && m0 && spShOk(gt, m0)) {
-        RBV.spQ = { mv, gt, sig: RBV.sig };
-        spStartFx(mv, () => {});
-        updateHud(RBV.cur, curLi(), curHf());   // 予約したらボタンを消す(二重に予約しない)
+      if (spShWin(gt) && m0) {
+        const t = spTarget(gt, m0) || spTarget(gt - 1, m0);
+        if (!t) return;
+        const key = gbKey(t.li, 0, 'msp', t.on, 0);
+        if (RB.ans[key]) return;
+        commitAns(() => { RB.ans[key] = { a: 'fire', mv, p: Math.max(0, t.p - 1) }; });
       }
       return;
     }
@@ -12609,17 +12647,6 @@ function gbRender(body, bt, picks, foes) {
     // 押した瞬間は「威力は未確定」で記録する(同時発動で相手が先攻なら、相手のSPの演出とダメージが先)
     go(null);
   };
-  // シールドの窓のあいだに予約したSP(RBV.spQ): 窓が閉じて計算し直したら、窓が出た時点に押したものとして入れる。
-  // ⚠ 画面を作り直すたびに呼ばれるので、古い画面(作り直された後)では何もせず、新しい画面に任せる
-  if (RBV.spQ && !(bt.pending && RBV.spQ.gt >= stop)) {
-    setTimeout(() => {
-      const q = RBV.spQ;
-      if (!q || !onScreen() || !RBV.started) return;
-      RBV.spQ = null;
-      if (q.sig === RBV.sig && rtOn()) manualSp(q.mv, q);
-    }, 0);
-  }
-
   // ---- 初期表示(再生の途中状態を引き継ぐ) ----
   RBV.cur = Math.max(0, Math.min(RBV.cur, stop));
   if (!RB.step) RBV.cur = stop;

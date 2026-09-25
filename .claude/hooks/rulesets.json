@@ -11,6 +11,7 @@
         "rules-random",
         "mock-fx",
         "mock-sp",
+        "mock-skip",
         "exit-gbl"
       ],
       "paths": [
