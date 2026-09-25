@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>ジム挑戦の答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<iframe id="f" src="/gym-attack/index.html" style="width:420px;height:300px"></iframe>
+<script>
+// ジム挑戦の答え合わせ。答えを変えるときは必ずタダシさんに確認すること。
+// ① 手計算の例: 架空のポケモンとわざ（数値を直書き＝毎日のデータ更新の影響を受けない）で、1発のダメージ・DPS・何発耐えるか・被弾補正を
+//    手で計算した値（2026-09-25 Python で確認）と比べる。本体の計算の部品（GonaviGym＝画面と同じ関数）を通す
+// ② 画面の順位: ツールとは別にこのページで書いた計算（.claude/rules/gym.md と CLAUDE.md の決まり＝サイクルDPS×ゲージ補正、
+//    総合力＝(1÷平均有効度)^0.25×r/(r+2)、ドラゴン7%ルールは常にON）で上位30件を作り、画面の一覧（名前・シャドウ・わざ・ポイント・🛡）と比べる
+// ③ タダシさん確認済みの事実: 対メタグロスの総合力で イベルタル🛡2発・ズガドーン🛡0発
+const f = document.getElementById('f');
+const out = document.getElementById('out');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+f.onload = async () => {
+  const res = [];
+  const ok = (name, got, want) => res.push([name, String(got) === String(want), got, want]);
+  try {
+    const W = f.contentWindow, doc = f.contentDocument;
+    for (let i = 0; i < 200 && !(W.GonaviGym && W.GonaviGym.data()); i++) await sleep(50);
+    const G = W.GonaviGym, D = G.data();
+    if (!D) throw new Error('ジム挑戦のデータが読み込まれませんでした');
+    const O = G.opts();
+    ok('詳細設定の既定値', `${O.gauge[1]}/${O.gauge[2]}/${O.gauge[3]} 指数${O.rex} 比重${O.wFast} PL${O.dpl}`, '0.65/0.95/1 指数0.25 比重0.3 PL40');
+
+    // ① 手計算の例（ノーマル同士＝相性1倍・タイプ一致1.2倍）
+    const NT = D.types_jp.indexOf('ノーマル');
+    D.moves.__CHK_F = { jp: '検査F', type: NT, power: 10, energy: 10, dur: 1000, fast: true, bars: null };
+    D.moves.__CHK_C = { jp: '検査C', type: NT, power: 100, energy: -50, dur: 3000, fast: false, bars: 2 };
+    D.moves.__CHK_D = { jp: '検査D', type: NT, power: 50, energy: -50, dur: 3000, fast: false, bars: 2 };
+    const me = { name: '検査A', types: [NT], atk: 300, def: 200, sta: 200, fast: ['__CHK_F'], charged: ['__CHK_C'] };
+    const foe = { name: '検査B', types: [NT], atk: 200, def: 200, sta: 200, fast: ['__CHK_F'], charged: ['__CHK_D'] };
+    const ctx = G.defCtx(foe, 40, 0.3);
+    const cb = G.comboOf(me, false, '__CHK_F', '__CHK_C', ctx, O.gauge);
+    ok('手計算 DPS（ノーマル10×100回＋SP94×20回 ÷ 160秒）', cb && cb.dps.toFixed(3), '18.000');
+    ok('手計算 火力（DPS×2ゲージ補正0.95）', cb && cb.sPower.toFixed(3), '17.100');
+    const h0 = G.hitOf(me, false, ctx, 0.25), h1 = G.hitOf(me, true, ctx, 0.25);
+    ok('手計算 被ダメ・HP・耐え数', h0.tank && `${h0.tank.d}/${h0.tank.hp}/${h0.tank.n}発`, '29/180/6発');
+    ok('手計算 被弾補正 r/(r+2)', h0.resist.toFixed(4), '0.7563');
+    ok('手計算 シャドウ（防御5/6）の被ダメ・耐え数', h1.tank && `${h1.tank.d}/${h1.tank.n}発`, '34/5発');
+    for (const k of ['__CHK_F', '__CHK_C', '__CHK_D']) delete D.moves[k];
+
+    // ② 画面の順位を別の計算と比べる
+    const CPM = { 40: 0.7903, 50: 0.84029999 };
+    const eff = (mt, dts) => dts.reduce((m, t) => m * D.chart[mt][t], 1);
+    const dmg = (a, d, pw, st, e, sh) => Math.floor(0.5 * (a / d) * pw * st * e * sh) + 1;
+    function mine(def, mode, fl) {
+      const dAtk = (def.atk + 15) * CPM[40], dDef = (def.def + 15) * CPM[40];
+      const tw = {};
+      for (const m of def.fast) { const mv = D.moves[m]; if (mv) tw[mv.type] = Math.max(tw[mv.type] || 0, 0.3); }
+      for (const m of def.charged) { const mv = D.moves[m]; if (mv) tw[mv.type] = 1; }
+      const rows = [];
+      for (const p of D.pokemon) {
+        if (p.mega && !fl.mega) continue;
+        for (const sh of (p.shadow && fl.shadow) ? [false, true] : [false]) {
+          let inc = 0, sw = 0;
+          for (const t in tw) { inc += eff(+t, p.types) * tw[t]; sw += tw[t]; }
+          const myDef = (p.def + 15) * CPM[50] * (sh ? 5 / 6 : 1), myHP = Math.floor((p.sta + 15) * CPM[50]);
+          let worst = 0;
+          for (const m of [...def.fast, ...def.charged]) {
+            const mv = D.moves[m]; if (!mv || !mv.power) continue;
+            worst = Math.max(worst, dmg(dAtk, myDef, mv.power, def.types.includes(mv.type) ? 1.2 : 1, eff(mv.type, p.types), 1));
+          }
+          const r = worst ? myHP / worst : 9;
+          const resist = Math.pow(1 / (sw ? inc / sw : 1), 0.25) * r / (r + 2);
+          const tank = worst ? Math.max(0, Math.ceil(myHP / worst) - 1) : null;
+          const a = (p.atk + 15) * CPM[50], loc = [];
+          for (const fm of p.fast) for (const cm of p.charged) {
+            const F = D.moves[fm], C = D.moves[cm]; if (!F || !C || !C.bars) continue;
+            const dF = dmg(a, dDef, F.power, p.types.includes(F.type) ? 1.2 : 1, eff(F.type, def.types), sh ? 1.2 : 1);
+            const dC = dmg(a, dDef, C.power, p.types.includes(C.type) ? 1.2 : 1, eff(C.type, def.types), sh ? 1.2 : 1);
+            const n = F.energy * 100 / Math.abs(C.energy);
+            const dps = (dF * 100 + dC * n) / ((F.dur * 100 + C.dur * n) / 1000);
+            const pow = dps * O.gauge[C.bars], score = mode === 'power' ? pow : pow * resist;
+            if (!isFinite(score) || score <= 0) continue;
+            loc.push({ p, sh, fm, cm, bars: C.bars, score, tank });
+          }
+          loc.sort((x, y) => y.score - x.score);
+          let pk = loc.slice(0, fl.multi ? 3 : 1);
+          if (!fl.multi && pk.length && pk[0].bars === 1) {
+            const s = loc.find(x => x.bars > 1);
+            if (s && (pk[0].score - s.score) / pk[0].score < 0.07) pk = [s];
+          }
+          rows.push(...pk);
+        }
+      }
+      rows.sort((x, y) => y.score - x.score);
+      const top = rows.slice(0, 30), base = top.length ? top[0].score : 1;
+      return top.map(x => `${x.sh ? 'S' : ''}${x.p.name}|${D.moves[x.fm].jp}/${D.moves[x.cm].jp}|${(x.score / base * 100).toFixed(1)}${mode === 'total' && x.tank != null ? '|🛡' + x.tank : ''}`);
+    }
+    const screen = mode => [...doc.querySelectorAll('#ranklist .card')].map(c => {
+      const tk = [...c.querySelectorAll('.hchip')].map(x => x.textContent).find(t => t.startsWith('🛡'));
+      return `${c.querySelector('.shadowmark') ? 'S' : ''}${c.querySelector('.nm').textContent}|${c.querySelector('.moves').textContent.replace(/\s+/g, '')}|${c.querySelector('.score').firstChild.textContent.trim()}${mode === 'total' && tk ? '|🛡' + parseInt(tk.slice(2)) : ''}`;
+    });
+    const setFl = fl => ['shadow', 'mega', 'multi'].forEach(k => {
+      const b = doc.getElementById('f' + k[0].toUpperCase() + k.slice(1));
+      if ((b.getAttribute('aria-pressed') === 'true') !== !!fl[k]) b.click();
+    });
+    const CASES = [
+      ['メタグロス', 'power', {}], ['メタグロス', 'total', {}],
+      ['ハピナス', 'power', { shadow: 1, mega: 1 }], ['ハピナス', 'total', { shadow: 1, mega: 1 }],
+      ['カイリキー', 'total', { multi: 1 }], ['ラティオス', 'power', { shadow: 1 }],
+      ['レジロック', 'power', {}],  // 7%ルールで上位30件が大きく入れ替わる相手（5%にすると17件変わる）
+    ];
+    for (const [nm, mode, fl] of CASES) {
+      const def = D.pokemon.find(p => p.name === nm);
+      if (!def) { res.push([`防衛 ${nm} がデータにいない`, false, '(なし)', nm]); continue; }
+      doc.getElementById(mode === 'power' ? 'mPower' : 'mTotal').click();
+      setFl(fl);
+      W.selectDefender(def);
+      const got = screen(mode), want = mine(def, mode, fl);
+      const label = `画面の上位30件 対${nm}・${mode === 'power' ? '火力' : '総合力'}${Object.keys(fl).length ? '・' + Object.keys(fl).join('+') : ''}`;
+      const i = want.findIndex((w, k) => got[k] !== w);
+      ok(label, i < 0 && got.length === want.length ? `${got.length}件一致` : `${i + 1}位が違う: ${got[i]}`, i < 0 && got.length === want.length ? `${want.length}件一致` : want[i]);
+    }
+
+    // ③ タダシさん確認済み（対メタグロス・総合力）
+    const meta = D.pokemon.find(p => p.name === 'メタグロス');
+    const mctx = G.defCtx(meta, 40, 0.3);
+    const tankOf = nm => { const p = D.pokemon.find(x => x.name === nm); return p ? G.hitOf(p, false, mctx, 0.25).tank.n + '発' : '(なし)'; };
+    ok('対メタグロス イベルタルの耐え数', tankOf('イベルタル'), '2発');
+    ok('対メタグロス ズガドーンの耐え数', tankOf('ズガドーン'), '0発');
+  } catch (e) {
+    res.push(['実行エラー', false, String(e && e.stack || e), '']);
+  }
+  const bad = res.filter(r => !r[1]).length;
+  out.innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div>`;
+};
+</script>
+</body></html>

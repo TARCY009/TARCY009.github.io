@@ -65,7 +65,8 @@
       "checklist": ".claude/checklists/gym.md",
       "checks": [
         "max-attacker",
-        "exit-rank"
+        "exit-rank",
+        "gym-attack"
       ],
       "paths": [
         "gym-attack/**",
@@ -89,7 +90,8 @@
       "rules": ".claude/rules/dex.md",
       "checklist": ".claude/checklists/dex.md",
       "checks": [
-        "exit-rank"
+        "exit-rank",
+        "dex-stats"
       ],
       "paths": [
         "pokedex/**",

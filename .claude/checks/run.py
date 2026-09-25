@@ -6,6 +6,8 @@ gbl-engine:  pvp-tests/engine-test.html（GBLエンジンの実測突き合わ�
 iv-calc:     .claude/checks/iv-check.html（個体値チェッカーのCP・順位・逆引き・進化後CP＝16項目）
 raid-engine: .claude/checks/raid-check.html（スクショ5例のボスの攻撃時刻＋回帰5通り。基準は raid-baseline.json）
 max-attacker:.claude/checks/max-check.html（マックスバトルのアタッカーが「ダメージ最大のマックスわざ」を選ぶか＝5項目）
+gym-attack:  .claude/checks/gym-check.html（ジム挑戦の手計算の例・画面の上位30件を別の計算と比べる・確認済みの耐え数＝15項目）
+dex-stats:   .claude/checks/dex-check.html（ステータス図鑑の最大CP・メガLv4・最大SCP・タイプ相性・わざ表の数値＝17項目）
 exit-rank:   .claude/checks/exit-check.html?only=rank（1ポケモン1ページ用の出口＝画面の数字か。タイプ別火力・耐久指数・ジム防衛・マックスバトル タイプ別＝20項目）
 exit-gbl:    .claude/checks/exit-check.html?only=gbl（同・GBLの環境一覧とロケット団のランキング＝16項目）
 rules-scn:   .claude/checks/rules/scncheck.py（GBLのバトルルールのシナリオ6本＝expected/*.json と突き合わせ）
@@ -135,6 +137,8 @@ CHECKS = {
     'iv-calc': page_check('.claude/checks/iv-check.html', 16),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
     'max-attacker': page_check('.claude/checks/max-check.html', 5),
+    'gym-attack': page_check('.claude/checks/gym-check.html', 15, 60000),
+    'dex-stats': page_check('.claude/checks/dex-check.html', 17, 60000),
     'mock-fx': check_mock_fx,
     # 模擬戦のSPアタックの通し検査(2026-09-24): 押した瞬間の演出・メーターの順番・同時発動・止まらない など。保存前は短い版(2戦)
     'mock-sp': sub_check('.claude/checks/mock-sp.py', ['--quick'], '模擬戦のSPアタックの通し検査'),

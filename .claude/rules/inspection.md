@@ -94,5 +94,6 @@ paths:
 | mock-fx | 模擬戦の演出の順番（交代のあとのVS・終了後の手の残り） |
 | mock-sp | 模擬戦のSPアタックの通し（押した瞬間の演出・メーターの順番・同時発動・止まらない）。保存前は `--quick`、広く見るときは `--seed N` |
 | iv-calc / raid-engine / max-attacker / exit-rank / exit-gbl | 個体値・レイド・マックスバトル・各ツールの出口 |
+| gym-attack / dex-stats | ジム挑戦（手計算の例・画面の上位30件を別の計算と比べる）・ステータス図鑑（最大CP・SCP・相性・わざ表） |
 
 総当たりの調べもの（重いので自動検査には入れていない）: `.claude/checks/rules/probe-escape.js`（模擬戦AIの「倒されそうなら逃げる」）
