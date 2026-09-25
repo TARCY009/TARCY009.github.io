@@ -3130,6 +3130,13 @@ button.sdchip.on .tbadge{filter:none}
 .spstfx .ring.r2{animation-delay:.16s}
 @keyframes spstEdge{0%{opacity:0;box-shadow:inset 0 0 0 0 var(--tc1)}30%{opacity:1;box-shadow:inset 0 0 34px 8px var(--tc1)}100%{opacity:0;box-shadow:inset 0 0 52px 12px var(--tc2)}}
 @keyframes spstRing{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(7)}}
+/* ⇄交代ボタンを押した瞬間（2026-09-25タダシさん選択・案A）: 押したボタンが一瞬白く光り、金の輪が2つ広がる。位置は JS がボタンの矩形に合わせる */
+.swpfx{position:fixed;z-index:2147483000;pointer-events:none}
+.swpfx .flash{position:absolute;inset:0;border-radius:12px;background:#fff;opacity:0;animation:swpFlash .35s ease-out forwards}
+.swpfx .ring{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px;border-radius:50%;border:3px solid #ffc83d;opacity:0;animation:swpRing .55s ease-out forwards}
+.swpfx .ring.r2{animation-delay:.12s}
+@keyframes swpFlash{0%{opacity:.75}100%{opacity:0}}
+@keyframes swpRing{0%{opacity:1;transform:scale(.4)}100%{opacity:0;transform:scale(4.2)}}
 
 /* ---- 模擬戦の決着パネル(2026-09-24タダシさん指示): WIN/LOSE の下に 再戦／入れ替えて再戦／終了 ----
    決着の演出(.fxend)が終わったら同じ場所に出す。文字は .fxend .ebig の静止表示と同じ見た目。

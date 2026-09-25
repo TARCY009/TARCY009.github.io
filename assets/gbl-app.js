@@ -5286,6 +5286,21 @@ function spStartFx(mvId, then) {
   setTimeout(then, 520);
   setTimeout(() => fx.remove(), 900);
 }
+// ---- ⇄交代ボタンを押した瞬間の演出（2026-09-25タダシさん選択・案A）----
+// 押したボタンが一瞬白く光り、そこから金の輪が2つ広がる（約0.55秒・再生は止めない）。効果音は GonaviSound.swapPress（案5 トン・キン）。
+// 受け付けた交代だけで呼ぶ（間に合わなかった入力では出さない＝SPの演出と同じ考え方）。🎬演出OFF・動きを減らす設定では見た目を省く
+function swapPressFx(btn) {
+  try { if (window.GonaviSound) GonaviSound.swapPress(); } catch (e) {}
+  if (!fxOk() || !btn || !btn.getBoundingClientRect) return;
+  const r = btn.getBoundingClientRect();
+  if (!r.width) return;
+  const fx = document.createElement('div');
+  fx.className = 'swpfx';
+  fx.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
+  fx.innerHTML = '<i class="flash"></i><i class="ring"></i><i class="ring r2"></i>';
+  document.body.appendChild(fx);
+  setTimeout(() => fx.remove(), 900);
+}
 function spqMeter(mvId, done, cancel, opt) {
   document.getElementById('spqwin')?.remove();
   const m = D.moves[mvId];
@@ -6697,6 +6712,7 @@ function rbRender(body, bt, picks, foes, extra) {
           delete RB.ans[k2];
       });
       RB.ans[key] = { a: 'toq', to: +b.dataset.to };
+      swapPressFx(b);   // 押した瞬間の演出と音(2026-09-25)
       RBUI.open = null; RBV.playing = true;
       RBV.keepFx = true;   // 途中の操作なので、0ターン目でも演出はやり直さない
       run();
@@ -12364,7 +12380,7 @@ function gbRender(body, bt, picks, foes) {
   // **押した瞬間にそのポケモンへ交代し、再生は止めない**。ウィンドウを挟むと
   // 「いま押す」という一瞬の判断ができず、交代受けの練習にならないため。
   // 答えは msw として記録されるので、タイムラインのチップから選び直し・↺で取り消しできる
-  const manualSwap = to => {
+  const manualSwap = (to, btn) => {
     if (!RB.step || !RBV.started || ended()) return;
     const gt = RBV.cur;
     if (bt.pending && gt >= stop) return;   // 質問の表示中はそちらの選択肢で選ぶ
@@ -12382,7 +12398,7 @@ function gbRender(body, bt, picks, foes) {
         Object.keys(RB.ans).forEach(k2 => { if (k2.indexOf('0:1:lead:') !== 0) delete RB.ans[k2]; });
         RB.ans[lkey] = { a: 'to', to };
       });
-      if (ok0) { RBUI.open = null; RBV.keepFx = true; run(); return; }
+      if (ok0) { swapPressFx(btn); RBUI.open = null; RBV.keepFx = true; run(); return; }
     }
     // ---- 先行入力(2026-09-07タダシさん指示) ----
     // 交代ボタンは**いつ押してもよい**が、実際に交代が起きるのは
@@ -12409,11 +12425,12 @@ function gbRender(body, bt, picks, foes) {
       RB.ans[key] = { a: 'toq', to, p: pressed };
     });
     if (!ok) return;
+    swapPressFx(btn);   // 押した瞬間の演出と音(2026-09-25・受け付けた交代だけ)
     RBUI.open = null;
     RBV.keepFx = true;   // 途中の操作なので、0ターン目でも演出はやり直さない
     run();               // 再生の状態(RBV.playing)はそのまま＝止めずに続く
   };
-  mswBtns.forEach(b => { b.onclick = () => manualSwap(+b.dataset.to); });
+  mswBtns.forEach(b => { b.onclick = () => manualSwap(+b.dataset.to, b); });
   // ---- リアルタイムのSP(2026-09-08タダシさん指示) ----
   // 押した瞬間からのSPの発動位置: いま打っているノーマルアタックの着弾ターン E と、その時点のゲージ。
   // 実戦はノーマルアタックの打ち始めでゲージを数えるので、2ターンわざの1ターン目に押しても通る。

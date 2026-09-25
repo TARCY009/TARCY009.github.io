@@ -849,6 +849,42 @@
     }
   }
 
+  // ==== ⇄交代ボタンを押した瞬間の音（2026-09-25タダシさん指示・見本は scratchpad/mock-swappress.html）====
+  // 押した瞬間に鳴る短い音（0.45秒以内）。あとで流れる交代のカットインの音（seSwap）・SPが始まる音とは作りを変える。
+  // 5案ずつ作ってあり SWP_PAT で選ぶ（0にすると鳴らさない）
+  var SWP_PAT = 5;   // 2026-09-25タダシさん決定: 案5 トン・キン
+  var SWP_GAIN = [.4, 2.8, 1.1, 1.75, 1.9];   // 案ごとの音量の倍率（OfflineAudioContext で測ってピーク≒.45＝SPが始まる音と同じくらいにそろえた）
+  function seSwapPress(pat, at) {
+    GAIN = SWP_GAIN[(pat || 1) - 1] || 1;
+    try { seSwapPress0(pat, at || 0); } finally { GAIN = 1; }
+  }
+  function seSwapPress0(pat, a) {
+    switch (pat) {
+      case 2:   // カチャッ（ボールの開け閉めのような、硬い2つの粒）
+        noise({ f: 3800, q: 6, dur: .03, vol: .5, at: a, seed: 7101 });
+        ks(1760, .12, { damp: .985, tone: .85, decay: 22, vol: .34, at: a, seed: 7102 });
+        noise({ f: 5200, q: 7, dur: .025, vol: .42, at: a + .075, seed: 7103 });
+        ks(2350, .12, { damp: .985, tone: .85, decay: 24, vol: .3, at: a + .075, seed: 7104 });
+        break;
+      case 3:   // ポポン（やわらかい木の2音・上がる）
+        fm(659, .22, { ratio: 3.5, index: 1.8, decay: 16, idecay: 30, vol: .36, at: a, pan: -.35 });
+        fm(988, .26, { ratio: 3.5, index: 1.6, decay: 14, idecay: 28, vol: .34, at: a + .08, pan: .35, dly: .12 });
+        break;
+      case 4:   // ヒュイッ（下から上へ抜ける短い音程＋小さなきらめき）
+        tone({ f: 420, f2: 1500, type: 'triangle', dur: .17, vol: .36, at: a, lo: 4200, attack: .01 });
+        tone({ f: 840, f2: 3000, type: 'sine', dur: .14, vol: .12, at: a + .02, lo: 6000 });
+        shimmer(2, { base: 2637, dur: .22, span: .06, vol: .08, at: a + .12, spread: .8 });
+        break;
+      case 5:   // トン・キン（軽い打音に、小さな鐘をひとつ）
+        kick(.16, { f0: 190, f1: 110, vol: .34, drive: .2, decay: 22, click: .12, at: a });
+        fm(1568, .38, { ratio: 2.01, index: 2.2, decay: 9, idecay: 14, vol: .2, at: a + .05, rev: .35, dly: .15, wide: 1 });
+        break;
+      default:  // シュッ（短い風切りが左から右へ抜ける）
+        whoosh(.24, { f0: 900, f1: 4600, q: 4, vol: .5, at: a, pan: -.8, pan2: .8, dur: .24 });
+        noise({ f: 2600, q: 3, dur: .04, vol: .18, at: a + .17, seed: 7105 });
+    }
+  }
+
   var subTimers = [];
   function clearSub() { subTimers.forEach(clearTimeout); subTimers = []; }
   // at 秒あとに鳴らす（1つの行に演出が複数あるとき、カットインと同じ間でずらすのに使う）。
@@ -910,6 +946,10 @@
     spStart: function (at) { later(function () { seSpStart(SPST_PAT, 0); }, at); },
     spStartPattern: function (n) { if (n == null) return SPST_PAT; SPST_PAT = +n; return SPST_PAT; },
     spStartRaw: function (pat, at) { if (!ac()) return; seSpStart(pat, at); },
+    // ⇄交代ボタンを押した瞬間の音（2026-09-25）
+    swapPress: function (at) { if (!SWP_PAT) return; later(function () { seSwapPress(SWP_PAT, 0); }, at); },
+    swapPressPattern: function (n) { if (n == null) return SWP_PAT; SWP_PAT = +n; return SWP_PAT; },
+    swapPressRaw: function (pat, at) { if (!ac()) return; seSwapPress(pat, at); },
     spqPattern: function (kind, n) { if (n == null) return SPQ_PAT[kind]; SPQ_PAT[kind] = +n; return SPQ_PAT[kind]; },
     // 見本・測定用: 予約を使わず、音の側の at で並べて鳴らす（OfflineAudioContext で1回のレンダリングにまとめるため）
     spqRaw: function (kind, arg, pat, at) { if (!ac()) return; if (kind === 'slide') seSpqSlide(arg, pat, at); else seSpqResult(arg, pat, at); },
