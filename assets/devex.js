@@ -88,6 +88,8 @@
       '.dvxpanel .sugg-list>div{padding:6px 10px;cursor:pointer;font-size:.8rem}',
       '.dvxpanel .sugg-list>div:hover{background:rgba(169,112,255,.22)}',
       '.dvxpanel .sugg-list>div.dup{opacity:.45;cursor:default}',
+      '.dvxpanel .sugg-list>div.on{background:rgba(169,112,255,.26);font-weight:800}',
+      '.dvxpanel .sugg-list>div small{opacity:.7;margin-left:4px;font-weight:600}',
       '.dvxchips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}',
       '.dvxchips span{display:inline-flex;align-items:center;gap:5px;background:rgba(169,112,255,.2);',
       '  border:1px solid #6b46c1;border-radius:999px;padding:2px 4px 2px 10px;font-size:.74rem}',
@@ -144,23 +146,33 @@
       });
       hit.sort(function (a, b) { return (toKata(a).indexOf(qk) - toKata(b).indexOf(qk)) || a.localeCompare(b, 'ja'); });
       hit = hit.slice(0, 60);
+      // 外しているものは「✓」を付けて残し、もう一度押すと戻す（続けて何匹でも選べる・2026-09-27タダシさん指示）
       ul.innerHTML = hit.length
         ? hit.map(function (n) {
             var on = list.indexOf(n) >= 0;
-            return '<div' + (on ? ' class="dup"' : '') + ' data-n="' + n.replace(/"/g, '&quot;') + '">' +
-              n + (on ? '<small>（すでに外しています）</small>' : '') + '</div>';
+            return '<div' + (on ? ' class="on"' : '') + ' data-n="' + n.replace(/"/g, '&quot;') + '">' +
+              (on ? '✓ ' : '') + n + (on ? '<small>（外しています・押すと戻す）</small>' : '') + '</div>';
           }).join('')
         : '<div class="dup">見つかりません</div>';
+      // ⚠ 共通の守り(home.js の suggGuard)は、選ばずに入力欄を離れたとき一覧に display:none を直接書く。
+      //   それが残ると2匹目から候補が一切出なかった(デオキシスを2つ外せない・2026-09-27タダシさん報告)ので、開くたびに消す
+      ul.style.display = '';
       ul.classList.add('open');
     }
     inp.addEventListener('input', showSugg);
     inp.addEventListener('focus', showSugg);
     ul.addEventListener('mousedown', function (e) { e.preventDefault(); });   // 入力欄のフォーカスを外さない
+    // 選んでも一覧は閉じない（同じ検索のまま続けて選べる）。一覧の外を触ったら閉じる
     ul.addEventListener('click', function (e) {
       var d = e.target.closest('div[data-n]'); if (!d) return;
-      add(d.dataset.n);
-      inp.value = ''; ul.classList.remove('open'); ul.innerHTML = '';
+      if (list.indexOf(norm(d.dataset.n)) >= 0) remove(d.dataset.n); else add(d.dataset.n);
+      showSugg();
     });
+    document.addEventListener('pointerdown', function (e) {
+      if (!ul.classList.contains('open') || e.target.closest('.sugg') === inp.parentNode) return;
+      // 打ちかけの文字は消す（共通の守りが「打った名前に一致する候補」を勝手に押さないように）
+      inp.value = ''; ul.classList.remove('open'); ul.innerHTML = '';
+    }, true);
     wrap.querySelector('.dvxclear').onclick = function () { if (list.length) { list = []; save(); fire(); } };
     wrap.querySelector('.dvxcopy').onclick = function () {
       var u = location.origin + location.pathname + (list.length ? '?devex=' + encodeURIComponent(list.join(',')) : '?devex=');

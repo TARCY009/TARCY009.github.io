@@ -216,6 +216,9 @@ tbody tr{cursor:pointer}
 tbody tr:hover{background:var(--mebg)}
 .mvnm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:.88rem}
 .mtrow{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+.mvsnap{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.mvsnap button{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border:0;border-radius:999px;padding:7px 12px;color:#241800;background:linear-gradient(160deg,#ffe9a3,#ffc83d 55%,#e0a200);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 rgba(0,0,0,.35)}
+.mvsnap button:disabled{opacity:.35;cursor:default}
 .mtrow .mtabs{flex:1;min-width:0;margin:0}
 @media (max-width:560px){ .mtrow{flex-wrap:wrap} .mtrow #megalv{width:100%} }
 .mvnm .st{color:var(--special);font-weight:800}
@@ -359,7 +362,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 <div id="result" style="display:none">
   <div class="card" id="herocard"></div>
   <a class="pglink" id="pglink" hidden></a>
-  <div class="card" id="mvcard"></div>
+  <div class="card" id="mvcard" data-snap-nodev></div>
 </div>
 <div class="card" id="emptycard"><div class="mtnote">ポケモンを選ぶと、種族値・最大CP・弱点・わざ性能が出ます</div></div>
 
@@ -896,10 +899,27 @@ function renderMoves(){
         <tbody>${mv.sps.map(srow).join('')}</tbody></table></div></div>`;
     }
   }
-  box.innerHTML=tabs+body;
+  // 開発者の端末だけ、ジム・レイド／トレーナーバトルを別々に保存するボタン(画像には写さない・2026-09-27タダシさん指示)
+  const S=window.GonaviSnap;
+  const dev=(S&&S.isDev()&&S.devSave)?`<div class="mvsnap" data-snap-skip>
+    <button type="button" data-snapt="pve"${pveMoves(e)?'':' disabled'}>📷 ジム・レイド</button>
+    <button type="button" data-snapt="pvp"${pvpMoves(e)?'':' disabled'}>📷 トレーナーバトル</button></div>`:'';
+  box.innerHTML=dev+tabs+body;
   box.querySelectorAll('.mtabs button[data-t]').forEach(b=>b.onclick=()=>{ state.tab=b.dataset.t; renderMoves(); });
+  box.querySelectorAll('.mvsnap [data-snapt]').forEach(b=>b.onclick=()=>saveMvTab(b.dataset.snapt));
   if(hasPlus) MegaLv.mount(box.querySelector('#megalv'));
   box.querySelectorAll('tr[data-mv]').forEach(tr=>tr.onclick=()=>openMove(tr.dataset.mv));
+}
+
+// 開発者の保存: 保存したい側のタブに切り替えて枠ごと描き、描き終えたら元のタブへ戻す(画面の見た目どおり・ロゴなし)
+async function saveMvTab(tab){
+  const S=window.GonaviSnap, box=document.getElementById('mvcard');
+  if(!S||!S.devSave||box.dataset.saving)return;
+  const prev=state.tab;
+  box.dataset.saving='1';
+  state.tab=tab; renderMoves();
+  try{ await S.devSave(box,false,false,{name:tab==='pve'?'わざ性能_ジムレイド':'わざ性能_トレーナーバトル'}); }
+  finally{ delete box.dataset.saving; state.tab=prev; renderMoves(); }
 }
 
 // ---- わざ詳細ウィンドウ(タップで開く) ----

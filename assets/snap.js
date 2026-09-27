@@ -1335,6 +1335,8 @@
           }
           continue;
         }
+        // data-snap-nodev＝ページが自前の開発者用保存ボタンを持つ枠（図鑑のわざ性能＝ジム・レイド／トレーナーバトルを別々に保存・2026-09-27）
+        if (c.hasAttribute('data-snap-nodev')) continue;
         if (c === pubT) { if (r.height >= 40 && c.children.length) out.push(c); continue; }
         if (r.width < minW || r.height < 40) continue;
         if (r.height >= 70 && isFrame(cs)) {
@@ -1420,7 +1422,7 @@
       var outCv = big ? await fit1920(res, withBg, bigW ? 24 : 60) : res.canvas;
       busy(false);
       var h1 = txt('header h1') || document.title.split('｜')[0];
-      await preview(outCv, h1.replace(/\s+/g, '') + '_' + stamp() + (big ? '_1920x1440' : '') + '.png');
+      await preview(outCv, h1.replace(/\s+/g, '') + (extra && extra.name ? '_' + extra.name : '') + '_' + stamp() + (big ? '_1920x1440' : '') + '.png');
     } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした'); }
   }
 
@@ -1517,5 +1519,6 @@
   window.GonaviSnap = { renderEl: renderEl, publicImage: publicImage, publicImage1920: publicImage1920, publicGraph: publicGraph,
                         fit1920: fit1920, PUB: PUB, narrowImage: narrowImage, NARROW: NARROW,
                         // ページが自前で画像を組み立てるとき用（わざ図鑑の性能カード・2026-09-16）
-                        preview: preview, previewMany: previewMany, busy: busy, stamp: stamp, isDev: isDev, devGrade: devGrade };
+                        preview: preview, previewMany: previewMany, busy: busy, stamp: stamp, isDev: isDev, devGrade: devGrade,
+                        devSave: devSave };
 })();

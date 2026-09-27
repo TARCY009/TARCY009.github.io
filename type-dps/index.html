@@ -185,6 +185,7 @@ h1 b{white-space:nowrap}
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
 <script src="/assets/devadd.js"></script>
+<script src="/assets/devmove.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -312,7 +313,10 @@ function movesOf(p, ids, eids, tEn, fast){
 // PL1〜51の多数決で最適構成を決める。既定は「純粋に火力がいちばん高い構成」で、
 // 「分割SP優遇」(fSplit)を押しているあいだだけ、1位が1ゲージ技なら分割あり技との差7%未満で分割あり優先
 function bestOfType(p, tEn, shadow){
-  const fs=movesOf(p,p.q,p.eq,tEn,true), cs=movesOf(p,p.c,p.ec,tEn,false);
+  // 開発者だけの「わざカスタム」で覚えさせたわざも候補に足す（ふつうの人は x=null で変わらない）
+  const x=window.GonaviDevMv?GonaviDevMv.extra(p.n):null;
+  const add=(a,b)=>x?[...new Set([...a,...b])]:a;
+  const fs=movesOf(p,add(p.q,x?x.q:[]),p.eq,tEn,true), cs=movesOf(p,add(p.c,x?x.c:[]),p.ec,tEn,false);
   if(!fs.length||!cs.length) return null;
   const stab=p.ty.includes(tEn)?1.2:1.0;
   const coef={};
@@ -355,7 +359,7 @@ function bestOfType(p, tEn, shadow){
 const rankCache=new Map();
 function buildRows(){
   // ⚠ 開発者の除外もキャッシュの鍵に入れる（メガLv・分割SP優遇と同じ落とし穴）
-  const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+MegaLv.level()+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'');
+  const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+MegaLv.level()+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'')+'|'+(window.GonaviDevMv?GonaviDevMv.sig():'');
   if(rankCache.has(key)) return rankCache.get(key);
   const rows=[];
   for(const k of KEYS){
@@ -681,6 +685,11 @@ if(window.GonaviDevAdd){
     }
     rankCache.clear(); sync();
   });
+}
+// 開発者だけの「✎ わざカスタム」（ポケモンに好きなわざ・新しく作ったわざを覚えさせて順位を見る）
+if(window.GonaviDevMv){
+  GonaviDevMv.on(()=>{ rankCache.clear(); sync(); });
+  GonaviDevMv.mount($('devexbox'), {names:()=>KEYS.map(k=>D.pokemon[k].n), moves:D.moves, typeJa:D.typeJa, curType:()=>curT});
 }
 // ---- 出口: 全タイプの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ buildRows を呼ぶ・画面は変えない） ----
 // base=絞り込みなし／all=シャドウ＋メガ・ゲンシ。分割SP優遇は既定のOFF

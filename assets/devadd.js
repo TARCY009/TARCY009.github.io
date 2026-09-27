@@ -118,6 +118,8 @@
       '.dvapanel .sugg-list>div{padding:6px 10px;cursor:pointer;font-size:.8rem}',
       '.dvapanel .sugg-list>div:hover{background:rgba(79,216,196,.2)}',
       '.dvapanel .sugg-list>div.dup{opacity:.45;cursor:default}',
+      '.dvapanel .sugg-list>div.on{background:rgba(79,216,196,.22);font-weight:800}',
+      '.dvapanel .sugg-list>div small{opacity:.7;margin-left:4px;font-weight:600}',
       '.dvachips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}',
       '.dvachips span{display:inline-flex;align-items:center;gap:5px;background:rgba(79,216,196,.16);',
       '  border:1px solid #1f8f86;border-radius:999px;padding:2px 4px 2px 10px;font-size:.74rem}',
@@ -171,23 +173,31 @@
       });
       hit.sort(function (a, b) { return (toKata(a).indexOf(qk) - toKata(b).indexOf(qk)) || a.localeCompare(b, 'ja'); });
       hit = hit.slice(0, 60);
+      // 足しているものは「✓」を付けて残し、もう一度押すと外す（続けて何匹でも選べる・2026-09-27タダシさん指示）
       ul.innerHTML = hit.length
         ? hit.map(function (n) {
             var on = has(n);
-            return '<div' + (on ? ' class="dup"' : '') + ' data-n="' + esc(n) + '">' +
-              esc(n) + (on ? '<small>（足しています）</small>' : '') + '</div>';
+            return '<div' + (on ? ' class="on"' : '') + ' data-n="' + esc(n) + '">' +
+              (on ? '✓ ' : '') + esc(n) + (on ? '<small>（足しています・押すと外す）</small>' : '') + '</div>';
           }).join('')
         : '<div class="dup">このツールに足せる未実装のポケモンにありません</div>';
+      // ⚠ 共通の守り(suggGuard)が書いた display:none を消す（残ると2匹目から候補が出ない・devex.js と同じ）
+      ul.style.display = '';
       ul.classList.add('open');
     }
     inp.addEventListener('input', showSugg);
     inp.addEventListener('focus', showSugg);
     ul.addEventListener('mousedown', function (e) { e.preventDefault(); });   // 入力欄のフォーカスを外さない
+    // 選んでも一覧は閉じない（続けて選べる）。一覧の外を触ったら閉じる
     ul.addEventListener('click', function (e) {
       var d = e.target.closest('div[data-n]'); if (!d) return;
-      add(d.dataset.n);
-      inp.value = ''; ul.classList.remove('open'); ul.innerHTML = '';
+      if (has(d.dataset.n)) remove(d.dataset.n); else add(d.dataset.n);
+      showSugg();
     });
+    document.addEventListener('pointerdown', function (e) {
+      if (!ul.classList.contains('open') || e.target.closest('.sugg') === inp.parentNode) return;
+      inp.value = ''; ul.classList.remove('open'); ul.innerHTML = '';
+    }, true);
     wrap.querySelector('.dvaclear').onclick = function () { if (list.length) { list = []; save(); fire(); } };
     wrap.querySelector('.dvacopy').onclick = function () {
       var u = location.origin + location.pathname + '?devadd=' + (list.length ? encodeURIComponent(list.join(',')) : '');
