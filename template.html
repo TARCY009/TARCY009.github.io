@@ -872,6 +872,7 @@ function guessTier(k){
 //   ボスだけで持つと「レベルを変えても古い構成のまま」になる(実際に踏んだ)。
 //   分割SP優遇(fSplit)もわざ構成を変えるので同じくキーに入れる
 let mpTopCache={key:null,rows:null};
+let devSh=new Set();   // 開発者が「シャドウ未実装」で足したポケモン（ふつうの人は常に空）
 function mpTop(){
   // ⚠ 開発者の除外もキーに入れる（1位アタッカーが変わるため）
   const ck=boss+'|'+MegaLv.level()+'|'+fSplit+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'');
@@ -883,7 +884,7 @@ function mpTop(){
     if(!p.mega && !p.fe) continue;   // ランキングと同じ範囲(最終進化＋メガ)
     const b=bestCombo(p,bt,false);
     if(b) rows.push({p,f:b.f,c:b.c,shadow:false,dps:b.dps});
-    if(p.shadow){
+    if(p.shadow||devSh.has(k)){
       const s=bestCombo(p,bt,true);
       if(s) rows.push({p,f:s.f,c:s.c,shadow:true,dps:s.dps});
     }
@@ -1015,8 +1016,9 @@ function buildMyForm(){
   const pm=preMega(myKey), isMega=pm!==myKey;
   document.getElementById('cpLabel').textContent=isMega?`CP（${D.pokemon[pm].n}のとき）`:'CP';
   document.getElementById('myCP').placeholder=isMega?`メガシンカ前のCP`:'例: 2387';
-  shBtn.disabled=!p.shadow;
-  if(!p.shadow) myShadowOn=false;
+  const shOk=p.shadow||devSh.has(myKey);
+  shBtn.disabled=!shOk;
+  if(!shOk) myShadowOn=false;
   syncMyModes();
   checkLevel();
 }
@@ -1155,8 +1157,10 @@ if(window.GonaviDevAdd){
       if(on(p.n)){ if(!D.pokemon[k]) D.pokemon[k]=p; if(i<0) KEYS.push(k); }
       else if(i>=0) KEYS.splice(i,1);
     }
+    // シャドウ未実装のポケモンを「シャドウ◯◯」で足したもの（計算はふつうのシャドウと同じ）
+    devSh=new Set(KEYS.filter(k=>!D.pokemon[k].shadow&&on('シャドウ'+D.pokemon[k].n)));
     mpTopCache={key:null,rows:null}; if(boss) renderMinPlayers(); renderRank();
-  });
+  }, {shadowNames:()=>KEYS.filter(k=>{const p=D.pokemon[k]; return !p.shadow&&p.fe&&!p.mega;}).map(k=>D.pokemon[k].n)});
 }
 function syncModes(){
   shadowBtn.setAttribute('aria-pressed',fShadow);
@@ -1215,7 +1219,7 @@ function buildRanking(){
       const base=bestCombo(p,bt,false);
       if(base) rows.push({k,p,shadow:false,...base});
     }
-    if(p.shadow && fShadow && !(fBulk&&isLowBulk(p,true))){
+    if((p.shadow||devSh.has(k)) && fShadow && !(fBulk&&isLowBulk(p,true))){
       const s=bestCombo(p,bt,true);
       if(s) rows.push({k,p,shadow:true,...s});
     }
