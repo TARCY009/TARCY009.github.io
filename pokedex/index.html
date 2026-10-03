@@ -251,8 +251,26 @@ tbody tr:hover{background:var(--mebg)}
 .mvwin .gv .gbar{margin-top:0;width:62px}
 .mvwin .gv b{color:var(--ink)}
 /* 1ポケモン1ページへの入口（名前の枠＝画像に撮る枠の外に置く） */
-.pglink{display:block;margin:-4px 2px 14px;text-align:right;font-size:.82rem;font-weight:800;color:var(--cy);text-decoration:none}
-.pglink[hidden]{display:none}
+/* 1ポケモン1ページへの大きなボタン。模擬戦の主役ボタン(gbl.css の .mockhero)と同じ作り。
+   ⚠ 色つきの光彩は付けない(動画用スクショに写るため・恒久ルール)。影は黒のぼかしだけ */
+.pghero{display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:14px 16px;border-radius:16px;
+  text-decoration:none;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#241a5c 0%,#6d28d9 42%,#c026d3 78%,#f59e0b 130%);
+  box-shadow:0 6px 16px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .12s}
+.pghero[hidden]{display:none}
+.pghero:hover{transform:translateY(-1px)}
+.pghero:active{transform:translateY(1px)}
+.pghero .pl{flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  font-size:1.05rem;color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4)}
+.pghero .tx{flex:1;min-width:0}
+.pghero .t1{display:block;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.pghero .t2{display:block;font-size:.7rem;font-weight:600;color:rgba(255,255,255,.88);margin-top:2px}
+/* 光の帯がゆっくり流れる(模擬戦ボタンと同じ) */
+.pghero::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;transform:skewX(-20deg);pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);animation:pgshine 3.4s ease-in-out infinite}
+@keyframes pgshine{0%{left:-60%}55%{left:130%}100%{left:130%}}
+@media (prefers-reduced-motion:reduce){.pghero::after{animation:none}}
+@media (max-width:520px){.pghero{padding:12px 13px;gap:10px}.pghero .t1{font-size:.96rem}.pghero .pl{width:34px;height:34px}}
 .mvwin .mdlink{display:block;margin-top:12px;text-align:right;font-size:.76rem;font-weight:800;color:var(--cy);text-decoration:none}
 .mvwin .note{margin-top:10px;font-size:.78rem;color:var(--sub);line-height:1.7}
 /* 絞り込み(タイプ・地方) */
@@ -361,8 +379,9 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
 
 <div id="result" style="display:none">
   <div class="card" id="herocard"></div>
-  <a class="pglink" id="pglink" hidden></a>
   <div class="card" id="mvcard" data-snap-nodev></div>
+  <!-- 1ポケモン1ページへの入口。わざの枠の下に模擬戦ボタンと同じ作りの大きなボタン（2026-10-03タダシさん指示） -->
+  <a class="pghero" id="pglink" hidden data-snap-skip data-snap-nodev><span class="pl">▶</span><span class="tx"><b class="t1"></b><span class="t2">レイド・ジム・マックスバトル・GBLでの順位と使い道をまとめたページ</span></span></a>
 </div>
 <div class="card" id="emptycard"><div class="mtnote">ポケモンを選ぶと、種族値・最大CP・弱点・わざ性能が出ます</div></div>
 
@@ -808,7 +827,7 @@ function pageLink(){
   const pk=PAGEMAP&&n&&(PAGEMAP[n]||PAGEMAP[n.replace(/（.*?）/g,'')]);
   if(!pk){a.hidden=true;return;}
   a.href='/pokedex/'+pk+'/';
-  a.textContent=e.name+'の強さと使い道 ›';
+  a.querySelector('.t1').textContent=e.name+'の強さと使い道';
   a.title='レイド・ジム・マックスバトル・GBL・ロケット団ごとの強さと、進化の条件・わざをまとめたページです';
   a.hidden=false;
 }
