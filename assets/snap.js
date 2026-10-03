@@ -28,7 +28,8 @@
   // ---------------------------------------------------------------- 一般向けボタンの設定
   // target=画像にする要素 / rows=1行の要素(上位LIMIT件だけ残す) / drop=画像から外す要素 /
   // ctx=見出しの下に出す条件の文字 / tags=点灯中の絞り込みボタン(ピルで出す) / barIn=ボタンを置く場所(無ければtargetの直前)
-  // graph＝「📊 グラフ画像」用に、1行の中の名前(name)・数値(val)・シャドウの印(shadow)の場所と、数値の単位(unit)
+  // graph＝「📊 グラフ画像」用に、1行の中の名前(name)・数値(val)・シャドウの印(shadow)の場所と、数値の単位(unit)。
+  // cat＝キョダイマックス／ダイマックス／特別の札（名前の上に札と同じ色の小さな文字で出す・2026-10-03タダシさん指示）
   var PUB = {
     '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', ctx: ['#bossView .bossname'],
                tags: '.c-rank .modes [aria-pressed="true"]', title: 'レイド火力ランキング',
@@ -45,10 +46,10 @@
                       tags: '#tabs [aria-selected="true"],#filters [aria-pressed="true"]', title: 'マックスバトル対策',
                       // 1920×1440は左右4位ずつ・8位まで。絞り込みの札はボス名の横（2026-09-16タダシさん指示）
                       l1920: { type: 'grid', per: 4, inlineTags: true },
-                      graph: { name: '.nm', val: '.pts b', unit: 'ポイント', head: '#bname' } },
+                      graph: { name: '.nm', val: '.pts b', unit: 'ポイント', head: '#bname', cat: '.cattag' } },
     '/max-type/': { target: '#list', rows: '.row', ctx: ['#curTypeName'],
                     tags: '.rhead [aria-pressed="true"]', title: 'マックスバトル タイプ別アタッカー',
-                    graph: { name: '.gname,.pname .nm', val: '.pts b', unit: 'ポイント', head: '#curTypeName' } },
+                    graph: { name: '.pname .nm', val: '.pts b', unit: 'ポイント', head: '#curTypeName', cat: '.cattag' } },
     '/max-type/tank/': { target: '#list', rows: '.row', ctx: ['#curTypeName'],
                     tags: '.rhead [aria-pressed="true"]', title: 'マックスバトル タイプ別タンク',
                     graph: { name: '.pname .nm', val: '.pts b', unit: 'ポイント', head: '#curTypeName' } },
@@ -759,7 +760,7 @@
       var ne = r.querySelector(G.name), ve = r.querySelector(G.val), rk = r.querySelector('.rk,.rank');
       var vt = ve ? firstText(ve) : '', rn = rk ? parseInt(rk.textContent, 10) : NaN;
       return { name: ne ? firstText(ne) : '', vt: vt, v: parseFloat(vt.replace(/,/g, '')), rank: isFinite(rn) ? rn : i + 1,
-               shadow: !!(G.shadow && r.querySelector(G.shadow)) };
+               shadow: !!(G.shadow && r.querySelector(G.shadow)), cat: G.cat ? r.querySelector(G.cat) : null };
     }).filter(function (x) { return x.name && isFinite(x.v); });
     if (!rows.length) throw new Error('rows');
     var col = toolColor(), c2 = shadeRGB(col, 0.35);
@@ -794,8 +795,17 @@
       for (var p = 0; p < chars.length; p += per) lines.push(chars.slice(p, p + per).join(''));
       return { fs: fs, lines: lines.slice(0, 3) };
     });
+    // 名前の上の札（キョダイマックス＝赤〜橙／ダイマックス＝青／特別＝紫・画面の札と同じ色）。1つでもあれば全員の名前を同じだけ下げてそろえる
+    var CATC = { G: '#ff6a78', D: '#8fb8ff', S: '#c98fff' };
+    rows.forEach(function (r) {
+      var c = r.cat; r.cat = null;
+      if (!c) return;
+      var k = c.classList.contains('G') ? 'G' : c.classList.contains('D') ? 'D' : 'S';
+      r.cat = { t: (c.textContent || '').trim(), c: CATC[k] };
+    });
+    var catOff = rows.some(function (r) { return r.cat; }) ? 30 : 0;
     var nameH = Math.max.apply(null, names.map(function (x) {
-      return 34 + x.fs * 0.9 + (x.lines.length - 1) * x.fs * 1.2 + x.fs * 0.3;
+      return 34 + catOff + x.fs * 0.9 + (x.lines.length - 1) * x.fs * 1.2 + x.fs * 0.3;
     }).concat([40]));
     var B = Math.round(H - PAD - nameH);
     var vals = rows.map(function (r) { return r.v; });
@@ -853,8 +863,13 @@
       }
       cx.font = '800 34px ' + JP; cx.fillStyle = '#ffffff'; cx.fillText(r.vt, cxm, by - 16);
       var nm = names[i];
+      if (r.cat) {
+        var cfs = 20; cx.font = '800 ' + cfs + 'px ' + JP;
+        while (cx.measureText(r.cat.t).width > colW - 10 && cfs > 12) { cfs--; cx.font = '800 ' + cfs + 'px ' + JP; }
+        cx.fillStyle = r.cat.c; cx.fillText(r.cat.t, cxm, B + 34 + 18);
+      }
       nm.lines.forEach(function (ln, li) {
-        var ly = B + 34 + nm.fs * 0.9 + li * nm.fs * 1.2;
+        var ly = B + 34 + catOff + nm.fs * 0.9 + li * nm.fs * 1.2;
         cx.font = '700 ' + nm.fs + 'px ' + JP; cx.fillStyle = '#cfe3ff';
         if (li === 0 && r.shadow) {
           var w3 = cx.measureText(ln).width, sc = nm.fs / 1024 * 1.1, fw = 800 * sc, sx = cxm - (w3 + fw + 4) / 2;
