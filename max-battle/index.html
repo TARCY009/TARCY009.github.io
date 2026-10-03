@@ -158,7 +158,10 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .myiv{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
 .myiv label{display:inline-flex;align-items:center;gap:5px;color:var(--sub);font-size:.74rem;font-weight:600}
 .myiv input{width:64px;padding:7px 8px;background:var(--bg2);border:1px solid var(--line2);border-radius:9px;color:var(--text);font-size:.86rem;outline:none;text-align:center}
-.myiv #ivCP{width:84px}
+.myiv #ivCP,.myiv #ivPL{width:84px}
+.myiv .cpby{margin:0;display:inline-flex}
+.myiv label{white-space:nowrap}
+.myiv .cpby button{font-size:.78rem;padding:6px 13px}
 .myiv input:focus{border-color:var(--violet)}
 .ivinfo{font-size:.7rem;color:var(--sub);font-weight:700}
 .ivinfo.warn{color:var(--warn)}
@@ -352,7 +355,10 @@ footer a{color:var(--spec)}
   <input id="mq" type="search" placeholder="ポケモン名で検索（自分のポケモンの順位確認）" autocomplete="off">
   <div id="mySug" class="sug"></div>
   <div id="myiv" class="myiv" style="display:none">
-    <label>CP <input id="ivCP" type="number" inputmode="numeric" placeholder="実測CP"></label>
+    <!-- CPかPLのどちらで入力するかを選ぶ（片方を変えるともう片方はほぼ必ず崩れるため・2026-10-03タダシさん指示） -->
+    <span class="gtabs cpby"><span class="gseg"><button type="button" id="byCp" class="t-cyan" aria-pressed="true" title="CPと個体値からPLを割り出して計算します">CP</button><button type="button" id="byPl" class="t-cyan" aria-pressed="false" title="PL（ポケモンレベル）と個体値から計算します">PL</button></span></span>
+    <input id="ivCP" type="number" inputmode="numeric" placeholder="実測CP" aria-label="CP">
+    <input id="ivPL" type="number" min="1" max="51" step="0.5" inputmode="decimal" placeholder="例: 40" aria-label="PL" style="display:none">
     <label>攻撃 <input id="ivA" type="number" min="0" max="15" inputmode="numeric" placeholder="15"></label>
     <label>防御 <input id="ivD" type="number" min="0" max="15" inputmode="numeric" placeholder="15"></label>
     <label>HP <input id="ivS" type="number" min="0" max="15" inputmode="numeric" placeholder="15"></label>
@@ -417,6 +423,8 @@ footer a{color:var(--spec)}
   const tabsEl=$('tabs'), tabAtk=$('tabAtk'), tabTank=$('tabTank');
   const swapMovesEl=$('swapMoves'), myqwrap=$('myqwrap'), mq=$('mq'), pinEl=$('pinlist');
   const fSp=$('fSp'), spPanel=$('spPanel'), spStarSeg=$('spStarSeg'), spStarFixed=$('spStarFixed');
+  const ivPL=$('ivPL'), byCp=$('byCp'), byPl=$('byPl');
+  let inBy='cp';   // 'cp'=CPからPLを割り出す / 'pl'=PLを直接入れる
   const myivBox=$('myiv'), ivCP=$('ivCP'), ivA=$('ivA'), ivD=$('ivD'), ivS=$('ivS'), ivInfo=$('ivInfo');
   const spHP=$('spHP'), spDef=$('spDef'), spStatus=$('spStatus'), spMush=$('spMush');
   const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {
@@ -1004,8 +1012,20 @@ footer a{color:var(--spec)}
   function ownStats(p){
     const cp = parseInt(ivCP.value, 10);
     const a = parseInt(ivA.value, 10), d = parseInt(ivD.value, 10), st = parseInt(ivS.value, 10);
-    if(!(cp > 0)) return null;
     if([a, d, st].some(v => !(v >= 0 && v <= 15))) return null;
+    if(inBy === 'pl'){
+      // PLを直接入れる（0.5刻み・1〜51）。CPはそこから出す
+      const L = String(parseFloat(ivPL.value));
+      const cm = D.cpms[L];
+      if(!cm) return null;
+      return {
+        L, exact: true, cp: cpOf(p, a, d, st, cm), cm, byPl: true,
+        atkR: (p.atk + a) * cm,
+        eqSt: (p.st + st) * cm / cpm,
+        eqDf: (p.df + d) * cm / cpm,
+      };
+    }
+    if(!(cp > 0)) return null;
     // CPと一致するPLを探索(完全一致がなければ最も近いPL)
     let bestL = null, bestDiff = Infinity;
     for(const k in D.cpms){
@@ -1050,17 +1070,28 @@ footer a{color:var(--spec)}
     myivBox.style.display = '';
     const os = ownStats(pin[0].p);
     if(os){
-      ivInfo.textContent = os.exact
+      ivInfo.textContent = os.byPl ? `→ CP${os.cp}として計算中`
+        : os.exact
         ? `→ PL${os.L}として計算中`
         : `⚠ CPと個体値が一致しません(最も近いPL${os.L}で計算)`;
       ivInfo.className = os.exact ? 'ivinfo' : 'ivinfo warn';
     }else{
-      ivInfo.textContent = (ivCP.value || ivA.value || ivD.value || ivS.value)
+      ivInfo.textContent = inBy === 'pl'
+        ? 'PL(1〜51・0.5刻み)と個体値(0〜15)を入力してください'
+        : (ivCP.value || ivA.value || ivD.value || ivS.value)
         ? 'CPと個体値(0〜15)をすべて入力してください' : '';
       ivInfo.className = 'ivinfo';
     }
   }
-  [ivCP, ivA, ivD, ivS].forEach(el => el.addEventListener('input', () => compute()));
+  [ivCP, ivPL, ivA, ivD, ivS].forEach(el => el.addEventListener('input', () => compute()));
+  function syncInBy(){
+    byCp.setAttribute('aria-pressed', inBy === 'cp');
+    byPl.setAttribute('aria-pressed', inBy === 'pl');
+    ivCP.style.display = inBy === 'cp' ? '' : 'none';
+    ivPL.style.display = inBy === 'pl' ? '' : 'none';
+  }
+  byCp.addEventListener('click', () => { inBy = 'cp'; syncInBy(); compute(); });
+  byPl.addEventListener('click', () => { inBy = 'pl'; syncInBy(); compute(); });
 
   function notFound(q){
     return `<p class="empty">「${q}」に一致するポケモンは対象内にいません</p>`;
@@ -1233,6 +1264,7 @@ footer a{color:var(--spec)}
     // デフォルト入力: 最大CP(PL50・個体値15)と個体値15をあらかじめ入力しておく
     ivA.value = 15; ivD.value = 15; ivS.value = 15;
     ivCP.value = cpOf(p, 15, 15, 15, D.cpms['50']);
+    ivPL.value = 50;
     shown = 30;
     compute();
   }

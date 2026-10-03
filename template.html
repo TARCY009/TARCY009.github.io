@@ -232,7 +232,12 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 .selrow{display:flex;align-items:center;gap:6px}
 .selrow select{flex:1;min-width:0}
 .seltype{flex-shrink:0;display:inline-flex}
-.cprow input{max-width:220px}
+.cprow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.cprow .modes{margin:0;flex:0 0 auto}
+.cprow .seg button{min-width:52px}
+.cprow input{max-width:220px;flex:1 1 auto}
+.cpnote{font-size:.72rem;color:var(--sub);margin:4px 0 0}
+.cpnote:empty{display:none}
 .ivrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .ivrow input{padding:8px 6px;text-align:center}
 .ivrow label.f{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -447,7 +452,12 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
       <button id="myShadow" type="button" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i>シャドウ</button>
     </div>
     <div id="cpArea" style="margin-top:8px">
-      <div class="cprow"><label class="f" id="cpLabel">CP</label><input type="number" id="myCP" min="10" placeholder="例: 2387"></div>
+      <!-- CPかPLのどちらで入力するかを選ぶ（片方を変えるともう片方はほぼ必ず崩れるため・2026-10-03タダシさん指示） -->
+      <div class="cprow"><div class="modes cpby"><span class="seg">
+        <button id="byCp" type="button" aria-pressed="true" title="CPと個体値からPLを割り出して計算します">CP</button>
+        <button id="byPl" type="button" aria-pressed="false" title="PL（ポケモンレベル）と個体値から計算します">PL</button>
+      </span></div><input type="number" id="myCP" min="10" inputmode="numeric" placeholder="例: 2387"><input type="number" id="myPL" min="1" max="51" step="0.5" inputmode="decimal" placeholder="例: 40" style="display:none"></div>
+      <div class="cpnote" id="cpLabel"></div>
       <label class="f">個体値</label>
       <div class="ivrow">
         <div><label class="f iv">攻撃</label><input type="number" id="ivA" min="0" max="15" value="15"></div>
@@ -1014,8 +1024,9 @@ function buildMyForm(){
   document.getElementById('myForm').style.display='block';
   // メガ・ゲンシは手持ちに出ているCP(メガシンカ前)を入れてもらう
   const pm=preMega(myKey), isMega=pm!==myKey;
-  document.getElementById('cpLabel').textContent=isMega?`CP（${D.pokemon[pm].n}のとき）`:'CP';
+  document.getElementById('cpLabel').textContent=isMega?`${D.pokemon[pm].n}のとき（メガシンカ前）の値を入れてください`:'';
   document.getElementById('myCP').placeholder=isMega?`メガシンカ前のCP`:'例: 2387';
+  document.getElementById('myPL').placeholder=isMega?`メガシンカ前のPL`:'例: 40';
   const shOk=p.shadow||devSh.has(myKey);
   shBtn.disabled=!shOk;
   if(!shOk) myShadowOn=false;
@@ -1033,6 +1044,17 @@ function syncMyModes(){
   smMax.setAttribute('aria-pressed',myMode==='max');
   shBtn.setAttribute('aria-pressed',myShadowOn);
 }
+// 入力のしかた: 'cp'=CPからPLを割り出す / 'pl'=PLを直接入れる
+let inBy='cp';
+const byCp=document.getElementById('byCp'), byPl=document.getElementById('byPl');
+function syncInBy(){
+  byCp.setAttribute('aria-pressed',inBy==='cp');
+  byPl.setAttribute('aria-pressed',inBy==='pl');
+  document.getElementById('myCP').style.display=inBy==='cp'?'':'none';
+  document.getElementById('myPL').style.display=inBy==='pl'?'':'none';
+}
+byCp.onclick=()=>{inBy='cp';syncInBy();checkLevel();};
+byPl.onclick=()=>{inBy='pl';syncInBy();checkLevel();};
 smCp.onclick=()=>{myMode='cp';syncMyModes();checkLevel();};
 smMax.onclick=()=>{myMode='max';syncMyModes();checkLevel();};
 shBtn.onclick=()=>{myShadowOn=!myShadowOn;syncMyModes();};
@@ -1045,6 +1067,23 @@ function checkLevel(){
   const bp=D.pokemon[preMega(myKey)];   // PL逆算はメガシンカ前の種族値で行う
   const cp=parseInt(document.getElementById('myCP').value,10);
   const iva=+document.getElementById('ivA').value, ivd=+document.getElementById('ivD').value, ivh=+document.getElementById('ivH').value;
+  if(inBy==='pl'){
+    // PLを直接入れる: 0.5刻み・1〜51（51は最高の相棒）。メガLv4などの上限ブーストは登録後のボタンで
+    const pl=parseFloat(document.getElementById('myPL').value);
+    if(isNaN(pl)||[iva,ivd,ivh].some(v=>isNaN(v)||v<0||v>15)){out.style.display='none';btn.disabled=true;return;}
+    out.style.display='block';
+    const cm=D.cpm[String(pl)];
+    if(!cm||pl>51){
+      out.className='lv-out err';
+      out.textContent='PLは1〜51を0.5刻みで入れてください（51は最高の相棒のとき）。';
+      btn.disabled=true; return;
+    }
+    const cpv=cpOf(bp,iva,ivd,ivh,cm);
+    out.className='lv-out';
+    out.textContent=`CP ${cpv}${bp!==p?`（${bp.n}のとき）`:''}｜攻撃実数値 ${((p.a+iva)*cm).toFixed(1)}`;
+    out.dataset.lv=pl; btn.disabled=false;
+    return;
+  }
   if(!cp||[iva,ivd,ivh].some(v=>isNaN(v)||v<0||v>15)){out.style.display='none';btn.disabled=true;return;}
   const hits=levelFromCP(bp,cp,iva,ivd,ivh);
   out.style.display='block';
@@ -1058,7 +1097,7 @@ function checkLevel(){
     btn.disabled=true;
   }
 }
-['myCP','ivA','ivD','ivH'].forEach(id=>document.getElementById(id).addEventListener('input',checkLevel));
+['myCP','myPL','ivA','ivD','ivH'].forEach(id=>document.getElementById(id).addEventListener('input',checkLevel));
 
 document.getElementById('addBtn').onclick=()=>{
   const p=D.pokemon[myKey];
