@@ -117,6 +117,11 @@
       '.dvmpanel .sugg-list>div.on{background:rgba(255,182,61,.24);font-weight:800}',
       '.dvmpanel .sugg-list>div small{opacity:.72;font-weight:600;margin-left:auto;white-space:nowrap}',
       '.dvmsel{margin-top:8px}',
+      '.dvmsel .sugg{display:block}',
+      '.dvmsel .sugg-list{font-size:.8rem;font-weight:600;color:#ffe9c7}',
+      '.dvmsel .sugg-list{min-width:250px}',
+      '.dvmsel label:last-child .sugg-list{left:auto;right:0}',
+      '.dvmsel .sugg-list>div{white-space:nowrap}',
       '.dvmpkrow{display:flex;gap:6px;align-items:stretch}',
       '.dvmpkrow .sugg{flex:1 1 auto}',
       '.dvmsh{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border-radius:9px;white-space:nowrap;',
@@ -154,13 +159,15 @@
     var out = [];
     Object.keys((opt && opt.moves) || {}).forEach(function (id) {
       var x = opt.moves[id]; if (!x || !x.e) return;
+      // ⚠ 名前が番号のままのわざ（データ元の古い＋わざの番号など）は出さない（2026-10-03タダシさん指摘「謎の番号」）
+      if (!/[ぁ-んァ-ヶ一-龥]/.test(mvLabel(id))) return;
       if ((x.e > 0) === (kind === 'f')) out.push(id);
     });
     out.sort(function (a, b) { return mvLabel(a).localeCompare(mvLabel(b), 'ja'); });
     return out;
   }
   function learnOf(n) { try { return (opt.learn && opt.learn(n)) || null; } catch (e) { return null; } }
-  function optHtml(id) { var x = mv(id); return '<option value="' + id + '">' + esc(mvLabel(id)) + (x && x.dev ? '（自作）' : '') + '</option>'; }
+
 
   function build(host) {
     css();
@@ -177,8 +184,8 @@
       '<div class="dvmpkrow"><div class="sugg"><input type="text" class="dvmpk" placeholder="ポケモン名で探す" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
       '<button type="button" class="dvmsh" aria-pressed="false" title="シャドウとして反映します（シャドウがまだ無いポケモンでもシャドウの行が増えます。ランキングのシャドウを点けているときに出ます）"><i class="shadowmark"></i>シャドウ</button></div>' +
       '<div class="dvmgrid dvmsel">' +
-      '<label>ノーマルアタック<select class="s-f"></select></label>' +
-      '<label>SPアタック<select class="s-c"></select></label>' +
+      '<label>ノーマルアタック<span class="sugg"><input type="text" class="s-f" placeholder="わざ名で探す" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><span class="sugg-list"></span></span></label>' +
+      '<label>SPアタック<span class="sugg"><input type="text" class="s-c" placeholder="わざ名で探す" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><span class="sugg-list"></span></span></label>' +
       '</div>' +
       '<div class="dvmnew">' +
       '<div class="dvmlab dvmnewttl">新しいわざを作る</div>' +
@@ -201,7 +208,7 @@
     host.appendChild(wrap);
     var btn = wrap.querySelector('.dvmbtn'), panel = wrap.querySelector('.dvmpanel');
     var pk = wrap.querySelector('.dvmpk'), ul = pk.nextElementSibling;
-    var sf = wrap.querySelector('.s-f'), sc = wrap.querySelector('.s-c');
+    var sf = wrap.querySelector('.s-f'), sc = wrap.querySelector('.s-c');   // わざの入力欄（選んだIDは dataset.id）
     var msg = wrap.querySelector('.dvmmsg'), nw = wrap.querySelector('.dvmnew'), nerr = wrap.querySelector('.dvmnerr'), ferr = wrap.querySelector('.dvmferr');
     var picked = '', newKind = 'f', shOn = false, shBtn = wrap.querySelector('.dvmsh');
     function syncSh() { shBtn.setAttribute('aria-pressed', shOn ? 'true' : 'false'); }
@@ -216,32 +223,68 @@
       if (open && !picked) pk.focus();
     };
 
-    // わざの欄: 「ー（足さない）」→ そのポケモンが覚えるわざ → その他のわざ（自作を含む）→「＋ 新しいわざを作る…」
-    function fillSel(sel, kind, val) {
-      var all = moveIds(kind), lr = learnOf(picked), mine = lr ? (kind === 'f' ? lr.q : lr.c) || [] : [];
-      mine = mine.filter(function (id) { return mv(id); });
-      var rest = all.filter(function (id) { return mine.indexOf(id) < 0; });
-      sel.innerHTML = '<option value="">ー（足さない）</option>' +
-        (mine.length ? '<optgroup label="覚えるわざ">' + mine.map(optHtml).join('') + '</optgroup>' : '') +
-        '<optgroup label="その他のわざ（本来おぼえない）">' + rest.map(optHtml).join('') + '</optgroup>' +
-        '<option value="__new">＋ 新しいわざを作る…</option>';
-      sel.value = val && mv(val) ? val : '';
-      sel.dataset.prev = sel.value;
+    // わざの欄（2026-10-03タダシさん指示で、選ぶだけでなく打って探せる欄に）: 選んだわざのIDは dataset.id に持つ。
+    // 候補は そのポケモンが覚えるわざ → その他のわざ（自作を含む）→「＋ 新しいわざを作る…」。空にすると「足さない」
+    function idOf(inp) { return inp.dataset.id || ''; }
+    function setMv(inp, id) {
+      id = id && mv(id) ? id : '';
+      inp.dataset.id = id;
+      var x = mv(id);
+      inp.value = id ? mvLabel(id) + (x && x.dev ? '（自作）' : '') : '';
     }
-    function fillBoth(f, c) { fillSel(sf, 'f', f); fillSel(sc, 'c', c); }
-    function openNew(kind, sel) {
+    function fillBoth(f, c) { setMv(sf, f); setMv(sc, c); }
+    function mvRows(inp, kind) {
+      var q = toKata(inp.value.trim()), cur = idOf(inp);
+      if (cur && inp.value === mvLabel(cur) + (mv(cur) && mv(cur).dev ? '（自作）' : '')) q = '';   // 選んだままなら全部見せる
+      var lr = learnOf(picked), mine = lr ? (kind === 'f' ? lr.q : lr.c) || [] : [];
+      var all = moveIds(kind), hit = all.filter(function (id) { return !q || toKata(mvLabel(id)).indexOf(q) >= 0; });
+      hit.sort(function (a, b) {
+        return ((mine.indexOf(a) >= 0 ? 0 : 1) - (mine.indexOf(b) >= 0 ? 0 : 1)) ||
+          (q ? toKata(mvLabel(a)).indexOf(q) - toKata(mvLabel(b)).indexOf(q) : 0) || mvLabel(a).localeCompare(mvLabel(b), 'ja');
+      });
+      return hit.slice(0, 80).map(function (id) {
+        var x = mv(id), own = mine.indexOf(id) >= 0;
+        return '<div data-v="' + id + '"' + (id === cur ? ' class="on"' : '') + '>' + icon(x.t, 16) + esc(mvLabel(id)) +
+          '<small>' + (x.dev ? '自作・' : own ? '覚える・' : '') + '威力' + x.p + '</small></div>';
+      }).concat(['<div data-v="__new">＋ 新しいわざを作る…</div>']);
+    }
+    function openNew(kind) {
       newKind = kind;
-      sel.value = sel.dataset.prev || '';
       nw.classList.add('open');
       wrap.querySelector('.dvmnewttl').textContent = '新しい' + (kind === 'f' ? 'ノーマルアタック' : 'SPアタック') + 'を作る';
       wrap.querySelector('.f-ef').hidden = kind !== 'f'; wrap.querySelector('.f-ec').hidden = kind === 'f';
       try { var t = opt.curType && opt.curType(); if (t) wrap.querySelector('.f-t').value = t; } catch (e) { }
+      var n = wrap.querySelector('.f-n'), typed = (kind === 'f' ? sf : sc).value.trim();
+      if (typed && !idOf(kind === 'f' ? sf : sc)) n.value = typed;   // 打った名前が見つからなければ、その名前で作れるように
       nerr.textContent = '';
     }
     [[sf, 'f'], [sc, 'c']].forEach(function (a) {
-      a[0].addEventListener('change', function () {
-        if (a[0].value === '__new') { openNew(a[1], a[0]); return; }
-        a[0].dataset.prev = a[0].value; ferr.textContent = '';
+      var inp = a[0], kind = a[1], list = inp.nextElementSibling;
+      function show() {
+        list.innerHTML = mvRows(inp, kind).join('');
+        // ⚠ 共通の守り(home.js の suggGuard)が書いた display:none を消す
+        list.style.display = '';
+        list.classList.add('open');
+      }
+      function close() { list.classList.remove('open'); list.innerHTML = ''; }
+      inp.addEventListener('input', show);
+      inp.addEventListener('focus', show);
+      list.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      list.addEventListener('click', function (e) {
+        e.preventDefault();   // ⚠ 外側の label が入力欄へフォーカスを戻して一覧が開き直すのを止める
+        var d = e.target.closest('div[data-v]'); if (!d) return;
+        var v = d.getAttribute('data-v');
+        close();
+        if (v === '__new') { openNew(kind); setMv(inp, idOf(inp)); return; }
+        setMv(inp, v); ferr.textContent = ''; inp.blur();
+      });
+      // 選ばずに離れたら: 空なら「足さない」、それ以外は選んでいたわざに戻す
+      inp.addEventListener('blur', function () {
+        setTimeout(function () {
+          if (document.activeElement === inp) return;
+          close();
+          if (!inp.value.trim()) inp.dataset.id = ''; else setMv(inp, idOf(inp));
+        }, 220);
       });
     });
 
@@ -303,13 +346,13 @@
       inject();
       nerr.textContent = ''; ['.f-n', '.f-p', '.f-d', '.f-e'].forEach(function (s) { wrap.querySelector(s).value = ''; });
       nw.classList.remove('open');
-      if (c) fillBoth(sf.value, id); else fillBoth(id, sc.value);
+      if (c) fillBoth(idOf(sf), id); else fillBoth(id, idOf(sc));
     };
 
     // ランキングに反映: そのポケモンの1行を作る（同じポケモンなら置きかえる）。欄の中身はそのまま残す
     wrap.querySelector('.dvmapply').onclick = function () {
       if (!picked) { ferr.textContent = 'ポケモンを選んでください'; pk.focus(); return; }
-      var ids = [sf.value, sc.value].filter(function (id) { return id && id !== '__new' && mv(id); });
+      var ids = [idOf(sf), idOf(sc)].filter(function (id) { return id && mv(id); });
       if (!ids.length) { ferr.textContent = 'ノーマルアタックかSPアタックを選んでください'; return; }
       ferr.textContent = '';
       var m = monOf(picked, shOn);
@@ -336,7 +379,7 @@
       else prompt('このリンクをコピーしてください', u);
     };
     fillBoth('', '');
-    wrap._refill = function () { fillBoth(sf.value, sc.value); };
+    wrap._refill = function () { fillBoth(idOf(sf), idOf(sc)); };
     mounted.push(wrap);
   }
 
