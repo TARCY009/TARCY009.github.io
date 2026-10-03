@@ -1010,7 +1010,9 @@
           '<div class="snapbtns"><button type="button" class="snapgo">保存する</button><button type="button" class="snapno">閉じる</button></div></div>';
         ov.querySelector('img').src = url;
         document.body.appendChild(ov);
-        var close = function () { ov.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000); resolve(); };
+        // ⚠ 画像の一時アドレスはすぐ捨てない（保存の書き込みが終わる前に捨てると、ブラウザが書きかけのファイル
+        // （.download／.crdownload）を残し、移動も画像ソフトでの読み込みもできなくなる・2026-10-03タダシさん報告）
+        var close = function () { ov.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 120000); resolve(); };
         ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
         ov.querySelector('.snapno').onclick = close;
         ov.querySelector('.snapgo').onclick = async function () {
