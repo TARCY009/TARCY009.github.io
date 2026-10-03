@@ -967,12 +967,14 @@ function movePool(key) {
   return { fasts, chargeds };
 }
 // ロケット団のあいてが使ってくるわざ。おぼえるわざの中からランダムに打ってくるが、
-// 特別なわざ(レガシー技)は打ってこないので、通常枠(q/c)だけに絞る
+// 特別なわざ(レガシー技)は打ってこないので、通常枠だけに絞る。
+// ⚠ データの q/c には特別わざ(eq/ec)も混ざっている(フーディンのカウンター等)ので、eq/ec を必ず引く(2026-10-03タダシさん指摘)
 function rkPool(key) {
   const p = D.pokemon[key];
+  const eq = new Set(p.eq || []), ec = new Set(p.ec || []);
   return {
-    fasts: [...new Set(p.q)].filter(m => D.moves[m]),
-    chargeds: [...new Set(p.c)].filter(m => D.moves[m] && m !== 'RETURN' && m !== 'FRUSTRATION'),
+    fasts: [...new Set(p.q)].filter(m => D.moves[m] && !eq.has(m)),
+    chargeds: [...new Set(p.c)].filter(m => D.moves[m] && !ec.has(m) && m !== 'RETURN' && m !== 'FRUSTRATION'),
   };
 }
 // ロケット団戦のSPアタック1発ぶんの待ち時間(2026-08-21タダシさん提供の実測)。
