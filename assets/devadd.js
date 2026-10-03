@@ -22,7 +22,10 @@
         GonaviDevAdd.mount(置き場所, 'データのURL', (data, on) => {
           … data のうち on(名前) が true のものを一覧に足し、false のものを外す
           … キャッシュを捨てて描き直す
-        });
+        }, { shadowNames: () => 実装済みでシャドウが無いポケモンの名前 });   ← 4つ目は省略可
+   ⚠ shadowNames を渡したページだけ「シャドウ」ボタンが出る（2026-10-03タダシさん指示・いまはタイプ別火力だけ）。
+      押すと、実装済みでシャドウがまだ無いポケモンを「シャドウ◯◯」として足せる。ページ側は apply の中で
+      on('シャドウ' + 名前) を見て、そのポケモンにシャドウの行を足す（計算はツールのシャドウと同じ）。
    保存キーは site_devadd（開発者だけの設定なので「データの引っ越し」からは外してある）。 */
 (function () {
   'use strict';
@@ -129,7 +132,12 @@
       '.dvarow{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}',
       '.dvarow button{font:inherit;font-size:.72rem;font-weight:700;cursor:pointer;border-radius:999px;',
       '  border:1px solid #1f8f86;background:rgba(0,0,0,.28);color:#d6fff8;padding:4px 10px}',
-      '.dvamsg{color:#a8ffd0;font-size:.71rem;margin-left:4px}'
+      '.dvamsg{color:#a8ffd0;font-size:.71rem;margin-left:4px}',
+      '.dvashrow{margin:0 0 7px}',
+      '.dvashrow button.dvash{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border-radius:999px;',
+      '  border:1px solid #8a5cd6;background:rgba(0,0,0,.28);color:#d9c2ff;padding:4px 11px}',
+      '.dvashrow button.dvash[aria-pressed="true"]{background:linear-gradient(160deg,#d9b8ff,#9b5cf0 55%,#6a2fc0);color:#fff;border-color:transparent}',
+      '.dvashrow .shadowmark{margin-right:3px}'
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -144,6 +152,9 @@
       '<div class="dvapanel">' +
       '<p class="dvanote">まだ実装されていないポケモンを、この端末の一覧にだけ足します（開発者だけ・ふつうの人の画面は変わりません）。<br>' +
       '性能はゲーム内データのいまの値です。実装までに変わることがあります。ここで足したポケモンは、ほかのランキングにも入ります。</p>' +
+      (m.shadowNames ? '<div class="dvashrow"><button type="button" class="dvash" aria-pressed="false" ' +
+        'title="押しているあいだは、実装済みでシャドウがまだ無いポケモンを探します（シャドウ◯◯として足します）">' +
+        '<i class="shadowmark"></i>シャドウ未実装</button></div>' : '') +
       '<div class="sugg"><input type="search" placeholder="未実装のポケモン名で探す" autocomplete="off" ' +
       'autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
       '<div class="dvachips"></div>' +
@@ -155,6 +166,13 @@
     var btn = wrap.querySelector('.dvabtn'), panel = wrap.querySelector('.dvapanel');
     var inp = wrap.querySelector('input'), ul = wrap.querySelector('.sugg-list');
     var msg = wrap.querySelector('.dvamsg');
+    var shBtn = wrap.querySelector('.dvash'), shMode = false;
+    if (shBtn) shBtn.onclick = function () {
+      shMode = !shMode;
+      shBtn.setAttribute('aria-pressed', shMode ? 'true' : 'false');
+      inp.placeholder = shMode ? 'シャドウが未実装のポケモン名で探す' : '未実装のポケモン名で探す';
+      inp.focus(); showSugg();
+    };
 
     btn.onclick = function () {
       var open = panel.classList.toggle('open');
@@ -165,9 +183,10 @@
     function showSugg() {
       var q = inp.value.trim();
       if (!q) { ul.classList.remove('open'); ul.innerHTML = ''; return; }
-      if (!m.data) { ul.innerHTML = '<div class="dup">' + (m.err ? '未実装のデータを読めませんでした' : '読み込み中…') + '</div>'; ul.classList.add('open'); return; }
+      if (!shMode && !m.data) { ul.innerHTML = '<div class="dup">' + (m.err ? '未実装のデータを読めませんでした' : '読み込み中…') + '</div>'; ul.classList.add('open'); return; }
       var qk = toKata(q), seen = {}, hit = [];
-      namesOf(m.data).forEach(function (n) {
+      var src = shMode ? (m.shadowNames() || []).map(function (n) { return 'シャドウ' + n; }) : namesOf(m.data);
+      src.forEach(function (n) {
         if (!n || seen[n]) return; seen[n] = 1;
         if (toKata(n).indexOf(qk) >= 0) hit.push(n);
       });
@@ -180,7 +199,7 @@
             return '<div' + (on ? ' class="on"' : '') + ' data-n="' + esc(n) + '">' +
               (on ? '✓ ' : '') + esc(n) + (on ? '<small>（足しています・押すと外す）</small>' : '') + '</div>';
           }).join('')
-        : '<div class="dup">このツールに足せる未実装のポケモンにありません</div>';
+        : '<div class="dup">' + (shMode ? 'シャドウが未実装のポケモンにありません' : 'このツールに足せる未実装のポケモンにありません') + '</div>';
       // ⚠ 共通の守り(suggGuard)が書いた display:none を消す（残ると2匹目から候補が出ない・devex.js と同じ）
       ul.style.display = '';
       ul.classList.add('open');
@@ -210,7 +229,7 @@
   function render() {
     mounted.forEach(function (m) {
       if (!m.wrap) return;
-      var names = m.data ? namesOf(m.data).map(canon) : null;
+      var names = m.data ? namesOf(m.data).concat(m.shadowNames ? (m.shadowNames() || []).map(function (n) { return 'シャドウ' + n; }) : []).map(canon) : null;
       var b = m.wrap.querySelector('.dvabtn b'); if (b) b.textContent = list.length;
       var chips = m.wrap.querySelector('.dvachips');
       // このツールのデータに無い名前（ジム防衛の伝説など）は薄く出す
@@ -247,11 +266,12 @@
     list: function () { return dev() ? list.slice() : []; },
     // host=ボタンの置き場所 ／ url=未実装のデータ ／ apply(data, on)=一覧に足し・外して描き直す関数
     // ⚠ 開発者かどうかは home.js の GonaviDev() で決まるので、**読み込みが終わってから**置く
-    mount: function (host, url, apply) {
+    mount: function (host, url, apply, opts) {
       if (!host || typeof apply !== 'function') return;
       var go = function () {
         if (!dev()) return;
-        var m = { url: url, apply: apply, data: null, wrap: null };
+        var m = { url: url, apply: apply, data: null, wrap: null,
+          shadowNames: opts && typeof opts.shadowNames === 'function' ? opts.shadowNames : null };
         mounted.push(m);
         build(m, host); render();
         fetchData(url).then(function (d) {

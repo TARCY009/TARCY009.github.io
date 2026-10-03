@@ -357,6 +357,7 @@ function bestOfType(p, tEn, shadow){
   return winner;
 }
 const rankCache=new Map();
+let devSh=new Set();
 function buildRows(){
   // ⚠ 開発者の除外もキャッシュの鍵に入れる（メガLv・分割SP優遇と同じ落とし穴）
   const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+MegaLv.level()+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'')+'|'+(window.GonaviDevMv?GonaviDevMv.sig():'');
@@ -370,7 +371,8 @@ function buildRows(){
     if(p.mega&&!fMega) continue;
     const b=bestOfType(p,curT,false);
     if(b) rows.push({p,shadow:false,dps:b.dps,f:b.f,c:b.c});
-    if(fShadow&&p.shadow){
+    // devSh＝開発者が「シャドウ未実装」で足したポケモン（ふつうの人は常に空）
+    if(fShadow&&(p.shadow||devSh.has(k))){
       const s=bestOfType(p,curT,true);
       if(s) rows.push({p,shadow:true,dps:s.dps,f:s.f,c:s.c});
     }
@@ -683,8 +685,10 @@ if(window.GonaviDevAdd){
       if(on(p.n)){ if(!D.pokemon[k]) D.pokemon[k]=p; if(i<0) KEYS.push(k); }
       else if(i>=0) KEYS.splice(i,1);
     }
+    // シャドウ未実装のポケモンを「シャドウ◯◯」で足したもの（計算はふつうのシャドウと同じ）
+    devSh=new Set(KEYS.filter(k=>!D.pokemon[k].shadow&&on('シャドウ'+D.pokemon[k].n)));
     rankCache.clear(); sync();
-  });
+  }, {shadowNames:()=>KEYS.filter(k=>{const p=D.pokemon[k]; return !p.shadow&&p.fe&&!p.mega;}).map(k=>D.pokemon[k].n)});
 }
 // 開発者だけの「✎ わざカスタム」（ポケモンに好きなわざ・新しく作ったわざを覚えさせて順位を見る）
 if(window.GonaviDevMv){
