@@ -158,7 +158,7 @@ h1 b{white-space:nowrap}
 .empty{color:var(--sub);font-size:.82rem;text-align:center;padding:18px 0}
 
 /* ── グラフ ── */
-.ghead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ghead{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .gttl{font-size:.95rem;font-weight:800}
 .gsub{font-size:.68rem;color:var(--sub)}
 #saveBtn{margin-left:auto;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;
@@ -314,7 +314,7 @@ function movesOf(p, ids, eids, tEn, fast){
 // 「分割SP優遇」(fSplit)を押しているあいだだけ、1位が1ゲージ技なら分割あり技との差7%未満で分割あり優先
 function bestOfType(p, tEn, shadow){
   // 開発者だけの「わざカスタム」で覚えさせたわざも候補に足す（ふつうの人は x=null で変わらない）
-  const x=window.GonaviDevMv?GonaviDevMv.extra(p.n):null;
+  const x=window.GonaviDevMv?GonaviDevMv.extra(p.n,shadow):null;
   const add=(a,b)=>x?[...new Set([...a,...b])]:a;
   const fs=movesOf(p,add(p.q,x?x.q:[]),p.eq,tEn,true), cs=movesOf(p,add(p.c,x?x.c:[]),p.ec,tEn,false);
   if(!fs.length||!cs.length) return null;
@@ -372,7 +372,7 @@ function buildRows(){
     const b=bestOfType(p,curT,false);
     if(b) rows.push({p,shadow:false,dps:b.dps,f:b.f,c:b.c});
     // devSh＝開発者が「シャドウ未実装」で足したポケモン（ふつうの人は常に空）
-    if(fShadow&&(p.shadow||devSh.has(k))){
+    if(fShadow&&(p.shadow||devSh.has(k)||(window.GonaviDevMv&&GonaviDevMv.hasShadow(p.n)))){
       const s=bestOfType(p,curT,true);
       if(s) rows.push({p,shadow:true,dps:s.dps,f:s.f,c:s.c});
     }
@@ -693,7 +693,8 @@ if(window.GonaviDevAdd){
 // 開発者だけの「✎ わざカスタム」（ポケモンに好きなわざ・新しく作ったわざを覚えさせて順位を見る）
 if(window.GonaviDevMv){
   GonaviDevMv.on(()=>{ rankCache.clear(); sync(); });
-  GonaviDevMv.mount($('devexbox'), {names:()=>KEYS.map(k=>D.pokemon[k].n), moves:D.moves, typeJa:D.typeJa, curType:()=>curT});
+  GonaviDevMv.mount($('devexbox'), {names:()=>KEYS.map(k=>D.pokemon[k].n), moves:D.moves, typeJa:D.typeJa, curType:()=>curT,
+    learn:n=>{ const k=KEYS.find(k=>D.pokemon[k].n===n); const p=k&&D.pokemon[k]; return p?{q:[...p.q,...(p.eq||[])],c:[...p.c,...(p.ec||[])]}:null; }});
 }
 // ---- 出口: 全タイプの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ buildRows を呼ぶ・画面は変えない） ----
 // base=絞り込みなし／all=シャドウ＋メガ・ゲンシ。分割SP優遇は既定のOFF

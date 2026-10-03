@@ -8,11 +8,12 @@
    ⚠ 何匹でも足せる（ポケモンごとに1行）。同じポケモンにわざを何本でも足せる。
    ⚠ リンクで渡せる: 「🔗 このリンクをコピー」で ?devmv=... を作る（開いた端末に覚えさせて住所からすぐ消す）。
       ?devmv= だけ（空）で全部外す。
-   ⚠ 名前は「シャドウ」を外して比べる＝通常とシャドウの両方に効く（devex.js と同じ）。
+   ⚠ 名前は「シャドウ」を外して比べ、通常とシャドウは「シャドウ」ボタンで分ける（sh。2026-10-03から・以前の保存は通常として読む）。
 
    使い方（ページ側）:
      1) <head> に <script src="/assets/devmove.js"></script>（devex.js・devadd.js の直後・ページ本体より先）
-     2) データを読んだら GonaviDevMv.mount(置き場所, {names:()=>名前の一覧, moves:わざの表(D.moves), typeJa:D.typeJa, curType:()=>いまのタイプ})
+     2) データを読んだら GonaviDevMv.mount(置き場所, {names:()=>名前の一覧, moves:わざの表(D.moves), typeJa:D.typeJa, curType:()=>いまのタイプ,
+                                        learn:名前=>{q:[覚えるノーマル], c:[覚えるSP]}（省略可・わざの欄の「覚えるわざ」に使う）})
         （作ったわざは moves に DEVMV_… の番号で書き込まれる＝名前・タイプ・威力はほかのわざと同じに引ける）
      3) わざ構成を決めるところで  const x=GonaviDevMv.extra(名前)  → {q:[ノーマルのID], c:[SPのID]} か null
      4) 作り直しの合図 GonaviDevMv.on(()=>描き直す)・キャッシュの鍵に GonaviDevMv.sig()
@@ -20,7 +21,7 @@
 (function () {
   'use strict';
   var KEY = 'site_devmv';
-  var st = { defs: [], mons: [] }, subs = [], mounted = [], cssDone = false, opt = null, cur = null;
+  var st = { defs: [], mons: [] }, subs = [], mounted = [], cssDone = false, opt = null;
 
   function dev() { try { return !!(window.GonaviDev && window.GonaviDev()); } catch (e) { return false; } }
   function norm(s) { return String(s == null ? '' : s).replace(/^シャドウ/, '').trim(); }
@@ -38,8 +39,9 @@
     });
     (Array.isArray(v.mons) ? v.mons : []).forEach(function (m) {
       if (!m || !m.n) return;
-      var n = norm(m.n); if (!n || o.mons.some(function (x) { return x.n === n; })) return;
-      o.mons.push({ n: n, mv: (Array.isArray(m.mv) ? m.mv : []).filter(function (x) { return typeof x === 'string'; }) });
+      var n = norm(m.n), sh = m.sh ? 1 : 0;
+      if (!n || o.mons.some(function (x) { return x.n === n && x.sh === sh; })) return;
+      o.mons.push({ n: n, sh: sh, mv: (Array.isArray(m.mv) ? m.mv : []).filter(function (x) { return typeof x === 'string'; }) });
     });
     return o;
   }
@@ -75,7 +77,9 @@
   // どのポケモンも覚えていない自作のわざは片づける
   function gc() { st.defs = st.defs.filter(function (d) { return st.mons.some(function (m) { return m.mv.indexOf(d.id) >= 0; }); }); }
   function changed() { gc(); save(); inject(); subs.forEach(function (f) { try { f(); } catch (e) { } }); render(); }
-  function monOf(n) { n = norm(n); for (var i = 0; i < st.mons.length; i++) if (st.mons[i].n === n) return st.mons[i]; return null; }
+  // sh: 通常(0)とシャドウ(1)は別の行（2026-10-03タダシさん指示でシャドウを選べるようにした）
+  function monOf(n, sh) { n = norm(n); sh = sh ? 1 : 0; for (var i = 0; i < st.mons.length; i++) if (st.mons[i].n === n && st.mons[i].sh === sh) return st.mons[i]; return null; }
+  function anyOf(n) { return monOf(n, 0) || monOf(n, 1); }
   function mv(id) { return opt && opt.moves ? opt.moves[id] : null; }
   function tja(t) { return (opt && opt.typeJa && opt.typeJa[t]) || t; }
   function icon(t, sz) { try { return window.typeIconHTML ? window.typeIconHTML(tja(t), sz || 16) : ''; } catch (e) { return ''; } }
@@ -112,9 +116,15 @@
       '.dvmpanel .sugg-list>div.dup{opacity:.45;cursor:default}',
       '.dvmpanel .sugg-list>div.on{background:rgba(255,182,61,.24);font-weight:800}',
       '.dvmpanel .sugg-list>div small{opacity:.72;font-weight:600;margin-left:auto;white-space:nowrap}',
-      '.dvmcur{display:none;margin-top:8px;border-top:1px dashed #b7791f;padding-top:6px}',
-      '.dvmcur.show{display:block}',
-      '.dvmcur .dvmwho{font-weight:900;font-size:.82rem;color:#fff}',
+      '.dvmsel{margin-top:8px}',
+      '.dvmpkrow{display:flex;gap:6px;align-items:stretch}',
+      '.dvmpkrow .sugg{flex:1 1 auto}',
+      '.dvmsh{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border-radius:9px;white-space:nowrap;',
+      '  border:1px solid #8a5cd6;background:rgba(0,0,0,.28);color:#d9c2ff;padding:0 11px}',
+      '.dvmsh[aria-pressed="true"]{background:linear-gradient(160deg,#d9b8ff,#9b5cf0 55%,#6a2fc0);color:#fff;border-color:transparent}',
+      '.dvmsh .shadowmark,.dvmlist .who .shadowmark{margin-right:3px;color:#c79bff}',
+      '.dvmsh[aria-pressed="true"] .shadowmark{color:#fff}',
+      '.dvmapply{display:block;width:100%;font-size:.8rem!important;padding:8px 10px!important;margin-top:9px}',
       '.dvmnew{display:none;margin-top:7px;border:1px dashed #b7791f;border-radius:10px;padding:8px}',
       '.dvmnew.open{display:block}',
       '.dvmgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}',
@@ -124,8 +134,7 @@
       '.dvmerr{color:#ffb4a8;font-size:.7rem;margin-top:4px;min-height:1em}',
       '.dvmlist{margin:9px 0 0;display:flex;flex-direction:column;gap:5px}',
       '.dvmlist .row{display:flex;flex-wrap:wrap;align-items:center;gap:5px;background:rgba(255,182,61,.10);border:1px solid #7a5415;border-radius:10px;padding:5px 6px}',
-      '.dvmlist .row.cur{border-color:#ffb63d;background:rgba(255,182,61,.2)}',
-      '.dvmlist .who{font:inherit;font-weight:900;cursor:pointer;border:0;background:none;color:#fff;padding:0 4px;font-size:.78rem}',
+            '.dvmlist .who{font:inherit;font-weight:900;cursor:pointer;border:0;background:none;color:#fff;padding:0 4px;font-size:.78rem}',
       '.dvmlist .mvc{display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.3);border-radius:999px;padding:1px 3px 1px 8px;font-size:.72rem}',
       '.dvmlist .mvc.own{outline:1px dashed #ffb63d}',
       '.dvmlist button.x{font:inherit;cursor:pointer;border:0;background:rgba(0,0,0,.35);color:#ffe9c7;border-radius:999px;width:19px;height:19px;line-height:1;padding:0}',
@@ -139,32 +148,19 @@
     document.head.appendChild(s);
   }
 
-  // 候補の一覧（ポケモン・わざ共通の作り）。onPick(値) を呼び、keep=true なら選んでも閉じない
-  function suggest(inp, ul, rowsFn, onPick, keep) {
-    function show() {
-      var q = inp.value.trim();
-      if (!q) { ul.classList.remove('open'); ul.innerHTML = ''; return; }
-      var rows = rowsFn(toKata(q)).slice(0, 60);
-      ul.innerHTML = rows.length ? rows.join('') : '<div class="dup">見つかりません</div>';
-      // ⚠ 共通の守り(home.js の suggGuard)が書いた display:none を消す（残ると2回目から候補が出ない・devex.js と同じ）
-      ul.style.display = '';
-      ul.classList.add('open');
-    }
-    inp.addEventListener('input', show);
-    inp.addEventListener('focus', show);
-    ul.addEventListener('mousedown', function (e) { e.preventDefault(); });   // 入力欄のフォーカスを外さない
-    ul.addEventListener('click', function (e) {
-      var d = e.target.closest('div[data-v]'); if (!d) return;
-      onPick(d.getAttribute('data-v'));
-      if (keep) show(); else { inp.value = ''; ul.classList.remove('open'); ul.innerHTML = ''; }
+  // ---- 画面（2026-10-03タダシさん指示で作り直し: GBLシミュレーターと同じく「ポケモン名・ノーマルアタック・SPアタック」の3つの欄。
+  //      入れた中身は消さずに残し、「ランキングに反映」を押したときだけ反映する。反映したポケモンは下の一覧に何匹でも並ぶ） ----
+  function moveIds(kind) {   // kind: 'f'=ノーマル / 'c'=SP
+    var out = [];
+    Object.keys((opt && opt.moves) || {}).forEach(function (id) {
+      var x = opt.moves[id]; if (!x || !x.e) return;
+      if ((x.e > 0) === (kind === 'f')) out.push(id);
     });
-    document.addEventListener('pointerdown', function (e) {
-      if (!ul.classList.contains('open') || e.target.closest('.sugg') === inp.parentNode) return;
-      // 打ちかけの文字は消す（共通の守りが「打った名前に一致する候補」を勝手に押さないように）
-      inp.value = ''; ul.classList.remove('open'); ul.innerHTML = '';
-    }, true);
-    return show;
+    out.sort(function (a, b) { return mvLabel(a).localeCompare(mvLabel(b), 'ja'); });
+    return out;
   }
+  function learnOf(n) { try { return (opt.learn && opt.learn(n)) || null; } catch (e) { return null; } }
+  function optHtml(id) { var x = mv(id); return '<option value="' + id + '">' + esc(mvLabel(id)) + (x && x.dev ? '（自作）' : '') + '</option>'; }
 
   function build(host) {
     css();
@@ -175,115 +171,172 @@
     wrap.innerHTML =
       '<button type="button" class="dvmbtn" aria-expanded="false" title="開発者だけの機能です。ポケモンに好きなわざを覚えさせて、ランキングに反映します（動画用）">✎ わざカスタム<b>0</b></button>' +
       '<div class="dvmpanel">' +
-      '<p class="dvmnote">ポケモンに好きなわざを覚えさせて、この端末のランキングにだけ反映します（開発者だけ・ふつうの人の画面は変わりません）。<br>' +
-      'わざの組み合わせはいつもどおり自動で選びます。新しいわざを作ることもできます。何匹でも足せます。</p>' +
-      '<div class="dvmlab">① ポケモン</div>' +
-      '<div class="sugg"><input type="search" class="dvmpk" placeholder="ポケモン名で探す" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
-      '<div class="dvmcur">' +
-      '<div class="dvmlab">② <span class="dvmwho"></span> に覚えさせるわざ（押すたびに足す／外す）</div>' +
-      '<div class="sugg"><input type="search" class="dvmmv" placeholder="わざ名で探す" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
-      '<button type="button" class="dvmsub dvmnewbtn" style="margin-top:6px">＋ 新しいわざを作る</button>' +
+      '<p class="dvmnote">ポケモンに好きなわざを覚えさせて、この端末のランキングにだけ反映します（開発者だけ・ふつうの人の画面は変わりません）。' +
+      '選んだわざは覚えるわざに足され、組み合わせはいつもどおり自動で選びます。</p>' +
+      '<div class="dvmlab">ポケモン</div>' +
+      '<div class="dvmpkrow"><div class="sugg"><input type="text" class="dvmpk" placeholder="ポケモン名で探す" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
+      '<button type="button" class="dvmsh" aria-pressed="false" title="シャドウとして反映します（シャドウがまだ無いポケモンでもシャドウの行が増えます。ランキングのシャドウを点けているときに出ます）"><i class="shadowmark"></i>シャドウ</button></div>' +
+      '<div class="dvmgrid dvmsel">' +
+      '<label>ノーマルアタック<select class="s-f"></select></label>' +
+      '<label>SPアタック<select class="s-c"></select></label>' +
+      '</div>' +
       '<div class="dvmnew">' +
+      '<div class="dvmlab dvmnewttl">新しいわざを作る</div>' +
       '<div class="dvmgrid">' +
       '<label class="w2">わざの名前<input type="text" class="f-n" maxlength="30" placeholder="例: しんわざ"></label>' +
       '<label>タイプ<select class="f-t">' + typeOpts.map(function (t) { return '<option value="' + t + '">' + esc(tja(t)) + '</option>'; }).join('') + '</select></label>' +
-      '<label>種類<select class="f-k"><option value="f">ノーマル</option><option value="c">SP</option></select></label>' +
       '<label>威力<input type="text" class="f-p" inputmode="decimal" placeholder="例: 12"></label>' +
       '<label>わざ全体の時間（秒）<input type="text" class="f-d" inputmode="decimal" placeholder="例: 1.0"></label>' +
       '<label class="f-ef">ゲージ増加<input type="text" class="f-e" inputmode="decimal" placeholder="例: 8"></label>' +
       '<label class="f-ec" hidden>ゲージ<select class="f-g"><option value="-100">1本（100）</option><option value="-50">2本（50）</option><option value="-33">3本（33）</option></select></label>' +
-      '</div><div class="dvmerr"></div>' +
-      '<button type="button" class="dvmsub dvmgo">作って覚えさせる</button>' +
-      '</div></div>' +
+      '</div><div class="dvmerr dvmnerr"></div>' +
+      '<div class="dvmrow" style="margin-top:4px"><button type="button" class="dvmsub dvmgo">作ってこの欄に入れる</button><button type="button" class="dvmsub dvmnewx">やめる</button></div>' +
+      '</div>' +
+      '<div class="dvmerr dvmferr"></div>' +
+      '<button type="button" class="dvmsub dvmgo dvmapply">ランキングに反映</button>' +
       '<div class="dvmlist"></div>' +
       '<div class="dvmrow"><button type="button" class="dvmclear">すべて外す</button>' +
       '<button type="button" class="dvmcopy">🔗 このリンクをコピー</button><span class="dvmmsg"></span></div>' +
       '</div>';
     host.appendChild(wrap);
     var btn = wrap.querySelector('.dvmbtn'), panel = wrap.querySelector('.dvmpanel');
-    var pk = wrap.querySelector('.dvmpk'), mvIn = wrap.querySelector('.dvmmv');
-    var msg = wrap.querySelector('.dvmmsg'), nw = wrap.querySelector('.dvmnew'), err = wrap.querySelector('.dvmerr');
+    var pk = wrap.querySelector('.dvmpk'), ul = pk.nextElementSibling;
+    var sf = wrap.querySelector('.s-f'), sc = wrap.querySelector('.s-c');
+    var msg = wrap.querySelector('.dvmmsg'), nw = wrap.querySelector('.dvmnew'), nerr = wrap.querySelector('.dvmnerr'), ferr = wrap.querySelector('.dvmferr');
+    var picked = '', newKind = 'f', shOn = false, shBtn = wrap.querySelector('.dvmsh');
+    function syncSh() { shBtn.setAttribute('aria-pressed', shOn ? 'true' : 'false'); }
+    shBtn.onclick = function () {
+      shOn = !shOn; syncSh(); ferr.textContent = '';
+      var m = picked && monOf(picked, shOn); if (m) loadMv(m);   // そちらの行があれば中身を出す。無ければ欄はそのまま
+    };
 
     btn.onclick = function () {
       var open = panel.classList.toggle('open');
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open && !cur) pk.focus();
+      if (open && !picked) pk.focus();
     };
-    // ① ポケモン: 選ぶと「いま覚えさせている1匹」になる（一覧に行を足す）
-    suggest(pk, pk.nextElementSibling, function (qk) {
+
+    // わざの欄: 「ー（足さない）」→ そのポケモンが覚えるわざ → その他のわざ（自作を含む）→「＋ 新しいわざを作る…」
+    function fillSel(sel, kind, val) {
+      var all = moveIds(kind), lr = learnOf(picked), mine = lr ? (kind === 'f' ? lr.q : lr.c) || [] : [];
+      mine = mine.filter(function (id) { return mv(id); });
+      var rest = all.filter(function (id) { return mine.indexOf(id) < 0; });
+      sel.innerHTML = '<option value="">ー（足さない）</option>' +
+        (mine.length ? '<optgroup label="覚えるわざ">' + mine.map(optHtml).join('') + '</optgroup>' : '') +
+        '<optgroup label="その他のわざ（本来おぼえない）">' + rest.map(optHtml).join('') + '</optgroup>' +
+        '<option value="__new">＋ 新しいわざを作る…</option>';
+      sel.value = val && mv(val) ? val : '';
+      sel.dataset.prev = sel.value;
+    }
+    function fillBoth(f, c) { fillSel(sf, 'f', f); fillSel(sc, 'c', c); }
+    function openNew(kind, sel) {
+      newKind = kind;
+      sel.value = sel.dataset.prev || '';
+      nw.classList.add('open');
+      wrap.querySelector('.dvmnewttl').textContent = '新しい' + (kind === 'f' ? 'ノーマルアタック' : 'SPアタック') + 'を作る';
+      wrap.querySelector('.f-ef').hidden = kind !== 'f'; wrap.querySelector('.f-ec').hidden = kind === 'f';
+      try { var t = opt.curType && opt.curType(); if (t) wrap.querySelector('.f-t').value = t; } catch (e) { }
+      nerr.textContent = '';
+    }
+    [[sf, 'f'], [sc, 'c']].forEach(function (a) {
+      a[0].addEventListener('change', function () {
+        if (a[0].value === '__new') { openNew(a[1], a[0]); return; }
+        a[0].dataset.prev = a[0].value; ferr.textContent = '';
+      });
+    });
+
+    // ポケモン名: 候補から選ぶと欄に名前が残る。選ばずに離れたら、選んでいた名前に戻す
+    function pickRows(qk) {
       var all = []; try { all = (opt.names ? opt.names() : []) || []; } catch (e) { }
       var seen = {}, hit = [];
       all.forEach(function (n) { var b = norm(n); if (!b || seen[b]) return; seen[b] = 1; if (toKata(b).indexOf(qk) >= 0) hit.push(b); });
       hit.sort(function (a, b) { return (toKata(a).indexOf(qk) - toKata(b).indexOf(qk)) || a.localeCompare(b, 'ja'); });
-      return hit.map(function (n) { var m = monOf(n); return '<div data-v="' + esc(n) + '"' + (m ? ' class="on"' : '') + '>' + esc(n) + (m ? '<small>わざ' + m.mv.length + '本</small>' : '') + '</div>'; });
-    }, function (n) {
-      if (!monOf(n)) st.mons.push({ n: norm(n), mv: [] });
-      cur = norm(n); changed();
-      setTimeout(function () { mvIn.focus(); }, 0);
-    }, false);
-    // ② わざ: 既存のわざ（全部）と作ったわざ。押すたびに足す／外す（続けて選べる）
-    suggest(mvIn, mvIn.nextElementSibling, function (qk) {
-      var m = monOf(cur); if (!m || !opt.moves) return [];
-      var hit = [];
-      Object.keys(opt.moves).forEach(function (id) {
-        var x = opt.moves[id]; if (!x || !x.e) return;
-        var lb = mvLabel(id);
-        if (toKata(lb).indexOf(qk) >= 0) hit.push({ id: id, lb: lb, x: x });
-      });
-      hit.sort(function (a, b) { return (toKata(a.lb).indexOf(qk) - toKata(b.lb).indexOf(qk)) || a.lb.localeCompare(b.lb, 'ja'); });
-      return hit.map(function (h) {
-        var on = m.mv.indexOf(h.id) >= 0;
-        return '<div data-v="' + h.id + '"' + (on ? ' class="on"' : '') + '>' + (on ? '✓ ' : '') + icon(h.x.t, 16) + esc(h.lb) +
-          '<small>' + kindOf(h.x) + '・威力' + h.x.p + (h.x.dev ? '・自作' : '') + '</small></div>';
-      });
-    }, function (id) {
-      var m = monOf(cur); if (!m) return;
-      var i = m.mv.indexOf(id); if (i >= 0) m.mv.splice(i, 1); else m.mv.push(id);
-      changed();
+      return hit.slice(0, 60).map(function (n) { var m = anyOf(n); return '<div data-v="' + esc(n) + '"' + (m ? ' class="on"' : '') + '>' + esc(n) + (m ? '<small>反映中</small>' : '') + '</div>'; });
+    }
+    function showSugg() {
+      var q = pk.value.trim();
+      if (!q || q === picked) { ul.classList.remove('open'); ul.innerHTML = ''; return; }
+      var rows = pickRows(toKata(q));
+      ul.innerHTML = rows.length ? rows.join('') : '<div class="dup">見つかりません</div>';
+      // ⚠ 共通の守り(home.js の suggGuard)が書いた display:none を消す（残ると2回目から候補が出ない・devex.js と同じ）
+      ul.style.display = '';
+      ul.classList.add('open');
+    }
+    function loadMv(m) {
+      var ex = { f: '', c: '' };
+      if (m) m.mv.forEach(function (id) { var x = mv(id); if (!x) return; if (x.e > 0) { if (!ex.f) ex.f = id; } else if (!ex.c) ex.c = id; });
+      fillBoth(ex.f, ex.c);
+    }
+    function setPicked(n, sh) {
+      picked = n; pk.value = n; ul.classList.remove('open'); ul.innerHTML = '';
+      if (sh != null) { shOn = !!sh; syncSh(); }
+      loadMv(monOf(n, shOn));
+      ferr.textContent = '';
+    }
+    pk.addEventListener('input', showSugg);
+    pk.addEventListener('focus', showSugg);
+    ul.addEventListener('mousedown', function (e) { e.preventDefault(); });   // 入力欄のフォーカスを外さない
+    ul.addEventListener('click', function (e) {
+      var d = e.target.closest('div[data-v]'); if (!d) return;
+      setPicked(d.getAttribute('data-v'));
+      pk.blur();
+    });
+    document.addEventListener('pointerdown', function (e) {
+      if (!ul.classList.contains('open') || e.target.closest('.sugg') === pk.parentNode) return;
+      pk.value = picked; ul.classList.remove('open'); ul.innerHTML = '';
     }, true);
+    pk.addEventListener('blur', function () { setTimeout(function () { if (document.activeElement !== pk && !ul.classList.contains('open')) pk.value = picked; }, 250); });
 
-    // 新しいわざを作る
-    var fk = wrap.querySelector('.f-k');
-    wrap.querySelector('.dvmnewbtn').onclick = function () {
-      nw.classList.toggle('open');
-      try { var t = opt.curType && opt.curType(); if (t) wrap.querySelector('.f-t').value = t; } catch (e) { }
-    };
-    fk.onchange = function () { var c = fk.value === 'c'; wrap.querySelector('.f-ef').hidden = c; wrap.querySelector('.f-ec').hidden = !c; };
-    wrap.querySelector('.dvmgo').onclick = function () {
-      var m = monOf(cur); if (!m) return;
-      var n = wrap.querySelector('.f-n').value.trim(), t = wrap.querySelector('.f-t').value, c = fk.value === 'c';
+    // 新しいわざを作る（作ったわざは欄に入るだけ。反映は「ランキングに反映」で）
+    wrap.querySelector('.dvmnewx').onclick = function () { nw.classList.remove('open'); };
+    wrap.querySelector('.dvmnew .dvmgo').onclick = function () {
+      var n = wrap.querySelector('.f-n').value.trim(), t = wrap.querySelector('.f-t').value, c = newKind === 'c';
       var p = numOf(wrap.querySelector('.f-p').value), d = numOf(wrap.querySelector('.f-d').value);
       var e = c ? +wrap.querySelector('.f-g').value : numOf(wrap.querySelector('.f-e').value);
-      if (!n) { err.textContent = 'わざの名前を入れてください'; return; }
-      if (!(p >= 0)) { err.textContent = '威力を数字で入れてください'; return; }
-      if (!(d > 0)) { err.textContent = '時間を0より大きい数字で入れてください（秒）'; return; }
-      if (!c && !(e > 0)) { err.textContent = 'ゲージ増加を0より大きい数字で入れてください'; return; }
+      if (!n) { nerr.textContent = 'わざの名前を入れてください'; return; }
+      if (!(p >= 0)) { nerr.textContent = '威力を数字で入れてください'; return; }
+      if (!(d > 0)) { nerr.textContent = '時間を0より大きい数字で入れてください（秒）'; return; }
+      if (!c && !(e > 0)) { nerr.textContent = 'ゲージ増加を0より大きい数字で入れてください'; return; }
       var k = 1; st.defs.forEach(function (x) { k = Math.max(k, +x.id.slice(6) + 1); });
       var id = 'DEVMV_' + k;
       st.defs.push({ id: id, n: n, t: t, p: p, d: d, e: e });
-      m.mv.push(id);
-      err.textContent = ''; ['.f-n', '.f-p', '.f-d', '.f-e'].forEach(function (s) { wrap.querySelector(s).value = ''; });
+      inject();
+      nerr.textContent = ''; ['.f-n', '.f-p', '.f-d', '.f-e'].forEach(function (s) { wrap.querySelector(s).value = ''; });
       nw.classList.remove('open');
-      changed();
+      if (c) fillBoth(sf.value, id); else fillBoth(id, sc.value);
     };
-    // 一覧: ポケモン名を押すとそのポケモンに切り替え・×で外す
+
+    // ランキングに反映: そのポケモンの1行を作る（同じポケモンなら置きかえる）。欄の中身はそのまま残す
+    wrap.querySelector('.dvmapply').onclick = function () {
+      if (!picked) { ferr.textContent = 'ポケモンを選んでください'; pk.focus(); return; }
+      var ids = [sf.value, sc.value].filter(function (id) { return id && id !== '__new' && mv(id); });
+      if (!ids.length) { ferr.textContent = 'ノーマルアタックかSPアタックを選んでください'; return; }
+      ferr.textContent = '';
+      var m = monOf(picked, shOn);
+      if (m) m.mv = ids; else st.mons.push({ n: picked, sh: shOn ? 1 : 0, mv: ids });
+      changed();
+      msg.textContent = '反映しました'; setTimeout(function () { msg.textContent = ''; }, 1600);
+    };
+    // 一覧: ポケモン名を押すと欄に戻す・×で外す
     wrap.querySelector('.dvmlist').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       var row = b.closest('.row'), n = row && row.getAttribute('data-n');
-      var m = monOf(n); if (!m) return;
-      if (b.classList.contains('who')) { cur = m.n; render(); setTimeout(function () { mvIn.focus(); }, 0); return; }
+      var m = monOf(n, row && row.getAttribute('data-sh') === '1'); if (!m) return;
+      if (b.classList.contains('who')) { setPicked(m.n, m.sh); return; }
       var id = b.getAttribute('data-mv');
-      if (id) { m.mv = m.mv.filter(function (x) { return x !== id; }); }
-      else { st.mons = st.mons.filter(function (x) { return x !== m; }); if (cur === m.n) cur = null; }
+      if (id) { m.mv = m.mv.filter(function (x) { return x !== id; }); if (!m.mv.length) st.mons = st.mons.filter(function (x) { return x !== m; }); }
+      else st.mons = st.mons.filter(function (x) { return x !== m; });
       changed();
     });
-    wrap.querySelector('.dvmclear').onclick = function () { if (st.mons.length || st.defs.length) { st = clean(null); cur = null; changed(); } };
+    wrap.querySelector('.dvmclear').onclick = function () { if (st.mons.length || st.defs.length) { st = clean(null); changed(); } };
     wrap.querySelector('.dvmcopy').onclick = function () {
       var u = location.origin + location.pathname + '?devmv=' + (st.mons.length ? enc(st) : '');
       var done = function () { msg.textContent = 'コピーしました'; setTimeout(function () { msg.textContent = ''; }, 1600); };
       if (navigator.clipboard) navigator.clipboard.writeText(u).then(done, function () { prompt('このリンクをコピーしてください', u); });
       else prompt('このリンクをコピーしてください', u);
     };
+    fillBoth('', '');
+    wrap._refill = function () { fillBoth(sf.value, sc.value); };
     mounted.push(wrap);
   }
 
@@ -291,32 +344,33 @@
     mounted.forEach(function (wrap) {
       var n = 0; st.mons.forEach(function (m) { if (m.mv.length) n++; });
       var b = wrap.querySelector('.dvmbtn b'); if (b) b.textContent = n;
-      if (cur && !monOf(cur)) cur = null;
-      var c = wrap.querySelector('.dvmcur'); c.classList.toggle('show', !!cur);
-      wrap.querySelector('.dvmwho').textContent = cur || '';
+      if (wrap._refill) wrap._refill();   // 自作わざが片づいたら欄からも消す
       var list = wrap.querySelector('.dvmlist');
-      list.innerHTML = st.mons.length ? st.mons.map(function (m) {
-        return '<div class="row' + (m.n === cur ? ' cur' : '') + '" data-n="' + esc(m.n) + '">' +
-          '<button type="button" class="who" title="このポケモンにわざを足す">' + esc(m.n) + '</button>' +
-          (m.mv.length ? m.mv.map(function (id) {
+      list.innerHTML = st.mons.length ? '<div class="dvmlab">反映中</div>' + st.mons.map(function (m) {
+        return '<div class="row" data-n="' + esc(m.n) + '" data-sh="' + (m.sh ? 1 : 0) + '">' +
+          '<button type="button" class="who" title="このポケモンを上の欄に戻す">' + (m.sh ? '<i class="shadowmark"></i>' : '') + esc(m.n) + '</button>' +
+          m.mv.map(function (id) {
             var x = mv(id);
             return '<span class="mvc' + (x && x.dev ? ' own' : '') + '">' + (x ? icon(x.t, 14) : '') + esc(mvLabel(id)) +
               '<button type="button" class="x" data-mv="' + id + '" title="このわざを外す">×</button></span>';
-          }).join('') : '<em style="opacity:.6">わざをまだ選んでいません</em>') +
+          }).join('') +
           '<button type="button" class="x" title="このポケモンごと外す">×</button></div>';
-      }).join('') : '<em style="opacity:.6">いまは1匹もカスタムしていません</em>';
+      }).join('') : '';
     });
   }
 
   window.GonaviDevMv = {
     // ⚠ 開発者の端末でなければ必ず null（ふつうの人のランキングは変わらない）
-    extra: function (name) {
+    // shadow=true ならシャドウの行のぶん（通常とシャドウは別々に覚えさせる）
+    extra: function (name, shadow) {
       if (!dev() || !st.mons.length) return null;
-      var m = monOf(name); if (!m || !m.mv.length) return null;
+      var m = monOf(name, shadow); if (!m || !m.mv.length) return null;
       var q = [], c = [];
       m.mv.forEach(function (id) { var x = mv(id); if (!x) return; (x.e > 0 ? q : c).push(id); });
       return { q: q, c: c };
     },
+    // シャドウとして反映したポケモンか（シャドウが未実装でもシャドウの行を作るため）
+    hasShadow: function (name) { if (!dev() || !st.mons.length) return false; var m = monOf(name, 1); return !!(m && m.mv.length); },
     sig: function () { return dev() && st.mons.length ? JSON.stringify(st) : ''; },
     on: function (fn) { if (typeof fn === 'function') subs.push(fn); },
     // host=ボタンの置き場所 ／ o={names, moves, typeJa, curType}
