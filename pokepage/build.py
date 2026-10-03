@@ -13,6 +13,7 @@ import gm_ja         # 進化の条件の日本語の札
 b.PAGES = F.ROSTER
 b.GM = F.GM
 b.td_rows, b.max_rows, b.gbl_of, b.rkt_best = F.td_rows, F.max_rows, F.gbl_of, F.rkt_best
+b.gbl_over = F.gbl_over
 b.ITEM_JA = gm_ja.ITEM_JA
 # 日付はふつう今日。手元でページだけ組み直すときは、データを集めた日を POKEPAGE_DATE=2026-09-22 のように渡す（「◯月◯日時点」をデータに合わせる）
 _d = datetime.date.fromisoformat(os.environ['POKEPAGE_DATE']) if os.environ.get('POKEPAGE_DATE') else datetime.date.today()
@@ -312,11 +313,15 @@ def sec_max(pg, p):
 def sec_gbl(pg):
     k = pg['pk']
     g = b.gbl_of(k)
-    if k == 'ditto' or not g:
+    if k == 'ditto' or (not g and not b.gbl_over(k)):
         return section('gbl', 'Battle League', 'GBL', '<p class="none">GOバトルリーグには参加できません。</p>')
     head = ''
+    over = b.gbl_over(k)
     for c in ['1500', '2500', '0']:
         o = g.get(c)
+        if c in over:
+            head += ('<div class="lgm lg' + c + ' off over"><span>' + b.LG[c] + '</span><b>⚠</b><small>CP' + c + '以下の個体は入手できません</small></div>')
+            continue
         if not o:
             continue
         ok = bool(o.get('metaRank')) or o['score'] >= 40

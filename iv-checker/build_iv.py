@@ -219,7 +219,12 @@ def main():
             for e in added:
                 f.write(f'- 追加: {e["n"]}\n')
             for n, b, a in updated:
-                f.write(f'- 種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}\n')
+                # ⚠ 種族値の更新以外（交換不可の印・PL下限・シャドウの最低個体値）も来る。画面に出す処理と同じ形で書く
+                # （種族値の形で書こうとして止まっていた・2026-10-03アーマードミュウツーの交換不可で発覚）
+                if b == 'u': f.write(f'- 交換不可(最低個体値10)の印: {n} → {"付けた" if a else "外した"}\n')
+                elif b == 'lf': f.write(f'- PL下限: {n} → {("PL" + str(a)) if a else "解除"}\n')
+                elif b == 'us': f.write(f'- シャドウのときの最低個体値: {n} → {a if a else "解除"}\n')
+                else: f.write(f'- 種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}\n')
 
 
 if __name__ == '__main__':

@@ -49,7 +49,7 @@ for pg in ROSTER:
         S.append('max')
     for g in GBL:
         e = g['data'].get(k)
-        if e and k != 'ditto' and any((k in g['meta']) or float(v['score']) >= 40 for v in e.values() if v.get('score') is not None):
+        if e and k != 'ditto' and any((k in g['meta']) or float(v['score']) >= 40 for v in e.values() if v.get('score') is not None and not v.get('over')):
             S.append('gbl')
             break
     if k in rkt:

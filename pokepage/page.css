@@ -87,7 +87,7 @@ h3{margin:30px 0 12px;font-size:.78rem;font-weight:800;letter-spacing:.1em;color
 .lgm{padding:14px 16px;border-radius:16px;background:var(--surf);position:relative;overflow:hidden}
 .lgm::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:#4e7bff}.lgm.lg2500::before{background:#e5b93a}.lgm.lg0::before{background:#a06bff}
 .lgm span{font-size:.72rem;font-weight:800;color:var(--sub)}.lgm b{display:block;font:600 2rem/1.2 Oswald,system-ui,sans-serif}.lgm b i{font:800 .75rem/1 system-ui;color:var(--sub);margin-left:1px}
-.lgm small{font-size:.66rem;color:var(--sub)}.lgm.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}.lgm.off b{color:var(--faint)}.lgm.off::before{opacity:.35}
+.lgm small{font-size:.66rem;color:var(--sub)}.lgm.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}.lgm.off b{color:var(--faint)}.lgm.off::before{opacity:.35}.lgm.over b{color:#ffb35c}.lgm.over small{color:#ffb35c;font-weight:700}:root.light .lgm.over b,:root.light .lgm.over small{color:#a85a00}
 .lg{margin-top:26px}.lg h3{margin:0 0 10px;color:var(--ink);font-size:1rem;letter-spacing:.02em}
 .mvs{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .mvs .mvn{padding:6px 12px 6px 8px;border-radius:999px;background:var(--surf2);font-size:.86rem;font-weight:700;margin:0}

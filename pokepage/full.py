@@ -103,12 +103,18 @@ def _gbl_one(c, k, shadow):
                 win3=win[:5], lose3=lose[:5], nWin3=len(win), nLose3=len(lose), n=len(meta))
 
 def gbl_of(k, shadow=False):
+    # ⚠ リーグの上限に収まる個体が入手できないリーグ(over＝交換できないポケモンの最低個体値・最低PLでもCPが上限を超える)は外す。
+    #    外さないと、実在しない理想個体(15-15-15 PL50)の環境勝率がタイル・段階・質問に出てしまう(2026-10-03タダシさん指摘)
     out = {}
     for c in ('1500', '2500', '0'):
         o = _gbl_one(c, k, shadow)
-        if o:
+        if o and not o.get('over'):
             out[c] = o
     return out
+
+def gbl_over(k, shadow=False):
+    # 上限に収まる個体が入手できないリーグ(画面に「⚠ CP1500以下の個体は入手できません」と出す)
+    return [c for c in ('1500', '2500') if (_gbl_one(c, k, shadow) or {}).get('over')]
 
 # ---------- ロケット団 ----------
 def rkt_best(k):
