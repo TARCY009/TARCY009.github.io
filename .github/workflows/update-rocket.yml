@@ -1,0 +1,69 @@
+# GOロケット団（したっぱ・リーダー・サカキ）の手持ちを、毎日2回、3つの外部攻略情報と突き合わせて更新します
+# （2026-10-06 タダシさん指示）。
+#   build_rocket.py → assets/rocket_roster.js（3つの情報がそろった人だけ書き換える）
+# 手持ちの入れ替え直後は、各情報が2〜3日かけて追いつくので、そろうまでは前のまま。
+# 4日たってもそろわない人・読み取れなくなった情報があれば「お知らせ」でメールが届きます。
+name: auto-update-rocket
+
+on:
+  schedule:
+    - cron: '30 22 * * *'   # UTC 22:30 = JST 7:30 毎日
+    - cron: '30 10 * * *'   # UTC 10:30 = JST 19:30 毎日（入れ替えの当日にも追いつけるように）
+  workflow_dispatch:         # Actionsタブから手動実行も可能
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: auto-update-rocket
+  cancel-in-progress: false
+
+jobs:
+  rocket:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: 3つの情報を読み取って突き合わせる
+        id: build
+        run: |
+          python3 build_rocket.py | tee /tmp/rocket.txt
+          echo "headline=$(grep '^HEADLINE: ' /tmp/rocket.txt | sed 's/^HEADLINE: //')" >> "$GITHUB_OUTPUT"
+          if [ -s rocket_changes.md ]; then cat rocket_changes.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: 変化があればそのまま公開
+        run: |
+          git add assets/rocket_roster.js .github/rocket_state.json .github/rocket_ids.json
+          if git diff --cached --quiet; then
+            echo "変化なし"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: ロケット団の手持ちを自動更新（${{ steps.build.outputs.headline || '状態の記録のみ' }}）"
+            git pull --rebase
+            git push
+          fi
+
+      # 手持ちを書き換えた日・4日以上そろわない人がいる日・読み取れなくなった日だけ「お知らせ」を立てる
+      - name: お知らせする
+        if: steps.build.outputs.headline != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEADLINE: ${{ steps.build.outputs.headline }}
+        run: |
+          gh issue list --state open --limit 50 --json number,title \
+            | jq -r '.[] | select(.title | startswith("📢 ロケット団の手持ち")) | .number' \
+            | xargs -r -I{} gh issue close {} --comment "新しいお知らせが届いたので閉じます。"
+          {
+            cat rocket_changes.md
+            echo ""
+            echo "@${{ github.repository_owner }}"
+          } > /tmp/issue_body.md
+          gh issue create \
+            --title "📢 ロケット団の手持ち（$(TZ=Asia/Tokyo date '+%-m/%-d')）${HEADLINE}" \
+            --body-file /tmp/issue_body.md

@@ -1926,9 +1926,13 @@ const RK_NOTE = {
   boss: 'サカキは<b>こちらの最初の2発のSPアタックを必ずシールドで防ぎます</b>。SPアタックの威力は等倍です。',
 };
 
-// ---- リーダー・サカキの手持ち(内蔵データ) ----
-// データは assets/rocket_roster.js。したっぱは相手が多すぎるので内蔵しない(自分で選ぶ)
+// ---- したっぱ・リーダー・サカキの手持ち(内蔵データ) ----
+// データは assets/rocket_roster.js（build_rocket.py が毎日、3つの外部攻略情報が一致したものだけ書き換える）。
+// したっぱはタイプ別(同じタイプに2人いれば♂/♀)。リーダー・サカキと違い、種別を選んだだけでは枠を書き換えない
+// (自分で選んでいた枠を gbl_rocket_grunt から戻すため)。タイプを押したときだけ入れる
 const RR = window.ROCKET_ROSTER || { updated: '', list: {} };
+const RK_TYPE_JA = new Set(['ノーマル', 'くさ', 'ほのお', 'みず', 'でんき', 'こおり', 'いわ', 'ひこう', 'むし', 'エスパー',
+  'ゴースト', 'かくとう', 'じめん', 'どく', 'ドラゴン', 'はがね', 'あく', 'フェアリー']);
 const rkWhoList = () => (RR.list && RR.list[RK.kind]) || [];
 const rkWho = () => rkWhoList().find(w => w.id === RK.who) || null;
 // 選んでいる並び(各枠の候補番号)。未選択の枠は先頭の候補にする
@@ -1952,16 +1956,31 @@ function rkPutAll() {
   [0, 1, 2].forEach(i => { RKT[i] = line[i] ? { key: line[i], fast: null, c1: null } : null; });
   saveRkt(); syncRocket(); run();
 }
-// 手持ちパネルの描画(したっぱのときは丸ごと隠す)
+// 手持ちパネルの描画(データが無い種別のときは丸ごと隠す)
 function renderRoster() {
   const box = document.getElementById('rkroster');
   const list = rkWhoList();
   if (!list.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
-  if (!rkWho()) RK.who = list[0].id;   // 既定はリストの先頭(呼び出しはタップしたときだけ)
-  const w = rkWho(), sel = rkSel(w);
-  document.getElementById('rkwho').innerHTML = list.map(x =>
-    `<button data-w="${x.id}" aria-pressed="${x.id === RK.who}" title="${x.name}の手持ちを${RK.team ? 'あいての3枠' : 'あいての欄'}に呼び出す">${x.name}</button>`).join('');
+  const grunt = RK.kind === 'grunt';
+  // リーダー・サカキの既定はリストの先頭。したっぱは押すまで選ばない(自分で入れた枠を勝手に書き換えないため)
+  if (!rkWho() && !grunt) RK.who = list[0].id;
+  const whoEl = document.getElementById('rkwho');
+  whoEl.classList.toggle('grunt', grunt);
+  whoEl.innerHTML = list.map(x => {
+    const ty = x.name.replace(/[♂♀]/g, ''), sex = (x.name.match(/[♂♀]/) || [''])[0];
+    const label = grunt && RK_TYPE_JA.has(ty) ? `${typeIconHTML(ty, 15)}<span>${ty}</span>${sex ? `<small>${sex}</small>` : ''}` : x.name;
+    const who = !grunt ? x.name : RK_TYPE_JA.has(ty) ? `${ty}タイプのしたっぱ${sex}`
+      : x.id === 'decoy' ? 'おとり（サカキのふりをしたしたっぱ）' : `セリフにタイプが無いしたっぱ${sex}`;
+    return `<button data-w="${x.id}" aria-pressed="${x.id === RK.who}" title="${who}の手持ちを${RK.team ? 'あいての3枠' : 'あいての欄'}に呼び出す">${label}</button>`;
+  }).join('');
+  const w = rkWho();
+  if (!w) {   // したっぱでまだタイプを選んでいない
+    document.getElementById('rklineup').innerHTML = '';
+    whoEl.querySelectorAll('button').forEach(b => b.onclick = () => { RK.who = RK.whoBy[RK.kind] = b.dataset.w; rkPutAll(); });
+    return;
+  }
+  const sel = rkSel(w);
   const chip = (key, s, j) => {
     const p = D.pokemon[key];
     if (!p) return `<button class="rkchip" disabled>${key}</button>`;
@@ -2132,7 +2151,7 @@ function syncRocket() {
   document.querySelectorAll('#rkenter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === RK.enter));
   document.querySelectorAll('#rkmode button').forEach(b => b.setAttribute('aria-pressed', RK_PLAY[b.dataset.v] === RK.play));
   syncFoeSlots();
-  renderRoster();   // リーダー・サカキの手持ち(したっぱのときは隠れる)
+  renderRoster();   // したっぱ・リーダー・サカキの手持ち
   // 1対1のときだけ「対策」の切り替えを出す
   const vr = document.getElementById('rkviewrow');
   vr.style.display = RK.play === '1v1' ? '' : 'none';
@@ -2312,7 +2331,7 @@ function restoreFoeInputs() {
   tab.title = 'シャドウ（攻撃1.2倍・防御5/6）としてシミュレートする';
   if (S[1].key) el.querySelector('input').value = (S[1].shadow ? 'シャドウ' : '') + D.pokemon[S[1].key].n;
 }
-// したっぱのあいては内蔵データが無く自分で選ぶので、リーダー・サカキの手持ちで
+// したっぱのあいては自分で選んだ枠のこともあるので、リーダー・サカキの手持ちで
 // 上書きされて消えないように別に覚えておき、したっぱへ戻したときに復元する
 const RKG_KEY = 'gbl_rocket_grunt';
 const loadRkGrunt = () => { try { const v = JSON.parse(localStorage.getItem(RKG_KEY)); return Array.isArray(v) ? v : null; } catch (e) { return null; } };
@@ -13946,7 +13965,7 @@ const TOUR_DEFS = {
   // ロケット団 1対1(対策ランキング): あいて → 表 → 安定 → 絞り込み → 自分の個体 → 行タップ
   rkrank: [
     { sel: '#rkkind',
-      tx: 'あいての種類です。<b>リーダー・サカキは手持ちが自動で入ります</b>。したっぱは下の「あいて」の欄に自分で入れます' },
+      tx: 'あいての種類です。<b>リーダー・サカキは手持ちが自動で入ります</b>。したっぱは下に出るタイプを押すと手持ちが入ります（「あいて」の欄に自分で入れることもできます）' },
     { sel: '#rkrank .rkrbody, #rkrank',
       tx: 'ここに<b>ノーマルアタックの火力が高い順</b>で対策が出ます。ロケット団戦は<b>いかに速く倒すか</b>がいちばん大事なので、SPアタックを撃たずに攻撃し切れるポケモンが上に来ます' },
     { sel: '#rkviewbtns',

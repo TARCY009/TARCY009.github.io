@@ -30,7 +30,8 @@
         "build_meta.py",
         "build_past_cups.py",
         "build_help.py",
-        "build_pvp_data.py"
+        "build_pvp_data.py",
+        "build_rocket.py"
       ]
     },
     "raid": {

@@ -15,6 +15,7 @@ HANDOVER.md
 # build_data.py が生成する差分サマリー
 # GitHub Actions が自動PRの本文(body-path)に使う一時ファイルのためコミットしない
 changes.md
+rocket_changes.md
 
 # build_max.py がダウンロードする Game Master のキャッシュ(18MB超・コミットしない)
 max-battle/latest.json
