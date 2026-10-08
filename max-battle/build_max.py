@@ -187,6 +187,71 @@ def has_real_evolution(ps):
     return False
 
 
+DEV_CAND_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "max_unreleased.json")
+GYM_UNRELEASED = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gym-attack", "data", "gym_unreleased.json")
+
+
+def write_dev_candidates(poke, gmax_forms, sour_map, bm_moves, entries, gym, to_entry, unmatched):
+    """開発者だけの「＋ 未実装」用。ランキングに無いポケモンを roster と同じ形で書き出す。
+    d=1 はダイマックスとしては足せない（もう載っている・進化前）・g=1 はすでにキョダイマックスで載っている。
+    gft/ggm はゲーム内データにあるキョダイマックスわざ（無ければ画面側が仮のわざを置く）。un=1 は未実装のポケモン"""
+    unrel = set()
+    if os.path.exists(GYM_UNRELEASED):
+        with open(GYM_UNRELEASED, encoding="utf-8") as f:
+            u = json.load(f)
+        for p in u.get("pokemon", []):
+            if p.get("dex") and p["name"] not in {q["name"] for q in gym["pokemon"]}:
+                gym["pokemon"].append(p)
+                unrel.add(p["name"])
+        for k, v in u.get("moves", {}).items():
+            gym["moves"].setdefault(k, v)
+    have_d = {e["n"] for e in entries if e["cat"] == "D"}
+    have_g = {e["n"] for e in entries if e["cat"] == "G"}
+    gset = set(gmax_forms)
+    costume_pat = re.compile(r"\([A-Za-z0-9 ._\-]+\)$")
+    n0 = len(unmatched)
+    out, seen, evolves, cands = [], set(), set(), []
+    tids = sorted(poke)
+    for tid in tids:
+        ps = poke[tid]
+        form = tid.split("_POKEMON_")[1]
+        pid = ps.get("pokemonId", form)
+        if any(o != tid and o.startswith(tid + "_") for o in tids):
+            continue    # フォルム付きのテンプレがある「無印」は飛ばす
+        gok = (pid, form) in gset or ((pid, "FORM_UNSET") in gset and form in (pid, pid + "_NORMAL"))
+        e = to_entry(tid, ps, "D")
+        if not e or len(unmatched) > n0 or costume_pat.search(e["n"]) or not e.get("fm"):
+            del unmatched[n0:]
+            continue
+        n = "ストリンダー(ハイ&ロー)" if e["n"] == "ストリンダー" else e["n"]
+        # 進化前はランキングと同じく外す（キョダイマックスできる姿は残す）。
+        # ⚠ コスチューム違いのテンプレには進化の情報が無いので、同じ名前のどれか1つでも進化するなら外す
+        if has_real_evolution(ps):
+            evolves.add(n)
+        cands.append((n, e, pid, form, gok))
+    cands.sort(key=lambda c: not c[4])   # キョダイマックスできる姿を先に（同じ名前は最初の1つだけ残す）
+    for n, e, pid, form, gok in cands:
+        if n in seen or (n in evolves and not gok):
+            continue
+        c = {"n": n, "ty": e["ty"], "atk": e["atk"], "df": e["df"], "st": e["st"], "fm": e["fm"]}
+        if gok:
+            mv = sour_map.get((pid, form)) or sour_map.get((pid, "FORM_UNSET"))
+            info = bm_moves.get(mv, {}) if mv else {}
+            if info.get("type") in T_IDX:
+                c["gft"] = T_IDX[info["type"]]
+                c["ggm"] = GMAX_JP.get(info.get("vfx"), info.get("vfx"))
+        if n in have_d or n in evolves: c["d"] = 1   # 進化前はキョダイマックスとしてだけ足せる
+        if n in have_g: c["g"] = 1
+        if c.get("d") and (c.get("g") or "gft" not in c):
+            continue    # もう全部ランキングに載っている
+        if e["n"] in unrel: c["un"] = 1
+        seen.add(n)
+        out.append(c)
+    with open(DEV_CAND_OUT, "w", encoding="utf-8") as f:
+        json.dump({"entries": out}, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"開発者用の候補: {len(out)}匹（うち未実装 {sum(1 for c in out if c.get('un'))}・キョダイわざあり {sum(1 for c in out if 'gft' in c)}）")
+
+
 def load_gm():
     # 通常は毎回最新を取得(自動更新用)。開発時のみ --local でキャッシュ利用
     if "--local" not in sys.argv or not os.path.exists(GM_LOCAL):
@@ -569,6 +634,13 @@ def main():
         f.write("const MAX_DATA = ")
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
         f.write(";\n")
+
+    # ---- 開発者だけの「＋ 未実装」の候補（2026-10-08タダシさん指示・/max-type/ が読む） --------
+    # まだダイマックス（キョダイマックス）できないポケモンを、ランキングと同じ形で書き出す。
+    # 未実装のポケモン（gym_unreleased.json）も含める。⚠ max_data.js を書いたあとに作る
+    # （settings_to_entry が SPアタックの表を伸ばすので、先に作ると max_data.js が変わる）
+    write_dev_candidates(poke, gmax_forms, sour_map, bm_moves, entries, gym,
+                         settings_to_entry, unmatched)
 
     # ---- レポート ----------------------------------------------------------
     d_cnt = sum(1 for c, _ in report if c == "D")

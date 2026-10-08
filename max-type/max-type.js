@@ -67,11 +67,14 @@
   const tanks = [];
   { const seen = new Set();
     for(const p of D.roster){ if(!seen.has(p.n)){ seen.add(p.n); tanks.push(p); } } }
+  // 開発者だけの「＋ 未実装」で足したポケモン（ふつうの人は常に空）。形は roster と同じ
+  let extra = [];
+  const tankNames = new Set(tanks.map(p => p.n));
 
   // ---- アタッカー: 選んだタイプのマックスわざの与ダメージ(マックスバトル対策と同じ式・相手の相性は全員同じなので省く) ----
   function atkRows(){
     const rows = [];
-    for(const p of D.roster){
+    for(const p of D.roster.concat(extra)){
       // 開発者だけの除外（未実装の先行収録を動画用に外す・ふつうの人には効かない）
       if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;
       const atkStat = (p.atk + 15) * cpm;
@@ -103,7 +106,7 @@
   //  ザマゼンタの登場時の壁60もマックスバトル対策と同じく足す
   function tankRows(){
     const rows = [];
-    for(const p of tanks){
+    for(const p of tanks.concat(extra.filter((p, i, a) => !tankNames.has(p.n) && a.findIndex(q => q.n === p.n) === i))){
       if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;   // 開発者だけの除外
       const hp0 = p.st + (p.wall ? (D.wall_hp || 60) / cpm : 0);
       const bulk = hp0 * p.df;
@@ -228,6 +231,32 @@
     const list = $('list'); list.parentNode.insertBefore(host, list);
     GonaviDevEx.mount(host, () => D.roster.map(p => p.n));
     GonaviDevEx.on(render);
+  }
+  // 開発者だけの「＋ 未実装」（2026-10-08タダシさん指示）。まだダイマックスできないポケモン（未実装も含む）を
+  // ダイマックス／キョダイマックスを選んで足す。候補は build_max.py が書き出す max_unreleased.json（計算はこのページと同じ）。
+  // キョダイマックスわざがゲーム内データに無いポケモンは、1つ目のタイプの仮のキョダイわざにする
+  if(window.GonaviDevAdd){
+    const host = document.createElement('div');
+    const list = $('list'); list.parentNode.insertBefore(host, list);
+    let byName = new Map();
+    GonaviDevAdd.mount(host, '/max-battle/data/max_unreleased.json', (U, on) => {
+      byName = new Map(U.entries.map(c => [c.n, c]));
+      extra = [];
+      for(const c of U.entries){
+        if(!on(c.n)) continue;
+        const mk = GonaviDevAdd.modeOf(c.n);
+        if(mk.includes('D') && !c.d) extra.push(Object.assign({}, c, {cat:'D'}));
+        if(mk.includes('G') && !c.g) extra.push(Object.assign({}, c, {cat:'G', ft: c.gft != null ? c.gft : c.ty[0], gm: c.ggm || 'キョダイわざ（仮）'}));
+      }
+      shown = PAGE; render();
+    }, {
+      modes: [{k:'D', label:'ダイマックス', short:'ダイ', title:'ダイマックスとして足します（マックスわざはノーマルアタックのタイプ）'},
+              {k:'G', label:'キョダイマックス', short:'キョダイ', title:'キョダイマックスとして足します（キョダイわざがゲーム内データに無いポケモンは、1つ目のタイプの仮のわざ）'}],
+      allow: (n, k) => { const c = byName.get(n); return !!c && (k === 'D' ? !c.d : !c.g); },
+      placeholder: 'ダイマックスできないポケモン名で探す',
+      note: 'まだダイマックス・キョダイマックスできないポケモン（未実装のポケモンも含む）を、この端末の一覧にだけ足します（開発者だけ・ふつうの人の画面は変わりません）。<br>' +
+            '先に「ダイマックス」「キョダイマックス」を選んでから名前を押します（両方点けると両方入ります）。キョダイわざがゲーム内データに無いポケモンは、1つ目のタイプの仮のわざにします。'
+    });
   }
   // ---- 出口: 全タイプのアタッカー・タンクの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ atkRows／tankRows を呼ぶ・画面は変えない） ----
   // 既定の設定（特別技も＝ON・ダイウォール込み＝OFF）。tankGuard はダイウォール込みの順位

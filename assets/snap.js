@@ -33,7 +33,7 @@
   var PUB = {
     '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', ctx: ['#bossView .bossname'],
                tags: '.c-rank .modes [aria-pressed="true"]', title: 'レイド火力ランキング',
-               graph: { name: '.rname .nm', val: '.rdps', shadow: '.rname .shadowmark,.rname .sh', unit: 'DPS', head: '#bossView .bossname' } },
+               graph: { name: '.rname .nm', val: '.rdps', shadow: '.rname .shadowmark,.rname .sh', unit: 'DPS', head: '#bossView .bossname', floor: 35 } },
     '/bulk/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn',
                 tags: '.rhead [aria-pressed="true"]:not(#cntSeg *)', title: '耐久指数ランキング',
                 graph: { name: '.rname .nm', val: '.rval', shadow: '.rname .shadowmark', unit: '耐久指数' } },
@@ -474,6 +474,13 @@
     if (cur) lines.push(cur);
     return lines;
   }
+  // ファイル名に点灯中の絞り込みを入れる(2026-10-08タダシさん指示: 名前の後ろに「シャドウ」「メガ・ゲンシ」)。
+  // 「含む」と絵文字は外す。ファイル名に使えない記号も外す
+  function fileTags(sel) {
+    return tagLabels(sel).map(function (t) {
+      return t.replace(/含む$/, '').replace(/[^\p{L}\p{N}・ー]/gu, '');
+    }).filter(Boolean).map(function (t) { return '_' + t; }).join('');
+  }
   function tagLabels(sel) {
     if (!sel) return [];
     var out = [];
@@ -810,10 +817,12 @@
     var B = Math.round(H - PAD - nameH);
     var vals = rows.map(function (r) { return r.v; });
     var dmax = Math.max.apply(null, vals), dmin = Math.min.apply(null, vals);
-    // 目盛りの下限は30に固定(2026-09-16タダシさん指示・タイプ別火力のグラフと同じ)。
-    // 30を切る値があるとき・耐久指数のように桁が大きく30が刻みに乗らないときだけ0から
-    var step = niceStep((dmax - 30) || dmax * 0.2 || 1);
-    var v0 = (dmin >= 30 && step <= 30) ? 30 : 0;
+    // 目盛りの下限は固定(2026-09-16タダシさん指示で30)。レイド火力だけ35(2026-10-08タダシさん指示・タイプ別火力のグラフと同じ値。
+    // 10/3にタイプ別火力だけ35にして、こちらを30のまま残していた)。ページごとの値は PUB の graph.floor。
+    // 下限を切る値があるとき・耐久指数のように桁が大きく下限が刻みに乗らないときだけ0から
+    var FL = G.floor || 30;
+    var step = niceStep((dmax - FL) || dmax * 0.2 || 1);
+    var v0 = (dmin >= FL && step <= FL) ? FL : 0;
     if (v0 === 0) step = niceStep(dmax || 1);
     var v1 = Math.ceil(dmax * 1.02 / step) * step;
     if (v1 <= v0) v1 = v0 + step;
@@ -1108,7 +1117,7 @@
             busy(false);
             var tail = kind === 'g' ? '_グラフ_1920x1440' : kind === 'b' ? '_1920x1440' : '';
             var base = cfg.head ? cfg.head().file : cfg.title;
-            await preview(cv, 'GOナビ_' + base.replace(/\s+/g, '') + '_' + stamp().slice(0, 8) + tail + '.png');
+            await preview(cv, 'GOナビ_' + base.replace(/\s+/g, '') + fileTags(cfg.tags) + '_' + stamp().slice(0, 8) + tail + '.png');
           }
         } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした。このブラウザでは対応していない可能性があります'); }
         btns.forEach(function (x) { x.disabled = false; });

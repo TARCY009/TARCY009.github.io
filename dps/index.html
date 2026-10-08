@@ -409,6 +409,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
 <script src="/assets/devadd.js"></script>
+<script src="/assets/devmove.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -602,8 +603,17 @@ function comboDPS(p, m1, m2, atkReal, bossTypes, shadow, def, ex){
   }
   return {dps:(d1*100+chgTotal)/t, d1, d2};
 }
-function fastMoves(p){ return [...p.q.map(m=>({id:m,sp:false})), ...p.eq.map(m=>({id:m,sp:true}))].filter(x=>D.moves[x.id]); }
-function chgMoves(p){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>({id:m,sp:true}))].filter(x=>D.moves[x.id]); }
+// 開発者だけの「✎ わざカスタム」で覚えさせたわざも足す（2026-10-08タダシさん指示・タイプ別火力と同じ。ふつうの人は x=null で変わらない）。
+// 通常とシャドウは別に覚えさせられるので shadow を渡す。⚠ 省いたとき（自分のポケモンの登録欄）は足さない
+// （登録は端末に保存されるので、あとで消した自作わざのIDが残って壊れるのを防ぐ）
+function devMvOf(p, shadow, kind){
+  if(shadow===undefined) return [];
+  const x=window.GonaviDevMv?GonaviDevMv.extra(p.n,shadow):null;
+  const have=new Set(kind==='q'?[...p.q,...p.eq]:[...p.c,...p.ec]);
+  return x?x[kind].filter(id=>!have.has(id)).map(id=>({id,sp:false})):[];
+}
+function fastMoves(p, shadow){ return [...p.q.map(m=>({id:m,sp:false})), ...p.eq.map(m=>({id:m,sp:true})), ...devMvOf(p,shadow,'q')].filter(x=>D.moves[x.id]); }
+function chgMoves(p, shadow){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>({id:m,sp:true})), ...devMvOf(p,shadow,'c')].filter(x=>D.moves[x.id]); }
 
 // 全レベル(PL1〜51, 0.5刻み)の多数決で最適技構成を決定。
 // 既定は「純粋に火力がいちばん高い構成」。「分割SP優遇」(fSplit)を押しているあいだだけ、
@@ -612,8 +622,8 @@ function chgMoves(p){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>(
 const LEVELS=[];
 for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) LEVELS.push(m); }
 function bestCombo(p, bossTypes, shadow){
-  const fs=fastMoves(p).filter(x=>D.moves[x.id].e>0);
-  const cs=chgMoves(p).filter(x=>D.moves[x.id].e<0);
+  const fs=fastMoves(p,shadow).filter(x=>D.moves[x.id].e>0);
+  const cs=chgMoves(p,shadow).filter(x=>D.moves[x.id].e<0);
   if(!fs.length||!cs.length) return null;
   // レベル非依存の係数を前計算: dmg = floor(coef*atk + 1)
   const coef={};
@@ -885,7 +895,7 @@ let mpTopCache={key:null,rows:null};
 let devSh=new Set();   // 開発者が「シャドウ未実装」で足したポケモン（ふつうの人は常に空）
 function mpTop(){
   // ⚠ 開発者の除外もキーに入れる（1位アタッカーが変わるため）
-  const ck=boss+'|'+MegaLv.level()+'|'+fSplit+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'');
+  const ck=boss+'|'+MegaLv.level()+'|'+fSplit+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'')+'|'+(window.GonaviDevMv?GonaviDevMv.sig():'');
   if(mpTopCache.key===ck) return mpTopCache.rows;
   const bt=D.pokemon[boss].ty, rows=[];
   for(const k of KEYS){
@@ -894,7 +904,7 @@ function mpTop(){
     if(!p.mega && !p.fe) continue;   // ランキングと同じ範囲(最終進化＋メガ)
     const b=bestCombo(p,bt,false);
     if(b) rows.push({p,f:b.f,c:b.c,shadow:false,dps:b.dps});
-    if(p.shadow||devSh.has(k)){
+    if(p.shadow||devSh.has(k)||(window.GonaviDevMv&&GonaviDevMv.hasShadow(p.n))){
       const s=bestCombo(p,bt,true);
       if(s) rows.push({p,f:s.f,c:s.c,shadow:true,dps:s.dps});
     }
@@ -931,8 +941,8 @@ function mpCalc(tierId){
     for(const r of mpTop()){
       const atk=(r.p.a+15)*D.cpm['50'];
       const combos=exP
-        ? fastMoves(r.p).filter(x=>D.moves[x.id].e>0).flatMap(f=>
-            chgMoves(r.p).filter(x=>D.moves[x.id].e<0).map(c=>[D.moves[f.id],D.moves[c.id]]))
+        ? fastMoves(r.p,r.shadow).filter(x=>D.moves[x.id].e>0).flatMap(f=>
+            chgMoves(r.p,r.shadow).filter(x=>D.moves[x.id].e<0).map(c=>[D.moves[f.id],D.moves[c.id]]))
         : [[D.moves[r.f.id],D.moves[r.c.id]]];
       for(const [m1,m2] of combos){
         const rn=comboDPS(r.p,m1,m2,atk,bp.ty,r.shadow,def,exP);
@@ -1201,6 +1211,12 @@ if(window.GonaviDevAdd){
     mpTopCache={key:null,rows:null}; if(boss) renderMinPlayers(); renderRank();
   }, {shadowNames:()=>KEYS.filter(k=>{const p=D.pokemon[k]; return !p.shadow&&p.fe&&!p.mega;}).map(k=>D.pokemon[k].n)});
 }
+// 開発者だけの「✎ わざカスタム」（ポケモンに好きなわざ・新しく作ったわざを覚えさせて順位を見る・タイプ別火力と同じ部品）
+if(window.GonaviDevMv){
+  GonaviDevMv.on(()=>{ mpTopCache={key:null,rows:null}; if(boss) renderMinPlayers(); renderRank(); });
+  GonaviDevMv.mount(document.getElementById('devexbox'), {names:()=>KEYS.map(k=>D.pokemon[k].n), moves:D.moves, typeJa:D.typeJa, curType:()=>null,
+    learn:n=>{ const k=KEYS.find(k=>D.pokemon[k].n===n); const p=k&&D.pokemon[k]; return p?{q:[...p.q,...(p.eq||[])],c:[...p.c,...(p.ec||[])]}:null; }});
+}
 function syncModes(){
   shadowBtn.setAttribute('aria-pressed',fShadow);
   megaBtn.setAttribute('aria-pressed',fMega);
@@ -1258,7 +1274,7 @@ function buildRanking(){
       const base=bestCombo(p,bt,false);
       if(base) rows.push({k,p,shadow:false,...base});
     }
-    if((p.shadow||devSh.has(k)) && fShadow && !(fBulk&&isLowBulk(p,true))){
+    if((p.shadow||devSh.has(k)||(window.GonaviDevMv&&GonaviDevMv.hasShadow(p.n))) && fShadow && !(fBulk&&isLowBulk(p,true))){
       const s=bestCombo(p,bt,true);
       if(s) rows.push({k,p,shadow:true,...s});
     }
@@ -1350,8 +1366,8 @@ function shieldRows(){
     const {maxHit,maxMove}=shieldMaxHit(bp,p,def);
     if(!maxMove || maxHit>=hp) continue;   // 1発で倒れる可能性があるメガは除外
     // 2/3分割SPアタック限定で対ボス最高DPS構成
-    const fs=fastMoves(p).filter(x=>D.moves[x.id].e>0 && !x.id.startsWith('HIDDEN_POWER_'));
-    const cs=chgMoves(p).filter(x=>{const m=D.moves[x.id];return m.e<0 && Math.abs(m.e)<100;});
+    const fs=fastMoves(p,false).filter(x=>D.moves[x.id].e>0 && !x.id.startsWith('HIDDEN_POWER_'));
+    const cs=chgMoves(p,false).filter(x=>{const m=D.moves[x.id];return m.e<0 && Math.abs(m.e)<100;});
     let best=null;
     const atk=(p.a+15)*D.cpm['50'];
     for(const f of fs){

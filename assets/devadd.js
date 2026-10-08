@@ -26,11 +26,14 @@
    ⚠ shadowNames を渡したページだけ「シャドウ」ボタンが出る（2026-10-03タダシさん指示・タイプ別火力とレイド火力）。
       押すと、実装済みでシャドウがまだ無いポケモンを「シャドウ◯◯」として足せる。ページ側は apply の中で
       on('シャドウ' + 名前) を見て、そのポケモンにシャドウの行を足す（計算はツールのシャドウと同じ）。
+   ⚠ 4つ目に modes を渡したページだけ「ダイマックス｜キョダイマックス」のボタンが出る（2026-10-08タダシさん指示・マックスバトル タイプ別）。
+      足したときに点いていたボタンを名前ごとに覚え（site_devadd_mode）、ページは GonaviDevAdd.modeOf(名前)（'D'・'G'・'DG'）で見る。
+      allow(名前, 'D'|'G') を渡すと、その形で足せない候補を薄くする。リンクでは「名前~G」の形で渡る。
    保存キーは site_devadd（開発者だけの設定なので「データの引っ越し」からは外してある）。 */
 (function () {
   'use strict';
-  var KEY = 'site_devadd';
-  var list = [], mounted = [], cssDone = false, cache = {};
+  var KEY = 'site_devadd', MKEY = 'site_devadd_mode';
+  var list = [], mounted = [], cssDone = false, cache = {}, modes = {};
   var REGION = ['ガラル', 'アローラ', 'ヒスイ', 'パルデア'];
 
   function dev() { try { return !!(window.GonaviDev && window.GonaviDev()); } catch (e) { return false; } }
@@ -50,8 +53,15 @@
       var v = JSON.parse(localStorage.getItem(KEY) || '[]');
       list = Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x; }) : [];
     } catch (e) { list = []; }
+    try { var w = JSON.parse(localStorage.getItem(MKEY) || '{}'); modes = w && typeof w === 'object' ? w : {}; } catch (e) { modes = {}; }
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { } }
+  function save() {
+    try {
+      // 外した名前の形は捨てる
+      var keep = {}; list.forEach(function (n) { var c = canon(n); if (modes[c]) keep[c] = modes[c]; }); modes = keep;
+      localStorage.setItem(KEY, JSON.stringify(list)); localStorage.setItem(MKEY, JSON.stringify(modes));
+    } catch (e) { }
+  }
   function has(n) { var c = canon(n); for (var i = 0; i < list.length; i++) if (canon(list[i]) === c) return true; return false; }
 
   // ---- リンクで受け取る。⚠ location.search だけで見ない（住所を書き直すページがあるため・?dev=1 と同じ） ----
@@ -70,7 +80,13 @@
     } catch (e) { }
     if (v == null) return;
     var seen = {};
-    list = v.split(',').map(function (s) { return s.trim(); }).filter(function (s) {
+    modes = {};
+    list = v.split(',').map(function (s) {
+      // 「名前~G」＝形つき（マックスバトル）
+      s = s.trim(); var i = s.lastIndexOf('~');
+      if (i > 0) { var mk = s.slice(i + 1); s = s.slice(0, i).trim(); if (/^(D|G|DG)$/.test(mk)) modes[canon(s)] = mk; }
+      return s;
+    }).filter(function (s) {
       var c = canon(s); if (!s || seen[c]) return false; seen[c] = 1; return true;
     });
     save();
@@ -137,7 +153,12 @@
       '.dvashrow button.dvash{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border-radius:999px;',
       '  border:1px solid #8a5cd6;background:rgba(0,0,0,.28);color:#d9c2ff;padding:4px 11px}',
       '.dvashrow button.dvash[aria-pressed="true"]{background:linear-gradient(160deg,#d9b8ff,#9b5cf0 55%,#6a2fc0);color:#fff;border-color:transparent}',
-      '.dvashrow .shadowmark{margin-right:3px}'
+      '.dvashrow .shadowmark{margin-right:3px}',
+      '.dvamoderow{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 7px}',
+      '.dvamoderow button{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border-radius:999px;',
+      '  border:1px solid #c0408f;background:rgba(0,0,0,.28);color:#ffc6e8;padding:4px 11px}',
+      '.dvamoderow button[aria-pressed="true"]{background:linear-gradient(160deg,#ffc1e6,#e0479e 55%,#a1206d);color:#fff;border-color:transparent}',
+      '.dvachips span i{font-style:normal;font-size:.66rem;opacity:.85;margin-left:-1px}'
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -150,12 +171,15 @@
     wrap.innerHTML =
       '<button type="button" class="dvabtn" aria-expanded="false" title="開発者だけの機能です。まだ実装されていないポケモンをこの一覧に足します（動画用）">＋ 未実装<b>0</b></button>' +
       '<div class="dvapanel">' +
-      '<p class="dvanote">まだ実装されていないポケモンを、この端末の一覧にだけ足します（開発者だけ・ふつうの人の画面は変わりません）。<br>' +
-      '性能はゲーム内データのいまの値です。実装までに変わることがあります。ここで足したポケモンは、ほかのランキングにも入ります。</p>' +
+      '<p class="dvanote">' + (m.note || 'まだ実装されていないポケモンを、この端末の一覧にだけ足します（開発者だけ・ふつうの人の画面は変わりません）。<br>' +
+      '性能はゲーム内データのいまの値です。実装までに変わることがあります。ここで足したポケモンは、ほかのランキングにも入ります。') + '</p>' +
       (m.shadowNames ? '<div class="dvashrow"><button type="button" class="dvash" aria-pressed="false" ' +
         'title="押しているあいだは、実装済みでシャドウがまだ無いポケモンを探します（シャドウ◯◯として足します）">' +
         '<i class="shadowmark"></i>シャドウ未実装</button></div>' : '') +
-      '<div class="sugg"><input type="search" placeholder="未実装のポケモン名で探す" autocomplete="off" ' +
+      (m.modes ? '<div class="dvamoderow">' + m.modes.map(function (o, i) {
+        return '<button type="button" data-mk="' + o.k + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '" title="' + esc(o.title || '') + '">' + esc(o.label) + '</button>';
+      }).join('') + '</div>' : '') +
+      '<div class="sugg"><input type="search" placeholder="' + esc(m.placeholder || '未実装のポケモン名で探す') + '" autocomplete="off" ' +
       'autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
       '<div class="dvachips"></div>' +
       '<div class="dvarow"><button type="button" class="dvaclear">すべて外す</button>' +
@@ -170,9 +194,24 @@
     if (shBtn) shBtn.onclick = function () {
       shMode = !shMode;
       shBtn.setAttribute('aria-pressed', shMode ? 'true' : 'false');
-      inp.placeholder = shMode ? 'シャドウが未実装のポケモン名で探す' : '未実装のポケモン名で探す';
+      inp.placeholder = shMode ? 'シャドウが未実装のポケモン名で探す' : (m.placeholder || '未実装のポケモン名で探す');
       inp.focus(); showSugg();
     };
+
+    // 形のボタン（両方点けてもよい・最低1つ）。足すときに点いている形で覚える
+    var curMode = function () {
+      var s2 = ''; wrap.querySelectorAll('.dvamoderow button[aria-pressed="true"]').forEach(function (b) { s2 += b.dataset.mk; });
+      return s2;
+    };
+    m.curMode = curMode;
+    wrap.querySelectorAll('.dvamoderow button').forEach(function (b) {
+      b.onclick = function () {
+        var on = b.getAttribute('aria-pressed') !== 'true';
+        if (!on && wrap.querySelectorAll('.dvamoderow button[aria-pressed="true"]').length <= 1) return;
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        showSugg();
+      };
+    });
 
     btn.onclick = function () {
       var open = panel.classList.toggle('open');
@@ -195,9 +234,13 @@
       // 足しているものは「✓」を付けて残し、もう一度押すと外す（続けて何匹でも選べる・2026-09-27タダシさん指示）
       ul.innerHTML = hit.length
         ? hit.map(function (n) {
-            var on = has(n);
+            var on = has(n), cm = m.modes ? curMode() : '';
+            var ok = !m.allow || cm.split('').some(function (k) { return m.allow(n, k); });
+            var same = on && (!m.modes || modeOf(n) === cm);
+            var note = !on ? '' : same ? '（足しています・押すと外す）' : '（' + modeLabel(m, modeOf(n)) + 'で足しています・押すと形を変える）';
+            if (!ok && !on) return '<div class="dup" data-x="1">' + esc(n) + '<small>（この形では足せません）</small></div>';
             return '<div' + (on ? ' class="on"' : '') + ' data-n="' + esc(n) + '">' +
-              (on ? '✓ ' : '') + esc(n) + (on ? '<small>（足しています・押すと外す）</small>' : '') + '</div>';
+              (on ? '✓ ' : '') + esc(n) + (note ? '<small>' + note + '</small>' : '') + '</div>';
           }).join('')
         : '<div class="dup">' + (shMode ? 'シャドウが未実装のポケモンにありません' : 'このツールに足せる未実装のポケモンにありません') + '</div>';
       // ⚠ 共通の守り(suggGuard)が書いた display:none を消す（残ると2匹目から候補が出ない・devex.js と同じ）
@@ -210,7 +253,12 @@
     // 選んでも一覧は閉じない（続けて選べる）。一覧の外を触ったら閉じる
     ul.addEventListener('click', function (e) {
       var d = e.target.closest('div[data-n]'); if (!d) return;
-      if (has(d.dataset.n)) remove(d.dataset.n); else add(d.dataset.n);
+      var n = d.dataset.n;
+      if (m.modes) {
+        var cm = curMode();
+        if (has(n) && modeOf(n) === cm) remove(n);
+        else { modes[canon(n)] = cm; if (has(n)) { save(); fire(); } else add(n); }
+      } else if (has(n)) remove(n); else add(n);
       showSugg();
     });
     document.addEventListener('pointerdown', function (e) {
@@ -219,7 +267,9 @@
     }, true);
     wrap.querySelector('.dvaclear').onclick = function () { if (list.length) { list = []; save(); fire(); } };
     wrap.querySelector('.dvacopy').onclick = function () {
-      var u = location.origin + location.pathname + '?devadd=' + (list.length ? encodeURIComponent(list.join(',')) : '');
+      var u = location.origin + location.pathname + '?devadd=' + (list.length ? encodeURIComponent(list.map(function (n) {
+        var k = modes[canon(n)]; return k ? n + '~' + k : n;
+      }).join(',')) : '');
       var done = function () { msg.textContent = 'コピーしました'; setTimeout(function () { msg.textContent = ''; }, 1600); };
       if (navigator.clipboard) navigator.clipboard.writeText(u).then(done, function () { prompt('このリンクをコピーしてください', u); });
       else prompt('このリンクをコピーしてください', u);
@@ -237,7 +287,7 @@
         ? list.map(function (n) {
             var miss = names && names.indexOf(canon(n)) < 0;
             return '<span' + (miss ? ' class="miss" title="このツールには入らないポケモンです（ほかのランキングには入ります）"' : '') + '>' +
-              esc(n) + '<button type="button" data-n="' + esc(n) + '" title="外す">×</button></span>';
+              esc(n) + (m.modes ? '<i>（' + esc(modeLabel(m, modeOf(n), true)) + '）</i>' : '') + '<button type="button" data-n="' + esc(n) + '" title="外す">×</button></span>';
           }).join('')
         : '<em style="opacity:.6">いまは1匹も足していません</em>';
     });
@@ -247,6 +297,11 @@
     remove(b.dataset.n);
   });
 
+  function modeOf(n) { return modes[canon(n)] || 'D'; }
+  function modeLabel(m, k, short) {
+    return (m.modes || []).filter(function (o) { return k.indexOf(o.k) >= 0; })
+      .map(function (o) { return short && o.short ? o.short : o.label; }).join('・');
+  }
   function applyOne(m) {
     if (!m.data) return;
     try { m.apply(m.data, function (n) { return dev() && list.length > 0 && has(n); }); }
@@ -264,6 +319,8 @@
     // ⚠ 開発者の端末でなければ必ず false（ふつうの人の一覧には1匹も足さない）
     has: function (name) { return dev() && list.length > 0 && has(name); },
     list: function () { return dev() ? list.slice() : []; },
+    // 形（'D'・'G'・'DG'）。形を選ばずに足した名前は 'D'
+    modeOf: function (name) { return modeOf(name); },
     // host=ボタンの置き場所 ／ url=未実装のデータ ／ apply(data, on)=一覧に足し・外して描き直す関数
     // ⚠ 開発者かどうかは home.js の GonaviDev() で決まるので、**読み込みが終わってから**置く
     mount: function (host, url, apply, opts) {
@@ -271,7 +328,10 @@
       var go = function () {
         if (!dev()) return;
         var m = { url: url, apply: apply, data: null, wrap: null,
-          shadowNames: opts && typeof opts.shadowNames === 'function' ? opts.shadowNames : null };
+          shadowNames: opts && typeof opts.shadowNames === 'function' ? opts.shadowNames : null,
+          modes: opts && Array.isArray(opts.modes) && opts.modes.length ? opts.modes : null,
+          allow: opts && typeof opts.allow === 'function' ? opts.allow : null,
+          note: opts && opts.note || '', placeholder: opts && opts.placeholder || '' };
         mounted.push(m);
         build(m, host); render();
         fetchData(url).then(function (d) {
