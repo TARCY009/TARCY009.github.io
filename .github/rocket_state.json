@@ -3,11 +3,11 @@
  "pending": {
   "electric": {
    "since": "2026-10-06",
-   "told": false
+   "told": true
   },
   "water_m": {
    "since": "2026-10-06",
-   "told": false
+   "told": true
   }
  }
 }
