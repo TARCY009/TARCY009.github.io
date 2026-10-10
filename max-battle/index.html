@@ -292,6 +292,8 @@ footer a{color:var(--spec)}
 </style>
 <!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
 <script src="/assets/devex.js"></script>
+<!-- 開発者だけの「＋ 未実装」(まだダイマックスできないポケモンを動画用に足す)。⚠ ページ本体より先に読む -->
+<script src="/assets/devadd.js"></script>
 <!-- ダイマックス勢のノーマルアタックの決め方（画面と答え合わせで共通） -->
 <script src="/max-battle/pick-fast.js"></script>
 </head>
@@ -483,6 +485,11 @@ footer a{color:var(--spec)}
       tanks.push(p);
     }
   }
+  // 開発者だけの「＋ 未実装」で足したポケモン（ふつうの人は常に空・形は roster と同じ。2026-10-10タダシさん指示）。
+  // タンクは種単位なので、すでに一覧にいる名前と重複は足さない
+  let extra = [];
+  const tankNames = new Set(tanks.map(p => p.n));
+  const extraTanks = () => extra.filter((p, i, a) => !tankNames.has(p.n) && a.findIndex(q => q.n === p.n) === i);
   function bulkOf(p){
     // 耐久指数は種族値ベース: HP種族値 × 防御種族値 (例: ラティアス 190×246=46,740)
     // ザマゼンタの開始時ウォールは実HP60相当のため、種族値換算(60÷PL50係数≒71.4)で上乗せ
@@ -766,7 +773,7 @@ footer a{color:var(--spec)}
 
   function computeAtk(){
     const rows = [];
-    for(const p of D.roster){
+    for(const p of D.roster.concat(extra)){
       // 開発者だけの除外（未実装の先行収録を動画用に外す・ふつうの人には効かない）
       if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;
       const power = D.power[p.cat];
@@ -819,7 +826,7 @@ footer a{color:var(--spec)}
   function computeTank(){
     const moves = bossMoves();
     const rows = [];
-    for(const p of tanks){
+    for(const p of tanks.concat(extraTanks())){
       if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;   // 開発者だけの除外
       const half = halfMoveOf(p);
       const bulk = bulkOf(p);
@@ -861,7 +868,7 @@ footer a{color:var(--spec)}
     if(mi === undefined){ ranked = []; renderSwap(null); return; }
     const m = D.cmoves[mi];
     const rows = [];
-    for(const p of tanks){
+    for(const p of tanks.concat(extraTanks())){
       if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;   // 開発者だけの除外
       const bulk = bulkOf(p);
       const mult = effVs(m.t, p.ty);
@@ -1292,6 +1299,31 @@ footer a{color:var(--spec)}
   if(window.GonaviDevEx){
     GonaviDevEx.mount(document.getElementById('devexbox'), ()=>D.roster.map(p=>p.n));
     GonaviDevEx.on(()=>{ compute(); render(); });
+  }
+  // 開発者だけの「＋ 未実装」（2026-10-10タダシさん指示・マックスバトル タイプ別と同じ部品とデータ）。
+  // まだダイマックスできないポケモン（未実装も含む）をダイマックス／キョダイマックスを選んで足す。
+  // キョダイわざがゲーム内データに無いポケモンは1つ目のタイプの仮のわざ。
+  // ⚠ 候補データにSPアタック（cm）が無いので、足したポケモンの行にはSP判定が出ない（spBestOf が null を返す）
+  if(window.GonaviDevAdd){
+    let byName = new Map();
+    GonaviDevAdd.mount(document.getElementById('devexbox'), '/max-battle/data/max_unreleased.json', (U, on) => {
+      byName = new Map(U.entries.map(c => [c.n, c]));
+      extra = [];
+      for(const c of U.entries){
+        if(!on(c.n)) continue;
+        const mk = GonaviDevAdd.modeOf(c.n);
+        if(mk.includes('D') && !c.d) extra.push(Object.assign({}, c, {cat:'D'}));
+        if(mk.includes('G') && !c.g) extra.push(Object.assign({}, c, {cat:'G', ft: c.gft != null ? c.gft : c.ty[0], gm: c.ggm || 'キョダイわざ（仮）'}));
+      }
+      shown = 30; compute();
+    }, {
+      modes: [{k:'D', label:'ダイマックス', short:'ダイ', title:'ダイマックスとして足します（マックスわざはノーマルアタックのタイプ）'},
+              {k:'G', label:'キョダイマックス', short:'キョダイ', title:'キョダイマックスとして足します（キョダイわざがゲーム内データに無いポケモンは、1つ目のタイプの仮のわざ）'}],
+      allow: (n, k) => { const c = byName.get(n); return !!c && (k === 'D' ? !c.d : !c.g); },
+      placeholder: 'ダイマックスできないポケモン名で探す',
+      note: 'まだダイマックス・キョダイマックスできないポケモン（未実装のポケモンも含む）を、この端末の一覧にだけ足します（開発者だけ・ふつうの人の画面は変わりません）。<br>' +
+            '先に「ダイマックス」「キョダイマックス」を選んでから名前を押します（両方点けると両方入ります）。キョダイわざがゲーム内データに無いポケモンは、1つ目のタイプの仮のわざにします。足したポケモンの行にはSP判定が出ません。'
+    });
   }
 })();
 // 使い方タブ(仕様・前提の説明はここ1か所にまとめる)
