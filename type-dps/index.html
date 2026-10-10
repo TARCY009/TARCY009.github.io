@@ -682,7 +682,7 @@ if(window.GonaviDevEx){
 // 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）
 if(window.GonaviDevAdd){
   GonaviDevAdd.mount($('devexbox'), '/pokedex/unreleased.json', (U, on)=>{
-    GonaviDevAdd.plusSync(D.moves, PLUS_IDS); MegaLv.apply(D.moves, PLUS_IDS);
+    GonaviDevAdd.megaSync(D.pokemon, KEYS); GonaviDevAdd.plusSync(D.moves, PLUS_IDS); MegaLv.apply(D.moves, PLUS_IDS);
     for(const [k,p] of Object.entries(U.pokemon||{})){
       const i=KEYS.indexOf(k);
       if(on(p.n)){ if(!D.pokemon[k]) D.pokemon[k]=p; if(i<0) KEYS.push(k); }
@@ -691,7 +691,7 @@ if(window.GonaviDevAdd){
     // シャドウ未実装のポケモンを「シャドウ◯◯」で足したもの（計算はふつうのシャドウと同じ）
     devSh=new Set(KEYS.filter(k=>!D.pokemon[k].shadow&&on('シャドウ'+D.pokemon[k].n)));
     rankCache.clear(); sync();
-  }, {shadowNames:()=>KEYS.filter(k=>{const p=D.pokemon[k]; return !p.shadow&&p.fe&&!p.mega;}).map(k=>D.pokemon[k].n), megaPlus:{megas:()=>KEYS.filter(k=>D.pokemon[k].mega&&!/_PRIMAL$/.test(k)).map(k=>D.pokemon[k].n), moves:D.moves,
+  }, {shadowNames:()=>KEYS.filter(k=>{const p=D.pokemon[k]; return !p.shadow&&p.fe&&!p.mega;}).map(k=>D.pokemon[k].n), megaPlus:{megas:()=>KEYS.filter(k=>D.pokemon[k].mega&&!/_PRIMAL$/.test(k)).map(k=>D.pokemon[k].n), moves:D.moves, pokemon:D.pokemon, keys:KEYS, typeJa:D.typeJa,
        learn:n=>{ const k=KEYS.find(k=>D.pokemon[k].n===n); const p=k&&D.pokemon[k]; return p?[...p.c,...(p.ec||[])]:[]; }}});
 }
 // 開発者だけの「✎ わざカスタム」（ポケモンに好きなわざ・新しく作ったわざを覚えさせて順位を見る）
