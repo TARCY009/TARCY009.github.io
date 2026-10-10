@@ -381,7 +381,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
   <div class="card" id="herocard"></div>
   <div class="card" id="mvcard" data-snap-nodev></div>
   <!-- 1ポケモン1ページへの入口。わざの枠の下に模擬戦ボタンと同じ作りの大きなボタン（2026-10-03タダシさん指示） -->
-  <a class="pghero" id="pglink" hidden data-snap-skip data-snap-nodev><span class="pl">▶</span><span class="tx"><b class="t1"></b><span class="t2">レイド・ジム・マックスバトル・GBLでの順位と使い道をまとめたページ</span></span></a>
+  <a class="pghero" id="pglink" hidden data-snap-skip data-snap-nodev><span class="pl">▶</span><span class="tx"><b class="t1"></b><span class="t2">レイド・ジム・マックスバトル・GBLでの順位をまとめたページ</span></span></a>
 </div>
 <div class="card" id="emptycard"><div class="mtnote">ポケモンを選ぶと、種族値・最大CP・弱点・わざ性能が出ます</div></div>
 
@@ -827,7 +827,7 @@ function pageLink(){
   const pk=PAGEMAP&&n&&(PAGEMAP[n]||PAGEMAP[n.replace(/（.*?）/g,'')]);
   if(!pk){a.hidden=true;return;}
   a.href='/pokedex/'+pk+'/';
-  a.querySelector('.t1').textContent=e.name+'の強さと使い道';
+  a.querySelector('.t1').textContent=e.name+'の各バトルでの強さ';
   a.title='レイド・ジム・マックスバトル・GBL・ロケット団ごとの強さと、進化の条件・わざをまとめたページです';
   a.hidden=false;
 }

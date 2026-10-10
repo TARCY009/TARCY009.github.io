@@ -256,3 +256,7 @@ html,body{overflow-x:clip}
 @media (max-width:620px){.hero .wm{right:-60px;top:30px;opacity:.075}}
 
 @media (min-width:621px){.tiles{grid-template-columns:repeat(3,1fr)}.tiles .tile,.tiles .tile.two{grid-column:span 1}}
+.arrow small.cd{display:block;max-width:9.5em;margin:3px auto 12px;padding:2px 7px;border-radius:8px;background:rgba(255,255,255,.07);font-size:.66rem;line-height:1.35;white-space:normal;text-align:center}:root.light .arrow small.cd{background:rgba(20,30,70,.07)}.flow+.flow{margin-top:10px}
+/* 名前の右の大きなタイプアイコン（透かし）: 小さいアイコン用の立体加工（光・影）を外し、下の数字の段にかからないよう下側を消す（2026-10-10タダシさん指摘「タイプアイコンがおかしい」） */
+.hero .wm .tbadge,.hero .wm .tico{filter:none}.hero .wm .tbadge::after{display:none}
+.hero .wm{-webkit-mask-image:linear-gradient(#000 50%,transparent 78%);mask-image:linear-gradient(#000 50%,transparent 78%)}

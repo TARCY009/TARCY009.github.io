@@ -728,7 +728,7 @@ def head_tags(pg, name, desc):
     """検索エンジン・SNS向けのタグ（build_seo.py の head_block と同じ並び）。確認用は全部 noindex"""
     e = lambda x: html.escape(x, quote=True)
     url = SITE + '/pokedex/' + pg['pk'] + '/'
-    title = name + 'の強さと使い道｜ポケモンGO｜GOナビ'
+    title = name + 'の各バトルでの強さ｜ポケモンGO｜GOナビ'   # 「使い道」は人によって不快に感じるので使わない（2026-10-10タダシさん指示）
     t = TIERS.get(pg['pk'], {})
     L = ['<title>' + e(title) + '</title>', '<meta name="description" content="' + e(desc) + '">']
     if not PUBLISH or HOLD or t.get('noindex'):
