@@ -450,7 +450,7 @@ def main():
                 md.append(f'  - 前: {names_of(old, P)}')
         md.append('')
     if notify_wait:
-        md.append(f'## ⏳ {WAIT_DAYS}日以上そろわない人がいます（確認をお願いします）\n')
+        md.append(f'## ⏳ {WAIT_DAYS}日以上そろわないポケモンがいます（確認をお願いします）\n')
         for gid, days, vals in notify_wait:
             md.append(f'- **{label(gid)}**（{days}日）')
             for n, v in zip((1, 2, 3), vals):
@@ -492,7 +492,7 @@ def main():
     if changed:
         head.append(f'更新{len(changed)}人')
     if notify_wait:
-        head.append(f'要確認{len(notify_wait)}人')
+        head.append(f'要確認{len(notify_wait)}件')
     if new_fail:
         head.append(f'読み取り失敗{len(new_fail)}件')
     print('HEADLINE: ' + '・'.join(head))

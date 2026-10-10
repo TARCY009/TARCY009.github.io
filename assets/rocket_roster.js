@@ -8,7 +8,7 @@
 // わざは公開情報が安定しないため持たない（画面の選択欄で選ぶ／既定はおぼえるわざの先頭）。
 // grunt の id は「タイプ」（同じタイプに2人いれば _m=♂ / _f=♀）、none=セリフにタイプなし、decoy=おとり。
 window.ROCKET_ROSTER = {
-  updated: '2026年10月6日',
+  updated: '2026年10月10日',
   list: {
     leader: [
       { id: 'sierra', name: 'シエラ', slots: [
@@ -54,6 +54,16 @@ window.ROCKET_ROSTER = {
         ['mudkip', 'tentacool', 'krabby'],
         ['dewpider', 'swampert', 'sharpedo'],
         ['walrein', 'greninja', 'tentacruel'],
+      ] },
+      { id: 'water_m', name: 'みず♂', slots: [
+        ['magikarp', 'feebas'],
+        ['magikarp'],
+        ['magikarp', 'gyarados'],
+      ] },
+      { id: 'electric', name: 'でんき', slots: [
+        ['voltorb', 'shinx', 'helioptile'],
+        ['geodude_alolan', 'magnemite', 'electabuzz'],
+        ['ampharos', 'luxray', 'galvantula'],
       ] },
       { id: 'ice', name: 'こおり', slots: [
         ['seel', 'delibird', 'spheal'],
