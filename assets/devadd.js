@@ -29,11 +29,18 @@
    ⚠ 4つ目に modes を渡したページだけ「ダイマックス｜キョダイマックス」のボタンが出る（2026-10-08タダシさん指示・マックスバトル タイプ別）。
       足したときに点いていたボタンを名前ごとに覚え（site_devadd_mode）、ページは GonaviDevAdd.modeOf(名前)（'D'・'G'・'DG'）で見る。
       allow(名前, 'D'|'G') を渡すと、その形で足せない候補を薄くする。リンクでは「名前~G」の形で渡る。
+   ⚠ 4つ目に megaPlus を渡したページだけ「メガの新しい＋わざ」の欄が出る（2026-10-10タダシさん指示・レイド火力とタイプ別火力）。
+      スーパーマックスレベル解禁と同時に発表される＋わざを、公式の威力だけで先に足す。
+      ＋わざの時間（全体・ダメージ発生・判定終了）は元のわざと同じ・ゲージは1本（これまでの＋わざがすべてそう）・タイプも元のわざ。
+      威力はメガLv1の値（公式発表の値）で、メガLvの倍率はページ側の MegaLv.apply がいつもどおり掛ける。
+      ページ側: apply の中で GonaviDevAdd.plusSync(D.moves, PLUS_IDS) → MegaLv.apply(D.moves, PLUS_IDS)、
+      わざの候補を作るところで GonaviDevAdd.plusFor(名前)（わざIDの配列・開発者でなければ常に空）。
+      保存キーは site_devadd_plus・リンクは ?devplus=名前~元のわざID~威力,…（空で全部外す）。
    保存キーは site_devadd（開発者だけの設定なので「データの引っ越し」からは外してある）。 */
 (function () {
   'use strict';
-  var KEY = 'site_devadd', MKEY = 'site_devadd_mode';
-  var list = [], mounted = [], cssDone = false, cache = {}, modes = {};
+  var KEY = 'site_devadd', MKEY = 'site_devadd_mode', PKEY = 'site_devadd_plus';
+  var list = [], mounted = [], cssDone = false, cache = {}, modes = {}, plus = [];
   var REGION = ['ガラル', 'アローラ', 'ヒスイ', 'パルデア'];
 
   function dev() { try { return !!(window.GonaviDev && window.GonaviDev()); } catch (e) { return false; } }
@@ -54,7 +61,15 @@
       list = Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x; }) : [];
     } catch (e) { list = []; }
     try { var w = JSON.parse(localStorage.getItem(MKEY) || '{}'); modes = w && typeof w === 'object' ? w : {}; } catch (e) { modes = {}; }
+    try {
+      var x = JSON.parse(localStorage.getItem(PKEY) || '[]');
+      plus = Array.isArray(x) ? x.filter(okPlus) : [];
+    } catch (e) { plus = []; }
   }
+  // メガの新しい＋わざ: {n:メガの名前, b:元のわざID, p:威力(メガLv1)}
+  function okPlus(x) { return x && typeof x.n === 'string' && x.n && typeof x.b === 'string' && /^[A-Z0-9_]+$/.test(x.b) && +x.p > 0 && +x.p < 10000; }
+  function plusId(x) { return 'DEVPLUS_' + x.b + '_' + Math.round(x.p * 10); }
+  function savePlus() { try { localStorage.setItem(PKEY, JSON.stringify(plus)); } catch (e) { } }
   function save() {
     try {
       // 外した名前の形は捨てる
@@ -65,6 +80,30 @@
   function has(n) { var c = canon(n); for (var i = 0; i < list.length; i++) if (canon(list[i]) === c) return true; return false; }
 
   // ---- リンクで受け取る。⚠ location.search だけで見ない（住所を書き直すページがあるため・?dev=1 と同じ） ----
+  function fromUrlPlus() {
+    var v = null;
+    try {
+      var q = new URLSearchParams(location.search);
+      if (q.has('devplus')) v = q.get('devplus');
+      if (v == null) {
+        var nav = performance.getEntriesByType('navigation')[0];
+        if (nav && nav.name) {
+          var q2 = new URLSearchParams(new URL(nav.name, location.href).search);
+          if (q2.has('devplus')) v = q2.get('devplus');
+        }
+      }
+    } catch (e) { }
+    if (v == null) return;
+    plus = v.split(',').map(function (s) {
+      var a = s.split('~'); return { n: (a[0] || '').trim(), b: (a[1] || '').trim(), p: +a[2] };
+    }).filter(okPlus);
+    savePlus();
+    try {
+      var u = new URL(location.href);
+      u.searchParams.delete('devplus');
+      history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+    } catch (e) { }
+  }
   function fromUrl() {
     var v = null;
     try {
@@ -97,7 +136,7 @@
     } catch (e) { }
   }
 
-  load(); fromUrl();
+  load(); fromUrl(); fromUrlPlus();
 
   // データの中の名前（形はファイルごとに違う）
   function namesOf(data) {
@@ -158,7 +197,20 @@
       '.dvamoderow button{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border-radius:999px;',
       '  border:1px solid #c0408f;background:rgba(0,0,0,.28);color:#ffc6e8;padding:4px 11px}',
       '.dvamoderow button[aria-pressed="true"]{background:linear-gradient(160deg,#ffc1e6,#e0479e 55%,#a1206d);color:#fff;border-color:transparent}',
-      '.dvachips span i{font-style:normal;font-size:.66rem;opacity:.85;margin-left:-1px}'
+      '.dvachips span i{font-style:normal;font-size:.66rem;opacity:.85;margin-left:-1px}',
+      '.dvaplus{margin-top:11px;padding-top:9px;border-top:1px dashed #1f8f86}',
+      '.dvaplus .dvaplushd{font-weight:800;color:#ffc6e8;margin-bottom:3px}',
+      '.dvaplus .dvaform{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}',
+      '.dvaplus .dvaform .sugg{flex:1 1 100%}',
+      '.dvaplus select,.dvaplus .dvapw{font-size:16px;padding:5px 8px;border-radius:9px;border:1px solid #1f8f86;background:rgba(0,0,0,.34);color:#fff}',
+      '.dvaplus select{flex:1 1 160px;min-width:0}',
+      '.dvaplus .dvapw{width:92px;box-sizing:border-box}',
+      '.dvaplus .dvapadd{font:inherit;font-size:.76rem;font-weight:800;cursor:pointer;border-radius:999px;border:0;padding:5px 14px;',
+      '  background:linear-gradient(160deg,#ffc1e6,#e0479e 55%,#a1206d);color:#fff}',
+      '.dvaplus .dvapmsg{flex:1 1 100%;color:#ffb3c8;font-size:.71rem}',
+      '.dvaplus .dvachips span{background:rgba(224,71,158,.16);border-color:#c0408f}',
+      '.dvaplus .dvachips b{color:#f08ccd}',
+      '.dvaplus .dvachips em.dvapt{font-style:normal}'
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -182,6 +234,15 @@
       '<div class="sugg"><input type="search" placeholder="' + esc(m.placeholder || '未実装のポケモン名で探す') + '" autocomplete="off" ' +
       'autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
       '<div class="dvachips"></div>' +
+      (m.megaPlus ? '<div class="dvaplus"><div class="dvaplushd">メガの新しい＋わざ</div>' +
+        '<p class="dvanote">公式発表の威力だけで、まだ無い＋わざをメガシンカポケモンに足します。時間とタイプは元のわざと同じ・ゲージは1本（これまでの＋わざと同じ）。' +
+        '威力は発表の値（メガLv1）を入れてください。メガLvの倍率はいつもどおり掛かります。ランキングに出すには「メガ・ゲンシ」を点けてください。</p>' +
+        '<div class="dvaform"><div class="sugg"><input type="search" class="dvapn" placeholder="メガシンカポケモン名で探す" autocomplete="off" ' +
+        'autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><div class="sugg-list"></div></div>' +
+        '<select class="dvapb" title="＋わざの元になるSPアタック"><option value="">元のわざ</option></select>' +
+        '<input type="text" class="dvapw" inputmode="decimal" placeholder="威力" title="公式発表の威力（メガLv1の値）" autocomplete="off">' +
+        '<button type="button" class="dvapadd">足す</button><span class="dvapmsg"></span></div>' +
+        '<div class="dvachips dvapchips"></div></div>' : '') +
       '<div class="dvarow"><button type="button" class="dvaclear">すべて外す</button>' +
       '<button type="button" class="dvacopy">🔗 このリンクをコピー</button><span class="dvamsg"></span></div>' +
       '</div>';
@@ -265,19 +326,86 @@
       if (!ul.classList.contains('open') || e.target.closest('.sugg') === inp.parentNode) return;
       inp.value = ''; ul.classList.remove('open'); ul.innerHTML = '';
     }, true);
-    wrap.querySelector('.dvaclear').onclick = function () { if (list.length) { list = []; save(); fire(); } };
+    wrap.querySelector('.dvaclear').onclick = function () {
+      if (list.length || plus.length) { list = []; save(); plus = []; savePlus(); fire(); }
+    };
+    if (m.megaPlus) buildPlus(m, wrap);
     wrap.querySelector('.dvacopy').onclick = function () {
       var u = location.origin + location.pathname + '?devadd=' + (list.length ? encodeURIComponent(list.map(function (n) {
         var k = modes[canon(n)]; return k ? n + '~' + k : n;
       }).join(',')) : '');
+      if (m.megaPlus) u += '&devplus=' + encodeURIComponent(plus.map(function (x) { return x.n + '~' + x.b + '~' + x.p; }).join(','));
       var done = function () { msg.textContent = 'コピーしました'; setTimeout(function () { msg.textContent = ''; }, 1600); };
       if (navigator.clipboard) navigator.clipboard.writeText(u).then(done, function () { prompt('このリンクをコピーしてください', u); });
       else prompt('このリンクをコピーしてください', u);
     };
   }
 
+  // ---- メガの新しい＋わざの欄 ----
+  function buildPlus(m, wrap) {
+    var mp = m.megaPlus, box = wrap.querySelector('.dvaplus');
+    var inp = box.querySelector('.dvapn'), ul = box.querySelector('.sugg-list');
+    var sel = box.querySelector('.dvapb'), pw = box.querySelector('.dvapw'), msg = box.querySelector('.dvapmsg');
+    var cur = '';
+    var isChg = function (id) { var v = mp.moves[id]; return v && v.e < 0 && !/_PLUS$|^DEVPLUS_|^DEVMV_/.test(id) && !/^[0-9]+$/.test(v.n); };
+    function fillMoves() {
+      var learn = (cur && mp.learn(cur) || []).filter(isChg);
+      var seen = {}; learn.forEach(function (id) { seen[id] = 1; });
+      var others = Object.keys(mp.moves).filter(function (id) { return isChg(id) && !seen[id]; })
+        .sort(function (a, b) { return mp.moves[a].n.localeCompare(mp.moves[b].n, 'ja'); });
+      var opt = function (id) { return '<option value="' + esc(id) + '">' + esc(mp.moves[id].n) + '</option>'; };
+      sel.innerHTML = '<option value="">元のわざ</option>' +
+        (learn.length ? '<optgroup label="覚えるわざ">' + learn.map(opt).join('') + '</optgroup>' : '') +
+        '<optgroup label="その他のわざ">' + others.map(opt).join('') + '</optgroup>';
+    }
+    fillMoves();
+    function showSugg() {
+      var q = inp.value.trim();
+      if (!q) { ul.classList.remove('open'); ul.innerHTML = ''; return; }
+      var qk = toKata(q), hit = (mp.megas() || []).filter(function (n) { return toKata(n).indexOf(qk) >= 0; });
+      hit.sort(function (a, b) { return (toKata(a).indexOf(qk) - toKata(b).indexOf(qk)) || a.localeCompare(b, 'ja'); });
+      ul.innerHTML = hit.length ? hit.slice(0, 60).map(function (n) { return '<div data-n="' + esc(n) + '">' + esc(n) + '</div>'; }).join('')
+        : '<div class="dup">メガシンカポケモンにありません</div>';
+      ul.style.display = '';   // 共通の守り(suggGuard)が書いた display:none を消す
+      ul.classList.add('open');
+    }
+    inp.addEventListener('input', showSugg);
+    inp.addEventListener('focus', showSugg);
+    ul.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    ul.addEventListener('click', function (e) {
+      var d = e.target.closest('div[data-n]'); if (!d) return;
+      cur = d.dataset.n; inp.value = cur; ul.classList.remove('open'); ul.innerHTML = '';
+      fillMoves(); msg.textContent = '';
+    });
+    document.addEventListener('pointerdown', function (e) {
+      if (!ul.classList.contains('open') || e.target.closest('.sugg') === inp.parentNode) return;
+      ul.classList.remove('open'); ul.innerHTML = '';
+    }, true);
+    // ⚠ 打っている最中は書き換えない。全角の数字は足すときに半角へ直して読む
+    box.querySelector('.dvapadd').onclick = function () {
+      var n = inp.value.trim(), b = sel.value;
+      var p = parseFloat(pw.value.replace(/[０-９．]/g, function (c) { return c === '．' ? '.' : String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }));
+      if ((mp.megas() || []).indexOf(n) < 0) { msg.textContent = 'メガシンカポケモンを候補から選んでください'; return; }
+      if (!b) { msg.textContent = '元のわざを選んでください'; return; }
+      if (!(p > 0 && p < 10000)) { msg.textContent = '威力を数字で入れてください'; return; }
+      var x = { n: n, b: b, p: Math.round(p * 10) / 10 };
+      // 同じポケモン・同じ元のわざは置きかえ（威力の打ち直し）
+      plus = plus.filter(function (y) { return !(y.n === x.n && y.b === x.b); });
+      plus.push(x); savePlus(); fire();
+      msg.textContent = ''; pw.value = '';
+    };
+  }
+
   function render() {
     mounted.forEach(function (m) {
+      if (m.wrap && m.megaPlus) {
+        var pc = m.wrap.querySelector('.dvapchips'), mv = m.megaPlus.moves;
+        if (pc) pc.innerHTML = plus.length ? plus.map(function (x, i) {
+          var bn = mv[x.b] ? mv[x.b].n : x.b;
+          return '<span><em class="dvapt">' + esc(x.n) + '　<b>' + esc(bn) + '+</b>　威力' + x.p + '</em>' +
+            '<button type="button" data-pi="' + i + '" title="外す">×</button></span>';
+        }).join('') : '<em style="opacity:.6">いまは足していません</em>';
+      }
       if (!m.wrap) return;
       var names = m.data ? namesOf(m.data).concat(m.shadowNames ? (m.shadowNames() || []).map(function (n) { return 'シャドウ' + n; }) : []).map(canon) : null;
       var b = m.wrap.querySelector('.dvabtn b'); if (b) b.textContent = list.length;
@@ -293,6 +421,8 @@
     });
   }
   document.addEventListener('click', function (e) {
+    var pb = e.target.closest('.dvapchips button[data-pi]');
+    if (pb) { plus.splice(+pb.dataset.pi, 1); savePlus(); fire(); return; }
     var b = e.target.closest('.dvachips button[data-n]'); if (!b) return;
     remove(b.dataset.n);
   });
@@ -319,6 +449,24 @@
     // ⚠ 開発者の端末でなければ必ず false（ふつうの人の一覧には1匹も足さない）
     has: function (name) { return dev() && list.length > 0 && has(name); },
     list: function () { return dev() ? list.slice() : []; },
+    // メガの新しい＋わざ（わざIDの配列）。⚠ 開発者の端末でなければ必ず空
+    plusFor: function (name) {
+      if (!dev()) return [];
+      return plus.filter(function (x) { return x.n === name; }).map(plusId);
+    },
+    // わざの表に＋わざを作り（時間・タイプは元のわざ・ゲージ1本）、外したものは消す。ids（PLUS_IDS）にも足し外しする
+    plusSync: function (moves, ids) {
+      if (!moves) return;
+      Object.keys(moves).forEach(function (id) { if (id.indexOf('DEVPLUS_') === 0) delete moves[id]; });
+      if (ids) for (var i = ids.length - 1; i >= 0; i--) if (String(ids[i]).indexOf('DEVPLUS_') === 0) ids.splice(i, 1);
+      if (!dev()) return;
+      plus.forEach(function (x) {
+        var b = moves[x.b], id = plusId(x);
+        if (!b || moves[id]) return;
+        moves[id] = { n: b.n + '+', t: b.t, p: x.p, d: b.d, e: -100, w: b.w, we: b.we };
+        if (ids && ids.indexOf(id) < 0) ids.push(id);
+      });
+    },
     // 形（'D'・'G'・'DG'）。形を選ばずに足した名前は 'D'
     modeOf: function (name) { return modeOf(name); },
     // host=ボタンの置き場所 ／ url=未実装のデータ ／ apply(data, on)=一覧に足し・外して描き直す関数
@@ -331,12 +479,13 @@
           shadowNames: opts && typeof opts.shadowNames === 'function' ? opts.shadowNames : null,
           modes: opts && Array.isArray(opts.modes) && opts.modes.length ? opts.modes : null,
           allow: opts && typeof opts.allow === 'function' ? opts.allow : null,
-          note: opts && opts.note || '', placeholder: opts && opts.placeholder || '' };
+          note: opts && opts.note || '', placeholder: opts && opts.placeholder || '',
+          megaPlus: opts && opts.megaPlus && typeof opts.megaPlus.megas === 'function' ? opts.megaPlus : null };
         mounted.push(m);
         build(m, host); render();
         fetchData(url).then(function (d) {
           m.data = d;
-          if (list.length) applyOne(m);
+          if (list.length || plus.length) applyOne(m);
           render();
         }, function () { m.err = true; });
       };

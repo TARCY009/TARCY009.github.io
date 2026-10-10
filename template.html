@@ -613,7 +613,9 @@ function devMvOf(p, shadow, kind){
   return x?x[kind].filter(id=>!have.has(id)).map(id=>({id,sp:false})):[];
 }
 function fastMoves(p, shadow){ return [...p.q.map(m=>({id:m,sp:false})), ...p.eq.map(m=>({id:m,sp:true})), ...devMvOf(p,shadow,'q')].filter(x=>D.moves[x.id]); }
-function chgMoves(p, shadow){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>({id:m,sp:true})), ...devMvOf(p,shadow,'c')].filter(x=>D.moves[x.id]); }
+// 開発者だけの「メガの新しい＋わざ」（発表された威力で先に足す・2026-10-10タダシさん指示）。devMvOf と同じく登録欄（shadow省略）には足さない
+function devPlusOf(p, shadow){ return shadow===undefined||!window.GonaviDevAdd?[]:GonaviDevAdd.plusFor(p.n).map(id=>({id,sp:false})); }
+function chgMoves(p, shadow){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>({id:m,sp:true})), ...devMvOf(p,shadow,'c'), ...devPlusOf(p,shadow)].filter(x=>D.moves[x.id]); }
 
 // 全レベル(PL1〜51, 0.5刻み)の多数決で最適技構成を決定。
 // 既定は「純粋に火力がいちばん高い構成」。「分割SP優遇」(fSplit)を押しているあいだだけ、
@@ -1201,6 +1203,7 @@ if(window.GonaviDevEx){
 // 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）
 if(window.GonaviDevAdd){
   GonaviDevAdd.mount(document.getElementById('devexbox'), '/pokedex/unreleased.json', (U, on)=>{
+    GonaviDevAdd.plusSync(D.moves, PLUS_IDS); MegaLv.apply(D.moves, PLUS_IDS);
     for(const [k,p] of Object.entries(U.pokemon||{})){
       const i=KEYS.indexOf(k);
       if(on(p.n)){ if(!D.pokemon[k]) D.pokemon[k]=p; if(i<0) KEYS.push(k); }
@@ -1209,7 +1212,8 @@ if(window.GonaviDevAdd){
     // シャドウ未実装のポケモンを「シャドウ◯◯」で足したもの（計算はふつうのシャドウと同じ）
     devSh=new Set(KEYS.filter(k=>!D.pokemon[k].shadow&&on('シャドウ'+D.pokemon[k].n)));
     mpTopCache={key:null,rows:null}; if(boss) renderMinPlayers(); renderRank();
-  }, {shadowNames:()=>KEYS.filter(k=>{const p=D.pokemon[k]; return !p.shadow&&p.fe&&!p.mega;}).map(k=>D.pokemon[k].n)});
+  }, {shadowNames:()=>KEYS.filter(k=>{const p=D.pokemon[k]; return !p.shadow&&p.fe&&!p.mega;}).map(k=>D.pokemon[k].n), megaPlus:{megas:()=>KEYS.filter(k=>D.pokemon[k].mega&&!/_PRIMAL$/.test(k)).map(k=>D.pokemon[k].n), moves:D.moves,
+       learn:n=>{ const k=KEYS.find(k=>D.pokemon[k].n===n); const p=k&&D.pokemon[k]; return p?[...p.c,...(p.ec||[])]:[]; }}});
 }
 // 開発者だけの「✎ わざカスタム」（ポケモンに好きなわざ・新しく作ったわざを覚えさせて順位を見る・タイプ別火力と同じ部品）
 if(window.GonaviDevMv){
