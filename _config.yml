@@ -1,0 +1,19 @@
+# 公開先（GitHub Pages）に出さないもの（2026-10-11）
+# 開発用のメモ・スクリプト・試験用のページ・生成の元ファイルは、リポジトリには置くがサイトには出さない。
+# ⚠ ここに書いても手元の作業・毎朝の自動更新には影響しない（公開されるかどうかだけが変わる）
+exclude:
+  - CLAUDE.md
+  - HANDOVER.md
+  - TYPE_ICONS.md
+  - changes.md
+  - "*.py"
+  - gym-attack/build_gym.py
+  - gym-defense/build_defense.py
+  - iv-checker/build_iv.py
+  - max-battle/build_max.py
+  - template.html
+  - pokepage
+  - scratchpad
+  - pvp-tests
+  - iconlab
+  - battlelog/_demo.html

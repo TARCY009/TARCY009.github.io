@@ -38,9 +38,24 @@ def render(rocket):
     return t.strip()
 
 
+# 使い方のいちばん下に置く「関連する読み物」（2026-10-11・ページごと。題名は読み物の一覧から引く）
+RELATED = {
+    'gbl/index.html': ['gbl-simulator-tips', 'gbl-turns', 'gbl-optimal-throw', 'gbl-shield-bluff', 'gbl-swap', 'gbl-charge', 'gbl-party-types', 'showdown'],
+    'rocket/index.html': ['rocket-basics', 'shadow-pokemon', 'type-chart', 'gbl-simulator-tips'],
+    'battlelog/index.html': ['gbl-party-types', 'showdown', 'gbl-simulator-tips', 'gbl-shield-bluff'],
+}
+_g = open('guide/index.html', encoding='utf-8').read()
+GUIDE_T = dict(re.findall(r'<li><a href="/guide/([^"/]+)/">(.*?)</a>', _g))
+
+
+def related(path):
+    lis = ''.join(f'<li><a href="/guide/{k}/">{GUIDE_T[k]}</a></li>' for k in RELATED[path])
+    return f'<h4>関連する読み物</h4><ul class="relguide">{lis}</ul>'
+
+
 for path, rocket in PAGES:
     html = open(path, encoding='utf-8').read()
-    block = f'{START}\n<div id="helpsrc" hidden>\n{render(rocket)}\n</div>\n{END}'
+    block = f'{START}\n<div id="helpsrc" hidden>\n{render(rocket)}\n{related(path)}\n</div>\n{END}'
     if START in html:
         new = re.sub(re.escape(START) + r'.*?' + re.escape(END), lambda _: block, html, flags=re.S)
     else:

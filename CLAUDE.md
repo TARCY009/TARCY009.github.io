@@ -47,6 +47,9 @@
 - **2026-09-17に CLAUDE.md と gbl.md を縮めた**（経緯・検証の記録を削除）。**縮める前の全文は `.claude/archive/CLAUDE-2026-09-17-full.md`・`.claude/archive/gbl-2026-09-17-full.md`**。昔の経緯や検証の数値が要るときはそこを読む
 - **言語の見張り（`.claude/hooks/lang_check.py`・Stop フック・2026-09-24タダシさん承認）**: 返事を書き終えた瞬間に、いまの回にClaudeが書いた文を調べ、英語の文（英単語5個以上で日本語の文字が英字の4分の1未満）があれば止めて日本語で書き直させる。コード・URL・ファイルの場所は数えない。長い作業の途中で報告が英語に流れる事故が1チャットで何度も起きたため
 - `.claude/` は公開サイトには配信されない（点で始まるフォルダは除外される。`.github/` で404を確認済み）。`settings.local.json`・`launch.json`・`state/` はgitに入れない
+- **⚠ 公開先はJekyll（GitHub Pages の標準）なので、点で始まらないファイルは全部公開される**（2026-10-11まで CLAUDE.md・*.py・template.html などが gonavi.jp から読めていた）。
+  **公開しないものはリポジトリ直下の `_config.yml` の `exclude` に書く**（CLAUDE.md・HANDOVER.md・TYPE_ICONS.md・changes.md・*.py・template.html・pokepage・scratchpad・pvp-tests・iconlab・battlelog/_demo.html）。
+  **開発用のファイル・フォルダを新しく直下に作ったら必ず足す**。外したことは push 後に `curl -o /dev/null -w '%{http_code}' https://gonavi.jp/CLAUDE.md` が404になることで確かめる
 - 答え合わせのブラウザは `~/Library/Caches/ms-playwright/chromium_headless_shell-*`。通常の Chrome は画面なしモードで終わらないことがある（消えていたら不合格扱いで止まる）
 
 
@@ -57,13 +60,16 @@
 - 置き場所は **`<header>` の中・h1（添え書き `.lead`/`small` があればその後ろ）の直後**の `<p class="intro">`。見た目は `assets/pageheader.css` の `header .intro` 1か所（`--sub` の色・.82rem・左そろえ）。広告の枠A（header の直後）の並びは変えない
 - **GBL・ロケット団・対戦記録は `assets/gbl-app.js` の骨組みの `#intro`**（ロケット団・対戦記録は eyebrow と同じ場所で `textContent` を差し替える）。**レイド火力は template.html と dps/index.html の両方**
 - **ツールの機能を変えたら紹介文も見直す**（例: マックスバトルのランクは自動判定なので「★5・★6の切り替え」とは書かない）。新しいツールにも必ず付ける
+- **「使い方」のいちばん下に「関連する読み物」**（2026-10-11・`<!-- related-guide -->` の印＋`<h4>`＋`ul.relguide`・見た目は `pageheader.css`）。GBL・ロケット団・対戦記録は `build_help.py` の `RELATED`。**読み物を足したら関係するツールにも足す**
+- **トップページのいちばん下に読み物の一覧（Guide ／ 読み物）と、看板の下に1文の紹介（`.lead`）**（2026-10-11）。一覧は `guide/index.html` と同じ題名・説明。**読み物を足したらトップページの一覧と件数も直す**
 
 ### 審査用⇄本番用のスイッチ（2026-09-23・タダシさん決定）
 
-**`assets/pageheader.css` の1行 `:root{--gonavi-mode:review;--intro-show:block}`** が全16ツールの切り替え。
-**合格したら `:root{--gonavi-mode:post;--intro-show:none}` に書き換えるだけ**＝紹介文は📖説明モードのときだけ出し、「使い方」は読み込み後に閉じる（`home.js` の `closeHelpIfPost` がページ自身の開閉ボタンを押す）。
+**`assets/pageheader.css` の1行 `:root{--gonavi-mode:full;--intro-show:block}`** が全16ツールの切り替え。
+**合格したら `:root{--gonavi-mode:compact;--intro-show:none}` に書き換えるだけ**＝紹介文は📖説明モードのときだけ出し、「使い方」は読み込み後に閉じる（`home.js` の `closeHelpIfPost` がページ自身の開閉ボタンを押す）。
 **文章はどちらでもHTMLに残す**（Googleの方針で、操作で開閉する内容は隠し文字に当たらない）。隠すのは display だけ（文字色・画面外・文字サイズ0・透明度0は禁止例そのもの）。
-警告が来たら1行を review に戻せばすぐ審査用の見た目に戻る。
+警告が来たら1行を full に戻せばすぐ元の見た目に戻る。
+- **⚠ 値の名前は2026-10-11に review→full・post→compact へ変えた**（2回目の不合格の対策）。**公開ファイル（CSS・JS・HTMLのコメントも）に「審査」「アドセンス」「合格後に隠す」のような言葉を書かない**——誰でも読めるので「審査のときだけ見せている」と読まれうる。その手の説明はこの CLAUDE.md（非公開）に書く
 - ⚠ 開閉の処理は onclick のページと addEventListener のページ（マックスバトル・ジム挑戦・ジム防衛・個体値チェッカー）がある。`closeHelpIfPost` は本当に押して aria-expanded で閉じたかを見る。**新しいツールの開閉も aria-expanded を書き換えること**
 - 確かめ方: `scratchpad/test-postmode.html`（Git管理外）を画面なしブラウザの `--dump-dom` で開くと、16ツールの 紹介文・📖・使い方・開き直し を一覧で返す
 
@@ -482,6 +488,11 @@ GBL（3リーグの環境勝率と順位・確定わざ・圧勝できる相手�
 **`python3 pokepage/run.py --publish`** が 集める（`collect/`＝各ツールの出口）→ 育成情報（`gm_all.py`）→ コスチューム → ページの一覧（`roster.py`・1,120ページ）→ 段階（`tiers.py`）→ 組む（`build.py`）→ 点検（`check.py`）を約40秒で流す。
 `--publish` なしは確認用（`pokepage/out/`・全部 noindex・一覧は `pokepage/out.html`）。途中のデータ `pokepage/data/` と確認用は git に入れない。
 
+- **⚠⚠ 2026-10-11 アドセンス2回目の不合格（有用性の低いコンテンツ）を受けて、1,121ページを丸ごと公開から外した（タダシさん承認）**。
+  noindex でも審査はサイトをたどって読むので、サイトの約96%が同じ形の自動生成ページに見えていたため。
+  **ページは消していない**（`git rm --cached` で git の管理から外しただけ・手元に残っている・`.git/info/exclude` の5行で隠している）。
+  **`pokepage/hold-all.txt` があるあいだ、毎朝の自動更新の4つの手順は変数 `POKEPAGE` が on でも動かない**。
+  **合格するまで公開しない**。合格後の戻し方: ①`hold-all.txt` を消す ②`.git/info/exclude` の5行を消して `git add pokedex/*/index.html pokedex/pages.json sitemap-pokemon.xml` ③`python3 build_seo.py --no-images` で robots.txt にサイトマップの行を戻す ④push ⑤Search Console に送る。**広告は付けず、段階的に**（下の決まりどおり）
 - **出力**: `/pokedex/<キー>/index.html`・`assets/pokepage.css`（全ページ共通の見た目）・`pokedex/pages.json`（名前→キー。ステータス図鑑の入口が読む）・`sitemap-pokemon.xml`
 - **公開スイッチ**: 毎朝の自動更新（`update-data.yml` の最後の4つ）は**リポジトリの変数 `POKEPAGE` が `on` のときだけ**動く。`test` は作って点検するまで（公開しない）。
   **⚠ この端末では公開まで `.git/info/exclude` で上の4つの出力を git から隠している**（合図のときにその5行を消す）

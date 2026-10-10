@@ -122,7 +122,7 @@ body{
 .bmark{width:30px;height:30px;border-radius:9px;display:block;
   box-shadow:0 4px 12px -5px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.09) inset}
 .themesw{width:max-content}
-/* 右側: 読み物へのリンク＋表示の切り替え（2026-09-22タダシさん指示・アドセンス再申請の準備）。
+/* 右側: 読み物へのリンク＋表示の切り替え。
    絵文字・光彩なし。細い罫線のピルだけで、切り替えボタンより控えめに置く */
 .tbr{display:flex;align-items:center;gap:10px}
 .tblink{font-size:.72rem;letter-spacing:.14em;text-indent:.14em;color:var(--sub);text-decoration:none;
@@ -232,6 +232,20 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
 }
 /* 語の途中で折り返さない(iOSのSafari対策と同じ考え方) */
 .card .nm,.gsec .en,.gsec .ja{word-break:keep-all}
+
+/* ---- 読み物の一覧（2026-10-11）: 題名と一行の説明。飾りは1pxの罫線だけ ---- */
+.glist{list-style:none;display:grid;grid-template-columns:1fr;gap:0 26px;margin:0 0 6px}
+@media(min-width:640px){.glist{grid-template-columns:1fr 1fr}}
+.glist a{display:block;padding:12px 2px 13px;border-bottom:1px solid var(--hair);text-decoration:none;color:inherit}
+.glist b{display:block;font-size:.8rem;font-weight:700;letter-spacing:.04em;line-height:1.55}
+.glist span{display:block;margin-top:3px;font-size:.66rem;color:var(--sub);line-height:1.7;letter-spacing:.02em}
+.glist a:hover b,.glist a:focus-visible b{text-decoration:underline}
+.gmore{margin:14px 0 0;text-align:right;font-size:.7rem;letter-spacing:.12em}
+.gmore a{color:var(--sub);text-decoration:none}
+.gmore a:hover{color:var(--ink)}
+/* サイトの紹介（看板の下・1〜2文） */
+.lead{max-width:34em;margin:18px auto 0;font-size:.74rem;line-height:1.95;letter-spacing:.06em;color:var(--sub)}
+@media (max-width:560px){.lead{font-size:.7rem;margin-top:14px}}
 </style>
 </head>
 <body>
@@ -247,6 +261,7 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <div class="wmbox"><h1 class="wmf"><span class="go">G<span class="o">O<i class="bp"></i></span></span>ナ<span class="bi">ビ</span></h1><i class="ndl" aria-hidden="true"><svg viewBox="0 0 100 100"><g transform="rotate(38 50 50)"><polygon points="50,6 43.5,50 56.5,50" fill="#ff5abe"/><polygon points="50,94 43.5,50 56.5,50" fill="#8c98c6"/><circle cx="50" cy="50" r="5.2" fill="#fff"/></g></svg></i></div>
   <div class="hrule"></div>
   <p class="btag">Pok&eacute;mon GO Tools</p>
+  <p class="lead">レイド・ジム・マックスバトル・トレーナーバトル・個体値。ゲーム内のデータにもとづく16の計算ツールと、バトルの仕組みを解説する読み物。</p>
 </header>
 
 <div class="gsec" style="--gc:var(--g1)"><span class="en">Raid &amp; Gym</span><span class="ja">レイド・ジム</span><span class="rule"></span><span class="no">05</span></div>
@@ -280,6 +295,35 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <a class="card" href="/move-dex/"><img src="/assets/icons/move-dex/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">わざ図鑑</b><span class="ds expl">タイプを選ぶだけで、わざの性能と覚えるポケモンが分かります</span></span></a>
   <a class="card" href="/bulk/"><img src="/assets/icons/bulk/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">耐久指数ランキング</b><span class="ds expl">倒されにくいポケモンが順に並びます。防御とHPのかけ算です</span></span></a>
 </div>
+
+<div class="gsec" style="--gc:var(--gold)"><span class="en">Guide</span><span class="ja">読み物</span><span class="rule"></span><span class="no">24</span></div>
+<ul class="glist">
+  <li><a href="/guide/philosophy/"><b>GOナビを作るときに大切にしていること</b><span>ぱっと見でわかる画面・計算の正確さ・正解の型を押しつけないことなど、運営者の考え方。</span></a></li>
+  <li><a href="/guide/battle-types/"><b>ポケモンGOのバトルの種類と仕組み</b><span>レイド・マックスバトル・ジム・GOバトルリーグ・GOロケット団、それぞれの仕組みと面白さ。</span></a></li>
+  <li><a href="/guide/type-chart/"><b>ポケモンGOのタイプ相性の倍率</b><span>1.6倍・0.625倍・0.39倍と、2つのタイプを持つポケモンへの掛け算・タイプ一致。</span></a></li>
+  <li><a href="/guide/shadow-pokemon/"><b>シャドウポケモンの仕組み</b><span>与えるダメージも受けるダメージも1.2倍。レイドとGBLでの向き不向き・個体値の下限。</span></a></li>
+  <li><a href="/guide/raid-dps/"><b>レイドの「火力（DPS）」の読み方</b><span>ランキングの数字はどう決まるか。1秒あたりのダメージ・ものさしの相手・わざ構成の選ばれ方・数字に入っていないもの。</span></a></li>
+  <li><a href="/guide/raid-players/"><b>レイドの「最少討伐人数」</b><span>理論値と実戦の目安が違う理由。ランクごとのHPと制限時間・ボスの攻撃のタイミング・ゲージのやりとり・スーパーメガのシールド。</span></a></li>
+  <li><a href="/guide/raid-bonuses/"><b>レイドのボーナスまとめ</b><span>天候・フレンド・メガシンカの応援・フィールド効果・チームパワーの倍率と、重ねがけのルール。</span></a></li>
+  <li><a href="/guide/super-mega-shield/"><b>スーパーメガレイドのシールドの仕組み</b><span>張られるタイミング・ボスごとの枚数・割れるポケモンと割れないポケモン・シールド中の攻撃と防御の倍率。</span></a></li>
+  <li><a href="/guide/mega-plus-moves/"><b>メガシンカの「＋わざ」とメガレベル</b><span>メガシンカ中だけ使える3本目のSPアタック。覚える条件・使える場面・メガレベルによる威力の倍率・16匹のわざの性能。</span></a></li>
+  <li><a href="/guide/gym-defense/"><b>ジムに置くと長く残るポケモンの条件</b><span>耐久指数・かくとうとの相性・やる気の下がりにくさ・防衛側の攻撃の遅さ。</span></a></li>
+  <li><a href="/guide/bulk-index/"><b>耐久指数とは</b><span>HP種族値×防御種族値で倒されにくさを比べる。シャドウの扱い・⚠️極低耐久の目安・使い道。</span></a></li>
+  <li><a href="/guide/max-battle-roles/"><b>マックスバトルのアタッカーとタンクの選び方</b><span>威力が固定のマックスわざ・マックスメーターのたまり方・耐久と耐性・ダイウォールの壁。</span></a></li>
+  <li><a href="/guide/gbl-simulator-tips/"><b>GBLシミュレーターの使い方</b><span>5つのモードの使い分け・使う順番の例・1対1の結果の見方・模擬戦で練習できること。</span></a></li>
+  <li><a href="/guide/gbl-turns/"><b>GBLの「ターン」の仕組み</b><span>0.5秒刻みで何が起きているか。ノーマルアタックの当たるターン・SPアタックの始まり・同じターンの順番・同時発動・制限時間。</span></a></li>
+  <li><a href="/guide/gbl-optimal-throw/"><b>最適撃ち早見表</b><span>SPアタックを相手のノーマルアタックの切れ目に合わせて撃つ回数を、ターン数ごとに1枚の表で。最適撃ちにこだわらない場面も。</span></a></li>
+  <li><a href="/guide/gbl-shield-bluff/"><b>GBLのシールドと「ブラフ」</b><span>2枚のシールドで防げるもの・防げないもの。能力変化は防げないこと・軽いSPアタックでシールドを使わせるブラフ。</span></a></li>
+  <li><a href="/guide/gbl-swap/"><b>GBLの交代のルール</b><span>45秒のクールタイム・交代にかかる1ターン・交代先に入る打ちかけの1発・能力変化のリセット・倒れたあとの出し直し。</span></a></li>
+  <li><a href="/guide/gbl-charge/"><b>SPアタックの威力調整</b><span>NICE・GREAT・EXCELLENTで威力が25〜100%に変わること・入力の時間・変わらないもの・シミュレーターでの扱い。</span></a></li>
+  <li><a href="/guide/gbl-party-types/"><b>GBLのパーティの型</b><span>ABC・ABB・ABAの回し方と、序盤に強い・終盤に強いという見方。</span></a></li>
+  <li><a href="/guide/showdown/"><b>見せ合い（6匹から3匹を選ぶ）の考え方</b><span>パーティのルール・選出の3つの見方・模擬戦での練習のしかた。</span></a></li>
+  <li><a href="/guide/breakpoint/"><b>ブレイクポイントとは</b><span>ノーマルアタックの1ダメージが試合を変える理由。階段状のダメージ・1ターンのわざほど効くこと・CP上限のあるリーグでの考え方。</span></a></li>
+  <li><a href="/guide/iv-rank/"><b>個体値の「順位」とは何か</b><span>スーパーリーグで100%が1位にならない理由。4096通り・CP上限とPL・入手方法による下限まで。</span></a></li>
+  <li><a href="/guide/iv-checker-howto/"><b>個体値チェッカーの使い方</b><span>入力例で見る順位の読み方と、いまのCPからPL・進化後のCPを調べる方法。</span></a></li>
+  <li><a href="/guide/rocket-basics/"><b>GOロケット団バトルの仕組み</b><span>相手の硬直・SPアタックの待ち時間・したっぱとリーダーとサカキの違い・早く倒すための考え方。</span></a></li>
+</ul>
+<p class="gmore"><a href="/guide/">読み物の一覧へ</a></p>
 
 <footer>
   <p class="upd">データは毎日、対戦環境は毎週、自動で更新。</p>

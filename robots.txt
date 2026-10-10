@@ -6,4 +6,3 @@ Disallow: /iconlab/
 Disallow: /pokepage/
 
 Sitemap: https://gonavi.jp/sitemap.xml
-Sitemap: https://gonavi.jp/sitemap-pokemon.xml

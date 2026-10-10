@@ -184,8 +184,8 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
   else build();
 
-  // ---- 本番用のときは「使い方」を閉じる（2026-09-23・タダシさん決定） ----
-  // 切り替えは pageheader.css の --gonavi-mode の1行（review＝審査用・post＝本番用）。
+  // ---- compact のときは「使い方」を閉じる（2026-09-23・タダシさん決定） ----
+  // 切り替えは pageheader.css の --gonavi-mode の1行（full＝開いたまま・compact＝閉じる）。
   // 閉じるのはページ自身の開閉ボタンを1回押す形にする（ページごとに開閉の作りがちがうため・状態の食い違いを作らない）。
   // ボタンの処理はページのスクリプトがあとから付けるので、付くまで少し待つ。閉じたら二度と触らない（利用者が開き直せる）
   // ⚠ 処理の付け方は onclick のページと addEventListener のページ（マックスバトル・ジム挑戦・ジム防衛・個体値チェッカー）がある。
@@ -194,7 +194,7 @@
   function closeHelpIfPost() {
     var mode = '';
     try { mode = getComputedStyle(document.documentElement).getPropertyValue('--gonavi-mode').trim(); } catch (e) {}
-    if (mode !== 'post') return;
+    if (mode !== 'compact') return;
     var tries = 0;
     (function step() {
       var tab = document.getElementById('helptab');
