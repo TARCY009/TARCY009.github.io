@@ -12,18 +12,78 @@
        ・ジム・レイド    : ゲーム内公開データにわざが入った時点
 
 形式: メガのキー（ジム・レイド側の大文字キー）: (元わざID, レイド威力, 対戦威力, 対戦消費, 出どころ)
-  ・＋わざのIDは「元わざID + _PLUS」、名前は「元わざの名前 + +」、タイプは元わざと同じ
+  ・＋わざのIDは「元わざID + _PLUS」、名前は「元わざの名前 + ＋」、タイプは元わざと同じ
   ・威力・消費が分からないところは None。対戦の消費は正の数（通常のわざと同じ形）
   ・未実装のメガでもよい（図鑑の未実装メガに付く。build_mega_preview.py が作る）
   ・情報元にもう入ったわざ（MEGA_PLUS_MOVES の16本）は書かなくてよい
 """
 
 MEGA_PLUS_INFO = {
-    # 2026-10-01 外部の解析情報（ゲームの中身から見つかったもの・未発表）。公式発表で変わることがある
-    'GENGAR_MEGA':      ('SHADOW_BALL', None, None, None, '解析情報 2026-10-01（未発表）'),
-    'CHARIZARD_MEGA_X': ('DRAGON_CLAW', None, None, None, '解析情報 2026-10-01（未発表）'),
-    'CHARIZARD_MEGA_Y': ('BLAST_BURN',  None, None, None, '解析情報 2026-10-01（未発表）'),
-    'HEATRAN_MEGA':     ('MAGMA_STORM', None, None, None, '解析情報 2026-10-01（未発表）'),
+    # 2026-10 外部の解析情報（ゲーム内データに追加された＋わざ・海外の情報・変更の可能性あり）。公式発表・実装で変わることがある
+    'VENUSAUR_MEGA':        ('FRENZY_PLANT', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガフシギバナ『ハードプラント＋』
+    'CHARIZARD_MEGA_X':     ('DRAGON_CLAW', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガリザードンX『ドラゴンクロー＋』
+    'CHARIZARD_MEGA_Y':     ('BLAST_BURN', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガリザードンY『ブラストバーン＋』
+    'BLASTOISE_MEGA':       ('HYDRO_CANNON', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガカメックス『ハイドロカノン＋』
+    'PIDGEOT_MEGA':         ('HURRICANE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガピジョット『ぼうふう＋』
+    'ALAKAZAM_MEGA':        ('PSYSHOCK', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガフーディン『サイコショック＋』
+    'GENGAR_MEGA':          ('SHADOW_BALL', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガゲンガー『シャドーボール＋』
+    'PINSIR_MEGA':          ('AERIAL_ACE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガカイロス『つばめがえし＋』
+    'GYARADOS_MEGA':        ('PAYBACK', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガギャラドス『しっぺがえし＋』
+    'MEGANIUM_MEGA':        ('SOLAR_BEAM', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガメガニウム『ソーラービーム＋』
+    'FERALIGATR_MEGA':      ('BREAKING_SWIPE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガオーダイル『ワイドブレイカー＋』
+    'AMPHAROS_MEGA':        ('THUNDER_PUNCH', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガデンリュウ『かみなりパンチ＋』
+    'STEELIX_MEGA':         ('GYRO_BALL', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガハガネール『ジャイロボール＋』
+    'SCIZOR_MEGA':          ('X_SCISSOR', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガハッサム『シザークロス＋』
+    'HERACROSS_MEGA':       ('LUNGE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガヘラクロス『とびかかる＋』
+    'TYRANITAR_MEGA':       ('STONE_EDGE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガバンギラス『ストーンエッジ＋』
+    'SCEPTILE_MEGA':        ('LEAF_BLADE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガジュカイン『リーフブレード＋』
+    'BLAZIKEN_MEGA':        ('BLAZE_KICK', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガバシャーモ『ブレイズキック＋』
+    'SWAMPERT_MEGA':        ('MUDDY_WATER', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガラグラージ『だくりゅう＋』
+    'GARDEVOIR_MEGA':       ('DAZZLING_GLEAM', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガサーナイト『マジカルシャイン＋』
+    'MAWILE_MEGA':          ('PLAY_ROUGH', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガクチート『じゃれつく＋』
+    'AGGRON_MEGA':          ('HEAVY_SLAM', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガボスゴドラ『ヘビーボンバー＋』
+    'MEDICHAM_MEGA':        ('HIGH_JUMP_KICK', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガチャーレム『とびひざげり＋』
+    'SHARPEDO_MEGA':        ('CRUNCH', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガサメハダー『かみくだく＋』
+    'CAMERUPT_MEGA':        ('HEAT_WAVE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガバクーダ『ねっぷう＋』
+    'ALTARIA_MEGA':         ('DISARMING_VOICE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガチルタリス『チャームボイス＋』
+    'BANETTE_MEGA':         ('SHADOW_PUNCH', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガジュペッタ『シャドーパンチ＋』
+    'CHIMECHO_MEGA':        ('FLASH_CANNON', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガチリーン『ラスターカノン＋』
+    'ABSOL_MEGA':           ('NIGHT_SLASH', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガアブソル『つじぎり＋』
+    'ABSOL_MEGA_Z':         ('SHADOW_SNEAK', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガアブソルZ『かげうち＋』
+    'SALAMENCE_MEGA':       ('FLY', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガボーマンダ『そらをとぶ＋』
+    'METAGROSS_MEGA':       ('METEOR_MASH', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガメタグロス『コメットパンチ＋』
+    'LATIAS_MEGA':          ('MIST_BALL', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガラティアス『ミストボール＋』
+    'LATIOS_MEGA':          ('LUSTER_PURGE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガラティオス『ラスターパージ＋』
+    'RAYQUAZA_MEGA':        ('DRAGON_ASCENT', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガレックウザ『ガリョウテンセイ＋』
+    'LOPUNNY_MEGA':         ('CLOSE_COMBAT', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガミミロップ『インファイト＋』
+    'GARCHOMP_MEGA':        ('EARTHQUAKE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガガブリアス『じしん＋』
+    'GARCHOMP_MEGA_Z':      ('DRACO_METEOR', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガガブリアスZ『りゅうせいぐん＋』
+    'LUCARIO_MEGA':         ('AURA_SPHERE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガルカリオ『はどうだん＋』
+    'LUCARIO_MEGA_Z':       ('FOCUS_BLAST', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガルカリオZ『きあいだま＋』
+    'ABOMASNOW_MEGA':       ('BLIZZARD', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガユキノオー『ふぶき＋』
+    'HEATRAN_MEGA':         ('MAGMA_STORM', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガヒードラン『マグマストーム＋』
+    'EMBOAR_MEGA':          ('FLAME_CHARGE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガエンブオー『ニトロチャージ＋』
+    'EXCADRILL_MEGA':       ('DRILL_RUN', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガドリュウズ『ドリルライナー＋』
+    'AUDINO_MEGA':          ('DRAINING_KISS', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガタブンネ『ドレインキッス＋』
+    'SCOLIPEDE_MEGA':       ('MEGAHORN', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガペンドラー『メガホーン＋』
+    'EELEKTROSS_MEGA':      ('WILD_CHARGE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガシビルドン『ワイルドボルト＋』
+    'GOLURK_MEGA':          ('EARTH_POWER', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガゴルーグ『だいちのちから＋』
+    'PYROAR_MEGA':          ('FIRE_BLAST', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガカエンジシ『だいもんじ＋』
+    'MEOWSTIC_MEGA':        ('PSYCHIC', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガニャオニクス『サイコキネシス＋』
+    'MEOWSTIC_FEMALE_MEGA': ('PSYCHIC', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガニャオニクス『サイコキネシス＋』
+    'BARBARACLE_MEGA':      ('CROSS_CHOP', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガガメノデス『クロスチョップ＋』
+    'DRAGALGE_MEGA':        ('SLUDGE_WAVE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガドラミドロ『ヘドロウェーブ＋』
+    'HAWLUCHA_MEGA':        ('FLYING_PRESS', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガルチャブル『フライングプレス＋』
+    'DIANCIE_MEGA':         ('POWER_GEM', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガディアンシー『パワージェム＋』
+    'CRABOMINABLE_MEGA':    ('DRAIN_PUNCH', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガケケンカニ『ドレインパンチ＋』
+    'GOLISOPOD_MEGA':       ('IRON_HEAD', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガグソクムシャ『アイアンヘッド＋』
+    'ZERAORA_MEGA':         ('PLASMA_FISTS', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガゼラオラ『プラズマフィスト＋』
+    'SCOVILLAIN_MEGA':      ('FLAMETHROWER', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガスコヴィラン『かえんほうしゃ＋』
+    'GLIMMORA_MEGA':        ('METEOR_BEAM', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガキラフロル『メテオビーム＋』
+    'TATSUGIRI_MEGA':       ('DRAGON_PULSE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガシャリタツ『りゅうのはどう＋』
+    'BAXCALIBUR_MEGA':      ('ICICLE_SPEAR', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガセグレイブ『つららばり＋』
+    'CHANDELURE_MEGA':      ('OMINOUS_WIND', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガシャンデラ『あやしいかぜ＋』
+    'AERODACTYL_MEGA':      ('ROCK_SLIDE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガプテラ『いわなだれ＋』
 }
 
 
