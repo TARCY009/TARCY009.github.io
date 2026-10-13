@@ -188,6 +188,7 @@ def main():
             # 日本語名が無い技はゲーム未実装の作業用データ(「◯◯+」等)なので収録しない
             # (収録すると /gbl/ の「その他のわざ」欄に英語名のまま並んでしまう)
             warn_mv.append(mid); continue
+        nm = re.sub(r'\++$', lambda m: '＋' * len(m.group()), nm)   # 最後の「+」は全角に(2026-10-14タダシさん指示)
         entry = {'n': nm, 't': mv['type'].upper(), 'p': mv['power']}
         if mv.get('energyGain'):                 # 通常技: ゲージ増加とターン数
             entry['eg'] = mv['energyGain']
