@@ -100,7 +100,7 @@ def main():
         mid = plus_id(base)
         gb, pb = god['moves'].get(base), pvpd['moves'].get(base)
         if not gb: continue
-        ent = {'id': mid, 'n': gb['n'] + '+', 't': gb['t'], 'src': src}
+        ent = {'id': mid, 'n': gb['n'] + '＋', 't': gb['t'], 'src': src}
         gp = god['pokemon'].get(mk)
         if not (gp and gp.get('plus') == mid):           # ジム・レイド側がまだ付いていない
             gm = god['moves'].get(mid)

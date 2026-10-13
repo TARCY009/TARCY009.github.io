@@ -10,7 +10,7 @@
 //  ・はなふぶき DPE 2.03 ＝ タダシさん提供のスクショ（dex.md）
 //  ・最大CP・メガLv4のCP・そのほかのSCP ＝ 図鑑とは別に Python で総当たりした値（2026-09-25）
 //  ・タイプ相性 ＝ ゲーム内の相性表からの手計算（ドラゴン/ひこう・はがね/エスパー）
-//  ・げきりん+ ＝ 185×1.3（メガLv4）×1.2（タイプ一致）＝288.6
+//  ・げきりん＋ ＝ 185×1.3（メガLv4）×1.2（タイプ一致）＝288.6
 // 答えを変えるときは必ずタダシさんに確認すること。
 const f = document.getElementById('f');
 const out = document.getElementById('out');
@@ -63,7 +63,7 @@ f.onload = async () => {
     // ③ わざ表（ジム・レイド＝＋わざの威力／トレーナーバトル＝DPE）
     show('メガカイリュー');
     const cell = (id, i) => { const tr = doc.querySelector(`#mvcard tr[data-mv="${id}"]`); return tr ? tr.children[i].textContent.trim() : '(行なし)'; };
-    ok('メガカイリュー げきりん+ の威力（メガLv4・タイプ一致）', cell('OUTRAGE_PLUS', 1), '288.6');
+    ok('メガカイリュー げきりん＋ の威力（メガLv4・タイプ一致）', cell('OUTRAGE_PLUS', 1), '288.6');
     show('フシギバナ');
     doc.querySelector('#mvcard .mtabs button[data-t="pvp"]').click();
     await sleep(50);

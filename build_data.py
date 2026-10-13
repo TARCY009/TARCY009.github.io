@@ -178,43 +178,43 @@ SUPP_MOVES = {
 # 全体の長さ・ダメージ発生・判定終了は元わざと同じ値。
 # ⚠ この「時間は元わざを引き継ぐ」規則が13本すべてで成立していたので、以後に発表される＋わざは
 #   公式発表の「威力」さえ分かれば、元わざの時間を写して先行収録してよい(2026-09-04タダシさん指示)。
-#   第1号: あくのはどう+(メガヘルガー・レイド威力150) / とどめばり+(メガスピアー・レイド威力140)。
+#   第1号: あくのはどう＋(メガヘルガー・レイド威力150) / とどめばり＋(メガスピアー・レイド威力140)。
 #   出どころは公式ニュース「チームメガ」(2026-09-08 10:00〜)。提供元に正式収録されたらそちらが優先される
 # ⚠ メガレベルが上がると威力が上がる(外部情報では Lv1 1.0 / Lv2 1.1 / Lv3 1.2 / Lv4 1.3)が、
 #   ここの値は倍率を掛けていない素の値。倍率をツールに入れるかは未判断(タダシさん確認待ち)。
-# ⚠ みらいよち+ の判定終了(damageWindowEnd)だけは暫定値。元わざがレイドに存在しないため
+# ⚠ みらいよち＋ の判定終了(damageWindowEnd)だけは暫定値。元わざがレイドに存在しないため
 #   全体の長さで代用している(この値を使うのはジム防衛のわざ選びだけで、メガは対象外)。
 # 形式: 追加わざID: (覚えるメガのkey, タイプ, 威力, 全体ms, ダメージ発生ms, 判定終了ms)
 MEGA_PLUS_MOVES = {
-    'DYNAMIC_PUNCH_PLUS': ('MEWTWO_MEGA_X',    'FIGHTING', 130.0, 2500, 1000, 2500),  # ばくれつパンチ+
-    'FUTURE_SIGHT_PLUS':  ('MEWTWO_MEGA_Y',    'PSYCHIC',  140.0, 2500, 1200, 2500),  # みらいよち+
-    'VOLT_TACKLE_PLUS':   ('RAICHU_MEGA_X',    'ELECTRIC', 170.0, 3500, 2100, 2600),  # ボルテッカー+
-    'ZAP_CANNON_PLUS':    ('RAICHU_MEGA_Y',    'ELECTRIC', 160.0, 3500, 2800, 3300),  # でんじほう+
-    'ACID_SPRAY_PLUS':    ('VICTREEBEL_MEGA',  'POISON',   160.0, 3000, 2100, 2800),  # アシッドボム+
-    'LIQUIDATION_PLUS':   ('STARMIE_MEGA',     'WATER',    180.0, 3000, 2000, 2700),  # アクアブレイク+
-    'OUTRAGE_PLUS':       ('DRAGONITE_MEGA',   'DRAGON',   185.0, 4000, 2600, 3800),  # げきりん+
-    'DRILL_PECK_PLUS':    ('SKARMORY_MEGA',    'FLYING',   170.0, 2500, 1900, 2300),  # ドリルくちばし+
-    'SEED_BOMB_PLUS':     ('CHESNAUGHT_MEGA',  'GRASS',    150.0, 2000, 1100, 1800),  # タネばくだん+
-    'MYSTICAL_FIRE_PLUS': ('DELPHOX_MEGA',     'FIRE',     140.0, 2000, 1300, 2000),  # マジカルフレイム+
-    'SURF_PLUS':          ('GRENINJA_MEGA',    'WATER',    130.0, 1500, 1200, 1400),  # なみのり+
-    'BRICK_BREAK_PLUS':   ('FALINKS_MEGA',     'FIGHTING', 150.0, 1500,  700, 1300),  # かわらわり+
-    'PSYBEAM_PLUS':       ('MALAMAR_MEGA',     'PSYCHIC',  170.0, 3000, 1100, 2500),  # サイケこうせん+
+    'DYNAMIC_PUNCH_PLUS': ('MEWTWO_MEGA_X',    'FIGHTING', 130.0, 2500, 1000, 2500),  # ばくれつパンチ＋
+    'FUTURE_SIGHT_PLUS':  ('MEWTWO_MEGA_Y',    'PSYCHIC',  140.0, 2500, 1200, 2500),  # みらいよち＋
+    'VOLT_TACKLE_PLUS':   ('RAICHU_MEGA_X',    'ELECTRIC', 170.0, 3500, 2100, 2600),  # ボルテッカー＋
+    'ZAP_CANNON_PLUS':    ('RAICHU_MEGA_Y',    'ELECTRIC', 160.0, 3500, 2800, 3300),  # でんじほう＋
+    'ACID_SPRAY_PLUS':    ('VICTREEBEL_MEGA',  'POISON',   160.0, 3000, 2100, 2800),  # アシッドボム＋
+    'LIQUIDATION_PLUS':   ('STARMIE_MEGA',     'WATER',    180.0, 3000, 2000, 2700),  # アクアブレイク＋
+    'OUTRAGE_PLUS':       ('DRAGONITE_MEGA',   'DRAGON',   185.0, 4000, 2600, 3800),  # げきりん＋
+    'DRILL_PECK_PLUS':    ('SKARMORY_MEGA',    'FLYING',   170.0, 2500, 1900, 2300),  # ドリルくちばし＋
+    'SEED_BOMB_PLUS':     ('CHESNAUGHT_MEGA',  'GRASS',    150.0, 2000, 1100, 1800),  # タネばくだん＋
+    'MYSTICAL_FIRE_PLUS': ('DELPHOX_MEGA',     'FIRE',     140.0, 2000, 1300, 2000),  # マジカルフレイム＋
+    'SURF_PLUS':          ('GRENINJA_MEGA',    'WATER',    130.0, 1500, 1200, 1400),  # なみのり＋
+    'BRICK_BREAK_PLUS':   ('FALINKS_MEGA',     'FIGHTING', 150.0, 1500,  700, 1300),  # かわらわり＋
+    'PSYBEAM_PLUS':       ('MALAMAR_MEGA',     'PSYCHIC',  170.0, 3000, 1100, 2500),  # サイケこうせん＋
     # 2026-09-04追加(公式発表の威力＋元わざの時間。あくのはどう=3.0/1.4/2.3秒・とどめばり=2.0/1.6/1.8秒)
-    'DARK_PULSE_PLUS':    ('HOUNDOOM_MEGA',    'DARK',     150.0, 3000, 1400, 2300),  # あくのはどう+
-    'FELL_STINGER_PLUS':  ('BEEDRILL_MEGA',    'BUG',      140.0, 2000, 1600, 1800),  # とどめばり+
+    'DARK_PULSE_PLUS':    ('HOUNDOOM_MEGA',    'DARK',     150.0, 3000, 1400, 2300),  # あくのはどう＋
+    'FELL_STINGER_PLUS':  ('BEEDRILL_MEGA',    'BUG',      140.0, 2000, 1600, 1800),  # とどめばり＋
     # 2026-09-12追加(公式「ムクホークのスーパーメガレイド・デイ」9/19・レイド威力150。時間は元わざ=2.0/1.0/1.6秒・タダシさん指定と一致)
-    'BRAVE_BIRD_PLUS':    ('STARAPTOR_MEGA',   'FLYING',   150.0, 2000, 1000, 1600),  # ブレイブバード+
+    'BRAVE_BIRD_PLUS':    ('STARAPTOR_MEGA',   'FLYING',   150.0, 2000, 1000, 1600),  # ブレイブバード＋
 }
 MEGA_PLUS_JA = {
-    'DYNAMIC_PUNCH_PLUS':'ばくれつパンチ+', 'FUTURE_SIGHT_PLUS':'みらいよち+',
-    'VOLT_TACKLE_PLUS':'ボルテッカー+',     'ZAP_CANNON_PLUS':'でんじほう+',
-    'ACID_SPRAY_PLUS':'アシッドボム+',      'LIQUIDATION_PLUS':'アクアブレイク+',
-    'OUTRAGE_PLUS':'げきりん+',             'DRILL_PECK_PLUS':'ドリルくちばし+',
-    'SEED_BOMB_PLUS':'タネばくだん+',       'MYSTICAL_FIRE_PLUS':'マジカルフレイム+',
-    'SURF_PLUS':'なみのり+',                'BRICK_BREAK_PLUS':'かわらわり+',
-    'PSYBEAM_PLUS':'サイケこうせん+',
-    'DARK_PULSE_PLUS':'あくのはどう+',      'FELL_STINGER_PLUS':'とどめばり+',
-    'BRAVE_BIRD_PLUS':'ブレイブバード+',
+    'DYNAMIC_PUNCH_PLUS':'ばくれつパンチ＋', 'FUTURE_SIGHT_PLUS':'みらいよち＋',
+    'VOLT_TACKLE_PLUS':'ボルテッカー＋',     'ZAP_CANNON_PLUS':'でんじほう＋',
+    'ACID_SPRAY_PLUS':'アシッドボム＋',      'LIQUIDATION_PLUS':'アクアブレイク＋',
+    'OUTRAGE_PLUS':'げきりん＋',             'DRILL_PECK_PLUS':'ドリルくちばし＋',
+    'SEED_BOMB_PLUS':'タネばくだん＋',       'MYSTICAL_FIRE_PLUS':'マジカルフレイム＋',
+    'SURF_PLUS':'なみのり＋',                'BRICK_BREAK_PLUS':'かわらわり＋',
+    'PSYBEAM_PLUS':'サイケこうせん＋',
+    'DARK_PULSE_PLUS':'あくのはどう＋',      'FELL_STINGER_PLUS':'とどめばり＋',
+    'BRAVE_BIRD_PLUS':'ブレイブバード＋',
 }
 # わざ定義は SUPP_MOVES と同じ仕組みで注入する(提供元に正式収録されたらそちらが優先される)。
 # 覚えるのはメガ(元ポケモンではない)なので、learn は空にして main() の中で紐付ける
@@ -396,7 +396,7 @@ def main():
     # 表(mega_plus_info.py)の＋わざの名前は「元わざの名前＋+」
     for _base, *_r in MEGA_PLUS_INFO.values():
         if plus_id(_base) not in JP_MOVE_FIX and (JP_MOVE_FIX.get(_base) or mname(_base)):
-            JP_MOVE_FIX[plus_id(_base)] = (JP_MOVE_FIX.get(_base) or mname(_base)) + '+'
+            JP_MOVE_FIX[plus_id(_base)] = (JP_MOVE_FIX.get(_base) or mname(_base)) + '＋'
 
     # ポケモンが実際に覚えるわざのID一覧(威力0のわざを収録するかの判定に使う)
     learnable = set()

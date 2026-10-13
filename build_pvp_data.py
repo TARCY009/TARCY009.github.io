@@ -36,14 +36,14 @@ MEGA_PLUS_PVP_CHECK = {
     # 2026-09-04追加分(公式発表は威力だけ・消費ゲージは未発表)。ゲージ None＝威力だけ突き合わせる。
     # ⚠ 対戦データはゲージが分からないうちは手で入れない(威力だけ入れると実在しない性能になる)。
     #   情報元に入った時点で自動収録され、威力が公式と違えば警告が出る
-    'DARK_PULSE_PLUS':    (60,  None),   # あくのはどう+(メガヘルガー)
-    'FELL_STINGER_PLUS':  (40,  None),   # とどめばり+(メガスピアー・こうげき+1)
-    'BRAVE_BIRD_PLUS':    (70,  -40),    # ブレイブバード+(メガムクホーク・自分のぼうぎょ-3確定・消費40＝2026-09-16タダシさん確定)
+    'DARK_PULSE_PLUS':    (60,  None),   # あくのはどう＋(メガヘルガー)
+    'FELL_STINGER_PLUS':  (40,  None),   # とどめばり＋(メガスピアー・こうげき+1)
+    'BRAVE_BIRD_PLUS':    (70,  -40),    # ブレイブバード＋(メガムクホーク・自分のぼうぎょ-3確定・消費40＝2026-09-16タダシさん確定)
 }
 # 提供元にまだ無い＋わざの手動定義(2026-09-16タダシさん指示)。**提供元に入ったらそちらを優先**し、上の見張りで数値を突き合わせる。
 # 消費ゲージ(e)は正の数で持つ(通常のわざと同じ形)。ゲージが未確定のわざはここに入れない(実在しない性能になる)
 MEGA_PLUS_PVP_MANUAL = {
-    'BRAVE_BIRD_PLUS': {'t': 'FLYING', 'p': 70, 'e': 40, 'bf': [0, -3], 'bt': 'self', 'bc': 1.0},   # ブレイブバード+(メガムクホーク)
+    'BRAVE_BIRD_PLUS': {'t': 'FLYING', 'p': 70, 'e': 40, 'bf': [0, -3], 'bt': 'self', 'bc': 1.0},   # ブレイブバード＋(メガムクホーク)
 }
 
 # PvPoke固有ID・i18n未収録の技の日本語名(GM側と表記が違うものはID照合で解決するのでここは最小限)
@@ -232,7 +232,7 @@ def main():
         if mid in plus_moves or mid in MEGA_PLUS_MOVES or base not in moves: continue
         mv = src_mv.get(mid)
         if mv:
-            e = {'n': moves[base]['n'] + '+', 't': mv['type'].upper(), 'p': mv['power'], 'e': mv['energy']}
+            e = {'n': moves[base]['n'] + '＋', 't': mv['type'].upper(), 'p': mv['power'], 'e': mv['energy']}
             for k_src, k_dst in (('buffs','bf'), ('buffTarget','bt'), ('buffApplyChance','bc')):
                 if k_src in mv:
                     e[k_dst] = float(mv[k_src]) if k_src == 'buffApplyChance' else mv[k_src]
@@ -240,7 +240,7 @@ def main():
                 print(f'警告: ＋わざの対戦数値が表と違います → {mid} 情報元{mv["power"]}/{mv["energy"]} 表{pp}/{pe}')
             print('表の＋わざを情報元の確定値で収録 →', mid)
         elif pp is not None and pe is not None:
-            e = {'n': moves[base]['n'] + '+', 't': moves[base]['t'], 'p': pp, 'e': pe}
+            e = {'n': moves[base]['n'] + '＋', 't': moves[base]['t'], 'p': pp, 'e': pe}
             print('表の＋わざを表の数値で収録(情報元に入るまで) →', mid)
         else:
             continue

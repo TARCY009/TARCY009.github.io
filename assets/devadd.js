@@ -687,7 +687,7 @@
       plus.forEach(function (x) {
         var b = moves[x.b], id = plusId(x);
         if (!b || moves[id]) return;
-        moves[id] = { n: b.n + '+', t: b.t, p: x.p, d: b.d, e: -100, w: b.w, we: b.we };
+        moves[id] = { n: b.n + '＋', t: b.t, p: x.p, d: b.d, e: -100, w: b.w, we: b.we };
         if (ids && ids.indexOf(id) < 0) ids.push(id);
       });
     },

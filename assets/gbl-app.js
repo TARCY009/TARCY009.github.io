@@ -98,7 +98,7 @@ document.getElementById('app').innerHTML = `
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガ<wbr>Lv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4<wbr>＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CP<wbr>ブースト<small>イベント<wbr>ボーナス</small></button>
         </div>
       </div>
-      <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
+      <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「＋」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
       <div class="spqwrap"><div class="megalv spq"><span class="mlvl" title="SPアタックのミニゲーム(アイコンをタップする画面)の出来。EXCELLENT=100%／GREAT=75%／NICE=50%／何も取れない=25%の威力になります(ゲーム内公開データ)。この側のSPアタック全部に効きます。既定は100%">SPの出来</span><span class="mlvseg"><button type="button" data-pw="1" aria-pressed="true">100</button><button type="button" data-pw="0.75">75</button><button type="button" data-pw="0.5">50</button><button type="button" data-pw="0.25">25</button></span><span class="mlvnote">％ ＝ EXCELLENT／GREAT／NICE／最低</span></div></div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
@@ -176,7 +176,7 @@ document.getElementById('app').innerHTML = `
           <button data-lv="52" title="メガLv4(スーパーマックスレベル)でPL上限+2(52まで)">メガ<wbr>Lv4</button><button data-lv="53" title="メガLv4+最高の相棒でPL上限53まで">メガLv4<wbr>＋相棒</button><button data-lv="55" title="イベントのメガシンカCPブースト中はPL上限+5(55まで。最高の相棒でも55が上限)">CP<wbr>ブースト<small>イベント<wbr>ボーナス</small></button>
         </div>
       </div>
-      <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
+      <div class="mlvwrap" style="display:none"><div class="megalv"><span class="mlvl" title="メガシンカの追加SPアタック（わざ名の最後が「＋」）は、メガレベルが上がるほど威力が上がります。Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません">メガLv</span><span class="mlvseg"><button type="button" data-lv="1">1</button><button type="button" data-lv="2">2</button><button type="button" data-lv="3">3</button><button type="button" data-lv="4" aria-pressed="true">4</button></span><span class="mlvnote">＋わざの威力だけ変わります</span></div></div>
       <div class="spqwrap"><div class="megalv spq"><span class="mlvl" title="SPアタックのミニゲーム(アイコンをタップする画面)の出来。EXCELLENT=100%／GREAT=75%／NICE=50%／何も取れない=25%の威力になります(ゲーム内公開データ)。この側のSPアタック全部に効きます。既定は100%">SPの出来</span><span class="mlvseg"><button type="button" data-pw="1" aria-pressed="true">100</button><button type="button" data-pw="0.75">75</button><button type="button" data-pw="0.5">50</button><button type="button" data-pw="0.25">25</button></span><span class="mlvnote">％ ＝ EXCELLENT／GREAT／NICE／最低</span></div></div>
       <select class="selFast" title="ノーマルアタック"></select>
       <select class="selC1" title="SPアタック"></select>
@@ -550,7 +550,7 @@ const plusNoteHtml = key => {
   const cp = plusIdOf(key);
   return cp ? `<div class="plusnote" title="メガシンカの追加SPアタック。SPアタック1・2とは別に、3本目として自動で持ちます（威力はメガLvで変わります）"><b>＋わざ</b>${D.moves[cp].n}<small>（3本目・自動）</small></div>` : '';
 };
-const MLV_HELP = 'メガシンカの追加SPアタック（わざ名の最後が「+」）は、メガレベルが上がるほど威力が上がります。'
+const MLV_HELP = 'メガシンカの追加SPアタック（わざ名の最後が「＋」）は、メガレベルが上がるほど威力が上がります。'
   + 'Lv1=1.0倍 ／ Lv2(高レベル)=1.1倍 ／ Lv3(マックス)=1.2倍 ／ Lv4(スーパーマックス)=1.3倍。既定はLv4です。ほかのわざには効きません';
 // 枠の中に置く小さな「メガLv 1|2|3|4」(＋わざを持つメガの枠だけに出す)
 const mlvSegHtml = lv => `<span class="megalv pmlv"><span class="mlvl" title="${MLV_HELP}">メガLv</span><span class="mlvseg">`
@@ -1489,8 +1489,8 @@ ${PAGE_ROCKET ? '' : `
   1対1シミュでは、左右のパネルで別々に指定できます。</p>
 
   <h4>メガの追加SPアタック「＋わざ」とメガLv</h4>
-  <p>スーパーマックスレベルに到達できるメガシンカは、メガシンカ中だけ使える<b>3本目のSPアタック</b>（わざ名の最後が「+」）を持ちます。
-  GOバトルリーグでも使えるので、そのメガのSPアタックの欄に<b>「げきりん+」のように並びます</b>（このシミュレーターはSP2本で戦うので、3本のうち2本を選びます）。</p>
+  <p>スーパーマックスレベルに到達できるメガシンカは、メガシンカ中だけ使える<b>3本目のSPアタック</b>（わざ名の最後が「＋」）を持ちます。
+  GOバトルリーグでも使えるので、そのメガのSPアタックの欄に<b>「げきりん＋」のように並びます</b>（このシミュレーターはSP2本で戦うので、3本のうち2本を選びます）。</p>
   <p>＋わざは<b>メガレベルが上がるほど威力が上がります</b>（Lv1=1.0倍／Lv2=1.1倍／Lv3=1.2倍／Lv4＝スーパーマックス=1.3倍）。
   トレーナーバトルでも同じ倍率がかかるので、＋わざを持つメガを選ぶと<b>「メガLv」</b>の切り替えが出ます。
   <b>既定はLv4（最大）</b>。環境一覧・対策さがしなど一覧の相手はLv4で計算します。ほかのわざには効きません。</p>
