@@ -906,7 +906,7 @@ const gaugeBar=(m,id)=>{ const e=pveEnergyOf(id,m); const n=e>=-34?3:e>=-51?2:1;
 const PLUS_HELP='メガシンカ中だけ使える追加のSPアタック。既存の2本とは別枠で、条件を満たせば自動で覚えます（わざマシン不要）。レイドとGOバトルリーグで使えますが、ジムに配置されたポケモンとのジムバトルでは使えません。メガレベルが上がるほど威力が上がります（表の値は倍率を掛けていない素の値）。';
 // 性能がまだ分からない＋わざ(m.pend = 'name' 名前だけ／'power' 威力だけ)。分からない値は「−」で出す
 const UNK='<span class="unk" title="まだ発表されていません。公式発表・実装で分かりしだい自動で入ります">−</span>';
-const pendTip=m=>(m.pend==='power'?'威力だけ発表されています。':'名前だけ分かっています。')+'ほかの性能は公式発表・実装で分かりしだい自動で入ります'+(m.src?`（出どころ: ${m.src}）`:'');
+const pendTip=m=>(m.pend==='est'?'威力は発表された値、時間は元のわざと同じ・ゲージは1本（＋わざの決まり）で入れています。実装で確定した値に自動で切り替わります':(m.pend==='power'?'威力だけ発表されています。':'名前だけ分かっています。')+'ほかの性能は公式発表・実装で分かりしだい自動で入ります')+(m.src?`（出どころ: ${m.src}）`:'');
 const mvName=(nm,t,lg,pl,m)=>`<span class="mvnm">${typePairHTML([GO.typeJa[t]],16)}<span${lg?' class="sp"':''}>${nm}${lg?'<b class="st" title="特別なわざ(レガシー)。通常のわざマシンでは覚えられません">*</b>':''}</span>${pl?`<b class="plus" title="${PLUS_HELP}">追加</b>`:''}${m&&m.pend?`<b class="pend" title="${pendTip(m)}">未確定</b>`:''}</span>`;
 const has=v=>v!=null;
 
@@ -930,8 +930,8 @@ function renderMoves(){
         return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td>${num(m.e/m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
       const srow=id=>{ const m=GO.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
-        if(m.pend) return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,false,id===mv.plus,m)}</td>
-          <td class="${st&&has(m.p)?'stab':''}">${has(m.p)?num(pw):UNK}</td><td>${UNK}</td><td>${UNK}</td></tr>`;
+        if(m.pend) return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,false,id===mv.plus,m)}${has(m.e)?gaugeBar(m,id):''}</td>
+          <td class="${st&&has(m.p)?'stab':''}">${has(m.p)?num(pw):UNK}</td><td>${has(m.d)?num(m.d):UNK}</td><td class="${st&&has(m.p)&&has(m.d)?'stab':''}">${has(m.p)&&has(m.d)?num(pw/m.d):UNK}</td></tr>`;
         return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id),id===mv.plus)}${gaugeBar(m,id)}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
       body=`
@@ -1031,7 +1031,9 @@ function openMove(id){
     const pw=has(gm.p)?gm.p*(st?1.2:1):null;
     pve=`<div class="grp"><div class="gttl">ジム・レイド</div><div class="rows">
       ${r('威力',!has(gm.p)?UNK:st?`${num(gm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(gm.p))}
-      ${r('わざ全体の時間',UNK)}${r('ダメージ発生',UNK)}${r('ゲージ',UNK)}${r('DPS',UNK)}
+      ${r('わざ全体の時間',has(gm.d)?num(gm.d)+'秒':UNK)}${r('ダメージ発生',has(gm.w)?num(gm.w,2)+'秒':UNK)}
+      ${has(gm.e)?`<div class="r" title="ゲージの分割数と1本あたりの量です(分割なし=100・2分割=50・3分割=33)"><span>ゲージ</span><span class="gv">${gaugeBar(gm,gid)}<b>${Math.round(-gm.e)}</b></span></div>`:r('ゲージ',UNK)}
+      ${r('DPS',has(gm.p)&&has(gm.d)?`<span class="${st?'stab':''}">${num(pw/gm.d)}</span>`:UNK)}
     </div></div>`;
   }else if(gm){
     const pw=gm.p*(st?1.2:1);

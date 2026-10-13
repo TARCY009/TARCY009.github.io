@@ -105,7 +105,8 @@ def main():
         if not (gp and gp.get('plus') == mid):           # ジム・レイド側がまだ付いていない
             gm = god['moves'].get(mid)
             if gm: ent['pve'] = {'st': 'full', **gm}
-            elif raid is not None: ent['pve'] = {'st': 'power', 'p': float(raid)}
+            # 威力が分かったら、時間は元わざと同じ・ゲージは1本(100)（＋わざの決まり・2026-09-04）。図鑑では「未確定」の札つきで出す
+            elif raid is not None: ent['pve'] = {'st': 'est', 'p': float(raid), 'd': gb['d'], 'w': gb['w'], 'we': gb['we'], 'e': -100}
             else: ent['pve'] = {'st': 'name'}
         pp_ = pv.get(mk.lower())
         if not (pp_ and pp_.get('cp') == mid):            # トレーナーバトル側がまだ付いていない
