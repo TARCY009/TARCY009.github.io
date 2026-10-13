@@ -229,6 +229,11 @@ tbody tr:hover{background:var(--mebg)}
 .mvnm .plus{flex:none;font-size:.6rem;font-weight:800;letter-spacing:.04em;line-height:1;padding:3px 5px;border-radius:5px;
   color:#2a0038;background:linear-gradient(160deg,#f0a8ff 0%,#c46bff 45%,#8b3fd6 100%);
   box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.55)}
+/* 性能がまだ分からない＋わざ(名前だけ／威力だけ)。分からない値は「−」 */
+.mvnm .pend{flex:none;font-size:.58rem;font-weight:700;line-height:1;padding:2px 5px;border-radius:5px;
+  color:var(--sub);border:1px dashed var(--line)}
+td .unk,.mvwin .unk{color:var(--sub);font-weight:600}
+.mvwin .lg.pd{color:var(--sub)}
 .gbar{display:flex;gap:3px;margin-top:4px;max-width:130px}
 .gbar i{height:5px;flex:1;border-radius:3px;opacity:.9}
 .stab{color:var(--stab);font-weight:800}
@@ -472,7 +477,9 @@ Promise.all([
   fetch('/pvp_data.json').then(r=>r.json()),
   // 図鑑専用: 未実装ポケモンのジム・レイド側の性能(火力系ツールには入れないので別ファイル。無くても動く)
   fetch('/pokedex/unreleased.json').then(r=>r.ok?r.json():{pokemon:{}}).catch(()=>({pokemon:{}})),
-]).then(([g,p,u])=>{ GO=g; PVP=p;
+  // 図鑑専用: ゲームにまだ無いメガ(原作の種族値からの換算)と、＋わざの判明段階(build_mega_preview.py が作る)
+  fetch('/pokedex/mega_preview.json').then(r=>r.ok?r.json():{}).catch(()=>({})),
+]).then(([g,p,u,mp])=>{ GO=g; PVP=p;
   // バトル中の内部フォルム(対戦データで hid=1 のもの)は、ジム・レイド側の同名フォルムも載せない
   const hidNames=new Set(Object.values(PVP.pokemon).filter(v=>v.hid).map(v=>v.n));
   Object.entries(u.pokemon||{}).forEach(([k,v])=>{ if(!GO.pokemon[k]&&!hidNames.has(v.n)) GO.pokemon[k]={...v,un:1}; });
@@ -481,15 +488,46 @@ Promise.all([
   // メガの追加SPアタック「＋わざ」。対戦データでは plusMoves という別枠に入っている
   // (GBLシミュレーターのわざ欄に混ざらないようにするため)。図鑑は表示するのでここで合流させる
   Object.assign(PVP.moves, PVP.plusMoves||{});
-  // ＋わざの威力はメガレベルが上がるほど上がる(既定はLv4＝1.3倍)。データは素の値なのでここで合わせる
-  PLUS_IDS=[...new Set(Object.values(GO.pokemon).map(p=>p.plus).filter(Boolean))];
+  mergeMegaPreview(mp||{});
+  // ＋わざの威力はメガレベルが上がるほど上がる(既定はLv4＝1.3倍)。データは素の値なのでここで合わせる。
+  // 威力がまだ分からない＋わざ(名前だけ)は倍率を掛けない
+  const hasP=(mv,id)=>mv[id]&&mv[id].p!=null;
+  PLUS_IDS=[...new Set(Object.values(GO.pokemon).map(p=>p.plus).filter(id=>id&&hasP(GO.moves,id)))];
+  const PVP_PLUS=Object.keys(PVP.plusMoves||{}).filter(id=>hasP(PVP.moves,id));
   MegaLv.apply(GO.moves, PLUS_IDS);
-  MegaLv.apply(PVP.moves, Object.keys(PVP.plusMoves||{}));
-  MegaLv.onChange(()=>{ MegaLv.apply(GO.moves, PLUS_IDS); MegaLv.apply(PVP.moves, Object.keys(PVP.plusMoves||{})); renderMoves(); });
+  MegaLv.apply(PVP.moves, PVP_PLUS);
+  MegaLv.onChange(()=>{ MegaLv.apply(GO.moves, PLUS_IDS); MegaLv.apply(PVP.moves, PVP_PLUS); renderMoves(); });
   init(); });
+
+// ゲームにまだ無いメガと＋わざの判明段階を合流させる(2026-10-14タダシさん指示)。
+// 実装されて godata/pvp_data に入ったものは、そちらが優先(ここでは上書きしない)
+function mergeMegaPreview(mp){
+  const pvNames=new Set(Object.values(PVP.pokemon).map(v=>v.n));
+  for(const [k,v] of Object.entries(mp.pokemon||{})){
+    if(GO.pokemon[k]) continue;
+    const {pv,base,...g}=v;
+    GO.pokemon[k]={...g,un:1};
+    if(pv&&!pvNames.has(v.n)&&!PVP.pokemon[k.toLowerCase()])
+      PVP.pokemon[k.toLowerCase()]={n:v.n,a:v.a,df:v.df,h:v.h,ty:v.ty,q:pv.q||[],c:pv.c||[],eq:pv.eq||[],ec:pv.ec||[],
+        dex:pv.dex,r:0,mega:1,...(v.cv?{cv:1}:{}),...(pv.ivf?{ivf:pv.ivf}:{}),...(pv.lvf?{lvf:pv.lvf}:{})};
+  }
+  // ＋わざ: st=name(名前だけ)/power(威力だけ)/full(確定)。分からない値は持たない＝表では「−」
+  const mv=(x,s)=>{ const {st,...v}=s; const m={n:x.n,t:x.t,...v}; if(st!=='full'){ m.pend=st; m.src=x.src; } return m; };
+  for(const [mk,x] of Object.entries(mp.plus||{})){
+    const g=GO.pokemon[mk];
+    if(g&&x.pve&&!g.plus){ if(!GO.moves[x.id]) GO.moves[x.id]=mv(x,x.pve); g.plus=x.id; }
+    const p=PVP.pokemon[mk.toLowerCase()];
+    if(p&&x.pvp&&!p.cp){
+      if(!PVP.moves[x.id]) PVP.moves[x.id]=mv(x,x.pvp);
+      p.cp=x.id; (PVP.plusMoves=PVP.plusMoves||{})[x.id]=PVP.moves[x.id];
+    }
+  }
+}
 
 // 名前で両データを対応付ける(キー体系が違うため。PvE側だけ/PvP側だけのフォルムもそのまま載せる)
 let DEX=[];         // {name, go:キー|null, pvp:キー|null, ty, a, df, h, dex, un(未実装)}
+// 原作の種族値をGOの決まりで換算した値（ゲームにまだ無いメガ・build_mega_preview.py）
+const CV_TAG='<i class="unrel" title="ゲームにまだ無いメガです。種族値は原作の値をポケモンGOの決まり（攻撃・防御は素早さで補正・HPは1.75倍＋50・強すぎるポケモンは弱体化）で換算した目安で、実装時に変わることがあります">換算</i>';
 const UNREL_TAG='<i class="unrel" title="ゲームにまだ実装されていないポケモンです。データ元の性能（変わることがあります）を載せています">未実装</i>';
 let MAXA=1,MAXD=1,MAXH=1;
 function buildDex(){
@@ -501,8 +539,8 @@ function buildDex(){
   }
   for(const [k,v] of Object.entries(GO.pokemon)){
     const e=m.get(v.n);
-    if(e){ e.go=k; e.fe=v.fe?1:0; e.lg=v.lg?1:0; e.mega=!!v.mega; if(v.un) e.un=1; }
-    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999,fe:v.fe?1:0,lg:v.lg?1:0,mega:!!v.mega,un:v.un?1:0});
+    if(e){ e.go=k; e.fe=v.fe?1:0; e.lg=v.lg?1:0; e.mega=!!v.mega; if(v.un) e.un=1; if(v.cv) e.cv=1; }
+    else m.set(v.n,{name:v.n,go:k,pvp:null,ty:v.ty,a:v.a,df:v.df,h:v.h,dex:9999,fe:v.fe?1:0,lg:v.lg?1:0,mega:!!v.mega,un:v.un?1:0,cv:v.cv?1:0});
   }
   // PvP側にしかないフォルムは、括弧を除いたベース名でPvE側から最終進化・伝説の印を借りる
   const goByName=new Map(Object.values(GO.pokemon).map(v=>[v.n,v]));
@@ -779,7 +817,7 @@ function render(){
   // ヒーロー
   document.getElementById('herocard').innerHTML=`
     <div class="hero">
-      <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm"><span class="nmt">${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}${e.un?UNREL_TAG:''}</div></div>
+      <div class="idn">${e.dex&&e.dex!==9999?`<span class="no" title="全国図鑑の番号です">No.${e.dex}</span>`:''}<div class="nm"><span class="nmt">${e.name}</span>${typePairHTML(e.ty.map(t=>GO.typeJa[t]),24)}${e.un?UNREL_TAG:''}${e.cv?CV_TAG:''}</div></div>
       <div class="cp" title="PL50・個体値15/15/15のときのCPです"><small>最大CP</small><b>${maxCp(e)}</b>${
         e.mega?`<span class="mega4" title="メガレベル最大(メガLv4)でPL上限が+2されたPL52・個体値15/15/15のときのCPです">メガLv4: <i>${maxCp(e,52)}</i></span>`:''}</div>
     </div>
@@ -866,13 +904,19 @@ const TYPE_COLORS={NORMAL:'#9fa19f',FIGHTING:'#ff8000',FLYING:'#81b9ef',POISON:'
 const gaugeBar=(m,id)=>{ const e=pveEnergyOf(id,m); const n=e>=-34?3:e>=-51?2:1;
   return `<span class="gbar">${Array.from({length:n},()=>`<i style="background:${TYPE_COLORS[m.t]||'#888'}"></i>`).join('')}</span>`; };
 const PLUS_HELP='メガシンカ中だけ使える追加のSPアタック。既存の2本とは別枠で、条件を満たせば自動で覚えます（わざマシン不要）。レイドとGOバトルリーグで使えますが、ジムに配置されたポケモンとのジムバトルでは使えません。メガレベルが上がるほど威力が上がります（表の値は倍率を掛けていない素の値）。';
-const mvName=(nm,t,lg,pl)=>`<span class="mvnm">${typePairHTML([GO.typeJa[t]],16)}<span${lg?' class="sp"':''}>${nm}${lg?'<b class="st" title="特別なわざ(レガシー)。通常のわざマシンでは覚えられません">*</b>':''}</span>${pl?`<b class="plus" title="${PLUS_HELP}">追加</b>`:''}</span>`;
+// 性能がまだ分からない＋わざ(m.pend = 'name' 名前だけ／'power' 威力だけ)。分からない値は「−」で出す
+const UNK='<span class="unk" title="まだ発表されていません。公式発表・実装で分かりしだい自動で入ります">−</span>';
+const pendTip=m=>(m.pend==='power'?'威力だけ発表されています。':'名前だけ分かっています。')+'ほかの性能は公式発表・実装で分かりしだい自動で入ります'+(m.src?`（出どころ: ${m.src}）`:'');
+const mvName=(nm,t,lg,pl,m)=>`<span class="mvnm">${typePairHTML([GO.typeJa[t]],16)}<span${lg?' class="sp"':''}>${nm}${lg?'<b class="st" title="特別なわざ(レガシー)。通常のわざマシンでは覚えられません">*</b>':''}</span>${pl?`<b class="plus" title="${PLUS_HELP}">追加</b>`:''}${m&&m.pend?`<b class="pend" title="${pendTip(m)}">未確定</b>`:''}</span>`;
+const has=v=>v!=null;
 
 function renderMoves(){
   const e=entryOf(state.key);
   const box=document.getElementById('mvcard');
   // 追加SPアタック(＋わざ)を持つ16匹のときだけ、メガレベルの切り替えを出す
-  const hasPlus=!!((e.go&&GO.pokemon[e.go]&&GO.pokemon[e.go].plus)||(e.pvp&&PVP.pokemon[e.pvp]&&PVP.pokemon[e.pvp].cp));
+  // (威力がまだ分からない＋わざだけなら出さない＝切り替えても何も変わらないため)
+  const pOk=(M,id)=>!!(id&&M[id]&&has(M[id].p));
+  const hasPlus=(e.go&&GO.pokemon[e.go]&&pOk(GO.moves,GO.pokemon[e.go].plus))||(e.pvp&&PVP.pokemon[e.pvp]&&pOk(PVP.moves,PVP.pokemon[e.pvp].cp));
   const tabs=`<div class="mtrow"><div class="mtabs">
     <button data-t="pve" aria-pressed="${state.tab==='pve'}" title="ジム・レイド(PvE)でのわざ性能を表示します">ジム・レイド</button>
     <button data-t="pvp" aria-pressed="${state.tab==='pvp'}" title="トレーナーバトル(GBL・対人戦)でのわざ性能を表示します">トレーナーバトル</button>
@@ -886,6 +930,8 @@ function renderMoves(){
         return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td>${num(m.e/m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
       const srow=id=>{ const m=GO.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
+        if(m.pend) return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,false,id===mv.plus,m)}</td>
+          <td class="${st&&has(m.p)?'stab':''}">${has(m.p)?num(pw):UNK}</td><td>${UNK}</td><td>${UNK}</td></tr>`;
         return `<tr data-mv="${id}" data-side="pve"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id),id===mv.plus)}${gaugeBar(m,id)}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${num(m.d)}</td><td class="${st?'stab':''}">${num(pw/m.d)}</td></tr>`; };
       body=`
@@ -906,6 +952,8 @@ function renderMoves(){
         return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id))}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${m.eg||0}</td><td>${tn}</td><td>${num((m.eg||0)/tn)}</td><td class="${st?'stab':''}">${num(pw/tn)}</td></tr>`; };
       const srow=id=>{ const m=PVP.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
+        if(m.pend) return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,false,id===mv.plus,m)}</td>
+          <td class="${st&&has(m.p)?'stab':''}">${has(m.p)?num(pw):UNK}</td><td>${has(m.e)?m.e:UNK}</td><td>${has(m.p)&&has(m.e)?num(pw/m.e,2):UNK}</td><td class="eff">${has(m.e)?effHtml(m):UNK}</td></tr>`;
         return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id),id===mv.plus)}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${m.e}</td><td class="${st?'stab':''}">${num(pw/m.e,2)}</td><td class="eff">${effHtml(m)}</td></tr>`; };
       body=`
@@ -978,7 +1026,14 @@ function openMove(id){
   const isPlus=!!(PVP.plusMoves&&(PVP.plusMoves[id]||(pid&&PVP.plusMoves[pid])));   // メガの追加SPアタック
   const r=(k,v)=>`<div class="r"><span>${k}</span><b>${v}</b></div>`;
   let pve='';
-  if(gm){
+  const pd=(gm&&gm.pend)||(pm&&pm.pend);
+  if(gm&&gm.pend){
+    const pw=has(gm.p)?gm.p*(st?1.2:1):null;
+    pve=`<div class="grp"><div class="gttl">ジム・レイド</div><div class="rows">
+      ${r('威力',!has(gm.p)?UNK:st?`${num(gm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(gm.p))}
+      ${r('わざ全体の時間',UNK)}${r('ダメージ発生',UNK)}${r('ゲージ',UNK)}${r('DPS',UNK)}
+    </div></div>`;
+  }else if(gm){
     const pw=gm.p*(st?1.2:1);
     const isFast=gm.e>0;
     // SPのゲージは分割数のメーター+1本あたりの量(分割なし=100/2分割=50/3分割=33)で示す
@@ -993,7 +1048,13 @@ function openMove(id){
     </div></div>`;
   }
   let pvp='';
-  if(pm){
+  if(pm&&pm.pend){
+    const pw=has(pm.p)?pm.p*(st?1.2:1):null;
+    pvp=`<div class="grp"><div class="gttl">トレーナーバトル</div><div class="rows">
+      ${r('威力',!has(pm.p)?UNK:st?`${num(pm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(pm.p))}
+      ${r('消費ゲージ',has(pm.e)?pm.e:UNK)}${r('DPE',has(pm.p)&&has(pm.e)?num(pw/pm.e,2):UNK)}${r('能力変化',UNK)}
+    </div></div>`;
+  }else if(pm){
     const pw=pm.p*(st?1.2:1);
     const isFast=pm.tn!=null;
     const bt=buffText(pm);
@@ -1010,6 +1071,7 @@ function openMove(id){
     <div class="hd">${typePairHTML([GO.typeJa[base.t]],20)}<b>${base.n}</b></div>
     ${legacy?'<div class="lg">＊ 特別なわざ(レガシー) — 通常のわざマシンでは覚えられません</div>':''}
     ${isPlus?'<div class="lg pl">追加 メガシンカ中だけ使える3本目のSPアタック — 自動で覚えます（わざマシン不要）。レイドとGOバトルリーグで使えますが、ジムに配置されたポケモンとのジムバトルでは使えません。メガレベルが上がるほど威力が上がります（下の値は選んでいるメガLvの値）</div>':''}
+    ${pd?`<div class="lg pd">未確定 ${pendTip(pd===(gm&&gm.pend)?gm:pm)}。「−」はまだ分からない値です</div>`:''}
     ${pve}${pvp}
     ${!gm?'<div class="note">このわざはジム・レイドには存在しません</div>':''}
     ${!pm?'<div class="note">このわざはトレーナーバトルには存在しません</div>':''}

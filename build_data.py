@@ -11,6 +11,7 @@
 必要: requests (pip install requests)
 """
 import json, re, math, sys, urllib.request
+from mega_plus_info import MEGA_PLUS_INFO, plus_id
 
 SRC = {
     'gm':   'https://raw.githubusercontent.com/PokeMiners/game_masters/master/latest/latest.json',
@@ -248,6 +249,36 @@ def apply_gm_supp(data):
                     ps.setdefault(slot, []).append(mid)
     return data
 
+
+def add_info_plus(data):
+    """mega_plus_info.py の表のうち、ゲーム内公開データに入った（確定）か、公式発表で威力が分かった＋わざを
+    MEGA_PLUS_MOVES に足す（2026-10-14タダシさん指示）。名前しか分からないものは足さない（図鑑だけが名前を出す）。
+    威力だけのときの時間は元わざを写す（2026-09-04の決まり）。apply_gm_supp より前に呼ぶ"""
+    ms = {e['data']['moveSettings'].get('movementId'): e['data']['moveSettings']
+          for e in data if 'moveSettings' in e.get('data', {})}
+    for mk, (base, raid, *_rest) in MEGA_PLUS_INFO.items():
+        mid = plus_id(base)
+        if mid in MEGA_PLUS_MOVES: continue
+        b = ms.get(base)
+        if not b:
+            print('警告: ＋わざの元わざが見つかりません →', mk, base); continue
+        ty = b['pokemonType'].replace('POKEMON_TYPE_', '')
+        got = ms.get(mid)
+        src = got or (b if raid else None)
+        if not src: continue
+        pw = float(got.get('power', 0)) if got else float(raid)
+        MEGA_PLUS_MOVES[mid] = (mk, ty, pw, src.get('durationMs', 0),
+                                src.get('damageWindowStartMs', src.get('damageWindowEndMs', 0)),
+                                src.get('damageWindowEndMs', 0))
+        if not got:
+            SUPP_MOVES[mid] = {'move': {'movementId': mid, 'pokemonType': b['pokemonType'], 'power': pw,
+                                        'durationMs': b.get('durationMs', 0),
+                                        'damageWindowStartMs': MEGA_PLUS_MOVES[mid][4],
+                                        'damageWindowEndMs': MEGA_PLUS_MOVES[mid][5], 'energyDelta': -100},
+                               'learn': {}}
+        print('表の＋わざを取り込み →', mk, mid, '確定値' if got else f'威力{pw}（時間は元わざ）')
+    return data
+
 # 種族値・技構成がGame Master上で同一でも、独立エントリとして収録するフォルム
 # (フォルムチェンジ専用の特別技持ち等。統合dedupの対象外にする)
 FORCE_SPLIT = {'KELDEO_RESOLUTE'}
@@ -339,7 +370,7 @@ DEFAULT_FORM = {'LANDORUS':'ランドロス（けしん）','TORNADUS':'トル�
  'KELDEO':'ケルディオ（いつも）'}
 
 def main():
-    data = apply_gm_supp(fetch(SRC['gm']))
+    data = apply_gm_supp(add_info_plus(fetch(SRC['gm'])))
     ja = fetch(SRC['ja'])['data']
     ja_map = {ja[i]: ja[i+1] for i in range(0, len(ja)-1, 2)}
     pvp = fetch(SRC['pvp'])['pokemon']
@@ -362,6 +393,10 @@ def main():
     norm = lambda lst: sorted(str(num2move.get(m,m)) if not isinstance(m,str) else m for m in (lst or []))
     pname = lambda pid: ja_map.get(f'pokemon_name_{dex.get(pid,"????")}') or GEN9_JA.get(pid) or pid
     mname = lambda mid: ja_map.get(f'move_name_{move_no.get(mid,"")}')
+    # 表(mega_plus_info.py)の＋わざの名前は「元わざの名前＋+」
+    for _base, *_r in MEGA_PLUS_INFO.values():
+        if plus_id(_base) not in JP_MOVE_FIX and (JP_MOVE_FIX.get(_base) or mname(_base)):
+            JP_MOVE_FIX[plus_id(_base)] = (JP_MOVE_FIX.get(_base) or mname(_base)) + '+'
 
     # ポケモンが実際に覚えるわざのID一覧(威力0のわざを収録するかの判定に使う)
     learnable = set()
@@ -571,7 +606,9 @@ def main():
     _plus_ok = 0
     for _mid, (_mk, *_rest) in MEGA_PLUS_MOVES.items():
         if _mk not in final:
-            print('警告: ＋わざの対象メガが見つかりません →', _mk, _mid); continue
+            # 表(mega_plus_info.py)の未実装メガは図鑑の未実装メガのほうに付くので黙って飛ばす
+            if _mk not in MEGA_PLUS_INFO: print('警告: ＋わざの対象メガが見つかりません →', _mk, _mid)
+            continue
         if _mid not in final[_mk]['c'] and _mid not in final[_mk]['ec']:
             final[_mk]['c'] = list(final[_mk]['c']) + [_mid]
         final[_mk]['plus'] = _mid   # 追加SPアタック(3本目)の印。画面のバッジ表示と、ジム挑戦の除外に使う

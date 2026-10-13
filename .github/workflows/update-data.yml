@@ -53,6 +53,10 @@ jobs:
       - name: GBL・ロケット団対策データを再生成
         run: python3 build_pvp_data.py
 
+      # 図鑑だけの「ゲームにまだ無いメガ」と「＋わざの判明段階」（mega_plus_info.py の表）。失敗しても前日の分で動くので止めない
+      - name: 図鑑の未実装メガと＋わざの判明段階を作り直す
+        run: python3 build_mega_preview.py || echo "図鑑の未実装メガは前日のまま"
+
       # 個体値チェッカーだけ手作業更新でメガ4匹が取り残されていたため、2026-08-15に同期を追加した
       - name: 個体値チェッカーのポケモンを同期
         run: python3 iv-checker/build_iv.py
@@ -75,7 +79,7 @@ jobs:
                  gym-defense/data/defense_data.js gym-defense/data/defense_data.json gym-defense/data/defense_unreleased.json
                  max-battle/data/max_data.js max-battle/data/max_unreleased.json
                  pvp_data.js pvp_data.json assets/meta_moves.js
-                 iv-checker/index.html pokedex/unreleased.json"
+                 iv-checker/index.html pokedex/unreleased.json pokedex/mega_preview.json"
           if git diff --quiet -- $FILES; then
             echo "データに変化なし。今回は更新しない"
             echo "changed=0" >> "$GITHUB_OUTPUT"

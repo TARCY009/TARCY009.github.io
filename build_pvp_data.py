@@ -12,6 +12,7 @@ GOバトルリーグ対面シミュレート用 データ生成スクリプト
 import json, re, math
 from build_data import (SRC, fetch, TYPE_JA, REGION, FORM_JA, OVERRIDE,
                         DEFAULT_FORM, GEN9_JA, JP_MOVE_FIX, MEGA_PLUS_MOVES, MEGA_PLUS_JA)
+from mega_plus_info import MEGA_PLUS_INFO, plus_id, info_ids
 
 # PvPoke速度に含まれるが対戦ツールでは扱わない特殊ID
 SKIP_SPECIES_SUFFIX = ('_shadow',)          # シャドウは基本形にフラグで持つ
@@ -22,7 +23,7 @@ SKIP_MOVES = {'STRUGGLE', 'HIDDEN_POWER_NORMAL'}   # わるあがき(自動発�
 #   「その他のわざ（本来おぼえない）」を作るので、moves に入れると13本がそこに並んでしまう。
 #   GBLシミュレーターの3本目対応は未着手なので、その時が来るまで混ぜない。
 #   ポケモン側は cp フィールド(1本)に持つ。既存の c / ec は一切触らない
-SKIP_MOVES |= set(MEGA_PLUS_MOVES)
+SKIP_MOVES |= set(MEGA_PLUS_MOVES) | info_ids()   # 表(mega_plus_info.py)の＋わざも別枠
 # 情報元の数値が変わっていないかの見張り(タダシさんが実データと突き合わせて確定させた値・2026-09-01)
 MEGA_PLUS_PVP_CHECK = {
     'DYNAMIC_PUNCH_PLUS': (130, -80), 'FUTURE_SIGHT_PLUS':  (130, -80),
@@ -223,6 +224,38 @@ def main():
                   f'情報元{mv["power"]}/{mv["energy"]} 確定値{want[0]}/{want[1]}')
         plus_moves[mid] = e
 
+    # 表(mega_plus_info.py)の＋わざ: 情報元に入っていればその値(確定)、無ければ表の威力と消費が両方そろったときだけ。
+    # 威力だけのときは入れない(消費が分からないと実在しない性能になる)。図鑑は build_mega_preview.py が名前・威力だけでも出す
+    info_link = {}
+    for mk, (base, _raid, pp, pe, _src) in MEGA_PLUS_INFO.items():
+        mid = plus_id(base)
+        if mid in plus_moves or mid in MEGA_PLUS_MOVES or base not in moves: continue
+        mv = src_mv.get(mid)
+        if mv:
+            e = {'n': moves[base]['n'] + '+', 't': mv['type'].upper(), 'p': mv['power'], 'e': mv['energy']}
+            for k_src, k_dst in (('buffs','bf'), ('buffTarget','bt'), ('buffApplyChance','bc')):
+                if k_src in mv:
+                    e[k_dst] = float(mv[k_src]) if k_src == 'buffApplyChance' else mv[k_src]
+            if (pp is not None and mv['power'] != pp) or (pe is not None and abs(mv['energy']) != pe):
+                print(f'警告: ＋わざの対戦数値が表と違います → {mid} 情報元{mv["power"]}/{mv["energy"]} 表{pp}/{pe}')
+            print('表の＋わざを情報元の確定値で収録 →', mid)
+        elif pp is not None and pe is not None:
+            e = {'n': moves[base]['n'] + '+', 't': moves[base]['t'], 'p': pp, 'e': pe}
+            print('表の＋わざを表の数値で収録(情報元に入るまで) →', mid)
+        else:
+            continue
+        plus_moves[mid] = e
+        info_link[mk.lower()] = mid
+    # 情報元に入ったのに表にも MEGA_PLUS_MOVES にも無い＋わざ(メガ専用わざの印つき)は、どのメガのわざか分からないので知らせる
+    known = set(MEGA_PLUS_MOVES) | info_ids()
+    new_plus = sorted(m['moveId'] for m in pvp['moves'] if m.get('isMegaMove') and m['moveId'] not in known)
+    if new_plus:
+        msg = ['', '## 情報元に新しい＋わざ（どのメガのわざか未登録）', '',
+               *[f'- {m}（mega_plus_info.py の表に、覚えるメガと一緒に1行足すと全ツールに入ります）' for m in new_plus], '']
+        print('\n'.join(msg))
+        try: open('changes.md', 'a', encoding='utf-8').write('\n'.join(msg))
+        except Exception: pass
+
     # ---- ポケモン: PvPoke(技構成・種族値) + 日本語名 ----
     def jp_name(sid):
         """PvPokeのspeciesIdをGMのフォルムキーに照合して日本語名を得る"""
@@ -289,7 +322,9 @@ def main():
             print('対戦側は未収録のため印を付けない →', sid, mid); continue
         pokes[sid]['cp'] = mid
         plus_ok += 1
-    print(f'メガの追加SPアタック: {plus_ok}/{len(MEGA_PLUS_MOVES)}匹（対戦用は plusMoves に別枠で収録）')
+    for sid, mid in info_link.items():
+        if sid in pokes: pokes[sid]['cp'] = mid; plus_ok += 1
+    print(f'メガの追加SPアタック: {plus_ok}/{len(MEGA_PLUS_MOVES) + len(info_link)}匹（対戦用は plusMoves に別枠で収録）')
     for sid in shadow_ok:
         if sid in pokes: pokes[sid]['shadow'] = 1
     # ---- 交換できないポケモンは最低個体値10(個体値10未満の個体はゲーム内に存在しない) ----
