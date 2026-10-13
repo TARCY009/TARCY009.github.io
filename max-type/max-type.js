@@ -18,6 +18,20 @@
   let guardOn = Q.get('g') === '1';
   let includeLegacy = Q.get('lg') !== '0';
   let shown = PAGE;
+  // ムゲンダイナのフィールド効果「ダイマックスほう」（2026-10-14タダシさん指示）。マックスわざが1レベル上がる（Lv3→Lv4）:
+  //  ダイマックスわざ 350→450 ／ キョダイマックスわざ・ムゲンダイナ 450→550 ／ ダイウォール 1回60→80（3回で180→240）。
+  //  ザシアン(けんのおう)・ザマゼンタ(たてのおう)（cat S350）には効かない。そのどちらかが10位以内にいるときだけ押せる
+  //  （効果なしの順位で判定。いないときは灰色にして効果も外す）
+  const CANNON_POW = {D:450, G:550, S450:550};
+  const CANNON_GUARD = 240;
+  let cannon = Q.get('dc') === '1';
+  const powOf = (p, on) => (on && CANNON_POW[p.cat]) || D.power[p.cat];
+  const guardOf = (p, on) => on && p.cat !== 'S350' ? CANNON_GUARD : GUARD;
+  const zzTop10 = rows => rows.some(r => r.rank <= 10 && r.p.cat === 'S350');
+  function cannonAvail(){
+    if(mode === 'atk') return zzTop10(atkRows(false));
+    return guardOn && zzTop10(tankRows(false));
+  }
 
   // ---- 共通 ----
   function chip(ti, size){ return typeIconHTML(D.types_jp[ti], size || 14); }
@@ -72,13 +86,13 @@
   const tankNames = new Set(tanks.map(p => p.n));
 
   // ---- アタッカー: 選んだタイプのマックスわざの与ダメージ(マックスバトル対策と同じ式・相手の相性は全員同じなので省く) ----
-  function atkRows(){
+  function atkRows(on){
     const rows = [];
     for(const p of D.roster.concat(extra)){
       // 開発者だけの除外（未実装の先行収録を動画用に外す・ふつうの人には効かない）
       if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;
       const atkStat = (p.atk + 15) * cpm;
-      const power = D.power[p.cat];
+      const power = powOf(p, on);
       let fast, moveName;
       if(p.cat === 'D'){
         const pool = (p.fm || []).filter(f => f.t === curT && (includeLegacy || !f.e));
@@ -96,7 +110,7 @@
         moveName = p.gm;
       }
       const stab = p.ty.includes(curT) ? D.stab : 1;
-      rows.push({p, fast, moveName, stab, dmg: power * atkStat * stab});
+      rows.push({p, fast, moveName, stab, power, dmg: power * atkStat * stab});
     }
     return withRanks(rows, 'dmg');
   }
@@ -104,16 +118,17 @@
   // ---- タンク: 耐久指数 ÷ 選んだタイプから受けるダメージの倍率(交代受けと同じ式) ----
   //  ダイウォール込みは、壁180(実HP)を種族値に換算(÷PL50の係数)してHPに足す。
   //  ザマゼンタの登場時の壁60もマックスバトル対策と同じく足す
-  function tankRows(){
+  function tankRows(on){
     const rows = [];
     for(const p of tanks.concat(extra.filter((p, i, a) => !tankNames.has(p.n) && a.findIndex(q => q.n === p.n) === i))){
       if(window.GonaviDevEx && GonaviDevEx.has(p.n)) continue;   // 開発者だけの除外
       const hp0 = p.st + (p.wall ? (D.wall_hp || 60) / cpm : 0);
       const bulk = hp0 * p.df;
-      const gbulk = (hp0 + (guardOn ? GUARD / cpm : 0)) * p.df;
+      const gd = guardOf(p, on);
+      const gbulk = (hp0 + (guardOn ? gd / cpm : 0)) * p.df;
       const mult = effVs(curT, p.ty);
       const half = (p.fm || []).filter(f => f.q).sort((a,b) => (a.e?1:0) - (b.e?1:0))[0] || null;
-      rows.push({p, bulk, gbulk, mult, half, score: gbulk / mult});
+      rows.push({p, bulk, gbulk, gd, mult, half, score: gbulk / mult});
     }
     return withRanks(rows, 'score');
   }
@@ -149,7 +164,7 @@
       <div class="detail">
         <span>攻撃種族値 <b>${r.p.atk}</b></span>
         <span>タイプ一致 <b>${r.stab > 1 ? '○ ×1.2' : 'なし'}</b></span>
-        <span>マックスわざの威力 <b>${D.power[r.p.cat]}</b></span>
+        <span>マックスわざの威力 <b>${r.power}</b></span>
       </div>
     </div>`;
   }
@@ -159,7 +174,7 @@
       : '<span class="chip nohalf" title="発生0.5秒のノーマルアタックを覚えません（マックスメーターの溜まりがおそくなります）">0.5秒技なし</span>';
     const wallChip = r.p.wall ? '<span class="chip wallb" title="登場時に壁60を持っています">開始時ウォール+60</span>' : '';
     const bulkTxt = guardOn
-      ? `<span title="HP種族値×防御種族値に、ダイウォールの壁180ぶんを足した値です">耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b> <span class="arrow">→</span> 壁込み <b>${Math.round(r.gbulk).toLocaleString('ja-JP')}</b></span>`
+      ? `<span title="HP種族値×防御種族値に、ダイウォールの壁${r.gd}ぶんを足した値です">耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b> <span class="arrow">→</span> 壁込み <b>${Math.round(r.gbulk).toLocaleString('ja-JP')}</b></span>`
       : `<span title="HP種族値×防御種族値です">耐久指数 <b>${Math.round(r.bulk).toLocaleString('ja-JP')}</b>${r.p.wall ? '(開始時ウォール込み)' : ''}</span>`;
     return `<div class="row${r.rank <= 3 ? ' no' + r.rank : ''}">
       <div class="prow">
@@ -171,7 +186,7 @@
           <div class="moves">${defChip(r.mult)} ${wallChip}</div>
           <div class="moves">${halfInfo}</div>
         </div>
-        <div class="pts" title="${guardOn ? '壁180込みの耐久指数' : '耐久指数'}を、${D.types_jp[curT]}タイプから受けるダメージの倍率で割り、1位を100として換算したポイントです"><b>${r.pts >= 99.95 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
+        <div class="pts" title="${guardOn ? '壁' + r.gd + '込みの耐久指数' : '耐久指数'}を、${D.types_jp[curT]}タイプから受けるダメージの倍率で割り、1位を100として換算したポイントです"><b>${r.pts >= 99.95 ? '100' : r.pts.toFixed(1)}</b><small>ポイント</small></div>
       </div>
       <div class="meter"><i style="width:${Math.max(2, r.pts).toFixed(1)}%"></i></div>
       <div class="detail">
@@ -183,7 +198,18 @@
   }
   function render(){
     const ja = D.types_jp[curT];
-    const rows = mode === 'atk' ? atkRows() : tankRows();
+    const avail = cannonAvail();
+    if(!avail) cannon = false;
+    const cb = $('fCannon');
+    if(cb){
+      cb.style.display = (mode === 'atk' || guardOn) ? '' : 'none';
+      cb.disabled = !avail;
+      cb.setAttribute('aria-pressed', String(cannon));
+      cb.title = avail
+        ? 'ムゲンダイナのフィールド効果「ダイマックスほう」でマックスわざを1レベル上げた（Lv4）ときの順位にします。ダイマックスわざ 350→450・キョダイマックスわざ 450→550' + (mode === 'tank' ? '・ダイウォールの壁 180→240' : '') + '。ザシアン(けんのおう)・ザマゼンタ(たてのおう)には効きません'
+        : 'ザシアン(けんのおう)・ザマゼンタ(たてのおう)が10位以内にいるときだけ押せます（この2匹には「ダイマックスほう」が効かないため、順位が入れ替わります）';
+    }
+    const rows = mode === 'atk' ? atkRows(cannon) : tankRows(cannon);
     $('curType').innerHTML = `<span id="curTypeName">${typeIconHTML(ja, 26)}${ja}タイプ</span><small>${mode === 'atk' ? 'のアタッカー' : 'を受けるタンク'} ${rows.length}匹</small>`;
     const list = $('list');
     list.classList.toggle('tank', mode === 'tank');
@@ -200,6 +226,7 @@
     if(curT !== TYPE_IDX[0]) q.set('t', EN[curT]);
     if(guardOn) q.set('g', '1');
     if(!includeLegacy) q.set('lg', '0');
+    if(cannon) q.set('dc', '1');
     const qs = q.toString();
     history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
     // もう一方のページへのタブにも、いまのタイプと設定を引き継ぐ
@@ -219,6 +246,7 @@
     render(); syncUrl();
   }
   $('fLegacy').onclick = () => { includeLegacy = !includeLegacy; sync(); };
+  if($('fCannon')) $('fCannon').onclick = () => { cannon = !cannon; shown = PAGE; sync(); };
   $('gOff').onclick = () => { guardOn = false; sync(); };
   $('gOn').onclick = () => { guardOn = true; sync(); };
   $('more').onclick = () => { shown += PAGE; render(); };
@@ -261,7 +289,7 @@
   // ---- 出口: 全タイプのアタッカー・タンクの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ atkRows／tankRows を呼ぶ・画面は変えない） ----
   // 既定の設定（特別技も＝ON・ダイウォール込み＝OFF）。tankGuard はダイウォール込みの順位
   window.GonaviExport = function(){
-    const sv = [curT, guardOn, includeLegacy], out = {};
+    const sv = [curT, guardOn, includeLegacy, cannon], out = {};
     const pt = r => r.pts >= 99.95 ? '100' : r.pts.toFixed(1);
     try {
       includeLegacy = true;
@@ -274,7 +302,7 @@
         guardOn = true;
         o.tankGuard = tankRows().map(r => ({n:r.p.n, rank:r.rank, pts:pt(r)}));
       }
-    } finally { [curT, guardOn, includeLegacy] = sv; }
+    } finally { [curT, guardOn, includeLegacy, cannon] = sv; }
     return out;
   };
   sync();

@@ -336,6 +336,7 @@ footer a{color:var(--spec)}
   <button id="fSp" class="t-gold" aria-pressed="false" title="SPアタックを打った方がマックスメーターのチャージを早められる場合は「SP打ってOK」と表示。打たない方がチャージが早い場合は「SP封印推奨」と表示します">SP判定</button>
   <button type="button" id="spMush" class="t-red" style="display:none" aria-pressed="false" title="ダイキノコを使ったときの判定に切り替えます。バトル中の自分の攻撃のダメージがすべて2倍になり（最後に出たダメージを2倍）、マックスメーターの溜まりも速くなります。0.5秒わざ以外のノーマルアタックの連打のほうが速くなる場合も判定します">ダイキノコ</button>
   <button id="fLegacy" class="t-cyan" aria-pressed="true" title="特別なわざ（いまは覚えられない限定のわざ）も候補に含めます">特別技も</button>
+  <button type="button" id="fCannon" class="t-red" aria-pressed="false" disabled style="display:none">ダイマックスほう</button>
   <button id="fHalf" class="t-cyan" aria-pressed="true" style="display:none" title="マックスメーターを速く溜められるノーマルアタックを持つポケモンだけに絞ります（0.5秒わざ、または連打すると0.5秒あたり1％以上溜まる1秒以上のわざ）">0.5秒技だけ</button>
   <button id="fSwap" class="t-shadow" aria-pressed="false" style="display:none" title="ボスのわざを選んで、交代でそれを受け止めたときの被ダメージの少なさで並べます">交代受け</button>
 </div>
@@ -439,6 +440,12 @@ footer a{color:var(--spec)}
   const cpm = D.cpm50;
 
   let boss=null, mode='atk', swapOn=false, halfOnly=true, includeLegacy=true;
+  // ムゲンダイナのフィールド効果「ダイマックスほう」（2026-10-14タダシさん指示）。マックスわざが1レベル上がる（Lv3→Lv4）:
+  //  ダイマックスわざ 350→450 ／ キョダイマックスわざ・ムゲンダイナ 450→550。ザシアン(けんのおう)・ザマゼンタ(たてのおう)（cat S350）には効かない。
+  //  そのどちらかが効果なしの火力ランキングで10位以内にいるときだけ押せる（いないときは灰色にして効果も外す）
+  const CANNON_POW = {D:450, G:550, S450:550};
+  let cannon = false;
+  const fCannon = document.getElementById('fCannon');
   let spStar=6, spOn=false;
   // ダイキノコ（2026-09-23タダシさん指示）。最後に出たダメージを2倍する＝(切り捨て(…)+1)×2。
   // 途中で2倍（切り捨ての前）だと外部の実測（ドサイドンのうちおとす→ファイヤー2.56%・フリーザー2.28%）と合わない
@@ -667,6 +674,7 @@ footer a{color:var(--spec)}
     fSp.style.display = boss ? '' : 'none';
     spMush.style.display = boss ? '' : 'none';   // ダイキノコはアタッカー・タンクのどちらでも効く（SP判定・マックスメーターのチャージ効率）
     fLegacy.style.display = (mode==='atk' || spOn) ? '' : 'none';
+    fCannon.style.display = (mode==='atk' && boss) ? '' : 'none';
     fHalf.style.display   = (mode==='tank' && !swapOn) ? '' : 'none';
     fSwap.style.display   = (mode==='tank') ? '' : 'none';
     swapMovesEl.style.display = (mode==='tank' && swapOn) ? 'flex' : 'none';
@@ -729,6 +737,11 @@ footer a{color:var(--spec)}
   });
   spDef.addEventListener('input', () => compute());
 
+  fCannon.addEventListener('click', () => {
+    cannon = !cannon;
+    shown = 30;
+    compute();
+  });
   fLegacy.addEventListener('click', () => {
     includeLegacy = !includeLegacy;
     fLegacy.setAttribute('aria-pressed', String(includeLegacy));
@@ -815,6 +828,19 @@ footer a{color:var(--spec)}
                 rec: rf ? Object.assign({}, rf.f, {chg: rf.c}) : null};
       }
       rows.push({p, ...best});
+    }
+    // ダイマックスほう: 効果なしの順位でザシアン(けんのおう)・ザマゼンタ(たてのおう)が10位以内なら押せる
+    rows.sort((a,b) => b.dmg - a.dmg);
+    const avail = rows.slice(0, 10).some(r => r.p.cat === 'S350');
+    if(!avail) cannon = false;
+    fCannon.disabled = !avail;
+    fCannon.setAttribute('aria-pressed', String(cannon));
+    fCannon.title = avail
+      ? 'ムゲンダイナのフィールド効果「ダイマックスほう」でマックスわざを1レベル上げた（Lv4）ときの順位にします。ダイマックスわざ 350→450・キョダイマックスわざ 450→550。ザシアン(けんのおう)・ザマゼンタ(たてのおう)には効きません'
+      : 'ザシアン(けんのおう)・ザマゼンタ(たてのおう)が10位以内にいるときだけ押せます（この2匹には「ダイマックスほう」が効かないため、順位が入れ替わります）';
+    for(const r of rows){
+      r.power = cannon && CANNON_POW[r.p.cat] ? CANNON_POW[r.p.cat] : D.power[r.p.cat];
+      r.dmg *= r.power / D.power[r.p.cat];
     }
     rows.sort((a,b) => b.dmg - a.dmg);
     const top = rows.length ? rows[0].dmg : 1;
