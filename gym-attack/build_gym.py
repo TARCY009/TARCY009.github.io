@@ -182,6 +182,13 @@ print(f'更新 {len(updated)}件: {"、".join(updated[:10])}{" …" if len(updat
 UNREL = os.path.join(REPO, 'pokedex', 'unreleased.json')
 if os.path.exists(UNREL):
     un = json.load(open(UNREL, encoding='utf-8')).get('pokemon', {})
+    # 図鑑用の「ゲームにまだ無いメガ」（原作の種族値からの換算・build_mega_preview.py）も足す（2026-10-14タダシさん指示）。
+    # 毎朝の自動更新ではこのあとで作り直されるので、前日のファイルを使う（ジム挑戦は＋わざを出さないので種族値とわざだけでよい）
+    MP = os.path.join(REPO, 'pokedex', 'mega_preview.json')
+    if os.path.exists(MP):
+        for k, v in json.load(open(MP, encoding='utf-8')).get('pokemon', {}).items():
+            if k not in un:
+                un[k] = {kk: vv for kk, vv in v.items() if kk not in ('pv', 'base', 'cv')}
     u_poke, u_moves = [], {}
     for k, v in un.items():
         ty = [ti[t] for t in v['ty']]
