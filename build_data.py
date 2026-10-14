@@ -250,6 +250,9 @@ def apply_gm_supp(data):
     return data
 
 
+INFO_SUPP = set()   # 表の威力から作った＋わざ（ゲーム内公開データには無いもの）
+
+
 def add_info_plus(data):
     """mega_plus_info.py の表のうち、ゲーム内公開データに入った（確定）か、公式発表で威力が分かった＋わざを
     MEGA_PLUS_MOVES に足す（2026-10-14タダシさん指示）。名前しか分からないものは足さない（図鑑だけが名前を出す）。
@@ -271,6 +274,7 @@ def add_info_plus(data):
                                 src.get('damageWindowStartMs', src.get('damageWindowEndMs', 0)),
                                 src.get('damageWindowEndMs', 0))
         if not got:
+            INFO_SUPP.add(mid)
             SUPP_MOVES[mid] = {'move': {'movementId': mid, 'pokemonType': b['pokemonType'], 'power': pw,
                                         'durationMs': b.get('durationMs', 0),
                                         'damageWindowStartMs': MEGA_PLUS_MOVES[mid][4],
@@ -610,6 +614,8 @@ def main():
         if _mk not in final:
             # 表(mega_plus_info.py)の未実装メガは図鑑の未実装メガのほうに付くので黙って飛ばす
             if _mk not in MEGA_PLUS_INFO: print('警告: ＋わざの対象メガが見つかりません →', _mk, _mid)
+            # 実装前のメガの＋わざ(表の威力から作ったもの)はジム・レイドのデータに残さない＝図鑑が「未確定」で出す
+            elif _mid in INFO_SUPP: moves.pop(_mid, None)
             continue
         if _mid not in final[_mk]['c'] and _mid not in final[_mk]['ec']:
             final[_mk]['c'] = list(final[_mk]['c']) + [_mid]

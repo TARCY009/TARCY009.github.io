@@ -82,7 +82,8 @@ MEGA_PLUS_INFO = {
     'GLIMMORA_MEGA':        ('METEOR_BEAM', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガキラフロル『メテオビーム＋』
     'TATSUGIRI_MEGA':       ('DRAGON_PULSE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガシャリタツ『りゅうのはどう＋』
     'BAXCALIBUR_MEGA':      ('ICICLE_SPEAR', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガセグレイブ『つららばり＋』
-    'CHANDELURE_MEGA':      ('OMINOUS_WIND', 145, 50, None, '公式発表 2026-10（シャンデラのスーパーメガレイド・デイ）'),   # メガシャンデラ『あやしいかぜ＋』
+    'CHANDELURE_MEGA':      ('OMINOUS_WIND', 145, 50, None, '公式発表 2026-10（シャンデラのスーパーメガレイド・デイ）'),   # メガシャンデラ『あやしいかぜ＋』（対戦: 確率で自分の攻撃・防御+1。確率は未発表）
+    'SABLEYE_MEGA':         ('NIGHT_SHADE', 160, 55, None, '公式発表 2026-10（ハロウィン2026パート2・11/1から）'),   # メガヤミラミ『ナイトヘッド＋』
     'AERODACTYL_MEGA':      ('ROCK_SLIDE', None, None, None, '解析情報 2026-10（未発表・変更の可能性あり）'),   # メガプテラ『いわなだれ＋』
 }
 
