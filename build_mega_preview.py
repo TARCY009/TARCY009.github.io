@@ -72,7 +72,8 @@ def main():
         paren = re.search(r'（.*?）', nm0)
         keep = paren.group(0) if paren and base in ('MEOWSTIC_FEMALE',) else ''
         name = tag + re.sub(r'（.*?）', '', nm0) + xyz + keep
-        pk = pv.get(key.lower())
+        # 対戦データの情報元に同じメガが載っていればその値（キーの書き方が違っても名前で見つける）
+        pk = pv.get(key.lower()) or next((x for x in pv.values() if x.get('n') == name and not x.get('hid')), None)
         if pk and pk.get('n') and not pk.get('hid'):
             a, d, h = pk['a'], pk['df'], pk['h']; cv = 0
         else:
@@ -131,10 +132,42 @@ def main():
         if 'pve' in ent or 'pvp' in ent:
             out_plus[mk] = ent
 
+    report(out_pk, out_plus)
     js = json.dumps({'pokemon': dict(sorted(out_pk.items())), 'plus': out_plus}, ensure_ascii=False, separators=(',', ':'))
     open(OUT, 'w', encoding='utf-8').write(js)
     print(f'図鑑の未実装メガ: {len(out_pk)}匹（うち換算 {sum(1 for x in out_pk.values() if x.get("cv"))}匹）'
           f'・＋わざの判明段階: {len(out_plus)}件 → {OUT}')
+
+
+STAGE_JA = {'name': '名前だけ', 'power': '威力だけ', 'est': '威力＋時間（元わざ）', 'full': '確定値'}
+
+
+def report(out_pk, out_plus):
+    """前回の出力と比べて、段階が進んだもの・実装データに入ったものを毎朝のお知らせ(changes.md)に足す"""
+    try: prev = json.load(open(OUT, encoding='utf-8'))
+    except Exception: return
+    lines = []
+    for k, v in prev.get('pokemon', {}).items():
+        if k not in out_pk:
+            lines.append(f'{v["n"]}: ゲームのデータに入ったので、換算値の仮表示を終えて正式な値に切り替え')
+        elif v.get('cv') and not out_pk[k].get('cv'):
+            lines.append(f'{v["n"]}: 対戦データの情報元に載ったので、換算値から情報元の種族値に切り替え')
+    for mk, x in out_plus.items():
+        if mk not in prev.get('plus', {}):
+            lines.append(f'{x["n"]}（{mk}）: 表に追加')
+    for mk, x in prev.get('plus', {}).items():
+        y = out_plus.get(mk, {})
+        for side, ja in (('pve', 'ジム・レイド'), ('pvp', 'トレーナーバトル')):
+            if side not in x: continue
+            if side not in y:
+                lines.append(f'{x["n"]}（{mk}）{ja}: 確定してツールのデータに入った（図鑑の仮表示を終了）')
+            elif x[side].get('st') != y[side].get('st'):
+                lines.append(f'{x["n"]}（{mk}）{ja}: {STAGE_JA.get(x[side].get("st"))} → {STAGE_JA.get(y[side].get("st"))}')
+    if lines:
+        msg = ['', '### ⚡ メガの＋わざ・未実装メガ（ステータス図鑑）', '', *[f'- {t}' for t in lines], '']
+        print('\n'.join(msg))
+        try: open('changes.md', 'a', encoding='utf-8').write('\n'.join(msg))
+        except Exception: pass
 
 
 if __name__ == '__main__':

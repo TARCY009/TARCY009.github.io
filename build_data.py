@@ -251,6 +251,9 @@ def apply_gm_supp(data):
 
 
 INFO_SUPP = set()   # 表の威力から作った＋わざ（ゲーム内公開データには無いもの）
+INFO_NOTES = []     # お知らせ(changes.md)に載せる＋わざの知らせ
+# 伝説のわざの「+」（メガの＋わざではない・誰も覚えない）。知らせの対象から外す
+NOT_MEGA_PLUS = {'AEROBLAST_PLUS', 'AEROBLAST_PLUS_PLUS', 'SACRED_FIRE_PLUS', 'SACRED_FIRE_PLUS_PLUS'}
 
 
 def add_info_plus(data):
@@ -270,6 +273,9 @@ def add_info_plus(data):
         src = got or (b if raid else None)
         if not src: continue
         pw = float(got.get('power', 0)) if got else float(raid)
+        if got:
+            INFO_NOTES.append((mid, f'{mk} の {mid}: ゲーム内公開データに入り確定値に切り替え（威力{pw:g}）'
+                              + (f' ⚠ 表の発表値{raid}と違う' if raid is not None and float(raid) != pw else '')))
         MEGA_PLUS_MOVES[mid] = (mk, ty, pw, src.get('durationMs', 0),
                                 src.get('damageWindowStartMs', src.get('damageWindowEndMs', 0)),
                                 src.get('damageWindowEndMs', 0))
@@ -281,6 +287,10 @@ def add_info_plus(data):
                                         'damageWindowEndMs': MEGA_PLUS_MOVES[mid][5], 'energyDelta': -100},
                                'learn': {}}
         print('表の＋わざを取り込み →', mk, mid, '確定値' if got else f'威力{pw}（時間は元わざ）')
+    # ゲーム内公開データに入ったのに、どの表にも無い＋わざ（どのメガのわざか未登録）
+    known = set(MEGA_PLUS_MOVES) | {plus_id(v[0]) for v in MEGA_PLUS_INFO.values()} | NOT_MEGA_PLUS
+    for mid in sorted(m for m in ms if isinstance(m, str) and m.endswith('_PLUS') and m not in known):
+        INFO_NOTES.append((None, f'{mid}: ゲーム内公開データに新しい＋わざ（どのメガのわざか未登録 → mega_plus_info.py に1行足す）'))
     return data
 
 # 種族値・技構成がGame Master上で同一でも、独立エントリとして収録するフォルム
@@ -505,7 +515,7 @@ def main():
             if not stt: continue
             tev = ov.get('tempEvoId','')
             tag = 'ゲンシ' if tev.endswith('PRIMAL') else 'メガ'
-            xy = 'X' if tev.endswith('_X') else ('Y' if tev.endswith('_Y') else '')
+            xy = next((c for c in 'XYZ' if tev.endswith('_' + c)), '')   # メガアブソルZ などの Z も
             mkey = k+'_'+tev.replace('TEMP_EVOLUTION_','')
             if mkey in final: continue
             final[mkey] = {'n':tag+p['n']+xy,'a':stt['baseAttack'],'df':stt['baseDefense'],'h':stt['baseStamina'],
@@ -586,7 +596,7 @@ def main():
     # GMに正式収録されたら自動取得値を優先（キーが既にあればスキップ）。
     for sp in pvp:
         sid = sp.get('speciesId','')
-        mm = re.match(r'^(.*?)_(mega(?:_[xy])?|primal)$', sid)
+        mm = re.match(r'^(.*?)_(mega(?:_[xyz])?|primal)$', sid)
         if not mm or not sp.get('released'): continue
         key = sid.upper()
         if key in final: continue
@@ -597,7 +607,7 @@ def main():
         bs = sp.get('baseStats') or {}
         if not all(bs.get(x) for x in ('atk','def','hp')): continue
         kind = mm.group(2)
-        xy = 'X' if kind.endswith('_x') else ('Y' if kind.endswith('_y') else '')
+        xy = next((c for c in 'XYZ' if kind.endswith('_' + c.lower())), '')
         tag = 'ゲンシ' if kind == 'primal' else 'メガ'
         ty = [t.upper() for t in (sp.get('types') or []) if t and t != 'none']
         final[key] = {'n':tag+src['n']+xy,'a':bs['atk'],'df':bs['def'],'h':bs['hp'],
@@ -716,6 +726,10 @@ def main():
         sec("🔧 技の威力調整", adjmoves, short="威力調整")
         sec("🗑️ 削除", removed, short="削除")
         print("HEADLINE: " + ("・".join(head) if head else "内部データの調整のみ"))
+    # 確定値への切り替えは、前回のデータと値が変わった日だけ知らせる（毎日同じ知らせを出さない）
+    notes = [t for mid, t in INFO_NOTES if mid is None or not old or old.get('moves', {}).get(mid) != moves.get(mid)]
+    if notes:
+        lines += ['### ⚡ メガの＋わざ（ジム・レイド）', ''] + [f'- {x}' for x in notes] + ['']
     if not lines:
         lines = ["データに実質的な変更はありません（CPM表・相性表など内部値のみの差分の可能性）。"]
     open('changes.md','w',encoding='utf-8').write(

@@ -12,7 +12,7 @@ GOバトルリーグ対面シミュレート用 データ生成スクリプト
 import json, re, math
 from build_data import (SRC, fetch, TYPE_JA, REGION, FORM_JA, OVERRIDE,
                         DEFAULT_FORM, GEN9_JA, JP_MOVE_FIX, MEGA_PLUS_MOVES, MEGA_PLUS_JA)
-from mega_plus_info import MEGA_PLUS_INFO, plus_id, info_ids
+from mega_plus_info import MEGA_PLUS_INFO, MEGA_PLUS_PVP_BUFF, plus_id, info_ids
 
 # PvPoke速度に含まれるが対戦ツールでは扱わない特殊ID
 SKIP_SPECIES_SUFFIX = ('_shadow',)          # シャドウは基本形にフラグで持つ
@@ -227,7 +227,9 @@ def main():
 
     # 表(mega_plus_info.py)の＋わざ: 情報元に入っていればその値(確定)、無ければ表の威力と消費が両方そろったときだけ。
     # 威力だけのときは入れない(消費が分からないと実在しない性能になる)。図鑑は build_mega_preview.py が名前・威力だけでも出す
-    info_link = {}
+    info_link, info_notes = {}, []
+    try: _old_plus = json.load(open('pvp_data.json', encoding='utf-8')).get('plusMoves', {})
+    except Exception: _old_plus = None
     for mk, (base, _raid, pp, pe, _src) in MEGA_PLUS_INFO.items():
         mid = plus_id(base)
         if mid in plus_moves or mid in MEGA_PLUS_MOVES or base not in moves: continue
@@ -237,16 +239,30 @@ def main():
             for k_src, k_dst in (('buffs','bf'), ('buffTarget','bt'), ('buffApplyChance','bc')):
                 if k_src in mv:
                     e[k_dst] = float(mv[k_src]) if k_src == 'buffApplyChance' else mv[k_src]
+            note = f'{mk} の {mid}: 対戦データの情報元に入り確定値に切り替え（威力{mv["power"]}・消費{mv["energy"]}）'
             if (pp is not None and mv['power'] != pp) or (pe is not None and abs(mv['energy']) != pe):
-                print(f'警告: ＋わざの対戦数値が表と違います → {mid} 情報元{mv["power"]}/{mv["energy"]} 表{pp}/{pe}')
+                note += f' ⚠ 表の発表値（威力{pp}・消費{pe}）と違う'
+            bfx = MEGA_PLUS_PVP_BUFF.get(mid)
+            if bfx and (list(mv.get('buffs') or []) != bfx['bf'] or (mv.get('buffTarget') or 'self') != bfx['bt']
+                        or (bfx['bc'] is not None and float(mv.get('buffApplyChance', 1)) != bfx['bc'])):
+                note += f' ⚠ 能力変化が発表と違う（情報元 {mv.get("buffs")}・{mv.get("buffTarget")}・{mv.get("buffApplyChance")}）'
+            if _old_plus is None or {k: v for k, v in _old_plus.get(mid, {}).items() if k != 'n'} != {k: v for k, v in e.items() if k != 'n'}:
+                info_notes.append(note)   # 前回と値が変わった日だけ知らせる
             print('表の＋わざを情報元の確定値で収録 →', mid)
         elif pp is not None and pe is not None:
             e = {'n': moves[base]['n'] + '＋', 't': moves[base]['t'], 'p': pp, 'e': pe}
+            bfx = MEGA_PLUS_PVP_BUFF.get(mid)   # 発表の能力変化（確率が分かっているときだけ・計算に確率が要るため）
+            if bfx and bfx['bc'] is not None: e.update({'bf': bfx['bf'], 'bt': bfx['bt'], 'bc': float(bfx['bc'])})
             print('表の＋わざを表の数値で収録(情報元に入るまで) →', mid)
         else:
             continue
         plus_moves[mid] = e
         info_link[mk.lower()] = mid
+    if info_notes:
+        msg = ['', '### ⚡ メガの＋わざ（トレーナーバトル）', '', *[f'- {x}' for x in info_notes], '']
+        print('\n'.join(msg))
+        try: open('changes.md', 'a', encoding='utf-8').write('\n'.join(msg))
+        except Exception: pass
     # 情報元に入ったのに表にも MEGA_PLUS_MOVES にも無い＋わざ(メガ専用わざの印つき)は、どのメガのわざか分からないので知らせる
     known = set(MEGA_PLUS_MOVES) | info_ids()
     new_plus = sorted(m['moveId'] for m in pvp['moves'] if m.get('isMegaMove') and m['moveId'] not in known)
@@ -262,7 +278,7 @@ def main():
         """PvPokeのspeciesIdをGMのフォルムキーに照合して日本語名を得る"""
         up = sid.upper()
         mega = ''
-        m = re.match(r'^(.+?)_MEGA(_[XY])?$', up)
+        m = re.match(r'^(.+?)_MEGA(_[XYZ])?$', up)   # メガアブソルZ などの Z も
         if m and up not in gm_keys:
             up = m.group(1); mega = 'メガ', (m.group(2) or '').strip('_')
         if up.endswith('_PRIMAL'):
