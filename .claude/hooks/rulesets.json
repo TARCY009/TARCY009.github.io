@@ -93,7 +93,8 @@
       "checklist": ".claude/checklists/dex.md",
       "checks": [
         "exit-rank",
-        "dex-stats"
+        "dex-stats",
+        "mega-plus-data"
       ],
       "paths": [
         "pokedex/**",

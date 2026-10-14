@@ -4514,6 +4514,7 @@ function runRkRank() {
       return;
     }
     body.innerHTML = list.map((r, i) => rkRankCard(r, i)).join('');
+    rkFit(body);
     body.querySelectorAll('.rkrcard').forEach(el => el.onclick = () => {
       const r = list[+el.dataset.i];
       applyMyPk(0, { key: r.key, fast: r.fast, shadow: r.shadow,
@@ -4524,6 +4525,16 @@ function runRkRank() {
 }
 // 負けるあいてのわざ名を短くまとめる（2026-10-14タダシさん指示）。
 // 「めざめるパワー（ひこう）・めざめるパワー（じめん）」→「めざめるパワー（ひこう・じめん）」。括弧の中がタイプなら共通の並びにそろえる
+// 名前・わざの行が枠に収まらないときだけ、実際の幅を測って字を少しずつ小さくする（全行の高さをそろえるため・2026-10-14）
+function rkFit(root) {
+  // 9pxまで縮めても入らない名前は、名前の終わりを「…」にする（全文は長押し）
+  const over = el => { const t = el.querySelector('.rkrnm'); return t ? t.scrollWidth > t.clientWidth + 1 : el.scrollWidth > el.clientWidth + 1; };
+  root.querySelectorAll('.rkrname, .rkrmv').forEach(el => {
+    if (!el.clientWidth) return;
+    let fs = parseFloat(getComputedStyle(el).fontSize), n = 0;
+    while (over(el) && fs > 9 && n++ < 10) { fs -= 0.6; el.style.fontSize = fs + 'px'; }
+  });
+}
 function rkLoseNames(list) {
   const grp = new Map();
   for (const nm of list) {
@@ -4557,8 +4568,8 @@ function rkRankCard(r, i) {
   return `<div class="rkrcard${warn ? ' warn' : ''}" data-i="${i}">
     <div class="rkrank ${n === 1 ? 'r1' : n === 2 ? 'r2' : n === 3 ? 'r3' : ''}">${n}</div>
     <div class="rkrmain">
-      <div class="rkrname${p.n.length >= 10 ? ' long' : ''}">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
-        ${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}${typeIcons(p, 15)}</div>
+      <div class="rkrname${(L => L >= 12 ? ' long xl' : L >= 10 ? ' long' : '')(p.n.length + (r.shadow ? 1 : 0) + (r.mine ? 1 : 0))}">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
+        ${r.shadow ? '<i class="shadowmark"></i>' : ''}<span class="rkrnm" title="${nm}">${p.n}</span>${typeIcons(p, 15)}</div>
       <div class="rkrmv">${mvChip(mv.n)}
         <span class="rkrdim">${r.mine ? `個体値${r.ivs.join('/')} PL${r.level}` : ''}</span></div>
     </div>

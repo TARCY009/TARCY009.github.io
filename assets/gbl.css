@@ -1330,7 +1330,10 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkrname .shadowmark{color:#b06cff}
 /* 名前の頭に付けるシャドウマーク（.shadowmark.nmk）は assets/shadow-icon.css に置いてある（全ツール共通） */
 .rkrmine{color:var(--gold)}
-.rkrmv{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:.8rem;flex-wrap:wrap}
+.rkrmv{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:.8rem;flex-wrap:nowrap;white-space:nowrap;min-width:0}
+.rkrname,.rkrmv{overflow:hidden}
+.rkrname .rkrnm{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rkrmv .rkrdim{min-width:0;overflow:hidden;text-overflow:ellipsis}   /* ★個体の「個体値・PL」は入りきらなければ「…」 */
 .rkrdim{font-size:.62rem;color:var(--sub);font-weight:400}
 .rkrnum{flex:0 1 auto;text-align:right;max-width:52%;min-width:0}
 .rkrnum b{font-size:1rem;color:var(--cy)}
@@ -1343,7 +1346,7 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
 .rkrnum .rkrtop{display:flex;align-items:baseline;justify-content:flex-end;gap:6px;white-space:nowrap}
 /* 1秒あたりの火力は秒数と同じ行に置く（右の欄を低くして、警告が2行でも枠の高さを他の行とそろえる・2026-10-14） */
 .rkrnum .rkrdps{font-style:normal;font-size:.6rem;color:var(--sub);opacity:.8}
-@media (max-width:520px){.rkrcard{gap:6px;padding:6px}.rkrname{font-size:.84rem;gap:3px}.rkrname.long{font-size:.74rem}.rkrnum{max-width:43%}}
+@media (max-width:520px){.rkrcard{gap:6px;padding:6px}.rkrname{font-size:.84rem;gap:3px}.rkrname.long{font-size:.74rem}.rkrname.xl{font-size:.66rem}.rkrnum{max-width:43%}}
 /* 模擬戦のおすすめ提案(タブを押してから枠の入力欄をタップすると対策トップ5が出る) */
 .rksuggbar{display:flex;align-items:center;gap:5px;margin:6px 0 2px;flex-wrap:wrap}
 /* ⚙詳細: 使う頻度の低い設定をまとめて隠すタブ(右端・少し大きめ) */
