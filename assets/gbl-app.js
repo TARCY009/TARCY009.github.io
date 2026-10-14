@@ -4522,6 +4522,22 @@ function runRkRank() {
     });
   }, 20);
 }
+// 負けるあいてのわざ名を短くまとめる（2026-10-14タダシさん指示）。
+// 「めざめるパワー（ひこう）・めざめるパワー（じめん）」→「めざめるパワー（ひこう・じめん）」。括弧の中がタイプなら共通の並びにそろえる
+function rkLoseNames(list) {
+  const grp = new Map();
+  for (const nm of list) {
+    const m = /^(.+?)（(.+)）$/.exec(nm);
+    const base = m ? m[1] : nm;
+    if (!grp.has(base)) grp.set(base, []);
+    if (m) grp.get(base).push(m[2]);
+  }
+  return [...grp].map(([base, subs]) => {
+    if (!subs.length) return base;
+    const s2 = typeof sortTypes === 'function' ? sortTypes(subs.slice(), x => x) : subs;
+    return `${base}（${s2.join('・')}）`;
+  }).join('・');
+}
 function rkRankCard(r, i) {
   const n = r.rank || i + 1;   // 全体での順位(圏外の自分の個体もこの順位で出す)
   const p = D.pokemon[r.key];
@@ -4535,17 +4551,18 @@ function rkRankCard(r, i) {
     : '<span class="rkrdim">—</span>';   // 全部負けるなら秒数に意味がない
   const sub = !r.checked ? ''
     : r.win ? `残HP${r.myPct}%`
-    : r.anyWin ? `<span class="ng">⚠️${r.loseTo.join('・')}だと負け</span>`
+    // 「負け」を先に書く（多すぎて2行目で切れても、負けることは必ず見える・全文は長押し）
+    : r.anyWin ? (t => `<span class="ng" title="${t}だと負け">⚠️負け：${t}</span>`)(rkLoseNames(r.loseTo))
     : `<span class="ng">⚠️どのわざでも負け</span>`;
   return `<div class="rkrcard${warn ? ' warn' : ''}" data-i="${i}">
     <div class="rkrank ${n === 1 ? 'r1' : n === 2 ? 'r2' : n === 3 ? 'r3' : ''}">${n}</div>
     <div class="rkrmain">
-      <div class="rkrname">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
+      <div class="rkrname${p.n.length >= 10 ? ' long' : ''}">${r.mine ? '<span class="rkrmine" title="★登録リストの個体">★</span>' : ''}
         ${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}${typeIcons(p, 15)}</div>
       <div class="rkrmv">${mvChip(mv.n)}
         <span class="rkrdim">${r.mine ? `個体値${r.ivs.join('/')} PL${r.level}` : ''}</span></div>
     </div>
-    <div class="rkrnum">${num}<small>${sub}</small><i class="rkrdps">${r.dps.toFixed(1)}/秒</i></div>
+    <div class="rkrnum"><span class="rkrtop"><i class="rkrdps">${r.dps.toFixed(1)}/秒</i>${num}</span><small>${sub}</small></div>
   </div>`;
 }
 

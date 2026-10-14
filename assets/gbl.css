@@ -1321,23 +1321,29 @@ header .pagelink{font-size:.78rem;color:var(--sub);text-decoration:none;border:1
   background:var(--bg2);border:1px solid var(--line);border-radius:10px}
 .rkrcard:hover{border-color:var(--gl)}
 .rkrcard.warn{border-color:rgba(255,107,129,.45)}
+/* どの行も同じ高さ（警告が2行の行に合わせる・2026-10-14タダシさん指示） */
+.rkrcard{min-height:65px}
 .rkrank{flex:0 0 26px;text-align:center;font-size:.8rem;font-weight:800;color:var(--sub)}
 .rkrank.r1{color:#ffd76a}.rkrank.r2{color:#d6dee8}.rkrank.r3{color:#e0a06a}
 .rkrmain{flex:1;min-width:0}
-.rkrname{display:flex;align-items:center;gap:4px;font-size:.94rem;font-weight:700;color:var(--ink);flex-wrap:wrap}
+.rkrname{display:flex;align-items:center;gap:4px;font-size:.94rem;font-weight:700;color:var(--ink);flex-wrap:nowrap;white-space:nowrap;min-width:0}
 .rkrname .shadowmark{color:#b06cff}
 /* 名前の頭に付けるシャドウマーク（.shadowmark.nmk）は assets/shadow-icon.css に置いてある（全ツール共通） */
 .rkrmine{color:var(--gold)}
 .rkrmv{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:.8rem;flex-wrap:wrap}
 .rkrdim{font-size:.62rem;color:var(--sub);font-weight:400}
-.rkrnum{flex:0 0 auto;text-align:right}
+.rkrnum{flex:0 1 auto;text-align:right;max-width:52%;min-width:0}
 .rkrnum b{font-size:1rem;color:var(--cy)}
 .rkrnum b.ng{color:var(--lose)}
 .rkrnum b.warn{color:var(--gold)}
 .rkrnum small{display:block;font-size:.6rem;color:var(--sub);white-space:nowrap}
 .rkrnum small .ng{color:var(--lose)}
-.rkrnum .rkrdps{display:block;font-style:normal;font-size:.6rem;color:var(--sub);opacity:.8}
-@media (max-width:520px){.rkrcard{gap:6px;padding:6px}.rkrname{font-size:.87rem}}
+/* 負けるわざが多いときは2行までで折り返し、はみ出すぶんは「…」（全文は長押し・2026-10-14タダシさん指示） */
+.rkrnum small:has(.ng){white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.35}
+.rkrnum .rkrtop{display:flex;align-items:baseline;justify-content:flex-end;gap:6px;white-space:nowrap}
+/* 1秒あたりの火力は秒数と同じ行に置く（右の欄を低くして、警告が2行でも枠の高さを他の行とそろえる・2026-10-14） */
+.rkrnum .rkrdps{font-style:normal;font-size:.6rem;color:var(--sub);opacity:.8}
+@media (max-width:520px){.rkrcard{gap:6px;padding:6px}.rkrname{font-size:.84rem;gap:3px}.rkrname.long{font-size:.74rem}.rkrnum{max-width:43%}}
 /* 模擬戦のおすすめ提案(タブを押してから枠の入力欄をタップすると対策トップ5が出る) */
 .rksuggbar{display:flex;align-items:center;gap:5px;margin:6px 0 2px;flex-wrap:wrap}
 /* ⚙詳細: 使う頻度の低い設定をまとめて隠すタブ(右端・少し大きめ) */
