@@ -215,9 +215,32 @@
     if (data.pokemon) return Object.keys(data.pokemon).map(function (k) { return data.pokemon[k].n; });
     return [];
   }
+  // 図鑑用の「ゲームにまだ無いメガ」（pokedex/mega_preview.json・原作の種族値からの換算）も候補に足す（2026-10-14タダシさん指示）。
+  // ＋わざは威力と時間が分かっているもの（公式発表の威力＋元わざの時間）だけ、わざとして足す（plusSync が D.moves に入れる）
+  var PREV_MOVES = {};
+  function mergePreview(d, mp) {
+    d.pokemon = d.pokemon || {};
+    Object.keys(mp.pokemon || {}).forEach(function (k) {
+      if (d.pokemon[k]) return;
+      var v = Object.assign({}, mp.pokemon[k]); delete v.pv; delete v.base;
+      d.pokemon[k] = v;
+    });
+    Object.keys(mp.plus || {}).forEach(function (mk) {
+      var x = mp.plus[mk], s = x.pve, p = d.pokemon[mk];
+      if (!p || !s || s.p == null || s.d == null) return;
+      PREV_MOVES[x.id] = { n: x.n, t: x.t, p: s.p, d: s.d, e: s.e != null ? s.e : -100, w: s.w, we: s.we };
+      if ((p.c || []).indexOf(x.id) < 0) p.c = (p.c || []).concat([x.id]);
+      p.plus = x.id;
+    });
+  }
   function fetchData(url) {
     if (!cache[url]) cache[url] = fetch(url, { cache: 'no-cache' }).then(function (r) {
       if (!r.ok) throw new Error(r.status); return r.json();
+    }).then(function (d) {
+      if (url !== '/pokedex/unreleased.json') return d;
+      return fetch('/pokedex/mega_preview.json', { cache: 'no-cache' })
+        .then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })
+        .then(function (mp) { mergePreview(d, mp); return d; });
     });
     return cache[url];
   }
@@ -684,6 +707,10 @@
       Object.keys(moves).forEach(function (id) { if (id.indexOf('DEVPLUS_') === 0) delete moves[id]; });
       if (ids) for (var i = ids.length - 1; i >= 0; i--) if (String(ids[i]).indexOf('DEVPLUS_') === 0) ids.splice(i, 1);
       if (!dev()) return;
+      Object.keys(PREV_MOVES).forEach(function (id) {   // 図鑑用の未実装メガの＋わざ（威力が分かっているもの）
+        if (!moves[id]) moves[id] = Object.assign({}, PREV_MOVES[id]);
+        if (ids && ids.indexOf(id) < 0) ids.push(id);
+      });
       plus.forEach(function (x) {
         var b = moves[x.b], id = plusId(x);
         if (!b || moves[id]) return;
