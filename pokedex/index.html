@@ -953,7 +953,7 @@ function renderMoves(){
           <td class="${st?'stab':''}">${num(pw)}</td><td>${m.eg||0}</td><td>${tn}</td><td>${num((m.eg||0)/tn)}</td><td class="${st?'stab':''}">${num(pw/tn)}</td></tr>`; };
       const srow=id=>{ const m=PVP.moves[id]; const st=stabOf(e,m.t); const pw=m.p*(st?1.2:1);
         if(m.pend) return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,false,id===mv.plus,m)}</td>
-          <td class="${st&&has(m.p)?'stab':''}">${has(m.p)?num(pw):UNK}</td><td>${has(m.e)?m.e:UNK}</td><td>${has(m.p)&&has(m.e)?num(pw/m.e,2):UNK}</td><td class="eff">${has(m.e)?effHtml(m):UNK}</td></tr>`;
+          <td class="${st&&has(m.p)?'stab':''}">${has(m.p)?num(pw):UNK}</td><td>${has(m.e)?m.e:UNK}</td><td>${has(m.p)&&has(m.e)?num(pw/m.e,2):UNK}</td><td class="eff">${m.bf?effHtml(m):UNK}</td></tr>`;
         return `<tr data-mv="${id}" data-side="pvp"><td class="mv">${mvName(m.n,m.t,mv.legacy.has(id),id===mv.plus)}</td>
           <td class="${st?'stab':''}">${num(pw)}</td><td>${m.e}</td><td class="${st?'stab':''}">${num(pw/m.e,2)}</td><td class="eff">${effHtml(m)}</td></tr>`; };
       body=`
@@ -1003,6 +1003,7 @@ function effHtml(m){
     ?[part('自',m.bs||[0,0]),part('敵',m.bo||[0,0])].filter(Boolean).join('')
     :part(m.bt==='opponent'?'敵':'自',m.bf);
   if(!main)return '<span class="none">—</span>';
+  if(m.bcu)return `${main}<small title="発動する確率はまだ発表されていません">確率?</small>`;
   const pc=m.bc==null?100:Math.round(m.bc*100);
   return `${main}<small>${pc}%</small>`;
 }
@@ -1012,7 +1013,7 @@ function buffText(m){
   const parts=[];
   if(m.bf[0])parts.push(`攻撃${m.bf[0]>0?'+':''}${m.bf[0]}`);
   if(m.bf[1])parts.push(`防御${m.bf[1]>0?'+':''}${m.bf[1]}`);
-  const pc=m.bc!=null&&m.bc<1?`${Math.round(m.bc*100)}%の確率で`:'確定で';
+  const pc=m.bcu?'ランダムで（確率は未発表）':m.bc!=null&&m.bc<1?`${Math.round(m.bc*100)}%の確率で`:'確定で';
   return `${pc}${tgt}の${parts.join('・')}`;
 }
 function openMove(id){
@@ -1054,7 +1055,7 @@ function openMove(id){
     const pw=has(pm.p)?pm.p*(st?1.2:1):null;
     pvp=`<div class="grp"><div class="gttl">トレーナーバトル</div><div class="rows">
       ${r('威力',!has(pm.p)?UNK:st?`${num(pm.p)} → <span class="stab">${num(pw)}</span>(タイプ一致)`:num(pm.p))}
-      ${r('消費ゲージ',has(pm.e)?pm.e:UNK)}${r('DPE',has(pm.p)&&has(pm.e)?num(pw/pm.e,2):UNK)}${r('能力変化',UNK)}
+      ${r('消費ゲージ',has(pm.e)?pm.e:UNK)}${r('DPE',has(pm.p)&&has(pm.e)?num(pw/pm.e,2):UNK)}${r('能力変化',buffText(pm)||UNK)}
     </div></div>`;
   }else if(pm){
     const pw=pm.p*(st?1.2:1);

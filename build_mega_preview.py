@@ -16,7 +16,7 @@
 原作の種族値の換算式は assets/devadd.js の goStats と同じ（既存メガ53匹で一致を確認済み・2026-10-14）
 """
 import json, math, re, urllib.request
-from mega_plus_info import MEGA_PLUS_INFO, plus_id
+from mega_plus_info import MEGA_PLUS_INFO, MEGA_PLUS_PVP_BUFF, plus_id
 
 SD_URL = 'https://play.pokemonshowdown.com/data/pokedex.json'     # 原作の種族値（Z-Aの新メガを含む）
 PVP_URL = 'https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/gamemaster.json'
@@ -122,6 +122,12 @@ def main():
                 ent['pvp'] = {'st': 'full' if pe is not None else 'power', 'p': pp, **({'e': pe} if pe is not None else {})}
             else:
                 ent['pvp'] = {'st': 'name'}
+            # 公式発表の能力変化（情報元の確定値が無いときだけ足す）
+            bfx = MEGA_PLUS_PVP_BUFF.get(mid)
+            if bfx and ent['pvp'].get('st') != 'full':
+                ent['pvp'].update({'bf': bfx['bf'], 'bt': bfx['bt']})
+                if bfx.get('bc') is None: ent['pvp']['bcu'] = 1
+                else: ent['pvp']['bc'] = bfx['bc']
         if 'pve' in ent or 'pvp' in ent:
             out_plus[mk] = ent
 
