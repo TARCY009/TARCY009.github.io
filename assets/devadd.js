@@ -577,10 +577,20 @@
         '<optgroup label="その他のわざ">' + others.map(opt).join('') + '</optgroup>';
     }
     fillMoves();
+    // 候補は一覧にいるメガ＋未実装のメガ（メガシャンデラなど・2026-10-14タダシさん指示）。未実装のメガを選んだら一覧にも足す
+    function dataMegas() {
+      var pk = m.data && m.data.pokemon; if (!pk || Array.isArray(pk)) return [];
+      return Object.keys(pk).filter(function (k) { return pk[k].mega && !/_PRIMAL$/.test(k); }).map(function (k) { return pk[k].n; });
+    }
+    function allMegas() {
+      var seen = {}, out = [];
+      (mp.megas() || []).concat(dataMegas()).forEach(function (n) { if (!seen[n]) { seen[n] = 1; out.push(n); } });
+      return out;
+    }
     function showSugg() {
       var q = inp.value.trim();
       if (!q) { ul.classList.remove('open'); ul.innerHTML = ''; return; }
-      var qk = toKata(q), hit = (mp.megas() || []).filter(function (n) { return toKata(n).indexOf(qk) >= 0; });
+      var qk = toKata(q), hit = allMegas().filter(function (n) { return toKata(n).indexOf(qk) >= 0; });
       hit.sort(function (a, b) { return (toKata(a).indexOf(qk) - toKata(b).indexOf(qk)) || a.localeCompare(b, 'ja'); });
       ul.innerHTML = hit.length ? hit.slice(0, 60).map(function (n) { return '<div data-n="' + esc(n) + '">' + esc(n) + '</div>'; }).join('')
         : '<div class="dup">メガシンカポケモンにありません</div>';
@@ -593,6 +603,7 @@
     ul.addEventListener('click', function (e) {
       var d = e.target.closest('div[data-n]'); if (!d) return;
       cur = d.dataset.n; inp.value = cur; ul.classList.remove('open'); ul.innerHTML = '';
+      if ((mp.megas() || []).indexOf(cur) < 0) add(cur);   // 未実装のメガは一覧にも足す（足さないとランキングに出ない）
       fillMoves(); msg.textContent = '';
     });
     document.addEventListener('pointerdown', function (e) {
@@ -627,7 +638,7 @@
         var pc = m.wrap.querySelector('.dvapchips'), mv = m.megaPlus.moves;
         if (pc) pc.innerHTML = plus.length ? plus.map(function (x, i) {
           var bn = mv[x.b] ? mv[x.b].n : x.b;
-          return '<span><em class="dvapt">' + esc(x.n) + '　<b>' + esc(bn) + '+</b>　威力' + x.p + '</em>' +
+          return '<span><em class="dvapt">' + esc(x.n) + '　<b>' + esc(bn) + '＋</b>　威力' + x.p + '</em>' +
             '<button type="button" data-pi="' + i + '" title="外す">×</button></span>';
         }).join('') : '<em style="opacity:.6">いまは足していません</em>';
       }
