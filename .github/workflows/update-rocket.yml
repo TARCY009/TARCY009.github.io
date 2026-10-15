@@ -1,8 +1,12 @@
-# GOロケット団（したっぱ・リーダー・サカキ）の手持ちを、毎日2回、3つの外部攻略情報と突き合わせて更新します
+# GOロケット団（したっぱ・リーダー・サカキ）の手持ちを、3つの外部攻略情報と突き合わせて更新します
 # （2026-10-06 タダシさん指示）。
 #   build_rocket.py → assets/rocket_roster.js（3つの情報がそろった人だけ書き換える）
 # 手持ちの入れ替え直後は、各情報が2〜3日かけて追いつくので、そろうまでは前のまま。
 # 4日たってもそろわない人・読み取れなくなった情報があれば「お知らせ」でメールが届きます。
+#
+# ⚠ 読むのはロケット団イベントで手持ちが変わったあとの1週間ほどだけ（2026-10-16 タダシさん指示）。
+#   .github/rocket_until.txt に期限の日付（YYYY-MM-DD・日本時間）を書くと、その日まで毎日2回読む。
+#   空なら毎日の自動実行は何もしない（次のイベントまで待つ）。Actionsタブからの手動実行はいつでも読む。
 name: auto-update-rocket
 
 on:
@@ -25,11 +29,27 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 期限の日付（.github/rocket_until.txt）を過ぎていたら、毎日の自動実行は何もしない
+      - name: 読み取りの期間かを確かめる
+        id: gate
+        run: |
+          until=$(tr -d '[:space:]' < .github/rocket_until.txt 2>/dev/null || true)
+          today=$(TZ=Asia/Tokyo date '+%Y-%m-%d')
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"; echo "手動実行なので読み取ります"
+          elif [[ -n "$until" && ! "$today" > "$until" ]]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"; echo "読み取りの期間中（$until まで）"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"; echo "読み取りの期間外（期限: '${until:-なし}'）。次のロケット団イベントまで待ちます"
+          fi
+
       - uses: actions/setup-python@v7
+        if: steps.gate.outputs.go == 'true'
         with:
           python-version: '3.12'
 
       - name: 3つの情報を読み取って突き合わせる
+        if: steps.gate.outputs.go == 'true'
         id: build
         run: |
           python3 build_rocket.py | tee /tmp/rocket.txt
@@ -37,6 +57,7 @@ jobs:
           if [ -s rocket_changes.md ]; then cat rocket_changes.md >> "$GITHUB_STEP_SUMMARY"; fi
 
       - name: 変化があればそのまま公開
+        if: steps.gate.outputs.go == 'true'
         run: |
           git add assets/rocket_roster.js .github/rocket_state.json .github/rocket_ids.json
           if git diff --cached --quiet; then
@@ -51,7 +72,7 @@ jobs:
 
       # 手持ちを書き換えた日・4日以上そろわない人がいる日・読み取れなくなった日だけ「お知らせ」を立てる
       - name: お知らせする
-        if: steps.build.outputs.headline != ''
+        if: steps.gate.outputs.go == 'true' && steps.build.outputs.headline != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEADLINE: ${{ steps.build.outputs.headline }}

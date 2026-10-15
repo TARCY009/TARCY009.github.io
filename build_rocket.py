@@ -187,7 +187,8 @@ def parse1(s, names):
             gender = 'b'
         if not who:
             continue
-        starts = [m.start() for m in re.finditer(r'<svg class="[^"]*" x="\d+" width="163" height="82"', p)][:3]
+        # 枠のSVG（1匹目・2匹目・3匹目）。高さの属性はページ側の作りで変わる（2026-10-14に height="82" から :height="…" に変わり0人になった）ので見ない
+        starts = [m.start() for m in re.finditer(r'<svg class="[^"]*" x="\d+" width="163"', p)][:3]
         if len(starts) != 3:
             continue
         starts.append(len(p))
@@ -400,7 +401,7 @@ def main():
     updated, cur = read_current()
     state = json.load(open(STATE, encoding='utf-8')) if os.path.exists(STATE) else {}
     pend = state.get('pending', {})
-    fails = state.get('fail', {})
+    fails = {str(k): v for k, v in state.get('fail', {}).items()}  # JSONの鍵は文字列（1 と '1' を取り違えない）
 
     ids = set(cur) | {g for m in maps.values() for g in m}
     new = dict(cur)
@@ -429,16 +430,15 @@ def main():
             notify_wait.append((gid, days, vals))
             pend[gid]['told'] = True
 
+    # 読めなくなった情報は、読めなくなった最初の日だけ知らせる（失敗が続くあいだは記録の日付を保つ）
     new_fail = []
     for n in (1, 2, 3):
         if n in fail:
-            if n not in fails:
-                fails[n] = today
+            if str(n) not in fails:
+                fails[str(n)] = today
                 new_fail.append(n)
         else:
             fails.pop(str(n), None)
-            fails.pop(n, None)
-    fails = {str(k): v for k, v in fails.items()}
 
     # ---- 報告 ----
     md = []
