@@ -407,7 +407,8 @@ footer a{color:var(--spec)}
   <p>マックスメーターは<b>1回の攻撃ごとに「与えたダメージ ÷ ボスの最大HP」の割合で溜まり、最低でも1％</b>は溜まります。
     2026年にこの溜まり方が調整され、★5と★6では以前よりずっと速く溜まるようになりました。
     そのため<b>★6でもSPアタックを撃ったほうが速いボスがあります</b>（以前はどのボスでも0.5秒のノーマルアタック連打が最速でした）。
-    1％に必要なダメージは<b>★5＝ボスHP÷800、★6＝ボスHP÷3000</b>です。</p>
+    1％に必要なダメージは<b>★5＝ボスHP÷800、★6＝ボスHP÷3000</b>です。
+    1回で溜まる量は、<b>★5・★6では小数第2位まで</b>（それより下は切り捨て）、<b>★1〜★4では整数</b>（小数は切り捨て）で計算しています。どちらも1回1％より少なくはなりません。</p>
   <p>おすすめのノーマルアタックは、<b>マックスメーターのチャージ効率（連打したときの0.5秒あたりのマックスメーターの溜まり方。SPアタックのゲージのことではありません）が高い順、同じならDPSが高い順</b>に選びます（キョダイマックス・タンク。キョダイマックスのアタッカーは、溜まり方が同じわざどうしなら、<b>SPアタックと組み合わせたときのダメージ効率が高いわざ</b>を選びます。ただし「SP判定」で「SP封印推奨」になったときは、SPアタックを撃たない前提で<b>ノーマルアタックだけの火力が高いわざ</b>を選びます。ダイマックスのアタッカーは、ノーマルアタックのタイプでマックスわざのタイプが決まるので、ダメージが最大のわざを選びます）。</p>
   <p><b>ダイキノコ</b>を押すと、ダイキノコを使ったときの判定になります。バトル中の自分の攻撃のダメージがすべて2倍（最後に出たダメージを2倍）になるので、メーターも速く溜まります。</p>
   <p>ノーマルアタックは、0.5秒わざの連打なら0.5秒あたり1％です。1秒以上のわざでも、1発のダメージが大きく0.5秒あたり1％を超えるなら、そちらのほうが速く溜まります（HPの小さい★1〜★4のボスや、ダイキノコを使ったときによく起きます）。そのようなわざは「ノーマル ◯◯ ◯％」と添えて表示し、SPアタックはそのわざの連打より速いときに「SP打ってOK」とします。</p>
@@ -436,7 +437,7 @@ footer a{color:var(--spec)}
   const BP = (typeof BOSS_PARAMS !== 'undefined') ? BOSS_PARAMS : {
     defaults:{"1":{hp:1700,defCpm:0.15},"2":{hp:5000,defCpm:0.38},"3":{hp:10000,defCpm:0.5},
               "4":{hp:20000,defCpm:0.6},"5":{hp:20000,defCpm:0.8},"6":{hp:100000,defCpm:0.85}},
-    coeff:{"1":0.005,"2":0.005,"3":0.005,"4":0.005,"5":0.00125,"6":0.00033333}, bosses:{}};
+    coeff:{"1":0.005,"2":0.005,"3":0.005,"4":0.005,"5":0.00125,"6":0.0003333333333333333}, bosses:{}};
   const cpm = D.cpm50;
 
   let boss=null, mode='atk', swapOn=false, halfOnly=true, includeLegacy=true;
@@ -554,7 +555,7 @@ footer a{color:var(--spec)}
   }
   function chargeOf(p, f, pr){
     if(!f.d) return 0;
-    const hit = (pr && pr.denom) ? Math.max(1, fastDmgOf(p, f, pr) / pr.denom) : 1;   // ボスの値が分からなければ1発1%
+    const hit = (pr && pr.denom) ? meterOf(fastDmgOf(p, f, pr), pr) : 1;   // ボスの値が分からなければ1発1%
     return hit / ((f.d / 1000) * 2);
   }
   function recFastOf(p, pool){
@@ -938,10 +939,19 @@ footer a{color:var(--spec)}
     const hp = parseFloat(spHP.value);
     const defCpm = parseFloat(spDef.value);
     const e = BP.bosses[boss.n];
-    const coeff = (e && e.coeff) || (BP.coeff || {"5":0.00125,"6":0.00033333})[String(spStar)];
+    const coeff = (e && e.coeff) || (BP.coeff || {"5":0.00125,"6":0.0003333333333333333})[String(spStar)];
     if(!defCpm || !boss.df) return null;
     return {bossDef: (boss.df + 15) * defCpm,
-            denom: (hp && coeff) ? hp * coeff : null, mush: mush ? 2 : 1};
+            denom: (hp && coeff) ? hp * coeff : null, mush: mush ? 2 : 1,
+            dec: spStar >= 5 ? 2 : 0};
+  }
+  // 1発で溜まるマックスメーター（%）＝ max(1, 切り捨て(ダメージ÷1%に必要なダメージ, 小数dec桁))（2026-10-17タダシさん承認）
+  // ★5・★6＝小数第2位まで（カネール氏の実測「小数点以下は切り捨てられていない」＋海外の計算ツールの式）
+  // ★1〜★4＝整数に切り捨て（海外の計算ツールの式・議論だけが根拠で実測は未確認）
+  // 1e-7 は割り算の誤差（2.56 が 2.5599999… になる）で1つ下へ落ちないための遊び
+  function meterOf(dmg, pr){
+    const k = Math.pow(10, pr.dec || 0);
+    return Math.max(1, Math.floor(dmg / pr.denom * k + 1e-7) / k);
   }
   function spCtx(){
     if(!spOn || !boss) return null;
@@ -959,7 +969,7 @@ footer a{color:var(--spec)}
       if(!f.d) continue;
       const fstab = p.ty.includes(f.t) ? D.stab : 1;
       const fd = (Math.floor(0.5 * (f.p||0) * (atk / ctx.bossDef) * fstab * effVs(f.t, boss.ty)) + 1) * mu;
-      const per = Math.max(1, fd / ctx.denom) / ((f.d / 1000) * 2);
+      const per = meterOf(fd, ctx) / ((f.d / 1000) * 2);
       if(!best || per > best.per) best = {f, per};
     }
     return best;
@@ -978,7 +988,7 @@ footer a{color:var(--spec)}
       const stab = p.ty.includes(m.t) ? D.stab : 1;
       const eff = effVs(m.t, boss.ty);
       const dmg = (Math.floor(0.5 * m.p * (atk / ctx.bossDef) * stab * eff) + 1) * mu;
-      const charge = ctx.denom ? Math.max(1, dmg / ctx.denom) : 0; // 1%未満は1に補正(検証済み仕様)
+      const charge = ctx.denom ? meterOf(dmg, ctx) : 0; // 1%未満は1に補正(検証済み仕様)・ランク別の切り捨て
       const per = ctx.denom ? charge / ((m.d / 1000) * 2) : 0;
       // ダメージ効率 = 火力ランキングツールと同方式の「わざ1&わざ2」コンボDPS
       // (各SPに最適なノーマルアタックを組み合わせた時の効率)
