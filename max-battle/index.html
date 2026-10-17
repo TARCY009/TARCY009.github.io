@@ -408,7 +408,7 @@ footer a{color:var(--spec)}
     2026年にこの溜まり方が調整され、★5と★6では以前よりずっと速く溜まるようになりました。
     そのため<b>★6でもSPアタックを撃ったほうが速いボスがあります</b>（以前はどのボスでも0.5秒のノーマルアタック連打が最速でした）。
     1％に必要なダメージは<b>★5＝ボスHP÷800、★6＝ボスHP÷3000</b>です。</p>
-  <p>おすすめのノーマルアタックは、<b>マックスメーターのチャージ効率（連打したときの0.5秒あたりのマックスメーターの溜まり方。SPアタックのゲージのことではありません）が高い順、同じならDPSが高い順</b>に選びます（キョダイマックス・タンク。ダイマックスのアタッカーは、ノーマルアタックのタイプでマックスわざのタイプが決まるので、ダメージが最大のわざを選びます）。</p>
+  <p>おすすめのノーマルアタックは、<b>マックスメーターのチャージ効率（連打したときの0.5秒あたりのマックスメーターの溜まり方。SPアタックのゲージのことではありません）が高い順、同じならDPSが高い順</b>に選びます（キョダイマックス・タンク。キョダイマックスのアタッカーは、溜まり方が同じわざどうしなら、<b>SPアタックと組み合わせたときのダメージ効率が高いわざ</b>を選びます。ただし「SP判定」で「SP封印推奨」になったときは、SPアタックを撃たない前提で<b>ノーマルアタックだけの火力が高いわざ</b>を選びます。ダイマックスのアタッカーは、ノーマルアタックのタイプでマックスわざのタイプが決まるので、ダメージが最大のわざを選びます）。</p>
   <p><b>ダイキノコ</b>を押すと、ダイキノコを使ったときの判定になります。バトル中の自分の攻撃のダメージがすべて2倍（最後に出たダメージを2倍）になるので、メーターも速く溜まります。</p>
   <p>ノーマルアタックは、0.5秒わざの連打なら0.5秒あたり1％です。1秒以上のわざでも、1発のダメージが大きく0.5秒あたり1％を超えるなら、そちらのほうが速く溜まります（HPの小さい★1〜★4のボスや、ダイキノコを使ったときによく起きます）。そのようなわざは「ノーマル ◯◯ ◯％」と添えて表示し、SPアタックはそのわざの連打より速いときに「SP打ってOK」とします。</p>
 <!-- related-guide --><h4>関連する読み物</h4><ul class="relguide"><li><a href="/guide/max-battle-roles/">マックスバトルのアタッカーとタンクの選び方</a></li><li><a href="/guide/bulk-index/">耐久指数とは</a></li><li><a href="/guide/type-chart/">ポケモンGOのタイプ相性の倍率</a></li><li><a href="/guide/battle-types/">ポケモンGOのバトルの種類と仕組み</a></li></ul>
@@ -520,12 +520,17 @@ footer a{color:var(--spec)}
   // SP打ってOKの技がある場合=そのSPとのわざ1わざ2トータルダメージ効率
   // (エネルギー獲得量の差もここで反映。例: すなかけ7 > マッドショット6)
   // SP封印の場合=タイプ補正込みの与ダメージ
+  // ⚠ SP判定ボタンで分ける（2026-10-17タダシさん指示）:
+  //   OFF（または判定できない）＝SPを撃つ前提でダメージ効率（コンボDPSがいちばん高いSPと組む）
+  //   ON・打ってOK＝そのSPとのダメージ効率／ON・封印推奨＝SPを撃たない前提でノーマルアタックの火力
   function fastSelCtx(p){
     const pr = spParams();
     let bestSp = null;
-    if(pr && pr.denom){
+    if(pr && pr.denom && spOn){
       const b = spBestOf(p, pr);
       if(b && b.ok) bestSp = b;
+    }else if(pr){
+      bestSp = spBestOf(p, {bossDef: pr.bossDef, mush: pr.mush});   // 分母なし＝ダメージ効率＋5%ルールで選ぶ
     }
     return {pr, bestSp, atk: (p.atk + 15) * cpm};
   }
@@ -559,6 +564,24 @@ footer a{color:var(--spec)}
     const r6 = v => Math.round(v * 1e6);
     return cands.map(f => ({f, c: chargeOf(p, f, pr), dps: fastDmgOf(p, f, pr) / (f.d / 1000)}))
       .sort((a,b) => r6(b.c) - r6(a.c) || b.dps - a.dps || (a.f.e?1:0) - (b.f.e?1:0))[0];
+  }
+  // キョダイマックス・特別枠のアタッカーのノーマルアタック（2026-10-17タダシさん指示）:
+  // ①マックスメーターのチャージ効率（連打したときの0.5秒あたり・chargeOf）が最大のわざに絞る（最優先）
+  // ②その中で、SPを撃つ前提（SP判定OFF／ONで打ってOK）ならコンボDPS、SP封印推奨ならノーマルアタックのDPS
+  // ③同じなら特別わざでないもの
+  // 例: 対ユクシーのオーロンゲ（どちらも0.5秒で①は同じ）＝OFF→ふいうち／ON・封印→かみつく／ON・キノコで打ってOK→ふいうち
+  function attackerFastOf(p){
+    const cands = (p.fm||[]).filter(f => f.d);
+    if(!cands.length) return null;
+    const sc = fastSelCtx(p);
+    const pr = boss ? spParams() : null;
+    const m = sc.bestSp && sc.bestSp.m;
+    const r6 = v => Math.round(v * 1e6);
+    const score = f => (m && pr && (m.en||0) > 0 && (f.en||0) > 0)
+      ? comboEffOf(p, f, m, sc.atk, pr.bossDef)
+      : fastDmgOf(p, f, pr) / (f.d / 1000);
+    return cands.map(f => ({f, c: chargeOf(p, f, pr), s: score(f)}))
+      .sort((a,b) => r6(b.c) - r6(a.c) || b.s - a.s || (a.f.e?1:0) - (b.f.e?1:0))[0];
   }
   // 0.5秒あたり1%以上ためられるノーマルアタック（0.5秒わざ、または1%を超える1秒以上のわざ）。無ければ null
   function halfMoveOf(p){
@@ -817,12 +840,11 @@ footer a{color:var(--spec)}
                 fast: s0.f, moveName: D.generic_max_jp[s0.f.t]};
       }else{
         // キョダイマックス・特別枠: マックスわざタイプ固定のため、
-        // ノーマルアタックは0.5秒技を必ず最優先。なければタイプ補正込みで
-        // 最もダメージが出る技(例: ムゲンダイナはボスに合わせてドラゴンテールorどくづき)
+        // ノーマルアタックの選択はダメージに関係しないので、マックスメーターの溜まり方で選ぶ（attackerFastOf）
         const stab = p.ty.includes(p.ft) ? D.stab : 1;
         const eff = effVs(p.ft, boss.ty);
-        // 2026-09-23から「マックスメーターのチャージ効率 → DPS」で選ぶ（0.5秒わざにこだわらない・タダシさん指示）
-        const rf = recFastOf(p);
+        // SP打ってOKならそのSPとのコンボの溜まり方、無ければ連打の溜まり方 → DPS（2026-10-17タダシさん指示）
+        const rf = attackerFastOf(p);
         best = {dmg: power * atkStat * stab * eff, t: p.ft, stab, eff,
                 fast: null, moveName: p.gm,
                 rec: rf ? Object.assign({}, rf.f, {chg: rf.c}) : null};
