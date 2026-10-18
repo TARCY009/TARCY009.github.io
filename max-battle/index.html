@@ -545,7 +545,7 @@ footer a{color:var(--spec)}
   // ⚠ ここの「チャージ効率」は**マックスメーター**のチャージ（SPアタックのゲージ＝EPS/EPTとは別物）。
   // チャージ効率＝そのわざを連打したときの0.5秒あたりのマックスメーターのたまり方（最低1%/発）。
   // 0.5秒わざは1%、1秒以上のわざでも1発のダメージが大きく0.5秒あたり1%を超えるならそちらが速い。
-  // おすすめは「チャージ効率が高い順 → 同じならDPSが高い順 → 同じならSPアタックのゲージが多くたまるもの → 同じなら特別わざでないもの」。
+  // おすすめは「チャージ効率が高い順 → 同じならDPSが高い順 → 同じならわざ性能（図鑑のDPS） → 同じならSPアタックのゲージが多くたまるもの → 同じなら特別わざでないもの」。
   // ⚠ ダイマックス勢のアタッカーは使わない（ノーマルアタックのタイプ＝マックスわざのタイプなので「ダメージ最大」の決まり・pick-fast.js）
   function fastDmgOf(p, f, pr){
     const stab = p.ty.includes(f.t) ? D.stab : 1;
@@ -558,18 +558,22 @@ footer a{color:var(--spec)}
     const hit = (pr && pr.denom) ? meterOf(fastDmgOf(p, f, pr), pr) : 1;   // ボスの値が分からなければ1発1%
     return hit / ((f.d / 1000) * 2);
   }
+  // わざ性能＝図鑑のDPS（威力×タイプ一致÷秒・相手によらない）。切り捨てで実際のダメージが同じになったときの決め手（2026-10-18タダシさん指示）
+  function fastPerfOf(p, f){
+    return f.d ? (f.p||0) * (p.ty.includes(f.t) ? D.stab : 1) / (f.d / 1000) : 0;
+  }
   function recFastOf(p, pool){
     const cands = (pool || p.fm || []).filter(f => f.d);
     if(!cands.length) return null;
     const pr = boss ? spParams() : null;
     const r6 = v => Math.round(v * 1e6);
-    return cands.map(f => ({f, c: chargeOf(p, f, pr), dps: fastDmgOf(p, f, pr) / (f.d / 1000)}))
-      .sort((a,b) => r6(b.c) - r6(a.c) || b.dps - a.dps || (b.f.en||0) - (a.f.en||0) || (a.f.e?1:0) - (b.f.e?1:0))[0];
+    return cands.map(f => ({f, c: chargeOf(p, f, pr), dps: fastDmgOf(p, f, pr) / (f.d / 1000), pf: fastPerfOf(p, f)}))
+      .sort((a,b) => r6(b.c) - r6(a.c) || b.dps - a.dps || r6(b.pf) - r6(a.pf) || (b.f.en||0) - (a.f.en||0) || (a.f.e?1:0) - (b.f.e?1:0))[0];
   }
   // キョダイマックス・特別枠のアタッカーのノーマルアタック（2026-10-17タダシさん指示）:
   // ①マックスメーターのチャージ効率（連打したときの0.5秒あたり・chargeOf）が最大のわざに絞る（最優先）
   // ②その中で、SPを撃つ前提（SP判定OFF／ONで打ってOK）ならコンボDPS、SP封印推奨ならノーマルアタックのDPS
-  // ③同じならSPアタックのゲージが多くたまるもの ④同じなら特別わざでないもの（2026-10-17タダシさん指示）
+  // ③同じならわざ性能（図鑑のDPS・2026-10-18） ④同じならSPアタックのゲージが多くたまるもの ⑤同じなら特別わざでないもの（2026-10-17タダシさん指示）
   // 例: 対ユクシーのオーロンゲ（どちらも0.5秒で①は同じ）＝OFF→ふいうち／ON・封印→かみつく／ON・キノコで打ってOK→ふいうち
   function attackerFastOf(p){
     const cands = (p.fm||[]).filter(f => f.d);
@@ -581,8 +585,8 @@ footer a{color:var(--spec)}
     const score = f => (m && pr && (m.en||0) > 0 && (f.en||0) > 0)
       ? comboEffOf(p, f, m, sc.atk, pr.bossDef)
       : fastDmgOf(p, f, pr) / (f.d / 1000);
-    return cands.map(f => ({f, c: chargeOf(p, f, pr), s: score(f)}))
-      .sort((a,b) => r6(b.c) - r6(a.c) || b.s - a.s || (b.f.en||0) - (a.f.en||0) || (a.f.e?1:0) - (b.f.e?1:0))[0];
+    return cands.map(f => ({f, c: chargeOf(p, f, pr), s: score(f), pf: fastPerfOf(p, f)}))
+      .sort((a,b) => r6(b.c) - r6(a.c) || r6(b.s) - r6(a.s) || r6(b.pf) - r6(a.pf) || (b.f.en||0) - (a.f.en||0) || (a.f.e?1:0) - (b.f.e?1:0))[0];
   }
   // 0.5秒あたり1%以上ためられるノーマルアタック（0.5秒わざ、または1%を超える1秒以上のわざ）。無ければ null
   function halfMoveOf(p){
