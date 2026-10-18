@@ -545,35 +545,38 @@ footer a{color:var(--spec)}
   // ⚠ ここの「チャージ効率」は**マックスメーター**のチャージ（SPアタックのゲージ＝EPS/EPTとは別物）。
   // チャージ効率＝そのわざを連打したときの0.5秒あたりのマックスメーターのたまり方（最低1%/発）。
   // 0.5秒わざは1%、1秒以上のわざでも1発のダメージが大きく0.5秒あたり1%を超えるならそちらが速い。
-  // おすすめは「チャージ効率が高い順 → 同じならDPSが高い順 → 同じならわざ性能（図鑑のDPS） → 同じならSPアタックのゲージが多くたまるもの → 同じなら特別わざでないもの」。
+  // おすすめは「チャージ効率が高い順 → 同じならDPSが高い順 → 同じならPL20〜50でDPSを計算し直して上回ったPLが多いもの → わざ性能のDPS → EPS → 特別わざでないもの」（後ろの4つは pick-fast.js の gonaviPlTie）。
   // ⚠ ダイマックス勢のアタッカーは使わない（ノーマルアタックのタイプ＝マックスわざのタイプなので「ダメージ最大」の決まり・pick-fast.js）
-  function fastDmgOf(p, f, pr){
+  // cm＝PLの係数（省けばPL50）
+  function fastDmgOf(p, f, pr, cm){
     const stab = p.ty.includes(f.t) ? D.stab : 1;
     const eff = boss ? effVs(f.t, boss.ty) : 1;
     if(!pr) return (f.p||0) * stab * eff;
-    return (Math.floor(0.5 * (f.p||0) * ((p.atk + 15) * cpm / pr.bossDef) * stab * eff) + 1) * (pr.mush || 1);
+    return (Math.floor(0.5 * (f.p||0) * ((p.atk + 15) * (cm || cpm) / pr.bossDef) * stab * eff) + 1) * (pr.mush || 1);
   }
   function chargeOf(p, f, pr){
     if(!f.d) return 0;
     const hit = (pr && pr.denom) ? meterOf(fastDmgOf(p, f, pr), pr) : 1;   // ボスの値が分からなければ1発1%
     return hit / ((f.d / 1000) * 2);
   }
-  // わざ性能＝図鑑のDPS（威力×タイプ一致÷秒・相手によらない）。切り捨てで実際のダメージが同じになったときの決め手（2026-10-18タダシさん指示）
-  function fastPerfOf(p, f){
-    return f.d ? (f.p||0) * (p.ty.includes(f.t) ? D.stab : 1) / (f.d / 1000) : 0;
-  }
+  // 引き分けの決め手でPLごとに計算し直すときの係数（PL20〜50・0.5刻み・2026-10-18タダシさん指示）
+  const TIE_CPMS = Object.keys(D.cpms).filter(k => +k >= 20 && +k <= 50).map(k => D.cpms[k]);
+  const stabOf = (p, f) => p.ty.includes(f.t) ? D.stab : 1;
   function recFastOf(p, pool){
     const cands = (pool || p.fm || []).filter(f => f.d);
     if(!cands.length) return null;
     const pr = boss ? spParams() : null;
     const r6 = v => Math.round(v * 1e6);
-    return cands.map(f => ({f, c: chargeOf(p, f, pr), dps: fastDmgOf(p, f, pr) / (f.d / 1000), pf: fastPerfOf(p, f)}))
-      .sort((a,b) => r6(b.c) - r6(a.c) || b.dps - a.dps || r6(b.pf) - r6(a.pf) || (b.f.en||0) - (a.f.en||0) || (a.f.e?1:0) - (b.f.e?1:0))[0];
+    const dpsAt = (f, cm) => fastDmgOf(p, f, pr, cm) / (f.d / 1000);
+    const sorted = cands.map(f => ({f, c: chargeOf(p, f, pr), dps: dpsAt(f), stab: stabOf(p, f)}))
+      .sort((a,b) => r6(b.c) - r6(a.c) || r6(b.dps) - r6(a.dps));
+    return gonaviPlTie(sorted, (a,b) => r6(a.c) === r6(b.c) && r6(a.dps) === r6(b.dps),
+      pr ? (x, cm) => dpsAt(x.f, cm) : null, TIE_CPMS);
   }
   // キョダイマックス・特別枠のアタッカーのノーマルアタック（2026-10-17タダシさん指示）:
   // ①マックスメーターのチャージ効率（連打したときの0.5秒あたり・chargeOf）が最大のわざに絞る（最優先）
   // ②その中で、SPを撃つ前提（SP判定OFF／ONで打ってOK）ならコンボDPS、SP封印推奨ならノーマルアタックのDPS
-  // ③同じならわざ性能（図鑑のDPS・2026-10-18） ④同じならSPアタックのゲージが多くたまるもの ⑤同じなら特別わざでないもの（2026-10-17タダシさん指示）
+  // ③同じならPL20〜50で②を計算し直して上回ったPLが多いもの ④わざ性能のDPS ⑤EPS ⑥特別わざでないもの（2026-10-18タダシさん指示・pick-fast.js の gonaviPlTie）
   // 例: 対ユクシーのオーロンゲ（どちらも0.5秒で①は同じ）＝OFF→ふいうち／ON・封印→かみつく／ON・キノコで打ってOK→ふいうち
   function attackerFastOf(p){
     const cands = (p.fm||[]).filter(f => f.d);
@@ -582,11 +585,13 @@ footer a{color:var(--spec)}
     const pr = boss ? spParams() : null;
     const m = sc.bestSp && sc.bestSp.m;
     const r6 = v => Math.round(v * 1e6);
-    const score = f => (m && pr && (m.en||0) > 0 && (f.en||0) > 0)
-      ? comboEffOf(p, f, m, sc.atk, pr.bossDef)
-      : fastDmgOf(p, f, pr) / (f.d / 1000);
-    return cands.map(f => ({f, c: chargeOf(p, f, pr), s: score(f), pf: fastPerfOf(p, f)}))
-      .sort((a,b) => r6(b.c) - r6(a.c) || r6(b.s) - r6(a.s) || r6(b.pf) - r6(a.pf) || (b.f.en||0) - (a.f.en||0) || (a.f.e?1:0) - (b.f.e?1:0))[0];
+    const score = (f, cm) => (m && pr && (m.en||0) > 0 && (f.en||0) > 0)
+      ? comboEffOf(p, f, m, cm ? (p.atk + 15) * cm : sc.atk, pr.bossDef)
+      : fastDmgOf(p, f, pr, cm) / (f.d / 1000);
+    const sorted = cands.map(f => ({f, c: chargeOf(p, f, pr), s: score(f), stab: stabOf(p, f)}))
+      .sort((a,b) => r6(b.c) - r6(a.c) || r6(b.s) - r6(a.s));
+    return gonaviPlTie(sorted, (a,b) => r6(a.c) === r6(b.c) && r6(a.s) === r6(b.s),
+      pr ? (x, cm) => score(x.f, cm) : null, TIE_CPMS);
   }
   // 0.5秒あたり1%以上ためられるノーマルアタック（0.5秒わざ、または1%を超える1秒以上のわざ）。無ければ null
   function halfMoveOf(p){
@@ -840,7 +845,8 @@ footer a{color:var(--spec)}
                   sel: fastSelScore(p, f, sc),
                   half: f.q ? 1 : 0};
         });
-        const s0 = pickMaxFast(scored);
+        // 引き分けたら PL20〜50 で選出スコアを計算し直して比べる（2026-10-18タダシさん指示）
+        const s0 = pickMaxFast(scored, (x, cm) => fastSelScore(p, x.f, Object.assign({}, sc, {atk: (p.atk + 15) * cm})), TIE_CPMS);
         best = {dmg: s0.dmg, t: s0.f.t, stab: s0.stab, eff: s0.eff,
                 fast: s0.f, moveName: D.generic_max_jp[s0.f.t]};
       }else{
