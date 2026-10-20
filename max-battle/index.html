@@ -246,6 +246,9 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
   font-size:.82rem;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 :root.light .spfixed{color:#3a2600}
 .spstatus{font-size:.7rem;color:var(--sub)}
+/* 2026年の調整のあと、まだ確かめていないボスの注意（2026-10-20タダシさん指示・boss_params.js で c26:true のボスは出さない） */
+.spwarn{margin:2px 0 0;padding:8px 11px;border-radius:10px;border:1px solid rgba(242,193,78,.45);background:rgba(242,193,78,.10);color:#f2c14e;font-size:.74rem;line-height:1.6}
+:root.light .spwarn{color:#8a5a00;border-color:rgba(176,122,0,.4);background:rgba(242,193,78,.14)}
 .spstatus.ok{color:var(--okink);font-weight:800}
 .tanknote{color:var(--faint);font-size:.7rem;line-height:1.6;margin:10px 2px 0}
 .spok{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#4ad6b8,#3aa8d8);color:#04241d}
@@ -354,6 +357,7 @@ footer a{color:var(--spec)}
     <label>ボスHP <input id="spHP" type="number" inputmode="numeric" placeholder="要入力"></label>
     <label>防御CPM <input id="spDef" type="number" step="0.01" inputmode="decimal"></label>
   </div>
+  <p id="spWarn" class="spwarn" style="display:none">⚠ 2026年にボスごとのHP・防御とマックスメーターの計算式が調整されたため、このボスが再登場して確かめられるまで、SP判定は目安です。</p>
 </div>
 
 <div class="myq" id="myqwrap" style="display:none">
@@ -759,6 +763,8 @@ footer a{color:var(--spec)}
     const dc = (e && e.defCpm != null) ? e.defCpm : d.defCpm;
     spHP.value = hp != null ? hp : '';
     spDef.value = dc != null ? dc : '';
+    // 2026年の調整のあと、再登場して確かめたボス（c26:true）だけ注意を出さない
+    document.getElementById('spWarn').style.display = (e && e.c26) ? 'none' : '';
     spStatus.textContent = 'SP判定＝SPアタック発動の可否';
     spStatus.className = 'spstatus ok';
   }
