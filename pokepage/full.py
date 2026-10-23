@@ -125,6 +125,8 @@ def rkt_best(k):
                 continue
             fast = (PVP['moves'].get(r['fast']) or {}).get('n', r['fast'])
             rows.append(dict(who=f['who'], foe=PVP['pokemon'][f['k']]['n'], rank=r['rank'], dps=float(r['dps']),
+                             # ツールの画面はDPT(0.5秒あたり)で出す(2026-10-23)。出口に dpt が無い古い集計だけ dps から割り出す
+                             dpt=float(r['dpt']) if r.get('dpt') else float(r['dps']) / 2,
                              win=bool(r.get('win')) and not r.get('loseTo'), fast=fast, sh=bool(r.get('s'))))
     seen, out = set(), []
     for r in sorted(rows, key=lambda x: x['rank']):

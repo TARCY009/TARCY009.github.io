@@ -356,7 +356,7 @@ def sec_rocket(pg):
         return section('rocket', 'Team Rocket', 'ロケット団', '<p class="none">ノーマルアタックでのゴリ押しには不向きです。</p>' + ctas(link('/rocket/', '速く倒せるポケモンをさがす')), lead)
     rows = ['<div class="row"><div class="rl"><b>' + pk_name(r['foe'], 18) + '</b><small>' + esc(r['who']) + '</small>' + ('<em class="shd">' + ico('shadow') + 'シャドウ</em>' if r['sh'] else '') + '</div>'
             '<div class="rm">' + mv(r['fast']) + '<small>どのわざで来ても先に倒されない</small></div>'
-            '<div class="rr"><b>' + str(r['rank']) + '</b><i>位</i><small>DPS ' + ('%g' % r['dps']) + '</small></div></div>' for r in top]
+            '<div class="rr"><b>' + str(r['rank']) + '</b><i>位</i><small>DPT ' + ('%.2f' % r['dpt']) + '</small></div></div>' for r in top]
     return section('rocket', 'Team Rocket', 'ロケット団', rows_html(rows) + ctas(link('/rocket/', '速く倒せるポケモンをさがす')), lead)
 
 # ---------- 進化・すがた・育成 ----------

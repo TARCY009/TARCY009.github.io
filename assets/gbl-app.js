@@ -4499,6 +4499,8 @@ function runRkRank() {
   document.getElementById('rkranktitle').innerHTML = 'ノーマルアタック火力ランキング' +
     (RKR.view === 'safe' ? '<small>先に倒されないものだけ</small>' : '');
   updateUrl();
+  // 計算し直すあいだは画像の保存を出さない（前のあいて・絞り込みの数字で保存されないように・2026-10-23点検）
+  RKR.img = null; rkSaveSync();
   if (!S[1].key) { body.innerHTML = '<div class="mtnote">あいてのポケモンを選ぶとランキングが出ます</div>'; return; }
   body.innerHTML = '<div class="mtprog">計算中…</div>';
   setTimeout(() => {
@@ -4563,8 +4565,10 @@ function rkImgWho(foeKey) {
   const w = Array.isArray(list) ? list.find(x => x.id === RK.who) : null;
   if (!w) return sp.name;
   const at = (w.slots || []).findIndex(sl => (sl || []).includes(foeKey));
-  return RK.kind === 'grunt' ? `${sp.name}（${w.name}）${at >= 0 ? ' ' + (at + 1) + '匹目' : ''}`
-    : `${sp.name} ${w.name}${at >= 0 ? ' ' + (at + 1) + '匹目' : ''}`;
+  // 選んだ人の手持ちに入っていないあいて（自分で選び直した等）は、人の名前を出さない（別の人の手持ちに見えるため・2026-10-23点検）
+  if (at < 0) return sp.name;
+  if (RK.kind === 'boss') return `${sp.name} ${at + 1}匹目`;   // 「サカキ サカキ」と重ねない
+  return RK.kind === 'grunt' ? `${sp.name}（${w.name}）${at + 1}匹目` : `${sp.name} ${w.name} ${at + 1}匹目`;
 }
 function rkImgSVG() {
   const W = 1920, H = 1440, rows = RKR.img || [], esc = escH;
@@ -4583,17 +4587,7 @@ function rkImgSVG() {
 <linearGradient id="gmega" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d63384"/><stop offset="1" stop-color="#7a3cc4"/></linearGradient></defs>
 <rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="34" fill="url(#bg)"/><rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="34" fill="url(#tint)"/>
 <rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="34" fill="none" stroke="url(#edge)" stroke-width="6"/>`;
-  // 見出し
-  const t1 = foe ? foe.n : '', fs = 62, w1 = tw(t1, fs) + 54, t2 = 'を倒すノーマルアタック', w2 = tw(t2, fs);
-  s += `<text x="72" y="74" font-size="26" font-weight="700" fill="#8b96c2" letter-spacing="6">ポケモンGO ロケット団対策 ／ ${esc(rkImgWho(S[1].key))}</text>
-<path d="${RK_FLAME}" transform="translate(72,${152 - fs * 0.86}) scale(${fs / 1024 * 0.95})" fill="#b06cff"/>
-<text x="${72 + 54}" y="152" font-size="${fs}" font-weight="800" fill="url(#chip)">${esc(t1)}</text>
-<text x="${72 + w1 + 8}" y="152" font-size="${fs}" font-weight="800" fill="#fff">${t2}</text>
-<rect x="${72 + w1 + 8 + w2 + 26}" y="104" width="150" height="56" rx="13" fill="url(#chip)"/><rect x="${72 + w1 + 8 + w2 + 26}" y="104" width="150" height="26" rx="13" fill="url(#hl)"/>
-<text x="${72 + w1 + 8 + w2 + 101}" y="144" font-size="32" font-weight="800" fill="#2a0b0b" text-anchor="middle">TOP10</text>
-<rect x="72" y="176" width="640" height="5" rx="2.5" fill="url(#ul)"/>`;
-  if (RKR.view === 'safe') s += `<text x="72" y="222" font-size="24" font-weight="700" fill="#8b96c2">先に倒されないものだけ</text>`;
-  // 右上: 絞り込みの札＋GOナビ
+  // 右上: 絞り込みの札（先に幅を決める＝見出しがここに重ならないように字の大きさを合わせるため・2026-10-23点検）
   const pills = [];
   if (RKR.shadow) pills.push({ t: 'シャドウ含む', fill: '#7c3aed', flame: true });
   if (RKR.mega) pills.push({ t: 'メガ・ゲンシ含む', fill: 'url(#gmega)' });
@@ -4606,6 +4600,20 @@ function rkImgSVG() {
     s += `<text x="${px + padL}" y="${py + ph / 2 + 11}" font-size="${pfs}" font-weight="800" fill="#fff">${esc(p2.t)}</text>`;
     px -= 16;
   }
+  const headR = px - 10;   // 見出しが使える右端
+  // 見出し（長い名前や札が2つのときは字を小さくして、右上の札に重ねない）
+  const t1 = foe ? foe.n : '', t2 = 'を倒すノーマルアタック';
+  const headW = f => 72 + f * 0.87 + tw(t1, f) + 8 + tw(t2, f) + 26 + 150 * f / 62;
+  let fs = 62; while (headW(fs) > headR && fs > 36) fs -= 2;
+  const fl = fs * 0.87, w1 = tw(t1, fs) + fl, w2 = tw(t2, fs), cw = 150 * fs / 62, ch = 56 * fs / 62;
+  s += `<text x="72" y="74" font-size="26" font-weight="700" fill="#8b96c2" letter-spacing="6">ポケモンGO ロケット団対策 ／ ${esc(rkImgWho(S[1].key))}</text>
+<path d="${RK_FLAME}" transform="translate(72,${152 - fs * 0.86}) scale(${fs / 1024 * 0.95})" fill="#b06cff"/>
+<text x="${72 + fl}" y="152" font-size="${fs}" font-weight="800" fill="url(#chip)">${esc(t1)}</text>
+<text x="${72 + w1 + 8}" y="152" font-size="${fs}" font-weight="800" fill="#fff">${t2}</text>
+<rect x="${72 + w1 + 8 + w2 + 26}" y="${152 - ch + 8}" width="${cw}" height="${ch}" rx="13" fill="url(#chip)"/><rect x="${72 + w1 + 8 + w2 + 26}" y="${152 - ch + 8}" width="${cw}" height="${ch * 0.46}" rx="13" fill="url(#hl)"/>
+<text x="${72 + w1 + 8 + w2 + 26 + cw / 2}" y="${152 - ch * 0.16}" font-size="${32 * fs / 62}" font-weight="800" fill="#2a0b0b" text-anchor="middle">TOP10</text>
+<rect x="72" y="176" width="640" height="5" rx="2.5" fill="url(#ul)"/>`;
+  if (RKR.view === 'safe') s += `<text x="72" y="222" font-size="24" font-weight="700" fill="#8b96c2">先に倒されないものだけ</text>`;
   if (!clean) {
     const lg = 88, bm = W - 72 - lg / 2;
     if (RK_LOGO) s += `<image href="${RK_LOGO}" x="${bm - lg / 2}" y="30" width="${lg}" height="${lg}" opacity=".92"/>`;
@@ -4624,11 +4632,18 @@ function rkImgSVG() {
     const md = MD[n];
     s += `<rect x="${L + 14}" y="${cy - 30}" width="62" height="60" rx="14" fill="${md || '#232c55'}"/><text x="${L + 45}" y="${cy + 12}" font-size="30" font-weight="900" fill="${md ? '#2a1a00' : '#cfd6f0'}" text-anchor="middle">${n}</text>`;
     const nx = L + 98;
-    let nfs = 34; while (tw(p.n, nfs) + (r.shadow ? 30 : 0) > nameW - 10 && nfs > 20) nfs -= 2;
-    if (r.shadow) s += `<path d="${RK_FLAME}" transform="translate(${nx},${cy - 4 - nfs * 0.9}) scale(${nfs / 1024 * 0.95})" fill="#b06cff"/>`;
-    s += `<text x="${nx + (r.shadow ? 30 : 0)}" y="${cy - 4}" font-size="${nfs}" font-weight="800" fill="#eef1fb">${esc(p.n)}</text>`;
-    const sub = warn ? (r.anyWin ? `⚠負け：${rkLoseNames(r.loseTo)}` : '⚠どのわざでも負け') : '';
-    s += `<text x="${nx}" y="${cy + 30}" font-size="22" font-weight="700" fill="${sp ? '#ff9750' : '#8b96c2'}">${esc(mv.n)}${sp ? '*' : ''}<tspan fill="#ff7a7a" dx="14">${esc(sub)}</tspan></text>`;
+    // ★＝★登録リストの自分の個体（画面と同じ印・2026-10-23点検）
+    const star = r.mine ? 34 : 0, fl = r.shadow ? 30 : 0;
+    let nfs = 34; while (tw(p.n, nfs) + fl + star > nameW - 10 && nfs > 20) nfs -= 2;
+    if (r.mine) s += `<text x="${nx}" y="${cy - 4}" font-size="${nfs}" font-weight="900" fill="#ffd54a">★</text>`;
+    if (r.shadow) s += `<path d="${RK_FLAME}" transform="translate(${nx + star},${cy - 4 - nfs * 0.9}) scale(${nfs / 1024 * 0.95})" fill="#b06cff"/>`;
+    s += `<text x="${nx + star + fl}" y="${cy - 4}" font-size="${nfs}" font-weight="800" fill="#eef1fb">${esc(p.n)}</text>`;
+    let sub = warn ? (r.anyWin ? `⚠負け：${rkLoseNames(r.loseTo)}` : '⚠どのわざでも負け') : '';
+    // わざ名と「負け」が棒の手前に収まるように、字を小さく・それでも入らなければ末尾を「…」に（2026-10-23点検）
+    const mvt = mv.n + (sp ? '*' : ''), room = bL - nx - 24;
+    let mfs = 22; while (tw(mvt, mfs) + (sub ? 14 + tw(sub, mfs) : 0) > room && mfs > 16) mfs -= 1;
+    while (sub && tw(mvt, mfs) + 14 + tw(sub, mfs) > room && sub.length > 4) sub = sub.slice(0, -2) + '…';
+    s += `<text x="${nx}" y="${cy + 30}" font-size="${mfs}" font-weight="700" fill="${sp ? '#ff9750' : '#8b96c2'}">${esc(mvt)}<tspan fill="#ff7a7a" dx="14">${esc(sub)}</tspan></text>`;
     const bx2 = x(r.dps / 2);
     s += `<rect x="${bL}" y="${cy - 16}" width="${Math.max(4, bx2 - bL)}" height="32" rx="16" fill="url(#barh)"/><rect x="${bL}" y="${cy - 16}" width="${Math.max(4, bx2 - bL)}" height="14" rx="7" fill="url(#hl)"/>
 <text x="${bx2 + 14}" y="${cy + 10}" font-size="26" font-weight="800" fill="#fff">${(r.dps / 2).toFixed(2)}</text>`;

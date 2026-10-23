@@ -455,16 +455,7 @@ function graphSVG(forSave,Wopt){
     s+=`<rect width="${W}" height="${H}" fill="url(#gbg)"/>
     <rect width="${W}" height="${H}" fill="url(#gtint)"/>`;
   }
-  s+=`<text x="72" y="74" font-size="26" font-weight="700" fill="#8b96c2" letter-spacing="6">ポケモンGO R団戦タイプ別火力ランキング</text>`;
-  const t1=ja+'タイプ', tfs2=62;
-  const w1=tw(t1,tfs2), w2=tw('ノーマルアタック火力',tfs2);
-  s+=`<text x="72" y="152" font-size="${tfs2}" font-weight="800" fill="url(#gchip)">${esc(t1)}</text>
-  <text x="${72+w1+10}" y="152" font-size="${tfs2}" font-weight="800" fill="#ffffff">ノーマルアタック火力</text>`;
-  const chx=72+w1+10+w2+30;
-  s+=`<rect x="${chx}" y="104" width="150" height="56" rx="13" fill="url(#gchip)"/>
-  <rect x="${chx}" y="104" width="150" height="26" rx="13" fill="url(#ghl)"/>
-  <text x="${chx+75}" y="144" font-size="32" font-weight="800" fill="#0b1023" text-anchor="middle">TOP10</text>
-  <rect x="72" y="176" width="640" height="5" rx="2.5" fill="url(#gul)"/>`;
+  // 右上の札を先に置いて幅を決め、見出しが重ならないように字の大きさを合わせる(2026-10-23点検: 札2つ＋長いタイプ名で重なった)
   const pills=[];
   if(fShadow) pills.push({t:'シャドウ含む',fill:'#7c3aed',flame:true});
   if(fMega) pills.push({t:'メガ・ゲンシ含む',fill:'url(#gmega)'});
@@ -479,6 +470,18 @@ function graphSVG(forSave,Wopt){
     s+=`<text x="${px+padL}" y="${py+ph/2+11}" font-size="${pfs}" font-weight="800" fill="#ffffff">${esc(p2.t)}</text>`;
     px-=16;
   }
+  s+=`<text x="72" y="74" font-size="26" font-weight="700" fill="#8b96c2" letter-spacing="6">ポケモンGO R団戦タイプ別火力ランキング</text>`;
+  const t1=ja+'タイプ', t2='ノーマルアタック火力';
+  const headW=f=>72+tw(t1,f)+10+tw(t2,f)+30+150*f/62;
+  let tfs2=62; while(headW(tfs2)>px-10&&tfs2>36) tfs2-=2;
+  const w1=tw(t1,tfs2), w2=tw(t2,tfs2), cw=150*tfs2/62, ch=56*tfs2/62;
+  s+=`<text x="72" y="152" font-size="${tfs2}" font-weight="800" fill="url(#gchip)">${esc(t1)}</text>
+  <text x="${72+w1+10}" y="152" font-size="${tfs2}" font-weight="800" fill="#ffffff">${t2}</text>`;
+  const chx=72+w1+10+w2+30;
+  s+=`<rect x="${chx}" y="${152-ch+8}" width="${cw}" height="${ch}" rx="13" fill="url(#gchip)"/>
+  <rect x="${chx}" y="${152-ch+8}" width="${cw}" height="${ch*0.46}" rx="13" fill="url(#ghl)"/>
+  <text x="${chx+cw/2}" y="${152-ch*0.16}" font-size="${32*tfs2/62}" font-weight="800" fill="#0b1023" text-anchor="middle">TOP10</text>
+  <rect x="72" y="176" width="640" height="5" rx="2.5" fill="url(#gul)"/>`;
   s+=`<text x="${L-14}" y="${T-20}" font-size="22" font-weight="700" fill="#6b76a3" text-anchor="end">DPT</text>`;
   for(let v=v0;v<=v1;v+=step){
     const gy=y(v);
