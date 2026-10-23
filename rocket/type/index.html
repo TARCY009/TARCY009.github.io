@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>R団戦タイプ別火力ランキング｜ポケモンGOのロケット団対策アタッカー｜GOナビ</title>
 <!-- seo:start (build_seo.py が作る・手で編集しない) -->
-<meta name="description" content="ポケモンGOのGOロケット団とのバトル向けに、タイプごとのノーマルアタックの火力(DPS)が高いポケモンを並べたランキング。ほのお・みず・かくとうなど17タイプをタップで切り替え、シャドウ・メガの有無も選べます。">
+<meta name="description" content="ポケモンGOのGOロケット団とのバトル向けに、タイプごとのノーマルアタックの火力(DPT)が高いポケモンを並べたランキング。ほのお・みず・かくとうなど17タイプをタップで切り替え、シャドウ・メガの有無も選べます。">
 <link rel="canonical" href="https://gonavi.jp/rocket/type/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="GOナビ">
@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="R団戦タイプ別火力ランキング">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"R団戦タイプ別火力ランキング","url":"https://gonavi.jp/rocket/type/","description":"ポケモンGOのGOロケット団とのバトル向けに、タイプごとのノーマルアタックの火力(DPS)が高いポケモンを並べたランキング。ほのお・みず・かくとうなど17タイプをタップで切り替え、シャドウ・メガの有無も選べます。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"R団戦タイプ別火力ランキング","url":"https://gonavi.jp/rocket/type/","description":"ポケモンGOのGOロケット団とのバトル向けに、タイプごとのノーマルアタックの火力(DPT)が高いポケモンを並べたランキング。ほのお・みず・かくとうなど17タイプをタップで切り替え、シャドウ・メガの有無も選べます。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
 <!-- seo:end -->
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/rocket-type/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/rocket-type/apple-touch-icon.png">
@@ -184,9 +184,9 @@ h1 b{white-space:nowrap}
 <div class="wrap">
 <header>
   <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
-  <div class="eyebrow">Pok&eacute;mon GO Team Rocket Type DPS</div>
+  <div class="eyebrow">Pok&eacute;mon GO Team Rocket Type DPT</div>
   <h1><span class="wmksuf">R団戦</span><b class="wmk" data-tool="rocket-type">タイプ別火力</b><span class="wmksuf">ランキング</span></h1>
-  <p class="intro">GOロケット団とのバトルで、タイプごとにノーマルアタックの火力が高いポケモンを並べたランキングです。タイプのアイコンをタップすると切り替わり、シャドウ・メガ・ゲンシを含めるかも選べます。順位はそのタイプのノーマルアタックで弱点を突いたときの1秒あたりのダメージで決まり、上位10匹のグラフ画像も保存できます。</p>
+  <p class="intro">GOロケット団とのバトルで、タイプごとにノーマルアタックの火力が高いポケモンを並べたランキングです。タイプのアイコンをタップすると切り替わり、シャドウ・メガ・ゲンシを含めるかも選べます。順位はそのタイプのノーマルアタックで弱点を突いたときの1ターン（0.5秒）あたりのダメージで決まり、上位10匹のグラフ画像も保存できます。</p>
   <a class="pagelink" href="/rocket/">ロケット団対策 ↗</a>
   <div id="themesw"></div>
 </header>
@@ -210,7 +210,7 @@ h1 b{white-space:nowrap}
       </span>
     </div>
   </div>
-  <p class="cond expl">全ポケモンをPL50・個体値15にそろえ、このタイプのノーマルアタックで、そのタイプが弱点の相手（×1.6）を攻撃したときの1秒あたりのダメージを比べています。SPアタックは撃たない前提です。</p>
+  <p class="cond expl">全ポケモンをPL50・個体値15にそろえ、このタイプのノーマルアタックで、そのタイプが弱点の相手（×1.6）を攻撃したときの1ターン（0.5秒）あたりのダメージを比べています。SPアタックは撃たない前提です。</p>
   <div id="rankList"></div>
 </section>
 
@@ -234,7 +234,7 @@ h1 b{white-space:nowrap}
   <ul>
     <li>全ポケモンを<b>PL50・個体値15</b>にそろえ、相手は<b>防御種族値100・PL40・個体値15</b>のものさしで比べます（<a href="/type-dps/">タイプ別火力ランキング</a>と同じものさし）。特定のロケット団のポケモンを相手にした数字ではなく、そのタイプでどのポケモンのどのわざがいちばん火力を出せるかを比べるための値です</li>
     <li>わざの性能は<b>トレーナーバトル（ロケット団戦）のもの</b>です。ダメージは1対1シミュレーターと同じ式（切り捨て＋1・トレーナーバトルの1.3倍）で計算します</li>
-    <li>そのタイプの<b>ノーマルアタック</b>で、<b>そのタイプが弱点の相手（×1.6）</b>を攻撃したときの<b>1秒あたりのダメージ（DPS）</b>です。ポケモンごとに、そのタイプでいちばん火力が出るノーマルアタックを選びます</li>
+    <li>そのタイプの<b>ノーマルアタック</b>で、<b>そのタイプが弱点の相手（×1.6）</b>を攻撃したときの<b>1ターン（0.5秒）あたりのダメージ（DPT）</b>です。ポケモンごとに、そのタイプでいちばん火力が出るノーマルアタックを選びます</li>
     <li><b>シャドウ</b>は攻撃1.2倍で、ロケット団戦の主力になりやすいので既定で含めています。<b>オレンジ色＋うしろに「*」</b>のわざは特別わざ・レガシーわざです</li>
     <li>同じ火力のポケモンは同順位です</li>
   </ul>
@@ -305,9 +305,10 @@ function bestFast(key, tEn, shadow){
   for(const id of ids){
     const mv=D.moves[id];
     const dmg=E.damage(D,mv,att,dfn);
-    const dps=dmg/(mv.tn*0.5);
+    // 火力は1ターン(0.5秒)あたりのダメージ＝DPT(2026-10-23タダシさん指示・トレーナーバトルの表記にそろえる)
+    const dpt=dmg/mv.tn;
     // 同じ火力なら特別わざでないものを残す
-    if(!best||dps>best.dps+1e-9||(Math.abs(dps-best.dps)<1e-9&&best.sp&&!sp.has(id))) best={id,mv,dmg,dps,sp:sp.has(id)};
+    if(!best||dpt>best.dpt+1e-9||(Math.abs(dpt-best.dpt)<1e-9&&best.sp&&!sp.has(id))) best={id,mv,dmg,dpt,sp:sp.has(id)};
   }
   return best;
 }
@@ -326,9 +327,9 @@ function buildRows(){
       if(s) rows.push({k,p,shadow:true,mega,...s});
     }
   }
-  rows.sort((a,b)=>b.dps-a.dps||a.k.localeCompare(b.k));
+  rows.sort((a,b)=>b.dpt-a.dpt||a.k.localeCompare(b.k));
   let rank=0, prev=null;
-  rows.forEach((r,i)=>{ const v=r.dps.toFixed(2); if(v!==prev){rank=i+1;prev=v;} r.rank=rank; });
+  rows.forEach((r,i)=>{ const v=r.dpt.toFixed(2); if(v!==prev){rank=i+1;prev=v;} r.rank=rank; });
   rankCache.set(key,rows);
   return rows;
 }
@@ -342,7 +343,7 @@ function badges(r){
          (r.shadow?'<span class="tag-s2" title="シャドウ"><i class="shadowmark"></i></span>':'');
 }
 const T_SP='特別わざ・レガシーわざです（イベント限定やすごいわざマシンスペシャルなどで習得）';
-const T_DPS='1秒あたりのダメージです（ノーマルアタック1発のダメージ÷わざの時間）';
+const T_DPT='1ターン（0.5秒）あたりのダメージです（ノーマルアタック1発のダメージ÷わざのターン数）';
 const T_RANK='火力が同じポケモンは同順位です（重なったぶんの順位は飛ばします）';
 const mvName=r=>{
   const n=r.id.startsWith('HIDDEN_POWER_')?'めざめるパワー':r.mv.n;
@@ -363,16 +364,16 @@ function renderRank(){
   const list=$('rankList');
   list.style.setProperty('--tgrad',`linear-gradient(90deg,${c[0]},${c[1]})`);
   if(!rows.length){ list.innerHTML='<div class="empty">このタイプのノーマルアタックを覚えるポケモンがいません</div>'; return; }
-  const max=rows[0].dps;
+  const max=rows[0].dpt;
   list.innerHTML=rows.map(r=>`
     <div class="rank-row${r.rank<=3?' md'+r.rank:''}">
       <div class="rk" title="${T_RANK}">${r.rank}位</div>
       <div class="rmain">
         <div class="rname">${badges(r)}<span class="nm">${esc(r.p.n)}</span></div>
         <div class="rmoves">${mvName(r)}<span class="tn">${r.mv.tn}ターン・1発${r.dmg}</span></div>
-        <div class="bar"><i style="width:${(r.dps/max*100).toFixed(1)}%"></i></div>
+        <div class="bar"><i style="width:${(r.dpt/max*100).toFixed(1)}%"></i></div>
       </div>
-      <div class="rdps" title="${T_DPS}">${r.dps.toFixed(2)}<small>DPS</small></div>
+      <div class="rdps" title="${T_DPT}">${r.dpt.toFixed(2)}<small>DPT</small></div>
     </div>`).join('');
 }
 
@@ -401,15 +402,15 @@ const shade=(hex,f)=>{
   const t=f>0?255:0,a=Math.abs(f),c=v=>Math.round(v+(t-v)*a);
   return `rgb(${c(r)},${c(g)},${c(b)})`;
 };
-// 目盛りの下限は15に固定(15を切る値があれば0から)。2026-10-23時点で全17タイプの10位は18以上(シャドウなしのはがね18.00が最小)。
+// 目盛りの下限は8に固定(8を切る値があれば0から)。2026-10-23時点で全17タイプの10位は9.00以上(シャドウなしのはがねが最小)。
 // 最下位に合わせて動かすと、タイプや絞り込みで棒の長さの意味が変わって見えるため(タイプ別火力と同じ考え方)
-const FLOOR=15;
+const FLOOR=8;
 function graphSVG(forSave,Wopt){
   const rows=buildRows().slice(0,10);
   const [c1,c2]=TC[curT], ja=JA[curT];
   const W=Wopt||1980,H=1440;
   const n=rows.length||1;
-  const dmax=rows.length?rows[0].dps:10, dmin=rows.length?rows[rows.length-1].dps:0;
+  const dmax=rows.length?rows[0].dpt:10, dmin=rows.length?rows[rows.length-1].dpt:0;
   const v0=dmin>=FLOOR?FLOOR:0;
   const step=(dmax-v0)<6?1:(dmax-v0)<14?2:(dmax-v0)<30?5:10;
   const v1=Math.ceil(dmax*1.02/step)*step;
@@ -478,7 +479,7 @@ function graphSVG(forSave,Wopt){
     s+=`<text x="${px+padL}" y="${py+ph/2+11}" font-size="${pfs}" font-weight="800" fill="#ffffff">${esc(p2.t)}</text>`;
     px-=16;
   }
-  s+=`<text x="${L-14}" y="${T-20}" font-size="22" font-weight="700" fill="#6b76a3" text-anchor="end">DPS</text>`;
+  s+=`<text x="${L-14}" y="${T-20}" font-size="22" font-weight="700" fill="#6b76a3" text-anchor="end">DPT</text>`;
   for(let v=v0;v<=v1;v+=step){
     const gy=y(v);
     s+=`<line x1="${L}" y1="${gy.toFixed(1)}" x2="${R}" y2="${gy.toFixed(1)}" stroke="#232c4f" stroke-width="${v===v0?2:1.2}"${v===v0?'':' stroke-dasharray="3 9"'}/>
@@ -487,13 +488,13 @@ function graphSVG(forSave,Wopt){
   const MD={1:'#ffd873',2:'#dfe8f2',3:'#e8a06a'};
   rows.forEach((r,i)=>{
     const cx=L+colW*i+colW/2;
-    const by=y(r.dps), bh=B-by, bx=cx-barW/2, rx=Math.min(12,barW/2);
+    const by=y(r.dpt), bh=B-by, bx=cx-barW/2, rx=Math.min(12,barW/2);
     const bar=`M${bx.toFixed(1)} ${B} V${(by+rx).toFixed(1)} Q${bx.toFixed(1)} ${by.toFixed(1)} ${(bx+rx).toFixed(1)} ${by.toFixed(1)} H${(bx+barW-rx).toFixed(1)} Q${(bx+barW).toFixed(1)} ${by.toFixed(1)} ${(bx+barW).toFixed(1)} ${(by+rx).toFixed(1)} V${B} Z`;
     s+=`<path d="${bar}" fill="${c1}" opacity=".5" filter="url(#gblur)"/>
     <path d="${bar}" fill="url(#gbar)"/>
     <rect x="${(bx+3).toFixed(1)}" y="${(by+3).toFixed(1)}" width="${(barW-6).toFixed(1)}" height="${Math.min(bh*0.45,150).toFixed(1)}" rx="${Math.max(2,rx-3)}" fill="url(#ghl)"/>`;
     if(bh>52) s+=`<text x="${cx.toFixed(1)}" y="${(B-16).toFixed(1)}" font-size="27" font-weight="800" fill="${MD[r.rank]||'#ffffff'}" opacity="${MD[r.rank]?0.95:0.5}" text-anchor="middle">${r.rank}</text>`;
-    s+=`<text x="${cx.toFixed(1)}" y="${(by-16).toFixed(1)}" font-size="${vfs}" font-weight="800" fill="#ffffff" text-anchor="middle">${r.dps.toFixed(2)}</text>`;
+    s+=`<text x="${cx.toFixed(1)}" y="${(by-16).toFixed(1)}" font-size="${vfs}" font-weight="800" fill="#ffffff" text-anchor="middle">${r.dpt.toFixed(2)}</text>`;
     const nm=names[i], fs=nm.fs;
     let ly=B;
     nm.lines.forEach((ln,li)=>{
