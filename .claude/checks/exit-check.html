@@ -89,7 +89,7 @@
         c.querySelector('.rkrname').textContent.replace(/\s+/g, ''), !!c.querySelector('.rkrname .shadowmark'),
         c.querySelector('.rkrdps').textContent.trim(), c.querySelector('.rkrnum b') ? c.querySelector('.rkrnum b').textContent : '—', c.classList.contains('warn')]);
       w.GonaviGbl.rocket(other, k);
-      const exr = w.GonaviGbl.rocket(kind, k).slice(0, scr.length).map(r => [String(r.rank), D.pokemon[r.k].n, r.s, r.dps + '/秒', r.sec != null ? r.sec : '—', r.checked && !r.win]);
+      const exr = w.GonaviGbl.rocket(kind, k).slice(0, scr.length).map(r => [String(r.rank), D.pokemon[r.k].n, r.s, r.dpt + 'DPT', r.sec != null ? r.sec : '—', r.checked && !r.win]);
       ok(`/rocket/ ${kind}・${k} 画面の${scr.length}行と出口が一致`, scr.length && JSON.stringify(scr) === JSON.stringify(exr), JSON.stringify(scr[0]) + JSON.stringify(exr[0]));
       ok(`/rocket/ ${k} 出口を呼んでも種別が変わらない`, w.eval('RK.kind') === kind);
       f.remove();

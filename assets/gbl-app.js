@@ -402,6 +402,7 @@ document.getElementById('app').innerHTML = `
     <div class="rkmybody" id="rkmybody" style="display:none"></div>
   </div>
   <div class="rkrbody"></div>
+  <div class="rksaverow" id="rksaverow" style="display:none" data-snap-skip><button id="rksave" type="button" title="上位10匹を1920×1440のPNG画像にします">📷 画像を保存</button></div>
 </div>
 
 <!-- 一覧系3モードの「⚙ 詳細」。ブラフ・能力変化わざはここへ畳んで、画面の幅と文字を減らす -->
@@ -1780,7 +1781,7 @@ ${PAGE_ROCKET ? '' : `
   <p>あいてを決めると、<b>ノーマルアタックだけで攻撃したときに火力が出る順</b>に並べます。
   ロケット団戦は早く倒すほど有利なので、SPアタックを撃たずに押し切れる相手を先に見つけるのが近道です。</p>
   <ul>
-    <li>大きい数字は<b>倒しきるまでの秒数</b>、右下の小さい数字は<b>1秒あたりのダメージ</b>です</li>
+    <li>大きい数字は<b>倒しきるまでの秒数</b>、小さい数字は<b>1ターン（0.5秒）あたりのダメージ（DPT）</b>です。「📷 画像を保存」で上位10匹を1920×1440の画像にできます</li>
     <li><b>⚠️</b>が付いたものは、<b>あいてのノーマルアタック次第で先に倒されます</b>。どのわざで負けるかを右に書いています</li>
     <li><b>高火力＋安定</b>に切り替えると、<b>あいてのわざがどれでも先に倒されない</b>ものだけになります</li>
     <li>シールドは<b>2枚とも残っている前提</b>です（SPアタックを撃たないので、まるごとあいてのSPを防ぐのに使えます）</li>
@@ -2493,7 +2494,7 @@ window.GonaviGbl = {
     try {
       RK.kind = kind; RKR.shadow = true; RKR.mega = false;
       return rkRankFor({ key: foeKey }, false).filter(r => !r.mine).map((r, i) => ({ rank: i + 1, k: r.key, s: !!r.shadow,
-        fast: r.fast, dps: r.dps.toFixed(1), checked: !!r.checked, win: !!r.win, anyWin: !!r.anyWin,
+        fast: r.fast, dps: r.dps.toFixed(1), dpt: (r.dps / 2).toFixed(2), checked: !!r.checked, win: !!r.win, anyWin: !!r.anyWin,
         sec: r.checked && r.anyWin ? (r.turns / 2).toFixed(1) : null, loseTo: r.loseTo || [] }));
     } finally { [RK.kind, RKR.shadow, RKR.mega] = sv; }
   },
@@ -4186,7 +4187,7 @@ function syncFoeSlots() {
 // ---- ロケット団戦 1対1: おすすめランキング ----
 // ロケット団戦の目的は「いかに早く倒すか」なので、あいてを決めたらまず
 // 「ノーマルアタックだけで攻撃したときにいちばん火力が出るポケモンとわざ」を並べる。
-// 火力＝そのあいてに対するノーマルアタックのDPS(ダメージ÷秒)。
+// 火力＝そのあいてに対するノーマルアタックのDPS(ダメージ÷秒)。画面と画像はDPT(＝DPS÷2・1ターン0.5秒あたり)で出す(2026-10-23タダシさん指示)。
 // あいてのわざはランダムなので、倒され判定(⚠)は「いちばんキツいわざで来た場合」で見る。
 const RKR = { view: 'power', shadow: true, mega: false, top: 30, cache: null, det: false };   // det=枠内「⚙ 詳細」(敵硬直)の開閉
 
@@ -4406,7 +4407,7 @@ function rkShowSugg(i, el) {
       <b class="rksgno">${k + 1}</b>
       <span class="rksgnm">${r.mine ? '<span class="rkrmine">★</span>' : ''}${r.shadow ? '<i class="shadowmark"></i>' : ''}${p.n}</span>${typeIcons(p, 15)}
       <span class="rksgmv">${mvChip(D.moves[r.fast].n, 12)}</span>
-      <span class="rksgdps">${warn ? '⚠' : ''}<small>DPS</small>${r.dps.toFixed(1)}</span>
+      <span class="rksgdps" title="1ターン（0.5秒）あたりのダメージ">${warn ? '⚠' : ''}<small>DPT</small>${(r.dps / 2).toFixed(2)}</span>
     </div>`;
   }).join('');
   list.style.display = 'block';
@@ -4508,6 +4509,7 @@ function runRkRank() {
     const list = ranked.slice(0, RKR.top)
       .concat(ranked.slice(RKR.top).filter(r => r.mine));   // ★自分の個体は圏外でも必ず出す
     if (!list.length) {
+      RKR.img = null; rkSaveSync();
       body.innerHTML = '<div class="mtnote">' + (RKR.view === 'safe'
         ? '<b>先に倒されずに勝てる</b>候補がありません（SPアタックを使うなら「シミュレート」か模擬戦へ）'
         : '候補がありません') + '</div>';
@@ -4515,6 +4517,9 @@ function runRkRank() {
     }
     body.innerHTML = list.map((r, i) => rkRankCard(r, i)).join('');
     rkFit(body);
+    // 画像に使う上位10匹（画面の順位・数字と同じもの。圏外の★個体は入れない）
+    RKR.img = ranked.slice(0, 10);
+    rkSaveSync();
     body.querySelectorAll('.rkrcard').forEach(el => el.onclick = () => {
       const r = list[+el.dataset.i];
       applyMyPk(0, { key: r.key, fast: r.fast, shadow: r.shadow,
@@ -4534,6 +4539,122 @@ function rkFit(root) {
     let fs = parseFloat(getComputedStyle(el).fontSize), n = 0;
     while (over(el) && fs > 9 && n++ < 10) { fs -= 0.6; el.style.fontSize = fs + 'px'; }
   });
+}
+// ---- ロケット団 1対1ランキングの画像（2026-10-23タダシさん選択の案B「タイムアタック風の横棒」・1920×1440） ----
+// 行＝順位・名前とわざ・火力の横棒(DPT＝1ターン0.5秒あたり)・右端に倒すまでの秒数。数字は画面の行と同じもの（RKR.img）
+let RK_LOGO = '';
+const RK_FLAME = 'M348 8C362 130 400 232 452 330C512 442 566 536 572 640C575 700 560 742 540 772C566 700 566 620 552 556C596 596 640 660 656 726C672 668 682 610 676 548C724 610 768 686 782 772C800 884 700 1010 470 1018C250 1026 30 962 14 812C2 700 60 596 132 520C124 590 138 650 168 700C168 620 196 540 244 486C244 546 258 596 282 634C300 566 292 486 268 410C238 314 262 150 348 8Z';
+const rkDevClean = () => { try { return !!(window.GonaviDev && window.GonaviDev()); } catch (e) { return false; } };
+function rkSaveSync() {
+  const row = document.getElementById('rksaverow');
+  if (!row) return;
+  const on = !!(RKR.img && RKR.img.length && RKR.view !== 'sim');
+  row.style.display = on ? '' : 'none';
+  const btn = document.getElementById('rksave');
+  btn.textContent = rkDevClean() ? '📷 画像を保存（ロゴなし・開発者）' : '📷 画像を保存';
+  btn.onclick = rkSaveImage;
+  if (on && !RK_LOGO) fetch('/assets/icons/home/icon-192.png').then(r => r.blob()).then(b => new Promise(res => {
+    const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b);
+  })).then(u => { RK_LOGO = u; }).catch(() => {});
+}
+// 見出しの前書き: 「リーダー シエラ 2匹目」のように、選んでいる人と何匹目かが分かれば添える
+function rkImgWho(foeKey) {
+  const sp = rkSpec(), list = (window.ROCKET_ROSTER && ROCKET_ROSTER.list && ROCKET_ROSTER.list[RK.kind]) || [];
+  const w = Array.isArray(list) ? list.find(x => x.id === RK.who) : null;
+  if (!w) return sp.name;
+  const at = (w.slots || []).findIndex(sl => (sl || []).includes(foeKey));
+  return RK.kind === 'grunt' ? `${sp.name}（${w.name}）${at >= 0 ? ' ' + (at + 1) + '匹目' : ''}`
+    : `${sp.name} ${w.name}${at >= 0 ? ' ' + (at + 1) + '匹目' : ''}`;
+}
+function rkImgSVG() {
+  const W = 1920, H = 1440, rows = RKR.img || [], esc = escH;
+  const tw = (str, fs) => [...String(str)].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? fs : fs * 0.62), 0);
+  const foe = D.pokemon[S[1].key], clean = rkDevClean();
+  const MD = { 1: '#ffd873', 2: '#dfe8f2', 3: '#e8a06a' };
+  const C1 = '#F1A062';
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans',system-ui,sans-serif"><defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#151628"/><stop offset="1" stop-color="#0b1023"/></linearGradient>
+<radialGradient id="tint" cx=".12" cy="0" r="1"><stop offset="0" stop-color="#ff6b6b" stop-opacity=".16"/><stop offset=".55" stop-color="#ff6b6b" stop-opacity="0"/></radialGradient>
+<linearGradient id="barh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9b5a2e"/><stop offset=".55" stop-color="${C1}"/><stop offset="1" stop-color="#ffd6a8"/></linearGradient>
+<linearGradient id="chip" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a9a"/><stop offset="1" stop-color="#d64040"/></linearGradient>
+<linearGradient id="hl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".25" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="ul" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff6b6b"/><stop offset="1" stop-color="#ff6b6b" stop-opacity="0"/></linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a7a"/><stop offset=".5" stop-color="#4f8dff"/><stop offset="1" stop-color="#8a7bff"/></linearGradient>
+<linearGradient id="gmega" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d63384"/><stop offset="1" stop-color="#7a3cc4"/></linearGradient></defs>
+<rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="34" fill="url(#bg)"/><rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="34" fill="url(#tint)"/>
+<rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="34" fill="none" stroke="url(#edge)" stroke-width="6"/>`;
+  // 見出し
+  const t1 = foe ? foe.n : '', fs = 62, w1 = tw(t1, fs) + 54, t2 = 'を倒すノーマルアタック', w2 = tw(t2, fs);
+  s += `<text x="72" y="74" font-size="26" font-weight="700" fill="#8b96c2" letter-spacing="6">ポケモンGO ロケット団対策 ／ ${esc(rkImgWho(S[1].key))}</text>
+<path d="${RK_FLAME}" transform="translate(72,${152 - fs * 0.86}) scale(${fs / 1024 * 0.95})" fill="#b06cff"/>
+<text x="${72 + 54}" y="152" font-size="${fs}" font-weight="800" fill="url(#chip)">${esc(t1)}</text>
+<text x="${72 + w1 + 8}" y="152" font-size="${fs}" font-weight="800" fill="#fff">${t2}</text>
+<rect x="${72 + w1 + 8 + w2 + 26}" y="104" width="150" height="56" rx="13" fill="url(#chip)"/><rect x="${72 + w1 + 8 + w2 + 26}" y="104" width="150" height="26" rx="13" fill="url(#hl)"/>
+<text x="${72 + w1 + 8 + w2 + 101}" y="144" font-size="32" font-weight="800" fill="#2a0b0b" text-anchor="middle">TOP10</text>
+<rect x="72" y="176" width="640" height="5" rx="2.5" fill="url(#ul)"/>`;
+  if (RKR.view === 'safe') s += `<text x="72" y="222" font-size="24" font-weight="700" fill="#8b96c2">先に倒されないものだけ</text>`;
+  // 右上: 絞り込みの札＋GOナビ
+  const pills = [];
+  if (RKR.shadow) pills.push({ t: 'シャドウ含む', fill: '#7c3aed', flame: true });
+  if (RKR.mega) pills.push({ t: 'メガ・ゲンシ含む', fill: 'url(#gmega)' });
+  let px = W - 70 - (clean ? 0 : 128);
+  for (const p2 of pills.reverse()) {
+    const pfs = 31, ph = 60, py = 92, padL = p2.flame ? 58 : 24, pw = tw(p2.t, pfs) + padL + 24;
+    px -= pw;
+    s += `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="${ph / 2}" fill="${p2.fill}"/><rect x="${px}" y="${py}" width="${pw}" height="${ph / 2}" rx="${ph / 4}" fill="url(#hl)" opacity=".5"/>`;
+    if (p2.flame) s += `<path d="${RK_FLAME}" transform="translate(${px + 16},${py + 9}) scale(${40 / 1024})" fill="#fff"/>`;
+    s += `<text x="${px + padL}" y="${py + ph / 2 + 11}" font-size="${pfs}" font-weight="800" fill="#fff">${esc(p2.t)}</text>`;
+    px -= 16;
+  }
+  if (!clean) {
+    const lg = 88, bm = W - 72 - lg / 2;
+    if (RK_LOGO) s += `<image href="${RK_LOGO}" x="${bm - lg / 2}" y="30" width="${lg}" height="${lg}" opacity=".92"/>`;
+    s += `<text x="${bm}" y="${30 + lg + 26}" font-size="22" font-weight="700" fill="#8b96c2" text-anchor="middle" opacity=".92">gonavi.jp</text>`;
+  }
+  // 行
+  const L = 72, R = W - 72, T = 272, rowH = 110, nameW = 450, timeW = 300, bL = L + 98 + nameW, bR = R - timeW - 30;
+  const dpts = rows.map(r => r.dps / 2), mx = Math.max(...dpts, 1), mn = Math.min(...dpts, mx);
+  const v0 = Math.max(0, Math.floor(mn * 0.55)), v1 = mx * 1.08, x = v => bL + (v - v0) / (v1 - v0) * (bR - bL);
+  s += `<text x="${bR}" y="${T - 14}" font-size="22" font-weight="700" fill="#6b76a3" text-anchor="end">ノーマルアタックの火力（DPT＝0.5秒あたり）</text>
+<text x="${R - 20}" y="${T - 14}" font-size="22" font-weight="700" fill="#6b76a3" text-anchor="end">倒すまで</text>`;
+  rows.forEach((r, i) => {
+    const p = D.pokemon[r.key], mv = D.moves[r.fast], y0 = T + i * rowH, cy = y0 + rowH / 2, n = r.rank || i + 1;
+    const sp = (p.eq || []).includes(r.fast), warn = r.checked && !r.win;
+    s += `<rect x="${L}" y="${y0 + 8}" width="${R - L}" height="${rowH - 16}" rx="18" fill="${i % 2 ? '#141b36' : '#18203f'}"/>`;
+    const md = MD[n];
+    s += `<rect x="${L + 14}" y="${cy - 30}" width="62" height="60" rx="14" fill="${md || '#232c55'}"/><text x="${L + 45}" y="${cy + 12}" font-size="30" font-weight="900" fill="${md ? '#2a1a00' : '#cfd6f0'}" text-anchor="middle">${n}</text>`;
+    const nx = L + 98;
+    let nfs = 34; while (tw(p.n, nfs) + (r.shadow ? 30 : 0) > nameW - 10 && nfs > 20) nfs -= 2;
+    if (r.shadow) s += `<path d="${RK_FLAME}" transform="translate(${nx},${cy - 4 - nfs * 0.9}) scale(${nfs / 1024 * 0.95})" fill="#b06cff"/>`;
+    s += `<text x="${nx + (r.shadow ? 30 : 0)}" y="${cy - 4}" font-size="${nfs}" font-weight="800" fill="#eef1fb">${esc(p.n)}</text>`;
+    const sub = warn ? (r.anyWin ? `⚠負け：${rkLoseNames(r.loseTo)}` : '⚠どのわざでも負け') : '';
+    s += `<text x="${nx}" y="${cy + 30}" font-size="22" font-weight="700" fill="${sp ? '#ff9750' : '#8b96c2'}">${esc(mv.n)}${sp ? '*' : ''}<tspan fill="#ff7a7a" dx="14">${esc(sub)}</tspan></text>`;
+    const bx2 = x(r.dps / 2);
+    s += `<rect x="${bL}" y="${cy - 16}" width="${Math.max(4, bx2 - bL)}" height="32" rx="16" fill="url(#barh)"/><rect x="${bL}" y="${cy - 16}" width="${Math.max(4, bx2 - bL)}" height="14" rx="7" fill="url(#hl)"/>
+<text x="${bx2 + 14}" y="${cy + 10}" font-size="26" font-weight="800" fill="#fff">${(r.dps / 2).toFixed(2)}</text>`;
+    const sec = r.checked && r.anyWin ? `⏱${(r.turns / 2).toFixed(1)}<tspan font-size="28">秒</tspan>` : '—';
+    s += `<text x="${R - 20}" y="${cy + 18}" font-size="52" font-weight="900" fill="${warn ? '#ff9a7a' : '#ffd678'}" text-anchor="end">${sec}</text>`;
+  });
+  return s + '</svg>';
+}
+function rkSaveImage() {
+  if (!RKR.img || !RKR.img.length) return;
+  const W = 1920, H = 1440;
+  const url = URL.createObjectURL(new Blob([rkImgSVG()], { type: 'image/svg+xml;charset=utf-8' }));
+  const img = new Image();
+  img.onload = () => {
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    cv.getContext('2d').drawImage(img, 0, 0, W, H);
+    URL.revokeObjectURL(url);
+    cv.__rounded = true;   // 四隅は SVG 側で丸めて描いているので snap.js で二重に切らせない
+    const foe = D.pokemon[S[1].key];
+    const name = `ロケット団対策ランキング_${foe ? foe.n : ''}${RKR.shadow ? '_シャドウ' : ''}${RKR.mega ? '_メガ・ゲンシ' : ''}${RKR.view === 'safe' ? '_先に倒されない' : ''}_TOP10_1920x1440.png`;
+    // ⚠ 押した瞬間に保存しない。見本を見せてから「保存する」（全ツール共通・iPhoneが保存を断るため）
+    if (window.GonaviSnap && GonaviSnap.preview) { GonaviSnap.preview(cv, name); return; }
+    cv.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }, 'image/png');
+  };
+  img.src = url;
 }
 function rkLoseNames(list) {
   const grp = new Map();
@@ -4573,7 +4694,7 @@ function rkRankCard(r, i) {
       <div class="rkrmv">${mvChip(mv.n)}
         <span class="rkrdim">${r.mine ? `個体値${r.ivs.join('/')} PL${r.level}` : ''}</span></div>
     </div>
-    <div class="rkrnum"><span class="rkrtop"><i class="rkrdps">${r.dps.toFixed(1)}/秒</i>${num}</span><small>${sub}</small></div>
+    <div class="rkrnum"><span class="rkrtop"><i class="rkrdps" title="1ターン（0.5秒）あたりのダメージ（DPT）">${(r.dps / 2).toFixed(2)}DPT</i>${num}</span><small>${sub}</small></div>
   </div>`;
 }
 
