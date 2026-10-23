@@ -12,7 +12,8 @@
         "mock-fx",
         "mock-sp",
         "mock-skip",
-        "exit-gbl"
+        "exit-gbl",
+        "rocket-rank"
       ],
       "paths": [
         "assets/gbl-app.js",

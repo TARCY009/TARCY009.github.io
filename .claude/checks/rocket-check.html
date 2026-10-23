@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>ロケット団のランキング・画像の答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<script>
+/* 2026-10-23の点検で作った答え合わせ（R団戦タイプ別火力ランキング・ロケット団 1対1ランキングの画像）。
+   ① /rocket/type/ の一覧を、ページとは別に書いた計算（pvp_data.json から直接・PvpEngine は使わない）と全件くらべる
+   ② /rocket/type/ のグラフ画像（1980・1920）で、見出し・TOP10の札が右上の札に重ならない／枠からはみ出さない
+   ③ /rocket/ 1対1ランキングの画像（rkImgSVG）が画面の上位10行と同じ（名前・DPT・秒数・★）で、
+      見出しの「人と何匹目」が正しく、文字が棒・右端・右上の札にかからない
+   ④ 計算し直しているあいだは「画像を保存」を出さない（前のあいての数字で保存しない）
+   答え（比べ方）を変えるときは必ずタダシさんに確認すること。 */
+(() => {
+  const res = [];
+  const ok = (name, cond, note) => res.push([name, !!cond, note || '']);
+  const load = src => new Promise(r => { const f = document.createElement('iframe'); f.width = 1200; f.height = 900; f.style.cssText = 'position:absolute;left:-9999px;top:0'; f.onload = () => r(f); f.src = src; document.body.appendChild(f); });
+  const wait = (fn, ms = 60000) => new Promise((r, j) => { const t0 = Date.now(); (function lp() { let v; try { v = fn(); } catch (e) { } if (v) return r(v); if (Date.now() - t0 > ms) return j(new Error('時間内に画面が出ませんでした')); setTimeout(lp, 30); })(); });
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // ---- ① 別の計算（ページのJSを使わない） ----
+  function expected(D, T, shOn, mgOn) {
+    const P = D.pokemon, M = D.moves, CPM = D.cpm['50'], DEF = (100 + 15) * 0.7903;
+    const isMega = k => k.includes('_mega') || k.includes('_primal');
+    const rows = [];
+    for (const k of Object.keys(P)) {
+      const p = P[k];
+      if (!p.r || p.hid || k === 'ditto' || k === 'shedinja') continue;
+      const mega = isMega(k);
+      if (mega && !mgOn) continue;
+      for (const sh of [false].concat(shOn && p.shadow && !mega ? [true] : [])) {
+        const atk = (p.a + 15) * CPM * (sh ? 1.2 : 1);
+        let best = null;
+        for (const id of [...new Set(p.q || [])]) {
+          const m = M[id];
+          if (!m || m.t !== T || !m.tn) continue;
+          const dmg = Math.floor(0.5 * m.p * atk / DEF * 1.6 * (p.ty.includes(T) ? 1.2 : 1) * 1.3) + 1;
+          const v = dmg / m.tn, spc = (p.eq || []).includes(id);
+          if (!best || v > best.v + 1e-9 || (Math.abs(v - best.v) < 1e-9 && best.spc && !spc)) best = { v, id, spc };
+        }
+        if (best) rows.push([best.v, k, sh, best.id, best.spc]);
+      }
+    }
+    rows.sort((a, b) => b[0] - a[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+    let rank = 0, prev = null;
+    return rows.slice(0, 40).map((r, i) => { const v = r[0].toFixed(2); if (v !== prev) { rank = i + 1; prev = v; }
+      return [rank, P[r[1]].n, r[2], r[3].startsWith('HIDDEN_POWER_') ? 'めざめるパワー' : M[r[3]].n, r[4], v]; });
+  }
+  // 見出し（y=152の文字と TOP10 の札）の右端 と 右上の札（y=92の四角）の左端
+  function headCheck(svgText, doc) {
+    const host = doc.createElement('div'); host.style.cssText = 'position:absolute;left:-99999px;top:0';
+    host.innerHTML = svgText; doc.body.appendChild(host);
+    const svg = host.querySelector('svg'); const vb = svg.viewBox.baseVal.width; svg.setAttribute('width', vb); svg.setAttribute('height', 1440);
+    const texts = [...svg.querySelectorAll('text')], rects = [...svg.querySelectorAll('rect')];
+    const head = texts.filter(t => +t.getAttribute('y') === 152);
+    const chip = rects.filter(r => /chip/.test(r.getAttribute('fill') || '') && +r.getAttribute('y') > 80 && +r.getAttribute('y') < 152);
+    const right = Math.max(...head.map(t => { const b = t.getBBox(); return b.x + b.width; }), ...chip.map(r => +r.getAttribute('x') + +r.getAttribute('width')));
+    const pills = rects.filter(r => +r.getAttribute('y') === 92);
+    const pl = pills.length ? Math.min(...pills.map(r => +r.getAttribute('x'))) : vb - 200;
+    const outside = texts.filter(t => { const b = t.getBBox(); return b.x < 0 || b.x + b.width > vb + 1; }).map(t => t.textContent.slice(0, 12));
+    return { host, svg, texts, overlap: right > pl - 6 ? `見出し右端${Math.round(right)} > 札${Math.round(pl)}` : '', outside };
+  }
+
+  async function typePage() {
+    const D = await (await fetch('/pvp_data.json')).json();
+    const f = await load('/rocket/type/?n=40'), w = f.contentWindow, d = w.document;
+    await wait(() => d.querySelectorAll('#rankList .rank-row').length && w.GonaviSnap);
+    const sh = d.getElementById('fShadow'), mg = d.getElementById('fMega');
+    const set = (b, on) => { if ((b.getAttribute('aria-pressed') === 'true') !== on) b.click(); };
+    const orig = w.URL.createObjectURL; let last = null;
+    w.URL.createObjectURL = b => { last = b; return orig.call(w.URL, b); };
+    const pv = w.GonaviSnap.preview; w.GonaviSnap.preview = () => {};
+    const heads = [];
+    for (const [s, m] of [[1, 0], [0, 0], [1, 1], [0, 1]]) {
+      const bad = [];
+      for (const tb of [...d.querySelectorAll('.tbtn')]) {
+        set(sh, !!s); set(mg, !!m); tb.click();
+        const rows = [...d.querySelectorAll('#rankList .rank-row')].map(e => [parseInt(e.querySelector('.rk').textContent), e.querySelector('.nm').textContent, !!e.querySelector('.tag-s2'), e.querySelector('.mv').textContent.replace('*', ''), !!e.querySelector('.mv.sp'), e.querySelector('.rdps').firstChild.textContent.trim()]);
+        const ex = expected(D, tb.dataset.t, !!s, !!m);
+        if (JSON.stringify(rows) !== JSON.stringify(ex)) { const i = rows.findIndex((r, j) => JSON.stringify(r) !== JSON.stringify(ex[j])); bad.push(`${tb.dataset.t} ${i + 1}行目 画面${JSON.stringify(rows[i])} 計算${JSON.stringify(ex[i])}`); }
+        // 一覧の上位10とグラフの数字
+        const g = [...d.querySelectorAll('#gsvg text')].map(t => t.textContent);
+        if (ex.slice(0, 10).some(r => !g.includes(r[5]))) bad.push(`${tb.dataset.t} グラフに一覧の数字が無い`);
+        for (const btn of ['saveBtn', 'saveBtn2']) {
+          last = null; d.getElementById(btn).click(); await sleep(20);
+          if (!last) { heads.push(`${tb.dataset.t} 画像が作られない`); continue; }
+          const h = headCheck(await last.text(), d);
+          if (h.overlap) heads.push(`${tb.dataset.t}${s}${m}${btn} ${h.overlap}`);
+          if (h.outside.length) heads.push(`${tb.dataset.t}${s}${m}${btn} はみ出し ${h.outside[0]}`);
+          h.host.remove();
+        }
+      }
+      ok(`/rocket/type/ 一覧が別の計算と一致（17タイプ・40位まで・シャドウ${s ? '含む' : 'なし'}・メガ${m ? '含む' : 'なし'}）`, !bad.length, bad.slice(0, 2).join(' ／ '));
+    }
+    ok('/rocket/type/ グラフ画像の見出しが右上の札に重ならず枠からはみ出さない（68通り×2サイズ）', !heads.length, heads.slice(0, 3).join(' ／ '));
+    w.URL.createObjectURL = orig; w.GonaviSnap.preview = pv;
+    f.remove();
+  }
+
+  async function rocket1v1() {
+    const f = await load('/rocket/?rk=leader&rw=sierra&r=ferrothorn'), w = f.contentWindow, d = w.document;
+    await wait(() => d.querySelectorAll('#rkrank .rkrcard').length && w.rkImgSVG);
+    // const で作られた変数（RK・S・RKR）は window の外から見えないので eval で取る
+    const RK = w.eval('RK'), S = w.eval('S'), RKR = w.eval('RKR');
+    const KN = { grunt: 'したっぱ', leader: 'リーダー', boss: 'サカキ' };
+    const cases = [
+      ['leader', 'sierra', 'ferrothorn', 'power', false, 'リーダー シエラ 2匹目'],
+      ['leader', 'sierra', 'blastoise', 'power', false, 'リーダー シエラ 2匹目'],
+      ['boss', 'giovanni', 'zekrom', 'power', false, 'サカキ 3匹目'],
+      ['leader', 'sierra', 'weezing_galarian', 'power', true, 'リーダー'],      // シエラの手持ちに無いあいて＝人の名前を出さない
+      ['leader', 'cliff', 'weezing_galarian', 'power', true, 'リーダー クリフ 2匹目'],
+      ['grunt', 'fire', 'litwick', 'power', true, 'したっぱ（ほのお）1匹目'],
+      ['leader', 'cliff', 'tyranitar', 'safe', false, 'リーダー クリフ 3匹目'],
+    ];
+    const bad = [], hide = [];
+    for (const [kind, who, foe, view, mega, whoExp] of cases) {
+      const kb = [...d.querySelectorAll('#rkkind button')].find(b => b.textContent.includes(KN[kind]));
+      if (RK.kind !== kind) { kb.click(); await sleep(300); }
+      RK.who = RK.whoBy[kind] = who; S[1].key = foe; RKR.view = view; RKR.mega = mega;
+      w.runRkRank();
+      if (d.getElementById('rksaverow').style.display !== 'none' || RKR.img) hide.push(foe);
+      await wait(() => RKR.img, 30000);
+      const cards = [...d.querySelectorAll('#rkrank .rkrcard')].slice(0, 10).map(c => [c.querySelector('.rkrnm').textContent, c.querySelector('.rkrdps').textContent.replace('DPT', ''), (c.querySelector('.rkrnum b') || {}).textContent || '—', !!c.querySelector('.rkrmine')]);
+      const h = headCheck(w.rkImgSVG(), d);
+      const rowsT = h.texts.filter(t => +t.getAttribute('y') > 272);
+      const names = rowsT.filter(t => t.getAttribute('font-weight') === '800' && !t.getAttribute('text-anchor') && t.getAttribute('font-size') !== '26').map(t => t.textContent);
+      const dpts = rowsT.filter(t => /^\d+\.\d\d$/.test(t.textContent)).map(t => t.textContent);
+      const secs = rowsT.filter(t => t.getAttribute('font-size') === '52').map(t => t.textContent.replace(/[⏱秒]/g, ''));
+      const stars = rowsT.filter(t => t.textContent === '★').length;
+      const whoT = h.texts.find(t => +t.getAttribute('y') === 74).textContent.replace('ポケモンGO ロケット団対策 ／ ', '');
+      const bL = 72 + 98 + 450;
+      const onBar = rowsT.filter(t => { const b = t.getBBox(), x = +t.getAttribute('x'); return !t.getAttribute('text-anchor') && x < bL && b.x + b.width > bL - 6; }).map(t => t.textContent.slice(0, 16));
+      const p = [];
+      if (JSON.stringify(names) !== JSON.stringify(cards.map(c => c[0]))) p.push('名前');
+      if (JSON.stringify(dpts) !== JSON.stringify(cards.map(c => c[1]))) p.push('DPT');
+      if (JSON.stringify(secs) !== JSON.stringify(cards.map(c => c[2]))) p.push('秒数');
+      if (stars !== cards.filter(c => c[3]).length) p.push('★');
+      if (whoT !== whoExp) p.push(`見出し「${whoT}」≠「${whoExp}」`);
+      if (h.overlap) p.push(h.overlap);
+      if (h.outside.length) p.push('はみ出し ' + h.outside[0]);
+      if (onBar.length) p.push('棒にかかる ' + onBar[0]);
+      if (p.length) bad.push(`${kind}・${foe}: ${p.join('・')}`);
+      h.host.remove();
+    }
+    ok(`/rocket/ 1対1ランキングの画像が画面と同じで、見出し・重なりも正しい（${cases.length}通り）`, !bad.length, bad.slice(0, 3).join(' ／ '));
+    ok('/rocket/ 計算し直しているあいだは「画像を保存」を出さない', !hide.length, hide.join('・'));
+    f.remove();
+  }
+
+  (async () => {
+    try { await typePage(); await rocket1v1(); }
+    catch (e) { res.push(['実行エラー', false, String(e && e.stack || e)]); }
+    const bad = res.filter(r => !r[1]).length;
+    document.getElementById('out').innerHTML = res.map(([n, g, note]) => `<div>${g ? '✅' : '❌'} ${n}${g ? '' : '　' + note}</div>`).join('')
+      + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+  })();
+})();
+</script>
+</body></html>

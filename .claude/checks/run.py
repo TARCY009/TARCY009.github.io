@@ -10,6 +10,7 @@ gym-attack:  .claude/checks/gym-check.html（ジム挑戦の手計算の例・�
 dex-stats:   .claude/checks/dex-check.html（ステータス図鑑の最大CP・メガLv4・最大SCP・タイプ相性・わざ表の数値＝17項目）
 exit-rank:   .claude/checks/exit-check.html?only=rank（1ポケモン1ページ用の出口＝画面の数字か。タイプ別火力・耐久指数・ジム防衛・マックスバトル タイプ別＝20項目）
 exit-gbl:    .claude/checks/exit-check.html?only=gbl（同・GBLの環境一覧とロケット団のランキング＝16項目）
+rocket-rank: .claude/checks/rocket-check.html（R団戦タイプ別火力の一覧＝別の計算／グラフと1対1ランキングの画像の見出し・重なり・画面との一致＝7項目）
 rules-scn:   .claude/checks/rules/scncheck.py（GBLのバトルルールのシナリオ6本＝expected/*.json と突き合わせ）
 rules-random:.claude/checks/rules/randcheck.py（同・種1で600戦をランダムに回し、バトルルール違反0か）
 mock-sp:     .claude/checks/mock-sp.py --quick（模擬戦を画面ごと回し、SPボタン・メーター・同時発動の順番が崩れないか。広く見るときは --seed N で16戦）
@@ -150,6 +151,8 @@ CHECKS = {
     'mega-plus-data': sub_check('.claude/checks/mega-plus-data.py', [], 'メガの＋わざのデータ点検', 120),
     'exit-rank': page_check('.claude/checks/exit-check.html?only=rank', 20, 120000),
     'exit-gbl': page_check('.claude/checks/exit-check.html?only=gbl', 16, 300000),
+    # R団戦タイプ別火力・ロケット団 1対1ランキングの画像(2026-10-23の点検): 一覧＝別の計算・グラフの見出しの重なり・画像＝画面・見出しの人と何匹目
+    'rocket-rank': page_check('.claude/checks/rocket-check.html', 7, 300000),
 }
 
 
