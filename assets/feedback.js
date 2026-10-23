@@ -72,6 +72,7 @@
     '/gbl/': 'GBLシミュレーター',
     '/battlelog/': 'GBL対戦記録',
     '/breakpoint/': 'ブレイクポイント',
+    '/rocket/type/': 'R団戦タイプ別火力',
     '/rocket/': 'ロケット団対策',
     '/iv-checker/': '個体値チェッカー',
     '/pokedex/': 'ステータス図鑑',

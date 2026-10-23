@@ -81,7 +81,7 @@
 - **リポジトリ直下の `CNAME` ファイル（中身 `gonavi.jp`）で独自ドメインを指定**。**⚠ 消すと旧アドレスに戻り、gonavi.jp で開けなくなる**
 - 絶対アドレス（canonical・og:url・og:image・運営者情報のURL）は `https://gonavi.jp/`。**新しいページでも gonavi.jp で書く**
 - **localStorage はアドレスごとに別**（旧アドレスの記録は「データの引っ越し」ページで移す）
-構成: **`/`(トップページ＝ツール一覧)** `/dps/`(レイド火力チェッカー) `/raid/` `/type-dps/` `/max-battle/` `/gym-attack/` `/gym-defense/` `/gbl/` `/rocket/` `/battlelog/` `/breakpoint/` `/iv-checker/` `/pokedex/` `/bulk/`(耐久指数ランキング) `/move-dex/`(わざ図鑑) `/max-type/`(マックスバトル タイプ別アタッカー) `/max-type/tank/`(同 タンク)
+構成: **`/`(トップページ＝ツール一覧)** `/dps/`(レイド火力チェッカー) `/raid/` `/type-dps/` `/max-battle/` `/gym-attack/` `/gym-defense/` `/gbl/` `/rocket/` `/rocket/type/`(R団戦タイプ別火力ランキング) `/battlelog/` `/breakpoint/` `/iv-checker/` `/pokedex/` `/bulk/`(耐久指数ランキング) `/move-dex/`(わざ図鑑) `/max-type/`(マックスバトル タイプ別アタッカー) `/max-type/tank/`(同 タンク)
 
 ### トップページと引っ越し（2026-09-01確定・タダシさん指示）
 
