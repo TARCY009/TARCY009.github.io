@@ -221,6 +221,20 @@ tbody tr:hover{background:var(--mebg)}
 .mvsnap button:disabled{opacity:.35;cursor:default}
 .mtrow .mtabs{flex:1;min-width:0;margin:0}
 @media (max-width:560px){ .mtrow{flex-wrap:wrap} .mtrow #megalv{width:100%} }
+/* レイドアタッカーとしての火力（2026-10-23） */
+.atkblk{margin-top:10px}
+.atkh{display:flex;align-items:center;gap:6px;font-size:.86rem;margin:0 0 6px}
+.atkh small{color:var(--sub);font-weight:700;font-size:.72rem}
+.atkh .atklink{margin-left:auto;font-size:.72rem;font-weight:800;color:var(--sub);text-decoration:none;white-space:nowrap}
+.atkh .atklink:hover{color:var(--ink)}
+.atkblk tr.nomv{cursor:default}
+.atkblk td.rk{width:24px;color:var(--sub);font-size:.74rem;padding-left:8px;padding-right:0}
+.atkblk td.mv{cursor:default;padding-left:8px}
+.atkblk td.mv .mvnm{font-size:.82rem}
+.atkblk td.dps{font-weight:800;white-space:nowrap}
+.atkblk .hpany{font-size:.66rem;color:var(--sub);font-weight:700}
+.atkblk .eqx{display:block;font-size:.6rem;color:var(--sub);font-weight:700;margin:2px 0 0 22px}
+.atkmore{display:block;width:100%;margin-top:10px;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;color:var(--sub);background:none;border:1px dashed var(--line);border-radius:10px;padding:9px}
 .mvnm .st{color:var(--special);font-weight:800}
 .mvnm .sp{color:var(--special)}
 /* メガの追加SPアタック(3本目)の印 */
@@ -409,6 +423,8 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <li>SPアタックのわざ名の下のバーは<b>ゲージの本数</b>(1〜3本)です</li>
     <li>ダメージ発生までの時間は、わざをタップした詳細ウィンドウで確認できます</li>
   </ul>
+  <h4>レイドアタッカーとしての火力</h4>
+  <p>ジム・レイドのわざ表の下に、<b>そのタイプが弱点（×1.6）の相手を攻撃したときの火力（DPS）</b>を、わざ構成の上位3つまでタイプごとに出します。PL50・個体値15で、計算は<a href="/type-dps/">タイプ別火力ランキング</a>と同じです（1位の構成と数字はランキングと一致します）。ノーマルアタックとSPアタックを同じタイプでそろえた構成が基本で、別タイプのノーマルアタックの構成は、それを上回るときだけ「等倍で計算」の印を付けて並べます（実際の相手によっては半減されます）。ノーマルは弱点を突ける相手がいないので「ノーマル（等倍）」の行です。最初は火力の高い2タイプを出し、残りは「ほかのタイプ」で開きます。相手を決めて比べるときは<a href="/dps/">レイド火力チェッカー</a>で見てください。</p>
   <h4>トレーナーバトルのわざ性能</h4>
   <ul>
     <li><b>ゲージ</b> … 1発で増えるゲージ量(ノーマルアタック) ／ <b>消費</b> … 撃つのに使うゲージ量(SPアタック)</li>
@@ -942,7 +958,7 @@ function renderMoves(){
       <div class="mvsec"><div class="sec">SPアタック</div>
         <div class="enote expl">わざ名の下のバーはゲージの本数(1〜3本)。本数が多いほど小刻みに撃てます。</div>
         <div class="tblwrap"><table><thead><tr><th style="text-align:left;padding-left:10px">わざ</th><th>威力</th><th>時間</th><th>DPS</th></tr></thead>
-        <tbody>${mv.sps.map(srow).join('')}</tbody></table></div></div>`;
+        <tbody>${mv.sps.map(srow).join('')}</tbody></table></div></div>${atkHtml(e)}`;
     }
   }else{
     const mv=pvpMoves(e);
@@ -977,6 +993,82 @@ function renderMoves(){
   box.querySelectorAll('.mvsnap [data-snapt]').forEach(b=>b.onclick=()=>saveMvTab(b.dataset.snapt));
   if(hasPlus) MegaLv.mount(box.querySelector('#megalv'));
   box.querySelectorAll('tr[data-mv]').forEach(tr=>tr.onclick=()=>openMove(tr.dataset.mv));
+  const more=box.querySelector('[data-atkmore]');
+  if(more) more.onclick=()=>{ atkAll=atkAll===state.key?null:state.key; renderMoves(); };
+}
+
+// ---- レイドアタッカーとしての火力（2026-10-23タダシさん指示） ----
+// 行＝タイプ。そのタイプが弱点(×1.6)の相手を攻撃したときの、このポケモンのわざ構成の火力(DPS)を上位3つ。
+// ⚠ 計算はタイプ別火力ランキング(type-dps の bestOfType)と同じ: 防御100のものさし・弱点は切り捨ての前・PL1〜51の多数決で1位・数字はPL50。
+//   ノーマルとSPを同じタイプでそろえた構成が基本(＝ランキングの1位と一致)。別タイプのノーマルアタック(等倍として計算)の構成は、
+//   そろえた構成の1位を上回るときだけ混ぜる(月食ネクロズマのサイコカッター・ロックオンなど)。
+//   ノーマルは弱点を突ける相手がいないので「等倍」の行(ノーマルのノーマルアタックを覚えるか、自身がノーマルタイプのときだけ)
+const ATK_DEF=(100+15)*0.7903, ATK_WEAK=1.6;
+let ATK_LV=null, atkAll=null;   // atkAll＝「ほかのタイプ」を開いているポケモン
+function atkRows(e){
+  if(!e.go||!GO.pokemon[e.go]) return [];
+  const p=GO.pokemon[e.go];
+  if(!ATK_LV){ ATK_LV=[]; for(let l=1;l<=51;l+=0.5){ const m=GO.cpm[String(l)]; if(m) ATK_LV.push(m); } }
+  const M=GO.moves, ok=id=>M[id]&&has(M[id].p)&&has(M[id].d)&&!BAD.has(id);
+  const fs=[...new Set([...(p.q||[]),...(p.eq||[])])].filter(id=>ok(id)&&M[id].e>0);
+  const cs=[...new Set([...(p.c||[]),...(p.ec||[])])].filter(id=>ok(id)&&M[id].e<0);
+  const fT=new Set(fs.map(id=>M[id].t)), cT=new Set(cs.map(id=>M[id].t));
+  const types=[...cT].filter(t=>t==='NORMAL' ? (fT.has('NORMAL')||p.ty.includes('NORMAL')) : fT.has(t));
+  const atk50=(p.a+15)*GO.cpm['50'];
+  const out=[];
+  for(const T of types){
+    const w=T==='NORMAL'?1:ATK_WEAK;
+    const coef=id=>0.5*M[id].p*(p.ty.includes(M[id].t)?1.2:1)*(M[id].t===T?w:1)/ATK_DEF;
+    const combos=[];
+    for(const f of fs) for(const c of cs){
+      if(M[c].t!==T) continue;
+      const n2=(M[f].e*100)/Math.abs(M[c].e), t=M[f].d*100+M[c].d*n2;
+      if(t>0) combos.push({f,c,n2,t,k1:coef(f),k2:coef(c),same:M[f].t===T});
+    }
+    const at=(cb,atk)=>(Math.floor(cb.k1*atk+1)*100+Math.floor(cb.k2*atk+1)*cb.n2)/cb.t;
+    combos.forEach(cb=>cb.v=at(cb,atk50));
+    // 等倍で計算するめざめるパワーは、タイプ違いでも同じ火力になるので1行にまとめる（レジギガスのノーマルの行など）
+    const hpSeen=new Map();
+    for(const cb of combos.filter(cb=>!cb.same&&cb.f.startsWith('HIDDEN_POWER_')).sort((a,b)=>b.v-a.v)){
+      const k=cb.c+'|'+cb.v.toFixed(6), h=hpSeen.get(k);
+      if(h){ h.hpAny=true; cb.drop=true; } else hpSeen.set(k,cb);
+    }
+    for(let i=combos.length-1;i>=0;i--) if(combos[i].drop) combos.splice(i,1);
+    const same=combos.filter(cb=>cb.same);
+    let list;
+    if(same.length){
+      // 1位はタイプ別火力ランキングと同じ多数決
+      const tally=new Map();
+      for(const m of ATK_LV){ const a=(p.a+15)*m; let b=null; for(const cb of same){ const v=at(cb,a); if(!b||v>b.v) b={v,cb}; } tally.set(b.cb,(tally.get(b.cb)||0)+1); }
+      let win=null; for(const cb of same){ const n=tally.get(cb)||0; if(n&&(!win||n>win.n||(n===win.n&&cb.v>win.cb.v))) win={n,cb}; }
+      const rest=same.filter(cb=>cb!==win.cb).sort((a,b)=>b.v-a.v);
+      const mixed=combos.filter(cb=>!cb.same&&cb.v>win.cb.v).sort((a,b)=>b.v-a.v);
+      list=[...mixed,win.cb,...rest];
+    }else list=combos.sort((a,b)=>b.v-a.v);   // ノーマルの行でノーマルのノーマルアタックが無いとき(レジギガスなど)
+    list=list.slice(0,3);
+    if(list.length) out.push({T,list,best:list[0].v});
+  }
+  return out.sort((a,b)=>b.best-a.best);
+}
+function atkHtml(e){
+  const rows=atkRows(e);
+  if(!rows.length) return '';
+  const p=GO.pokemon[e.go], legacy=new Set([...(p.eq||[]),...(p.ec||[])]);
+  const nm=id=>mvName(GO.moves[id].n,GO.moves[id].t,legacy.has(id));
+  const fnm=cb=>cb.hpAny?`<span class="mvnm"><span>めざめるパワー<small class="hpany">（どのタイプでも同じ）</small></span></span>`:nm(cb.f);
+  const open=atkAll===state.key, shown=open?rows:rows.slice(0,2);
+  const blk=r=>{
+    const ja=GO.typeJa[r.T], normal=r.T==='NORMAL';
+    const head=normal?`${typePairHTML([ja],18)}<b>ノーマル</b><small>（等倍）</small>`:`${typePairHTML([ja],18)}<b>${ja}アタッカー</b>`;
+    const link=normal?'':`<a class="atklink" href="/type-dps/?t=${r.T.toLowerCase()}" title="${ja}のタイプ別火力ランキングを開きます">ランキング ›</a>`;
+    const tr=r.list.map((cb,i)=>`<tr class="nomv"><td class="rk">${i+1}</td><td class="mv">${fnm(cb)}${!cb.same&&!normal?'<small class="eqx" title="このノーマルアタックは弱点を突かないので、等倍として計算しています（実際の相手によっては半減されます）">等倍で計算</small>':''}</td><td class="mv">${nm(cb.c)}</td><td class="dps">${cb.v.toFixed(2)}</td></tr>`).join('');
+    return `<div class="atkblk"><div class="atkh">${head}${link}</div>
+      <div class="tblwrap"><table><thead><tr><th></th><th style="text-align:left;padding-left:10px">ノーマルアタック</th><th style="text-align:left;padding-left:10px">SPアタック</th><th>火力</th></tr></thead><tbody>${tr}</tbody></table></div></div>`;
+  };
+  const more=rows.length>2?`<button type="button" class="atkmore" data-atkmore aria-expanded="${open}">${open?'ほかのタイプを閉じる ▴':`ほかのタイプ（${rows.length-2}） ▾`}</button>`:'';
+  return `<div class="mvsec atksec"><div class="sec">レイドアタッカーとしての火力</div>
+    <div class="enote expl">そのタイプが弱点（×1.6）の相手を攻撃したときの火力（DPS）です。PL50・個体値15、計算はタイプ別火力ランキングと同じです。ノーマルアタックとSPアタックを同じタイプでそろえた構成が基本で、別タイプのノーマルアタックの構成は、それを上回るときだけ「等倍で計算」の印を付けて並べます。相手を決めて比べるときはレイド火力チェッカーで見てください。</div>
+    ${shown.map(blk).join('')}${more}</div>`;
 }
 
 // 開発者の保存: 保存したい側のタブに切り替えて枠ごと描き、描き終えたら元のタブへ戻す(画面の見た目どおり・ロゴなし)
