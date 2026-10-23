@@ -267,8 +267,11 @@ h1 .badge{font-size:.62rem;background:linear-gradient(135deg,var(--dyna),var(--d
 .swapmoves .mvp{color:var(--faint);font-size:.7rem}
 .fastalt{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:700;background:var(--bg2);border:1px solid var(--line2);color:var(--sub)}
 .halfchip{white-space:nowrap;font-size:.66rem;border-radius:999px;padding:2px 10px;font-weight:800;background:linear-gradient(135deg,#cdeeff,#a9dcf6);color:#0c3346}
+/* 水色の札の中の特別わざは、ふつうのオレンジだと地に溶けるので赤寄り・暗めにする（2026-10-23タダシさん指示） */
+.halfchip .sp{color:#bf3d12}
 .spseal{color:var(--faint);opacity:.75;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
-.spseal b,.spseal b.sp{color:inherit;font-weight:700}
+.spseal b{color:inherit;font-weight:700}
+.spseal b.sp{color:var(--special);font-weight:700}   /* 封印推奨で灰色にしても、特別わざの名前はオレンジのまま（2026-10-23タダシさん指示） */
 :root.light .spseal{opacity:1}
 /* 使い方の箱: 共通の tabs.css は --panel を見るが、このページには無く、ライトでも暗い既定の面になって文字が読めなかった（2026-10-11） */
 :root.light .helpbody{background:var(--card)}
@@ -610,7 +613,7 @@ footer a{color:var(--spec)}
   // 0.5秒わざ以外で1%を超えるわざの札（「ノーマル うちおとす(1秒) 1.28%」）
   function chgTag(f){
     const sec = (f.d/1000).toFixed(1).replace(/\.0$/,'');
-    return `<span class="halfchip" title="0.5秒わざではありませんが、1発のダメージが大きく、連打すると0.5秒あたり1％以上マックスメーターを溜められます（0.5秒わざの連打以上の速さ）">${f.jp}${f.e?'*':''}(${sec}秒) ${f.chg.toFixed(2)}%</span>`;
+    return `<span class="halfchip" title="0.5秒わざではありませんが、1発のダメージが大きく、連打すると0.5秒あたり1％以上マックスメーターを溜められます（0.5秒わざの連打以上の速さ）"><span${f.e?' class="sp"':''}>${f.jp}${f.e?'*':''}</span>(${sec}秒) ${f.chg.toFixed(2)}%</span>`;
   }
 
   // ---------- ボス検索 ----------
@@ -1062,14 +1065,14 @@ footer a{color:var(--spec)}
     const fb = b.fb;
     if(fb && fb.per > 1.0001 && !b.ok){
       const sec = (fb.f.d/1000).toFixed(1).replace(/\.0$/,'');
-      return `<div class="catline"><span class="spok" title="このノーマルアタックの連打は、0.5秒わざの連打より速くメーターを溜められます（数字は0.5秒あたりのチャージ量）。SPアタックはこれより遅いので撃たないほうが速く溜まります">ノーマル連打が最速: ${fb.f.jp}(${sec}秒)<b class="spv">${fb.per.toFixed(2)}%</b></span></div>`;
+      return `<div class="catline"><span class="spok" title="このノーマルアタックの連打は、0.5秒わざの連打より速くメーターを溜められます（数字は0.5秒あたりのチャージ量）。SPアタックはこれより遅いので撃たないほうが速く溜まります">ノーマル連打が最速: <span${fb.f.e?' class="sp"':''}>${fb.f.jp}${fb.f.e?'*':''}</span>(${sec}秒)<b class="spv">${fb.per.toFixed(2)}%</b></span></div>`;
     }
     const verdict = b.ok
       ? `<span class="spok" title="数字は0.5秒あたりのマックスメーターのチャージ量です。1%を超えるSPアタックは、撃った方がメーターを速く溜められます">SP打ってOK: ${b.m.jp}${pct}</span>`
       : `<span class="nohalf" title="どのSPアタックも0.5秒あたりのチャージ量が1%未満なので、ノーマルアタック連打の方がメーターが速く溜まります（数字はいちばん高いSPの参考値）">SP封印推奨(0.5秒技連打)${pct}</span>`;
     // 0.5秒わざ以外のノーマルアタックも0.5秒わざの連打（1%）より速く溜まるなら添える（SPの合間の攻撃の参考）
     const fbTag = (fb && fb.per > 1.0001 && fb.f.d > 500)
-      ? ` <span class="fastalt" title="このノーマルアタックでも、0.5秒わざの連打より速くメーターが溜まります（数字は0.5秒あたりのチャージ量）">ノーマル ${fb.f.jp} ${fb.per.toFixed(2)}%</span>` : '';
+      ? ` <span class="fastalt" title="このノーマルアタックでも、0.5秒わざの連打より速くメーターが溜まります（数字は0.5秒あたりのチャージ量）">ノーマル <span${fb.f.e?' class="sp"':''}>${fb.f.jp}${fb.f.e?'*':''}</span> ${fb.per.toFixed(2)}%</span>` : '';
     return `<div class="catline">${verdict}${fbTag}</div>`;
   }
 
