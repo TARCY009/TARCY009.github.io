@@ -419,6 +419,14 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 .recocard tr:last-child td{border-bottom:none}
 .recocard td.no{color:var(--sub);font-size:.68rem}
 .recocard td.iv{font-weight:800;color:var(--ink)}
+.recocard td.st{font-variant-numeric:tabular-nums;font-size:.74rem}
+/* 表に出す項目の札（押して出し入れ・2026-10-23） */
+.recocard .rcols{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:10px}
+.recocard .rcols .rl{font-size:.6rem;font-weight:800;color:var(--sub);margin-right:2px}
+.recocard .rcols button{font:inherit;font-size:.64rem;font-weight:800;padding:4px 9px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  color:var(--sub);border:1px solid var(--line);background:linear-gradient(180deg,#1e2850,#151d38)}
+.recocard .rcols button[aria-pressed="true"]{background:linear-gradient(160deg,#7fe6f5,#08b4c9 45%,#06788a);color:#042330;border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+:root.light .recocard .rcols button:not([aria-pressed="true"]){background:linear-gradient(180deg,#fff,#eef1f8);color:#5b6b96}
 .recocard td.bk b{font-size:.98rem}
 .recocard td.bk b.up{color:var(--gold)}
 .recocard td.bk b.dn{color:var(--red)}
@@ -679,7 +687,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li><b>あいての順位</b>（紫）: 先に相手の前提を選びます（既定は100位以内）。同じポケモンでも順位によって実数値が変わるので、<b>その範囲のどの個体が相手でも届く</b>、じぶんの個体だけを出します。範囲を広げるほど条件はきびしくなり、「合わせるのは現実的でない」相手は消えます</li>
     <li><b>じぶんの順位</b>（水色）: 相手ごとに「届く個体のうちいちばん順位が高いもの」を探し、その順位でグループ分けします。<b>10位以内が既定</b>。50位をタップすると11〜50位の個体で届く相手が追加されます</li>
     <li>チップの中身: <b>4→5</b>＝ダメージの変化／<b>順位と個体の例</b>／<b>🔥勝ち+1・⚠勝ち-1</b>＝1位の個体とくらべた勝ち数の差（🛡0-0/1-1/2-2の合計）。⚠は防御・HPを下げてPLを上げるぶん逆に不利になる相手です。チップをタップすると、届く個体の一覧（順位が高い順・上位100件）が開きます</li>
-    <li><b>🏆おすすめ個体</b>: 4096通りの個体値をぜんぶ試し、環境100匹との<b>勝ち数が多い順</b>に並べます。🗡️・🛡の列は、1位の個体よりダメージが1上がる（被ダメージが1下がる）相手の数です。勝ち数が並んだら🗡️🛡で選んでください。マスをタップすると、どの相手で段が動くかが開きます</li>
+    <li><b>🏆おすすめ個体</b>: 4096通りの個体値をぜんぶ試し、環境100匹との<b>勝ち数が多い順</b>に並べます。🗡️・🛡の列は、1位の個体よりダメージが1上がる（被ダメージが1下がる）相手の数です。勝ち数が並んだら🗡️🛡で選んでください。マスをタップすると、どの相手で段が動くかが開きます。表の上の「順位・個体値・PL・CP・SCP・攻撃値・防御値」を押すと、その列を出し入れできます（この端末に保存）</li>
   </ul>
   <h4>自分の個体で確かめる</h4>
   <p>上の機能は「これからどの個体を選ぶか」のためのものです。<b>手持ちの個体がどうなのか</b>を見たいときは、<b>▸ 自分の個体で確かめる</b>を開いて個体値とPLを入れてください。環境100匹それぞれへのいまのダメージが並び、行をタップすると詳細（ブレイク条件・届く個体の例・1対1シミュへのボタン）が出ます。</p>
@@ -752,6 +760,10 @@ const FOE_RNG = [1, 10, 100, 1000, 4096];
 let FRNG = 100;
 let RECO = false;   // 🏆おすすめ個体の表を出しているか
 let RECO_OPEN = null;   // おすすめ個体の表で開いている内訳('個体値|g' or '個体値|t')
+// おすすめ個体の表の列（上の札を押して出し入れ・端末に保存。2026-10-23タダシさん指示）
+const RCOLS = [['rank', '順位'], ['iv', '個体値'], ['pl', 'PL'], ['cp', 'CP'], ['scp', 'SCP'], ['atk', '攻撃値'], ['def', '防御値']];
+let RCOL_OFF = new Set();
+try { RCOL_OFF = new Set(JSON.parse(localStorage.getItem('gbl_bp_recocols')) || []); } catch (e) {}
 const RECO_SORT = 'win';   // 並びは勝ち数だけ(2026-08-23タダシさん判断。合計・🛡優先のタブは廃止)
 // 勝ち数(環境100匹×🛡3パターン)のキャッシュ。1個体300戦=約20msなので、候補の上位だけ少しずつ計算する
 let winCache = { sig: null, map: new Map(), ref: null, timer: null };
@@ -1432,7 +1444,7 @@ function recoHtml() {
       else if (dn) dns.push(`<span class="bkc dn">${nm}<b>${d}→${kind === 'g' ? d - 1 : d + 1}</b></span>`);
     });
     const ttl = kind === 'g' ? '🗡️ 与えるダメージ' : '🛡 被ダメージ';
-    return `<tr class="sub"><td colspan="8"><div class="bkl"><span class="bkt">${ttl}</span>${ups.join('')}${dns.join('')}${!ups.length && !dns.length ? '<span class="z">変わる相手はいません</span>' : ''}</div></td></tr>`;
+    return `<tr class="sub"><td colspan="${shown.length + 4}"><div class="bkl"><span class="bkt">${ttl}</span>${ups.join('')}${dns.join('')}${!ups.length && !dns.length ? '<span class="z">変わる相手はいません</span>' : ''}</div></td></tr>`;
   };
   const bkTd = (r, kind, v, gu, gd) => {
     const k = r.ivs.join('.') + '|' + kind, on = RECO_OPEN === k, has = gu || gd;
@@ -1442,19 +1454,30 @@ function recoHtml() {
   const pm = v => v > 0 ? `<b class="up">+${v}</b>` : v < 0 ? `<b class="dn">${v}</b>` : `<span class="z">0</span>`;
   const wcell = r => r.w == null ? `<td class="w"><span class="z">…</span></td>`
     : `<td class="w"><b class="${ref.w == null ? '' : r.w > ref.w ? 'up' : r.w < ref.w ? 'dn' : ''}">${r.w}</b>${ref.w != null && r.w !== ref.w ? `<small>${r.w > ref.w ? '+' : ''}${r.w - ref.w}</small>` : ''}</td>`;
+  // 出している列だけ並べる（RCOLS の順）
+  const shown = RCOLS.filter(([k]) => !RCOL_OFF.has(k));
+  const colTd = (r, rk) => shown.map(([k]) =>
+    k === 'rank' ? `<td>${rk}</td>` : k === 'iv' ? `<td class="iv">${r.ivs.join('/')}</td>` : k === 'pl' ? `<td>${fmtLv(r.level)}</td>`
+    : k === 'cp' ? `<td>${r.st.cp}</td>` : k === 'scp' ? `<td>${scpOf(r.st)}</td>`
+    : `<td class="st">${(k === 'atk' ? r.st.atk : r.st.def).toFixed(2)}</td>`).join('');
   const tr = rows.map((r, i) => `<tr class="${i < 3 ? 'top3' : ''}${r.ivs.join() === mine && IVOPEN ? ' mine' : ''}">
-    <td class="no">${i + 1}</td><td>${r.rank}位</td><td class="iv">${r.ivs.join('/')}</td><td>${fmtLv(r.level)}</td><td>${r.st.cp}</td>
+    <td class="no">${i + 1}</td>${colTd(r, r.rank + '位')}
     ${bkTd(r, 'g', r.g, r.gu, r.gd)}${bkTd(r, 't', r.t, r.tu, r.td)}${wcell(r)}</tr>${RECO_OPEN === r.ivs.join('.') + '|g' ? subRow(r, 'g') : RECO_OPEN === r.ivs.join('.') + '|t' ? subRow(r, 't') : ''}`).join('');
-  const refTr = `<tr class="ref"><td class="no">基準</td><td>1位</td><td class="iv">${ref.ivs.join('/')}</td><td>${fmtLv(ref.level)}</td><td>${ref.st.cp}</td>
+  const refTr = `<tr class="ref"><td class="no">基準</td>${colTd(ref, '1位')}
     <td class="bk"><span class="z">0</span></td><td class="bk"><span class="z">0</span></td><td class="w">${ref.w == null ? '<span class="z">…</span>' : `<b>${ref.w}</b>`}</td></tr>`;
+  const TH = { rank: '<span class="ax me">じぶん</span><br>順位', atk: '攻撃<br>実数値', def: '防御<br>実数値' };
+  const colTh = shown.map(([k, l]) => `<th>${TH[k] || l}</th>`).join('');
+  const colBar = `<div class="rcols"><span class="rl">表示する項目</span>${RCOLS.map(([k, l]) =>
+    `<button data-rcol="${k}" aria-pressed="${!RCOL_OFF.has(k)}" title="押すと表の「${l}」の列を出し入れします">${l}</button>`).join('')}</div>`;
   const done = rows.filter(r => r.w != null).length + (ref.w != null ? 1 : 0), all = rows.length + 1;
   // 右上: 「あいての順位」の前提(下のパネルと同じ FRNG に連動)。ここで切り替えても下のタブが一緒に動く
   const rngMini = `<span class="rngmini"><span class="ax foe">あいて</span>${FOE_RNG.map(n =>
     `<button data-frng="${n}" aria-pressed="${n === FRNG}" title="🗡️🛡の列は、あいてが${n === 1 ? '1位の個体' : n >= 4096 ? 'どの個体' : n + '位以内のどの個体'}でも届く相手の数です（下のパネルの「あいての順位」と同じ設定）">${n === 1 ? '1位' : n >= 4096 ? '全個体' : n + '位'}</button>`).join('')}</span>`;
   return `<div class="ivsum cp recocard"><div class="dt">🏆 おすすめ個体<span class="ds">勝ち数が多い順</span>${rngMini}</div>
     <div class="ds"><b class="up">勝ち数</b>＝環境${n}匹と🛡0-0/1-1/2-2で戦った合計（${n * 3}戦）。<b class="up">🗡️</b>＝1位の個体よりダメージが1上がる相手の数／<b class="up">🛡</b>＝被ダメージが1下がる相手の数<span class="expl">。マイナスは逆に1落ちる相手の数。🗡️🛡のあいては右上の順位（${RNG_LBL(FRNG)}）、勝ち数のあいては1位の個体で、ブラフなし・最適タイミング（GBLの一覧系と同じ前提）。勝ち数は候補の上位${rows.length}件だけ計算します。1〜2勝の差は前提しだいで動くので、勝ち数が並んだら🗡️🛡で選んでください</span></div>
+    ${colBar}
     <div class="recowrap"><table>
-      <thead><tr><th></th><th><span class="ax me">じぶん</span><br>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>🗡️<br>ブレイク</th><th>🛡<br>ブレイク</th><th>勝ち数<br><small>/${n * 3}</small></th></tr></thead>
+      <thead><tr><th></th>${colTh}<th>🗡️<br>ブレイク</th><th>🛡<br>ブレイク</th><th>勝ち数<br><small>/${n * 3}</small></th></tr></thead>
       <tbody>${refTr}${tr}</tbody></table></div>
     <div class="recofoot">${done < all ? `勝ち数を計算中… ${done}/${all}` : `候補${rows.length}件`}</div></div>`;
 }
@@ -1684,6 +1707,12 @@ function render() {
   $('recobtn').style.display = capped ? '' : 'none';
   $('recobtn').setAttribute('aria-pressed', RECO);
   $('reco').querySelectorAll('[data-bk]').forEach(td => td.onclick = () => { RECO_OPEN = RECO_OPEN === td.dataset.bk ? null : td.dataset.bk; render(); });
+  $('reco').querySelectorAll('[data-rcol]').forEach(b => b.onclick = () => {
+    const k = b.dataset.rcol;
+    if (RCOL_OFF.has(k)) RCOL_OFF.delete(k); else RCOL_OFF.add(k);
+    try { localStorage.setItem('gbl_bp_recocols', JSON.stringify([...RCOL_OFF])); } catch (e) {}
+    render();
+  });
   // 一覧(環境100匹の行)は「自分の個体で確かめる」を開いたときだけ(上のまとめと情報が二重になるため)
   $('listwrap').style.display = IVOPEN ? '' : 'none';
   $('mega4').style.display = capped ? 'none' : '';
