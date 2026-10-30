@@ -48,10 +48,19 @@ for mk, nm in want.items():
 print('C 確認', len(want), '件')
 
 # D あやしいかぜ＋・ナイトヘッド＋
-c = mp['plus']['CHANDELURE_MEGA']; ow = g['moves']['OMINOUS_WIND']
-if not (c['pve'].get('p') == 145 and c['pve'].get('d') == ow['d'] and c['pve'].get('w') == ow['w'] and c['pve'].get('e') == -100): ng('D あやしいかぜ＋ pve', c['pve'])
-if not (c['pvp'].get('p') == 50 and c['pvp'].get('bf') == [1, 1] and c['pvp'].get('bt') == 'self' and c['pvp'].get('bcu') == 1): ng('D あやしいかぜ＋ pvp', c['pvp'])
-if 'OMINOUS_WIND_PLUS' in g['moves']: ng('D 実装前メガのわざが godata に漏れている')
+ow = g['moves']['OMINOUS_WIND']
+if 'CHANDELURE_MEGA' in g['pokemon']:
+    # 2026-10-30 実装（公式ニュースの告知で取り込み）。期待する値は実装前と同じ（威力145・元わざの時間・ゲージ1本）
+    c = g['moves'].get('OMINOUS_WIND_PLUS') or {}
+    if not (c.get('p') == 145 and c.get('d') == ow['d'] and c.get('w') == ow['w'] and c.get('e') == -100): ng('D あやしいかぜ＋ pve', c)
+    if g['pokemon']['CHANDELURE_MEGA'].get('plus') != 'OMINOUS_WIND_PLUS': ng('D シャンデラに付いていない')
+    cp = p.get('plusMoves', {}).get('OMINOUS_WIND_PLUS') or {}
+    if not (cp.get('p') == 50 and cp.get('bf') == [1, 1] and cp.get('bt') == 'self'): ng('D あやしいかぜ＋ pvp', cp)
+else:
+    c = mp['plus']['CHANDELURE_MEGA']
+    if not (c['pve'].get('p') == 145 and c['pve'].get('d') == ow['d'] and c['pve'].get('w') == ow['w'] and c['pve'].get('e') == -100): ng('D あやしいかぜ＋ pve', c['pve'])
+    if not (c['pvp'].get('p') == 50 and c['pvp'].get('bf') == [1, 1] and c['pvp'].get('bt') == 'self' and c['pvp'].get('bcu') == 1): ng('D あやしいかぜ＋ pvp', c['pvp'])
+    if 'OMINOUS_WIND_PLUS' in g['moves']: ng('D 実装前メガのわざが godata に漏れている')
 ns, n0 = g['moves'].get('NIGHT_SHADE_PLUS'), g['moves']['NIGHT_SHADE']
 if not ns or ns['p'] != 160 or ns['d'] != n0['d'] or ns['w'] != n0['w'] or ns['e'] != -100: ng('D ナイトヘッド＋', ns, n0)
 if g['pokemon']['SABLEYE_MEGA'].get('plus') != 'NIGHT_SHADE_PLUS': ng('D ヤミラミに付いていない')

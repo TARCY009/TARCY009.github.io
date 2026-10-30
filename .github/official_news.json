@@ -1,0 +1,446 @@
+{
+ "articles": {
+  "202609partnerresearch-jp": {
+   "hash": "ea750522693f",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-11",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "コンテンツにスキップ"
+  },
+  "202610aeonmall-halloween": {
+   "hash": "157c40493132",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-06",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "コンテンツにスキップ"
+  },
+  "chandelure-super-mega-raid-day-2026": {
+   "hash": "c1c8873c1cc0",
+   "notes": [],
+   "plus": {
+    "CHANDELURE_MEGA": {
+     "base": "OMINOUS_WIND",
+     "buff": {
+      "bc": null,
+      "bf": [
+       1,
+       1
+      ],
+      "bt": "self"
+     },
+     "effect": "わざを使用するポケモンのこうげきとぼうぎょが1段階増加することがある",
+     "move": "あやしいかぜ＋",
+     "name": "メガシャンデラ",
+     "pvp": 50,
+     "raid": 145
+    }
+   },
+   "published": "2026-10-14",
+   "read": "2026-10-30",
+   "released": {
+    "chandelure_mega": {
+     "name": "メガシャンデラ"
+    }
+   },
+   "shadow": {},
+   "title": "「シャンデラ」の「スーパーメガレイド・デイ」で、不思議な光が皆さんを待っています！"
+  },
+  "choose-your-path-twilight-trails-2026": {
+   "hash": "731eb861b378",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-15",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "シーズン「黄昏の旅路」の新しい「タイムチャレンジ」で、自分の道を切り開こう！"
+  },
+  "communityday-november-2026-pawniard": {
+   "hash": "ef04d7da2ac6",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-22",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "2026年11月の「コミュニティ・デイ」：「コマタナ」"
+  },
+  "communityday-october-2026-zorua": {
+   "hash": "6190daf2b98d",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-16",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "2026年10月の「コミュニティ・デイ」：「ゾロア」"
+  },
+  "communitydayclassic-gible-september-2026": {
+   "hash": "705347a3c29b",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-01",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "2026年9月の「コミュニティ・デイ（復刻）」：「フカマル」"
+  },
+  "dynamax-trails-eternamax-eternatus-2026": {
+   "hash": "9990ba3856df",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-29",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "すべての道は、「ムゲンダイナ」が再び登場する「大きな足跡」イベントに続く"
+  },
+  "dynamax-uxie-mesprit-azelf-max-battle-day-2026": {
+   "hash": "498afc36fb6a",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-02",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「ユクシー」「エムリット」「アグノム」がダイマックスして登場！"
+  },
+  "fall-marathon-buddy-trek-2026": {
+   "hash": "d2f84ac80b10",
+   "notes": [],
+   "plus": {
+    "MANECTRIC_MEGA": {
+     "base": "DISCHARGE",
+     "buff": null,
+     "effect": "",
+     "move": "ほうでん＋",
+     "name": "メガライボルト",
+     "pvp": 50,
+     "raid": 150
+    }
+   },
+   "published": "2026-09-24",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「秋の遠足：相棒といっしょ」では、「アノクサ」が『Pokémon GO』に初登場"
+  },
+  "gigantamax-cinderace-max-battle-day-2026": {
+   "hash": "8a7d0129938d",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-10",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「マックスバトルデイ」で、「キョダイマックスエースバーン」がキョダイ火炎ボールをシュート！"
+  },
+  "go-pass-november-2026": {
+   "hash": "5021907b20ce",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-21",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「GOパス：11月」を進めてポケコインを獲得しよう"
+  },
+  "go-pass-october-2026": {
+   "hash": "31f5560dbadf",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-23",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「GOパス：10月」で「カイオーガ」が登場！さらに、「キラチャーム」が入手できます！"
+  },
+  "go-wild-area-stamp-rally-details-2026": {
+   "hash": "2872a88d2762",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-23",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「Pokémon GO ワイルドエリア」の「イベント GO スタンプラリー」についてのアップデート"
+  },
+  "gowildarea-sendai-ticket-update": {
+   "hash": "e76c83f982b9",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-08",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「Pokémon GO ワイルドエリア：仙台・東北」チケット購入の事前登録について"
+  },
+  "halloween-part-1-2026": {
+   "hash": "9a2c0b74433e",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-06",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「ハロウィン2026パート1」イベントで、衣装を身にまとった「ピカチュウ」、「ズバット」、「ヤバチャ」と一緒にトリック・オア・トリートを楽しもう！"
+  },
+  "halloween-part-2-2026": {
+   "hash": "e13417a4def6",
+   "notes": [],
+   "plus": {
+    "SABLEYE_MEGA": {
+     "base": "NIGHT_SHADE",
+     "buff": null,
+     "effect": "",
+     "move": "ナイトヘッド＋",
+     "name": "メガヤミラミ",
+     "pvp": 55,
+     "raid": 160
+    }
+   },
+   "published": "2026-10-09",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「ハロウィン2026パート2」で「メガヤミラミ」がパワーアップ！さらに、色違いの「ボチ」が『Pokémon GO』に初登場！"
+  },
+  "harvest-festival-2026": {
+   "hash": "659da070d242",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-08",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "実りある『収穫祭：「カジッチュ」集め』イベント開催！色違いの「カジッチュ」が『Pokémon GO』に初めて登場します"
+  },
+  "harvest-festival-tgr-2026": {
+   "hash": "f16928937198",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-08",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「収穫祭：占拠」イベントで「シャドウゼクロム」を救おう！"
+  },
+  "into-the-wild-2026": {
+   "hash": "80fb06f21016",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-15",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「ワイルドウィーク」ではがねタイプやドラゴンタイプのポケモンを追いかけよう！"
+  },
+  "mega-finale-2026-community": {
+   "hash": "c1553a748a9c",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-01",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「Pokémon GO Fest 2026：メガフィナーレ」グローバルチャレンジ #PokemonGOFest2026 #ポケモンGO"
+  },
+  "mega-squads-2026": {
+   "hash": "89a2e0aff931",
+   "notes": [],
+   "plus": {
+    "BEEDRILL_MEGA": {
+     "base": "FELL_STINGER",
+     "buff": {
+      "bc": 1.0,
+      "bf": [
+       1,
+       0
+      ],
+      "bt": "self"
+     },
+     "effect": "「こうげき」を1段階上げます",
+     "move": "とどめばり＋",
+     "name": "メガスピアー",
+     "pvp": 40,
+     "raid": 140
+    },
+    "HOUNDOOM_MEGA": {
+     "base": "DARK_PULSE",
+     "buff": null,
+     "effect": "",
+     "move": "あくのはどう＋",
+     "name": "メガヘルガー",
+     "pvp": 60,
+     "raid": 150
+    }
+   },
+   "published": "2026-09-01",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「メガフィナーレ」に引き続き、「チームメガ」イベントに向けて盛り上がりましょう！"
+  },
+  "minior-meteor-showers-2026": {
+   "hash": "e3086f2d6f88",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-02",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "流星群がみられる時期に星空の下を探索すると、「メテノ」と出会えるかも！"
+  },
+  "pgo-gameplay-update-oct-2026": {
+   "hash": "fcebbcf8c9d8",
+   "notes": [],
+   "plus": {},
+   "published": "2026-10-09",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "『Pokémon GO』のゲームプレイと遊びやすさに関するアップデートについて"
+  },
+  "pokemon-horizons-celebration-event-2026": {
+   "hash": "fafaef674da5",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-02",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「テレビアニメコラボ」イベントが再び開催！"
+  },
+  "pokemon-x-adidas-2026": {
+   "hash": "d64930ed3850",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-24",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「ADIDAS | POKÉMON」コレクションの着せ替えアイテムが『Pokémon GO』に登場！"
+  },
+  "sandile-hatch-day-2026": {
+   "hash": "0fe6caa065c3",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-25",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「メグロコふかの日」で、「メグロコ」について深掘りしよう"
+  },
+  "save-the-date-go-tour-2027": {
+   "hash": "9042ea9ad3f1",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-24",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「Pokémon GO Tour 2027」開催決定！"
+  },
+  "staraptor-super-mega-raid-day-2026": {
+   "hash": "e9967b75ff56",
+   "notes": [],
+   "plus": {
+    "STARAPTOR_MEGA": {
+     "base": "BRAVE_BIRD",
+     "buff": {
+      "bc": 1.0,
+      "bf": [
+       0,
+       -3
+      ],
+      "bt": "self"
+     },
+     "effect": "使用するポケモンの「ぼうぎょ」を3段階下げます",
+     "move": "ブレイブバード＋",
+     "name": "メガムクホーク",
+     "pvp": 70,
+     "raid": 150
+    }
+   },
+   "published": "2026-09-02",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「スーパーメガレイド・デイ」で勇敢に「ムクホーク」に挑もう！"
+  },
+  "world-space-week-2026": {
+   "hash": "4d686f438288",
+   "notes": [],
+   "plus": {},
+   "published": "2026-09-21",
+   "read": "2026-10-30",
+   "released": {},
+   "shadow": {},
+   "title": "「世界宇宙週間」で「宇宙飛行ピカチュウ」と一緒に出発しよう"
+  }
+ },
+ "notices": [
+  {
+   "date": "2026-10-30",
+   "id": "chandelure-super-mega-raid-day-2026:d4a0a88b",
+   "kind": "auto",
+   "slug": "chandelure-super-mega-raid-day-2026",
+   "text": "メガシャンデラ（chandelure_mega）の実装の告知 → 未実装の印を外して全ツールに入れる",
+   "title": "「シャンデラ」の「スーパーメガレイド・デイ」で、不思議な光が皆さんを待っています！"
+  },
+  {
+   "date": "2026-10-30",
+   "id": "chandelure-super-mega-raid-day-2026:57921806",
+   "kind": "auto",
+   "slug": "chandelure-super-mega-raid-day-2026",
+   "text": "メガシャンデラの＋わざ「あやしいかぜ＋」 レイド威力145・対戦威力50・効果「わざを使用するポケモンのこうげきとぼうぎょが1段階増加することがある」（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "「シャンデラ」の「スーパーメガレイド・デイ」で、不思議な光が皆さんを待っています！"
+  },
+  {
+   "date": "2026-10-30",
+   "id": "fall-marathon-buddy-trek-2026:78e288cc",
+   "kind": "auto",
+   "slug": "fall-marathon-buddy-trek-2026",
+   "text": "メガライボルトの＋わざ「ほうでん＋」 レイド威力150・対戦威力50（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "「秋の遠足：相棒といっしょ」では、「アノクサ」が『Pokémon GO』に初登場"
+  },
+  {
+   "date": "2026-10-30",
+   "id": "halloween-part-2-2026:45e5d29f",
+   "kind": "auto",
+   "slug": "halloween-part-2-2026",
+   "text": "メガヤミラミの＋わざ「ナイトヘッド＋」 レイド威力160・対戦威力55（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "「ハロウィン2026パート2」で「メガヤミラミ」がパワーアップ！さらに、色違いの「ボチ」が『Pokémon GO』に初登場！"
+  },
+  {
+   "date": "2026-10-30",
+   "id": "mega-squads-2026:668f7c14",
+   "kind": "auto",
+   "slug": "mega-squads-2026",
+   "text": "メガスピアーの＋わざ「とどめばり＋」 レイド威力140・対戦威力40・効果「「こうげき」を1段階上げます」（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "「メガフィナーレ」に引き続き、「チームメガ」イベントに向けて盛り上がりましょう！"
+  },
+  {
+   "date": "2026-10-30",
+   "id": "mega-squads-2026:4d308a99",
+   "kind": "auto",
+   "slug": "mega-squads-2026",
+   "text": "メガヘルガーの＋わざ「あくのはどう＋」 レイド威力150・対戦威力60（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "「メガフィナーレ」に引き続き、「チームメガ」イベントに向けて盛り上がりましょう！"
+  },
+  {
+   "date": "2026-10-30",
+   "id": "staraptor-super-mega-raid-day-2026:7ce33bf1",
+   "kind": "auto",
+   "slug": "staraptor-super-mega-raid-day-2026",
+   "text": "メガムクホークの＋わざ「ブレイブバード＋」 レイド威力150・対戦威力70・効果「使用するポケモンの「ぼうぎょ」を3段階下げます」（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "「スーパーメガレイド・デイ」で勇敢に「ムクホーク」に挑もう！"
+  }
+ ]
+}

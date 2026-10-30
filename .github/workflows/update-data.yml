@@ -35,6 +35,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      # 公式ニュースを読み、実装の告知（新しいポケモン・メガ・シャドウ・メガの＋わざの威力）を先に取り込む（2026-10-30タダシさん指示）。
+      # 結果は .github/official_news.json に貯まり、下のビルドがそれを読む。読めない日も止めない（前日までの結果で動く）
+      - name: 公式ニュースの実装の告知を読む
+        run: python3 news_auto.py || echo "公式ニュースは今回読めなかった"
+
       - name: 火力チェッカーをビルド（差分サマリーも生成）
         id: build
         run: |
@@ -66,6 +71,9 @@ jobs:
       - name: 環境上位のわざ構成を作り直す
         run: python3 pvp-tests/build_meta_moves.py --no-report
 
+      - name: 公式ニュースから読み取ったことをお知らせに足す
+        run: if [ -f news_today.md ]; then cat news_today.md >> changes.md; fi
+
       - name: 更新内容を実行結果ページに表示
         run: cat changes.md >> "$GITHUB_STEP_SUMMARY"
 
@@ -91,6 +99,18 @@ jobs:
                        -m "変更の内訳はお知らせ（Issue）を見てください。"
             git push
             echo "changed=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 公式ニュースの読み取り記録（どの記事を読んだか・知らせ）は、データに変化が無い日でも保存する（お知らせは立てない）
+      - name: 公式ニュースの読み取り記録を保存
+        run: |
+          git add .github/official_news.json
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: 公式ニュースの読み取り記録を更新"
+            git pull --rebase
+            git push
           fi
 
       # 更新があった日だけ「お知らせ」を立てる。GitHubがこれをメールで送ってくれる。

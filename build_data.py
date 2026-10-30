@@ -12,6 +12,7 @@
 """
 import json, re, math, sys, urllib.request
 from mega_plus_info import MEGA_PLUS_INFO, plus_id
+import news_auto   # 公式ニュースから読み取った実装の告知（2026-10-30タダシさん指示）
 
 SRC = {
     'gm':   'https://raw.githubusercontent.com/PokeMiners/game_masters/master/latest/latest.json',
@@ -388,9 +389,12 @@ def main():
     ja = fetch(SRC['ja'])['data']
     ja_map = {ja[i]: ja[i+1] for i in range(0, len(ja)-1, 2)}
     pvp = fetch(SRC['pvp'])['pokemon']
-    shadow_ids = {p['speciesId'][:-7].upper().replace('_ALOLAN','_ALOLA') for p in pvp if p['speciesId'].endswith('_shadow')} | MANUAL_SHADOW
+    shadow_ids = {p['speciesId'][:-7].upper().replace('_ALOLAN','_ALOLA') for p in pvp if p['speciesId'].endswith('_shadow')} | MANUAL_SHADOW \
+                 | {k.upper().replace('_ALOLAN','_ALOLA') for k in news_auto.shadow_pvp()}
     print('実装済みシャドウ:', len(shadow_ids))
-    released_map = {p['speciesId']: bool(p.get('released')) for p in pvp}
+    # 公式ニュースで実装が告知されたものは、情報元が未実装のままでも実装済みとして扱う
+    news_rel = news_auto.released_pvp()
+    released_map = {p['speciesId']: bool(p.get('released')) or p['speciesId'] in news_rel for p in pvp}
 
     dex, move_no, num2move = {}, {}, {}
     for e in data:
@@ -597,7 +601,7 @@ def main():
     for sp in pvp:
         sid = sp.get('speciesId','')
         mm = re.match(r'^(.*?)_(mega(?:_[xyz])?|primal)$', sid)
-        if not mm or not sp.get('released'): continue
+        if not mm or not released_map.get(sid): continue
         key = sid.upper()
         if key in final: continue
         base_key = mm.group(1).upper().replace('_ALOLAN','_ALOLA')

@@ -54,6 +54,12 @@
         "hooks": [
           { "type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.py\" selfcheck", "timeout": 30 }
         ]
+      },
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/news_notice.py\"", "timeout": 20 }
+        ]
       }
     ]
   }

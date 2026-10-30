@@ -13,6 +13,7 @@ import json, re, math
 from build_data import (SRC, fetch, TYPE_JA, REGION, FORM_JA, OVERRIDE,
                         DEFAULT_FORM, GEN9_JA, JP_MOVE_FIX, MEGA_PLUS_MOVES, MEGA_PLUS_JA)
 from mega_plus_info import MEGA_PLUS_INFO, MEGA_PLUS_PVP_BUFF, plus_id, info_ids
+import news_auto   # 公式ニュースから読み取った実装の告知（2026-10-30タダシさん指示）
 
 # PvPoke速度に含まれるが対戦ツールでは扱わない特殊ID
 SKIP_SPECIES_SUFFIX = ('_shadow',)          # シャドウは基本形にフラグで持つ
@@ -301,7 +302,7 @@ def main():
             return mega[0] + nm + mega[1] if mega else nm
         return None
 
-    pokes, shadow_ok, warn_pk = {}, set(MANUAL_SHADOW), []
+    pokes, shadow_ok, warn_pk = {}, set(MANUAL_SHADOW) | news_auto.shadow_pvp(), []
     for p in pvp['pokemon']:
         sid = p['speciesId']
         if sid.endswith(SKIP_SPECIES_SUFFIX):
@@ -317,7 +318,7 @@ def main():
                       'q': p.get('fastMoves', []), 'c': p.get('chargedMoves', []),
                       'eq': [m for m in p.get('eliteMoves', []) if m.endswith('_FAST') or (m in moves and 'eg' in moves[m])],
                       'ec': [m for m in p.get('eliteMoves', []) if m in moves and 'e' in moves[m]],
-                      'r': 1 if (p.get('released') or sid in MANUAL_RELEASED) else 0}
+                      'r': 1 if (p.get('released') or sid in MANUAL_RELEASED or sid in news_auto.released_pvp()) else 0}
         # hid=検索候補に出さない(hはHP種族値なので別名): バトル中だけの内部フォルム(エンジンが自動で切り替える)と、情報元の重複エントリ。
         # データ自体は残す(pvp-engine.js が aegislash_blade を参照するため)
         if sid in HIDDEN_FORMS or 'duplicate' in (p.get('tags') or []): pokes[sid]['hid'] = 1

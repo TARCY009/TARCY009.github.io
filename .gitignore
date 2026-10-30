@@ -27,3 +27,4 @@ pvp-tests/*
 !pvp-tests/build_meta_moves.py
 !pvp-tests/answer_key.js
 !pvp-tests/meta_changes.md
+news_today.md

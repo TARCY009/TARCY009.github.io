@@ -95,6 +95,24 @@ MEGA_PLUS_PVP_BUFF = {
     'OMINOUS_WIND_PLUS': {'bf': [1, 1], 'bt': 'self', 'bc': None},   # あやしいかぜ＋「こうげきとぼうぎょが1段階上がることがある」
 }
 
+# 公式ニュースから読み取った＋わざ（news_auto.py・2026-10-30タダシさん指示）。上の表に無いメガは足し、
+# 表の威力が None のところだけ埋める（表に手で書いた値があればそちらが優先）。能力変化も無いときだけ足す
+try:
+    from news_auto import plus_info as _news_plus
+    for _mk, _v in _news_plus().items():
+        _src = f'公式ニュース（{_v.get("slug", "")}）'
+        _row = MEGA_PLUS_INFO.get(_mk)
+        if _row is None:
+            MEGA_PLUS_INFO[_mk] = (_v['base'], _v.get('raid'), _v.get('pvp'), None, _src)
+        elif _row[0] == _v['base']:
+            MEGA_PLUS_INFO[_mk] = (_row[0], _row[1] if _row[1] is not None else _v.get('raid'),
+                                   _row[2] if _row[2] is not None else _v.get('pvp'), _row[3],
+                                   _row[4] if _row[1] is not None else _src)
+        if _v.get('buff') and _v['base'] + '_PLUS' not in MEGA_PLUS_PVP_BUFF:
+            MEGA_PLUS_PVP_BUFF[_v['base'] + '_PLUS'] = _v['buff']
+except Exception as _e:   # 読めなくても表だけで動く
+    print('公式ニュースの＋わざを読めません（表だけで続ける）:', _e)
+
 def plus_id(base):
     return base + '_PLUS'
 
