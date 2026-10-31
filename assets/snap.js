@@ -33,7 +33,8 @@
   var PUB = {
     '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', ctx: ['#bossView .bossname'],
                tags: '.c-rank .modes [aria-pressed="true"]', title: 'レイド火力ランキング',
-               graph: { name: '.rname .nm', val: '.rdps', shadow: '.rname .shadowmark,.rname .sh', unit: 'DPS', head: '#bossView .bossname', floor: 35 } },
+               graph: { name: '.rname .nm', val: '.rdps', shadow: '.rname .shadowmark,.rname .sh', unit: 'DPS', head: '#bossView .bossname', floor: 35,
+                       floorOn: '#fShadow[aria-pressed="true"],#fMega[aria-pressed="true"]', floorUp: 40 } },
     '/bulk/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn',
                 tags: '.rhead [aria-pressed="true"]:not(#cntSeg *)', title: '耐久指数ランキング',
                 graph: { name: '.rname .nm', val: '.rval', shadow: '.rname .shadowmark', unit: '耐久指数' } },
@@ -822,7 +823,9 @@
     // 目盛りの下限は固定(2026-09-16タダシさん指示で30)。レイド火力だけ35(2026-10-08タダシさん指示・タイプ別火力のグラフと同じ値。
     // 10/3にタイプ別火力だけ35にして、こちらを30のまま残していた)。ページごとの値は PUB の graph.floor。
     // 下限を切る値があるとき・耐久指数のように桁が大きく下限が刻みに乗らないときだけ0から
+    // floorOn＝この絞り込みが点灯中は下限を floorUp に上げる（切る値があれば元の下限・2026-10-31タダシさん指示）
     var FL = G.floor || 30;
+    if (G.floorOn && document.querySelector(G.floorOn) && dmin >= G.floorUp) FL = G.floorUp;
     var step = niceStep((dmax - FL) || dmax * 0.2 || 1);
     var v0 = (dmin >= FL && step <= FL) ? FL : 0;
     if (v0 === 0) step = niceStep(dmax || 1);

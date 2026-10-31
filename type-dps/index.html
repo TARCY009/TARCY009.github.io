@@ -491,8 +491,10 @@ function graphSVG(forSave,Wopt){
   const n=rows.length||1;
   // 目盛り: 下限は全タイプ共通で35に固定(2026-09-16タダシさん指示で30に固定・2026-10-03に35へ。最下位に合わせて動かすと、タイプや絞り込みで
   // 棒の長さの意味が変わって見えるため)。上限=1位の少し上。万一35を切る値があれば0から
+  // シャドウ・メガ・ゲンシの絞り込み中は全体の値が上がるので40(2026-10-31タダシさん指示)。40を切る値があれば35
   const dmax=rows.length?rows[0].dps:10, dmin=rows.length?rows[rows.length-1].dps:0;
-  const v0=dmin>=35?35:0;
+  const floor=(fShadow||fMega)&&dmin>=40?40:35;
+  const v0=dmin>=floor?floor:0;
   const step=(dmax-v0)<6?1:(dmax-v0)<14?2:(dmax-v0)<30?5:10;
   const v1=Math.ceil(dmax*1.02/step)*step;
   const L=118,R=W-52,T=252;
