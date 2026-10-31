@@ -281,6 +281,8 @@
         if (rs && o.frame && rs.borderTopStyle === 'none') {
           for (var k in o.frame) dR[i].style.setProperty(k, o.frame[k], 'important');
         }
+        // padR＝行の右の余白（画像のときだけ。右端の数字が枠に付かないようにする。メーターはそのぶん縮む）
+        if (o.padR) dR[i].style.setProperty('padding-right', o.padR, 'important');
       }
     }
     if (o.rows && o.limit) {
@@ -337,7 +339,7 @@
     var W = Math.max(40, Math.round(o.width));
     var P = o.pad || 0;
     var css = await collectCSS(o.mode);
-    var clone = await prepClone(el, { width: W, big: o.big, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame, under: o.under, strip: o.strip });
+    var clone = await prepClone(el, { width: W, big: o.big, drop: o.drop, rows: o.rows, limit: o.limit, from: o.from, fill: o.fill, frame: o.frame, padR: o.padR, under: o.under, strip: o.strip });
     var chain = wrapChain(el, clone);
     var bcs = getComputedStyle(document.body);
     var bodyStyle = 'margin:0!important;padding:' + P + 'px!important;min-height:0!important;height:auto!important;' +
@@ -1131,8 +1133,8 @@
   // マックスバトルだけは行の中の文字が多いので少し広い幅(640px)。
   // vw＝そろえる画面の幅（@media はこの幅で判定させる） / w＝その画面幅での一覧の幅（実測・2026-09-13）
   var NARROW = {
-    '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', vw: 500, w: 448, title: 'レイド火力ランキング' },
-    '/type-dps/': { target: '#rankList', rows: '.rank-row', vw: 500, w: 446, title: 'タイプ別火力ランキング' },
+    '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', vw: 500, w: 448, padR: '12px', title: 'レイド火力ランキング' },
+    '/type-dps/': { target: '#rankList', rows: '.rank-row', vw: 500, w: 446, padR: '12px', title: 'タイプ別火力ランキング' },
     '/gym-attack/': { target: '#ranklist', rows: '.card', vw: 500, w: 468, title: 'ジム挑戦オススメ' },
     '/gym-defense/': { target: '#list', rows: '.row', vw: 500, w: 468, title: 'ジム防衛オススメ' },
     '/max-battle/': { target: '#list', rows: '.row', vw: 640, w: 608, title: 'マックスバトル対策' }
@@ -1179,7 +1181,7 @@
     var P = Math.round((cfg.vw - cfg.w) / 2); // 左右の余白込みで vw になる＝その画面幅の見た目で組まれる
     var res = await renderEl(el, { width: cfg.w, mode: 'native', rootCls: document.documentElement.className,
                                    bodyCls: document.body.className.replace(/\bbfull\b/, ''), bg: false, pad: P,
-                                   rows: cfg.rows, limit: n, drop: cfg.drop, fill: rowFill(el), frame: NARROW_FRAME, scale: 3 });
+                                   rows: cfg.rows, limit: n, drop: cfg.drop, fill: rowFill(el), frame: NARROW_FRAME, padR: cfg.padR, scale: 3 });
     return trimAlpha(res.canvas, Math.round(4 * res.s));
   }
   function setupNarrow() {
