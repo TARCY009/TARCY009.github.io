@@ -968,7 +968,8 @@ const overCapTag = base => {
   if (overCapCp(base)) return ' <span class="over">⚠リーグ上限超え</span>';
   if (!base || !base.cap || !isMega(base.key)) return '';
   const lvf = (D.pokemon[base.key] || {}).lvf || (LEGEND_MEGA.test(base.key) ? 20 : 0), st = PvpEngine.buildStats(D, base);
-  return lvf && st.plUsed < lvf ? ` <span class="pladj">PL${st.plFrom || lvf}→PL${st.plUsed}に自動調整</span>` : '';
+  // 理想個体(ideal)は入手できる最低PLからの調整として見せる。手入力で最初から低いPLにした個体は調整ではないので出さない
+  return lvf && st.plUsed < lvf && (st.plFrom || base.ideal) ? ` <span class="pladj">PL${st.plFrom || lvf}→PL${st.plUsed}に自動調整</span>` : '';
 };
 // 勝者が決まらなかった対面(res.winner)。'draw'=相打ち / null=540ターン(270秒)たっても
 // どちらも倒れなかった。**null のときに res.final[winner] を引くと落ちる**ので、
@@ -2920,7 +2921,7 @@ function runCounter() {
     while (idx < list.length && performance.now() - t0 < 40) {
       const m = list[idx];
       const r1 = rank1(m.k, cap, 0, undefined, !!m.s);
-      const cdCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap,
+      const cdCfg = { key: m.k, ivs: r1.ivs, level: r1.level, shadow: !!m.s, timing: 'optimal', cap, ideal: true,
         bluff: metaBluff, fast: m.f || movePool(m.k).fasts[0], charged: [m.c1, m.c2].filter(Boolean) };
       const cells = [0, 1, 2].map(sh => {
         let worst = null;   // あいてが最も得をするわざ構成を選ぶ＝候補にとって最も厳しい結果
@@ -3347,7 +3348,7 @@ function syncPartySlot(i) {
     // そのリーグに収まる個体が存在しないポケモン(交換できない幻など)は、理想個体でCP上限を超える。
     // 枠にも必ず警告を出す(この枠はパーティ診断・GBL模擬戦・ロケット団模擬戦で共通)
     const over = overCapTag(ptBase(m, isMega(m.key) && !plusOn() ? 0 : cap));   // ロケット団戦にCP上限は無い
-    const iv = (m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値') + over;
+    const iv = (m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `個体値${m.mIvs.join('/')} PL${plOfBattle(m.mLevel)}` : '理想個体値') + over;
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
     // わざを自分で選べる枠(模擬戦)では、わざは下の欄に出るので文字では書かない。
     // 個体値・PLの文字も出さない(⚙詳細にある。ﾏﾆｭｱﾙ入力中だけ小さく出して分かるようにする)
@@ -3488,7 +3489,7 @@ function ptBase(m, capX) {
   if (m.ivMode === 'manual' && m.mIvs)
     return { key: m.key, ivs: m.mIvs.slice(), level: plOfBattle(m.mLevel), shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
   const r = rank1(m.key, cp, 0, m.maxLv || 51, !!m.shadow);
-  return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
+  return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m), ideal: true };
 }
 // シールドの枚数ごとの「穴」(3匹とも勝てない相手)の数。
 // わざの構成は選択中の枚数で決まったもの(usedPols)を使い回す＝いま表に出ている3匹の話のまま、
@@ -8690,11 +8691,13 @@ function syncSdSlots() {
       const base = ptBase(m);
       const st = PvpEngine.buildStats(D, base);
       const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+      // 自動調整の文は長く、名前の行に入れると入力欄が潰れるので、名前の行の下に出す
+      const tag = overCapTag(base), adj = tag.includes('pladj');
       el.querySelector('.sdcp').innerHTML =
         `<span title="PL${st.plUsed}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}"><i>CP</i>${st.cp}</span>` +
-        overCapTag(base);
+        (adj ? '' : tag);
       const gm = el.querySelector('.gmlv');
-      gm.innerHTML = hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '';
+      gm.innerHTML = (adj ? `<div class="sdadj">${tag}</div>` : '') + (hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '');
       gm.querySelectorAll('.mlvseg button').forEach(b => b.onclick = () => {
         m.megaLv = +b.dataset.lv; sdChanged();
       });
@@ -13119,7 +13122,7 @@ function run() {
     const c = carryOf(i);
     if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: plOfBattle(s.mLevel), shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ...c };
     const r1 = rank1(s.key, capX, 0, s.maxLv, s.shadow);
-    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ...c };
+    return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ideal: true, ...c };
   });
   if (myStall) base[0].stallStart = myStall;
   // マニュアル個体値のCPと実数値を表示し、リーグ上限超えは警告する(計算は続行)。

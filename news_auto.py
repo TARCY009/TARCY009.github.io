@@ -189,6 +189,12 @@ def parse_buff(t):
     return {'bf': [n if atk else 0, n if df else 0], 'bt': target, 'bc': chance}
 
 
+def keep_old(old, res):
+    """記事を読み直したとき、前に読み取った実装・シャドウ・＋わざを消さない。
+    parse は「いま未実装のもの」だけを拾うので、取り込み済みのものは2回目から拾わない＝そのまま置き換えると未実装へ戻る"""
+    return {k: {**((old or {}).get(k) or {}), **res[k]} for k in ('released', 'shadow', 'plus')}
+
+
 # ---------------------------------------------------------------- 本体
 def main():
     dry = '--dry-run' in sys.argv
@@ -222,11 +228,12 @@ def main():
         h = hashlib.sha1('\n'.join(body).encode()).hexdigest()[:12]
         if old and old.get('hash') == h:
             continue
-        title = body[1] if len(body) > 1 else slug
+        mt = re.search(r'<title[^>]*>(.*?)</title>', page, re.S)
+        title = html.unescape(mt.group(1)).strip() if mt and start == 0 else (body[1] if len(body) > 1 else slug)
         res = parse(body, pvp)
         rec = {'title': title, 'published': published_of(page) or (old or {}).get('published') or today,
                'hash': h, 'read': today,
-               'released': res['released'], 'shadow': res['shadow'], 'plus': res['plus']}
+               **keep_old(old, res)}
         # 知らせ（1度読んだ記事が書き換わったときは、前に無かったものだけ）
         notes = []
         for k, v in res['released'].items():

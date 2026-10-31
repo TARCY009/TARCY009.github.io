@@ -87,5 +87,9 @@ for mid, (mk, ty, pw, d, w, we) in MEGA_PLUS_MOVES.items():
     m = g['moves'].get(mid)
     if mid in ('NIGHT_SHADE_PLUS',): continue
     if not m or m['p'] != pw or abs(m['d'] - d / 1000) > 1e-9: ng('A 確定値がずれた', mid, m, pw, d)
+# 公式ニュース: 記事を読み直しても、前に読み取った実装の印を消さない（消すと未実装へ戻る）
+import news_auto
+_k = news_auto.keep_old({'released': {'a': 1}, 'shadow': {'b': 1}, 'plus': {'C': 1}}, {'released': {}, 'shadow': {'d': 1}, 'plus': {}})
+if _k != {'released': {'a': 1}, 'shadow': {'b': 1, 'd': 1}, 'plus': {'C': 1}}: ng('公式ニュース 読み直しで印が消える', _k)
 print('問題', len(bad), '件')
 sys.exit(1 if bad else 0)
