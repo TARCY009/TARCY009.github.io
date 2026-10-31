@@ -959,12 +959,16 @@ function overCapCp(base) {
   const cp = PvpEngine.buildStats(D, base).cp;
   return cp > base.cap ? cp : 0;
 }
-// メガ・ゲンシは上限を超えず自動でPLが下がるので、下がったときだけその旨を出す(新しくCPを出す画面も必ずこれを通す)
-const plAdjTxt = st => `PL${st.plFrom}→PL${st.plUsed}に自動調整`;
+// メガ・ゲンシは上限を超えず自動でPLが下がる。**入手できる最低PL(lvf)より低いPLで戦うときだけ**その旨を出す
+// (メガカイリューのように低いPLの個体が手に入るポケモンは、名前を入れた時点でその個体で出るので出さない・2026-10-31タダシさん指示)。
+// 伝説のメガ・ゲンシは最低PL20を基準にする(タスク産のPL15は過去の限られた個体のため・2026-10-31タダシさん指示)。
+// 新しい伝説のメガ・ゲンシが増えたら LEGEND_MEGA に足す。新しくCPを出す画面も必ずこれを通す
+const LEGEND_MEGA = /^(mewtwo|latias|latios|rayquaza|kyogre|groudon)_/;
 const overCapTag = base => {
   if (overCapCp(base)) return ' <span class="over">⚠リーグ上限超え</span>';
-  const st = base && base.cap ? PvpEngine.buildStats(D, base) : null;
-  return st && st.plFrom ? ` <span class="pladj">${plAdjTxt(st)}</span>` : '';
+  if (!base || !base.cap || !isMega(base.key)) return '';
+  const lvf = (D.pokemon[base.key] || {}).lvf || (LEGEND_MEGA.test(base.key) ? 20 : 0), st = PvpEngine.buildStats(D, base);
+  return lvf && st.plUsed < lvf ? ` <span class="pladj">PL${st.plFrom || lvf}→PL${st.plUsed}に自動調整</span>` : '';
 };
 // 勝者が決まらなかった対面(res.winner)。'draw'=相打ち / null=540ターン(270秒)たっても
 // どちらも倒れなかった。**null のときに res.final[winner] を引くと落ちる**ので、
@@ -1513,7 +1517,7 @@ ${PAGE_ROCKET ? '' : `
   <p>対戦データにまだ性能が入っていない＋わざ（消費ゲージが未発表のもの）は出ません。</p>
 
   <h4>メガ・ゲンシのCP自動調整</h4>
-  <p>メガ・ゲンシのCPがリーグやカップの上限を超えるときは、バトルのあいだだけPLが自動で下がり、上限に収まるいちばん高いPL（0.5刻み）で戦います。個体値はそのままです。調整が起きると「PL50→PL◯に自動調整」と出ます。
+  <p>メガ・ゲンシのCPがリーグやカップの上限を超えるときは、バトルのあいだだけPLが自動で下がり、上限に収まるいちばん高いPL（0.5刻み）で戦います。個体値はそのままです。入手できる最低PLより低いPLで戦うポケモン（メガディアンシーや伝説のメガ・ゲンシなど。伝説はPL20が基準）には「PL◯→PL◯に自動調整」と出ます。
   GOバトルリーグではメガのPLは51までで計算します（ロケット団戦ではPL52以上も使えます）。</p>
 
   <h4>パーティ診断の「平均勝率」</h4>
@@ -13133,6 +13137,8 @@ function run() {
       const st = PvpEngine.buildStats(D, base[i]);
       note.innerHTML = `理想個体値のCP: <b>${st.cp}</b> <span class="over">⚠リーグ上限超え</span>` +
         `<div class="ivstats">このリーグのCP制限に収まる個体が存在しません（最低個体値・最低PLの制約のため）</div>`;
+    } else if (capX && overCapTag(base[i])) {
+      note.innerHTML = `理想個体値のCP: <b>${PvpEngine.buildStats(D, base[i]).cp}</b>` + overCapTag(base[i]);
     } else note.textContent = '';
     // CP上限のないリーグ(マスター・ロケット団戦)では入手別の1位個体は意味がないので隠す
     const noCap = !capX;

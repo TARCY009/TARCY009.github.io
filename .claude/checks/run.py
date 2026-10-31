@@ -16,7 +16,7 @@ rules-random:.claude/checks/rules/randcheck.py（同・種1で600戦をランダ
 mock-sp:     .claude/checks/mock-sp.py --quick（模擬戦を画面ごと回し、SPボタン・メーター・同時発動の順番が崩れないか。広く見るときは --seed N で16戦）
 mega-plus-data: .claude/checks/mega-plus-data.py（メガの＋わざ・未実装メガのデータ点検）
 mock-skip:   .claude/checks/mock-skip.py --quick（模擬戦を⏸→⏩決断まで／演出中に⏩ で決着まで進め、決着パネル・決着の演出・威力調整・演出の列の空回りが崩れないか。全部見るときは引数なしで4本×3戦）
-mega-cap:    .claude/checks/megacap-check.html（メガ・ゲンシのCP自動調整＝PLの下がり方・4ツールのそろい・マスターのPL51まで・ロケット団は不変の18項目）
+mega-cap:    .claude/checks/megacap-check.html（メガ・ゲンシのCP自動調整＝PLの下がり方・4ツールのそろい・マスターのPL51まで・ロケット団は不変の22項目）
 いずれも画面なしのブラウザで開き、すべて ✅ かを確かめる。
 答え（期待値・基準ファイル）を変えるときは、必ずタダシさんに確認してから。
 """
@@ -139,7 +139,7 @@ CHECKS = {
     'rules-scn': sub_check('.claude/checks/rules/scncheck.py', [], 'バトルルールのシナリオ検査'),
     'rules-random': sub_check('.claude/checks/rules/randcheck.py', ['--n', '600', '--seed', '1', '--ms', '60000'], 'バトルルールのランダム検査'),
     'iv-calc': page_check('.claude/checks/iv-check.html', 16),
-    'mega-cap': page_check('.claude/checks/megacap-check.html', 18, 60000),
+    'mega-cap': page_check('.claude/checks/megacap-check.html', 22, 60000),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
     'max-attacker': page_check('.claude/checks/max-check.html', 5),
     'gym-attack': page_check('.claude/checks/gym-check.html', 15, 60000),
