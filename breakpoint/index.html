@@ -638,7 +638,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
 <div class="gtabs dirrow" id="dirrow" style="display:none"><div class="gseg">
   <button class="t-atk" data-dir="give" aria-pressed="true" title="じぶんのノーマルアタックのダメージが1上がる境目を見ます">🗡️ 与える</button>
   <button class="t-def" data-dir="take" aria-pressed="false" title="あいてのノーマルアタックから受けるダメージが1下がる境目を見ます">🛡 受ける</button>
-</div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="4096通りの個体値をぜんぶ試して、環境100匹との勝ち数が多い順に並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="メガLv4（スーパーマックスレベル・PL52/53）を計算に入れます。環境の相手のうちメガシンカできるポケモンをメガの姿でも並べ、表にPL52/53の行・列を足します">メガ4</button><button class="t-mega mega4" id="cpb" aria-pressed="false" style="display:none" title="メガシンカCPブースト（イベントボーナス）を計算に入れます。メガLv4のPL+2がPL+5になるので、メガの行・列にPL55を足します（最高の相棒を足しても55まで）">CPブースト</button></div>
+</div><button class="t-gold mega4 reco" id="recobtn" aria-pressed="false" style="display:none" title="4096通りの個体値をぜんぶ試して、環境100匹との勝ち数が多い順に並べます">🏆 おすすめ個体</button><button class="t-mega mega4" id="mega4" aria-pressed="false" title="環境の相手のうちメガシンカできるポケモンを、メガの姿でも並べます">メガも</button><button class="t-mega mega4" id="cpb" aria-pressed="false" style="display:none" title="メガシンカCPブースト（イベントボーナス）を計算に入れます。メガLv4のPL+2がPL+5になるので、メガの行・列にPL55を足します（最高の相棒を足しても55まで）">CPブースト</button></div>
 <div id="reco"></div>
 <div id="ivsum"></div>
 <!-- 自分の個体の入力は環境100匹の一覧の直上に置く(2026-08-23タダシさん指示: まとめ・おすすめ個体には効かないので、入力→関係ない表→一覧と跨がせない) -->
@@ -677,8 +677,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
   <ul>
     <li>上のタブは個体値です。<b>15が既定</b>。14をタップすると「14以上で届く相手」が追加されます。点灯中のタブをもう一度タップすると、そのグループだけ隠れます</li>
     <li>相手ごとのチップの中の表は、<b>じぶんのPL（縦）×あいてのPL（横）</b>ごとのダメージです。そのグループの個体値でちょうど段が上がる組み合わせだけ金色になります</li>
-    <li><b>メガ4</b>をONにすると、メガシンカできる相手をメガの姿でも並べ、PL52/53の行・列を足します</li>
-    <li><b>CPブースト</b>（メガ4がONのときだけ出ます）＝イベントボーナスのメガシンカCPブーストを入れます。メガLv4のPL+2がPL+5になるので、メガの行・列に<b>PL55</b>を足します（最高の相棒を足しても55まで）</li>
+    <li><b>メガも</b>をONにすると、メガシンカできる相手をメガの姿でも並べます（GBLのリーグ戦ではメガのPLは51までで計算します）</li>
     <li>メガシンカの追加SPアタック（わざ名の最後が「+」）は、勝ち数の計算とGBLシミュレーターへのリンクでSPアタックの候補に入ります（威力はメガLv4＝1.3倍）。ブレイクポイント自体はノーマルアタックの話なので、境目は変わりません</li>
   </ul>
   <h4>スーパー・ハイパーの見かた</h4>
@@ -697,7 +696,7 @@ h1 small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;letter-
     <li>ダメージ式・実数値はGBLシミュレーターのエンジンと同じです。<b>同じ条件なら結果は必ず一致します</b></li>
     <li>能力変化（バフ・デバフ）が無い、バトル開始時点で計算します</li>
     <li>環境上位100匹は理想個体値（マスターは15/15/15 PL50）。わざは人が確認した実戦の定番構成です</li>
-    <li>じぶんのPLの上限は51（最高の相棒）。メガシンカはメガLv4（メガシンカ中に自動で＋2相当）＋相棒で53まで（CPブーストをONにすると55まで）</li>
+    <li>じぶんのPLの上限は51（最高の相棒）。メガ・ゲンシも同じです。リーグのCP上限を超えるメガ・ゲンシは、バトルのあいだだけ上限に収まるPLまで自動で下がります</li>
     <li><b>SPアタックは対象外</b>です。SPのダメージ+1はバトル全体で1〜2回しか起きず、ノーマルアタックの境目のほうがはるかに重要なためです</li>
     <li>勝ち数のシミュレート: あいては理想個体値・定番わざ構成、じぶんは画面で選んだノーマルアタック＋定番のSPアタック。ブラフなし・確率わざ不発・最適タイミング（GBLシミュレーターの一覧系と同じ前提）</li>
   </ul>
@@ -773,8 +772,10 @@ let OPEN = null;  // 開いている行 ('pin' | メタ行のindex)
 let DTAB = {};    // 行ごとの 与える/受ける タブ状態
 const capV = () => +LG || 0;
 let CPB = false;   // メガシンカCPブースト(PL55)を入れるか。メガ4がONのときだけ選べる(2026-09-11・公開前の作業B4)
-const megaTop = () => CPB ? 55 : 53;
-const megaPls = () => [50, 51, 52, 53].concat(CPB ? [55] : []);
+// GBLのリーグ戦ではメガのPL52以上は使えない(公式: 大きなCPボーナスはマスターリーグでは付かない)。ロケット団戦から来たときだけ従来どおり
+const RK_LINK = new URLSearchParams(location.search).get('rk') === '1';
+const megaTop = () => RK_LINK ? (CPB ? 55 : 53) : 51;
+const megaPls = () => RK_LINK ? [50, 51, 52, 53].concat(CPB ? [55] : []) : [50, 51];
 const plTag = l => l >= 55 ? '<small>CPブースト</small>' : l > 51 ? '<small>メガLv4</small>' : l > 50 ? '<small>相棒</small>' : '';
 const maxLvOf = () => isMega(ME.key) ? megaTop() : 51;
 // 交換できないポケモン(幻・ジガルデ等。pvp_data の ivf)は最低個体値10。10未満の個体はゲーム内に存在しない(恒久ルール)
@@ -785,7 +786,8 @@ const ivFloorOf = (key, shadow) => {
   return (shadow && p.ivfs != null) ? p.ivfs : (p.ivf || 0);
 };
 // PLの下限(ジガルデはPL20未満の個体が存在しない)。CP制限でこのPLに収まらない個体は「存在しない」として除く
-const lvFloorOf = key => (D.pokemon[key] && D.pokemon[key].lvf) || 1;
+// メガ・ゲンシはバトル中にPLが自動で下がるので下限を見ない(GBLの rank1 と同じ)
+const lvFloorOf = key => (!isMega(key) && D.pokemon[key] && D.pokemon[key].lvf) || 1;
 
 // ---- 実数値・ダメージ(エンジンと同じ式を使う=食い違い禁止) ----
 const statsOf = (key, ivs, level, shadow) =>
@@ -799,7 +801,7 @@ function rank1(key, cap, shadow) {
   const fl = ivFloorOf(key, shadow);
   const ck = key + '|' + cap + '|' + fl;
   if (R1C.has(ck)) return R1C.get(ck);
-  const p = D.pokemon[key], LV = levelsUpTo(isMega(key) ? 53 : 51);
+  const p = D.pokemon[key], LV = levelsUpTo(51);
   let best = null;
   if (!cap) best = { ivs: [15, 15, 15], level: 50 };
   else {
@@ -1069,7 +1071,7 @@ function ivBar(foe, mv, dir) {
 // ---- 「どうすればブレイクするか」の箱(マスター・CP制限共通。PLの目標を絶対値で言う) ----
 // PL50より上は最高の相棒(メガはメガLv4で52・53まで)が要るので、その条件を本文に書く
 function goalBox(v, dir) {
-  const mega = isMega(ME.key);
+  const mega = isMega(ME.key) && RK_LINK;   // GBLのリーグ戦ではメガのPL52以上は使えない
   const to = v.at, now = v.cur.lv;
   let how, note = '', expl = '';
   // メガLv4はメガシンカ中に自動でPL+2相当になる(強化するものではない)。PL52・53はそれでしか届かない
@@ -1255,7 +1257,7 @@ const foeTblCache = new Map();
 function foeTable(key, shadow) {
   const ck = key + '|' + LG + '|' + (shadow ? 1 : 0);
   if (foeTblCache.has(ck)) return foeTblCache.get(ck);
-  const p = D.pokemon[key], cap = capV(), LV = levelsUpTo(isMega(key) ? 53 : 51);
+  const p = D.pokemon[key], cap = capV(), LV = levelsUpTo(51);
   const sA = shadow ? D.settings.shadowAtkMult : 1, sD = shadow ? D.settings.shadowDefMult : 1;
   const rows = [], fl = ivFloorOf(key, shadow);
   for (let a = fl; a <= 15; a++) for (let d = fl; d <= 15; d++) for (let h = fl; h <= 15; h++) {
@@ -1716,7 +1718,7 @@ function render() {
   // 一覧(環境100匹の行)は「自分の個体で確かめる」を開いたときだけ(上のまとめと情報が二重になるため)
   $('listwrap').style.display = IVOPEN ? '' : 'none';
   $('mega4').style.display = capped ? 'none' : '';
-  $('cpb').style.display = capped || !MEGA4 ? 'none' : '';   // CPブーストはメガ4の上に乗るボーナスなので、メガ4がONのときだけ
+  $('cpb').style.display = capped || !MEGA4 || !RK_LINK ? 'none' : '';   // CPブーストはメガ4の上に乗るボーナスなので、メガ4がONのときだけ
   $('ivsum').querySelectorAll('[data-rlow]').forEach(b => b.onclick = () => { RLOW = !RLOW; if (!RLOW && RSEL >= RANK_GRP.length) RSEL = RANK_GRP.length - 1; render(); });
   $('ivsum').querySelectorAll('[data-rsel]').forEach(c => c.onclick = () => {
     const i = +c.dataset.rsel;
@@ -1826,7 +1828,9 @@ function setIdeal() {
 function pickMe(key, opts) {
   ME.key = key;
   ME.shadow = !!(opts && opts.shadow) || (!!D.pokemon[key].shadow && ME.shadow && !(opts && 'shadow' in opts));
-  if (opts && opts.ivs) { const fl = ivFloorOf(key, ME.shadow); ME.ivs = opts.ivs.map(v => Math.max(fl, v)); ME.level = opts.level; ME.edited = true; IVOPEN = true; }
+  if (opts && opts.ivs) { const fl = ivFloorOf(key, ME.shadow); ME.ivs = opts.ivs.map(v => Math.max(fl, v)); ME.level = isMega(key) ? Math.min(opts.level, maxLvOf()) : opts.level; ME.edited = true; IVOPEN = true;
+    // メガ・ゲンシは上限に収まるPLまで自動で下がる(1対1シミュと同じPLにそろえる)
+    if (isMega(key) && capV() && statsOf(key, ME.ivs, ME.level, false).cp > capV()) ME.level = maxLevelFor(key, ME.ivs, capV(), 51); }
   else setIdeal();
   ME.fast = (opts && opts.fast && D.moves[opts.fast]) ? opts.fast : defaultFast(key, ME.shadow, LG);
   $('meq').value = (ME.shadow ? 'シャドウ' : '') + D.pokemon[key].n;
@@ -2042,7 +2046,7 @@ function loadUrl() {
       opts.ivs = iv;
       // PL指定なし(個体値チェッカーからの形)は、その個体値の上限PLで始める。
       // マスターはPL50から(51にすると相棒ブーストの境目が最初から消えてしまう)
-      opts.level = pl >= 1 ? pl : (capV() ? maxLevelFor(me, iv, capV(), isMega(me) ? 53 : 51) : 50);
+      opts.level = pl >= 1 ? pl : (capV() ? maxLevelFor(me, iv, capV(), 51) : 50);
     }
     pickMe(me, opts);
   }

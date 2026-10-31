@@ -1,0 +1,35 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>メガ・ゲンシのCP自動調整の答え合わせ</title></head><body>
+<div id="out"></div>
+<script>
+// メガ・ゲンシのCP自動調整(2026-10-31)。答えは pvp_data.json から別の計算で求めて確かめた値
+const res = [], ok = (n, got, want) => { const g = JSON.stringify(got), w = JSON.stringify(want); res.push([n, g === w, g, w]); };
+const fr = src => new Promise(r => { const f = document.createElement('iframe'); f.style.cssText = 'width:390px;height:800px'; f.src = src; f.onload = () => setTimeout(() => r(f.contentWindow), 1500); document.body.appendChild(f); });
+(async () => {
+  try {
+    const g = await fr('/gbl/'), bp = await fr('/breakpoint/'), iv = await fr('/iv-checker/'), rk = await fr('/rocket/');
+    const st = c => g.eval(`(()=>{const s=PvpEngine.buildStats(D,${JSON.stringify(c)});return [s.cp,s.plUsed,s.plFrom]})()`);
+    const dra = [15, 15, 15];
+    ok('メガカイリュー PL50 スーパー', st({ key: 'dragonite_mega', ivs: dra, level: 50, cap: 1500 }), [1447, 10.5, 50]);
+    ok('メガカイリュー PL50 ハイパー', st({ key: 'dragonite_mega', ivs: dra, level: 50, cap: 2500 }), [2480, 18, 50]);
+    ok('上限より低いPLは下げない', st({ key: 'dragonite_mega', ivs: dra, level: 10, cap: 1500 }), [1378, 10, null]);
+    ok('上限ちょうどで止まる', st({ key: 'venusaur_mega', ivs: [14, 10, 12], level: 50, cap: 1500 }), [1500, 14.5, 50]);
+    ok('0.5段だけ下がる', st({ key: 'mawile_mega', ivs: [14, 10, 0], level: 50, cap: 2500 }), [2500, 49.5, 50]);
+    ok('ふつうのポケモンは下げない', st({ key: 'deoxys', ivs: dra, level: 50, cap: 1500 })[1], 50);
+    ok('ふつうの上限超えは警告', g.eval(`overCapTag({key:'deoxys',ivs:[15,15,15],level:50,cap:1500})`).includes('リーグ上限超え'), true);
+    ok('メガは警告でなく自動調整', g.eval(`overCapTag({key:'dragonite_mega',ivs:[15,15,15],level:50,cap:1500})`).includes('PL50→PL10.5に自動調整'), true);
+    ok('メガディアンシー スーパー(GBL)', g.eval(`(r=>[r.ivs,r.level])(rank1('diancie_mega',1500,0,51,false))`), [[10, 10, 12], 12.5]);
+    ok('メガディアンシー スーパー(ブレイクポイント)', bp.eval(`(r=>[r.ivs,r.level,!!r.none])(rank1('diancie_mega',1500,false))`), [[10, 10, 12], 12.5, false]);
+    ok('メガディアンシー スーパー(個体値チェッカー)', iv.eval(`(r=>[r.length,r[0].ia,r[0].id,r[0].ih,r[0].lv])(rankAll(POKE.find(x=>x.i==='diancie_mega'),1500,50,10))`), [216, 10, 10, 12, 12.5]);
+    ok('ジガルデのPL下限は残る(GBL)', g.eval(`lvFloorOf('zygarde_complete')`) > 1, true);
+    ok('ブレイクポイントのPLがそろう', bp.eval(`(()=>{LG='1500';pickMe('dragonite_mega',{ivs:[15,15,15],level:50});return ME.level})()`), 10.5);
+    ok('個体値チェッカーのPLがそろう', iv.eval(`rankAll(POKE.find(x=>x.i==='dragonite_mega'),1500,50,0).find(x=>x.ia==15&&x.id==15&&x.ih==15).lv`), 10.5);
+    ok('マスターの理想はPL50', g.eval(`rank1('dragonite_mega',0,0,53,false).level`), 50);
+    ok('マスターの登録個体はPL51まで', g.eval(`ptBase({key:'dragonite_mega',ivMode:'manual',mIvs:[15,15,15],mLevel:53,maxLv:53},0).level`), 51);
+    ok('ブレイクポイントのメガはPL51まで', bp.eval(`megaPls()`), [50, 51]);
+    ok('ロケット団戦はPL53のまま', rk.eval(`[rank1('dragonite_mega',0,0,53,false).level,ptBase({key:'dragonite_mega',ivMode:'manual',mIvs:[15,15,15],mLevel:53,maxLv:53},0).level]`), [53, 53]);
+  } catch (e) { res.push(['実行エラー', false, String(e), '']); }
+  const bad = res.filter(r => !r[1]).length;
+  document.getElementById('out').innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div>`;
+})();
+</script></body></html>

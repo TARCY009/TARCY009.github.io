@@ -114,6 +114,9 @@ def gbl_of(k, shadow=False):
 
 def gbl_over(k, shadow=False):
     # 上限に収まる個体が入手できないリーグ(画面に「⚠ CP1500以下の個体は入手できません」と出す)
+    # メガ・ゲンシはバトル中にPLが自動で下がるので、いつでも入れる＝出さない
+    if '_mega' in k or '_primal' in k:
+        return []
     return [c for c in ('1500', '2500') if (_gbl_one(c, k, shadow) or {}).get('over')]
 
 # ---------- ロケット団 ----------

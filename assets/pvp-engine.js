@@ -42,6 +42,11 @@
   // 2026-08-10に外部シミュレーターの表示値と20例(3種別)で完全一致を確認した実測準拠の式。
   // シャドウ補正(攻×1.2・防÷1.2)は通常のポケモンと同じく戦闘計算で別途かかる
   const RCPM = 1.31502077;
+  // メガ・ゲンシは、CPがリーグ・カップの上限を超えるとバトルのあいだだけPLが自動で下がる(公式・2026-10-31タダシさん指示)。
+  // 上限に収まるいちばん高いPLへ0.5刻みで下げる。個体値はそのまま。ふつうのポケモンは下げない(上限超えの警告のまま)
+  const isMegaKey = k => k.includes('_mega') || k.includes('_primal');
+  const cpOfLv = (D, p, ivs, lv) => { const c = D.cpm[String(lv)];
+    return Math.max(10, Math.floor((p.a + ivs[0]) * Math.sqrt(p.df + ivs[1]) * Math.sqrt(p.h + ivs[2]) * c * c / 10)); };
   function buildStats(D, cfg) {
     const p = D.pokemon[cfg.key];
     if (cfg.statMult) {
@@ -54,14 +59,17 @@
       const sD = cfg.shadow ? D.settings.shadowDefMult : 1;
       return { atk: bA * sA, def: bD * sD, hp, cp, baseAtk: bA, baseDef: bD, types: p.ty, name: p.n };
     }
-    const c = D.cpm[String(cfg.level)];
+    let lv = cfg.level;
+    if (cfg.cap && isMegaKey(cfg.key)) while (lv > 1 && cpOfLv(D, p, cfg.ivs, lv) > cfg.cap) lv -= 0.5;
+    const c = D.cpm[String(lv)];
     const sA = cfg.shadow ? D.settings.shadowAtkMult : 1;
     const sD = cfg.shadow ? D.settings.shadowDefMult : 1;
     const atk = (p.a + cfg.ivs[0]) * c * sA;
     const def = (p.df + cfg.ivs[1]) * c * sD;
     const hp  = Math.floor((p.h + cfg.ivs[2]) * c);
-    const cp  = Math.max(10, Math.floor((p.a + cfg.ivs[0]) * Math.sqrt(p.df + cfg.ivs[1]) * Math.sqrt(p.h + cfg.ivs[2]) * c * c / 10));
-    return { atk, def, hp, cp, types: p.ty, name: p.n };
+    const cp  = cpOfLv(D, p, cfg.ivs, lv);
+    // plUsed=実際に戦うPL／plFrom=自動で下がったときの元のPL(下がっていなければ無し)
+    return { atk, def, hp, cp, types: p.ty, name: p.n, plUsed: lv, plFrom: lv !== cfg.level ? cfg.level : null };
   }
 
   // SPアタックのミニゲームの出来による威力の倍率(ゲーム内公開データ COMBAT_SETTINGS の chargeScore〜・2026-09-22タダシさん指示で導入):

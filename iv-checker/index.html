@@ -799,7 +799,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     48〜50は各20。PL50まで合計296）。</p>
   <h4>PL上限</h4>
   <p>50 ／ 51（最高の相棒）。メガシンカのポケモンでは、<b>メガLv4</b> の 52 と、
-    メガLv4＋最高の相棒の 53 も選べます。アメXLを使わない場合の上限（40・41）も並べてあります。</p>
+    メガLv4＋最高の相棒の 53 も選べます。アメXLを使わない場合の上限（40・41）も並べてあります。リーグのCP上限を超えるメガ・ゲンシは、バトルのあいだだけ上限に収まるPLまで自動で下がるので、スーパー・ハイパーの順位と表のPLはその前提です。</p>
   <h4>100%チェック</h4>
   <p>ポケモン欄の右上の「<b>100%チェック</b>」を押して、<b>どこで手に入れたか</b>を選ぶと、
     そのときの<b>個体値100%（15/15/15）のCP</b>が出ます。捕まえる画面のCPがこの数字と同じなら100%です。</p>
@@ -870,12 +870,13 @@ function bestLevel(ba,bd,bh,ia,id_,ih,capCP,maxLv){
   return best;
 }
 
+const isMegaP=p=>p.i.includes('_mega')||p.i.includes('_primal');
 function rankAll(p,capCP,maxLv,fl){
   const rows=[];
   for(let ia=fl;ia<16;ia++)for(let id_=fl;id_<16;id_++)for(let ih=fl;ih<16;ih++){
     const r=bestLevel(p.a,p.f,p.h,ia,id_,ih,capCP,maxLv);
     if(!r) continue;
-    if(p.lf && 1+r[0]/2<p.lf) continue;   // PL下限未満の個体は存在しない(ジガルデ20)
+    if(p.lf && !isMegaP(p) && 1+r[0]/2<p.lf) continue;   // PL下限未満の個体は存在しない(ジガルデ20)。メガ・ゲンシはバトル中にPLが自動で下がるので下限を見ない
     const m=CPMS[r[0]];
     const A=(p.a+ia)*m, D=(p.f+id_)*m, H=floor((p.h+ih)*m);
     rows.push({sp:A*D*H, cp:r[1], lv:1+r[0]/2, ia, id:id_, ih, at:A, df:D, hp:H});   // at/df/hp=実数値(表示の「実数値」用)
@@ -1014,7 +1015,7 @@ function render(){
   if(idx<0){
     if(stEl) stEl.innerHTML='<span class="lgterr">'+(belowFloor
       ? '入力個体値がこの入手方法の最低値('+state.floor+')未満です'
-      : state.p.lf ? 'この個体はリーグCP制限に収まりません(PL'+state.p.lf+'未満の個体は存在しません)'
+      : state.p.lf && !isMegaP(state.p) ? 'この個体はリーグCP制限に収まりません(PL'+state.p.lf+'未満の個体は存在しません)'
       : 'この個体はリーグCP制限を満たせません')+'</span>';
     document.getElementById('top10').innerHTML='';
     document.getElementById('mewrap').style.display='none';

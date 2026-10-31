@@ -910,9 +910,14 @@ const ivFloorOf = (key, shadow) => {
   if (!p) return 0;
   return (shadow && p.ivfs != null) ? p.ivfs : (p.ivf || 0);
 };
-const lvFloorOf = key => (D.pokemon[key] && D.pokemon[key].lvf) || 1;   // PLの下限(ジガルデ20)
+// PLの下限(ジガルデ20)。メガ・ゲンシはバトル中にPLが自動で下がるので下限を見ない(メガディアンシーがスーパーで計算できる)。個体値の下限は残す
+const lvFloorOf = key => (!isMega(key) && D.pokemon[key] && D.pokemon[key].lvf) || 1;
+// GBLのリーグ戦ではメガのPL52・53・55は使えない(公式: スーパーマックスレベルの大きなCPボーナスはマスターリーグでは付かない)。ロケット団戦は従来どおり
+const plTop = maxLv => plusOn() ? Math.min(maxLv || 51, 51) : maxLv;
+const plOfBattle = lv => plusOn() ? Math.min(lv, 51) : lv;   // 登録した個体のPLも同じ上限で戦う
 function rank1(key, cap, minIv, maxLv, shadow) {
   minIv = Math.max(minIv || 0, ivFloorOf(key, shadow));
+  maxLv = plTop(maxLv);
   const ck = key + '|' + cap + '|' + (minIv || 0) + '|' + (maxLv || '');
   if (R1C.has(ck)) return R1C.get(ck);
   const v = rank1Calc(key, cap, minIv, maxLv);
@@ -954,7 +959,13 @@ function overCapCp(base) {
   const cp = PvpEngine.buildStats(D, base).cp;
   return cp > base.cap ? cp : 0;
 }
-const overCapTag = base => overCapCp(base) ? ' <span class="over">⚠リーグ上限超え</span>' : '';
+// メガ・ゲンシは上限を超えず自動でPLが下がるので、下がったときだけその旨を出す(新しくCPを出す画面も必ずこれを通す)
+const plAdjTxt = st => `PL${st.plFrom}→PL${st.plUsed}に自動調整`;
+const overCapTag = base => {
+  if (overCapCp(base)) return ' <span class="over">⚠リーグ上限超え</span>';
+  const st = base && base.cap ? PvpEngine.buildStats(D, base) : null;
+  return st && st.plFrom ? ` <span class="pladj">${plAdjTxt(st)}</span>` : '';
+};
 // 勝者が決まらなかった対面(res.winner)。'draw'=相打ち / null=540ターン(270秒)たっても
 // どちらも倒れなかった。**null のときに res.final[winner] を引くと落ちる**ので、
 // 残HP%を出す前に必ずこれで弾く(SPアタックを覚えないポケモン同士などで実際に起きる)
@@ -1104,6 +1115,7 @@ function optimize(cfgL, cfgR) {
 function bpUrl(L, R) {
   const q = new URLSearchParams();
   if (!PAGE_ROCKET && cap) q.set('lg', String(cap));
+  if (PAGE_ROCKET) q.set('rk', '1');   // ロケット団戦はメガのPL52以上がそのまま使える
   q.set('me', L.key);
   if (L.shadow) q.set('msh', '1');
   if (L.ivs) q.set('miv', L.ivs.join('.'));
@@ -1119,7 +1131,7 @@ function bpUrl(L, R) {
 
 // 指定個体値でCP上限を超えない最大PLを返す
 function maxLevelFor(key, ivs, capV, maxLv) {
-  const LV = levelsUpTo(maxLv);
+  const LV = levelsUpTo(plTop(maxLv));
   let lo = 0, hi = LV.length - 1, li = 0;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
@@ -1246,7 +1258,7 @@ sideEl.forEach((el, i) => {
       // 個体値に合わせてPLをCP上限内の最大(最適)レベルへ自動調整
       S[i].mLevel = maxLevelFor(S[i].key, S[i].mIvs, cap, S[i].maxLv);
       ivInputs[3].value = S[i].mLevel;
-    } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, lvFloorOf(S[i].key), S[i].maxLv); inp.value = S[i].mLevel; }
+    } else { S[i].mLevel = clamp(Math.round((+inp.value || 1) * 2) / 2, lvFloorOf(S[i].key), plTop(S[i].maxLv)); inp.value = S[i].mLevel; }
     run();
   });
   // メガLv(＋わざを持つメガだけ): 追加SPアタックの威力倍率。既定はLv4(1.3倍)
@@ -1499,6 +1511,10 @@ ${PAGE_ROCKET ? '' : `
   トレーナーバトルでも同じ倍率がかかるので、＋わざを持つメガを選ぶと<b>「メガLv」</b>の切り替えが出ます。
   <b>既定はLv4（最大）</b>。環境一覧・対策さがしなど一覧の相手はLv4で計算します。ほかのわざには効きません。</p>
   <p>対戦データにまだ性能が入っていない＋わざ（消費ゲージが未発表のもの）は出ません。</p>
+
+  <h4>メガ・ゲンシのCP自動調整</h4>
+  <p>メガ・ゲンシのCPがリーグやカップの上限を超えるときは、バトルのあいだだけPLが自動で下がり、上限に収まるいちばん高いPL（0.5刻み）で戦います。個体値はそのままです。調整が起きると「PL50→PL◯に自動調整」と出ます。
+  GOバトルリーグではメガのPLは51までで計算します（ロケット団戦ではPL52以上も使えます）。</p>
 
   <h4>パーティ診断の「平均勝率」</h4>
   <p>環境上位の相手<b>1匹あたり</b>、パーティの何匹が勝てるかを割合で出したものです。
@@ -2322,7 +2338,7 @@ function restoreFoeInputs() {
   });
   el.querySelector('.mypkbar').style.display = '';   // ★登録リストのタブを戻す
   syncTimingTabs(false);
-  el.querySelector('.smaxwrap').style.display = (S[1].key && isMega(S[1].key)) ? 'block' : 'none';
+  el.querySelector('.smaxwrap').style.display = (!plusOn() && S[1].key && isMega(S[1].key)) ? 'block' : 'none';
   el.querySelector('.bluffwrap').style.display =
     S[1].c2 && !['multi', 'counter', 'party'].includes(mode) ? 'block' : 'none';
   hideLabelFor(el, '.ivmode', true); hideLabelFor(el, '.c2row', true);
@@ -2513,7 +2529,7 @@ function runMulti() {
   if (needMy || needMv) {
     if (needMv) {   // わざ欄だけは先に埋めて、すぐ選べるようにする
       const mb = S[0].ivMode === 'manual' && S[0].mIvs
-        ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }
+        ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: plOfBattle(S[0].mLevel), shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }
         : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]) }))(rank1(S[0].key, cap, 0, S[0].maxLv, S[0].shadow));
       fillMoves(0, mb);
     }
@@ -2535,7 +2551,7 @@ function runMulti() {
     applyMeta(list[k]);
   };
   const meBase = S[0].ivMode === 'manual' && S[0].mIvs
-    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: S[0].mLevel, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }
+    ? { key: S[0].key, ivs: S[0].mIvs.slice(), level: plOfBattle(S[0].mLevel), shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }
     : (r => ({ key: S[0].key, ivs: r.ivs, level: r.level, shadow: S[0].shadow, cap, megaLv: megaLvOf(S[0]), ...carryOf(0) }))(rank1(S[0].key, cap, 0, S[0].maxLv, S[0].shadow));
   const myTiming = S[0].timing === 'plan' ? 'optimal' : S[0].timing;
   // SPアタック2を選んでいれば、2本を相手に合わせて使い分ける前提で計算する(わざ開放した実戦に合わせる)
@@ -2852,7 +2868,7 @@ function runCounter() {
   CV.results = [];
   // 倒したい相手(あいて)の設定。わざは対面ごとに相手側が最善を選ぶ前提で評価する
   const foeBase = S[1].ivMode === 'manual' && S[1].mIvs
-    ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: S[1].mLevel, shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }
+    ? { key: S[1].key, ivs: S[1].mIvs.slice(), level: plOfBattle(S[1].mLevel), shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }
     : (r => ({ key: S[1].key, ivs: r.ivs, level: r.level, shadow: S[1].shadow, cap, megaLv: megaLvOf(S[1]), ...carryOf(1) }))(rank1(S[1].key, cap, 0, S[1].maxLv, S[1].shadow));
   // 「全ポケモン」は環境リストの代わりに、全ポケモン(シャドウ込み)から同じ形の候補を作る
   const list = cnTop === 'all' ? cnAllList(foeBase) : cnTop === 100 ? cnBase.concat(cnExt) : cnBase;
@@ -3326,7 +3342,7 @@ function syncPartySlot(i) {
     const isPt = el.dataset.mv === 'pt';
     // そのリーグに収まる個体が存在しないポケモン(交換できない幻など)は、理想個体でCP上限を超える。
     // 枠にも必ず警告を出す(この枠はパーティ診断・GBL模擬戦・ロケット団模擬戦で共通)
-    const over = overCapTag(ptBase(m));
+    const over = overCapTag(ptBase(m, isMega(m.key) && !plusOn() ? 0 : cap));   // ロケット団戦にCP上限は無い
     const iv = (m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `個体値${m.mIvs.join('/')} PL${m.mLevel}` : '理想個体値') + over;
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
     // わざを自分で選べる枠(模擬戦)では、わざは下の欄に出るので文字では書かない。
@@ -3466,7 +3482,7 @@ function syncPtAuto() {
 function ptBase(m, capX) {
   const cp = capX != null ? capX : cap;
   if (m.ivMode === 'manual' && m.mIvs)
-    return { key: m.key, ivs: m.mIvs.slice(), level: m.mLevel, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
+    return { key: m.key, ivs: m.mIvs.slice(), level: plOfBattle(m.mLevel), shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
   const r = rank1(m.key, cp, 0, m.maxLv || 51, !!m.shadow);
   return { key: m.key, ivs: r.ivs, level: r.level, shadow: !!m.shadow, cap: cp, megaLv: megaLvOf(m) };
 }
@@ -8078,7 +8094,7 @@ function syncGbFoeSlots() {
     const st = PvpEngine.buildStats(D, base);
     const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
     el.querySelector('.fstat').innerHTML =
-      `${typeIcons(D.pokemon[m.key], 15)} CP${st.cp}・PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}` +
+      `${typeIcons(D.pokemon[m.key], 15)} CP${st.cp}・PL${st.plUsed}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}` +
       overCapTag(base);   // そのリーグに収まる個体が無いポケモンは理想個体で上限を超える
     // ＋わざを持つメガだけ「メガLv」(追加SPアタックの威力倍率・既定Lv4)を出す
     const gm = el.querySelector('.gmlv');
@@ -8671,7 +8687,7 @@ function syncSdSlots() {
       const st = PvpEngine.buildStats(D, base);
       const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
       el.querySelector('.sdcp').innerHTML =
-        `<span title="PL${base.level}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}"><i>CP</i>${st.cp}</span>` +
+        `<span title="PL${st.plUsed}／攻${f1(st.atk)}・防${f1(st.def)}・HP${st.hp}"><i>CP</i>${st.cp}</span>` +
         overCapTag(base);
       const gm = el.querySelector('.gmlv');
       gm.innerHTML = hasPlus(m.key) ? mlvSegHtml(megaLvOf(m)) : '';
@@ -12991,7 +13007,7 @@ function applyMyPk(i, m, skipRun) {
 // スーパーマックスレベルのタブ表示(メガのみ)と選択状態を同期
 function syncSmax(i) {
   const el = sideEl[i];
-  el.querySelector('.smaxwrap').style.display = (S[i].key && isMega(S[i].key)) ? 'block' : 'none';
+  el.querySelector('.smaxwrap').style.display = (!plusOn() && S[i].key && isMega(S[i].key)) ? 'block' : 'none';
   el.querySelectorAll('.smax button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.lv === S[i].maxLv));
   // メガLv(＋わざの威力倍率)は、＋わざを持つメガのときだけ出す
   const mw = el.querySelector('.mlvwrap');
@@ -13000,7 +13016,7 @@ function syncSmax(i) {
   // ﾏﾆｭｱﾙ個体値のPL欄の上限も合わせる。max="51" のままだと、メガLv4(52/53)やCPブースト(55)を
   // 選んでもスピナー(↑)で52以上に上げられない(手で打てばクランプは通る)
   const lv = el.querySelector('.ivL');
-  if (lv) lv.setAttribute('max', String(S[i].maxLv || 51));
+  if (lv) lv.setAttribute('max', String(plTop(S[i].maxLv) || 51));
 }
 
 // 発ごとのSP設定を初期状態(全部おまかせ)へ戻す。ポケモンを切り替えたときに古い指定を残さない
@@ -13097,7 +13113,7 @@ function run() {
   const myStall = rk ? RK_ENTER[RK.enter].me : 0;
   const base = S.map((s, i) => {
     const c = carryOf(i);
-    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: s.mLevel, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ...c };
+    if (s.ivMode === 'manual' && s.mIvs) return { key: s.key, ivs: s.mIvs.slice(), level: plOfBattle(s.mLevel), shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ...c };
     const r1 = rank1(s.key, capX, 0, s.maxLv, s.shadow);
     return { key: s.key, ivs: r1.ivs, level: r1.level, shadow: s.shadow, cap: capX, megaLv: megaLvOf(s), spq: s.spq || 1, ...c };
   });
@@ -13109,7 +13125,7 @@ function run() {
     if (s.ivMode === 'manual' && s.mIvs) {
       const st = PvpEngine.buildStats(D, base[i]);
       const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
-      note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (capX && st.cp > capX ? ' <span class="over">⚠リーグ上限超え</span>' : '') +
+      note.innerHTML = `この設定のCP: <b>${st.cp}</b>` + (capX ? overCapTag(base[i]) : '') +
         `<div class="ivstats">攻 <b>${f1(st.atk)}</b>・防 <b>${f1(st.def)}</b>・HP <b>${st.hp}</b></div>`;
     } else if (overCapCp(base[i])) {
       // 理想個体(自動)でも、そのリーグに収まる個体が存在しないポケモンは上限を超える。
@@ -13325,7 +13341,7 @@ function fillMoves(i, cfg) {
   // (シャドウ補正をかける前の値＝ゲームやシミュレーターの表示に合わせる)
   el.querySelector('.ivline').textContent = cfg.statMult
     ? `CP${st.cp}／攻${st.baseAtk.toFixed(2)}・防${st.baseDef.toFixed(2)}・HP${st.hp}`
-    : `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${cfg.level}`;
+    : `CP${st.cp} / 個体値${cfg.ivs.join('/')} / PL${st.plUsed}`;
   // タイプが同名でかぶるわざ(ウェザーボール等)は、読み込み時に名前へタイプを入れてある
   const opt = (m, sel) => {
     const mv = D.moves[m];

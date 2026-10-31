@@ -13,7 +13,8 @@
         "mock-sp",
         "mock-skip",
         "exit-gbl",
-        "rocket-rank"
+        "rocket-rank",
+        "mega-cap"
       ],
       "paths": [
         "assets/gbl-app.js",
@@ -56,7 +57,8 @@
       "rules": ".claude/rules/iv.md",
       "checklist": ".claude/checklists/iv.md",
       "checks": [
-        "iv-calc"
+        "iv-calc",
+        "mega-cap"
       ],
       "paths": [
         "iv-checker/**"
@@ -82,7 +84,8 @@
       "rules": ".claude/rules/breakpoint.md",
       "checklist": ".claude/checklists/breakpoint.md",
       "checks": [
-        "gbl-engine"
+        "gbl-engine",
+        "mega-cap"
       ],
       "paths": [
         "breakpoint/**"
