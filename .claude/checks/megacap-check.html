@@ -34,6 +34,10 @@ const fr = src => new Promise(r => { const f = document.createElement('iframe');
     ok('マスターの登録個体はPL51まで', g.eval(`ptBase({key:'dragonite_mega',ivMode:'manual',mIvs:[15,15,15],mLevel:53,maxLv:53},0).level`), 51);
     ok('ブレイクポイントのメガはPL51まで', bp.eval(`megaPls()`), [50, 51]);
     ok('ロケット団戦はPL53のまま', rk.eval(`[rank1('dragonite_mega',0,0,53,false).level,ptBase({key:'dragonite_mega',ivMode:'manual',mIvs:[15,15,15],mLevel:53,maxLv:53},0).level]`), [53, 53]);
+    // 2026-10-31の点検で見つけた3つ(パーティ枠のPL表示・★登録のPL53の入力欄・ロケット団の枠の警告)
+    ok('パーティ枠のPLは戦うPL(plUsed)', g.eval(`(()=>{const v=PT[0];PT[0]={key:'dragonite_mega',ivMode:'manual',mIvs:[15,15,15],mLevel:50,maxLv:53,shadow:false};syncPartySlot(0);const t=document.querySelector('.pslot.mine[data-i="0"] .pmeta').innerText;PT[0]=v;syncPartySlot(0);return [/PL10\\.5/.test(t),/PL50/.test(t)]})()`), [true, false]);
+    ok('★登録のPL53はGBLの入力欄でも51', g.eval(`(()=>{applyMyPk(0,{key:'dragonite_mega',ivMode:'manual',mIvs:[15,15,15],mLevel:53,maxLv:53},true);return [S[0].mLevel,sideEl[0].querySelector('.ivL').value]})()`), [51, '51']);
+    ok('ロケット団の枠に上限超えの警告を出さない', rk.eval(`(()=>{const v=PT[0];PT[0]={key:'azumarill',ivMode:'manual',mIvs:[15,15,15],mLevel:50,maxLv:51,shadow:false};syncPartySlot(0);const t=document.querySelector('.pslot.mine[data-i="0"] .pmeta').innerText;PT[0]=v;syncPartySlot(0);return [/PL50/.test(t),/上限超え/.test(t)]})()`), [true, false]);
   } catch (e) { res.push(['実行エラー', false, String(e), '']); }
   const bad = res.filter(r => !r[1]).length;
   document.getElementById('out').innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')

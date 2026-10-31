@@ -3347,8 +3347,11 @@ function syncPartySlot(i) {
     const isPt = el.dataset.mv === 'pt';
     // そのリーグに収まる個体が存在しないポケモン(交換できない幻など)は、理想個体でCP上限を超える。
     // 枠にも必ず警告を出す(この枠はパーティ診断・GBL模擬戦・ロケット団模擬戦で共通)
-    const over = overCapTag(ptBase(m, isMega(m.key) && !plusOn() ? 0 : cap));   // ロケット団戦にCP上限は無い
-    const iv = (m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `個体値${m.mIvs.join('/')} PL${plOfBattle(m.mLevel)}` : '理想個体値') + over;
+    // ロケット団戦(plusOn が偽)にCP上限は無いので、ふつうのポケモンの手入力PL50にも「⚠リーグ上限超え」を出さない(2026-10-31の点検で発見・計算は元から cap 0)
+    const pb = ptBase(m, plusOn() ? cap : 0);
+    const over = overCapTag(pb);
+    // PLは入力した値ではなく実際に戦うPL(plUsed)。メガ・ゲンシは上限に収まるPLまで下がるので、1対1の表示(ivline)とそろえる(2026-10-31の点検)
+    const iv = (m.ivMode === 'manual' && Array.isArray(m.mIvs) ? `個体値${m.mIvs.join('/')} PL${PvpEngine.buildStats(D, pb).plUsed}` : '理想個体値') + over;
     const mv = m.fast ? `${D.moves[m.fast].n}${m.c1 ? ' / ' + D.moves[m.c1].n : ''}${m.c2 ? ' / ' + D.moves[m.c2].n : ''}` : 'わざは対面ごとに自動';
     // わざを自分で選べる枠(模擬戦)では、わざは下の欄に出るので文字では書かない。
     // 個体値・PLの文字も出さない(⚙詳細にある。ﾏﾆｭｱﾙ入力中だけ小さく出して分かるようにする)
@@ -12992,7 +12995,8 @@ function applyMyPk(i, m, skipRun) {
   S[i].mvDef = false;
   resetPin(i);   // 前のポケモンで確定したわざを持ち越さない
   resetSpPlan(i);   // 発ごとのSP設定は「おまかせ」に戻す(前のポケモンの指定を残さない)
-  S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel || null;
+  // ★登録のPL53(ロケット団戦で登録したメガ)はGBLのリーグ戦ではPL51までで戦うので、入力欄の数字も戦うPLにそろえる(2026-10-31の点検)
+  S[i].ivMode = m.ivMode || 'auto'; S[i].mIvs = m.mIvs || null; S[i].mLevel = m.mLevel ? plOfBattle(m.mLevel) : null;
   S[i].shadow = !!m.shadow;
   applyDefaultMoves(i);   // ★登録にわざが無ければ既定を入れる
   S[i].maxLv = m.maxLv || 51;
@@ -14365,7 +14369,7 @@ const bootStep = (name, fn) => { try { fn(); } catch (e) { bootErr(name, e); } }
     if (p.length < 4 || p.some(n => isNaN(n))) return;
     S[i].ivMode = 'manual';
     S[i].mIvs = [p[0], p[1], p[2]];
-    S[i].mLevel = p.length > 4 ? p[3] + p[4] / 10 : p[3];   // PL45.5は「45.5」の2要素に割れて届く
+    S[i].mLevel = plOfBattle(p.length > 4 ? p[3] + p[4] / 10 : p[3]);   // PL45.5は「45.5」の2要素に割れて届く。古いリンクのPL52以上はGBLでは51に
     const el = sideEl[i];
     el.querySelectorAll('.ivmode button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'manual'));
     el.querySelector('.custIv').style.display = 'block';
