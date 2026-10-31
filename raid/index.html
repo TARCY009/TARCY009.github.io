@@ -290,6 +290,12 @@ table.tl td.bhp.y b{color:#ffd54a} table.tl td.bhp.y i{background:linear-gradien
 table.tl td.bhp.r b{color:#ff9d9d} table.tl td.bhp.r i{background:linear-gradient(90deg,#ff6b81,#ff9d9d)}
 :root.light table.tl td.bhp.g b{color:#1e8f52} :root.light table.tl td.bhp.y b{color:#a86f00} :root.light table.tl td.bhp.r b{color:#c43a4c}
 table.tl td.mhp{font-variant-numeric:tabular-nums;color:var(--sub)}
+/* チームパワーの列(ボタンがオンで2人以上のときだけ出る)。満タンと2倍で戻った行は金 */
+table.tl td.tpm{position:relative;white-space:nowrap;min-width:64px;font-variant-numeric:tabular-nums}
+table.tl td.tpm b{color:var(--violet)}
+table.tl td.tpm small{margin-left:1px;color:var(--sub);font-size:.68rem}
+table.tl td.tpm i{position:absolute;left:0;bottom:0;height:3px;opacity:.85;pointer-events:none;border-radius:99px;background:var(--violet)}
+table.tl td.tpm.full b{color:var(--gold)} table.tl td.tpm.full i{background:var(--gold)}
 .spm{color:var(--ng);font-weight:800}
 .note{font-size:.72rem;color:var(--sub);margin-top:10px}
 .expl{display:none}
@@ -474,6 +480,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <li>ひんし→次のポケモンは<b>1秒</b>（固定）。手持ちが全滅したら<b>再突入</b>の秒数（既定10秒・変更可）だけ攻撃が止まります</li>
     <li><b>メガシンカ・ゲンシカイキは1匹しか使えない</b>ので、そのポケモンがひんしになったら控えを出さずに<b>再突入</b>してやり直します（メガ1匹で何度も再突入するほうが、メガ無しの6匹より速いことがあります）。6匹編成にメガを2匹以上入れても最初の1匹だけで戦います</li>
     <li>タイムラインの<b>ボス残りHP</b>はその行のあとのボスのHP（数値と割合）、<b>じぶんHP</b>は場に出ているポケモンのHPです</li>
+    <li>チームパワーがオンで2人以上のときは、タイムラインの右端に<b>メーターのたまり具合</b>（現在値/18）が出ます。満タンのあとのSPアタックが2倍になった行は「18→0+3」のように、0へ戻ってそのわざのぶんが足された形で出ます</li>
     <li><b>実戦DPS</b>＝1人あたりの与ダメージ÷経過時間。ひんし・再突入・回避で攻撃できない時間も含んだ「実際に出せている火力」です</li>
   </ul>
   <h4>ランクごとの前提</h4>
@@ -499,14 +506,14 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
 <script src="/assets/home.js"></script>
 <script src="/assets/feedback.js"></script>
 <script src="/assets/mega-lv.js"></script>
-<script src="/assets/raid-engine.js?v=2026-09-19.2"></script>
+<script src="/assets/raid-engine.js?v=2026-10-31.1"></script>
 <script>
 // ---- エンジンの版チェック(2026-09-04タダシさん報告で追加) ----
 // 画面だけ新しく、エンジン(raid-engine.js)がブラウザのキャッシュに古いまま残ると、
 // タイムラインが undefined/NaN になったり、メガの再突入ルールが効かなかったりする(実際に本番で起きた)。
 // 対策は3段: ①<script src> に ?v= を付けてキャッシュを避ける ②エンジンの VERSION がこの値と違ったら
 // キャッシュを使わずに取り直して1回だけ再読み込みする ③それでも直らなければ上に案内を出す(下の timelineHtml も値が無ければ「—」を出す)
-const RAID_ENGINE_VER='2026-09-19.2';
+const RAID_ENGINE_VER='2026-10-31.1';
 (function(){
   try{
     const have=window.RaidEngine&&RaidEngine.VERSION;
@@ -1085,6 +1092,14 @@ function timelineHtml(){
   const bp=D.pokemon[boss];
   // エンジンの記録(bl/mh)が無い行があれば、こちらで与ダメージを積み上げて補う(undefined/NaN を絶対に出さない)
   let cum=0, lacked=false;
+  // チームパワーの列はメーターが動くとき(ボタンがオンで2人以上)だけ。記録(tm)が無い行は「—」
+  const hasTp=cfg.tp>0, TPM=RaidEngine.TP_MAX||18;
+  const tpCell=x=>{
+    if(!hasTp)return '';
+    if(x.tm==null)return '<td class="tpm">—</td>';
+    if(x.tp)return `<td class="tpm full"><b>${TPM}→0</b><small>+${x.tm}</small></td>`;
+    return `<td class="tpm${x.tm>=TPM?' full':''}"><b>${x.tm}</b><small>/${TPM}</small><i style="width:${Math.min(100,Math.round(x.tm/TPM*100))}%"></i></td>`;
+  };
   const rowsH=r.log.slice(0,MAXROW).map(x=>{
     if(x.side==='me'&&x.dmg)cum+=x.dmg;
     const bl=x.bl!=null?x.bl:(lacked=true,Math.max(0,t.hp-cum*selN));
@@ -1095,18 +1110,18 @@ function timelineHtml(){
     const bcls=bpct>50?'g':bpct>20?'y':'r';
     const bhp=`<td class="bhp ${bcls}"><b>${bl}</b><small>${bpct}%</small><i style="width:${bpct}%"></i></td>`;
     const mhp=`<td class="mhp">${mh}</td>`;
-    if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td>${bhp}${mhp}</tr>`;
+    if(x.side==='sys')return `<tr class="sys"><td colspan="4">⏱${(t.time-x.t).toFixed(1)}　${x.note}</td>${bhp}${mhp}${tpCell(x)}</tr>`;
     const nm=x.side==='me'?cfg.team[x.mi].name:bp.n;
     const cls=x.side==='me'?'me':'boss';
     return `<tr class="${cls}"><td class="nm">${nm}</td><td>${(t.time-x.t).toFixed(1)}</td>
-      <td class="mv">${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td>${bhp}${mhp}</tr>`;
+      <td class="mv">${x.sp?'<span class="spm">'+x.mv.n+'</span>':x.mv.n}${x.tp?'<small>（チームパワー×2）</small>':''}${x.dodged?'<small>（回避）</small>':''}</td><td>${x.miss?'—':x.dmg}</td>${bhp}${mhp}${tpCell(x)}</tr>`;
   }).join('');
   if(lacked)console.warn('レイドシミュ: エンジンの記録にHPが無い行があります(エンジンが古い可能性)');
   const more=r.log.length>MAXROW?`<p class="note">長いので先頭${MAXROW}行だけ表示しています</p>`:'';
   const sum=r.win?`残り${(t.time-r.t).toFixed(1)}秒で討伐`:`時間切れ・ボスの残りHP ${Math.round(r.bossLeft/t.hp*100)}%`;
   const hasMega=cfg.team.some(m=>m.mega);
   return `<details class="tl" open data-snap-skip><summary>タイムライン　<b>${selN}人</b>で挑んだとき｜${sum}｜実戦DPS ${(r.dmg/r.t).toFixed(1)}｜ひんし${r.faints}回・${hasMega?'再突入':'全滅'}${r.wipes}回</summary>
-    <div class="tlwrap"><table class="tl"><thead><tr><th>ポケモン</th><th title="残り時間(秒)">タイム</th><th>わざ</th><th>ダメージ</th><th title="この行のあとのボスの残りHP(数値と割合)">ボス残りHP</th><th title="この行のあとのじぶんのポケモンのHP">じぶんHP</th></tr></thead><tbody>${rowsH}</tbody></table></div>${more}</details>`;
+    <div class="tlwrap"><table class="tl"><thead><tr><th>ポケモン</th><th title="残り時間(秒)">タイム</th><th>わざ</th><th>ダメージ</th><th title="この行のあとのボスの残りHP(数値と割合)">ボス残りHP</th><th title="この行のあとのじぶんのポケモンのHP">じぶんHP</th>${hasTp?'<th title="この行のあとのチームパワーのメーター(最大18)。満タンのあとのSPアタックが2倍になり0へ戻ります">チームパワー</th>':''}</tr></thead><tbody>${rowsH}</tbody></table></div>${more}</details>`;
 }
 
 // ---- イベント ----

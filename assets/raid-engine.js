@@ -119,13 +119,14 @@
     var t = 0, myGen = 0, mon = 0, faints = 0, wipes = 0;
     var myHP = team[0].hp, myE = 0, bE = 0, total = 0, win = false, endT = null;
     var tp = cfg.tp || 0, tpMeter = 0;   // チームパワー(瀕死交代しても引き継ぐのでポケモンごとに戻さない)
+    var tpShown = 0;      // タイムラインに出すメーター(撃ち始めで増える tpMeter を、ダメージが入った行まで遅らせた値。計算には使わない)
     var sh = 0;                          // スーパーメガのシールド(0=展開前/破壊後 1=展開中。ダメージ表の添字)
     var shDone = false, shWarned = false, shPlan = false; // 割り切ったか / 割れないと記録済みか / 割れる時刻を予約済みか
     var spOpp = 0;        // 'alt'用: SPを撃てた機会の数(2回に1回撃つ)
     var activeFrom = 0;   // この時刻までこちらのポケモンは場にいない(交代・再突入の待ち)
     var pendAct = null;   // 予約中のこちらの行動(回避したらこの開始を0.5秒うしろへずらす)
     var log = [];
-    function L(o) { if (cfg.wantLog) log.push(o); }
+    function L(o) { if (cfg.wantLog) { if (tp) o.tm = tpShown; log.push(o); } }
     function pushAct(tt, g) { pendAct = { t: tt, pr: 0, k: 'act', g: g }; ev.push(pendAct); }
     // スーパーメガ: シールドを割れるかどうかは「人数 × 1人が割れる枚数」だけで決まる。
     // ⚠ 追いかけている1匹がSPアタックを当てたかどうかで決めてはいけない——このシミュレーションは
@@ -179,10 +180,15 @@
           tpMeter = Math.min(TP_MAX, tpMeter + tp);
         }
         // ダメージは当たった瞬間のシールド状態で決める(hit側で表を引く)
-        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, sp: useC, tp: tpBoost, mi: mon });
+        ev.push({ t: t + mv.w, pr: 1, k: 'hit', g: myGen, mv: mv, sp: useC, tp: tpBoost, mi: mon, tm: tpMeter });
         pushAct(t + mv.d, myGen);
       } else if (e.k === 'hit') {                // こちらのダメージが入る(ゲージもこの瞬間に入る)
-        if (e.g !== myGen) continue;             // 撃っている途中で倒れたぶんは消える
+        if (e.g !== myGen) {                     // 撃っている途中で倒れたぶんは消える
+          if (e.tp) L({ t: t, side: 'sys', note: '2倍になるSPアタックが当たる前に倒された（チームパワーは使ったまま）',
+                        bl: Math.max(0, bs.hp - total * N), mh: myHP });
+          continue;
+        }
+        if (tp) tpShown = e.tm;
         var md = e.sp ? (e.tp ? myC2[sh][e.mi] : myC[sh][e.mi]) : myF[sh][e.mi];
         total += md;
         if (!e.sp) myE = Math.min(MAX_ENERGY, myE + e.mv.e);
@@ -236,6 +242,7 @@
         if (myHP <= 0) {
           myGen++; faints++;
           myE = 0;
+          tpShown = tpMeter;                     // 撃ちかけのわざのぶんも消えずに残るので、ここで追いつかせる
           var blNow = Math.max(0, bs.hp - total * N);
           if (team[mon].mega) {
             // メガシンカ・ゲンシカイキは1匹だけ → ひんしになったら控えを出さずに再突入してやり直す
@@ -264,7 +271,7 @@
 
   // 版番号: raid/index.html が同じ値を期待し、食い違ったら古いキャッシュとみなして取り直す(2026-09-04)。
   // ⚠ このファイルを変えたら必ず上げ、raid/index.html の RAID_ENGINE_VER と <script src> の ?v= も同じ値にする
-  var VERSION = '2026-09-19.2';
-  root.RaidEngine = { simulate: simulate, damage: damage, VERSION: VERSION,
+  var VERSION = '2026-10-31.1';
+  root.RaidEngine = { simulate: simulate, damage: damage, VERSION: VERSION, TP_MAX: TP_MAX,
     PLAYER_START: PLAYER_START, BOSS_STARTS: BOSS_STARTS, BOSS_GAP: BOSS_GAP };
 })(typeof window !== 'undefined' ? window : globalThis);
