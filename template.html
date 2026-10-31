@@ -523,7 +523,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <li><b>「分割SP優遇」</b>を押すと、1位が<b>ゲージ分割なし（1ゲージ）</b>のわざでも、分割ありとの差が<b>7%未満</b>なら分割ありを優先します（分割ありは早く撃てるので実戦向きです）</li>
     <li>わざ名が<b class="sp">オレンジ色＋うしろに「*」</b>のものは特別わざ・レガシーわざ（イベント限定やすごいわざマシンスペシャルなどで習得）。習得済みならそのまま選べます</li>
     <li><b>めざめるパワー</b>はタイプを選べないので、そのボスに刺さるタイプをアイコンで示します</li>
-    <li>ボスのわざ一覧に<b>特別わざは出ません</b>（レイドボスは使ってこないため）</li>
+    <li>ボスのわざ一覧に<b>特別わざ・メガの＋わざは出ません</b>（レイドボスは使ってこないため）</li>
   </ul>
 
   <h4>メガの「＋」わざ（追加SPアタック）</h4>
@@ -767,7 +767,8 @@ attachSugg(document.getElementById('bossInput'),document.getElementById('bossSug
   return `<span class="srow-wrap"><span class="srow-main"><span class="srow">${p.n}</span>${typeIcons(p,18)}</span>
   <small class="srow-cp">捕獲100%CP <b>${cp100(c,20)}</b>（PL20）/ <b>${cp100(c,25)}</b>（PL25 天候ブースト）${c!==p?`・${c.n}で捕獲`:''}</small></span>`;
 });
-// レイドボスが実際に使うわざ一覧(特別わざ・レガシーわざは使用しないため通常枠のみ)
+// レイドボスが実際に使うわざ一覧(特別わざ・レガシーわざは使用しないため通常枠のみ。メガの＋わざも使わない)
+const bossChgIds=p=>p.c.filter(id=>!PLUS_IDS.includes(id));
 function bossMovesHtml(p){
   const fmt=ids=>{
     const out=[]; let hpDone=false;
@@ -783,8 +784,8 @@ function bossMovesHtml(p){
   };
   return `<details class="bossmoves"><summary>ボスのわざ</summary>
     <div class="bm-sec">ノーマルアタック</div><div class="bm-list">${fmt(p.q)}</div>
-    <div class="bm-sec">SPアタック</div><div class="bm-list">${fmt(p.c)}</div>
-    <small class="bm-note expl">※特別わざ・レガシーわざはレイドボスは使ってこないため除外しています。</small>
+    <div class="bm-sec">SPアタック</div><div class="bm-list">${fmt(bossChgIds(p))}</div>
+    <small class="bm-note expl">※特別わざ・レガシーわざ・メガの＋わざはレイドボスは使ってこないため除外しています。</small>
   </details>`;
 }
 function renderBoss(){
@@ -1351,7 +1352,7 @@ function badges(shadow, mega, p){
 function shieldMaxHit(bp, p, def){
   const bossAtk=(bp.a+15)*D.cpm['40'];
   let maxHit=0, maxMove=null;
-  for(const id of bp.c){
+  for(const id of bossChgIds(bp)){
     const m=D.moves[id];
     if(!m||m.e>=0) continue;
     const dmg=Math.floor(0.5*m.p*(bossAtk*1.8/def)*stab(bp,m)*eff(m.t,p.ty))+1;
