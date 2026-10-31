@@ -227,5 +227,30 @@ def main():
                 else: f.write(f'- 種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}\n')
 
 
+def write_family(path=PAGE):
+    """ステータス図鑑の「進化」ボタン用に、進化の親子（進化後の番号→進化前の番号）を pokedex/family.json へ書く。
+    個体値チェッカーの PRE（進化前の逆引き）と同じ作り方＝POKE の v に、ページの補正表 EVO_NOT／EVO_ADD を当てる"""
+    html = open(path, encoding='utf-8').read()
+    poke = json.loads(re.search(r'const POKE = (\[.*?\]);?\n', html).group(1))
+    no = re.findall(r'(\w+):1', re.search(r'const EVO_NOT=\{(.*?)\};', html, re.S).group(1))
+    add = re.findall(r"\['(\w+)','(\w+)'\]", re.search(r'const EVO_ADD=\[(.*?)\];', html, re.S).group(1))
+    if not no or not add:
+        raise SystemExit('進化の補正表が読めません（EVO_NOT／EVO_ADD の書き方が変わった）')
+    ids = {p['i'] for p in poke}
+    pre = {}
+    for p in poke:
+        for c in p.get('v') or []:
+            if c in ids and c not in no and c not in pre:
+                pre[c] = p['i']
+    for a, b in add:
+        if a in ids and b in ids:
+            pre[b] = a
+    with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(path))), 'pokedex', 'family.json'), 'w', encoding='utf-8') as f:
+        json.dump(pre, f, ensure_ascii=False, separators=(',', ':'), sort_keys=True)
+        f.write('\n')
+    print(f'図鑑の進化の親子: {len(pre)}組')
+
+
 if __name__ == '__main__':
     main()
+    write_family()

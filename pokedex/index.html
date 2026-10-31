@@ -313,6 +313,12 @@ td .unk,.mvwin .unk{color:var(--sub);font-weight:600}
 .fregs{display:flex;flex-wrap:wrap;gap:6px}
 .fregs button{padding:6px 12px;border:1px solid var(--line2);border-radius:999px;background:var(--tab);color:var(--sub);font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 .fregs button[aria-pressed="true"]{background:linear-gradient(160deg,#7ce7ff 0%,#08b4c9 45%,#0a7f96 100%);color:#042330;border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+/* 関連するすがた: 進化系統・メガ・地方違いへ移るボタン(名前が確定しているあいだだけ出す) */
+#relnav{margin-top:10px;display:flex;flex-direction:column;gap:7px;scroll-margin-top:12px}
+#relnav[hidden]{display:none}
+.relrow{display:flex;align-items:flex-start;gap:8px}
+.rellbl{flex:0 0 2.9em;padding-top:7px;font-size:.72rem;font-weight:800;color:var(--sub);letter-spacing:.05em}
+.relrow .fregs{flex:1;min-width:0}
 .fclear{margin-left:auto;background:none;border:none;color:var(--sub);font-size:.74rem;cursor:pointer;text-decoration:underline}
 .filthead{display:flex;align-items:center}
 .flcnt{font-size:.76rem;color:var(--sub);margin:10px 0 6px}
@@ -370,6 +376,7 @@ footer{margin-top:20px;color:var(--sub);font-size:.68rem;text-align:center;line-
     <button id="qclr" class="clrbtn" type="button" aria-label="入力を消す" title="入力を消します">✕</button>
     <div id="sugg"></div>
   </div>
+  <div id="relnav" hidden></div>
   <div class="filthead">
     <button class="filttab" id="filttab" aria-expanded="false" title="タイプや地方でポケモンを絞り込めます">▸ タイプ・地方で絞り込む</button>
     <button class="fclear" id="fclear" style="display:none" title="絞り込みをすべて外します">絞り込みを外す</button>
@@ -504,7 +511,9 @@ Promise.all([
   fetch('/pokedex/unreleased.json').then(r=>r.ok?r.json():{pokemon:{}}).catch(()=>({pokemon:{}})),
   // 図鑑専用: ゲームにまだ無いメガ(原作の種族値からの換算)と、＋わざの判明段階(build_mega_preview.py が作る)
   fetch('/pokedex/mega_preview.json').then(r=>r.ok?r.json():{}).catch(()=>({})),
-]).then(([g,p,u,mp])=>{ GO=g; PVP=p;
+  // 図鑑専用: 進化の親子(進化後の番号→進化前の番号・iv-checker/build_iv.py が作る。無ければ進化の行だけ出ない)
+  fetch('/pokedex/family.json').then(r=>r.ok?r.json():{}).catch(()=>({})),
+]).then(([g,p,u,mp,fam])=>{ GO=g; PVP=p; EVO_PRE=fam||{};
   // バトル中の内部フォルム(対戦データで hid=1 のもの)は、ジム・レイド側の同名フォルムも載せない
   const hidNames=new Set(Object.values(PVP.pokemon).filter(v=>v.hid).map(v=>v.n));
   Object.entries(u.pokemon||{}).forEach(([k,v])=>{ if(!GO.pokemon[k]&&!hidNames.has(v.n)) GO.pokemon[k]={...v,un:1}; });
@@ -630,7 +639,7 @@ function weakSetOf(e){
 
 // ---- 検索 ----
 const q=document.getElementById('q'), sugg=document.getElementById('sugg'), qclr=document.getElementById('qclr');
-function syncClr(){ qclr.style.display=q.value?'block':'none'; }
+function syncClr(){ qclr.style.display=q.value?'block':'none'; renderRel(); }
 function passFilter(e){
   for(const t of state.ftypes) if(!e.ty.includes(t)) return false;
   for(const t of state.fweak) if(!weakSetOf(e).has(t)) return false;
@@ -780,13 +789,21 @@ q.addEventListener('input',e=>{
   });
 });
 document.addEventListener('click',e=>{ if(!e.target.closest('.searchbox'))sugg.style.display='none'; });
+// 候補を選ばずに離れると共通の守り(home.js)が入力欄を前の名前へ戻す。戻ったあとで関連のボタンを出し直す
+q.addEventListener('blur',()=>setTimeout(renderRel,300));
 qclr.onclick=()=>{ q.value=''; sugg.style.display='none'; syncClr(); q.focus(); };
 
 // ---- 選択と描画 ----
 function pick(name){
   state.key=name;
   render();
-  document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+  scrollToPicked();
+}
+// 関連のボタンが画面の上に来る位置へ送る(ボタンのすぐ下が結果)。絞り込みの一覧が間にあるときは結果へ送る
+function scrollToPicked(){
+  const rel=document.getElementById('relnav');
+  const listOpen=document.getElementById('flwrap').style.display==='block'||document.getElementById('filtbody').classList.contains('open');
+  (rel.hidden||listOpen?document.getElementById('result'):rel).scrollIntoView({behavior:'smooth',block:'start'});
 }
 function entryOf(name){ return DEX.find(e=>e.name===name); }
 
@@ -880,7 +897,63 @@ function render(){
   renderMoves();
   pageLink();
   updateUrl();
+  renderRel();
 }
+// ---- 関連するすがた(進化系統・メガ・地方違い)へ移るボタン ----
+// 名前が確定しているあいだだけ出す(入力欄の文字＝表示中のポケモンのとき)。いま見ている姿は点灯。
+// 移れる先が無い行は出さない
+let EVO_PRE={}, EVO_KIDS=null, DEX_BY_PVP=null;
+const REGION_NAME=/^(アローラ|ガラル|ヒスイ|パルデア)/;
+function familyLine(e){   // 進化の枝を全部(いちばん元の姿から順に)
+  if(!e.pvp)return [e];
+  if(!EVO_KIDS){
+    EVO_KIDS={}; DEX_BY_PVP=new Map(DEX.filter(x=>x.pvp).map(x=>[x.pvp,x]));
+    for(const [c,pr] of Object.entries(EVO_PRE))(EVO_KIDS[pr]=EVO_KIDS[pr]||[]).push(c);
+  }
+  let root=e.pvp;
+  for(let i=0;i<6&&EVO_PRE[root];i++)root=EVO_PRE[root];
+  const keys=[root];
+  const dexOf=k=>(DEX_BY_PVP.get(k)||{}).dex||9999;
+  for(let i=0;i<keys.length;i++)keys.push(...(EVO_KIDS[keys[i]]||[]).slice().sort((a,b)=>dexOf(a)-dexOf(b)));
+  const line=keys.map(k=>DEX_BY_PVP.get(k)).filter(Boolean);
+  return line.includes(e)?line:[e];
+}
+function megaBase(e){   // メガ・ゲンシの元の姿。名前から引けないものは同じ図鑑番号のふつうの姿
+  const n=e.name.replace(/^(メガ|ゲンシ)/,'').replace(/[XYZ]$/,'');
+  return entryOf(n)||DEX.find(x=>x.dex===e.dex&&!x.mega&&!REGION_NAME.test(x.name))||e;
+}
+function relGroups(e){
+  const base=e.mega?megaBase(e):e;
+  const line=familyLine(base);
+  const dexes=new Set(line.filter(m=>!REGION_NAME.test(m.name)).map(m=>m.dex));
+  const megas=DEX.filter(x=>x.mega&&x.dex!==9999&&dexes.has(x.dex));
+  const inLine=new Set(line);
+  const isReg=x=>REGION_NAME.test(x.name);
+  // 地方の姿から見たときの元の姿は、括弧の付くフォルム(ヒヒダルマ（ダルマ）など)を除く。元の姿を先に並べる
+  const forms=DEX.filter(x=>!x.mega&&x.dex!==9999&&!inLine.has(x)
+    &&line.some(m=>m.dex===x.dex&&(isReg(x)||(isReg(m)&&!/[（(]/.test(x.name)))))
+    .sort((a,b)=>isReg(a)-isReg(b));
+  return [
+    {lb:'進化',list:line},
+    {lb:megas.length&&megas.every(x=>x.name.startsWith('ゲンシ'))?'ゲンシ':'メガ',list:megas},
+    {lb:'地方',list:forms},
+  ].filter(g=>g.list.some(x=>x!==e));
+}
+function renderRel(){
+  const box=document.getElementById('relnav');
+  const e=state.key&&q.value===state.key?entryOf(state.key):null;
+  const gs=e?relGroups(e):[];
+  box.hidden=!gs.length;
+  box.innerHTML=gs.map(g=>`<div class="relrow"><span class="rellbl">${g.lb}</span><div class="fregs">${
+    g.list.map(x=>`<button type="button" data-n="${x.name}" aria-pressed="${x===e}">${x.name}</button>`).join('')}</div></div>`).join('');
+  box.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    if(b.dataset.n===state.key)return;
+    q.value=b.dataset.n; state.key=b.dataset.n;
+    render(); syncClr();
+    if(document.getElementById('flwrap').style.display==='block')document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+}
+
 // 1ポケモン1ページ（/pokedex/<キー>/）への入口。ページの一覧（pages.json・名前→キー）があるときだけ出す
 // ＝ページを公開するまでは一覧が無いので何も出ない
 let PAGEMAP=null;
