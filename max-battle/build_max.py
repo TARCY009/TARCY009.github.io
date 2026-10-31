@@ -48,6 +48,16 @@ MANUAL_INCLUDE_D = [
     "UXIE",             # ユクシー
     "MESPRIT",          # エムリット
     "AZELF",            # アグノム
+    # 2026-11-14（ディアルガ）・11-15（パルキア）に「GOワイルドエリア：グローバル」で初登場（公式発表・2026-10-31タダシさん指示で先行収録）。
+    # 仙台（11/6〜8）が先。ゲーム内データに入れば自動取得と重なるが、同じ内容なので重複マージで1つになる
+    "DIALGA",           # ディアルガ
+    "PALKIA",           # パルキア
+]
+# ゲーム内データの allowedSourdoughPokemon にまだ無いが実装が告知されたキョダイマックス (pokemonId)。
+# キョダイわざの対応表（SOURDOUGH_MOVE_MAPPING_SETTINGS）にはあるので、そこからわざを引く。
+# データに入れば自動で同じものが拾われ、ここの分は重複マージで消える
+MANUAL_INCLUDE_G = [
+    "DURALUDON",        # キョダイマックスジュラルドン（2026-11-6〜8 仙台・11/14〜15 グローバルで初登場・★6・キョダイゲンスイ＝ドラゴン）
 ]
 
 # ---- キョダイマックス実装済みホワイトリスト --------------------------------
@@ -59,6 +69,7 @@ RELEASED_GMAX = set([
     "MEOWTH", "MACHAMP", "GENGAR", "KINGLER", "LAPRAS", "SNORLAX",
     "TOXTRICITY", "RILLABOOM", "CINDERACE", "INTELEON", "GARBODOR",
     "GRIMMSNARL",
+    "DURALUDON",        # 2026-11 初登場（MANUAL_INCLUDE_G でも足している）
 ])
 
 # ---- タイプ定義 (gym_data.json の types_jp と同順) -------------------------
@@ -347,6 +358,13 @@ def main():
                 pid = e["pokemonId"]
                 for f in e.get("form", ["FORM_UNSET"]):
                     gmax_forms.append((pid, f))
+
+    # 告知済みでまだ allowedSourdoughPokemon に無いキョダイマックス（MANUAL_INCLUDE_G）。
+    # ⚠ キョダイわざの対応表に無いものは足さない（わざのタイプが決められないため・警告だけ出す）
+    for pid in MANUAL_INCLUDE_G:
+        if any(g[0] == pid for g in gmax_forms):
+            continue
+        gmax_forms.append((pid, "FORM_UNSET"))
 
     # ---- 3) キョダイマックスわざ対応表 ------------------------------------
     sour_map = {}       # (pokemonId, form) -> VN_BM id
