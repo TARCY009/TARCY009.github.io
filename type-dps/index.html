@@ -175,6 +175,44 @@ h1 b{white-space:nowrap}
 #gwrap{border-radius:12px;overflow:hidden;line-height:0}
 #gwrap svg{width:100%;height:auto;display:block}
 
+/* ⚠️極低耐久を除外（レイド火力チェッカーと同じオレンジ・2026-11-04タダシさん指示） */
+#fBulk{--mc:#ffab70;--mcl:#b54a0e;--mg:linear-gradient(160deg,#ffc48a 0%,#f0762b 45%,#a8430e 100%);--mgl:rgba(240,118,43,.45)}
+/* 開発者だけの「📌 構成を指定」（除外の紫・未実装の青緑・わざカスタムの琥珀と分けて水色） */
+.dfxwrap{margin:8px 0}
+.dfxbtn{font:inherit;font-size:.76rem;font-weight:800;cursor:pointer;border-radius:999px;
+  border:1px solid #2f86c9;background:linear-gradient(180deg,#123452,#0c2238);color:#cfe9ff;padding:5px 12px}
+.dfxbtn[aria-expanded="true"]{background:linear-gradient(160deg,#bfe6ff,#4ea8ff 55%,#1f6fc4);color:#03203a;border-color:transparent}
+.dfxbtn b{margin-left:5px;background:rgba(255,255,255,.22);border-radius:999px;padding:0 6px}
+.dfxpanel{display:none;margin-top:7px;border:1px solid #2f86c9;border-radius:12px;padding:10px 11px;
+  background:rgba(10,30,52,.96);color:#cfe9ff;font-size:.76rem;line-height:1.7;max-width:460px}
+.dfxpanel.open{display:block}
+.dfxpanel .dfxnote{color:#9cc8ea;font-size:.71rem;margin:0 0 7px}
+.dfxpanel .dfxlab{display:block;font-weight:800;margin:8px 0 3px;font-size:.72rem;color:#8fd0ff}
+.dfxpanel input,.dfxpanel select{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:6px 9px;border-radius:9px;
+  border:1px solid #2f86c9;background:rgba(0,0,0,.34);color:#fff}
+.dfxpanel select option{background:#0c2238;color:#fff}
+.dfxpanel .dfxrow{display:flex;gap:6px;align-items:stretch}
+.dfxpanel .sugg{position:relative;flex:1 1 auto}
+.dfxpanel .sugg-list{position:absolute;left:0;right:0;top:100%;z-index:60;max-height:260px;overflow:auto;
+  background:#0c2238;border:1px solid #2f86c9;border-radius:9px;margin-top:3px;display:none}
+.dfxpanel .sugg-list.open{display:block}
+.dfxpanel .sugg-list>div{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;font-size:.8rem}
+.dfxpanel .sugg-list>div:hover{background:rgba(78,168,255,.18)}
+.dfxsh{font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border-radius:9px;white-space:nowrap;
+  border:1px solid #8a5cd6;background:rgba(0,0,0,.28);color:#d9c2ff;padding:0 11px}
+.dfxsh[aria-pressed="true"]{background:linear-gradient(160deg,#d9b8ff,#9b5cf0 55%,#6a2fc0);color:#fff;border-color:transparent}
+.dfxsh .shadowmark{margin-right:3px;color:#c79bff}
+.dfxsh[aria-pressed="true"] .shadowmark{color:#fff}
+.dfxapply{display:block;width:100%;margin-top:9px;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;border:0;border-radius:10px;
+  padding:8px 10px;color:#03203a;background:linear-gradient(160deg,#bfe6ff,#4ea8ff 55%,#1f6fc4)}
+.dfxapply:disabled{opacity:.45;cursor:default}
+.dfxlist{margin-top:9px}
+.dfxlist>div{display:flex;align-items:center;gap:6px;border-top:1px solid rgba(78,168,255,.25);padding:5px 0}
+.dfxlist>div.off{opacity:.5}
+.dfxlist .who{flex:1 1 auto;cursor:pointer}
+.dfxlist .who .shadowmark{margin-right:3px;color:#c79bff}
+.dfxlist .x{font:inherit;cursor:pointer;border:1px solid #2f86c9;border-radius:999px;background:transparent;color:#cfe9ff;padding:0 8px}
+.fixtag{color:#03203a;background:#4ea8ff;border-radius:6px;font-size:.62rem;font-weight:800;padding:0 5px;flex-shrink:0}
 @media (max-width:560px){
   .tbtn{width:44px;height:44px;flex:0 0 auto}
   .gtabs button{flex:1 1 auto}
@@ -211,6 +249,7 @@ h1 b{white-space:nowrap}
         title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
       <button id="fSplit" class="t-green" type="button" aria-pressed="false"
         title="1ゲージのSPアタックが1位でも、ゲージ2分割・3分割のSPアタックとの火力差が7%未満ならそちらを優先します（分割ありは早く撃てるので実戦向き）。押していないあいだは、純粋に火力がいちばん高い組み合わせで順位を出します">分割SP優遇</button>
+      <button id="fBulk" type="button" aria-pressed="false" title="⚠️極低耐久（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）のポケモンを一覧から外します。順位は外したあとの並びで振り直します">⚠️極低耐久を除外</button>
       <div id="megalv"></div>
       <span class="gseg" id="cntSeg">
         <button class="t-cyan" type="button" data-n="20" title="上位20位まで表示します">20位</button>
@@ -221,6 +260,7 @@ h1 b{white-space:nowrap}
   </div>
   <p class="cond expl">全ポケモンをPL50・個体値15にそろえ、ノーマルアタックとSPアタックが両方このタイプの構成で、そのタイプが弱点の相手（×1.6）に攻撃したときの火力を比べています。</p>
   <div id="devexbox"></div>
+  <div id="devfixbox"></div>
   <div id="rankList"></div>
 </section>
 
@@ -249,6 +289,7 @@ h1 b{white-space:nowrap}
     <li><b>「分割SP優遇」</b>を押すと、1位が1ゲージ技でも分割あり技（2/3分割）との差が<b>7%未満</b>なら分割ありを優先します（分割ありは早く撃てるので実戦向きです）</li>
     <li>候補は最終進化とメガシンカ・ゲンシカイキ。<b>シャドウ</b>は攻撃1.2倍、<b>オレンジ色＋うしろに「*」</b>のわざは特別わざ・レガシーわざです</li>
     <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）</li>
+    <li><b>「⚠️極低耐久を除外」</b>を押すと、⚠️極低耐久のポケモンを一覧とグラフから外し、外したあとの並びで順位を振り直します（シャドウの行は防御が下がるぶん込みで1行ずつ判定するので、通常の行だけ残ることがあります）</li>
     <li><b>メガLv</b>＝メガシンカの追加SPアタック（わざ名の最後が「+」）は、<b>メガレベルが上がるほど威力が上がります</b>（Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／<b>Lv4（スーパーマックス）＝1.3倍</b>）。<b>既定はLv4</b>で、この設定はサイト内の他のツールにも引き継がれます。追加SPアタックを持つポケモンを出しているときだけタブが現れます</li>
   </ul>
   <h4>グラフの保存</h4>
@@ -302,7 +343,7 @@ const CPM50=D.cpm['50'];
 const Q=new URLSearchParams(location.search);
 let curT=(TYPES.find(t=>t[0].toLowerCase()===Q.get('t'))||TYPES[0])[0];
 let showN=[20,30,40].includes(+Q.get('n'))?+Q.get('n'):20;
-let fShadow=Q.get('sh')==='1', fMega=Q.get('mg')==='1', fSplit=Q.get('sp')==='1';
+let fShadow=Q.get('sh')==='1', fMega=Q.get('mg')==='1', fSplit=Q.get('sp')==='1', fBulk=Q.get('lb')==='1';
 
 // ---- 計算(火力チェッカーと同じサイクルDPS・タイプ内のわざに限定) ----
 function movesOf(p, ids, eids, tEn, fast){
@@ -361,9 +402,33 @@ function bestOfType(p, tEn, shadow){
 }
 const rankCache=new Map();
 let devSh=new Set();
+// ⚠️極低耐久（防御種族値×HP種族値が16000未満・シャドウは防御5/6込み）。レイド火力チェッカーと同じ判定
+const isLowBulk=(p,shadow)=>p.df*(shadow?5/6:1)*p.h<16000;
+// ---- 開発者だけの「📌 構成を指定」（2026-11-04タダシさん指示・レイド火力チェッカーの「自分のポケモン」と同じ考え方）----
+// ポケモンとわざ2つを決めて、その構成のまま（PL50・個体値15）ランキングに1行足す。元の行は残す。
+// 出すのは「わざが2つともいまのタイプ」のときだけ（このランキングの決まりと同じ）。
+// 🚫除外・メガ・ゲンシ・シャドウ・極低耐久の絞り込みでは消さない（指定したものなので・元の行だけ除外すれば並べ替えられる）。
+// ⚠ 開発者の端末だけ（GonaviDev()）。ふつうの人は保存が残っていても1行も増えない。保存キー site_devfix（引っ越しの SKIP に入れてある）
+const FIXKEY='site_devfix';
+let FIX=[];
+try{ const v=JSON.parse(localStorage.getItem(FIXKEY)||'[]');
+  if(Array.isArray(v)) FIX=v.filter(x=>x&&x.k&&x.f&&x.c).map(x=>({k:String(x.k),sh:!!x.sh,f:String(x.f),c:String(x.c)})); }catch(e){}
+const isDev=()=>{ try{ return !!(window.GonaviDev&&window.GonaviDev()); }catch(e){ return false; } };
+const fixSig=()=>isDev()&&FIX.length?JSON.stringify(FIX):'';
+// 指定した構成のPL50の火力（bestOfType の最後の計算と同じ式＝わざが2つともいまのタイプなら同じ数字になる）
+function fixedDps(p,fid,cid,shadow){
+  const m1=D.moves[fid], m2=D.moves[cid];
+  if(!m1||!m2||!(m1.e>0)||!(m2.e<0)||m1.t!==curT||m2.t!==curT) return null;
+  const stab=p.ty.includes(curT)?1.2:1.0, atk=(p.a+15)*CPM50;
+  const co=m=>0.5*m.p*stab*WEAK*(shadow?1.2:1)/DEF_ENEMY;
+  const d1=Math.floor(co(m1)*atk+1), d2=Math.floor(co(m2)*atk+1);
+  const n2=(m1.e*100)/Math.abs(m2.e);
+  return (d1*100+d2*n2)/(m1.d*100+m2.d*n2);
+}
+const isElite=(p,id)=>(p.eq||[]).includes(id)||(p.ec||[]).includes(id);
 function buildRows(){
   // ⚠ 開発者の除外もキャッシュの鍵に入れる（メガLv・分割SP優遇と同じ落とし穴）
-  const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+MegaLv.level()+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'')+'|'+(window.GonaviDevMv?GonaviDevMv.sig():'');
+  const key=curT+'|'+fShadow+'|'+fMega+'|'+fSplit+'|'+fBulk+'|'+MegaLv.level()+'|'+(window.GonaviDevEx?GonaviDevEx.sig():'')+'|'+(window.GonaviDevMv?GonaviDevMv.sig():'')+'|'+fixSig();
   if(rankCache.has(key)) return rankCache.get(key);
   const rows=[];
   for(const k of KEYS){
@@ -372,13 +437,18 @@ function buildRows(){
     if(window.GonaviDevEx&&GonaviDevEx.has(p.n)) continue;
     if(!p.mega&&!p.fe) continue;
     if(p.mega&&!fMega) continue;
-    const b=bestOfType(p,curT,false);
+    const b=(fBulk&&isLowBulk(p,false))?null:bestOfType(p,curT,false);
     if(b) rows.push({p,shadow:false,dps:b.dps,f:b.f,c:b.c});
     // devSh＝開発者が「シャドウ未実装」で足したポケモン（ふつうの人は常に空）
-    if(fShadow&&(p.shadow||devSh.has(k)||(window.GonaviDevMv&&GonaviDevMv.hasShadow(p.n)))){
+    if(fShadow&&(p.shadow||devSh.has(k)||(window.GonaviDevMv&&GonaviDevMv.hasShadow(p.n)))&&!(fBulk&&isLowBulk(p,true))){
       const s=bestOfType(p,curT,true);
       if(s) rows.push({p,shadow:true,dps:s.dps,f:s.f,c:s.c});
     }
+  }
+  if(isDev()) for(const x of FIX){
+    const p=D.pokemon[x.k]; if(!p) continue;
+    const v=fixedDps(p,x.f,x.c,x.sh); if(v==null) continue;
+    rows.push({p,shadow:x.sh,dps:v,f:{id:x.f,sp:isElite(p,x.f)},c:{id:x.c,sp:isElite(p,x.c)},fix:true});
   }
   rows.sort((a,b)=>b.dps-a.dps);
   let rank=0, prev=null;
@@ -433,7 +503,7 @@ function renderRank(){
     <div class="rank-row${r.rank<=3?' md'+r.rank:''}">
       <div class="rk" title="${T_RANK}">${r.rank}位</div>
       <div class="rmain">
-        <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${lowBulk(r.p,r.shadow)}<small class="expl">PL50・個体値15</small></div>
+        <div class="rname">${badges(r.shadow,r.p.mega,r.p)}<span class="nm">${r.p.n}</span>${lowBulk(r.p,r.shadow)}${r.fix?'<span class="fixtag" data-snap-skip title="開発者が「📌 構成を指定」で足した行です（わざ構成を固定・PL50・個体値15）">📌指定</span>':''}<small class="expl">PL50・個体値15</small></div>
         <div class="rmoves">${mvName(r.f)}<span>＋</span>${mvName(r.c)}</div>
         <div class="bar"><i style="width:${(r.dps/max*100).toFixed(1)}%"></i></div>
       </div>
@@ -555,6 +625,7 @@ function graphSVG(forSave,Wopt){
   const pills=[];
   if(fShadow) pills.push({t:'シャドウ',fill:'#7c3aed',flame:true});
   if(fMega) pills.push({t:'メガ・ゲンシ',fill:'url(#gmega)'});
+  if(fBulk) pills.push({t:'極低耐久を除外',fill:'#c2410c'});
   let px=W-70-(devClean()?0:128);   // 右上のロゴの幅ぶん左へ
   for(const p2 of [...pills].reverse()){
     const pfs=31, ph=60, py=92, padL=p2.flame?58:24;
@@ -627,7 +698,7 @@ function saveGraph(W){
     ctx.drawImage(img,0,0,W,1440);
     URL.revokeObjectURL(url);
     cv.__rounded=true;   // graphSVG が四隅を丸めて描いているので、snap.js 側で二重に切らせない
-    const name=`タイプ別火力ランキング_${JA[curT]}${fShadow?'_シャドウ':''}${fMega?'_メガ・ゲンシ':''}_TOP10${W===1920?'_1920x1440':''}.png`; // 絞り込みは名前の後ろに(2026-10-08タダシさん指示)
+    const name=`タイプ別火力ランキング_${JA[curT]}${fShadow?'_シャドウ':''}${fMega?'_メガ・ゲンシ':''}${fBulk?'_極低耐久を除外':''}_TOP10${W===1920?'_1920x1440':''}.png`; // 絞り込みは名前の後ろに(2026-10-08タダシさん指示)
     // ⚠ 押した瞬間に保存しない。まず見本を見せて「保存する」で保存する(全ツール共通の決まり)。
     //   画像作りに時間がかかると、iPhoneが「ユーザーの操作ではない」として保存を断るため。
     //   開発者の端末の色調整(devGrade)も snap.js の preview が中でかけてくれる
@@ -655,6 +726,7 @@ function syncUrl(){
   if(fShadow) q.set('sh','1');
   if(fMega) q.set('mg','1');
   if(fSplit) q.set('sp','1');
+  if(fBulk) q.set('lb','1');
   const qs=q.toString();
   history.replaceState(null,'',location.pathname+(qs?'?'+qs:''));
 }
@@ -663,12 +735,14 @@ function sync(){
   $('fShadow').setAttribute('aria-pressed',String(fShadow));
   $('fMega').setAttribute('aria-pressed',String(fMega));
   $('fSplit').setAttribute('aria-pressed',String(fSplit));
+  $('fBulk').setAttribute('aria-pressed',String(fBulk));
   document.querySelectorAll('#cntSeg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===showN)));
-  renderRank(); renderGraph(); syncUrl();
+  renderRank(); renderGraph(); syncUrl(); renderFix();
 }
 $('fShadow').onclick=()=>{fShadow=!fShadow;sync();};
 $('fMega').onclick=()=>{fMega=!fMega;sync();};
 $('fSplit').onclick=()=>{fSplit=!fSplit;sync();};
+$('fBulk').onclick=()=>{fBulk=!fBulk;sync();};
 MegaLv.mount($('megalv'));
 MegaLv.onChange(()=>{ MegaLv.apply(D.moves, PLUS_IDS); sync(); });
 document.querySelectorAll('#cntSeg button').forEach(b=>b.onclick=()=>{showN=+b.dataset.n;sync();});
@@ -703,12 +777,103 @@ if(window.GonaviDevMv){
   GonaviDevMv.mount($('devexbox'), {names:()=>KEYS.map(k=>D.pokemon[k].n), moves:D.moves, typeJa:D.typeJa, curType:()=>curT,
     learn:n=>{ const k=KEYS.find(k=>D.pokemon[k].n===n); const p=k&&D.pokemon[k]; return p?{q:[...p.q,...(p.eq||[])],c:[...p.c,...(p.ec||[])]}:null; }});
 }
+// ---- 開発者だけの「📌 構成を指定」の画面（ボタンは開発者の端末だけ・中身は buildRows の FIX を足し引きする） ----
+const FX={open:false, k:null, sh:false, f:'', c:''};
+const toKataF=s=>String(s).replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+const mvLab=id=>{ const m=D.moves[id]; if(!m) return id; return id.startsWith('HIDDEN_POWER_')?'めざめるパワー':m.n; };
+// 名前が番号のままのわざ（データ元の古い番号など）は出さない
+const mvOk=id=>{ const m=D.moves[id]; return !!(m&&m.n&&!/^[A-Z0-9_]+$/.test(m.n)); };
+function fixOpts(p,fast){
+  const own=fast?[...p.q,...(p.eq||[])]:[...p.c,...(p.ec||[])];
+  const isF=id=>fast?D.moves[id].e>0:D.moves[id].e<0;
+  const mine=[...new Set(own)].filter(id=>D.moves[id]&&D.moves[id].t===curT&&isF(id)&&mvOk(id));
+  const other=Object.keys(D.moves).filter(id=>!mine.includes(id)&&D.moves[id].t===curT&&isF(id)&&mvOk(id))
+    .sort((a,b)=>mvLab(a).localeCompare(mvLab(b),'ja'));
+  const o=id=>`<option value="${id}">${esc(mvLab(id))}${isElite(p,id)?'*':''}</option>`;
+  return (mine.length?`<optgroup label="覚えるわざ">${mine.map(o).join('')}</optgroup>`:'')+
+         (other.length?`<optgroup label="その他のわざ">${other.map(o).join('')}</optgroup>`:'');
+}
+function saveFix(){ try{ localStorage.setItem(FIXKEY,JSON.stringify(FIX)); }catch(e){} }
+function fixPick(k){
+  const p=D.pokemon[k]; if(!p) return;
+  FX.k=k; $('dfxName').value=p.n;
+  $('dfxF').innerHTML=fixOpts(p,true); $('dfxC').innerHTML=fixOpts(p,false);
+  // 既定はいまのランキングで選ばれている構成（無ければ先頭）
+  const b=bestOfType(p,curT,FX.sh);
+  if(b){ $('dfxF').value=b.f.id; $('dfxC').value=b.c.id; }
+  fixForm();
+}
+function fixForm(){
+  const ok=FX.k&&$('dfxF').value&&$('dfxC').value;
+  $('dfxApply').disabled=!ok;
+  $('dfxSh').setAttribute('aria-pressed',String(FX.sh));
+  $('dfxNone').style.display=(FX.k&&(!$('dfxF').value||!$('dfxC').value))?'':'none';
+}
+function renderFix(){
+  const box=$('devfixbox');
+  if(!isDev()){ box.innerHTML=''; return; }
+  if(!box.firstChild){
+    box.innerHTML=`<div class="dfxwrap" data-snap-skip>
+      <button type="button" class="dfxbtn" id="dfxBtn" aria-expanded="false" title="ポケモンとわざ構成を決めて、そのままの構成でランキングに1行足します（開発者だけ）">📌 構成を指定<b id="dfxCnt"></b></button>
+      <div class="dfxpanel" id="dfxPanel">
+        <p class="dfxnote">ポケモンとわざ構成を決めて、<b>その構成のまま</b>ランキングに1行足します（PL50・個体値15・元の行も残ります）。選べるのはいまのタイプのわざだけで、行はそのタイプのランキングに出ます。元の行を消したいときは🚫除外で外してください（指定した行は消えません）。</p>
+        <span class="dfxlab">ポケモン</span>
+        <div class="dfxrow"><div class="sugg"><input id="dfxName" type="text" placeholder="ポケモンで検索" autocomplete="off"><div class="sugg-list" id="dfxSugg"></div></div>
+          <button type="button" class="dfxsh" id="dfxSh" aria-pressed="false" title="シャドウとして足します（攻撃1.2倍）"><i class="shadowmark"></i>シャドウ</button></div>
+        <label class="dfxlab" for="dfxF">ノーマルアタック</label><select id="dfxF"></select>
+        <label class="dfxlab" for="dfxC">SPアタック</label><select id="dfxC"></select>
+        <p class="dfxnote" id="dfxNone" style="display:none;margin-top:6px">このタイプのわざが選べません（タイプを切り替えてください）</p>
+        <button type="button" class="dfxapply" id="dfxApply" disabled>ランキングに反映</button>
+        <div class="dfxlist" id="dfxList"></div>
+      </div></div>`;
+    $('dfxBtn').onclick=()=>{ FX.open=!FX.open; renderFix(); };
+    const inp=$('dfxName'), ul=$('dfxSugg');
+    const show=()=>{
+      const q=toKataF(inp.value.trim()); ul.style.display='';
+      if(!q){ ul.classList.remove('open'); ul.innerHTML=''; return; }
+      const hits=KEYS.filter(k=>{ const p=D.pokemon[k]; return (p.fe||p.mega)&&toKataF(p.n).includes(q); })
+        .sort((a,b)=>(D.pokemon[a].n.startsWith(q)?0:1)-(D.pokemon[b].n.startsWith(q)?0:1)).slice(0,100);
+      ul.innerHTML=hits.map(k=>{ const p=D.pokemon[k]; return `<div data-k="${k}">${esc(p.n)}${p.ty.map(t=>typeIconHTML(D.typeJa[t]||t,16)).join('')}</div>`; }).join('');
+      ul.classList.toggle('open',hits.length>0);
+    };
+    inp.addEventListener('input',show);
+    inp.addEventListener('compositionend',show);
+    ul.addEventListener('click',e=>{ const d=e.target.closest('[data-k]'); if(!d) return; ul.classList.remove('open'); fixPick(d.dataset.k); });
+    document.addEventListener('click',e=>{ if(!e.target.closest('#devfixbox .sugg')) ul.classList.remove('open'); });
+    $('dfxSh').onclick=()=>{ FX.sh=!FX.sh; fixForm(); };
+    $('dfxF').onchange=fixForm; $('dfxC').onchange=fixForm;
+    $('dfxApply').onclick=()=>{
+      if(!FX.k) return;
+      const x={k:FX.k,sh:FX.sh,f:$('dfxF').value,c:$('dfxC').value};
+      if(!FIX.some(y=>y.k===x.k&&y.sh===x.sh&&y.f===x.f&&y.c===x.c)) FIX.push(x);
+      saveFix(); rankCache.clear(); sync();
+    };
+    $('dfxList').addEventListener('click',e=>{
+      const i=+((e.target.closest('[data-i]')||{}).dataset||{}).i; if(!(i>=0)) return;
+      if(e.target.closest('.x')){ FIX.splice(i,1); saveFix(); rankCache.clear(); sync(); return; }
+      const x=FIX[i]; FX.sh=x.sh; fixPick(x.k); $('dfxF').value=x.f; $('dfxC').value=x.c; fixForm();
+    });
+  }
+  $('dfxBtn').setAttribute('aria-expanded',String(FX.open));
+  $('dfxPanel').classList.toggle('open',FX.open);
+  $('dfxCnt').textContent=FIX.length||''; $('dfxCnt').style.display=FIX.length?'':'none';
+  // タイプを切り替えたら、選んでいるポケモンのわざの候補もそのタイプに作り直す
+  if(FX.k&&FX.t!==curT){ const f=$('dfxF').value, c=$('dfxC').value; fixPick(FX.k); if(D.moves[f]&&D.moves[f].t===curT) $('dfxF').value=f; if(D.moves[c]&&D.moves[c].t===curT) $('dfxC').value=c; fixForm(); }
+  FX.t=curT;
+  $('dfxList').innerHTML=FIX.map((x,i)=>{
+    const p=D.pokemon[x.k]; if(!p) return '';
+    const here=D.moves[x.f]&&D.moves[x.f].t===curT&&D.moves[x.c]&&D.moves[x.c].t===curT;
+    return `<div data-i="${i}" class="${here?'':'off'}" title="${here?'名前を押すと上の欄に戻します':'いまのタイプのわざではないので、このランキングには出ません'}">
+      <span class="who">${x.sh?'<i class="shadowmark"></i>':''}${esc(p.n)}　${esc(mvLab(x.f))}＋${esc(mvLab(x.c))}</span>
+      <button type="button" class="x" title="この行を外す">×</button></div>`;
+  }).join('');
+}
 // ---- 出口: 全タイプの全順位をデータで返す（1ポケモン1ページの集計用・画面と同じ buildRows を呼ぶ・画面は変えない） ----
 // base=絞り込みなし／all=シャドウ＋メガ・ゲンシ。分割SP優遇は既定のOFF
 window.GonaviExport=function(){
-  const sv=[curT,fShadow,fMega,fSplit], keyOf=new Map(KEYS.map(k=>[D.pokemon[k],k])), out={};
+  const sv=[curT,fShadow,fMega,fSplit,fBulk], keyOf=new Map(KEYS.map(k=>[D.pokemon[k],k])), out={};
   try{
-    fSplit=false;
+    fSplit=false; fBulk=false;
     for(const [en] of TYPES){
       curT=en; out[en]={};
       for(const [name,on] of [['base',false],['all',true]]){
@@ -716,7 +881,7 @@ window.GonaviExport=function(){
         out[en][name]=buildRows().map(r=>({k:keyOf.get(r.p),sh:r.shadow,rank:r.rank,dps:r.dps.toFixed(2),f:r.f.id,c:r.c.id}));
       }
     }
-  } finally { [curT,fShadow,fMega,fSplit]=sv; }
+  } finally { [curT,fShadow,fMega,fSplit,fBulk]=sv; }
   return {megaLv:MegaLv.level(), types:out};
 };
 sync();
