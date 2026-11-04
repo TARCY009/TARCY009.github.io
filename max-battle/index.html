@@ -538,7 +538,7 @@ footer a{color:var(--spec)}
       const b = spBestOf(p, pr);
       if(b && b.ok) bestSp = b;
     }else if(pr){
-      bestSp = spBestOf(p, {bossDef: pr.bossDef, mush: pr.mush});   // 分母なし＝ダメージ効率＋5%ルールで選ぶ
+      bestSp = spBestOf(p, {bossDef: pr.bossDef, mush: pr.mush});   // 分母なし＝ダメージ効率で選ぶ
     }
     return {pr, bestSp, atk: (p.atk + 15) * cpm};
   }
@@ -1033,24 +1033,18 @@ footer a{color:var(--spec)}
       const oks = cands.filter(c => c.ok);
       if(oks.length){
         // ①1%超え(打ってOK)であることが条件 → ②その中でわざ1&わざ2のダメージ効率が
-        // 最も高い技を選ぶ(1ゲージ技は分割あり最高値を5%以上上回る場合のみ採用)
+        // 最も高い技を選ぶ
+        // ⚠ 1ゲージ技を割り引く5%ルールは2026-11-04に撤廃（タダシさん指示。ボスの攻撃がまばらで交代受けもできるため、
+        //   ゲージのあふれ・抱え落ちの心配がジム・レイドより小さい）
         oks.sort((a,b) => b.eff - a.eff || b.per - a.per);
         best = oks[0];
-        if(!best.split){
-          const bs = oks.find(c => c.split);
-          if(bs && (best.eff - bs.eff) / best.eff < 0.05) best = bs;
-        }
       }else{
         best = cands.sort((a,b) => b.per - a.per)[0];
       }
     }else{
-      // 判定パラメータ未確定時(通常ランキングの最適SP表示): 効率+5%ルール
+      // 判定パラメータ未確定時(通常ランキングの最適SP表示): ダメージ効率（同じなら分割ありの技）
       cands.sort((a,b) => b.eff - a.eff || ((b.split?1:0) - (a.split?1:0)));
       best = cands[0];
-      if(!best.split){
-        const bs = cands.find(c => c.split);
-        if(bs && (best.eff - bs.eff) / best.eff < 0.05) best = bs;
-      }
     }
     return best;
   }
