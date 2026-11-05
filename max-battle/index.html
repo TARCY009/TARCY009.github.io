@@ -527,10 +527,13 @@ footer a{color:var(--spec)}
   // ノーマルアタック選出スコア:
   // SP打ってOKの技がある場合=そのSPとのわざ1わざ2トータルダメージ効率
   // (エネルギー獲得量の差もここで反映。例: すなかけ7 > マッドショット6)
-  // SP封印の場合=タイプ補正込みの与ダメージ
+  // SP封印の場合=ノーマルアタックだけのDPS（実際のダメージ÷わざの時間）
   // ⚠ SP判定ボタンで分ける（2026-10-17タダシさん指示）:
   //   OFF（または判定できない）＝SPを撃つ前提でダメージ効率（コンボDPSがいちばん高いSPと組む）
   //   ON・打ってOK＝そのSPとのダメージ効率／ON・封印推奨＝SPを撃たない前提でノーマルアタックの火力
+  // ⚠ 封印推奨のときは1発の威力で比べない（2026-11-05タダシさん指示）。対ジュラルドンのウーラオスで
+  //   いわくだき（1発22・1.5秒＝DPS14.67）をカウンター（1発17・1.0秒＝DPS17.00）より上にしていた。
+  //   キョダイマックス・特別枠（attackerFastOf）の封印推奨と同じく、ノーマルアタックだけのDPSで比べる
   function fastSelCtx(p){
     const pr = spParams();
     let bestSp = null;
@@ -546,7 +549,11 @@ footer a{color:var(--spec)}
     if(sc.bestSp && sc.pr && (f.en||0) > 0 && (sc.bestSp.m.en||0) > 0){
       return comboEffOf(p, f, sc.bestSp.m, sc.atk, sc.pr.bossDef);
     }
-    return (f.p||0) * (p.ty.includes(f.t) ? D.stab : 1) * effVs(f.t, boss.ty);
+    const sec = (f.d || 0) / 1000;
+    if(!sec) return 0;
+    const stab = p.ty.includes(f.t) ? D.stab : 1, eff = effVs(f.t, boss.ty);
+    if(sc.pr) return (Math.floor(0.5 * (f.p||0) * (sc.atk / sc.pr.bossDef) * stab * eff) + 1) * (sc.pr.mush || 1) / sec;
+    return (f.p||0) * stab * eff / sec;   // ボスの防御が分からないときだけ威力で（それでも時間で割る）
   }
   // ---------- メーターをためるためのノーマルアタック（2026-09-23タダシさん指示） ----------
   // ⚠ ここの「チャージ効率」は**マックスメーター**のチャージ（SPアタックのゲージ＝EPS/EPTとは別物）。

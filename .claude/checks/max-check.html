@@ -59,9 +59,34 @@
   } catch (e) {
     res.push(['実行エラー', false, String(e), '']);
   }
-  const bad = res.filter(r => !r[1]).length;
-  document.getElementById('out').innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
-    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+  const finish = () => {
+    const bad = res.filter(r => !r[1]).length;
+    document.getElementById('out').innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+      + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+  };
+  // ⑤ 本物の画面で: SP封印推奨のときのノーマルアタックは「1発の威力」ではなく「ノーマルアタックだけのDPS」で選ぶ
+  //    （2026-11-05タダシさん報告の再発防止。対ジュラルドンのウーラオスが いわくだき（1発22・1.5秒）を
+  //     カウンター（1発17・1.0秒）より上にしていた。ダイナックルのダメージは同じなので次の決め手で決まる）
+  const fr = document.createElement('iframe');
+  fr.style.cssText = 'width:600px;height:400px;position:absolute;left:-9999px';
+  fr.src = '/max-battle/';
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  fr.onload = async () => {
+    try {
+      const d = fr.contentDocument;
+      await wait(300);
+      const q = d.getElementById('bq'); q.value = 'ジュラルドン'; q.dispatchEvent(new Event('input')); await wait(50);
+      const sb = [...d.querySelectorAll('#sug button')].find(b => b.textContent.trim().startsWith('ジュラルドン'));
+      sb.click(); await wait(100);
+      d.getElementById('fSp').click(); await wait(200);
+      const row = [...d.querySelectorAll('#list > *')].find(x => x.textContent.includes('ウーラオス(れんげき)'));
+      const fast = row ? ((row.textContent.match(/ノーマルアタック:\s*(\S+)/) || [])[1] || '読めない') : '行が見つからない';
+      ok('画面: 対ジュラルドン・SP判定ON（封印推奨）のウーラオス(れんげき)のノーマルアタック', fast, 'カウンター');
+    } catch (e) { res.push(['画面の確認でエラー', false, String(e), '']); }
+    finish();
+  };
+  fr.onerror = () => { res.push(['画面を開けない', false, '', '']); finish(); };
+  document.body.appendChild(fr);
 })();
 </script>
 </body></html>
