@@ -141,7 +141,7 @@ CHECKS = {
     'iv-calc': page_check('.claude/checks/iv-check.html', 16),
     'mega-cap': page_check('.claude/checks/megacap-check.html', 27, 60000),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
-    'max-attacker': page_check('.claude/checks/max-check.html', 6),
+    'max-attacker': page_check('.claude/checks/max-check.html', 8),
     'gym-attack': page_check('.claude/checks/gym-check.html', 15, 60000),
     'dex-stats': page_check('.claude/checks/dex-check.html', 17, 60000),
     'mock-fx': check_mock_fx,

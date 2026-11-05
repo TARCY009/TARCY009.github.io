@@ -82,6 +82,14 @@
       const row = [...d.querySelectorAll('#list > *')].find(x => x.textContent.includes('ウーラオス(れんげき)'));
       const fast = row ? ((row.textContent.match(/ノーマルアタック:\s*(\S+)/) || [])[1] || '読めない') : '行が見つからない';
       ok('画面: 対ジュラルドン・SP判定ON（封印推奨）のウーラオス(れんげき)のノーマルアタック', fast, 'カウンター');
+      // ⑥ SPは「メーターが100%になるまでの時間」をPL20〜50×ダイキノコ2通りで多数決（2026-11-05タダシさん指示）。
+      //    ダイキノコのボタンで選ばれるSPが変わらないこと（旧ルールではカイリキーが インファイト⇄ばくれつパンチ に入れ替わっていた）
+      const spOfRow = n => { const r = [...d.querySelectorAll('#list > *')].find(x => x.textContent.includes(n)); return r ? ((r.textContent.match(/SPアタック:\s*(\S+)/) || [])[1] || '読めない') : '行が見つからない'; };
+      const a1 = spOfRow('キョダイマックスカイリキー'), u1 = spOfRow('ウーラオス(れんげき)');
+      d.getElementById('spMush').click(); await wait(200);
+      const a2 = spOfRow('キョダイマックスカイリキー'), u2 = spOfRow('ウーラオス(れんげき)');
+      ok('画面: 対ジュラルドンのキョダイマックスカイリキーのSP（ダイキノコなし／あり）', `${a1}／${a2}`, 'インファイト／インファイト');
+      ok('画面: 対ジュラルドンのウーラオス(れんげき)のSP（ダイキノコなし／あり）', `${u1}／${u2}`, 'ばくれつパンチ／ばくれつパンチ');
     } catch (e) { res.push(['画面の確認でエラー', false, String(e), '']); }
     finish();
   };
