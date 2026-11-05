@@ -5,7 +5,7 @@
 gbl-engine:  pvp-tests/engine-test.html（GBLエンジンの実測突き合わせ・7ケース×3項目＝21項目）
 iv-calc:     .claude/checks/iv-check.html（個体値チェッカーのCP・順位・逆引き・進化後CP＝16項目）
 raid-engine: .claude/checks/raid-check.html（スクショ5例のボスの攻撃時刻＋回帰5通り。基準は raid-baseline.json）
-max-attacker:.claude/checks/max-check.html（マックスバトルのアタッカーが「ダメージ最大のマックスわざ」を選ぶか＝5項目）
+max-attacker:.claude/checks/max-check.html（マックスバトルのアタッカーが「ダメージ最大のマックスわざ」を選ぶか・画面のノーマルアタック／SPの決まり＝9項目）
 gym-attack:  .claude/checks/gym-check.html（ジム挑戦の手計算の例・画面の上位30件を別の計算と比べる・確認済みの耐え数＝15項目）
 dex-stats:   .claude/checks/dex-check.html（ステータス図鑑の最大CP・メガLv4・最大SCP・タイプ相性・わざ表の数値＝17項目）
 exit-rank:   .claude/checks/exit-check.html?only=rank（1ポケモン1ページ用の出口＝画面の数字か。タイプ別火力・耐久指数・ジム防衛・マックスバトル タイプ別＝20項目）
@@ -141,7 +141,7 @@ CHECKS = {
     'iv-calc': page_check('.claude/checks/iv-check.html', 16),
     'mega-cap': page_check('.claude/checks/megacap-check.html', 27, 60000),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
-    'max-attacker': page_check('.claude/checks/max-check.html', 8),
+    'max-attacker': page_check('.claude/checks/max-check.html', 9),
     'gym-attack': page_check('.claude/checks/gym-check.html', 15, 60000),
     'dex-stats': page_check('.claude/checks/dex-check.html', 17, 60000),
     'mock-fx': check_mock_fx,

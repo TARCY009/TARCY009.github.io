@@ -501,12 +501,20 @@ function render(def){
       // 行の点数（順位・ポイント・DPS）はPL50のまま。「複数技」ONはPL50の上位3構成（従来どおり）
       let picks=local.slice(0,FL.multi?3:1);
       if(!FL.multi&&local.length>1){
+        // 速さのため、PLに依らない係数（ダメージ＝floor(係数×攻撃実数値)+1）を先に作る。comboOf と同じ式
+        const shadowMult=isShadow?1.2:1.0, pre=local.map(r=>{
+          const fm=DATA.moves[r.f], cm=DATA.moves[r.cmid];
+          const n2=(fm.energy*100)/Math.abs(cm.energy);
+          return {r, cF:0.5*fm.power*stab(fm.type,p.types)*eff(fm.type,ctx.def.types)*shadowMult/ctx.defStat,
+                  cC:0.5*cm.power*stab(cm.type,p.types)*eff(cm.type,ctx.def.types)*shadowMult/ctx.defStat,
+                  n2, time:(fm.dur*100+cm.dur*n2)/1000, g:gauge[cm.bars]*((MODE==='power')?1:resist)};
+        });
         const votes=new Map();
         for(const m of CPM_ALL){
+          const a=(p.atk+CFG.IV)*m;
           let best=null,bestSplit=null;
-          for(const r of local){
-            const cb=comboOf(p,isShadow,r.f,r.cmid,ctx,gauge,m);
-            const sc=(MODE==='power')?cb.sPower:cb.sPower*resist;
+          for(const x of pre){
+            const r=x.r, sc=((Math.floor(x.cF*a)+1)*100+(Math.floor(x.cC*a)+1)*x.n2)/x.time*x.g;
             if(!best||sc>best.sc) best={sc,r};
             if(r.bars>1&&(!bestSplit||sc>bestSplit.sc)) bestSplit={sc,r};
           }
