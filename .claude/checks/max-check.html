@@ -83,12 +83,15 @@
       const fast = row ? ((row.textContent.match(/ノーマルアタック:\s*(\S+)/) || [])[1] || '読めない') : '行が見つからない';
       ok('画面: 対ジュラルドン・SP判定ON（封印推奨）のウーラオス(れんげき)のノーマルアタック', fast, 'カウンター');
       // ⑥ SPは「メーターが100%になるまでの時間」をPL20〜50×ダイキノコ2通りで多数決（2026-11-05タダシさん指示）。
-      //    ダイキノコのボタンで選ばれるSPが変わらないこと（旧ルールではカイリキーが インファイト⇄ばくれつパンチ に入れ替わっていた）
+      //    ダイキノコのボタンで選ばれるSPが変わらないこと（旧ルールではカイリキーが インファイト⇄ばくれつパンチ に入れ替わっていた）。
+      //    1位の得票が55%未満の僅差なら上位2本のうちコンボDPSが高いほう（同日2件目・タダシさん決定）:
+      //    対ジュラルドンのキョダイマックスカイリキーは票が インファイト63対ばくれつパンチ59 の僅差なので、DPSの高いばくれつパンチ（22.24対23.57）。
+      //    対ディアルガも ばくれつパンチ63対インファイト59 で同じ答えになる＝ボスで入れ替わらない
       const spOfRow = n => { const r = [...d.querySelectorAll('#list > *')].find(x => x.textContent.includes(n)); return r ? ((r.textContent.match(/SPアタック:\s*(\S+)/) || [])[1] || '読めない') : '行が見つからない'; };
       const a1 = spOfRow('キョダイマックスカイリキー'), u1 = spOfRow('ウーラオス(れんげき)');
       d.getElementById('spMush').click(); await wait(200);
       const a2 = spOfRow('キョダイマックスカイリキー'), u2 = spOfRow('ウーラオス(れんげき)');
-      ok('画面: 対ジュラルドンのキョダイマックスカイリキーのSP（ダイキノコなし／あり）', `${a1}／${a2}`, 'インファイト／インファイト');
+      ok('画面: 対ジュラルドンのキョダイマックスカイリキーのSP（ダイキノコなし／あり・票は僅差なのでDPSの高いほう）', `${a1}／${a2}`, 'ばくれつパンチ／ばくれつパンチ');
       ok('画面: 対ジュラルドンのウーラオス(れんげき)のSP（ダイキノコなし／あり）', `${u1}／${u2}`, 'ばくれつパンチ／ばくれつパンチ');
       // ⑦ ノーマルアタックのスコアの段は「PL20〜50の多数決 → 同数ならPL50」（2026-11-05タダシさん指示）。
       //    対ディアルガのキョダイマックスカイリキーは PL50 だけだと からてチョップ（22.24 対 22.14）だが、PL20〜50では41対20でカウンター。
@@ -96,12 +99,13 @@
       const fastOfRow = n => { const r = [...d.querySelectorAll('#list > *')].find(x => x.textContent.includes(n)); return r ? ((r.textContent.match(/ノーマルアタック:\s*(\S+)/) || [])[1] || '読めない') : '行が見つからない'; };
       q.value = 'ディアルガ'; q.dispatchEvent(new Event('input')); await wait(50);
       [...d.querySelectorAll('#sug button')].find(b => b.textContent.trim().startsWith('ディアルガ')).click(); await wait(100);
-      const m1 = fastOfRow('キョダイマックスカイリキー');          // SP判定ON・ダイキノコあり（上の続き）
+      const m1 = fastOfRow('キョダイマックスカイリキー'), s1 = spOfRow('キョダイマックスカイリキー');   // SP判定ON・ダイキノコあり（上の続き）
       d.getElementById('spMush').click(); await wait(150);
-      const m2 = fastOfRow('キョダイマックスカイリキー');          // SP判定ON・ダイキノコなし
+      const m2 = fastOfRow('キョダイマックスカイリキー'), s2 = spOfRow('キョダイマックスカイリキー');   // SP判定ON・ダイキノコなし
       d.getElementById('fSp').click(); await wait(150);
       const m3 = fastOfRow('キョダイマックスカイリキー');          // SP判定OFF
       ok('画面: 対ディアルガのキョダイマックスカイリキーのノーマルアタック（SP判定ON・キノコあり／ON・なし／OFF）', `${m1}／${m2}／${m3}`, 'カウンター／カウンター／カウンター');
+      ok('画面: 対ディアルガのキョダイマックスカイリキーのSP（ダイキノコあり／なし・ジュラルドンと同じ答え）', `${s1}／${s2}`, 'ばくれつパンチ／ばくれつパンチ');
     } catch (e) { res.push(['画面の確認でエラー', false, String(e), '']); }
     finish();
   };

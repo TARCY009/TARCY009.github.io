@@ -1027,6 +1027,7 @@ footer a{color:var(--spec)}
   // それ以外＝連打したときのメーターのたまり方が最速）の中で、そのSPと組んでいちばん速いもの。
   // 自分のポケモン（atkOverride）はそのPLだけ・ダイキノコ2通り。結果はボス・設定ごとに控える（ダイキノコの有無によらない）
   const voteCache = new Map();
+  const SP_VOTE_CLEAR = 0.55;   // 1位の得票がこの割合未満なら「僅差」＝上位2本のうちコンボDPSが高いほう（2026-11-05タダシさん決定）
   function spVote(p, ctx, cands, atkOverride){
     const key = [p.n, p.cat, mode, includeLegacy, boss.n, ctx.bossDef, ctx.denom, ctx.dec, atkOverride || 0].join('|');
     if(voteCache.has(key)) return voteCache.get(key);
@@ -1058,7 +1059,11 @@ footer a{color:var(--spec)}
       if(win === null) none++; else votes[win] = (votes[win] || 0) + 1;
     }
     const spSorted = cands.map(c => c.mi).sort((a, b) => (votes[b] || 0) - (votes[a] || 0) || effOf(b) - effOf(a));
-    const top = spSorted[0], topV = votes[top] || 0;
+    let top = spSorted[0]; const topV = votes[top] || 0;
+    // 1位の得票が55%未満（122通りなら票差12以内）は、キノコなし・ありで速いSPが割れた実質の引き分け
+    // （全ボスで数えると1位が50〜54%の行に3割が固まり、55%から薄くなる）。そのときは上位2本のうちコンボDPSが高いほうを出す
+    // （2026-11-05タダシさん指示。カイリキーが ディアルガ＝ばくれつパンチ／ジュラルドン＝インファイト とボスで入れ替わっていた）
+    if(spSorted.length > 1 && topV < total * SP_VOTE_CLEAR && effOf(spSorted[1]) > effOf(top)) top = spSorted[1];
     const r = {pick: top, ok: topV >= none, votes, none, total};   // 同数なら撃つほう
     voteCache.set(key, r);
     return r;
@@ -1101,7 +1106,7 @@ footer a{color:var(--spec)}
     if(ctx.denom){
       // ⚠ 2026-11-05タダシさん指示: 「マックスメーターが100%になるまでの時間」がいちばん短いSPを選ぶ。
       //   PL20〜50（0.5刻み）× ダイキノコなし・ありの122通りで数え、いちばん速かった回数が多いもの（spVote）。
-      //   「SPを撃たない（ノーマル連打だけ）」がいちばん多ければ封印推奨。同じ回数ならコンボDPS。
+      //   「SPを撃たない（ノーマル連打だけ）」がいちばん多ければ封印推奨。1位が55%未満の僅差なら上位2本のうちコンボDPSが高いほう。
       //   旧「0.5秒あたり1%以上で打ってOK → その中でコンボDPS」は、ゲージをためる時間・上限で捨てるゲージ・
       //   最後のSPがちょうど100%に届くかを見ておらず、ダイキノコの有無で結果が入れ替わっていた（カイリキー対ジュラルドン）
       const v = spVote(p, ctx, cands, atkOverride);
@@ -1129,7 +1134,7 @@ footer a{color:var(--spec)}
     }
     // 判定はマックスメーターが100%になるまでの時間（PL20〜50×ダイキノコなし・ありで多数決・spVote）。数字はSPを撃っているあいだの0.5秒あたりのチャージ量
     const verdict = b.ok
-      ? `<span class="spok" title="ノーマルアタックでゲージをためてこのSPアタックを撃つと、マックスメーターがいちばん早く100%になります（PL20〜50・ダイキノコなし／ありで比べて、いちばん速かった回数が多いもの）。数字はSPを撃っているあいだの0.5秒あたりのチャージ量です">SP打ってOK: ${b.m.jp}${pct}</span>`
+      ? `<span class="spok" title="ノーマルアタックでゲージをためてこのSPアタックを撃つと、マックスメーターがいちばん早く100%になります（PL20〜50・ダイキノコなし／ありで比べて、いちばん速かった回数が多いもの。回数がほぼ同じなら火力が高いほう）。数字はSPを撃っているあいだの0.5秒あたりのチャージ量です">SP打ってOK: ${b.m.jp}${pct}</span>`
       : `<span class="nohalf" title="SPアタックを撃たずにノーマルアタックを連打したほうが、マックスメーターが早く100%になります（PL20〜50・ダイキノコなし／ありで比べた多数決）。数字はいちばん速いSPの参考値です">SP封印推奨(ノーマル連打)${pct}</span>`;
     // 0.5秒わざ以外のノーマルアタックも0.5秒わざの連打（1%）より速く溜まるなら添える（SPの合間の攻撃の参考）
     const fbTag = (fb && fb.per > 1.0001 && fb.f.d > 500)
