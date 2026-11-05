@@ -43,6 +43,8 @@ f.onload = async () => {
 
     // ② 画面の順位を別の計算と比べる
     const CPM = { 40: 0.7903, 50: 0.84029999 };
+    const CPMS = []; for (let l = 1; l <= 51; l += 0.5) { const m = D.cpm && D.cpm[String(l)]; if (m) CPMS.push(m); }
+    ok('PL1〜51の係数の表（多数決用）', CPMS.length, 101);
     const eff = (mt, dts) => dts.reduce((m, t) => m * D.chart[mt][t], 1);
     const dmg = (a, d, pw, st, e, sh) => Math.floor(0.5 * (a / d) * pw * st * e * sh) + 1;
     function mine(def, mode, fl) {
@@ -78,9 +80,29 @@ f.onload = async () => {
           }
           loc.sort((x, y) => y.score - x.score);
           let pk = loc.slice(0, fl.multi ? 3 : 1);
-          if (!fl.multi && pk.length && pk[0].bars === 1) {
-            const s = loc.find(x => x.bars > 1);
-            if (s && (pk[0].score - s.score) / pk[0].score < 0.07) pk = [s];
+          // 採用する1構成は PL1〜51 の多数決（各PLで7%ルール）→ 同数ならPL50の点（2026-11-05タダシさん指示）
+          if (!fl.multi && loc.length > 1) {
+            const votes = new Map();
+            for (const m of CPMS) {
+              const a2 = (p.atk + 15) * m;
+              let best = null, bs = null;
+              for (const x of loc) {
+                const F = D.moves[x.fm], C = D.moves[x.cm];
+                const dF = dmg(a2, dDef, F.power, p.types.includes(F.type) ? 1.2 : 1, eff(F.type, def.types), sh ? 1.2 : 1);
+                const dC = dmg(a2, dDef, C.power, p.types.includes(C.type) ? 1.2 : 1, eff(C.type, def.types), sh ? 1.2 : 1);
+                const n = F.energy * 100 / Math.abs(C.energy);
+                const dps = (dF * 100 + dC * n) / ((F.dur * 100 + C.dur * n) / 1000);
+                const sc = dps * O.gauge[C.bars] * (mode === 'power' ? 1 : resist);
+                if (!best || sc > best.sc) best = { sc, x };
+                if (x.bars > 1 && (!bs || sc > bs.sc)) bs = { sc, x };
+              }
+              let win = best;
+              if (best.x.bars === 1 && bs && (best.sc - bs.sc) / best.sc < 0.07) win = bs;
+              votes.set(win.x, (votes.get(win.x) || 0) + 1);
+            }
+            let pick = null;
+            for (const [x, n] of votes) if (!pick || n > pick.n || (n === pick.n && x.score > pick.x.score)) pick = { x, n };
+            pk = [pick.x];
           }
           rows.push(...pk);
         }

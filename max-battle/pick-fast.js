@@ -4,8 +4,8 @@
       同じ関数を呼ぶので、片方だけ直して食い違う事故が起きない。
 
    並び順は **①与ダメージがいちばん大きいわざ ②同じなら0.5秒わざ ③同じなら選出スコア
-   ④同じなら「PL20〜50で選出スコアを計算し直し、上回ったPLが多いほう」（2026-10-18・切り捨てで実際のダメージが同じになったとき用）
-   ⑤同じならわざ性能のDPS（威力×タイプ一致÷時間＝図鑑のDPS） ⑥同じならEPS（SPゲージ÷時間）（2026-10-17のフライゴン すなかけ7＞マッドショット6 もここ）
+   ③は「PL20〜50で計算し直して上回ったPLが多いほう（多数決）→ 同数ならPL50」（2026-11-05タダシさん指示・レイド火力・マックスバトルのSPと同じ）
+   ④同じならわざ性能のDPS（威力×タイプ一致÷時間＝図鑑のDPS） ⑥同じならEPS（SPゲージ÷時間）（2026-10-17のフライゴン すなかけ7＞マッドショット6 もここ）
    ⑦同じなら特別わざでないもの**。④〜⑦は gonaviPlTie（キョダイ・特別枠とタンクも同じものを使う）。
 
    ⚠ 2026-09-19タダシさん報告の不具合の再発防止（ランキングの致命的な誤り）:
@@ -26,10 +26,12 @@
   var dpsOf = function (x) { return sec(x) ? (x.f.p || 0) * (x.stab || 1) / sec(x) : 0; };
   var epsOf = function (x) { return sec(x) ? (x.f.en || 0) / sec(x) : 0; };
 
-  // 引き分けの決め手（2026-10-18タダシさん指示）。sorted＝それまでの決まりで並べ終えた候補（いちばん上が最有力）、
-  // same(a,b)＝それまでの決まりで同じか、valAt(x, cpm)＝引き分けた段階の値をそのPLの係数で計算し直したもの、cpms＝PL20〜50の係数。
-  // ①PLごとに比べて上回った回数が多いほう ②わざ性能のDPS ③EPS ④特別わざでないもの
-  window.gonaviPlTie = function (sorted, same, valAt, cpms) {
+  // スコアの段の決め手（2026-10-18タダシさん指示・2026-11-05に「常に多数決」へ・タダシさん指示）。
+  // sorted＝それまでの決まり（ダメージ・0.5秒・チャージ効率など、スコアより前の段）で並べ終えた候補、
+  // same(a,b)＝スコアより前の段で同じか、score(x)＝PL50のスコア、valAt(x, cpm)＝そのPLの係数でスコアを計算し直したもの、cpms＝PL20〜50の係数。
+  // ①PLごとに比べて上回った回数が多いほう（レイド火力・マックスバトルのSPと同じ多数決） ②同数ならPL50のスコア
+  // ③わざ性能のDPS ④EPS ⑤特別わざでないもの。valAt・cpms を省けばPL50のスコアだけで決める（答え合わせ用）
+  window.gonaviPlTie = function (sorted, same, valAt, cpms, score) {
     if (!sorted || !sorted.length) return null;
     var g = sorted.filter(function (x) { return same(sorted[0], x); });
     if (g.length < 2) return sorted[0];
@@ -42,8 +44,10 @@
         }
       });
     }
+    var sc = score || function () { return 0; };
     return g.map(function (x, i) { return { x: x, w: w[i] }; }).sort(function (a, b) {
       return b.w - a.w
+        || r6(sc(b.x)) - r6(sc(a.x))
         || r6(dpsOf(b.x)) - r6(dpsOf(a.x))
         || r6(epsOf(b.x)) - r6(epsOf(a.x))
         || ((a.x.f && a.x.f.e ? 1 : 0) - (b.x.f && b.x.f.e ? 1 : 0));
@@ -59,8 +63,9 @@
         || (b.half ? 1 : 0) - (a.half ? 1 : 0)
         || r6(b.sel) - r6(a.sel);
     });
+    // ③の選出スコアは「PL20〜50の多数決 → 同数ならPL50」（2026-11-05）。ダメージと0.5秒が同じ候補の中で決める
     return window.gonaviPlTie(sorted, function (a, b) {
-      return r6(a.dmg) === r6(b.dmg) && (a.half ? 1 : 0) === (b.half ? 1 : 0) && r6(a.sel) === r6(b.sel);
-    }, selAt, cpms);
+      return r6(a.dmg) === r6(b.dmg) && (a.half ? 1 : 0) === (b.half ? 1 : 0);
+    }, selAt, cpms, function (x) { return x.sel; });
   };
 })();

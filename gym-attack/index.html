@@ -388,6 +388,8 @@ function stab(moveType, types){ return types.includes(moveType)?1.2:1.0; }
 function dmg(atkStat, defStat, power, s, e, shadow){
   return Math.floor(0.5*(atkStat/defStat)*power*s*e*shadow)+1;
 }
+// PL1〜51（0.5刻み）の係数（わざ構成の多数決用・gym_data の cpm）。古いデータで表が無ければPL50だけ
+const CPM_ALL=(()=>{const a=[];for(let l=1;l<=51;l+=0.5){const m=DATA.cpm&&DATA.cpm[String(l)];if(m)a.push(m);}return a.length>2?a:[CFG.CPM50];})();
 
 function selectDefender(p){
   currentDefender=p; $q.value=p.name; $sg.style.display='none';
@@ -437,11 +439,11 @@ function hitOf(p, isShadow, ctx, rex, k){
   const resist=Math.pow(1/avgInc,rex)*(rHit/(rHit+k));
   return {resist,hitW,hitN,hitR,cW,cN,cR,tank};
 }
-// わざ構成1つの火力（サイクルDPS×ゲージ補正）。計算できない構成は null
-function comboOf(p, isShadow, f, cmid, ctx, gauge){
+// わざ構成1つの火力（サイクルDPS×ゲージ補正）。計算できない構成は null。cpm を省けばPL50
+function comboOf(p, isShadow, f, cmid, ctx, gauge, cpm){
   const def=ctx.def;
   const fm=DATA.moves[f], cm=DATA.moves[cmid]; if(!fm||!cm||!cm.bars) return null;
-  const atkStat=(p.atk+CFG.IV)*CFG.CPM50;
+  const atkStat=(p.atk+CFG.IV)*(cpm||CFG.CPM50);
   const shadowMult=isShadow?1.2:1.0;
   const eF=eff(fm.type,def.types), eC=eff(cm.type,def.types);
   const dF=dmg(atkStat,ctx.defStat,fm.power,stab(fm.type,p.types),eF,shadowMult);
@@ -493,11 +495,28 @@ function render(def){
         }
       }
       local.sort((a,b)=>b.score-a.score);
-      // ドラゴン7%ルール: 1位が1ゲージ技なら、分割あり技との差が7%未満のとき分割ありを採用
-      let picks=local.slice(0,FL.multi?3:1); // デフォルトは最適技構成のみ、複数技ONで上位3構成
-      if(!FL.multi&&picks.length&&picks[0].bars===1){
-        const split=local.find(r=>r.bars>1);
-        if(split&&(picks[0].score-split.score)/picks[0].score<0.07) picks=[split];
+      // 既定（1構成だけ）は PL1〜51（0.5刻み）の多数決で採用する構成を決める（2026-11-05タダシさん指示・
+      // レイド火力チェッカーと同じ決め方。旧はPL50だけ）。各PLで ドラゴン7%ルール（1位が1ゲージ技なら、
+      // 分割あり技との差が7%未満のとき分割あり）を当ててそのPLの勝者を決め、票がいちばん多い構成。同数ならPL50の点が高いほう。
+      // 行の点数（順位・ポイント・DPS）はPL50のまま。「複数技」ONはPL50の上位3構成（従来どおり）
+      let picks=local.slice(0,FL.multi?3:1);
+      if(!FL.multi&&local.length>1){
+        const votes=new Map();
+        for(const m of CPM_ALL){
+          let best=null,bestSplit=null;
+          for(const r of local){
+            const cb=comboOf(p,isShadow,r.f,r.cmid,ctx,gauge,m);
+            const sc=(MODE==='power')?cb.sPower:cb.sPower*resist;
+            if(!best||sc>best.sc) best={sc,r};
+            if(r.bars>1&&(!bestSplit||sc>bestSplit.sc)) bestSplit={sc,r};
+          }
+          let win=best;
+          if(best.r.bars===1&&bestSplit&&(best.sc-bestSplit.sc)/best.sc<0.07) win=bestSplit;
+          votes.set(win.r,(votes.get(win.r)||0)+1);
+        }
+        let pick=null;
+        for(const [r,n] of votes) if(!pick||n>pick.n||(n===pick.n&&r.score>pick.r.score)) pick={r,n};
+        picks=[pick.r];
       }
       rows.push(...picks);
     }

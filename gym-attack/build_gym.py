@@ -166,6 +166,8 @@ for mid in sorted(used):
         continue
     moves[mid] = conv_move(gm)
 gym['moves'] = moves
+# PL1〜51（0.5刻み）の係数（わざ構成をPLごとの多数決で決めるため・2026-11-05）。godata.json と同じ表
+gym['cpm'] = {k: v for k, v in god['cpm'].items()}
 if missing:
     print('警告: godataに無いわざ →', missing)
 

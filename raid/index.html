@@ -611,22 +611,41 @@ function attachSugg(inputEl,listEl,onPick,filterFn){
   document.addEventListener('click',e=>{if(!listEl.contains(e.target)&&e.target!==inputEl)listEl.style.display='none';});
 }
 
-// ---- アタッカーの自動選出(そのボスの実防御での最高火力構成・PL50個体値15) ----
+// ---- アタッカーの自動選出(そのボスの実防御での最高火力構成・個体値15) ----
+// わざ構成は PL1〜51（0.5刻み）の多数決で決め、同数ならPL50の火力が高いほう（2026-11-05タダシさん指示・
+// レイド火力チェッカーの bestCombo と同じ決め方。旧はPL50だけで決めていた）。返す dps はその構成のPL50の値（順位のものさしは変えない）
+const COMBO_LEVELS=[];
+for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) COMBO_LEVELS.push(m); }
 function bestComboVs(p,bt,bossDef,shadow){
-  const atk=(p.a+15)*CPM50;
   const mult=shadow?1.2:1;
-  let best=null;
+  const combos=[];
   for(const f of fastIds(p)){const m1=D.moves[f];
     for(const c of chgIds(p)){const m2=D.moves[c];
-      const d1=RaidEngine.damage(m1.p,atk,bossDef,p.ty.includes(m1.t)?1.2:1,eff(m1.t,bt),mult);
-      const d2=RaidEngine.damage(m2.p,atk,bossDef,p.ty.includes(m2.t)?1.2:1,eff(m2.t,bt),mult);
       const n2=(m1.e*100)/Math.abs(m2.e);
       const tt=m1.d*100+m2.d*n2;
       if(tt<=0)continue;
-      const dps=(d1*100+d2*n2)/tt;
-      if(!best||dps>best.dps)best={f,c,dps};
+      combos.push({f,c,m1,m2,n2,tt,s1:p.ty.includes(m1.t)?1.2:1,s2:p.ty.includes(m2.t)?1.2:1,e1:eff(m1.t,bt),e2:eff(m2.t,bt)});
     }}
-  return best;
+  if(!combos.length)return null;
+  const dpsAt=(cb,atk)=>{
+    const d1=RaidEngine.damage(cb.m1.p,atk,bossDef,cb.s1,cb.e1,mult);
+    const d2=RaidEngine.damage(cb.m2.p,atk,bossDef,cb.s2,cb.e2,mult);
+    return (d1*100+d2*cb.n2)/cb.tt;
+  };
+  const votes=new Map();
+  for(const m of (COMBO_LEVELS.length?COMBO_LEVELS:[CPM50])){
+    const atk=(p.a+15)*m;
+    let best=null;
+    for(const cb of combos){ const v=dpsAt(cb,atk); if(!best||v>best.v)best={v,cb}; }
+    votes.set(best.cb,(votes.get(best.cb)||0)+1);
+  }
+  const atk50=(p.a+15)*CPM50;
+  let best=null;
+  for(const [cb,n] of votes){
+    const dps=dpsAt(cb,atk50);
+    if(!best||n>best.n||(n===best.n&&dps>best.dps))best={f:cb.f,c:cb.c,dps,n};
+  }
+  return {f:best.f,c:best.c,dps:best.dps};
 }
 let topCache={key:null,val:null,list:[]};
 // 火力順の一覧(最終進化だけ・シャドウは別の行)。1位おまかせは先頭、最少人数おまかせは上位を候補に使う
