@@ -34,13 +34,6 @@ OUT = os.path.join(HERE, "data", "max_data.js")
 MANUAL_EXCLUDE = set([
     # 例: ("MEOWTH", "MEOWTH_GALARIAN"),
 ])
-# ゲーム内データに先に入ったが、実装日がまだのダイマックス（pokemonId: 実装日＝日本時間）。その日から自動で入る（2026-11-08）
-RELEASE_ON_D = {
-    'MELMETAL':  '2026-11-09',   # Into the Wild（11/9〜13）のGOパスでダイマックスのメルタン
-    'REGIDRAGO': '2026-11-12',   # 同イベントのマックスバトル・デイ
-}
-import datetime as _dt
-_TODAY = _dt.datetime.now(_dt.timezone(_dt.timedelta(hours=9))).strftime('%Y-%m-%d')
 # GM未反映の新規実装ダイマックスをここへ追加 (pokemonId)
 MANUAL_INCLUDE_D = [
     "HYDREIGON",        # サザンドラ (2026-07-19実装、GM未反映。進化前2種は最終進化フィルタで除外)
@@ -495,8 +488,6 @@ def main():
         sp = poke[tid]
         pid = sp.get("pokemonId", pid_form)
         if (pid, pid_form) in MANUAL_EXCLUDE:
-            continue
-        if RELEASE_ON_D.get(pid, '') > _TODAY:   # 実装日がまだ
             continue
         # 特例3体・ムゲンダイマックスは D として出さない
         if pid in ("ZACIAN", "ZAMAZENTA", "ETERNATUS"):
