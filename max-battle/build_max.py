@@ -22,7 +22,8 @@ data/max_data.js を生成する。
 import json, re, sys, os, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-GM_URL = "https://raw.githubusercontent.com/PokeMiners/game_masters/master/latest/latest.json"
+sys.path.insert(0, os.path.dirname(HERE))
+import gm_source   # ゲーム内データは2つの置き場の新しいほう（2026-11-08）
 GM_LOCAL = os.path.join(HERE, "latest.json")
 GYM_DATA = os.path.join(HERE, "..", "gym-attack", "data", "gym_data.json")
 GYM_DATA_FALLBACK = os.path.join(HERE, "gym_data.json")
@@ -33,6 +34,13 @@ OUT = os.path.join(HERE, "data", "max_data.js")
 MANUAL_EXCLUDE = set([
     # 例: ("MEOWTH", "MEOWTH_GALARIAN"),
 ])
+# ゲーム内データに先に入ったが、実装日がまだのダイマックス（pokemonId: 実装日＝日本時間）。その日から自動で入る（2026-11-08）
+RELEASE_ON_D = {
+    'MELMETAL':  '2026-11-09',   # Into the Wild（11/9〜13）のGOパスでダイマックスのメルタン
+    'REGIDRAGO': '2026-11-12',   # 同イベントのマックスバトル・デイ
+}
+import datetime as _dt
+_TODAY = _dt.datetime.now(_dt.timezone(_dt.timedelta(hours=9))).strftime('%Y-%m-%d')
 # GM未反映の新規実装ダイマックスをここへ追加 (pokemonId)
 MANUAL_INCLUDE_D = [
     "HYDREIGON",        # サザンドラ (2026-07-19実装、GM未反映。進化前2種は最終進化フィルタで除外)
@@ -267,9 +275,8 @@ def load_gm():
     # 通常は毎回最新を取得(自動更新用)。開発時のみ --local でキャッシュ利用
     if "--local" not in sys.argv or not os.path.exists(GM_LOCAL):
         print("downloading Game Master ...")
-        urllib.request.urlretrieve(GM_URL, GM_LOCAL)
-    with open(GM_LOCAL, encoding="utf-8") as f:
-        return json.load(f)
+        urllib.request.urlretrieve(gm_source.pick_url(), GM_LOCAL)
+    return gm_source.load_file(GM_LOCAL)   # すがた名・＋わざの名前をそろえる(gm_source.normalize)
 
 
 def load_gym():
@@ -488,6 +495,8 @@ def main():
         sp = poke[tid]
         pid = sp.get("pokemonId", pid_form)
         if (pid, pid_form) in MANUAL_EXCLUDE:
+            continue
+        if RELEASE_ON_D.get(pid, '') > _TODAY:   # 実装日がまだ
             continue
         # 特例3体・ムゲンダイマックスは D として出さない
         if pid in ("ZACIAN", "ZAMAZENTA", "ETERNATUS"):

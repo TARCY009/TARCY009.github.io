@@ -10,6 +10,9 @@ GOバトルリーグ対面シミュレート用 データ生成スクリプト
 出力: pvp_data.json / pvp_data.js (window.PVP_DATA)
 """
 import json, re, math
+import gm_source
+import verified    # 実機で確かめた値（いちばん優先）
+import source_check   # 取り寄せ先どうしの食い違い
 from build_data import (SRC, fetch, TYPE_JA, REGION, FORM_JA, OVERRIDE,
                         DEFAULT_FORM, GEN9_JA, JP_MOVE_FIX, MEGA_PLUS_MOVES, MEGA_PLUS_JA)
 from mega_plus_info import MEGA_PLUS_INFO, MEGA_PLUS_PVP_BUFF, plus_id, info_ids
@@ -105,8 +108,6 @@ HIDDEN_FORMS = {'aegislash_blade', 'mimikyu_busted', 'cramorant_gulping', 'cramo
 TYPE_ORDER_FIX = {
     'voltorb_hisuian': ['ELECTRIC', 'GRASS'],   # ゲーム内: でんき・くさ（情報元は くさ・でんき）
     'groudon_primal':  ['GROUND', 'FIRE'],      # ゲンシグラードン。ゲーム内: じめん・ほのお（情報元は ほのお・じめん）
-    'sliggoo_hisuian': ['STEEL', 'DRAGON'],     # ヒスイヌメイル。ゲーム内: はがね・ドラゴン（2026-11-08タダシさんの実機スクショ）
-    'goodra_hisuian':  ['STEEL', 'DRAGON'],     # ヒスイヌメルゴン。同上
 }
 
 SPECIES_JA_FIX = {
@@ -126,7 +127,7 @@ SPECIES_JA_FIX = {
 }
 
 def main():
-    gm = fetch(SRC['gm'])
+    gm = gm_source.load()   # build_data.py と同じ置き場(gm_source.py)
     ja = fetch(SRC['ja'])['data']
     ja_map = {ja[i]: ja[i+1] for i in range(0, len(ja)-1, 2)}
     pvp = fetch(SRC['pvp'])
@@ -216,6 +217,20 @@ def main():
     # 確定値と食い違ったら警告を出す(情報元が調整されたら気づけるように)
     plus_moves = {}
     src_mv = {m['moveId']: m for m in pvp['moves']}
+    # 情報元(対戦データ)にまだ無い＋わざは、ゲーム内データの本物の値で補う(2026-11-08・gm_source.normalize が名前を「元わざ_PLUS」にそろえてある)
+    for e in gm:
+        cm = (e.get('data') or {}).get('combatMove')
+        if not cm or not cm.get('_megaPlus') or cm['uniqueId'] in src_mv: continue
+        b = cm.get('buffs') or {}
+        mv = {'moveId': cm['uniqueId'], 'type': cm['type'].replace('POKEMON_TYPE_', '').lower(),
+              'power': int(cm.get('power') or 0), 'energy': abs(int(cm.get('energyDelta') or 0))}
+        if any(k.startswith('attacker') for k in b):
+            mv['buffs'] = [b.get('attackerAttackStatStageChange', 0), b.get('attackerDefenseStatStageChange', 0)]; mv['buffTarget'] = 'self'
+        elif any(k.startswith('target') for k in b):
+            mv['buffs'] = [b.get('targetAttackStatStageChange', 0), b.get('targetDefenseStatStageChange', 0)]; mv['buffTarget'] = 'opponent'
+        if 'buffs' in mv: mv['buffApplyChance'] = str(b.get('buffActivationChance', 1))
+        src_mv[cm['uniqueId']] = mv
+        print('＋わざの対戦の値をゲーム内データから補う →', cm['uniqueId'], mv['power'], mv['energy'])
     for mid in MEGA_PLUS_MOVES:
         mv = src_mv.get(mid)
         if not mv:
@@ -348,6 +363,26 @@ def main():
             print('警告: MANUAL_MEGA_PVP の元がありません →', src); continue
         pokes[sid] = {'n': nm, 'dex': b['dex'], 'a': a, 'df': df, 'h': h, 'ty': ty,
                       'q': list(b['q']), 'c': list(b['c']), 'eq': list(b['eq']), 'ec': list(b['ec']), 'r': 1, 'mega': 1}
+    # 取り寄せ先どうしの食い違い（source_check.py）: 新しく見つかったものだけお知らせに出す
+    try:
+        _found, _new = source_check.check(gm, pvp['pokemon'], {k: v['n'] for k, v in pokes.items()},
+                                          {k for k, v in pokes.items() if v.get('r')},
+                                          {k: v['n'] for k, v in moves.items()})
+        print(f'取り寄せ先どうしの食い違い: {len(_found)}件（新しく見つかった {len(_new)}件）')
+        if _new:
+            open('changes.md', 'a', encoding='utf-8').write(
+                '\n### 🔍 取り寄せ先どうしの食い違い（新しく見つかったもの）\n' + ''.join(f'- {x}\n' for x in _new))
+    except Exception as _e:
+        print('食い違いの点検に失敗（更新は続ける）→', _e)
+    # 実機で確かめた値（verified.py）を最優先で上書き
+    _ver_same = []
+    for k, v in verified.VERIFIED.items():
+        sid = verified.pvp_key(k)
+        if sid in pokes and verified.apply(pokes[sid], v, 'pvp'): _ver_same.append(k)
+    for x in verified.report('対戦データの情報元', _ver_same):
+        print(x)
+        try: open('changes.md', 'a', encoding='utf-8').write('\n### 📦 実機確認の表\n- ' + x + '\n')
+        except Exception: pass
     # 追加SPアタック(3本目)を持つメガに印を付ける。既存の c / ec には足さないので
     # /gbl/・/rocket/・ブレイクポイント・対戦記録の結果は一切変わらない。
     # 対戦データ側にまだわざ定義が無いもの(plus_moves に入っていない)には印を付けない

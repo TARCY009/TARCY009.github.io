@@ -1,0 +1,31 @@
+# ゲーム内データの見張り（2026-11-08タダシさん指示・取り寄せ先の改善の柱⑥）
+# 3時間ごとに、2つの置き場（gm_source.py）の更新日時だけを見る。前回作り直したときより新しい版が出ていたら、
+# 毎朝の自動更新（update-data.yml）をその場で動かす。新しくなければ何もしない（お知らせも出ない）。
+# 置き場は「ゲーム内データが変わった日」にだけ更新されるので、ゲームの更新から半日以内にツールへ入る
+name: watch-gm
+
+on:
+  schedule:
+    - cron: '20 */3 * * *'   # 3時間ごと（毎時20分）
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write     # update-data.yml を動かす
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: 新しいゲーム内データが出ているか
+        id: gate
+        run: echo "newer=$(python3 gm_source.py --newer | tail -1)" >> "$GITHUB_OUTPUT"
+      - name: 出ていれば自動更新を動かす
+        if: steps.gate.outputs.newer == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update-data.yml

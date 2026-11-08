@@ -11,11 +11,14 @@
 必要: requests (pip install requests)
 """
 import json, re, math, sys, urllib.request
+import gm_source   # ゲーム内データの取り寄せ先（2つの置き場の新しいほう）
+import verified    # 実機で確かめた値（いちばん優先）
+VERIFIED_NOTES = []
 from mega_plus_info import MEGA_PLUS_INFO, plus_id
 import news_auto   # 公式ニュースから読み取った実装の告知（2026-10-30タダシさん指示）
 
 SRC = {
-    'gm':   'https://raw.githubusercontent.com/PokeMiners/game_masters/master/latest/latest.json',
+    'gm':   'https://raw.githubusercontent.com/PokeMiners/game_masters/master/latest/latest.json',   # ⚠ 直接使わない。gm_source.pick_url() を通す(2026-11-08)
     'ja':   'https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20APK/JSON/i18n_japanese.json',
     'pvp':  'https://raw.githubusercontent.com/pvpoke/pvpoke/master/src/data/gamemaster.json',
 }
@@ -340,14 +343,15 @@ MANUAL_MEGA = {
 # key: (対戦データのspeciesId, 名前, 最終進化か, タイプの並び)。種族値・わざは対戦データの値。タイプはゲーム内の並び（実機で確認）。
 # ゲーム内公開データに正式収録されたら自動取得値を優先する(キーが既にあれば何もしない)
 MANUAL_POKE = {
-    'SLIGGOO_HISUIAN': ('sliggoo_hisuian', 'ヒスイヌメイル',   0, ['STEEL', 'DRAGON']),   # わざ・威力は2026-11-08にタダシさんの実機スクショと一致を確認
-    'GOODRA_HISUIAN':  ('goodra_hisuian',  'ヒスイヌメルゴン', 1, ['STEEL', 'DRAGON']),
+    'SLIGGOO_HISUIAN': ('sliggoo_hisuian', 'ヒスイヌメイル',   0, None),   # わざ・タイプの並びは verified.py（実機スクショで確認済み）
+    'GOODRA_HISUIAN':  ('goodra_hisuian',  'ヒスイヌメルゴン', 1, None),
 }
 # i18nに未収録の技・ポケモンの日本語名
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
  'MIND_BLOWN':'ビックリヘッド','DRUM_BEATING':'ドラムアタック','PYROBALL':'かえんボール','GIGATON_HAMMER':'デカハンマー',
  'AURA_WHEEL_ELECTRIC':'オーラぐるま（でんき）','AURA_WHEEL_DARK':'オーラぐるま（あく）','DYNAMAX_CANNON':'ダイマックスほう',
- 'PLASMA_FISTS':'プラズマフィスト','GLAIVE_RUSH':'きょけんとつげき','SNIPE_SHOT':'ねらいうち','DIVE':'ダイビング'}
+ 'PLASMA_FISTS':'プラズマフィスト','GLAIVE_RUSH':'きょけんとつげき','SNIPE_SHOT':'ねらいうち','DIVE':'ダイビング',
+ 'KOWTOW_CLEAVE':'ドゲザン'}   # ドドゲザンのわざ(置き場Aの11/3版で入った・日本語名がまだ無い)
 JP_MOVE_FIX.update(MEGA_PLUS_JA)   # メガの追加SPアタック「＋わざ」13本
 GEN9_JA = {'WALKINGWAKE':'ウネルミナモ','IRONLEAVES':'テツノイサハ','DIPPLIN':'カミッチュ','POLTCHAGEIST':'チャデス',
  'SINISTCHA':'ヤバソチャ','OKIDOGI':'イイネイヌ','MUNKIDORI':'マシマシラ','FEZANDIPITI':'キチキギス','OGERPON':'オーガポン',
@@ -366,7 +370,7 @@ FORM_JA = {
  'RED_STRIPED':'あかすじ','BLUE_STRIPED':'あおすじ','WHITE_STRIPED':'しろすじ',
  'STANDARD':'','ZEN':'ダルマ','SPRING':'はる','SUMMER':'なつ','AUTUMN':'あき','WINTER':'ふゆ',
  'INCARNATE':'けしん','THERIAN':'れいじゅう','BLACK':'ブラック','WHITE':'ホワイト',
- 'ARIA':'ボイス','PIROUETTE':'ステップ','ORDINARY':'いつも','RESOLUTE':'かくご',
+ 'METEOR':'りゅうせい','ARIA':'ボイス','PIROUETTE':'ステップ','ORDINARY':'いつも','RESOLUTE':'かくご',
  'BURN':'ブレイズ','CHILL':'フリーズ','DOUSE':'アクア','SHOCK':'イナズマ',
  'TEN_PERCENT':'10%','FIFTY_PERCENT':'50%','COMPLETE':'パーフェクト','COMPLETE_TEN_PERCENT':'10%','COMPLETE_FIFTY_PERCENT':'50%',
  'SMALL':'ちいさい','AVERAGE':'ふつう','LARGE':'おおきい','SUPER':'とくだい',
@@ -391,12 +395,13 @@ OVERRIDE = {'MEWTWO_A':'アーマードミュウツー','CHERRIM_SUNNY':'チェ�
  'MINIOR':'メテノ（りゅうせい）','MINIOR_BLUE':'メテノ（コア）',
  'ZACIAN_HERO':'ザシアン（れきせんのゆうしゃ）','ZAMAZENTA_HERO':'ザマゼンタ（れきせんのゆうしゃ）',
  'PIKACHU_BB_2026':'ピカチュウ（コスチューム2026）','PIKACHU_COSTUME_2020':'ピカチュウ（コスチューム2020）','PIKACHU_VS_2019':'ピカチュウ（コスチューム2019）'}
-DEFAULT_FORM = {'LANDORUS':'ランドロス（けしん）','TORNADUS':'トルネロス（けしん）','THUNDURUS':'ボルトロス（けしん）',
+DEFAULT_FORM = {'MINIOR':'メテノ（コア）',   # 置き場Aの11/3版から、すがた無しのメテノがコアの能力になった(りゅうせいは MINIOR_METEOR)
+ 'LANDORUS':'ランドロス（けしん）','TORNADUS':'トルネロス（けしん）','THUNDURUS':'ボルトロス（けしん）',
  'ENAMORUS':'ラブトロス（けしん）','SHAYMIN':'シェイミ（ランド）','HOOPA':'フーパ（いましめられし）','GIRATINA':'ギラティナ（アナザー）',
  'KELDEO':'ケルディオ（いつも）'}
 
 def main():
-    data = apply_gm_supp(add_info_plus(fetch(SRC['gm'])))
+    data = apply_gm_supp(add_info_plus(gm_source.load()))   # ゲーム内データは2つの置き場の新しいほう(gm_source.py)
     ja = fetch(SRC['ja'])['data']
     ja_map = {ja[i]: ja[i+1] for i in range(0, len(ja)-1, 2)}
     pvp = fetch(SRC['pvp'])['pokemon']
@@ -457,6 +462,11 @@ def main():
             #   we = ダメージ判定が終わる時間(秒)
             # ジム防衛のおすすめわざ選びは d と w の両方を使う（重いわざを見分けるため）。
             # おんがえし だけは元データに w が無いので we で代用する。
+            # 当たるまでの時間がゲーム内データに無いわざ(置き場Aの11/3版のダイビング等)は、手で補った値を使う(0秒にしない)
+            if 'damageWindowStartMs' not in ms and 'damageWindowEndMs' not in ms and mid in SUPP_MOVES:
+                _sm = SUPP_MOVES[mid]['move']
+                ms = {**ms, 'damageWindowStartMs': _sm.get('damageWindowStartMs'), 'damageWindowEndMs': _sm.get('damageWindowEndMs')}
+                ms = {k: v for k, v in ms.items() if v is not None}
             _we = ms.get('damageWindowEndMs', 0) / 1000
             moves[mid] = {'n':nm,'t':ms['pokemonType'].replace('POKEMON_TYPE_',''),
                           'p':ms.get('power') or 0.0,'d':ms.get('durationMs',0)/1000,'e':ms.get('energyDelta',0),
@@ -562,6 +572,10 @@ def main():
                      'ec': _ids([m for m in _el if m not in _fast], False),
                      'shadow': False, 'fe': _fe}
         print('対戦データの情報元から補完 →', _nm)
+
+    # ===== 実機で確かめた値（verified.py）を最優先で上書き =====
+    _ver_same = [k for k, v in verified.VERIFIED.items() if k in final and verified.apply(final[k], v, 'pve')]
+    VERIFIED_NOTES.extend(verified.report('ゲーム内データ', _ver_same))
 
     # ===== 未実装ポケモンの除外（PvPokeのreleasedフラグで判定） =====
     # 照合できたうえで released=False のものだけ除外。照合不能は安全側で残す。
@@ -722,6 +736,14 @@ def main():
         if 'typeEffective' in d:
             chart[d['typeEffective']['attackType'].replace('POKEMON_TYPE_','')]=d['typeEffective']['attackScalar']
 
+    # ＋わざの威力: ゲーム内データにイベントのボーナス（グローバルチャレンジなど）が乗っている期間は、発表の威力を 'p' に戻し、
+    # いまの値を 'pe' に控える（2026-11-08タダシさん指示「確かでない倍率を勝手に使わない」・あとでイベントボーナスのボタンが使う）
+    for _mk, (_b, _raid, *_r) in MEGA_PLUS_INFO.items():
+        _mid = plus_id(_b)
+        _src = _r[-1] if _r else ''
+        if _raid and '公式' in str(_src) and _mid in moves and moves[_mid].get('p') not in (None, _raid):
+            moves[_mid]['pe'] = moves[_mid]['p']; moves[_mid]['p'] = float(_raid)
+            VERIFIED_NOTES.append(f"{moves[_mid]['n']}: ゲーム内データの威力{moves[_mid]['pe']:g}はイベントのボーナス込みと見て、発表の{_raid}で計算")
     god = json.dumps({'pokemon':final,'moves':moves,'cpm':cpm,'chart':chart,'types':TYPES,'typeJa':TYPE_JA},
                      ensure_ascii=False, separators=(',',':'))
 
@@ -773,6 +795,10 @@ def main():
         lines += ['### ⚡ メガの＋わざ（ジム・レイド）', ''] + [f'- {x}' for x in notes] + ['']
     if not lines:
         lines = ["データに実質的な変更はありません（CPM表・相性表など内部値のみの差分の可能性）。"]
+    _gm_notes = gm_source.notes()   # 取り寄せ先の切り替え・ゲーム内データの更新・止まっている心配
+    _gm_notes += VERIFIED_NOTES
+    if _gm_notes:
+        lines += ['', '### 📦 ゲーム内データ'] + [f'- {x}' for x in _gm_notes]
     open('changes.md','w',encoding='utf-8').write(
         "## データ更新の内容\n\n"
         "この内容はすでにサイトへ反映済みです。読み終わったらこのお知らせを閉じてください。\n"

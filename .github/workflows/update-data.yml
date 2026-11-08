@@ -101,14 +101,15 @@ jobs:
             echo "changed=1" >> "$GITHUB_OUTPUT"
           fi
 
-      # 公式ニュースの読み取り記録（どの記事を読んだか・知らせ）は、データに変化が無い日でも保存する（お知らせは立てない）
+      # 公式ニュースの読み取り記録（どの記事を読んだか・知らせ）と、ゲーム内データの取り寄せ先の記録（gm_source.json）・
+      # 取り寄せ先どうしの食い違いの控え（source_diff.json）は、データに変化が無い日でも保存する（お知らせは立てない）
       - name: 公式ニュースの読み取り記録を保存
         run: |
-          git add .github/official_news.json
+          git add .github/official_news.json .github/gm_source.json .github/source_diff.json
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore: 公式ニュースの読み取り記録を更新"
+            git commit -m "chore: 公式ニュース・取り寄せ先の記録を更新"
             git pull --rebase
             git push
           fi
