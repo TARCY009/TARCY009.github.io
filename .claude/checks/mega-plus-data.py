@@ -64,7 +64,10 @@ else:
 ns, n0 = g['moves'].get('NIGHT_SHADE_PLUS'), g['moves']['NIGHT_SHADE']
 if not ns or ns['p'] != 160 or ns['d'] != n0['d'] or ns['w'] != n0['w'] or ns['e'] != -100: ng('D ナイトヘッド＋', ns, n0)
 if g['pokemon']['SABLEYE_MEGA'].get('plus') != 'NIGHT_SHADE_PLUS': ng('D ヤミラミに付いていない')
-if mp['plus'].get('SABLEYE_MEGA', {}).get('pvp', {}).get('p') != 55: ng('D ヤミラミ pvp 55')
+# 対戦側は情報元に正式に入ったら pvp_data の plusMoves が正（図鑑の未確定の一覧からは外れる・2026-11-08）。期待値は55のまま
+_ns_pvp = (p.get('plusMoves', {}).get('NIGHT_SHADE_PLUS') or {}).get('p')
+if _ns_pvp is None: _ns_pvp = mp['plus'].get('SABLEYE_MEGA', {}).get('pvp', {}).get('p')
+if _ns_pvp != 55: ng('D ヤミラミ pvp 55', _ns_pvp)
 # ジム挑戦に＋わざが出ていない
 gm_ids = set(json.dumps(gd, ensure_ascii=False).split('"'))
 for mid in list(MEGA_PLUS_MOVES) + ['NIGHT_SHADE_PLUS', 'OMINOUS_WIND_PLUS']:

@@ -309,7 +309,8 @@ FORM_MOVE_FIX = {
 }
 # 対戦データ側がまだ「未実装(released=false)」のままだが、ゲームには実装済みのポケモン。
 # ここに入れると未実装除外の対象から外れる。提供元が追いついたら消してよい
-MANUAL_RELEASED = {'CRAMORANT'}   # ウッウ(2026-08-18実装)
+MANUAL_RELEASED = {'CRAMORANT',   # ウッウ(2026-08-18実装)
+                   'SLIGGOO_HISUIAN', 'GOODRA_HISUIAN'}   # ヒスイヌメイル・ヒスイヌメルゴン(2026-11-06ワイルドエリア2026：仙台・東北で初登場・タダシさん指示)
 # 情報元がシャドウ実装に追随していないぶんを手動で補う(タダシさん指示で先行反映)。
 # 提供元(対戦データ)に `<key>_shadow` が入れば自動でも拾われるので、重複しても害はない(集合に足すだけ)。
 # build_pvp_data.py の MANUAL_SHADOW と必ず同じ顔ぶれにする
@@ -331,6 +332,16 @@ MANUAL_MEGA = {
     'GRENINJA_MEGA':   ('メガゲッコウガ',  299, 180, 176, ['WATER','DARK'],     'GRENINJA'),
     # 2026-09-19のスーパーメガレイド・デイで初登場(2026-09-12タダシさん指示で先行収録)
     'STARAPTOR_MEGA':  ('メガムクホーク',  278, 207, 198, ['FIGHTING','FLYING'], 'STARAPTOR'),
+    # 2026-11-28のスーパーメガレイド・デイで初登場(2026-11-08タダシさん指示で先行収録)。
+    # 種族値は原作(HP95/攻80/防93/特攻135/特防110/素早70)をGOの決まりで換算した値＝外部の攻略情報2つと一致
+    'CLEFABLE_MEGA':   ('メガピクシー',    253, 205, 216, ['FAIRY','FLYING'],    'CLEFABLE'),
+}
+# ゲーム内公開データ(提供元)にまだ載っていないポケモン(メガ以外)を、対戦データの情報元から補う(2026-11-08新設)。
+# key: (対戦データのspeciesId, 名前, 最終進化か)。種族値・タイプ・わざは対戦データの値。
+# ゲーム内公開データに正式収録されたら自動取得値を優先する(キーが既にあれば何もしない)
+MANUAL_POKE = {
+    'SLIGGOO_HISUIAN': ('sliggoo_hisuian', 'ヒスイヌメイル',   0),
+    'GOODRA_HISUIAN':  ('goodra_hisuian',  'ヒスイヌメルゴン', 1),
 }
 # i18nに未収録の技・ポケモンの日本語名
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
@@ -525,6 +536,32 @@ def main():
             final[mkey] = {'n':tag+p['n']+xy,'a':stt['baseAttack'],'df':stt['baseDefense'],'h':stt['baseStamina'],
                            'ty':[t.replace('POKEMON_TYPE_','') for t in [ov.get('typeOverride1'),ov.get('typeOverride2')] if t],
                            'q':p['q'],'c':p['c'],'eq':p['eq'],'ec':p['ec'],'shadow':False,'mega':True,'fe':1}
+
+    # ===== ゲーム内公開データに無いポケモンを対戦データの情報元から補う(MANUAL_POKE) =====
+    _pvp_by = {p['speciesId']: p for p in pvp}
+    for _k, (_sid, _nm, _fe) in MANUAL_POKE.items():
+        if _k in final: continue
+        _sp = _pvp_by.get(_sid)
+        if not _sp:
+            print('警告: MANUAL_POKE の元が対戦データにありません →', _sid); continue
+        _bs = _sp['baseStats']
+        def _ids(lst, fast, _k=_k):
+            out = []
+            for m in lst or []:
+                mid = m + '_FAST' if fast and not m.endswith('_FAST') else m
+                if mid in moves: out.append(mid)
+                else: print('警告: MANUAL_POKE のわざがありません →', _k, mid)
+            return sorted(out)
+        _el = _sp.get('eliteMoves') or []
+        _fast = set(_sp.get('fastMoves') or [])
+        final[_k] = {'n': _nm, 'a': _bs['atk'], 'df': _bs['def'], 'h': _bs['hp'],
+                     'ty': [t.upper() for t in _sp['types'] if t != 'none'],
+                     'q': _ids([m for m in _sp.get('fastMoves') or [] if m not in _el], True),
+                     'c': _ids([m for m in _sp.get('chargedMoves') or [] if m not in _el], False),
+                     'eq': _ids([m for m in _el if m in _fast], True),
+                     'ec': _ids([m for m in _el if m not in _fast], False),
+                     'shadow': False, 'fe': _fe}
+        print('対戦データの情報元から補完 →', _nm)
 
     # ===== 未実装ポケモンの除外（PvPokeのreleasedフラグで判定） =====
     # 照合できたうえで released=False のものだけ除外。照合不能は安全側で残す。

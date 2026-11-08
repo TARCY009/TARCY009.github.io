@@ -73,7 +73,13 @@ LEVEL_FLOOR = {'zygarde': 20, 'deoxys': 20, 'darkrai': 20, 'mewtwo_armored': 20}
 # (2026-09-15テスター#22・タダシさん指示)。通常のダークライは従来どおり10
 SHADOW_IV_FLOOR = {'darkrai': 6}
 MANUAL_RELEASED = {'cramorant',        # ウッウ(2026-08-18実装)
-                   'staraptor_mega'}   # メガムクホーク(2026-09-19スーパーメガレイド・デイ・タダシさん指示で先行)
+                   'staraptor_mega',   # メガムクホーク(2026-09-19スーパーメガレイド・デイ・タダシさん指示で先行)
+                   'sliggoo_hisuian', 'goodra_hisuian'}   # ヒスイヌメイル・ヒスイヌメルゴン(2026-11-06ワイルドエリア2026：仙台・東北で初登場)
+# 情報元にまだ載っていないメガを手で足す: speciesId: (名前, 攻, 防, HP, [タイプ], 元のspeciesId)。わざは元のポケモンを引き継ぐ。
+# 情報元に入ったらそちらを優先する(キーが既にあれば何もしない)。build_data.py の MANUAL_MEGA と同じ数値にする
+MANUAL_MEGA_PVP = {
+    'clefable_mega': ('メガピクシー', 253, 205, 216, ['FAIRY', 'FLYING'], 'clefable'),   # 2026-11-28初登場(タダシさん指示で先行)
+}
 # 情報元がシャドウ実装に追随していないぶんを手動で補う(タダシさん指示で先行反映)。
 # 提供元に `<key>_shadow` が入れば自動でも拾われるので、重複しても害はない(集合に足すだけ)
 MANUAL_SHADOW = {   # 2026-09-08 実装確定
@@ -297,6 +303,12 @@ def main():
             nm = display_name(*gm_keys[c])
             if mega: nm = mega[0] + nm + mega[1]
             return nm
+        # GM未収録の地方のすがた(ヒスイヌメルゴン等・2026-11-08): 元の種の名前に地方名を付ける
+        mr = re.match(r'^(.+)_(HISUIAN|GALARIAN|ALOLAN|PALDEAN)$', up)
+        if mr:
+            base = jp_name(mr.group(1).lower())
+            reg = {'HISUIAN': 'HISUIAN', 'GALARIAN': 'GALARIAN', 'ALOLAN': 'ALOLA', 'PALDEAN': 'PALDEA'}[mr.group(2)]
+            if base: return REGION[reg] + base
         nm = GEN9_JA.get(up.replace('_', ''))        # GM未収録の第9世代(WALKING_WAKE等)
         if nm:
             return mega[0] + nm + mega[1] if mega else nm
@@ -327,6 +339,13 @@ def main():
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
             if 'mythical' in p['tags']: pokes[sid]['myth'] = 1
+    for sid, (nm, a, df, h, ty, src) in MANUAL_MEGA_PVP.items():
+        if sid in pokes: continue
+        b = pokes.get(src)
+        if not b:
+            print('警告: MANUAL_MEGA_PVP の元がありません →', src); continue
+        pokes[sid] = {'n': nm, 'dex': b['dex'], 'a': a, 'df': df, 'h': h, 'ty': ty,
+                      'q': list(b['q']), 'c': list(b['c']), 'eq': list(b['eq']), 'ec': list(b['ec']), 'r': 1, 'mega': 1}
     # 追加SPアタック(3本目)を持つメガに印を付ける。既存の c / ec には足さないので
     # /gbl/・/rocket/・ブレイクポイント・対戦記録の結果は一切変わらない。
     # 対戦データ側にまだわざ定義が無いもの(plus_moves に入っていない)には印を付けない
