@@ -105,6 +105,8 @@ HIDDEN_FORMS = {'aegislash_blade', 'mimikyu_busted', 'cramorant_gulping', 'cramo
 TYPE_ORDER_FIX = {
     'voltorb_hisuian': ['ELECTRIC', 'GRASS'],   # ゲーム内: でんき・くさ（情報元は くさ・でんき）
     'groudon_primal':  ['GROUND', 'FIRE'],      # ゲンシグラードン。ゲーム内: じめん・ほのお（情報元は ほのお・じめん）
+    'sliggoo_hisuian': ['STEEL', 'DRAGON'],     # ヒスイヌメイル。ゲーム内: はがね・ドラゴン（2026-11-08タダシさんの実機スクショ）
+    'goodra_hisuian':  ['STEEL', 'DRAGON'],     # ヒスイヌメルゴン。同上
 }
 
 SPECIES_JA_FIX = {

@@ -61,8 +61,8 @@ jobs:
             echo "changed=1" >> "$GITHUB_OUTPUT"
           fi
 
-      # 更新があった週だけ「お知らせ」を立てる。GitHubがこれをメールで送ってくれるので
-      # タダシさん側の設定は不要。先週までのお知らせは自動で閉じて受信箱をためない。
+      # 変化があった回だけ、短い要約を「📢 GOナビのお知らせ」1つにコメントで足す＝メール1通（.github/notify.sh・2026-11-08タダシさん指示）。
+      # 要約すると中身が残らない回（内部データの調整のみ・毎回同じ一覧だけ）は送らない
       - name: 更新結果をお知らせする
         if: steps.commit.outputs.changed == '1' || github.event.inputs.test == 'true'
         env:
@@ -70,22 +70,4 @@ jobs:
           HEADLINE: ${{ steps.moves.outputs.headline }}
           OWNER: ${{ github.repository_owner }}
           IS_TEST: ${{ github.event.inputs.test }}
-        run: |
-          if [ "$IS_TEST" = "true" ] && [ "${{ steps.commit.outputs.changed }}" != "1" ]; then
-            HEADLINE="テスト送信（環境に変化はありません）"
-          fi
-          gh issue list --state open --limit 50 --json number,title \
-            | jq -r '.[] | select(.title | startswith("📢 環境リストの更新結果")) | .number' \
-            | xargs -r -I{} gh issue close {} --comment "新しいお知らせが届いたので閉じます。"
-          {
-            cat pvp-tests/meta_changes.md
-            echo
-            echo "---"
-            echo "この内容はすでにサイトへ反映済みです。読み終わったらこのお知らせを閉じてください。"
-            echo "（次の更新のときに自動で閉じるので、そのままでも大丈夫です）"
-            echo ""
-            echo "@${OWNER}"
-          } > /tmp/issue_body.md
-          gh issue create \
-            --title "📢 環境リストの更新結果（$(TZ=Asia/Tokyo date '+%-m/%-d')）${HEADLINE}" \
-            --body-file /tmp/issue_body.md
+        run: sh .github/notify.sh meta pvp-tests/meta_changes.md

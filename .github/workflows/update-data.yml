@@ -113,25 +113,14 @@ jobs:
             git push
           fi
 
-      # 更新があった日だけ「お知らせ」を立てる。GitHubがこれをメールで送ってくれる。
-      # 前回のお知らせは自動で閉じて受信箱をためない。
+      # 変化があった回だけ、短い要約を「📢 GOナビのお知らせ」1つにコメントで足す＝メール1通（.github/notify.sh・2026-11-08タダシさん指示）。
+      # 要約すると中身が残らない回（内部データの調整のみ・毎回同じ一覧だけ）は送らない
       - name: 更新内容をお知らせする
         if: steps.commit.outputs.changed == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEADLINE: ${{ steps.build.outputs.headline }}
-        run: |
-          gh issue list --state open --limit 50 --json number,title \
-            | jq -r '.[] | select(.title | startswith("📢 ゲームデータの更新内容")) | .number' \
-            | xargs -r -I{} gh issue close {} --comment "新しいお知らせが届いたので閉じます。"
-          {
-            cat changes.md
-            echo ""
-            echo "@${{ github.repository_owner }}"
-          } > /tmp/issue_body.md
-          gh issue create \
-            --title "📢 ゲームデータの更新内容（$(TZ=Asia/Tokyo date '+%-m/%-d')）${HEADLINE:-内部データの調整のみ}" \
-            --body-file /tmp/issue_body.md
+          OWNER: ${{ github.repository_owner }}
+        run: sh .github/notify.sh data changes.md
 
       # ---- 1ポケモン1ページ（/pokedex/<キー>/）----
       # ⚠ pokepage/hold-all.txt があるあいだは、変数 POKEPAGE が on でも下の4つは動かない（2026-10-11・アドセンス2回目の不合格を受けて公開から外した）。

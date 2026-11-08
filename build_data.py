@@ -337,11 +337,11 @@ MANUAL_MEGA = {
     'CLEFABLE_MEGA':   ('メガピクシー',    253, 205, 216, ['FAIRY','FLYING'],    'CLEFABLE'),
 }
 # ゲーム内公開データ(提供元)にまだ載っていないポケモン(メガ以外)を、対戦データの情報元から補う(2026-11-08新設)。
-# key: (対戦データのspeciesId, 名前, 最終進化か)。種族値・タイプ・わざは対戦データの値。
+# key: (対戦データのspeciesId, 名前, 最終進化か, タイプの並び)。種族値・わざは対戦データの値。タイプはゲーム内の並び（実機で確認）。
 # ゲーム内公開データに正式収録されたら自動取得値を優先する(キーが既にあれば何もしない)
 MANUAL_POKE = {
-    'SLIGGOO_HISUIAN': ('sliggoo_hisuian', 'ヒスイヌメイル',   0),
-    'GOODRA_HISUIAN':  ('goodra_hisuian',  'ヒスイヌメルゴン', 1),
+    'SLIGGOO_HISUIAN': ('sliggoo_hisuian', 'ヒスイヌメイル',   0, ['STEEL', 'DRAGON']),   # わざ・威力は2026-11-08にタダシさんの実機スクショと一致を確認
+    'GOODRA_HISUIAN':  ('goodra_hisuian',  'ヒスイヌメルゴン', 1, ['STEEL', 'DRAGON']),
 }
 # i18nに未収録の技・ポケモンの日本語名
 JP_MOVE_FIX = {'CHILLING_WATER':'ひやみず','SECRET_SWORD':'しんぴのつるぎ','BEAK_BLAST':'くちばしキャノン',
@@ -539,7 +539,7 @@ def main():
 
     # ===== ゲーム内公開データに無いポケモンを対戦データの情報元から補う(MANUAL_POKE) =====
     _pvp_by = {p['speciesId']: p for p in pvp}
-    for _k, (_sid, _nm, _fe) in MANUAL_POKE.items():
+    for _k, (_sid, _nm, _fe, _ty) in MANUAL_POKE.items():
         if _k in final: continue
         _sp = _pvp_by.get(_sid)
         if not _sp:
@@ -555,7 +555,7 @@ def main():
         _el = _sp.get('eliteMoves') or []
         _fast = set(_sp.get('fastMoves') or [])
         final[_k] = {'n': _nm, 'a': _bs['atk'], 'df': _bs['def'], 'h': _bs['hp'],
-                     'ty': [t.upper() for t in _sp['types'] if t != 'none'],
+                     'ty': _ty or [t.upper() for t in _sp['types'] if t != 'none'],
                      'q': _ids([m for m in _sp.get('fastMoves') or [] if m not in _el], True),
                      'c': _ids([m for m in _sp.get('chargedMoves') or [] if m not in _el], False),
                      'eq': _ids([m for m in _el if m in _fast], True),

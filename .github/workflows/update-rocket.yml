@@ -70,21 +70,11 @@ jobs:
             git push
           fi
 
-      # 手持ちを書き換えた日・4日以上そろわない人がいる日・読み取れなくなった日だけ「お知らせ」を立てる
+      # 変化があった回だけ、短い要約を「📢 GOナビのお知らせ」1つにコメントで足す＝メール1通（.github/notify.sh・2026-11-08タダシさん指示）。
+      # 要約すると中身が残らない回（内部データの調整のみ・毎回同じ一覧だけ）は送らない
       - name: お知らせする
         if: steps.gate.outputs.go == 'true' && steps.build.outputs.headline != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEADLINE: ${{ steps.build.outputs.headline }}
-        run: |
-          gh issue list --state open --limit 50 --json number,title \
-            | jq -r '.[] | select(.title | startswith("📢 ロケット団の手持ち")) | .number' \
-            | xargs -r -I{} gh issue close {} --comment "新しいお知らせが届いたので閉じます。"
-          {
-            cat rocket_changes.md
-            echo ""
-            echo "@${{ github.repository_owner }}"
-          } > /tmp/issue_body.md
-          gh issue create \
-            --title "📢 ロケット団の手持ち（$(TZ=Asia/Tokyo date '+%-m/%-d')）${HEADLINE}" \
-            --body-file /tmp/issue_body.md
+          OWNER: ${{ github.repository_owner }}
+        run: sh .github/notify.sh rocket rocket_changes.md
