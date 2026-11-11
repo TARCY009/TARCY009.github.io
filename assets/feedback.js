@@ -79,7 +79,9 @@
     '/move-dex/': 'わざ図鑑',
     '/bulk/': '耐久指数ランキング',
     '/max-type/': 'マックスバトル タイプ別アタッカー',
-    '/max-type/tank/': 'マックスバトル タイプ別タンク'
+    '/max-type/tank/': 'マックスバトル タイプ別タンク',
+    '/scp/': 'スーパーリーグ SCPランキング',
+    '/scp/hyper/': 'ハイパーリーグ SCPランキング'
   };
   var path = location.pathname.replace(/index\.html$/, '');
   if (path.charAt(path.length - 1) !== '/') path += '/';

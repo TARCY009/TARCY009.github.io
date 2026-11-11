@@ -92,19 +92,21 @@
       ]
     },
     "dex": {
-      "label": "ステータス図鑑・わざ図鑑・耐久指数・マックスバトル タイプ別",
+      "label": "ステータス図鑑・わざ図鑑・耐久指数・マックスバトル タイプ別・SCPランキング",
       "rules": ".claude/rules/dex.md",
       "checklist": ".claude/checklists/dex.md",
       "checks": [
         "exit-rank",
         "dex-stats",
-        "mega-plus-data"
+        "mega-plus-data",
+        "scp-rank"
       ],
       "paths": [
         "pokedex/**",
         "move-dex/**",
         "bulk/**",
-        "max-type/**"
+        "max-type/**",
+        "scp/**"
       ]
     }
   }

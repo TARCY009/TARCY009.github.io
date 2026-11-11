@@ -29,11 +29,11 @@ BRAND = 'GOナビ'
 PAGES = [
   dict(path='/', key='home',
        title='GOナビ｜ポケモンGO 攻略ツール（レイド火力・GBL・個体値）',
-       desc='GOナビはポケモンGOの攻略ツール集です。レイドの火力ランキング、トレーナーバトルの対面シミュレート、個体値の順位、ジムの攻め・守り、マックスバトル対策まで17個の道具を無料で使えます。',
+       desc='GOナビはポケモンGOの攻略ツール集です。レイドの火力ランキング、トレーナーバトルの対面シミュレート、個体値の順位、ジムの攻め・守り、マックスバトル対策まで18個の道具を無料で使えます。',
        og_title='GOナビ｜ポケモンGO 攻略ツール',
-       og_desc='レイドの火力、GBLの対面、個体値の順位まで。17個の道具を無料で使えます。',
+       og_desc='レイドの火力、GBLの対面、個体値の順位まで。18個の道具を無料で使えます。',
        eyebrow='POKÉMON GO TOOLS', name='GOナビ',
-       tag='レイド・ジム・トレーナーバトル・個体値。17個の攻略ツールを無料で。',
+       tag='レイド・ジム・トレーナーバトル・個体値。18個の攻略ツールを無料で。',
        color='#7fb4ff', ld='site'),
   dict(path='/dps/', key='dps', src=['template.html', 'dps/index.html'],
        title='レイド火力チェッカー｜ポケモンGOのレイドDPSランキング｜GOナビ',
@@ -171,6 +171,22 @@ PAGES = [
        eyebrow='POKÉMON GO BULK RANKING', name='耐久指数ランキング',
        tag='倒されにくいポケモンが順に並びます。防御とHPのかけ算です',
        color='#8ec9ff', ld='app'),
+  dict(path='/scp/', key='scp',
+       title='スーパーリーグ SCPランキング｜ポケモンGOのGBL理想個体値一覧｜GOナビ',
+       desc='ポケモンGOのGOバトルリーグ スーパーリーグ(CP1500以下)で、全ポケモンをSCP(攻撃・防御・HPを総合した評価値)の高い順に並べたランキング。理想の個体値・PL・CPつきで、メガ・ゲンシ、進化前、伝説系の除外、PL50と51を切り替えられます。',
+       og_title='スーパーリーグ SCPランキング｜ポケモンGO',
+       og_desc='CP1500以下で、ステータスの総合値が高いポケモンと理想の個体値が分かります。',
+       eyebrow='POKÉMON GO GREAT LEAGUE SCP', name='スーパーリーグ SCPランキング',
+       tag='CP1500以下で、ステータスの総合値が高い順',
+       color='#7aa8ff', ld='app'),
+  dict(path='/scp/hyper/', key='scp-hyper',
+       title='ハイパーリーグ SCPランキング｜ポケモンGOのGBL理想個体値一覧｜GOナビ',
+       desc='ポケモンGOのGOバトルリーグ ハイパーリーグ(CP2500以下)で、全ポケモンをSCP(攻撃・防御・HPを総合した評価値)の高い順に並べたランキング。理想の個体値・PL・CPつきで、メガ・ゲンシ、進化前、伝説系の除外、PL50と51を切り替えられます。',
+       og_title='ハイパーリーグ SCPランキング｜ポケモンGO',
+       og_desc='CP2500以下で、ステータスの総合値が高いポケモンと理想の個体値が分かります。',
+       eyebrow='POKÉMON GO ULTRA LEAGUE SCP', name='ハイパーリーグ SCPランキング',
+       tag='CP2500以下で、ステータスの総合値が高い順',
+       color='#ffd54a', ld='app'),
   # 案内ページ（共有用画像はトップと同じ）
   dict(path='/about/', key='home', title='運営者情報｜GOナビ',
        desc='ポケモンGO攻略ツール集「GOナビ」の運営者情報・免責事項・著作権について。',
@@ -268,7 +284,7 @@ NAME_BR = {
   'type-dps': 'タイプ別火力|ランキング', 'max-battle': 'マックスバトル|対策ツール',
   'gym-attack': 'ジム挑戦|オススメツール', 'gym-defense': 'ジム防衛|オススメツール',
   'breakpoint': 'GBL|ブレイクポイント', 'rocket': 'GOロケット団|対策シミュレーター', 'rocket-type': 'R団戦|タイプ別火力|ランキング',
-  'bulk': '耐久指数|ランキング', 'max-type': 'マックスバトル|タイプ別アタッカー|ランキング', 'max-type-tank': 'マックスバトル|タイプ別タンク|ランキング', 'iv-checker': '個体値|チェッカー',
+  'bulk': '耐久指数|ランキング', 'max-type': 'マックスバトル|タイプ別アタッカー|ランキング', 'max-type-tank': 'マックスバトル|タイプ別タンク|ランキング', 'iv-checker': '個体値|チェッカー', 'scp': 'スーパーリーグ|SCPランキング', 'scp-hyper': 'ハイパーリーグ|SCPランキング',
 }
 for _p in PAGES:
     if _p['key'] in NAME_BR and _p.get('name'):
@@ -355,7 +371,7 @@ FONT_W4 = '/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc'
 FONT_EN = ('/System/Library/Fonts/Avenir Next.ttc', 8)   # Heavy
 
 
-ICON_DIR = {'dps': 'karyoku'}   # アイコンのフォルダ名がツールのキーと違うもの
+ICON_DIR = {'dps': 'karyoku', 'scp-hyper': 'scp'}   # アイコンのフォルダ名がツールのキーと違うもの
 
 
 def icon_dir_of(fn, key=None):

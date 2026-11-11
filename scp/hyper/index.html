@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハイパーリーグ SCPランキング｜ポケモンGOのGBL理想個体値一覧｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOのGOバトルリーグ ハイパーリーグ(CP2500以下)で、全ポケモンをSCP(攻撃・防御・HPを総合した評価値)の高い順に並べたランキング。理想の個体値・PL・CPつきで、メガ・ゲンシ、進化前、伝説系の除外、PL50と51を切り替えられます。">
+<link rel="canonical" href="https://gonavi.jp/scp/hyper/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="ハイパーリーグ SCPランキング｜ポケモンGO">
+<meta property="og:description" content="CP2500以下で、ステータスの総合値が高いポケモンと理想の個体値が分かります。">
+<meta property="og:url" content="https://gonavi.jp/scp/hyper/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/scp-hyper.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ハイパーリーグ SCPランキング">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"ハイパーリーグ SCPランキング","url":"https://gonavi.jp/scp/hyper/","description":"ポケモンGOのGOバトルリーグ ハイパーリーグ(CP2500以下)で、全ポケモンをSCP(攻撃・防御・HPを総合した評価値)の高い順に並べたランキング。理想の個体値・PL・CPつきで、メガ・ゲンシ、進化前、伝説系の除外、PL50と51を切り替えられます。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
+<!-- seo:end -->
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/scp/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/scp/apple-touch-icon.png">
+<link rel="manifest" href="/scp/hyper/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="ハイパーリーグ SCPランキング">
+<link rel="stylesheet" href="/assets/shadow-icon.css">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/feedback.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script src="/assets/ads.js"></script>
+<link rel="stylesheet" href="/assets/tabs.css">
+<link rel="stylesheet" href="/scp/scp.css">
+<meta name="theme-color" content="#0b1023">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<!-- 開発者だけの「🚫 除外」(未実装の先行収録を動画用に外す)。⚠ ページ本体より先に読む -->
+<script src="/assets/devex.js"></script>
+</head>
+<body data-cap="2500">
+<div class="wrap">
+<header>
+  <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
+  <div class="eyebrow">Pok&eacute;mon GO Ultra League SCP Ranking</div>
+  <h1><span class="grp"><span class="wmksuf">ハイパーリーグ</span></span> <span class="grp"><b class="wmk" data-tool="scp-hyper">SCP</b><span class="wmksuf">ランキング</span></span></h1>
+  <p class="intro">GOバトルリーグのハイパーリーグ（CP2500以下）で、全ポケモンをSCPの高い順に並べたランキングです。SCPは攻撃・防御・HPの実数値を総合した対戦向けの評価値で、それぞれのポケモンがCP2500に収まる中でSCPが最大になる個体値とPLの値を出します。メガ・ゲンシや進化前を含めるか、伝説系を除くか、PLの上限を50か51かを切り替え、名前で探すと順位と理想の個体値が分かります。</p>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<section class="panel">
+  <div class="gtabs lgtabs" data-snap-skip><div class="gseg" id="lgSeg">
+    <button class="t-blue" type="button" data-cap="1500" aria-pressed="false" title="スーパーリーグ（CP1500以下）のSCPランキング">スーパー</button>
+    <button class="t-gold" type="button" data-cap="2500" aria-pressed="false" title="ハイパーリーグ（CP2500以下）のSCPランキング">ハイパー</button>
+  </div></div>
+  <div class="rhead">
+    <div class="gtabs">
+      <button id="fMega" class="t-mega" type="button" aria-pressed="false"
+        title="メガシンカ・ゲンシカイキをランキングに含めます">メガ・ゲンシ</button>
+      <button id="fNoLg" class="t-gold" type="button" aria-pressed="false"
+        title="伝説・幻・ウルトラビーストをランキングから外します（手に入りやすいポケモンだけで見たいときに）">伝説系除く</button>
+      <button id="fPre" class="t-green" type="button" aria-pressed="false"
+        title="進化前のポケモンもランキングに含めます（ふだんは最終進化だけ）">進化前も</button>
+      <span class="gseg" id="plSeg">
+        <button class="t-cyan" type="button" data-pl="50" title="PL50（通常の強化の上限）まで上げる前提で理想の個体を出します">PL50</button>
+        <button class="t-cyan" type="button" data-pl="51" title="PL51（相棒ブースト込み）まで上げる前提で理想の個体を出します">PL51</button>
+      </span>
+      <span class="gseg" id="cntSeg">
+        <button class="t-cyan" type="button" data-n="30" title="上位30位まで表示します">30位</button>
+        <button class="t-cyan" type="button" data-n="50" title="上位50位まで表示します">50位</button>
+        <button class="t-cyan" type="button" data-n="100" title="上位100位まで表示します">100位</button>
+      </span>
+      <span class="gseg" id="viewSeg">
+        <button class="t-blue" type="button" data-v="num" title="個体値を数字で出します">数字</button>
+        <button class="t-blue" type="button" data-v="bar" title="個体値を攻撃・防御・HPの3本の棒で出します">棒グラフ</button>
+      </span>
+    </div>
+    <div class="searchbox" id="sbox">
+      <input id="q" type="text" inputmode="search" enterkeyhint="search" placeholder="ポケモン名で探す" autocomplete="off" title="名前の一部を入れると、そのポケモンの順位だけを出します">
+      <button class="clr" type="button" aria-label="消す">✕</button>
+    </div>
+  </div>
+  <p class="note">シャドウは攻撃が1.2倍・防御が5/6倍になり、掛け合わせると通常と同じSCPになるため、分けずに並べています。</p>
+  <p class="cond expl">SCP＝攻撃・防御・HPの実数値を総合した値。CP2500以下に収まる個体値・PLの中で、いちばん高くなる組み合わせの値です。</p>
+  <p class="cnt" id="cnt"></p>
+  <div id="devexbox"></div>
+  <div id="rankList"></div>
+</section>
+
+<div class="adslot" data-ad="mid" data-snap-skip></div>
+
+<button class="helptab" id="helptab" type="button" aria-expanded="true">？ 使い方・計算の前提</button>
+<div class="helpbody" id="helpbody">
+  <h4>このツールでわかること</h4>
+  <p>GOバトルリーグの<b>ハイパーリーグ（CP2500以下）</b>で、全ポケモンを<b>SCPの高い順</b>に並べたランキングです。あわせて、そのSCPになる<b>理想の個体値・PL・CP</b>も出します。上の「スーパー｜ハイパー」でスーパーリーグのランキングに切り替えられます（絞り込みはそのまま引き継ぎます）。</p>
+  <h4>SCPとは</h4>
+  <ul>
+    <li><b>SCP＝攻撃・防御・HPの実数値を総合した対戦向けの評価値</b>です。実数値（種族値＋個体値に、PLごとの係数を掛けた値）の積を2/3乗して10で割ったものです</li>
+    <li>CPは攻撃に寄った計算なので、同じCPでも防御・HPが高い個体ほどSCPは高くなります。CP上限のあるリーグでは、<b>攻撃の個体値が低いほどPLを上げられて</b>、SCPが高くなることがよくあります（ハピナス・クレセリア・レジスチルなど）</li>
+    <li>SCPは<b>わざ・タイプ相性を含まない</b>、ステータスだけの目安です。実際の対戦の強さは、GBLシミュレーターでわざ込みで確かめられます</li>
+    <li>SCPが同じポケモンは同順位です（重なったぶんの順位は飛ばします）</li>
+  </ul>
+  <h4>理想の個体値の決め方</h4>
+  <ul>
+    <li>個体値の組み合わせ4096通りそれぞれで、<b>CP2500を超えない最大のPL</b>まで上げたときのSCPを比べ、いちばん高いものを出します。個体値チェッカーの「個体値順」の1位、GBLシミュレーターの「理想(自動)」と同じ計算です</li>
+    <li><b>交換できないポケモン</b>（幻・ジガルデなど）は個体値10以上・PLの下限（15または20）を守ります。その条件でCP2500に収まる個体がいないポケモンは載せません</li>
+    <li><b>上限に届かない</b>の札＝個体値15/15/15・PLの上限まで上げてもCP2500に届かないポケモンです。その値がそのポケモンの最大のSCPです</li>
+    <li><b>メガ・ゲンシ</b>はスーパーマックスレベルのPL52以上を使わず、CP上限に収まるPLで計算します</li>
+  </ul>
+  <h4>シャドウの扱い</h4>
+  <p>シャドウは<b>攻撃が1.2倍・防御が5/6倍</b>になります。SCPは攻撃と防御を掛け合わせるので、1.2×5/6＝1で<b>通常と同じSCP</b>になります。そのため、シャドウを別の行には分けていません（同じ個体値・PLなら、通常もシャドウも順位とSCPは同じです）。シャドウダークライだけは個体値の下限が6と通常（10）と違いますが、このランキングでは通常の個体の値を出しています。</p>
+  <h4>絞り込みと表示</h4>
+  <ul>
+    <li><b>メガ・ゲンシ</b>＝メガシンカ・ゲンシカイキも並べます。<b>伝説系除く</b>＝伝説・幻・ウルトラビーストを外します。<b>進化前も</b>＝ふだんは最終進化だけですが、押すと進化前のポケモンも並べます</li>
+    <li><b>PL50｜PL51</b>＝理想の個体を出すときのPLの上限です。PL51は相棒ブースト込みの上限です</li>
+    <li><b>数字｜棒グラフ</b>＝個体値を「0/15/15」の数字で出すか、攻撃・防御・HPの3本の棒（15は赤）で出すかを切り替えます</li>
+    <li><b>名前で探す</b>＝名前の一部を入れると、そのポケモンの順位だけを出します。順位は絞り込み全体の中での順位です</li>
+  </ul>
+  <h4>データの更新</h4>
+  <p>ポケモンのデータは毎朝自動で更新されます。</p>
+<!-- related-guide --><h4>関連する読み物</h4><ul class="relguide"><li><a href="/guide/iv-rank/">個体値の「順位」とは何か</a></li><li><a href="/guide/iv-checker-howto/">個体値チェッカーの使い方</a></li><li><a href="/guide/shadow-pokemon/">シャドウポケモンの仕組み</a></li><li><a href="/guide/gbl-simulator-tips/">GBLシミュレーターの使い方</a></li></ul>
+</div>
+</div>
+
+<script src="/assets/type-icons.js"></script>
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+<script src="/assets/home.js"></script>
+<script src="/assets/feedback.js"></script>
+<script type="module" src="/scp/scp.js"></script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>

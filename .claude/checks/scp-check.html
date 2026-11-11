@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>SCPランキングの答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<script>
+// SCPランキング（/scp/・/scp/hyper/）の数字が、ほかのツールの計算と食い違っていないかを見る。
+// 答えの出どころ（SCPランキングの関数は使っていない）:
+//  ・PL51 の全件 ＝ GBLシミュレーター（/gbl/）の rank1（理想個体値・PL51まで）
+//  ・PL50 の全件 ＝ ステータス図鑑（/pokedex/）の maxScp（PL50まで）。メガ・ゲンシは除く（図鑑はメガにもPLの下限を当てるため）
+//  ・マリルリ SL1818／HL2084、ミュウツー 1326／2219、メルメタル 1522／2538、フシギバナ 1508／2519、ジガルデ ハイパー2629
+//    ＝ .claude/rules/dex.md と dex-check.html の確認済みの値（PL50）
+// 答えを変えるときは必ずタダシさんに確認すること。
+const out = document.getElementById('out');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const load = src => new Promise(r => { const f = document.createElement('iframe'); f.width = 420; f.height = 900;
+  f.style.cssText = 'position:absolute;left:-9999px'; f.onload = () => r(f); f.src = src; document.body.appendChild(f); });
+const waitFor = async (fn, n = 400) => { for (let i = 0; i < n; i++) { try { const v = fn(); if (v) return v; } catch (e) {} await sleep(50); } return null; };
+(async () => {
+  const res = [];
+  const ok = (name, got, want) => res.push([name, String(got) === String(want), got, want]);
+  try {
+    const fs = await load('/scp/'), fh = await load('/scp/hyper/'), fg = await load('/gbl/'), fd = await load('/pokedex/');
+    const S = await waitFor(() => fs.contentWindow.GonaviExport && fs.contentWindow.GonaviExport());
+    const H = await waitFor(() => fh.contentWindow.GonaviExport && fh.contentWindow.GonaviExport());
+    if (!S || !H) throw new Error('SCPランキングの出口が動きませんでした');
+    const G = fg.contentWindow, P = fd.contentWindow;
+    await waitFor(() => typeof G.rank1 === 'function' && G.eval('D') && G.eval('D.pokemon'));
+    await waitFor(() => P.eval('DEX.length') > 0);
+    const GD = G.eval('D');
+    const gScp = (k, b) => { const p = GD.pokemon[k], c = GD.cpm[String(b.level)];
+      return Math.floor(Math.pow((p.a + b.ivs[0]) * c * (p.df + b.ivs[1]) * c * Math.floor((p.h + b.ivs[2]) * c), 2 / 3) / 10); };
+    const dexBy = new Map(P.eval('DEX').map(e => [e.name, e]));
+    for (const [lg, X, cap] of [['スーパー', S, 1500], ['ハイパー', H, 2500]]) {
+      ok(`${lg} 出口のCP上限`, X.cap, cap);
+      // ① PL51 の全件を GBLシミュレーターの rank1 と比べる（個体値・PL・SCP）
+      let n = 0, bad = [];
+      for (const r of X.pl51.all) {
+        const b = G.rank1(r.k, cap, 0, undefined, false);
+        n++;
+        if (b.ivs.join('/') !== r.ivs || b.level !== r.lv || gScp(r.k, b) !== r.scp) bad.push(`${r.k} ${r.ivs} PL${r.lv} ${r.scp} ≠ ${b.ivs.join('/')} PL${b.level} ${gScp(r.k, b)}`);
+      }
+      ok(`${lg} PL51 全${n}件が GBLシミュレーターの理想個体と同じ`, bad.length ? bad.slice(0, 3).join(' ／ ') : 'ずれ0', 'ずれ0');
+      ok(`${lg} PL51 の件数が十分（空回りしていない）`, n > 400, true);
+      // ② PL50 の全件（メガ・ゲンシ以外）を ステータス図鑑の最大SCP と比べる
+      n = 0; bad = [];
+      const PVK = G.eval('D.pokemon');
+      for (const r of X.pl50.all) {
+        if (/_mega|_primal/.test(r.k)) continue;
+        const e = dexBy.get(PVK[r.k].n); if (!e) continue;
+        n++;
+        const v = P.maxScp(e, cap);
+        if (v !== r.scp) bad.push(`${PVK[r.k].n} ${r.scp}≠${v}`);
+      }
+      ok(`${lg} PL50 全${n}件が ステータス図鑑の最大SCPと同じ`, bad.length ? bad.slice(0, 3).join(' ／ ') : 'ずれ0', 'ずれ0');
+      ok(`${lg} PL50 の件数が十分`, n > 400, true);
+      // ③ 順位は SCP の高い順・同じ値は同順位
+      const rows = X.pl50.all; let okRank = true;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i].scp > rows[i - 1].scp) okRank = false;
+        if (rows[i].scp === rows[i - 1].scp ? rows[i].rank !== rows[i - 1].rank : rows[i].rank !== i + 1) okRank = false;
+      }
+      ok(`${lg} 並びと同順位の付け方`, okRank, true);
+    }
+    // ④ 確認済みの値（PL50・メガなし一覧 all の中から名前で引く）
+    const nameOf = k => G.eval('D.pokemon')[k].n;
+    const val = (X, nm) => { const r = X.pl50.all.find(r => nameOf(r.k) === nm); return r ? r.scp : '—'; };
+    for (const [nm, sl, hl] of [['マリルリ', 1818, 2084], ['ミュウツー', 1326, 2219], ['メルメタル', 1522, 2538], ['フシギバナ', 1508, 2519], ['ジガルデ', '—', 2629]])
+      ok(`${nm} スーパー／ハイパー`, `${val(S, nm)}／${val(H, nm)}`, `${sl}／${hl}`);
+    ok('マリルリ スーパーの理想個体', (S.pl50.all.find(r => nameOf(r.k) === 'マリルリ') || {}).ivs + ' PL' + (S.pl50.all.find(r => nameOf(r.k) === 'マリルリ') || {}).lv, '0/15/15 PL45.5');
+    // ⑤ 画面の1位〜3位が出口と同じ
+    const doc = fs.contentDocument;
+    const top = [...doc.querySelectorAll('#rankList .rank-row')].slice(0, 3).map(r => r.querySelector('.rval').firstChild.textContent.trim()).join(',');
+    ok('スーパー 画面の上位3件のSCP＝出口', top, S.pl50.base.slice(0, 3).map(r => r.scp).join(','));
+  } catch (e) {
+    res.push(['実行エラー', false, String(e), '']);
+  }
+  const bad = res.filter(r => !r[1]).length;
+  out.innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+})();
+</script>
+</body></html>
