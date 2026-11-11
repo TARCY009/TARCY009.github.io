@@ -81,7 +81,8 @@
     '/max-type/': 'マックスバトル タイプ別アタッカー',
     '/max-type/tank/': 'マックスバトル タイプ別タンク',
     '/scp/': 'スーパーリーグ SCPランキング',
-    '/scp/hyper/': 'ハイパーリーグ SCPランキング'
+    '/scp/hyper/': 'ハイパーリーグ SCPランキング',
+    '/box/': 'ボックス割引率チェッカー'
   };
   var path = location.pathname.replace(/index\.html$/, '');
   if (path.charAt(path.length - 1) !== '/') path += '/';

@@ -108,6 +108,17 @@
         "max-type/**",
         "scp/**"
       ]
+    },
+    "box": {
+      "label": "ボックス割引率チェッカー",
+      "rules": ".claude/rules/box.md",
+      "checklist": ".claude/checklists/box.md",
+      "checks": [
+        "box-calc"
+      ],
+      "paths": [
+        "box/**"
+      ]
     }
   }
 }

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ボックス割引率チェッカー｜ポケモンGOのセールボックスのお得度｜GOナビ</title>
+<!-- seo:start (build_seo.py が作る・手で編集しない) -->
+<meta name="description" content="ポケモンGOのショップのセールボックスが本当に安いかを調べるツール。ふかそうち・スーパーふかそうち・プレミアムバトルパス・リモートレイドパス・マックス粒子パック・ダイキノコの数を入れると、主要なアイテムだけで数えた割引率と、これまでのボックスの最安値にどこまで近いか（お得度）が分かります。コインと円の比較にも対応。">
+<link rel="canonical" href="https://gonavi.jp/box/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GOナビ">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="ボックス割引率チェッカー｜ポケモンGO">
+<meta property="og:description" content="セールボックスの本当の割引率と、これまでの最安値への近さが分かります。">
+<meta property="og:url" content="https://gonavi.jp/box/">
+<meta property="og:image" content="https://gonavi.jp/assets/ogp/box.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ボックス割引率チェッカー">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"ボックス割引率チェッカー","url":"https://gonavi.jp/box/","description":"ポケモンGOのショップのセールボックスが本当に安いかを調べるツール。ふかそうち・スーパーふかそうち・プレミアムバトルパス・リモートレイドパス・マックス粒子パック・ダイキノコの数を入れると、主要なアイテムだけで数えた割引率と、これまでのボックスの最安値にどこまで近いか（お得度）が分かります。コインと円の比較にも対応。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
+<!-- seo:end -->
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/box/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/box/apple-touch-icon.png">
+<link rel="manifest" href="/box/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="ボックス割引率チェッカー">
+<link rel="stylesheet" href="/assets/theme.css">
+<link rel="stylesheet" href="/assets/explain.css">
+<link rel="stylesheet" href="/assets/wordmark.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/feedback.css">
+<link rel="stylesheet" href="/assets/pageheader.css">
+<link rel="stylesheet" href="/assets/ads.css">
+<script src="/assets/ads.js"></script>
+<link rel="stylesheet" href="/assets/tabs.css">
+<meta name="theme-color" content="#0b1023">
+<script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
+<script>try{if(localStorage.getItem('site_explain')==='1')document.documentElement.classList.add('explain');}catch(e){}</script>
+<style>
+/* 色は :root(ダーク=既定) と :root.light の2ブロックだけで決める(全ツール共通ルール)。
+   このツールの役割色はポケコインの金。枠の上端の帯＝値段:金／中身:水色／結果:金→桃→紫 */
+:root{
+  --ink:#eef1fb; --text:#eef1fb; --sub:#8f9ac4; --dim:#5d678c; --line:#232c50; --edge:#2e3a6a;
+  --gold:#ffd36b; --gold2:#f0a827; --goldsuf:#fff; --eb:#c9a227; --cyan:#7fe3ff; --green:#4fdc98; --g1:#2f9f74; --g2:#5fe6a6;
+  --mint:#7af0b4; --ontag:#062616; --red:#ff8f8f; --delbg:rgba(255,120,120,.10); --delline:rgba(255,143,143,.45);
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,201,60,.11), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(34,195,230,.10), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(139,92,246,.14), transparent 62%),
+    linear-gradient(160deg,#0b1023,#131a36 55%,#1a1126);
+  --panel:linear-gradient(180deg,rgba(27,36,68,.95),rgba(19,26,52,.95)); --cardline:#2c3866;
+  --cardsh:0 20px 36px -24px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
+  --acc-gold:linear-gradient(90deg,#ffe08a,#f0a827 55%,#c47f10); --acc-cyan:linear-gradient(90deg,#8fe9ff,#22c3e6 55%,#6f8cf5); --acc-res:linear-gradient(90deg,#ffd36b,#ff8fb8 55%,#8b5cf6);
+  --field:#0b1130; --fieldline:#34427c; --fieldin:inset 0 2px 7px rgba(0,0,0,.5); --ph:#4c5680;
+  --tab:linear-gradient(180deg,#1e2850,#151d38); --tabflat:#161e3c; --tabsh:rgba(0,0,0,.42); --tabin:rgba(255,255,255,.07);
+  --bar:linear-gradient(165deg,#2b1f52,#1c2449 60%,#191f40); --barline:#4b3f8a; --barsub:#b3bbdf; --barstrong:#fff;
+  --box:rgba(11,17,46,.72); --boxline:#3a3f7c; --sheet:linear-gradient(180deg,#151c3c,#10162f); --sheetline:#3a467f; --ov:rgba(3,5,12,.68);
+  --cta:linear-gradient(160deg,#8fe9ff,#22c3e6 45%,#0a8fb0); --oncta:#042330; --pick:#22c3e6; --selbg:rgba(34,195,230,.09);
+  --swon:linear-gradient(180deg,#5fe6a6,#2fb878); --swoff:#343d66; --offink:#5d678c; --offsub:#4c5577;
+  --track:#0b1130; --knob:#fff; --knobring:#1c2449;
+  --hatch:repeating-linear-gradient(45deg,#2a3154 0 4px,#1c2240 4px 8px);
+  --fade0:rgba(11,16,35,0); --fade1:#0c1126; --dockbg:linear-gradient(165deg,rgba(47,34,90,.94),rgba(27,35,72,.94));
+  --tcolor:#0b1023;
+}
+:root.light{
+  --ink:#20263a; --text:#20263a; --sub:#677092; --dim:#9aa3bd; --line:#e4e9f5; --edge:#d3dbee;
+  --gold:#946200; --gold2:#b87a00; --goldsuf:#946200; --eb:#a37a12; --cyan:#0a7f9c; --green:#178f58; --g1:#57c995; --g2:#178f58;
+  --mint:#bdf0d5; --ontag:#0b4a2c; --red:#c93a3a; --delbg:rgba(201,58,58,.07); --delline:rgba(201,58,58,.4);
+  --bgimg:
+    radial-gradient(900px 520px at -10% -10%, rgba(255,201,60,.22), transparent 62%),
+    radial-gradient(820px 540px at 112% 6%, rgba(34,195,230,.14), transparent 62%),
+    radial-gradient(950px 620px at 50% 115%, rgba(139,92,246,.15), transparent 62%),
+    linear-gradient(165deg,#fbf6e9,#eef3fb 50%,#f1edfa);
+  --panel:rgba(255,255,255,.9); --cardline:#dfe5f3;
+  --cardsh:0 16px 30px -20px rgba(120,90,20,.4), inset 0 1px 0 rgba(255,255,255,.9);
+  --acc-gold:linear-gradient(90deg,#ffd45e,#f0a827 55%,#c47f10); --acc-cyan:linear-gradient(90deg,#5fdcf5,#19b4d6 55%,#6f8cf5); --acc-res:linear-gradient(90deg,#f5b83a,#f47aa8 55%,#8b5cf6);
+  --field:#fff; --fieldline:#c2cce6; --fieldin:inset 0 2px 5px rgba(40,50,100,.10); --ph:#a9b2cc;
+  --tab:linear-gradient(180deg,#fff,#eff3fc); --tabflat:#f1f4fc; --tabsh:rgba(30,40,90,.14); --tabin:#fff;
+  --bar:linear-gradient(165deg,#fff,#f4effe 60%,#eef1fd); --barline:#cfc3f0; --barsub:#5f6888; --barstrong:#20263a;
+  --box:rgba(255,255,255,.85); --boxline:#ddd6f3; --sheet:linear-gradient(180deg,#fbfcff,#f3f6fd); --sheetline:#cfd8ee; --ov:rgba(30,36,60,.45);
+  --cta:linear-gradient(160deg,#7fe3fa,#22c3e6 45%,#0a9cbf); --oncta:#042330; --pick:#0a9cbf; --selbg:rgba(10,156,191,.08);
+  --swon:linear-gradient(180deg,#4fd192,#1f9d63); --swoff:#c6cee2; --offink:#9aa3bd; --offsub:#b1b9d0;
+  --track:#e6ebf6; --knob:#20263a; --knobring:#fff;
+  --hatch:repeating-linear-gradient(45deg,#dfe5f3 0 4px,#eef2fa 4px 8px);
+  --fade0:rgba(240,243,251,0); --fade1:#f0f3fb; --dockbg:linear-gradient(165deg,rgba(255,255,255,.96),rgba(243,238,254,.96));
+  --tcolor:#fbf6e9;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:var(--bgimg);background-attachment:fixed;color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px 190px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;padding:0;-webkit-tap-highlight-color:transparent}
+input{font:inherit;color:inherit}
+[hidden]{display:none !important}
+.num,.disp input,.stp input{font-family:"Oswald","Hiragino Sans",sans-serif;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+header{margin:4px 2px 4px}
+.eyebrow{font-family:"Oswald",sans-serif;font-size:.68rem;letter-spacing:.34em;color:var(--eb);text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--eb),transparent);opacity:.6}
+h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
+@media (max-width:430px){h1{font-size:1.28rem}}
+.expl{display:none}
+.explain .expl{display:revert}
+.enote{font-size:11px;color:var(--sub);line-height:1.7;margin:8px 4px 0}
+
+/* 小見出し（英字＋和文＋1pxの罫線） */
+.sh{display:flex;align-items:center;gap:9px;margin:22px 2px 9px;min-height:32px}
+.sh .en{font-family:"Oswald",sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:var(--eb)}
+.sh .ja{font-size:12.5px;font-weight:800;letter-spacing:.04em}
+.sh .ja::before{content:"／";color:var(--dim);font-weight:400;margin-right:8px}
+.sh i{flex:1;height:1px;background:linear-gradient(90deg,var(--edge),transparent);min-width:8px}
+.sh .gtabs{flex:none}
+.act{font-size:11.5px;font-weight:800;color:var(--sub);background:var(--tab);border:1px solid var(--edge);border-radius:10px;padding:6px 12px;
+  box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);transition:transform .12s}
+.act:active{transform:translateY(1px)}
+.act.warn{color:var(--red);border-color:var(--red)}
+
+/* 枠（上端に役割色の帯） */
+.card{position:relative;border-radius:15px;background:var(--panel);border:1px solid var(--cardline);box-shadow:var(--cardsh);overflow:hidden}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--acc)}
+.c-price{--acc:var(--acc-gold);padding:14px 10px 10px}
+.c-items{--acc:var(--acc-cyan);padding-top:4px}
+.coin{display:inline-block;width:1em;height:1em;border-radius:50%;flex:none;vertical-align:-.13em;
+  background:radial-gradient(circle at 34% 28%,#fff6c8,#ffd24a 46%,#d99a10 100%);box-shadow:inset 0 0 0 .08em #b27808,inset 0 0 0 .2em rgba(255,255,255,.4)}
+
+/* 値段（デジタル表示） */
+.disp{display:flex;align-items:center;gap:10px;height:64px;padding:0 14px;border-radius:12px;background:var(--field);border:1.5px solid var(--fieldline);box-shadow:var(--fieldin);cursor:text;transition:border-color .15s}
+.disp:focus-within{border-color:var(--gold2)}
+.disp .coin{font-size:26px}
+.disp input{flex:1;min-width:0;width:100%;height:60px;background:none;border:0;outline:0;text-align:right;font-size:36px;color:var(--gold);padding:0}
+.disp input::placeholder{color:var(--ph)}
+.disp span{font-size:12px;color:var(--sub);font-weight:800;flex:none;align-self:flex-end;margin-bottom:15px}
+.disp.yen{height:52px;margin-top:8px}
+.disp.yen i{font-family:"Oswald",sans-serif;font-style:normal;font-size:22px;font-weight:600;color:var(--sub);width:26px;text-align:center;flex:none}
+.disp.yen input{height:48px;font-size:27px;color:var(--ink)}
+.disp.yen span{margin-bottom:12px}
+.rate{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;padding:9px 12px;border-radius:11px;border:1px solid var(--edge);
+  background:var(--tab);box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);font-size:11px;color:var(--sub);text-align:left;line-height:1.6}
+.rate b{display:block;color:var(--ink);font-size:13px}
+.rate b em{font-style:normal;color:var(--gold)}
+.rate i{font-style:normal;margin-left:auto;color:var(--cyan);font-weight:800;font-size:12px;flex:none}
+
+/* コインと円の比較 */
+.cmp{margin-top:10px;border-radius:13px;border:1px solid var(--barline);background:var(--bar);padding:11px 12px 12px}
+.cmp .ttl{font-size:13.5px;font-weight:900;line-height:1.5}
+.cmp .ttl b{color:var(--gold);font-size:22px;margin:0 2px}
+.cmp .ttl small{font-size:11px;color:var(--barsub);font-weight:700}
+.cmp .two{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.cmp .two div{border-radius:10px;background:var(--box);border:1px solid var(--boxline);padding:7px 10px 8px;font-size:10.5px;color:var(--barsub);line-height:1.5}
+.cmp .two div.win{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+.cmp .two b{display:block;font-size:19px;color:var(--barstrong)}
+.cmp .two div.win b{color:var(--green)}
+.cmp .two em{font-style:normal;font-size:9.5px;font-weight:900;color:var(--ontag);background:var(--mint);border-radius:4px;padding:0 5px;margin-left:5px}
+
+/* 中身 */
+.empty{text-align:center;padding:26px 16px 22px;color:var(--sub);font-size:12.5px;line-height:1.8}
+.empty svg.giftbox{display:block;margin:-6px auto 6px;width:132px;height:auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.28))}
+.empty svg:not(.giftbox){display:block;margin:0 auto 10px;width:54px;height:54px;stroke:var(--eb);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.cta{display:block;width:100%;text-align:center;font-size:15px;font-weight:900;letter-spacing:.04em;color:var(--oncta);border-radius:13px;padding:14px;
+  background:var(--cta);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 3px 0 var(--tabsh);transition:transform .12s}
+.cta:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 1px 0 var(--tabsh)}
+.empty .cta{margin-top:14px}
+.sample{display:inline-block;margin-top:12px;font-size:12px;font-weight:800;color:var(--cyan);padding:6px 10px;border-bottom:1px dashed currentColor}
+.boxart{display:flex;justify-content:center;padding:12px 0 6px;border-bottom:1px solid var(--line)}
+.boxart svg{width:96px;height:auto;filter:drop-shadow(0 8px 12px rgba(0,0,0,.25))}
+.it{display:flex;align-items:stretch;gap:9px;padding:11px 12px 11px 0;border-bottom:1px solid var(--line);font-size:14.5px;font-weight:800}
+.it .chip{width:5px;border-radius:0 5px 5px 0;background:var(--c);flex:none;margin-right:3px}
+.it .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.it .r1,.it .r2{display:flex;align-items:center;gap:8px}
+.it .n1{flex:1;min-width:0;line-height:1.3}
+.it .meta{flex:1;min-width:0;font-size:11px;font-weight:600;color:var(--sub);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.del{width:36px;height:38px;border-radius:11px;border:1px solid var(--delline);background:var(--delbg);color:var(--red);display:grid;place-items:center;flex:none;margin-right:4px}
+.del svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.del:active{transform:translateY(1px)}
+.stp button:disabled{color:var(--dim);opacity:.45;cursor:default}
+.it.off .del{opacity:.6}
+.it .meta b{color:var(--ink);font-size:13.5px}
+.kj{display:inline-block;font-size:9.5px;font-weight:900;line-height:1.5;color:var(--ontag);background:var(--mint);border-radius:4px;padding:0 5px;flex:none}
+.stp{display:flex;align-items:stretch;height:38px;border:1px solid var(--edge);border-radius:11px;overflow:hidden;flex:none;background:var(--field);box-shadow:0 2px 0 var(--tabsh)}
+.stp button{width:31px;color:var(--sub);background:var(--tab);font-weight:900;font-size:16px;line-height:1}
+.stp button:active{background:var(--tabflat)}
+.stp input{width:50px;text-align:center;color:var(--cyan);font-size:17px;background:none;border:0;outline:0;padding:0;box-shadow:var(--fieldin)}
+.sw{width:46px;height:27px;border-radius:99px;background:var(--swon);position:relative;flex:none;box-shadow:inset 0 1px 3px rgba(0,0,0,.3);transition:background .15s}
+.sw:after{content:"";position:absolute;right:3px;top:3px;width:21px;height:21px;border-radius:50%;background:linear-gradient(180deg,#fff,#e9edf7);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.it.off{color:var(--offink)}
+.it.off .n1{text-decoration:line-through;text-decoration-thickness:1px}
+.it.off .chip{background:var(--hatch)}
+.it.off .meta,.it.off .meta b,.it.off .stp input{color:var(--offsub)}
+.it.off .kj{background:var(--swoff);color:var(--sub)}
+.it.off .sw{background:var(--swoff)}
+.it.off .sw:after{right:auto;left:3px}
+.add{display:block;width:100%;font-size:13.5px;font-weight:900;color:var(--cyan);text-align:center;padding:14px;letter-spacing:.03em}
+.add:active{opacity:.7}
+
+/* 結果 */
+.res{--acc:var(--acc-res);background:var(--bar);border-color:var(--barline);padding:16px 12px 14px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{border-radius:12px;background:var(--box);border:1px solid var(--boxline);padding:10px 12px 11px;min-width:0;display:flex;flex-direction:column}
+.tile>span{font-size:11px;font-weight:800;color:var(--barsub);letter-spacing:.04em}
+.tile .v{font-size:60px;line-height:1.1;color:var(--gold);margin-top:6px}
+.tile .v i{font-style:normal;font-size:27px;margin-left:3px}
+.tile .v.neg{color:var(--red)}
+.tile .was{margin-top:auto;font-size:11.5px;color:var(--barsub);font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.tile .was s{opacity:.75}
+.tile .was b{color:var(--barstrong);font-size:14px}
+.tile .was .coin{font-size:12px}
+.gauge{display:block;width:100%;max-width:150px;margin:2px auto 0}
+.gauge path{fill:none;stroke-width:10;stroke-linecap:round}
+.gauge .tr{stroke:var(--track)}
+.gauge .fl{stroke:url(#gg)}
+.gauge text{font-family:"Oswald","Hiragino Sans",sans-serif;font-weight:600;text-anchor:middle;fill:var(--green);font-size:31px}
+.gauge text.neg{fill:var(--red)}
+.gauge tspan{font-size:15px}
+.tile small{display:block;text-align:center;font-size:10.5px;color:var(--barsub);font-weight:700;margin-top:2px}
+.tile .nov{font-size:38px;color:var(--ph);text-align:center;margin:10px 0 6px}
+.res h3{font-size:11px;color:var(--barsub);letter-spacing:.06em;font-weight:800;margin:16px 2px 7px;display:flex;align-items:center;gap:8px}
+.res h3::after{content:"";flex:1;height:1px;background:var(--boxline)}
+.scale{position:relative;height:12px;border-radius:99px;background:var(--track);margin:26px 4px 7px;box-shadow:var(--fieldin)}
+.scale i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,var(--g1),var(--g2))}
+.scale u{position:absolute;top:-5px;width:4px;height:22px;border-radius:3px;background:var(--knob);transform:translateX(-50%);box-shadow:0 0 0 2px var(--knobring)}
+.scale s{position:absolute;top:-23px;font-size:10.5px;font-weight:800;color:var(--barstrong);text-decoration:none;white-space:nowrap}
+.ends{display:flex;justify-content:space-between;font-size:10.5px;color:var(--barsub);line-height:1.5;margin:0 4px;font-weight:700}
+.ends div:last-child{text-align:right}
+.ends b{display:block;color:var(--barstrong);font-size:14px}
+.band{display:flex;gap:2px;height:14px;margin:0 4px}
+.band i{display:block;height:100%;border-radius:3px;min-width:3px}
+.band i:first-child{border-radius:7px 3px 3px 7px} .band i:last-child{border-radius:3px 7px 7px 3px}
+.band i.off{background:var(--hatch) !important}
+.note{font-size:11px;color:var(--barsub);line-height:1.7;margin:10px 4px 0}
+
+/* 下の帯 */
+.dock{position:fixed;left:0;right:0;bottom:0;padding:16px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,var(--fade0),var(--fade1) 34%);pointer-events:none;z-index:5}
+.bar{position:relative;max-width:536px;margin:0 auto;border-radius:17px;background:var(--dockbg);border:1px solid var(--barline);padding:10px 14px 11px;display:flex;align-items:center;gap:12px;pointer-events:auto;
+  box-shadow:0 10px 24px -10px rgba(0,0,0,.6),inset 0 1px 0 var(--tabin);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.bar::before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:2px;border-radius:2px;background:var(--acc-res)}
+.bar .big{font-size:44px;color:var(--gold);line-height:1;flex:none}
+.bar .big i{font-style:normal;font-size:21px;margin-left:1px}
+.bar .big.none{color:var(--ph)} .bar .big.neg{color:var(--red)}
+.bar .sm{font-size:11px;font-weight:700;color:var(--barsub);line-height:1.55;min-width:0;flex:1}
+.bar .sm div{white-space:nowrap;font-size:12px}
+.bar .sm s{opacity:.75}
+.bar .sm b{color:var(--barstrong);font-size:15px}
+.bar .ot{flex:none;width:76px;text-align:right;font-size:10.5px;font-weight:800;color:var(--barsub);line-height:1.25}
+.bar .ot b{display:block;font-size:24px;color:var(--green);line-height:1.15}
+.bar .ot b i{font-style:normal;font-size:13px}
+.bar .ot b.neg{color:var(--red)}
+.bar .ot .mini{display:block;height:5px;border-radius:9px;background:var(--track);margin-top:4px;overflow:hidden}
+.bar .ot .mini u{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--g1),var(--g2))}
+
+/* 窓 */
+.ov{position:fixed;inset:0;background:var(--ov);display:none;z-index:20;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ov.open{display:block}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:8vh;max-width:560px;margin:0 auto;border-radius:24px 24px 0 0;background:var(--sheet);border:1px solid var(--sheetline);border-bottom:0;
+  padding:8px 14px 0;display:flex;flex-direction:column;box-shadow:0 -18px 40px -18px rgba(0,0,0,.6);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(28px)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+.sheet::before{content:"";width:42px;height:4px;border-radius:9px;background:var(--edge);margin:0 auto 8px;flex:none}
+.sheet .top{display:flex;align-items:center;margin-bottom:10px}
+.sheet h2{font-size:15px;margin:0;font-weight:900;letter-spacing:.03em}
+.sheet .x{margin-left:auto;width:34px;height:34px;border-radius:50%;background:var(--tab);border:1px solid var(--edge);color:var(--sub);font-size:14px;box-shadow:0 2px 0 var(--tabsh)}
+.scroll{flex:1;overflow-y:auto;padding-bottom:12px;-webkit-overflow-scrolling:touch}
+.grp{font-size:11px;font-weight:800;color:var(--sub);margin:16px 2px 7px;display:flex;align-items:center;gap:7px;letter-spacing:.04em}
+.grp::after{content:"";flex:1;height:1px;background:var(--line)}
+.pl{border:1px solid var(--edge);border-radius:13px;overflow:hidden;background:var(--panel)}
+.pr{display:flex;align-items:center;gap:8px;width:100%;min-height:54px;padding:7px 10px 7px 14px;text-align:left;font-size:14px;font-weight:800;border-bottom:1px solid var(--line)}
+.pr:last-child{border-bottom:0}
+button.pr:active{background:var(--selbg)}
+.pr .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pr .nm small{font-size:10.5px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:4px}
+.pr .plus{width:38px;height:38px;border-radius:11px;border:1px solid var(--edge);display:grid;place-items:center;color:var(--cyan);font-size:18px;font-weight:900;background:var(--tab);box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);flex:none}
+.pr.sel{background:var(--selbg);box-shadow:inset 4px 0 0 var(--pick)}
+.okwrap{flex:none;padding:10px 0 calc(14px + env(safe-area-inset-bottom))}
+.bd{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:11px 13px;border-radius:12px;border:1px solid var(--edge);background:var(--tab);box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin);margin-bottom:8px;font-size:12px;color:var(--sub);font-weight:700}
+.bd .coin{font-size:17px}
+.bd b{font-size:19px;color:var(--ink)}
+.bd i{font-style:normal;margin-left:auto;font-size:11px;white-space:nowrap}
+.bd[aria-pressed="true"]{border-color:transparent;background:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%);color:#4a3200;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.bd[aria-pressed="true"] b{color:#3a2700}
+.rc{background:#f4f1e6;color:#222;border-radius:6px;padding:16px 14px;font-size:12.5px;line-height:1.9}
+.rc h5{text-align:center;font-size:13px;margin:0 0 6px}
+.rc div{display:flex;justify-content:space-between;gap:10px}
+.rc div.cut{color:#999;text-decoration:line-through}
+.rc hr{border:0;border-top:1px dashed #999;margin:6px 0}
+.rc .tot{font-weight:900;font-size:14px}
+.helptab{margin-top:30px}
+.helpbody table{border-collapse:collapse;margin:6px 0 12px;font-size:.74rem}
+.helpbody td,.helpbody th{border:1px solid var(--line);padding:4px 10px;text-align:left}
+@media (max-width:380px){.stp button{width:29px}.stp input{width:46px}.tile .v{font-size:52px}.bar .big{font-size:40px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
+  <div class="eyebrow">Pok&eacute;mon GO Box Value</div>
+  <h1><b class="wmk" data-tool="box">ボックス割引率</b><span class="wmksuf">チェッカー</span></h1>
+  <p class="intro">ポケモンGOのセールボックスが、どれだけ安いかを調べるツールです。ボックスの値段と、ふかそうち・パスなど主要なアイテムの数を入れ、要らないものはスイッチで外します。主要なアイテムだけで数えた割引率と、これまでのボックスの最安値にどこまで近いか（お得度）が分かります。</p>
+  <div id="themesw"></div>
+</header>
+
+<div class="adslot" data-ad="top" data-snap-skip></div>
+
+<div class="sh"><span class="en">Price</span><span class="ja">ボックスの値段</span><i></i>
+  <div class="gtabs one"><button class="t-gold" id="yenBtn" type="button" aria-pressed="false" title="同じボックスが円でも売られているときに、コインと円のどちらで買うほうが安いかを比べます。">円でも比べる</button></div></div>
+<div class="card c-price">
+  <label class="disp"><i class="coin"></i><input id="pc" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="ボックスの値段（ポケコイン）"><span>コイン</span></label>
+  <label class="disp yen" id="yenRow" hidden><i>¥</i><input id="py" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="ボックスの値段（円）"><span>円</span></label>
+  <button class="rate" id="rateBtn" type="button" hidden title="ふだんポケコインを買うときのまとめ売りを選びます。ここで選んだ買い方で、コインの値段を円に、円の値段をコインに直します。"></button>
+</div>
+<p class="enote expl">コインと円の両方を入れると、どちらで買うほうが安いかを比べます。割引率は安いほうの値段で計算します。</p>
+<div id="cmp"></div>
+
+<div class="sh"><span class="en">Contents</span><span class="ja">中身</span><i></i><button class="act" id="clrBtn" type="button" hidden>消す</button><button class="act" id="rcpBtn" type="button" hidden>レシート</button></div>
+<div class="card c-items" id="list"></div>
+<p class="enote expl">スイッチを切ったアイテムは、要らないものとして計算から外します。行の左の色は、結果の「中身の内訳」の帯と同じ色です。</p>
+<div id="detail"></div>
+
+<button class="helptab" id="helptab" type="button" aria-expanded="true">？ 使い方・計算の前提</button>
+<div class="helpbody" id="helpbody">
+  <h4>このツールでわかること</h4>
+  <p>セールボックスの値打ちは、ふかそうち・パスなどの<b>主要なアイテムがいくつ入っていて、その分がいくらか</b>で決まります。このツールは、主要なアイテムだけで数えた割引率と、<b>これまでのボックスの最安値にどこまで近いか（お得度）</b>を出します。</p>
+  <h4>使い方</h4>
+  <ul>
+    <li>ボックスの値段（ポケコイン）を入れます</li>
+    <li>「＋ アイテムを選ぶ」で中身を選び、個数を入れます。数字を直接打つこともできます。選べるのは主要な6つのアイテムです</li>
+    <li>要らないアイテムはスイッチで外します。外したアイテムは0コインとして数えます</li>
+    <li>円でも売られているボックスは、「円でも比べる」を押して円の値段を入れると、コインと円のどちらで買うほうが安いかを比べます。「コインの買い方」では、ふだんポケコインを買うときのまとめ売りを選びます</li>
+  </ul>
+  <h4>割引率の出し方</h4>
+  <ul>
+    <li><b>割引率＝1 −（ボックスの値段 ÷ 中身を単品で買ったときの合計）</b>です</li>
+    <li>単品の値段は、ゲーム内ショップで1つずつ買うときの値段です</li>
+    <li><b>ほしのかけら・しあわせタマゴ・ボールなど、ほかのアイテムは数えません。</b>ボックスの値段をまるごと主要なアイテムの分として計算するので、おまけが入ったボックスでは、ゲーム内の「◯%OFF」の表示と数字が違います</li>
+    <li>マックス粒子パックは<b>1パック＝800</b>として数えます。ボックスに2,400と書かれていれば3パックです</li>
+  </ul>
+  <h4>お得度とは</h4>
+  <ul>
+    <li>単品で買ったときの合計を<b>0%</b>、これまでのボックスの最安値で数えた合計を<b>100%</b>として、ボックスの値段がどの位置にあるかを表します</li>
+    <li>最安値は、これまでのボックスの値段を主要なアイテムだけで割って出した、1つあたりの値段です</li>
+  </ul>
+  <table>
+    <tr><th>アイテム</th><th>単品</th><th>最安値</th></tr>
+    <tr><td>ふかそうち</td><td>150</td><td>60</td></tr>
+    <tr><td>スーパーふかそうち</td><td>200</td><td>80</td></tr>
+    <tr><td>プレミアムバトルパス</td><td>100</td><td>55</td></tr>
+    <tr><td>リモートレイドパス</td><td>195</td><td>140</td></tr>
+    <tr><td>マックス粒子パック</td><td>150</td><td>103</td></tr>
+    <tr><td>ダイキノコ</td><td>400</td><td>274</td></tr>
+  </table>
+  <ul>
+    <li>お得度は100%を超えることもあります</li>
+  </ul>
+  <h4>コインと円の比較</h4>
+  <p>選んだ「コインの買い方」の1コインあたりの値段で、コインの値段を円に直して比べます。たとえば14,000円で15,500コインを買う場合、7,000コインは約6,323円にあたります。</p>
+</div>
+</div>
+
+<div class="dock" data-snap-skip><div class="bar" id="bar"></div></div>
+
+<div class="ov" id="ovItems"><div class="sheet">
+  <div class="top"><h2>ボックスに入っているアイテム</h2><button class="x" type="button" data-close aria-label="閉じる">✕</button></div>
+  <div class="scroll" id="pickBody"></div>
+  <div class="okwrap"><button class="cta" id="pickOk" type="button" data-close></button></div>
+</div></div>
+
+<div class="ov" id="ovRate"><div class="sheet">
+  <div class="top"><h2>ふだんのポケコインの買い方</h2><button class="x" type="button" data-close aria-label="閉じる">✕</button></div>
+  <div class="scroll" id="rateBody"></div>
+</div></div>
+
+<div class="ov" id="ovRcp"><div class="sheet">
+  <div class="top"><h2>レシート</h2><button class="x" type="button" data-close aria-label="閉じる">✕</button></div>
+  <div class="scroll" id="rcpBody"></div>
+</div></div>
+
+<script src="/assets/theme.js"></script>
+<script src="/assets/explain.js"></script>
+<script src="/assets/home.js"></script>
+<script src="/assets/feedback.js"></script>
+<script src="/box/giftbox.js"></script>
+<script>
+'use strict';
+/* ── データ ──
+   主要の6つだけを数える（ほしのかけら・しあわせタマゴなどのおまけは計算に入れない＝タダシさんのやり方・2026-11-11）。
+   p＝単品の値段（コイン）。best＝これまでのボックスの最安値（1つあたり）。出どころは引き継ぎメモ（README.md）。 */
+const ITEMS = [
+  // 最安値＝ボックスの値段を主要のアイテムの単品の合計だけで割り、その割合を単品の値段に掛けた値（2026-11-11タダシさん決定）
+  {id:'incu',    name:'ふかそうち',           p:150, best:60},    // タマゴボックス 7000（ふか50・スーパーふか50）
+  {id:'sincu',   name:'スーパーふかそうち',   p:200, best:80},    // 同上
+  {id:'battle',  name:'プレミアムバトルパス', p:100, best:55},    // ハイパーレイドボックス 5425（バトルパス99）54.8
+  {id:'remote',  name:'リモートレイドパス',   p:195, best:140},   // リモートレイドボックス 490（レイドパス3・バトルパス1）139.4
+  {id:'mp',      name:'マックス粒子パック',   p:150, best:103, sub:'1パック＝800'},   // 散策ボックス 1300（粒子2・ダイキノコ4）102.6
+  {id:'shroom',  name:'ダイキノコ',           p:400, best:274}    // 同上 273.7
+];
+const BY = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+const SAMPLE = {pc:6095, rows:[['incu',40],['sincu',40],['remote',3],['battle',5],['mp',1]]};   // 冬のスペシャルボックス（2026-11）
+const BF_END = Date.parse('2026-11-30T13:00:00+09:00');
+const BUNDLES = [
+  {g:'ウェブストア', c:15500, y:14000}, {g:'ウェブストア', c:5600, y:5600}, {g:'ウェブストア', c:2700, y:2800},
+  {g:'ウェブストア', c:1300, y:1400},  {g:'ウェブストア', c:600, y:700},   {g:'ウェブストア', c:110, y:140},
+  {g:'ゲーム内', c:14500, y:14000}, {g:'ゲーム内', c:5200, y:5600}, {g:'ゲーム内', c:2500, y:2800},
+  {g:'ゲーム内', c:1200, y:1400},  {g:'ゲーム内', c:550, y:700},   {g:'ゲーム内', c:100, y:140},
+  {g:'ウェブストア・期間限定（11月30日まで・各1回）', c:16500, y:14000, until:BF_END},
+  {g:'ウェブストア・期間限定（11月30日まで・各1回）', c:6000, y:5600, until:BF_END},
+  {g:'ウェブストア・期間限定（11月30日まで・各1回）', c:2900, y:2800, until:BF_END}
+].filter(b => !b.until || Date.now() < b.until);
+const COLORS = ['#22b8d9','#e6a91a','#9a78f0','#2fb878','#ef6fa6','#f08a3c','#6f8cf5','#b3bd2c'];
+// 箱の絵。ゲーム内では、黒い箱はロケットレーダー入り・青いガラスの箱はリモートレイドパス入り・金に紺の箱はすごいわざマシン入り（コミュニティ・デイのボックス）のときだけ出る（タダシさん）。
+// その2つが中身にあればその箱、なければ残りの種類から開くたびに1つ（中身を足しても箱は変わらない）
+const GIFT_ONLY = {black: 'radar', remote: 'remote', gold: 'etm'};
+const GIFT_NEVER = {black: 1, gold: 1};   // 中身の主要6つに入らないアイテムの箱（ロケットレーダー・すごいわざマシン）。今は出さない   // すごいわざマシンはノーマル・スペシャルで1つの行（etm）
+const GIFT_RAND = (k => k[Math.floor(Math.random() * k.length)])(Object.keys(GiftBox.KINDS).filter(k => !GIFT_ONLY[k] && !GIFT_NEVER[k]));
+const giftKind = () => {
+  for (const k in GIFT_ONLY) if (S.rows.some(r => r.id === GIFT_ONLY[k])) return k;
+  return GIFT_RAND;
+};
+const GIFT_SVG = {};
+const giftSvg = (k, size) => GIFT_SVG[k + size] || (GIFT_SVG[k + size] = GiftBox.svg(k, {size}));
+
+/* ── 状態（端末に保存。キーは site_ で始める＝データの引っ越しに入る） ── */
+const S = {rows:[], bundle:0, yen:false};          // rows: {id, n, on}
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('ja-JP');
+const fmtP = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
+const num = s => { const t = String(s).replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^0-9]/g, ''); return t ? parseInt(t, 10) : 0; };
+const kata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+const pctN = r => { const v = r * 100; return String(Math.abs(v) < 10 ? Math.round(v * 10) / 10 : Math.round(v)); };   // 数字だけ（%は別の大きさで描く）
+const pct = r => pctN(r) + '%';
+const yenPerCoin = () => BUNDLES[S.bundle].y / BUNDLES[S.bundle].c;
+const rowOf = id => S.rows.find(r => r.id === id);
+const colorOf = id => COLORS[S.rows.findIndex(r => r.id === id) % COLORS.length];
+try{ const k = localStorage.getItem('site_box_bundle'); const i = BUNDLES.findIndex(b => b.g+'|'+b.c === k); if (i >= 0) S.bundle = i; }catch(e){}
+try{
+  const o = JSON.parse(localStorage.getItem('site_box_state') || 'null');
+  if (o && Array.isArray(o.rows)){
+    S.rows = o.rows.filter(r => r && BY[r.id] && r.n > 0).map(r => ({id:r.id, n:Math.min(9999, Math.floor(r.n)), on:r.on !== false}));
+    if (o.pc > 0) $('pc').value = fmt(o.pc);
+    if (o.py > 0){ $('py').value = fmt(o.py); S.yen = true; }
+    if (o.yen) S.yen = true;
+  }
+}catch(e){}
+function save(){ try{ localStorage.setItem('site_box_state', JSON.stringify({rows:S.rows, pc:num($('pc').value), py:num($('py').value), yen:S.yen})); }catch(e){} }
+
+/* ── 計算（引き継ぎメモの「お得度の計算」どおり） ── */
+function calc(){
+  const C = num($('pc').value), Y = S.yen ? num($('py').value) : 0, r = yenPerCoin();
+  const yAsCoin = Y ? Y / r : 0;
+  let price = 0, by = '';
+  if (C && Y){ if (yAsCoin < C){ price = yAsCoin; by = 'yen'; } else { price = C; by = 'coin'; } }
+  else if (C){ price = C; by = 'coin'; }
+  else if (Y){ price = yAsCoin; by = 'yen'; }
+  let all = 0, want = 0, best = 0, hasRef = false, noPrice = false, anyOff = false;
+  for (const row of S.rows){
+    const it = BY[row.id], p = it.p || 0;
+    if (it.p == null && row.on) noPrice = true;
+    all += p * row.n;
+    if (!row.on){ anyOff = true; continue; }
+    want += p * row.n;
+    best += (it.best || p) * row.n;
+    if (it.best) hasRef = true;
+  }
+  const o = {C, Y, r, price, by, all, want, best, hasRef, noPrice, anyOff};
+  o.ready = price > 0 && want > 0;
+  if (o.ready){
+    o.mine = 1 - price / want;
+    o.label = all > 0 ? 1 - price / all : null;
+    o.otoku = hasRef && want > best ? (want - price) / (want - best) : null;
+  }
+  return o;
+}
+
+/* ── 部品 ── */
+const TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5"/></svg>';
+const del = row => '<button class="del" type="button" data-act="del" aria-label="' + BY[row.id].name + 'を削除">' + TRASH + '</button>';
+const stp = row => '<span class="stp"><button type="button" data-act="dec" aria-label="減らす"' + (row.n <= 1 ? ' disabled' : '') + '>−</button>' +
+  '<input type="text" inputmode="numeric" value="' + row.n + '" aria-label="' + BY[row.id].name + 'の数" autocomplete="off">' +
+  '<button type="button" data-act="inc" aria-label="増やす">＋</button></span>';
+function metaOf(row){     // 一覧の行の2段目（小計）
+  const it = BY[row.id];
+  if (it.p == null) return '値段が不明（0コインで数えます）';
+  return '<span class="num">' + fmtP(it.p) + ' × ' + row.n + ' ＝</span><b class="num">' + fmt(it.p * row.n) + '</b>';
+}
+const priceTag = it => '単品 ' + fmtP(it.p) + (it.best ? '・最安 ' + it.best : '') + (it.sub ? '・' + it.sub : '');
+function gauge(ot){       // お得度の半円メーター（0〜100%で弧が伸びる）
+  const L = 157.08, w = Math.max(0, Math.min(100, ot)) / 100 * L, d = 'M10 64A50 50 0 0 1 110 64';
+  return '<svg class="gauge" viewBox="0 0 120 74" role="img" aria-label="お得度 ' + ot + '%"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="0"><stop offset="0" style="stop-color:var(--g1)"/><stop offset="1" style="stop-color:var(--g2)"/></linearGradient></defs>' +
+    '<path class="tr" d="' + d + '"/>' + (w > 0 ? '<path class="fl" d="' + d + '" stroke-dasharray="' + w.toFixed(1) + ' 400"/>' : '') +
+    '<text x="60" y="63" class="' + (ot < 0 ? 'neg' : '') + '">' + ot + '<tspan>%</tspan></text></svg>';
+}
+
+/* ── 描く ── */
+function drawPrice(){
+  $('yenRow').hidden = !S.yen; $('rateBtn').hidden = !S.yen;
+  $('yenBtn').setAttribute('aria-pressed', String(S.yen));
+  const b = BUNDLES[S.bundle];
+  $('rateBtn').innerHTML = '<span>コインの買い方（' + b.g.split('・')[0] + '・1コイン 約' + (b.y / b.c).toFixed(2) + '円）<b><em>' + fmt(b.y) + '円</em> で <em>' + fmt(b.c) + 'コイン</em></b></span><i>変える ›</i>';
+}
+function drawList(){
+  const L = $('list');
+  if (!S.rows.length){
+    L.innerHTML = '<div class="empty">' + giftSvg(giftKind(), 132) + 'ボックスの中身を選ぶと<br>割引率とお得度が出ます' +
+      '<button class="cta" type="button" data-open="ovItems">＋ アイテムを選ぶ</button>' +
+      '<button class="sample" type="button" id="sampleBtn">見本を入れてみる</button></div>';
+  } else {
+    L.innerHTML = '<div class="boxart">' + giftSvg(giftKind(), 96) + '</div>' + S.rows.map(row => {
+      const it = BY[row.id];
+      return '<div class="it' + (row.on ? '' : ' off') + '" data-id="' + row.id + '" style="--c:' + colorOf(row.id) + '"><i class="chip"></i>' +
+        '<div class="body"><div class="r1"><span class="n1">' + it.name + '</span>' +
+        '<button class="sw" type="button" data-act="sw" role="switch" aria-checked="' + row.on + '" aria-label="' + it.name + 'が要る"></button></div>' +
+        '<div class="r2"><span class="meta">' + metaOf(row) + '</span>' + del(row) + stp(row) + '</div></div></div>';
+    }).join('') + '<button class="add" type="button" data-open="ovItems">＋ アイテムを選ぶ</button>';
+  }
+  $('rcpBtn').hidden = $('clrBtn').hidden = !S.rows.length;
+}
+function drawResult(){
+  const o = calc(), bar = $('bar');
+  save();
+  /* コインと円の比較 */
+  if (o.C && o.Y){
+    const cy = o.C * o.r, d = Math.abs(o.Y - cy), coinWin = cy < o.Y, same = Math.round(d) === 0;
+    $('cmp').innerHTML = '<div class="cmp"><div class="ttl">' +
+      (same ? 'コインでも円でも同じ値段' : (coinWin ? 'コイン' : '円') + 'で買うほうが<b class="num">' + fmt(d) + '円</b>安い <small>（' + pct(d / Math.max(o.Y, cy)) + '）</small>') + '</div>' +
+      '<div class="two"><div class="' + (coinWin && !same ? 'win' : '') + '">コインで買う' + (coinWin && !same ? '<em>安い</em>' : '') + '<b class="num">約' + fmt(cy) + '円</b>' + fmt(o.C) + 'コインを円に直した値段</div>' +
+      '<div class="' + (!coinWin && !same ? 'win' : '') + '">円で買う' + (!coinWin && !same ? '<em>安い</em>' : '') + '<b class="num">' + fmt(o.Y) + '円</b>コインにすると約' + fmt(o.Y / o.r) + '</div></div></div>';
+  } else $('cmp').innerHTML = '';
+
+  if (!o.ready){
+    bar.innerHTML = '<div class="big num none">−<i>%</i></div><div class="sm">値段と中身を入れると<br>割引率とお得度が出ます</div>';
+    $('detail').innerHTML = '';
+    return;
+  }
+  const how = o.by === 'yen' ? fmt(o.Y) + '円' : fmt(o.price);
+  const ot = o.otoku == null ? null : Math.round(o.otoku * 100), otw = ot == null ? 0 : Math.max(0, Math.min(100, ot));
+  const lbl = o.anyOff ? 'あなたにとっての割引率' : '割引率';
+  const T_OT = '単品で買ったときの合計を0%、これまでのボックスの最安値で数えた合計を100%として、このボックスの値段がどこにあるかを表します。';
+  const T_RT = 'ボックスの値段を、' + (o.anyOff ? '要るアイテムだけを' : '中身を') + '単品で買ったときの合計と比べた割引率です。';
+
+  /* 下の帯 */
+  bar.innerHTML = '<div class="big num' + (o.mine < 0 ? ' neg' : '') + '">' + pctN(o.mine) + '<i>%</i></div>' +
+    '<div class="sm">' + (o.anyOff ? '要るものだけの割引率' : '割引率') + '<div><s class="num">' + fmt(o.want) + '</s> → <b class="num">' + how + '</b></div></div>' +
+    (ot != null ? '<div class="ot" title="' + T_OT + '">お得度<b class="num' + (ot < 0 ? ' neg' : '') + '">' + ot + '<i>%</i></b><span class="mini"><u style="width:' + otw + '%"></u></span></div>' : '');
+
+  /* 結果の枠 */
+  let h = '<div class="sh"><span class="en">Result</span><span class="ja">結果</span><i></i></div><div class="card res"><div class="tiles">' +
+    '<div class="tile" title="' + T_RT + '"><span>' + lbl + '</span><b class="v num' + (o.mine < 0 ? ' neg' : '') + '">' + pctN(o.mine) + '<i>%</i></b>' +
+      '<div class="was"><s class="num">' + fmt(o.want) + '</s>→' + (o.by === 'yen' ? '' : '<i class="coin"></i>') + '<b class="num">' + how + '</b></div></div>' +
+    '<div class="tile" title="' + T_OT + '"><span>お得度</span>' + (ot != null ? gauge(ot) + '<small>最安値への近さ</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
+  if (o.anyOff && o.label != null) h += '<p class="note">全部要るなら、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pct(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
+  if (o.mine < 0) h += '<p class="note">' + (o.anyOff ? '要るものだけなら、' : '') + '単品で買うほうが ' + fmt(o.price - o.want) + ' コイン安くなります。</p>';
+  if (ot != null){
+    const kp = Math.max(1, Math.min(99, otw));
+    h += '<h3>お得度のものさし</h3><div class="scale"><i style="width:' + otw + '%"></i><u style="left:' + kp + '%"></u>' +
+      '<s class="num" style="' + (kp > 60 ? 'right:' + (100 - kp) + '%;margin-right:-8px' : 'left:' + kp + '%;margin-left:-8px') + '">このボックス ' + fmt(o.price) + '</s></div>' +
+      '<div class="ends"><div>0%　単品の合計<b class="num">' + fmt(o.want) + '</b></div><div>100%　最安値<b class="num">' + fmt(o.best) + '</b></div></div>' +
+      '<p class="note expl">100%は、中身をこれまでのボックスの最安値で数えた合計です。</p>';
+  }
+  h += '<h3>中身の内訳</h3><div class="band">';
+  S.rows.forEach(row => {
+    const v = (BY[row.id].p || 0) * row.n; if (!v || !o.all) return;
+    h += '<i class="' + (row.on ? '' : 'off') + '" style="flex:' + v + ' 1 0;background:' + colorOf(row.id) + '"></i>';
+  });
+  h += '</div>';
+  $('detail').innerHTML = h + '</div>';
+}
+function drawPick(){
+  const cell = it => {
+    const row = rowOf(it.id), nm = '<span class="nm">' + it.name + '<small>' + priceTag(it) + '</small></span>';
+    return row ? '<div class="pr sel" data-id="' + it.id + '">' + nm + del(row) + stp(row) + '</div>'
+               : '<button class="pr" type="button" data-id="' + it.id + '" data-act="inc">' + nm + '<span class="plus">＋</span></button>';
+  };
+  const grp = (ttl, list) => list.length ? '<div class="grp">' + ttl + '</div><div class="pl">' + list.map(cell).join('') + '</div>' : '';
+  $('pickBody').innerHTML = '<div class="pl">' + ITEMS.map(cell).join('') + '</div>' +
+    '<p class="enote">ほしのかけら・しあわせタマゴなど、ほかのアイテムは数えません。ボックスの値段は、ここにある6つのアイテムの分として計算します。</p>';
+  $('pickOk').textContent = S.rows.length ? S.rows.length + '種類を入れる' : '閉じる';
+}
+function drawRateSheet(){
+  let h = '', g = '';
+  BUNDLES.forEach((b, i) => {
+    if (b.g !== g){ g = b.g; h += '<div class="grp">' + g + '</div>'; }
+    h += '<button class="bd" type="button" data-bundle="' + i + '" aria-pressed="' + (i === S.bundle) + '"><i class="coin" style="margin:0"></i><b class="num">' + fmt(b.c) + '</b><span>' + fmt(b.y) + '円</span><i>1コイン 約' + (b.y / b.c).toFixed(2) + '円</i></button>';
+  });
+  $('rateBody').innerHTML = h + '<p class="enote">ここで選んだ買い方で、コインの値段を円に、円の値段をコインに直します。</p>';
+}
+function drawReceipt(){
+  const o = calc();
+  let h = '<div class="rc"><h5>ボックスの中身</h5><hr>';
+  for (const row of S.rows){
+    const it = BY[row.id];
+    h += '<div class="' + (row.on ? '' : 'cut') + '"><span>' + it.name + ' ×' + row.n + '</span><span>' + (it.p == null ? '−' : fmt(it.p * row.n)) + '</span></div>';
+  }
+  h += '<hr><div><span>単品の合計' + (o.anyOff ? '（要るものだけ）' : '') + '</span><span>' + fmt(o.want) + '</span></div>';
+  if (o.price) h += '<div class="tot"><span>ボックスの値段</span><span>' + fmt(o.price) + '</span></div>';
+  if (o.ready) h += '<hr><div class="tot"><span>割引率</span><span>' + pct(o.mine) + '</span></div>' + (o.otoku != null ? '<div><span>お得度</span><span>' + Math.round(o.otoku * 100) + '%</span></div>' : '');
+  $('rcpBody').innerHTML = h + '</div>';
+}
+const redraw = () => { drawPrice(); drawList(); drawResult(); };
+
+/* ── 操作 ── */
+function openOv(id){
+  if (id === 'ovItems') drawPick();
+  if (id === 'ovRate') drawRateSheet();
+  if (id === 'ovRcp') drawReceipt();
+  $(id).classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function closeOv(){
+  document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open'));
+  document.body.style.overflow = '';
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  redraw();
+}
+let clrT = 0;
+function disarmClr(){ clearTimeout(clrT); const b = $('clrBtn'); b.textContent = '消す'; b.classList.remove('warn'); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, .ov');
+  if (!t) return;
+  if (t.id !== 'clrBtn') disarmClr();
+  if (t.classList.contains('ov')){ if (e.target === t) closeOv(); return; }
+  if (t.dataset.open) return openOv(t.dataset.open);
+  if ('close' in t.dataset) return closeOv();
+  if (t.dataset.bundle){
+    S.bundle = +t.dataset.bundle;
+    try{ localStorage.setItem('site_box_bundle', BUNDLES[S.bundle].g + '|' + BUNDLES[S.bundle].c); }catch(err){}
+    return closeOv();
+  }
+  if (t.id === 'yenBtn'){
+    S.yen = !S.yen; if (!S.yen) $('py').value = '';
+    redraw(); if (S.yen) $('py').focus(); return;
+  }
+  if (t.id === 'rateBtn') return openOv('ovRate');
+  if (t.id === 'rcpBtn') return openOv('ovRcp');
+  if (t.id === 'sampleBtn'){
+    S.rows = SAMPLE.rows.map(([id, n]) => ({id, n, on:true})); $('pc').value = fmt(SAMPLE.pc);
+    return redraw();
+  }
+  if (t.id === 'clrBtn'){     // 2回押しで消す（1回目は確かめ）
+    if (!t.classList.contains('warn')){ t.textContent = '本当に消す？'; t.classList.add('warn'); clrT = setTimeout(disarmClr, 3500); return; }
+    disarmClr(); S.rows = []; $('pc').value = ''; $('py').value = '';
+    return redraw();
+  }
+  const act = t.dataset.act, host = t.closest('[data-id]');
+  if (act && host){
+    const id = host.dataset.id, inSheet = !!t.closest('#ovItems');
+    let row = rowOf(id);
+    if (act === 'sw' && row) row.on = !row.on;
+    if (act === 'inc'){ if (row) row.n = Math.min(9999, row.n + 1); else S.rows.push({id, n:1, on:true}); }
+    if (act === 'dec' && row && row.n > 1) row.n--;          // 1より下には減らさない（消すのは別のゴミ箱のボタン）
+    if (act === 'del' && row) S.rows.splice(S.rows.indexOf(row), 1);
+    if (inSheet){ save(); drawPick(); } else { drawList(); drawResult(); }
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.ov.open')) closeOv(); });
+{
+  const tab = $('helptab'), body = $('helpbody');
+  tab.onclick = () => { const o = body.hidden; body.hidden = !o; tab.setAttribute('aria-expanded', String(o)); };
+}
+
+/* 入力欄：打っている最中は中身を書き換えない（日本語キーボードでは数字も変換中の文字）。整えるのは入力を終えたとき */
+for (const id of ['pc', 'py']){
+  const el = $(id);
+  el.addEventListener('input', e => { if (!e.isComposing) drawResult(); });
+  el.addEventListener('compositionend', drawResult);
+  el.addEventListener('focus', () => { const v = num(el.value); el.value = v ? String(v) : ''; });
+  el.addEventListener('blur', () => { const v = num(el.value); el.value = v ? fmt(v) : ''; drawResult(); });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) el.blur(); });
+}
+/* 個数の欄（一覧と選ぶ窓の両方）。一覧を作り直さずに、その行だけ直す（すぐ隣の −／＋ を押した操作が消えるため） */
+const cntEl = e => e.target.matches && e.target.matches('.stp input') ? e.target : null;
+function cntIn(e){
+  const el = cntEl(e); if (!el || e.isComposing) return;
+  const host = el.closest('[data-id]'), row = rowOf(host.dataset.id), v = num(el.value);
+  if (!row || v <= 0) return;
+  row.n = Math.min(v, 9999);
+  const m = host.querySelector('.meta'); if (m) m.innerHTML = metaOf(row);
+  host.querySelector('[data-act="dec"]').disabled = row.n <= 1;
+  if (el.closest('#ovItems')) save(); else drawResult();
+}
+document.addEventListener('input', cntIn);
+document.addEventListener('compositionend', cntIn);
+document.addEventListener('focusin', e => { const el = cntEl(e); if (el) el.select(); });
+document.addEventListener('focusout', e => {
+  const el = cntEl(e); if (!el) return;
+  const host = el.closest('[data-id]'), row = rowOf(host.dataset.id); if (!row) return;
+  el.value = row.n; host.querySelector('[data-act="dec"]').disabled = row.n <= 1;
+  if (!el.closest('#ovItems')) drawResult();
+});
+document.addEventListener('keydown', e => { const el = cntEl(e); if (el && e.key === 'Enter' && !e.isComposing) el.blur(); });
+
+redraw();
+</script>
+<script src="/assets/snap.js"></script>
+</body>
+</html>

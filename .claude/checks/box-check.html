@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>ボックス割引率チェッカーの答え合わせ</title></head>
+<body>
+<div id="out">実行中…</div>
+<script>
+// ボックス割引率チェッカー（/box/）の計算が、決めた答えと合っているかを見る。
+// 答えの出どころ: .claude/rules/box.md（2026-11-11タダシさん決定）と、ゲーム内のボックスの表示（◯%OFF）。
+//  ・最安値の表 60・80・55・140・103・274
+//  ・基準の箱（タマゴボックス7000・ハイパーレイドボックス5425・散策ボックス1300）はお得度100%
+//  ・おまけの無い箱はゲーム内の割引率と同じ（7000＝60%OFF・490＝28%OFF・575の散歩ボックス＝39%OFF）
+// 答えを変えるときは必ずタダシさんに確認すること。
+const out = document.getElementById('out');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const load = src => new Promise(r => { const f = document.createElement('iframe'); f.width = 420; f.height = 900;
+  f.style.cssText = 'position:absolute;left:-9999px'; f.onload = () => r(f); f.src = src; document.body.appendChild(f); });
+const waitFor = async (fn, n = 200) => { for (let i = 0; i < n; i++) { try { const v = fn(); if (v) return v; } catch (e) {} await sleep(50); } return null; };
+(async () => {
+  const res = [];
+  const ok = (name, got, want) => res.push([name, String(got) === String(want), got, want]);
+  try {
+    try { localStorage.removeItem('site_box_state'); } catch (e) {}
+    const f = await load('/box/');
+    const W = f.contentWindow;
+    await waitFor(() => W.eval('typeof calc') === 'function');
+    const run = (pc, rows) => W.eval(`$('pc').value='${pc}'; S.rows=${JSON.stringify(rows.map(([id, n, on]) => ({id, n, on: on !== false})))}; drawList(); drawResult(); (()=>{const o=calc(); return {mine:Math.round(o.mine*100), ot:o.otoku==null?null:Math.round(o.otoku*100), want:o.want, best:o.best};})()`);
+    // ① 選べるアイテムと最安値の表
+    ok('選べるアイテムは主要の6つ', W.eval("ITEMS.map(i=>i.id).join(',')"), 'incu,sincu,battle,remote,mp,shroom');
+    ok('最安値の表', W.eval("ITEMS.map(i=>i.best).join(',')"), '60,80,55,140,103,274');
+    ok('単品の値段', W.eval("ITEMS.map(i=>i.p).join(',')"), '150,200,100,195,150,400');
+    // ② 基準の箱はお得度100%
+    let o = run(7000, [['incu', 50], ['sincu', 50]]);
+    ok('タマゴボックス7000 割引率・お得度', `${o.mine}%・${o.ot}%`, '60%・100%');
+    o = run(5425, [['battle', 99]]);
+    ok('ハイパーレイドボックス5425 お得度', o.ot + '%', '100%');
+    o = run(1300, [['mp', 2], ['shroom', 4]]);
+    ok('散策ボックス1300 割引率・お得度', `${o.mine}%・${o.ot}%`, '32%・100%');
+    // ③ ゲーム内の割引率と一致
+    o = run(490, [['remote', 3], ['battle', 1]]);
+    ok('リモートレイドボックス490（28%OFF）', `${o.mine}%・お得度${o.ot}%`, '28%・お得度93%');
+    o = run(575, [['incu', 5]]);
+    ok('散歩ボックス575 主要だけ（ふかそうち5）', `${o.mine}%・単品${o.want}`, '23%・単品750');
+    // ④ スイッチで外したアイテムは数えない
+    o = run(7000, [['incu', 50], ['sincu', 50, false]]);
+    ok('スーパーふかそうちを外した 単品の合計', o.want, 7500);
+    // ⑤ 箱の絵: リモートレイドパスで青いガラス・黒と金に紺は出さない
+    run(490, [['remote', 3]]);
+    ok('リモートレイドパス入りの箱', W.eval('giftKind()'), 'remote');
+    run(7000, [['incu', 50]]);
+    ok('ランダムの箱に黒・金に紺が入らない', /black|gold/.test(W.eval('GIFT_RAND')) ? W.eval('GIFT_RAND') : 'なし', 'なし');
+    // ⑥ 選ぶ窓に6つ並ぶ
+    W.eval("drawPick()");
+    ok('選ぶ窓の行の数', f.contentDocument.querySelectorAll('#pickBody .pr').length, 6);
+    W.eval("$('pc').value=''; S.rows=[]; drawList(); drawResult();");
+  } catch (e) {
+    res.push(['実行エラー', false, String(e), '']);
+  }
+  try { localStorage.removeItem('site_box_state'); } catch (e) {}
+  const bad = res.filter(r => !r[1]).length;
+  out.innerHTML = res.map(([n, g, got, want]) => `<div>${g ? '✅' : '❌'} ${n}: ${got}${g ? '' : '（答え ' + want + '）'}</div>`).join('')
+    + `<div id="sum" data-ok="${res.length - bad}" data-ng="${bad}">合計 ${res.length - bad}/${res.length}</div><iframe hidden></iframe>`;
+})();
+</script>
+</body></html>

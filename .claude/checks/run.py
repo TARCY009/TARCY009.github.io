@@ -10,6 +10,7 @@ gym-attack:  .claude/checks/gym-check.html（ジム挑戦の手計算の例・�
 dex-stats:   .claude/checks/dex-check.html（ステータス図鑑の最大CP・メガLv4・最大SCP・タイプ相性・わざ表の数値＝17項目）
 exit-rank:   .claude/checks/exit-check.html?only=rank（1ポケモン1ページ用の出口＝画面の数字か。タイプ別火力・耐久指数・ジム防衛・マックスバトル タイプ別＝20項目）
 scp-rank:    .claude/checks/scp-check.html（SCPランキングの全件＝GBLシミュレーターの理想個体・図鑑の最大SCP・確認済みの値＝19項目）
+box-calc:    .claude/checks/box-check.html（ボックス割引率チェッカーの最安値の表・基準の箱のお得度100%・ゲームの割引率との一致・箱の絵＝12項目）
 exit-gbl:    .claude/checks/exit-check.html?only=gbl（同・GBLの環境一覧とロケット団のランキング＝16項目）
 rocket-rank: .claude/checks/rocket-check.html（R団戦タイプ別火力の一覧＝別の計算／グラフと1対1ランキングの画像の見出し・重なり・画面との一致＝7項目）
 rules-scn:   .claude/checks/rules/scncheck.py（GBLのバトルルールのシナリオ6本＝expected/*.json と突き合わせ）
@@ -155,6 +156,8 @@ CHECKS = {
     'exit-rank': page_check('.claude/checks/exit-check.html?only=rank', 20, 120000),
     # SCPランキング(2026-11-11): 全件を GBLシミュレーターの rank1(PL51)・ステータス図鑑の maxScp(PL50)と突き合わせる
     'scp-rank': page_check('.claude/checks/scp-check.html', 19, 120000),
+    # ボックス割引率チェッカー(2026-11-12): 主要6つだけで数える・最安値の表・基準の箱は100%
+    'box-calc': page_check('.claude/checks/box-check.html', 12, 60000),
     'exit-gbl': page_check('.claude/checks/exit-check.html?only=gbl', 16, 300000),
     # R団戦タイプ別火力・ロケット団 1対1ランキングの画像(2026-10-23の点検): 一覧＝別の計算・グラフの見出しの重なり・画像＝画面・見出しの人と何匹目
     'rocket-rank': page_check('.claude/checks/rocket-check.html', 7, 300000),
