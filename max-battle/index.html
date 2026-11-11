@@ -1035,6 +1035,7 @@ footer a{color:var(--spec)}
     const dmgOf = (pw, t, atk, mu) => (Math.floor(0.5 * pw * (atk / ctx.bossDef) * (p.ty.includes(t) ? D.stab : 1) * effVs(t, boss.ty)) + 1) * mu;
     const atks = atkOverride ? [atkOverride] : TIE_CPMS.map(c => (p.atk + 15) * c);
     const votes = {}; let none = 0, total = 0;
+    const runs = [];   // 設定ごとの100%までの時間（打ってOKの判定をいまのダイキノコの状態で決めるため）
     const effOf = mi => { const c = cands.find(x => x.mi === mi); return c ? c.eff : -1; };
     for(const atk of atks) for(const mu of [1, 2]){
       const c = Object.assign({}, ctx, {mush: mu});
@@ -1048,10 +1049,14 @@ footer a{color:var(--spec)}
         pool = fs.filter(x => Math.round(x.mt / (x.d * 2) * 1e6) === mx);
       }
       if(!pool.length) continue;
-      let bestT = Math.min(...pool.map(x => fillTime(x, null))), win = null;   // win=null＝SPを撃たない
+      const tNone = Math.min(...pool.map(x => fillTime(x, null)));
+      let bestT = tNone, win = null;   // win=null＝SPを撃たない
+      const run = {mu, tNone, t: {}};
+      runs.push(run);
       for(const cd of cands){
         const sp = {d: cd.m.d / 1000, en: cd.m.en || 100, mt: meterOf(dmgOf(cd.m.p, cd.m.t, atk, mu), c)};
         const t = Math.min(...pool.map(x => x.en > 0 ? fillTime(x, sp) : Infinity));
+        run.t[cd.mi] = t;
         // 同じ時間なら撃つほう（SPのぶんダメージが出る）→ SPどうしはコンボDPSが高いほう
         if(t < bestT - 1e-9 || (Math.abs(t - bestT) < 1e-9 && (win === null || cd.eff > effOf(win)))){ bestT = t; win = cd.mi; }
       }
@@ -1064,7 +1069,16 @@ footer a{color:var(--spec)}
     // （全ボスで数えると1位が50〜54%の行に3割が固まり、55%から薄くなる）。そのときは上位2本のうちコンボDPSが高いほうを出す
     // （2026-11-05タダシさん指示。カイリキーが ディアルガ＝ばくれつパンチ／ジュラルドン＝インファイト とボスで入れ替わっていた）
     if(spSorted.length > 1 && topV < total * SP_VOTE_CLEAR && effOf(spSorted[1]) > effOf(top)) top = spSorted[1];
-    const r = {pick: top, ok: topV >= none, votes, none, total};   // 同数なら撃つほう
+    // 「打ってOK／封印推奨」は、いまのダイキノコの状態の設定（PL20〜50の61通り）だけで、出すSPと「撃たない」を比べて決める
+    // （2026-11-11タダシさん指示。キノコなし・ありを合わせて数えると、レジスチル×ザマゼンタのインファイトが
+    //   キノコなし0票・あり61票の61対61になり、キノコなしの画面でも「打ってOK」と出ていた）。出すSPはキノコの有無によらない
+    const okBy = {};
+    for(const mu of [1, 2]){
+      let shoot = 0, hold = 0;
+      for(const rn of runs) if(rn.mu === mu){ if(rn.t[top] <= rn.tNone + 1e-9) shoot++; else hold++; }
+      okBy[mu] = shoot >= hold;   // 同じ時間・同数なら撃つほう
+    }
+    const r = {pick: top, okBy, votes, none, total};
     voteCache.set(key, r);
     return r;
   }
@@ -1110,7 +1124,8 @@ footer a{color:var(--spec)}
       //   旧「0.5秒あたり1%以上で打ってOK → その中でコンボDPS」は、ゲージをためる時間・上限で捨てるゲージ・
       //   最後のSPがちょうど100%に届くかを見ておらず、ダイキノコの有無で結果が入れ替わっていた（カイリキー対ジュラルドン）
       const v = spVote(p, ctx, cands, atkOverride);
-      cands.forEach(c => { c.ok = v.ok; c.votes = v.votes[c.mi] || 0; c.vtotal = v.total; c.vnone = v.none; });
+      const ok = v.okBy[mu === 2 ? 2 : 1];
+      cands.forEach(c => { c.ok = ok; c.votes = v.votes[c.mi] || 0; c.vtotal = v.total; c.vnone = v.none; });
       best = cands.find(c => c.mi === v.pick) || cands[0];
     }else{
       // 判定パラメータ未確定時(通常ランキングの最適SP表示): ダメージ効率（同じなら分割ありの技）
