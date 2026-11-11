@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<!-- SCPランキングのアイコン（2026-11-12・タダシさん選択＝表彰台＋その下にSCPの文字）。
+     濃紺の地に、1位の台の上に金の星・2位＝スーパー（青）・3位＝ハイパー（黄）の台、下に「SCP」（白→青の金属の文字）。
+     画面なしブラウザで 512x512 を撮り、scratchpad/icon_round.py が四隅を落として4サイズに書き出す（?prev=1 で見本の並び） -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap">
+<style>
+html,body{margin:0;background:transparent}
+body.prev{background:linear-gradient(160deg,#0b1023,#131a36 55%,#1a1126);padding:16px;display:flex;gap:16px;align-items:center}
+svg{display:block}
+body:not(.prev) svg{width:512px;height:512px}
+body.prev svg.b{width:200px;height:200px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))} body.prev svg.s{width:52px;height:52px}
+</style></head><body>
+<script>
+const id = 'i';
+const ICON = `<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2a5e"/><stop offset="1" stop-color="#0a0c22"/></linearGradient>
+  <radialGradient id="ga" cx=".2" cy=".15" r=".6"><stop offset="0" stop-color="#5b8cff" stop-opacity=".45"/><stop offset="1" stop-color="#5b8cff" stop-opacity="0"/></radialGradient>
+  <radialGradient id="gb" cx=".85" cy=".9" r=".6"><stop offset="0" stop-color="#ffd54a" stop-opacity=".32"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/></radialGradient>
+  <linearGradient id="p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".5" stop-color="#ffc93a"/><stop offset="1" stop-color="#c8860f"/></linearGradient>
+  <linearGradient id="p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8d0ff"/><stop offset="1" stop-color="#3a5cb0"/></linearGradient>
+  <linearGradient id="p3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe892"/><stop offset="1" stop-color="#a27810"/></linearGradient>
+  <linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".55" stop-color="#ffd54a"/><stop offset="1" stop-color="#e0a020"/></linearGradient>
+  <linearGradient id="tx" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".48" stop-color="#d6e4ff"/><stop offset=".52" stop-color="#7aa8ff"/><stop offset="1" stop-color="#3f62b8"/></linearGradient>
+  <clipPath id="cl"><rect width="512" height="512" rx="102"/></clipPath></defs>
+  <g clip-path="url(#cl)">
+  <rect width="512" height="512" fill="url(#bg)"/><rect width="512" height="512" fill="url(#ga)"/><rect width="512" height="512" fill="url(#gb)"/>
+  <!-- 表彰台（台の上面に光・下に影） -->
+  <g transform="translate(0,-6)">
+    <rect x="96" y="214" width="104" height="96" rx="10" fill="url(#p2)"/>
+    <rect x="312" y="240" width="104" height="70" rx="10" fill="url(#p3)"/>
+    <rect x="200" y="166" width="112" height="144" rx="10" fill="url(#p1)"/>
+    <rect x="96" y="214" width="104" height="10" rx="5" fill="#fff" fill-opacity=".35"/>
+    <rect x="312" y="240" width="104" height="10" rx="5" fill="#fff" fill-opacity=".35"/>
+    <rect x="200" y="166" width="112" height="10" rx="5" fill="#fff" fill-opacity=".45"/>
+    <text x="256" y="270" font-family="Oswald" font-weight="700" font-size="84" text-anchor="middle" fill="#7a4c06" fill-opacity=".7">1</text>
+    <path transform="translate(0,-26)" d="M256 58l21 43 47 6-34 32 9 47-43-23-43 23 9-47-34-32 47-6z" fill="url(#st)" stroke="#fff4c4" stroke-width="6" stroke-linejoin="round"/>
+    <rect x="80" y="310" width="352" height="9" rx="4.5" fill="#c8d6ff" fill-opacity=".55"/>
+  </g>
+  <!-- SCP の文字（白→青の金属・濃紺のふち） -->
+  <text x="256" y="452" font-family="Oswald" font-weight="700" font-size="124" text-anchor="middle" fill="url(#tx)" stroke="#0a0c22" stroke-width="5" paint-order="stroke" letter-spacing="6">SCP</text>
+  </g>`;
+const prev = /prev=1/.test(location.search);
+if (prev) document.body.className = 'prev';
+document.body.insertAdjacentHTML('beforeend', prev
+  ? `<svg class="b" viewBox="0 0 512 512">${ICON}</svg><svg class="s" viewBox="0 0 512 512">${ICON}</svg>`
+  : `<svg viewBox="0 0 512 512">${ICON}</svg>`);
+</script>
+</body></html>
