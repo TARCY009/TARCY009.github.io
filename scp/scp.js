@@ -167,6 +167,22 @@ document.querySelectorAll('#lgSeg button').forEach(b => {
     GonaviDevEx.mount($('devexbox'), () => KEYS.map(k => PV.pokemon[k].n));
     GonaviDevEx.on(() => { cache.clear(); renderRank(); });
   }
+  // 開発者だけの「＋ 未実装」（まだ実装されていないポケモンを動画用に足す・devex の逆）。
+  // 候補は対戦データにある未実装のポケモン（r が 0・バトル中だけのすがたと戦えないポケモンを除く）。
+  // 対戦データはもう読んであるので、候補だけを手元で包んで渡す（ふつうの人には mount が何もしない）
+  if (window.GonaviDevAdd) {
+    const U = { pokemon: {} };
+    for (const [k, p] of Object.entries(PV.pokemon)) if (!p.r && !p.hid && !PVP_BAN.has(k)) U.pokemon[k] = p;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(U)], { type: 'application/json' }));
+    GonaviDevAdd.mount($('devexbox'), url, (D, on) => {
+      for (const [k, p] of Object.entries(D.pokemon || {})) {
+        const i = KEYS.indexOf(k);
+        if (on(p.n)) { if (i < 0) KEYS.push(k); }
+        else if (i >= 0) KEYS.splice(i, 1);
+      }
+      cache.clear(); renderRank();
+    });
+  }
   inp.addEventListener('input', apply);
   inp.addEventListener('compositionend', apply);
   box.querySelector('.clr').onclick = () => { inp.value = ''; apply(); inp.focus(); };
