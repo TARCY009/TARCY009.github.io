@@ -50,7 +50,7 @@
 :root{
   --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560; --panel:rgba(26,35,66,.94);
   --cy:#43e0ff; --gold:#ffd54a;
-  --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff; --g4:#ff5abe;   /* 4グループの色 */
+  --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff; --g4:#ff5abe; --g5:#4fdc98;   /* グループの色（g5＝ショップ・アイテム・2026-11-12） */
   --hair:rgba(255,255,255,.14);               /* 罫線。高級感は線の細さで出す */
   /* 看板は44pxと大きいので、ここだけ**中央に反射の折れ目**を入れた金属のグラデーションを使う。
      ⚠ この折れ目つきは小さい字に流用しないこと（1px以下の汚い線になる）。
@@ -73,7 +73,7 @@
 :root.light{
   --ink:#20263a; --sub:#6a7391; --line:#dfe6f5; --panel:rgba(255,255,255,.9);
   --cy:#0b8fa8; --gold:#b07a00;
-  --g1:#e05a20; --g2:#0b8fa8; --g3:#7a3cc4; --g4:#c2247e;
+  --g1:#e05a20; --g2:#0b8fa8; --g3:#7a3cc4; --g4:#c2247e; --g5:#13804e;
   --hair:rgba(40,60,120,.16);
   /* ライトも銀のまま明度を落とす（折れ目の位置は同じ）。
      ⚠ 押し出しは文字より暗い色にする（明るい銀だと白くにじんで輪郭がぼやける）。
@@ -290,12 +290,16 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <a class="card" href="/rocket/type/"><img src="/assets/icons/rocket-type/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">R団戦タイプ別火力</b><span class="ds expl">ロケット団戦で、タイプごとにノーマルアタックの火力が高いポケモンが分かります</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--g3)"><span class="en">Database</span><span class="ja">個体値・図鑑</span><span class="rule"></span><span class="no">05</span></div>
+<div class="gsec" style="--gc:var(--g3)"><span class="en">Database</span><span class="ja">個体値・図鑑</span><span class="rule"></span><span class="no">04</span></div>
 <div class="cards" style="--gc:var(--g3)">
   <a class="card" href="/iv-checker/"><img src="/assets/icons/iv-checker/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">個体値チェッカー</b><span class="ds expl">その個体が4096通りの中で何位か、すぐ分かります</span></span></a>
   <a class="card" href="/pokedex/"><img src="/assets/icons/pokedex/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ステータス図鑑</b><span class="ds expl">種族値・弱点・わざの強さを、1画面でまとめて見られます</span></span></a>
   <a class="card" href="/move-dex/"><img src="/assets/icons/move-dex/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">わざ図鑑</b><span class="ds expl">タイプを選ぶだけで、わざの性能と覚えるポケモンが分かります</span></span></a>
   <a class="card" href="/bulk/"><img src="/assets/icons/bulk/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">耐久指数ランキング</b><span class="ds expl">倒されにくいポケモンが順に並びます。防御とHPのかけ算です</span></span></a>
+</div>
+
+<div class="gsec" style="--gc:var(--g5)"><span class="en">Shop &amp; Items</span><span class="ja">ショップ・アイテム</span><span class="rule"></span><span class="no">01</span></div>
+<div class="cards" style="--gc:var(--g5)">
   <a class="card" href="/box/"><img src="/assets/icons/box/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ボックス割引率チェッカー</b><span class="ds expl">セールボックスが主要なアイテムで数えてどれだけ安いか、これまでの最安値と比べられます</span></span></a>
 </div>
 
