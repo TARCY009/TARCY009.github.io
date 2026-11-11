@@ -70,6 +70,9 @@ h1 .grp{white-space:nowrap}
 .rhead .gtabs{margin:0}
 /* 表示のしかたの段は、2〜3択のまとまり（PL・個体値の見せ方・件数）どうしを少し離す */
 .rhead .gtabs.segs{gap:6px 12px}
+/* 「メーター」の見出し＋2択（見出しはボタンの外の小さな文字・切り替えと1つのまとまり） */
+.seglbl{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
+.seglbl>em{font-style:normal;font-size:.68rem;font-weight:700;color:var(--sub);white-space:nowrap}
 .searchbox{position:relative;flex:1 1 180px;min-width:150px}
 .searchbox input{width:100%;font:inherit;font-size:.9rem;padding:8px 32px 8px 12px;border-radius:11px;
   border:1px solid var(--line);background:var(--field);color:var(--ink);outline:none}
@@ -133,6 +136,7 @@ h1 .grp{white-space:nowrap}
   .rhead .gtabs{width:100%}
   .rhead .gtabs button{flex:1 1 auto}
   .rhead .gtabs.segs .gseg{flex:1 1 auto}
+  .rhead .gtabs.segs .seglbl{flex:1 1 auto}
   .rhead .gtabs.segs{gap:6px 8px}
   /* PLの上限と個体値の見せ方（2択×2）で1行・件数（3択）で1行にそろえる */
   .rhead .gtabs.segs .gseg button{padding:8px 10px}

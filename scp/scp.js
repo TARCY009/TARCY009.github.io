@@ -53,7 +53,7 @@ const scpOf = prod => Math.floor(Math.pow(prod, 2 / 3) / 10);
 const BEST = { 50: new Map(), 51: new Map() };
 const bestOf = (k, pl) => { const m = BEST[pl]; if (!m.has(k)) m.set(k, best(k, pl)); return m.get(k); };
 
-// ---- 状態(共有URL: mg=1 メガ・ゲンシ / nl=1 伝説系除く / pre=1 進化前も / pl=51 / n=件数 / v=bar 個体値を棒で) ----
+// ---- 状態(共有URL: mg=1 メガ・ゲンシ / nl=1 伝説系除く / pre=1 進化前も / pl=51 / n=件数 / v=bar メーターを個体値に) ----
 const Q = new URLSearchParams(location.search);
 let fMega = Q.get('mg') === '1', fNoLg = Q.get('nl') === '1', fPre = Q.get('pre') === '1';
 let pl = Q.get('pl') === '51' ? 51 : 50;

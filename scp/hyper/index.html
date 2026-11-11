@@ -77,10 +77,10 @@
         <button class="t-cyan" type="button" data-pl="50" title="PL50（通常の強化の上限）まで上げる前提で理想の個体を出します">PL50</button>
         <button class="t-cyan" type="button" data-pl="51" title="PL51（相棒ブースト込み）まで上げる前提で理想の個体を出します">PL51</button>
       </span>
-      <span class="gseg" id="viewSeg">
-        <button class="t-blue" type="button" data-v="num" title="個体値を数字で出します">数字</button>
-        <button class="t-blue" type="button" data-v="bar" title="個体値を攻撃・防御・HPの3本の棒で出します">棒グラフ</button>
-      </span>
+      <span class="seglbl"><em>メーター</em><span class="gseg" id="viewSeg">
+        <button class="t-blue" type="button" data-v="num" title="SCPをメーターで出します（個体値は「0/15/15」の数字）">SCP</button>
+        <button class="t-blue" type="button" data-v="bar" title="個体値を攻撃・防御・HPの3本のメーターで出します（15は赤）">個体値</button>
+      </span></span>
       <span class="gseg" id="cntSeg">
         <button class="t-cyan" type="button" data-n="30" title="上位30位まで表示します">30位</button>
         <button class="t-cyan" type="button" data-n="50" title="上位50位まで表示します">50位</button>
@@ -127,7 +127,7 @@
   <ul>
     <li><b>メガ・ゲンシ</b>＝メガシンカ・ゲンシカイキも並べます。<b>伝説系除く</b>＝伝説・幻・ウルトラビーストを外します。<b>進化前も</b>＝ふだんは最終進化だけですが、押すと進化前のポケモンも並べます</li>
     <li><b>PL50｜PL51</b>＝理想の個体を出すときのPLの上限です。PL51は相棒ブースト込みの上限です</li>
-    <li><b>数字｜棒グラフ</b>＝個体値を「0/15/15」の数字で出すか、攻撃・防御・HPの3本の棒（15は赤）で出すかを切り替えます</li>
+    <li><b>メーター SCP｜個体値</b>＝メーターで見せる値を切り替えます。SCP＝SCPの高さをメーターで出し、個体値は「0/15/15」の数字で出します。個体値＝攻撃・防御・HPの個体値を3本のメーター（15は赤）で出します</li>
     <li><b>名前で探す</b>＝名前の一部を入れると、そのポケモンの順位だけを出します。順位は絞り込み全体の中での順位です</li>
   </ul>
   <h4>データの更新</h4>
