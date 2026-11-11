@@ -27,7 +27,7 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <link rel="stylesheet" href="/assets/explain.css">
 <link rel="stylesheet" href="/assets/wordmark.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="/assets/home.css">
 <link rel="stylesheet" href="/assets/feedback.css">
 <link rel="stylesheet" href="/assets/pageheader.css">
@@ -198,7 +198,7 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tile{border-radius:12px;background:var(--box);border:1px solid var(--boxline);padding:10px 12px 11px;min-width:0;display:flex;flex-direction:column}
 .tile>span{font-size:11px;font-weight:800;color:var(--barsub);letter-spacing:.04em}
-.tile .v{font-size:60px;line-height:1.1;color:var(--gold);margin-top:6px}
+.tile .v{font-weight:700;font-size:60px;line-height:1.1;color:var(--gold);margin-top:6px}
 .tile .v i{font-style:normal;font-size:27px;margin-left:3px}
 .tile .v.neg{color:var(--red)}
 .tile .was{margin-top:auto;font-size:11.5px;color:var(--barsub);font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
@@ -209,6 +209,23 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .gauge path{fill:none;stroke-width:10;stroke-linecap:round}
 .gauge .tr{stroke:var(--track)}
 .gauge .fl{stroke:url(#gg)}
+/* 立体の数字（2026-11-12タダシさん選択・A 押し出し）: 真ん中で明暗が折れる金属の板＋下へ3段の厚み。
+   ⚠ background-clip:text と filter はこの文字だけの要素に付ける（中に位置指定の要素を入れない＝iPhone対策）。ライトはベタ塗り＋軽い影 */
+.v3d{background-image:linear-gradient(180deg,#fff6d6 0%,#ffd76a 46%,#e09a17 54%,#b8740c 100%);-webkit-background-clip:text;background-clip:text;color:transparent !important;
+  filter:drop-shadow(0 1px 0 #8a560a) drop-shadow(0 1px 0 #7a4a08) drop-shadow(0 1px 0 #6a3f06) drop-shadow(0 4px 5px rgba(0,0,0,.55))}
+.v3d.g{background-image:linear-gradient(180deg,#eafff3 0%,#7ff0b6 46%,#2fbf7c 54%,#1d8f5a 100%);
+  filter:drop-shadow(0 1px 0 #166b44) drop-shadow(0 1px 0 #135c3a) drop-shadow(0 1px 0 #0f4d31) drop-shadow(0 4px 5px rgba(0,0,0,.55))}
+.v3d.r{background-image:linear-gradient(180deg,#ffe6e6 0%,#ff9a9a 46%,#e0484a 54%,#a8282b 100%);
+  filter:drop-shadow(0 1px 0 #7a1c1e) drop-shadow(0 1px 0 #681719) drop-shadow(0 1px 0 #561214) drop-shadow(0 4px 5px rgba(0,0,0,.55))}
+.v3d.sm.g{filter:drop-shadow(0 1px 0 #135c3a) drop-shadow(0 1px 0 #0f4d31) drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.v3d.sm.r{filter:drop-shadow(0 1px 0 #681719) drop-shadow(0 1px 0 #561214) drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+:root.light .v3d{background-image:none;color:var(--gold) !important;filter:none;text-shadow:0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(120,90,20,.25)}
+:root.light .v3d.g{color:var(--green) !important;text-shadow:0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(20,100,60,.22)}
+:root.light .v3d.r{color:var(--red) !important;text-shadow:0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(150,30,30,.22)}
+.gwrap{position:relative;max-width:150px;margin:2px auto 0;width:100%}
+.gwrap .gauge{margin:0}
+.gnum{position:absolute;left:0;right:0;bottom:4%;text-align:center;font-family:"Oswald","Hiragino Sans",sans-serif;font-weight:700;font-size:35px;line-height:1}
+.gnum i{font-style:normal;font-size:17px;margin-left:1px}
 .gauge text{font-family:"Oswald","Hiragino Sans",sans-serif;font-weight:600;text-anchor:middle;fill:var(--green);font-size:31px}
 .gauge text.neg{fill:var(--red)}
 .gauge tspan{font-size:15px}
@@ -227,6 +244,14 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .band i{display:block;height:100%;border-radius:3px;min-width:3px}
 .band i:first-child{border-radius:7px 3px 3px 7px} .band i:last-child{border-radius:3px 7px 7px 3px}
 .band i.off{background:var(--hatch) !important}
+.legend{list-style:none;margin:9px 4px 0;padding:0;display:grid;gap:5px}
+.legend li{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--ink);min-width:0}
+.legend li i{width:11px;height:11px;border-radius:3px;flex:none}
+.legend li span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend li b{font-size:12.5px;color:var(--barstrong)}
+.legend li em{font-style:normal;font-size:11px;color:var(--barsub);width:3.3em;text-align:right}
+.legend li.off{color:var(--offink)} .legend li.off span{text-decoration:line-through}
+.legend li.off i{background:var(--hatch) !important} .legend li.off b{color:var(--offink)}
 .note{font-size:11px;color:var(--barsub);line-height:1.7;margin:10px 4px 0}
 
 /* 下の帯 */
@@ -234,7 +259,7 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .bar{position:relative;max-width:536px;margin:0 auto;border-radius:17px;background:var(--dockbg);border:1px solid var(--barline);padding:10px 14px 11px;display:flex;align-items:center;gap:12px;pointer-events:auto;
   box-shadow:0 10px 24px -10px rgba(0,0,0,.6),inset 0 1px 0 var(--tabin);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .bar::before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:2px;border-radius:2px;background:var(--acc-res)}
-.bar .big{font-size:44px;color:var(--gold);line-height:1;flex:none}
+.bar .big{font-weight:700;font-size:44px;color:var(--gold);line-height:1;flex:none}
 .bar .big i{font-style:normal;font-size:21px;margin-left:1px}
 .bar .big.none{color:var(--ph)} .bar .big.neg{color:var(--red)}
 .bar .sm{font-size:11px;font-weight:700;color:var(--barsub);line-height:1.55;min-width:0;flex:1}
@@ -484,9 +509,9 @@ function metaOf(row){     // 一覧の行の2段目（小計）
 const priceTag = it => '単品 ' + fmtP(it.p) + (it.best ? '・最安 ' + it.best : '') + (it.sub ? '・' + it.sub : '');
 function gauge(ot){       // お得度の半円メーター（0〜100%で弧が伸びる）
   const L = 157.08, w = Math.max(0, Math.min(100, ot)) / 100 * L, d = 'M10 64A50 50 0 0 1 110 64';
-  return '<svg class="gauge" viewBox="0 0 120 74" role="img" aria-label="お得度 ' + ot + '%"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="0"><stop offset="0" style="stop-color:var(--g1)"/><stop offset="1" style="stop-color:var(--g2)"/></linearGradient></defs>' +
+  return '<div class="gwrap"><svg class="gauge" viewBox="0 0 120 74" role="img" aria-label="お得度 ' + ot + '%"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="0"><stop offset="0" style="stop-color:var(--g1)"/><stop offset="1" style="stop-color:var(--g2)"/></linearGradient></defs>' +
     '<path class="tr" d="' + d + '"/>' + (w > 0 ? '<path class="fl" d="' + d + '" stroke-dasharray="' + w.toFixed(1) + ' 400"/>' : '') +
-    '<text x="60" y="63" class="' + (ot < 0 ? 'neg' : '') + '">' + ot + '<tspan>%</tspan></text></svg>';
+    '</svg><b class="gnum num v3d ' + (ot < 0 ? 'r' : 'g') + '">' + ot + '<i>%</i></b></div>';
 }
 
 /* ── 描く ── */
@@ -537,13 +562,13 @@ function drawResult(){
   const T_RT = 'ボックスの値段を、' + (o.anyOff ? '要るアイテムだけを' : '中身を') + '単品で買ったときの合計と比べた割引率です。';
 
   /* 下の帯 */
-  bar.innerHTML = '<div class="big num' + (o.mine < 0 ? ' neg' : '') + '">' + pctN(o.mine) + '<i>%</i></div>' +
+  bar.innerHTML = '<div class="big num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctN(o.mine) + '<i>%</i></div>' +
     '<div class="sm">' + (o.anyOff ? '要るものだけの割引率' : '割引率') + '<div><s class="num">' + fmt(o.want) + '</s> → <b class="num">' + how + '</b></div></div>' +
-    (ot != null ? '<div class="ot" title="' + T_OT + '">お得度<b class="num' + (ot < 0 ? ' neg' : '') + '">' + ot + '<i>%</i></b><span class="mini"><u style="width:' + otw + '%"></u></span></div>' : '');
+    (ot != null ? '<div class="ot" title="' + T_OT + '">お得度<b class="num v3d sm ' + (ot < 0 ? 'neg r' : 'g') + '">' + ot + '<i>%</i></b><span class="mini"><u style="width:' + otw + '%"></u></span></div>' : '');
 
   /* 結果の枠 */
   let h = '<div class="sh"><span class="en">Result</span><span class="ja">結果</span><i></i></div><div class="card res"><div class="tiles">' +
-    '<div class="tile" title="' + T_RT + '"><span>' + lbl + '</span><b class="v num' + (o.mine < 0 ? ' neg' : '') + '">' + pctN(o.mine) + '<i>%</i></b>' +
+    '<div class="tile" title="' + T_RT + '"><span>' + lbl + '</span><b class="v num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctN(o.mine) + '<i>%</i></b>' +
       '<div class="was"><s class="num">' + fmt(o.want) + '</s>→' + (o.by === 'yen' ? '' : '<i class="coin"></i>') + '<b class="num">' + how + '</b></div></div>' +
     '<div class="tile" title="' + T_OT + '"><span>お得度</span>' + (ot != null ? gauge(ot) + '<small>最安値への近さ</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
   if (o.anyOff && o.label != null) h += '<p class="note">全部要るなら、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pct(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
@@ -561,6 +586,12 @@ function drawResult(){
     h += '<i class="' + (row.on ? '' : 'off') + '" style="flex:' + v + ' 1 0;background:' + colorOf(row.id) + '"></i>';
   });
   h += '</div>';
+  /* 帯の色がどのアイテムかを1行ずつ（色の丸・名前・単品の合計の割合）。外したアイテムは斜線の丸と取り消し線 */
+  h += '<ul class="legend">' + S.rows.map(row => {
+    const v = (BY[row.id].p || 0) * row.n; if (!v || !o.all) return '';
+    return '<li class="' + (row.on ? '' : 'off') + '"><i style="background:' + colorOf(row.id) + '"></i><span>' + BY[row.id].name + '</span>' +
+      '<b class="num">' + fmt(v) + '</b><em class="num">' + pct(v / o.all) + '</em></li>';
+  }).join('') + '</ul>';
   $('detail').innerHTML = h + '</div>';
 }
 function drawPick(){
