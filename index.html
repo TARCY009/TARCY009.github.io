@@ -50,7 +50,7 @@
 :root{
   --ink:#eef1fb; --sub:#8b96c2; --line:#2a3560; --panel:rgba(26,35,66,.94);
   --cy:#43e0ff; --gold:#ffd54a;
-  --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff; --g4:#ff5abe; --g5:#4fdc98;   /* グループの色（g5＝ショップ・アイテム・2026-11-12） */
+  --g1:#ff7a4d; --g2:#43e0ff; --g3:#b06cff; --g4:#ff5abe; --g5:#4fdc98;   /* グループの色（g5＝読み物・2026-11-12。ショップ・アイテムは金 --gold） */
   --hair:rgba(255,255,255,.14);               /* 罫線。高級感は線の細さで出す */
   /* 看板は44pxと大きいので、ここだけ**中央に反射の折れ目**を入れた金属のグラデーションを使う。
      ⚠ この折れ目つきは小さい字に流用しないこと（1px以下の汚い線になる）。
@@ -298,12 +298,12 @@ footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
   <a class="card" href="/bulk/"><img src="/assets/icons/bulk/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">耐久指数ランキング</b><span class="ds expl">倒されにくいポケモンが順に並びます。防御とHPのかけ算です</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--g5)"><span class="en">Shop &amp; Items</span><span class="ja">ショップ・アイテム</span><span class="rule"></span><span class="no">01</span></div>
-<div class="cards" style="--gc:var(--g5)">
+<div class="gsec" style="--gc:var(--gold)"><span class="en">Shop &amp; Items</span><span class="ja">ショップ・アイテム</span><span class="rule"></span><span class="no">01</span></div>
+<div class="cards" style="--gc:var(--gold)">
   <a class="card" href="/box/"><img src="/assets/icons/box/icon-192.png" alt="" width="52" height="52" decoding="async"><span class="tx"><b class="nm">ボックス割引率チェッカー</b><span class="ds expl">セールボックスが主要なアイテムで数えてどれだけ安いか、これまでの最安値と比べられます</span></span></a>
 </div>
 
-<div class="gsec" style="--gc:var(--gold)"><span class="en">Guide</span><span class="ja">読み物</span><span class="rule"></span><span class="no">24</span></div>
+<div class="gsec" style="--gc:var(--g5)"><span class="en">Guide</span><span class="ja">読み物</span><span class="rule"></span><span class="no">24</span></div>
 <ul class="glist">
   <li><a href="/guide/philosophy/"><b>GOナビを作るときに大切にしていること</b><span>ぱっと見でわかる画面・計算の正確さ・正解の型を押しつけないことなど、運営者の考え方。</span></a></li>
   <li><a href="/guide/battle-types/"><b>ポケモンGOのバトルの種類と仕組み</b><span>レイド・マックスバトル・ジム・GOバトルリーグ・GOロケット団、それぞれの仕組みと面白さ。</span></a></li>
