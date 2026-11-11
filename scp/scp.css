@@ -63,11 +63,13 @@ h1 .grp{white-space:nowrap}
 /* ── リーグの切り替え（2ページを行き来する・横いっぱいの2択） ── */
 .lgtabs{margin:0 0 10px}
 .lgtabs .gseg{display:flex;width:100%}
-.lgtabs .gseg button{flex:1 1 0;font-size:.9rem;padding:9px 6px}
+.lgtabs .gseg button{flex:1 1 0}
 
 /* ── 絞り込み ── */
 .rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .rhead .gtabs{margin:0}
+/* 表示のしかたの段は、2〜3択のまとまり（PL・個体値の見せ方・件数）どうしを少し離す */
+.rhead .gtabs.segs{gap:6px 12px}
 .searchbox{position:relative;flex:1 1 180px;min-width:150px}
 .searchbox input{width:100%;font:inherit;font-size:.9rem;padding:8px 32px 8px 12px;border-radius:11px;
   border:1px solid var(--line);background:var(--field);color:var(--ink);outline:none}
@@ -127,7 +129,14 @@ h1 .grp{white-space:nowrap}
   box-shadow:0 2px 0 var(--tabsh),inset 0 1px 0 var(--tabin)}
 
 @media (max-width:560px){
+  /* 絞り込みの段は横いっぱいにそろえる（タイプ別火力と同じ）。表示のしかたの段は2〜3択を詰めて並べ、入らなければ次の行へ */
+  .rhead .gtabs{width:100%}
   .rhead .gtabs button{flex:1 1 auto}
+  .rhead .gtabs.segs .gseg{flex:1 1 auto}
+  .rhead .gtabs.segs{gap:6px 8px}
+  /* PLの上限と個体値の見せ方（2択×2）で1行・件数（3択）で1行にそろえる */
+  .rhead .gtabs.segs .gseg button{padding:8px 10px}
+  .rhead .gtabs.segs #cntSeg{flex-basis:100%}
   .rval{width:62px;font-size:.92rem}
   .rname{flex-wrap:wrap;row-gap:2px}
   .rname .nm{overflow:visible;flex-shrink:0;max-width:100%;white-space:normal}

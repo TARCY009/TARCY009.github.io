@@ -60,6 +60,7 @@
     <button class="t-blue" type="button" data-cap="1500" aria-pressed="false" title="スーパーリーグ（CP1500以下）のSCPランキング">スーパー</button>
     <button class="t-gold" type="button" data-cap="2500" aria-pressed="false" title="ハイパーリーグ（CP2500以下）のSCPランキング">ハイパー</button>
   </div></div>
+  <!-- 絞り込み（含める・外す）→ 表示のしかた（PLの上限・個体値の見せ方・件数）→ 名前で探す の3段（タイプ別火力と同じ並び） -->
   <div class="rhead">
     <div class="gtabs">
       <button id="fMega" class="t-mega" type="button" aria-pressed="false"
@@ -68,20 +69,26 @@
         title="伝説・幻・ウルトラビーストをランキングから外します（手に入りやすいポケモンだけで見たいときに）">伝説系除く</button>
       <button id="fPre" class="t-green" type="button" aria-pressed="false"
         title="進化前のポケモンもランキングに含めます（ふだんは最終進化だけ）">進化前も</button>
+    </div>
+  </div>
+  <div class="rhead">
+    <div class="gtabs segs">
       <span class="gseg" id="plSeg">
         <button class="t-cyan" type="button" data-pl="50" title="PL50（通常の強化の上限）まで上げる前提で理想の個体を出します">PL50</button>
         <button class="t-cyan" type="button" data-pl="51" title="PL51（相棒ブースト込み）まで上げる前提で理想の個体を出します">PL51</button>
+      </span>
+      <span class="gseg" id="viewSeg">
+        <button class="t-blue" type="button" data-v="num" title="個体値を数字で出します">数字</button>
+        <button class="t-blue" type="button" data-v="bar" title="個体値を攻撃・防御・HPの3本の棒で出します">棒グラフ</button>
       </span>
       <span class="gseg" id="cntSeg">
         <button class="t-cyan" type="button" data-n="30" title="上位30位まで表示します">30位</button>
         <button class="t-cyan" type="button" data-n="50" title="上位50位まで表示します">50位</button>
         <button class="t-cyan" type="button" data-n="100" title="上位100位まで表示します">100位</button>
       </span>
-      <span class="gseg" id="viewSeg">
-        <button class="t-blue" type="button" data-v="num" title="個体値を数字で出します">数字</button>
-        <button class="t-blue" type="button" data-v="bar" title="個体値を攻撃・防御・HPの3本の棒で出します">棒グラフ</button>
-      </span>
     </div>
+  </div>
+  <div class="rhead">
     <div class="searchbox" id="sbox">
       <input id="q" type="text" inputmode="search" enterkeyhint="search" placeholder="ポケモン名で探す" autocomplete="off" title="名前の一部を入れると、そのポケモンの順位だけを出します">
       <button class="clr" type="button" aria-label="消す">✕</button>
