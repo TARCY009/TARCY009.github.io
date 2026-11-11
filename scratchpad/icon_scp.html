@@ -26,19 +26,22 @@ const ICON = `<defs>
   <g clip-path="url(#cl)">
   <rect width="512" height="512" fill="url(#bg)"/><rect width="512" height="512" fill="url(#ga)"/><rect width="512" height="512" fill="url(#gb)"/>
   <!-- 表彰台（台の上面に光・下に影） -->
-  <g transform="translate(0,-6)">
-    <rect x="96" y="214" width="104" height="96" rx="10" fill="url(#p2)"/>
-    <rect x="312" y="240" width="104" height="70" rx="10" fill="url(#p3)"/>
-    <rect x="200" y="166" width="112" height="144" rx="10" fill="url(#p1)"/>
-    <rect x="96" y="214" width="104" height="10" rx="5" fill="#fff" fill-opacity=".35"/>
-    <rect x="312" y="240" width="104" height="10" rx="5" fill="#fff" fill-opacity=".35"/>
-    <rect x="200" y="166" width="112" height="10" rx="5" fill="#fff" fill-opacity=".45"/>
-    <text x="256" y="270" font-family="Oswald" font-weight="700" font-size="84" text-anchor="middle" fill="#7a4c06" fill-opacity=".7">1</text>
-    <path transform="translate(0,-26)" d="M256 58l21 43 47 6-34 32 9 47-43-23-43 23 9-47-34-32 47-6z" fill="url(#st)" stroke="#fff4c4" stroke-width="6" stroke-linejoin="round"/>
+  <!-- 全体（星・表彰台・SCP）を上下の真ん中へ: 星の上端36〜文字の下端452の中心を256にそろえる＝12下げる（2026-11-12タダシさん指示） -->
+  <g transform="translate(0,12)">
+    <!-- 表彰台（台の上面に光・下に影）。台は20ずつ長く -->
+    <rect x="96" y="194" width="104" height="116" rx="10" fill="url(#p2)"/>
+    <rect x="312" y="220" width="104" height="90" rx="10" fill="url(#p3)"/>
+    <rect x="200" y="146" width="112" height="164" rx="10" fill="url(#p1)"/>
+    <rect x="96" y="194" width="104" height="10" rx="5" fill="#fff" fill-opacity=".35"/>
+    <rect x="312" y="220" width="104" height="10" rx="5" fill="#fff" fill-opacity=".35"/>
+    <rect x="200" y="146" width="112" height="10" rx="5" fill="#fff" fill-opacity=".45"/>
+    <text x="256" y="258" font-family="Oswald" font-weight="700" font-size="84" text-anchor="middle" fill="#7a4c06" fill-opacity=".7">1</text>
+    <!-- 星は8割の大きさ・下端を1位の台の8上に -->
+    <path transform="translate(256,87) scale(.8) translate(-256,-122)" d="M256 58l21 43 47 6-34 32 9 47-43-23-43 23 9-47-34-32 47-6z" fill="url(#st)" stroke="#fff4c4" stroke-width="7.5" stroke-linejoin="round"/>
     <rect x="80" y="310" width="352" height="9" rx="4.5" fill="#c8d6ff" fill-opacity=".55"/>
+    <!-- SCP の文字（白→青の金属・濃紺のふち） -->
+    <text x="256" y="452" font-family="Oswald" font-weight="700" font-size="124" text-anchor="middle" fill="url(#tx)" stroke="#0a0c22" stroke-width="5" paint-order="stroke" letter-spacing="6">SCP</text>
   </g>
-  <!-- SCP の文字（白→青の金属・濃紺のふち） -->
-  <text x="256" y="452" font-family="Oswald" font-weight="700" font-size="124" text-anchor="middle" fill="url(#tx)" stroke="#0a0c22" stroke-width="5" paint-order="stroke" letter-spacing="6">SCP</text>
   </g>`;
 const prev = /prev=1/.test(location.search);
 if (prev) document.body.className = 'prev';
