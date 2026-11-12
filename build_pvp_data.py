@@ -94,6 +94,12 @@ MANUAL_SHADOW = {   # 2026-09-08 実装確定
 # 未実装(r=0)のポケモンも2026-09-04から検索で選べる(タダシさん指示)。ただし次は「ポケモン」ではないので隠す(h=1)
 # 情報元が本体キー(toxtricity)にしか新わざを足さなかったフォルム違いへ、通常枠のわざを手で補う。
 # 2026-09シーズン: ストリンダー(ハイ/ロー)のスピードスター(公式は両フォルムとも習得)。情報元が足したら重複しない
+# 特別わざの印を外す（2026-11-12タダシさん指示・build_data.py の NOT_ELITE と同じ顔ぶれ・キーは小文字）:
+# 忘れさせられない専用わざ（ムゲンダイナのダイマックスほう）は特別枠(ec)から通常枠(c)へ移し「＊」を付けない
+NOT_ELITE = {
+    'eternatus': ['DYNAMAX_CANNON'],
+}
+
 MANUAL_LEARN = {
     'toxtricity_amped':   {'c': ['SWIFT']},
     'toxtricity_low_key': {'c': ['SWIFT']},
@@ -353,6 +359,10 @@ def main():
         if sid in HIDDEN_FORMS or 'duplicate' in (p.get('tags') or []): pokes[sid]['hid'] = 1
         for slot, ms in (MANUAL_LEARN.get(sid) or {}).items():
             pokes[sid][slot] = list(pokes[sid][slot]) + [m for m in ms if m in moves and m not in pokes[sid][slot]]
+        for m in NOT_ELITE.get(sid) or []:   # 特別枠→通常枠（印を外す）
+            if m in pokes[sid]['ec']:
+                pokes[sid]['ec'] = [x for x in pokes[sid]['ec'] if x != m]
+                if m not in pokes[sid]['c']: pokes[sid]['c'] = list(pokes[sid]['c']) + [m]
         if p.get('tags'):
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
             if 'mythical' in p['tags']: pokes[sid]['myth'] = 1

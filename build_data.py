@@ -141,6 +141,13 @@ for _t, _src in ((SUPP_C, SUPP_C_2609), (SUPP_Q, SUPP_Q_2609)):
 # 既存のわざ定義の性能変更(シーズンのわざアップデート)。提供元が追いつくまでのつなぎ。
 # `when` の値がいまの取得値と全部一致するときだけ `set` を上書きする＝提供元が新しい値に更新したら自動で効かなくなる
 # (更新後の値が when と違うため)。反映されたかは season_moves.py が突き合わせる
+# 特別わざの印を外す（2026-11-12タダシさん指示）: 情報元が「特別枠」に分類していても、忘れさせられない専用わざ
+# （ムゲンダイナのダイマックスほう）は特別わざという感じではないので、通常枠（c）へ移して「＊」を付けない。
+# 情報元の分類が変わっても害は無いので消さずに残す。対戦側は build_pvp_data.py の NOT_ELITE（小文字キー）
+NOT_ELITE = {
+    'ETERNATUS': ['DYNAMAX_CANNON'],
+}
+
 MOVE_FIX = {
     # サイコブースト: ジム・レイドの威力70→130・ゲージ2本→3本(-50→-33)。2026-09-09 05:00適用(公式ニュース)
     'PSYCHO_BOOST': {'when': {'power': 70.0, 'energyDelta': -50}, 'set': {'power': 130.0, 'energyDelta': -33}},
@@ -639,6 +646,12 @@ def main():
                     if m in final[k][slot]: final[k][slot].remove(m)
             for m in fix.get('add_ec', []):
                 if m not in final[k]['ec'] and m not in final[k]['c']: final[k]['ec'].append(m)
+    for k,ms in NOT_ELITE.items():   # 特別枠→通常枠（印を外す）
+        if k in final:
+            for m in ms:
+                if m in final[k]['ec']:
+                    final[k]['ec'].remove(m)
+                    if m not in final[k]['c']: final[k]['c'].append(m)
     for mkey,(nm,a,df,h,ty,src) in MANUAL_MEGA.items():
         if mkey in final: continue  # Game Masterに正式収録されたら自動取得値を優先
         s = final[src]

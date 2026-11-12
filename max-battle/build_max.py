@@ -35,6 +35,11 @@ MANUAL_EXCLUDE = set([
     # 例: ("MEOWTH", "MEOWTH_GALARIAN"),
 ])
 # GM未反映の新規実装ダイマックスをここへ追加 (pokemonId)
+# 特別わざの印を外す（日本語名→わざID）。ジム・レイド側は build_data.py の NOT_ELITE、対戦側は build_pvp_data.py
+NOT_ELITE = {
+    'ムゲンダイナ': ['DYNAMAX_CANNON'],
+}
+
 MANUAL_INCLUDE_D = [
     "HYDREIGON",        # サザンドラ (2026-07-19実装、GM未反映。進化前2種は最終進化フィルタで除外)
     "ELECTIVIRE",       # エレキブル (実装済み、GM未反映。2026-07-21本人指摘)
@@ -462,6 +467,9 @@ def main():
             ckeys = [k for k in (ps.get("cinematicMoves") or []) +
                      (ps.get("eliteCinematicMove") or []) if isinstance(k, str)]
         elite_c = set(k for k in (ps.get("eliteCinematicMove") or []) if isinstance(k, str))
+        # 特別わざの印を外す（2026-11-12タダシさん指示・build_data.py の NOT_ELITE と同じ顔ぶれ）:
+        # 忘れさせられない専用わざ（ムゲンダイナのダイマックスほう）には「＊」を付けない
+        elite_c -= set(NOT_ELITE.get(name) or [])
         cm_ids, ce_ids = [], []
         for k in ckeys:
             if not cm_valid(k):
