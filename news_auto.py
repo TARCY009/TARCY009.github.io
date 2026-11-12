@@ -251,9 +251,13 @@ def keep_old(old, res):
 # ニュース一覧に出ないページ（ワイルドエリア・シーズンなどのビッグイベント）も読む。
 # トップ（/ja）のメニューにあるパスから始めて、そのページの中のパスを1段たどる（深さ2・最大 MAX_PAGES）
 TOP_URL = BASE + '/ja'
+# ⚠ リアルイベント（仙台・メキシコシティなど）のページも全部読む（2026-11-12タダシさん指示: ヒスイヌメルゴンはリアルイベント限定の初登場で、
+#   グローバルのページには書かれていない）。都市ごとのページの下（gameplay / experiences / faq）まで届くよう深さ3でたどる
 SITE_SKIP = {'/ja', '/ja/', '/ja/news', '/ja/store', '/ja/tickets', '/ja/map', '/ja/leaderboard', '/ja/code-redemption',
-             '/ja/find-your-community', '/ja/reward-road', '/ja/events', '/ja/featured-in-person-events', '/ja/support'}
-MAX_PAGES = 40
+             '/ja/find-your-community', '/ja/reward-road', '/ja/support', '/ja/5-pokemon-go'}
+SITE_SKIP_TAIL = ('/tickets', '/faq')   # チケット・よくある質問のページは読まない
+MAX_PAGES = 80
+MAX_DEPTH = 3
 PATH_RE = re.compile(r'(/ja/[A-Za-z0-9_\-][A-Za-z0-9_\-/]*)')
 
 
@@ -261,7 +265,7 @@ def site_paths(page):
     out = set()
     for p in PATH_RE.findall(page):
         p = p.rstrip('/')
-        if p.startswith('/ja/news') or p in SITE_SKIP or '//' in p or len(p) > 80:
+        if p.startswith('/ja/news') or p in SITE_SKIP or p.endswith(SITE_SKIP_TAIL) or '//' in p or len(p) > 80:
             continue
         out.add(p)
     return out
@@ -285,7 +289,7 @@ def site_pages():
         except Exception as e:
             print('  読めません', p, e); continue
         pages[p] = page
-        if depth[p] >= 2:
+        if depth[p] >= MAX_DEPTH:
             continue
         for q in sorted(site_paths(page)):
             if q not in seen:

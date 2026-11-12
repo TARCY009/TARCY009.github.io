@@ -362,6 +362,32 @@
    "shadow": {},
    "title": "流星群がみられる時期に星空の下を探索すると、「メテノ」と出会えるかも！"
   },
+  "page:events": {
+   "dmax": {},
+   "hash": "ca97f75ed711",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "Pokémon GOイベント - 2026 November",
+   "url": "https://pokemongo.com/ja/events"
+  },
+  "page:featured-in-person-events": {
+   "dmax": {},
+   "hash": "f0b7fa33a3b6",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "Events – Pokémon GO",
+   "url": "https://pokemongo.com/ja/featured-in-person-events"
+  },
   "page:gowildarea": {
    "dmax": {},
    "hash": "3ba9c3568e53",
@@ -410,6 +436,45 @@
    "shadow": {},
    "title": "Sendai • Tohoku – GO Wild Area 2026 — Pokémon GO",
    "url": "https://pokemongo.com/ja/gowildarea/sendai"
+  },
+  "page:gowildarea/sendai/experiences": {
+   "dmax": {},
+   "hash": "0f9121c019fd",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "Sendai In-Person Experiences – GO Wild Area 2026 — Pokémon G",
+   "url": "https://pokemongo.com/ja/gowildarea/sendai/experiences"
+  },
+  "page:gowildarea/sendai/gameplay": {
+   "dmax": {
+    "DIALGA": {
+     "form": "D",
+     "name": "ディアルガ"
+    },
+    "DURALUDON": {
+     "form": "G",
+     "name": "ジュラルドン"
+    },
+    "PALKIA": {
+     "form": "D",
+     "name": "パルキア"
+    }
+   },
+   "hash": "8d116b3188a1",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "Sendai Gameplay – GO Wild Area 2026 — Pokémon GO",
+   "url": "https://pokemongo.com/ja/gowildarea/sendai/gameplay"
   },
   "page:seasons": {
    "dmax": {
@@ -748,6 +813,33 @@
    "text": "ダイマックスパルキアの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
    "title": "Pokémon GO ワイルドエリア",
    "url": "https://pokemongo.com/ja/gowildarea/global"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:gowildarea/sendai/gameplay:15052a7f",
+   "kind": "auto",
+   "slug": "page:gowildarea/sendai/gameplay",
+   "text": "キョダイマックスジュラルドンの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "Sendai Gameplay – GO Wild Area 2026 — Pokémon GO",
+   "url": "https://pokemongo.com/ja/gowildarea/sendai/gameplay"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:gowildarea/sendai/gameplay:a14e98c7",
+   "kind": "auto",
+   "slug": "page:gowildarea/sendai/gameplay",
+   "text": "ダイマックスディアルガの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "Sendai Gameplay – GO Wild Area 2026 — Pokémon GO",
+   "url": "https://pokemongo.com/ja/gowildarea/sendai/gameplay"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:gowildarea/sendai/gameplay:1708e754",
+   "kind": "auto",
+   "slug": "page:gowildarea/sendai/gameplay",
+   "text": "ダイマックスパルキアの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "Sendai Gameplay – GO Wild Area 2026 — Pokémon GO",
+   "url": "https://pokemongo.com/ja/gowildarea/sendai/gameplay"
   },
   {
    "id": "reflect:boss:85cb8b80",

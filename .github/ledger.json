@@ -252,7 +252,7 @@
   "name": "ディアルガ",
   "pve": "DIALGA",
   "pvp": null,
-  "source": "ニュース:page:gowildarea/global・手の表:build_max.MANUAL_INCLUDE_D",
+  "source": "ニュース:page:gowildarea/global・ニュース:page:gowildarea/sendai/gameplay・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -284,7 +284,7 @@
   "name": "パルキア",
   "pve": "PALKIA",
   "pvp": null,
-  "source": "ニュース:page:gowildarea/global・手の表:build_max.MANUAL_INCLUDE_D",
+  "source": "ニュース:page:gowildarea/global・ニュース:page:gowildarea/sendai/gameplay・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -332,7 +332,7 @@
   "name": "ジュラルドン",
   "pve": "DURALUDON",
   "pvp": null,
-  "source": "ニュース:page:gowildarea/global・手の表:build_max.MANUAL_INCLUDE_G",
+  "source": "ニュース:page:gowildarea/global・ニュース:page:gowildarea/sendai/gameplay・手の表:build_max.MANUAL_INCLUDE_G",
   "note": ""
  }
 ]
