@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-title" content="マックスバトル対策ツール">
 <title>マックスバトル対策ツール｜ポケモンGOのダイマックス攻略｜GOナビ</title>
 <!-- seo:start (build_seo.py が作る・手で編集しない) -->
-<meta name="description" content="ポケモンGOのマックスバトルで、ボスごとに攻める役(アタッカー)と耐える役(タンク)のおすすめを並べます。ダイマックス・キョダイマックスのわざ、SPアタックの判定、0.5秒技の有無まで確認できます。">
+<meta name="description" content="ポケモンGOのマックスバトルで、ボスごとに攻める役(アタッカー)と耐える役(タンク)のおすすめを並べます。ダイマックス・キョダイマックスのわざ、0.5秒技の有無まで確認できます。">
 <link rel="canonical" href="https://gonavi.jp/max-battle/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="GOナビ">
@@ -19,7 +19,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="マックスバトル対策ツール">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"マックスバトル対策ツール","url":"https://gonavi.jp/max-battle/","description":"ポケモンGOのマックスバトルで、ボスごとに攻める役(アタッカー)と耐える役(タンク)のおすすめを並べます。ダイマックス・キョダイマックスのわざ、SPアタックの判定、0.5秒技の有無まで確認できます。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"マックスバトル対策ツール","url":"https://gonavi.jp/max-battle/","description":"ポケモンGOのマックスバトルで、ボスごとに攻める役(アタッカー)と耐える役(タンク)のおすすめを並べます。ダイマックス・キョダイマックスのわざ、0.5秒技の有無まで確認できます。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
 <!-- seo:end -->
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/max-battle/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/max-battle/apple-touch-icon.png">
@@ -400,16 +400,16 @@ footer a{color:var(--spec)}
   </ul>
   <h4>絞り込み</h4>
   <ul>
-    <li><b>SP判定</b> ＝ SPアタックを撃つべきかを判定して、最適なわざを選び直します</li>
+    <li class="devsp" style="display:none"><b>SP判定</b> ＝ SPアタックを撃つべきかを判定して、最適なわざを選び直します</li>
     <li><b>特別技も</b> ＝ 特別なわざ（覚えさせるのに条件が要るもの）を含めます。一覧では<b class="sp">わざ名がオレンジ色＋うしろに「*」</b>で出ます</li>
     <li><b>0.5秒技だけ</b> ＝ マックスメーターを速く溜められるノーマルアタックを持つポケモンだけに絞ります。0.5秒わざのほか、1秒以上のわざでも連打すると0.5秒あたり1％以上溜まるもの（ダイキノコを使ったときやHPの小さいボスでよくあります）も含めます</li>
     <li><b>ダイキノコ</b> ＝ ダイキノコを使ったときの計算にします（自分の攻撃のダメージがすべて2倍）。メーターの溜まり方の数字に効きます（選ばれるSPアタックは、なし・ありの両方で比べて決めるので変わりません）</li>
     <li><b>交代受け</b> ＝ ボスの攻撃を受け止める役として評価します</li>
   </ul>
-  <h4>SP判定のしくみ</h4>
+  <h4>SPアタックの選び方</h4>
   <p>SPアタックは、<b>マックスメーターが100％になるまでの時間がいちばん短くなるわざ</b>を選びます。
-    ノーマルアタックでゲージをためてSPアタックを撃つ流れを1回ずつ数え（ゲージは100が上限で、あふれたぶんは無駄になります）、
-    <b>SPアタックを撃たずにノーマルアタックだけを連打したほうが早いときは「SP封印推奨」</b>になります。
+    ノーマルアタックでゲージをためてSPアタックを撃つ流れを1回ずつ数えます（ゲージは100が上限で、あふれたぶんは無駄になります）。
+    <span class="devsp" style="display:none"><b>SPアタックを撃たずにノーマルアタックだけを連打したほうが早いときは「SP封印推奨」</b>になります。</span>
     PL・ダイキノコの有無で数秒ずつ順番が入れ替わることがあるので、<b>PL20〜50とダイキノコなし・ありのすべての組み合わせで比べ、いちばん速かった回数が多いわざ</b>を出しています（ダイキノコのボタンで選ばれるわざは変わりません）。
     受けたダメージでたまるゲージは計算に入れていません。</p>
   <p><b>ボスのランク（★の数）はボスごとに決まっている</b>ので、選ぶ必要はありません（画面には確認用に出しています）。
@@ -726,8 +726,14 @@ footer a{color:var(--spec)}
     syncControls();
     compute();
   }
+  function spDevOk(){ try{ return !!(window.GonaviDev && window.GonaviDev()); }catch(e){ return false; } }
+  // 使い方の SP判定 の説明も開発者の端末だけ出す（home.js はこのあとで読むので load を待つ）
+  window.addEventListener('load', () => {
+    if(spDevOk()) document.querySelectorAll('.devsp').forEach(el => el.style.display = '');
+  });
   function syncControls(){
-    fSp.style.display = boss ? '' : 'none';
+    // ⚠ SP判定は開発者の端末だけ（2026-11-12タダシさん指示・ボスの設定値がほぼ判明するまで封印。仕組みは残す）
+    fSp.style.display = (boss && spDevOk()) ? '' : 'none';
     spMush.style.display = boss ? '' : 'none';   // ダイキノコはアタッカー・タンクのどちらでも効く（SP判定・マックスメーターのチャージ効率）
     fLegacy.style.display = (mode==='atk' || spOn) ? '' : 'none';
     fCannon.style.display = (mode==='atk' && boss) ? '' : 'none';
