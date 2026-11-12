@@ -44,7 +44,7 @@
   "name": "メガピクシー",
   "pve": "CLEFABLE_MEGA",
   "pvp": "clefable_mega",
-  "source": "手の表:build_data.MANUAL_MEGA・手の表:build_pvp_data.MANUAL_MEGA_PVP",
+  "source": "手の表:build_data.MANUAL_MEGA・手の表:build_pvp_data.MANUAL_RELEASED・手の表:build_pvp_data.MANUAL_MEGA_PVP",
   "note": ""
  },
  {

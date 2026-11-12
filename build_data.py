@@ -346,6 +346,13 @@ MANUAL_MEGA = {
     # 種族値は原作(HP95/攻80/防93/特攻135/特防110/素早70)をGOの決まりで換算した値＝外部の攻略情報2つと一致
     'CLEFABLE_MEGA':   ('メガピクシー',    253, 205, 216, ['FAIRY','FLYING'],    'CLEFABLE'),
 }
+# 告知された新メガの自動先行収録（mega_auto.py・原作の種族値の換算値）。手の表（上の MANUAL_MEGA）が優先
+try:
+    import mega_auto
+    MANUAL_MEGA = {**mega_auto.pve_table(), **MANUAL_MEGA}
+    mega_auto.save()
+except Exception as _e:
+    print('警告: 新メガの自動先行収録を読めません →', _e)
 # ゲーム内公開データ(提供元)にまだ載っていないポケモン(メガ以外)を、対戦データの情報元から補う(2026-11-08新設)。
 # key: (対戦データのspeciesId, 名前, 最終進化か, タイプの並び)。種族値・わざは対戦データの値。タイプはゲーム内の並び（実機で確認）。
 # ゲーム内公開データに正式収録されたら自動取得値を優先する(キーが既にあれば何もしない)
@@ -654,7 +661,12 @@ def main():
                     final[k]['ec'].remove(m)
                     if m not in final[k]['c']: final[k]['c'].append(m)
     for mkey,(nm,a,df,h,ty,src) in MANUAL_MEGA.items():
-        if mkey in final: continue  # Game Masterに正式収録されたら自動取得値を優先
+        if mkey in final:   # Game Masterに正式収録されたら自動取得値を優先。先行収録の値と違えばお知らせに出す（実装の前後の照らし合わせ）
+            g = final[mkey]
+            if (g['a'], g['df'], g['h']) != (a, df, h) or list(g['ty']) != list(ty):
+                INFO_NOTES.append((None, f'{nm}: 先行収録の値（攻{a}/防{df}/HP{h}/{"/".join(ty)}）とゲーム内公開データの確定値'
+                                         f'（攻{g["a"]}/防{g["df"]}/HP{g["h"]}/{"/".join(g["ty"])}）が違う → 確定値を使用。手の表の行は消してよい'))
+            continue
         s = final[src]
         final[mkey] = {'n':nm,'a':a,'df':df,'h':h,'ty':ty,'q':s['q'],'c':s['c'],'eq':s['eq'],'ec':s['ec'],
                        'shadow':False,'mega':True,'fe':1}
@@ -820,6 +832,7 @@ def main():
 
     open('godata.json','w',encoding='utf-8').write(god)
     # 図鑑専用: 未実装ポケモンのジム・レイド側の性能(種族値・タイプ・おぼえるわざ)。わざ定義は godata.json の moves を共用する
+    unreleased = {k: v for k, v in unreleased.items() if k not in final}   # 先行収録で実装済みに入れたもの（MANUAL_MEGA 等）は未実装の控えから外す
     open('pokedex/unreleased.json','w',encoding='utf-8').write(
         json.dumps({'pokemon': dict(sorted(unreleased.items()))}, ensure_ascii=False, separators=(',',':')))
     print(f'図鑑専用の未実装ポケモン: {len(unreleased)}種 → pokedex/unreleased.json')

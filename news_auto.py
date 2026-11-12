@@ -69,6 +69,11 @@ def plus_info():
     return _union('plus')
 
 
+def new_megas():
+    """どの情報元にも無いまま初登場が告知された新メガの名前（mega_auto.py が換算値で先行収録する）"""
+    return {v.get('name') or k for k, v in _union('mega_new').items()}
+
+
 def dynamax_pve():
     """ダイマックス・キョダイマックスの初登場が告知されたポケモン: {ゲーム内データのキー: 'D'|'G'}（build_max.py が読む）"""
     return {k: v.get('form', 'D') for k, v in _union('dmax').items()}
@@ -138,7 +143,7 @@ def parse(lines, pvp, pve=None):
     for k, v in P.items():
         by_name.setdefault(norm(v['n']), k)
     moves_by_name = {norm(v['n']): k for k, v in pvp['moves'].items() if 'e' in v}
-    out = {'released': {}, 'shadow': {}, 'plus': {}, 'dmax': {}, 'notes': []}
+    out = {'released': {}, 'shadow': {}, 'plus': {}, 'dmax': {}, 'mega_new': {}, 'notes': []}
 
     # 初登場の文とその直後3行を「初登場の範囲」にする（見出しのあとに名前だけの行が並ぶ書き方のため）
     debut_idx = set()
@@ -165,6 +170,11 @@ def parse(lines, pvp, pve=None):
                 out['released'][k] = {'name': P[k]['n']}
             elif not k and name in pve and pve[name][1]:   # 対戦データに無いが、ゲーム内データ側の未実装の控えにはある
                 out['released']['pve:' + pve[name][0]] = {'name': pve[name][2], 'pve': pve[name][0]}
+            elif not k and name not in pve:
+                # どの情報元にも無い新メガ（例: メガピクシー）: 元のポケモンが分かれば、原作の種族値の換算値で先行収録する（mega_auto.py）
+                mm = re.match(r'^(メガ|ゲンシ)(.+?)([XYZ])?$', name)
+                if mm and (mm.group(2) in by_name or mm.group(2) in pve):
+                    out['mega_new'][name] = {'name': m.group(1).strip('*＊'), 'base': mm.group(2)}
 
     # シャドウ
     for l in lines:
@@ -233,7 +243,7 @@ def parse_buff(t):
 def keep_old(old, res):
     """記事を読み直したとき、前に読み取った実装・シャドウ・＋わざを消さない。
     parse は「いま未実装のもの」だけを拾うので、取り込み済みのものは2回目から拾わない＝そのまま置き換えると未実装へ戻る"""
-    return {k: {**((old or {}).get(k) or {}), **res.get(k, {})} for k in ('released', 'shadow', 'plus', 'dmax')}
+    return {k: {**((old or {}).get(k) or {}), **res.get(k, {})} for k in ('released', 'shadow', 'plus', 'dmax', 'mega_new')}
 
 
 # ---------------------------------------------------------------- 本体
@@ -315,6 +325,9 @@ def read_one(key, url, page, old, pvp, today, arts, new_notes, is_news, pve=None
     for k, v in res['shadow'].items():
         if k not in (old or {}).get('shadow', {}):
             notes.append(('auto', f'シャドウ{v["name"]}の告知 → シャドウを付ける'))
+    for k, v in res['mega_new'].items():
+        if k not in (old or {}).get('mega_new', {}):
+            notes.append(('auto', f'{v["name"]}の初登場の告知（情報元にまだ無い） → 原作の種族値の換算値で先行収録（実装後に確定値と照らし合わせる）'))
     for k, v in res['dmax'].items():
         if k not in (old or {}).get('dmax', {}):
             notes.append(('auto', f'{"キョダイマックス" if v["form"] == "G" else "ダイマックス"}{v["name"]}の初登場の告知 → マックスバトルのデータに足す'

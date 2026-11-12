@@ -110,7 +110,7 @@ jobs:
       # 取り寄せ先どうしの食い違いの控え（source_diff.json）は、データに変化が無い日でも保存する（お知らせは立てない）
       - name: 公式ニュースの読み取り記録を保存
         run: |
-          git add .github/official_news.json .github/gm_source.json .github/source_diff.json .github/ledger.json .github/reflect_report.json
+          git add .github/official_news.json .github/gm_source.json .github/source_diff.json .github/ledger.json .github/reflect_report.json .github/mega_auto.json
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"

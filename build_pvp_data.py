@@ -83,6 +83,13 @@ MANUAL_RELEASED = {'cramorant',        # ウッウ(2026-08-18実装)
 MANUAL_MEGA_PVP = {
     'clefable_mega': ('メガピクシー', 253, 205, 216, ['FAIRY', 'FLYING'], 'clefable'),   # 2026-11-28初登場(タダシさん指示で先行)
 }
+# 告知された新メガの自動先行収録（mega_auto.py・原作の種族値の換算値）。手の表（上の MANUAL_MEGA_PVP）が優先
+try:
+    import mega_auto
+    MANUAL_MEGA_PVP = {**mega_auto.pvp_table(), **MANUAL_MEGA_PVP}
+except Exception as _e:
+    print('警告: 新メガの自動先行収録を読めません →', _e)
+MANUAL_RELEASED = set(MANUAL_RELEASED) | set(MANUAL_MEGA_PVP)   # 先行収録のメガは実装済み扱い（情報元に未実装として入っても印を落とさない）
 # 情報元がシャドウ実装に追随していないぶんを手動で補う(タダシさん指示で先行反映)。
 # 提供元に `<key>_shadow` が入れば自動でも拾われるので、重複しても害はない(集合に足すだけ)
 MANUAL_SHADOW = {   # 2026-09-08 実装確定
@@ -367,7 +374,19 @@ def main():
             if 'mega' in p['tags']: pokes[sid]['mega'] = 1
             if 'mythical' in p['tags']: pokes[sid]['myth'] = 1
     for sid, (nm, a, df, h, ty, src) in MANUAL_MEGA_PVP.items():
-        if sid in pokes: continue
+        if sid in pokes:   # 情報元に入っている。確定（released）ならそちらを優先、未実装の見込み値なら先行収録の値を使う。違えばお知らせに出す（実装の前後の照らし合わせ）
+            g = pokes[sid]
+            official = any(p.get('speciesId') == sid and p.get('released') for p in pvp['pokemon'])
+            differ = (g['a'], g['df'], g['h']) != (a, df, h) or list(g['ty']) != list(ty)
+            if differ:
+                try: open('changes.md', 'a', encoding='utf-8').write(
+                    f'\n### ⚠ 新メガの照らし合わせ（対戦データ）\n- {nm}: 先行収録の値（攻{a}/防{df}/HP{h}/{"/".join(ty)}）と情報元の'
+                    + ('確定値' if official else '未実装の見込み値') + f'（攻{g["a"]}/防{g["df"]}/HP{g["h"]}/{"/".join(g["ty"])}）が違う → '
+                    + ('確定値を使用。手の表の行は消してよい' if official else '先行収録の値を使用（実装後に確定値へ切り替わる）') + '\n')
+                except Exception: pass
+            if not official:
+                g.update({'a': a, 'df': df, 'h': h, 'ty': list(ty), 'r': 1, 'mega': 1})
+            continue
         b = pokes.get(src)
         if not b:
             print('警告: MANUAL_MEGA_PVP の元がありません →', src); continue

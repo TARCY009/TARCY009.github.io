@@ -80,6 +80,8 @@ def build():
         for key, v in (rec.get('plus') or {}).items():
             add('plus', v.get('name') or pve_name(key), pve_key=key, source=src,
                 note=f"{v.get('move') or ''}（元わざ {v.get('base') or ''}・レイド威力 {v.get('raid')}）")
+        for key, v in (rec.get('mega_new') or {}).items():
+            add('mega', v.get('name') or key, source=src, note='情報元に無い新メガ（換算値で先行収録）')
         for key, v in (rec.get('dmax') or {}).items():
             add('gigantamax' if v.get('form') == 'G' else 'dynamax', v.get('name') or pve_name(key), pve_key=key, source=src)
 
