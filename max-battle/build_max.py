@@ -66,6 +66,32 @@ MANUAL_INCLUDE_G = [
     "DURALUDON",        # キョダイマックスジュラルドン（2026-11-6〜8 仙台・11/14〜15 グローバルで初登場・★6・キョダイゲンスイ＝ドラゴン）
 ]
 
+# ---- 公式の告知で初登場が決まったダイマックス・キョダイマックス（news_auto.py の読み取り・2026-11-12タダシさん指示）----
+# 覚えるわざは元のポケモンのもの＝データは手元にあるので、ゲーム内データを待たずに告知の日に入れる
+try:
+    import news_auto
+    _NEWS_DMAX = news_auto.dynamax_pve()
+except Exception as _e:
+    print('警告: 公式ニュースのダイマックスの告知を読めません →', _e); _NEWS_DMAX = {}
+MANUAL_INCLUDE_D = MANUAL_INCLUDE_D + sorted(k for k, f in _NEWS_DMAX.items() if f == 'D' and k not in MANUAL_INCLUDE_D)
+MANUAL_INCLUDE_G = MANUAL_INCLUDE_G + sorted(k for k, f in _NEWS_DMAX.items() if f == 'G' and k not in MANUAL_INCLUDE_G)
+
+# ---- キョダイわざの表（原作）: ゲーム内の対応表（SOURDOUGH_MOVE_MAPPING_SETTINGS）にまだ無いキョダイマックスの、わざのタイプと名前 ----
+# キョダイわざは種類ごとに原作で決まっている（威力はGOの固定値）。対応表に入ったらそちらを優先し、表と食い違えば警告を出す
+GMAX_FALLBACK = {
+    "VENUSAUR": ("GRASS", "キョダイベンタツ"), "CHARIZARD": ("FIRE", "キョダイゴクエン"), "BLASTOISE": ("WATER", "キョダイホウゲキ"),
+    "BUTTERFREE": ("BUG", "キョダイコワク"), "PIKACHU": ("ELECTRIC", "キョダイバンライ"), "MEOWTH": ("NORMAL", "キョダイコバン"),
+    "MACHAMP": ("FIGHTING", "キョダイシンゲキ"), "GENGAR": ("GHOST", "キョダイゲンエイ"), "KINGLER": ("WATER", "キョダイホウマツ"),
+    "LAPRAS": ("ICE", "キョダイセンリツ"), "EEVEE": ("NORMAL", "キョダイホーヨー"), "SNORLAX": ("NORMAL", "キョダイサイセイ"),
+    "GARBODOR": ("POISON", "キョダイシュウキ"), "MELMETAL": ("STEEL", "キョダイユウゲキ"), "RILLABOOM": ("GRASS", "キョダイコランダ"),
+    "CINDERACE": ("FIRE", "キョダイカキュウ"), "INTELEON": ("WATER", "キョダイソゲキ"), "CORVIKNIGHT": ("FLYING", "キョダイフウゲキ"),
+    "ORBEETLE": ("PSYCHIC", "キョダイテンドウ"), "DREDNAW": ("WATER", "キョダイガンジン"), "COALOSSAL": ("ROCK", "キョダイフンセキ"),
+    "FLAPPLE": ("GRASS", "キョダイサンゲキ"), "APPLETUN": ("GRASS", "キョダイカンロ"), "SANDACONDA": ("GROUND", "キョダイサジン"),
+    "TOXTRICITY": ("ELECTRIC", "キョダイカンデン"), "CENTISKORCH": ("FIRE", "キョダイヒャッカ"), "HATTERENE": ("FAIRY", "キョダイテンバツ"),
+    "GRIMMSNARL": ("DARK", "キョダイスイマ"), "ALCREMIE": ("FAIRY", "キョダイダンエン"), "COPPERAJAH": ("STEEL", "キョダイコウジン"),
+    "DURALUDON": ("DRAGON", "キョダイゲンスイ"),
+}
+
 # ---- キョダイマックス実装済みホワイトリスト --------------------------------
 # Game Master の allowedSourdoughPokemon は未実装分を先行収録しているため、
 # 実装済みのみをここで管理する (新規実装時に1行追加)。
@@ -77,6 +103,7 @@ RELEASED_GMAX = set([
     "GRIMMSNARL",
     "DURALUDON",        # 2026-11 初登場（MANUAL_INCLUDE_G でも足している）
 ])
+RELEASED_GMAX |= {k for k, f in _NEWS_DMAX.items() if f == 'G'}   # 告知で初登場が決まったキョダイマックス
 
 # ---- タイプ定義 (gym_data.json の types_jp と同順) -------------------------
 TYPE_ORDER = ["NORMAL","FIGHTING","FLYING","POISON","GROUND","ROCK","BUG","GHOST",
@@ -536,11 +563,18 @@ def main():
             continue
         key = (pid, form)
         mv = sour_map.get(key) or sour_map.get((pid, "FORM_UNSET"))
-        if not mv:
-            report.append(("G?", f"{pid}/{form} (わざ対応なし)"))
-            continue
-        info = bm_moves.get(mv, {})
+        info = bm_moves.get(mv, {}) if mv else {}
         ftype, vfx = info.get("type"), info.get("vfx")
+        fb = GMAX_FALLBACK.get(pid)
+        if ftype and fb and fb[0] != ftype:
+            print(f"警告: {pid} のキョダイわざのタイプが原作の表({fb[0]})とゲーム内の対応表({ftype})で違う。ゲーム内を優先")
+        if not mv:
+            if not fb:
+                report.append(("G?", f"{pid}/{form} (わざ対応なし・原作の表にも無い)"))
+                continue
+            ftype, vfx = fb[0], None
+            report.append(("G", f"{pid} (キョダイわざは原作の表 {fb[1]})"))
+        gname_fb = fb[1] if (fb and not vfx) else None
         # settings template を探す
         cand = None
         for tid, ps in poke.items():
@@ -553,7 +587,7 @@ def main():
         if not cand:
             report.append(("G?", f"{pid}/{form} (settings なし)"))
             continue
-        e = settings_to_entry(cand[0], cand[1], "G", fixed=ftype, gname=GMAX_JP.get(vfx, vfx))
+        e = settings_to_entry(cand[0], cand[1], "G", fixed=ftype, gname=(GMAX_JP.get(vfx, vfx) if vfx else gname_fb))
         if e:
             entries.append(e)
             report.append(("G", e["n"]))

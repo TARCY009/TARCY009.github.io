@@ -204,7 +204,7 @@
   "name": "アグノム",
   "pve": "AZELF",
   "pvp": null,
-  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "source": "ニュース:page:seasons・ニュース:page:seasons/twilight-trails・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -220,7 +220,7 @@
   "name": "エムリット",
   "pve": "MESPRIT",
   "pvp": null,
-  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "source": "ニュース:page:seasons・ニュース:page:seasons/twilight-trails・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -229,6 +229,14 @@
   "pve": "ELECTIVIRE",
   "pvp": null,
   "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "サイホーン",
+  "pve": "RHYHORN",
+  "pvp": null,
+  "source": "ニュース:page:seasons・ニュース:page:seasons/twilight-trails・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -244,7 +252,7 @@
   "name": "ディアルガ",
   "pve": "DIALGA",
   "pvp": null,
-  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "source": "ニュース:page:gowildarea/global・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -265,10 +273,18 @@
  },
  {
   "kind": "dynamax",
+  "name": "ニューラ",
+  "pve": "SNEASEL",
+  "pvp": null,
+  "source": "ニュース:page:seasons・ニュース:page:seasons/twilight-trails・手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
   "name": "パルキア",
   "pve": "PALKIA",
   "pvp": null,
-  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "source": "ニュース:page:gowildarea/global・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -297,10 +313,18 @@
  },
  {
   "kind": "dynamax",
+  "name": "ヤクデ",
+  "pve": "SIZZLIPEDE",
+  "pvp": null,
+  "source": "ニュース:page:seasons・ニュース:page:seasons/twilight-trails・手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
   "name": "ユクシー",
   "pve": "UXIE",
   "pvp": null,
-  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "source": "ニュース:page:seasons・ニュース:page:seasons/twilight-trails・手の表:build_max.MANUAL_INCLUDE_D",
   "note": ""
  },
  {
@@ -308,7 +332,7 @@
   "name": "ジュラルドン",
   "pve": "DURALUDON",
   "pvp": null,
-  "source": "手の表:build_max.MANUAL_INCLUDE_G",
+  "source": "ニュース:page:gowildarea/global・手の表:build_max.MANUAL_INCLUDE_G",
   "note": ""
  }
 ]

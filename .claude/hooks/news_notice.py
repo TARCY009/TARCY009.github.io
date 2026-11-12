@@ -59,7 +59,7 @@ def main():
              'この回の最初の返事で、ほかの作業より先に短く伝えてください。']
     if check:
         lines.append('■ 確かめてほしいもの（記事を読んで判断し、必要ならツールに入れる。決められないものはタダシさんに聞く）:')
-        lines += [f'  - {n["text"]}（{n["title"]}・https://pokemongo.com/ja/news/{n["slug"]}）' for n in check]
+        lines += [f'  - {n["text"]}（{n["title"]}・{n.get("url") or "https://pokemongo.com/ja/news/" + n["slug"]}）' for n in check]
     if auto:
         lines.append('■ 自動でツールに入れたもの（毎朝の自動更新で公開済み。数字がツールに入っているか確かめてから伝える）:')
         lines += [f'  - {n["text"]}（{n["title"]}）' for n in auto]

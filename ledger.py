@@ -69,6 +69,9 @@ def build():
     for slug, rec in arts.items():
         src = 'ニュース:' + slug
         for key, v in (rec.get('released') or {}).items():
+            if key.startswith('pve:'):   # 対戦データに無く、ゲーム内データ側の名前で照合した告知
+                add('mega' if '_MEGA' in key else 'pokemon', v.get('name') or pve_name(key[4:]), pve_key=key[4:], source=src)
+                continue
             nm = v.get('name') or pvp_name(key)
             kind = 'mega' if (pvp.get(key) or {}).get('mega') or key.endswith('_mega') or '_mega_' in key else 'pokemon'
             add(kind, nm, pvp_key=key, source=src)
@@ -77,6 +80,8 @@ def build():
         for key, v in (rec.get('plus') or {}).items():
             add('plus', v.get('name') or pve_name(key), pve_key=key, source=src,
                 note=f"{v.get('move') or ''}（元わざ {v.get('base') or ''}・レイド威力 {v.get('raid')}）")
+        for key, v in (rec.get('dmax') or {}).items():
+            add('gigantamax' if v.get('form') == 'G' else 'dynamax', v.get('name') or pve_name(key), pve_key=key, source=src)
 
     # ② 生成スクリプトの手の表
     try:

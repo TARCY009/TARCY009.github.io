@@ -417,6 +417,7 @@ def main():
     print('実装済みシャドウ:', len(shadow_ids))
     # 公式ニュースで実装が告知されたものは、情報元が未実装のままでも実装済みとして扱う
     news_rel = news_auto.released_pvp()
+    news_rel_pve = news_auto.released_pve()   # 対戦データに名前が無く、ゲーム内データ側の名前で照合できた告知（キーは大文字）
     released_map = {p['speciesId']: bool(p.get('released')) or p['speciesId'] in news_rel for p in pvp}
 
     dex, move_no, num2move = {}, {}, {}
@@ -615,7 +616,7 @@ def main():
                 rel = released_map[cand]; break
         if rel is None:  # 最後の手段: アンダースコア無視で照合
             rel = released_nound.get(k.lower().replace('_',''))
-        if rel is False and k not in MANUAL_RELEASED:
+        if rel is False and k not in MANUAL_RELEASED and k not in news_rel_pve:
             excluded.append(final[k]['n']); unreleased[k] = final.pop(k)
     print(f'未実装として除外: {len(excluded)}種（例: {"、".join(excluded[:6])} …）')
 

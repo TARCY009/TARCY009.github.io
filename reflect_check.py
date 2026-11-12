@@ -176,7 +176,10 @@ def run(drop=()):
         elif kind in ('dynamax', 'gigantamax'):
             cats = mx_by.get(nm) or set()
             want = 'D' if kind == 'dynamax' else 'G'
-            if not cats:
+            g = god_by.get(nm)
+            if not cats and g and kind == 'dynamax' and not g[1].get('fe'):
+                pass   # 進化前（ダイマックスサイホーンなど）はマックスバトル対策に載せない決まり（最終進化だけ）＝漏れではない
+            elif not cats:
                 bad(e, 'マックスバトル(max_data)', '無い')
             elif want not in cats:
                 bad(e, 'マックスバトル(max_data)', f'区分が {sorted(cats)} で {want} が無い')

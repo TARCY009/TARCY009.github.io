@@ -362,6 +362,129 @@
    "shadow": {},
    "title": "流星群がみられる時期に星空の下を探索すると、「メテノ」と出会えるかも！"
   },
+  "page:gowildarea": {
+   "dmax": {},
+   "hash": "3ba9c3568e53",
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "Pokémon GO ワイルドエリア",
+   "url": "https://pokemongo.com/ja/gowildarea"
+  },
+  "page:gowildarea/global": {
+   "dmax": {
+    "DIALGA": {
+     "form": "D",
+     "name": "ディアルガ"
+    },
+    "DURALUDON": {
+     "form": "G",
+     "name": "ジュラルドン"
+    },
+    "PALKIA": {
+     "form": "D",
+     "name": "パルキア"
+    }
+   },
+   "hash": "1b6494ec304f",
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "Pokémon GO ワイルドエリア",
+   "url": "https://pokemongo.com/ja/gowildarea/global"
+  },
+  "page:gowildarea/sendai": {
+   "dmax": {},
+   "hash": "c2f127a7ef08",
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "Sendai • Tohoku – GO Wild Area 2026 — Pokémon GO",
+   "url": "https://pokemongo.com/ja/gowildarea/sendai"
+  },
+  "page:seasons": {
+   "dmax": {
+    "AZELF": {
+     "form": "D",
+     "name": "アグノム"
+    },
+    "MESPRIT": {
+     "form": "D",
+     "name": "エムリット"
+    },
+    "RHYHORN": {
+     "form": "D",
+     "name": "サイホーン"
+    },
+    "SIZZLIPEDE": {
+     "form": "D",
+     "name": "ヤクデ"
+    },
+    "SNEASEL": {
+     "form": "D",
+     "name": "ニューラ"
+    },
+    "UXIE": {
+     "form": "D",
+     "name": "ユクシー"
+    }
+   },
+   "hash": "c2df8baabf31",
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons"
+  },
+  "page:seasons/twilight-trails": {
+   "dmax": {
+    "AZELF": {
+     "form": "D",
+     "name": "アグノム"
+    },
+    "MESPRIT": {
+     "form": "D",
+     "name": "エムリット"
+    },
+    "RHYHORN": {
+     "form": "D",
+     "name": "サイホーン"
+    },
+    "SIZZLIPEDE": {
+     "form": "D",
+     "name": "ヤクデ"
+    },
+    "SNEASEL": {
+     "form": "D",
+     "name": "ニューラ"
+    },
+    "UXIE": {
+     "form": "D",
+     "name": "ユクシー"
+    }
+   },
+   "hash": "c2df8baabf31",
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-12",
+   "read": "2026-11-12",
+   "released": {},
+   "shadow": {},
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons/twilight-trails"
+  },
   "pgo-explorer-gadget-2026-update": {
    "hash": "554e71ad1ed2",
    "notes": [],
@@ -544,6 +667,87 @@
    "slug": "clefable-super-mega-raid-day-2026",
    "text": "「ピクシー」の＋わざ「ムーンフォース＋」: 対象のメガが0匹で決められません（[]）",
    "title": "「ピクシー」の「スーパーメガレイド・デイ」で、月の光の中でダンス！"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:seasons:308f95e1",
+   "kind": "auto",
+   "slug": "page:seasons",
+   "text": "ダイマックスサイホーンの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:seasons:e27f8eda",
+   "kind": "auto",
+   "slug": "page:seasons",
+   "text": "ダイマックスニューラの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:seasons:b8186389",
+   "kind": "auto",
+   "slug": "page:seasons",
+   "text": "ダイマックスヤクデの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:seasons:b1c44cbb",
+   "kind": "auto",
+   "slug": "page:seasons",
+   "text": "ダイマックスユクシーの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:seasons:3ab14f60",
+   "kind": "auto",
+   "slug": "page:seasons",
+   "text": "ダイマックスエムリットの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:seasons:74cc888a",
+   "kind": "auto",
+   "slug": "page:seasons",
+   "text": "ダイマックスアグノムの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:gowildarea/global:15052a7f",
+   "kind": "auto",
+   "slug": "page:gowildarea/global",
+   "text": "キョダイマックスジュラルドンの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "Pokémon GO ワイルドエリア",
+   "url": "https://pokemongo.com/ja/gowildarea/global"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:gowildarea/global:a14e98c7",
+   "kind": "auto",
+   "slug": "page:gowildarea/global",
+   "text": "ダイマックスディアルガの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "Pokémon GO ワイルドエリア",
+   "url": "https://pokemongo.com/ja/gowildarea/global"
+  },
+  {
+   "date": "2026-11-12",
+   "id": "page:gowildarea/global:1708e754",
+   "kind": "auto",
+   "slug": "page:gowildarea/global",
+   "text": "ダイマックスパルキアの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
+   "title": "Pokémon GO ワイルドエリア",
+   "url": "https://pokemongo.com/ja/gowildarea/global"
   },
   {
    "id": "reflect:boss:85cb8b80",
