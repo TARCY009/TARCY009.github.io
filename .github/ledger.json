@@ -1,0 +1,314 @@
+[
+ {
+  "kind": "pokemon",
+  "name": "ウッウ",
+  "pve": "CRAMORANT",
+  "pvp": "cramorant",
+  "source": "手の表:build_data.MANUAL_RELEASED・手の表:build_pvp_data.MANUAL_RELEASED",
+  "note": ""
+ },
+ {
+  "kind": "pokemon",
+  "name": "ヒスイヌメイル",
+  "pve": "SLIGGOO_HISUIAN",
+  "pvp": "sliggoo_hisuian",
+  "source": "手の表:build_data.MANUAL_RELEASED・手の表:build_data.MANUAL_POKE・手の表:build_pvp_data.MANUAL_RELEASED",
+  "note": ""
+ },
+ {
+  "kind": "pokemon",
+  "name": "ヒスイヌメルゴン",
+  "pve": "GOODRA_HISUIAN",
+  "pvp": "goodra_hisuian",
+  "source": "手の表:build_data.MANUAL_RELEASED・手の表:build_data.MANUAL_POKE・手の表:build_pvp_data.MANUAL_RELEASED",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガゲッコウガ",
+  "pve": "GRENINJA_MEGA",
+  "pvp": null,
+  "source": "手の表:build_data.MANUAL_MEGA",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガシャンデラ",
+  "pve": null,
+  "pvp": "chandelure_mega",
+  "source": "ニュース:chandelure-super-mega-raid-day-2026",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガピクシー",
+  "pve": "CLEFABLE_MEGA",
+  "pvp": "clefable_mega",
+  "source": "手の表:build_data.MANUAL_MEGA・手の表:build_pvp_data.MANUAL_MEGA_PVP",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガブリガロン",
+  "pve": "CHESNAUGHT_MEGA",
+  "pvp": null,
+  "source": "手の表:build_data.MANUAL_MEGA",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガマフォクシー",
+  "pve": "DELPHOX_MEGA",
+  "pvp": null,
+  "source": "手の表:build_data.MANUAL_MEGA",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガミュウツーX",
+  "pve": "MEWTWO_MEGA_X",
+  "pvp": null,
+  "source": "手の表:build_data.MANUAL_MEGA",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガミュウツーY",
+  "pve": "MEWTWO_MEGA_Y",
+  "pvp": null,
+  "source": "手の表:build_data.MANUAL_MEGA",
+  "note": ""
+ },
+ {
+  "kind": "mega",
+  "name": "メガムクホーク",
+  "pve": "STARAPTOR_MEGA",
+  "pvp": "staraptor_mega",
+  "source": "手の表:build_data.MANUAL_MEGA・手の表:build_pvp_data.MANUAL_RELEASED",
+  "note": ""
+ },
+ {
+  "kind": "shadow",
+  "name": "カリキリ",
+  "pve": "FOMANTIS",
+  "pvp": "fomantis",
+  "source": "手の表:build_data.MANUAL_SHADOW・手の表:build_pvp_data.MANUAL_SHADOW",
+  "note": ""
+ },
+ {
+  "kind": "shadow",
+  "name": "グソクムシャ",
+  "pve": "GOLISOPOD",
+  "pvp": "golisopod",
+  "source": "手の表:build_data.MANUAL_SHADOW・手の表:build_pvp_data.MANUAL_SHADOW",
+  "note": ""
+ },
+ {
+  "kind": "shadow",
+  "name": "コソクムシ",
+  "pve": "WIMPOD",
+  "pvp": "wimpod",
+  "source": "手の表:build_data.MANUAL_SHADOW・手の表:build_pvp_data.MANUAL_SHADOW",
+  "note": ""
+ },
+ {
+  "kind": "shadow",
+  "name": "シロデスナ",
+  "pve": "PALOSSAND",
+  "pvp": "palossand",
+  "source": "手の表:build_data.MANUAL_SHADOW・手の表:build_pvp_data.MANUAL_SHADOW",
+  "note": ""
+ },
+ {
+  "kind": "shadow",
+  "name": "スナバァ",
+  "pve": "SANDYGAST",
+  "pvp": "sandygast",
+  "source": "手の表:build_data.MANUAL_SHADOW・手の表:build_pvp_data.MANUAL_SHADOW",
+  "note": ""
+ },
+ {
+  "kind": "shadow",
+  "name": "ゼクロム",
+  "pve": "ZEKROM",
+  "pvp": "zekrom",
+  "source": "手の表:build_data.MANUAL_SHADOW・手の表:build_pvp_data.MANUAL_SHADOW",
+  "note": ""
+ },
+ {
+  "kind": "shadow",
+  "name": "ラランテス",
+  "pve": "LURANTIS",
+  "pvp": "lurantis",
+  "source": "手の表:build_data.MANUAL_SHADOW・手の表:build_pvp_data.MANUAL_SHADOW",
+  "note": ""
+ },
+ {
+  "kind": "plus",
+  "name": "メガシャンデラ",
+  "pve": "CHANDELURE_MEGA",
+  "pvp": null,
+  "source": "ニュース:chandelure-super-mega-raid-day-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "あやしいかぜ＋（元わざ OMINOUS_WIND・レイド威力 145）"
+ },
+ {
+  "kind": "plus",
+  "name": "メガスピアー",
+  "pve": "BEEDRILL_MEGA",
+  "pvp": null,
+  "source": "ニュース:mega-squads-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "とどめばり＋（元わざ FELL_STINGER・レイド威力 140）"
+ },
+ {
+  "kind": "plus",
+  "name": "メガピクシー",
+  "pve": "CLEFABLE_MEGA",
+  "pvp": null,
+  "source": "手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "元わざ MOONBLAST・レイド威力 160"
+ },
+ {
+  "kind": "plus",
+  "name": "メガヘルガー",
+  "pve": "HOUNDOOM_MEGA",
+  "pvp": null,
+  "source": "ニュース:mega-squads-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "あくのはどう＋（元わざ DARK_PULSE・レイド威力 150）"
+ },
+ {
+  "kind": "plus",
+  "name": "メガムクホーク",
+  "pve": "STARAPTOR_MEGA",
+  "pvp": null,
+  "source": "ニュース:staraptor-super-mega-raid-day-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "ブレイブバード＋（元わざ BRAVE_BIRD・レイド威力 150）"
+ },
+ {
+  "kind": "plus",
+  "name": "メガヤミラミ",
+  "pve": "SABLEYE_MEGA",
+  "pvp": null,
+  "source": "ニュース:halloween-part-2-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "ナイトヘッド＋（元わざ NIGHT_SHADE・レイド威力 160）"
+ },
+ {
+  "kind": "plus",
+  "name": "メガライボルト",
+  "pve": "MANECTRIC_MEGA",
+  "pvp": null,
+  "source": "ニュース:fall-marathon-buddy-trek-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "ほうでん＋（元わざ DISCHARGE・レイド威力 150）"
+ },
+ {
+  "kind": "dynamax",
+  "name": "アグノム",
+  "pve": "AZELF",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "アローラペルシアン",
+  "pve": "PERSIAN_ALOLA",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "エムリット",
+  "pve": "MESPRIT",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "エレキブル",
+  "pve": "ELECTIVIRE",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "サザンドラ",
+  "pve": "HYDREIGON",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "ディアルガ",
+  "pve": "DIALGA",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "ドサイドン",
+  "pve": "RHYPERIOR",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "ニャイキング",
+  "pve": "PERRSERKER",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "パルキア",
+  "pve": "PALKIA",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "ペルシアン",
+  "pve": "PERSIAN",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "マニューラ",
+  "pve": "WEAVILE",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "マルヤクデ",
+  "pve": "CENTISKORCH",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "dynamax",
+  "name": "ユクシー",
+  "pve": "UXIE",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_D",
+  "note": ""
+ },
+ {
+  "kind": "gigantamax",
+  "name": "ジュラルドン",
+  "pve": "DURALUDON",
+  "pvp": null,
+  "source": "手の表:build_max.MANUAL_INCLUDE_G",
+  "note": ""
+ }
+]

@@ -71,6 +71,11 @@ jobs:
       - name: 環境上位のわざ構成を作り直す
         run: python3 pvp-tests/build_meta_moves.py --no-report
 
+      # 告知台帳（公式ニュース＋手の表）の全件が各ツールのデータに入っているかを突き合わせる（2026-11-12タダシさん承認）。
+      # 漏れは changes.md（お知らせ）と official_news.json の知らせ（チャットの始め）に出す。公開は止めない
+      - name: ツール反映の検査（告知台帳との突き合わせ）
+        run: python3 reflect_check.py || echo "ツール反映の検査は今回流せなかった"
+
       - name: 公式ニュースから読み取ったことをお知らせに足す
         run: if [ -f news_today.md ]; then cat news_today.md >> changes.md; fi
 
@@ -105,7 +110,7 @@ jobs:
       # 取り寄せ先どうしの食い違いの控え（source_diff.json）は、データに変化が無い日でも保存する（お知らせは立てない）
       - name: 公式ニュースの読み取り記録を保存
         run: |
-          git add .github/official_news.json .github/gm_source.json .github/source_diff.json
+          git add .github/official_news.json .github/gm_source.json .github/source_diff.json .github/ledger.json .github/reflect_report.json
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"

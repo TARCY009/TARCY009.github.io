@@ -544,6 +544,62 @@
    "slug": "clefable-super-mega-raid-day-2026",
    "text": "「ピクシー」の＋わざ「ムーンフォース＋」: 対象のメガが0匹で決められません（[]）",
    "title": "「ピクシー」の「スーパーメガレイド・デイ」で、月の光の中でダンス！"
+  },
+  {
+   "id": "reflect:boss:85cb8b80",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「アローラペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
+  },
+  {
+   "id": "reflect:boss:df50a2dc",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「エレキブル」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
+  },
+  {
+   "id": "reflect:boss:3cb12c2b",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「サザンドラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
+  },
+  {
+   "id": "reflect:boss:2592d92c",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「ドサイドン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
+  },
+  {
+   "id": "reflect:boss:86938a72",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「ニャイキング」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
+  },
+  {
+   "id": "reflect:boss:629c694b",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「ペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
+  },
+  {
+   "id": "reflect:boss:6dc4a349",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「マニューラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
+  },
+  {
+   "id": "reflect:boss:96df17c5",
+   "kind": "reflect",
+   "date": "2026-11-12",
+   "title": "マックスバトルのボス",
+   "text": "ボス「マルヤクデ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   }
  ]
 }

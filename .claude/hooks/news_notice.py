@@ -53,7 +53,8 @@ def main():
     if not new:
         return
     auto = [n for n in new if n.get('kind') == 'auto']
-    check = [n for n in new if n.get('kind') != 'auto']
+    reflect = [n for n in new if n.get('kind') == 'reflect']
+    check = [n for n in new if n.get('kind') not in ('auto', 'reflect')]
     lines = ['【公式ニュースの自動読み取り】まだタダシさんに伝えていない知らせがあります。'
              'この回の最初の返事で、ほかの作業より先に短く伝えてください。']
     if check:
@@ -62,6 +63,9 @@ def main():
     if auto:
         lines.append('■ 自動でツールに入れたもの（毎朝の自動更新で公開済み。数字がツールに入っているか確かめてから伝える）:')
         lines += [f'  - {n["text"]}（{n["title"]}）' for n in auto]
+    if reflect:
+        lines.append('■ ツール反映の検査（reflect_check.py）で見つかった反映漏れ・未登録（原因を調べて直す。直せないものはタダシさんに伝える）')
+        lines += [f'  - {n["text"]}' for n in reflect]
     lines.append('伝え終えたら `python3 .claude/hooks/news_notice.py --ack` を流して、伝えた印を付けること。')
     print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart',
                                              'additionalContext': '\n'.join(lines)}}, ensure_ascii=False))
