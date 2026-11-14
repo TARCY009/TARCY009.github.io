@@ -154,6 +154,8 @@ label.f{font-size:.75rem;color:var(--sub);display:block;margin:10px 0 4px;font-w
 /* じぶん側=水色(点灯は濃い文字) ／ シャドウ=紫 */
 .cyanseg button{--mc:#5fd8ea;--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mgl:rgba(8,180,201,.45);--mi:#042330}
 :root.light .cyanseg button{--mc:#0b7f92}
+#soloBtn{--mc:#5fd8ea;--mg:linear-gradient(160deg,#7fe6f5 0%,#08b4c9 45%,#06788a 100%);--mi:#042330}
+:root.light #soloBtn{--mc:#0b7f93}
 #myShadow{--mc:#c396ff;--mg:linear-gradient(160deg,#c9a7ff 0%,#8b5cf6 45%,#6d28d9 100%);--mgl:rgba(139,92,246,.45);display:inline-flex;align-items:center;gap:5px}
 :root.light #myShadow{--mc:#7a3cc4}
 /* 設定(結果カード内)=紫 */
@@ -373,8 +375,9 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     </div>
     <div class="modes" style="margin-top:10px" id="shRow">
       <button type="button" id="myShadow" aria-pressed="false" title="シャドウとして計算します（攻撃1.2倍・防御5/6）"><i class="shadowmark"></i>シャドウ</button>
+      <button type="button" id="soloBtn" aria-pressed="false" title="このポケモンを1匹しか持っていない前提で計算します。倒されたら控えがいないので、ロビーに戻って回復し、再突入します（再突入の秒数は結果の「前提」で変えられます）">1匹だけ</button>
     </div>
-    <p class="note expl">全員がこのアタッカー6匹（PL50・個体値15）のパーティで参加する想定です。</p>
+    <p class="note expl" id="myNote">全員がこのアタッカー6匹（PL50・個体値15）のパーティで参加する想定です。</p>
   </div>
   <div id="teamBox" style="display:none"></div>
 </div>
@@ -384,7 +387,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
   <!-- 前提＝一括設定で動かないもの（ボスの動き・こちらの操作）。既定から変えると枠が青くなる（2026-09-20タダシさん指示） -->
   <div class="setrow prerow">
     <span class="lbl">前提</span>
-    <span class="pick" data-pre="ボス技" title="ボスがSPアタックを撃つ条件です。即打ち＝ゲージがたまったら必ず撃つ（きびしめの前提）／2回に1回＝確率どおりの平均的な動き（毎回同じ結果）／ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）"><select id="spSel">
+    <span class="pick" data-pre="ボスSP技" title="ボスがSPアタックを撃つ条件です。即打ち＝ゲージがたまったら必ず撃つ（きびしめの前提）／2回に1回＝確率どおりの平均的な動き（毎回同じ結果）／ランダム＝実戦と同じ運まかせ（30回試した勝率で判定）"><select id="spSel">
       <option value="asap">即打ち</option>
       <option value="alt" selected>2回に1回</option>
       <option value="coin">ランダム</option>
@@ -560,6 +563,8 @@ const guessTier=k=>{const p=D.pokemon[k]; return p.mega?(p.lg?'t6':'t4'):'t5';};
 
 // ---- 状態 ----
 let boss=null, tier='t5';
+let soloOn=false;   // 「1匹だけ」: 同じアタッカーを1匹しか持っていない前提(倒されたら再突入・2026-11-14タダシさん指示)
+const teamOf=one=>soloOn?[one]:[one,one,one,one,one,one];
 let myMode='fewest', myKey=null, myShadow=false;   // 既定は最少人数おまかせ(2026-09-13タダシさん指示)   // えらぶ のときに使う
 let spMode='alt';   // 既定は「2回に1回」＝確率どおりの平均的な動き（2026-09-20タダシさん指示）
 // 6匹編成(上から順に出す)。端末に保存して次回も同じパーティで開く
@@ -683,14 +688,14 @@ const FEW_CAND=24;
 let fewCache={key:null,val:null};
 function fewestAttacker(){
   if(!boss||!D.pokemon[boss]||$('bfSel').dataset.boss!==boss||!$('bfSel').value)return null;
-  const ck=[boss,tier,MegaLv.level(),$('bfSel').value,$('bcSel').value,spMode,dodgeSp,$('feSel').value,tpOn,
+  const ck=[boss,tier,MegaLv.level(),$('bfSel').value,$('bcSel').value,spMode,dodgeSp,$('feSel').value,tpOn,soloOn,
     $('wxSel').value,$('frSel').value,$('mgSel').value,$('rejoinSec').value].join('|');
   if(fewCache.key===ck)return fewCache.val;
   const sp=spMode==='coin'?'alt':spMode;
   let best=null;
   for(const a of attackerList().slice(0,FEW_CAND)){
     const one=monCfg(a.k,a.shadow,a.f,a.c);
-    const team=[one,one,one,one,one,one];
+    const team=teamOf(one);
     const lim=best?best.n:20;   // いまの最良より多い人数は試さない
     for(let n=1;n<=lim;n++){
       const r=RaidEngine.simulate(buildCfg(n,1,false,team,sp));
@@ -888,7 +893,9 @@ function renderMy(){
   syncTypeIcon('mfSel','mfType'); syncTypeIcon('mcSel','mcType');
   $('myShadow').setAttribute('aria-pressed',sh);
   $('myShadow').disabled=auto||!p.shadow;
-  $('shRow').style.display=auto?'none':'flex';
+  $('myShadow').style.display=auto?'none':'';
+  $('soloBtn').setAttribute('aria-pressed',soloOn);
+  $('myNote').textContent=soloOn?'全員がこのアタッカーを1匹だけ（PL50・個体値15）持って参加する想定です。倒されたら再突入します。':'全員がこのアタッカー6匹（PL50・個体値15）のパーティで参加する想定です。';
 }
 
 // ---- シミュレート ----
@@ -957,7 +964,7 @@ function buildTeamCfg(){
   }
   const mk=curMyKey(); if(!mk||!$('mfSel').value)return null;
   const one=monCfg(mk,curMyShadow(),$('mfSel').value,$('mcSel').value||null);
-  return [one,one,one,one,one,one];   // 同じアタッカー6匹
+  return teamOf(one);   // 同じアタッカー6匹(「1匹だけ」なら1匹＝倒されたら再突入)
 }
 // team・sp を渡すと、画面の選択ではなくそのパーティ・ボスのSPの撃ち方で計算する(最少人数おまかせの選び出しに使う)
 // bm={f,c}＝ボスのわざを差し替えて計算する(「どのわざ構成でも」用)。省けば画面で選んでいるわざ
@@ -999,7 +1006,7 @@ function bossCombos(){
 function anyKey(){
   const team=myMode==='fewest'?'':JSON.stringify((buildTeamCfg()||[]).map(m=>[m.name,m.fast&&m.fast.n,m.chg&&m.chg.n,Math.round(m.atk*100),m.mult,m.mega]));
   return [boss,tier,MegaLv.level(),spMode,dodgeSp,$('feSel').value,tpOn,$('wxSel').value,$('frSel').value,$('mgSel').value,
-    $('rejoinSec').value,myMode,team].join('|');
+    $('rejoinSec').value,myMode,soloOn,team].join('|');
 }
 function anyHtml(){
   const a=anyRes;
@@ -1023,7 +1030,7 @@ async function scheduleAny(){
   let best=null;
   if(myMode==='fewest'){
     for(const a of attackerList().slice(0,FEW_CAND)){
-      const one=monCfg(a.k,a.shadow,a.f,a.c), team=[one,one,one,one,one,one];
+      const one=monCfg(a.k,a.shadow,a.f,a.c), team=teamOf(one);
       const lim=best?best.n-1:20;   // いまの最良より多い人数は試さない
       for(let n=1;n<=lim;n++) if(allWin(team,n)){ const p=D.pokemon[a.k]; best={n,name:badges(a.shadow,false,p)+p.n}; break; }
       await yieldNow(); if(tok!==anyTok)return;
@@ -1195,6 +1202,7 @@ syncFe();
 $('wxSel').addEventListener('change',runAll);
 $('frSel').addEventListener('change',runAll);
 $('mgSel').addEventListener('change',runAll);
+$('soloBtn').onclick=()=>{soloOn=!soloOn;renderMy();runAll();};
 $('tpBtn').onclick=()=>{tpOn=!tpOn;$('tpBtn').setAttribute('aria-pressed',tpOn);syncPreset();runAll();};
 
 // 前提のプリセット(2026-09-19タダシさん指示)。
