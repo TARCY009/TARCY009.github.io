@@ -475,6 +475,7 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <li><b>天候</b>＝選んだ天候で1.2倍になるタイプのわざが強くなります。<b>自分のわざだけでなくボスのわざにも掛かります</b>（例: 曇りならボスのきあいだまも1.2倍）。対象タイプ: 晴れ＝くさ・じめん・ほのお ／ 時々曇り＝ノーマル・いわ ／ 曇り＝フェアリー・かくとう・どく ／ 雨＝みず・でんき・むし ／ 霧＝あく・ゴースト ／ 雪＝こおり・はがね ／ 強風＝ドラゴン・ひこう・エスパー</li>
     <li><b>フレンド</b>＝友達×1.03／仲良し×1.05／親友×1.07／大親友×1.10／大親友＋×1.12 ／ <b>メガ応援</b>＝他の参加者のメガシンカで別タイプ×1.1・同タイプ×1.3 ／ <b>フィールド</b>＝フィールド効果（同時に1つだけ・自分のポケモンだけにかかる）。ザシアン＝攻撃1.1倍／メガミュウツーX＝メガシンカしたボスへのダメージ1.15倍（メガレイド・スーパーメガレイドだけ・ゲンシには効かない）。フレンドとメガ応援は、<b>選ぶときの一覧には呼び名が出て、選んだあとのボタンには倍率だけ</b>を出します（設定を1行に収めるため）</li>
     <li><b>チームパワー</b>＝パーティプレイのボーナス。ONにすると<b>参加する全員がパーティを組んでいる前提</b>で、人数に応じてわざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人以上+3P・最大18P・SPアタックでも増える）、満タンで<b>次のSPアタックが2倍</b>になります。1人のときは効果がありません。点灯したら毎回すぐ使う前提で、瀕死交代してもメーターは引き継ぎます（外部攻略情報と実測検証で一致した値）</li>
+    <li>チームパワーがオンのとき、<b>1位おまかせ・最少人数おまかせのわざは人数ごとに選び直します</b>（人数が多いほどメーターが早くたまるので、ゲージの少ないSPアタックや速いノーマルアタックが選ばれやすくなります）。1位おまかせは4人でチームパワーを使ったときの火力1位です。えらぶ・6匹編成は選んだわざのままです</li>
     <li>メガ応援は、本当は<b>わざのタイプごと</b>に効きますが、ここでは選んだ倍率が<b>全部のわざに掛かる</b>前提です（ノーマルとSPでタイプがちがう構成では少しだけ強めに出ます）</li>
     <li>ダメージが増えるとボスのゲージも速くたまるので、ブーストを入れるとSPアタックが飛んでくる頻度も上がります（そこまで込みで計算しています）</li>
   </ul>
@@ -621,7 +622,32 @@ function attachSugg(inputEl,listEl,onPick,filterFn){
 // レイド火力チェッカーの bestCombo と同じ決め方。旧はPL50だけで決めていた）。返す dps はその構成のPL50の値（順位のものさしは変えない）
 const COMBO_LEVELS=[];
 for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) COMBO_LEVELS.push(m); }
-function bestComboVs(p,bt,bossDef,shadow){
+// ---- チームパワー込みのわざ選び(2026-11-14タダシさん指示) ----
+// チームパワーのボタンを押しているときは、人数ごとの上昇P(1人=0・2人=1・3人=2・4人以上=3)で、
+// SPアタックの何割が2倍になるかを数えてわざ構成を選び直す(ゲージの少ないSPや速いノーマルが浮上する)。
+// 数え方はエンジンと同じ: わざ1回ごとに+tp・18Pで止まりあふれは捨てる・満タンで撃つSPが2倍になり0Pに戻る
+// (レイド火力チェッカーの tpCover と同じもの)
+const tpCovMemo=new Map();
+function tpCover(fe,ce,tp){
+  if(!tp||fe<=0||ce<=0)return 0;
+  const key=fe+'|'+ce+'|'+tp; if(tpCovMemo.has(key))return tpCovMemo.get(key);
+  const MAX=RaidEngine.TP_MAX||18;
+  let en=0,meter=0,sp=0,dbl=0,res=null; const seen=new Map();
+  for(let i=0;i<200000&&res===null;i++){
+    en=Math.min(100,en+fe); meter=Math.min(MAX,meter+tp);
+    while(en>=ce&&res===null){
+      const st=en+'|'+meter;
+      if(seen.has(st)){const o=seen.get(st); res=(dbl-o.dbl)/(sp-o.sp); break;}
+      seen.set(st,{sp,dbl});
+      if(meter>=MAX){dbl++;meter=0;}
+      meter=Math.min(MAX,meter+tp); en-=ce; sp++;
+    }
+  }
+  if(res===null)res=sp?dbl/sp:0;
+  tpCovMemo.set(key,res); return res;
+}
+const tpAt=N=>tpOn?Math.max(0,Math.min(N,4)-1):0;
+function bestComboVs(p,bt,bossDef,shadow,tp){
   const mult=shadow?1.2:1;
   const combos=[];
   for(const f of fastIds(p)){const m1=D.moves[f];
@@ -629,13 +655,16 @@ function bestComboVs(p,bt,bossDef,shadow){
       const n2=(m1.e*100)/Math.abs(m2.e);
       const tt=m1.d*100+m2.d*n2;
       if(tt<=0)continue;
-      combos.push({f,c,m1,m2,n2,tt,s1:p.ty.includes(m1.t)?1.2:1,s2:p.ty.includes(m2.t)?1.2:1,e1:eff(m1.t,bt),e2:eff(m2.t,bt)});
+      combos.push({f,c,m1,m2,n2,tt,s1:p.ty.includes(m1.t)?1.2:1,s2:p.ty.includes(m2.t)?1.2:1,e1:eff(m1.t,bt),e2:eff(m2.t,bt),
+        cov:tp?tpCover(m1.e,Math.abs(m2.e),tp):0});
     }}
   if(!combos.length)return null;
   const dpsAt=(cb,atk)=>{
     const d1=RaidEngine.damage(cb.m1.p,atk,bossDef,cb.s1,cb.e1,mult);
     const d2=RaidEngine.damage(cb.m2.p,atk,bossDef,cb.s2,cb.e2,mult);
-    return (d1*100+d2*cb.n2)/cb.tt;
+    if(!cb.cov)return (d1*100+d2*cb.n2)/cb.tt;
+    const d2x=RaidEngine.damage(cb.m2.p,atk,bossDef,cb.s2,cb.e2,mult*2);   // 2倍は切り捨ての前
+    return (d1*100+cb.n2*(d2*(1-cb.cov)+d2x*cb.cov))/cb.tt;
   };
   const votes=new Map();
   for(const m of (COMBO_LEVELS.length?COMBO_LEVELS:[CPM50])){
@@ -652,11 +681,26 @@ function bestComboVs(p,bt,bossDef,shadow){
   }
   return {f:best.f,c:best.c,dps:best.dps};
 }
-let topCache={key:null,val:null,list:[]};
+let topCache={key:null,val:null,list:[]}, topCacheTp={key:null,lists:{}};
 // 火力順の一覧(最終進化だけ・シャドウは別の行)。1位おまかせは先頭、最少人数おまかせは上位を候補に使う
-function attackerList(){
+function attackerList(tp){
   // ボスを選ぶ前に設定をいじると boss が空のまま呼ばれる（例外で runAll が止まるので先に返す）
   if(!boss||!D.pokemon[boss])return [];
+  // チームパワーの上昇Pごとの一覧(tp=0 はこれまでと同じ一覧)
+  if(tp){
+    const k2=boss+'|'+tier+'|'+MegaLv.level();
+    if(topCacheTp.key!==k2)topCacheTp={key:k2,lists:{}};
+    if(topCacheTp.lists[tp])return topCacheTp.lists[tp];
+    const bp=D.pokemon[boss], bt=bp.ty, bossDef=(bp.df+15)*tierOf(tier).cpm, list=[];
+    for(const k of KEYS){
+      const p=D.pokemon[k]; if(!p.fe)continue;
+      const b=bestComboVs(p,bt,bossDef,false,tp); if(b)list.push({k,shadow:false,...b});
+      if(p.shadow){ const s2=bestComboVs(p,bt,bossDef,true,tp); if(s2)list.push({k,shadow:true,...s2}); }
+    }
+    list.sort((a,b)=>b.dps-a.dps);
+    list.by=new Map(list.map(a=>[a.k+'|'+a.shadow,a]));
+    return topCacheTp.lists[tp]=list;
+  }
   // ⚠ キーにメガレベルも入れる。＋わざの威力がレベルで変わるので、
   //   ボスとランクだけで持つと「レベルを変えても1位の選び直しが起きない」(実際に踏んだ)
   const ck=boss+'|'+tier+'|'+MegaLv.level();
@@ -677,7 +721,25 @@ function attackerList(){
   topCache={key:ck,val:list[0]||null,list};
   return list;
 }
-function topAttacker(){ return attackerList()[0]||null; }
+// 1位おまかせ: チームパワーを押しているときは「4人でチームパワーを使ったときの火力1位」
+function topAttacker(){ return attackerList(tpOn?3:0)[0]||null; }
+// そのポケモンの、上昇Ptpのときのわざ構成
+function comboAt(k,sh,tp){
+  if(!tp){ return attackerList().find(a=>a.k===k&&a.shadow===!!sh)||null; }
+  return attackerList(tp).by.get(k+'|'+!!sh)||null;
+}
+// 最少人数おまかせの候補: チームパワーを押しているときは、上昇P 0〜3 それぞれの火力上位をまとめる
+function fewCands(){
+  const out=[], seen=new Set();
+  for(const tp of (tpOn?[0,1,2,3]:[0]))
+    for(const a of attackerList(tp).slice(0,FEW_CAND)){ const id=a.k+'|'+a.shadow; if(!seen.has(id)){seen.add(id); out.push(a);} }
+  return out;
+}
+// 候補aを人数Nで戦わせるときのパーティ(わざはその人数の上昇Pで選んだもの)
+function teamAt(a,N){
+  const cb=tpOn?(comboAt(a.k,a.shadow,tpAt(N))||a):a;
+  return teamOf(monCfg(a.k,a.shadow,cb.f,cb.c));
+}
 
 // ---- 最少人数おまかせ(2026-09-11・公開前の作業B3・タダシさん承認) ----
 // 火力上位を実際にこのシミュレーターで戦わせ、いちばん少ない人数で勝てる1匹を選ぶ(同じ人数なら早く倒せるほう)。
@@ -693,13 +755,11 @@ function fewestAttacker(){
   if(fewCache.key===ck)return fewCache.val;
   const sp=spMode==='coin'?'alt':spMode;
   let best=null;
-  for(const a of attackerList().slice(0,FEW_CAND)){
-    const one=monCfg(a.k,a.shadow,a.f,a.c);
-    const team=teamOf(one);
+  for(const a of fewCands()){
     const lim=best?best.n:20;   // いまの最良より多い人数は試さない
     for(let n=1;n<=lim;n++){
-      const r=RaidEngine.simulate(buildCfg(n,1,false,team,sp));
-      if(r.win){ if(!best||n<best.n||r.t<best.t)best={...a,n,t:r.t}; break; }
+      const r=RaidEngine.simulate(buildCfg(n,1,false,teamAt(a,n),sp));
+      if(r.win){ if(!best||n<best.n||r.t<best.t){ const cb=tpOn?(comboAt(a.k,a.shadow,tpAt(n))||a):a; best={...a,f:cb.f,c:cb.c,n,t:r.t}; } break; }
     }
   }
   fewCache={key:ck,val:best};
@@ -881,7 +941,7 @@ function renderMy(){
   $('myPickRow').style.display=auto?'none':'block';
   const sh=curMyShadow();
   const fw=few?fewestAttacker():null;
-  const why=!auto?'':few?(fw?`（このボスをいちばん少ない${fw.n}人で倒せる1匹）`:'（20人でも倒しきれないため火力1位）'):'（このボスへの火力1位）';
+  const why=!auto?'':few?(fw?`（このボスをいちばん少ない${fw.n}人で倒せる1匹）`:'（20人でも倒しきれないため火力1位）'):(tpOn?'（4人でチームパワーを使ったときの火力1位）':'（このボスへの火力1位）');
   $('mySum').innerHTML=`${badges(sh,p.mega,p)}<b>${p.n}</b>${typeIcons(p,20)}<small style="color:var(--sub)">PL50・個体値15${why}</small>`;
   const top=auto?(fw||topAttacker()):null;
   const fs=fastIds(p), cs=chgIds(p);
@@ -954,7 +1014,7 @@ function monCfg(k,sh,f,c,lv,iv){
     hp:Math.floor((p.h+v[2])*cpm),mult:(sh?1.2:1)*boostMult(),
     fast:mvObj(f),chg:c?mvObj(c):null,name:p.n,mega:!!p.mega};   // mega: ひんしで再突入(1匹だけ使える)
 }
-function buildTeamCfg(){
+function buildTeamCfg(N){
   if(myMode==='team'){
     // メガシンカ・ゲンシカイキはパーティに1匹まで。2匹目以降は外して戦う(画面に注記を出す)
     let megaSeen=false;
@@ -963,6 +1023,11 @@ function buildTeamCfg(){
     return null;
   }
   const mk=curMyKey(); if(!mk||!$('mfSel').value)return null;
+  // チームパワー中のおまかせ2つは、人数ごとの上昇Pでわざを選び直す(えらぶ・6匹編成は選んだわざのまま)
+  if(tpOn&&N&&(myMode==='auto'||myMode==='fewest')){
+    const cb=comboAt(mk,curMyShadow(),tpAt(N));
+    if(cb)return teamOf(monCfg(mk,curMyShadow(),cb.f,cb.c));
+  }
   const one=monCfg(mk,curMyShadow(),$('mfSel').value,$('mcSel').value||null);
   return teamOf(one);   // 同じアタッカー6匹(「1匹だけ」なら1匹＝倒されたら再突入)
 }
@@ -977,7 +1042,7 @@ function buildCfg(N,seed,wantLog,team,sp,bm){
   //   フレンドボーナスは一緒に入るフレンドが、メガ応援はメガを出す他の参加者がいないと成立しない。
   //   チームパワーは下の tp が 1人=0 なので元から効かない。
   //   → 有利な前提で1人になっても、この3つを外して勝てなければ最少は2人になる
-  let tm=team||buildTeamCfg();
+  let tm=team||buildTeamCfg(N);
   const soloOff=N===1?(+$('frSel').value||1)*(+$('mgSel').value||1):1;
   if(tm&&soloOff!==1) tm=tm.map(m=>({...m,mult:m.mult/soloOff}));
   return {limit:t.time,eff,boss:bossCfg,team:tm,N,spMode:sp||spMode,dodgeSp,
@@ -1029,15 +1094,14 @@ async function scheduleAny(){
   const allWin=(team,n)=>combos.every(bm=>RaidEngine.simulate(buildCfg(n,1,false,team,sp,bm)).win);
   let best=null;
   if(myMode==='fewest'){
-    for(const a of attackerList().slice(0,FEW_CAND)){
-      const one=monCfg(a.k,a.shadow,a.f,a.c), team=teamOf(one);
+    for(const a of fewCands()){
       const lim=best?best.n-1:20;   // いまの最良より多い人数は試さない
-      for(let n=1;n<=lim;n++) if(allWin(team,n)){ const p=D.pokemon[a.k]; best={n,name:badges(a.shadow,false,p)+p.n}; break; }
+      for(let n=1;n<=lim;n++) if(allWin(teamAt(a,n),n)){ const p=D.pokemon[a.k]; best={n,name:badges(a.shadow,false,p)+p.n}; break; }
       await yieldNow(); if(tok!==anyTok)return;
     }
   }else{
     const team=buildTeamCfg();
-    if(team) for(let n=1;n<=20;n++){ if(allWin(team,n)){best={n};break;} await yieldNow(); if(tok!==anyTok)return; }
+    if(team) for(let n=1;n<=20;n++){ if(allWin(buildTeamCfg(n),n)){best={n};break;} await yieldNow(); if(tok!==anyTok)return; }
   }
   if(tok!==anyTok)return;
   anyRes={key,n:best?best.n:null,name:best&&best.name};
@@ -1045,7 +1109,8 @@ async function scheduleAny(){
 }
 function runAll(){
   // 最少人数おまかせは、設定(ボスのわざ・SP・回避・ブースト等)が変わると選ぶ1匹も変わる。先に選び直して表示と選択欄をそろえる
-  if(myMode==='fewest'&&boss)renderMy();
+  // 1位おまかせもチームパワーのオン・オフで選ぶ1匹とわざが変わる
+  if((myMode==='fewest'||myMode==='auto')&&boss)renderMy();
   syncMegaLv(); syncMegaNote();
   if(!boss||!$('bfSel').value){$('resBody').innerHTML='<div class="empty">ボスを選ぶと結果が出ます</div>';return;}
   if(!buildTeamCfg()){
