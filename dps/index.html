@@ -276,6 +276,12 @@ button:focus-visible,.modes button:focus-visible{outline:2px solid var(--violet)
 /* 極低耐久の除外=⚠️マークと同じオレンジ系(押している間は⚠️付きのポケモンが一覧から消える) */
 #fBulk{--mc:var(--mcO);--mg:linear-gradient(160deg,#ffc48a 0%,#f0762b 45%,#a8430e 100%);--mgl:rgba(240,118,43,.45)}
 /* 分割SP優遇=緑。押している間だけ「1ゲージ技より分割あり技を優先」の補正がかかる */
+#fTp,.tpseg button{--mc:#ff8fc8;--mg:linear-gradient(160deg,#ffb3db 0%,#e04f9e 45%,#9c2a68 100%);--mgl:rgba(224,79,158,.45)}
+:root.light #fTp,:root.light .tpseg button{--mc:#b03a7a}
+.tpseg{display:inline-flex;gap:2px}
+.tpseg button{border-radius:4px}
+.tpseg button:first-child{border-radius:11px 4px 4px 11px}
+.tpseg button:last-child{border-radius:4px 11px 11px 4px}
 #fSplit{--mc:var(--mcG);--mg:linear-gradient(160deg,#7fe0a0 0%,#17864a 45%,#0b4d2a 100%);--mgl:rgba(23,134,74,.45)}
 /* 水色は明るいので、点灯したときだけ文字を濃くする(紫・マゼンタは白のままで読める) */
 #mShield[aria-pressed="true"],.seg button[aria-pressed="true"]{color:#042330}
@@ -479,6 +485,8 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <button id="mShield" type="button" aria-pressed="false" title="スーパーメガレイドでボスのシールドを壊す役向きのランキングに切り替えます（使えるのはメガシンカだけなのでメガのみの一覧になります）">🛡シールド破壊</button>
     <button id="fBulk" type="button" aria-pressed="false" title="⚠️極低耐久（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）のポケモンを一覧から外します。順位は外したあとの並びで振り直します">⚠️極低耐久を除外</button>
     <button id="fSplit" type="button" aria-pressed="false" title="1ゲージのSPアタックが1位でも、ゲージ2分割・3分割のSPアタックとの火力差が7%未満ならそちらを優先します（分割ありは早く撃てるので実戦向き）。押していないあいだは、純粋に火力がいちばん高い組み合わせで順位を出します">分割SP優遇</button>
+    <button id="fTp" type="button" aria-pressed="false" title="パーティプレイのチームパワーを使ったときの火力で並べます。わざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人+3P・最大18P）、満タンになったら次のSPアタックが2倍になります。満タンのあとにたまった分は捨てられる前提で、2倍になるSPアタックの割合を順に数えます">チームパワー</button>
+    <span class="tpseg" id="tpSeg" style="display:none"><button type="button" data-n="2" aria-pressed="false" title="2人でパーティを組んだとき（わざ1回で+1P）">2人</button><button type="button" data-n="3" aria-pressed="false" title="3人でパーティを組んだとき（わざ1回で+2P）">3人</button><button type="button" data-n="4" aria-pressed="true" title="4人でパーティを組んだとき（わざ1回で+3P）">4人</button></span>
     <div id="megalv"></div>
   </div>
   <div id="mineSummary"></div>
@@ -545,6 +553,13 @@ footer{font-size:.7rem;color:var(--sub);text-align:center;padding:14px 0 30px}
     <li><b>⚠️極低耐久</b>は倒されやすい目安（防御種族値×HP種族値が16000未満。シャドウは防御が下がるぶんも込みで判定）。「⚠️極低耐久を除外」タブで一覧から外せます（順位は外したあとの並びで振り直します）</li>
   </ul>
 
+  <h4>チームパワー</h4>
+  <ul>
+    <li>「チームパワー」を押すと、パーティプレイのチームパワーを使ったときの火力で並べます。<b>2人・3人・4人</b>から選べます</li>
+    <li>わざ1回ごとにメーターがたまり（2人+1P・3人+2P・4人+3P）、<b>18P</b>で満タンです。満タンになったら次のSPアタックが<b>2倍</b>になり、メーターは0に戻ります</li>
+    <li>満タンになってから次のSPアタックまでにたまった分は捨てられます。2倍になるSPアタックの割合は、平均ではなく<b>わざを1回ずつ順に数えて</b>出しています</li>
+    <li>満タンになったらすぐ使う前提です。わざ構成も、チームパワーを使ったときにいちばん火力が高い組み合わせで選び直します</li>
+  </ul>
   <h4>🛡 シールド破壊（スーパーメガレイド用）</h4>
   <ul>
     <li>シールドは<b>メガシンカポケモンがSPアタックを撃つと1枚壊せます</b>（1人1枚・タイプ不問）</li>
@@ -618,13 +633,50 @@ function fastMoves(p, shadow){ return [...p.q.map(m=>({id:m,sp:false})), ...p.eq
 function devPlusOf(p, shadow){ return shadow===undefined||!window.GonaviDevAdd?[]:GonaviDevAdd.plusFor(p.n).map(id=>({id,sp:false})); }
 function chgMoves(p, shadow){ return [...p.c.map(m=>({id:m,sp:false})), ...p.ec.map(m=>({id:m,sp:true})), ...devMvOf(p,shadow,'c'), ...devPlusOf(p,shadow)].filter(x=>D.moves[x.id]); }
 
+// ---- チームパワー（ランキング用・2026-11-14タダシさん指示）----
+// 平均の式ではなく、レイドシミュと同じ決まりで順に数える: わざ1回ごとに+tp（18Pで止まり、あふれた分は捨てる）。
+// 満タンで撃つSPアタックが2倍になり0Pに戻る（そのSPのぶんの+tpは戻したあとに足す）。
+// ゲージとメーターの組が前と同じになったらそこから先はくり返しなので、そのあいだの「2倍の数÷SPの数」を返す。
+// 決まるのはノーマルのゲージ・SPの消費・tp だけ（レベル・相手に関係ない）なので覚えておく
+const TP_MAX=18, tpCovMemo=new Map();
+function tpCover(fe, ce, tp){
+  if(!tp||fe<=0||ce<=0) return 0;
+  const key=fe+'|'+ce+'|'+tp;
+  if(tpCovMemo.has(key)) return tpCovMemo.get(key);
+  let en=0, meter=0, sp=0, dbl=0, res=null;
+  const seen=new Map();
+  for(let i=0;i<200000&&res===null;i++){
+    en=Math.min(100,en+fe); meter=Math.min(TP_MAX,meter+tp);   // ノーマルアタック1回
+    while(en>=ce&&res===null){                                  // ゲージがたまったらすぐSPアタック
+      const st=en+'|'+meter;
+      if(seen.has(st)){ const s=seen.get(st); res=(dbl-s.dbl)/(sp-s.sp); break; }
+      seen.set(st,{sp,dbl});
+      if(meter>=TP_MAX){ dbl++; meter=0; }
+      meter=Math.min(TP_MAX,meter+tp); en-=ce; sp++;
+    }
+  }
+  if(res===null) res=sp?dbl/sp:0;
+  tpCovMemo.set(key,res);
+  return res;
+}
+// ランキングのチームパワー（ボタン・人数）。人数→わざ1回の上昇P（2人=1・3人=2・4人=3）
+let fTp=false, tpN=4;
+const rankTp=()=>fTp?tpN-1:0;
+// 登録した自分のポケモン用: 1つのわざ構成のチームパワー込みの火力（2倍は切り捨ての前に掛ける）
+function tpComboDPS(p, m1, m2, atkReal, bossTypes, shadow, tp){
+  const r=comboDPS(p,m1,m2,atkReal,bossTypes,shadow);
+  if(!r||!tp) return r;
+  const n2=(m1.e*100)/Math.abs(m2.e), t=m1.d*100+m2.d*n2, cov=tpCover(m1.e,Math.abs(m2.e),tp);
+  const d2x=dmg(p,m2,atkReal,bossTypes,shadow,undefined,2);
+  return {dps:(r.d1*100+n2*(r.d2*(1-cov)+d2x*cov))/t, d1:r.d1, d2:r.d2};
+}
 // 全レベル(PL1〜51, 0.5刻み)の多数決で最適技構成を決定。
 // 既定は「純粋に火力がいちばん高い構成」。「分割SP優遇」(fSplit)を押しているあいだだけ、
 // 各レベルで1位が「ゲージ分割なし(1ゲージ技)」の場合に、分割あり(2/3ゲージ)の最高構成との
 // 火力差が7%未満なら分割ありをそのレベルの勝者とする(ドラゴン7%ルール)。
 const LEVELS=[];
 for(let l=1;l<=51;l+=0.5){ const m=D.cpm[String(l)]; if(m) LEVELS.push(m); }
-function bestCombo(p, bossTypes, shadow){
+function bestCombo(p, bossTypes, shadow, tp){
   const fs=fastMoves(p,shadow).filter(x=>D.moves[x.id].e>0);
   const cs=chgMoves(p,shadow).filter(x=>D.moves[x.id].e<0);
   if(!fs.length||!cs.length) return null;
@@ -639,7 +691,7 @@ function bestCombo(p, bossTypes, shadow){
     for(const c of cs){ const m2=D.moves[c.id];
       const n2=(m1.e*100)/Math.abs(m2.e);
       const t=m1.d*100+m2.d*n2;
-      if(t>0) combos.push({f,c,n2,t,split:Math.abs(m2.e)<100});
+      if(t>0) combos.push({f,c,n2,t,split:Math.abs(m2.e)<100,cov:tp?tpCover(m1.e,Math.abs(m2.e),tp):0});
     }}
   if(!combos.length) return null;
   const tally=new Map();
@@ -648,7 +700,7 @@ function bestCombo(p, bossTypes, shadow){
     let best=null,bestSplit=null;
     for(const cb of combos){
       const d1=Math.floor(coef[cb.f.id]*atk+1), d2=Math.floor(coef[cb.c.id]*atk+1);
-      const v=(d1*100+d2*cb.n2)/cb.t;
+      const v=(d1*100+cb.n2*(cb.cov?d2*(1-cb.cov)+Math.floor(coef[cb.c.id]*2*atk+1)*cb.cov:d2))/cb.t;
       if(!best||v>best.v) best={v,cb};
       if(cb.split&&(!bestSplit||v>bestSplit.v)) bestSplit={v,cb};
     }
@@ -664,7 +716,7 @@ function bestCombo(p, bossTypes, shadow){
     const key=cb.f.id+'|'+cb.c.id, votes=tally.get(key)||0;
     if(!votes) continue;
     const d1=Math.floor(coef[cb.f.id]*atk50+1), d2=Math.floor(coef[cb.c.id]*atk50+1);
-    const dps=(d1*100+d2*cb.n2)/cb.t;
+    const dps=(d1*100+cb.n2*(cb.cov?d2*(1-cb.cov)+Math.floor(coef[cb.c.id]*2*atk50+1)*cb.cov:d2))/cb.t;
     if(!winner||votes>winner.votes||(votes===winner.votes&&dps>winner.dps))
       winner={votes,dps,f:cb.f,c:cb.c};
   }
@@ -1187,7 +1239,7 @@ function bindMineCtl(sumEl){
   });
 }
 // ---- ranking ----
-const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield'), bulkBtn=document.getElementById('fBulk'), splitBtn=document.getElementById('fSplit');
+const shadowBtn=document.getElementById('fShadow'), megaBtn=document.getElementById('fMega'), shieldBtn=document.getElementById('mShield'), bulkBtn=document.getElementById('fBulk'), splitBtn=document.getElementById('fSplit'), tpBtn=document.getElementById('fTp'), tpSeg=document.getElementById('tpSeg');
 const megalvBox=document.getElementById('megalv');
 MegaLv.mount(megalvBox);
 // いま出している一覧に「＋わざ」の行があるか。メガLvが効くのはその行だけなので、
@@ -1232,6 +1284,9 @@ function syncModes(){
   // シールド破壊はメガ専用の一覧なので、その間は他の絞り込みを使わない
   // (シールド破壊はそもそも分割SP持ちだけの一覧なので、分割SP優遇も効かない)
   shadowBtn.disabled=shieldMode; megaBtn.disabled=shieldMode; bulkBtn.disabled=shieldMode; splitBtn.disabled=shieldMode;
+  tpBtn.setAttribute('aria-pressed',fTp); tpBtn.disabled=shieldMode;
+  tpSeg.style.display=fTp&&!shieldMode?'':'none';
+  tpSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.n===tpN));
   // メガLvはメガを出しているときだけ見せる。ただし既定(Lv4)から変えているあいだは常に見せる
   // (見えない前提で数字が変わらないようにするため)
   syncMegaLvVis();
@@ -1240,6 +1295,8 @@ shadowBtn.onclick=()=>{fShadow=!fShadow;showN=30;syncModes();renderRank();};
 megaBtn.onclick=()=>{fMega=!fMega;showN=30;syncModes();renderRank();};
 bulkBtn.onclick=()=>{fBulk=!fBulk;showN=30;syncModes();renderRank();};
 // わざ構成が変わる＝最少討伐人数の1位アタッカーも変わるので、そちらも出し直す
+tpBtn.onclick=()=>{fTp=!fTp;showN=30;syncModes();renderRank();};
+tpSeg.querySelectorAll('button').forEach(b=>b.onclick=()=>{tpN=+b.dataset.n;showN=30;syncModes();renderRank();});
 splitBtn.onclick=()=>{fSplit=!fSplit;showN=30;syncModes();if(boss)renderMinPlayers();renderRank();};
 shieldBtn.onclick=()=>{
   shieldMode=!shieldMode; showN=30;
@@ -1277,11 +1334,11 @@ function buildRanking(){
     if(!p.mega && !p.fe) continue; // 進化前はランキングに表示しない(ボス選択・自分の登録では選択可)
     // 極低耐久の除外はシャドウ補正込みで行ごとに判定(素は残ってシャドウだけ消えるポケモンがある)
     if(!(fBulk&&isLowBulk(p,false))){
-      const base=bestCombo(p,bt,false);
+      const base=bestCombo(p,bt,false,rankTp());
       if(base) rows.push({k,p,shadow:false,...base});
     }
     if((p.shadow||devSh.has(k)||(window.GonaviDevMv&&GonaviDevMv.hasShadow(p.n))) && fShadow && !(fBulk&&isLowBulk(p,true))){
-      const s=bestCombo(p,bt,true);
+      const s=bestCombo(p,bt,true,rankTp());
       if(s) rows.push({k,p,shadow:true,...s});
     }
   }
@@ -1316,7 +1373,7 @@ function mineRows(){
     // ＋わざはその個体に設定したメガレベルの威力で計算する
     // (ランキング側のメガLvは全員をそろえた物差しなので、こちらとは別扱い)
     const m2=PLUS_IDS.includes(e.c)?{...D.moves[e.c],p:MegaLv.powerAt(D.moves[e.c],mineMlv(e))}:D.moves[e.c];
-    const r=comboDPS(p,m1,m2,atk,bt,e.shadow);
+    const r=tpComboDPS(p,m1,m2,atk,bt,e.shadow,rankTp());
     return {i,e,p,dps:r?r.dps:0};
   });
 }

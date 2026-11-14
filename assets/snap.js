@@ -32,7 +32,7 @@
   // cat＝キョダイマックス／ダイマックス／特別の札（名前の上に札と同じ色の小さな文字で出す・2026-10-03タダシさん指示）
   var PUB = {
     '/dps/': { target: '#rankList', rows: '.rank-row', drop: '.more', ctx: ['#bossView .bossname'],
-               tags: '.c-rank .modes [aria-pressed="true"]', title: 'レイド火力ランキング',
+               tags: '.c-rank .modes [aria-pressed="true"]:not(#fTp)', title: 'レイド火力ランキング',
                graph: { name: '.rname .nm', val: '.rdps', shadow: '.rname .shadowmark,.rname .sh', unit: 'DPS', head: '#bossView .bossname', floor: 35,
                        floorOn: '#fShadow[aria-pressed="true"],#fMega[aria-pressed="true"]', floorUp: 40 } },
     '/bulk/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn',
@@ -502,6 +502,7 @@
       if (/^シャドウ/.test(t)) t = 'シャドウ含む';
       else if (t === 'メガ・ゲンシ') t = 'メガ・ゲンシ含む';
       else if (/^[1-4]$/.test(t) && b.closest('.megalv,.mlvseg')) t = 'メガLv' + t;
+      else if (b.closest('.tpseg')) t = 'チームパワー' + t;   // レイド火力の人数（ボタンは「2人」だけなので名前を足す）
       if (t && t.length <= 16 && out.indexOf(t) < 0) out.push(t);
     });
     return out;
