@@ -340,6 +340,49 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .res .legend li em{font-size:11.5px;width:3em;color:var(--rsub)}
 .res .note{color:var(--rsub)}
 
+
+/* ── 画像専用の「値段と中身」カード（開発者だけ・動画用・2026-11-16タダシさん指示） ──
+   入力欄の見た目ではなく、結果の枠と同じ「ガラスと金」で値段と中身を1枚にまとめる。動画用なので常にダークの色で描く */
+.scard{position:absolute;left:-10000px;top:0;width:380px;border-radius:22px;padding:16px 14px 16px;color:#eef1fb;font-family:"Noto Sans JP","Hiragino Sans",sans-serif;
+  background:radial-gradient(120% 60% at 0% 0%,rgba(255,214,120,.16),transparent 55%),radial-gradient(100% 70% at 100% 100%,rgba(140,110,255,.22),transparent 60%),linear-gradient(160deg,#241a4a,#18204a 55%,#121836);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.4)}
+.scard::before{content:"";position:absolute;inset:0;border-radius:22px;padding:1px;pointer-events:none;
+  background:linear-gradient(135deg,#ffe7a3,#b9862a 25%,#5d4aa8 55%,#9e8cff 80%,#ffe7a3);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.scard .scst{display:flex;align-items:center;gap:12px;border-radius:16px;padding:12px 14px 12px 10px;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02) 40%,rgba(0,0,0,.18)),#0f1430;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06)}
+.scard .scst::after{content:"";position:absolute;left:-20%;top:-60%;width:70%;height:120%;transform:rotate(25deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+.scard .scart{flex:none;width:96px;height:96px;display:flex;align-items:center;justify-content:center}
+.scard .scart svg{width:96px;height:96px}
+.scard .scpr{flex:1;min-width:0;text-align:right}
+.scard .sccap{display:flex;align-items:baseline;justify-content:flex-end;gap:6px;font-size:11px;font-weight:800;color:#b9c0e6}
+.scard .sccap em,.scard h4 em{font:600 9px "Oswald",sans-serif;letter-spacing:.22em;color:#d8b25a;font-style:normal}
+.scard .scbig{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-top:6px}
+.scard .scbig .coin{font-size:26px}
+.scard .scbig b{font:700 50px/1 "Oswald",sans-serif;letter-spacing:-.01em;
+  background:linear-gradient(180deg,#fffbe9 0%,#ffe08a 30%,#f7c143 48%,#a8670a 52%,#e9a93a 70%,#fff0b8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 #6b4306) drop-shadow(0 1px 0 #5a3705) drop-shadow(0 1px 0 #482c04) drop-shadow(0 5px 6px rgba(0,0,0,.55))}
+.scard .scbig span{font-size:12px;font-weight:800;color:#b9c0e6;align-self:flex-end;margin-bottom:4px}
+.scard .scyen{margin-top:4px;font:600 17px "Oswald",sans-serif;color:#fff}
+.scard .scyen small{font:800 10px "Noto Sans JP",sans-serif;color:#9aa3cc;margin-right:6px}
+.scard h4{display:flex;align-items:center;gap:8px;margin:16px 2px 9px;font-size:11px;font-weight:800;color:#b9c0e6}
+.scard h4::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(216,178,90,.6),transparent)}
+.scard h4 b{order:2;font:600 11px "Oswald",sans-serif;color:#9aa3cc;margin-left:auto}
+.scard .scls{display:grid;gap:6px}
+.scard .scit{position:relative;display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 12px 9px 14px;overflow:hidden;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--c) 20%,transparent),rgba(255,255,255,.02) 55%),#0f1430;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(255,255,255,.05)}
+.scard .scit::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 60%,#fff),var(--c))}
+.scard .scit .scgm{flex:none;width:12px;height:12px;border-radius:2px;transform:rotate(45deg) scale(.82);background:linear-gradient(135deg,color-mix(in srgb,var(--c) 45%,#fff),var(--c));box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.scard .scit .scnm{flex:1;min-width:0;font-size:14px;font-weight:800;line-height:1.3}
+.scard .scit .scnm small{display:block;font:500 10.5px "Oswald","Noto Sans JP",sans-serif;color:#9aa3cc;letter-spacing:.02em}
+.scard .scit .scct{font:700 30px/1 "Oswald",sans-serif;color:#fff;white-space:nowrap}
+.scard .scit .scct i{font-style:normal;font-size:16px;color:#b9c0e6;margin-right:2px}
+.scard .scit.scoff{opacity:.45}
+.scard .scit.scoff .scnm{text-decoration:line-through}
+.scard .scit .sctag{flex:none;font-size:9.5px;font-weight:800;color:#c9cfee;border:1px solid rgba(201,207,238,.4);border-radius:99px;padding:1px 7px}
+.scard .scft{display:flex;justify-content:space-between;align-items:baseline;margin:12px 4px 0;padding-top:9px;border-top:1px dotted rgba(185,192,230,.3);font-size:11px;font-weight:800;color:#9aa3cc}
+.scard .scft b{font:600 18px "Oswald",sans-serif;color:#fff;margin-left:6px}
+
 /* 下の帯 */
 .dock{position:fixed;left:0;right:0;bottom:0;padding:16px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,var(--fade0),var(--fade1) 34%);pointer-events:none;z-index:5}
 .bar{position:relative;max-width:536px;margin:0 auto;border-radius:17px;background:var(--dockbg);border:1px solid var(--barline);padding:10px 14px 11px;display:flex;align-items:center;gap:12px;pointer-events:auto;
@@ -428,7 +471,7 @@ button.pr:active{background:var(--selbg)}
 <div class="card c-items" id="list"></div>
 <p class="enote expl">スイッチを切ったアイテムは、要らないものとして計算から外します。行の左の色は、結果の「中身の内訳」の帯と同じ色です。</p>
 </div>
-<div class="snapbar" id="inSnap" hidden data-snap-skip><button type="button" class="snapbtn" data-big="0" title="ボックスの値段と中身をまとめて1枚の画像にして保存します（開発者だけ）">📷 入力をまとめて保存</button><button type="button" class="snapbtn alt" data-big="1" title="ボックスの値段と中身をまとめて、1920×1440の中央に大きく置いて保存します（開発者だけ）">1920×1440</button></div>
+<div class="snapbar" id="inSnap" hidden data-snap-skip><button type="button" class="snapbtn" data-big="0" title="ボックスの値段と中身を、画像用にまとめたカードにして保存します（開発者だけ）">📷 値段と中身を画像に</button><button type="button" class="snapbtn alt" data-big="1" title="ボックスの値段と中身をまとめて、1920×1440の中央に大きく置いて保存します（開発者だけ）">1920×1440</button></div>
 <div id="detail"></div>
 
 <button class="helptab" id="helptab" type="button" aria-expanded="true">？ 使い方・計算の前提</button>
@@ -820,15 +863,35 @@ redraw();
 </script>
 <script src="/assets/snap.js"></script>
 <script>
-// 開発者だけ: 値段と中身（#inbox）をまとめて1枚の画像に（2026-11-15タダシさん指示・動画用）。
+// 開発者だけ: 値段と中身を、画像専用にまとめたカード（.scard）で1枚の画像に（2026-11-16タダシさん指示・動画用）。
+// 入力欄をそのまま写すのではなく、押した瞬間の入力からカードを組み立てて画面の外に置き、保存したら取り除く。
 // 結果の枠は、ほかのツールと同じく snap.js の枠ごとのボタンで保存する
 (function(){
-  const bar=document.getElementById('inSnap'), S=window.GonaviSnap;
-  if(!bar||!S||!S.isDev()) return;
+  const bar=document.getElementById('inSnap'), G=window.GonaviSnap;
+  if(!bar||!G||!G.isDev()) return;
   bar.hidden=false;
-  bar.addEventListener('click',e=>{
-    const b=e.target.closest('button'); if(!b) return;
-    S.devSave(document.getElementById('inbox'), b.dataset.big==='1', false, {name:'入力'});
+  function card(){
+    const C=num($('pc').value), Y=S.yen?num($('py').value):0;
+    let want=0, n=0;
+    const rows=S.rows.map(row=>{
+      const it=BY[row.id]; if(row.on){ want+=(it.p||0)*row.n; n++; }
+      return '<div class="scit'+(row.on?'':' scoff')+'" style="--c:'+colorOf(row.id)+'"><i class="scgm"></i>'+
+        '<span class="scnm">'+it.name+'<small>単品 '+(it.p==null?'−':fmtP(it.p))+(it.sub?'・'+it.sub:'')+'</small></span>'+
+        (row.on?'':'<span class="sctag">要らない</span>')+'<b class="scct"><i>×</i>'+fmt(row.n)+'</b></div>';
+    }).join('');
+    const el=document.createElement('div'); el.className='scard';
+    el.innerHTML='<div class="scst"><div class="scart">'+giftSvg(giftKind(),96)+'</div><div class="scpr">'+
+      '<div class="sccap">ボックスの値段<em>PRICE</em></div>'+
+      (C?'<div class="scbig"><i class="coin"></i><b>'+fmt(C)+'</b><span>コイン</span></div>':'')+
+      (Y?'<div class="scyen"><small>円で買うと</small>¥'+fmt(Y)+'</div>':'')+(!C&&!Y?'<div class="scbig"><b>−</b></div>':'')+'</div></div>'+
+      '<h4>中身<em>CONTENTS</em><b>'+S.rows.length+'種類</b></h4><div class="scls">'+rows+'</div>'+
+      (want?'<div class="scft">単品で買うと<span><b>'+fmt(want)+'</b> コイン</span></div>':'');
+    return el;
+  }
+  bar.addEventListener('click',async e=>{
+    const b=e.target.closest('button'); if(!b||!S.rows.length) return;
+    const el=card(); document.body.appendChild(el);
+    try{ await G.devSave(el, b.dataset.big==='1', false, {name:'値段と中身'}); } finally { el.remove(); }
   });
 })();
 </script>
