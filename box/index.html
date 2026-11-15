@@ -254,6 +254,92 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .legend li.off i{background:var(--hatch) !important} .legend li.off b{color:var(--offink)}
 .note{font-size:11px;color:var(--barsub);line-height:1.7;margin:10px 4px 0}
 
+/* ── 結果の枠「ガラスと金」（2026-11-15タダシさんが3案からA案を選択） ──
+   外枠＝金と紫の1pxの縁取り（::before のマスク）／2つのパネル＝ガラスの光沢／数字＝金属の押し出し／
+   メーター＝目盛り・筒の光の筋・先端の玉／ものさし＝10等分の刻み・金の札／内訳＝光沢の帯・宝石形の印・点線の明細。
+   ぼかしの光彩は使わない（動画用の画像ににじみが写るため・全ツール共通） */
+:root{
+  --rbg:radial-gradient(120% 60% at 0% 0%,rgba(255,214,120,.16),transparent 55%),radial-gradient(100% 70% at 100% 100%,rgba(140,110,255,.22),transparent 60%),linear-gradient(160deg,#241a4a,#18204a 55%,#121836);
+  --rring:linear-gradient(135deg,#ffe7a3,#b9862a 25%,#5d4aa8 55%,#9e8cff 80%,#ffe7a3);
+  --rsh:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.4),0 18px 40px -18px rgba(0,0,0,.8);
+  --tbg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02) 40%,rgba(0,0,0,.18)),#0f1430;
+  --tsh:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06);
+  --tsheen:rgba(255,255,255,.06); --rcap:#b9c0e6; --ren:#d8b25a; --rsub:#9aa3cc; --rstrong:#fff;
+  --gtrk:#090c20; --gtick:rgba(185,192,230,.35); --gknob:#eafff3;
+  --strk:#0a0e24; --strksh:inset 0 2px 4px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.08); --stick:rgba(10,14,36,.55);
+  --lead:rgba(185,192,230,.3);
+}
+:root.light{
+  --rbg:radial-gradient(120% 60% at 0% 0%,rgba(255,206,92,.22),transparent 55%),radial-gradient(100% 70% at 100% 100%,rgba(150,120,255,.18),transparent 60%),linear-gradient(160deg,#fffdf6,#f6f2ff 55%,#eef2fd);
+  --rring:linear-gradient(135deg,#e9c46a,#b8862a 25%,#8b7ad8 55%,#c2b6ff 80%,#e9c46a);
+  --rsh:inset 0 1px 0 rgba(255,255,255,.95),0 16px 30px -18px rgba(90,70,150,.45);
+  --tbg:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,246,255,.92));
+  --tsh:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(120,100,190,.16),0 2px 6px -3px rgba(80,60,140,.25);
+  --tsheen:rgba(255,255,255,.55); --rcap:#5f6888; --ren:#a37a12; --rsub:#677092; --rstrong:#20263a;
+  --gtrk:#e6e9f6; --gtick:rgba(95,104,136,.35); --gknob:#fff;
+  --strk:#e6e9f6; --strksh:inset 0 2px 4px rgba(40,50,100,.15),0 1px 0 #fff; --stick:rgba(255,255,255,.6);
+  --lead:rgba(95,104,136,.3);
+}
+.res{border:0;border-radius:22px;background:var(--rbg);box-shadow:var(--rsh);padding:14px 12px 16px}
+.res::before{top:0;bottom:0;height:auto;border-radius:22px;padding:1px;background:var(--rring);pointer-events:none;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.res .tiles{gap:9px}
+.res .tile{position:relative;overflow:hidden;border:0;border-radius:16px;background:var(--tbg);box-shadow:var(--tsh);padding:11px 12px 12px}
+.res .tile::after{content:"";position:absolute;left:-30%;top:-60%;width:90%;height:120%;transform:rotate(25deg);pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--tsheen),transparent)}
+.res .tile>span{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:6px;row-gap:1px;white-space:nowrap;font-size:11px;font-weight:800;color:var(--rcap);letter-spacing:.02em}
+.res .tile>span em,.res h3 em{font:600 9px "Oswald",sans-serif;letter-spacing:.22em;color:var(--ren);font-style:normal}
+.res .tile .v{font-size:64px;line-height:1;margin:9px 0 3px;letter-spacing:-.01em}
+.res .tile .v i{font-size:28px;margin-left:2px}
+.res .v3d:not(.r):not(.g){background-image:linear-gradient(180deg,#fffbe9 0%,#ffe08a 30%,#f7c143 48%,#a8670a 52%,#e9a93a 70%,#fff0b8 100%);
+  filter:drop-shadow(0 1px 0 #6b4306) drop-shadow(0 1px 0 #5a3705) drop-shadow(0 1px 0 #482c04) drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+.res .v3d.g{background-image:linear-gradient(180deg,#f2fff8 0%,#9ff5c8 45%,#2fbf7c 55%,#7fe8b4 100%)}
+:root.light .res .v3d:not(.r):not(.g){background-image:none;filter:none}
+:root.light .res .v3d.g{background-image:none}
+.res .tile .was{font-size:12px;color:var(--rsub);gap:5px}
+.res .tile .was s{position:relative;opacity:1;color:var(--rsub);text-decoration:none;font-size:13px}
+.res .tile .was s::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:#ff7a8a;transform:rotate(-12deg)}
+.res .tile .was b{font-size:16px;color:var(--rstrong)}
+.res .tile .was .coin{font-size:14px}
+.res .gwrap{max-width:140px;margin:4px auto 0}
+.res .gauge{max-width:140px}
+.res .gnum{top:46px;bottom:auto;font-size:29px}
+.res .gnum i{font-size:13px}
+.res .tile small{color:var(--rsub);font-size:10px;letter-spacing:.06em;margin-top:-1px}
+.gauge .gtk{stroke:var(--gtick);stroke-width:1.2;fill:none}
+.gauge .gbg{stroke:var(--gtrk);stroke-width:13}
+.gauge .gfl{stroke:url(#gg);stroke-width:9}
+.gauge .ghl{stroke:rgba(255,255,255,.4);stroke-width:2}
+:root.light .gauge .ghl{stroke:rgba(255,255,255,.75)}
+.gauge .gkn{fill:var(--gknob);stroke:#1d8f5a;stroke-width:2}
+.res h3{font-size:11px;font-weight:800;color:var(--rcap);letter-spacing:.02em;margin:18px 2px 10px}
+.res h3::after{background:linear-gradient(90deg,rgba(216,178,90,.6),transparent)}
+.res .scale{height:16px;margin:32px 4px 8px;background:var(--strk);box-shadow:var(--strksh)}
+.res .scale i{top:3px;bottom:3px;left:3px;max-width:calc(100% - 6px);background:linear-gradient(90deg,#1e7f5a,#3fd28e 60%,#8cf5c4)}
+.res .scale i::after{content:"";position:absolute;inset:0 0 50% 0;border-radius:99px 99px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.05))}
+.res .scale::after{content:"";position:absolute;inset:0;border-radius:99px;pointer-events:none;
+  background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),var(--stick) calc(10% - 1px) 10%)}
+.res .scale u{display:none}
+.res .scale s{top:-27px;font:600 11px "Oswald",sans-serif;color:#1b1407;padding:2px 7px;border-radius:6px;
+  background:linear-gradient(180deg,#fff2c4,#f3c24f 55%,#c88a1c);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 0 rgba(0,0,0,.35)}
+.res .scale s small{font:800 9px "Noto Sans JP","Hiragino Sans",sans-serif;margin-right:4px}
+.res .scale s::after{content:"";position:absolute;bottom:-5px;border:5px solid transparent;border-top-color:#c88a1c;border-bottom:0}
+.res .scale s.rt::after{right:4px} .res .scale s.lt::after{left:4px}
+.res .ends{font-size:10px;color:var(--rsub)}
+.res .ends b{font-size:16px;color:var(--rstrong);margin-top:1px}
+.res .band{gap:3px;height:16px}
+.res .band i{position:relative;border-radius:5px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+.res .band i::after{content:"";position:absolute;inset:0 0 55% 0;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0))}
+.res .band i.off::after{display:none}
+.res .legend{margin:12px 4px 0;gap:7px}
+.res .legend li{font-size:12.5px;font-weight:700;color:var(--ink)}
+.res .legend li i{width:11px;height:11px;border-radius:2px;transform:rotate(45deg) scale(.82);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.res .legend li span{flex:0 1 auto}
+.res .legend li .ld{flex:1 1 8px;min-width:8px;border-bottom:1px dotted var(--lead);transform:translateY(-3px)}
+.res .legend li b{font-size:14px;color:var(--rstrong)}
+.res .legend li em{font-size:11.5px;width:3em;color:var(--rsub)}
+.res .note{color:var(--rsub)}
+
 /* 下の帯 */
 .dock{position:fixed;left:0;right:0;bottom:0;padding:16px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,var(--fade0),var(--fade1) 34%);pointer-events:none;z-index:5}
 .bar{position:relative;max-width:536px;margin:0 auto;border-radius:17px;background:var(--dockbg);border:1px solid var(--barline);padding:10px 14px 11px;display:flex;align-items:center;gap:12px;pointer-events:auto;
@@ -512,10 +598,18 @@ function metaOf(row){     // 一覧の行の2段目（小計）
   return '<span class="num">' + fmtP(it.p) + ' × ' + row.n + ' ＝</span><b class="num">' + fmt(it.p * row.n) + '</b>';
 }
 const priceTag = it => '単品 ' + fmtP(it.p) + (it.best ? '・最安 ' + it.best : '') + (it.sub ? '・' + it.sub : '');
-function gauge(ot){       // お得度の半円メーター（0〜100%で弧が伸びる）
-  const L = 157.08, w = Math.max(0, Math.min(100, ot)) / 100 * L, d = 'M10 64A50 50 0 0 1 110 64';
-  return '<div class="gwrap"><svg class="gauge" viewBox="0 0 120 74" role="img" aria-label="お得度 ' + ot + '%"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="0"><stop offset="0" style="stop-color:var(--g1)"/><stop offset="1" style="stop-color:var(--g2)"/></linearGradient></defs>' +
-    '<path class="tr" d="' + d + '"/>' + (w > 0 ? '<path class="fl" d="' + d + '" stroke-dasharray="' + w.toFixed(1) + ' 400"/>' : '') +
+function gauge(ot){       // お得度の半円メーター（0〜100%で弧が伸びる・目盛り7本・筒の光の筋・先端の玉＝A案）
+  const R = 44, cx = 70, cy = 76, L = Math.PI * R, f = Math.max(0, Math.min(100, ot)) / 100, w = f * L;
+  const d = 'M26 76A44 44 0 0 1 114 76', hl = 'M26 74A44 44 0 0 1 114 74';
+  let tk = '';
+  for (let k = 0; k <= 6; k++){ const a = Math.PI * k / 6, c = Math.cos(a), s2 = Math.sin(a);
+    tk += '<line class="gtk" x1="' + (cx - 58 * c).toFixed(1) + '" y1="' + (cy - 58 * s2).toFixed(1) + '" x2="' + (cx - 53 * c).toFixed(1) + '" y2="' + (cy - 53 * s2).toFixed(1) + '"/>'; }
+  const kx = (cx - R * Math.cos(Math.PI * f)).toFixed(1), ky = (cy - R * Math.sin(Math.PI * f)).toFixed(1);
+  return '<div class="gwrap"><svg class="gauge" viewBox="0 0 140 84" role="img" aria-label="お得度 ' + ot + '%"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#1e7f5a"/><stop offset=".55" stop-color="#3fd28e"/><stop offset="1" stop-color="#b6ffdc"/></linearGradient></defs>' +
+    tk + '<path class="gbg" d="' + d + '" fill="none" stroke-linecap="round"/>' +
+    (w > 0 ? '<path class="gfl" d="' + d + '" fill="none" stroke-linecap="round" stroke-dasharray="' + w.toFixed(1) + ' 400"/>' +
+             '<path class="ghl" d="' + hl + '" fill="none" stroke-linecap="round" stroke-dasharray="' + Math.max(0, w - 4).toFixed(1) + ' 400"/>' +
+             '<circle class="gkn" cx="' + kx + '" cy="' + ky + '" r="6.5"/>' : '') +
     '</svg><b class="gnum num v3d ' + (ot < 0 ? 'r' : 'g') + '">' + ot + '<i>%</i></b></div>';
 }
 
@@ -573,19 +667,19 @@ function drawResult(){
 
   /* 結果の枠 */
   let h = '<div class="sh"><span class="en">Result</span><span class="ja">結果</span><i></i></div><div class="card res"><div class="tiles">' +
-    '<div class="tile" title="' + T_RT + '"><span>' + lbl + '</span><b class="v num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctN(o.mine) + '<i>%</i></b>' +
+    '<div class="tile" title="' + T_RT + '"><span>' + lbl + '<em>DISCOUNT</em></span><b class="v num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctN(o.mine) + '<i>%</i></b>' +
       '<div class="was"><s class="num">' + fmt(o.want) + '</s>→' + (o.by === 'yen' ? '' : '<i class="coin"></i>') + '<b class="num">' + how + '</b></div></div>' +
-    '<div class="tile" title="' + T_OT + '"><span>お得度</span>' + (ot != null ? gauge(ot) + '<small>最安値への近さ</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
+    '<div class="tile" title="' + T_OT + '"><span>お得度<em>VALUE</em></span>' + (ot != null ? gauge(ot) + '<small>最安値への近さ</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
   if (o.anyOff && o.label != null) h += '<p class="note">全部要るなら、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pct(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
   if (o.mine < 0) h += '<p class="note">' + (o.anyOff ? '要るものだけなら、' : '') + '単品で買うほうが ' + fmt(o.price - o.want) + ' コイン安くなります。</p>';
   if (ot != null){
     const kp = Math.max(1, Math.min(99, otw));
-    h += '<h3>お得度のものさし</h3><div class="scale"><i style="width:' + otw + '%"></i><u style="left:' + kp + '%"></u>' +
-      '<s class="num" style="' + (kp > 60 ? 'right:' + (100 - kp) + '%;margin-right:-8px' : 'left:' + kp + '%;margin-left:-8px') + '">このボックス ' + fmt(o.price) + '</s></div>' +
+    h += '<h3>お得度のものさし<em>SCALE</em></h3><div class="scale"><i style="width:' + otw + '%"></i><u style="left:' + kp + '%"></u>' +
+      '<s class="num ' + (kp > 60 ? 'rt' : 'lt') + '" style="' + (kp > 60 ? 'right:' + (100 - kp) + '%;margin-right:-8px' : 'left:' + kp + '%;margin-left:-8px') + '"><small>このボックス</small>' + fmt(o.price) + '</s></div>' +
       '<div class="ends"><div>0%　単品の合計<b class="num">' + fmt(o.want) + '</b></div><div>100%　最安値<b class="num">' + fmt(o.best) + '</b></div></div>' +
       '<p class="note expl">100%は、中身をこれまでのボックスの最安値で数えた合計です。</p>';
   }
-  h += '<h3>中身の内訳</h3><div class="band">';
+  h += '<h3>中身の内訳<em>CONTENTS</em></h3><div class="band">';
   S.rows.forEach(row => {
     const v = (BY[row.id].p || 0) * row.n; if (!v || !o.all) return;
     h += '<i class="' + (row.on ? '' : 'off') + '" style="flex:' + v + ' 1 0;background:' + colorOf(row.id) + '"></i>';
@@ -594,7 +688,7 @@ function drawResult(){
   /* 帯の色がどのアイテムかを1行ずつ（色の丸・名前・単品の合計の割合）。外したアイテムは斜線の丸と取り消し線 */
   h += '<ul class="legend">' + S.rows.map(row => {
     const v = (BY[row.id].p || 0) * row.n; if (!v || !o.all) return '';
-    return '<li class="' + (row.on ? '' : 'off') + '"><i style="background:' + colorOf(row.id) + '"></i><span>' + BY[row.id].name + '</span>' +
+    return '<li class="' + (row.on ? '' : 'off') + '"><i style="background:' + colorOf(row.id) + '"></i><span>' + BY[row.id].name + '</span><s class="ld"></s>' +
       '<b class="num">' + fmt(v) + '</b><em class="num">' + pct(v / o.all) + '</em></li>';
   }).join('') + '</ul>';
   $('detail').innerHTML = h + '</div>';
