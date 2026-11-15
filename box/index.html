@@ -326,8 +326,10 @@ button.pr:active{background:var(--selbg)}
 
 <div class="adslot" data-ad="top" data-snap-skip></div>
 
+<!-- 入力（値段と中身）をまとめた囲み。開発者だけ、この囲みを1枚の画像にして保存できる（2026-11-15タダシさん指示・動画用） -->
+<div id="inbox">
 <div class="sh"><span class="en">Price</span><span class="ja">ボックスの値段</span><i></i>
-  <div class="gtabs one"><button class="t-gold" id="yenBtn" type="button" aria-pressed="false" title="同じボックスが円でも売られているときに、コインと円のどちらで買うほうが安いかを比べます。">円でも比べる</button></div></div>
+  <div class="gtabs one" data-snap-skip><button class="t-gold" id="yenBtn" type="button" aria-pressed="false" title="同じボックスが円でも売られているときに、コインと円のどちらで買うほうが安いかを比べます。">円でも比べる</button></div></div>
 <div class="card c-price">
   <label class="disp"><i class="coin"></i><input id="pc" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="ボックスの値段（ポケコイン）"><span>コイン</span></label>
   <label class="disp yen" id="yenRow" hidden><i>¥</i><input id="py" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="ボックスの値段（円）"><span>円</span></label>
@@ -336,9 +338,11 @@ button.pr:active{background:var(--selbg)}
 <p class="enote expl">コインと円の両方を入れると、どちらで買うほうが安いかを比べます。割引率は安いほうの値段で計算します。</p>
 <div id="cmp"></div>
 
-<div class="sh"><span class="en">Contents</span><span class="ja">中身</span><i></i><button class="act" id="clrBtn" type="button" hidden>消す</button><button class="act" id="rcpBtn" type="button" hidden>レシート</button></div>
+<div class="sh"><span class="en">Contents</span><span class="ja">中身</span><i></i><button class="act" id="clrBtn" type="button" hidden data-snap-skip>消す</button><button class="act" id="rcpBtn" type="button" hidden data-snap-skip>レシート</button></div>
 <div class="card c-items" id="list"></div>
 <p class="enote expl">スイッチを切ったアイテムは、要らないものとして計算から外します。行の左の色は、結果の「中身の内訳」の帯と同じ色です。</p>
+</div>
+<div class="snapbar" id="inSnap" hidden data-snap-skip><button type="button" class="snapbtn" data-big="0" title="ボックスの値段と中身をまとめて1枚の画像にして保存します（開発者だけ）">📷 入力をまとめて保存</button><button type="button" class="snapbtn alt" data-big="1" title="ボックスの値段と中身をまとめて、1920×1440の中央に大きく置いて保存します（開発者だけ）">1920×1440</button></div>
 <div id="detail"></div>
 
 <button class="helptab" id="helptab" type="button" aria-expanded="true">？ 使い方・計算の前提</button>
@@ -720,5 +724,18 @@ document.addEventListener('keydown', e => { const el = cntEl(e); if (el && e.key
 redraw();
 </script>
 <script src="/assets/snap.js"></script>
+<script>
+// 開発者だけ: 値段と中身（#inbox）をまとめて1枚の画像に（2026-11-15タダシさん指示・動画用）。
+// 結果の枠は、ほかのツールと同じく snap.js の枠ごとのボタンで保存する
+(function(){
+  const bar=document.getElementById('inSnap'), S=window.GonaviSnap;
+  if(!bar||!S||!S.isDev()) return;
+  bar.hidden=false;
+  bar.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    S.devSave(document.getElementById('inbox'), b.dataset.big==='1', false, {name:'入力'});
+  });
+})();
+</script>
 </body>
 </html>
