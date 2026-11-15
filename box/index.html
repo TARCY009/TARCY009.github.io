@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ボックス割引率チェッカー｜ポケモンGOのセールボックスのお得度｜GOナビ</title>
 <!-- seo:start (build_seo.py が作る・手で編集しない) -->
-<meta name="description" content="ポケモンGOのショップのセールボックスが本当に安いかを調べるツール。ふかそうち・スーパーふかそうち・プレミアムバトルパス・リモートレイドパス・マックス粒子パック・ダイキノコの数を入れると、主要なアイテムだけで数えた割引率と、これまでのボックスの最安値にどこまで近いか（お得度）が分かります。コインと円の比較にも対応。">
+<meta name="description" content="ポケモンGOのショップのセールボックスが本当に安いかを調べるツール。ふかそうち・スーパーふかそうち・プレミアムバトルパス・リモートレイドパス・マックス粒子パック・ダイキノコの数を入れると、主要なアイテムだけで数えた割引率と、これまでのボックスの最安値をどこまで達成しているか（お得度・最安値の達成度）が分かります。コインと円の比較にも対応。">
 <link rel="canonical" href="https://gonavi.jp/box/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="GOナビ">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:title" content="ボックス割引率チェッカー｜ポケモンGO">
-<meta property="og:description" content="セールボックスの本当の割引率と、これまでの最安値への近さが分かります。">
+<meta property="og:description" content="セールボックスの本当の割引率と、これまでの最安値の達成度が分かります。">
 <meta property="og:url" content="https://gonavi.jp/box/">
 <meta property="og:image" content="https://gonavi.jp/assets/ogp/box.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ボックス割引率チェッカー">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"ボックス割引率チェッカー","url":"https://gonavi.jp/box/","description":"ポケモンGOのショップのセールボックスが本当に安いかを調べるツール。ふかそうち・スーパーふかそうち・プレミアムバトルパス・リモートレイドパス・マックス粒子パック・ダイキノコの数を入れると、主要なアイテムだけで数えた割引率と、これまでのボックスの最安値にどこまで近いか（お得度）が分かります。コインと円の比較にも対応。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"ボックス割引率チェッカー","url":"https://gonavi.jp/box/","description":"ポケモンGOのショップのセールボックスが本当に安いかを調べるツール。ふかそうち・スーパーふかそうち・プレミアムバトルパス・リモートレイドパス・マックス粒子パック・ダイキノコの数を入れると、主要なアイテムだけで数えた割引率と、これまでのボックスの最安値をどこまで達成しているか（お得度・最安値の達成度）が分かります。コインと円の比較にも対応。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"ja","isPartOf":{"@type":"WebSite","name":"GOナビ","url":"https://gonavi.jp/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}</script>
 <!-- seo:end -->
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/box/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/box/apple-touch-icon.png">
@@ -449,7 +449,7 @@ button.pr:active{background:var(--selbg)}
   <nav class="sitenav" aria-label="サイト内メニュー" data-snap-skip><a href="/">ツール一覧</a><a href="/guide/">読み物</a><a href="/about/">運営者情報</a></nav>
   <div class="eyebrow">Pok&eacute;mon GO Box Value</div>
   <h1><b class="wmk" data-tool="box">ボックス割引率</b><span class="wmksuf">チェッカー</span></h1>
-  <p class="intro">ポケモンGOのセールボックスが、どれだけ安いかを調べるツールです。ボックスの値段と、ふかそうち・パスなど主要なアイテムの数を入れ、要らないものはスイッチで外します。主要なアイテムだけで数えた割引率と、これまでのボックスの最安値にどこまで近いか（お得度）が分かります。</p>
+  <p class="intro">ポケモンGOのセールボックスが、どれだけ安いかを調べるツールです。ボックスの値段と、ふかそうち・パスなど主要なアイテムの数を入れ、要らないものはスイッチで外します。主要なアイテムだけで数えた割引率と、これまでのボックスの最安値をどこまで達成しているか（お得度・最安値の達成度）が分かります。</p>
   <div id="themesw"></div>
 </header>
 
@@ -477,7 +477,7 @@ button.pr:active{background:var(--selbg)}
 <button class="helptab" id="helptab" type="button" aria-expanded="true">？ 使い方・計算の前提</button>
 <div class="helpbody" id="helpbody">
   <h4>このツールでわかること</h4>
-  <p>セールボックスの値打ちは、ふかそうち・パスなどの<b>主要なアイテムがいくつ入っていて、その分がいくらか</b>で決まります。このツールは、主要なアイテムだけで数えた割引率と、<b>これまでのボックスの最安値にどこまで近いか（お得度）</b>を出します。</p>
+  <p>セールボックスの値打ちは、ふかそうち・パスなどの<b>主要なアイテムがいくつ入っていて、その分がいくらか</b>で決まります。このツールは、主要なアイテムだけで数えた割引率と、<b>これまでのボックスの最安値をどこまで達成しているか（お得度・最安値の達成度）</b>を出します。</p>
   <h4>使い方</h4>
   <ul>
     <li>ボックスの値段（ポケコイン）を入れます</li>
@@ -714,7 +714,7 @@ function drawResult(){
   let h = '<div class="sh"><span class="en">Result</span><span class="ja">結果</span><i></i></div><div class="card res"><div class="tiles">' +
     '<div class="tile" title="' + T_RT + '"><span>' + lbl + '<em>DISCOUNT</em></span><b class="v num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctN(o.mine) + '<i>%</i></b>' +
       '<div class="was"><s class="num">' + fmt(o.want) + '</s>→' + (o.by === 'yen' ? '' : '<i class="coin"></i>') + '<b class="num">' + how + '</b></div></div>' +
-    '<div class="tile" title="' + T_OT + '"><span>お得度<em>VALUE</em></span>' + (ot != null ? gauge(ot) + '<small>最安値への近さ</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
+    '<div class="tile" title="' + T_OT + '"><span>お得度<em>VALUE</em></span>' + (ot != null ? gauge(ot) + '<small>最安値の達成度</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
   if (o.anyOff && o.label != null) h += '<p class="note">全部要るなら、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pct(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
   if (o.mine < 0) h += '<p class="note">' + (o.anyOff ? '要るものだけなら、' : '') + '単品で買うほうが ' + fmt(o.price - o.want) + ' コイン安くなります。</p>';
   if (ot != null){
