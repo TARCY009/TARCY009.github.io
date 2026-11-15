@@ -434,7 +434,8 @@ const BUNDLES = [
   {g:'ウェブストア・期間限定（11月30日まで・各1回）', c:6000, y:5600, until:BF_END},
   {g:'ウェブストア・期間限定（11月30日まで・各1回）', c:2900, y:2800, until:BF_END}
 ].filter(b => !b.until || Date.now() < b.until);
-const COLORS = ['#22b8d9','#e6a91a','#9a78f0','#2fb878','#ef6fa6','#f08a3c','#6f8cf5','#b3bd2c'];
+// アイテムごとに色を固定する（2026-11-15タダシさん指示。旧: 入れた順番で色が変わっていた）
+const COLORS = {incu:'#f08a3c', sincu:'#9a78f0', battle:'#2fb878', remote:'#3f86f2', mp:'#ef6fa6', shroom:'#e2366e'};   // オレンジ・紫・緑・青・ピンク・赤とマゼンタの中間
 // 箱の絵。ゲーム内では、黒い箱はロケットレーダー入り・青いガラスの箱はリモートレイドパス入り・金に紺の箱はすごいわざマシン入り（コミュニティ・デイのボックス）のときだけ出る（タダシさん）。
 // その2つが中身にあればその箱、なければ残りの種類から開くたびに1つ（中身を足しても箱は変わらない）
 const GIFT_ONLY = {black: 'radar', remote: 'remote', gold: 'etm'};
@@ -458,7 +459,7 @@ const pctN = r => { const v = r * 100; return String(Math.abs(v) < 10 ? Math.rou
 const pct = r => pctN(r) + '%';
 const yenPerCoin = () => BUNDLES[S.bundle].y / BUNDLES[S.bundle].c;
 const rowOf = id => S.rows.find(r => r.id === id);
-const colorOf = id => COLORS[S.rows.findIndex(r => r.id === id) % COLORS.length];
+const colorOf = id => COLORS[id] || '#8a93b8';
 try{ const k = localStorage.getItem('site_box_bundle'); const i = BUNDLES.findIndex(b => b.g+'|'+b.c === k); if (i >= 0) S.bundle = i; }catch(e){}
 try{
   const o = JSON.parse(localStorage.getItem('site_box_state') || 'null');
