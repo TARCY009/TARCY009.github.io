@@ -301,11 +301,11 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .res .tile .was s::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:#ff7a8a;transform:rotate(-12deg)}
 .res .tile .was b{font-size:16px;color:var(--rstrong)}
 .res .tile .was .coin{font-size:14px}
-.res .gwrap{width:100%;max-width:240px;margin:auto auto 0;padding-top:4px}
+.res .gwrap{width:100%;max-width:230px;margin:auto auto 0;padding-top:7px}
 .res .gauge{width:100%;max-width:none}
-.res .gnum{top:auto;bottom:4%;font-size:clamp(28px,21cqw,50px)}
+.res .gnum{top:54%;bottom:auto;margin-top:-.5em;font-size:clamp(30px,23cqw,54px)}
 .res .gnum i{font-size:.44em}
-.res .tile small{color:var(--rsub);font-size:clamp(10px,6.2cqw,12px);letter-spacing:.06em;margin:2px 0 auto}
+.res .tile small{color:var(--rsub);font-size:clamp(10px,6.2cqw,12px);letter-spacing:.06em;margin:-13cqw 0 auto;position:relative}
 .gauge .gtk{stroke:var(--gtick);stroke-width:1.2;fill:none}
 .gauge .gbg{stroke:var(--gtrk);stroke-width:13}
 .gauge .gfl{stroke:url(#gg);stroke-width:9}
@@ -641,17 +641,19 @@ function metaOf(row){     // 一覧の行の2段目（小計）
   return '<span class="num">' + fmtP(it.p) + ' × ' + row.n + ' ＝</span><b class="num">' + fmt(it.p * row.n) + '</b>';
 }
 const priceTag = it => '単品 ' + fmtP(it.p) + (it.best ? '・最安 ' + it.best : '') + (it.sub ? '・' + it.sub : '');
-function gauge(ot){       // お得度の半円メーター（0〜100%で弧が伸びる・目盛り7本・筒の光の筋・先端の玉＝A案）
-  const R = 44, cx = 70, cy = 76, L = Math.PI * R, f = Math.max(0, Math.min(100, ot)) / 100, w = f * L;
-  const d = 'M26 76A44 44 0 0 1 114 76', hl = 'M26 74A44 44 0 0 1 114 74';
+function gauge(ot){       // お得度のメーター（240度の弧・0〜100%で伸びる・目盛り7本・筒の光の筋・先端の玉＝A案。2026-11-16 半円だと上が空くので240度に）
+  const R = 48, cx = 70, cy = 62, A0 = 210, SW = 240, L = SW / 360 * 2 * Math.PI * R;
+  const f = Math.max(0, Math.min(100, ot)) / 100, w = f * L;
+  const pt = (deg, r) => [(cx + r * Math.cos(deg * Math.PI / 180)).toFixed(1), (cy - r * Math.sin(deg * Math.PI / 180)).toFixed(1)];
+  const arc = r => { const [x1, y1] = pt(A0, r), [x2, y2] = pt(A0 - SW, r); return 'M' + x1 + ' ' + y1 + 'A' + r + ' ' + r + ' 0 1 1 ' + x2 + ' ' + y2; };
   let tk = '';
-  for (let k = 0; k <= 6; k++){ const a = Math.PI * k / 6, c = Math.cos(a), s2 = Math.sin(a);
-    tk += '<line class="gtk" x1="' + (cx - 58 * c).toFixed(1) + '" y1="' + (cy - 58 * s2).toFixed(1) + '" x2="' + (cx - 53 * c).toFixed(1) + '" y2="' + (cy - 53 * s2).toFixed(1) + '"/>'; }
-  const kx = (cx - R * Math.cos(Math.PI * f)).toFixed(1), ky = (cy - R * Math.sin(Math.PI * f)).toFixed(1);
-  return '<div class="gwrap"><svg class="gauge" viewBox="0 0 140 84" role="img" aria-label="お得度 ' + ot + '%"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#1e7f5a"/><stop offset=".55" stop-color="#3fd28e"/><stop offset="1" stop-color="#b6ffdc"/></linearGradient></defs>' +
-    tk + '<path class="gbg" d="' + d + '" fill="none" stroke-linecap="round"/>' +
-    (w > 0 ? '<path class="gfl" d="' + d + '" fill="none" stroke-linecap="round" stroke-dasharray="' + w.toFixed(1) + ' 400"/>' +
-             '<path class="ghl" d="' + hl + '" fill="none" stroke-linecap="round" stroke-dasharray="' + Math.max(0, w - 4).toFixed(1) + ' 400"/>' +
+  for (let k = 0; k <= 6; k++){ const d = A0 - SW * k / 6, [x1, y1] = pt(d, 62), [x2, y2] = pt(d, 57);
+    tk += '<line class="gtk" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>'; }
+  const [kx, ky] = pt(A0 - SW * f, R);
+  return '<div class="gwrap"><svg class="gauge" viewBox="0 0 140 116" role="img" aria-label="お得度 ' + ot + '%"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#1e7f5a"/><stop offset=".55" stop-color="#3fd28e"/><stop offset="1" stop-color="#b6ffdc"/></linearGradient></defs>' +
+    tk + '<path class="gbg" d="' + arc(R) + '" fill="none" stroke-linecap="round"/>' +
+    (w > 0 ? '<path class="gfl" d="' + arc(R) + '" fill="none" stroke-linecap="round" stroke-dasharray="' + w.toFixed(1) + ' 400"/>' +
+             '<path class="ghl" d="' + arc(R + 2) + '" fill="none" stroke-linecap="round" stroke-dasharray="' + Math.max(0, w * (R + 2) / R - 5).toFixed(1) + ' 400"/>' +
              '<circle class="gkn" cx="' + kx + '" cy="' + ky + '" r="6.5"/>' : '') +
     '</svg><b class="gnum num v3d ' + (ot < 0 ? 'r' : 'g') + '">' + ot + '<i>%</i></b></div>';
 }
