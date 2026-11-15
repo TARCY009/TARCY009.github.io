@@ -284,28 +284,28 @@ h1{font-size:1.45rem;margin:0;line-height:1.35;font-weight:900}
 .res::before{top:0;bottom:0;height:auto;border-radius:22px;padding:1px;background:var(--rring);pointer-events:none;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
 .res .tiles{gap:9px}
-.res .tile{position:relative;overflow:hidden;border:0;border-radius:16px;background:var(--tbg);box-shadow:var(--tsh);padding:11px 12px 12px}
+.res .tile{position:relative;overflow:hidden;border:0;border-radius:16px;background:var(--tbg);box-shadow:var(--tsh);padding:11px 12px 12px;container-type:inline-size}
 .res .tile::after{content:"";position:absolute;left:-30%;top:-60%;width:90%;height:120%;transform:rotate(25deg);pointer-events:none;
   background:linear-gradient(90deg,transparent,var(--tsheen),transparent)}
 .res .tile>span{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:6px;row-gap:1px;white-space:nowrap;font-size:11px;font-weight:800;color:var(--rcap);letter-spacing:.02em}
 .res .tile>span em,.res h3 em{font:600 9px "Oswald",sans-serif;letter-spacing:.22em;color:var(--ren);font-style:normal}
-.res .tile .v{font-size:64px;line-height:1;margin:9px 0 3px;letter-spacing:-.01em}
-.res .tile .v i{font-size:28px;margin-left:2px}
+.res .tile .v{font-size:clamp(58px,42cqw,96px);line-height:.95;margin:auto 0;padding:6px 0 4px;letter-spacing:-.01em;align-self:center}
+.res .tile .v i{font-size:.44em;margin-left:2px}
 .res .v3d:not(.r):not(.g){background-image:linear-gradient(180deg,#fffbe9 0%,#ffe08a 30%,#f7c143 48%,#a8670a 52%,#e9a93a 70%,#fff0b8 100%);
   filter:drop-shadow(0 1px 0 #6b4306) drop-shadow(0 1px 0 #5a3705) drop-shadow(0 1px 0 #482c04) drop-shadow(0 6px 8px rgba(0,0,0,.55))}
 .res .v3d.g{background-image:linear-gradient(180deg,#f2fff8 0%,#9ff5c8 45%,#2fbf7c 55%,#7fe8b4 100%)}
 :root.light .res .v3d:not(.r):not(.g){background-image:none;filter:none}
 :root.light .res .v3d.g{background-image:none}
-.res .tile .was{font-size:12px;color:var(--rsub);gap:5px}
+.res .tile .was{font-size:12px;color:var(--rsub);gap:5px;justify-content:center}
 .res .tile .was s{position:relative;opacity:1;color:var(--rsub);text-decoration:none;font-size:13px}
 .res .tile .was s::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:#ff7a8a;transform:rotate(-12deg)}
 .res .tile .was b{font-size:16px;color:var(--rstrong)}
 .res .tile .was .coin{font-size:14px}
-.res .gwrap{max-width:140px;margin:4px auto 0}
-.res .gauge{max-width:140px}
-.res .gnum{top:46px;bottom:auto;font-size:29px}
-.res .gnum i{font-size:13px}
-.res .tile small{color:var(--rsub);font-size:10px;letter-spacing:.06em;margin-top:-1px}
+.res .gwrap{width:100%;max-width:240px;margin:auto auto 0;padding-top:4px}
+.res .gauge{width:100%;max-width:none}
+.res .gnum{top:auto;bottom:4%;font-size:clamp(28px,21cqw,50px)}
+.res .gnum i{font-size:.44em}
+.res .tile small{color:var(--rsub);font-size:clamp(10px,6.2cqw,12px);letter-spacing:.06em;margin:2px 0 auto}
 .gauge .gtk{stroke:var(--gtick);stroke-width:1.2;fill:none}
 .gauge .gbg{stroke:var(--gtrk);stroke-width:13}
 .gauge .gfl{stroke:url(#gg);stroke-width:9}
