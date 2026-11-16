@@ -283,7 +283,8 @@ PAGES = [
        og_title='GOロケット団バトルの仕組み｜GOナビ', og_desc='硬直とSPアタックの待ち時間から、早く倒す考え方を解説。', ld='article'),
   dict(path='/backup/', key='home', title='データの引っ越し｜GOナビ',
        desc='ポケモンGO攻略ツール集「GOナビ」に保存した対戦記録・★登録・パーティなどを書き出して、別の端末やブラウザへ移せます。',
-       og_title='データの引っ越し｜GOナビ', og_desc='保存した記録を書き出して、別の端末やブラウザへ移せます。'),
+       og_title='データの引っ越し｜GOナビ', og_desc='保存した記録を書き出して、別の端末やブラウザへ移せます。',
+       nosm=True),  # 操作だけのページなのでサイトマップには載せない（2026-11-16）
 ]
 
 # 共有用画像でツール名が1行に入らないとき、折り返してよい位置（'|'）。語の途中で切らないため
@@ -552,6 +553,8 @@ def lastmod(fn):
 def write_sitemap():
     rows = []
     for p in PAGES:
+        if p.get('nosm'):
+            continue
         fn = (p.get('src') or [p['path'].strip('/') + '/index.html' if p['path'] != '/' else 'index.html'])[-1]
         lm = lastmod(fn)
         pr = '1.0' if p['path'] == '/' else ('0.3' if not p.get('ld') else '0.8')

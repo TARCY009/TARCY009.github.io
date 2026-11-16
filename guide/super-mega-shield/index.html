@@ -30,6 +30,16 @@
 <link rel="stylesheet" href="/assets/ads.css">
 <script>try{if(localStorage.getItem('site_theme')==='light')document.documentElement.className='light';}catch(e){}</script>
 <script src="/assets/ads.js"></script>
+<style>
+/* 測定の記録の表（この読み物だけ） */
+.bt{width:100%;border-collapse:collapse;margin:2px 0 14px;font-size:.86rem;font-variant-numeric:tabular-nums}
+.bt th,.bt td{padding:7px 6px;border-bottom:1px solid var(--hair);text-align:right}
+.bt th:first-child,.bt td:first-child{text-align:left}
+.bt thead th{font-size:.74rem;color:var(--sub);font-weight:700;white-space:nowrap}
+.bt caption{caption-side:top;text-align:left;font-size:.76rem;color:var(--sub);padding:0 0 4px}
+.bt td b{font-weight:900}
+.bt tbody tr:last-child td{border-bottom:0}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -87,6 +97,31 @@
   </dl>
   <p>攻撃の1.8倍は、CPから個体を特定したメガリザードンYが、シールド中のボスのSPアタックでどれだけHPを減らしたかを整数のダメージで照らし合わせて確かめています。防御の倍率は、実測で確定したらこのページに書き足します。</p>
   <p>シールドが残っていても<b>ダメージは通ります</b>。防御が硬くなるぶん削るのは遅くなりますが、制限時間内に削り切れば、シールドを割らなくても討伐できます。人数がシールドの枚数に足りないときは、この「割らずに削り切る」形になります。</p>
+</section>
+
+<section class="card">
+  <h2>測定の記録（攻撃1.8倍）</h2>
+  <p>攻撃の倍率は、運営者が実際のスーパーメガレイドで測りました。条件と数字をそのまま載せます。</p>
+  <dl class="facts">
+    <dt>測った日</dt><dd>2026年8月28日</dd>
+    <dt>受けた側</dt><dd>メガリザードンY（個体値15/15/15・PL50・CP5037）。CPから個体を１つに特定し、HP168・防御190.75と計算</dd>
+    <dt>撃った側</dt><dd>シールドを張っているメガエアームド（スーパーメガレイドのボス）のゴッドバード１発</dd>
+    <dt>条件</dt><dd>天候ブーストなし</dd>
+    <dt>見えた結果</dt><dd>HPが約61%減った（HPバーの読み）＝ダメージ100〜105</dd>
+  </dl>
+  <p>ダメージは整数で出るので、倍率ごとに「残るHP」を計算して、見えた結果と比べました。</p>
+  <table class="bt">
+    <caption>倍率ごとの残るHP（計算）と、見えた結果（残り約39%）</caption>
+    <thead><tr><th scope="col">倍率</th><th scope="col">残るHP</th><th scope="col">見えた結果と</th></tr></thead>
+    <tbody>
+      <tr><td><b>1.8倍</b></td><td>38.1%</td><td><b>合う</b></td></tr>
+      <tr><td>1.9倍</td><td>35.1%</td><td>合わない</td></tr>
+      <tr><td>2.0倍</td><td>31.5%</td><td>合わない</td></tr>
+    </tbody>
+  </table>
+  <p>ダメージ100〜105から逆算した倍率は1.73〜1.83で、1.8倍だけがこの範囲に入ります。以前は「シールド中は２倍」と言われていましたが、HPバーを大まかに読んだ値で、この測定とは合いませんでした。</p>
+  <p><b>この測定の限界</b>：測ったのは１回で、HPの減り方はバーの見た目から読んでいます。ほかのボス・ほかのわざでも同じ倍率かは、まだ確かめていません。新しい測定で違う結果が出たら、このページとツールの数字を直します。</p>
+  <p>防御の倍率は、別のバトルの記録（メガミュウツーXを４人でシールドを割らずに討伐・残り65秒）から逆算すると2.4〜3.7倍の範囲になり、いちばん有力なのは3.6倍前後です。こちらは実測で確定していないので、ツールでは暫定値として扱っています。</p>
 </section>
 
 <section class="card">
