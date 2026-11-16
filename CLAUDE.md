@@ -418,6 +418,8 @@ iv-checker・pokedex・gbl/rocket/battlelog（`assets/gbl.css`）・max-battle�
   ③**`sitemap.xml`**（18ページ・lastmod は git の最終更新日） ④**`robots.txt`**（/feedback/・/scratchpad/ 等を除外）
 - **⚠ seo:start〜seo:end の中と `<title>` は手で編集しない**。`build_seo.py` の `PAGES` 表を直して流し直す。
   **ツール名・説明を変えたら必ず流し直す**（manifest の name・apple-mobile-web-app-title と同じく一緒に直すもの）
+- **読み物の見出しの下の「文: TARCY／更新日」（`<!-- byline:start -->〜<!-- byline:end -->`）も build_seo.py が書く**（2026-11-16タダシさん指示・手で編集しない）。更新日＝自動で書く部分を除いた中身が変わった最後の保存の日（保存前の書き換えがあれば今日）。**記事の本文を直したら保存の前に流し直す**。JSON-LD の datePublished/dateModified・サイトマップの日付も同じ値
+- **運営者情報のチャンネル登録者数は `build_about.py` が毎週月曜（update-meta.yml）に読み取って書き直す**（`<!-- yt-subs:start -->`〜。読めなければ前の値のまま）
 - **`<title>` は「ツール名｜ポケモンGOの◯◯｜GOナビ」の形**（タブで切れても読める）
 - **⚠ レイド火力チェッカーは `template.html` と `dps/index.html` の両方を書き換える**（表の `src`）
 - 画像のツール名は1行に入らなければ `NAME_BR` の `|` の位置で2行に折る（**語の途中で切らない**）。説明は「、」「。」「・」の後ろを優先して折り返す。
