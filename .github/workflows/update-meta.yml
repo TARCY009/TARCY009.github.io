@@ -61,6 +61,20 @@ jobs:
             echo "changed=1" >> "$GITHUB_OUTPUT"
           fi
 
+      # 運営者情報のチャンネル登録者数（build_about.py・2026-11-16タダシさん指示）。
+      # 読めなければ前の値のまま。変わったときだけ別のコミットで公開し、お知らせは出さない
+      - name: 運営者情報のチャンネル登録者数を更新
+        run: |
+          python3 build_about.py
+          if ! git diff --quiet about/index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add about/index.html
+            git commit -m "chore: 運営者情報のチャンネル登録者数を自動更新"
+            git pull --rebase
+            git push
+          fi
+
       # 変化があった回だけ、短い要約を「📢 GOナビのお知らせ」1つにコメントで足す＝メール1通（.github/notify.sh・2026-11-08タダシさん指示）。
       # 要約すると中身が残らない回（内部データの調整のみ・毎回同じ一覧だけ）は送らない
       - name: 更新結果をお知らせする

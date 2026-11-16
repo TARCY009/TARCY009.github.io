@@ -34,6 +34,9 @@ header{margin-bottom:18px}
   letter-spacing:.2em;text-transform:uppercase;color:var(--acc);margin-bottom:4px}
 h1{margin:0;font-size:1.45rem;font-weight:900;letter-spacing:.04em}
 .lead{margin:8px 0 0;color:var(--sub);font-size:.84rem}
+/* 読み物の著者名と更新日（build_seo.py が書く・2026-11-16） */
+.byline{margin:8px 0 0;color:var(--sub);font-size:.76rem;letter-spacing:.02em}
+.byline a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;
   padding:18px 18px 8px;margin-bottom:14px;box-shadow:var(--cardsh)}
 h2{margin:0 0 10px;font-size:1rem;font-weight:900;letter-spacing:.04em;
@@ -65,7 +68,7 @@ dl.facts>*:nth-last-child(-n+2){border-bottom:0}
 :root.light .cbtn{color:#fff;background:linear-gradient(160deg,#3fc6e0 0%,#0b8ea8 50%,#086a7d 100%)}
 .center{text-align:center}
 @media (max-width:430px){body{padding:12px 11px 56px}.card{padding:15px 14px 6px}
-  dl.facts{grid-template-columns:6.8em 1fr}h1{font-size:1.28rem}}
+  dl.facts{grid-template-columns:7.4em 1fr}h1{font-size:1.28rem}}
 
 /* ===== 読み物（/guide/）2026-09-22 ===== */
 ul.arts{list-style:none;padding:0;margin:0 0 6px}

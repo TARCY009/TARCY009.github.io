@@ -335,7 +335,9 @@ def head_block(p):
     elif ld == 'article':
         data = {'@context': 'https://schema.org', '@type': 'Article', 'headline': p['og_title'],
                 'url': url, 'description': p['desc'], 'inLanguage': 'ja',
-                'author': {'@type': 'Person', 'name': 'TARCY'},
+                'author': {'@type': 'Person', 'name': 'TARCY', 'url': SITE + '/about/'},
+                **({'datePublished': p['_pub']} if p.get('_pub') else {}),
+                **({'dateModified': p['_mod']} if p.get('_mod') else {}),
                 'publisher': {'@type': 'Organization', 'name': BRAND, 'url': SITE + '/'},
                 'isPartOf': {'@type': 'WebSite', 'name': BRAND, 'url': SITE + '/'}}
     else:
@@ -345,6 +347,62 @@ def head_block(p):
                  json.dumps(data, ensure_ascii=False, separators=(',', ':')) + '</script>')
     L.append('<!-- seo:end -->')
     return '\n'.join(L)
+
+
+# ---------------------------------------------------------------- 1') 記事の著者名と更新日（2026-11-16タダシさん指示）
+# 読み物の見出しの添え書き（.lead）の直後に <!-- byline:start -->〜<!-- byline:end --> を書く。手で編集しない。
+# 更新日＝その記事の最後の保存の日。保存していない書き換えがあれば今日（この印と seo の印の中は数えない）
+BYLINE = re.compile(r'\n?[ \t]*<!-- byline:start[^>]*-->.*?<!-- byline:end -->', re.S)
+
+
+def _strip_auto(s):
+    s = re.sub(r'<!-- seo:start.*?<!-- seo:end -->', '', s, flags=re.S)
+    return BYLINE.sub('', s)
+
+
+def article_dates(fn):
+    def git(*a):
+        try:
+            return subprocess.run(['git', *a], cwd=HERE, capture_output=True, text=True).stdout
+        except Exception:
+            return ''
+    pub = (git('log', '--diff-filter=A', '--follow', '--format=%cs', '--', fn).split() or [None])[-1]
+    # 中身（自動で書く部分を除く）が変わった最後の保存の日。著者名・seo の書き換えだけの保存は数えない
+    mod = None
+    revs = [l.split() for l in git('log', '--format=%H %cs', '--', fn).splitlines() if l.strip()]
+    for i, (h, d) in enumerate(revs):
+        older = git('show', f'{revs[i + 1][0]}:{fn}') if i + 1 < len(revs) else ''
+        if not older or _strip_auto(git('show', f'{h}:{fn}')) != _strip_auto(older):
+            mod = d
+            break
+    head = git('show', f'HEAD:{fn}')
+    cur = open(os.path.join(HERE, fn), encoding='utf-8').read()
+    if not head or _strip_auto(head) != _strip_auto(cur):
+        import datetime
+        mod = (datetime.datetime.utcnow() + datetime.timedelta(hours=9)).strftime('%Y-%m-%d')
+        pub = pub or mod
+    return pub, mod
+
+
+def jdate(d):
+    y, m, dd = d.split('-')
+    return f'{int(y)}年{int(m)}月{int(dd)}日'
+
+
+def patch_byline(fn, p):
+    path = os.path.join(HERE, fn)
+    s = open(path, encoding='utf-8').read()
+    body = BYLINE.sub('', s)
+    m = re.search(r'<h1[^>]*>.*?</h1>\s*<p class="lead">.*?</p>', body, re.S)
+    if not m:
+        raise SystemExit(f'{fn}: 見出しの添え書き（.lead）が見つかりません')
+    line = (f'\n  <!-- byline:start (build_seo.py が作る・手で編集しない) -->'
+            f'<p class="byline">文: <a href="/about/">TARCY</a>／更新日 {jdate(p["_mod"])}</p><!-- byline:end -->')
+    out = body[:m.end()] + line + body[m.end():]
+    if out != s:
+        open(path, 'w', encoding='utf-8').write(out)
+        return True
+    return False
 
 
 OLD_TAG = re.compile(
@@ -556,7 +614,7 @@ def write_sitemap():
         if p.get('nosm'):
             continue
         fn = (p.get('src') or [p['path'].strip('/') + '/index.html' if p['path'] != '/' else 'index.html'])[-1]
-        lm = lastmod(fn)
+        lm = p.get('_mod') or lastmod(fn)
         pr = '1.0' if p['path'] == '/' else ('0.3' if not p.get('ld') else '0.8')
         rows.append(f'  <url><loc>{SITE}{p["path"]}</loc>' + (f'<lastmod>{lm}</lastmod>' if lm else '') +
                     f'<priority>{pr}</priority></url>')
@@ -578,6 +636,11 @@ def main():
     made = set()
     for p in PAGES:
         files = p.get('src') or [('index.html' if p['path'] == '/' else p['path'].strip('/') + '/index.html')]
+        if p.get('ld') == 'article':
+            p['_pub'], p['_mod'] = article_dates(files[-1])
+            for fn in files:
+                if patch_byline(fn, p):
+                    print('著者名と更新日 ' + fn)
         for fn in files:
             ch = patch_head(fn, p)
             print(('更新 ' if ch else '変化なし ') + fn)
