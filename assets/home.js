@@ -191,21 +191,57 @@
   // ⚠ 処理の付け方は onclick のページと addEventListener のページ（マックスバトル・ジム挑戦・ジム防衛・個体値チェッカー）がある。
   //   どちらでも効くように本当に押す（click）。処理がまだ付いていなければ何も起きず aria-expanded が true のまま＝押し直す。
   //   どのページの処理も aria-expanded を書き換えるので、閉じたかどうかはそれで見る
-  function closeHelpIfPost() {
+  // ---- compact のときは「使い方」を見出しごとに開く箱にする（2026-11-17・タダシさん決定の案4） ----
+  // 切り替えは pageheader.css の --gonavi-mode の1行（full＝これまでどおり開いた文章・compact＝箱）。
+  // ・タイトルの下の3文の紹介文（header .intro）は「使い方」のいちばん上の箱「このツールでわかること」へ移す
+  // ・「使い方」の中は h4 の見出しごとに箱にして、最初は全部閉じる。見出しを押すと開く
+  // ・文章は消さない（隠すのは display だけ）。「使い方」のボタン自体は開いたまま
+  // ⚠ GBL・ロケット団・対戦記録は使い方の文章をあとから入れるので、h4 が入るまで少し待つ
+  function helpAccordion() {
     var mode = '';
     try { mode = getComputedStyle(document.documentElement).getPropertyValue('--gonavi-mode').trim(); } catch (e) {}
     if (mode !== 'compact') return;
     var tries = 0;
     (function step() {
-      var tab = document.getElementById('helptab');
-      if (tab && tab.getAttribute('aria-expanded') !== 'true') return;   // 閉じた（またはもともと閉じている）
-      if (tab) tab.click();
-      if (tab && tab.getAttribute('aria-expanded') !== 'true') return;
-      if (++tries < 80) setTimeout(step, 150);   // 最大12秒ほど待つ（GBLはデータを読んでから処理を付ける）
+      var body = document.getElementById('helpbody');
+      if (!body || !body.querySelector('h4')) { if (++tries < 80) setTimeout(step, 150); return; }
+      if (body.getAttribute('data-acc') === '1') return;
+      body.setAttribute('data-acc', '1');
+      function sec(title, nodes, isH4) {
+        var box = document.createElement('div'); box.className = 'hacc';
+        var h = isH4 || document.createElement('h4');
+        if (!isH4) h.textContent = title;
+        h.classList.add('hacch'); h.setAttribute('role', 'button'); h.setAttribute('tabindex', '0'); h.setAttribute('aria-expanded', 'false');
+        var b = document.createElement('div'); b.className = 'haccb';
+        nodes.forEach(function (n) { b.appendChild(n); });
+        box.appendChild(h); box.appendChild(b);
+        function tg() { var o = box.classList.toggle('open'); h.setAttribute('aria-expanded', o ? 'true' : 'false'); }
+        h.addEventListener('click', tg);
+        h.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tg(); } });
+        return box;
+      }
+      var kids = [].slice.call(body.childNodes), out = [], lead = [], cur = null, curNodes = [];
+      var intro = document.querySelector('header .intro');
+      if (intro) lead.push(intro);
+      kids.forEach(function (n) {
+        if (n.nodeType === 1 && n.tagName === 'H4') {
+          if (cur) out.push(sec('', curNodes, cur));
+          cur = n; curNodes = [];
+        } else if (cur) curNodes.push(n);
+        else if (n.nodeType === 1 || (n.nodeType === 3 && n.textContent.trim())) lead.push(n);
+      });
+      if (cur) out.push(sec('', curNodes, cur));
+      // 最初の見出しが「このツールでわかること」「このツールでできること」などなら、紹介文はその箱の先頭へ（同じ見出しを2つ並べない）
+      var first = out[0] && out[0].querySelector('.hacch');
+      if (lead.length && first && /^この(ツール|図鑑|ページ)で(わかる|分かる|できる)こと/.test(first.textContent.trim())) {
+        var fb = out[0].querySelector('.haccb');
+        lead.slice().reverse().forEach(function (n) { fb.insertBefore(n, fb.firstChild); });
+      } else if (lead.length) out.unshift(sec('このツールでわかること', lead));
+      out.forEach(function (x) { body.appendChild(x); });
     })();
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', closeHelpIfPost);
-  else closeHelpIfPost();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', helpAccordion);
+  else helpAccordion();
 
   // ==== 名前の検索欄の守り（全ツール共通・2026-09-10タダシさん報告で新設） ====
   // 候補をタップせずにキーボードの「✓」や「完了」で入力を終えると、入力欄には打った名前が残るのに

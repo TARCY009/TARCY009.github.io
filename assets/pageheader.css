@@ -54,10 +54,11 @@ header h1::before{content:'';display:inline-block;vertical-align:-.13em;flex:0 0
 
 /* ===== 紹介文と「使い方」の表示の切り替え（全ツール共通・ここ1行） =====
    full   ＝紹介文を出す・「使い方」は開いたまま
-   compact＝紹介文は📖説明モードのときだけ・「使い方」は読み込み後に閉じる（home.js が --gonavi-mode を読む）
+   compact＝タイトルの下は短い1文（.intro1）だけ。3文の紹介文は「使い方」のいちばん上へ移し、「使い方」は見出しごとに開く箱で最初は全部閉じる（home.js が --gonavi-mode を読む）
+   full   のときは .intro1 を出さない（--intro1-show）
    どちらでも文章はHTMLに残り、開閉ボタンでいつでも読める。
    ⚠ 隠すのは display だけ。文字色・画面の外・文字サイズ0・透明度0で隠さない */
-:root{--gonavi-mode:full;--intro-show:block}
+:root{--gonavi-mode:compact;--intro-show:none;--intro1-show:block}
 :root.explain{--intro-show:block}
 
 /* ===== タイトルのすぐ下の紹介文（全ツール共通） =====
@@ -67,6 +68,21 @@ header h1::before{content:'';display:inline-block;vertical-align:-.13em;flex:0 0
 header .intro{display:var(--intro-show,block);flex:1 1 100%;margin:6px 0 0;font-size:.82rem;line-height:1.75;color:var(--sub,#9fb0e0);max-width:64ch;letter-spacing:.01em;text-align:left}
 /* 個体値チェッカーは見出しが中央寄せなので、段落だけ左そろえにする（5行の中央寄せは読みにくい） */
 @media (max-width:430px){header .intro{font-size:.76rem;line-height:1.7}}
+/* タイトルのすぐ下の短い1文（compact のとき）。見た目は紹介文と同じ */
+header .intro1{display:var(--intro1-show,none);flex:1 1 100%;margin:6px 0 0;font-size:.84rem;line-height:1.7;color:var(--sub,#9fb0e0);letter-spacing:.01em;text-align:left}
+@media (max-width:430px){header .intro1{font-size:.78rem}}
+
+/* ===== 「使い方」を見出しごとに開く箱にする（compact のとき・home.js の helpAccordion） =====
+   文章は消さずに箱の中に残す。隠すのは display だけ */
+.hacc{border-top:1px solid rgba(159,176,224,.2)}
+.hacc:last-child{border-bottom:1px solid rgba(159,176,224,.2)}
+.helpbody .hacc>h4.hacch,#helpbody .hacc>h4.hacch{position:relative;margin:0!important;padding:12px 30px 12px 2px!important;border:0!important;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.hacc>h4.hacch::after{content:'▸';position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--sub,#8fa0cf);font-size:.9em;transition:transform .15s}
+.hacc.open>h4.hacch::after{transform:translateY(-50%) rotate(90deg)}
+.hacc>h4.hacch:focus-visible{outline:2px solid #8b5cf6;outline-offset:2px;border-radius:6px}
+.hacc>.haccb{padding:0 2px 10px}
+.hacc:not(.open)>.haccb{display:none}
+.haccb>p.intro{display:block;margin:0 0 12px}
 
 /* ===== サイト内メニュー（全ツール共通） =====
    最初の画面でサイトの構造（ツール一覧・読み物・運営者情報）が分かるように、ヘッダーの最上段の左に小さな文字リンクを置く。

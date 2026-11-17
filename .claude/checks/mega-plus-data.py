@@ -93,6 +93,7 @@ for mid, (mk, ty, pw, d, w, we) in MEGA_PLUS_MOVES.items():
 # 公式ニュース: 記事を読み直しても、前に読み取った実装の印を消さない（消すと未実装へ戻る）
 import news_auto
 _k = news_auto.keep_old({'released': {'a': 1}, 'shadow': {'b': 1}, 'plus': {'C': 1}}, {'released': {}, 'shadow': {'d': 1}, 'plus': {}})
-if _k != {'released': {'a': 1}, 'shadow': {'b': 1, 'd': 1}, 'plus': {'C': 1}}: ng('公式ニュース 読み直しで印が消える', _k)
+# 比べるのは元からある3つの欄だけ（2026-11-12に dmax・mega_new の欄が増えた。空の欄が増えても印は消えていない）
+if {x: _k.get(x) for x in ('released', 'shadow', 'plus')} != {'released': {'a': 1}, 'shadow': {'b': 1, 'd': 1}, 'plus': {'C': 1}}: ng('公式ニュース 読み直しで印が消える', _k)
 print('問題', len(bad), '件')
 sys.exit(1 if bad else 0)
