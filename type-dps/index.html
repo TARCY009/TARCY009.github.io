@@ -294,7 +294,7 @@ h1 b{white-space:nowrap}
     <li><b>メガLv</b>＝メガシンカの追加SPアタック（わざ名の最後が「+」）は、<b>メガレベルが上がるほど威力が上がります</b>（Lv1＝1.0倍／Lv2＝1.1倍／Lv3＝1.2倍／<b>Lv4（スーパーマックス）＝1.3倍</b>）。<b>既定はLv4</b>で、この設定はサイト内の他のツールにも引き継がれます。追加SPアタックを持つポケモンを出しているときだけタブが現れます</li>
   </ul>
   <h4>グラフの保存</h4>
-  <p>グラフは<b>上位10位まで</b>を表示します（一覧の20位・30位・40位の切り替えとは独立）。「📷 画像を保存」で<b>1980×1440のPNG画像</b>、「1920×1440サイズ」で<b>1920×1440のPNG画像</b>として保存でき、動画や共有にそのまま使えます。</p>
+  <p>グラフは<b>上位10位まで</b>を表示します（一覧の20位・30位・40位の切り替えとは独立）。「📷 画像を保存」で<b>1980×1440のPNG画像</b>として保存でき、動画や共有にそのまま使えます。</p>
   <h4>データの更新</h4>
   <p>ポケモン・わざのデータは毎朝自動で更新されます。</p>
 <!-- related-guide --><h4>関連する読み物</h4><ul class="relguide"><li><a href="/guide/raid-dps/">レイドの「火力（DPS）」の読み方</a></li><li><a href="/guide/type-chart/">ポケモンGOのタイプ相性の倍率</a></li><li><a href="/guide/shadow-pokemon/">シャドウポケモンの仕組み</a></li><li><a href="/guide/mega-plus-moves/">メガシンカの「＋わざ」とメガレベル</a></li><li><a href="/guide/raid-bonuses/">レイドのボーナスまとめ</a></li></ul>
@@ -718,6 +718,8 @@ function saveGraph(W){
 }
 $('saveBtn').onclick=()=>saveGraph(1980);
 $('saveBtn2').onclick=()=>saveGraph(1920);
+// 1920×1440は動画用なので開発者だけ（2026-11-17タダシさん指示）
+(()=>{const b=$('saveBtn2'),f=()=>{b.hidden=!(window.GonaviDev&&GonaviDev());};f();setInterval(f,1500);})();
 
 // ---- 操作 ----
 function syncUrl(){

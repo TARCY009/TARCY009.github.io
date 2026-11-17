@@ -1097,8 +1097,9 @@
       // ボタンは2つ: ふつうの保存（幅720の縦長）と、動画用の1920×1440（2026-09-12タダシさん指示）
       // devBtns＝開発者の端末だけに出すボタン（同じ並びにまとめる）。no1920＝1920×1440を出さない
       bar.innerHTML = '<button type="button" class="snapbtn" data-run="n">📷 画像を保存</button>' +
-        (cfg.no1920 ? '' : '<button type="button" class="snapbtn alt" data-run="b" title="動画でそのまま使える1920×1440の画像にします（上位5件）">1920×1440サイズ</button>') +
-        (cfg.graph ? '<button type="button" class="snapbtn gr" data-run="g" title="上位10件を棒グラフにした1920×1440の画像にします">📊 グラフ画像</button>' : '') +
+        // 1920×1440 と 📊グラフ画像 は動画用なので開発者だけ（2026-11-17タダシさん指示。一般の人は「📷 画像を保存」と、一覧の下のグラフの保存だけ）
+        (cfg.no1920 ? '' : '<button type="button" class="snapbtn alt devonly" data-run="b" title="動画でそのまま使える1920×1440の画像にします（上位5件・開発者だけ）">1920×1440サイズ</button>') +
+        (cfg.graph ? '<button type="button" class="snapbtn gr devonly" data-run="g" title="上位10件を棒グラフにした1920×1440の画像にします（開発者だけ）">📊 グラフ画像</button>' : '') +
         (cfg.devBtns || []).map(function (d) {
           return '<button type="button" class="snapbtn alt devonly" data-run="' + d.k + '" title="' + d.title + '（開発者だけ）">' + d.label + '</button>';
         }).join('');
@@ -1135,7 +1136,55 @@
         btns.forEach(function (x) { x.disabled = false; });
       };
       btns.forEach(function (x) { x.onclick = function () { run(x.getAttribute('data-run')); }; });
+      if (cfg.graph) setupListGraph(cfg, target);
     })();
+  }
+
+  // ---------------------------------------------------------------- 一覧の下のグラフ（2026-11-17タダシさん指示）
+  // ランキングのツールすべてで、順位の一覧のすぐ下に上位10件の棒グラフ（タイプ別火力ランキングと同じ形）を画面に出す。
+  // 中身は「📊 グラフ画像」と同じ publicGraph（名前と値は画面の一覧から読む＝一覧と必ず同じ）。
+  // 一般の人も「📷 画像を保存」で保存できる。枠は 4:3 で先に場所を取る（描き終わってから下の中身が動かないように）
+  function setupListGraph(cfg, target) {
+    if (document.querySelector('.snapgraph')) return;
+    var box = document.createElement('div');
+    box.className = 'snapgraph'; box.setAttribute('data-snap-skip', '');
+    box.innerHTML = '<div class="sgcv"></div><div class="snapbar"><button type="button" class="snapbtn" data-run="lg">📷 画像を保存</button></div>';
+    target.parentNode.insertBefore(box, target.nextSibling);
+    var holder = box.querySelector('.sgcv'), sbtn = box.querySelector('button'), sig = '', timer = 0, busyDraw = false;
+    var rowSig = function () {
+      return Array.prototype.slice.call(target.querySelectorAll(cfg.rows), 0, GRAPH_N).map(function (r) {
+        return (r.textContent || '').replace(/\s+/g, ' ');
+      }).join('|') + '#' + Array.prototype.map.call(document.querySelectorAll(cfg.tags || '_'), function (x) { return x.textContent; }).join(',');
+    };
+    var draw = async function () {
+      timer = 0;
+      var n = target.querySelectorAll(cfg.rows).length;
+      box.hidden = !n || target.offsetParent === null;
+      if (box.hidden) return;
+      var s2 = rowSig() + (isDev() ? 'D' : '');
+      if (s2 === sig || busyDraw) return;
+      busyDraw = true;
+      try {
+        var cv = await publicGraph(cfg);
+        holder.innerHTML = ''; holder.appendChild(cv); sig = s2;
+      } catch (e) { /* 行がまだそろっていない */ }
+      busyDraw = false;
+      if (rowSig() + (isDev() ? 'D' : '') !== sig) later();
+    };
+    var later = function () { if (!timer) timer = setTimeout(draw, 350); };
+    new MutationObserver(later).observe(target, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
+    setInterval(later, 2000);
+    later();
+    sbtn.onclick = async function () {
+      if (sbtn.disabled) return;
+      sbtn.disabled = true; busy(true);
+      try {
+        var cv = await publicGraph(cfg); busy(false);
+        var base = cfg.head ? cfg.head().file : cfg.title;
+        await preview(cv, 'GOナビ_' + base.replace(/\s+/g, '') + fileTags(cfg.tags) + '_' + stamp().slice(0, 8) + '_グラフ.png');
+      } catch (e) { busy(false); console.warn('snap', e); alert('画像を作れませんでした。このブラウザでは対応していない可能性があります'); }
+      sbtn.disabled = false;
+    };
   }
 
   // ---------------------------------------------------------------- 開発者: 狭い画面の上位N位（2026-09-13タダシさん指示）
@@ -1468,6 +1517,8 @@
   var css = document.createElement('style'); css.id = 'snapui-css';
   css.textContent =
     '.snapbar{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:6px 0 8px}' +
+    '.snapgraph{margin:14px 0 6px}.snapgraph .sgcv{aspect-ratio:4/3;width:100%;border-radius:14px;overflow:hidden;background:#0b1023}' +
+    '.snapgraph .sgcv canvas{display:block;width:100%;height:100%}' +
     '.snapbtn.alt{color:#e8eeff;background:linear-gradient(160deg,#5566a3 0%,#34427a 55%,#232d57 100%);' +
       'box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.35)}' +
     '.snapbtn.gr{color:#04232b;background:linear-gradient(160deg,#b9f6ff 0%,#43e0ff 55%,#0fa8c4 100%);' +

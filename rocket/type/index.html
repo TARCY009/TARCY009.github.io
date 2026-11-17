@@ -241,7 +241,7 @@ h1 b{white-space:nowrap}
   </ul>
   <p>実際のあいてを決めて、先に倒されないか・何秒で倒せるかまで調べるときは<a href="/rocket/">ロケット団対策シミュレーター</a>のランキングを使ってください。</p>
   <h4>グラフの保存</h4>
-  <p>グラフは<b>上位10位まで</b>を表示します（一覧の20位・30位・40位の切り替えとは独立）。「📷 画像を保存」で<b>1980×1440のPNG画像</b>、「1920×1440サイズ」で<b>1920×1440のPNG画像</b>として保存できます。</p>
+  <p>グラフは<b>上位10位まで</b>を表示します（一覧の20位・30位・40位の切り替えとは独立）。「📷 画像を保存」で<b>1980×1440のPNG画像</b>として保存できます。</p>
   <h4>データの更新</h4>
   <p>ポケモン・わざのデータは毎朝自動で更新されます。</p>
 <!-- related-guide --><h4>関連する読み物</h4><ul class="relguide"><li><a href="/guide/rocket-basics/">GOロケット団バトルの仕組み</a></li><li><a href="/guide/type-chart/">ポケモンGOのタイプ相性の倍率</a></li><li><a href="/guide/shadow-pokemon/">シャドウポケモンの仕組み</a></li></ul>
@@ -546,6 +546,8 @@ function saveGraph(W){
 }
 $('saveBtn').onclick=()=>saveGraph(1980);
 $('saveBtn2').onclick=()=>saveGraph(1920);
+// 1920×1440は動画用なので開発者だけ（2026-11-17タダシさん指示）
+(()=>{const b=$('saveBtn2'),f=()=>{b.hidden=!(window.GonaviDev&&GonaviDev());};f();setInterval(f,1500);})();
 
 // ---- 操作 ----
 function syncUrl(){
