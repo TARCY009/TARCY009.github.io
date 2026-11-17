@@ -28,6 +28,7 @@
   // ---------------------------------------------------------------- 一般向けボタンの設定
   // target=画像にする要素 / rows=1行の要素(上位LIMIT件だけ残す) / drop=画像から外す要素 /
   // ctx=見出しの下に出す条件の文字 / tags=点灯中の絞り込みボタン(ピルで出す) / barIn=ボタンを置く場所(無ければtargetの直前)
+  // search＝一覧を名前で絞る入力欄（入っているあいだは一覧の下のグラフを隠す・グラフは上位10位のためのもの）
   // graph＝「📊 グラフ画像」用に、1行の中の名前(name)・数値(val)・シャドウの印(shadow)の場所と、数値の単位(unit)。
   // cat＝キョダイマックス／ダイマックス／特別の札（名前の上に札と同じ色の小さな文字で出す・2026-10-03タダシさん指示）
   var PUB = {
@@ -35,19 +36,19 @@
                tags: '.c-rank .modes [aria-pressed="true"]:not(#fTp)', title: 'レイド火力ランキング',
                graph: { name: '.rname .nm', val: '.rdps', shadow: '.rname .shadowmark,.rname .sh', unit: 'DPS', head: '#bossView .bossname', floor: 35,
                        floorOn: '#fShadow[aria-pressed="true"],#fMega[aria-pressed="true"]', floorUp: 40 } },
-    '/bulk/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn',
+    '/bulk/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn', search: '#q',
                 tags: '.rhead [aria-pressed="true"]:not(#cntSeg *)', title: '耐久指数ランキング',
                 graph: { name: '.rname .nm', val: '.rval', shadow: '.rname .shadowmark', unit: '耐久指数' } },
-    '/scp/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn',
+    '/scp/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn', search: '#q',
                tags: '.rhead [aria-pressed="true"]:not(#cntSeg *):not(#viewSeg *)', title: 'スーパーリーグ SCPランキング',
                graph: { name: '.rname .nm', val: '.rval', unit: 'SCP' } },
-    '/scp/hyper/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn',
+    '/scp/hyper/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn', search: '#q',
                tags: '.rhead [aria-pressed="true"]:not(#cntSeg *):not(#viewSeg *)', title: 'ハイパーリーグ SCPランキング',
                graph: { name: '.rname .nm', val: '.rval', unit: 'SCP' } },
     '/gym-attack/': { target: '#ranklist', rows: '.card', ctx: ['#defender .dname'],
                       tags: '.gtabs [aria-pressed="true"]', title: 'ジム挑戦オススメ',
                       graph: { name: '.pname .nm', val: '.score', shadow: '.pname .shadowmark', unit: 'ポイント', head: '#defender .dname' } },
-    '/gym-defense/': { target: '#list', rows: '.row', tags: '.gtabs [aria-pressed="true"]', title: 'ジム防衛オススメ',
+    '/gym-defense/': { target: '#list', rows: '.row', search: '#q', tags: '.gtabs [aria-pressed="true"]', title: 'ジム防衛オススメ',
                        graph: { name: '.pname', val: '.pts b', unit: 'ポイント' } },
     '/max-battle/': { target: '#list', rows: '.row', ctx: ['#bname'],
                       tags: '#tabs [aria-selected="true"],#filters [aria-pressed="true"]', title: 'マックスバトル対策',
@@ -1159,7 +1160,9 @@
     var draw = async function () {
       timer = 0;
       var n = target.querySelectorAll(cfg.rows).length;
-      box.hidden = !n || target.offsetParent === null;
+      var q = cfg.search ? document.querySelector(cfg.search) : null;
+      var searching = !!(q && q.value.trim());
+      box.hidden = !n || target.offsetParent === null || searching;
       if (box.hidden) return;
       var s2 = rowSig() + (isDev() ? 'D' : '');
       if (s2 === sig || busyDraw) return;
@@ -1172,6 +1175,8 @@
       if (rowSig() + (isDev() ? 'D' : '') !== sig) later();
     };
     var later = function () { if (!timer) timer = setTimeout(draw, 350); };
+    var sq = cfg.search ? document.querySelector(cfg.search) : null;
+    if (sq) sq.addEventListener('input', later);
     new MutationObserver(later).observe(target, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
     setInterval(later, 2000);
     later();
