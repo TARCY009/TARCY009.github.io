@@ -41,7 +41,7 @@
                 graph: { name: '.rname .nm', val: '.rval', shadow: '.rname .shadowmark', unit: '耐久指数' } },
     '/scp/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn', search: '#q',
                tags: '.rhead [aria-pressed="true"]:not(#cntSeg *):not(#viewSeg *)', title: 'スーパーリーグ SCPランキング',
-               graph: { name: '.rname .nm', val: '.rval', unit: 'SCP', floor: 1000 } },
+               graph: { name: '.rname .nm', val: '.rval', unit: 'SCP', floor: 1500 } },
     '/scp/hyper/': { target: '#rankList', rows: '.rank-row', drop: '.more,#moreBtn', search: '#q',
                tags: '.rhead [aria-pressed="true"]:not(#cntSeg *):not(#viewSeg *)', title: 'ハイパーリーグ SCPランキング',
                graph: { name: '.rname .nm', val: '.rval', unit: 'SCP', floor: 2000 } },
