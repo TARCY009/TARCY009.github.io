@@ -323,7 +323,7 @@ footer a{color:var(--spec)}
 <p class="bosslabel">敵ボスポケモン</p>
 <div class="searchbox">
   <input id="bq" type="search" placeholder="ボスの名前を入力(例: リザードン)" autocomplete="off">
-  <div id="sug" class="sug"></div>
+  <div id="sug" class="sug sugg-list"></div>
 </div>
 
 <div id="bosscard" class="bosscard">
@@ -365,8 +365,11 @@ footer a{color:var(--spec)}
 </div>
 
 <div class="myq" id="myqwrap" style="display:none">
+  <!-- 名前の検索欄の守り（home.js の suggGuard）が効くよう、欄と候補一覧を .sugg／.sugg-list でくるむ（2026-11-18・選ばずに離れると欄と中身が食い違っていた） -->
+  <div class="sugg" style="position:relative">
   <input id="mq" type="search" placeholder="ポケモン名で検索（自分のポケモンの順位確認）" autocomplete="off">
-  <div id="mySug" class="sug"></div>
+  <div id="mySug" class="sug sugg-list"></div>
+  </div>
   <div id="myiv" class="myiv" style="display:none">
     <!-- CPかPLのどちらで入力するかを選ぶ（片方を変えるともう片方はほぼ必ず崩れるため・2026-10-03タダシさん指示） -->
     <span class="gtabs cpby"><span class="gseg"><button type="button" id="byCp" class="t-cyan" aria-pressed="true" title="CPと個体値からPLを割り出して計算します">CP</button><button type="button" id="byPl" class="t-cyan" aria-pressed="false" title="PL（ポケモンレベル）と個体値から計算します">PL</button></span></span>
@@ -677,7 +680,8 @@ footer a{color:var(--spec)}
     const btns = sug.querySelectorAll('button');
     if(e.key === 'ArrowDown'){e.preventDefault(); selIdx = Math.min(selIdx+1, btns.length-1);}
     else if(e.key === 'ArrowUp'){e.preventDefault(); selIdx = Math.max(selIdx-1, 0);}
-    else if(e.key === 'Enter'){e.preventDefault(); if(selIdx>=0) selectBoss(sugItems[selIdx]); else if(sugItems.length) selectBoss(sugItems[0]); return;}
+    // 候補ボタンを押す形で選ぶ（名前の検索欄の守りが「選んだ」と分かるように。直接 selectBoss を呼ぶと、離れた瞬間に元の名前へ戻されていた・2026-11-18）
+    else if(e.key === 'Enter'){e.preventDefault(); const b = btns[selIdx >= 0 ? selIdx : 0]; if(b) b.click(); return;}
     else return;
     btns.forEach((b,i)=>b.classList.toggle('sel', i===selIdx));
   });
@@ -1419,7 +1423,8 @@ footer a{color:var(--spec)}
   let mySel = null, mySugItems = [], mySelIdx = -1;
   function renderMySug(){
     const q = norm(mq.value.trim());
-    if(mySel && mq.value !== mySel){ mySel = null; myQuery = ''; compute(); }
+    // 選んだポケモンは、欄を空にしたときだけ外す（打っている途中に外すと、選ばずに離れたとき欄だけ元の名前に戻り、中身と食い違った・2026-11-18）
+    if(mySel && !mq.value.trim()){ mySel = null; myQuery = ''; compute(); }
     if(q.length < 2){ mySug.style.display = 'none'; return; }
     const hits = [];
     const seen = new Set();
@@ -1455,7 +1460,7 @@ footer a{color:var(--spec)}
     const btns = mySug.querySelectorAll('button');
     if(e.key === 'ArrowDown'){e.preventDefault(); mySelIdx = Math.min(mySelIdx+1, btns.length-1);}
     else if(e.key === 'ArrowUp'){e.preventDefault(); mySelIdx = Math.max(mySelIdx-1, 0);}
-    else if(e.key === 'Enter'){e.preventDefault(); selectMine(mySugItems[mySelIdx < 0 ? 0 : mySelIdx]); return;}
+    else if(e.key === 'Enter'){e.preventDefault(); const b = btns[mySelIdx < 0 ? 0 : mySelIdx]; if(b) b.click(); return;}
     else return;
     btns.forEach((b,i) => b.classList.toggle('sel', i === mySelIdx));
   });
