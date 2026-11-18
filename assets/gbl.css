@@ -3220,3 +3220,21 @@ button.sdchip.on .tbadge{filter:none}
 :root.light .rkcnt button:not([aria-pressed="true"]){background:linear-gradient(180deg,#fff,#eef1f8);color:#0a7f96}
 .rkimgview{margin-top:14px;line-height:0}
 .rkimgview svg{width:100%;height:auto;display:block}
+
+/* ===== 模擬戦（選択式）のスマホの操作しやすさ（2026-11-18・テスター#20・タダシさんが5案からD案を選択） =====
+   ① 決断の窓が出ているあいだは、押せない交代ボタンの行を畳む（タイムラインを広く見せる）。
+      リアルタイム（SPボタンの行 .hsprow がある）では畳まない（バトル中に部品の位置が動くと押し間違えるため）
+   ② ⏸と×1を大きく（28×27・32×27 → 40×34・42×34）。真ん中の列を広げて横並びのまま
+   ③ 下の段（コマ送り〜終了）を1段のまま大きく（高さ46・文字を一回り大きく） */
+.rbdock:not(:has(.hsprow)):has(.rbwinbox .rbwin) .hswaprow{display:none}
+.rbhud:has(.hplay){grid-template-columns:1fr 88px 1fr}
+.rbhud .hctl:has(.hplay){max-width:88px;gap:4px;flex-wrap:nowrap}
+.rbhud .hctl .hplay{width:40px;height:34px;font-size:.9rem}
+.rbhud .hctl .hspd{width:42px;height:34px;font-size:.9rem}
+@media (max-width:560px){
+  .hbtns:has(>button:nth-child(6)) button{min-height:46px;padding:6px 1px;font-size:.95rem;gap:3px}
+  .hbtns:has(>button:nth-child(6)) button b{font-size:.68rem}
+}
+@media (max-width:380px){.hbtns:has(>button:nth-child(6)) button b{font-size:.6rem}}
+/* 360px以下は真ん中の列を少し戻す（名前が「マリ…」と切れたため） */
+@media (max-width:360px){.rbhud:has(.hplay){grid-template-columns:1fr 76px 1fr}.rbhud .hctl:has(.hplay){max-width:76px}.rbhud .hctl .hplay{width:35px}.rbhud .hctl .hspd{width:37px}}
