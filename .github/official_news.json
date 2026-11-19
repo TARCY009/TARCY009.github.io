@@ -274,12 +274,12 @@
   },
   "halloween-part-1-2026": {
    "dmax": {},
-   "hash": "03f67179328a",
+   "hash": "9a2c0b74433e",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-10-06",
-   "read": "2026-11-17",
+   "read": "2026-11-19",
    "released": {},
    "shadow": {},
    "title": "「ハロウィン2026パート1」イベントで、衣装を身にまとった「ピカチュウ」、「ズバット」、「ヤバチャ」と一緒にトリック・オア・トリートを楽しもう！",
@@ -287,7 +287,7 @@
   },
   "halloween-part-2-2026": {
    "dmax": {},
-   "hash": "589ffc811f38",
+   "hash": "e13417a4def6",
    "mega_new": {},
    "notes": [],
    "plus": {
@@ -302,7 +302,7 @@
     }
    },
    "published": "2026-10-09",
-   "read": "2026-11-17",
+   "read": "2026-11-19",
    "released": {},
    "shadow": {},
    "title": "「ハロウィン2026パート2」で「メガヤミラミ」がパワーアップ！さらに、色違いの「ボチ」が『Pokémon GO』に初登場！",
@@ -694,12 +694,12 @@
   },
   "twilight-wishes-2026": {
    "dmax": {},
-   "hash": "54894fc2e1b0",
+   "hash": "6ca9fcd5e973",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-03",
-   "read": "2026-11-17",
+   "read": "2026-11-19",
    "released": {},
    "shadow": {},
    "title": "「黄昏時の願い」イベントで、星空の下に集まろう",
@@ -892,56 +892,56 @@
   {
    "id": "reflect:boss:85cb8b80",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「アローラペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:df50a2dc",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「エレキブル」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:3cb12c2b",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「サザンドラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:2592d92c",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「ドサイドン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:86938a72",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「ニャイキング」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:629c694b",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「ペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:6dc4a349",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「マニューラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:96df17c5",
    "kind": "reflect",
-   "date": "2026-11-18",
+   "date": "2026-11-19",
    "title": "マックスバトルのボス",
    "text": "ボス「マルヤクデ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   }
