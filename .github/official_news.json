@@ -112,6 +112,19 @@
    "shadow": {},
    "title": "「ピクシー」の「スーパーメガレイド・デイ」で、月の光の中でダンス！"
   },
+  "community-day-december-2026": {
+   "dmax": {},
+   "hash": "00103aa1e241",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-21",
+   "read": "2026-11-21",
+   "released": {},
+   "shadow": {},
+   "title": "2026年の「コミュニティ・デイ」に登場したポケモンが再び登場！",
+   "url": "https://pokemongo.com/ja/news/community-day-december-2026"
+  },
   "communityday-november-2026-pawniard": {
    "hash": "ef04d7da2ac6",
    "notes": [],
@@ -905,56 +918,56 @@
   {
    "id": "reflect:boss:85cb8b80",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「アローラペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:df50a2dc",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「エレキブル」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:3cb12c2b",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「サザンドラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:2592d92c",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「ドサイドン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:86938a72",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「ニャイキング」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:629c694b",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「ペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:6dc4a349",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「マニューラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:96df17c5",
    "kind": "reflect",
-   "date": "2026-11-20",
+   "date": "2026-11-21",
    "title": "マックスバトルのボス",
    "text": "ボス「マルヤクデ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   }
