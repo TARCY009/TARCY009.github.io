@@ -839,6 +839,40 @@
    "shadow": {},
    "title": "「スーパーメガレイド・デイ」で勇敢に「ムクホーク」に挑もう！"
   },
+  "tropical-paradise-2026": {
+   "dmax": {},
+   "hash": "2e8b2f8f8163",
+   "mega_new": {},
+   "notes": [],
+   "plus": {
+    "SLOWBRO_MEGA": {
+     "base": "CHILLING_WATER",
+     "buff": {
+      "bc": 1.0,
+      "bf": [
+       -1,
+       0
+      ],
+      "bt": "opponent"
+     },
+     "effect": "相手の「こうげき」を必ず1段階下げます。",
+     "move": "ひやみず＋",
+     "name": "メガヤドラン",
+     "pvp": 45,
+     "raid": 160
+    }
+   },
+   "published": "2026-11-26",
+   "read": "2026-11-26",
+   "released": {
+    "pyukumuku": {
+     "name": "ナマコブシ"
+    }
+   },
+   "shadow": {},
+   "title": "『Pokémon GO』の「熱帯楽園」イベントで南国気分を味わおう！",
+   "url": "https://pokemongo.com/ja/news/tropical-paradise-2026"
+  },
   "twilight-wishes-2026": {
    "dmax": {},
    "hash": "15c59f10f8b6",
@@ -1044,6 +1078,24 @@
    "text": "メガピクシーの＋わざ「ムーンフォース＋」 レイド威力160・対戦威力80・効果「一定確率で相手の「こうげき」を1段階下げます」（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
    "title": "「ピクシー」の「スーパーメガレイド・デイ」で、月の光の中でダンス！",
    "url": "https://pokemongo.com/ja/news/clefable-super-mega-raid-day-2026"
+  },
+  {
+   "date": "2026-11-26",
+   "id": "tropical-paradise-2026:a5a73acb",
+   "kind": "auto",
+   "slug": "tropical-paradise-2026",
+   "text": "ナマコブシ（pyukumuku）の実装の告知 → 未実装の印を外して全ツールに入れる",
+   "title": "『Pokémon GO』の「熱帯楽園」イベントで南国気分を味わおう！",
+   "url": "https://pokemongo.com/ja/news/tropical-paradise-2026"
+  },
+  {
+   "date": "2026-11-26",
+   "id": "tropical-paradise-2026:ad613f71",
+   "kind": "auto",
+   "slug": "tropical-paradise-2026",
+   "text": "メガヤドランの＋わざ「ひやみず＋」 レイド威力160・対戦威力45・効果「相手の「こうげき」を必ず1段階下げます。」（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "『Pokémon GO』の「熱帯楽園」イベントで南国気分を味わおう！",
+   "url": "https://pokemongo.com/ja/news/tropical-paradise-2026"
   },
   {
    "id": "reflect:boss:85cb8b80",

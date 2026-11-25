@@ -9,6 +9,14 @@
  },
  {
   "kind": "pokemon",
+  "name": "ナマコブシ",
+  "pve": null,
+  "pvp": "pyukumuku",
+  "source": "ニュース:tropical-paradise-2026",
+  "note": ""
+ },
+ {
+  "kind": "pokemon",
   "name": "ヒスイヌメイル",
   "pve": "SLIGGOO_HISUIAN",
   "pvp": "sliggoo_hisuian",
@@ -182,6 +190,14 @@
   "pvp": null,
   "source": "ニュース:staraptor-super-mega-raid-day-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
   "note": "ブレイブバード＋（元わざ BRAVE_BIRD・レイド威力 150）"
+ },
+ {
+  "kind": "plus",
+  "name": "メガヤドラン",
+  "pve": "SLOWBRO_MEGA",
+  "pvp": null,
+  "source": "ニュース:tropical-paradise-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "ひやみず＋（元わざ CHILLING_WATER・レイド威力 160）"
  },
  {
   "kind": "plus",
