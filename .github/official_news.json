@@ -87,6 +87,19 @@
    "shadow": {},
    "title": "「シャンデラ」の「スーパーメガレイド・デイ」で、不思議な光が皆さんを待っています！"
   },
+  "choose-your-path-daydream-destinations-2026": {
+   "dmax": {},
+   "hash": "69d7b76f81fb",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-25",
+   "read": "2026-11-25",
+   "released": {},
+   "shadow": {},
+   "title": "シーズン「うたた寝の途」では「選べるタイムチャレンジ」で探索を自由に楽しもう",
+   "url": "https://pokemongo.com/ja/news/choose-your-path-daydream-destinations-2026"
+  },
   "choose-your-path-twilight-trails-2026": {
    "hash": "731eb861b378",
    "notes": [],
@@ -237,6 +250,32 @@
    "released": {},
    "shadow": {},
    "title": "「マックスバトルデイ」で、「キョダイマックスエースバーン」がキョダイ火炎ボールをシュート！"
+  },
+  "go-battle-league-daydream-destinations": {
+   "dmax": {},
+   "hash": "71b841b208a0",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-24",
+   "read": "2026-11-25",
+   "released": {},
+   "shadow": {},
+   "title": "「GOバトルリーグ：うたた寝の途」最新情報",
+   "url": "https://pokemongo.com/ja/news/go-battle-league-daydream-destinations"
+  },
+  "go-pass-december-2026": {
+   "dmax": {},
+   "hash": "303e5787bcd8",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-25",
+   "read": "2026-11-25",
+   "released": {},
+   "shadow": {},
+   "title": "「GOパス：12月」にはタマらないリワードが待っています！",
+   "url": "https://pokemongo.com/ja/news/go-pass-december-2026"
   },
   "go-pass-november-2026": {
    "hash": "5021907b20ce",
@@ -420,6 +459,19 @@
    "shadow": {},
    "title": "流星群がみられる時期に星空の下を探索すると、「メテノ」と出会えるかも！"
   },
+  "monthly-content-update-dec2026": {
+   "dmax": {},
+   "hash": "3343cb4858ec",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-25",
+   "read": "2026-11-25",
+   "released": {},
+   "shadow": {},
+   "title": "12月の最新情報",
+   "url": "https://pokemongo.com/ja/news/monthly-content-update-dec2026"
+  },
   "page:events": {
    "dmax": {},
    "hash": "ca97f75ed711",
@@ -561,15 +613,29 @@
      "name": "ユクシー"
     }
    },
-   "hash": "c2df8baabf31",
+   "hash": "c01781dfcc85",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-12",
-   "read": "2026-11-12",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「Pokémon GO：黄昏の旅路」へようこそ",
+   "title": "「Pokémon GO：うたた寝の途」へようこそ",
    "url": "https://pokemongo.com/ja/seasons"
+  },
+  "page:seasons/daydream-destinations": {
+   "dmax": {},
+   "hash": "c01781dfcc85",
+   "mega_new": {},
+   "notes": [],
+   "plus": {},
+   "published": "2026-11-25",
+   "read": "2026-11-25",
+   "released": {},
+   "shadow": {},
+   "title": "「Pokémon GO：うたた寝の途」へようこそ",
+   "url": "https://pokemongo.com/ja/seasons/daydream-destinations"
   },
   "page:seasons/twilight-trails": {
    "dmax": {
@@ -720,12 +786,12 @@
   },
   "twilight-wishes-2026": {
    "dmax": {},
-   "hash": "6ca9fcd5e973",
+   "hash": "54894fc2e1b0",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-03",
-   "read": "2026-11-19",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
    "title": "「黄昏時の願い」イベントで、星空の下に集まろう",
@@ -918,56 +984,56 @@
   {
    "id": "reflect:boss:85cb8b80",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「アローラペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:df50a2dc",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「エレキブル」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:3cb12c2b",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「サザンドラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:2592d92c",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「ドサイドン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:86938a72",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「ニャイキング」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:629c694b",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「ペルシアン」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:6dc4a349",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「マニューラ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   },
   {
    "id": "reflect:boss:96df17c5",
    "kind": "reflect",
-   "date": "2026-11-24",
+   "date": "2026-11-25",
    "title": "マックスバトルのボス",
    "text": "ボス「マルヤクデ」の設定値（HP・防御CPM）が未登録＝既定値で計算中"
   }
