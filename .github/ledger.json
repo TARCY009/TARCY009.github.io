@@ -164,8 +164,8 @@
   "name": "メガピクシー",
   "pve": "CLEFABLE_MEGA",
   "pvp": null,
-  "source": "手の表:mega_plus_info.MEGA_PLUS_INFO",
-  "note": "元わざ MOONBLAST・レイド威力 160"
+  "source": "ニュース:clefable-super-mega-raid-day-2026・手の表:mega_plus_info.MEGA_PLUS_INFO",
+  "note": "ムーンフォース＋（元わざ MOONBLAST・レイド威力 160）"
  },
  {
   "kind": "plus",

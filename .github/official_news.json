@@ -22,12 +22,12 @@
   },
   "2026_ana_blue": {
    "dmax": {},
-   "hash": "7b7ad2d23187",
+   "hash": "beb3967daabd",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-20",
-   "read": "2026-11-20",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
    "title": "「ポケモンジェット 青」就航記念！ANAと『Pokémon GO』のパートナーシップで、新たな冒険へ飛び立とう！",
@@ -47,17 +47,22 @@
    "url": "https://pokemongo.com/ja/news/apple_store_japan"
   },
   "black-friday-2026": {
-   "hash": "2f6ebce8da2e",
+   "dmax": {},
+   "hash": "f35f26223af2",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-09",
-   "read": "2026-11-09",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "ブラックフライデーセールでボーナスポケコインが2倍！"
+   "title": "ブラックフライデーセールでボーナスポケコインが2倍！",
+   "url": "https://pokemongo.com/ja/news/black-friday-2026"
   },
   "chandelure-super-mega-raid-day-2026": {
-   "hash": "c1c8873c1cc0",
+   "dmax": {},
+   "hash": "e25cc0b92b92",
+   "mega_new": {},
    "notes": [],
    "plus": {
     "CHANDELURE_MEGA": {
@@ -78,18 +83,19 @@
     }
    },
    "published": "2026-10-14",
-   "read": "2026-10-30",
+   "read": "2026-11-25",
    "released": {
     "chandelure_mega": {
      "name": "メガシャンデラ"
     }
    },
    "shadow": {},
-   "title": "「シャンデラ」の「スーパーメガレイド・デイ」で、不思議な光が皆さんを待っています！"
+   "title": "「シャンデラ」の「スーパーメガレイド・デイ」で、不思議な光が皆さんを待っています！",
+   "url": "https://pokemongo.com/ja/news/chandelure-super-mega-raid-day-2026"
   },
   "choose-your-path-daydream-destinations-2026": {
    "dmax": {},
-   "hash": "69d7b76f81fb",
+   "hash": "7c4695965cd5",
    "mega_new": {},
    "notes": [],
    "plus": {},
@@ -111,42 +117,60 @@
    "title": "シーズン「黄昏の旅路」の新しい「タイムチャレンジ」で、自分の道を切り開こう！"
   },
   "clefable-super-mega-raid-day-2026": {
-   "hash": "5b610a1e9c9c",
-   "notes": [
-    [
-     "check",
-     "「ピクシー」の＋わざ「ムーンフォース＋」: 対象のメガが0匹で決められません（[]）"
-    ]
-   ],
-   "plus": {},
+   "dmax": {},
+   "hash": "44355dde64d8",
+   "mega_new": {},
+   "notes": [],
+   "plus": {
+    "CLEFABLE_MEGA": {
+     "base": "MOONBLAST",
+     "buff": {
+      "bc": null,
+      "bf": [
+       -1,
+       0
+      ],
+      "bt": "opponent"
+     },
+     "effect": "一定確率で相手の「こうげき」を1段階下げます",
+     "move": "ムーンフォース＋",
+     "name": "メガピクシー",
+     "pvp": 80,
+     "raid": 160
+    }
+   },
    "published": "2026-11-06",
-   "read": "2026-11-06",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「ピクシー」の「スーパーメガレイド・デイ」で、月の光の中でダンス！"
+   "title": "「ピクシー」の「スーパーメガレイド・デイ」で、月の光の中でダンス！",
+   "url": "https://pokemongo.com/ja/news/clefable-super-mega-raid-day-2026"
   },
   "community-day-december-2026": {
    "dmax": {},
-   "hash": "00103aa1e241",
+   "hash": "2e601aba7bb4",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-21",
-   "read": "2026-11-21",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
    "title": "2026年の「コミュニティ・デイ」に登場したポケモンが再び登場！",
    "url": "https://pokemongo.com/ja/news/community-day-december-2026"
   },
   "communityday-november-2026-pawniard": {
-   "hash": "ef04d7da2ac6",
+   "dmax": {},
+   "hash": "662fc8951101",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-10-22",
-   "read": "2026-10-30",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "2026年11月の「コミュニティ・デイ」：「コマタナ」"
+   "title": "2026年11月の「コミュニティ・デイ」：「コマタナ」",
+   "url": "https://pokemongo.com/ja/news/communityday-november-2026-pawniard"
   },
   "communityday-october-2026-zorua": {
    "hash": "6190daf2b98d",
@@ -170,26 +194,29 @@
   },
   "duolingo-2026": {
    "dmax": {},
-   "hash": "1e8f0e625edf",
+   "hash": "293214e0f7c4",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-17",
-   "read": "2026-11-17",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
    "title": "『Pokémon GO』と『Duolingo』で新しい言語の冒険へ！",
    "url": "https://pokemongo.com/ja/news/duolingo-2026"
   },
   "dynamax-trails-eternamax-eternatus-2026": {
-   "hash": "5c155838d8a3",
+   "dmax": {},
+   "hash": "21f47d3aa6cd",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-10-29",
-   "read": "2026-11-11",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "すべての道は、「ムゲンダイナ」が再び登場する「大きな足跡」イベントに続く"
+   "title": "すべての道は、「ムゲンダイナ」が再び登場する「大きな足跡」イベントに続く",
+   "url": "https://pokemongo.com/ja/news/dynamax-trails-eternamax-eternatus-2026"
   },
   "dynamax-uxie-mesprit-azelf-max-battle-day-2026": {
    "hash": "498afc36fb6a",
@@ -222,24 +249,30 @@
    "title": "「秋の遠足：相棒といっしょ」では、「アノクサ」が『Pokémon GO』に初登場"
   },
   "forever-stamp-rally-go-wild-area-2026": {
-   "hash": "2dad8db7e8f4",
+   "dmax": {},
+   "hash": "24591bb104ec",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-03",
-   "read": "2026-11-08",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "今日から新しい街の冒険へ出かけましょう！仙台・東北とメキシコのメキシコシティで、すべてのトレーナーが『Pokémon GO』で新しい「GOスタンプラリー」に参加できます。"
+   "title": "今日から新しい街の冒険へ出かけましょう！仙台・東北とメキシコのメキシコシティで、すべてのトレーナーが『Pokémon GO』で新しい「GOスタンプラリー」に参加できます。",
+   "url": "https://pokemongo.com/ja/news/forever-stamp-rally-go-wild-area-2026"
   },
   "get-ready-for-gowildarea-2026": {
-   "hash": "1f2bab493f6c",
+   "dmax": {},
+   "hash": "02870f383b85",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-03",
-   "read": "2026-11-05",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「トレーナープロフィール」の各種背景や新しい着せ替えアイテムなど、「Pokémon GO ワイルドエリア2026」の最新情報をお届けします"
+   "title": "「トレーナープロフィール」の各種背景や新しい着せ替えアイテムなど、「Pokémon GO ワイルドエリア2026」の最新情報をお届けします",
+   "url": "https://pokemongo.com/ja/news/get-ready-for-gowildarea-2026"
   },
   "gigantamax-cinderace-max-battle-day-2026": {
    "hash": "8a7d0129938d",
@@ -253,7 +286,7 @@
   },
   "go-battle-league-daydream-destinations": {
    "dmax": {},
-   "hash": "71b841b208a0",
+   "hash": "73b7e67ed320",
    "mega_new": {},
    "notes": [],
    "plus": {},
@@ -266,7 +299,7 @@
   },
   "go-pass-december-2026": {
    "dmax": {},
-   "hash": "303e5787bcd8",
+   "hash": "150094516a21",
    "mega_new": {},
    "notes": [],
    "plus": {},
@@ -278,14 +311,17 @@
    "url": "https://pokemongo.com/ja/news/go-pass-december-2026"
   },
   "go-pass-november-2026": {
-   "hash": "5021907b20ce",
+   "dmax": {},
+   "hash": "ffe4633431ca",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-10-21",
-   "read": "2026-10-30",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「GOパス：11月」を進めてポケコインを獲得しよう"
+   "title": "「GOパス：11月」を進めてポケコインを獲得しよう",
+   "url": "https://pokemongo.com/ja/news/go-pass-november-2026"
   },
   "go-pass-october-2026": {
    "hash": "31f5560dbadf",
@@ -298,34 +334,43 @@
    "title": "「GOパス：10月」で「カイオーガ」が登場！さらに、「キラチャーム」が入手できます！"
   },
   "go-wild-area-stamp-rally-details-2026": {
-   "hash": "2872a88d2762",
+   "dmax": {},
+   "hash": "2fcdb3454163",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-10-23",
-   "read": "2026-10-30",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「Pokémon GO ワイルドエリア」の「イベント GO スタンプラリー」についてのアップデート"
+   "title": "「Pokémon GO ワイルドエリア」の「イベント GO スタンプラリー」についてのアップデート",
+   "url": "https://pokemongo.com/ja/news/go-wild-area-stamp-rally-details-2026"
   },
   "gowildarea-2026-timed-research": {
-   "hash": "01ed5267591a",
+   "dmax": {},
+   "hash": "aab80e3e20e5",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-07",
-   "read": "2026-11-07",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "今週末限定！日本時間2026年11月6日～11月8日にログインして、「キョダイマックスカイリキー」と出会える無料の「タイムチャレンジ」に挑戦しよう！"
+   "title": "今週末限定！日本時間2026年11月6日～11月8日にログインして、「キョダイマックスカイリキー」と出会える無料の「タイムチャレンジ」に挑戦しよう！",
+   "url": "https://pokemongo.com/ja/news/gowildarea-2026-timed-research"
   },
   "gowildarea-global-2026-osaka-gameplay-update": {
-   "hash": "0e7057952cf8",
+   "dmax": {},
+   "hash": "ad24547d83de",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-11",
-   "read": "2026-11-12",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「Pokémon GO ワイルドエリア：グローバル」開催期間中の大阪・難波エリアにおけるゲームプレイについて"
+   "title": "「Pokémon GO ワイルドエリア：グローバル」開催期間中の大阪・難波エリアにおけるゲームプレイについて",
+   "url": "https://pokemongo.com/ja/news/gowildarea-global-2026-osaka-gameplay-update"
   },
   "gowildarea-sendai-ticket-update": {
    "hash": "e76c83f982b9",
@@ -394,14 +439,17 @@
    "title": "「収穫祭：占拠」イベントで「シャドウゼクロム」を救おう！"
   },
   "into-the-wild-2026": {
-   "hash": "9d1ab256973d",
+   "dmax": {},
+   "hash": "03e40c544f28",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-10-15",
-   "read": "2026-11-11",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「ワイルドウィーク」ではがねタイプやドラゴンタイプのポケモンを追いかけよう！"
+   "title": "「ワイルドウィーク」ではがねタイプやドラゴンタイプのポケモンを追いかけよう！",
+   "url": "https://pokemongo.com/ja/news/into-the-wild-2026"
   },
   "mega-finale-2026-community": {
    "hash": "c1553a748a9c",
@@ -461,7 +509,7 @@
   },
   "monthly-content-update-dec2026": {
    "dmax": {},
-   "hash": "3343cb4858ec",
+   "hash": "3eeb8ffae861",
    "mega_new": {},
    "notes": [],
    "plus": {},
@@ -525,11 +573,12 @@
      "name": "パルキア"
     }
    },
-   "hash": "1b6494ec304f",
+   "hash": "80f807fbc686",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-12",
-   "read": "2026-11-12",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
    "title": "Pokémon GO ワイルドエリア",
@@ -575,12 +624,12 @@
      "name": "パルキア"
     }
    },
-   "hash": "8d116b3188a1",
+   "hash": "c4bdcf6f993e",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-12",
-   "read": "2026-11-12",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
    "title": "Sendai Gameplay – GO Wild Area 2026 — Pokémon GO",
@@ -613,7 +662,7 @@
      "name": "ユクシー"
     }
    },
-   "hash": "c01781dfcc85",
+   "hash": "96df88823066",
    "mega_new": {},
    "notes": [],
    "plus": {},
@@ -626,7 +675,7 @@
   },
   "page:seasons/daydream-destinations": {
    "dmax": {},
-   "hash": "c01781dfcc85",
+   "hash": "96df88823066",
    "mega_new": {},
    "notes": [],
    "plus": {},
@@ -675,14 +724,17 @@
    "url": "https://pokemongo.com/ja/seasons/twilight-trails"
   },
   "pgo-explorer-gadget-2026-update": {
-   "hash": "554e71ad1ed2",
+   "dmax": {},
+   "hash": "5095cb3faa11",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-03",
-   "read": "2026-11-03",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "「おでかけキャッチャー」が進化！"
+   "title": "「おでかけキャッチャー」が進化！",
+   "url": "https://pokemongo.com/ja/news/pgo-explorer-gadget-2026-update"
   },
   "pgo-gameplay-update-oct-2026": {
    "hash": "fcebbcf8c9d8",
@@ -696,12 +748,12 @@
   },
   "pokemon-crocs-2026": {
    "dmax": {},
-   "hash": "26af20762c0c",
+   "hash": "2b44b0d7b74b",
    "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-17",
-   "read": "2026-11-17",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
    "title": "Crocsによる新しいポケモンコレクションから、着せ替えアイテムが『Pokémon GO』に登場！",
@@ -748,14 +800,17 @@
    "title": "「Pokémon GO Tour 2027」開催決定！"
   },
   "save-the-date-s25": {
-   "hash": "213a1bc8a8f0",
+   "dmax": {},
+   "hash": "b4cb004d4c41",
+   "mega_new": {},
    "notes": [],
    "plus": {},
    "published": "2026-11-10",
-   "read": "2026-11-10",
+   "read": "2026-11-25",
    "released": {},
    "shadow": {},
-   "title": "次のシーズンで開催される「コミュニティ・デイ」の日程をお知らせします！"
+   "title": "次のシーズンで開催される「コミュニティ・デイ」の日程をお知らせします！",
+   "url": "https://pokemongo.com/ja/news/save-the-date-s25"
   },
   "staraptor-super-mega-raid-day-2026": {
    "hash": "e9967b75ff56",
@@ -786,7 +841,7 @@
   },
   "twilight-wishes-2026": {
    "dmax": {},
-   "hash": "54894fc2e1b0",
+   "hash": "15c59f10f8b6",
    "mega_new": {},
    "notes": [],
    "plus": {},
@@ -980,6 +1035,15 @@
    "text": "ダイマックスパルキアの初登場の告知 → マックスバトルのデータに足す（ボスの設定値は未確認なので既定値）",
    "title": "Sendai Gameplay – GO Wild Area 2026 — Pokémon GO",
    "url": "https://pokemongo.com/ja/gowildarea/sendai/gameplay"
+  },
+  {
+   "date": "2026-11-25",
+   "id": "clefable-super-mega-raid-day-2026:d8f8bd92",
+   "kind": "auto",
+   "slug": "clefable-super-mega-raid-day-2026",
+   "text": "メガピクシーの＋わざ「ムーンフォース＋」 レイド威力160・対戦威力80・効果「一定確率で相手の「こうげき」を1段階下げます」（レイドは元わざの時間・ゲージ1本で計算。対戦は消費ゲージが分かるまで入れない）",
+   "title": "「ピクシー」の「スーパーメガレイド・デイ」で、月の光の中でダンス！",
+   "url": "https://pokemongo.com/ja/news/clefable-super-mega-raid-day-2026"
   },
   {
    "id": "reflect:boss:85cb8b80",
