@@ -719,7 +719,7 @@ function drawResult(){
     '<div class="tile" title="' + T_RT + '"><span>' + lbl + '<em>DISCOUNT</em></span><b class="v num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctDN(o.mine) + '<i>%</i></b>' +
       '<div class="was"><s class="num">' + fmt(o.want) + '</s>→' + (o.by === 'yen' ? '' : '<i class="coin"></i>') + '<b class="num">' + how + '</b></div></div>' +
     '<div class="tile" title="' + T_OT + '"><span>お得度<em>VALUE</em></span>' + (ot != null ? gauge(ot) + '<small>最安値の達成度</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
-  if (o.anyOff && o.label != null) h += '<p class="note">全部要るなら、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pctD(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
+  if (o.anyOff && o.label != null) h += '<p class="note">外したアイテムも数えると、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pctD(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
   if (o.mine < 0) h += '<p class="note">' + (o.anyOff ? '要るものだけなら、' : '') + '単品で買うほうが ' + fmt(o.price - o.want) + ' コイン安くなります。</p>';
   if (ot != null){
     const kp = Math.max(1, Math.min(99, otw));
