@@ -488,7 +488,7 @@ button.pr:active{background:var(--selbg)}
   </ul>
   <h4>割引率の出し方</h4>
   <ul>
-    <li><b>割引率＝1 −（ボックスの値段 ÷ 中身を単品で買ったときの合計）</b>です</li>
+    <li><b>割引率＝1 −（ボックスの値段 ÷ 中身を単品で買ったときの合計）</b>です。ゲーム内の「◯%OFF」と同じく、小数は切り捨てます</li>
     <li>単品の値段は、ゲーム内ショップで１つずつ買うときの値段です</li>
     <li><b>ほしのかけら・しあわせタマゴ・ボールなど、ほかのアイテムは数えません。</b>ボックスの値段をまるごと主要なアイテムの分として計算するので、おまけが入ったボックスでは、ゲーム内の「◯%OFF」の表示と数字が違います</li>
     <li>マックス粒子パックは<b>1パック＝800</b>として数えます。ボックスに2,400と書かれていれば３パックです</li>
@@ -587,6 +587,9 @@ const num = s => { const t = String(s).replace(/[０-９]/g, c => String.fromCha
 const kata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const pctN = r => { const v = r * 100; return String(Math.abs(v) < 10 ? Math.round(v * 10) / 10 : Math.round(v)); };   // 数字だけ（%は別の大きさで描く）
 const pct = r => pctN(r) + '%';
+// 割引率はゲーム内の「◯%OFF」と同じく切り捨て（0に向かって・小数の誤差よけに1e-9）。10%未満は小数第1位まで
+const pctDN = r => { const v = r * 100, t = Math.abs(v) < 10 ? Math.trunc(v * 10 + Math.sign(v) * 1e-9) / 10 : Math.trunc(v + Math.sign(v) * 1e-9); return String(t === 0 ? 0 : t); };
+const pctD = r => pctDN(r) + '%';
 const yenPerCoin = () => BUNDLES[S.bundle].y / BUNDLES[S.bundle].c;
 const rowOf = id => S.rows.find(r => r.id === id);
 const colorOf = id => COLORS[id] || '#8a93b8';
@@ -707,16 +710,16 @@ function drawResult(){
   const T_RT = 'ボックスの値段を、' + (o.anyOff ? '要るアイテムだけを' : '中身を') + '単品で買ったときの合計と比べた割引率です。';
 
   /* 下の帯 */
-  bar.innerHTML = '<div class="big num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctN(o.mine) + '<i>%</i></div>' +
+  bar.innerHTML = '<div class="big num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctDN(o.mine) + '<i>%</i></div>' +
     '<div class="sm">' + (o.anyOff ? '要るものだけの割引率' : '割引率') + '<div><s class="num">' + fmt(o.want) + '</s> → <b class="num">' + how + '</b></div></div>' +
     (ot != null ? '<div class="ot" title="' + T_OT + '">お得度<b class="num v3d sm ' + (ot < 0 ? 'neg r' : 'g') + '">' + ot + '<i>%</i></b><span class="mini"><u style="width:' + otw + '%"></u></span></div>' : '');
 
   /* 結果の枠 */
   let h = '<div class="sh"><span class="en">Result</span><span class="ja">結果</span><i></i></div><div class="card res"><div class="tiles">' +
-    '<div class="tile" title="' + T_RT + '"><span>' + lbl + '<em>DISCOUNT</em></span><b class="v num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctN(o.mine) + '<i>%</i></b>' +
+    '<div class="tile" title="' + T_RT + '"><span>' + lbl + '<em>DISCOUNT</em></span><b class="v num v3d' + (o.mine < 0 ? ' neg r' : '') + '">' + pctDN(o.mine) + '<i>%</i></b>' +
       '<div class="was"><s class="num">' + fmt(o.want) + '</s>→' + (o.by === 'yen' ? '' : '<i class="coin"></i>') + '<b class="num">' + how + '</b></div></div>' +
     '<div class="tile" title="' + T_OT + '"><span>お得度<em>VALUE</em></span>' + (ot != null ? gauge(ot) + '<small>最安値の達成度</small>' : '<b class="nov num">−</b><small>最安値と同じかそれ以上</small>') + '</div></div>';
-  if (o.anyOff && o.label != null) h += '<p class="note">全部要るなら、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pct(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
+  if (o.anyOff && o.label != null) h += '<p class="note">全部要るなら、割引率は <b class="num" style="color:var(--barstrong);font-size:13px">' + pctD(o.label) + '</b>（単品の合計 ' + fmt(o.all) + '）です。</p>';
   if (o.mine < 0) h += '<p class="note">' + (o.anyOff ? '要るものだけなら、' : '') + '単品で買うほうが ' + fmt(o.price - o.want) + ' コイン安くなります。</p>';
   if (ot != null){
     const kp = Math.max(1, Math.min(99, otw));
@@ -767,7 +770,7 @@ function drawReceipt(){
   }
   h += '<hr><div><span>単品の合計' + (o.anyOff ? '（要るものだけ）' : '') + '</span><span>' + fmt(o.want) + '</span></div>';
   if (o.price) h += '<div class="tot"><span>ボックスの値段</span><span>' + fmt(o.price) + '</span></div>';
-  if (o.ready) h += '<hr><div class="tot"><span>割引率</span><span>' + pct(o.mine) + '</span></div>' + (o.otoku != null ? '<div><span>お得度</span><span>' + Math.round(o.otoku * 100) + '%</span></div>' : '');
+  if (o.ready) h += '<hr><div class="tot"><span>割引率</span><span>' + pctD(o.mine) + '</span></div>' + (o.otoku != null ? '<div><span>お得度</span><span>' + Math.round(o.otoku * 100) + '%</span></div>' : '');
   $('rcpBody').innerHTML = h + '</div>';
 }
 const redraw = () => { drawPrice(); drawList(); drawResult(); };
