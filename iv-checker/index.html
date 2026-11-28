@@ -453,12 +453,12 @@ body.has-sticky{padding-top:52px}
 :root.light .rkrow .r.r10{background-image:linear-gradient(180deg,#8d9cae 0%,#6f7f93 55%,#56657a 100%)}
 :root.light .rkrow .r.r100{background-image:linear-gradient(180deg,#c98a55 0%,#a8693a 55%,#83502a 100%)}
 @media(max-width:560px){
-  .rkboard{--cols:minmax(0,1.08fr) repeat(4,minmax(0,1fr))}
+  .rkboard{--cols:minmax(0,1.3fr) repeat(4,minmax(0,1fr))}
   #lgtabs,.rkrow{column-gap:3px}
   #lgtabs .lgc{padding:8px 1px 7px}
   #lgtabs .lgc .lgc-n{font-size:.64rem;letter-spacing:.01em}
   .rkcorner{padding-left:6px} .rkcorner b{font-size:.74rem}
-  .rkrow .nm{padding-left:7px} .rkrow .nm b{font-size:.72rem}
+  .rkrow .nm{padding-left:6px} .rkrow .nm b{font-size:.68rem;letter-spacing:-.02em}
   .rkrow .c .r{font-size:.9rem;letter-spacing:-.02em} .rkrow.me .c .r{font-size:1rem}
   .rkrow .c .r .u{font-size:.5rem;margin-left:0}
   .rkrow .c small{font-size:.52rem}
@@ -489,9 +489,17 @@ body.rkm-open{overflow:hidden}
   box-shadow:inset 0 1px 0 var(--tabin),0 3px 0 rgba(0,0,0,.3);transition:transform .09s ease,box-shadow .09s ease}
 .setbtn:active{transform:translateY(2px);box-shadow:inset 0 2px 4px rgba(0,0,0,.3),0 1px 0 rgba(0,0,0,.3)}
 .setlbl{font-size:.74rem;font-weight:800;letter-spacing:.04em;color:var(--sub);white-space:nowrap}
-.setsum{flex:1;min-width:0;font-size:.8rem;font-weight:700;color:var(--cy);line-height:1.35}
-.setbtn i{font-style:normal;color:var(--sub);transition:transform .15s ease}
-.setbtn[aria-expanded="true"] i{transform:rotate(180deg)}
+.setsum{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}
+.setchip{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;padding:4px 10px 5px;border-radius:8px;
+  border:1px solid rgba(67,224,255,.35);background:rgba(67,224,255,.08);line-height:1.2}
+.setchip i{font-style:normal;font-size:.56rem;font-weight:700;letter-spacing:.06em;color:var(--sub)}
+.setchip b{font-size:.84rem;font-weight:800;color:var(--cy);white-space:nowrap}
+.setchip b small{font-size:.66rem;font-weight:700;color:var(--sub);margin-left:5px}
+.setbtn{flex-wrap:wrap}
+@media(max-width:560px){.setlbl{flex:1 0 100%;order:-2} .setarr{position:absolute;right:12px;top:10px} .setbtn{position:relative;row-gap:6px}}
+:root.light .setchip{border-color:rgba(11,143,168,.35);background:rgba(11,143,168,.06)}
+.setarr{font-style:normal;color:var(--sub);transition:transform .15s ease}
+.setbtn[aria-expanded="true"] .setarr{transform:rotate(180deg)}
 .setbody{padding:6px 2px 0}
 .setsrc{margin-top:10px}
 .setsrc label.sec{margin-bottom:5px;font-size:.66rem}
@@ -836,7 +844,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <div class="iv-hint expl" id="lghint" style="margin-top:8px">行＝進化前・進化後・メガ（この個体値のまま進化させたときの順位）。行をタップでその姿、リーグのボタンで下の一覧を切り替え。</div>
   <!-- 計算の前提(並び順・PL上限・入手方法)はふだん1つのボタンに畳む(2026-11-28タダシさん指示)。ボタンにいまの設定を要約して出す -->
   <div class="setwrap" id="setwrap">
-  <button type="button" class="setbtn" id="setbtn" aria-expanded="false" aria-controls="setbody" title="並び順・PL上限・入手方法（最低個体値）を変えます"><span class="setlbl">計算の前提</span><span class="setsum" id="setsum"></span><i aria-hidden="true">▾</i></button>
+  <button type="button" class="setbtn" id="setbtn" aria-expanded="false" aria-controls="setbody" title="並び順・PL上限・入手方法（最低個体値）を変えます"><span class="setlbl">計算の前提</span><span class="setsum" id="setsum"></span><i class="setarr" aria-hidden="true">▾</i></button>
   <div class="setbody" id="setbody" hidden>
   <div class="capsel" id="sortrow">
     <span>並び順</span>
@@ -1192,7 +1200,9 @@ function syncSetSum(){
   const cap=document.querySelector('.cap.act');
   const src=document.querySelector('.src.act');
   const srcTxt=src? src.textContent.replace(/最低.*$/,'').trim() : '';
-  el.textContent=[srt, cap? 'PL'+cap.dataset.cap : '', srcTxt? srcTxt+'（最低'+state.floor+'）' : ''].filter(Boolean).join('・');
+  // 項目ごとに札を分ける(2026-11-28タダシさん指示「それぞれを認識しやすく」): 上に小さな見出し・下に値
+  const chip=(k,v)=>v? '<span class="setchip"><i>'+k+'</i><b>'+v+'</b></span>' : '';
+  el.innerHTML=chip('並び順',srt)+chip('PL上限',cap? cap.dataset.cap : '')+chip('入手方法',srcTxt? srcTxt+'<small>最低'+state.floor+'</small>' : '');
 }
 document.getElementById('setbtn').addEventListener('click',()=>{
   const b=document.getElementById('setbtn'), body=document.getElementById('setbody');
