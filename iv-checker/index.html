@@ -124,6 +124,10 @@ h1 small{display:block;font-size:.72rem;color:var(--sub);font-weight:500;margin-
 
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--cardsh,none)}
 label.sec{display:block;font-size:.72rem;font-weight:700;color:var(--sub);letter-spacing:.15em;margin-bottom:8px}
+#toplabel{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;letter-spacing:.04em;margin-bottom:0}
+#toplabel .tpn{font-size:.95rem;font-weight:900;color:var(--ink);letter-spacing:.02em}
+#toplabel .tpl{font-size:.74rem;font-weight:800;color:var(--cy)}
+#toplabel .tpt{font-size:.72rem;letter-spacing:.15em}
 
 /* ポケモン検索 */
 .searchbox,.inbox{position:relative}
@@ -871,6 +875,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     <button class="lgc lgboth" data-lg="gu" id="lgboth" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体のSCPを100%としたときの割合の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n">メガ <span class="sl">スーパー</span>＋<span class="hl">ハイパー</span></span><span class="bt"><span class="role">2役</span><span class="lgc-r" id="lgr-gu">—</span></span></button>
     <button class="lgc lgboth" data-lg="ga" id="lgaio" style="display:none" title="メガのスーパー・ハイパーと、メガシンカ前の姿のハイパーの3つで順位が高い個体ほど上に並べたときの、この個体値の順位です。メガシンカ前の姿をハイパーの上限まで強化すれば、メガシンカでCPが自動で下がるので1匹で3つに出せます。それぞれ1位の個体のSCPを100%としたときの割合の平均で並べます"><span class="lgc-n" id="lgaion"></span><span class="bt"><span class="role">3役</span><span class="lgc-r" id="lgr-ga">—</span></span></button>
   </div>
+  <div class="iv-hint expl" id="megahint" style="display:none;margin-top:10px">メガシンカが使えるリーグ（メガ版のリーグ）にメガを出すと、ゲーム内でCPがそのリーグの上限に合わせて自動で調整されます。だから1匹のメガで「2役」（スーパーとハイパー）、メガ前をハイパーの上限まで強化しておけば「3役」（＋メガ前のハイパー）をこなせます。</div>
   <div class="iv-hint expl" id="lghint" style="margin-top:8px">行＝進化前・進化後・メガ（この個体値のまま進化させたときの順位）。行をタップでその姿、リーグのボタンで下の一覧を切り替え。</div>
   <!-- 計算の前提(並び順・PL上限・入手方法)はふだん1つのボタンに畳む(2026-11-28タダシさん指示)。ボタンにいまの設定を要約して出す -->
   <div class="setwrap" id="setwrap">
@@ -1043,7 +1048,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     順位は「入手方法」「PL上限」の前提で数えるので、<b>野生の想定なら入手方法は「野生」（最低個体値0）</b>にします
     （「CP→個体値」を押すと自動で野生になり、もう一度押して戻すと元の設定に戻ります）。</p>
   <h4>スーパー＋ハイパー両立（メガ・ゲンシ）</h4>
-  <p>メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、<b>1匹のメガでスーパーにもハイパーにも出せます</b>。
+  <p><b>メガシンカが使えるリーグ（メガ版のリーグ）にメガシンカしたポケモンを出すと、ゲーム内でCPがそのリーグの上限に合わせて自動で調整されます</b>。
+    そのため、<b>1匹のメガをスーパーにもハイパーにも出せ、複数の役をこなせます</b>（ふつうのポケモンは、強化したCPのままなので1つのリーグにしか出せません）。
     メガ・ゲンシを選ぶと、リーグの下に<b>スーパー＋ハイパー両立</b>が出ます。押すと、両方のリーグで順位が高い個体ほど上に並べた一覧になります。</p>
   <ul>
     <li><b>平均</b> ＝ スーパー・ハイパーそれぞれで1位の個体のSCPを100%としたときの割合の平均。この値が高い順に並べます</li>
@@ -1279,6 +1285,7 @@ function render(){
   // --- メガ・ゲンシ: スーパー＋ハイパー両立 ---
   const mega=isMegaP(state.p), ai=mega? aioLeagues(state.p) : null;
   document.getElementById('lgextra').style.display=mega?'':'none';
+  document.getElementById('megahint').style.display=mega?'':'none';
   document.getElementById('lgaio').style.display=ai?'':'none';
   // オールインワンの名前は、数えているリーグをそのまま書く(2026-11-28タダシさん指示「オールインワンの文字はやめて」)。
   // 1段目＝メガのスーパー＋ハイパー、2段目＝メガ前で数えるリーグ(CP制限に届かないリーグは書かない)
@@ -1364,7 +1371,7 @@ function render(){
     html+='<tr'+cls+'><td>'+rkHtml(r.rank)+'</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td>'+tailTd(r)+'</tr>';
   });
   document.getElementById('top10').innerHTML=html;
-  document.getElementById('toplabel').textContent= showN>10 ? 'TOP'+showN : 'TOP10';
+  setTopLabel(showN, {lc:'リトルカップ',gl:'スーパーリーグ',ul:'ハイパーリーグ',ml:'マスターリーグ'}[state.league]);
   // 「さらに50件見る」(全部出しきったら消える)・「TOP10に戻す」(伸ばしているときだけ)
   const rest=rows.length-showN;
   document.getElementById('morerow').style.display='flex';
@@ -1410,6 +1417,11 @@ function render(){
 }
 
 // 「スーパー＋ハイパー両立」の一覧(列: 順位・個体値・スーパーの順位・ハイパーの順位・平均)
+// 一覧の見出し「ポケモン名 リーグ TOP10」(2026-11-28タダシさん指示: 進化系統を1つの表で切り替えるので、いま何を見ているかを見出しで示す)
+function setTopLabel(n, lg){
+  const el=document.getElementById('toplabel');
+  el.innerHTML='<span class="tpn">'+state.p.n+'</span><span class="tpl">'+lg+'</span><span class="tpt">'+(n>10? 'TOP'+n : 'TOP10')+'</span>';
+}
 function renderBoth(rows, idx, belowFloor, pool, ai){
   const sticky=document.getElementById('sticky');
   document.getElementById('result').style.display='block';
@@ -1443,7 +1455,7 @@ function renderBoth(rows, idx, belowFloor, pool, ai){
   const line=r=>'<td><span class="rkc">'+r.rank+'位</span></td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td>'+cols.map(([k])=>'<td>'+r[k].rank+'位</td>').join('')+'<td>'+pc(r.sc)+'</td>';
   const showN=Math.min(state.showN, rows.length);
   document.getElementById('top10').innerHTML=rows.slice(0,showN).map((r,i)=>'<tr'+(i===idx?' class="me"':'')+'>'+line(r)+'</tr>').join('');
-  document.getElementById('toplabel').textContent= showN>10 ? 'TOP'+showN : 'TOP10';
+  setTopLabel(showN, ai? '3役' : '2役');
   const rest=rows.length-showN;
   document.getElementById('morerow').style.display='flex';
   const mb=document.getElementById('moreBtn'), lb=document.getElementById('lessBtn');
