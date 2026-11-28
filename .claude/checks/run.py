@@ -3,7 +3,7 @@
 すべて合格なら終了コード0。1つでも不合格・実行できなければ1。
 
 gbl-engine:  pvp-tests/engine-test.html（GBLエンジンの実測突き合わせ・7ケース×3項目＝21項目）
-iv-calc:     .claude/checks/iv-check.html（個体値チェッカーのCP・順位・逆引き・進化後CP＝16項目）
+iv-calc:     .claude/checks/iv-check.html（個体値チェッカーのCP・順位・逆引き・進化後CP・メガの両立とオールインワン＝18項目）
 raid-engine: .claude/checks/raid-check.html（スクショ5例のボスの攻撃時刻＋回帰5通り。基準は raid-baseline.json）
 max-attacker:.claude/checks/max-check.html（マックスバトルのアタッカーが「ダメージ最大のマックスわざ」を選ぶか・画面のノーマルアタック／SPの決まり＝10項目）
 gym-attack:  .claude/checks/gym-check.html（ジム挑戦の手計算の例・画面の上位30件を別の計算と比べる・確認済みの耐え数＝15項目）
@@ -140,7 +140,7 @@ CHECKS = {
     # バトルルールの検査(2026-09-22): シナリオ6本＝期待値との突き合わせ／ランダム＝種固定で600戦回して違反0
     'rules-scn': sub_check('.claude/checks/rules/scncheck.py', [], 'バトルルールのシナリオ検査'),
     'rules-random': sub_check('.claude/checks/rules/randcheck.py', ['--n', '600', '--seed', '1', '--ms', '60000'], 'バトルルールのランダム検査'),
-    'iv-calc': page_check('.claude/checks/iv-check.html', 16),
+    'iv-calc': page_check('.claude/checks/iv-check.html', 18),
     'mega-cap': page_check('.claude/checks/megacap-check.html', 27, 60000),
     'raid-engine': page_check('.claude/checks/raid-check.html', 10),
     'max-attacker': page_check('.claude/checks/max-check.html', 10),

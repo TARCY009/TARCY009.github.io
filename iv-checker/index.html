@@ -367,6 +367,16 @@ body.has-sticky{padding-top:52px}
 .lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--gl),inset 0 1px 0 var(--tabin)}
 .lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 0 1.5px var(--ul),inset 0 1px 0 var(--tabin)}
 .lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 0 1.5px var(--ml),inset 0 1px 0 var(--tabin)}
+/* メガ・ゲンシだけの「スーパー＋ハイパー両立」(2026-11-28タダシさん指示)。4枚の下に横いっぱい・1行。
+   メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せる */
+.lgc.lgboth{grid-column:span 2;display:flex;align-items:baseline;justify-content:center;gap:4px 10px;flex-wrap:wrap;padding:7px 10px 8px}
+.lgc.lgboth .lgc-n{display:inline;letter-spacing:.04em;font-size:.74rem;color:var(--sub)}
+.lgc.lgboth .lgc-n .g{color:var(--gl)} .lgc.lgboth .lgc-n .uu{color:var(--ul)} .lgc.lgboth .lgc-n .w{color:var(--sub);margin-left:4px}
+.lgc.lgboth .lgc-r{display:inline;margin-top:0;font-size:1.35rem}
+.lgc.act[data-lg="gu"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--ul),inset 0 1px 0 var(--tabin)}
+.lgc.lgboth .lgc-n .a{color:var(--cy)}
+.lgc.act[data-lg="ga"]{border-color:var(--cy);box-shadow:0 0 0 1.5px var(--cy),inset 0 1px 0 var(--tabin)}
+@media(max-width:400px){.lgc.lgboth .lgc-n{font-size:.64rem;letter-spacing:.01em} .lgc.lgboth .lgc-r{font-size:1.2rem}}
 /* メダル色は上の :root / :root.light が持つ。
    大きい順位はベタ塗りではなくメダルのグラデーションで塗る(タグ・フレームと同じ質感にそろえる)。
    「位」は子要素なので自分の色(--sub)のまま残る。
@@ -494,6 +504,19 @@ body.has-sticky{padding-top:52px}
   --mg:linear-gradient(160deg,#ffd873 0%,#f0a827 45%,#c47f10 100%);font-size:.75rem}
 .evf{flex:1;padding:7px 4px;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer;text-align:center}
 /* 進化前CPの列を足したとき(7列)の幅の配りなおし。6列時と同じ「中央寄せ＋％幅」の考え方 */
+table.both th:nth-child(1),table.both td:nth-child(1){width:18%}
+table.both th:nth-child(2),table.both td:nth-child(2){width:24%}
+table.both th:nth-child(3),table.both td:nth-child(3){width:19%}
+table.both th:nth-child(4),table.both td:nth-child(4){width:19%}
+table.both th:nth-child(5),table.both td:nth-child(5){width:20%;padding-right:9px}
+/* オールインワン(7列): 順位・個体値・メガのスーパー/ハイパー・メガ前のスーパー/ハイパー・平均 */
+table.aio th:nth-child(1),table.aio td:nth-child(1){width:13%}
+table.aio th:nth-child(2),table.aio td:nth-child(2){width:19%}
+table.aio th:nth-child(n+3):nth-child(-n+6),table.aio td:nth-child(n+3):nth-child(-n+6){width:13%}
+table.aio th:nth-child(7),table.aio td:nth-child(7){width:16%;padding-right:7px}
+table.aio th{line-height:1.25}
+table.aio th small{display:block;font-size:.85em;opacity:.85}
+@media(max-width:560px){table.aio{font-size:.7rem} table.aio th{font-size:.55rem} table.aio th,table.aio td{padding-left:1px;padding-right:1px} table.aio td:first-child,table.aio th:first-child{padding-left:5px} table.aio td:last-child,table.aio th:last-child{padding-right:4px}}
 table.evo th:nth-child(1),table.evo td:nth-child(1){width:16%}
 table.evo th:nth-child(2),table.evo td:nth-child(2){width:21%}
 table.evo th:nth-child(3),table.evo td:nth-child(3){width:10%}
@@ -658,6 +681,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     <button class="lgc act" data-lg="gl" title="CP1500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">スーパー</span><span class="lgc-r" id="lgr-gl">—</span><small class="expl">CP1500以下</small></button>
     <button class="lgc" data-lg="ul" title="CP2500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small class="expl">CP2500以下</small></button>
     <button class="lgc" data-lg="ml" title="CP制限なしでのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small class="expl">制限なし</small></button>
+    <button class="lgc lgboth" data-lg="gu" id="lgboth" style="display:none" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体を100%としたときの割合（ステータス積）の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n"><span class="g">スーパー</span>＋<span class="uu">ハイパー</span><span class="w">両立</span></span><span class="lgc-r" id="lgr-gu">—</span></button>
+    <button class="lgc lgboth" data-lg="ga" id="lgaio" style="display:none" title="メガのスーパー・ハイパーに加えて、メガシンカ前の姿のスーパー・ハイパーでも順位が高い個体ほど上に並べたときの、この個体値の順位です（1匹をどこで使っても困りにくい個体）。それぞれ1位の個体を100%としたときの割合（ステータス積）の平均で並べます。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません"><span class="lgc-n"><span class="a">メガ前も</span><span class="w">オールインワン</span></span><span class="lgc-r" id="lgr-ga">—</span></button>
   </div>
   <div class="iv-hint expl" id="lghint" style="margin-top:8px">4リーグの順位を同時表示。タップで詳細を切替。リトル＝CP500のリトルカップ。</div>
   <div class="capsel" id="sortrow">
@@ -821,6 +846,14 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <p>探すのは<b>PL1〜35の整数レベル</b>です（野生で出るのは整数レベルなので、強化したあとの半端なPLは対象外）。
     順位は「入手方法」「PL上限」の前提で数えるので、<b>野生の想定なら入手方法は「野生」（最低個体値0）</b>にします
     （「CP→個体値」を押すと自動で野生になり、もう一度押して戻すと元の設定に戻ります）。</p>
+  <h4>スーパー＋ハイパー両立（メガ・ゲンシ）</h4>
+  <p>メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、<b>1匹のメガでスーパーにもハイパーにも出せます</b>。
+    メガ・ゲンシを選ぶと、リーグの下に<b>スーパー＋ハイパー両立</b>が出ます。押すと、両方のリーグで順位が高い個体ほど上に並べた一覧になります。</p>
+  <ul>
+    <li><b>平均</b> ＝ スーパー・ハイパーそれぞれで1位の個体を100%としたときの割合（ステータス積）の平均。この値が高い順に並べます</li>
+    <li>表の<b>スーパー</b>・<b>ハイパー</b>の列は、それぞれのリーグでの順位です</li>
+    <li><b>オールインワン</b> ＝ メガのスーパー・ハイパーに、メガシンカ前の姿のスーパー・ハイパーも加えた4つの平均で並べます（1匹をどこで使っても困りにくい個体）。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません</li>
+  </ul>
   <h4>リトルカップ（CP500）</h4>
   <p>リーグの左端の<b>リトル</b>は、CP500以下で戦うリトルカップでの順位です。最近は開催されていませんが、終了の発表が無いため残してあります。進化前のポケモン（デルビルなど）の厳選に使えます。</p>
   <h4>進化系統の順位</h4>
@@ -851,7 +884,7 @@ const POKE = [{"i":"bulbasaur","n":"フシギダネ","e":"Bulbasaur","d":1,"a":1
 const state = { p:null, mode:'iv', iv:[10,10,10], league:'gl', cap:50, floor:0, sort:'scp',
   evoCol:false, evoFrom:null, evoChain:[], hdLv:null,   // 進化前CP列(トグル・どの姿から・進化前の系列)／100%チェックで選んだPL
   statCol:false, showN:10, listKey:'',   // 表示「実数値」(CP/SCP/アメXLの列を攻撃/防御/HPに差し替え)／順位一覧を何件出すか(さらに50件見る)／件数を戻す判定用
-  cpNow:null, plNow:null };   // いまのCP(任意入力)と、そこから割り出したPL(CPMSの添字。無ければnull)
+  cpNow:null, plNow:null, both:false };   // both=メガの一覧の切り替え(false／'gu'＝スーパー＋ハイパー両立／'ga'＝メガ前も含めたオールインワン)   // いまのCP(任意入力)と、そこから割り出したPL(CPMSの添字。無ければnull)
 const CAPS = { lc:500, gl:1500, ul:2500, ml:null };   // lc=リトルカップ(CP500・2026-09-04追加)
 
 const floor = Math.floor, sqrt = Math.sqrt;
@@ -942,6 +975,44 @@ function assignRanks(rows,mode){
   return rows;
 }
 
+// メガ・ゲンシの「スーパー＋ハイパー両立」(2026-11-28タダシさん指示)。
+// それぞれのリーグで1位のステータス積を100%とした割合の平均(sc)が高い順。同じ値は同順位(assignRanksと同じ流儀)。
+// 各リーグの順位は総合(SCP)の順位そのもの(攻撃優先は使わない)
+// オールインワン(ga・同日の追加指示): メガのスーパー・ハイパーに、メガシンカ前の姿のスーパー・ハイパーも足した4つの平均。
+// メガ前の姿の表は進化系統の順位と同じ famRowsBy(PL上限・PL下限・最低個体値も同じ)。
+// メガ前の姿の最大CP(15/15/15・PL上限)がCP制限に300以上届かないリーグは数えない(進化系統の画像と同じ基準)
+const bothCache={};
+const baseOfMega=p=>POKE[IDX[p.i.replace(/_(mega(_[xy])?|primal)$/,'')]]||null;
+function aioLeagues(p){
+  const b=baseOfMega(p); if(!b||b.i===p.i) return null;
+  const capLv=state.cap>51? 50 : state.cap;
+  const lgs=['gl','ul'].filter(lg=>cp(b.a+15, b.f+15, b.h+15, CPMS[(capLv-1)*2]) >= CAPS[lg]-300);
+  return lgs.length? {b, lgs} : null;
+}
+function bothRows(p, aio){
+  const ai=aio? aioLeagues(p) : null;
+  if(aio && !ai) return [];
+  const key=p.i+'|'+state.cap+'|'+state.floor+'|'+(ai? ai.lgs.join(',') : '');
+  if(bothCache[key]) return bothCache[key];
+  const k=r=>r.ia*256+r.id*16+r.ih;
+  const lists=[['g',assignRanks(rankAll(p, CAPS.gl, state.cap, state.floor),'scp')],
+               ['u',assignRanks(rankAll(p, CAPS.ul, state.cap, state.floor),'scp')]];
+  if(ai) ai.lgs.forEach(lg=>lists.push([lg==='gl'?'bg':'bu', famRowsBy(ai.b, lg, 'scp')]));
+  const rows=[];
+  if(lists.every(([,l])=>l.length)){
+    const maps=lists.map(([nm,l])=>[nm, new Map(l.map(r=>[k(r),r])), l[0].sp]);
+    lists[0][1].forEach(r0=>{
+      const o={ia:r0.ia, id:r0.id, ih:r0.ih, sc:0, rs:0};
+      for(const [nm,m,top] of maps){ const r=m.get(k(r0)); if(!r) return; o[nm]=r; o.sc+=r.sp/top; o.rs+=r.rank; }
+      o.sc/=maps.length; rows.push(o);
+    });
+    rows.sort((a,b)=> b.sc-a.sc || a.rs-b.rs || a.g.rank-b.g.rank);
+    let prev=null, prevRank=0;
+    rows.forEach((r,i)=>{ if(prev && spEq(prev.sc,r.sc)) r.rank=prevRank; else { r.rank=i+1; prev=r; prevRank=r.rank; } });
+  }
+  return bothCache[key]=rows;
+}
+
 function findRank(rows,iv){
   return rows.findIndex(r=>r.ia===iv[0]&&r.id===iv[1]&&r.ih===iv[2]);
 }
@@ -985,6 +1056,29 @@ function render(){
       el.className='lgc-r';
     }
   });
+
+  // --- メガ・ゲンシ: スーパー＋ハイパー両立 ---
+  const mega=isMegaP(state.p), ai=mega? aioLeagues(state.p) : null;
+  document.getElementById('lgboth').style.display=mega?'':'none';
+  document.getElementById('lgaio').style.display=ai?'':'none';
+  // メガ1つだけのときは両立を横いっぱいに
+  document.getElementById('lgboth').style.gridColumn= ai? '' : '1/-1';
+  if((!mega && state.both) || (state.both==='ga' && !ai)){ state.both=false; syncLgAct(); }
+  if(mega){
+    const put=(mode)=>{
+      const bRows=bothRows(state.p, mode==='ga'), bIdx=belowFloor? -1 : findRank(bRows, state.iv);
+      const el=document.getElementById('lgr-'+mode);
+      if(bIdx>=0){ const r=bRows[bIdx].rank; el.innerHTML=r+'<span class="u">位</span>'; el.className='lgc-r '+medalCls(r); }
+      else { el.textContent='—'; el.className='lgc-r'; }
+      return [bRows,bIdx];
+    };
+    const gu=put('gu'), ga=ai? put('ga') : null;
+    if(state.both==='gu'){ renderBoth(gu[0], gu[1], belowFloor, pool, null); return; }
+    if(state.both==='ga'){ renderBoth(ga[0], ga[1], belowFloor, pool, ai); return; }
+  }
+  ['rktbl','metbl'].forEach(id=>document.getElementById(id).classList.remove('both','aio'));
+  document.getElementById('tblmode').style.display='';
+  syncEvoUi();
 
   // --- 選択リーグの詳細 ---
   const {rows, idx}=detail[state.league];
@@ -1086,6 +1180,61 @@ function render(){
   document.body.classList.add('has-sticky');
 
   lastShare=buildShareText(rank,pool,me);
+  scheduleFamily();
+}
+
+// 「スーパー＋ハイパー両立」の一覧(列: 順位・個体値・スーパーの順位・ハイパーの順位・平均)
+function renderBoth(rows, idx, belowFloor, pool, ai){
+  const sticky=document.getElementById('sticky');
+  document.getElementById('result').style.display='block';
+  ['tblmode','evorow','evonote'].forEach(id=>document.getElementById(id).style.display='none');
+  const cls=ai? 'aio' : 'both';
+  ['rktbl','metbl'].forEach(id=>{ const t=document.getElementById(id); t.classList.remove('evo','both','aio'); t.classList.add(cls); });
+  const bn=ai? ai.b.n : '';
+  // オールインワンの列: メガのスーパー・ハイパー＋(数えるリーグだけ)メガ前のスーパー・ハイパー
+  const cols=[['g','スーパー','CP1500以下'],['u','ハイパー','CP2500以下']].map(c=>[...c,'メガ'])
+    .concat(ai? ai.lgs.map(lg=>lg==='gl'?['bg','スーパー','CP1500以下','メガ前']:['bu','ハイパー','CP2500以下','メガ前']) : []);
+  document.getElementById('thd').innerHTML='<th>順位</th><th title="攻撃／防御／HPの個体値の組み合わせです">個体値</th>'+
+    cols.map(([,nm,cpt,who])=> ai
+      ? '<th title="'+(who==='メガ'? state.p.n : bn)+'の'+nm+'リーグ（'+cpt+'）での順位です"><small>'+who+'</small>'+nm+'</th>'
+      : '<th title="'+nm+'リーグ（'+cpt+'）での順位です">'+nm+'</th>').join('')+
+    '<th title="'+(ai? '各列のリーグで' : 'スーパー・ハイパーそれぞれで')+'1位の個体を100%としたときの割合（ステータス積）の平均です。この値が高い順に並べます">平均</th>';
+  const listKey=[state.p.i,ai?'ga':'gu',state.cap,state.floor].join('|');
+  if(listKey!==state.listKey){ state.listKey=listKey; state.showN=10; }
+  const stEl=document.getElementById('lgtstats');
+  document.getElementById('lvnote').textContent='';
+  if(idx<0 || !rows.length){
+    if(stEl) stEl.innerHTML='<span class="lgterr">'+(belowFloor? '入力個体値がこの入手方法の最低値('+state.floor+')未満です' : 'この個体はリーグCP制限を満たせません')+'</span>';
+    document.getElementById('top10').innerHTML='';
+    document.getElementById('mewrap').style.display='none';
+    document.getElementById('morerow').style.display='none';
+    sticky.style.display='none'; document.body.classList.remove('has-sticky');
+    lastShare=''; scheduleFamily(); return;
+  }
+  const me=rows[idx];
+  if(stEl) stEl.innerHTML='<span class="lgts"><i>スーパーCP</i><b>'+me.g.cp+'</b></span><span class="lgts"><i>ハイパーCP</i><b>'+me.u.cp+'</b></span>';
+  const pc=x=>(Math.floor(x*10000)/100).toFixed(2)+'%';   // 表示は切り捨て(並びと同順位の判定には使わない)
+  const line=r=>'<td><span class="rkc">'+r.rank+'位</span></td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td>'+cols.map(([k])=>'<td>'+r[k].rank+'位</td>').join('')+'<td>'+pc(r.sc)+'</td>';
+  const showN=Math.min(state.showN, rows.length);
+  document.getElementById('top10').innerHTML=rows.slice(0,showN).map((r,i)=>'<tr'+(i===idx?' class="me"':'')+'>'+line(r)+'</tr>').join('');
+  document.getElementById('toplabel').textContent= showN>10 ? 'TOP'+showN : 'TOP10';
+  const rest=rows.length-showN;
+  document.getElementById('morerow').style.display='flex';
+  const mb=document.getElementById('moreBtn'), lb=document.getElementById('lessBtn');
+  mb.style.display= rest>0 ? '' : 'none';
+  mb.textContent='さらに'+Math.min(50,rest)+'件見る';
+  lb.style.display= showN>10 ? '' : 'none';
+  const mw=document.getElementById('mewrap');
+  if(idx>=showN){ document.getElementById('mebody').innerHTML='<tr class="me">'+line(me)+'</tr>'; mw.style.display='block'; }
+  else mw.style.display='none';
+  document.getElementById('bplink').href='/breakpoint/?lg=1500&me='+encodeURIComponent(state.p.i)+'&miv='+state.iv.join('.');
+  document.getElementById('stk-name').textContent=state.p.n+' '+me.ia+'/'+me.id+'/'+me.ih;
+  const sr=document.getElementById('stk-rank');
+  sr.textContent=(ai?'オールインワン ':'両立 ')+me.rank+'位';
+  sr.className=medalCls(me.rank);
+  sticky.style.display='flex'; document.body.classList.add('has-sticky');
+  lastShare=state.p.n+' '+me.ia+'/'+me.id+'/'+me.ih+(ai?' オールインワン ':' スーパー・ハイパー両立 ')+me.rank+'位/'+pool+'通り('+
+    cols.map(([k,nm,,who])=>(ai?who:'')+nm+me[k].rank+'位').join('・')+')(最低個体値'+state.floor+')';
   scheduleFamily();
 }
 
@@ -1692,9 +1841,15 @@ setupBar('iv-a',0); setupBar('iv-d',1); setupBar('iv-h',2);
 updateSortAvail();
 
 // --- リーグ/キャップ ---
+// 「両立」(gu)はリーグではなく表示の切り替え。中のリーグはスーパーのまま持つ(進化系統・ブレイクポイントのリンクなどはスーパー扱い)
+function syncLgAct(){
+  document.querySelectorAll('.lgc').forEach(x=>x.classList.toggle('act', state.both? x.dataset.lg===state.both : x.dataset.lg===state.league));
+}
 function setLeague(lg){
+  state.both=(lg==='gu'||lg==='ga')? lg : false;
+  if(state.both) lg='gl';
   state.league=lg;
-  document.querySelectorAll('.lgc').forEach(x=>x.classList.toggle('act', x.dataset.lg===lg));
+  syncLgAct();
   updateSortAvail();
   // CP制限リーグ(GL/UL)に切替時、伝説・UBなら交換(最低1)をデフォルト適用
   if((lg==='lc'||lg==='gl'||lg==='ul') && state.p && state.p.l===1){
