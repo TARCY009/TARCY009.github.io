@@ -57,6 +57,7 @@ from build_pvp_data import HIDDEN_FORMS as BATTLE_ONLY   # noqa: E402
 PVP = os.path.join(REPO, 'pvp_data.json')
 PAGE = os.path.join(HERE, 'index.html')
 CHANGES = os.path.join(REPO, 'changes.md')
+MEGA_PREVIEW = os.path.join(REPO, 'pokedex', 'mega_preview.json')   # ゲームにまだ無いメガ(図鑑と同じ控え)
 
 # 前に付く呼び名は、このツールでは「◯◯(呼び名)」の形にする
 TAG_JA = {'mega': 'メガ', 'primal': 'ゲンシ', 'alolan': 'アローラ',
@@ -65,7 +66,7 @@ FORM_RE = re.compile(r'^(.*?)_(mega(?:_[xy])?|primal|alolan|galarian|hisuian|pal
 # 出力するキーの並び（既存ファイルと同じにして無駄な差分を出さない）
 # t=タイプ(対戦データのtyそのまま・大文字英語)。2026-08-16にタイプアイコン表示のため追加。
 # 種族値と同じく毎回同期する(タイプ変更の告知は無いが、元データに追従しておく)
-ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm', 'u', 'us', 'lf']
+ORDER = ['i', 'n', 'e', 'd', 'a', 'f', 'h', 't', 'l', 'v', 'm', 'u', 'us', 'lf', 'x']   # x=1: ゲームにまだ無いメガ(原作の種族値からの換算・図鑑の控えと同じ)
 
 
 def ja_name(sid, name):
@@ -138,6 +139,8 @@ def main():
                 else: e.pop('lf', None)
                 updated.append((e['n'], 'lf', p.get('lvf')))
             # シャドウのときだけの下限 us(シャドウダークライ=6・2026-09-15)も対戦データの ivfs に追従する
+            if e.pop('x', None):   # 先行で入れていた未実装のメガが対戦データに入った＝確定値へ
+                updated.append((e['n'], 'x', 0))
             if (p.get('ivfs') or None) != e.get('us'):
                 if p.get('ivfs'): e['us'] = p['ivfs']
                 else: e.pop('us', None)
@@ -173,7 +176,54 @@ def main():
         sigs.add(row(ent['n'], ent['d'], ent['a'], ent['f'], ent['h']))
         added.append(ent)
 
-    stale = [e['n'] for e in arr if e['i'] not in pvp]
+    # ===== ゲームにまだ無いメガ(2026-11-28タダシさん指示「メガシンカが存在するものはすべて進化系統で表示」) =====
+    # 図鑑と同じ控え pokedex/mega_preview.json(原作の種族値をGOの決まりで換算した値)から足す。対戦データに入ったらそちらが優先
+    prev_added = []
+    try:
+        mp = json.load(open(MEGA_PREVIEW, encoding='utf-8'))['pokemon']
+    except Exception:
+        mp = {}
+    for key, v in mp.items():
+        mm = re.match(r'^(.*?)_MEGA(?:_([A-Z]))?$', key)
+        if not mm:
+            continue
+        base_key, suf = mm.group(1).lower(), (mm.group(2) or '')
+        # 姿違いのあるポケモン(シャリタツ)は姿ごとに作る
+        bases = [base_key] if base_key in idx else sorted(i for i in idx if i.startswith(base_key + '_') and '_mega' not in i and i not in BATTLE_ONLY)
+        if not bases:
+            print('※ 未実装のメガの元が見つからないので足さなかった:', v.get('n'), key)
+            continue
+        for b in bases:
+            be = arr[idx[b]]
+            sid = b + '_mega' + ('_' + suf.lower() if suf else '')
+            if sid in pvp:
+                continue
+            pm = re.match(r'^(.+?)\((.+)\)$', be['n'])
+            tag = 'メガ' + suf
+            if pm and b != 'zygarde':
+                name = pm.group(1) + '(' + tag + '・' + pm.group(2) + ')'
+            else:
+                name = (pm.group(1) if pm else be['n']) + '(' + tag + ')'
+            ent = {'i': sid, 'n': name, 'e': (be.get('e') or '') + ' (Mega' + (' ' + suf if suf else '') + ')',
+                   'd': be['d'], 'a': v['a'], 'f': v['df'], 'h': v['h'],
+                   't': [x for x in (v.get('ty') or []) if x and x != 'NONE'], 'x': 1}
+            for k in ('l', 'm', 'u'):
+                if be.get(k): ent[k] = be[k]
+            if sid in idx:
+                e = arr[idx[sid]]
+                if (e['a'], e['f'], e['h'], e.get('t'), e['n']) != (ent['a'], ent['f'], ent['h'], ent['t'], name):
+                    arr[idx[sid]] = {k: ent[k] for k in ORDER if k in ent}
+                    updated.append((name, 'xu', 1))
+                continue
+            at = idx[b] + 1
+            while at < len(arr) and arr[at]['i'].startswith(b + '_mega'):
+                at += 1
+            arr.insert(at, {k: ent[k] for k in ORDER if k in ent})
+            idx = {q['i']: i for i, q in enumerate(arr)}
+            prev_added.append(name)
+    added += [{'n': n + '（未実装のメガ）'} for n in prev_added]
+
+    stale = [e['n'] for e in arr if e['i'] not in pvp and not e.get('x')]
 
     # ===== 自己点検（取りこぼしがあったら止める）=====
     # このツールは「表示どおりに強化したらCPが違った」が起きてはいけないので、
@@ -203,6 +253,8 @@ def main():
             if b == 'u': print(f'  交換不可(最低個体値10)の印: {n} → {"付けた" if a else "外した"}')
             elif b == 'lf': print(f'  PL下限: {n} → {("PL" + str(a)) if a else "解除"}')
             elif b == 'us': print(f'  シャドウのときの最低個体値: {n} → {a if a else "解除"}')
+            elif b == 'x': print(f'  未実装のメガが実装された（確定値へ）: {n}')
+            elif b == 'xu': print(f'  未実装のメガの控えを更新: {n}')
             else: print(f'  種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}')
     if dropped:
         print('バトル中だけの姿なので外したもの:', '、'.join(dropped))
@@ -224,6 +276,8 @@ def main():
                 if b == 'u': f.write(f'- 交換不可(最低個体値10)の印: {n} → {"付けた" if a else "外した"}\n')
                 elif b == 'lf': f.write(f'- PL下限: {n} → {("PL" + str(a)) if a else "解除"}\n')
                 elif b == 'us': f.write(f'- シャドウのときの最低個体値: {n} → {a if a else "解除"}\n')
+                elif b == 'x': f.write(f'- 未実装のメガが実装された（確定値へ）: {n}\n')
+                elif b == 'xu': f.write(f'- 未実装のメガの控えを更新: {n}\n')
                 else: f.write(f'- 種族値の更新: {n} {b[0]}/{b[1]}/{b[2]} → {a[0]}/{a[1]}/{a[2]}\n')
 
 
