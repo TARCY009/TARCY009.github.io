@@ -839,7 +839,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
     <div class="iv-head"><span class="iv-name">HP</span><span class="iv-val">10</span></div>
     <div class="bar"></div>
   </div>
-  <div class="iv-hint">タップ・ドラッグで設定（1をもう一度タップ＝0）</div>
+  <div class="iv-hint">タップ・ドラッグで設定（いまの値のマスをもう一度タップ＝0）</div>
   <!-- いまのCP(2026-09-16 テスター#15): 任意。個体値とCPからPLが1つに決まるので、
        進化系統の順位の各姿に「このまま進化したときのCP」と収まるリーグを添える(進化前CPの逆向きの入口) -->
   <div class="cpnow" id="cpnowrow">
@@ -1001,7 +1001,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <p>ポケモンと個体値を入れると、<b>4096通りすべてを計算</b>して、その個体がリーグ内で何位かを出します。
     ３リーグの順位を同時に表示し、タップで詳しい内容に切り替わります。</p>
   <h4>個体値の入れ方</h4>
-  <p>バーをタップ、または左右にドラッグして決めます。<b>0にするには、「1」の状態でもう一度１マス目をタップ</b>するか、
+  <p>バーをタップ、または左右にドラッグして決めます。<b>0にするには、いまの値のマス（点灯しているいちばん右のマス）をもう一度タップ</b>するか、
     <b>バーの左端より外へスライド</b>します。</p>
   <h4>順位の決め方</h4>
   <p><b>SCP</b>＝攻撃・防御・HPを総合した対戦(PvP)向けの評価値です。CPは攻撃に寄った計算なので、
@@ -2112,25 +2112,27 @@ function setupBar(elId, ivIndex){
     return Math.max(0,Math.min(15,v));
   }
   function apply(v){ state.iv[ivIndex]=v; paint(); render(); }
-  let drag=false;
+  let drag=false, toZero=false;
   bar.addEventListener('pointerdown',e=>{
     drag=true; bar.setPointerCapture(e.pointerId);
-    let v=valueFromX(e.clientX);
-    // 0にする方法は2つ(2026-08-15タダシさん指示):
-    //  ①「1」のときにもう一度1マス目をタップ → 0(トグル)
+    const v=valueFromX(e.clientX);
+    // 0にする方法は2つ:
+    //  ① いまの値のマス(点灯しているいちばん右のマス)をもう一度タップ → 0(2026-11-28タダシさん指示で「1のときの1マス目」から全部の値へ広げた)。
+    //     ドラッグの始まりと区別するため、0にするのは指を離したとき(別のマスへ動いたら取り消す)
     //  ② バーの左端より外へスライド → 一気に0(下のpointermove)
-    // 旧仕様の「1マス目の左35%タップ=0」は、狙いにくいうえ「1にしたいのに0になる」誤爆もあるので廃止
-    if(v===1 && state.iv[ivIndex]===1) v=0;
+    if(v>0 && v===state.iv[ivIndex]){ toZero=true; return; }
+    toZero=false;
     apply(v);
   });
   bar.addEventListener('pointermove',e=>{
     if(!drag) return;
     let v=valueFromX(e.clientX);
     if(e.clientX < segs[0].getBoundingClientRect().left) v=0;  // バーの左へ抜けたら0
+    if(toZero){ if(v===state.iv[ivIndex]) return; toZero=false; }
     apply(v);
   });
-  bar.addEventListener('pointerup',()=>drag=false);
-  bar.addEventListener('pointercancel',()=>drag=false);
+  bar.addEventListener('pointerup',()=>{ drag=false; if(toZero){ toZero=false; apply(0); } });
+  bar.addEventListener('pointercancel',()=>{ drag=false; toZero=false; });
   paint();
 }
 setupBar('iv-a',0); setupBar('iv-d',1); setupBar('iv-h',2);
