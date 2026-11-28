@@ -2102,8 +2102,9 @@ function syncLgAct(){
   document.querySelectorAll('.lgc').forEach(x=>x.classList.toggle('act', state.both? x.dataset.lg===state.both : x.dataset.lg===state.league));
 }
 function setLeague(lg){
-  state.both=(lg==='gu'||lg==='ga')? lg : false;
-  if(state.both) lg='gl';
+  // 両立・オールインワンは、点灯中にもう一度押すと解除してスーパーの一覧へ戻す(2026-11-28タダシさん指示)
+  state.both=(lg==='gu'||lg==='ga') && state.both!==lg ? lg : false;
+  if(lg==='gu'||lg==='ga') lg='gl';
   state.league=lg;
   syncLgAct();
   updateSortAvail();
