@@ -376,7 +376,7 @@ body.has-sticky{padding-top:52px}
    行＝進化系統の各姿。押しているリーグの列はその色を薄く敷き、選んでいる姿の行は水色の線と大きな数字 */
 .rkboard{--cols:minmax(0,1.3fr) repeat(4,minmax(0,1fr))}
 #lgtabs,.rkrow{display:grid;grid-template-columns:var(--cols);column-gap:4px}
-#lgtabs{margin-bottom:5px;align-items:stretch}
+#lgtabs{margin-bottom:5px;padding-top:16px;align-items:stretch}
 .rkcorner{display:flex;flex-direction:column;justify-content:center;padding:0 2px 0 8px;min-width:0}
 .rkcorner i{font-style:normal;font-size:.56rem;font-weight:700;letter-spacing:.08em;color:var(--sub)}
 .rkcorner b{font-size:.92rem;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.01em;color:var(--ink);white-space:nowrap}
@@ -397,7 +397,7 @@ body.has-sticky{padding-top:52px}
   box-shadow:0 0 0 1.5px rgb(var(--c)),inset 0 -3px 0 rgba(0,0,0,.22),0 5px 0 rgba(var(--c),.55),0 6px 0 rgba(0,0,0,.4)}
 #lgtabs .lgc.act .lgc-n,#lgtabs .lgc.act small{color:var(--on)}
 #lgtabs .lgc.act .lgc-n{text-shadow:0 1px 0 rgba(255,255,255,.25)}
-#lgtabs .lgc.act::after{content:"";position:absolute;left:50%;bottom:-11px;margin-left:-6px;border:6px solid transparent;border-top-color:rgb(var(--c))}
+#lgtabs .lgc.act::after{content:"";position:absolute;left:50%;top:-19px;margin-left:-9px;border:9px solid transparent;border-bottom:0;border-top:12px solid rgb(var(--c))}   /* 選んでいる印: ボタンの上に下向きの三角(2026-11-28タダシさん指示) */
 @media(hover:hover){
   #lgtabs .lgc:hover:not(.act){transform:translateY(-1px);background:linear-gradient(180deg,rgba(var(--c),.28) 0%,rgba(var(--c),.12) 100%);
     border-color:rgba(var(--c),.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 0 rgba(0,0,0,.32)}
