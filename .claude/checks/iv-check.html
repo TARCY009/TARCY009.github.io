@@ -49,7 +49,7 @@ f.onload = () => setTimeout(() => {
     // 答えはページの外で4096通りを数え直した値（メガルカリオ・野生・PL上限50。各リーグ1位のSCPを100%とした割合の平均）
     const bt = W.bothRows(P('lucario_mega'), false), ba = W.bothRows(P('lucario_mega'), true);
     ok('メガルカリオ 両立の1位', `${bt[0].ia}/${bt[0].id}/${bt[0].ih} ${bt[0].g.rank}位・${bt[0].u.rank}位`, '0/14/13 1位・28位');
-    ok('メガルカリオ オールインワンの1位', `${ba[0].ia}/${ba[0].id}/${ba[0].ih} ${ba[0].g.rank}・${ba[0].u.rank}・${ba[0].bg.rank}・${ba[0].bu.rank} ${(ba[0].sc*100).toFixed(3)}`, '0/12/15 2・47・218・2 99.400');
+    ok('メガルカリオ メガのSL・HL＋メガ前のHLの1位', `${ba[0].ia}/${ba[0].id}/${ba[0].ih} ${ba[0].g.rank}・${ba[0].u.rank}・${ba[0].bu.rank} ${(ba[0].sc*100).toFixed(3)}`, '0/12/15 2・47・2 99.714');
   } catch (e) {
     res.push(['実行エラー', false, String(e), '']);
   }

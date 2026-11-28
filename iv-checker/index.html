@@ -481,7 +481,7 @@ body.has-sticky{padding-top:52px}
 .rkm-body{overflow-y:auto;padding:0 12px 14px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .rkm-body .morerow{display:flex;margin-top:10px}
 body.rkm-open{overflow:hidden}
-#lgextra{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+#lgextra{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:14px}
 /* 計算の前提(畳んだボタン) */
 .setwrap{margin-top:12px}
 .setbtn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;cursor:pointer;font:inherit;text-align:left;
@@ -503,28 +503,58 @@ body.rkm-open{overflow:hidden}
 .setbody{padding:6px 2px 0}
 .setsrc{margin-top:10px}
 .setsrc label.sec{margin-bottom:5px;font-size:.66rem}
-#lgextra .lgc{border-radius:11px;border:1px solid rgba(var(--gl-rgb),.5);
-  background:linear-gradient(100deg,rgba(var(--gl-rgb),.20),rgba(var(--ul-rgb),.16));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 3px 0 rgba(var(--gl-rgb),.25),0 4px 0 rgba(0,0,0,.28);transition:transform .1s ease,box-shadow .1s ease}
-#lgextra .lgc[data-lg="ga"]{border-color:rgba(67,224,255,.5);background:linear-gradient(100deg,rgba(67,224,255,.20),rgba(139,92,246,.16));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 3px 0 rgba(67,224,255,.22),0 4px 0 rgba(0,0,0,.28)}
-#lgextra .lgc:hover:not(.act){transform:translateY(-1px)}
-#lgextra .lgc.act{transform:translateY(3px);border-color:rgba(var(--gl-rgb),1);
-  background:linear-gradient(100deg,rgba(var(--gl-rgb),.48),rgba(var(--ul-rgb),.40));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(0,0,0,.18),0 1px 0 rgba(0,0,0,.25)}
-#lgextra .lgc[data-lg="ga"].act{border-color:var(--cy);background:linear-gradient(100deg,rgba(67,224,255,.46),rgba(139,92,246,.38))}
-:root.light #lgextra .lgc{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 3px 0 rgba(var(--gl-rgb),.22)}
-:root.light #lgextra .lgc.act{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.12)}
-/* メガ・ゲンシだけの「スーパー＋ハイパー両立」(2026-11-28タダシさん指示)。4枚の下に横いっぱい・1行。
-   メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せる */
-.lgc.lgboth{grid-column:auto;display:flex;align-items:baseline;justify-content:center;gap:4px 10px;flex-wrap:wrap;padding:7px 10px 8px}
-.lgc.lgboth .lgc-n{display:inline;letter-spacing:.04em;font-size:.74rem;color:var(--sub)}
-.lgc.lgboth .lgc-n .g{color:var(--gl)} .lgc.lgboth .lgc-n .uu{color:var(--ul)} .lgc.lgboth .lgc-n .w{color:var(--sub);margin-left:4px}
-.lgc.lgboth .lgc-r{display:inline;margin-top:0;font-size:1.35rem}
-.lgc.act[data-lg="gu"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--ul),inset 0 1px 0 var(--tabin)}
-.lgc.lgboth .lgc-n .a{color:var(--cy)}
-.lgc.act[data-lg="ga"]{border-color:var(--cy);box-shadow:0 0 0 1.5px var(--cy),inset 0 1px 0 var(--tabin)}
-@media(max-width:400px){.lgc.lgboth .lgc-n{font-size:.64rem;letter-spacing:.01em} .lgc.lgboth .lgc-r{font-size:1.2rem}}
+/* ===== メガの「2役」「3役」の札(2026-11-28タダシさん選択: 落ち着いた青と金・立体と光沢・縁は明るい青と明るい金) =====
+   選んでいない＝紺の地に青→金の細い線・字はスーパー=青/ハイパー=金。選んだ＝斜めに青→金で塗り、上半分にガラスの艶・下に紺の厚み・左上に✓。
+   色はここの変数にまとめる(画像は使わない)。光彩は付けない */
+#lgextra{--xb-a:#3f74d6;--xb-b:#1f4597;--xy-a:#d2b264;--xy-b:#9c7630;--xb-rgb:63,116,214;--xy-rgb:210,178,100;
+  --x-sl:#8fb4ff;--x-hl:#dcc27a;--x-ang:120deg;--x-r:12px;--x-navy-a:#202a52;--x-navy-b:#161d3c}
+#lgextra .lgc.lgboth{position:relative;grid-column:auto;display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;gap:5px;
+  min-height:44px;padding:9px 10px 8px;border-radius:var(--x-r);text-align:left;color:#fff;transform:translateY(-2px);
+  border:1.5px solid transparent;
+  background:linear-gradient(180deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.04) 46%,rgba(255,255,255,0) 47%) padding-box,
+             linear-gradient(180deg,var(--x-navy-a),var(--x-navy-b)) padding-box,
+             linear-gradient(var(--x-ang),rgba(var(--xb-rgb),.7),rgba(var(--xy-rgb),.7)) border-box;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 0 #10162e,0 4px 0 #0b1024,0 6px 8px rgba(0,0,0,.35);
+  transition:transform .08s ease,box-shadow .08s ease}
+#lgextra .lgc.lgboth .lgc-n{display:block;font-size:.7rem;font-weight:800;line-height:1.4;letter-spacing:.02em;color:#fff}
+#lgextra .lgc.lgboth .sl{color:var(--x-sl)} #lgextra .lgc.lgboth .hl{color:var(--x-hl)}
+#lgextra .lgc.lgboth .ln{display:block;white-space:nowrap}
+#lgextra .bt{display:flex;align-items:flex-end;justify-content:space-between;gap:6px}
+#lgextra .role{font-size:.68rem;font-weight:900;letter-spacing:.04em;padding:2px 7px;border-radius:999px;line-height:1.3;white-space:nowrap;
+  color:#dfe7ff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22)}
+#lgextra .lgc.lgboth .lgc-r{display:block;margin:0;font-size:1.4rem;font-weight:900;line-height:1;white-space:nowrap;
+  color:#fff;-webkit-text-fill-color:#fff;background:none}
+#lgextra .lgc.lgboth .lgc-r .u{font-size:.6rem;color:#fff;-webkit-text-fill-color:#fff;margin-left:1px}
+@media(hover:hover){#lgextra .lgc.lgboth:hover:not(.act){transform:translateY(-3px)}}
+/* 選んだ札 */
+#lgextra .lgc.lgboth.act{border:2px solid transparent;
+  background:linear-gradient(var(--x-ang),transparent calc(50% - 1px),rgba(255,255,255,.4) 50%,transparent calc(50% + 1px)) padding-box,
+             linear-gradient(var(--x-ang),var(--xb-a) 0%,var(--xb-b) 46%,var(--xy-a) 54%,var(--xy-b) 100%) padding-box,
+             linear-gradient(var(--x-ang),#8fb6ff 0%,#8fb6ff 40%,#f0d58e 60%,#f0d58e 100%) border-box;
+  box-shadow:inset 0 -4px 0 rgba(0,0,0,.2),inset 0 2px 0 rgba(255,255,255,.45),0 3px 0 #2b3a6a,0 5px 0 #222f58,0 7px 0 #182345,0 9px 10px rgba(0,0,0,.45)}
+#lgextra .lgc.lgboth.act::after{content:"";position:absolute;inset:0;border-radius:calc(var(--x-r) - 2px);pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,.12) 46%,rgba(255,255,255,0) 47%),
+             radial-gradient(18px 8px at 22% 14%,rgba(255,255,255,.5),rgba(255,255,255,0)),
+             linear-gradient(0deg,rgba(0,0,0,.14) 0%,rgba(0,0,0,0) 35%)}
+#lgextra .lgc.lgboth.act .lgc-n,#lgextra .lgc.lgboth.act .bt{position:relative;z-index:1}
+#lgextra .lgc.lgboth.act .lgc-n,#lgextra .lgc.lgboth.act .lgc-r{text-shadow:0 1px 0 rgba(10,18,50,.6),0 2px 3px rgba(0,0,0,.5);
+  -webkit-text-stroke:2px rgba(14,20,48,.5);paint-order:stroke fill}
+#lgextra .lgc.lgboth.act .lgc-r{-webkit-text-stroke:4px rgba(18,28,70,.6)}
+#lgextra .lgc.lgboth.act .sl{color:#b9d3ff;-webkit-text-stroke:3px rgba(10,22,60,.75)}
+#lgextra .lgc.lgboth.act .hl{color:#ffe08a;-webkit-text-stroke:3px rgba(48,32,6,.75)}
+#lgextra .lgc.lgboth.act .role{color:#fff;background:rgba(10,18,48,.45);border-color:rgba(255,255,255,.35)}
+#lgextra .lgc.lgboth.act::before{content:"✓";position:absolute;left:-8px;top:-10px;z-index:2;width:22px;height:22px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff 0%,#e6ecff 60%,#b9c6ee 100%);color:#1d3fa8;
+  font-size:.74rem;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 #6f80bd,0 3px 4px rgba(0,0,0,.4)}
+/* 押した瞬間は沈む(下の厚みが消える) */
+#lgextra .lgc.lgboth:active,#lgextra .lgc.lgboth.pressing{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 1px 0 #10162e}
+#lgextra .lgc.lgboth.act:active,#lgextra .lgc.lgboth.act.pressing{box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),inset 0 2px 0 rgba(255,255,255,.45),0 1px 0 #2b3a6a}
+:root.light #lgextra .lgc.lgboth:not(.act){--x-navy-a:#ffffff;--x-navy-b:#eef2fb;color:#20263a;--x-sl:#2f5fd6;--x-hl:#8a6411;
+  box-shadow:inset 0 1px 0 #fff,0 2px 0 #cfd6ea,0 4px 0 #b9c2dc}
+:root.light #lgextra .lgc.lgboth:not(.act) .lgc-n{color:#20263a}
+:root.light #lgextra .lgc.lgboth:not(.act) .lgc-r,:root.light #lgextra .lgc.lgboth:not(.act) .lgc-r .u{color:#20263a;-webkit-text-fill-color:#20263a}
+:root.light #lgextra .lgc.lgboth:not(.act) .role{color:#3b4566;background:rgba(32,38,58,.05);border-color:rgba(32,38,58,.2)}
+@media(max-width:400px){#lgextra .lgc.lgboth .lgc-n{font-size:.62rem;letter-spacing:0} #lgextra .lgc.lgboth .lgc-r{font-size:1.2rem} #lgextra .role{font-size:.6rem;padding:1px 5px}}
 /* メダル色は上の :root / :root.light が持つ。
    大きい順位はベタ塗りではなくメダルのグラデーションで塗る(タグ・フレームと同じ質感にそろえる)。
    「位」は子要素なので自分の色(--sub)のまま残る。
@@ -838,8 +868,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   </div>
   <!-- メガ・ゲンシだけ: スーパー＋ハイパー両立／オールインワン -->
   <div class="lgextra" id="lgextra" style="display:none">
-    <button class="lgc lgboth" data-lg="gu" id="lgboth" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体のSCPを100%としたときの割合の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n"><span class="g">スーパー</span>＋<span class="uu">ハイパー</span><span class="w">両立</span></span><span class="lgc-r" id="lgr-gu">—</span></button>
-    <button class="lgc lgboth" data-lg="ga" id="lgaio" style="display:none" title="メガのスーパー・ハイパーに加えて、メガシンカ前の姿のスーパー・ハイパーでも順位が高い個体ほど上に並べたときの、この個体値の順位です（1匹をどこで使っても困りにくい個体）。それぞれ1位の個体のSCPを100%としたときの割合の平均で並べます。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません"><span class="lgc-n"><span class="a">メガ前も</span><span class="w">オールインワン</span></span><span class="lgc-r" id="lgr-ga">—</span></button>
+    <button class="lgc lgboth" data-lg="gu" id="lgboth" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体のSCPを100%としたときの割合の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n">メガ <span class="sl">スーパー</span>＋<span class="hl">ハイパー</span></span><span class="bt"><span class="role">2役</span><span class="lgc-r" id="lgr-gu">—</span></span></button>
+    <button class="lgc lgboth" data-lg="ga" id="lgaio" style="display:none" title="メガのスーパー・ハイパーと、メガシンカ前の姿のハイパーの3つで順位が高い個体ほど上に並べたときの、この個体値の順位です。メガシンカ前の姿をハイパーの上限まで強化すれば、メガシンカでCPが自動で下がるので1匹で3つに出せます。それぞれ1位の個体のSCPを100%としたときの割合の平均で並べます"><span class="lgc-n" id="lgaion"></span><span class="bt"><span class="role">3役</span><span class="lgc-r" id="lgr-ga">—</span></span></button>
   </div>
   <div class="iv-hint expl" id="lghint" style="margin-top:8px">行＝進化前・進化後・メガ（この個体値のまま進化させたときの順位）。行をタップでその姿、リーグのボタンで下の一覧を切り替え。</div>
   <!-- 計算の前提(並び順・PL上限・入手方法)はふだん1つのボタンに畳む(2026-11-28タダシさん指示)。ボタンにいまの設定を要約して出す -->
@@ -1018,7 +1048,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <ul>
     <li><b>平均</b> ＝ スーパー・ハイパーそれぞれで1位の個体のSCPを100%としたときの割合の平均。この値が高い順に並べます</li>
     <li>表の<b>スーパー</b>・<b>ハイパー</b>の列は、それぞれのリーグでの順位です</li>
-    <li><b>オールインワン</b> ＝ メガのスーパー・ハイパーに、メガシンカ前の姿のスーパー・ハイパーも加えた4つの平均で並べます（1匹をどこで使っても困りにくい個体）。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません</li>
+    <li><b>メガ スーパー＋ハイパー ＋メガ前 ハイパー</b> ＝ メガのスーパー・ハイパーに、メガシンカ前の姿のハイパーを加えた3つの平均で並べます。メガシンカ前の姿をハイパーの上限まで強化しておけば、メガシンカしたときはCPが自動で下がるので、1匹でこの3つに出せます（その個体はメガシンカ前のスーパーには入らないので数えません）。メガシンカ前の姿の最大CPがハイパーに300以上届かないポケモンには出しません</li>
   </ul>
   <h4>リトルカップ（CP500）</h4>
   <p>リーグの左端の<b>リトル</b>は、CP500以下で戦うリトルカップでの順位です。最近は開催されていませんが、終了の発表が無いため残してあります。進化前のポケモン（デルビルなど）の厳選に使えます。</p>
@@ -1145,7 +1175,7 @@ function assignRanks(rows,mode){
 // メガ・ゲンシの「スーパー＋ハイパー両立」(2026-11-28タダシさん指示)。
 // それぞれのリーグで1位のSCPを100%とした割合の平均(sc)が高い順(2026-11-28タダシさん決定・積の比からSCPの比へ)。同じ値は同順位(assignRanksと同じ流儀)。
 // 各リーグの順位は総合(SCP)の順位そのもの(攻撃優先は使わない)
-// オールインワン(ga・同日の追加指示): メガのスーパー・ハイパーに、メガシンカ前の姿のスーパー・ハイパーも足した4つの平均。
+// オールインワン(ga・同日の追加指示): メガのスーパー・ハイパーに、メガシンカ前の姿のハイパーを足した3つの平均(メガ前のスーパーは数えない)。
 // メガ前の姿の表は進化系統の順位と同じ famRowsBy(PL上限・PL下限・最低個体値も同じ)。
 // メガ前の姿の最大CP(15/15/15・PL上限)がCP制限に300以上届かないリーグは数えない(進化系統の画像と同じ基準)
 const bothCache={};
@@ -1153,7 +1183,10 @@ const baseOfMega=p=>POKE[IDX[p.i.replace(/_(mega(_[a-z])?|primal)$/,'')]]||null;
 function aioLeagues(p){
   const b=baseOfMega(p); if(!b||b.i===p.i) return null;
   const capLv=state.cap>51? 50 : state.cap;
-  const lgs=['gl','ul'].filter(lg=>cp(b.a+15, b.f+15, b.h+15, CPMS[(capLv-1)*2]) >= CAPS[lg]-300);
+  // メガ前はハイパーだけ数える(2026-11-28タダシさん指示): 1匹で使い回すなら強化はメガ前のハイパー上限まで
+  //  →その個体はメガ前のスーパーには入らない／メガはCPが下がる方向にだけ自動調整されるので、メガのスーパー・ハイパーは使える。
+  //  メガ前の最大CPがハイパーに300以上届かないなら、この並べ方は成り立たないのでボタンを出さない
+  const lgs=['ul'].filter(lg=>cp(b.a+15, b.f+15, b.h+15, CPMS[(capLv-1)*2]) >= CAPS[lg]-300);
   return lgs.length? {b, lgs} : null;
 }
 function bothRows(p, aio){
@@ -1247,6 +1280,13 @@ function render(){
   const mega=isMegaP(state.p), ai=mega? aioLeagues(state.p) : null;
   document.getElementById('lgextra').style.display=mega?'':'none';
   document.getElementById('lgaio').style.display=ai?'':'none';
+  // オールインワンの名前は、数えているリーグをそのまま書く(2026-11-28タダシさん指示「オールインワンの文字はやめて」)。
+  // 1段目＝メガのスーパー＋ハイパー、2段目＝メガ前で数えるリーグ(CP制限に届かないリーグは書かない)
+  if(ai){
+    const LN={gl:'<span class="sl">スーパー</span>',ul:'<span class="hl">ハイパー</span>'};
+    document.getElementById('lgaion').innerHTML='<span class="ln">メガ '+LN.gl+'＋'+LN.ul+'</span>'+
+      '<span class="ln">＋メガ前 '+ai.lgs.map(l=>LN[l]).join('＋')+'</span>';
+  }
   // メガ1つだけのときは両立を横いっぱいに
   document.getElementById('lgboth').style.gridColumn= ai? '' : '1/-1';
   if((!mega && state.both) || (state.both==='ga' && !ai)){ state.both=false; syncLgAct(); }
@@ -1416,10 +1456,10 @@ function renderBoth(rows, idx, belowFloor, pool, ai){
   document.getElementById('bplink').href='/breakpoint/?lg=1500&me='+encodeURIComponent(state.p.i)+'&miv='+state.iv.join('.');
   document.getElementById('stk-name').textContent=state.p.n+' '+me.ia+'/'+me.id+'/'+me.ih;
   const sr=document.getElementById('stk-rank');
-  sr.textContent=(ai?'オールインワン ':'両立 ')+me.rank+'位';
+  sr.textContent=(ai?'メガ前も ':'両立 ')+me.rank+'位';
   sr.className=medalCls(me.rank);
   sticky.style.display='flex'; document.body.classList.add('has-sticky');
-  lastShare=state.p.n+' '+me.ia+'/'+me.id+'/'+me.ih+(ai?' オールインワン ':' スーパー・ハイパー両立 ')+me.rank+'位/'+pool+'通り('+
+  lastShare=state.p.n+' '+me.ia+'/'+me.id+'/'+me.ih+(ai?' メガのスーパー・ハイパー＋メガ前のハイパー ':' スーパー・ハイパー両立 ')+me.rank+'位/'+pool+'通り('+
     cols.map(([k,nm,,who])=>(ai?who:'')+nm+me[k].rank+'位').join('・')+')(最低個体値'+state.floor+')';
   scheduleFamily();
 }

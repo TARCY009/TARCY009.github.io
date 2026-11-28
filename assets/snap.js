@@ -72,7 +72,7 @@
   function ivHead() {
     var nm = txt('#lgtitle .lgtname') || txt('#lgtitle > span:first-child');
     var act = document.querySelector('#lgcard .lgc.act');
-    var lg = { lc: 'リトルカップ', gl: 'スーパーリーグ', ul: 'ハイパーリーグ', ml: 'マスターリーグ', gu: 'スーパー＋ハイパー両立', ga: 'オールインワン（メガ前も）' }[act && act.getAttribute('data-lg')] || '';
+    var lg = { lc: 'リトルカップ', gl: 'スーパーリーグ', ul: 'ハイパーリーグ', ml: 'マスターリーグ', gu: 'スーパー＋ハイパー両立', ga: 'メガ スーパー＋ハイパー＋メガ前 ハイパー' }[act && act.getAttribute('data-lg')] || '';
     var srt = document.querySelector('.srt.act[data-s="atk"]') ? '攻撃優先順' : '個体値順';
     return { title: nm, ctx: [lg, srt + ' TOP10'].filter(Boolean), file: nm + '_' + lg + '_' + srt };
   }
