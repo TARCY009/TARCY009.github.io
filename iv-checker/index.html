@@ -798,8 +798,8 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   </div>
   <!-- メガ・ゲンシだけ: スーパー＋ハイパー両立／オールインワン -->
   <div class="lgextra" id="lgextra" style="display:none">
-    <button class="lgc lgboth" data-lg="gu" id="lgboth" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体を100%としたときの割合（ステータス積）の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n"><span class="g">スーパー</span>＋<span class="uu">ハイパー</span><span class="w">両立</span></span><span class="lgc-r" id="lgr-gu">—</span></button>
-    <button class="lgc lgboth" data-lg="ga" id="lgaio" style="display:none" title="メガのスーパー・ハイパーに加えて、メガシンカ前の姿のスーパー・ハイパーでも順位が高い個体ほど上に並べたときの、この個体値の順位です（1匹をどこで使っても困りにくい個体）。それぞれ1位の個体を100%としたときの割合（ステータス積）の平均で並べます。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません"><span class="lgc-n"><span class="a">メガ前も</span><span class="w">オールインワン</span></span><span class="lgc-r" id="lgr-ga">—</span></button>
+    <button class="lgc lgboth" data-lg="gu" id="lgboth" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体のSCPを100%としたときの割合の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n"><span class="g">スーパー</span>＋<span class="uu">ハイパー</span><span class="w">両立</span></span><span class="lgc-r" id="lgr-gu">—</span></button>
+    <button class="lgc lgboth" data-lg="ga" id="lgaio" style="display:none" title="メガのスーパー・ハイパーに加えて、メガシンカ前の姿のスーパー・ハイパーでも順位が高い個体ほど上に並べたときの、この個体値の順位です（1匹をどこで使っても困りにくい個体）。それぞれ1位の個体のSCPを100%としたときの割合の平均で並べます。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません"><span class="lgc-n"><span class="a">メガ前も</span><span class="w">オールインワン</span></span><span class="lgc-r" id="lgr-ga">—</span></button>
   </div>
   <div class="iv-hint expl" id="lghint" style="margin-top:8px">行＝進化前・進化後・メガ（この個体値のまま進化させたときの順位）。行をタップでその姿、リーグのボタンで下の一覧を切り替え。</div>
   <div class="capsel" id="sortrow">
@@ -971,7 +971,7 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <p>メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、<b>1匹のメガでスーパーにもハイパーにも出せます</b>。
     メガ・ゲンシを選ぶと、リーグの下に<b>スーパー＋ハイパー両立</b>が出ます。押すと、両方のリーグで順位が高い個体ほど上に並べた一覧になります。</p>
   <ul>
-    <li><b>平均</b> ＝ スーパー・ハイパーそれぞれで1位の個体を100%としたときの割合（ステータス積）の平均。この値が高い順に並べます</li>
+    <li><b>平均</b> ＝ スーパー・ハイパーそれぞれで1位の個体のSCPを100%としたときの割合の平均。この値が高い順に並べます</li>
     <li>表の<b>スーパー</b>・<b>ハイパー</b>の列は、それぞれのリーグでの順位です</li>
     <li><b>オールインワン</b> ＝ メガのスーパー・ハイパーに、メガシンカ前の姿のスーパー・ハイパーも加えた4つの平均で並べます（1匹をどこで使っても困りにくい個体）。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません</li>
   </ul>
@@ -1098,7 +1098,7 @@ function assignRanks(rows,mode){
 }
 
 // メガ・ゲンシの「スーパー＋ハイパー両立」(2026-11-28タダシさん指示)。
-// それぞれのリーグで1位のステータス積を100%とした割合の平均(sc)が高い順。同じ値は同順位(assignRanksと同じ流儀)。
+// それぞれのリーグで1位のSCPを100%とした割合の平均(sc)が高い順(2026-11-28タダシさん決定・積の比からSCPの比へ)。同じ値は同順位(assignRanksと同じ流儀)。
 // 各リーグの順位は総合(SCP)の順位そのもの(攻撃優先は使わない)
 // オールインワン(ga・同日の追加指示): メガのスーパー・ハイパーに、メガシンカ前の姿のスーパー・ハイパーも足した4つの平均。
 // メガ前の姿の表は進化系統の順位と同じ famRowsBy(PL上限・PL下限・最低個体値も同じ)。
@@ -1125,7 +1125,7 @@ function bothRows(p, aio){
     const maps=lists.map(([nm,l])=>[nm, new Map(l.map(r=>[k(r),r])), l[0].sp]);
     lists[0][1].forEach(r0=>{
       const o={ia:r0.ia, id:r0.id, ih:r0.ih, sc:0, rs:0};
-      for(const [nm,m,top] of maps){ const r=m.get(k(r0)); if(!r) return; o[nm]=r; o.sc+=r.sp/top; o.rs+=r.rank; }
+      for(const [nm,m,top] of maps){ const r=m.get(k(r0)); if(!r) return; o[nm]=r; o.sc+=Math.pow(r.sp/top,2/3); o.rs+=r.rank; }   // SCPの割合(丸める前のSCP＝積の2/3乗どうしの比)
       o.sc/=maps.length; rows.push(o);
     });
     rows.sort((a,b)=> b.sc-a.sc || a.rs-b.rs || a.g.rank-b.g.rank);
@@ -1321,7 +1321,7 @@ function renderBoth(rows, idx, belowFloor, pool, ai){
     cols.map(([,nm,cpt,who])=> ai
       ? '<th title="'+(who==='メガ'? state.p.n : bn)+'の'+nm+'リーグ（'+cpt+'）での順位です"><small>'+who+'</small>'+nm+'</th>'
       : '<th title="'+nm+'リーグ（'+cpt+'）での順位です">'+nm+'</th>').join('')+
-    '<th title="'+(ai? '各列のリーグで' : 'スーパー・ハイパーそれぞれで')+'1位の個体を100%としたときの割合（ステータス積）の平均です。この値が高い順に並べます">平均</th>';
+    '<th title="'+(ai? '各列のリーグで' : 'スーパー・ハイパーそれぞれで')+'1位の個体のSCPを100%としたときの割合の平均です。この値が高い順に並べます">平均</th>';
   const listKey=[state.p.i,ai?'ga':'gu',state.cap,state.floor].join('|');
   if(listKey!==state.listKey){ state.listKey=listKey; state.showN=10; }
   const stEl=document.getElementById('lgtstats');
