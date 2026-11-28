@@ -384,21 +384,31 @@ body.has-sticky{padding-top:52px}
 .lgc[data-lg="gl"],.rkrow .c[data-lg="gl"]{--c:var(--gl-rgb);--on:var(--gl-on)}
 .lgc[data-lg="ul"],.rkrow .c[data-lg="ul"]{--c:var(--ul-rgb);--on:var(--ul-on)}
 .lgc[data-lg="ml"],.rkrow .c[data-lg="ml"]{--c:var(--ml-rgb);--on:var(--ml-on)}
-#lgtabs .lgc{position:relative;padding:9px 2px 8px;border-radius:11px;border:1px solid rgba(var(--c),.55);
-  background:linear-gradient(180deg,rgba(var(--c),.30) 0%,rgba(var(--c),.10) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 0 rgba(var(--c),.30),0 4px 0 rgba(0,0,0,.28);
-  transition:transform .1s ease,box-shadow .1s ease,background .12s ease}
-#lgtabs .lgc:hover:not(.act){transform:translateY(-1px)}
-#lgtabs .lgc .lgc-n{color:rgb(var(--c));font-size:.74rem;font-weight:800;letter-spacing:.06em}
-#lgtabs .lgc small{color:rgba(var(--c),.8)}
-#lgtabs .lgc.act{transform:translateY(3px);border-color:rgb(var(--c));
-  background:linear-gradient(165deg,rgba(255,255,255,.28) 0%,rgba(var(--c),1) 38%,rgba(var(--c),.82) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 0 rgba(0,0,0,.18),0 1px 0 rgba(0,0,0,.25)}
+/* リーグのボタン(2026-11-28タダシさん指示「選ばれている感」): 選んでいない＝暗く平たい／選んでいる＝その色で塗り、
+   白い縁・上の光沢・下の厚みで浮き上がる＋下の列へ向く三角。押した瞬間(:active・タップの .pressing)は沈む。光のにじみは付けない */
+#lgtabs .lgc{position:relative;padding:9px 2px 8px;border-radius:11px;border:1px solid rgba(var(--c),.4);
+  background:linear-gradient(180deg,rgba(var(--c),.16) 0%,rgba(var(--c),.06) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 3px 0 rgba(0,0,0,.32);
+  transition:transform .09s ease,box-shadow .09s ease,background .12s ease,filter .12s ease}
+#lgtabs .lgc .lgc-n{color:rgba(var(--c),.85);font-size:.74rem;font-weight:800;letter-spacing:.06em}
+#lgtabs .lgc small{color:rgba(var(--c),.7)}
+#lgtabs .lgc.act{transform:translateY(-2px);border-color:rgba(255,255,255,.9);
+  background:linear-gradient(180deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,0) 52%),linear-gradient(180deg,rgb(var(--c)) 0%,rgba(var(--c),.8) 100%);
+  box-shadow:0 0 0 1.5px rgb(var(--c)),inset 0 -3px 0 rgba(0,0,0,.22),0 5px 0 rgba(var(--c),.55),0 6px 0 rgba(0,0,0,.4)}
 #lgtabs .lgc.act .lgc-n,#lgtabs .lgc.act small{color:var(--on)}
-:root.light #lgtabs .lgc{background:linear-gradient(180deg,rgba(var(--c),.16) 0%,rgba(var(--c),.05) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 3px 0 rgba(var(--c),.30)}
-:root.light #lgtabs .lgc.act{background:linear-gradient(165deg,rgba(255,255,255,.22) 0%,rgba(var(--c),1) 38%,rgba(var(--c),.85) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.15)}
+#lgtabs .lgc.act .lgc-n{text-shadow:0 1px 0 rgba(255,255,255,.25)}
+#lgtabs .lgc.act::after{content:"";position:absolute;left:50%;bottom:-11px;margin-left:-6px;border:6px solid transparent;border-top-color:rgb(var(--c))}
+@media(hover:hover){
+  #lgtabs .lgc:hover:not(.act){transform:translateY(-1px);background:linear-gradient(180deg,rgba(var(--c),.28) 0%,rgba(var(--c),.12) 100%);
+    border-color:rgba(var(--c),.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 0 rgba(0,0,0,.32)}
+  #lgtabs .lgc.act:hover{filter:brightness(1.06)}
+}
+#lgtabs .lgc:active,#lgtabs .lgc.pressing{transform:translateY(2px);box-shadow:inset 0 2px 4px rgba(0,0,0,.35),0 1px 0 rgba(0,0,0,.32)}
+#lgtabs .lgc.act:active,#lgtabs .lgc.act.pressing{transform:translateY(1px);box-shadow:0 0 0 1.5px rgb(var(--c)),inset 0 2px 4px rgba(0,0,0,.28),0 1px 0 rgba(0,0,0,.4)}
+:root.light #lgtabs .lgc{background:linear-gradient(180deg,rgba(var(--c),.12) 0%,rgba(var(--c),.04) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 3px 0 rgba(var(--c),.22)}
+:root.light #lgtabs .lgc.act{background:linear-gradient(180deg,rgba(255,255,255,.3) 0%,rgba(255,255,255,0) 52%),linear-gradient(180deg,rgb(var(--c)) 0%,rgba(var(--c),.86) 100%);
+  box-shadow:0 0 0 1.5px rgb(var(--c)),inset 0 -3px 0 rgba(0,0,0,.18),0 5px 0 rgba(var(--c),.45)}
 /* 行は1枚の表(2026-11-28タダシさん指摘「順位が離れていて見づらい」): マスを箱で区切らず、
    リーグのボタンの真下から最後の行まで、そのリーグの色の帯を1本につなげる(縦に読める)。行は細い線で区切るだけ(横に読める) */
 .rkrows{display:flex;flex-direction:column;border-radius:0 0 12px 12px;overflow:hidden}
@@ -410,6 +420,11 @@ body.has-sticky{padding-top:52px}
 .rkrow .nm .tp{display:flex;gap:2px;line-height:0}
 .rkrow .c{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px 0 7px;min-width:0;
   background:rgba(var(--c),.07)}
+.rkrow .c{cursor:pointer;transition:transform .08s ease,box-shadow .08s ease,background-color .1s ease}
+@media(hover:hover){.rkrow .c:hover{position:relative;z-index:1;border-radius:8px;transform:translateY(-2px);background-color:rgba(var(--c),.26);
+  box-shadow:inset 0 0 0 1px rgba(var(--c),.7),inset 0 1px 0 rgba(255,255,255,.12),0 3px 0 rgba(0,0,0,.35)}}
+.rkrow .c:active,.rkrow .c.pressing{position:relative;z-index:1;border-radius:8px;transform:translateY(1px) scale(.96);background-color:rgba(var(--c),.3);
+  box-shadow:inset 0 0 0 1px rgba(var(--c),.8),inset 0 3px 6px rgba(0,0,0,.4)}
 .rkrow .c.on{background:rgba(var(--c),.17);box-shadow:inset 1px 0 0 rgba(var(--c),.45),inset -1px 0 0 rgba(var(--c),.45)}
 .rkrow:last-child .c.on{box-shadow:inset 1px 0 0 rgba(var(--c),.45),inset -1px 0 0 rgba(var(--c),.45),inset 0 -2px 0 rgba(var(--c),.7)}
 .rkrow:last-child .c{border-radius:0 0 9px 9px}
@@ -1924,6 +1939,15 @@ document.getElementById('rkrows').addEventListener('click',e=>{
   if(c && p){ openRankModal(p, c.dataset.lg); return; }
   if(p && p.i!==state.p.i) selectPoke(p, false);
 });
+// 押した瞬間の凹み: スマホは :active が出ないことがあるので、押したら .pressing を付け、最低0.14秒は残す
+(function(){
+  const SEL='#lgtabs .lgc, #lgextra .lgc, #rkrows .c';
+  let cur=null, t0=0;
+  const off=()=>{ if(!cur) return; const el=cur; cur=null; setTimeout(()=>el.classList.remove('pressing'), Math.max(0,140-(performance.now()-t0))); };
+  document.addEventListener('pointerdown',e=>{ const el=e.target.closest(SEL); if(!el) return; off(); cur=el; t0=performance.now(); el.classList.add('pressing'); },{passive:true});
+  ['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,off,{passive:true}));
+  document.addEventListener('scroll',off,{passive:true,capture:true});
+})();
 // ---- 個体値順位の窓(順位表のマスから・100件ずつ) ----
 const rkm={p:null, lg:null, n:100};
 function openRankModal(p, lg){
