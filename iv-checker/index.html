@@ -1359,8 +1359,8 @@ function render(){
   const me=rows[idx], rank=me.rank;
   const mcls=medalCls(rank);
   if(stEl) stEl.innerHTML=
+    '<span class="lgts"><i>PL</i><b>'+me.lv+'</b></span>'+   // 並びは表と同じ PL→CP→SCP(2026-11-28タダシさん指示)
     '<span class="lgts"><i>CP</i><b>'+me.cp+'</b></span>'+
-    '<span class="lgts"><i>PL</i><b>'+me.lv+'</b></span>'+
     '<span class="lgts"><i>SCP</i><b>'+scp(me.sp)+'</b></span>';
 
   const rkHtml=r=>'<span class="rkc">'+r+'位</span>';
