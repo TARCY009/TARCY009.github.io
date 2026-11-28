@@ -46,6 +46,8 @@
   --bg:#0c1122; --bg2:#131a33; --panel:#1a2342; --line:#2a3560;
   --ink:#eef1fb; --sub:#8b96c2; --cy:#43e0ff;
   --gl:#4d8dff; --ul:#f5c542; --ml:#b06cff; --lc:#5be0b0;
+  --gl-rgb:77,141,255; --ul-rgb:245,197,66; --ml-rgb:176,108,255; --lc-rgb:91,224,176;   /* 順位表のボタンの色(rgba用) */
+  --lc-on:#03261a; --gl-on:#fff; --ul-on:#2c1f00; --ml-on:#fff;
   --good:#3ddc84; --warn:#ff6b81;
   --bgimg:radial-gradient(1000px 500px at 50% -10%, #1d2a55 0%, transparent 60%), #0c1122;
   --sughover:#232e58; --segoff:#25305c;
@@ -74,6 +76,8 @@
   --bg:#eef2fc; --bg2:#fbfcff; --panel:rgba(255,255,255,.88); --line:#dfe6f5;
   --ink:#20263a; --sub:#6a7391; --cy:#0b8fa8;
   --gl:#3b6ef0; --ul:#b3820b; --ml:#8b5cf6; --lc:#158f63;
+  --gl-rgb:59,110,240; --ul-rgb:179,130,11; --ml-rgb:139,92,246; --lc-rgb:21,143,99;
+  --lc-on:#fff; --gl-on:#fff; --ul-on:#fff; --ml-on:#fff;
   --good:#1f9d55; --warn:#d63a52;
   /* 白一色にせず、このツールの色(青・紫・水色)を淡くにじませる */
   --bgimg:
@@ -367,9 +371,113 @@ body.has-sticky{padding-top:52px}
 .lgc.act[data-lg="gl"]{border-color:var(--gl);box-shadow:0 0 0 1.5px var(--gl),inset 0 1px 0 var(--tabin)}
 .lgc.act[data-lg="ul"]{border-color:var(--ul);box-shadow:0 0 0 1.5px var(--ul),inset 0 1px 0 var(--tabin)}
 .lgc.act[data-lg="ml"]{border-color:var(--ml);box-shadow:0 0 0 1.5px var(--ml),inset 0 1px 0 var(--tabin)}
+/* ===== 順位表(2026-11-28タダシさん指示) =====
+   見出しの行＝リーグの色のボタン(押していない＝色を薄く敷いて浮いている／押している＝色で塗って沈む)。
+   行＝進化系統の各姿。押しているリーグの列はその色を薄く敷き、選んでいる姿の行は水色の線と大きな数字 */
+.rkboard{--cols:minmax(0,1.3fr) repeat(4,minmax(0,1fr))}
+#lgtabs,.rkrow{display:grid;grid-template-columns:var(--cols);column-gap:4px}
+#lgtabs{margin-bottom:5px;align-items:stretch}
+.rkcorner{display:flex;flex-direction:column;justify-content:center;padding:0 2px 0 8px;min-width:0}
+.rkcorner i{font-style:normal;font-size:.56rem;font-weight:700;letter-spacing:.08em;color:var(--sub)}
+.rkcorner b{font-size:.92rem;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.01em;color:var(--ink);white-space:nowrap}
+.lgc[data-lg="lc"],.rkrow .c[data-lg="lc"]{--c:var(--lc-rgb);--on:var(--lc-on)}
+.lgc[data-lg="gl"],.rkrow .c[data-lg="gl"]{--c:var(--gl-rgb);--on:var(--gl-on)}
+.lgc[data-lg="ul"],.rkrow .c[data-lg="ul"]{--c:var(--ul-rgb);--on:var(--ul-on)}
+.lgc[data-lg="ml"],.rkrow .c[data-lg="ml"]{--c:var(--ml-rgb);--on:var(--ml-on)}
+#lgtabs .lgc{position:relative;padding:9px 2px 8px;border-radius:11px;border:1px solid rgba(var(--c),.55);
+  background:linear-gradient(180deg,rgba(var(--c),.30) 0%,rgba(var(--c),.10) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 0 rgba(var(--c),.30),0 4px 0 rgba(0,0,0,.28);
+  transition:transform .1s ease,box-shadow .1s ease,background .12s ease}
+#lgtabs .lgc:hover:not(.act){transform:translateY(-1px)}
+#lgtabs .lgc .lgc-n{color:rgb(var(--c));font-size:.74rem;font-weight:800;letter-spacing:.06em}
+#lgtabs .lgc small{color:rgba(var(--c),.8)}
+#lgtabs .lgc.act{transform:translateY(3px);border-color:rgb(var(--c));
+  background:linear-gradient(165deg,rgba(255,255,255,.28) 0%,rgba(var(--c),1) 38%,rgba(var(--c),.82) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 0 rgba(0,0,0,.18),0 1px 0 rgba(0,0,0,.25)}
+#lgtabs .lgc.act .lgc-n,#lgtabs .lgc.act small{color:var(--on)}
+:root.light #lgtabs .lgc{background:linear-gradient(180deg,rgba(var(--c),.16) 0%,rgba(var(--c),.05) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 3px 0 rgba(var(--c),.30)}
+:root.light #lgtabs .lgc.act{background:linear-gradient(165deg,rgba(255,255,255,.22) 0%,rgba(var(--c),1) 38%,rgba(var(--c),.85) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.15)}
+/* 行は1枚の表(2026-11-28タダシさん指摘「順位が離れていて見づらい」): マスを箱で区切らず、
+   リーグのボタンの真下から最後の行まで、そのリーグの色の帯を1本につなげる(縦に読める)。行は細い線で区切るだけ(横に読める) */
+.rkrows{display:flex;flex-direction:column;border-radius:0 0 12px 12px;overflow:hidden}
+.rkrow{cursor:pointer;border-top:1px solid var(--line);position:relative;transition:background-color .12s ease}
+.rkrow:first-child{border-top:none}
+.rkrow:hover{background-color:rgba(67,224,255,.05)}
+.rkrow .nm{display:flex;flex-direction:column;justify-content:center;gap:3px;padding:8px 2px 8px 9px;min-width:0}
+.rkrow .nm b{font-size:.8rem;font-weight:800;line-height:1.25;word-break:keep-all;overflow-wrap:anywhere;color:var(--ink)}
+.rkrow .nm .tp{display:flex;gap:2px;line-height:0}
+.rkrow .c{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px 0 7px;min-width:0;
+  background:rgba(var(--c),.07)}
+.rkrow .c.on{background:rgba(var(--c),.17);box-shadow:inset 1px 0 0 rgba(var(--c),.45),inset -1px 0 0 rgba(var(--c),.45)}
+.rkrow:last-child .c.on{box-shadow:inset 1px 0 0 rgba(var(--c),.45),inset -1px 0 0 rgba(var(--c),.45),inset 0 -2px 0 rgba(var(--c),.7)}
+.rkrow:last-child .c{border-radius:0 0 9px 9px}
+.rkrow .c .r{font-size:1.1rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--ink);white-space:nowrap}
+.rkrow .c .r .u{font-size:.6rem;font-weight:700;color:var(--sub);margin-left:1px}
+.rkrow .c small{font-size:.56rem;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap}
+.rkrow .c .r.na{color:var(--sub);font-weight:700}
+/* 選んでいる姿の行: 左端の水色の線＋行全体に水色を薄く重ねる(帯の色は残す)・上下の線も水色 */
+.rkrow.me{background-color:rgba(67,224,255,.08);border-top-color:rgba(67,224,255,.55)}
+.rkrow.me + .rkrow{border-top-color:rgba(67,224,255,.55)}
+.rkrow.me::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cy);border-radius:0 2px 2px 0}
+.rkrow.me .nm b{color:var(--cy)}
+.rkrow.me .c .r{font-size:1.28rem}
+.rkrow .sub{grid-column:1/-1;padding:0 9px 8px}
+.rkrow .sub .famnow{margin:0}
+.rkrow .r.r1,.rkrow .r.r10,.rkrow .r.r100{-webkit-background-clip:text;background-clip:text;color:transparent}
+.rkrow .r.r1{background-image:linear-gradient(180deg,#ffeaa8 0%,var(--mgold) 52%,#c08d12 100%)}
+.rkrow .r.r10{background-image:linear-gradient(180deg,#ffffff 0%,var(--msilver) 52%,#8f9dad 100%)}
+.rkrow .r.r100{background-image:linear-gradient(180deg,#f0c093 0%,var(--mbronze) 52%,#9a5f33 100%)}
+/* ライトは白い面に溶けないよう、明るい側を抜いた濃いめのメダル色 */
+:root.light .rkrow .r.r1{background-image:linear-gradient(180deg,#e9b31c 0%,#c99000 55%,#9a6c00 100%)}
+:root.light .rkrow .r.r10{background-image:linear-gradient(180deg,#8d9cae 0%,#6f7f93 55%,#56657a 100%)}
+:root.light .rkrow .r.r100{background-image:linear-gradient(180deg,#c98a55 0%,#a8693a 55%,#83502a 100%)}
+@media(max-width:560px){
+  .rkboard{--cols:minmax(0,1.08fr) repeat(4,minmax(0,1fr))}
+  #lgtabs,.rkrow{column-gap:3px}
+  #lgtabs .lgc{padding:8px 1px 7px}
+  #lgtabs .lgc .lgc-n{font-size:.64rem;letter-spacing:.01em}
+  .rkcorner{padding-left:6px} .rkcorner b{font-size:.74rem}
+  .rkrow .nm{padding-left:7px} .rkrow .nm b{font-size:.72rem}
+  .rkrow .c .r{font-size:.9rem;letter-spacing:-.02em} .rkrow.me .c .r{font-size:1rem}
+  .rkrow .c .r .u{font-size:.5rem;margin-left:0}
+  .rkrow .c small{font-size:.52rem}
+}
+/* 個体値順位の窓 */
+.rkmodal{position:fixed;inset:0;z-index:300;background:rgba(4,8,20,.62);display:flex;align-items:flex-end;justify-content:center;padding:0}
+.rkmodal[hidden]{display:none}
+.rkm-box{width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;border-radius:18px 18px 0 0;
+  background:var(--panel);border:1px solid var(--line);border-bottom:none;box-shadow:0 -8px 30px rgba(0,0,0,.4)}
+@media(min-width:600px){.rkmodal{align-items:center;padding:20px}.rkm-box{border-radius:18px;border-bottom:1px solid var(--line)}}
+.rkm-hd{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid var(--line)}
+.rkm-ttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rkm-ttl b{font-size:1.05rem;font-weight:900;color:var(--ink)}
+.rkm-ttl span{font-size:.74rem;font-weight:800;color:rgb(var(--c))}
+.rkm-box[data-lg="lc"]{--c:var(--lc-rgb)} .rkm-box[data-lg="gl"]{--c:var(--gl-rgb)} .rkm-box[data-lg="ul"]{--c:var(--ul-rgb)} .rkm-box[data-lg="ml"]{--c:var(--ml-rgb)}
+.rkm-box{border-top:3px solid rgb(var(--c))}
+.rkm-x{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-size:1rem;cursor:pointer}
+.rkm-me{padding:8px 14px;font-size:.8rem;color:var(--sub)}
+.rkm-me b{color:var(--cy);font-size:.95rem}
+.rkm-body{overflow-y:auto;padding:0 12px 14px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.rkm-body .morerow{display:flex;margin-top:10px}
+body.rkm-open{overflow:hidden}
+#lgextra{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+#lgextra .lgc{border-radius:11px;border:1px solid rgba(var(--gl-rgb),.5);
+  background:linear-gradient(100deg,rgba(var(--gl-rgb),.20),rgba(var(--ul-rgb),.16));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 3px 0 rgba(var(--gl-rgb),.25),0 4px 0 rgba(0,0,0,.28);transition:transform .1s ease,box-shadow .1s ease}
+#lgextra .lgc[data-lg="ga"]{border-color:rgba(67,224,255,.5);background:linear-gradient(100deg,rgba(67,224,255,.20),rgba(139,92,246,.16));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 3px 0 rgba(67,224,255,.22),0 4px 0 rgba(0,0,0,.28)}
+#lgextra .lgc:hover:not(.act){transform:translateY(-1px)}
+#lgextra .lgc.act{transform:translateY(3px);border-color:rgba(var(--gl-rgb),1);
+  background:linear-gradient(100deg,rgba(var(--gl-rgb),.48),rgba(var(--ul-rgb),.40));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(0,0,0,.18),0 1px 0 rgba(0,0,0,.25)}
+#lgextra .lgc[data-lg="ga"].act{border-color:var(--cy);background:linear-gradient(100deg,rgba(67,224,255,.46),rgba(139,92,246,.38))}
+:root.light #lgextra .lgc{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 3px 0 rgba(var(--gl-rgb),.22)}
+:root.light #lgextra .lgc.act{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.12)}
 /* メガ・ゲンシだけの「スーパー＋ハイパー両立」(2026-11-28タダシさん指示)。4枚の下に横いっぱい・1行。
    メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せる */
-.lgc.lgboth{grid-column:span 2;display:flex;align-items:baseline;justify-content:center;gap:4px 10px;flex-wrap:wrap;padding:7px 10px 8px}
+.lgc.lgboth{grid-column:auto;display:flex;align-items:baseline;justify-content:center;gap:4px 10px;flex-wrap:wrap;padding:7px 10px 8px}
 .lgc.lgboth .lgc-n{display:inline;letter-spacing:.04em;font-size:.74rem;color:var(--sub)}
 .lgc.lgboth .lgc-n .g{color:var(--gl)} .lgc.lgboth .lgc-n .uu{color:var(--ul)} .lgc.lgboth .lgc-n .w{color:var(--sub);margin-left:4px}
 .lgc.lgboth .lgc-r{display:inline;margin-top:0;font-size:1.35rem}
@@ -676,15 +784,24 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <!-- 選んだポケモンの名前とタイプを、リーグの枠のいちばん上にタイトルとして出す -->
   <div id="lgtitle" class="lgtitle" style="display:none"></div>
   <label class="sec" id="lgcardlabel">リーグ</label>
+  <!-- 順位表(2026-11-28タダシさん指示): リーグのボタンが列の見出し、行が進化系統の各姿(進化前・進化後・メガ)。
+       この個体値のまま進化させたときの順位を1つの枠で見くらべる。行をタップでその姿、ボタンで下の一覧のリーグを切り替える -->
+  <div class="rkboard" id="rkboard">
   <div class="tabs" id="lgtabs">
-    <button class="lgc" data-lg="lc" title="CP500以下（リトルカップ）でのこの個体値の順位（全4096通り中）を出します。最近は開催されていませんが、終了の発表が無いので残してあります"><span class="lgc-n">リトル</span><span class="lgc-r" id="lgr-lc">—</span><small class="expl">CP500以下</small></button>
-    <button class="lgc act" data-lg="gl" title="CP1500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">スーパー</span><span class="lgc-r" id="lgr-gl">—</span><small class="expl">CP1500以下</small></button>
-    <button class="lgc" data-lg="ul" title="CP2500以下でのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">ハイパー</span><span class="lgc-r" id="lgr-ul">—</span><small class="expl">CP2500以下</small></button>
-    <button class="lgc" data-lg="ml" title="CP制限なしでのこの個体値の順位（全4096通り中）を出します"><span class="lgc-n">マスター</span><span class="lgc-r" id="lgr-ml">—</span><small class="expl">制限なし</small></button>
-    <button class="lgc lgboth" data-lg="gu" id="lgboth" style="display:none" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体を100%としたときの割合（ステータス積）の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n"><span class="g">スーパー</span>＋<span class="uu">ハイパー</span><span class="w">両立</span></span><span class="lgc-r" id="lgr-gu">—</span></button>
+    <span class="rkcorner" id="rkcorner"><i>個体値</i><b>—</b></span>
+    <button class="lgc" data-lg="lc" title="リトルカップ（CP500以下）の順位です。押すと下の一覧がリトルになります。最近は開催されていませんが、終了の発表が無いので残してあります"><span class="lgc-n">リトル</span><small class="expl">CP500</small></button>
+    <button class="lgc act" data-lg="gl" title="スーパーリーグ（CP1500以下）の順位です。押すと下の一覧がスーパーになります"><span class="lgc-n">スーパー</span><small class="expl">CP1500</small></button>
+    <button class="lgc" data-lg="ul" title="ハイパーリーグ（CP2500以下）の順位です。押すと下の一覧がハイパーになります"><span class="lgc-n">ハイパー</span><small class="expl">CP2500</small></button>
+    <button class="lgc" data-lg="ml" title="マスターリーグ（CP制限なし）の順位です。押すと下の一覧がマスターになります"><span class="lgc-n">マスター</span><small class="expl">制限なし</small></button>
+  </div>
+  <div class="rkrows" id="rkrows"></div>
+  </div>
+  <!-- メガ・ゲンシだけ: スーパー＋ハイパー両立／オールインワン -->
+  <div class="lgextra" id="lgextra" style="display:none">
+    <button class="lgc lgboth" data-lg="gu" id="lgboth" title="スーパーとハイパーの両方で順位が高い個体ほど上に並べたときの、この個体値の順位です。それぞれのリーグで1位の個体を100%としたときの割合（ステータス積）の平均で並べます。メガシンカ中はリーグのCP制限に合わせてCPが自動で調整されるので、1匹で両方のリーグに出せます"><span class="lgc-n"><span class="g">スーパー</span>＋<span class="uu">ハイパー</span><span class="w">両立</span></span><span class="lgc-r" id="lgr-gu">—</span></button>
     <button class="lgc lgboth" data-lg="ga" id="lgaio" style="display:none" title="メガのスーパー・ハイパーに加えて、メガシンカ前の姿のスーパー・ハイパーでも順位が高い個体ほど上に並べたときの、この個体値の順位です（1匹をどこで使っても困りにくい個体）。それぞれ1位の個体を100%としたときの割合（ステータス積）の平均で並べます。メガシンカ前の姿の最大CPがCP制限に300以上届かないリーグは数えません"><span class="lgc-n"><span class="a">メガ前も</span><span class="w">オールインワン</span></span><span class="lgc-r" id="lgr-ga">—</span></button>
   </div>
-  <div class="iv-hint expl" id="lghint" style="margin-top:8px">4リーグの順位を同時表示。タップで詳細を切替。リトル＝CP500のリトルカップ。</div>
+  <div class="iv-hint expl" id="lghint" style="margin-top:8px">行＝進化前・進化後・メガ（この個体値のまま進化させたときの順位）。行をタップでその姿、リーグのボタンで下の一覧を切り替え。</div>
   <div class="capsel" id="sortrow">
     <span>並び順</span>
     <div class="seg">
@@ -788,15 +905,19 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <button id="copybtn">結果をコピー</button>
   <div class="iv-hint" id="copied" style="display:none;text-align:center">コピーしました!</div>
   <a id="bplink" class="bplink" href="/breakpoint/" title="この個体値のまま、環境上位の相手にダメージが変わる境目（ブレイクポイント）を調べる専用ページへ移動します">🎯 ブレイクポイント<small>この個体でダメージが変わる境目をチェック</small><b>↗</b></a>
-  <!-- 進化系統の順位(2026-09-04タダシさん指示): 個体値は進化しても変わらないので、この個体値のまま
-       進化前・進化後・メガにしたときの順位(4リーグ)と、選択中のリーグのTOP5を並べる -->
-  <div id="famwrap" style="display:none;margin-top:16px">
-    <label class="sec">進化系統の順位</label>
-    <div class="iv-hint" id="famnote">個体値は進化しても変わらないので、<b>この個体値のまま</b>進化前・進化後・メガにしたときの順位です。表は選択中のリーグのTOP5。</div>
-    <div id="fambody"></div>
-  </div>
 </div>
 
+<!-- 順位表のマスを押すと開く、その姿×リーグの個体値順位の一覧(2026-11-28タダシさん指示) -->
+<div class="rkmodal" id="rkmodal" hidden data-snap-skip>
+  <div class="rkm-box" role="dialog" aria-modal="true" aria-labelledby="rkm-t">
+    <div class="rkm-hd"><div class="rkm-ttl"><b id="rkm-t"></b><span id="rkm-s"></span></div><button class="rkm-x" id="rkm-x" type="button" aria-label="閉じる">✕</button></div>
+    <div class="rkm-me" id="rkm-me"></div>
+    <div class="rkm-body" id="rkm-body">
+      <div class="tblwrap"><table id="rkm-tbl"><thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th></tr></thead><tbody id="rkm-b"></tbody></table></div>
+      <div class="morerow"><button class="more" id="rkm-more" type="button">さらに100件見る</button></div>
+    </div>
+  </div>
+</div>
 <div class="adslot" data-ad="mid" data-ad-when="#top10" data-snap-skip></div>
 
 <button id="helptab" class="helptab" type="button" aria-expanded="true">？ 使い方・計算の前提</button>
@@ -857,11 +978,12 @@ table.evo th:nth-child(7),table.evo td:nth-child(7){width:10%;padding-right:9px}
   <h4>リトルカップ（CP500）</h4>
   <p>リーグの左端の<b>リトル</b>は、CP500以下で戦うリトルカップでの順位です。最近は開催されていませんが、終了の発表が無いため残してあります。進化前のポケモン（デルビルなど）の厳選に使えます。</p>
   <h4>進化系統の順位</h4>
-  <p>結果のいちばん下に、<b>同じ系統のポケモン（進化前・進化後・メガ）</b>の順位を並べます。個体値は進化しても変わらないので、
-    <b>この個体値のまま進化させたときの順位</b>がそのまま分かります（例: ヘルガーを選ぶとデルビルとメガヘルガー）。
-    札の4つは4リーグの順位、表は選択中のリーグのTOP5です。メガの行はメガLv4などのPL上限をそのまま使い、通常のポケモンには当てません。</p>
+  <p>リーグの枠の<b>順位表</b>に、<b>同じ系統のポケモン（進化前・進化後・メガ）</b>を1行ずつ並べます。個体値は進化しても変わらないので、
+    <b>この個体値のまま進化させたときの順位</b>が1つの表で見くらべられます（例: マリルを選ぶとマリルとマリルリ）。
+    数字の下の小さなCPは、そのリーグの上限まで強化したときのCPです。<b>名前を押すとその姿</b>に切り替わり（個体値と入手方法はそのまま）、<b>順位のマスを押すと</b>その姿・そのリーグの個体値順位の一覧（100件ずつ）が開きます。
+    <b>リーグのボタンを押すと</b>下の一覧がそのリーグになります。メガの行はメガLv4などのPL上限をそのまま使い、通常のポケモンには当てません。</p>
   <p>個体値の下の「<b>いまのCP</b>」に、ゲーム画面に出ているこの個体のCPを入れると、個体値と合わせて<b>PLが１つに決まります</b>
-    （ゲームではPLを確認できないため）。すると各姿に<b>強化せずそのまま進化させたときのCP</b>と、
+    （ゲームではPLを確認できないため）。すると順位表の各行に<b>強化せずそのまま進化させたときのCP</b>と、
     リトル・スーパー・ハイパーに収まるか（◯／✕）が出ます。「進化させたらCP制限を超えていた」を進化の前に防ぐためのものです。
     ✕は強化していなくてもCP制限を超えるということで、CPは下げられないので、その姿ではそのリーグに使えません。</p>
   <h4>進化前CP</h4>
@@ -1044,6 +1166,7 @@ function render(){
     const idx=belowFloor? -1 : findRank(rows, state.iv);
     detail[lg]={rows, idx};
     const el=document.getElementById('lgr-'+lg);
+    if(!el) return;   // 4リーグの順位は順位表(renderBoard)が出す
     // 「攻撃優先」はマスター専用の並びなので、スーパー・ハイパーには順位を出さない
     // (出すと「攻撃優先での順位」に見えてしまう。2026-08-16タダシさん指示)
     const na=(state.sort==='atk' && lg!=='ml');
@@ -1059,7 +1182,7 @@ function render(){
 
   // --- メガ・ゲンシ: スーパー＋ハイパー両立 ---
   const mega=isMegaP(state.p), ai=mega? aioLeagues(state.p) : null;
-  document.getElementById('lgboth').style.display=mega?'':'none';
+  document.getElementById('lgextra').style.display=mega?'':'none';
   document.getElementById('lgaio').style.display=ai?'':'none';
   // メガ1つだけのときは両立を横いっぱいに
   document.getElementById('lgboth').style.gridColumn= ai? '' : '1/-1';
@@ -1294,18 +1417,21 @@ function renderCpNow(){
   el.className='cpnowres';
   el.innerHTML='この個体は<b>PL'+(lo===hi? lo : lo+'〜'+hi)+'</b>';
 }
-function scheduleFamily(){
-  clearTimeout(famTimer);
-  famTimer=setTimeout(renderFamily,120);
+function scheduleFamily(){ renderBoard(); }
+// 順位表の行の並び: 進化前 → 選んだ系統 → 進化後、メガ・ゲンシは元の姿のすぐ後ろ
+function boardForms(){
+  const base=POKE[IDX[state.p.i.replace(/_(mega(_[xy])?|primal)$/,'')]]||state.p;
+  const forms=[state.p, ...familyOf(state.p)];
+  const order=[...preChain(base), base, ...descendants(base)].map(m=>m.i);
+  const pos=m=>{ const k=order.indexOf(m.i); return k>=0? k : order.indexOf(m.i.replace(/_(mega(_[xy])?|primal)$/,''))+0.5; };
+  return forms.sort((a,b)=>pos(a)-pos(b));
 }
-function renderFamily(){
-  const wrap=document.getElementById('famwrap'), body=document.getElementById('fambody');
-  if(!state.p||state.mode!=='iv'){ wrap.style.display='none'; return; }
-  const fam=familyOf(state.p);
-  if(!fam.length){ wrap.style.display='none'; return; }
-  const LG=[['lc','リトル'],['gl','スーパー'],['ul','ハイパー'],['ml','マスター']];
+function renderBoard(){
+  const host=document.getElementById('rkrows'), cor=document.querySelector('#rkcorner b');
+  if(!state.p||state.mode!=='iv'){ host.innerHTML=''; if(cor) cor.textContent='—'; return; }
+  if(cor) cor.textContent=state.iv.join('/');
+  const LG=['lc','gl','ul','ml'];
   const belowFloor=Math.min(...state.iv)<state.floor;
-  const rk=r=>r+'<span class="u">位</span>';
   // いまのCPが入っていれば、各姿に「そのPLのまま進化したときのCP」と収まるリーグ(◯/✕)を添える
   const hitNow=state.plNow!=null? plNowIdx() : [];
   const nowLine=m=>{
@@ -1316,28 +1442,25 @@ function renderFamily(){
       const ok=c2<=CAPS[lg];
       return '<span class="fit '+(ok?'ok':'ng')+'" title="'+nm+'(CP'+CAPS[lg]+'以下)に'+(ok?'収まります':'収まりません(強化せずに進化してもCP制限を超えます)')+'">'+nm+(ok?'◯':'✕')+'</span>';
     }).join('');
-    const self=state.p && m.i===state.p.i;
-    return '<div class="famnow"><div class="now"><span>PL'+plOf(hitNow[0])+'のまま'+(self?'':'進化')+'</span><b>CP '+(c1===c2? c1 : c1+'〜'+c2)+'</b></div><div class="fits">'+fits+'</div></div>';
+    const self=m.i===state.p.i;
+    return '<div class="sub"><div class="famnow"><div class="now"><span>PL'+plOf(hitNow[0])+'のまま'+(self?'':'進化')+'</span><b>CP '+(c1===c2? c1 : c1+'〜'+c2)+'</b></div><div class="fits">'+fits+'</div></div></div>';
   };
-  body.innerHTML=fam.map(m=>{
-    const ranks=LG.map(([lg,nm])=>{
+  const nmHtml=n=>{ const pm=n.match(/^(.+?)(\(.+\))$/); return pm? pm[1]+'<wbr>'+pm[2] : n; };
+  host.innerHTML=boardForms().map(m=>{
+    const cells=LG.map(lg=>{
       const rows=famRows(m,lg);
       const idx=belowFloor? -1 : findRank(rows,state.iv);
       const na=(state.sort==='atk' && lg!=='ml');
-      const r=(idx>=0&&!na)? rows[idx].rank : null;
-      return '<span data-lg="'+lg+'"'+(lg===state.league?' class="act"':'')+'><i>'+nm+'</i><b class="'+(r?medalCls(r):'')+'">'+(r? rk(r) : '—')+'</b></span>';
+      const r=(idx>=0&&!na)? rows[idx] : null;
+      const on=(!state.both && lg===state.league)?' on':'';
+      return '<span class="c'+on+'" data-lg="'+lg+'">'+
+        (r? '<b class="r '+medalCls(r.rank)+'">'+r.rank+'<span class="u">位</span></b><small>CP'+r.cp+'</small>'
+          : '<b class="r na">—</b><small>'+(na?'':(belowFloor?'':'収まらない'))+'</small>')+'</span>';
     }).join('');
-    const rows=famRows(m,state.league);
-    const myIdx=belowFloor? -1 : findRank(rows,state.iv);
-    const top=rows.slice(0,5).map((r,i)=>'<tr'+(i===myIdx?' class="me"':'')+'><td>'+r.rank+'位</td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td></tr>').join('');
-    return '<div class="famcard"><div class="famhd"><b>'+m.n+'</b>'+typesHtml(m,16)+'</div>'+
-      nowLine(m)+
-      '<div class="famranks">'+ranks+'</div>'+
-      (top? '<table class="famtbl"><thead><tr><th>順位</th><th>個体値</th><th>PL</th><th>CP</th><th>SCP</th></tr></thead><tbody>'+top+'</tbody></table>'
-          : '<div class="iv-hint" style="margin-top:6px">このリーグのCP制限に収まる個体がありません</div>')+
-      '</div>';
+    const me=m.i===state.p.i;
+    return '<div class="rkrow'+(me?' me':'')+'" data-i="'+IDX[m.i]+'" role="button" tabindex="0" title="'+(me?'選んでいるポケモンです':'名前を押すと'+m.n+'に切り替えます（個体値はそのまま）。順位のマスを押すと、そのリーグの個体値順位の一覧が開きます')+'">'+
+      '<span class="nm"><b>'+nmHtml(m.n)+'</b><span class="tp">'+typesHtml(m,13)+'</span></span>'+cells+nowLine(m)+'</div>';
   }).join('');
-  wrap.style.display='block';
 }
 
 // 開発者の「進化系統」画像(2026-09-17タダシさん指示): 系統の姿ごとに、スーパー・ハイパー(・最終進化はマスター)の上位5位を1枚ずつ。
@@ -1551,6 +1674,8 @@ function applyMode(){
   document.getElementById('lgcard').style.display=hd?'none':'';
   document.getElementById('srccard').style.display=hd?'none':'';
   document.getElementById('lgtabs').style.display=cp?'none':'';
+  document.getElementById('rkrows').style.display=cp?'none':'';
+  if(cp||hd) document.getElementById('lgextra').style.display='none';
   document.getElementById('lghint').style.display=cp?'none':'';
   document.getElementById('sortrow').style.display=cp?'none':'';
   document.getElementById('lgcardlabel').textContent=cp?'計算の前提':'リーグ';
@@ -1762,10 +1887,14 @@ q.addEventListener('input',e=>{
 });
 sugg.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
-  state.p=POKE[+b.dataset.i];
+  sugg.style.display='none';
+  selectPoke(POKE[+b.dataset.i], true);
+});
+// fromSearch=false(順位表の行から): 同じ系統なので入手方法(最低個体値)は選んだままにする
+function selectPoke(p, fromSearch){
+  state.p=p;
   q.value=state.p.n;
   syncQclr();
-  sugg.style.display='none';
   // メガ・ゲンシのみスーパーマックスレベル(52/53)のタブを表示。非メガ選択時は50に戻す
   const mega=state.p.i.includes('_mega')||state.p.i.includes('_primal');
   document.querySelectorAll('.smaxonly').forEach(x=>x.style.display=mega?'':'none');
@@ -1776,7 +1905,7 @@ sugg.addEventListener('click',e=>{
     document.querySelectorAll('.cap').forEach(x=>x.classList.toggle('act',+x.dataset.cap===50));
   }
   // 伝説・UBは交換入手が基本のため最低個体値1をデフォルトに
-  applyDefaultFloor(state.p.l===1, state.p.m===1);
+  if(fromSearch) applyDefaultFloor(state.p.l===1, state.p.m===1);
   // 進化前CP: 進化形のときだけボタンを出す(未進化なら出さない)。
   // 既定の姿はいちばん元の姿(捕まえて手持ちにあるのはたいていこれ)。トグルの状態は引き継ぐ
   state.evoChain=preChain(state.p);
@@ -1787,6 +1916,55 @@ sugg.addEventListener('click',e=>{
   pk.innerHTML='選択中: <b>'+state.p.n+'</b>'+typesHtml(state.p,16)+' — 種族値 攻'+state.p.a+' / 防'+state.p.f+' / HP'+state.p.h;
   setLgTitle();
   render();
+}
+// 順位表: 行を押すとその姿へ、リーグの数字を押すとその姿＋そのリーグへ
+document.getElementById('rkrows').addEventListener('click',e=>{
+  const row=e.target.closest('.rkrow'); if(!row) return;
+  const p=POKE[+row.dataset.i], c=e.target.closest('.c');
+  if(c && p){ openRankModal(p, c.dataset.lg); return; }
+  if(p && p.i!==state.p.i) selectPoke(p, false);
+});
+// ---- 個体値順位の窓(順位表のマスから・100件ずつ) ----
+const rkm={p:null, lg:null, n:100};
+function openRankModal(p, lg){
+  rkm.p=p; rkm.lg=lg; rkm.n=100;
+  const md=document.getElementById('rkmodal');
+  md.querySelector('.rkm-box').dataset.lg=lg;
+  md.hidden=false; document.body.classList.add('rkm-open');
+  drawRankModal();
+  document.getElementById('rkm-body').scrollTop=0;
+  document.getElementById('rkm-x').focus();
+}
+function drawRankModal(){
+  const {p, lg}=rkm; if(!p) return;
+  const na=(state.sort==='atk' && lg!=='ml');
+  const rows=famRowsBy(p, lg, na? 'scp' : state.sort);
+  const LN={lc:'リトルカップ（CP500以下）',gl:'スーパーリーグ（CP1500以下）',ul:'ハイパーリーグ（CP2500以下）',ml:'マスターリーグ'}[lg];
+  document.getElementById('rkm-t').textContent=p.n;
+  document.getElementById('rkm-s').textContent=LN+'・'+(state.sort==='atk'&&!na?'攻撃優先':'個体値順')+'（全'+rows.length+'通り）';
+  const belowFloor=Math.min(...state.iv)<state.floor;
+  const idx=belowFloor? -1 : findRank(rows, state.iv);
+  document.getElementById('rkm-me').innerHTML= idx>=0
+    ? 'あなたの個体 '+state.iv.join('/')+' は <b>'+rows[idx].rank+'位</b>（CP'+rows[idx].cp+'・PL'+rows[idx].lv+'）'
+    : 'あなたの個体はこの一覧にありません';
+  const n=Math.min(rkm.n, rows.length);
+  document.getElementById('rkm-b').innerHTML=rows.slice(0,n).map((r,i)=>
+    '<tr'+(i===idx?' class="me"':'')+'><td><span class="rkc">'+r.rank+'位</span></td><td>'+r.ia+'/'+r.id+'/'+r.ih+'</td><td>'+r.lv+'</td><td>'+r.cp+'</td><td>'+scp(r.sp)+'</td></tr>').join('');
+  const mb=document.getElementById('rkm-more'), rest=rows.length-n;
+  mb.style.display= rest>0? '' : 'none';
+  mb.textContent='さらに'+Math.min(100,rest)+'件見る';
+}
+function closeRankModal(){
+  document.getElementById('rkmodal').hidden=true; document.body.classList.remove('rkm-open'); rkm.p=null;
+}
+document.getElementById('rkm-more').addEventListener('click',()=>{ rkm.n+=100; drawRankModal(); });
+document.getElementById('rkm-x').addEventListener('click',closeRankModal);
+document.getElementById('rkmodal').addEventListener('click',e=>{ if(e.target.id==='rkmodal') closeRankModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && rkm.p) closeRankModal(); });
+document.getElementById('rkrows').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ') return;
+  const row=e.target.closest('.rkrow'); if(!row) return;
+  e.preventDefault(); const p=POKE[+row.dataset.i]; if(p && p.i!==state.p.i) selectPoke(p, false);
 });
 document.addEventListener('click',e=>{ if(!e.target.closest('.searchbox')) sugg.style.display='none'; });
 
